@@ -1,0 +1,17 @@
+character:
+  name: "Isabella_Varr"
+  origin: "API Created"
+  status: "Placeholder"
+
+combat_stats:
+  marksmanship: 5
+  melee: 5
+  tactics: 5
+  leadership: 5
+  endurance: 5
+
+psychological_profile:
+  loyalty: 5
+  aggression: 5
+  caution: 5
+  morale: 5

@@ -1,0 +1,33 @@
+character:
+  name: "Trooper 86"
+  age: 28
+  origin: "Krieg"
+  regiment: "143rd Siege Regiment"
+
+combat_stats:
+  marksmanship: 9
+  melee: 7
+  tactics: 8
+  leadership: 6
+  endurance: 10
+
+equipment:
+  primary_weapon: "Lucius Pattern Lasgun"
+  armor: "Krieg Pattern Flak Armor"
+  special_gear:
+    - "Rebreather"
+    - "Entrenching Tool"
+    - "Frag Grenades"
+    - "Bayonet"
+
+psychological_profile:
+  loyalty: 10
+  aggression: 6
+  caution: 8
+  morale: 9
+  fatalism: 10
+
+specializations:
+  - "Siege Warfare"
+  - "Trench Fighting" 
+  - "Chemical Warfare Resistance"
