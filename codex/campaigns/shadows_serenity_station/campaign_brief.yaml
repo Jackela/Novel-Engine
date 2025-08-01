@@ -1,0 +1,77 @@
+---
+title: "Shadows of Serenity Station"
+setting: |
+  An abandoned Imperial monitoring station on the edge of the Ghoul Stars, 
+  where long-range sensors once watched for xenos incursions. The station 
+  has been silent for months, but recent automated distress signals suggest 
+  something still moves within its corridors.
+
+atmosphere: |
+  Tense investigation with gothic horror elements. The station feels 
+  haunted by its past, with flickering lights, strange sounds, and 
+  the constant sense of being watched. Discovery and dialogue drive 
+  the narrative rather than combat.
+
+key_events:
+  - trigger_condition: "simulation_start"
+    description: "The station's emergency beacon activates, casting eerie red light through the corridors."
+    character_impact:
+      all: "You notice the emergency lighting and feel tension in the air."
+      imperial: "Your duty compels you to investigate Imperial distress signals."
+      ork: "Red lights mean sumfin' gud is about to happen!"
+    environmental_change: "Emergency lighting activated throughout the station"
+    probability: 1.0
+
+  - trigger_condition: "turn >= 2"
+    description: "Strange mechanical sounds echo from the station's depths."
+    character_impact:
+      tech_adept: "Your augmetic senses detect anomalous machine signatures."
+      space_marine: "Your enhanced hearing identifies potential threats below."
+    environmental_change: "Mechanical sounds provide audio cues about hidden areas"
+    probability: 1.0
+
+  - trigger_condition: "investigation_count >= 3"
+    description: "A hidden data terminal flickers to life, displaying corrupted logs."
+    character_impact:
+      all: "You discover fragmentary records of the station's final days."
+    environmental_change: "Data terminal becomes available for interaction"
+    probability: 0.8
+
+character_ecology:
+  factions_present:
+    - "Imperial Guard"
+    - "Space Marines" 
+    - "Adeptus Mechanicus"
+  npc_archetypes:
+    - "Station Servitors"
+    - "Auto-systems"
+    - "Hidden Survivors"
+  relationship_dynamics:
+    imperial_unity: "Imperial forces must work together to uncover the truth"
+    tech_mysteries: "Mechanicus agents seek to understand what happened to the station's machine spirits"
+
+environmental_elements:
+  - "Flickering emergency lighting"
+  - "Echoing mechanical sounds"
+  - "Locked blast doors requiring investigation to open"
+  - "Hidden data terminals with corrupted logs"
+  - "Abandoned personal quarters with story clues"
+  - "Central command center with inactive monitoring systems"
+
+story_progression_markers:
+  - "Emergency beacon activation"
+  - "First investigation reveals clues"
+  - "Hidden areas discovered"
+  - "Data terminals accessed"
+  - "Central mystery uncovered"
+  - "Final revelation and resolution"
+
+created_date: "2025-08-01T10:30:00"
+author: "Development Team"
+version: "1.0"
+tags:
+  - "investigation"
+  - "mystery"
+  - "non-combat"
+  - "imperial"
+  - "station"

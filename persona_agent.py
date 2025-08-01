@@ -35,6 +35,12 @@ from functools import lru_cache
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
+# 引入共享类型定义，避免循环导入...
+from shared_types import CharacterAction, ActionPriority
+
+# 引入叙事引擎组件，将史诗传说融入人格决策...
+from narrative_actions import NarrativeActionType, NarrativeActionResolver
+
 
 # 启动神圣的代理行为追踪仪式，记录人格机灵的每一次决策与行动...
 logging.basicConfig(level=logging.INFO)
@@ -49,29 +55,6 @@ class ThreatLevel(Enum):
     HIGH = "high"
     CRITICAL = "critical"
 
-
-class ActionPriority(Enum):
-    """Priority levels for character actions in the decision-making queue."""
-    CRITICAL = "critical"
-    HIGH = "high"
-    NORMAL = "normal"
-    LOW = "low"
-
-
-@dataclass
-class CharacterAction:
-    """
-    Represents an action that a PersonaAgent intends to take.
-    
-    This data structure encapsulates all information needed by the DirectorAgent
-    to process and resolve the character's intended action in the world state.
-    """
-    action_type: str  # e.g., "move", "attack", "communicate", "investigate"
-    target: Optional[str] = None  # Target entity ID or location
-    parameters: Dict[str, Any] = field(default_factory=dict)  # Action-specific parameters
-    priority: ActionPriority = ActionPriority.NORMAL
-    reasoning: str = ""  # Character's internal reasoning for this action
-    timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
 
 
 @dataclass
@@ -336,7 +319,13 @@ def _generate_fallback_response(agent_id: str, prompt: str, character_data: Dict
     faction_loyalty = decision_weights.get('faction_loyalty', 0.5)
     
     # 为测试生成确定但多样的响应，确保模拟结果的可预测性...
-    response_seed = hash((agent_id, prompt[:100])) % 1000
+    # 添加历史上下文和动态变化以防止重复响应的神圣异端现象...
+    current_time = int(time.time() * 1000) % 10000  # 毫秒级时间变化
+    recent_events_count = len(subjective_worldview.get('recent_events', []))
+    known_entities_count = len(subjective_worldview.get('known_entities', {}))
+    
+    # 使用增强的种子计算，集成时间、上下文和历史因素...
+    response_seed = hash((agent_id, prompt[:100], current_time, recent_events_count, known_entities_count)) % 1000
     
     if 'threat' in prompt.lower() and 'high' in prompt.lower():
         if cautious_trait > 0.6:
@@ -346,9 +335,17 @@ def _generate_fallback_response(agent_id: str, prompt: str, character_data: Dict
                 "ACTION: call_for_help\nTARGET: none\nREASONING: Prudence dictates I should request backup before engaging such a significant threat."
             ]
         elif aggressive_trait > 0.6:
+            # 为攻击性角色生成动态化的多样响应，根据当前上下文调整...
+            entity_count = len(subjective_worldview.get('known_entities', {}))
+            faction_name = subjective_worldview.get('primary_faction', 'my faction')
+            character_name = character_data.get('name', 'I')
+            
             responses = [
-                "ACTION: attack\nTARGET: hostile_forces\nREASONING: My aggressive nature and loyalty to the faction demand immediate action against these threats.",
-                "ACTION: suppress\nTARGET: enemy_position\nREASONING: Direct engagement is required to neutralize the threat and protect our interests."
+                f"ACTION: attack\nTARGET: hostile_forces\nREASONING: As {character_name} of {faction_name}, I must eliminate these threats before they can harm innocents. {entity_count} entities detected - direct action required!",
+                f"ACTION: suppress\nTARGET: enemy_position\nREASONING: My aggressive nature compels me to neutralize this threat immediately. For {faction_name} - no enemy shall stand!",
+                f"ACTION: attack\nTARGET: hostile_forces\nREASONING: The enemy shows no mercy, so neither shall I. Time to show them the true power of {faction_name}!",
+                f"ACTION: charge\nTARGET: enemy_forces\nREASONING: {character_name} never retreats! A frontal assault will scatter these cowards and bring glory to {faction_name}!",
+                f"ACTION: overwhelm\nTARGET: hostile_entities\nREASONING: Multiple contacts detected - I'll use my aggressive tactics to overwhelm them before they can coordinate their defense."
             ]
         else:
             responses = [
@@ -357,9 +354,13 @@ def _generate_fallback_response(agent_id: str, prompt: str, character_data: Dict
             ]
     elif 'battle' in prompt.lower() or 'combat' in prompt.lower():
         if faction_loyalty > 0.7:
+            faction_name = subjective_worldview.get('primary_faction', 'my faction')
+            character_name = character_data.get('name', 'I')
             responses = [
-                "ACTION: attack\nTARGET: enemy_forces\nREASONING: My unwavering loyalty to the faction compels me to engage the enemy without hesitation.",
-                "ACTION: guard\nTARGET: faction_assets\nREASONING: Protecting our faction's interests is my primary duty in this combat situation."
+                f"ACTION: attack\nTARGET: enemy_forces\nREASONING: {character_name}'s unwavering loyalty to {faction_name} compels me to engage without hesitation!",
+                f"ACTION: guard\nTARGET: faction_assets\nREASONING: Protecting {faction_name} interests is my sacred duty in this combat situation.",
+                f"ACTION: flank\nTARGET: enemy_position\nREASONING: For {faction_name}! I'll use tactical superiority to outmaneuver the enemy forces.",
+                f"ACTION: focus_fire\nTARGET: priority_targets\nREASONING: {character_name} will concentrate firepower on high-value targets to maximize damage to enemy forces."
             ]
         else:
             responses = [
@@ -368,11 +369,15 @@ def _generate_fallback_response(agent_id: str, prompt: str, character_data: Dict
             ]
     else:
         # 各种情境的默认响应模板，角色的本能反应...
+        character_name = character_data.get('name', 'I')
+        faction_name = subjective_worldview.get('primary_faction', 'my faction')
         responses = [
-            "ACTION: observe\nTARGET: none\nREASONING: In this situation, careful observation will provide the best foundation for future decisions.",
-            "ACTION: investigate\nTARGET: area_of_interest\nREASONING: Gathering more information about the current situation aligns with my character's approach to problem-solving.",
-            "ACTION: communicate\nTARGET: nearby_entities\nREASONING: Establishing communication could provide valuable intelligence and potential cooperation opportunities.",
-            "ACTION: wait_observe\nTARGET: none\nREASONING: The current situation does not require immediate action; patience and observation are more appropriate."
+            f"ACTION: observe\nTARGET: none\nREASONING: {character_name} must gather intel before committing to action. Knowledge is power.",
+            f"ACTION: investigate\nTARGET: area_of_interest\nREASONING: As a {faction_name} operative, thorough reconnaissance is essential before making tactical decisions.",
+            f"ACTION: communicate\nTARGET: nearby_entities\nREASONING: {character_name} seeks to establish contact - information exchange could prove valuable.",
+            f"ACTION: patrol\nTARGET: perimeter\nREASONING: Maintaining situational awareness through active patrol serves {faction_name} interests.",
+            f"ACTION: prepare\nTARGET: none\nREASONING: {character_name} will ready equipment and position for whatever comes next. Preparation prevents failure.",
+            f"ACTION: analyze\nTARGET: environment\nREASONING: Understanding the tactical situation fully before action ensures {faction_name} superiority."
         ]
     
     selected_response = responses[response_seed % len(responses)]
@@ -1116,9 +1121,12 @@ class PersonaAgent:
                 llm_action = self._llm_enhanced_decision_making(world_state_update, situation_assessment, available_actions)
                 if llm_action:
                     logger.info(f"Agent {self.agent_id} using LLM-guided decision: {llm_action.action_type} - {llm_action.reasoning}")
+                    # Store LLM action for future reference to prevent repetition
+                    self.last_action_taken = f"{llm_action.action_type} targeting {llm_action.target or 'none'}"
                     return llm_action
                 else:
                     logger.info(f"Agent {self.agent_id} LLM decision resulted in wait/observe")
+                    self.last_action_taken = "wait and observe"
             except Exception as llm_error:
                 logger.warning(f"LLM decision-making failed for agent {self.agent_id}: {str(llm_error)}. Falling back to algorithmic decision-making.")
             
@@ -1137,8 +1145,11 @@ class PersonaAgent:
             # 第五步神圣仪式：记录决策推理以供调试和叙事目的，留下思维痵迹...
             if selected_action:
                 logger.info(f"Agent {self.agent_id} decided to {selected_action.action_type}: {selected_action.reasoning}")
+                # Store action for future reference to prevent repetition
+                self.last_action_taken = f"{selected_action.action_type} targeting {selected_action.target or 'none'}"
             else:
                 logger.info(f"Agent {self.agent_id} decided to wait and observe")
+                self.last_action_taken = "wait and observe"
             
             return selected_action
             
@@ -1159,6 +1170,11 @@ class PersonaAgent:
         entity_info = world_state_update.get('entity_updates', {})
         faction_info = world_state_update.get('faction_updates', {})
         events = world_state_update.get('recent_events', [])
+        
+        # 处理叙事情境更新，融入史诗传说的脉络...
+        narrative_context = world_state_update.get('narrative_context', {})
+        if narrative_context:
+            self._process_narrative_situation_update(narrative_context)
         
         # 更新角色的位置知识，刷新人格机灵的地理认知...
         self._update_location_knowledge(location_info)
@@ -1247,6 +1263,10 @@ class PersonaAgent:
                 {'type': 'suppress', 'description': 'Suppress enemy activity'},
             ])
         
+        # 叙事行动选项 - 基于故事情境的角色选择...
+        narrative_actions = self._identify_narrative_actions(situation_assessment)
+        available_actions.extend(narrative_actions)
+        
         return available_actions
     
     def _evaluate_action_option(self, action: Dict[str, Any], situation: Dict[str, Any]) -> float:
@@ -1298,6 +1318,11 @@ class PersonaAgent:
             # Mission-focused actions
             score += self.decision_weights.get('mission_success', 0.5) * 0.5
             score += self.decision_weights.get('faction_loyalty', 0.5) * 0.3
+        
+        # 叙事行动评估 - 基于故事情境的角色偏好...
+        elif 'narrative_type' in action:
+            narrative_score = self._evaluate_narrative_action(action, situation)
+            score += narrative_score
         
         # Apply personality modifiers
         score = self._apply_personality_modifiers(score, action_type)
@@ -2122,7 +2147,13 @@ Morale Level: {self.morale_level:.2f} (-1.0 to 1.0 scale)"""
         threat_level = situation_assessment.get('threat_level', ThreatLevel.NEGLIGIBLE)
         current_goals = situation_assessment.get('current_goals', [])
         
+        # Add turn-specific context to prevent identical prompts
+        current_turn = world_state_update.get('current_turn', 'Unknown')
+        simulation_time = world_state_update.get('simulation_time', 'Unknown')
+        
         situation_section = f"""CURRENT SITUATION:
+Turn Number: {current_turn}
+Simulation Time: {simulation_time}
 Threat Level: {threat_level.value}
 Location: {self.current_location or 'Unknown'}
 Active Goals: {len(current_goals)} mission objectives
@@ -2145,10 +2176,56 @@ Recent Events: {len(self.subjective_worldview.get('recent_events', []))}"""
             for location, info in location_updates.items():
                 world_state_section += f"- {location}: {info}\n"
         
+        # Build narrative context section
+        narrative_section = ""
+        if hasattr(self, 'narrative_state') and self.narrative_state:
+            narrative_section = "NARRATIVE CONTEXT:\n"
+            campaign_title = self.narrative_state.get('current_campaign', '')
+            if campaign_title:
+                narrative_section += f"Campaign: {campaign_title}\n"
+            
+            story_setting = self.narrative_state.get('story_setting', '')
+            if story_setting:
+                narrative_section += f"Setting: {story_setting}\n"
+            
+            current_atmosphere = self.narrative_state.get('current_atmosphere', '')
+            if current_atmosphere:
+                narrative_section += f"Atmosphere: {current_atmosphere}\n"
+            
+            current_prompt = self.narrative_state.get('current_narrative_prompt', '')
+            if current_prompt:
+                narrative_section += f"Character Situation: {current_prompt}\n"
+            
+            faction_prompt = self.narrative_state.get('faction_narrative_prompt', '')
+            if faction_prompt:
+                narrative_section += f"Faction Context: {faction_prompt}\n"
+            
+            story_markers = self.narrative_state.get('story_markers', [])
+            if story_markers:
+                narrative_section += f"Story Progress: {', '.join(story_markers[-3:])}\n"  # Last 3 markers
+            
+            narrative_section += "\n"
+        
         # Build available actions section
         actions_section = "AVAILABLE ACTIONS:\n"
         for i, action in enumerate(available_actions, 1):
-            actions_section += f"{i}. {action.get('type', 'unknown')}: {action.get('description', 'No description')}\n"
+            action_desc = action.get('description', 'No description')
+            if 'narrative_type' in action:
+                action_desc += f" (Story Action: {action['narrative_type']})"
+            actions_section += f"{i}. {action.get('type', 'unknown')}: {action_desc}\n"
+        
+        # Build action history context to prevent repetitive responses
+        action_history_section = "ACTION HISTORY:\n"
+        # Add timestamp-based differentiation for each prompt 
+        import datetime
+        current_timestamp = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]  # Include milliseconds
+        action_history_section += f"Current Time: {current_timestamp}\n"
+        action_history_section += f"Turn Context: This is turn {current_turn} of the simulation.\n"
+        if hasattr(self, 'last_action_taken'):
+            action_history_section += f"Previous Action: {getattr(self, 'last_action_taken', 'None')}\n"
+        else:
+            action_history_section += "Previous Action: This is my first decision in the simulation.\n"
+        action_history_section += f"Agent State: Active and operational with current morale {self.morale_level:.2f}\n"
         
         # Build relationships context
         relationships_section = "KEY RELATIONSHIPS:\n"
@@ -2168,6 +2245,8 @@ Recent Events: {len(self.subjective_worldview.get('recent_events', []))}"""
 {situation_section}
 
 {world_state_section}
+{narrative_section}
+{action_history_section}
 {relationships_section}
 {actions_section}
 DECISION REQUEST:
@@ -2680,6 +2759,198 @@ def analyze_agent_compatibility(agent1: PersonaAgent, agent2: PersonaAgent) -> D
     )
     
     return compatibility
+
+    def _process_narrative_situation_update(self, narrative_context: Dict[str, Any]) -> None:
+        """
+        Process narrative situation updates that drive story-focused character decisions.
+        
+        This method handles story elements that go beyond basic threat assessment,
+        including campaign atmosphere, character-specific narrative prompts,
+        environmental story elements, and story progression markers.
+        
+        Args:
+            narrative_context: Dictionary containing narrative situation data
+        """
+        logger.info(f"Agent {self.agent_id} processing narrative situation update")
+        
+        # Extract narrative elements
+        campaign_title = narrative_context.get('campaign_title', '')
+        setting = narrative_context.get('setting', '')
+        atmosphere = narrative_context.get('atmosphere', '')
+        character_context = narrative_context.get('character_specific_context', {})
+        available_story_actions = narrative_context.get('available_story_actions', [])
+        story_progression = narrative_context.get('story_progression_markers', [])
+        
+        # Update character's narrative awareness
+        if not hasattr(self, 'narrative_state'):
+            self.narrative_state = {}
+        
+        self.narrative_state.update({
+            'current_campaign': campaign_title,
+            'story_setting': setting,
+            'current_atmosphere': atmosphere,
+            'character_story_context': character_context,
+            'available_narrative_actions': available_story_actions,
+            'story_markers': story_progression,
+            'last_narrative_update': datetime.now().isoformat()
+        })
+        
+        # Process character-specific narrative prompts
+        character_impact = character_context.get(self.agent_id, '')
+        if character_impact:
+            logger.info(f"Agent {self.agent_id} received character-specific narrative prompt: {character_impact}")
+            self.narrative_state['current_narrative_prompt'] = character_impact
+        
+        # Check for faction-specific prompts
+        character_faction = self.character_data.get('faction', '').lower()
+        for faction_key in character_context.keys():
+            if faction_key.lower() in character_faction:
+                faction_prompt = character_context[faction_key]
+                logger.info(f"Agent {self.agent_id} received faction-specific narrative prompt: {faction_prompt}")
+                self.narrative_state['faction_narrative_prompt'] = faction_prompt
+                break
+    
+    def _identify_narrative_actions(self, situation_assessment: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Identify narrative actions available based on current story context.
+        
+        Returns story-driven actions like investigate, dialogue, diplomacy, and betrayal
+        that are appropriate for the current narrative situation.
+        
+        Args:
+            situation_assessment: Character's assessment of the current situation
+            
+        Returns:
+            List of narrative action dictionaries
+        """
+        narrative_actions = []
+        
+        # Check if character has narrative context
+        if not hasattr(self, 'narrative_state') or not self.narrative_state:
+            return narrative_actions
+        
+        available_story_actions = self.narrative_state.get('available_narrative_actions', [])
+        current_atmosphere = self.narrative_state.get('current_atmosphere', '')
+        
+        # Investigation actions (always available in narrative mode)
+        narrative_actions.extend([
+            {
+                'type': 'investigate',
+                'narrative_type': NarrativeActionType.INVESTIGATE.value,
+                'description': 'Investigate mysterious elements in the environment',
+                'target': 'environmental_clues'
+            },
+            {
+                'type': 'observe_environment',
+                'narrative_type': NarrativeActionType.OBSERVE_ENVIRONMENT.value,
+                'description': 'Carefully observe the surrounding area for story details',
+                'target': 'story_environment'
+            }
+        ])
+        
+        # Dialogue actions (available when there are potential conversation targets)
+        if 'dialogue' in available_story_actions or 'communication' in current_atmosphere.lower():
+            narrative_actions.extend([
+                {
+                    'type': 'dialogue',
+                    'narrative_type': NarrativeActionType.DIALOGUE.value,
+                    'description': 'Engage in conversation to gather information',
+                    'target': 'other_characters'
+                },
+                {
+                    'type': 'communicate_faction',
+                    'narrative_type': NarrativeActionType.COMMUNICATE_FACTION.value,
+                    'description': 'Communicate with faction representatives',
+                    'target': 'faction_contacts'
+                }
+            ])
+        
+        # Diplomacy actions (available to characters with high faction loyalty)
+        character_faction_loyalty = self.character_data.get('decision_weights', {}).get('faction_loyalty', 0.5)
+        if character_faction_loyalty > 0.7:
+            narrative_actions.append({
+                'type': 'diplomacy',
+                'narrative_type': NarrativeActionType.DIPLOMACY.value,
+                'description': 'Attempt diplomatic negotiation or alliance building',
+                'target': 'potential_allies'
+            })
+        
+        # Betrayal actions (dramatic story option, rarely chosen)
+        if 'betrayal' in available_story_actions or random.random() < 0.1:  # 10% chance for dramatic tension
+            narrative_actions.append({
+                'type': 'betrayal',
+                'narrative_type': NarrativeActionType.BETRAYAL.value,
+                'description': 'Betray an established relationship for personal gain',
+                'target': 'trusted_ally'
+            })
+        
+        return narrative_actions
+    
+    def _evaluate_narrative_action(self, action: Dict[str, Any], situation: Dict[str, Any]) -> float:
+        """
+        Evaluate narrative actions based on character personality and story context.
+        
+        Args:
+            action: Narrative action to evaluate
+            situation: Current situation assessment
+            
+        Returns:
+            Float score representing action desirability for narrative purposes
+        """
+        score = 0.0
+        action_type = action.get('type', '')
+        narrative_type = action.get('narrative_type', '')
+        
+        # Base character personality influence
+        personality_traits = self.character_data.get('personality_traits', {})
+        
+        if narrative_type == NarrativeActionType.INVESTIGATE.value:
+            # Cautious characters prefer investigation
+            if personality_traits.get('cautious', 0) > 0.6:
+                score += 0.3
+            # Tech-focused characters like investigation
+            if 'tech' in self.character_data.get('name', '').lower():
+                score += 0.2
+        
+        elif narrative_type == NarrativeActionType.DIALOGUE.value:
+            # Charismatic characters prefer dialogue
+            if personality_traits.get('charismatic', 0) > 0.6:
+                score += 0.3
+            # Social characters like communication
+            if personality_traits.get('social', 0) > 0.5:
+                score += 0.2
+        
+        elif narrative_type == NarrativeActionType.DIPLOMACY.value:
+            # High faction loyalty characters prefer diplomacy
+            faction_loyalty = self.character_data.get('decision_weights', {}).get('faction_loyalty', 0.5)
+            score += faction_loyalty * 0.4
+            # Personal relationships matter for diplomacy
+            personal_relationships = self.character_data.get('decision_weights', {}).get('personal_relationships', 0.5)
+            score += personal_relationships * 0.2
+        
+        elif narrative_type == NarrativeActionType.BETRAYAL.value:
+            # Generally low score unless character has specific traits
+            score -= 0.5  # Base negative score
+            # Selfish or ruthless characters might consider betrayal
+            if personality_traits.get('ruthless', 0) > 0.7:
+                score += 0.4
+            if personality_traits.get('selfish', 0) > 0.7:
+                score += 0.3
+        
+        # Story context influence
+        if hasattr(self, 'narrative_state') and self.narrative_state:
+            current_narrative_prompt = self.narrative_state.get('current_narrative_prompt', '')
+            
+            # Boost actions that align with narrative prompts
+            if action_type.lower() in current_narrative_prompt.lower():
+                score += 0.4
+            
+            # Consider faction-specific prompts
+            faction_prompt = self.narrative_state.get('faction_narrative_prompt', '')
+            if faction_prompt and action_type.lower() in faction_prompt.lower():
+                score += 0.3
+        
+        return max(score, 0.0)  # Ensure non-negative score
 
 
 # Example usage and testing functions (for development purposes)
