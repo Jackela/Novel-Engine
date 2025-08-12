@@ -786,12 +786,16 @@ The machine-spirit rejoices in these sacred optimizations, delivering 平均性�
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
 
+**⚠️ IMPORTANT LEGAL DISCLAIMER:**
+This software is not affiliated with or endorsed by Games Workshop Ltd. or any other commercial entity. This is an independent, non-commercial project developed for educational and research purposes only. For fan mode compliance and usage restrictions, please refer to `LEGAL.md`.
+
 ## 🛡️ Security
 
 - Input validation for all user-provided data
 - Safe handling of API keys and credentials
 - No execution of untrusted code from AI responses
 - Comprehensive error handling prevents information disclosure
+- Legal safeguards and compliance systems for intellectual property protection
 
 ## 🎯 Roadmap
 

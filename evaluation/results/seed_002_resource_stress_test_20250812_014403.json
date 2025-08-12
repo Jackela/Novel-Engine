@@ -1,0 +1,15 @@
+{
+  "evaluation_summary": {
+    "seed_id": "seed_002_resource_stress_test",
+    "overall_score": 0.78,
+    "evaluation_passed": true,
+    "timestamp": "2025-08-12T01:44:03.264658"
+  },
+  "execution_metrics": {
+    "execution_time_seconds": 312.7,
+    "total_actions": 67
+  },
+  "iron_laws_compliance": {
+    "total_violations": 4
+  }
+}

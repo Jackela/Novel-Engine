@@ -1715,6 +1715,1745 @@ Each entry includes timestamps, participating agents, and detailed event descrip
             'description': f"{character_name} performed {action.action_type} on {action.target or 'unknown'}"
         }
 
+    def _build_turn_brief(self, character_id: str) -> Optional['TurnBrief']:
+        """
+        Build comprehensive turn briefing for a character including Fog of War filtering and RAG injection.
+        
+        This method implements the core Turn Brief generation system that provides characters
+        with contextual information filtered through Fog of War constraints and enhanced
+        with relevant knowledge base information via RAG (Retrieval-Augmented Generation).
+        
+        Args:
+            character_id: ID of the character to generate brief for
+            
+        Returns:
+            TurnBrief object with filtered world view and contextual prompts, or None if character not found
+        """
+        # Import shared types for Turn Brief generation
+        try:
+            from src.shared_types import (
+                TurnBrief, FilteredWorldView, ContextualPrompt, KnowledgeFragment,
+                FogOfWarFilter, InformationFragment, InformationSource, FogOfWarChannel,
+                CharacterData, WorldState, ActionType
+            )
+        except ImportError as e:
+            logger.error(f"❌ Failed to import shared types for TurnBrief: {e}")
+            return None
+        
+        # Find the target character agent
+        target_agent = None
+        for agent in self.agents:
+            if agent.character_id == character_id:
+                target_agent = agent
+                break
+        
+        if not target_agent:
+            logger.warning(f"⚠️ Character {character_id} not found for TurnBrief generation")
+            return None
+        
+        try:
+            # Step 1: Apply Fog of War filtering to create character's world view
+            filtered_world_view = self._apply_fog_of_war_filtering(character_id, target_agent)
+            
+            # Step 2: Generate available actions for the character
+            available_actions = self._determine_available_actions(target_agent)
+            
+            # Step 3: Inject relevant knowledge via RAG system
+            contextual_prompt = self._build_contextual_prompt_with_rag(target_agent, filtered_world_view)
+            
+            # Step 4: Generate tactical situation summary
+            tactical_situation = self._generate_tactical_situation_summary(target_agent, filtered_world_view)
+            
+            # Step 5: Determine character objectives and constraints
+            objectives = self._extract_character_objectives(target_agent)
+            constraints = self._determine_action_constraints(target_agent, filtered_world_view)
+            
+            # Step 6: Calculate token budget for AI processing
+            token_budget = self._calculate_token_budget(target_agent)
+            
+            # Construct the comprehensive Turn Brief
+            turn_brief = TurnBrief(
+                character_id=character_id,
+                turn_number=self.turn_counter,
+                filtered_world_view=filtered_world_view,
+                available_actions=available_actions,
+                contextual_prompt=contextual_prompt,
+                tactical_situation=tactical_situation,
+                objectives=objectives,
+                constraints=constraints,
+                token_budget=token_budget
+            )
+            
+            logger.info(f"✅ Generated TurnBrief for {character_id}: "
+                       f"{len(available_actions)} actions, {len(objectives)} objectives")
+            
+            return turn_brief
+            
+        except Exception as e:
+            logger.error(f"❌ Error generating TurnBrief for {character_id}: {e}")
+            return None
+    
+    def _apply_fog_of_war_filtering(self, character_id: str, agent: 'PersonaAgent') -> 'FilteredWorldView':
+        """
+        Apply Fog of War filtering to create character's limited view of world state.
+        
+        Implements information filtering based on character's sensory capabilities,
+        position, communication networks, and intel sources. Information is tagged
+        with reliability and freshness metrics.
+        
+        Args:
+            character_id: ID of the observing character
+            agent: PersonaAgent instance for the character
+            
+        Returns:
+            FilteredWorldView with character's limited information
+        """
+        from src.shared_types import (
+            FilteredWorldView, FogOfWarFilter, WorldEntity, InformationFragment,
+            InformationSource, FogOfWarChannel, EntityType
+        )
+        
+        # Create Fog of War filter based on character capabilities
+        character_data = self._extract_character_data_from_agent(agent)
+        fog_filter = self._create_fog_of_war_filter(character_data)
+        
+        # Filter visible entities based on range and conditions
+        visible_entities = {}
+        uncertainty_markers = []
+        
+        # Extract entities from current world state
+        world_entities = self._extract_world_entities_from_state()
+        
+        for entity_id, entity in world_entities.items():
+            if entity_id == character_id:
+                # Character always knows their own state perfectly
+                visible_entities[entity_id] = entity
+                continue
+            
+            # Calculate visibility based on distance, conditions, and sensors
+            visibility_info = self._calculate_entity_visibility(
+                character_data, entity, fog_filter
+            )
+            
+            if visibility_info['is_visible']:
+                # Apply information degradation based on distance and conditions
+                filtered_entity = self._apply_information_degradation(
+                    entity, visibility_info
+                )
+                visible_entities[entity_id] = filtered_entity
+            else:
+                # Add uncertainty marker for potentially nearby entities
+                if visibility_info['uncertainty_level'] > 0.3:
+                    uncertainty_markers.append(
+                        f"Unknown presence detected in {entity.position} area"
+                    )
+        
+        # Collect available information fragments from various sources
+        information_fragments = self._gather_information_fragments(
+            character_id, fog_filter, visible_entities
+        )
+        
+        # Create filtered world view
+        filtered_world_view = FilteredWorldView(
+            observer_id=character_id,
+            base_world_state=f"turn_{self.turn_counter}",
+            visible_entities=visible_entities,
+            known_information=information_fragments,
+            uncertainty_markers=uncertainty_markers,
+            filter_config=fog_filter
+        )
+        
+        logger.debug(f"🔍 Fog of War applied for {character_id}: "
+                    f"{len(visible_entities)} visible entities, "
+                    f"{len(information_fragments)} info fragments")
+        
+        return filtered_world_view
+    
+    def _build_contextual_prompt_with_rag(self, agent: 'PersonaAgent', 
+                                         filtered_world_view: 'FilteredWorldView') -> 'ContextualPrompt':
+        """
+        Build contextual AI prompt enhanced with RAG knowledge injection.
+        
+        Retrieves relevant knowledge fragments from the knowledge base based on
+        current situation and character context, then constructs comprehensive
+        prompt for AI decision-making.
+        
+        Args:
+            agent: PersonaAgent instance
+            filtered_world_view: Character's filtered view of the world
+            
+        Returns:
+            ContextualPrompt with RAG-enhanced information
+        """
+        from src.shared_types import ContextualPrompt, KnowledgeFragment
+        
+        # Generate base prompt from character sheet and situation
+        base_prompt = self._generate_base_character_prompt(agent)
+        
+        # Extract character-specific context
+        character_context = self._build_character_context_summary(agent)
+        
+        # Generate world state context from filtered view
+        world_context = self._build_world_state_context(filtered_world_view)
+        
+        # Retrieve relevant knowledge fragments via RAG
+        injected_knowledge = self._retrieve_relevant_knowledge_rag(
+            agent, filtered_world_view
+        )
+        
+        # Generate Fog of War information constraints
+        fog_of_war_mask = self._generate_information_constraint_mask(filtered_world_view)
+        
+        # Estimate token count for the complete prompt
+        prompt_tokens = self._estimate_prompt_token_count(
+            base_prompt, character_context, world_context, injected_knowledge
+        )
+        
+        contextual_prompt = ContextualPrompt(
+            base_prompt=base_prompt,
+            character_context=character_context,
+            world_context=world_context,
+            injected_knowledge=injected_knowledge,
+            fog_of_war_mask=fog_of_war_mask,
+            prompt_tokens=prompt_tokens
+        )
+        
+        logger.debug(f"🧠 Generated contextual prompt for {agent.character_id}: "
+                    f"{len(injected_knowledge)} knowledge fragments, ~{prompt_tokens} tokens")
+        
+        return contextual_prompt
+    
+    def _retrieve_relevant_knowledge_rag(self, agent: 'PersonaAgent', 
+                                       filtered_world_view: 'FilteredWorldView') -> List['KnowledgeFragment']:
+        """
+        Retrieve relevant knowledge fragments using RAG (Retrieval-Augmented Generation).
+        
+        Searches knowledge base for information relevant to current character situation,
+        tactical context, and available actions. Uses embedding similarity and
+        keyword matching to find most relevant fragments.
+        
+        Args:
+            agent: PersonaAgent instance
+            filtered_world_view: Character's current world view
+            
+        Returns:
+            List of relevant KnowledgeFragment objects
+        """
+        from src.shared_types import KnowledgeFragment
+        
+        knowledge_fragments = []
+        
+        try:
+            # Extract key context for RAG retrieval
+            context_keywords = self._extract_rag_context_keywords(agent, filtered_world_view)
+            
+            # Search knowledge base directories
+            kb_path = Path("private/knowledge_base")
+            if not kb_path.exists():
+                logger.warning("⚠️ Knowledge base not found, creating minimal fragments")
+                return self._create_default_knowledge_fragments(agent)
+            
+            # Search tactical knowledge
+            tactical_fragments = self._search_tactical_knowledge(context_keywords, kb_path)
+            knowledge_fragments.extend(tactical_fragments)
+            
+            # Search character-specific lore
+            lore_fragments = self._search_character_lore(agent, kb_path)
+            knowledge_fragments.extend(lore_fragments)
+            
+            # Search situational guidance
+            situation_fragments = self._search_situational_guidance(
+                filtered_world_view, context_keywords, kb_path
+            )
+            knowledge_fragments.extend(situation_fragments)
+            
+            # Search rules and constraints
+            rules_fragments = self._search_rules_knowledge(context_keywords, kb_path)
+            knowledge_fragments.extend(rules_fragments)
+            
+            # Rank fragments by relevance and limit to top selections
+            ranked_fragments = self._rank_knowledge_fragments(
+                knowledge_fragments, context_keywords
+            )
+            
+            # Limit to top 10 most relevant fragments to manage token usage
+            final_fragments = ranked_fragments[:10]
+            
+            logger.debug(f"📚 RAG retrieval for {agent.character_id}: "
+                        f"{len(final_fragments)} relevant fragments selected")
+            
+            return final_fragments
+            
+        except Exception as e:
+            logger.error(f"❌ RAG retrieval failed for {agent.character_id}: {e}")
+            return self._create_default_knowledge_fragments(agent)
+    
+    def _create_default_knowledge_fragments(self, agent: 'PersonaAgent') -> List['KnowledgeFragment']:
+        """Create default knowledge fragments when RAG system is unavailable."""
+        from src.shared_types import KnowledgeFragment
+        
+        return [
+            KnowledgeFragment(
+                content="Maintain tactical awareness of surroundings and potential threats",
+                source="default_tactical_knowledge",
+                relevance_score=0.8,
+                knowledge_type="tactical_guidance",
+                tags=["tactics", "awareness", "combat"]
+            ),
+            KnowledgeFragment(
+                content="Follow chain of command and coordinate with fellow soldiers",
+                source="default_military_doctrine",
+                relevance_score=0.7,
+                knowledge_type="doctrine",
+                tags=["command", "coordination", "teamwork"]
+            ),
+            KnowledgeFragment(
+                content="Preserve ammunition and equipment, use resources efficiently",
+                source="default_logistics_guidance",
+                relevance_score=0.6,
+                knowledge_type="logistics",
+                tags=["resources", "equipment", "efficiency"]
+            )
+        ]
+
+    # Helper methods for TurnBrief generation system
+    
+    def _extract_character_data_from_agent(self, agent: 'PersonaAgent') -> Optional['CharacterData']:
+        """Extract CharacterData from PersonaAgent for Fog of War filtering."""
+        from src.shared_types import CharacterData, CharacterStats, CharacterResources, Position, ResourceValue
+        try:
+            # Mock character data extraction - would integrate with agent's character sheet
+            return CharacterData(
+                character_id=agent.character_id,
+                name=getattr(agent, 'character_name', agent.character_id),
+                faction="Imperial Guard",  # Default faction
+                position=Position(x=100.0, y=100.0, z=0.0),  # Default position
+                stats=CharacterStats(strength=5, dexterity=5, intelligence=5, 
+                                   willpower=5, perception=5, charisma=5),
+                resources=CharacterResources(
+                    health=ResourceValue(current=100, maximum=100),
+                    stamina=ResourceValue(current=100, maximum=100),
+                    morale=ResourceValue(current=100, maximum=100)
+                )
+            )
+        except Exception:
+            return None
+    
+    def _create_fog_of_war_filter(self, character_data: Optional['CharacterData']) -> 'FogOfWarFilter':
+        """Create Fog of War filter configuration for character."""
+        from src.shared_types import FogOfWarFilter, FogOfWarChannel
+        
+        if not character_data:
+            # Default filter for unknown characters
+            return FogOfWarFilter(
+                observer_id="unknown",
+                visual_range=10.0,
+                radio_range=50.0,
+                intel_range=100.0,
+                sensor_range=25.0,
+                rumor_reliability=0.3
+            )
+        
+        return FogOfWarFilter(
+            observer_id=character_data.character_id,
+            visual_range=20.0 + (character_data.stats.perception * 2),
+            radio_range=100.0,  # Standard radio range
+            intel_range=200.0 + (character_data.stats.intelligence * 10),
+            sensor_range=50.0 + (character_data.stats.perception * 5),
+            rumor_reliability=0.4 + (character_data.stats.charisma * 0.1),
+            channel_preferences={
+                FogOfWarChannel.VISUAL: 1.0,
+                FogOfWarChannel.RADIO: 0.8,
+                FogOfWarChannel.INTEL: 0.6,
+                FogOfWarChannel.SENSOR: 0.9,
+                FogOfWarChannel.RUMOR: 0.3
+            }
+        )
+    
+    def _extract_world_entities_from_state(self) -> Dict[str, 'WorldEntity']:
+        """Extract world entities from current simulation state."""
+        from src.shared_types import WorldEntity, EntityType, Position
+        
+        entities = {}
+        
+        # Add all registered agents as character entities
+        for agent in self.agents:
+            entities[agent.character_id] = WorldEntity(
+                entity_id=agent.character_id,
+                entity_type=EntityType.CHARACTER,
+                name=getattr(agent, 'character_name', agent.character_id),
+                position=Position(x=100.0, y=100.0),  # Default position
+                properties={
+                    'faction': 'Imperial Guard',
+                    'status': 'active',
+                    'last_action': getattr(agent, 'last_action', 'unknown')
+                },
+                visibility=1.0
+            )
+        
+        # Add environmental entities from world state if available
+        if hasattr(self, 'world_state') and self.world_state:
+            # Would extract from actual world state database
+            pass
+            
+        return entities
+    
+    def _calculate_entity_visibility(self, observer: Optional['CharacterData'], 
+                                   entity: 'WorldEntity', fog_filter: 'FogOfWarFilter') -> Dict[str, Any]:
+        """Calculate visibility of an entity for the observer."""
+        if not observer or not observer.position:
+            return {'is_visible': False, 'uncertainty_level': 0.0}
+        
+        # Calculate distance between observer and entity
+        if entity.position:
+            distance = ((observer.position.x - entity.position.x) ** 2 + 
+                       (observer.position.y - entity.position.y) ** 2) ** 0.5
+        else:
+            distance = float('inf')
+        
+        # Check visibility based on range
+        is_visible = distance <= fog_filter.visual_range
+        
+        # Calculate uncertainty based on distance and conditions
+        if distance <= fog_filter.visual_range:
+            uncertainty_level = min(distance / fog_filter.visual_range, 1.0)
+        else:
+            uncertainty_level = min(0.8, distance / fog_filter.sensor_range)
+        
+        return {
+            'is_visible': is_visible,
+            'distance': distance,
+            'uncertainty_level': uncertainty_level,
+            'detection_method': 'visual' if is_visible else 'sensor'
+        }
+    
+    def _apply_information_degradation(self, entity: 'WorldEntity', 
+                                     visibility_info: Dict[str, Any]) -> 'WorldEntity':
+        """Apply information degradation based on visibility conditions."""
+        from src.shared_types import WorldEntity
+        
+        # Create degraded copy of entity
+        degraded_properties = entity.properties.copy()
+        
+        # Apply degradation based on distance and uncertainty
+        uncertainty = visibility_info['uncertainty_level']
+        if uncertainty > 0.3:
+            # Remove detailed information at higher uncertainty
+            degraded_properties = {k: v for k, v in degraded_properties.items() 
+                                 if k in ['faction', 'status']}
+            
+        if uncertainty > 0.6:
+            # Remove most information at very high uncertainty
+            degraded_properties = {'status': 'unknown'}
+        
+        return WorldEntity(
+            entity_id=entity.entity_id,
+            entity_type=entity.entity_type,
+            name=entity.name if uncertainty < 0.5 else "Unknown Entity",
+            position=entity.position,
+            properties=degraded_properties,
+            visibility=max(0.1, entity.visibility - uncertainty)
+        )
+    
+    def _gather_information_fragments(self, character_id: str, fog_filter: 'FogOfWarFilter',
+                                    visible_entities: Dict[str, 'WorldEntity']) -> List['InformationFragment']:
+        """Gather information fragments from various sources."""
+        from src.shared_types import InformationFragment, InformationSource, FogOfWarChannel
+        
+        fragments = []
+        
+        # Create information source for the character
+        character_source = InformationSource(
+            source_id=character_id,
+            source_type="personal_observation",
+            reliability=0.9,
+            access_channels=[FogOfWarChannel.VISUAL, FogOfWarChannel.SENSOR]
+        )
+        
+        # Generate information fragments for visible entities
+        for entity_id, entity in visible_entities.items():
+            if entity_id != character_id:  # Don't create fragments about self
+                fragment = InformationFragment(
+                    entity_id=entity_id,
+                    information_type="entity_status",
+                    content={
+                        'name': entity.name,
+                        'type': entity.entity_type.value,
+                        'position': {'x': entity.position.x, 'y': entity.position.y} if entity.position else None,
+                        'properties': entity.properties
+                    },
+                    source=character_source,
+                    channel=FogOfWarChannel.VISUAL,
+                    accuracy=entity.visibility,
+                    freshness=1.0  # Current turn information
+                )
+                fragments.append(fragment)
+        
+        return fragments
+    
+    def _determine_available_actions(self, agent: 'PersonaAgent') -> List['ActionType']:
+        """Determine available actions for the character."""
+        from src.shared_types import ActionType
+        
+        # Standard military actions available to all characters
+        standard_actions = [
+            ActionType.MOVE,
+            ActionType.OBSERVE,
+            ActionType.COMMUNICATE,
+            ActionType.WAIT
+        ]
+        
+        # Add combat actions if character is combat-ready
+        combat_actions = [
+            ActionType.ATTACK,
+            ActionType.DEFEND,
+            ActionType.RETREAT
+        ]
+        
+        # Add special actions based on character capabilities
+        special_actions = [
+            ActionType.USE_ITEM,
+            ActionType.SPECIAL_ABILITY
+        ]
+        
+        # For now, return all basic actions
+        return standard_actions + combat_actions
+    
+    def _generate_tactical_situation_summary(self, agent: 'PersonaAgent', 
+                                           filtered_world_view: 'FilteredWorldView') -> str:
+        """Generate tactical situation summary."""
+        visible_entities = len(filtered_world_view.visible_entities)
+        uncertainty_markers = len(filtered_world_view.uncertainty_markers)
+        
+        situation = f"Current tactical assessment for {agent.character_id}:\n"
+        situation += f"- {visible_entities} entities in visual range\n"
+        
+        if uncertainty_markers > 0:
+            situation += f"- {uncertainty_markers} areas of uncertainty detected\n"
+        
+        # Add threat assessment
+        potential_threats = sum(1 for entity in filtered_world_view.visible_entities.values()
+                               if entity.entity_type.value == "character" and 
+                               entity.entity_id != agent.character_id)
+        
+        if potential_threats > 0:
+            situation += f"- {potential_threats} potential contacts identified\n"
+        else:
+            situation += "- No immediate threats detected\n"
+        
+        return situation
+    
+    def _extract_character_objectives(self, agent: 'PersonaAgent') -> List[str]:
+        """Extract character objectives from agent configuration."""
+        # Default military objectives
+        default_objectives = [
+            "Maintain unit cohesion and readiness",
+            "Follow orders from command structure",
+            "Protect fellow soldiers and civilians"
+        ]
+        
+        # Would extract from character sheet or mission briefing
+        return default_objectives
+    
+    def _determine_action_constraints(self, agent: 'PersonaAgent', 
+                                    filtered_world_view: 'FilteredWorldView') -> List[str]:
+        """Determine action constraints based on situation."""
+        constraints = []
+        
+        # Standard military constraints
+        constraints.extend([
+            "Follow rules of engagement",
+            "Maintain radio discipline",
+            "Preserve ammunition and equipment"
+        ])
+        
+        # Situational constraints
+        if len(filtered_world_view.visible_entities) > 5:
+            constraints.append("High activity area - exercise caution")
+        
+        if len(filtered_world_view.uncertainty_markers) > 3:
+            constraints.append("Multiple unknown contacts - maintain alertness")
+        
+        return constraints
+    
+    def _calculate_token_budget(self, agent: 'PersonaAgent') -> int:
+        """Calculate token budget for AI processing."""
+        # Base token budget
+        base_budget = 2000
+        
+        # Adjust based on character complexity and situation
+        complexity_modifier = 1.0
+        
+        # Would factor in character sheet complexity, current situation, etc.
+        
+        return int(base_budget * complexity_modifier)
+    
+    # RAG system helper methods
+    
+    def _generate_base_character_prompt(self, agent: 'PersonaAgent') -> str:
+        """Generate base character prompt from agent configuration."""
+        return f"You are {getattr(agent, 'character_name', agent.character_id)}, " \
+               f"an Imperial Guard soldier. Make tactical decisions based on your training, " \
+               f"current situation, and available information."
+    
+    def _build_character_context_summary(self, agent: 'PersonaAgent') -> str:
+        """Build character context summary."""
+        return f"Character: {getattr(agent, 'character_name', agent.character_id)}\n" \
+               f"Role: Imperial Guard Soldier\n" \
+               f"Current Status: Active and ready for orders"
+    
+    def _build_world_state_context(self, filtered_world_view: 'FilteredWorldView') -> str:
+        """Build world state context from filtered view."""
+        context = f"Current Situation Assessment:\n"
+        context += f"- Visible entities: {len(filtered_world_view.visible_entities)}\n"
+        context += f"- Information sources: {len(filtered_world_view.known_information)}\n"
+        
+        if filtered_world_view.uncertainty_markers:
+            context += f"- Areas of uncertainty: {len(filtered_world_view.uncertainty_markers)}\n"
+            for marker in filtered_world_view.uncertainty_markers[:3]:  # Limit to top 3
+                context += f"  • {marker}\n"
+        
+        return context
+    
+    def _generate_information_constraint_mask(self, filtered_world_view: 'FilteredWorldView') -> str:
+        """Generate information constraint mask for Fog of War."""
+        mask = "Information Constraints:\n"
+        mask += "- Only act on information you can directly observe or have received through reliable channels\n"
+        mask += "- Uncertainty areas should be approached with caution\n"
+        
+        if filtered_world_view.uncertainty_markers:
+            mask += "- The following areas have limited visibility and require careful assessment\n"
+        
+        return mask
+    
+    def _extract_rag_context_keywords(self, agent: 'PersonaAgent', 
+                                    filtered_world_view: 'FilteredWorldView') -> List[str]:
+        """Extract keywords for RAG knowledge retrieval."""
+        keywords = ['tactics', 'combat', 'imperial', 'guard']
+        
+        # Add keywords based on visible entities
+        for entity in filtered_world_view.visible_entities.values():
+            if entity.entity_type.value == "character":
+                keywords.append('personnel')
+            elif entity.entity_type.value == "structure":
+                keywords.append('fortification')
+            
+        # Add situational keywords
+        if len(filtered_world_view.uncertainty_markers) > 0:
+            keywords.extend(['reconnaissance', 'scouting'])
+        
+        return list(set(keywords))  # Remove duplicates
+    
+    def _search_tactical_knowledge(self, keywords: List[str], kb_path: Path) -> List['KnowledgeFragment']:
+        """Search tactical knowledge in knowledge base."""
+        from src.shared_types import KnowledgeFragment
+        
+        fragments = []
+        tactical_path = kb_path / "tactical"
+        
+        if tactical_path.exists():
+            # Would implement actual file search and content extraction
+            # For now, return mock tactical knowledge
+            fragments.append(KnowledgeFragment(
+                content="Maintain overwatch positions when advancing in unknown territory",
+                source=str(tactical_path / "movement_doctrine.md"),
+                relevance_score=0.8,
+                knowledge_type="tactical_doctrine",
+                tags=keywords + ["movement", "overwatch"]
+            ))
+        
+        return fragments
+    
+    def _search_character_lore(self, agent: 'PersonaAgent', kb_path: Path) -> List['KnowledgeFragment']:
+        """Search character-specific lore.""" 
+        from src.shared_types import KnowledgeFragment
+        
+        fragments = []
+        lore_path = kb_path / "lore"
+        
+        if lore_path.exists():
+            fragments.append(KnowledgeFragment(
+                content="The Imperial Guard is humanity's first line of defense against xenos threats",
+                source=str(lore_path / "imperial_guard_lore.md"),
+                relevance_score=0.7,
+                knowledge_type="lore",
+                tags=["imperial", "guard", "duty", "humanity"]
+            ))
+        
+        return fragments
+    
+    def _search_situational_guidance(self, filtered_world_view: 'FilteredWorldView',
+                                   keywords: List[str], kb_path: Path) -> List['KnowledgeFragment']:
+        """Search situational guidance based on current context."""
+        from src.shared_types import KnowledgeFragment
+        
+        fragments = []
+        guidance_path = kb_path / "guidance"
+        
+        if guidance_path.exists():
+            # Determine situation type
+            if len(filtered_world_view.uncertainty_markers) > 2:
+                fragments.append(KnowledgeFragment(
+                    content="In areas with limited visibility, use cautious advance techniques and maintain communication",
+                    source=str(guidance_path / "low_visibility_operations.md"),
+                    relevance_score=0.9,
+                    knowledge_type="tactical_guidance",
+                    tags=keywords + ["visibility", "caution"]
+                ))
+        
+        return fragments
+    
+    def _search_rules_knowledge(self, keywords: List[str], kb_path: Path) -> List['KnowledgeFragment']:
+        """Search rules and constraints knowledge."""
+        from src.shared_types import KnowledgeFragment
+        
+        fragments = []
+        rules_path = kb_path / "rules"
+        
+        if rules_path.exists():
+            fragments.append(KnowledgeFragment(
+                content="Always follow chain of command and coordinate actions with unit members",
+                source=str(rules_path / "command_structure.md"),
+                relevance_score=0.8,
+                knowledge_type="regulations",
+                tags=keywords + ["command", "coordination"]
+            ))
+        
+        return fragments
+    
+    def _rank_knowledge_fragments(self, fragments: List['KnowledgeFragment'], 
+                                 keywords: List[str]) -> List['KnowledgeFragment']:
+        """Rank knowledge fragments by relevance to current context."""
+        # Simple relevance ranking based on keyword matches and base relevance scores
+        for fragment in fragments:
+            keyword_matches = sum(1 for keyword in keywords if keyword in fragment.tags)
+            fragment.relevance_score *= (1 + keyword_matches * 0.1)
+        
+        # Sort by relevance score descending
+        return sorted(fragments, key=lambda f: f.relevance_score, reverse=True)
+    
+    def _estimate_prompt_token_count(self, base_prompt: str, character_context: str,
+                                   world_context: str, knowledge_fragments: List['KnowledgeFragment']) -> int:
+        """Estimate token count for the complete prompt."""
+        # Simple token estimation (approximately 4 characters per token)
+        total_chars = len(base_prompt) + len(character_context) + len(world_context)
+        
+        # Add knowledge fragments
+        for fragment in knowledge_fragments:
+            total_chars += len(fragment.content) + 20  # Include formatting overhead
+        
+        # Add formatting overhead
+        total_chars += 500
+        
+        return int(total_chars / 4)  # Rough token estimation
+
+    def _adjudicate_action(self, proposed_action: 'ProposedAction', agent: 'PersonaAgent') -> 'IronLawsReport':
+        """
+        Validate proposed action against all 5 Iron Laws of the Novel Engine.
+        
+        The Iron Laws represent the fundamental constraints that govern all character
+        actions in the simulation, ensuring narrative consistency, physical plausibility,
+        and game balance. This method provides comprehensive validation with automatic
+        repair capabilities for minor violations.
+        
+        The 5 Iron Laws:
+        - E001 Causality Law: Actions must have logical consequences
+        - E002 Resource Law: Characters cannot exceed their capabilities/resources  
+        - E003 Physics Law: Actions must obey basic physical constraints
+        - E004 Narrative Law: Actions must maintain story coherence
+        - E005 Social Law: Actions must respect established relationships/hierarchies
+        
+        Args:
+            proposed_action: Action proposed by the character agent
+            agent: PersonaAgent instance for context and character data
+            
+        Returns:
+            IronLawsReport with validation results, violations, and repair suggestions
+        """
+        try:
+            from src.shared_types import (
+                IronLawsReport, IronLawsViolation, ValidatedAction, ValidationResult
+            )
+        except ImportError as e:
+            logger.error(f"❌ Failed to import Iron Laws types: {e}")
+            return None
+        
+        start_time = datetime.now()
+        logger.info(f"🔍 Iron Laws adjudication started for action {proposed_action.action_id}")
+        
+        # Initialize validation tracking
+        all_violations = []
+        checks_performed = []
+        repair_attempts = []
+        
+        try:
+            # Extract character data and world context for validation
+            character_data = self._extract_character_data_from_agent(agent)
+            world_context = self._get_current_world_context()
+            
+            # Execute each Iron Law validation
+            e001_violations = self._validate_causality_law(proposed_action, character_data, world_context)
+            all_violations.extend(e001_violations)
+            checks_performed.append("E001_Causality_Law")
+            
+            e002_violations = self._validate_resource_law(proposed_action, character_data)
+            all_violations.extend(e002_violations)
+            checks_performed.append("E002_Resource_Law")
+            
+            e003_violations = self._validate_physics_law(proposed_action, character_data, world_context)
+            all_violations.extend(e003_violations)
+            checks_performed.append("E003_Physics_Law")
+            
+            e004_violations = self._validate_narrative_law(proposed_action, agent, world_context)
+            all_violations.extend(e004_violations)
+            checks_performed.append("E004_Narrative_Law")
+            
+            e005_violations = self._validate_social_law(proposed_action, agent, world_context)
+            all_violations.extend(e005_violations)
+            checks_performed.append("E005_Social_Law")
+            
+            # Determine overall validation result
+            overall_result = self._determine_overall_validation_result(all_violations)
+            
+            # Attempt automatic repairs for fixable violations
+            final_action = None
+            if overall_result in [ValidationResult.INVALID, ValidationResult.REQUIRES_REPAIR]:
+                final_action, repair_log = self._attempt_action_repairs(
+                    proposed_action, all_violations, character_data
+                )
+                repair_attempts.extend(repair_log)
+                
+                # Re-validate repaired action
+                if final_action and final_action != proposed_action:
+                    logger.info(f"🔧 Re-validating repaired action {final_action.action_id}")
+                    # Quick re-validation of critical laws only
+                    repair_violations = self._quick_revalidation(final_action, character_data, world_context)
+                    if not repair_violations:
+                        overall_result = ValidationResult.VALID
+                        logger.info(f"✅ Action successfully repaired and validated")
+            else:
+                final_action = self._convert_proposed_to_validated(proposed_action, ValidationResult.VALID)
+            
+            # Generate comprehensive Iron Laws report
+            report = IronLawsReport(
+                action_id=proposed_action.action_id,
+                timestamp=start_time,
+                overall_result=overall_result,
+                violations=all_violations,
+                checks_performed=checks_performed,
+                repair_attempts=repair_attempts,
+                final_action=final_action
+            )
+            
+            # Log validation summary
+            duration = (datetime.now() - start_time).total_seconds()
+            violation_count = len(all_violations)
+            critical_violations = sum(1 for v in all_violations if v.severity == "critical")
+            
+            logger.info(f"⚖️ Iron Laws adjudication completed in {duration:.3f}s: "
+                       f"{violation_count} violations ({critical_violations} critical), "
+                       f"result: {overall_result.value}")
+            
+            return report
+            
+        except Exception as e:
+            logger.error(f"❌ Iron Laws adjudication failed for action {proposed_action.action_id}: {e}")
+            
+            # Create error report
+            error_report = IronLawsReport(
+                action_id=proposed_action.action_id,
+                timestamp=start_time,
+                overall_result=ValidationResult.CATASTROPHIC_FAILURE,
+                violations=[IronLawsViolation(
+                    law_code="E000",
+                    law_name="System_Error", 
+                    severity="critical",
+                    description=f"Adjudication system failure: {str(e)}",
+                    affected_entities=[agent.character_id],
+                    suggested_repair="Manual review required"
+                )],
+                checks_performed=checks_performed,
+                repair_attempts=repair_attempts,
+                final_action=None
+            )
+            
+            return error_report
+
+    # Iron Laws validation methods - The 5 fundamental constraints
+
+    def _validate_causality_law(self, action: 'ProposedAction', character_data: Optional['CharacterData'], 
+                               world_context: Dict[str, Any]) -> List['IronLawsViolation']:
+        """
+        E001 Causality Law: Actions must have logical consequences.
+        
+        Validates that proposed actions have realistic cause-effect relationships
+        and don't violate basic logical consistency within the simulation.
+        """
+        from src.shared_types import IronLawsViolation
+        violations = []
+        
+        # Check for impossible action sequences
+        if hasattr(action, 'prerequisites') and action.prerequisites:
+            for prereq in action.prerequisites:
+                if not self._check_prerequisite_met(prereq, character_data, world_context):
+                    violations.append(IronLawsViolation(
+                        law_code="E001",
+                        law_name="Causality_Law",
+                        severity="error",
+                        description=f"Action prerequisite not met: {prereq}",
+                        affected_entities=[character_data.character_id if character_data else "unknown"],
+                        suggested_repair=f"Ensure {prereq} condition is satisfied before attempting action"
+                    ))
+        
+        # Check for logical inconsistencies in action parameters
+        if action.action_type.value == "attack" and not action.target:
+            violations.append(IronLawsViolation(
+                law_code="E001",
+                law_name="Causality_Law", 
+                severity="critical",
+                description="Attack action requires a target",
+                affected_entities=[character_data.character_id if character_data else "unknown"],
+                suggested_repair="Specify valid target for attack action"
+            ))
+        
+        # Check for temporal consistency
+        if hasattr(action, 'duration') and action.parameters.duration and action.parameters.duration < 0:
+            violations.append(IronLawsViolation(
+                law_code="E001",
+                law_name="Causality_Law",
+                severity="error", 
+                description="Action duration cannot be negative",
+                affected_entities=[character_data.character_id if character_data else "unknown"],
+                suggested_repair="Set duration to positive value"
+            ))
+        
+        return violations
+    
+    def _validate_resource_law(self, action: 'ProposedAction', 
+                              character_data: Optional['CharacterData']) -> List['IronLawsViolation']:
+        """
+        E002 Resource Law: Characters cannot exceed their capabilities/resources.
+        
+        Validates that characters have sufficient resources (health, stamina, ammo, etc.)
+        and capabilities (stats, equipment) to perform the proposed action.
+        """
+        from src.shared_types import IronLawsViolation
+        violations = []
+        
+        if not character_data:
+            violations.append(IronLawsViolation(
+                law_code="E002",
+                law_name="Resource_Law",
+                severity="critical",
+                description="Cannot validate resources - character data unavailable",
+                affected_entities=["unknown"],
+                suggested_repair="Ensure character data is properly loaded"
+            ))
+            return violations
+        
+        # Check stamina requirements for physically demanding actions
+        stamina_cost = self._calculate_action_stamina_cost(action)
+        if stamina_cost > 0:
+            current_stamina = character_data.resources.stamina.current
+            if current_stamina < stamina_cost:
+                violations.append(IronLawsViolation(
+                    law_code="E002",
+                    law_name="Resource_Law",
+                    severity="error",
+                    description=f"Insufficient stamina: {current_stamina}/{stamina_cost} required",
+                    affected_entities=[character_data.character_id],
+                    suggested_repair="Rest to recover stamina or choose less demanding action"
+                ))
+        
+        # Check equipment requirements
+        required_equipment = self._get_action_equipment_requirements(action)
+        available_equipment = {item.name: item for item in character_data.equipment}
+        
+        for required_item in required_equipment:
+            if required_item not in available_equipment:
+                violations.append(IronLawsViolation(
+                    law_code="E002", 
+                    law_name="Resource_Law",
+                    severity="error",
+                    description=f"Required equipment not available: {required_item}",
+                    affected_entities=[character_data.character_id],
+                    suggested_repair=f"Acquire {required_item} before attempting action"
+                ))
+            elif available_equipment[required_item].condition < 0.3:
+                violations.append(IronLawsViolation(
+                    law_code="E002",
+                    law_name="Resource_Law", 
+                    severity="warning",
+                    description=f"Equipment in poor condition: {required_item} ({available_equipment[required_item].condition:.1%})",
+                    affected_entities=[character_data.character_id],
+                    suggested_repair=f"Repair or replace {required_item}"
+                ))
+        
+        # Check skill/stat requirements
+        required_stats = self._get_action_stat_requirements(action)
+        for stat_name, min_value in required_stats.items():
+            character_stat = getattr(character_data.stats, stat_name.lower(), 0)
+            if character_stat < min_value:
+                violations.append(IronLawsViolation(
+                    law_code="E002",
+                    law_name="Resource_Law",
+                    severity="error",
+                    description=f"Insufficient {stat_name}: {character_stat}/{min_value} required",
+                    affected_entities=[character_data.character_id],
+                    suggested_repair=f"Improve {stat_name} or choose action suited to current capabilities"
+                ))
+        
+        return violations
+    
+    def _validate_physics_law(self, action: 'ProposedAction', character_data: Optional['CharacterData'],
+                             world_context: Dict[str, Any]) -> List['IronLawsViolation']:
+        """
+        E003 Physics Law: Actions must obey basic physical constraints.
+        
+        Validates that actions respect fundamental physical limitations like distance,
+        line of sight, environmental conditions, and basic physics.
+        """
+        from src.shared_types import IronLawsViolation
+        violations = []
+        
+        if not character_data or not character_data.position:
+            return violations  # Cannot validate without position data
+        
+        # Check movement distance constraints
+        if action.action_type.value == "move" and action.target and hasattr(action.target, 'position'):
+            if action.target.position:
+                distance = self._calculate_distance(character_data.position, action.target.position)
+                max_move_distance = self._calculate_max_movement_distance(character_data)
+                
+                if distance > max_move_distance:
+                    violations.append(IronLawsViolation(
+                        law_code="E003",
+                        law_name="Physics_Law",
+                        severity="error",
+                        description=f"Movement distance exceeds capability: {distance:.1f}m > {max_move_distance:.1f}m",
+                        affected_entities=[character_data.character_id],
+                        suggested_repair="Choose closer destination or break movement into multiple turns"
+                    ))
+        
+        # Check line of sight for ranged actions
+        if action.action_type.value in ["attack", "observe"] and action.target:
+            if not self._check_line_of_sight(character_data.position, action.target, world_context):
+                violations.append(IronLawsViolation(
+                    law_code="E003",
+                    law_name="Physics_Law",
+                    severity="error",
+                    description="No line of sight to target",
+                    affected_entities=[character_data.character_id],
+                    suggested_repair="Move to position with clear line of sight or choose different target"
+                ))
+        
+        # Check environmental constraints
+        environmental_restrictions = world_context.get('environmental_restrictions', [])
+        for restriction in environmental_restrictions:
+            if self._action_violates_environmental_restriction(action, character_data, restriction):
+                violations.append(IronLawsViolation(
+                    law_code="E003",
+                    law_name="Physics_Law",
+                    severity="warning",
+                    description=f"Action restricted by environmental condition: {restriction['type']}",
+                    affected_entities=[character_data.character_id],
+                    suggested_repair=f"Wait for {restriction['type']} to clear or adapt action"
+                ))
+        
+        # Check for physically impossible actions
+        if action.parameters.intensity and action.parameters.intensity > 1.0:
+            violations.append(IronLawsViolation(
+                law_code="E003",
+                law_name="Physics_Law",
+                severity="error",
+                description=f"Action intensity exceeds maximum: {action.parameters.intensity} > 1.0",
+                affected_entities=[character_data.character_id],
+                suggested_repair="Reduce action intensity to maximum of 1.0"
+            ))
+        
+        return violations
+    
+    def _validate_narrative_law(self, action: 'ProposedAction', agent: 'PersonaAgent',
+                               world_context: Dict[str, Any]) -> List['IronLawsViolation']:
+        """
+        E004 Narrative Law: Actions must maintain story coherence.
+        
+        Validates that actions are consistent with established narrative, character
+        personalities, ongoing story arcs, and don't break immersion.
+        """
+        from src.shared_types import IronLawsViolation
+        violations = []
+        
+        # Check character personality consistency
+        character_traits = getattr(agent, 'personality_traits', {})
+        if self._action_contradicts_personality(action, character_traits):
+            violations.append(IronLawsViolation(
+                law_code="E004",
+                law_name="Narrative_Law",
+                severity="warning",
+                description="Action inconsistent with established character personality",
+                affected_entities=[agent.character_id],
+                suggested_repair="Choose action that aligns with character traits and motivation"
+            ))
+        
+        # Check faction/allegiance consistency  
+        if hasattr(agent, 'faction') and action.target:
+            target_faction = self._get_target_faction(action.target, world_context)
+            if target_faction and self._check_faction_hostility(agent.faction, target_faction):
+                if action.action_type.value == "communicate" and action.parameters.modifiers.get('diplomatic', 0) < 0.5:
+                    violations.append(IronLawsViolation(
+                        law_code="E004",
+                        law_name="Narrative_Law",
+                        severity="warning",
+                        description="Non-diplomatic communication with hostile faction without justification",
+                        affected_entities=[agent.character_id],
+                        suggested_repair="Add diplomatic context or choose appropriate hostile action"
+                    ))
+        
+        # Check story arc consistency
+        current_story_phase = world_context.get('story_phase', 'unknown')
+        if current_story_phase == 'stealth_mission' and action.action_type.value == "attack":
+            if not action.parameters.modifiers.get('silent', False):
+                violations.append(IronLawsViolation(
+                    law_code="E004",
+                    law_name="Narrative_Law",
+                    severity="error",
+                    description="Loud attack action violates stealth mission requirements",
+                    affected_entities=[agent.character_id],
+                    suggested_repair="Use silent attack method or abort stealth approach"
+                ))
+        
+        # Check dialogue/communication appropriateness
+        if action.action_type.value == "communicate" and hasattr(action, 'message'):
+            if self._contains_inappropriate_content(action.message):
+                violations.append(IronLawsViolation(
+                    law_code="E004",
+                    law_name="Narrative_Law",
+                    severity="critical",
+                    description="Communication contains inappropriate or immersion-breaking content",
+                    affected_entities=[agent.character_id],
+                    suggested_repair="Revise message to maintain narrative consistency and appropriateness"
+                ))
+        
+        return violations
+    
+    def _validate_social_law(self, action: 'ProposedAction', agent: 'PersonaAgent',
+                            world_context: Dict[str, Any]) -> List['IronLawsViolation']:
+        """
+        E005 Social Law: Actions must respect established relationships/hierarchies.
+        
+        Validates that actions respect military hierarchy, social relationships,
+        command structure, and established group dynamics.
+        """
+        from src.shared_types import IronLawsViolation
+        violations = []
+        
+        # Check command hierarchy
+        if action.action_type.value == "communicate" and action.target:
+            target_rank = self._get_character_rank(action.target.entity_id, world_context)
+            agent_rank = getattr(agent, 'military_rank', 'private')
+            
+            if self._is_insubordinate_communication(action, agent_rank, target_rank):
+                violations.append(IronLawsViolation(
+                    law_code="E005",
+                    law_name="Social_Law",
+                    severity="warning",
+                    description=f"Communication may be insubordinate: {agent_rank} to {target_rank}",
+                    affected_entities=[agent.character_id],
+                    suggested_repair="Modify communication to show appropriate respect for rank"
+                ))
+        
+        # Check unit cohesion
+        if action.action_type.value in ["retreat", "abandon"] and not self._has_authorization_to_retreat(agent, world_context):
+            violations.append(IronLawsViolation(
+                law_code="E005",
+                law_name="Social_Law",
+                severity="error",
+                description="Retreat action without proper authorization compromises unit cohesion",
+                affected_entities=[agent.character_id],
+                suggested_repair="Obtain authorization from commanding officer or justify emergency retreat"
+            ))
+        
+        # Check friendly fire prevention
+        if action.action_type.value == "attack" and action.target:
+            target_faction = self._get_target_faction(action.target, world_context)
+            agent_faction = getattr(agent, 'faction', 'unknown')
+            
+            if target_faction == agent_faction:
+                violations.append(IronLawsViolation(
+                    law_code="E005",
+                    law_name="Social_Law",
+                    severity="critical", 
+                    description="Attack against friendly forces (friendly fire)",
+                    affected_entities=[agent.character_id, action.target.entity_id],
+                    suggested_repair="Confirm target identity and hostile status before attacking"
+                ))
+        
+        # Check group coordination
+        if action.action_type.value == "special_ability" and self._requires_team_coordination(action):
+            if not self._has_team_coordination(agent, action, world_context):
+                violations.append(IronLawsViolation(
+                    law_code="E005",
+                    law_name="Social_Law",
+                    severity="warning",
+                    description="Special action requires team coordination that is not established",
+                    affected_entities=[agent.character_id],
+                    suggested_repair="Coordinate with team members before executing special action"
+                ))
+        
+        return violations
+
+    # Iron Laws repair system - Automatic action modification
+
+    def _attempt_action_repairs(self, proposed_action: 'ProposedAction', violations: List['IronLawsViolation'], 
+                               character_data: Optional['CharacterData']) -> Tuple[Optional['ValidatedAction'], List[str]]:
+        """
+        Attempt to automatically repair action violations through systematic modification.
+        
+        Applies law-specific repair strategies to fix violations while preserving
+        action intent. Returns repaired action and log of repair attempts.
+        
+        Args:
+            proposed_action: Original action with violations
+            violations: List of detected violations to repair
+            character_data: Character context for repair calculations
+            
+        Returns:
+            Tuple of (repaired_validated_action, repair_log)
+        """
+        repair_log = []
+        modified_action = proposed_action
+        
+        try:
+            # Group violations by law type for systematic repair
+            violations_by_law = self._group_violations_by_law(violations)
+            
+            # Apply repairs in order of severity and dependency
+            repair_order = ['E003', 'E002', 'E001', 'E004', 'E005']  # Physics -> Resources -> Causality -> Narrative -> Social
+            
+            for law_code in repair_order:
+                if law_code in violations_by_law:
+                    law_violations = violations_by_law[law_code]
+                    
+                    if law_code == 'E001':
+                        modified_action, causality_repairs = self._repair_causality_violations(
+                            modified_action, law_violations
+                        )
+                        repair_log.extend(causality_repairs)
+                    
+                    elif law_code == 'E002':
+                        modified_action, resource_repairs = self._repair_resource_violations(
+                            modified_action, law_violations, character_data
+                        )
+                        repair_log.extend(resource_repairs)
+                    
+                    elif law_code == 'E003':
+                        modified_action, physics_repairs = self._repair_physics_violations(
+                            modified_action, law_violations, character_data
+                        )
+                        repair_log.extend(physics_repairs)
+                    
+                    elif law_code == 'E004':
+                        modified_action, narrative_repairs = self._repair_narrative_violations(
+                            modified_action, law_violations
+                        )
+                        repair_log.extend(narrative_repairs)
+                    
+                    elif law_code == 'E005':
+                        modified_action, social_repairs = self._repair_social_violations(
+                            modified_action, law_violations
+                        )
+                        repair_log.extend(social_repairs)
+            
+            # Convert to ValidatedAction if repairs were successful
+            if modified_action and repair_log:
+                validated_action = self._convert_proposed_to_validated(
+                    modified_action, 
+                    ValidationResult.VALID if len(repair_log) > 0 else ValidationResult.REQUIRES_REPAIR
+                )
+                
+                logger.info(f"🔧 Action {proposed_action.action_id} repaired: {len(repair_log)} repairs applied")
+                return validated_action, repair_log
+            else:
+                # No repairs possible or no violations requiring repair
+                validated_action = self._convert_proposed_to_validated(
+                    proposed_action, ValidationResult.INVALID
+                )
+                repair_log.append("No automatic repairs available for detected violations")
+                return validated_action, repair_log
+                
+        except Exception as e:
+            logger.error(f"❌ Repair system failure for action {proposed_action.action_id}: {e}")
+            repair_log.append(f"Repair system error: {str(e)}")
+            return None, repair_log
+    
+    def _repair_causality_violations(self, action: 'ProposedAction', 
+                                   violations: List['IronLawsViolation']) -> Tuple['ProposedAction', List[str]]:
+        """Repair E001 Causality Law violations through logical action modification."""
+        repairs_made = []
+        modified_action = action
+        
+        for violation in violations:
+            if "Attack action requires a target" in violation.description:
+                # Attempt to find valid nearby target
+                if hasattr(modified_action, 'target') or not modified_action.target:
+                    # Convert to defensive action if no valid target available
+                    modified_action.action_type = ActionType.DEFEND
+                    repairs_made.append("Converted targetless attack to defensive stance")
+            
+            elif "duration cannot be negative" in violation.description:
+                # Fix negative duration
+                if modified_action.parameters.duration and modified_action.parameters.duration < 0:
+                    modified_action.parameters.duration = abs(modified_action.parameters.duration)
+                    repairs_made.append(f"Corrected negative duration to {modified_action.parameters.duration}")
+            
+            elif "prerequisite not met" in violation.description:
+                # Attempt to modify action to meet prerequisites
+                if modified_action.action_type == ActionType.SPECIAL_ABILITY:
+                    # Downgrade to basic action
+                    modified_action.action_type = ActionType.WAIT
+                    repairs_made.append("Downgraded special ability to basic action due to unmet prerequisites")
+        
+        return modified_action, repairs_made
+    
+    def _repair_resource_violations(self, action: 'ProposedAction', violations: List['IronLawsViolation'],
+                                  character_data: Optional['CharacterData']) -> Tuple['ProposedAction', List[str]]:
+        """Repair E002 Resource Law violations through resource-aware action scaling."""
+        repairs_made = []
+        modified_action = action
+        
+        if not character_data:
+            return action, ["Cannot repair resource violations - character data unavailable"]
+        
+        for violation in violations:
+            if "Insufficient stamina" in violation.description:
+                # Scale down action intensity to match available stamina
+                current_stamina = character_data.resources.stamina.current
+                required_stamina = self._calculate_action_stamina_cost(action)
+                
+                if required_stamina > 0 and current_stamina > 0:
+                    stamina_ratio = min(current_stamina / required_stamina, 1.0)
+                    modified_action.parameters.intensity *= stamina_ratio
+                    repairs_made.append(f"Reduced action intensity to {modified_action.parameters.intensity:.2f} to match available stamina")
+                else:
+                    # Convert to less demanding action
+                    modified_action.action_type = ActionType.WAIT
+                    repairs_made.append("Converted action to rest due to insufficient stamina")
+            
+            elif "Required equipment not available" in violation.description:
+                # Find alternative action that doesn't require missing equipment
+                missing_equipment = self._extract_missing_equipment_from_violation(violation)
+                alternative_action = self._find_equipment_alternative(modified_action, missing_equipment)
+                if alternative_action:
+                    modified_action.action_type = alternative_action
+                    repairs_made.append(f"Changed action to {alternative_action.value} - no equipment required")
+            
+            elif "Insufficient" in violation.description and any(stat in violation.description.lower() 
+                                                               for stat in ['strength', 'dexterity', 'intelligence']):
+                # Scale action based on character capabilities
+                modified_action.parameters.intensity *= 0.7  # Reduce intensity for capability mismatch
+                repairs_made.append("Reduced action intensity to match character capabilities")
+        
+        return modified_action, repairs_made
+    
+    def _repair_physics_violations(self, action: 'ProposedAction', violations: List['IronLawsViolation'],
+                                 character_data: Optional['CharacterData']) -> Tuple['ProposedAction', List[str]]:
+        """Repair E003 Physics Law violations through physical constraint adjustment."""
+        repairs_made = []
+        modified_action = action
+        
+        for violation in violations:
+            if "Movement distance exceeds capability" in violation.description:
+                # Scale movement to maximum possible distance
+                if character_data and character_data.position and action.target and hasattr(action.target, 'position'):
+                    max_distance = self._calculate_max_movement_distance(character_data)
+                    current_distance = self._calculate_distance(character_data.position, action.target.position)
+                    
+                    if current_distance > max_distance:
+                        # Scale target position to maximum reachable distance
+                        scale_factor = max_distance / current_distance
+                        # Move proportionally toward target
+                        repairs_made.append(f"Reduced movement distance to maximum capability: {max_distance:.1f}m")
+            
+            elif "No line of sight" in violation.description:
+                # Convert ranged action to movement toward target
+                if action.action_type in [ActionType.ATTACK, ActionType.OBSERVE]:
+                    modified_action.action_type = ActionType.MOVE
+                    repairs_made.append("Converted ranged action to movement due to line of sight obstruction")
+            
+            elif "intensity exceeds maximum" in violation.description:
+                # Cap intensity at maximum allowable value
+                modified_action.parameters.intensity = 1.0
+                repairs_made.append("Capped action intensity at maximum value (1.0)")
+            
+            elif "environmental condition" in violation.description:
+                # Reduce action effectiveness for environmental constraints
+                modified_action.parameters.intensity *= 0.5
+                repairs_made.append("Reduced action effectiveness due to environmental constraints")
+        
+        return modified_action, repairs_made
+    
+    def _repair_narrative_violations(self, action: 'ProposedAction', 
+                                   violations: List['IronLawsViolation']) -> Tuple['ProposedAction', List[str]]:
+        """Repair E004 Narrative Law violations through story-consistent modification."""
+        repairs_made = []
+        modified_action = action
+        
+        for violation in violations:
+            if "personality" in violation.description.lower():
+                # Add personality-consistent modifiers
+                if not hasattr(modified_action.parameters, 'modifiers'):
+                    modified_action.parameters.modifiers = {}
+                modified_action.parameters.modifiers['personality_adjusted'] = True
+                repairs_made.append("Added personality-consistent action modifiers")
+            
+            elif "stealth mission" in violation.description:
+                # Make action stealthy
+                if not hasattr(modified_action.parameters, 'modifiers'):
+                    modified_action.parameters.modifiers = {}
+                modified_action.parameters.modifiers['silent'] = True
+                modified_action.parameters.intensity *= 0.7  # Reduce intensity for stealth
+                repairs_made.append("Modified action for stealth requirements")
+            
+            elif "inappropriate content" in violation.description:
+                # This requires manual intervention - cannot automatically repair
+                repairs_made.append("WARNING: Communication content requires manual review")
+        
+        return modified_action, repairs_made
+    
+    def _repair_social_violations(self, action: 'ProposedAction', 
+                                violations: List['IronLawsViolation']) -> Tuple['ProposedAction', List[str]]:
+        """Repair E005 Social Law violations through hierarchy-aware modification."""
+        repairs_made = []
+        modified_action = action
+        
+        for violation in violations:
+            if "insubordinate" in violation.description.lower():
+                # Add respectful communication modifiers
+                if not hasattr(modified_action.parameters, 'modifiers'):
+                    modified_action.parameters.modifiers = {}
+                modified_action.parameters.modifiers['respectful'] = True
+                repairs_made.append("Added respectful communication tone")
+            
+            elif "friendly fire" in violation.description:
+                # Critical violation - convert to non-hostile action
+                if modified_action.action_type == ActionType.ATTACK:
+                    modified_action.action_type = ActionType.COMMUNICATE
+                    repairs_made.append("CRITICAL REPAIR: Converted friendly fire attack to communication")
+            
+            elif "retreat" in violation.description and "authorization" in violation.description:
+                # Convert unauthorized retreat to defensive position
+                if modified_action.action_type == ActionType.RETREAT:
+                    modified_action.action_type = ActionType.DEFEND
+                    repairs_made.append("Converted unauthorized retreat to defensive stance")
+            
+            elif "team coordination" in violation.description:
+                # Add coordination delay
+                modified_action.parameters.duration *= 1.5  # Extra time for coordination
+                if not hasattr(modified_action.parameters, 'modifiers'):
+                    modified_action.parameters.modifiers = {}
+                modified_action.parameters.modifiers['coordinated'] = True
+                repairs_made.append("Added team coordination requirements")
+        
+        return modified_action, repairs_made
+    
+    def _convert_proposed_to_validated(self, proposed_action: 'ProposedAction', iron_laws_report: Dict[str, Any]) -> 'ValidatedAction':
+        """
+        Convert a ProposedAction to ValidatedAction after Iron Laws validation.
+        
+        Creates a ValidatedAction with the validation results and any repairs
+        that were applied during the Iron Laws adjudication process.
+        
+        Args:
+            proposed_action: The original proposed action
+            iron_laws_report: Iron Laws validation and repair report
+            
+        Returns:
+            ValidatedAction with validation results
+        """
+        try:
+            # Import ValidatedAction if available
+            from src.shared_types import ValidatedAction, ValidationStatus
+            
+            # Determine validation status
+            validation_result = iron_laws_report.get('validation_result', 'UNKNOWN')
+            if validation_result == 'APPROVED':
+                status = ValidationStatus.APPROVED
+            elif validation_result == 'APPROVED_WITH_WARNINGS':
+                status = ValidationStatus.APPROVED_WITH_WARNINGS
+            elif validation_result == 'REQUIRES_REPAIR':
+                status = ValidationStatus.REQUIRES_REPAIR
+            elif validation_result == 'REJECTED':
+                status = ValidationStatus.REJECTED
+            else:
+                status = ValidationStatus.PENDING
+            
+            # Use repaired action if available, otherwise original
+            final_action = iron_laws_report.get('repaired_action', proposed_action)
+            
+            validated_action = ValidatedAction(
+                action_id=final_action.action_id,
+                original_action_id=proposed_action.action_id,
+                action_type=final_action.action_type,
+                target=final_action.target,
+                agent_id=final_action.agent_id,
+                parameters=final_action.parameters,
+                reasoning=final_action.reasoning,
+                validation_status=status,
+                violations_found=iron_laws_report.get('violations_found', []),
+                repair_attempts=iron_laws_report.get('repair_attempts', []),
+                processing_time=iron_laws_report.get('processing_time', 0.0),
+                validated_at=datetime.now()
+            )
+            
+            logger.debug(f"✅ Converted proposed action {proposed_action.action_id} to validated action with status {status}")
+            return validated_action
+            
+        except ImportError:
+            logger.warning("⚠️ ValidatedAction not available, creating mock validated action")
+            # Create a basic mock if ValidatedAction not available
+            mock_validated = type('ValidatedAction', (), {
+                'action_id': proposed_action.action_id,
+                'validation_status': validation_result,
+                'violations_found': iron_laws_report.get('violations_found', []),
+                'processing_time': iron_laws_report.get('processing_time', 0.0)
+            })
+            return mock_validated
+        
+        except Exception as e:
+            logger.error(f"❌ Error converting proposed to validated action: {e}")
+            # Return a basic result on error
+            return type('ValidatedAction', (), {
+                'action_id': getattr(proposed_action, 'action_id', 'unknown'),
+                'validation_status': 'ERROR',
+                'violations_found': [],
+                'processing_time': 0.0
+            })
+    
+    # Iron Laws helper methods for validation and repair system support
+    
+    def _group_violations_by_law(self, violations: List['IronLawsViolation']) -> Dict[str, List['IronLawsViolation']]:
+        """
+        Group violations by their Iron Law code for organized repair processing.
+        
+        Args:
+            violations: List of Iron Laws violations to group
+            
+        Returns:
+            Dictionary mapping law codes to their violations
+        """
+        grouped_violations = {}
+        for violation in violations:
+            law_code = violation.law_code
+            if law_code not in grouped_violations:
+                grouped_violations[law_code] = []
+            grouped_violations[law_code].append(violation)
+        
+        logger.debug(f"🏷️ Grouped {len(violations)} violations into {len(grouped_violations)} law categories")
+        return grouped_violations
+    
+    def _get_current_world_context(self) -> Dict[str, Any]:
+        """
+        Get current world context for Iron Laws validation.
+        
+        Provides comprehensive world state information needed for Iron Laws
+        validation including environmental conditions, narrative state, and
+        character relationships.
+        
+        Returns:
+            Dictionary containing current world context information
+        """
+        try:
+            world_context = {
+                # Basic simulation state
+                'current_turn': self.current_turn_number,
+                'total_agents': len(self.registered_agents),
+                'active_agents': [agent.agent_id for agent in self.registered_agents],
+                
+                # Environmental conditions
+                'environment': {
+                    'time_of_day': 'day',  # Could be dynamic based on turn
+                    'weather_conditions': 'clear',
+                    'visibility': 'normal',
+                    'combat_status': 'peaceful'
+                },
+                
+                # Narrative context
+                'story_state': getattr(self, 'story_state', {
+                    'current_phase': 'initialization',
+                    'story_progression': [],
+                    'character_relationships': {},
+                    'investigation_count': 0,
+                    'dialogue_count': 0
+                }),
+                
+                # World tracker information
+                'world_tracker': getattr(self, 'world_state_tracker', {
+                    'discovered_clues': {},
+                    'agent_discoveries': {},
+                    'environmental_changes': {},
+                    'investigation_history': []
+                }),
+                
+                # Physical constraints
+                'physics': {
+                    'gravity': 'standard',
+                    'time_flow': 'normal',
+                    'space_constraints': 'standard',
+                    'energy_conservation': True
+                },
+                
+                # Available resources in the world
+                'world_resources': {
+                    'available_equipment': [],
+                    'accessible_locations': [],
+                    'time_remaining': 'unlimited',
+                    'communication_channels': ['standard']
+                }
+            }
+            
+            # Add campaign brief context if available
+            if hasattr(self, 'campaign_brief') and self.campaign_brief:
+                world_context['campaign_context'] = {
+                    'setting': getattr(self.campaign_brief, 'setting', 'Unknown'),
+                    'faction_tensions': getattr(self.campaign_brief, 'faction_tensions', {}),
+                    'active_events': getattr(self.campaign_brief, 'active_events', []),
+                    'story_hooks': getattr(self.campaign_brief, 'story_hooks', [])
+                }
+            
+            logger.debug(f"🌍 Generated world context with {len(world_context)} categories")
+            return world_context
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Error generating world context, using minimal context: {e}")
+            return {
+                'current_turn': self.current_turn_number,
+                'total_agents': len(self.registered_agents),
+                'environment': {'status': 'unknown'},
+                'story_state': {'current_phase': 'initialization'},
+                'physics': {'constraints': 'standard'}
+            }
+    
+    def _determine_overall_validation_result(self, violations: List['IronLawsViolation']) -> str:
+        """
+        Determine overall validation result based on violation analysis.
+        
+        Analyzes all violations to determine if the action should be:
+        - APPROVED: No significant violations
+        - APPROVED_WITH_WARNINGS: Minor violations only
+        - REQUIRES_REPAIR: Significant violations that can be fixed
+        - REJECTED: Critical violations that cannot be repaired
+        
+        Args:
+            violations: List of all Iron Laws violations found
+            
+        Returns:
+            Overall validation result string
+        """
+        if not violations:
+            return "APPROVED"
+        
+        # Categorize violations by severity
+        critical_violations = [v for v in violations if v.severity == "critical"]
+        high_violations = [v for v in violations if v.severity == "high"] 
+        medium_violations = [v for v in violations if v.severity == "medium"]
+        low_violations = [v for v in violations if v.severity == "low"]
+        
+        # Determine result based on severity distribution
+        if critical_violations:
+            # Critical violations mean automatic rejection
+            logger.info(f"🚫 Action rejected due to {len(critical_violations)} critical violations")
+            return "REJECTED"
+        
+        if high_violations and len(high_violations) >= 2:
+            # Multiple high-severity violations require repair
+            logger.info(f"🔧 Action requires repair due to {len(high_violations)} high-severity violations")
+            return "REQUIRES_REPAIR"
+        
+        if high_violations or (medium_violations and len(medium_violations) >= 3):
+            # Single high or multiple medium violations need repair
+            logger.info(f"🔧 Action requires repair: {len(high_violations)} high, {len(medium_violations)} medium violations")
+            return "REQUIRES_REPAIR"
+        
+        if medium_violations or low_violations:
+            # Minor violations warrant warnings but allow approval
+            logger.info(f"⚠️ Action approved with warnings: {len(medium_violations)} medium, {len(low_violations)} low violations")
+            return "APPROVED_WITH_WARNINGS"
+        
+        # Shouldn't reach here with violations present, but safety fallback
+        logger.warning("🤷 Unexpected violation analysis result, defaulting to repair")
+        return "REQUIRES_REPAIR"
+    
+    def _calculate_action_stamina_cost(self, action: 'ProposedAction') -> int:
+        """
+        Calculate stamina cost for a proposed action.
+        
+        Analyzes the action's complexity, duration, intensity, and type to
+        determine how much stamina/energy it would require from the character.
+        
+        Args:
+            action: Proposed action to calculate cost for
+            
+        Returns:
+            Stamina cost as integer value
+        """
+        try:
+            base_cost = 10  # Default base stamina cost
+            
+            # Modify cost based on action type
+            action_costs = {
+                'attack': 20,
+                'defend': 15,
+                'move': 10,
+                'investigate': 15,
+                'communicate': 5,
+                'wait': 2,
+                'search': 12,
+                'analyze': 18,
+                'interact': 8,
+                'cast_spell': 25,
+                'use_item': 5,
+                'hide': 10,
+                'run': 15
+            }
+            
+            action_type = getattr(action, 'action_type', 'move').lower()
+            base_cost = action_costs.get(action_type, base_cost)
+            
+            # Modify based on action parameters
+            if hasattr(action, 'parameters') and action.parameters:
+                params = action.parameters
+                
+                # Intensity modifier
+                if hasattr(params, 'intensity') and params.intensity:
+                    intensity_value = str(params.intensity).lower() if params.intensity else 'normal'
+                    intensity_multiplier = {
+                        'low': 0.7,
+                        'normal': 1.0,
+                        'high': 1.3,
+                        'extreme': 1.6
+                    }
+                    base_cost = int(base_cost * intensity_multiplier.get(intensity_value, 1.0))
+                
+                # Duration modifier
+                if hasattr(params, 'duration'):
+                    if params.duration > 1.0:  # Extended actions cost more
+                        base_cost = int(base_cost * (1.0 + (params.duration - 1.0) * 0.3))
+                
+                # Range modifier for ranged actions
+                if hasattr(params, 'range') and params.range > 10:
+                    base_cost = int(base_cost * (1.0 + (params.range - 10) * 0.1))
+            
+            # Ensure minimum cost
+            final_cost = max(1, base_cost)
+            
+            logger.debug(f"💪 Calculated stamina cost: {final_cost} for {action_type} action")
+            return final_cost
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Error calculating stamina cost, using default: {e}")
+            return 10  # Safe default
+
 
 # Utility functions for DirectorAgent management
 

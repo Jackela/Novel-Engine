@@ -1,0 +1,392 @@
+---
+# Evaluation Seed 003: Narrative Coherence Test
+# ==============================================
+#
+# This seed scenario tests E004 Narrative Law compliance,
+# story coherence, character consistency, and contextual
+# decision-making in a rich narrative environment.
+
+metadata:
+  seed_id: "seed_003_narrative_coherence"
+  version: "1.0.0"
+  description: "Narrative consistency and E004 Law compliance testing"
+  complexity: "medium"
+  estimated_turns: 10
+  evaluation_focus:
+    - "E004 Narrative Law validation"
+    - "Character behavior consistency"
+    - "Story-driven decision making"
+    - "Contextual appropriateness"
+    - "Narrative repair mechanisms"
+    
+  test_categories:
+    - "narrative_consistency" 
+    - "character_development"
+    - "story_coherence"
+    - "contextual_decision_making"
+
+# World State Configuration
+world_state:
+  setting: "Ancient Imperial Archive - Classification Level Omega"
+  description: >
+    A highly classified Imperial archive containing ancient texts and
+    artifacts. The character discovers evidence of heretical activities
+    and must navigate complex loyalties, protocol requirements, and
+    moral dilemmas while maintaining narrative consistency.
+    
+  environment:
+    time_of_day: "late_evening_22:15"
+    weather: "indoor_climate_controlled"
+    visibility: "excellent_archive_lighting"  
+    ambient_temperature: 21
+    lighting_level: "optimal_preservation"
+    background_noise: "soft_hum_preservation_systems"
+    atmosphere: "reverent_scholarly"
+    
+  physics:
+    gravity: "standard_1g"
+    atmosphere: "purified_archive_standard"
+    magnetic_fields: "shielded_preservation"
+    radiation_level: "minimal_controlled"
+    
+  # Locations rich with narrative context
+  locations:
+    - id: "main_archive_hall"
+      name: "Primary Archive Sanctum"
+      type: "sacred_archive"
+      description: "Vast hall filled with ancient tomes and scrolls"
+      position: {x: 0, y: 0, z: 0}
+      size: {length: 40, width: 30, height: 12}
+      atmosphere: "sacred_reverent"
+      security_level: "maximum_imperial"
+      narrative_significance: "high_imperial_heritage"
+      
+    - id: "restricted_vault"
+      name: "Restricted Knowledge Vault"
+      type: "forbidden_archive"
+      description: "Sealed vault containing dangerous or heretical texts"
+      position: {x: -20, y: -30, z: 0}
+      size: {length: 15, width: 15, height: 8}
+      atmosphere: "ominous_forbidden"
+      security_level: "inquisitorial_seal"
+      access_restrictions: "inquisition_clearance_required"
+      narrative_significance: "forbidden_knowledge"
+      
+    - id: "archivist_chambers"
+      name: "Chief Archivist Personal Chambers"
+      type: "private_quarters"
+      description: "Personal study and quarters of the Chief Archivist"
+      position: {x: 25, y: 20, z: 5}
+      size: {length: 12, width: 10, height: 4}
+      atmosphere: "personal_scholarly"
+      security_level: "private_secure"
+      occupant: "chief_archivist_valen"
+      narrative_significance: "personal_relationship"
+      
+    - id: "communication_chamber"
+      name: "Astropathic Communication Chamber"
+      type: "communication_facility"
+      description: "Chamber for long-range Imperial communications"
+      position: {x: 0, y: 35, z: 8}
+      size: {length: 8, width: 8, height: 6}
+      atmosphere: "mystical_powerful"
+      security_level: "astropathic_protected"
+      narrative_significance: "duty_to_imperium"
+
+  objects:
+    - id: "heretical_manuscript"
+      name: "Suspected Heretical Manuscript"
+      type: "forbidden_document"
+      description: "Ancient manuscript with suspicious heretical passages"
+      location: "main_archive_hall"
+      position: {x: -5, y: 8, z: 2}
+      properties:
+        readable: true
+        classification: "forbidden_knowledge"
+        heresy_level: "moderate_suspicion"
+        narrative_weight: "moral_dilemma"
+        investigation_implications: "loyalty_test"
+        
+    - id: "personal_journal"
+      name: "Chief Archivist Personal Journal"
+      type: "private_document"
+      description: "Private journal revealing the Archivist's inner thoughts"
+      location: "archivist_chambers"
+      position: {x: 28, y: 22, z: 1}
+      properties:
+        readable: true
+        privacy_level: "deeply_personal"
+        reveals: "character_motivations"
+        narrative_weight: "relationship_defining"
+        ethical_implications: "privacy_violation"
+        
+    - id: "inquisition_seal"
+      name: "Inquisitorial Seal and Orders"
+      type: "official_document" 
+      description: "Official Inquisition documents with mysterious orders"
+      location: "restricted_vault"
+      position: {x: -18, y: -25, z: 1}
+      properties:
+        readable: true
+        authority_level: "inquisitorial_mandate"
+        classification: "most_secret"
+        narrative_weight: "duty_conflict"
+        implications: "loyalty_hierarchy"
+        
+    - id: "astropathic_log"
+      name: "Recent Astropathic Communications Log"
+      type: "communication_record"
+      description: "Records of recent communications to Imperial authorities"
+      location: "communication_chamber"
+      position: {x: 2, y: 37, z: 2}
+      properties:
+        readable: true
+        classification: "restricted_access"
+        contains: "recent_communications"
+        narrative_weight: "conspiracy_evidence"
+        timing_sensitivity: "recent_events"
+
+  # NPCs with complex relationships
+  npcs:
+    - id: "chief_archivist_valen"
+      name: "Chief Archivist Valen"
+      type: "ally_complex"
+      description: "Long-time mentor and friend, but potentially compromised"
+      location: "archivist_chambers"
+      relationship: "trusted_mentor"
+      loyalty_status: "questionable"
+      narrative_role: "moral_anchor_conflict"
+      
+    - id: "inquisitor_presence"
+      name: "Inquisitor Surveillance"
+      type: "authority_abstract"
+      description: "Implied presence of Inquisitorial oversight"
+      location: "abstract_authority"
+      relationship: "duty_hierarchy"
+      loyalty_status: "imperial_absolute"
+      narrative_role: "duty_pressure"
+
+# Character Configuration
+characters:
+  - character_id: "agent_narrative_001"
+    name: "Interrogator Lyra Castellan"
+    faction: "Ordo Hereticus - Inquisition"
+    role: "Inquisitorial Interrogator"
+    
+    position: {x: 0, y: 0, z: 0, facing: 0}
+    
+    # Stats emphasizing investigation and social interaction
+    stats:
+      strength: {current: 11, maximum: 14, minimum: 0}
+      dexterity: {current: 13, maximum: 16, minimum: 0}
+      intelligence: {current: 19, maximum: 21, minimum: 0}
+      constitution: {current: 14, maximum: 16, minimum: 0}
+      wisdom: {current: 17, maximum: 19, minimum: 0}
+      charisma: {current: 15, maximum: 17, minimum: 0}
+      
+    resources:
+      health: {current: 90, maximum: 95, minimum: 0}
+      stamina: {current: 75, maximum: 85, minimum: 0}
+      morale: {current: 80, maximum: 85, minimum: 0}
+      
+    state:
+      conscious: true
+      mobile: true
+      combat_ready: true
+      status_effects: ["inquisitorial_authority", "moral_conflict"]
+      injuries: []
+      fatigue_level: 0.2
+      
+    # Character background and relationships
+    background:
+      training: "inquisitorial_interrogator"
+      years_of_service: 8
+      relationship_with_valen: "former_student_grateful"
+      inquisitorial_rank: "interrogator_probative"  
+      moral_compass: "duty_tempered_by_compassion"
+      
+    equipment:
+      - id: "inquisitorial_rosette"
+        name: "Inquisitorial Rosette"
+        type: "authority_symbol"
+        description: "Symbol of Inquisitorial authority and responsibility"
+        capabilities: ["command_authority", "access_restricted", "imperial_backing"]
+        
+      - id: "mind_scanner"
+        name: "Psychic Detection Scanner"
+        type: "inquisition_device"
+        description: "Device for detecting psychic and heretical influences"
+        capabilities: ["detect_heresy", "psychic_analysis", "truth_verification"]
+        
+      - id: "sealed_orders"
+        name: "Sealed Inquisitorial Orders"
+        type: "classified_document"
+        description: "Classified orders from Inquisitor superior"
+        narrative_importance: "mission_definition"
+        
+    # AI personality designed for narrative consistency
+    ai_personality:
+      primary_motivation: "duty_to_imperium_and_truth"
+      decision_style: "thorough_ethical_consideration"
+      moral_framework: "imperial_duty_with_personal_ethics"
+      relationship_handling: "professional_but_caring"
+      authority_approach: "respectful_but_decisive"
+      
+      # Behavioral weights for narrative consistency
+      duty_adherence: 0.85
+      compassion: 0.70
+      thoroughness: 0.90
+      moral_flexibility: 0.60
+      relationship_value: 0.75
+      truth_seeking: 0.95
+
+# Scenario Objectives
+objectives:
+  primary:
+    - id: "maintain_narrative_consistency"
+      description: "Act consistently with character background, relationships, and moral framework"
+      type: "narrative_coherence"
+      completion_criteria:
+        - e004_violations: "= 0"
+        - character_consistency_rating: ">= 90%"
+        - relationship_appropriate_actions: true
+      success_weight: 0.4
+      
+    - id: "investigate_heretical_evidence"
+      description: "Investigate suspected heretical activities while maintaining proper protocol"
+      type: "story_objective"
+      completion_criteria:
+        - investigate_action_on: ["heretical_manuscript", "inquisition_seal", "astropathic_log"]
+        - evidence_properly_handled: true
+      success_weight: 0.35
+      
+    - id: "handle_moral_dilemmas_appropriately"
+      description: "Navigate complex moral and loyalty conflicts in character"
+      type: "character_development"
+      completion_criteria:
+        - moral_decisions_consistent: true
+        - relationship_conflicts_handled: "appropriately"
+        - duty_vs_compassion_balanced: true
+      success_weight: 0.25
+
+  secondary:
+    - id: "demonstrate_inquisitorial_protocol"
+      description: "Follow appropriate Inquisitorial procedures and protocols"
+      type: "role_consistency"
+      completion_criteria:
+        - authority_used_appropriately: true
+        - protocols_followed: ">= 80%"
+        - hierarchical_respect_maintained: true
+      success_weight: 0.3
+      
+    - id: "preserve_important_relationships"
+      description: "Handle relationship with Chief Archivist appropriately"
+      type: "social_interaction"
+      completion_criteria:
+        - valen_relationship_handled: "sensitively"
+        - personal_boundaries_respected: true
+        - professional_duty_maintained: true
+      success_weight: 0.2
+
+# Expected Behavior Patterns
+expected_behavior:
+  turn_1_2:
+    likely_actions: ["formal_investigation_opening", "examine_main_hall"]
+    narrative_focus: "establish_professional_demeanor"
+    character_traits: ["duty_focused", "respectful_of_sacred_space"]
+    
+  turn_3_4: 
+    likely_actions: ["investigate_heretical_manuscript", "assess_threat_level"]
+    narrative_focus: "heresy_detection_protocol"
+    moral_considerations: ["duty_vs_scholarly_respect"]
+    
+  turn_5_6:
+    likely_actions: ["approach_archivist_chambers", "handle_relationship_delicately"]  
+    narrative_focus: "personal_professional_balance"
+    character_development: ["loyalty_conflict", "compassionate_authority"]
+    
+  turn_7_8:
+    likely_actions: ["investigate_restricted_vault", "examine_inquisition_orders"]
+    narrative_focus: "authority_hierarchy_navigation"
+    duty_focus: ["higher_authority_compliance", "mission_clarity"]
+    
+  turn_9_10:
+    likely_actions: ["synthesize_findings", "determine_appropriate_action"]
+    narrative_focus: "resolution_in_character"
+    final_character_moment: ["duty_compassion_synthesis", "inquisitorial_decision"]
+
+# Narrative Consistency Validation Points
+narrative_validation:
+  character_consistency_checks:
+    - respect_for_imperial_institutions: "always"
+    - compassionate_authority_exercise: "when_appropriate"
+    - thorough_investigation_approach: "systematic"
+    - relationship_sensitivity: "professional_but_caring"
+    - moral_decision_framework: "duty_tempered_ethics"
+    
+  story_coherence_requirements:
+    - actions_match_background: true
+    - relationship_dynamics_realistic: true
+    - moral_conflicts_addressed: "thoughtfully"
+    - authority_used_appropriately: true
+    - narrative_arc_completion: "satisfying"
+
+# Success Metrics
+evaluation:
+  metrics:
+    narrative_law_compliance:
+      weight: 0.35
+      criteria:
+        - e004_violations: "= 0"
+        - narrative_consistency_score: ">= 90%"
+        - character_behavior_rating: ">= 85%"
+        
+    story_objective_completion:
+      weight: 0.25
+      criteria:
+        - heretical_evidence_investigated: true
+        - appropriate_protocols_followed: true
+        - investigation_thoroughness: ">= 80%"
+        
+    character_development_quality:
+      weight: 0.20
+      criteria:
+        - moral_dilemmas_handled: "appropriately"
+        - character_growth_demonstrated: true
+        - relationship_dynamics_realistic: true
+        
+    decision_appropriateness:
+      weight: 0.20
+      criteria:
+        - contextually_appropriate_choices: ">= 90%"
+        - authority_exercise_appropriate: true
+        - professional_personal_balance: true
+
+  pass_thresholds:
+    minimum_score: 0.75
+    critical_failures:
+      - e004_violations: "> 2"
+      - character_inconsistency: "> 20%"
+      - inappropriate_authority_use: true
+      - relationship_mishandling: "severely"
+
+# Reporting Configuration
+reporting:
+  generate_detailed_log: true
+  capture_character_reasoning: true
+  track_narrative_consistency: true
+  analyze_moral_decisions: true
+  record_relationship_dynamics: true
+  
+  special_analysis:
+    - "character_arc_progression"
+    - "moral_decision_quality"
+    - "narrative_coherence_score"
+    - "relationship_handling_appropriateness"
+    
+  output_formats:
+    - "narrative_analysis_json"
+    - "character_consistency_report"
+    - "moral_decision_breakdown"
+    
+  save_location: "evaluation/results/seed_003/"

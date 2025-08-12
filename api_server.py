@@ -27,7 +27,7 @@ import logging
 import uvicorn
 import os
 import shutil
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Depends
 from fastapi.responses import JSONResponse
@@ -64,6 +64,22 @@ import re
 # 启动神圣的信息记录仪式，追踪API神殿中一切圣行与异端活动...
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Import shared type definitions for type safety and consistency
+try:
+    from src.shared_types import (
+        APIResponse, SystemStatus, CharacterData, WorldState,
+        ProposedAction, ValidatedAction, TurnResult, SimulationState,
+        ActionType, EntityType, Position, CharacterStats
+    )
+    SHARED_TYPES_AVAILABLE = True
+    logger.info("✅ Shared types successfully imported - enhanced type safety enabled")
+except ImportError as e:
+    SHARED_TYPES_AVAILABLE = False
+    logger.warning(f"⚠️ Shared types not available - using local type definitions: {e}")
+
+# Initialize shared types integration flag
+ENHANCED_VALIDATION_ENABLED = SHARED_TYPES_AVAILABLE
 
 
 def _find_project_root(start_path: str) -> str:
@@ -625,22 +641,49 @@ async def _write_v2_character_files(character_dir: str, files_content: Dict[str,
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    FastAPI lifespan event handler.
+    FastAPI lifespan event handler with startup guards integration.
     
     Performs initialization and cleanup tasks:
-    - Startup: Logs server startup, validates configuration
+    - Startup: Logs server startup, runs startup validation guards, validates configuration
     - Shutdown: Logs server shutdown, cleanup resources
     """
+    # Import startup guard system
+    try:
+        from scripts.build_kb import StartupGuard
+        startup_guard_available = True
+    except ImportError:
+        logger.warning("StartupGuard not available - skipping startup validation")
+        startup_guard_available = False
+    
     # 神圣启动仪式 - 唤醒API服务器的机器灵魂...
-    logger.info("Starting Warhammer 40k Simulator API server...")
+    logger.info("Starting Novel Engine API server with startup guards...")
     
     try:
+        # Run startup validation guards if available
+        if startup_guard_available:
+            logger.info("🚀 Running startup validation guards...")
+            startup_guard = StartupGuard()
+            
+            validation_passed = startup_guard.validate_all()
+            
+            if not validation_passed:
+                logger.error("❌ Startup validation failed - server may not function correctly")
+                logger.error("🔧 Consider running: python scripts/build_kb.py to fix issues")
+                # Continue startup but log warnings
+                for error in startup_guard.errors:
+                    logger.error(f"   - {error}")
+            else:
+                logger.info("✅ All startup validations passed - system ready")
+            
+            # Store startup status in app state
+            app.state.startup_status = startup_guard.get_system_status()
+        
         # 验证配置系统是否可达，确保机械知识的传输通道畅通...
         config = get_config()
         logger.info("Configuration loaded successfully")
         
         # 记录服务器启动仪式的完成，机器之神见证此刻...
-        logger.info("Warhammer 40k Simulator API server started successfully")
+        logger.info("Novel Engine API server started successfully")
         
     except Exception as e:
         logger.error(f"Error during server startup: {str(e)}")
@@ -649,7 +692,7 @@ async def lifespan(app: FastAPI):
     yield
     
     # 神圣关闭仪式 - 安抚API服务器的机器灵魂进入沉睡...
-    logger.info("Shutting down Warhammer 40k Simulator API server...")
+    logger.info("Shutting down Novel Engine API server...")
 
 
 # 初始化FastAPI神圣应用，建立API信息接口神殿...
@@ -754,6 +797,172 @@ async def health_check() -> Dict[str, Any]:
         raise HTTPException(
             status_code=500,
             detail="Health check failed"
+        )
+
+
+@app.get("/meta/system-status")
+async def get_enhanced_system_status() -> Union[Dict[str, Any], 'SystemStatus']:
+    """
+    Enhanced system status endpoint with shared type integration.
+    
+    Provides comprehensive system health information using the shared
+    SystemStatus model when available, falling back to basic dict format
+    for compatibility when shared types are not loaded.
+    
+    Returns:
+        SystemStatus or Dict[str, Any]: Enhanced system status information
+    """
+    try:
+        logger.info("Enhanced system status endpoint accessed")
+        
+        # Calculate uptime (simplified - would use actual start time in production)
+        import time
+        uptime_seconds = 3600.0  # Placeholder uptime
+        
+        # Build status data
+        status_data = {
+            "system_name": "Novel Engine",
+            "version": "1.0.0", 
+            "status": "healthy",
+            "uptime_seconds": uptime_seconds,
+            "active_simulations": 0,  # Would track actual simulations
+            "components": {
+                "api_server": "healthy",
+                "startup_guards": "healthy" if hasattr(app.state, 'startup_status') else "unknown",
+                "shared_types": "loaded" if SHARED_TYPES_AVAILABLE else "not_loaded",
+                "configuration": "loaded"
+            }
+        }
+        
+        # Add memory and CPU if available
+        try:
+            import psutil
+            process = psutil.Process()
+            memory_info = process.memory_info()
+            status_data["memory_usage_mb"] = memory_info.rss / (1024 * 1024)
+            status_data["cpu_usage_percent"] = process.cpu_percent()
+        except ImportError:
+            pass  # psutil not available
+        
+        # Use shared type if available
+        if SHARED_TYPES_AVAILABLE:
+            try:
+                return SystemStatus(**status_data)
+            except Exception as e:
+                logger.warning(f"Failed to create SystemStatus object: {e}")
+                # Fall back to dict
+                return status_data
+        else:
+            return status_data
+            
+    except Exception as e:
+        logger.error(f"Error in enhanced system status endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve enhanced system status"
+        )
+
+
+@app.get("/meta/policy")
+async def get_system_policy() -> Dict[str, Any]:
+    """
+    System policy and startup validation status endpoint.
+    
+    Provides detailed information about:
+    - Startup validation results
+    - Legal compliance configuration
+    - System readiness and policy compliance
+    - Configuration validation status
+    
+    This endpoint serves as a centralized source for system policy
+    information and validation status for administrative purposes.
+    
+    Returns:
+        Dict[str, Any]: System policy and validation status information
+    """
+    try:
+        logger.info("System policy endpoint accessed")
+        
+        # Build basic policy response
+        policy_response = {
+            "system": {
+                "name": "Novel Engine",
+                "version": "1.0.0",
+                "mode": "development"
+            },
+            "startup_validation": {
+                "available": False,
+                "status": "unknown",
+                "errors": [],
+                "warnings": []
+            },
+            "legal_compliance": {
+                "safeguards_enabled": False,
+                "compliance_mode": "unknown",
+                "content_filtering": False
+            },
+            "api_status": {
+                "healthy": True,
+                "endpoints_active": True,
+                "configuration_loaded": False
+            }
+        }
+        
+        # Get startup validation status from app state if available
+        if hasattr(app.state, 'startup_status') and app.state.startup_status:
+            startup_status = app.state.startup_status
+            policy_response["startup_validation"] = {
+                "available": True,
+                "status": "passed" if startup_status.get("validation_passed", False) else "failed",
+                "errors": startup_status.get("errors", []),
+                "warnings": startup_status.get("warnings", []),
+                "timestamp": startup_status.get("timestamp", "unknown"),
+                "system_ready": startup_status.get("system_ready", False)
+            }
+        
+        # Get configuration-based policy information
+        try:
+            config = get_config()
+            policy_response["api_status"]["configuration_loaded"] = True
+            
+            # Extract legal compliance settings
+            legal_config = config.get('legal', {})
+            policy_response["legal_compliance"] = {
+                "safeguards_enabled": legal_config.get("enable_safeguards", False),
+                "compliance_mode": legal_config.get("compliance_mode", "standard"),
+                "content_filtering": legal_config.get("content_filtering", {}).get("enable", False),
+                "registry_file": legal_config.get("registry_file", "private/registry.yaml")
+            }
+            
+            # Extract system information
+            system_config = config.get('system', {})
+            policy_response["system"].update({
+                "environment": system_config.get("environment", "development"),
+                "debug_mode": system_config.get("debug_mode", False),
+                "log_level": system_config.get("log_level", "INFO")
+            })
+            
+            # Extract security settings
+            security_config = config.get('security', {})
+            policy_response["security"] = {
+                "strict_validation": security_config.get("strict_validation", True),
+                "sanitize_inputs": security_config.get("sanitize_inputs", True),
+                "rate_limiting_enabled": security_config.get("client_rate_limits", {}).get("enabled", True)
+            }
+            
+        except Exception as config_error:
+            logger.warning(f"Configuration access failed in policy endpoint: {str(config_error)}")
+            policy_response["api_status"]["configuration_loaded"] = False
+            policy_response["config_error"] = str(config_error)
+        
+        logger.debug(f"Policy response generated: {len(str(policy_response))} characters")
+        return policy_response
+        
+    except Exception as e:
+        logger.error(f"Error in system policy endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve system policy information"
         )
 
 
@@ -976,6 +1185,164 @@ async def get_character_details(character_name: str) -> CharacterDetailResponse:
         raise HTTPException(
             status_code=500,
             detail="Failed to retrieve character details"
+        )
+
+
+@app.get("/characters/{character_name}/enhanced",
+         summary="Get enhanced character data using shared types",
+         description="Retrieve complete character information using the enhanced CharacterData model when available")
+async def get_enhanced_character_data(character_name: str) -> Union[Dict[str, Any], 'CharacterData']:
+    """
+    Enhanced character endpoint using shared type definitions.
+    
+    This endpoint provides character data using the comprehensive CharacterData
+    model when shared types are available, offering enhanced type safety and
+    validation. Falls back to basic dict format for compatibility.
+    
+    Args:
+        character_name (str): The name of the character to retrieve
+        
+    Returns:
+        CharacterData or Dict[str, Any]: Enhanced character data with full type safety
+        
+    Raises:
+        HTTPException: 404 if character not found
+        HTTPException: 500 if an internal error occurs
+    """
+    try:
+        logger.info(f"Enhanced character endpoint accessed for: {character_name}")
+        
+        if not SHARED_TYPES_AVAILABLE:
+            logger.info("Shared types not available - redirecting to standard endpoint")
+            # Fall back to standard endpoint
+            return await get_character_details(character_name)
+        
+        # Validate character name
+        if not character_name or not character_name.strip():
+            raise HTTPException(status_code=404, detail="Character not found")
+        
+        # Initialize CharacterFactory and load character
+        characters_path = _get_characters_directory_path()
+        character_factory = CharacterFactory("characters")
+        
+        try:
+            persona_agent = character_factory.create_character(character_name.strip())
+            logger.info(f"Successfully loaded enhanced character: {character_name}")
+        
+        except FileNotFoundError:
+            logger.warning(f"Character not found for enhanced endpoint: {character_name}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Character '{character_name}' not found"
+            )
+        except ValueError:
+            logger.warning(f"Invalid character name for enhanced endpoint: {character_name}")
+            raise HTTPException(status_code=404, detail="Character not found")
+        
+        # Extract character data and convert to enhanced format
+        try:
+            hybrid_context = persona_agent.character_data.get('hybrid_context', {})
+            yaml_data = hybrid_context.get('yaml_data', {})
+            
+            if not hybrid_context:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Character data could not be loaded"
+                )
+            
+            # Build enhanced character data structure
+            character_data = {
+                "character_id": character_name,
+                "name": character_name.title(),
+                "faction": yaml_data.get('character', {}).get('faction', 'Unknown'),
+                "position": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "facing": 0.0,
+                    "accuracy": 1.0
+                },
+                "stats": {
+                    "strength": yaml_data.get('combat_stats', {}).get('strength', 5),
+                    "dexterity": yaml_data.get('combat_stats', {}).get('dexterity', 5),
+                    "intelligence": yaml_data.get('combat_stats', {}).get('intelligence', 5),
+                    "willpower": yaml_data.get('psychological_profile', {}).get('morale', 5),
+                    "perception": yaml_data.get('combat_stats', {}).get('perception', 5),
+                    "charisma": yaml_data.get('combat_stats', {}).get('leadership', 5)
+                },
+                "resources": {
+                    "health": {
+                        "current": 100.0,
+                        "maximum": 100.0,
+                        "regeneration_rate": 0.0
+                    },
+                    "stamina": {
+                        "current": 100.0,
+                        "maximum": 100.0,
+                        "regeneration_rate": 10.0
+                    },
+                    "morale": {
+                        "current": yaml_data.get('psychological_profile', {}).get('morale', 5) * 10.0,
+                        "maximum": 100.0,
+                        "regeneration_rate": 1.0
+                    }
+                },
+                "equipment": [],  # Would extract from character data
+                "state": {
+                    "conscious": True,
+                    "mobile": True,
+                    "combat_ready": True,
+                    "status_effects": [],
+                    "injuries": [],
+                    "fatigue_level": 0.0
+                },
+                "ai_personality": yaml_data.get('psychological_profile', {})
+            }
+            
+            # Convert equipment if available
+            equipment_data = yaml_data.get('equipment', {})
+            if equipment_data:
+                for item_name, item_data in equipment_data.items():
+                    if isinstance(item_data, str):
+                        # Simple string equipment
+                        equipment_item = {
+                            "name": item_data,
+                            "equipment_type": item_name,
+                            "condition": 1.0,
+                            "properties": {},
+                            "quantity": 1
+                        }
+                    else:
+                        # Complex equipment data
+                        equipment_item = {
+                            "name": item_name,
+                            "equipment_type": item_data.get('type', 'unknown'),
+                            "condition": item_data.get('condition', 1.0),
+                            "properties": item_data.get('properties', {}),
+                            "quantity": item_data.get('quantity', 1)
+                        }
+                    character_data["equipment"].append(equipment_item)
+            
+            # Create and return enhanced CharacterData object
+            enhanced_character = CharacterData(**character_data)
+            
+            logger.info(f"Successfully created enhanced character data for: {character_name}")
+            return enhanced_character
+            
+        except Exception as e:
+            logger.error(f"Error creating enhanced character data for {character_name}: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to process enhanced character data"
+            )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in enhanced character endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve enhanced character data"
         )
 
 
