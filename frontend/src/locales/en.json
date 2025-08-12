@@ -1,125 +1,30 @@
 {
-  "app": {
-    "title": "Warhammer 40k Multi-Agent Simulator",
-    "subtitle": "Frontend-Backend Integration Demo",
-    "footer": "Warhammer 40k Multi-Agent Simulator - Frontend Demo"
+  "nav": {
+    "dashboard": "Dashboard",
+    "characters": "Characters",
+    "workshop": "Workshop",
+    "library": "Library",
+    "monitor": "Monitor"
   },
-  "navigation": {
-    "home": "Home",
-    "characterSelection": "Character Selection",
-    "characterCreation": "Character Creation",
-    "startCharacterSelection": "Start Character Selection"
+  "dashboard": {
+    "welcome": "Welcome to Novel Engine",
+    "subtitle": "Create and explore interactive stories"
   },
-  "connection": {
-    "status": "Backend Connection Status",
-    "connecting": "Connecting to backend...",
-    "error": "Connection Error",
-    "success": "Backend Status: {{status}}",
-    "info": "Successfully connected to FastAPI backend at {{url}}",
-    "retry": "Retry Connection",
-    "refresh": "Refresh Status",
-    "timeout": "Request timeout - Backend may be slow to respond",
-    "networkError": "Cannot connect to backend - Please ensure the server is running on {{url}}",
-    "serverError": "Backend error: {{status}} - {{statusText}}",
-    "unexpectedError": "An unexpected error occurred"
+  "characters": {
+    "title": "Character Studio",
+    "subtitle": "Create and manage your story characters",
+    "create": "Create Character"
   },
-  "simulator": {
-    "info": "Simulator Information",
-    "frontend": {
-      "title": "Frontend",
-      "tech": "React 19 with Vite",
-      "status": "Active"
-    },
-    "backend": {
-      "title": "Backend", 
-      "tech": "FastAPI Server",
-      "status": "Connected"
-    },
-    "integration": {
-      "title": "Integration",
-      "tech": "REST API via Axios",
-      "status": "Operational"
-    }
+  "workshop": {
+    "title": "Story Workshop",
+    "subtitle": "Generate and craft your stories"
   },
-  "characterSelection": {
-    "title": "Character Selection Sanctum",
-    "subtitle": "Sacred Character Arsenal - Choose Your Champions for the Eternal War",
-    "loading": "Communing with the Machine God to retrieve character souls...",
-    "instruction": "Select 2-6 characters to forge the perfect warband for your simulation.",
-    "counter": "{{count}} of {{max}} characters selected",
-    "confirmButton": "Commence Sacred Simulation",
-    "createButton": "Forge New Character Soul",
-    "newCharacterNotification": "New character '{{name}}' has been forged successfully!",
-    "errors": {
-      "minSelection": "Please select at least {{min}} characters to start simulation",
-      "maxSelection": "Maximum {{max}} characters allowed",
-      "serverError": "Server error - Please try again later",
-      "notFound": "No characters found - Please ensure character data is available",
-      "networkError": "Cannot connect to server - Please ensure the backend is running",
-      "timeout": "Request timeout - Server may be slow to respond"
-    }
+  "library": {
+    "title": "Story Library",
+    "subtitle": "Browse your story collection"
   },
-  "characterCreation": {
-    "title": "Character Forging Sanctum",
-    "subtitle": "Forge New Character Soul",
-    "description": "Channel the power of the Omnissiah to create a new character for the eternal war",
-    "form": {
-      "name": {
-        "label": "Character Name",
-        "placeholder": "Enter the sacred name of your character"
-      },
-      "description": {
-        "label": "Character Description", 
-        "placeholder": "Describe your character's history, personality, and role in the grim darkness..."
-      },
-      "files": {
-        "label": "Sacred Archives (Optional)",
-        "placeholder": "Upload character files to enhance the AI Scribe's wisdom...",
-        "browse": "Browse Sacred Files",
-        "selected": "{{count}} file(s) selected",
-        "maxSize": "Maximum file size: {{size}}MB per file",
-        "allowedTypes": "Allowed types: {{types}}"
-      }
-    },
-    "counter": "{{current}} / {{max}} characters",
-    "buttons": {
-      "forge": "Forge Character Soul",
-      "cancel": "Return to Character Selection"
-    },
-    "ceremony": "Character Creation Ceremony in Progress...",
-    "success": "Character Soul Forged Successfully!",
-    "aiScribe": "AI Scribe Enhancement Active",
-    "processing": "The AI Scribe channels the Omnissiah's wisdom to enhance your character...",
-    "errors": {
-      "nameRequired": "Character name cannot be empty",
-      "nameLength": "Character name must be {{min}}-{{max}} characters",
-      "descriptionRequired": "Character description cannot be empty", 
-      "descriptionLength": "Description must be {{min}}-{{max}} characters",
-      "descriptionWords": "Description needs at least {{min}} words",
-      "fileSize": "File '{{filename}}' exceeds maximum size of {{max}}MB",
-      "fileType": "File '{{filename}}' has unsupported type. Allowed: {{types}}",
-      "serverError": "Failed to forge character soul - Server error",
-      "networkError": "Cannot connect to the sacred servers",
-      "nameConflict": "A character with this name already exists in the sacred archives"
-    }
-  },
-  "validation": {
-    "required": "This field is required",
-    "minLength": "Must be at least {{min}} characters",
-    "maxLength": "Must be no more than {{max}} characters", 
-    "minWords": "Must contain at least {{min}} words",
-    "pattern": "Invalid format",
-    "fileSize": "File size must not exceed {{max}}MB",
-    "fileType": "Only {{types}} files are allowed"
-  },
-  "common": {
-    "loading": "Loading...",
-    "error": "Error",
-    "success": "Success",
-    "cancel": "Cancel",
-    "confirm": "Confirm",
-    "save": "Save",
-    "close": "Close",
-    "retry": "Retry"
+  "monitor": {
+    "title": "System Monitor",
+    "subtitle": "Real-time system performance and health monitoring"
   }
 }

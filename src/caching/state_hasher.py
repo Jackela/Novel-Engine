@@ -583,8 +583,14 @@ class StateHasher:
     
     def _normalize_stats(self, stats: Any) -> Dict[str, Any]:
         """Normalize character stats for hashing."""
-        if SHARED_TYPES_AVAILABLE and hasattr(stats, '__dict__'):
-            # Handle Pydantic model
+        if SHARED_TYPES_AVAILABLE and hasattr(stats, 'model_dump'):
+            # Handle Pydantic v2 model
+            return dict(sorted(stats.model_dump().items()))
+        elif SHARED_TYPES_AVAILABLE and hasattr(stats, 'dict'):
+            # Handle Pydantic v1 model
+            return dict(sorted(stats.dict().items()))
+        elif hasattr(stats, '__dict__'):
+            # Handle regular object with __dict__
             return dict(sorted(stats.__dict__.items()))
         elif isinstance(stats, dict):
             return dict(sorted(stats.items()))
@@ -593,8 +599,14 @@ class StateHasher:
     
     def _normalize_resources(self, resources: Any) -> Dict[str, Any]:
         """Normalize character resources for hashing."""
-        if SHARED_TYPES_AVAILABLE and hasattr(resources, '__dict__'):
-            # Handle Pydantic model
+        if SHARED_TYPES_AVAILABLE and hasattr(resources, 'model_dump'):
+            # Handle Pydantic v2 model
+            return dict(sorted(resources.model_dump().items()))
+        elif SHARED_TYPES_AVAILABLE and hasattr(resources, 'dict'):
+            # Handle Pydantic v1 model
+            return dict(sorted(resources.dict().items()))
+        elif hasattr(resources, '__dict__'):
+            # Handle regular object with __dict__
             return dict(sorted(resources.__dict__.items()))
         elif isinstance(resources, dict):
             return dict(sorted(resources.items()))
@@ -603,7 +615,14 @@ class StateHasher:
     
     def _normalize_position(self, position: Any) -> Dict[str, Any]:
         """Normalize position for hashing."""
-        if SHARED_TYPES_AVAILABLE and hasattr(position, '__dict__'):
+        if SHARED_TYPES_AVAILABLE and hasattr(position, 'model_dump'):
+            # Handle Pydantic v2 model
+            return dict(sorted(position.model_dump().items()))
+        elif SHARED_TYPES_AVAILABLE and hasattr(position, 'dict'):
+            # Handle Pydantic v1 model
+            return dict(sorted(position.dict().items()))
+        elif hasattr(position, '__dict__'):
+            # Handle regular object with __dict__
             return dict(sorted(position.__dict__.items()))
         elif isinstance(position, dict):
             return dict(sorted(position.items()))
@@ -649,8 +668,9 @@ class StateHasher:
     def _compute_hash(self, data: Dict[str, Any]) -> str:
         """Compute hash from normalized data."""
         try:
-            # Convert to stable JSON representation
-            json_str = json.dumps(data, sort_keys=True, separators=(',', ':'))
+            # Convert to stable JSON representation with Pydantic model handling
+            serializable_data = self._make_json_serializable(data)
+            json_str = json.dumps(serializable_data, sort_keys=True, separators=(',', ':'))
             
             # Create hash
             hasher = self.hasher_class()
@@ -661,6 +681,27 @@ class StateHasher:
         except Exception as e:
             logger.error(f"❌ Hash computation failed: {e}")
             raise
+    
+    def _make_json_serializable(self, data: Any) -> Any:
+        """Convert data to JSON-serializable format."""
+        if isinstance(data, dict):
+            return {key: self._make_json_serializable(value) for key, value in data.items()}
+        elif isinstance(data, list):
+            return [self._make_json_serializable(item) for item in data]
+        elif hasattr(data, 'model_dump'):
+            # Pydantic v2 model
+            return self._make_json_serializable(data.model_dump())
+        elif hasattr(data, 'dict'):
+            # Pydantic v1 model
+            return self._make_json_serializable(data.dict())
+        elif hasattr(data, '__dict__'):
+            # Regular object with __dict__
+            return self._make_json_serializable(data.__dict__)
+        elif isinstance(data, (str, int, float, bool, type(None))):
+            return data
+        else:
+            # Convert to string for unknown types
+            return str(data)
     
     def _extract_world_dependencies(self, world_state: Dict[str, Any]) -> List[str]:
         """Extract dependency list from world state."""

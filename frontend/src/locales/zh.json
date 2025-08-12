@@ -1,125 +1,30 @@
 {
-  "app": {
-    "title": "战锤40K多智能体模拟器",
-    "subtitle": "前后端集成演示",
-    "footer": "战锤40K多智能体模拟器 - 前端演示"
+  "nav": {
+    "dashboard": "仪表板",
+    "characters": "角色",
+    "workshop": "工坊",
+    "library": "图书馆",
+    "monitor": "监控"
   },
-  "navigation": {
-    "home": "主页",
-    "characterSelection": "角色选择",
-    "characterCreation": "角色创建",
-    "startCharacterSelection": "开始角色选择"
+  "dashboard": {
+    "welcome": "欢迎使用小说引擎",
+    "subtitle": "创建和探索互动故事"
   },
-  "connection": {
-    "status": "后端连接状态",
-    "connecting": "正在连接后端...",
-    "error": "连接错误",
-    "success": "后端状态: {{status}}",
-    "info": "成功连接到FastAPI后端 {{url}}",
-    "retry": "重试连接",
-    "refresh": "刷新状态",
-    "timeout": "请求超时 - 后端响应可能较慢",
-    "networkError": "无法连接到后端 - 请确保服务器在 {{url}} 上运行",
-    "serverError": "后端错误: {{status}} - {{statusText}}",
-    "unexpectedError": "发生了意外错误"
+  "characters": {
+    "title": "角色工作室",
+    "subtitle": "创建和管理你的故事角色",
+    "create": "创建角色"
   },
-  "simulator": {
-    "info": "模拟器信息",
-    "frontend": {
-      "title": "前端",
-      "tech": "React 19 with Vite",
-      "status": "活跃"
-    },
-    "backend": {
-      "title": "后端", 
-      "tech": "FastAPI 服务器",
-      "status": "已连接"
-    },
-    "integration": {
-      "title": "集成",
-      "tech": "通过 Axios 的 REST API",
-      "status": "运行中"
-    }
+  "workshop": {
+    "title": "故事工坊",
+    "subtitle": "生成和制作你的故事"
   },
-  "characterSelection": {
-    "title": "角色选择圣殿",
-    "subtitle": "神圣角色军械库 - 为永恒战争选择你的勇士",
-    "loading": "正在与机械之神沟通以获取角色灵魂...",
-    "instruction": "选择2-6个角色来锻造完美的战团进行模拟。",
-    "counter": "已选择 {{count}} / {{max}} 个角色",
-    "confirmButton": "开始神圣模拟",
-    "createButton": "锻造新角色灵魂",
-    "newCharacterNotification": "新角色 '{{name}}' 已成功锻造！",
-    "errors": {
-      "minSelection": "请至少选择 {{min}} 个角色来开始模拟",
-      "maxSelection": "最多允许 {{max}} 个角色",
-      "serverError": "服务器错误 - 请稍后重试",
-      "notFound": "未找到角色 - 请确保角色数据可用",
-      "networkError": "无法连接到服务器 - 请确保后端正在运行",
-      "timeout": "请求超时 - 服务器响应可能较慢"
-    }
+  "library": {
+    "title": "故事图书馆",
+    "subtitle": "浏览你的故事收藏"
   },
-  "characterCreation": {
-    "title": "角色锻造圣殿",
-    "subtitle": "锻造新角色灵魂",
-    "description": "引导全知机神的力量为永恒战争创造新角色",
-    "form": {
-      "name": {
-        "label": "角色名称",
-        "placeholder": "输入你角色的神圣名字"
-      },
-      "description": {
-        "label": "角色描述", 
-        "placeholder": "描述你角色的历史、个性以及在黑暗中的角色..."
-      },
-      "files": {
-        "label": "神圣档案 (可选)",
-        "placeholder": "上传角色文件以增强AI书记官的智慧...",
-        "browse": "浏览神圣文件",
-        "selected": "已选择 {{count}} 个文件",
-        "maxSize": "每个文件最大大小: {{size}}MB",
-        "allowedTypes": "允许的类型: {{types}}"
-      }
-    },
-    "counter": "{{current}} / {{max}} 字符",
-    "buttons": {
-      "forge": "锻造角色灵魂",
-      "cancel": "返回角色选择"
-    },
-    "ceremony": "角色创建仪式进行中...",
-    "success": "角色灵魂锻造成功！",
-    "aiScribe": "AI书记官增强激活",
-    "processing": "AI书记官引导全知机神的智慧来增强你的角色...",
-    "errors": {
-      "nameRequired": "角色名称不能为空",
-      "nameLength": "角色名称必须为 {{min}}-{{max}} 个字符",
-      "descriptionRequired": "角色描述不能为空", 
-      "descriptionLength": "描述长度必须在 {{min}}-{{max}} 字符之间",
-      "descriptionWords": "描述至少需要 {{min}} 个单词",
-      "fileSize": "文件 '{{filename}}' 超过最大大小 {{max}}MB",
-      "fileType": "文件 '{{filename}}' 类型不受支持。允许的类型: {{types}}",
-      "serverError": "锻造角色灵魂失败 - 服务器错误",
-      "networkError": "无法连接到神圣服务器",
-      "nameConflict": "神圣档案中已存在同名角色"
-    }
-  },
-  "validation": {
-    "required": "此字段是必需的",
-    "minLength": "至少需要 {{min}} 个字符",
-    "maxLength": "最多 {{max}} 个字符", 
-    "minWords": "必须包含至少 {{min}} 个单词",
-    "pattern": "格式无效",
-    "fileSize": "文件大小不得超过 {{max}}MB",
-    "fileType": "只允许 {{types}} 文件"
-  },
-  "common": {
-    "loading": "加载中...",
-    "error": "错误",
-    "success": "成功",
-    "cancel": "取消",
-    "confirm": "确认",
-    "save": "保存",
-    "close": "关闭",
-    "retry": "重试"
+  "monitor": {
+    "title": "系统监控",
+    "subtitle": "实时系统性能和健康监控"
   }
 }
