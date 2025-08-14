@@ -4,7 +4,7 @@ DirectorAgent Core Implementation
 ================================
 
 This module implements the DirectorAgent class, which serves as the Game Master AI
-for the Warhammer 40k Multi-Agent Simulator. The DirectorAgent orchestrates the
+for the StoryForge AI Interactive Story Engine. The DirectorAgent orchestrates the
 entire simulation by managing PersonaAgent instances, coordinating their interactions,
 and maintaining the campaign narrative through structured event logging.
 
@@ -210,27 +210,9 @@ class DirectorAgent:
             OSError: If file creation or writing fails
         """
         try:
-            # 检查战役记录是否已存在，验证英雄传说的连续性...
-            if os.path.exists(self.campaign_log_path):
-                logger.info(f"Found existing campaign log: {self.campaign_log_path}")
-                
-                # 验证现有记录格式，确保英雄传说的正确编写...
-                try:
-                    with open(self.campaign_log_path, 'r', encoding='utf-8') as file:
-                        content = file.read()
-                        if not content.strip():
-                            logger.warning("Campaign log exists but is empty, reinitializing")
-                            self._create_new_campaign_log()
-                        else:
-                            logger.info("Campaign log validated successfully")
-                except Exception as e:
-                    logger.warning(f"Could not validate existing campaign log: {e}")
-                    logger.info("Creating backup and initializing new log")
-                    self._backup_existing_log()
-                    self._create_new_campaign_log()
-            else:
-                logger.info("No existing campaign log found, creating new one")
-                self._create_new_campaign_log()
+            # Always create fresh campaign log for each simulation
+            logger.info(f"Creating fresh campaign log: {self.campaign_log_path}")
+            self._create_new_campaign_log()
                 
         except Exception as e:
             logger.error(f"Failed to initialize campaign log: {str(e)}")
@@ -246,7 +228,7 @@ class DirectorAgent:
 
 ## Campaign Overview
 
-This log tracks all events, decisions, and interactions in the Warhammer 40k Multi-Agent Simulator.
+This log tracks all events, decisions, and interactions in the StoryForge AI Interactive Story Engine.
 Each entry includes timestamps, participating agents, and detailed event descriptions.
 
 ---
@@ -261,10 +243,15 @@ Each entry includes timestamps, participating agents, and detailed event descrip
 
 """
         
-        with open(self.campaign_log_path, 'w', encoding='utf-8') as file:
-            file.write(initial_content)
-        
-        logger.info(f"New campaign log created: {self.campaign_log_path}")
+        try:
+            with open(self.campaign_log_path, 'w', encoding='utf-8') as file:
+                file.write(initial_content)
+            
+            logger.info(f"New campaign log created: {self.campaign_log_path}")
+            logger.info(f"Campaign log file size: {os.path.getsize(self.campaign_log_path)} bytes")
+        except Exception as e:
+            logger.error(f"Failed to create campaign log at {self.campaign_log_path}: {e}")
+            raise
     
     def _backup_existing_log(self) -> None:
         """Create a backup of existing campaign log before reinitializing."""

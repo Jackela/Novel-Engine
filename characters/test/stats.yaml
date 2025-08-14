@@ -1,0 +1,43 @@
+character:
+  name: "Test Subject 01"
+  age: 25
+  origin: "Test Facility"
+  faction: "Development Team"
+  rank: "Test Subject"
+  specialization: "Quality Assurance"
+
+combat_stats:
+  marksmanship: 5
+  melee: 5
+  tactics: 5
+  leadership: 5
+  endurance: 5
+  pilot: 5
+
+equipment:
+  primary_weapon: "Test Weapon"
+  secondary_weapon: "Backup Test Weapon"
+  armor: "Standard Test Gear"
+  special_gear:
+    - "Testing Equipment"
+    - "Validation Tools"
+    - "QA Suite"
+
+psychological_profile:
+  loyalty: 7
+  aggression: 3
+  caution: 8
+  morale: 6
+  corruption_resistance: 9
+
+specializations:
+  - "Quality Assurance"
+  - "System Testing"
+  - "Development Support"
+
+relationships:
+  allies:
+    - "Development Team"
+  enemies:
+    - "System Bugs"
+  mentor: "QA Lead"

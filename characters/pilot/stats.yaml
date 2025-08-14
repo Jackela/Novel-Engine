@@ -1,0 +1,43 @@
+character:
+  name: "Alex Chen"
+  age: 32
+  origin: "Frontier Colony"
+  faction: "Galactic Defense Force"
+  rank: "Squadron Leader"
+  specialization: "Starfighter Pilot"
+
+combat_stats:
+  marksmanship: 8
+  melee: 6
+  tactics: 9
+  leadership: 8
+  endurance: 7
+  pilot: 10
+
+equipment:
+  primary_weapon: "Pulse Pistol"
+  secondary_weapon: "Combat Knife"
+  armor: "Flight Suit"
+  special_gear:
+    - "Pilot Helmet with HUD"
+    - "Emergency Survival Kit"
+    - "Personal Communicator"
+
+psychological_profile:
+  loyalty: 9
+  aggression: 6
+  caution: 7
+  morale: 8
+  corruption_resistance: 8
+
+specializations:
+  - "Starfighter Combat"
+  - "Squadron Leadership"
+  - "Emergency Response"
+
+relationships:
+  allies:
+    - "Defense Force Command"
+  enemies:
+    - "Hostile Pirates"
+  mentor: "Admiral Sarah Rodriguez"

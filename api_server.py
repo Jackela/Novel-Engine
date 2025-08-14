@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-FastAPI Web Server for Warhammer 40k Multi-Agent Simulator
-===========================================================
+FastAPI Web Server for StoryForge AI - Interactive Story Engine
+===============================================================
 
 This module implements a FastAPI web server that provides RESTful API endpoints
-for the Warhammer 40k Multi-Agent Simulator. The server enables web-based access
-to the simulation system, allowing external applications and clients to interact
-with the simulator through HTTP requests.
+for the StoryForge AI Interactive Story Engine. The server enables web-based access
+to the story generation system, allowing external applications and clients to interact
+with the intelligent narrative engine through HTTP requests.
 
 The FastAPI server provides:
 1. Basic API endpoint with health check functionality
@@ -36,17 +36,17 @@ from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, field_validator, Field
 from typing import List as TypingList
 
-# 召唤配置系统的神圣知识，为未来的机械融合做准备...
+# Import configuration system for intelligent settings management
 from config_loader import get_config
 
-# 引入模拟引擎的神圣组件，准备唤醒沉睡的机器灵魂...
+# Import story engine core components for narrative generation
 from character_factory import CharacterFactory
 from director_agent import DirectorAgent
 from chronicler_agent import ChroniclerAgent
-# 引入Gemini API神圣接口，召唤AI Scribe的机械智慧...
+# Import AI integration interfaces for enhanced content generation
 from persona_agent import _validate_gemini_api_key, _make_gemini_api_request
 
-# 引入神圣约束系统 - Sacred Constraints System blessed by the Omnissiah
+# Import advanced constraints system for content validation
 from src.constraints_loader import (
     get_character_name_constraints,
     get_character_description_constraints,
@@ -139,8 +139,8 @@ def _get_campaigns_directory_path() -> str:
     """
     Get the absolute path to the campaigns directory.
     
-    Sacred path resolution for campaign codex storage, following the blessed
-    architectural patterns of the Omnissiah.
+    Advanced path resolution for campaign data storage, following the established
+    architectural patterns of the system.
     
     Returns:
         str: Absolute path to the codex/campaigns directory
@@ -199,7 +199,7 @@ class CampaignCreationRequest(BaseModel):
     @field_validator('campaign_name')
     @classmethod
     def validate_campaign_name(cls, v):
-        """Validate campaign name format using sacred naming conventions."""
+        """Validate campaign name format using standardized naming conventions."""
         import re
         if not re.match(r'^[a-zA-Z0-9_]+$', v):
             raise ValueError('Campaign name must contain only alphanumeric characters and underscores')
@@ -312,13 +312,13 @@ class CharacterCreationRequest(BaseModel):
         ...,
         min_length=get_character_name_constraints()['minLength'],
         max_length=get_character_name_constraints()['maxLength'],
-        description=f"Character's sacred designation ({get_character_name_constraints()['minLength']}-{get_character_name_constraints()['maxLength']} characters)"
+        description=f"Character's unique designation ({get_character_name_constraints()['minLength']}-{get_character_name_constraints()['maxLength']} characters)"
     )
     description: str = Field(
         ...,
         min_length=get_character_description_constraints()['minLength'],
         max_length=get_character_description_constraints()['maxLength'],
-        description=f"Character's holy narrative description ({get_character_description_constraints()['minLength']}-{get_character_description_constraints()['maxLength']} characters, minimum {get_character_description_constraints()['minWords']} words)"
+        description=f"Character's detailed narrative description ({get_character_description_constraints()['minLength']}-{get_character_description_constraints()['maxLength']} characters, minimum {get_character_description_constraints()['minWords']} words)"
     )
     
     @field_validator('name')
@@ -363,7 +363,7 @@ class CharacterCreationResponse(BaseModel):
     )
 
 
-# AI Scribe Sacred Functions - Invoke the machine spirits of textual generation
+# AI Content Generation Functions - Advanced textual content creation
 async def _process_uploaded_files(files: TypingList[UploadFile]) -> str:
     """
     Process uploaded files and extract their text content.
@@ -384,7 +384,7 @@ async def _process_uploaded_files(files: TypingList[UploadFile]) -> str:
     
     for file in files:
         try:
-            # Read file content - sacred data extraction protocol
+            # Read file content - intelligent data extraction protocol
             content = await file.read()
             
             # Decode based on file type - interpret the machine runes
@@ -425,14 +425,14 @@ def _create_master_context_engineer_prompt(name: str, description: str, file_con
     character content following the V2 codex architecture.
     
     Args:
-        name: Character's sacred designation
+        name: Character's unique designation
         description: User-provided character description
         file_content: Concatenated content from uploaded files
         
     Returns:
         str: Detailed prompt for Gemini API
     """
-    prompt = f"""You are a Master Context Engineer specializing in Warhammer 40,000 universe character creation. Your sacred duty is to generate comprehensive character files based on the provided information.
+    prompt = f"""You are a Master Context Engineer specializing in science fiction universe character creation. Your objective is to generate comprehensive character files based on the provided information.
 
 CHARACTER DESIGNATION: {name}
 
@@ -558,14 +558,14 @@ relationships:
 
 CRITICAL INSTRUCTIONS:
 1. Base all content on the provided description and uploaded file context
-2. Ensure all content is appropriate for the Warhammer 40,000 universe
+2. Ensure all content is appropriate for a generic science fiction universe
 3. Make stats realistic and balanced (avoid all 10s)
-4. Include specific 40k lore elements and terminology
+4. Include appropriate science fiction elements and terminology
 5. Maintain internal consistency across all files
 6. Output EXACTLY the 4 files with the delimiters shown above
 7. Use the exact file naming convention specified
 
-Begin generation now. The Emperor protects."""
+Begin generation now. Create engaging content."""
 
     return prompt
 
@@ -588,7 +588,7 @@ def _parse_generated_content(generated_text: str) -> Dict[str, str]:
     """
     files = {}
     
-    # Define file patterns - sacred parsing incantations
+    # Define file patterns - intelligent parsing rules
     file_patterns = {
         '1_core.md': r'=== FILE: 1_core\.md ===(.*?)(?==== FILE:|\Z)',
         '2_history.md': r'=== FILE: 2_history\.md ===(.*?)(?==== FILE:|\Z)',
@@ -697,8 +697,8 @@ async def lifespan(app: FastAPI):
 
 # 初始化FastAPI神圣应用，建立API信息接口神殿...
 app = FastAPI(
-    title="Warhammer 40k Simulator API",
-    description="RESTful API for the Warhammer 40k Multi-Agent Simulator",
+    title="StoryForge AI API",
+    description="RESTful API for the StoryForge AI Interactive Story Engine",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -726,7 +726,7 @@ async def root() -> Dict[str, str]:
     """
     Root endpoint that provides API health check.
     
-    Returns a JSON response indicating that the Warhammer 40k Simulator API
+    Returns a JSON response indicating that the StoryForge AI Interactive Story Engine
     is running and accessible. This endpoint serves as both a health check
     and a basic connectivity test for clients.
     
@@ -740,7 +740,7 @@ async def root() -> Dict[str, str]:
         logger.info("Root endpoint accessed - API health check")
         
         response_data = {
-            "message": "Warhammer 40k Simulator API is running!"
+            "message": "StoryForge AI Interactive Story Engine is running!"
         }
         
         logger.debug(f"Returning response: {response_data}")
@@ -989,7 +989,7 @@ async def get_characters() -> CharactersListResponse:
     Get list of available characters.
     
     Retrieves all character names that are available for use in the
-    Warhammer 40k Multi-Agent Simulator. This endpoint provides the
+    StoryForge AI Interactive Story Engine. This endpoint provides the
     character roster that can be used for simulation scenarios.
     
     Returns:
@@ -1350,7 +1350,7 @@ async def get_enhanced_character_data(character_name: str) -> Union[Dict[str, An
           response_model=CharacterCreationResponse,
           status_code=201,
           summary="Create new character with AI Scribe enhancement",
-          description="Invoke the sacred AI Scribe ritual to create a complete character with contextual file uploads and Gemini API enhancement",
+          description="Invoke the advanced AI content generation system to create a complete character with contextual file uploads and AI enhancement",
           responses={
               201: {
                   "description": "Character creation completed successfully with AI Scribe enhancement",
@@ -1430,12 +1430,12 @@ async def get_enhanced_character_data(character_name: str) -> Union[Dict[str, An
               }
           })
 async def create_character_with_ai_scribe(
-    name: str = Form(..., min_length=3, max_length=50, description="Character's sacred designation"),
+    name: str = Form(..., min_length=3, max_length=50, description="Character's unique designation"),
     description: str = Form(..., min_length=10, max_length=2000, description="Character's narrative description"),
     files: TypingList[UploadFile] = File(default=[], description="Optional context files to enhance character creation")
 ) -> CharacterCreationResponse:
     """
-    Create a new character using the sacred AI Scribe enhancement ritual.
+    Create a new character using the advanced AI content generation system.
     
     This enhanced endpoint combines user description with uploaded file context
     to invoke the Gemini API Master Context Engineer. The AI Scribe generates
@@ -1472,7 +1472,7 @@ async def create_character_with_ai_scribe(
         name = name.strip().lower()
         description = description.strip()
         
-        # Validate name format - sacred naming conventions
+        # Validate name format - standardized naming conventions
         import re
         if not re.match(r'^[a-zA-Z0-9_]+$', name):
             raise HTTPException(
@@ -1664,7 +1664,7 @@ psychological_profile:
 @app.post("/simulations",
           response_model=SimulationResponse,
           summary="Run character simulation",
-          description="Execute a Warhammer 40k character simulation with specified participants and return the generated narrative",
+          description="Execute a character simulation with specified participants and return the generated narrative",
           responses={
               200: {
                   "description": "Simulation completed successfully",
@@ -1738,7 +1738,7 @@ psychological_profile:
           })
 async def run_simulation(request: SimulationRequest) -> SimulationResponse:
     """
-    Execute a Warhammer 40k character simulation.
+    Execute a character simulation.
     
     Runs a multi-agent simulation with the specified characters, generating
     an epic narrative through the interaction of PersonaAgents, DirectorAgent,
@@ -1849,15 +1849,15 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
         
         # 若提供了叙事风格则进行设定，调整史官的记录模式...
         narrative_style = request.narrative_style or "epic"
-        # 将API叙事风格映射至ChroniclerAgent风格，转换用户意图为机械指令...
+        # Map API narrative styles to ChroniclerAgent styles
         style_mapping = {
-            "epic": "grimdark_dramatic",
-            "detailed": "grimdark_dramatic", 
+            "epic": "sci_fi_dramatic",
+            "detailed": "sci_fi_dramatic", 
             "concise": "tactical"
         }
-        chronicler_style = style_mapping.get(narrative_style, "grimdark_dramatic")
+        chronicler_style = style_mapping.get(narrative_style, "sci_fi_dramatic")
         
-        chronicler = ChroniclerAgent(narrative_style=chronicler_style)
+        chronicler = ChroniclerAgent(narrative_style=chronicler_style, character_names=request.character_names)
         
         # 从战役记录圣典生成故事，让史官代理编织英雄传奇...
         try:
@@ -1865,12 +1865,12 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
             logger.info(f"Narrative generation completed: {len(story)} characters generated")
         except Exception as e:
             logger.error(f"Error during narrative generation: {str(e)}")
-            # 提供后备叙事，即使史官代理失效也要保留英雄事迹的基本记录...
+            # Provide fallback narrative if story generation fails
             story = (
-                f"In the grim darkness of the far future, {', '.join(request.character_names)} "
+                f"In the vast expanse of the cosmos, {', '.join(request.character_names)} "
                 f"engaged in epic conflict across {turns_executed} turns of battle. "
                 f"Though the full chronicle was lost to the chaos of war, their deeds "
-                f"shall be remembered in the annals of the Imperium."
+                f"shall be remembered in the annals of galactic history."
             )
         
         # 第七步神圣仪式：计算执行时间并构建响应，完成整个模拟循环...
@@ -1916,7 +1916,7 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
 @app.get("/campaigns",
          response_model=CampaignsListResponse,
          summary="Get available campaigns",
-         description="Retrieve a list of all available campaign directories in the sacred codex",
+         description="Retrieve a list of all available campaign directories in the data repository",
          responses={
              200: {
                  "description": "Successfully retrieved campaign list",
@@ -1935,7 +1935,7 @@ async def get_campaigns() -> CampaignsListResponse:
     """
     Get list of available campaigns.
     
-    Sacred ritual to retrieve all campaign directories from the blessed
+    Advanced function to retrieve all campaign directories from the established
     codex/campaigns storage realm. Each campaign represents a complete
     narrative scenario ready for simulation deployment.
     
@@ -1947,7 +1947,7 @@ async def get_campaigns() -> CampaignsListResponse:
         HTTPException: 500 if an internal error occurs
     """
     try:
-        logger.info("Campaigns endpoint accessed - retrieving sacred campaign codex")
+        logger.info("Campaigns endpoint accessed - retrieving campaign data repository")
         
         # 获取战役目录圣域路径，定位战役典籍的神圣殿堂...
         campaigns_path = _get_campaigns_directory_path()
@@ -1957,7 +1957,7 @@ async def get_campaigns() -> CampaignsListResponse:
             logger.warning(f"Campaigns directory not found: {campaigns_path}")
             raise HTTPException(
                 status_code=404,
-                detail="Campaigns directory not found - the sacred codex awaits initialization"
+                detail="Campaigns directory not found - the data repository awaits initialization"
             )
         
         if not os.path.isdir(campaigns_path):
@@ -2011,7 +2011,7 @@ def _generate_campaign_brief(campaign_name: str, description: str) -> Optional[s
     Generate AI-powered campaign brief using Gemini API.
     
     Sacred ritual to invoke the machine-spirit wisdom for campaign brief generation.
-    Uses the blessed Gemini API to transform campaign description into detailed
+    Uses the advanced AI system to transform campaign description into detailed
     mission briefing following Imperial doctrine.
     
     Args:

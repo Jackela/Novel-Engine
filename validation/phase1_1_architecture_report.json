@@ -1,0 +1,391 @@
+{
+  "component_analysis": {
+    "api_server.py": {
+      "classes": [
+        "HealthResponse",
+        "ErrorResponse",
+        "CharactersListResponse",
+        "CampaignsListResponse",
+        "CampaignCreationRequest",
+        "CampaignCreationResponse",
+        "FileCount",
+        "CharacterDetailResponse",
+        "SimulationRequest",
+        "SimulationResponse",
+        "CharacterCreationRequest",
+        "CharacterCreationResponse"
+      ],
+      "functions": [
+        "_find_project_root",
+        "_get_characters_directory_path",
+        "_get_campaigns_directory_path",
+        "_create_master_context_engineer_prompt",
+        "_parse_generated_content",
+        "_generate_campaign_brief",
+        "_save_campaign_brief",
+        "run_server"
+      ],
+      "imports": [
+        "logging",
+        "uvicorn",
+        "os",
+        "shutil",
+        "typing.Dict, Any, List, Optional, Union",
+        "contextlib.asynccontextmanager",
+        "fastapi.FastAPI, HTTPException, File, UploadFile, Form, Depends",
+        "fastapi.responses.JSONResponse",
+        "fastapi.middleware.cors.CORSMiddleware",
+        "fastapi.middleware.gzip.GZipMiddleware",
+        "pydantic.BaseModel, field_validator, Field",
+        "typing.List as TypingList",
+        "config_loader.get_config",
+        "character_factory.CharacterFactory",
+        "director_agent.DirectorAgent",
+        "chronicler_agent.ChroniclerAgent",
+        "persona_agent._validate_gemini_api_key, _make_gemini_api_request",
+        "src.constraints_loader.(",
+        "time",
+        "uuid",
+        "json",
+        "re",
+        "starlette.exceptions.HTTPException as StarletteHTTPException"
+      ],
+      "api_endpoints": [
+        "GET /",
+        "GET /health",
+        "GET /meta/system-status",
+        "GET /meta/policy",
+        "GET /characters",
+        "GET /characters/{character_name}",
+        "GET /characters/{character_name}/enhanced",
+        "POST /characters",
+        "POST /simulations",
+        "GET /campaigns",
+        "POST /campaigns"
+      ],
+      "error_handlers": [
+        "Error Handler: try:\n    from src.shared_types import (\n        AP...",
+        "Error Handler: try:\n            # Read file content - intelligent...",
+        "Error Handler: try:\n            with open(file_path, 'w', encodin...",
+        "Error Handler: try:\n        from scripts.build_kb import StartupG...",
+        "Error Handler: try:\n        # Run startup validation guards if av...",
+        "Error Handler: try:\n        logger.info(\"Root endpoint accessed -...",
+        "Error Handler: try:\n        logger.info(\"Health check endpoint ac...",
+        "Error Handler: try:\n        logger.info(\"Enhanced system status e...",
+        "Error Handler: try:\n                return SystemStatus(**status_...",
+        "Error Handler: try:\n        logger.info(\"System policy endpoint a..."
+      ],
+      "size_metrics": {
+        "lines": 2359,
+        "characters": 92097,
+        "complexity_score": 0.2
+      }
+    },
+    "director_agent.py": {
+      "classes": [
+        "DirectorAgent"
+      ],
+      "functions": [
+        "create_director_with_agents",
+        "run_simulation_batch",
+        "example_usage"
+      ],
+      "imports": [
+        "json",
+        "os",
+        "logging",
+        "typing.Dict, List, Optional, Any, Tuple",
+        "datetime.datetime",
+        "pathlib.Path",
+        "persona_agent.PersonaAgent",
+        "shared_types.CharacterAction",
+        "config_loader.get_config, get_campaign_log_filename",
+        "campaign_brief.CampaignBrief, CampaignBriefLoader, NarrativeEvent",
+        "narrative_actions.NarrativeActionResolver, NarrativeOutcome"
+      ],
+      "api_endpoints": [],
+      "error_handlers": [
+        "Error Handler: try:\n            config = get_config()\n           ...",
+        "Error Handler: try:\n            self._initialize_campaign_log()\n ...",
+        "Error Handler: try:\n            # Always create fresh campaign lo...",
+        "Error Handler: try:\n            with open(self.campaign_log_path,...",
+        "Error Handler: try:\n            import shutil\n            shutil....",
+        "Error Handler: try:\n            if os.path.exists(self.world_stat...",
+        "Error Handler: try:\n            campaign_brief_path = Path(self.c...",
+        "Error Handler: try:\n            logger.info(f\"Attempting to regis...",
+        "Error Handler: try:\n            timestamp = datetime.now().strfti...",
+        "Error Handler: try:\n                logger.info(f\"Processing agen..."
+      ],
+      "size_metrics": {
+        "lines": 3549,
+        "characters": 163001,
+        "complexity_score": 0.32
+      }
+    },
+    "chronicler_agent.py": {
+      "classes": [
+        "CampaignEvent",
+        "NarrativeSegment",
+        "ChroniclerAgent"
+      ],
+      "functions": [
+        "create_chronicler_with_output",
+        "batch_transcribe_logs",
+        "example_usage"
+      ],
+      "imports": [
+        "json",
+        "os",
+        "re",
+        "logging",
+        "time",
+        "random",
+        "typing.Dict, List, Optional, Any, Tuple",
+        "datetime.datetime",
+        "pathlib.Path",
+        "dataclasses.dataclass, field",
+        "config_loader.get_config"
+      ],
+      "api_endpoints": [],
+      "error_handlers": [
+        "Error Handler: try:\n            config = get_config()\n           ...",
+        "Error Handler: try:\n            self._initialize_output_directory...",
+        "Error Handler: try:\n            # \u8f6c\u6362\u4e3a\u8def\u5f84\u5bf9\u8c61\uff0c\u4fbf\u4e8e\u8fdb\u884c\u6587\u4ef6\u7cfb\u7edf\u7684\u795e\u5723\u64cd\u4f5c...\n      ...",
+        "Error Handler: try:\n            # \u9a8c\u8bc1\u8f93\u5165\u6587\u4ef6\uff0c\u786e\u4fdd\u6218\u5f79\u65e5\u5fd7\u7684\u5b8c\u6574\u6027\u4e0e\u53ef\u8bfb\u6027...\n      ...",
+        "Error Handler: try:\n            with open(log_path, 'r', encoding...",
+        "Error Handler: try:\n            lines = section.strip().split('\\n...",
+        "Error Handler: try:\n                # Generate narrative for this...",
+        "Error Handler: try:\n            # Create contextual prompt for th...",
+        "Error Handler: try:\n            template_key = event.event_type\n ...",
+        "Error Handler: try:\n            # Generate output filename\n      ..."
+      ],
+      "size_metrics": {
+        "lines": 1369,
+        "characters": 58224,
+        "complexity_score": 0.3
+      }
+    },
+    "persona_agent.py": {
+      "classes": [
+        "ThreatLevel",
+        "WorldEvent",
+        "SubjectiveInterpretation",
+        "PersonaAgent"
+      ],
+      "functions": [
+        "_validate_gemini_api_key",
+        "_get_http_session",
+        "_cached_gemini_request",
+        "_make_gemini_api_request",
+        "_make_gemini_api_request_direct",
+        "_generate_fallback_response",
+        "create_character_from_template",
+        "analyze_agent_compatibility",
+        "example_usage"
+      ],
+      "imports": [
+        "json",
+        "os",
+        "re",
+        "logging",
+        "time",
+        "random",
+        "requests",
+        "yaml",
+        "typing.Dict, List, Optional, Any, Tuple",
+        "dataclasses.dataclass, field",
+        "enum.Enum",
+        "datetime.datetime",
+        "functools.lru_cache",
+        "urllib3.util.retry.Retry",
+        "requests.adapters.HTTPAdapter",
+        "shared_types.CharacterAction, ActionPriority",
+        "narrative_actions.NarrativeActionType, NarrativeActionResolver"
+      ],
+      "api_endpoints": [],
+      "error_handlers": [
+        "Error Handler: try:\n        logger.debug(f\"Making Gemini API requ...",
+        "Error Handler: try:\n            response_text = response_json['ca...",
+        "Error Handler: try:\n            logger.info(f\"Loading character c...",
+        "Error Handler: try:\n            logger.info(f\"Agent {self.agent_i...",
+        "Error Handler: try:\n            logger.info(f\"Agent {self.agent_i...",
+        "Error Handler: try:\n            # Construct path to memory.log fi...",
+        "Error Handler: try:\n            logger.debug(f\"Agent {self.agent_...",
+        "Error Handler: try:\n                # Attempt Gemini API call\n   ...",
+        "Error Handler: try:\n            logger.info(f\"Agent {self.agent_i...",
+        "Error Handler: try:\n            # Check for required fields\n     ..."
+      ],
+      "size_metrics": {
+        "lines": 3001,
+        "characters": 138541,
+        "complexity_score": 0.37
+      }
+    },
+    "character_factory.py": {
+      "classes": [
+        "CharacterFactory"
+      ],
+      "functions": [],
+      "imports": [
+        "os",
+        "logging",
+        "typing.Optional",
+        "persona_agent.PersonaAgent"
+      ],
+      "api_endpoints": [],
+      "error_handlers": [
+        "Error Handler: try:\n            persona_agent = PersonaAgent(char...",
+        "Error Handler: logger.error...",
+        "Error Handler: logger.warning..."
+      ],
+      "size_metrics": {
+        "lines": 164,
+        "characters": 6771,
+        "complexity_score": 0.29
+      }
+    },
+    "config_loader.py": {
+      "classes": [
+        "SimulationConfig",
+        "PathsConfig",
+        "CharacterConfig",
+        "DirectorConfig",
+        "ChroniclerConfig",
+        "LLMConfig",
+        "TestingConfig",
+        "PerformanceConfig",
+        "FeaturesConfig",
+        "ValidationConfig",
+        "AppConfig",
+        "ConfigurationError",
+        "ConfigLoader"
+      ],
+      "functions": [
+        "get_config",
+        "get_simulation_turns",
+        "get_character_sheets_path",
+        "get_log_file_path",
+        "get_output_directory",
+        "get_default_character_sheets",
+        "get_campaign_log_filename",
+        "example_usage"
+      ],
+      "imports": [
+        "os",
+        "logging",
+        "threading",
+        "pathlib.Path",
+        "typing.Dict, Any, Optional, Union, List",
+        "dataclasses.dataclass, field"
+      ],
+      "api_endpoints": [],
+      "error_handlers": [
+        "Error Handler: try:\n    import yaml\n    YAML_AVAILABLE = True\nexc...",
+        "Error Handler: try:\n                # Check YAML library availabi...",
+        "Error Handler: try:\n            return os.path.getmtime(file_path...",
+        "Error Handler: try:\n            with open(file_path, 'r', encodin...",
+        "Error Handler: try:\n                    setter(env_value)\n       ...",
+        "Error Handler: try:\n        # Get configuration loader instance\n ...",
+        "Error Handler: logger.error...",
+        "Error Handler: logger.warning...",
+        "Error Handler: logger.warning...",
+        "Error Handler: logger.warning..."
+      ],
+      "size_metrics": {
+        "lines": 800,
+        "characters": 29815,
+        "complexity_score": 0.34
+      }
+    }
+  },
+  "data_flow_analysis": {
+    "flows": {
+      "request_flow": [
+        "HTTP Request \u2192 api_server.py",
+        "api_server.py \u2192 character_factory.py (character creation)",
+        "character_factory.py \u2192 persona_agent.py (agent instantiation)",
+        "api_server.py \u2192 director_agent.py (simulation execution)",
+        "director_agent.py \u2192 persona_agent.py (turn processing)",
+        "director_agent.py \u2192 campaign_log.md (event logging)",
+        "api_server.py \u2192 chronicler_agent.py (narrative generation)",
+        "chronicler_agent.py \u2192 campaign_log.md (log reading)",
+        "chronicler_agent.py \u2192 demo_narratives/ (story output)",
+        "api_server.py \u2192 HTTP Response"
+      ],
+      "data_dependencies": {
+        "character_names": "User Input \u2192 API \u2192 CharacterFactory \u2192 PersonaAgent",
+        "campaign_logs": "DirectorAgent \u2192 Campaign Log File \u2192 ChroniclerAgent",
+        "narrative_style": "User Input \u2192 API \u2192 ChroniclerAgent",
+        "world_state": "DirectorAgent \u2192 PersonaAgent (simulation turns)",
+        "character_data": "Character Files \u2192 PersonaAgent \u2192 DirectorAgent"
+      },
+      "critical_paths": [
+        "Character Name Integration: API \u2192 ChroniclerAgent (injected names)",
+        "Story Generation: Campaign Log \u2192 Narrative Output",
+        "Error Recovery: All components \u2192 Graceful degradation"
+      ]
+    },
+    "validation": {
+      "character_name_injection": true,
+      "config_loading": true,
+      "character_factory": true
+    }
+  },
+  "api_analysis": {
+    "endpoints": [
+      "GET /",
+      "GET /health",
+      "GET /meta/system-status",
+      "GET /meta/policy",
+      "GET /characters",
+      "GET /characters/{character_name}",
+      "GET /characters/{character_name}/enhanced",
+      "POST /characters",
+      "POST /simulations",
+      "GET /campaigns",
+      "POST /campaigns"
+    ],
+    "models": [
+      "HealthResponse",
+      "ErrorResponse",
+      "CharactersListResponse",
+      "CampaignsListResponse",
+      "CampaignCreationRequest",
+      "CampaignCreationResponse",
+      "FileCount",
+      "CharacterDetailResponse",
+      "SimulationRequest",
+      "SimulationResponse",
+      "CharacterCreationRequest",
+      "CharacterCreationResponse",
+      "HealthResponse",
+      "CharactersListResponse",
+      "CharacterDetailResponse",
+      "CharacterCreationResponse",
+      "SimulationResponse",
+      "CampaignsListResponse",
+      "CampaignCreationResponse"
+    ],
+    "error_handlers": [
+      "Error Handler: try:\n    from src.shared_types import (\n        AP...",
+      "Error Handler: try:\n            # Read file content - intelligent...",
+      "Error Handler: try:\n            with open(file_path, 'w', encodin...",
+      "Error Handler: try:\n        from scripts.build_kb import StartupG...",
+      "Error Handler: try:\n        # Run startup validation guards if av...",
+      "Error Handler: try:\n        logger.info(\"Root endpoint accessed -...",
+      "Error Handler: try:\n        logger.info(\"Health check endpoint ac...",
+      "Error Handler: try:\n        logger.info(\"Enhanced system status e...",
+      "Error Handler: try:\n                return SystemStatus(**status_...",
+      "Error Handler: try:\n        logger.info(\"System policy endpoint a..."
+    ],
+    "contract_health": "HEALTHY"
+  },
+  "health_metrics": {
+    "component_health": 1.0,
+    "data_flow_health": 1.0,
+    "api_health": 1.0,
+    "overall_health": 1.0
+  },
+  "issues": [],
+  "status": "EXCELLENT"
+}

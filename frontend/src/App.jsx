@@ -7,7 +7,7 @@ import TestCharacterSelection from './components/TestCharacterSelection.jsx';
 import SimpleCharacterSelection from './components/SimpleCharacterSelection.jsx';
 import './App.css';
 
-// 主页组件 - 应用程序的神圣仪表盘，为用户提供机械之神的祖福...
+// Home component - Application dashboard providing users with system status and navigation
 function Home() {
   const [backendStatus, setBackendStatus] = useState('');
   const [loading, setLoading] = useState(true);
@@ -19,8 +19,8 @@ function Home() {
         setLoading(true);
         setError(null);
         
-        const response = await axios.get('http://localhost:8001/health', {
-          timeout: 5000, // 5秒超时保护，防止网络害灵的无尽等待...
+        const response = await axios.get('http://localhost:8000/health', {
+          timeout: 5000, // 5 second timeout protection for network requests
         });
         
         setBackendStatus(response.data.message || response.data.status || 'Backend is healthy');
@@ -33,7 +33,7 @@ function Home() {
         } else if (err.response) {
           setError(`Backend error: ${err.response.status} - ${err.response.statusText}`);
         } else if (err.request) {
-          setError('Cannot connect to backend - Please ensure the server is running on http://localhost:8001');
+          setError('Cannot connect to backend - Please ensure the server is running on http://localhost:8000');
         } else {
           setError('An unexpected error occurred');
         }
@@ -51,7 +51,7 @@ function Home() {
     
     const fetchHealth = async () => {
       try {
-        const response = await axios.get('http://localhost:8001/health', {
+        const response = await axios.get('http://localhost:8000/health', {
           timeout: 5000,
         });
         
@@ -65,7 +65,7 @@ function Home() {
         } else if (err.response) {
           setError(`Backend error: ${err.response.status} - ${err.response.statusText}`);
         } else if (err.request) {
-          setError('Cannot connect to backend - Please ensure the server is running on http://localhost:8001');
+          setError('Cannot connect to backend - Please ensure the server is running on http://localhost:8000');
         } else {
           setError('An unexpected error occurred');
         }
@@ -80,8 +80,8 @@ function Home() {
   return (
     <div className="App">
       <header className="app-header">
-        <h1>Warhammer 40k Multi-Agent Simulator</h1>
-        <p className="app-subtitle">Frontend-Backend Integration Demo</p>
+        <h1>StoryForge AI - Interactive Story Engine</h1>
+        <p className="app-subtitle">AI-Powered Narrative Generation Platform</p>
       </header>
 
       <main className="app-main">
@@ -109,7 +109,7 @@ function Home() {
             <div className="status-success">
               <h3>Backend Status: {backendStatus}</h3>
               <p className="connection-info">
-                Successfully connected to FastAPI backend at http://localhost:8001
+                Successfully connected to FastAPI backend at http://localhost:8000
               </p>
               <button onClick={refreshStatus} className="refresh-button">
                 Refresh Status
@@ -141,7 +141,7 @@ function Home() {
             
             <div style={{ textAlign: 'center', marginTop: '2rem' }}>
               <Link to="/character-selection" className="nav-button">
-                开始角色选择 - Start Character Selection
+                Start Character Selection
               </Link>
             </div>
           </div>
@@ -149,13 +149,13 @@ function Home() {
       </main>
 
       <footer className="app-footer">
-        <p>Warhammer 40k Multi-Agent Simulator - Frontend Demo</p>
+        <p>StoryForge AI Interactive Story Engine - Web Interface</p>
       </footer>
     </div>
   );
 }
 
-// 主应用组件及路由器 - 管理数字领域中的导航路径，引导用户穿行于神圣界面...
+// Main App component with routing - Managing navigation paths and user interface flow
 function App() {
   return (
     <Router>

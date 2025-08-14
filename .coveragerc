@@ -1,0 +1,51 @@
+[run]
+# Coverage configuration for StoryForge AI
+source = .
+omit = 
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */node_modules/*
+    */venv/*
+    */env/*
+    .venv/*
+    build/*
+    dist/*
+    *.egg-info/*
+    setup.py
+    conftest.py
+    */migrations/*
+    */static/*
+    */media/*
+    demo_*.py
+    example_*.py
+    *_demo.py
+    fix_*.py
+    run_*.py
+    simple_*.py
+
+[report]
+# Reporting options
+precision = 2
+show_missing = true
+skip_covered = false
+sort = Cover
+
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+
+[html]
+directory = htmlcov
+title = StoryForge AI Coverage Report
+
+[xml]
+output = coverage.xml

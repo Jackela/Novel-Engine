@@ -4,16 +4,16 @@ ChroniclerAgent Core Implementation
 ==================================
 
 This module implements the ChroniclerAgent class, which serves as the narrative
-transcription system for the Warhammer 40k Multi-Agent Simulator. The ChroniclerAgent
+transcription system for the StoryForge AI Interactive Story Engine. The ChroniclerAgent
 transforms structured campaign logs into dramatic narrative stories that capture
-the essence of the grimdark universe.
+the essence of any fictional universe.
 
 The ChroniclerAgent acts as the story chronicler that:
 1. Parses structured campaign logs from DirectorAgent
 2. Extracts key events, character actions, and faction dynamics
 3. Uses LLM integration to generate dramatic narrative prose
 4. Combines individual event narratives into cohesive stories
-5. Maintains the authentic Warhammer 40k atmosphere and tone
+5. Maintains the authentic atmosphere and tone of the chosen setting
 
 This implementation provides the Phase 4 story transcription capability that transforms
 raw simulation data into compelling narrative content for players and readers.
@@ -33,10 +33,10 @@ from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass, field
 
-# 引入配置系统圣典，获取史官代理的神圣参数...
+# Import configuration system for chronicler agent settings
 from config_loader import get_config
 
-# 配置史官操作追踪的记录仪式，监控叙事生成的每个神圣步骤...
+# Configure chronicler operation tracking for narrative generation monitoring
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -78,17 +78,17 @@ class NarrativeSegment:
 
 class ChroniclerAgent:
     """
-    Core implementation of the narrative transcription system for the Warhammer 40k Multi-Agent Simulator.
+    Core implementation of the narrative transcription system for the StoryForge AI Interactive Story Engine.
     
     The ChroniclerAgent serves as the story chronicler that transforms structured campaign logs
-    into dramatic narrative prose. It maintains the authentic grimdark atmosphere while creating
+    into dramatic narrative prose. It maintains the authentic sci-fi atmosphere while creating
     engaging stories that capture the essence of character interactions and faction dynamics.
     
     Key Responsibilities:
     - Campaign log parsing and event extraction
     - LLM-powered narrative generation for individual events
     - Story combination and flow management
-    - Warhammer 40k atmosphere and tone preservation
+    - Science fiction atmosphere and tone preservation
     - Error handling and graceful degradation for malformed logs
     
     Architecture Notes:
@@ -99,7 +99,7 @@ class ChroniclerAgent:
     - Supports batch processing of multiple campaign logs
     """
     
-    def __init__(self, output_directory: Optional[str] = None, max_events_per_batch: Optional[int] = None, narrative_style: Optional[str] = None):
+    def __init__(self, output_directory: Optional[str] = None, max_events_per_batch: Optional[int] = None, narrative_style: Optional[str] = None, character_names: Optional[List[str]] = None):
         """
         Initialize the ChroniclerAgent with narrative generation capabilities.
         
@@ -114,6 +114,8 @@ class ChroniclerAgent:
                                 If None, uses configuration value
             narrative_style: Optional narrative style
                            If None, uses configuration value
+            character_names: Optional list of character names for direct integration
+                           If provided, these names will be used in story generation
                             
         Raises:
             ValueError: If output_directory is provided but is not a valid directory
@@ -148,9 +150,12 @@ class ChroniclerAgent:
             if self._config:
                 narrative_style = self._config.chronicler.narrative_style
             else:
-                narrative_style = "grimdark_dramatic"
+                narrative_style = "sci_fi_dramatic"
         self.narrative_style = narrative_style
         """Narrative style for story generation"""
+        
+        self.character_names = character_names or []
+        """List of character names for direct story integration"""
         
         # 事件处理追踪在，记录史官代理对每个战役事件的处理进度...
         self.events_processed = 0
@@ -232,10 +237,10 @@ class ChroniclerAgent:
         """
         self.narrative_templates = {
             'opening': {
-                'grimdark_dramatic': (
-                    "In the grim darkness of the far future, where there is only war, "
-                    "the chronicles of {location} unfold with terrible purpose. "
-                    "The Emperor's light flickers dimly against the encroaching shadows, "
+                'sci_fi_dramatic': (
+                    "In the vast expanse of the cosmos, where conflict shapes destiny, "
+                    "the chronicles of {location} unfold with dramatic purpose. "
+                    "Hope flickers against the encroaching shadows, "
                     "and heroes and villains alike dance to the whims of fate."
                 ),
                 'tactical': (
@@ -246,11 +251,11 @@ class ChroniclerAgent:
                 'philosophical': (
                     "What is the nature of war in a universe where peace is but a fleeting dream? "
                     "These chronicles attempt to capture the essence of conflict that defines "
-                    "the existence of all who dwell in the Emperor's domain."
+                    "the existence of all who dwell in these contested realms."
                 )
             },
             'agent_registration': {
-                'grimdark_dramatic': (
+                'sci_fi_dramatic': (
                     "As the shadows lengthened across the battlefield, {character_name} "
                     "emerged from the {faction} ranks. {character_description} "
                     "Their arrival would prove to be a turning point in the conflicts to come."
@@ -262,7 +267,7 @@ class ChroniclerAgent:
                 ),
             },
             'character_action': {
-                'grimdark_dramatic': (
+                'sci_fi_dramatic': (
                     "{character_name}, driven by {motivation}, chose to {action_type}. "
                     "{action_description} The consequences of this decision would "
                     "ripple through the fabric of the conflict itself."
@@ -274,7 +279,7 @@ class ChroniclerAgent:
                 ),
             },
             'turn_summary': {
-                'grimdark_dramatic': (
+                'sci_fi_dramatic': (
                     "As the dust settled on Turn {turn_number}, the weight of decisions "
                     "made and actions taken hung heavy in the air. {summary_text} "
                     "The war machine ground onward, ever hungry for more sacrifice."
@@ -286,11 +291,11 @@ class ChroniclerAgent:
                 ),
             },
             'closing': {
-                'grimdark_dramatic': (
-                    "Thus concludes this chapter in the endless war that defines existence "
-                    "in the 41st millennium. The heroes and villains of this tale have "
-                    "played their parts in the grand tragedy that is humanity's struggle "
-                    "for survival. In the grim darkness of the far future, there is only war... "
+                'sci_fi_dramatic': (
+                    "Thus concludes this chapter in the endless conflicts that define existence "
+                    "in this age of stars. The heroes and villains of this tale have "
+                    "played their parts in the grand drama that is civilization's struggle "
+                    "for survival. In the vast cosmos, conflict endures... "
                     "and the echoes of those who dared to defy the darkness."
                 ),
                 'tactical': (
@@ -302,19 +307,19 @@ class ChroniclerAgent:
         }
         
         self.faction_descriptions = {
-            'Space Marines': 'the Emperor\'s finest warriors, clad in ceramite and faith',
-            'Imperial Guard': 'the stalwart defenders of humanity, armed with courage and lasgun',
-            'Astra Militarum': 'the infinite ranks of the Emperor\'s hammer',
-            'Death Korps of Krieg': 'the gas-masked harbingers of industrial warfare',
-            'Adeptus Mechanicus': 'the tech-priests who seek truth in the machine',
-            'Orks': 'the green tide of destruction that knows only WAAAGH!',
-            'Goff Klan': 'the brutal elite of the ork war machine',
-            'Chaos': 'the corrupted servants of the Ruinous Powers',
-            'Imperial': 'servants of the Golden Throne',
+            'Galactic Defense Forces': 'elite protectors of civilized space, armed with advanced technology',
+            'Colonial Guard': 'the steadfast defenders of frontier worlds, equipped with energy weapons',
+            'Military Corps': 'the disciplined ranks of organized warfare',
+            'Industrial Forces': 'specialized units trained for harsh environments',
+            'Tech Guild': 'the engineers and technicians who master advanced systems',
+            'Raider Clans': 'aggressive forces that strike from the outer rim',
+            'Elite Raiders': 'the most feared warriors among the raider clans',
+            'Rogue Factions': 'corrupted forces serving dark purposes',
+            'Alliance Forces': 'servants of the galactic alliance',
             'Unknown': 'warriors of unclear allegiance'
         }
         
-        logger.info("Narrative templates initialized for Warhammer 40k atmosphere")
+        logger.info("Narrative templates initialized for sci-fi atmosphere")
     
     def transcribe_log(self, log_path: str) -> str:
         """
@@ -565,12 +570,32 @@ class ChroniclerAgent:
         participants = []
         faction_info = {}
         
-        # Pattern for character names in parentheses
-        character_pattern = r'(\w+(?:\s+\w+)*)\s*\(([^)]+)\)'
-        matches = re.findall(character_pattern, description)
-        
-        for character_name, agent_id in matches:
-            participants.append(character_name)
+        # PRIORITY 1: Always prefer injected character names over file-based names
+        if self.character_names:
+            # Use injected character names for all events - these are what the user requested
+            participants = list(self.character_names)  # Create copy to avoid modification
+        else:
+            # FALLBACK: Traditional parsing if no injected names available
+            # Pattern for character names in parentheses
+            character_pattern = r'(\w+(?:\s+\w+)*)\s*\(([^)]+)\)'
+            matches = re.findall(character_pattern, description)
+            
+            for character_name, agent_id in matches:
+                participants.append(character_name)
+            
+            # If no participants found in the traditional pattern, try alternative patterns
+            if not participants:
+                # Look for "Test Character" or similar patterns
+                name_patterns = [
+                    r'(?:Agent Registration:|joined).*?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+                    r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+\([^)]+\)\s+joined',
+                ]
+                
+                for pattern in name_patterns:
+                    matches = re.findall(pattern, description, re.IGNORECASE)
+                    if matches:
+                        participants.extend([name.strip() for name in matches if name.strip()])
+                        break
             
         # Pattern for faction information
         faction_pattern = r'\*\*Faction:\*\*\s*([^\\]+)'
@@ -579,7 +604,7 @@ class ChroniclerAgent:
         if faction_match:
             faction_text = faction_match.group(1).strip()
             if participants:
-                faction_info[participants[-1]] = faction_text
+                faction_info[participants[0]] = faction_text  # Use first participant for faction mapping
         
         return participants, faction_info
     
@@ -686,7 +711,7 @@ class ChroniclerAgent:
         Generate narrative prose for a single event using LLM integration.
         
         Creates a contextual prompt for the event and calls the LLM to generate
-        dramatic narrative content in the Warhammer 40k style.
+        dramatic narrative content in the sci-fi style.
         
         Args:
             event: Campaign event to generate narrative for
@@ -722,10 +747,10 @@ class ChroniclerAgent:
         """
         # Base prompt template
         base_prompt = (
-            "You are a Warhammer 40k historian chronicling the events of a great campaign. "
+            "You are a galactic historian chronicling the events of a great campaign. "
             "Write a dramatic, atmospheric narrative describing the following event in the "
-            "grimdark style of the 41st millennium. Use vivid imagery, appropriate faction "
-            "terminology, and maintain the dark, epic tone of Warhammer 40k.\n\n"
+            "epic sci-fi style. Use vivid imagery, appropriate faction "
+            "terminology, and maintain the dramatic, space opera tone.\n\n"
         )
         
         # Add event context
@@ -750,7 +775,7 @@ class ChroniclerAgent:
         style_guidance = (
             "Generate 2-3 sentences of dramatic narrative that captures the essence "
             "of this event. Focus on atmosphere, character motivation, and the weight "
-            "of consequences in the grim darkness of the far future. Use faction-appropriate "
+            "of consequences in the vast cosmos of space. Use faction-appropriate "
             "language and imagery."
         )
         
@@ -800,46 +825,56 @@ class ChroniclerAgent:
     
     def _generate_registration_response(self, prompt: str) -> str:
         """Generate a simulated LLM response for agent registration events."""
+        # Always use injected character names if available - this is what the user requested
+        character_name = "the operative"
+        if self.character_names:
+            character_name = random.choice(self.character_names)
+        
         responses = [
-            "From the shadowed ranks emerged a new warrior, their presence marking another soul bound to the eternal conflict that defines the 41st millennium.",
-            "The muster rolls swelled with another name, another life pledged to the Emperor's service in humanity's darkest hour.",
-            "With the thunder of marching boots and the weight of duty, a new combatant joined the ranks of those who would shape the destiny of worlds.",
+            f"From the stellar forces emerged {character_name}, their presence marking another skilled individual ready for the mission ahead.",
+            f"The roster expanded with {character_name}, another trained professional joining the galactic defense initiative.",
+            f"With determination and expertise, {character_name} stepped forward to face the challenges that would define this operation.",
         ]
         return random.choice(responses)
     
     def _generate_action_response(self, prompt: str) -> str:
         """Generate a simulated LLM response for character action events."""
+        # Always use injected character names if available - this ensures consistency with user requests
+        character_name = "the operative"
+        if self.character_names:
+            character_name = random.choice(self.character_names)
+            
         responses = [
-            "In the crucible of decision, where hesitation meant death and action meant consequence, the warrior chose their path through the darkness.",
-            "The weight of choice pressed down like the gravity of a dying star, yet still they moved forward, driven by purpose and the harsh necessities of war.",
-            "With the certainty of the righteous and the desperation of the damned, they committed to their course, knowing that in the grim darkness of the far future, there is only war.",
+            f"Faced with a critical decision, {character_name} assessed the situation and chose their strategic approach with calculated precision.",
+            f"Drawing upon their training and experience, {character_name} moved forward with purpose, determined to accomplish their mission objectives.",
+            f"With confidence born of expertise and dedication to their cause, {character_name} committed to their chosen course of action in the cosmic theater.",
         ]
         return random.choice(responses)
     
     def _generate_turn_begin_response(self, prompt: str) -> str:
         """Generate a simulated LLM response for turn beginning events."""
         responses = [
-            "Time itself seemed to hold its breath as new possibilities crystallized from the chaos of war, each moment pregnant with the potential for glory or damnation.",
-            "The great wheel of fate turned once more, grinding forward with the inexorable momentum of destiny itself.",
-            "As the shadows lengthened and the Emperor's light grew dim, another chapter in the endless war began to unfold.",
+            "The mission parameters updated as new tactical opportunities emerged from the evolving situation, each moment offering strategic potential.",
+            "Command protocols advanced to the next phase, with systematic coordination guiding the operational momentum forward.",
+            "As conditions shifted across the operational theater, a new phase of the mission commenced with renewed focus.",
         ]
         return random.choice(responses)
     
     def _generate_turn_end_response(self, prompt: str) -> str:
         """Generate a simulated LLM response for turn ending events."""
         responses = [
-            "The echoes of action faded into the eternal silence that follows decision, leaving only consequences to mark the passage of time.",
-            "With the finality of a blade's edge, the moment passed into history, its weight measured not in time but in the price of souls.",
-            "The chapter closed with the weight of finality, yet the war continued, as it always had, as it always would.",
+            "The operational phase concluded with clear outcomes, establishing new baseline conditions for subsequent mission planning.",
+            "Mission objectives were assessed and documented, with tactical results integrated into the ongoing strategic framework.",
+            "The sequence completed successfully, with all teams prepared to advance to the next phase of coordinated operations.",
         ]
         return random.choice(responses)
     
     def _generate_general_response(self, prompt: str) -> str:
         """Generate a simulated LLM response for general events."""
         responses = [
-            "In the grinding machinery of war, even the smallest events carried the weight of destiny upon their shoulders.",
-            "The tapestry of conflict wove itself tighter, each thread a life, each pattern a moment that would echo through eternity.",
-            "Within the vast scope of galactic warfare, individual moments crystallized into something approaching meaning.",
+            "Within the complex operational environment, each development contributed to the evolving strategic landscape.",
+            "The interconnected mission framework adapted dynamically, with individual actions creating meaningful operational outcomes.",
+            "Across the vast theater of galactic operations, coordinated efforts began to shape the direction of ongoing initiatives.",
         ]
         return random.choice(responses)
     
@@ -862,10 +897,20 @@ class ChroniclerAgent:
             narrative += '.'
         
         # Add character names if they were involved but not mentioned
-        if event.participants and not any(name.lower() in narrative.lower() for name in event.participants):
-            # Prepend character context if needed
-            if len(event.participants) == 1:
-                char_name = event.participants[0]
+        if event.participants and not any(name.lower() in narrative.lower() for name in event.participants if name != "Unknown"):
+            # Get valid character name (prefer injected names over "Unknown")
+            char_name = None
+            
+            # First try to use a real participant name (not "Unknown")
+            valid_participants = [name for name in event.participants if name != "Unknown" and name.strip()]
+            if valid_participants:
+                char_name = valid_participants[0]
+            # If no valid participants but we have injected character names, use those
+            elif self.character_names:
+                char_name = random.choice(self.character_names)
+            
+            # Only prepend character context if we have a valid name
+            if char_name:
                 narrative = f"For {char_name}, " + narrative.lower()
         
         return narrative
@@ -882,20 +927,28 @@ class ChroniclerAgent:
         """
         try:
             template_key = event.event_type
-            style_key = 'grimdark_dramatic'
+            style_key = 'sci_fi_dramatic'
             
             if template_key in self.narrative_templates and style_key in self.narrative_templates[template_key]:
                 template = self.narrative_templates[template_key][style_key]
                 
-                # Fill in template variables
+                # PRIORITY 1: Use injected character names (what the user requested)
+                # PRIORITY 2: Use valid participants (not "Unknown")
+                # PRIORITY 3: Generic fallback
+                character_name = 'A warrior'
+                if self.character_names:
+                    character_name = random.choice(self.character_names)
+                elif event.participants and event.participants[0] != 'Unknown':
+                    character_name = event.participants[0]
+                    
                 format_vars = {
-                    'character_name': event.participants[0] if event.participants else 'A warrior',
-                    'faction': list(event.faction_info.values())[0] if event.faction_info else 'unknown forces',
+                    'character_name': character_name,
+                    'faction': list(event.faction_info.values())[0] if event.faction_info else 'galactic forces',
                     'action_type': event.action_details.get('action_type', 'act'),
                     'turn_number': event.turn_number,
-                    'action_description': event.action_details.get('reasoning', 'with purpose unknown'),
+                    'action_description': event.action_details.get('reasoning', 'with strategic purpose'),
                     'character_description': self._get_faction_description(event.faction_info),
-                    'motivation': 'duty and honor',
+                    'motivation': 'duty and excellence',
                 }
                 
                 return template.format(**format_vars)
@@ -903,8 +956,12 @@ class ChroniclerAgent:
         except Exception as e:
             logger.debug(f"Fallback narrative generation failed: {str(e)}")
         
-        # Ultimate fallback
-        return f"In the darkness of the 41st millennium, events transpired that would echo through eternity."
+        # Ultimate fallback with character name if available
+        if self.character_names:
+            character_name = random.choice(self.character_names)
+            return f"In the darkness of space, {character_name} faced challenges that would echo through eternity."
+        else:
+            return f"In the darkness of space, events transpired that would echo through eternity."
     
     def _get_faction_description(self, faction_info: Dict[str, str]) -> str:
         """
@@ -925,7 +982,7 @@ class ChroniclerAgent:
             if faction_key.lower() in faction.lower():
                 return description
         
-        return "a servant of the Emperor's will"
+        return "a servant of the alliance's will"
     
     def _combine_narrative_segments(self, segments: List[NarrativeSegment], log_path: str) -> str:
         """
@@ -1020,24 +1077,34 @@ class ChroniclerAgent:
             all_factions.update(segment.faction_themes)
         
         # Use template system
-        opening_template = self.narrative_templates['opening']['grimdark_dramatic']
+        opening_template = self.narrative_templates['opening']['sci_fi_dramatic']
         
         context_vars = {
-            'location': 'the contested battlefields of the 41st millennium',
+            'location': 'the contested battlefields of the galaxy',
             'campaign_id': os.path.basename(log_path)
         }
         
         opening = opening_template.format(**context_vars)
         
-        # Add character context if we have notable participants
-        if all_characters:
-            character_list = list(all_characters)[:3]  # Limit to top 3
+        # Use directly injected character names if available, otherwise parse from segments
+        character_list = []
+        if self.character_names:
+            character_list = self.character_names[:3]  # Use injected names first
+        elif all_characters:
+            # Remove "Unknown" entries and use actual character names
+            character_list = [char for char in list(all_characters)[:3] if char != "Unknown"]
+        
+        # Add character context based on available names
+        if character_list:
             if len(character_list) == 1:
                 opening += f" The chronicles focus upon {character_list[0]}, whose choices would echo through the void."
             elif len(character_list) == 2:
                 opening += f" The fates of {character_list[0]} and {character_list[1]} intertwined in the crucible of war."
-            else:
+            elif len(character_list) > 2:
                 opening += f" The destinies of {', '.join(character_list[:-1])}, and {character_list[-1]} converged in this tale of conflict."
+        else:
+            # Fallback if no valid character names found
+            opening += f" The chronicles of galactic conflict unfold across the contested regions of space."
         
         return opening
     
@@ -1052,7 +1119,7 @@ class ChroniclerAgent:
         Returns:
             Closing narrative text
         """
-        closing_template = self.narrative_templates['closing']['grimdark_dramatic']
+        closing_template = self.narrative_templates['closing']['sci_fi_dramatic']
         return closing_template
     
     def _generate_empty_narrative(self, log_path: str) -> str:
@@ -1066,13 +1133,13 @@ class ChroniclerAgent:
             Basic narrative for empty logs
         """
         return (
-            "In the grim darkness of the far future, where there is only war, "
+            "In the vast expanse of space, where conflict shapes destiny, "
             "this chronicle records a moment of stillness. Perhaps it was the calm "
             "before the storm, or perhaps it was the silence that follows great "
             "devastation. In the vastness of the galaxy, even silence carries weight.\n\n"
             f"Chronicle source: {os.path.basename(log_path)}\n"
             "Status: No significant events recorded\n\n"
-            "In the Emperor's name, even the absence of war serves the greater purpose."
+            "In the name of peace, even the absence of war serves the greater purpose."
         )
     
     def _generate_error_narrative(self, log_path: str, error_message: str) -> str:
@@ -1087,13 +1154,13 @@ class ChroniclerAgent:
             Error narrative with atmospheric flavor
         """
         return (
-            "In the grim darkness of the far future, some chronicles are lost to "
+            "In the vast expanse of space, some chronicles are lost to "
             "the corrupting touch of chaos, their words scattered like ash on "
             "the solar winds. This record, though damaged, bears witness to "
-            "events that even the Adeptus Administratum could not fully capture.\n\n"
+            "events that even the Central Archives could not fully capture.\n\n"
             f"Chronicle source: {os.path.basename(log_path)}\n"
             f"Corruption detected: {error_message}\n\n"
-            "Even incomplete records serve the Emperor's truth. In darkness, "
+            "Even incomplete records serve the truth. In darkness, "
             "we find light. In fragments, we discover purpose."
         )
     
@@ -1185,12 +1252,12 @@ class ChroniclerAgent:
         Change the narrative style for future transcriptions.
         
         Args:
-            style: New narrative style ('grimdark_dramatic', 'tactical', 'philosophical')
+            style: New narrative style ('sci_fi_dramatic', 'tactical', 'philosophical')
             
         Returns:
             bool: True if style was set successfully, False if style is invalid
         """
-        valid_styles = ['grimdark_dramatic', 'tactical', 'philosophical']
+        valid_styles = ['sci_fi_dramatic', 'tactical', 'philosophical']
         
         if style not in valid_styles:
             logger.warning(f"Invalid narrative style: {style}. Valid styles: {valid_styles}")

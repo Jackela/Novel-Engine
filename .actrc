@@ -1,0 +1,20 @@
+# act configuration file
+# This file configures act for local GitHub Actions testing
+
+# Use medium-sized runner image (includes Node.js and Python)
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Enable verbose output for debugging
+--verbose
+
+# Set default secrets file
+--secret-file .env.local
+
+# Enable artifact server for uploading test results
+--artifact-server-path ./act-artifacts
+
+# Use container architecture matching host
+--container-architecture linux/amd64
+
+# Reuse containers to speed up subsequent runs
+--reuse

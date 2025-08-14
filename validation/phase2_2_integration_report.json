@@ -1,0 +1,148 @@
+{
+  "api_results": {
+    "tests_run": 4,
+    "tests_passed": 3,
+    "test_details": {
+      "health_check": {
+        "status_code": 200,
+        "response_time": 2.050081968307495,
+        "content_length": 110,
+        "passed": true
+      },
+      "system_status": {
+        "status_code": 500,
+        "response_time": 2.055659294128418,
+        "content_length": 73,
+        "passed": false
+      },
+      "character_listing": {
+        "status_code": 200,
+        "response_time": 5.740538835525513,
+        "content_length": 54,
+        "passed": true
+      },
+      "simulation_execution": {
+        "status_code": 200,
+        "response_time": 3.8895037174224854,
+        "content_length": 1549,
+        "passed": true
+      }
+    },
+    "overall_success": false
+  },
+  "workflow_results": {
+    "workflows_tested": 4,
+    "workflows_passed": 3,
+    "workflow_details": {
+      "character_creation_workflow": {
+        "success": true,
+        "execution_time": 0.038594722747802734,
+        "details": {
+          "success": true,
+          "characters_available": 4,
+          "characters_created": 3,
+          "character_ids": [
+            "pilot",
+            "engineer",
+            "scientist"
+          ]
+        }
+      },
+      "story_generation_workflow": {
+        "success": true,
+        "execution_time": 1.8416566848754883,
+        "details": {
+          "success": true,
+          "agents_created": 2,
+          "turns_executed": 1,
+          "story_length": 1392,
+          "story_quality": 1.0,
+          "no_unknown_segments": true
+        }
+      },
+      "error_recovery_workflow": {
+        "success": true,
+        "execution_time": 0.00900411605834961,
+        "details": {
+          "success": true,
+          "error_handling_tests": 2,
+          "graceful_degradation": true
+        }
+      },
+      "concurrent_simulation_workflow": {
+        "success": false,
+        "execution_time": 1.2350001335144043,
+        "details": {
+          "success": false,
+          "concurrent_simulations": 3,
+          "successful_simulations": 2,
+          "success_rate": 0.6666666666666666,
+          "simulation_results": [
+            {
+              "simulation_id": 0,
+              "success": false,
+              "error": "ChroniclerAgent initialization failed: Output directory initialization failed: No write permissions for output directory: demo_narratives"
+            },
+            {
+              "simulation_id": 1,
+              "success": true,
+              "story_length": 1149,
+              "quality_score": 0.7
+            },
+            {
+              "simulation_id": 2,
+              "success": true,
+              "story_length": 1171,
+              "quality_score": 0.7
+            }
+          ]
+        }
+      }
+    },
+    "overall_success": false
+  },
+  "performance_results": {
+    "tests_run": 4,
+    "tests_passed": 3,
+    "performance_metrics": {
+      "api_response_times": {
+        "success": false,
+        "avg_response_time": 2.0531729459762573,
+        "max_response_time": 2.0636281967163086,
+        "endpoints_tested": 3,
+        "summary": "Avg: 2.05s, Max: 2.06s"
+      },
+      "story_generation_speed": {
+        "success": true,
+        "generation_time": 4.821011304855347,
+        "story_length": 2673,
+        "words_per_second": 80.89588995720098,
+        "summary": "Generated 2673 chars in 4.82s"
+      },
+      "concurrent_load_handling": {
+        "success": true,
+        "concurrent_requests": 10,
+        "successful_requests": 10,
+        "success_rate": 1.0,
+        "avg_response_time": 2.043903350830078,
+        "max_response_time": 2.073812246322632,
+        "summary": "100.0% success rate, avg 2.04s"
+      },
+      "memory_usage_stability": {
+        "success": true,
+        "initial_memory_mb": 39.3671875,
+        "final_memory_mb": 39.44921875,
+        "memory_increase_mb": 0.08203125,
+        "cycles_performed": 3,
+        "summary": "Memory increased by 0.1MB over 3 cycles"
+      }
+    },
+    "overall_success": false
+  },
+  "overall_metrics": {
+    "total_tests": 12,
+    "total_passed": 9,
+    "success_rate": 0.75,
+    "overall_success": false
+  }
+}

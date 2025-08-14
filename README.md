@@ -1,6 +1,6 @@
-# Warhammer 40k Multi-Agent Simulator
+# StoryForge AI - Interactive Story Engine
 
-A sophisticated AI-powered narrative simulation system that brings the grimdark universe of Warhammer 40,000 to life through intelligent character agents and dynamic storytelling.
+A sophisticated AI-powered narrative generation system that creates immersive interactive stories through intelligent character agents and dynamic storytelling. Support any fictional universe or original settings.
 
 ## 🌟 Features
 
@@ -18,7 +18,7 @@ A sophisticated AI-powered narrative simulation system that brings the grimdark 
 
 ### Advanced Configuration System
 - **YAML Configuration**: Human-readable `config.yaml` for all simulation parameters
-- **Environment Overrides**: Override any setting using `W40K_*` environment variables
+- **Environment Overrides**: Override any setting using `STORYFORGE_*` environment variables
 - **Thread-Safe Singleton**: Global configuration access with automatic file change detection
 - **Graceful Defaults**: Robust fallback to sensible defaults when configuration is unavailable
 
@@ -26,7 +26,7 @@ A sophisticated AI-powered narrative simulation system that brings the grimdark 
 - **Thread-Safe Operations**: All components designed for concurrent execution
 - **Comprehensive Error Handling**: Graceful degradation and detailed error reporting
 - **Performance Optimized**: Advanced caching, connection pooling, and resource management
-- **Sacred Caching Protocols**: File I/O caching, LLM response caching, and YAML parsing optimization
+- **Advanced Caching Protocols**: File I/O caching, LLM response caching, and YAML parsing optimization
 - **Connection Pooling**: HTTP session reuse with automatic retry strategies for API reliability
 - **Request Compression**: GZip middleware for optimized API response transmission
 - **Extensive Logging**: Debug-friendly logging for development and production monitoring

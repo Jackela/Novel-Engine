@@ -135,7 +135,7 @@ def _get_http_session() -> requests.Session:
         retry_strategy = Retry(
             total=3,
             status_forcelist=[429, 500, 502, 503, 504],
-            method_whitelist=["HEAD", "GET", "POST"],
+            allowed_methods=["HEAD", "GET", "POST"],
             backoff_factor=1
         )
         
@@ -650,7 +650,7 @@ class PersonaAgent:
             character_data.update(simple_format_data)
         
         # 从标题提取角色名称（对于完整模板格式），获取人格机灵的真名...
-        name_match = re.search(r'#\s*Character Sheet:\s*(.+)', content)
+        name_match = re.search(r'#\s*Character (?:Sheet|Profile):\s*(.+)', content)
         if name_match and 'name' not in character_data:
             character_data['name'] = name_match.group(1).strip()
         
@@ -707,10 +707,15 @@ class PersonaAgent:
         
         # 提取要点项目圣物，解析角色身份的各项核心属性...
         patterns = {
+            'name': r'\*\*Name\*\*:\s*(.+)',
             'faction': r'\*\*Faction\*\*:\s*(.+)',
             'rank_role': r'\*\*Rank/Role\*\*:\s*(.+)',
             'age': r'\*\*Age\*\*:\s*(.+)',
             'origin': r'\*\*Origin\*\*:\s*(.+)',
+            'role': r'\*\*Role\*\*:\s*(.+)',
+            'affiliation': r'\*\*Affiliation\*\*:\s*(.+)',
+            'specialization': r'\*\*Specialization\*\*:\s*(.+)',
+            'rank': r'\*\*Rank\*\*:\s*(.+)',
         }
         
         for key, pattern in patterns.items():
@@ -1267,6 +1272,10 @@ class PersonaAgent:
         narrative_actions = self._identify_narrative_actions(situation_assessment)
         available_actions.extend(narrative_actions)
         
+        # 职业专属行动选项 - 基于角色专业的独特能力...
+        profession_actions = self._get_profession_actions()
+        available_actions.extend(profession_actions)
+        
         return available_actions
     
     def _evaluate_action_option(self, action: Dict[str, Any], situation: Dict[str, Any]) -> float:
@@ -1324,6 +1333,9 @@ class PersonaAgent:
             narrative_score = self._evaluate_narrative_action(action, situation)
             score += narrative_score
         
+        # Apply profession-specific bonuses
+        score = self._apply_profession_modifiers(score, action_type)
+        
         # Apply personality modifiers
         score = self._apply_personality_modifiers(score, action_type)
         
@@ -1351,12 +1363,12 @@ class PersonaAgent:
         # Select the highest-scoring action
         best_action, best_score = action_evaluations[0]
         
-        # Only take action if the score is above a threshold
-        # (Character might choose to wait if no good options)
-        action_threshold = 0.3  # Adjustable based on character decisiveness
+        # Determine character-specific action threshold
+        action_threshold = self._get_character_action_threshold()
         
+        # If no actions meet threshold, provide profession-specific default action
         if best_score < action_threshold:
-            return None  # Wait/observe instead
+            return self._get_profession_default_action()
         
         # Create CharacterAction object
         action_type = best_action.get('type', 'observe')
@@ -2664,6 +2676,383 @@ REASONING: As a loyal servant of the Imperium, my duty requires me to engage thr
         
         else:
             return f"{character_name} responds appropriately to the communication."
+    
+    def _identify_narrative_actions(self, situation_assessment: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Identify narrative actions available based on current story context.
+        
+        Returns story-driven actions like investigate, dialogue, diplomacy, and betrayal
+        that are appropriate for the current narrative situation.
+        
+        Args:
+            situation_assessment: Character's assessment of the current situation
+            
+        Returns:
+            List of narrative action dictionaries
+        """
+        narrative_actions = []
+        
+        # Check if character has narrative context
+        if not hasattr(self, 'narrative_state') or not self.narrative_state:
+            return narrative_actions
+        
+        available_story_actions = self.narrative_state.get('available_narrative_actions', [])
+        current_atmosphere = self.narrative_state.get('current_atmosphere', '')
+        
+        # Investigation actions (always available in narrative mode)
+        narrative_actions.extend([
+            {
+                'type': 'investigate',
+                'narrative_type': NarrativeActionType.INVESTIGATE.value,
+                'description': 'Investigate mysterious elements in the environment',
+                'target': 'environmental_clues'
+            },
+            {
+                'type': 'observe_environment',
+                'narrative_type': NarrativeActionType.OBSERVE_ENVIRONMENT.value,
+                'description': 'Carefully observe the surrounding area for story details',
+                'target': 'story_environment'
+            }
+        ])
+        
+        # Dialogue actions (available when there are potential conversation targets)
+        if 'dialogue' in available_story_actions or 'communication' in current_atmosphere.lower():
+            narrative_actions.extend([
+                {
+                    'type': 'dialogue',
+                    'narrative_type': NarrativeActionType.DIALOGUE.value,
+                    'description': 'Engage in conversation to gather information',
+                    'target': 'other_characters'
+                },
+                {
+                    'type': 'communicate_faction',
+                    'narrative_type': NarrativeActionType.COMMUNICATE_FACTION.value,
+                    'description': 'Communicate with faction representatives',
+                    'target': 'faction_contacts'
+                }
+            ])
+        
+        # Diplomacy actions (available to characters with high faction loyalty)
+        character_faction_loyalty = self.character_data.get('decision_weights', {}).get('faction_loyalty', 0.5)
+        if character_faction_loyalty > 0.7:
+            narrative_actions.append({
+                'type': 'diplomacy',
+                'narrative_type': NarrativeActionType.DIPLOMACY.value,
+                'description': 'Attempt diplomatic negotiation or alliance building',
+                'target': 'potential_allies'
+            })
+        
+        # Betrayal actions (dramatic story option, rarely chosen)
+        if 'betrayal' in available_story_actions or random.random() < 0.1:  # 10% chance for dramatic tension
+            narrative_actions.append({
+                'type': 'betrayal',
+                'narrative_type': NarrativeActionType.BETRAYAL.value,
+                'description': 'Betray an established relationship for personal gain',
+                'target': 'trusted_ally'
+            })
+        
+        return narrative_actions
+    
+    def _evaluate_narrative_action(self, action: Dict[str, Any], situation: Dict[str, Any]) -> float:
+        """
+        Evaluate narrative actions based on character personality and story context.
+        
+        Args:
+            action: Narrative action to evaluate
+            situation: Current situation assessment
+            
+        Returns:
+            Float score representing action desirability for narrative purposes
+        """
+        score = 0.0
+        action_type = action.get('type', '')
+        narrative_type = action.get('narrative_type', '')
+        
+        # Base character personality influence
+        personality_traits = self.character_data.get('personality_traits', {})
+        
+        if narrative_type == NarrativeActionType.INVESTIGATE.value:
+            # Cautious characters prefer investigation
+            if personality_traits.get('cautious', 0) > 0.6:
+                score += 0.3
+            # Tech-focused characters like investigation
+            if 'tech' in self.character_data.get('name', '').lower():
+                score += 0.2
+        
+        elif narrative_type == NarrativeActionType.DIALOGUE.value:
+            # Charismatic characters prefer dialogue
+            if personality_traits.get('charismatic', 0) > 0.6:
+                score += 0.3
+            # Social characters like communication
+            if personality_traits.get('social', 0) > 0.5:
+                score += 0.2
+        
+        elif narrative_type == NarrativeActionType.DIPLOMACY.value:
+            # High faction loyalty characters prefer diplomacy
+            faction_loyalty = self.character_data.get('decision_weights', {}).get('faction_loyalty', 0.5)
+            score += faction_loyalty * 0.4
+            # Personal relationships matter for diplomacy
+            personal_relationships = self.character_data.get('decision_weights', {}).get('personal_relationships', 0.5)
+            score += personal_relationships * 0.2
+        
+        elif narrative_type == NarrativeActionType.BETRAYAL.value:
+            # Generally low score unless character has specific traits
+            score -= 0.5  # Base negative score
+            # Selfish or ruthless characters might consider betrayal
+            if personality_traits.get('ruthless', 0) > 0.7:
+                score += 0.4
+            if personality_traits.get('selfish', 0) > 0.7:
+                score += 0.3
+        
+        # Story context influence
+        if hasattr(self, 'narrative_state') and self.narrative_state:
+            current_narrative_prompt = self.narrative_state.get('current_narrative_prompt', '')
+            
+            # Boost actions that align with narrative prompts
+            if action_type.lower() in current_narrative_prompt.lower():
+                score += 0.4
+            
+            # Consider faction-specific prompts
+            faction_prompt = self.narrative_state.get('faction_narrative_prompt', '')
+            if faction_prompt and action_type.lower() in faction_prompt.lower():
+                score += 0.3
+        
+        return max(score, 0.0)  # Ensure non-negative score
+    
+    def _apply_profession_modifiers(self, base_score: float, action_type: str) -> float:
+        """
+        Apply profession-specific scoring modifiers based on character role.
+        
+        Args:
+            base_score: Base action score
+            action_type: Type of action being evaluated
+            
+        Returns:
+            Modified score with profession-specific bonuses/penalties
+        """
+        score = base_score
+        character_role = self.character_data.get('role', '').lower()
+        character_name = self.character_data.get('name', '').lower()
+        character_specialization = self.character_data.get('specialization', '').lower()
+        
+        # Engineer profession bonuses
+        if 'engineer' in character_role or 'engineer' in character_name:
+            if action_type in ['investigate', 'analyze', 'repair', 'construct']:
+                score += 0.3  # Engineers excel at technical tasks
+            elif action_type in ['observe', 'assess']:
+                score += 0.2  # Engineers are analytical
+            elif action_type in ['attack', 'retreat']:
+                score -= 0.1  # Engineers prefer non-combat solutions
+                
+        # Pilot profession bonuses
+        elif 'pilot' in character_role or 'pilot' in character_name:
+            if action_type in ['scout', 'patrol', 'escort', 'maneuver']:
+                score += 0.3  # Pilots excel at mobility and reconnaissance
+            elif action_type in ['attack', 'defend']:
+                score += 0.2  # Pilots are combat-capable
+            elif action_type in ['investigate', 'research']:
+                score -= 0.1  # Pilots prefer action over analysis
+                
+        # Scientist profession bonuses
+        elif 'scientist' in character_role or 'scientist' in character_name or 'research' in character_specialization:
+            if action_type in ['observe_environment', 'investigate', 'analyze', 'research']:
+                score += 0.3  # Scientists excel at observation and analysis
+            elif action_type in ['experiment', 'study', 'document']:
+                score += 0.2  # Scientists are methodical
+            elif action_type in ['attack', 'intimidate']:
+                score -= 0.2  # Scientists prefer peaceful approaches
+        
+        # Specialization-specific bonuses
+        if 'xenobiology' in character_specialization and action_type in ['observe_environment', 'investigate']:
+            score += 0.15  # Xenobiologists love studying environments
+        elif 'systems' in character_specialization and action_type in ['investigate', 'repair']:
+            score += 0.15  # Systems specialists focus on technical analysis
+        elif 'starfighter' in character_specialization and action_type in ['scout', 'attack']:
+            score += 0.15  # Starfighter specialists are combat-oriented
+            
+        return score
+    
+    def _get_profession_actions(self) -> List[Dict[str, Any]]:
+        """
+        Get profession-specific actions that are always available to this character.
+        
+        Returns:
+            List of action dictionaries specific to the character's profession
+        """
+        profession_actions = []
+        character_role = self.character_data.get('role', '').lower()
+        character_name = self.character_data.get('name', '').lower()
+        character_specialization = self.character_data.get('specialization', '').lower()
+        
+        # Engineer profession actions
+        if 'engineer' in character_role or 'engineer' in character_name:
+            profession_actions.extend([
+                {
+                    'type': 'investigate',
+                    'target': 'technical_systems',
+                    'description': 'Analyze technical systems and infrastructure'
+                },
+                {
+                    'type': 'repair',
+                    'target': 'damaged_equipment',
+                    'description': 'Repair or optimize mechanical systems'
+                },
+                {
+                    'type': 'assess',
+                    'target': 'system_integrity',
+                    'description': 'Assess structural and system integrity'
+                }
+            ])
+            
+        # Pilot profession actions
+        elif 'pilot' in character_role or 'pilot' in character_name:
+            profession_actions.extend([
+                {
+                    'type': 'scout',
+                    'target': 'surrounding_area',
+                    'description': 'Scout area for tactical information'
+                },
+                {
+                    'type': 'patrol',
+                    'target': 'perimeter',
+                    'description': 'Patrol to maintain situational awareness'
+                },
+                {
+                    'type': 'maneuver',
+                    'target': 'tactical_position',
+                    'description': 'Take strategic position for advantage'
+                }
+            ])
+            
+        # Scientist profession actions
+        elif 'scientist' in character_role or 'scientist' in character_name or 'research' in character_specialization:
+            profession_actions.extend([
+                {
+                    'type': 'observe_environment',
+                    'target': 'environmental_data',
+                    'description': 'Systematically observe and record environmental phenomena'
+                },
+                {
+                    'type': 'analyze',
+                    'target': 'collected_data',
+                    'description': 'Analyze gathered data for patterns and insights'
+                },
+                {
+                    'type': 'experiment',
+                    'target': 'hypothesis',
+                    'description': 'Conduct scientific tests to verify theories'
+                }
+            ])
+            
+        # Specialization-specific actions
+        if 'xenobiology' in character_specialization:
+            profession_actions.append({
+                'type': 'study_lifeforms',
+                'target': 'alien_specimens',
+                'description': 'Study alien biological specimens'
+            })
+        elif 'systems' in character_specialization:
+            profession_actions.append({
+                'type': 'system_diagnostics',
+                'target': 'complex_systems',
+                'description': 'Run comprehensive system diagnostics'
+            })
+        elif 'starfighter' in character_specialization:
+            profession_actions.append({
+                'type': 'tactical_assessment',
+                'target': 'combat_situation',
+                'description': 'Assess tactical combat possibilities'
+            })
+            
+        return profession_actions
+    
+    def _get_character_action_threshold(self) -> float:
+        """
+        Get character-specific action threshold based on personality and profession.
+        
+        Returns:
+            Float threshold value (lower = more likely to take action)
+        """
+        base_threshold = 0.3
+        
+        # Adjust based on character role/profession
+        character_role = self.character_data.get('role', '').lower()
+        character_name = self.character_data.get('name', '').lower()
+        
+        # Engineers are analytical and cautious
+        if 'engineer' in character_role or 'engineer' in character_name:
+            return base_threshold + 0.1  # More cautious
+        
+        # Pilots are decisive and action-oriented
+        elif 'pilot' in character_role or 'pilot' in character_name:
+            return base_threshold - 0.2  # More decisive
+        
+        # Scientists are methodical but curious
+        elif 'scientist' in character_role or 'scientist' in character_name:
+            return base_threshold - 0.1  # Slightly more decisive
+        
+        # Adjust based on personality traits
+        personality_traits = self.character_data.get('personality_traits', {})
+        if isinstance(personality_traits, dict):
+            # Cautious characters have higher threshold
+            if personality_traits.get('cautious', 0) > 0.7:
+                base_threshold += 0.15
+            # Decisive/brave characters have lower threshold
+            if personality_traits.get('decisive', 0) > 0.7 or personality_traits.get('brave', 0) > 0.7:
+                base_threshold -= 0.15
+        
+        return max(0.1, min(0.5, base_threshold))  # Clamp between 0.1 and 0.5
+    
+    def _get_profession_default_action(self) -> Optional[CharacterAction]:
+        """
+        Get profession-specific default action when no other actions score high enough.
+        
+        Returns:
+            CharacterAction object for profession-appropriate default behavior
+        """
+        character_role = self.character_data.get('role', '').lower()
+        character_name = self.character_data.get('name', '').lower()
+        character_specialization = self.character_data.get('specialization', '').lower()
+        
+        # Engineer default: Analyze systems or investigate technical aspects
+        if 'engineer' in character_role or 'engineer' in character_name:
+            return CharacterAction(
+                action_type='investigate',
+                target='technical_systems',
+                parameters={'focus': 'system_analysis'},
+                priority='medium',
+                reasoning=f"As an engineer, {self.character_data.get('name', 'I')} should analyze the technical aspects of the current situation to identify potential issues or improvements."
+            )
+        
+        # Pilot default: Scout or maintain readiness
+        elif 'pilot' in character_role or 'pilot' in character_name:
+            return CharacterAction(
+                action_type='scout',
+                target='surrounding_area',
+                parameters={'focus': 'tactical_assessment'},
+                priority='medium',
+                reasoning=f"{self.character_data.get('name', 'I')} maintains tactical awareness and scouts the area for potential threats or opportunities, as befits a pilot's training."
+            )
+        
+        # Scientist default: Observe and analyze
+        elif 'scientist' in character_role or 'scientist' in character_name or 'research' in character_specialization:
+            return CharacterAction(
+                action_type='observe_environment',
+                target='environmental_data',
+                parameters={'focus': 'scientific_analysis'},
+                priority='medium',
+                reasoning=f"Dr. {self.character_data.get('name', 'Unknown')} carefully observes the environment to gather scientific data and identify phenomena worthy of further investigation."
+            )
+        
+        # Generic professional default: Assess situation
+        else:
+            return CharacterAction(
+                action_type='assess',
+                target='current_situation',
+                parameters={'focus': 'strategic_analysis'},
+                priority='low',
+                reasoning=f"{self.character_data.get('name', 'I')} takes time to assess the current situation and plan the next course of action."
+            )
 
 
 # Module-level utility functions
@@ -2810,147 +3199,6 @@ def analyze_agent_compatibility(agent1: PersonaAgent, agent2: PersonaAgent) -> D
                 self.narrative_state['faction_narrative_prompt'] = faction_prompt
                 break
     
-    def _identify_narrative_actions(self, situation_assessment: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Identify narrative actions available based on current story context.
-        
-        Returns story-driven actions like investigate, dialogue, diplomacy, and betrayal
-        that are appropriate for the current narrative situation.
-        
-        Args:
-            situation_assessment: Character's assessment of the current situation
-            
-        Returns:
-            List of narrative action dictionaries
-        """
-        narrative_actions = []
-        
-        # Check if character has narrative context
-        if not hasattr(self, 'narrative_state') or not self.narrative_state:
-            return narrative_actions
-        
-        available_story_actions = self.narrative_state.get('available_narrative_actions', [])
-        current_atmosphere = self.narrative_state.get('current_atmosphere', '')
-        
-        # Investigation actions (always available in narrative mode)
-        narrative_actions.extend([
-            {
-                'type': 'investigate',
-                'narrative_type': NarrativeActionType.INVESTIGATE.value,
-                'description': 'Investigate mysterious elements in the environment',
-                'target': 'environmental_clues'
-            },
-            {
-                'type': 'observe_environment',
-                'narrative_type': NarrativeActionType.OBSERVE_ENVIRONMENT.value,
-                'description': 'Carefully observe the surrounding area for story details',
-                'target': 'story_environment'
-            }
-        ])
-        
-        # Dialogue actions (available when there are potential conversation targets)
-        if 'dialogue' in available_story_actions or 'communication' in current_atmosphere.lower():
-            narrative_actions.extend([
-                {
-                    'type': 'dialogue',
-                    'narrative_type': NarrativeActionType.DIALOGUE.value,
-                    'description': 'Engage in conversation to gather information',
-                    'target': 'other_characters'
-                },
-                {
-                    'type': 'communicate_faction',
-                    'narrative_type': NarrativeActionType.COMMUNICATE_FACTION.value,
-                    'description': 'Communicate with faction representatives',
-                    'target': 'faction_contacts'
-                }
-            ])
-        
-        # Diplomacy actions (available to characters with high faction loyalty)
-        character_faction_loyalty = self.character_data.get('decision_weights', {}).get('faction_loyalty', 0.5)
-        if character_faction_loyalty > 0.7:
-            narrative_actions.append({
-                'type': 'diplomacy',
-                'narrative_type': NarrativeActionType.DIPLOMACY.value,
-                'description': 'Attempt diplomatic negotiation or alliance building',
-                'target': 'potential_allies'
-            })
-        
-        # Betrayal actions (dramatic story option, rarely chosen)
-        if 'betrayal' in available_story_actions or random.random() < 0.1:  # 10% chance for dramatic tension
-            narrative_actions.append({
-                'type': 'betrayal',
-                'narrative_type': NarrativeActionType.BETRAYAL.value,
-                'description': 'Betray an established relationship for personal gain',
-                'target': 'trusted_ally'
-            })
-        
-        return narrative_actions
-    
-    def _evaluate_narrative_action(self, action: Dict[str, Any], situation: Dict[str, Any]) -> float:
-        """
-        Evaluate narrative actions based on character personality and story context.
-        
-        Args:
-            action: Narrative action to evaluate
-            situation: Current situation assessment
-            
-        Returns:
-            Float score representing action desirability for narrative purposes
-        """
-        score = 0.0
-        action_type = action.get('type', '')
-        narrative_type = action.get('narrative_type', '')
-        
-        # Base character personality influence
-        personality_traits = self.character_data.get('personality_traits', {})
-        
-        if narrative_type == NarrativeActionType.INVESTIGATE.value:
-            # Cautious characters prefer investigation
-            if personality_traits.get('cautious', 0) > 0.6:
-                score += 0.3
-            # Tech-focused characters like investigation
-            if 'tech' in self.character_data.get('name', '').lower():
-                score += 0.2
-        
-        elif narrative_type == NarrativeActionType.DIALOGUE.value:
-            # Charismatic characters prefer dialogue
-            if personality_traits.get('charismatic', 0) > 0.6:
-                score += 0.3
-            # Social characters like communication
-            if personality_traits.get('social', 0) > 0.5:
-                score += 0.2
-        
-        elif narrative_type == NarrativeActionType.DIPLOMACY.value:
-            # High faction loyalty characters prefer diplomacy
-            faction_loyalty = self.character_data.get('decision_weights', {}).get('faction_loyalty', 0.5)
-            score += faction_loyalty * 0.4
-            # Personal relationships matter for diplomacy
-            personal_relationships = self.character_data.get('decision_weights', {}).get('personal_relationships', 0.5)
-            score += personal_relationships * 0.2
-        
-        elif narrative_type == NarrativeActionType.BETRAYAL.value:
-            # Generally low score unless character has specific traits
-            score -= 0.5  # Base negative score
-            # Selfish or ruthless characters might consider betrayal
-            if personality_traits.get('ruthless', 0) > 0.7:
-                score += 0.4
-            if personality_traits.get('selfish', 0) > 0.7:
-                score += 0.3
-        
-        # Story context influence
-        if hasattr(self, 'narrative_state') and self.narrative_state:
-            current_narrative_prompt = self.narrative_state.get('current_narrative_prompt', '')
-            
-            # Boost actions that align with narrative prompts
-            if action_type.lower() in current_narrative_prompt.lower():
-                score += 0.4
-            
-            # Consider faction-specific prompts
-            faction_prompt = self.narrative_state.get('faction_narrative_prompt', '')
-            if faction_prompt and action_type.lower() in faction_prompt.lower():
-                score += 0.3
-        
-        return max(score, 0.0)  # Ensure non-negative score
 
 
 # Example usage and testing functions (for development purposes)

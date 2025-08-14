@@ -1,0 +1,107 @@
+{
+  "test_summary": {
+    "total_tests": 25,
+    "passed_tests": 21,
+    "failed_tests": 3,
+    "error_tests": 1,
+    "skipped_tests": 3,
+    "success_rate": 84.0
+  },
+  "detailed_results": {
+    "failures": [
+      {
+        "test": "test_character_data_integrity (__main__.TestCharacterFactory.test_character_data_integrity)",
+        "error": "Traceback (most recent call last):\n  File \"E:\\Code\\Novel-Engine\\validation\\comprehensive_phase2_unit_testing_suite.py\", line 69, in test_character_data_integrity\n    self.assertTrue(hasattr(character, 'character_name'))\n    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: False is not true\n"
+      },
+      {
+        "test": "test_create_valid_character (__main__.TestCharacterFactory.test_create_valid_character)",
+        "error": "Traceback (most recent call last):\n  File \"E:\\Code\\Novel-Engine\\validation\\comprehensive_phase2_unit_testing_suite.py\", line 56, in test_create_valid_character\n    self.assertTrue(hasattr(character, 'character_name'))\n    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: False is not true\n"
+      },
+      {
+        "test": "test_register_agent (__main__.TestDirectorAgent.test_register_agent)",
+        "error": "Traceback (most recent call last):\n  File \"E:\\Code\\Novel-Engine\\validation\\comprehensive_phase2_unit_testing_suite.py\", line 164, in test_register_agent\n    self.assertIsNone(result)  # Most registration methods return None\n    ~~~~~~~~~~~~~~~~~^^^^^^^^\nAssertionError: False is not None\n"
+      }
+    ],
+    "errors": [
+      {
+        "test": "test_factory_consistency (__main__.TestCharacterFactory.test_factory_consistency)",
+        "error": "Traceback (most recent call last):\n  File \"E:\\Code\\Novel-Engine\\validation\\comprehensive_phase2_unit_testing_suite.py\", line 80, in test_factory_consistency\n    self.assertEqual(char1.character_name, char2.character_name)\n                     ^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'PersonaAgent' object has no attribute 'character_name'. Did you mean: 'character_data'?\n"
+      }
+    ],
+    "skipped": [
+      {
+        "test": "test_get_config (__main__.TestConfigLoader.test_get_config)",
+        "reason": "Config loading failed - expected in test environment"
+      },
+      {
+        "test": "test_persona_agent_creation (__main__.TestPersonaAgent.test_persona_agent_creation)",
+        "reason": "PersonaAgent creation failed - expected if missing dependencies"
+      },
+      {
+        "test": "test_persona_agent_decision_loop (__main__.TestPersonaAgent.test_persona_agent_decision_loop)",
+        "reason": "PersonaAgent decision loop test failed - expected if missing dependencies"
+      }
+    ]
+  },
+  "test_coverage_estimate": {
+    "source_files": 25,
+    "test_files": 1,
+    "tested_components": [
+      "CharacterFactory",
+      "ChroniclerAgent",
+      "DirectorAgent",
+      "ConfigLoader",
+      "PersonaAgent"
+    ],
+    "untested_components": [
+      "CharacterDetailResponse",
+      "EvaluationReporter",
+      "FileCount",
+      "SeedLoader",
+      "TestMethodFunctionality",
+      "NarrativeActionType",
+      "SimulationResponse",
+      "is",
+      "can",
+      "TestWithFixtures",
+      "CharactersListResponse",
+      "print",
+      "TestCharacterSheetLoading",
+      "for",
+      "TestPersonaAgentInitialization",
+      "CampaignCreationResponse",
+      "HealthResponse",
+      "fixed_lines",
+      "CompleteDemoRunner",
+      "ActionPriority",
+      "CharacterCreationRequest",
+      "CampaignsListResponse",
+      "NarrativeActionResolver",
+      "ErrorResponse",
+      "ThreatLevel",
+      "representing",
+      "ConfigurationError",
+      "and",
+      "CharacterCreationResponse",
+      "TestPersonaAgentImport",
+      "SimulationRequest",
+      "BaselineEvaluator",
+      "exists",
+      "CampaignCreationRequest",
+      "StoryForgeUATester",
+      "from",
+      "class",
+      "NovelEngineRunner",
+      "CampaignBriefLoader"
+    ],
+    "estimated_coverage_percentage": 11.363636363636363
+  },
+  "recommendations": [
+    "HIGH: Test success rate is 84.0% - aim for >95% success rate",
+    "HIGH: Test coverage is only 11.4% - add tests for untested components",
+    "MEDIUM: Add unit tests for untested components: CharacterDetailResponse, EvaluationReporter, FileCount, SeedLoader, TestMethodFunctionality",
+    "HIGH: Fix failing unit tests before proceeding to integration testing",
+    "LOW: Consider adding performance tests for critical components"
+  ],
+  "timestamp": "2025-08-14T00:03:20.207562"
+}

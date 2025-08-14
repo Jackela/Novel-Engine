@@ -1,0 +1,43 @@
+character:
+  name: "Dr. Maya Patel"
+  age: 29
+  origin: "Earth"
+  faction: "Scientific Research Institute"
+  rank: "Senior Researcher"
+  specialization: "Xenobiology"
+
+combat_stats:
+  marksmanship: 4
+  melee: 3
+  tactics: 7
+  leadership: 6
+  endurance: 6
+  pilot: 4
+
+equipment:
+  primary_weapon: "Stun Device"
+  secondary_weapon: "None"
+  armor: "Research Field Gear"
+  special_gear:
+    - "Bio-Scanner"
+    - "Sample Collection Kit"
+    - "Research Tablet"
+
+psychological_profile:
+  loyalty: 8
+  aggression: 2
+  caution: 9
+  morale: 7
+  corruption_resistance: 9
+
+specializations:
+  - "Xenobiology Research"
+  - "Data Analysis"
+  - "Scientific Documentation"
+
+relationships:
+  allies:
+    - "Research Institute"
+  enemies:
+    - "Corporate Interests"
+  mentor: "Professor James Wilson"
