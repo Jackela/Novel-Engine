@@ -28,7 +28,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 # Import the core components
 from director_agent import DirectorAgent
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
 from shared_types import CharacterAction, ActionPriority
 
 

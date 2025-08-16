@@ -23,7 +23,7 @@ import yaml
 import json
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
 from character_factory import CharacterFactory
 from director_agent import DirectorAgent
 

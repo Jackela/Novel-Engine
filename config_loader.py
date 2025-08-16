@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuration Loader for Warhammer 40k Multi-Agent Simulator
-============================================================
+Configuration Loader for the Multi-Agent Simulator.
 
 This module provides centralized configuration loading and management for the
 simulation system. It handles YAML configuration file parsing, validation,
@@ -9,15 +8,12 @@ default value management, and provides thread-safe access to configuration
 values throughout the application.
 
 Key Features:
-- YAML-based configuration with fallback defaults
-- Thread-safe singleton pattern for global configuration access
-- Type hints and validation for configuration values
-- Comprehensive error handling with graceful degradation
-- Environment variable override support
-- Configuration caching for performance
-
-Architecture Reference: Centralized Configuration System
-Development Phase: Configuration Implementation
+- YAML-based configuration with fallback defaults.
+- Thread-safe singleton pattern for global configuration access.
+- Type hints and validation for configuration values.
+- Comprehensive error handling with graceful degradation.
+- Environment variable override support.
+- Configuration caching for performance.
 """
 
 import os

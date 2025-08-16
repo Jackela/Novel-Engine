@@ -43,45 +43,13 @@ jobs:
           pip3 install -r requirements.txt
         fi
         pip3 install pytest pytest-asyncio pytest-cov black flake8 safety bandit
-        pip3 install aiosqlite jinja2 pydantic fastapi uvicorn
+        pip3 install httpx
         echo "✅ Python dependencies installed"
 
-    - name: Create test structure (if needed)
+    - name: Run Backend Tests
       run: |
-        mkdir -p src tests
-        if [ ! -d "src/core" ]; then
-          mkdir -p src/core src/api src/memory
-          echo "✅ Test structure created"
-        fi
-
-    - name: Run basic Python tests
-      run: |
-        # Run existing tests if they exist, otherwise create basic test
-        if [ -f "tests/test_foundation.py" ]; then
-          python3 -m pytest tests/test_foundation.py -v || echo "⚠️ Some tests failed"
-        else
-          echo "🧪 Running basic Python validation..."
-          python3 -c "
-          import sys, sqlite3, json
-          print('✅ Python', sys.version_info)
-          print('✅ Core modules available')
-          
-          # Test basic functionality
-          data = {'test': 'CI pipeline working'}
-          assert data['test'] == 'CI pipeline working'
-          print('✅ Basic functionality test passed')
-          
-          # Test database
-          conn = sqlite3.connect(':memory:')
-          conn.execute('CREATE TABLE test (id INTEGER, data TEXT)')
-          conn.execute('INSERT INTO test VALUES (1, ?)', (json.dumps(data),))
-          result = conn.execute('SELECT data FROM test WHERE id=1').fetchone()
-          assert json.loads(result[0])['test'] == 'CI pipeline working'
-          conn.close()
-          print('✅ Database test passed')
-          print('🎉 All backend tests completed successfully')
-          "
-        fi
+        echo "🐍 Running backend tests..."
+        PYTHONPATH=. python3 -m unittest discover tests
 
     - name: Code quality checks
       run: |

@@ -413,20 +413,18 @@ class PersonaAgent:
     - Provides hooks for future DirectorAgent integration
     """
     
-    def __init__(self, character_directory_path: str, agent_id: Optional[str] = None):
+    def __init__(self, character_directory_path: str, event_bus: 'EventBus', agent_id: Optional[str] = None):
         """
-        Initialize a PersonaAgent with a character directory containing .md files.
-        
+        Initializes a PersonaAgent from a character directory.
+
         Args:
-            character_directory_path: Path to the directory containing markdown character files
-            agent_id: Unique identifier for this agent (optional, derived from directory if not provided)
-            
-        Raises:
-            FileNotFoundError: If character directory doesn't exist
-            ValueError: If character directory format is invalid or no .md files found
+            character_directory_path: Path to the directory containing character files.
+            event_bus: An instance of the EventBus for decoupled communication.
+            agent_id: A unique identifier for this agent.
         """
         self.character_directory_path = character_directory_path
         self.agent_id = agent_id or self._derive_agent_id_from_path(character_directory_path)
+        self.event_bus = event_bus
         
         # 从角色圣表中加载核心角色数据，初始化人格机灵的基础属性...
         self.character_data: Dict[str, Any] = {}
@@ -470,7 +468,15 @@ class PersonaAgent:
         # 通过加载角色数据初始化代理，唤醒沉睡的人格机灵...
         self.load_character_context()
         
-        logger.info(f"PersonaAgent '{self.agent_id}' initialized successfully")
+        self.event_bus.subscribe("TURN_START", self.handle_turn_start)
+        logger.info(f"PersonaAgent '{self.agent_id}' initialized successfully and subscribed to TURN_START")
+
+    def handle_turn_start(self, world_state_update: Dict[str, Any]):
+        """
+        Handles the TURN_START event by making a decision and emitting an action.
+        """
+        action = self._make_decision(world_state_update)
+        self.event_bus.emit("AGENT_ACTION_COMPLETE", agent=self, action=action)
     
     def _derive_agent_id_from_path(self, path: str) -> str:
         """
@@ -1080,9 +1086,9 @@ class PersonaAgent:
         
         logger.info(f"Subjective worldview initialized for {primary_faction} character")
     
-    def decision_loop(self, world_state_update: Dict[str, Any]) -> Optional[CharacterAction]:
+    def _make_decision(self, world_state_update: Dict[str, Any]) -> Optional[CharacterAction]:
         """
-        Core decision-making method that processes world state and returns character action.
+        Core decision-making logic. Processes world state and returns a character action.
         
         This method represents the character's cognitive process of:
         1. Perceiving and interpreting the current world state

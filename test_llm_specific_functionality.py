@@ -11,7 +11,8 @@ import pytest
 import logging
 import os
 from unittest.mock import patch, MagicMock, mock_open
-from persona_agent import PersonaAgent, CharacterAction, ActionPriority
+from src.persona_agent import PersonaAgent
+from shared_types import CharacterAction, ActionPriority
 from character_factory import CharacterFactory
 
 class TestLLMIntegrationFunctionality:
