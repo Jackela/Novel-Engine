@@ -124,7 +124,7 @@ function ApiKeySetup({ onConfigured, allowSkip = true }) {
   /**
    * Handle paste event for better UX
    */
-  const handlePaste = (e) => {
+  const handlePaste = (_e) => {
     // Clear any existing errors when user pastes
     if (error) {
       setError('');

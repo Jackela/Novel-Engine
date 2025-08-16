@@ -157,7 +157,7 @@ function ProgressTracker({
 function CircularProgressTracker({ 
   steps, 
   currentStep, 
-  completedSteps, 
+  completedSteps: _completedSteps, 
   progressPercentage, 
   size, 
   theme, 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import WizardStep from './WizardStep';
 import WizardNavigation, { useWizardNavigation } from './WizardNavigation';
 import ProgressTracker from './ProgressTracker';
@@ -51,7 +51,7 @@ function OnboardingWizard({
   const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(8); // minutes
 
   // Step definitions
-  const steps = [
+  const steps = useMemo(() => [
     {
       id: 'welcome',
       title: 'Welcome to StoryForge AI',
@@ -87,7 +87,7 @@ function OnboardingWizard({
       icon: '🎉',
       estimatedTime: '30 seconds'
     }
-  ];
+  ], []);
 
   // Initialize onboarding
   useEffect(() => {
@@ -115,7 +115,7 @@ function OnboardingWizard({
     };
 
     initializeOnboarding();
-  }, [startHealthMonitoring]);
+  }, [startHealthMonitoring, updateTimeEstimate]);
 
   // Update time estimate based on current step
   const updateTimeEstimate = useCallback(() => {
@@ -341,7 +341,7 @@ function OnboardingWizard({
 /**
  * Welcome Step Component
  */
-function WelcomeStep({ onContinue }) {
+function WelcomeStep({ onContinue: _onContinue }) {
   return (
     <div className="welcome-step">
       <div className="welcome-hero">
@@ -398,7 +398,7 @@ function EnvironmentStep({ validationData, onValidate, onValidationComplete }) {
     if (!validationData) {
       handleValidation();
     }
-  }, []);
+  }, [handleValidation, validationData]);
 
   if (isValidating) {
     return (
@@ -533,7 +533,7 @@ function ConfigurationStep({ portConfig, isDetecting, onDetectConfig, onConfigur
 /**
  * Demo Step Component
  */
-function DemoStep({ apiUrl, hasApiKey, onStoryGenerated }) {
+function DemoStep({ apiUrl: _apiUrl, hasApiKey, onStoryGenerated }) {
   const [selectedStory, setSelectedStory] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedStory, setGeneratedStory] = useState(null);
