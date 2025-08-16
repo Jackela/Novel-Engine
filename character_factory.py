@@ -20,9 +20,10 @@ Usage:
 import os
 import logging
 from typing import Optional
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
+from src.event_bus import EventBus
 
-# 配置记录仪式，追踪角色创造工厂的神圣操作...
+# Configure logging
 logger = logging.getLogger(__name__)
 
 
@@ -40,17 +41,17 @@ class CharacterFactory:
     character data.
     """
     
-    def __init__(self, base_character_path: str = "characters"):
+    def __init__(self, event_bus: EventBus, base_character_path: str = "characters"):
         """
         Initialize the CharacterFactory.
         
         Args:
+            event_bus: An instance of the EventBus for decoupled communication.
             base_character_path: Base path where character directories are stored.
                                 Defaults to 'characters' for standard project layout.
         """
-        # 将相对路径转换为绝对路径，应对工作目录变化的闪乱干扰...
+        self.event_bus = event_bus
         if not os.path.isabs(base_character_path):
-            # 通过寻找标记文件定位项目根目录，识别神圣机械领域的中心...
             current_dir = os.path.abspath(os.getcwd())
             project_root = self._find_project_root(current_dir)
             self.base_character_path = os.path.join(project_root, base_character_path)
@@ -108,17 +109,15 @@ class CharacterFactory:
             ValueError: If character_name is empty or invalid
             
         Example:
-            factory = CharacterFactory()
+            factory = CharacterFactory(event_bus)
             krieg = factory.create_character('krieg')
             ork = factory.create_character('ork', agent_id='ork_warboss_1')
         """
         if not character_name or not character_name.strip():
             raise ValueError("Character name cannot be empty or None")
         
-        # 构建角色目录路径，定位英雄数据的神圣存储位置...
         character_directory = os.path.join(self.base_character_path, character_name.strip())
         
-        # 检查角色目录是否存在，验证英雄数据的物理存在...
         if not os.path.exists(character_directory):
             raise FileNotFoundError(
                 f"Character directory not found: {character_directory}. "
@@ -132,9 +131,8 @@ class CharacterFactory:
         
         logger.info(f"Creating PersonaAgent for character '{character_name}' from {character_directory}")
         
-        # 初始化并返回PersonaAgent实例，唤醒人格机灵的神圣意识...
         try:
-            persona_agent = PersonaAgent(character_directory, agent_id=agent_id)
+            persona_agent = PersonaAgent(character_directory, self.event_bus, agent_id=agent_id)
             logger.info(f"Successfully created PersonaAgent for '{character_name}' with ID: {persona_agent.agent_id}")
             return persona_agent
         except Exception as e:

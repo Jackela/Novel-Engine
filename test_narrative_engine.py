@@ -29,7 +29,8 @@ from unittest.mock import Mock, patch, MagicMock
 
 # Import the narrative engine components
 from director_agent import DirectorAgent
-from persona_agent import PersonaAgent, CharacterAction, ActionPriority
+from src.persona_agent import PersonaAgent
+from shared_types import CharacterAction, ActionPriority
 from campaign_brief import CampaignBrief, CampaignBriefLoader, NarrativeEvent
 from narrative_actions import NarrativeActionType, NarrativeActionResolver, NarrativeOutcome
 

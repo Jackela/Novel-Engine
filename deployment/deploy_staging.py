@@ -91,7 +91,13 @@ class StagingDeployment:
 import sys
 sys.path.append(".")
 from director_agent import DirectorAgent
-from persona_agent import PersonaAgent
+import sys
+import os
+
+# Add project root to path to allow imports from src
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from src.persona_agent import PersonaAgent
 from src.caching import StateHasher, SemanticCache, TokenBudgetManager
 from src.shared_types import CharacterData, WorldState, ProposedAction
 from api_server import app

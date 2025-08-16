@@ -3,7 +3,7 @@
 Test script to validate memory logging functionality
 """
 
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
 from character_factory import CharacterFactory
 import os
 

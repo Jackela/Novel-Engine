@@ -31,7 +31,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # Import system components
 from api_server import app
 from director_agent import DirectorAgent
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
 from chronicler_agent import ChroniclerAgent
 from character_factory import CharacterFactory
 

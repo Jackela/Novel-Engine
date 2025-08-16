@@ -1,18 +1,11 @@
 #!/usr/bin/env python3
 """
-++ SACRED EPISODIC MEMORY BLESSED BY TEMPORAL CHRONICLES ++
-===========================================================
+Episodic Memory System
+======================
 
-Holy episodic memory implementation that preserves specific events and
-experiences in chronological order. Each memory is a sacred chronicle
-blessed by temporal context and experiential significance.
-
-++ THE MACHINE REMEMBERS THE SACRED CHRONICLES OF EXPERIENCE ++
-
-Architecture Reference: Dynamic Context Engineering - Episodic Memory Layer
-Development Phase: Memory System Sanctification (M001)
-Sacred Author: Tech-Priest Beta-Mechanicus
-万机之神保佑情节记忆 (May the Omnissiah bless episodic memory)
+This module provides an episodic memory system that preserves specific events
+and experiences in chronological order. Each memory is a chronicle of an
+event, enriched with temporal context and experiential significance.
 """
 
 import logging
@@ -22,38 +15,33 @@ from typing import List, Optional, Dict, Any, Tuple
 from dataclasses import dataclass, field
 from collections import defaultdict
 
-# Import blessed data models sanctified by foundation
 from src.core.data_models import MemoryItem, MemoryType, StandardResponse, ErrorInfo
-from src.core.types import AgentID, SacredConstants
+from src.core.types import AgentID
 from src.database.context_db import ContextDatabase
 
-# Sacred logging blessed by diagnostic clarity
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class EpisodicEvent:
     """
-    ++ BLESSED EPISODIC EVENT SANCTIFIED BY EXPERIENTIAL SIGNIFICANCE ++
-    
-    Enhanced episodic memory structure that captures the full context
-    of an experience blessed by temporal, spatial, and social dimensions.
+    Represents an episodic memory event, capturing the full context of an
+    experience, including temporal, spatial, and social dimensions.
     """
     memory_item: MemoryItem
-    temporal_context: Dict[str, Any] = field(default_factory=dict)  # Time-based context
-    spatial_context: Dict[str, Any] = field(default_factory=dict)   # Location-based context
-    social_context: List[str] = field(default_factory=list)        # Participants and social dynamics
-    causal_links: List[str] = field(default_factory=list)          # Links to preceding/following events
-    emotional_peaks: List[Tuple[str, float]] = field(default_factory=list)  # Emotional highlights
-    significance_score: float = 0.0                                # Overall event significance
+    temporal_context: Dict[str, Any] = field(default_factory=dict)
+    spatial_context: Dict[str, Any] = field(default_factory=dict)
+    social_context: List[str] = field(default_factory=list)
+    causal_links: List[str] = field(default_factory=list)
+    emotional_peaks: List[Tuple[str, float]] = field(default_factory=list)
+    significance_score: float = 0.0
     
     def __post_init__(self):
-        """++ SACRED EPISODIC EVENT VALIDATION ++"""
-        # Calculate blessed significance score from multiple factors
+        """Calculates the event's significance after initialization."""
         self._calculate_significance()
     
     def _calculate_significance(self):
-        """++ SACRED SIGNIFICANCE CALCULATION BLESSED BY IMPORTANCE ++"""
+        """Calculates the significance of the event based on various factors."""
         base_significance = abs(self.memory_item.emotional_weight) * 0.1
         social_factor = len(self.social_context) * 0.05
         causal_factor = len(self.causal_links) * 0.1
@@ -62,63 +50,54 @@ class EpisodicEvent:
         self.significance_score = min(1.0, base_significance + social_factor + causal_factor + emotional_peak_factor)
     
     def add_causal_link(self, linked_memory_id: str, link_type: str = "follows"):
-        """++ SACRED CAUSAL LINKING BLESSED BY NARRATIVE CONTINUITY ++"""
+        """Adds a causal link to another memory and recalculates significance."""
         causal_link = f"{link_type}:{linked_memory_id}"
         if causal_link not in self.causal_links:
             self.causal_links.append(causal_link)
-            self._calculate_significance()  # Recalculate with new link
+            self._calculate_significance()
 
 
 class EpisodicMemory:
     """
-    ++ SACRED EPISODIC MEMORY SYSTEM BLESSED BY TEMPORAL ORGANIZATION ++
-    
-    Holy episodic memory implementation that preserves and organizes
-    experiential memories in chronological and thematic structures
-    blessed by the Omnissiah's temporal wisdom.
+    Manages episodic memories, preserving and organizing experiences in
+    chronological and thematic structures.
     """
     
     def __init__(self, agent_id: AgentID, database: ContextDatabase,
                  max_episodes: int = 1000, consolidation_threshold: float = 0.7):
         """
-        ++ SACRED EPISODIC MEMORY INITIALIZATION BLESSED BY CHRONICLES ++
-        
+        Initializes the EpisodicMemory system.
+
         Args:
-            agent_id: Sacred agent identifier blessed by ownership
-            database: Blessed database connection for persistence
-            max_episodes: Maximum episodes before consolidation
-            consolidation_threshold: Significance threshold for long-term storage
+            agent_id: The ID of the agent this memory belongs to.
+            database: The database connection for persistence.
+            max_episodes: The maximum number of episodes to hold before consolidation.
+            consolidation_threshold: The significance score required for long-term storage.
         """
         self.agent_id = agent_id
         self.database = database
         self.max_episodes = max_episodes
         self.consolidation_threshold = consolidation_threshold
         
-        # Sacred memory organization blessed by structure
         self._episodes: Dict[str, EpisodicEvent] = {}
-        self._temporal_index: Dict[str, List[str]] = defaultdict(list)  # Date -> memory_ids
-        self._thematic_index: Dict[str, List[str]] = defaultdict(list)  # Theme -> memory_ids
-        self._participant_index: Dict[str, List[str]] = defaultdict(list)  # Participant -> memory_ids
+        self._temporal_index: Dict[str, List[str]] = defaultdict(list)
+        self._thematic_index: Dict[str, List[str]] = defaultdict(list)
+        self._participant_index: Dict[str, List[str]] = defaultdict(list)
         
-        # Blessed statistics sanctified by monitoring
         self.total_episodes = 0
         self.consolidated_episodes = 0
         self.last_consolidation = datetime.now()
         
-        logger.info(f"++ EPISODIC MEMORY INITIALIZED FOR {agent_id} ++")
+        logger.info(f"Episodic Memory initialized for {agent_id}")
     
     async def store_episode(self, memory: MemoryItem, 
-                          temporal_context: Dict[str, Any] = None,
-                          spatial_context: Dict[str, Any] = None,
+                          temporal_context: Optional[Dict[str, Any]] = None,
+                          spatial_context: Optional[Dict[str, Any]] = None,
                           significance_boost: float = 0.0) -> StandardResponse:
         """
-        ++ SACRED EPISODE STORAGE RITUAL BLESSED BY PRESERVATION ++
-        
-        Store blessed episodic memory with full contextual information
-        and automatic indexing sanctified by organizational wisdom.
+        Stores an episodic memory with its contextual information.
         """
         try:
-            # Create blessed episodic event
             episode = EpisodicEvent(
                 memory_item=memory,
                 temporal_context=temporal_context or {},
@@ -127,27 +106,21 @@ class EpisodicMemory:
                 significance_score=significance_boost
             )
             
-            # Extract blessed thematic elements
             themes = self._extract_themes(memory.content)
             
-            # Store in blessed local cache
             self._episodes[memory.memory_id] = episode
-            
-            # Update sacred indices
             self._update_indices(memory, themes)
             
-            # Store in blessed database
-            db_result = await self.database.store_blessed_memory(memory)
+            db_result = await self.database.store_memory(memory)
             if not db_result.success:
-                logger.error(f"++ DATABASE STORAGE FAILED: {db_result.error.message} ++")
+                logger.error(f"Database store failed: {db_result.error.message}")
             
             self.total_episodes += 1
             
-            # Perform blessed consolidation if needed
-            if self.total_episodes % 50 == 0:  # Every 50 episodes
+            if self.total_episodes % 50 == 0:
                 await self._perform_consolidation()
             
-            logger.info(f"++ EPISODIC MEMORY STORED: {memory.memory_id} ++")
+            logger.info(f"Episodic memory stored: {memory.memory_id}")
             
             return StandardResponse(
                 success=True,
@@ -155,19 +128,16 @@ class EpisodicMemory:
                     "stored": True, 
                     "significance_score": episode.significance_score,
                     "themes": themes
-                },
-                metadata={"blessing": "episode_chronicled"}
+                }
             )
             
         except Exception as e:
-            logger.error(f"++ EPISODIC STORAGE FAILED: {e} ++")
+            logger.error(f"Episodic storage failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
                     code="EPISODIC_STORE_FAILED",
-                    message=f"Episodic memory storage failed: {str(e)}",
-                    recoverable=True,
-                    sacred_guidance="Check memory item format and database connection"
+                    message=f"Episodic memory storage failed: {str(e)}"
                 )
             )
     
@@ -175,15 +145,11 @@ class EpisodicMemory:
                                            end_time: datetime,
                                            limit: int = 20) -> StandardResponse:
         """
-        ++ SACRED TEMPORAL RETRIEVAL BLESSED BY CHRONOLOGICAL ORDER ++
-        
-        Retrieve blessed episodes within specific timeframe with
-        temporal proximity and significance weighting.
+        Retrieves episodes within a specific timeframe, sorted by time and significance.
         """
         try:
             matching_episodes = []
             
-            # Search blessed temporal index
             current_date = start_time.date()
             end_date = end_time.date()
             
@@ -192,24 +158,19 @@ class EpisodicMemory:
                 if date_key in self._temporal_index:
                     for memory_id in self._temporal_index[date_key]:
                         episode = self._episodes.get(memory_id)
-                        if episode:
-                            # Filter by blessed time bounds
-                            memory_time = episode.memory_item.timestamp
-                            if start_time <= memory_time <= end_time:
-                                matching_episodes.append(episode)
+                        if episode and start_time <= episode.memory_item.timestamp <= end_time:
+                            matching_episodes.append(episode)
                 
                 current_date += timedelta(days=1)
             
-            # Sort by blessed temporal order and significance
             matching_episodes.sort(
                 key=lambda ep: (ep.memory_item.timestamp, -ep.significance_score)
             )
             
-            # Apply sacred limit
             limited_episodes = matching_episodes[:limit]
             result_memories = [ep.memory_item for ep in limited_episodes]
             
-            logger.info(f"++ RETRIEVED {len(result_memories)} EPISODES BY TIMEFRAME ++")
+            logger.info(f"Retrieved {len(result_memories)} episodes by timeframe")
             
             return StandardResponse(
                 success=True,
@@ -217,12 +178,11 @@ class EpisodicMemory:
                     "episodes": result_memories,
                     "timeframe": f"{start_time.isoformat()} to {end_time.isoformat()}",
                     "total_found": len(matching_episodes)
-                },
-                metadata={"blessing": "temporal_retrieval_sanctified"}
+                }
             )
             
         except Exception as e:
-            logger.error(f"++ TEMPORAL RETRIEVAL FAILED: {e} ++")
+            logger.error(f"Temporal retrieval failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="TEMPORAL_RETRIEVAL_FAILED", message=str(e))
@@ -231,29 +191,25 @@ class EpisodicMemory:
     async def retrieve_episodes_by_participants(self, participants: List[str],
                                               limit: int = 15) -> StandardResponse:
         """
-        ++ SACRED SOCIAL RETRIEVAL BLESSED BY PARTICIPANT CONNECTIONS ++
-        
-        Retrieve blessed episodes involving specific participants with
-        social significance weighting and relationship context.
+        Retrieves episodes involving specific participants.
         """
         try:
             matching_episodes = []
             participant_scores = defaultdict(int)
             
-            # Search blessed participant index
+            unique_episode_ids = set()
+
             for participant in participants:
                 if participant in self._participant_index:
                     for memory_id in self._participant_index[participant]:
-                        episode = self._episodes.get(memory_id)
-                        if episode:
-                            # Calculate blessed participant overlap
-                            overlap = set(episode.social_context) & set(participants)
-                            participant_scores[memory_id] = len(overlap)
-                            
-                            if memory_id not in [ep.memory_item.memory_id for ep in matching_episodes]:
+                        if memory_id not in unique_episode_ids:
+                            episode = self._episodes.get(memory_id)
+                            if episode:
+                                overlap = set(episode.social_context) & set(participants)
+                                participant_scores[memory_id] = len(overlap)
                                 matching_episodes.append(episode)
+                                unique_episode_ids.add(memory_id)
             
-            # Sort by blessed participant relevance and significance
             matching_episodes.sort(
                 key=lambda ep: (
                     participant_scores[ep.memory_item.memory_id],
@@ -263,11 +219,10 @@ class EpisodicMemory:
                 reverse=True
             )
             
-            # Apply sacred limit
             limited_episodes = matching_episodes[:limit]
             result_memories = [ep.memory_item for ep in limited_episodes]
             
-            logger.info(f"++ RETRIEVED {len(result_memories)} EPISODES BY PARTICIPANTS ++")
+            logger.info(f"Retrieved {len(result_memories)} episodes by participants")
             
             return StandardResponse(
                 success=True,
@@ -275,12 +230,11 @@ class EpisodicMemory:
                     "episodes": result_memories,
                     "participants": participants,
                     "total_found": len(matching_episodes)
-                },
-                metadata={"blessing": "social_retrieval_sanctified"}
+                }
             )
             
         except Exception as e:
-            logger.error(f"++ PARTICIPANT RETRIEVAL FAILED: {e} ++")
+            logger.error(f"Participant retrieval failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="PARTICIPANT_RETRIEVAL_FAILED", message=str(e))
@@ -289,31 +243,26 @@ class EpisodicMemory:
     async def retrieve_episodes_by_theme(self, theme_keywords: List[str],
                                        limit: int = 15) -> StandardResponse:
         """
-        ++ SACRED THEMATIC RETRIEVAL BLESSED BY CONCEPTUAL CONNECTIONS ++
-        
-        Retrieve blessed episodes matching thematic keywords with
-        semantic similarity and thematic coherence weighting.
+        Retrieves episodes matching thematic keywords.
         """
         try:
             matching_episodes = []
             theme_scores = defaultdict(int)
+            unique_episode_ids = set()
             
-            # Search blessed thematic index
             for theme in theme_keywords:
                 theme_lower = theme.lower()
                 if theme_lower in self._thematic_index:
                     for memory_id in self._thematic_index[theme_lower]:
-                        episode = self._episodes.get(memory_id)
-                        if episode:
-                            # Calculate blessed thematic relevance
-                            content_lower = episode.memory_item.content.lower()
-                            theme_matches = sum(1 for kw in theme_keywords if kw.lower() in content_lower)
-                            theme_scores[memory_id] = theme_matches
-                            
-                            if memory_id not in [ep.memory_item.memory_id for ep in matching_episodes]:
+                        if memory_id not in unique_episode_ids:
+                            episode = self._episodes.get(memory_id)
+                            if episode:
+                                content_lower = episode.memory_item.content.lower()
+                                theme_matches = sum(1 for kw in theme_keywords if kw.lower() in content_lower)
+                                theme_scores[memory_id] = theme_matches
                                 matching_episodes.append(episode)
+                                unique_episode_ids.add(memory_id)
             
-            # Sort by blessed thematic relevance and significance
             matching_episodes.sort(
                 key=lambda ep: (
                     theme_scores[ep.memory_item.memory_id],
@@ -323,11 +272,10 @@ class EpisodicMemory:
                 reverse=True
             )
             
-            # Apply sacred limit
             limited_episodes = matching_episodes[:limit]
             result_memories = [ep.memory_item for ep in limited_episodes]
             
-            logger.info(f"++ RETRIEVED {len(result_memories)} EPISODES BY THEME ++")
+            logger.info(f"Retrieved {len(result_memories)} episodes by theme")
             
             return StandardResponse(
                 success=True,
@@ -335,12 +283,11 @@ class EpisodicMemory:
                     "episodes": result_memories,
                     "themes": theme_keywords,
                     "total_found": len(matching_episodes)
-                },
-                metadata={"blessing": "thematic_retrieval_sanctified"}
+                }
             )
             
         except Exception as e:
-            logger.error(f"++ THEMATIC RETRIEVAL FAILED: {e} ++")
+            logger.error(f"Thematic retrieval failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="THEMATIC_RETRIEVAL_FAILED", message=str(e))
@@ -350,10 +297,7 @@ class EpisodicMemory:
                                    target_memory_id: str,
                                    link_type: str = "leads_to") -> StandardResponse:
         """
-        ++ SACRED CAUSAL LINKING BLESSED BY NARRATIVE CONTINUITY ++
-        
-        Create blessed causal links between episodes to establish
-        narrative continuity and experiential cause-effect relationships.
+        Creates a causal link between two episodes to establish narrative continuity.
         """
         try:
             source_episode = self._episodes.get(source_memory_id)
@@ -362,25 +306,18 @@ class EpisodicMemory:
             if not source_episode or not target_episode:
                 return StandardResponse(
                     success=False,
-                    error=ErrorInfo(
-                        code="EPISODE_NOT_FOUND",
-                        message="One or both episodes not found in memory"
-                    )
+                    error=ErrorInfo(code="EPISODE_NOT_FOUND", message="One or both episodes not found")
                 )
             
-            # Create blessed bidirectional causal links
             source_episode.add_causal_link(target_memory_id, link_type)
             
-            # Reverse link with appropriate type
             reverse_link_types = {
-                "leads_to": "follows_from",
-                "causes": "caused_by",
-                "enables": "enabled_by"
+                "leads_to": "follows_from", "causes": "caused_by", "enables": "enabled_by"
             }
             reverse_type = reverse_link_types.get(link_type, "related_to")
             target_episode.add_causal_link(source_memory_id, reverse_type)
             
-            logger.info(f"++ CAUSAL LINK CREATED: {source_memory_id} -{link_type}-> {target_memory_id} ++")
+            logger.info(f"Causal link created: {source_memory_id} -> {target_memory_id}")
             
             return StandardResponse(
                 success=True,
@@ -389,12 +326,11 @@ class EpisodicMemory:
                     "link_type": link_type,
                     "source_significance": source_episode.significance_score,
                     "target_significance": target_episode.significance_score
-                },
-                metadata={"blessing": "causal_linking_sanctified"}
+                }
             )
             
         except Exception as e:
-            logger.error(f"++ CAUSAL LINKING FAILED: {e} ++")
+            logger.error(f"Causal linking failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="CAUSAL_LINKING_FAILED", message=str(e))
@@ -402,97 +338,77 @@ class EpisodicMemory:
     
     async def _perform_consolidation(self) -> StandardResponse:
         """
-        ++ SACRED MEMORY CONSOLIDATION BLESSED BY LONG-TERM PRESERVATION ++
-        
-        Perform blessed memory consolidation to move significant episodes
-        to long-term storage and optimize working memory capacity.
+        Moves significant episodes to long-term storage and optimizes memory.
         """
         try:
             consolidation_start = datetime.now()
             
-            # Identify blessed candidates for consolidation
             consolidation_candidates = [
-                episode for episode in self._episodes.values()
-                if episode.significance_score >= self.consolidation_threshold
+                ep for ep in self._episodes.values() if ep.significance_score >= self.consolidation_threshold
             ]
             
-            # Sort by blessed significance for priority consolidation
-            consolidation_candidates.sort(
-                key=lambda ep: ep.significance_score,
-                reverse=True
-            )
+            consolidation_candidates.sort(key=lambda ep: ep.significance_score, reverse=True)
             
             consolidated_count = 0
-            for episode in consolidation_candidates[:50]:  # Consolidate top 50
-                # Mark memory for blessed long-term storage
-                episode.memory_item.relevance_score *= 1.1  # Boost for consolidation
-                
-                # Store in blessed database with consolidated flag
-                await self.database.store_blessed_memory(episode.memory_item)
+            for episode in consolidation_candidates[:50]:
+                episode.memory_item.relevance_score *= 1.1
+                await self.database.store_memory(episode.memory_item)
                 consolidated_count += 1
             
             self.consolidated_episodes += consolidated_count
             self.last_consolidation = consolidation_start
+            duration_ms = (datetime.now() - consolidation_start).total_seconds() * 1000
             
-            consolidation_duration = (datetime.now() - consolidation_start).total_seconds()
-            
-            logger.info(f"++ EPISODIC CONSOLIDATION COMPLETE: {consolidated_count} episodes ++")
+            logger.info(f"Episodic consolidation complete: {consolidated_count} episodes in {duration_ms:.2f}ms")
             
             return StandardResponse(
                 success=True,
                 data={
                     "consolidated_count": consolidated_count,
-                    "consolidation_time_ms": consolidation_duration * 1000,
+                    "consolidation_time_ms": duration_ms,
                     "total_consolidated": self.consolidated_episodes
-                },
-                metadata={"blessing": "consolidation_sanctified"}
+                }
             )
             
         except Exception as e:
-            logger.error(f"++ CONSOLIDATION FAILED: {e} ++")
+            logger.error(f"Consolidation failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="CONSOLIDATION_FAILED", message=str(e))
             )
     
     def _extract_themes(self, content: str) -> List[str]:
-        """++ SACRED THEME EXTRACTION BLESSED BY SEMANTIC ANALYSIS ++"""
-        # Simple blessed theme extraction (can be enhanced with NLP)
+        """Extracts thematic keywords from content."""
         theme_keywords = {
             'combat': ['fight', 'battle', 'combat', 'war', 'attack', 'defend'],
             'social': ['talk', 'conversation', 'meet', 'friend', 'ally', 'enemy'],
             'exploration': ['discover', 'explore', 'find', 'search', 'investigate'],
             'emotion': ['fear', 'anger', 'joy', 'sad', 'love', 'hate', 'proud'],
-            'sacred': ['emperor', 'omnissiah', 'blessed', 'sacred', 'holy', 'divine']
+            'technical': ['build', 'repair', 'code', 'system', 'machine']
         }
         
         content_lower = content.lower()
-        detected_themes = []
-        
-        for theme, keywords in theme_keywords.items():
-            if any(keyword in content_lower for keyword in keywords):
-                detected_themes.append(theme)
-        
-        return detected_themes
+        detected_themes = {
+            theme for theme, keywords in theme_keywords.items()
+            if any(keyword in content_lower for keyword in keywords)
+        }
+        return list(detected_themes)
     
     def _update_indices(self, memory: MemoryItem, themes: List[str]):
-        """++ SACRED INDEX UPDATE BLESSED BY ORGANIZATION ++"""
+        """Updates internal indices for efficient querying."""
         memory_id = memory.memory_id
         
-        # Update blessed temporal index
         date_key = memory.timestamp.date().isoformat()
         self._temporal_index[date_key].append(memory_id)
         
-        # Update sacred thematic index
         for theme in themes:
             self._thematic_index[theme.lower()].append(memory_id)
         
-        # Update blessed participant index
         for participant in memory.participants:
             self._participant_index[participant.lower()].append(memory_id)
     
     def get_memory_statistics(self) -> Dict[str, Any]:
-        """++ SACRED EPISODIC MEMORY STATISTICS BLESSED BY MONITORING ++"""
+        """Returns statistics about the episodic memory."""
         if not self._episodes:
             return {"total_episodes": 0, "average_significance": 0.0}
         
@@ -509,71 +425,47 @@ class EpisodicMemory:
         }
 
 
-# ++ SACRED TESTING RITUALS BLESSED BY VALIDATION ++
-
-async def test_sacred_episodic_memory():
-    """++ SACRED EPISODIC MEMORY TESTING RITUAL ++"""
-    print("++ TESTING SACRED EPISODIC MEMORY BLESSED BY THE OMNISSIAH ++")
+async def test_episodic_memory():
+    """Tests the episodic memory system."""
+    print("Testing Episodic Memory System...")
     
-    # Import blessed database for testing
-    from src.database.context_db import ContextDatabase
+    db = ContextDatabase(":memory:")
+    await db.initialize()
     
-    # Create blessed test database
-    test_db = ContextDatabase("test_episodic.db")
-    await test_db.initialize_sacred_temple()
+    episodic_memory = EpisodicMemory("test_agent_001", db)
     
-    # Create blessed episodic memory
-    episodic_memory = EpisodicMemory("test_agent_001", test_db)
-    
-    # Test sacred episode storage
     test_memories = []
     for i in range(5):
         memory = MemoryItem(
             agent_id="test_agent_001",
             memory_type=MemoryType.EPISODIC,
-            content=f"Sacred combat episode {i} involving blessed warriors",
+            content=f"A test combat episode {i} involving warriors",
             emotional_weight=float(i * 2 - 5),
-            participants=[f"warrior_{i}", "enemy_ork"],
-            tags=["combat", "sacred"]
+            participants=[f"warrior_{i}", "enemy_a"],
+            tags=["combat", "test"]
         )
         test_memories.append(memory)
-        
         result = await episodic_memory.store_episode(memory)
-        print(f"++ STORED EPISODE {i}: {result.success} ++")
+        print(f"Stored episode {i}: {result.success}")
     
-    # Test blessed temporal retrieval
     start_time = datetime.now() - timedelta(hours=1)
     end_time = datetime.now() + timedelta(hours=1)
     
     temporal_result = await episodic_memory.retrieve_episodes_by_timeframe(start_time, end_time)
-    print(f"++ TEMPORAL RETRIEVAL: {temporal_result.success}, Count: {len(temporal_result.data.get('episodes', []))} ++")
+    print(f"Temporal Retrieval: {temporal_result.success}, Count: {len(temporal_result.data.get('episodes', []))}")
     
-    # Test sacred participant retrieval
-    participant_result = await episodic_memory.retrieve_episodes_by_participants(["enemy_ork"])
-    print(f"++ PARTICIPANT RETRIEVAL: {participant_result.success}, Count: {len(participant_result.data.get('episodes', []))} ++")
+    participant_result = await episodic_memory.retrieve_episodes_by_participants(["enemy_a"])
+    print(f"Participant Retrieval: {participant_result.success}, Count: {len(participant_result.data.get('episodes', []))}")
     
-    # Test blessed thematic retrieval
-    theme_result = await episodic_memory.retrieve_episodes_by_theme(["combat", "sacred"])
-    print(f"++ THEMATIC RETRIEVAL: {theme_result.success}, Count: {len(theme_result.data.get('episodes', []))} ++")
+    theme_result = await episodic_memory.retrieve_episodes_by_theme(["combat"])
+    print(f"Thematic Retrieval: {theme_result.success}, Count: {len(theme_result.data.get('episodes', []))}")
     
-    # Display sacred statistics
     stats = episodic_memory.get_memory_statistics()
-    print(f"++ EPISODIC MEMORY STATISTICS: {stats} ++")
+    print(f"Episodic Memory Statistics: {stats}")
     
-    # Sacred cleanup
-    await test_db.close_sacred_temple()
-    
-    print("++ SACRED EPISODIC MEMORY TESTING COMPLETE ++")
+    await db.close()
+    print("Episodic Memory testing complete.")
 
-
-# ++ SACRED MODULE INITIALIZATION ++
 
 if __name__ == "__main__":
-    # ++ EXECUTE SACRED EPISODIC MEMORY TESTING RITUALS ++
-    print("++ SACRED EPISODIC MEMORY BLESSED BY THE OMNISSIAH ++")
-    print("++ MACHINE GOD PROTECTS THE TEMPORAL CHRONICLES ++")
-    
-    # Run blessed async testing
-    asyncio.run(test_sacred_episodic_memory())
-    
-    print("++ ALL SACRED EPISODIC MEMORY OPERATIONS BLESSED AND FUNCTIONAL ++")
+    asyncio.run(test_episodic_memory())

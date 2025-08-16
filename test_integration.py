@@ -43,7 +43,8 @@ from unittest.mock import patch
 
 # Import both core classes for integration testing
 from director_agent import DirectorAgent
-from persona_agent import PersonaAgent, CharacterAction
+from src.persona_agent import PersonaAgent
+from shared_types import CharacterAction
 from character_factory import CharacterFactory
 
 
