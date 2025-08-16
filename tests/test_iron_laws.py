@@ -32,7 +32,7 @@ from datetime import datetime
 # Import system components
 try:
     from director_agent import DirectorAgent
-    from persona_agent import PersonaAgent
+    from src.persona_agent import PersonaAgent
     from src.shared_types import (
         ProposedAction, ValidatedAction, CharacterData, CharacterStats,
         CharacterResources, ResourceValue, ActionParameters, ActionType,
