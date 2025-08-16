@@ -5,15 +5,20 @@ Debug script to see what actions are available to characters
 
 import sys
 import os
+import logging
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from character_factory import CharacterFactory
 from datetime import datetime
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger(__name__)
+
 def debug_available_actions():
     """Debug what actions are available to each character."""
     
-    print("Debugging available actions for characters...")
+    logger.info("Debugging available actions for characters...")
     
     factory = CharacterFactory()
     
@@ -22,7 +27,7 @@ def debug_available_actions():
     
     for char_name in characters:
         try:
-            print(f"\n--- Debugging {char_name} Actions ---")
+            logger.info(f"\n--- Debugging {char_name} Actions ---")
             agent = factory.create_character(char_name)
             
             character_name = agent.character_data.get('name', 'Unknown')
@@ -71,11 +76,11 @@ def debug_available_actions():
                 print("No profession default action")
                 
         except Exception as e:
-            print(f"❌ ERROR debugging {char_name}: {e}")
+            logger.error(f"ERROR debugging {char_name}: {e}")
             import traceback
             traceback.print_exc()
     
-    print("\n=== Action Debug Complete ===")
+    logger.info("\n=== Action Debug Complete ===")
 
 if __name__ == "__main__":
     debug_available_actions()

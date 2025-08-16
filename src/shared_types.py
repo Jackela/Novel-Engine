@@ -22,7 +22,7 @@ Architecture Reference:
 from typing import Dict, List, Optional, Union, Any, Literal, Set
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
 from uuid import uuid4
 import json
 
@@ -117,8 +117,8 @@ class Position(BaseModel):
     facing: Optional[float] = Field(default=None, ge=0.0, lt=360.0, description="Facing direction in degrees")
     accuracy: Optional[float] = Field(default=1.0, ge=0.0, le=1.0, description="Position accuracy (0.0-1.0)")
     
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra = {
             "example": {
                 "x": 150.5,
                 "y": 200.0,
@@ -127,6 +127,7 @@ class Position(BaseModel):
                 "accuracy": 0.95
             }
         }
+    )
 
 
 class BoundingBox(BaseModel):
@@ -183,8 +184,8 @@ class Equipment(BaseModel):
     properties: Dict[str, Any] = Field(default_factory=dict, description="Equipment-specific properties")
     quantity: int = Field(default=1, ge=0, description="Number of items")
     
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra = {
             "example": {
                 "name": "Lasgun",
                 "equipment_type": "weapon",
@@ -197,6 +198,7 @@ class Equipment(BaseModel):
                 "quantity": 1
             }
         }
+    )
 
 
 # =============================================================================
@@ -251,8 +253,8 @@ class CharacterData(BaseModel):
     state: CharacterState = Field(default_factory=CharacterState, description="Current status")
     ai_personality: Dict[str, Any] = Field(default_factory=dict, description="AI behavior parameters")
     
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra = {
             "example": {
                 "character_id": "char_001",
                 "name": "Brother Marcus",
@@ -273,6 +275,7 @@ class CharacterData(BaseModel):
                 }
             }
         }
+    )
 
 
 # =============================================================================
@@ -308,8 +311,8 @@ class ProposedAction(BaseModel):
     confidence: float = Field(default=0.5, ge=0.0, le=1.0, description="AI confidence in action choice")
     alternatives: List[str] = Field(default_factory=list, description="Alternative actions considered")
     
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra = {
             "example": {
                 "character_id": "char_001", 
                 "action_type": "attack",
@@ -321,6 +324,7 @@ class ProposedAction(BaseModel):
                 "confidence": 0.8
             }
         }
+    )
 
 
 class ValidatedAction(BaseModel):
@@ -527,8 +531,8 @@ class TurnBrief(BaseModel):
     constraints: List[str] = Field(default_factory=list, description="Action constraints")
     token_budget: Optional[int] = Field(default=None, ge=0, description="Token budget for AI processing")
     
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra = {
             "example": {
                 "character_id": "char_001",
                 "turn_number": 5,
@@ -537,6 +541,7 @@ class TurnBrief(BaseModel):
                 "constraints": ["Limited ammunition", "Maintain radio discipline"]
             }
         }
+    )
 
 
 # =============================================================================

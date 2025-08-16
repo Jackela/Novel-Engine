@@ -7,5 +7,20 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/*.e2e.spec.js',
+      '**/*.spec.js',
+      '**/e2e/**',
+      '**/playwright/**',
+      '**/tests/CharacterCreation.e2e.spec.js',
+      '**/tests/CharacterSelection.spec.js', 
+      '**/tests/FullIntegration.spec.js'
+    ],
+    include: [
+      '**/*.test.tsx',
+      '**/*.test.ts'
+    ]
   },
 });

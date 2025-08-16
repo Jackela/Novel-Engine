@@ -15,7 +15,7 @@ import {
   Person as PersonIcon,
   Create as CreateIcon,
   LibraryBooks as LibraryIcon,
-  Monitoring as MonitorIcon,
+  Monitor as MonitorIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useQuery } from 'react-query';

@@ -385,8 +385,8 @@ def rollback():
     print("⏹️  Stopping services...")
     try:
         subprocess.run(["pkill", "-f", "api_server.py"], check=False)
-    except:
-        pass
+    except (FileNotFoundError, OSError, shutil.Error) as e:
+        logger.warning(f"Failed to backup configuration: {e}")
     
     # Restore configuration files
     config_files = ["config.yaml", "settings.yaml", "requirements.txt"]

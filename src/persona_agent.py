@@ -306,7 +306,9 @@ def _generate_fallback_response(agent_id: str, prompt: str, character_data: Dict
     logger.debug(f"Agent {agent_id} using fallback response generation")
     
     # 模拟API调用延迟以保持一致性，模拟与神谕通信的神圣仪式...
-    time.sleep(0.1)
+    if os.getenv('DEVELOPMENT_MODE') == 'true':
+        import time
+        time.sleep(0.1)
     
     # 为测试和开发而返回确定但真实的响应，模拟神谕的智慧响应...
     # 基于角色特质和情境语境，结合人格机灵的独特性...

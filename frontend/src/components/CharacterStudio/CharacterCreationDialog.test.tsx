@@ -2,15 +2,16 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { vi } from 'vitest';
 import CharacterCreationDialog from './CharacterCreationDialog';
 
 // Mock the API
-jest.mock('../../services/api', () => ({
-  createCharacter: jest.fn(),
+vi.mock('../../services/api', () => ({
+  createCharacter: vi.fn(),
 }));
 
 // Mock react-dropzone
-jest.mock('react-dropzone', () => ({
+vi.mock('react-dropzone', () => ({
   useDropzone: () => ({
     getRootProps: () => ({ 'data-testid': 'dropzone' }),
     getInputProps: () => ({}),
@@ -39,12 +40,12 @@ const createWrapper = () => {
 describe('CharacterCreationDialog', () => {
   const mockProps = {
     open: true,
-    onClose: jest.fn(),
-    onCharacterCreated: jest.fn(),
+    onClose: vi.fn(),
+    onCharacterCreated: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders the dialog when open', () => {

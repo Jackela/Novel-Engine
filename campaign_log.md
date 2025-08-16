@@ -1,6 +1,10 @@
 # Campaign Log
 
+<<<<<<< Updated upstream
 **Simulation Started:** 2025-08-16 09:23:13
+=======
+**Simulation Started:** 2025-08-15 15:44:57  
+>>>>>>> Stashed changes
 **Director Agent:** DirectorAgent v1.0  
 **Phase:** Phase 1 - Core Logic Implementation  
 
@@ -14,11 +18,16 @@ Each entry includes timestamps, participating agents, and detailed event descrip
 ## Campaign Events
 
 ### Simulation Initialization
+<<<<<<< Updated upstream
 **Time:** 2025-08-16 09:23:13
+=======
+**Time:** 2025-08-15 15:44:57  
+>>>>>>> Stashed changes
 **Event:** DirectorAgent initialized and campaign log created  
 **Participants:** System  
 **Details:** Game Master AI successfully started, ready for agent registration and simulation execution
 
+<<<<<<< Updated upstream
 
 ### Turn 1 Event
 **Time:** 2025-08-16 09:23:13
@@ -35,3 +44,5 @@ Each entry includes timestamps, participating agents, and detailed event descrip
 **Active Agents:** 1
 
 ---
+=======
+>>>>>>> Stashed changes

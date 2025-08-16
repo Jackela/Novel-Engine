@@ -29,7 +29,7 @@ import {
   Tab,
 } from '@mui/material';
 import {
-  Monitoring as MonitoringIcon,
+  Monitor as MonitoringIcon,
   Speed as SpeedIcon,
   Memory as MemoryIcon,
   Storage as StorageIcon,
