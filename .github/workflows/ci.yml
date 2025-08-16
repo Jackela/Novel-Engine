@@ -342,7 +342,7 @@ jobs:
 
     - name: Upload test artifacts (GitHub only)
       if: ${{ !env.ACT && failure() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: integration-test-results
         path: |
@@ -357,6 +357,11 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
@@ -373,12 +378,13 @@ jobs:
 
     - name: Python Security Check
       run: |
+        python -m pip install --upgrade pip
         pip install safety bandit
         safety check -r requirements.txt || true
         bandit -r . -f json -o bandit-report.json || true
 
     - name: Upload security artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-reports
         path: |
@@ -423,7 +429,7 @@ jobs:
         tar -czf novel-engine-${{ github.sha }}.tar.gz dist/
 
     - name: Upload build artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: novel-engine-build
         path: novel-engine-${{ github.sha }}.tar.gz
