@@ -28,7 +28,7 @@ from unittest.mock import Mock, patch, MagicMock
 # Core Novel Engine imports
 try:
     from director_agent import DirectorAgent
-    from persona_agent import PersonaAgent
+    from src.persona_agent import PersonaAgent
     from src.shared_types import (
         CharacterData, CharacterStats, CharacterResources, ResourceValue,
         Position, ActionType, ProposedAction, ActionParameters, ActionIntensity,

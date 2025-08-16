@@ -26,7 +26,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock, mock_open
 from chronicler_agent import ChroniclerAgent, CampaignEvent, NarrativeSegment
 from director_agent import DirectorAgent
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
 
 # Test Constants
 GENERIC_CHARACTERS = ["pilot", "scientist", "engineer", "test"]

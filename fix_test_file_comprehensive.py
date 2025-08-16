@@ -39,16 +39,15 @@ from datetime import datetime
 from unittest.mock import patch, MagicMock
 
 # Import the PersonaAgent class and related components
-from persona_agent import (
+from src.persona_agent import (
     PersonaAgent,
     ThreatLevel,
-    ActionPriority,
-    CharacterAction,
     WorldEvent,
     SubjectiveInterpretation,
     create_character_from_template,
     analyze_agent_compatibility
 )
+from shared_types import CharacterAction, ActionPriority
 
 
 def create_test_character_directory():

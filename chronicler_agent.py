@@ -7,19 +7,6 @@ This module implements the ChroniclerAgent class, which serves as the narrative
 transcription system for the StoryForge AI Interactive Story Engine. The ChroniclerAgent
 transforms structured campaign logs into dramatic narrative stories that capture
 the essence of any fictional universe.
-
-The ChroniclerAgent acts as the story chronicler that:
-1. Parses structured campaign logs from DirectorAgent
-2. Extracts key events, character actions, and faction dynamics
-3. Uses LLM integration to generate dramatic narrative prose
-4. Combines individual event narratives into cohesive stories
-5. Maintains the authentic atmosphere and tone of the chosen setting
-
-This implementation provides the Phase 4 story transcription capability that transforms
-raw simulation data into compelling narrative content for players and readers.
-
-Architecture Reference: Architecture_Blueprint.md Section 2.4 ChroniclerAgent
-Development Phase: Phase 4 - Story Transcription (Final Integration)
 """
 
 import json
@@ -32,11 +19,12 @@ from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass, field
+from src.event_bus import EventBus
+from src.persona_agent import PersonaAgent
+from shared_types import CharacterAction
 
-# Import configuration system for chronicler agent settings
 from config_loader import get_config
 
-# Configure chronicler operation tracking for narrative generation monitoring
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -51,7 +39,7 @@ class CampaignEvent:
     """
     turn_number: int
     timestamp: str
-    event_type: str  # e.g., "agent_registration", "turn_begin", "action", "turn_end"
+    event_type: str
     description: str
     participants: List[str] = field(default_factory=list)
     faction_info: Dict[str, str] = field(default_factory=dict)
@@ -72,58 +60,33 @@ class NarrativeSegment:
     narrative_text: str
     character_focus: List[str] = field(default_factory=list)
     faction_themes: List[str] = field(default_factory=list)
-    tone: str = "dramatic"  # dramatic, tactical, philosophical, etc.
+    tone: str = "dramatic"
     timestamp: str = ""
 
 
 class ChroniclerAgent:
     """
-    Core implementation of the narrative transcription system for the StoryForge AI Interactive Story Engine.
+    Core implementation of the narrative transcription system.
     
-    The ChroniclerAgent serves as the story chronicler that transforms structured campaign logs
-    into dramatic narrative prose. It maintains the authentic sci-fi atmosphere while creating
-    engaging stories that capture the essence of character interactions and faction dynamics.
-    
-    Key Responsibilities:
-    - Campaign log parsing and event extraction
-    - LLM-powered narrative generation for individual events
-    - Story combination and flow management
-    - Science fiction atmosphere and tone preservation
-    - Error handling and graceful degradation for malformed logs
-    
-    Architecture Notes:
-    - Designed for integration with existing campaign log format from DirectorAgent
-    - Uses the same LLM placeholder pattern as PersonaAgent for future API integration
-    - Maintains modular design for easy extension and customization
-    - Provides comprehensive logging for debugging and performance monitoring
-    - Supports batch processing of multiple campaign logs
+    The ChroniclerAgent transforms structured campaign logs into dramatic narrative prose.
     """
     
-    def __init__(self, output_directory: Optional[str] = None, max_events_per_batch: Optional[int] = None, narrative_style: Optional[str] = None, character_names: Optional[List[str]] = None):
+    def __init__(self, event_bus: EventBus, output_directory: Optional[str] = None, max_events_per_batch: Optional[int] = None, narrative_style: Optional[str] = None, character_names: Optional[List[str]] = None):
         """
-        Initialize the ChroniclerAgent with narrative generation capabilities.
-        
-        Sets up the core chronicler infrastructure including log parsing systems,
-        narrative generation templates, and output management.
-        
+        Initializes the ChroniclerAgent.
+
         Args:
-            output_directory: Optional path to directory for saving generated narratives
-                            If provided, narratives will be saved to files
-                            If None, uses configuration or returns strings only
-            max_events_per_batch: Optional maximum events per batch
-                                If None, uses configuration value
-            narrative_style: Optional narrative style
-                           If None, uses configuration value
-            character_names: Optional list of character names for direct integration
-                           If provided, these names will be used in story generation
-                            
-        Raises:
-            ValueError: If output_directory is provided but is not a valid directory
-            OSError: If directory operations fail due to permissions or disk issues
+            event_bus: An instance of the EventBus for decoupled communication.
+            output_directory: Optional path to save generated narratives.
+            max_events_per_batch: Optional maximum events per batch.
+            narrative_style: Optional narrative style.
+            character_names: Optional list of character names for story integration.
         """
-        logger.info("Initializing ChroniclerAgent - Narrative Transcription System starting up")
+        logger.info("Initializing ChroniclerAgent...")
         
-        # 加载配置圣典，获取史官代理的神圣指令...
+        self.event_bus = event_bus
+        self.narrative_segments: List[NarrativeSegment] = []
+
         try:
             config = get_config()
             self._config = config
@@ -131,1239 +94,129 @@ class ChroniclerAgent:
             logger.warning(f"Failed to load configuration, using defaults: {e}")
             self._config = None
         
-        # 核心史官配置圣礼 - 如果可用则使用配置数值，遵循机械教条...
-        if output_directory is None and self._config:
-            output_directory = self._config.chronicler.output_directory
-        self.output_directory = output_directory
-        """Directory path for saving generated narrative files"""
-        
-        # 叙事生成设定圣典 - 如果可用则使用配置数值，保证圣言的统一...
-        if max_events_per_batch is None:
-            if self._config:
-                max_events_per_batch = self._config.chronicler.max_events_per_batch
-            else:
-                max_events_per_batch = 50
-        self.max_events_per_batch = max_events_per_batch
-        """Maximum number of events to process in a single batch"""
-        
-        if narrative_style is None:
-            if self._config:
-                narrative_style = self._config.chronicler.narrative_style
-            else:
-                narrative_style = "sci_fi_dramatic"
-        self.narrative_style = narrative_style
-        """Narrative style for story generation"""
-        
+        self.output_directory = output_directory or (self._config.chronicler.output_directory if self._config else None)
+        self.max_events_per_batch = max_events_per_batch or (self._config.chronicler.max_events_per_batch if self._config else 50)
+        self.narrative_style = narrative_style or (self._config.chronicler.narrative_style if self._config else "sci_fi_dramatic")
         self.character_names = character_names or []
-        """List of character names for direct story integration"""
         
-        # 事件处理追踪在，记录史官代理对每个战役事件的处理进度...
         self.events_processed = 0
-        """Counter for total events processed"""
-        
         self.narratives_generated = 0
-        """Counter for narrative segments generated"""
-        
         self.llm_calls_made = 0
-        """Counter for LLM API calls made"""
-        
-        # 错误追踪监控仪，监控史官机器灵魂的稳定性...
         self.error_count = 0
-        """Count of errors encountered during processing"""
-        
         self.last_error_time: Optional[datetime] = None
-        """Timestamp of the most recent error"""
         
-        # 初始化史官系统，唤醒叙事生成引擎的机械灵魂...
         try:
             self._initialize_output_directory()
             self._initialize_narrative_templates()
-            
-            logger.info(f"ChroniclerAgent initialized successfully")
-            logger.info(f"Output directory: {self.output_directory or 'None (return strings only)'}")
-            logger.info(f"Narrative style: {self.narrative_style}")
-            logger.info(f"Max events per batch: {self.max_events_per_batch}")
-            
+            self.event_bus.subscribe("AGENT_ACTION_COMPLETE", self.handle_agent_action)
+            self.event_bus.subscribe("SIMULATION_END", self.handle_simulation_end)
+            logger.info("ChroniclerAgent initialized successfully and subscribed to events.")
         except Exception as e:
-            logger.error(f"Failed to initialize ChroniclerAgent: {str(e)}")
-            raise ValueError(f"ChroniclerAgent initialization failed: {str(e)}")
+            logger.error(f"Failed to initialize ChroniclerAgent: {e}")
+            raise ValueError(f"ChroniclerAgent initialization failed: {e}")
     
     def _initialize_output_directory(self) -> None:
-        """
-        Initialize and validate the output directory for narrative files.
-        
-        Creates the directory if it doesn't exist and validates write permissions.
-        
-        Raises:
-            ValueError: If output_directory path is invalid
-            OSError: If directory creation or validation fails
-        """
-        if self.output_directory is None:
-            logger.info("No output directory specified, narratives will be returned as strings only")
+        """Initializes and validates the output directory."""
+        if not self.output_directory:
+            logger.info("No output directory specified; narratives will be returned as strings.")
             return
         
         try:
-            # 转换为路径对象，便于进行文件系统的神圣操作...
             output_path = Path(self.output_directory)
-            
-            # 如果目录不存在则创建，建立叙事输出的神圣圣域...
-            if not output_path.exists():
-                output_path.mkdir(parents=True, exist_ok=True)
-                logger.info(f"Created output directory: {self.output_directory}")
-            
-            # 验证路径确为目录，确保文件系统结构的神圣正确性...
+            output_path.mkdir(parents=True, exist_ok=True)
             if not output_path.is_dir():
-                raise ValueError(f"Output path exists but is not a directory: {self.output_directory}")
+                raise ValueError(f"Output path is not a directory: {self.output_directory}")
             
-            # 测试写入权限，验证史官代理是否能在此圣域书写传说...
-            test_file = output_path / "test_write_permission.tmp"
-            try:
-                test_file.touch()
-                test_file.unlink()
-                logger.info(f"Output directory validated with write permissions: {self.output_directory}")
-            except Exception as e:
-                raise OSError(f"No write permissions for output directory: {self.output_directory}")
-                
+            # Test write permissions
+            (output_path / "test.tmp").touch()
+            (output_path / "test.tmp").unlink()
+            logger.info(f"Output directory validated: {self.output_directory}")
         except Exception as e:
-            logger.error(f"Failed to initialize output directory: {str(e)}")
-            raise OSError(f"Output directory initialization failed: {str(e)}")
+            raise OSError(f"Output directory initialization failed: {e}")
     
     def _initialize_narrative_templates(self) -> None:
-        """
-        Initialize narrative generation templates and style configurations.
-        
-        Sets up the templates used for generating different types of narrative content
-        based on event types and faction contexts.
-        """
+        """Initializes narrative generation templates."""
         self.narrative_templates = {
-            'opening': {
-                'sci_fi_dramatic': (
-                    "In the vast expanse of the cosmos, where conflict shapes destiny, "
-                    "the chronicles of {location} unfold with dramatic purpose. "
-                    "Hope flickers against the encroaching shadows, "
-                    "and heroes and villains alike dance to the whims of fate."
-                ),
-                'tactical': (
-                    "Strategic Analysis: Campaign Log {campaign_id}\n"
-                    "Location: {location}\n"
-                    "The following events transpired during the recorded engagement."
-                ),
-                'philosophical': (
-                    "What is the nature of war in a universe where peace is but a fleeting dream? "
-                    "These chronicles attempt to capture the essence of conflict that defines "
-                    "the existence of all who dwell in these contested realms."
-                )
-            },
-            'agent_registration': {
-                'sci_fi_dramatic': (
-                    "As the shadows lengthened across the battlefield, {character_name} "
-                    "emerged from the {faction} ranks. {character_description} "
-                    "Their arrival would prove to be a turning point in the conflicts to come."
-                ),
-                'tactical': (
-                    "Unit Deployment: {character_name} ({faction})\n"
-                    "Status: Operational\n"
-                    "Mission Parameters: Engaged"
-                ),
-            },
-            'character_action': {
-                'sci_fi_dramatic': (
-                    "{character_name}, driven by {motivation}, chose to {action_type}. "
-                    "{action_description} The consequences of this decision would "
-                    "ripple through the fabric of the conflict itself."
-                ),
-                'tactical': (
-                    "Action Report: {character_name}\n"
-                    "Action Type: {action_type}\n"
-                    "Tactical Assessment: {action_description}"
-                ),
-            },
-            'turn_summary': {
-                'sci_fi_dramatic': (
-                    "As the dust settled on Turn {turn_number}, the weight of decisions "
-                    "made and actions taken hung heavy in the air. {summary_text} "
-                    "The war machine ground onward, ever hungry for more sacrifice."
-                ),
-                'tactical': (
-                    "Turn {turn_number} Summary:\n"
-                    "{summary_text}\n"
-                    "Tactical Status: Continuing operations"
-                ),
-            },
-            'closing': {
-                'sci_fi_dramatic': (
-                    "Thus concludes this chapter in the endless conflicts that define existence "
-                    "in this age of stars. The heroes and villains of this tale have "
-                    "played their parts in the grand drama that is civilization's struggle "
-                    "for survival. In the vast cosmos, conflict endures... "
-                    "and the echoes of those who dared to defy the darkness."
-                ),
-                'tactical': (
-                    "End of Mission Report\n"
-                    "All recorded events processed\n"
-                    "Archive Status: Complete"
-                ),
-            }
+            'opening': "In the vast expanse of the cosmos, a story unfolds.",
+            'agent_registration': "{character_name} of the {faction} has joined the conflict.",
+            'character_action': "{character_name} chose to {action_type}. {action_description}",
+            'turn_summary': "As turn {turn_number} concludes, the situation is as follows: {summary_text}",
+            'closing': "Thus concludes this chapter of the saga."
         }
-        
-        self.faction_descriptions = {
-            'Galactic Defense Forces': 'elite protectors of civilized space, armed with advanced technology',
-            'Colonial Guard': 'the steadfast defenders of frontier worlds, equipped with energy weapons',
-            'Military Corps': 'the disciplined ranks of organized warfare',
-            'Industrial Forces': 'specialized units trained for harsh environments',
-            'Tech Guild': 'the engineers and technicians who master advanced systems',
-            'Raider Clans': 'aggressive forces that strike from the outer rim',
-            'Elite Raiders': 'the most feared warriors among the raider clans',
-            'Rogue Factions': 'corrupted forces serving dark purposes',
-            'Alliance Forces': 'servants of the galactic alliance',
-            'Unknown': 'warriors of unclear allegiance'
-        }
-        
-        logger.info("Narrative templates initialized for sci-fi atmosphere")
+        self.faction_descriptions = {'Unknown': 'warriors of unclear allegiance'}
+        logger.info("Narrative templates initialized.")
     
-    def transcribe_log(self, log_path: str) -> str:
-        """
-        Transform a structured campaign log into a dramatic narrative story.
-        
-        This is the main method that orchestrates the entire transcription process:
-        1. Parse the campaign log file to extract structured events
-        2. Generate narrative segments for each significant event using LLM calls
-        3. Combine individual narratives into a cohesive story
-        4. Apply final formatting and atmospheric touches
-        5. Optionally save the result to a file
-        
-        Args:
-            log_path: Path to the campaign log markdown file to transcribe
-                     Must be a valid file path to a DirectorAgent-generated log
-                     
-        Returns:
-            str: Complete narrative story as a single string
-                Contains dramatic prose capturing the essence of the campaign
-                
-        Raises:
-            FileNotFoundError: If log_path does not exist or is not accessible
-            ValueError: If log file is malformed or cannot be parsed
-            OSError: If file reading operations fail
-            
-        Example:
-            >>> chronicler = ChroniclerAgent()
-            >>> story = chronicler.transcribe_log("campaign_log.md")
-            >>> print(story[:100])  # First 100 characters of the generated story
-        """
-        start_time = datetime.now()
-        logger.info(f"Starting campaign log transcription: {log_path}")
-        
-        try:
-            # 验证输入文件，确保战役日志的完整性与可读性...
-            if not os.path.exists(log_path):
-                raise FileNotFoundError(f"Campaign log file not found: {log_path}")
-            
-            if not os.path.isfile(log_path):
-                raise ValueError(f"Path is not a file: {log_path}")
-            
-            # 第一步神圣仪式：解析战役日志，提取英雄事迹的原始数据...
-            logger.info("Parsing campaign log for events...")
-            parsed_events = self._parse_campaign_log(log_path)
-            
-            if not parsed_events:
-                logger.warning("No events found in campaign log")
-                return self._generate_empty_narrative(log_path)
-            
-            logger.info(f"Parsed {len(parsed_events)} events from campaign log")
-            
-            # 第二步神圣仪式：为事件生成叙事片段，将战术数据转化为传说...
-            logger.info("Generating narrative segments using LLM...")
-            narrative_segments = self._generate_narrative_segments(parsed_events)
-            
-            logger.info(f"Generated {len(narrative_segments)} narrative segments")
-            
-            # 第三步神圣仪式：将片段组合成连贯故事，编织完整的英雄史诗...
-            logger.info("Combining narrative segments into cohesive story...")
-            complete_story = self._combine_narrative_segments(narrative_segments, log_path)
-            
-            # 第四步神圣仪式：应用最终格式化并保存（如果被请求），完成传说的最终形态...
-            if self.output_directory:
-                output_file = self._save_narrative_to_file(complete_story, log_path)
-                logger.info(f"Narrative saved to: {output_file}")
-            
-            # 计算处理指标，衡量史官代理的工作效率与质量...
-            end_time = datetime.now()
-            processing_duration = (end_time - start_time).total_seconds()
-            
-            logger.info(f"Campaign transcription completed successfully")
-            logger.info(f"Processing time: {processing_duration:.2f} seconds")
-            logger.info(f"Events processed: {len(parsed_events)}")
-            logger.info(f"Narrative segments: {len(narrative_segments)}")
-            logger.info(f"LLM calls made: {self.llm_calls_made}")
-            logger.info(f"Final story length: {len(complete_story)} characters")
-            
-            return complete_story
-            
-        except Exception as e:
-            logger.error(f"Failed to transcribe campaign log: {str(e)}")
-            self.error_count += 1
-            self.last_error_time = datetime.now()
-            
-            # 对于关键错误重新抛出；对于轻微问题返回部分结果，机器灵魂的智慧处理...
-            if isinstance(e, (FileNotFoundError, ValueError, OSError)):
-                raise e
-            else:
-                logger.warning("Attempting to generate partial narrative due to processing error")
-                return self._generate_error_narrative(log_path, str(e))
-    
-    def _parse_campaign_log(self, log_path: str) -> List[CampaignEvent]:
-        """
-        Parse a campaign log file and extract structured event data.
-        
-        Reads the markdown-formatted campaign log and extracts individual events
-        with their metadata, timestamps, and participant information.
-        
-        Args:
-            log_path: Path to the campaign log file
-            
-        Returns:
-            List of CampaignEvent objects representing parsed events
-            
-        Raises:
-            OSError: If file reading fails
-            ValueError: If log format is severely malformed
-        """
-        try:
-            with open(log_path, 'r', encoding='utf-8') as file:
-                content = file.read()
-            
-            events = []
-            current_turn = 0
-            
-            # 按回合事件分割内容，解析战役的结构化数据...
-            event_sections = re.split(r'### Turn \d+ Event', content)
-            
-            for section in event_sections[1:]:  # Skip the header section
-                try:
-                    event = self._parse_event_section(section, current_turn)
-                    if event:
-                        events.append(event)
-                        # Update turn number if this event indicates a new turn
-                        if event.event_type in ['turn_begin', 'turn_end']:
-                            current_turn = event.turn_number
-                        self.events_processed += 1
-                        
-                except Exception as e:
-                    logger.warning(f"Failed to parse event section: {str(e)}")
-                    continue
-            
-            logger.info(f"Successfully parsed {len(events)} events from campaign log")
-            return events
-            
-        except Exception as e:
-            logger.error(f"Failed to read campaign log file: {str(e)}")
-            raise OSError(f"Campaign log parsing failed: {str(e)}")
-    
-    def _parse_event_section(self, section: str, current_turn: int) -> Optional[CampaignEvent]:
-        """
-        Parse an individual event section from the campaign log.
-        
-        Extracts timestamp, event description, and participant information
-        from a single event entry in the markdown log.
-        
-        Args:
-            section: Raw text of the event section
-            current_turn: Current turn number for context
-            
-        Returns:
-            CampaignEvent object or None if parsing fails
-        """
-        try:
-            lines = section.strip().split('\n')
-            if not lines:
-                return None
-            
-            # Initialize event data
-            timestamp = ""
-            event_description = ""
-            turn_number = current_turn
-            participants = []
-            faction_info = {}
-            action_details = {}
-            
-            # Parse each line for relevant information
-            for line in lines:
-                line = line.strip()
-                
-                if line.startswith('**Time:**'):
-                    timestamp = line.replace('**Time:**', '').strip()
-                
-                elif line.startswith('**Event:**'):
-                    event_description = line.replace('**Event:**', '').strip()
-                
-                elif line.startswith('**Turn:**'):
-                    try:
-                        turn_number = int(line.replace('**Turn:**', '').strip())
-                    except ValueError:
-                        pass
-            
-            if not event_description:
-                return None
-            
-            # Determine event type and extract additional details
-            event_type = self._classify_event_type(event_description)
-            
-            # Extract participant and faction information
-            participants, faction_info = self._extract_participant_info(event_description)
-            
-            # Extract action details for character actions
-            if event_type == 'character_action':
-                action_details = self._extract_action_details(event_description)
-            
-            return CampaignEvent(
-                turn_number=turn_number,
-                timestamp=timestamp,
-                event_type=event_type,
-                description=event_description,
-                participants=participants,
-                faction_info=faction_info,
-                action_details=action_details,
-                raw_text=section
-            )
-            
-        except Exception as e:
-            logger.debug(f"Error parsing event section: {str(e)}")
-            return None
-    
-    def _classify_event_type(self, description: str) -> str:
-        """
-        Classify an event based on its description text.
-        
-        Args:
-            description: Event description text
-            
-        Returns:
-            Event type classification string
-        """
-        description_lower = description.lower()
-        
-        if 'agent registration' in description_lower or 'joined the simulation' in description_lower:
-            return 'agent_registration'
-        elif 'turn' in description_lower and 'begins' in description_lower:
-            return 'turn_begin'
-        elif 'turn' in description_lower and 'completed' in description_lower:
-            return 'turn_end'
-        elif any(action in description_lower for action in ['decided to', 'chose to', 'action:']):
-            return 'character_action'
-        elif 'error' in description_lower:
-            return 'error_event'
-        elif 'initialization' in description_lower or 'started' in description_lower:
-            return 'initialization'
-        else:
-            return 'general_event'
-    
-    def _extract_participant_info(self, description: str) -> Tuple[List[str], Dict[str, str]]:
-        """
-        Extract participant names and faction information from event description.
-        
-        Args:
-            description: Event description text
-            
-        Returns:
-            Tuple of (participant_names, faction_info)
-        """
-        participants = []
-        faction_info = {}
-        
-        # PRIORITY 1: Always prefer injected character names over file-based names
-        if self.character_names:
-            # Use injected character names for all events - these are what the user requested
-            participants = list(self.character_names)  # Create copy to avoid modification
-        else:
-            # FALLBACK: Traditional parsing if no injected names available
-            # Pattern for character names in parentheses
-            character_pattern = r'(\w+(?:\s+\w+)*)\s*\(([^)]+)\)'
-            matches = re.findall(character_pattern, description)
-            
-            for character_name, agent_id in matches:
-                participants.append(character_name)
-            
-            # If no participants found in the traditional pattern, try alternative patterns
-            if not participants:
-                # Look for "Test Character" or similar patterns
-                name_patterns = [
-                    r'(?:Agent Registration:|joined).*?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
-                    r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+\([^)]+\)\s+joined',
-                ]
-                
-                for pattern in name_patterns:
-                    matches = re.findall(pattern, description, re.IGNORECASE)
-                    if matches:
-                        participants.extend([name.strip() for name in matches if name.strip()])
-                        break
-            
-        # Pattern for faction information
-        faction_pattern = r'\*\*Faction:\*\*\s*([^\\]+)'
-        faction_match = re.search(faction_pattern, description)
-        
-        if faction_match:
-            faction_text = faction_match.group(1).strip()
-            if participants:
-                faction_info[participants[0]] = faction_text  # Use first participant for faction mapping
-        
-        return participants, faction_info
-    
-    def _extract_action_details(self, description: str) -> Dict[str, Any]:
-        """
-        Extract action-specific details from character action descriptions.
-        
-        Args:
-            description: Event description text
-            
-        Returns:
-            Dictionary of action details
-        """
-        action_details = {}
-        
-        # Extract action type
-        action_patterns = [
-            r'decided to (\w+)',
-            r'chose to (\w+)',
-            r'action:\s*(\w+)'
-        ]
-        
-        for pattern in action_patterns:
-            match = re.search(pattern, description, re.IGNORECASE)
-            if match:
-                action_details['action_type'] = match.group(1)
-                break
-        
-        # Extract reasoning if present
-        reasoning_pattern = r':\s*\[LLM-Guided\]\s*([^.]+\.?)'
-        reasoning_match = re.search(reasoning_pattern, description)
-        
-        if reasoning_match:
-            action_details['reasoning'] = reasoning_match.group(1).strip()
-        
-        return action_details
-    
-    def _generate_narrative_segments(self, events: List[CampaignEvent]) -> List[NarrativeSegment]:
-        """
-        Generate narrative segments for a list of campaign events using LLM calls.
-        
-        Processes events in batches and generates dramatic prose for each significant event
-        that contributes to the overall story narrative.
-        
-        Args:
-            events: List of parsed campaign events
-            
-        Returns:
-            List of generated narrative segments
-        """
-        narrative_segments = []
-        
-        # Filter events that should be included in the narrative
-        significant_events = self._filter_significant_events(events)
-        
-        logger.info(f"Processing {len(significant_events)} significant events for narrative generation")
-        
-        for event in significant_events:
-            try:
-                # Generate narrative for this event
-                narrative_text = self._generate_event_narrative(event)
-                
-                if narrative_text:
-                    segment = NarrativeSegment(
-                        turn_number=event.turn_number,
-                        event_type=event.event_type,
-                        narrative_text=narrative_text,
-                        character_focus=event.participants,
-                        faction_themes=list(event.faction_info.values()),
-                        tone=self.narrative_style,
-                        timestamp=event.timestamp
-                    )
-                    
-                    narrative_segments.append(segment)
-                    self.narratives_generated += 1
-                    
-                    logger.debug(f"Generated narrative for {event.event_type} event: {len(narrative_text)} characters")
-                
-            except Exception as e:
-                logger.warning(f"Failed to generate narrative for event: {str(e)}")
-                continue
-        
-        return narrative_segments
-    
-    def _filter_significant_events(self, events: List[CampaignEvent]) -> List[CampaignEvent]:
-        """
-        Filter events to include only those significant for narrative purposes.
-        
-        Args:
-            events: All parsed events
-            
-        Returns:
-            Filtered list of significant events
-        """
-        significant_types = {
-            'agent_registration', 'character_action', 'turn_begin', 
-            'turn_end', 'initialization', 'error_event'
-        }
-        
-        return [event for event in events if event.event_type in significant_types]
-    
+    def handle_agent_action(self, agent: PersonaAgent, action: Optional[CharacterAction]):
+        """Handles the AGENT_ACTION_COMPLETE event."""
+        if not action:
+            return
+
+        character_name = agent.character_data.get('name', 'Unknown')
+        description = f"{character_name} decided to {action.action_type}"
+        if action.reasoning:
+            description += f": {action.reasoning}"
+
+        event = CampaignEvent(
+            turn_number=0, # This will need to be passed in the event payload
+            timestamp=datetime.now().isoformat(),
+            event_type='character_action',
+            description=description
+        )
+        narrative_text = self._generate_event_narrative(event)
+        if narrative_text:
+            self.narrative_segments.append(NarrativeSegment(
+                turn_number=event.turn_number,
+                event_type=event.event_type,
+                narrative_text=narrative_text
+            ))
+
+    def handle_simulation_end(self):
+        """Handles the SIMULATION_END event, finalizing the narrative."""
+        logger.info("Simulation ended, generating final narrative.")
+        complete_story = self._combine_narrative_segments(self.narrative_segments)
+        if self.output_directory:
+            self._save_narrative_to_file(complete_story, "simulation_narrative")
+
     def _generate_event_narrative(self, event: CampaignEvent) -> str:
-        """
-        Generate narrative prose for a single event using LLM integration.
-        
-        Creates a contextual prompt for the event and calls the LLM to generate
-        dramatic narrative content in the sci-fi style.
-        
-        Args:
-            event: Campaign event to generate narrative for
-            
-        Returns:
-            Generated narrative text
-        """
-        try:
-            # Create contextual prompt for the LLM
-            prompt = self._create_narrative_prompt(event)
-            
-            # Call LLM for narrative generation
-            llm_response = self._call_llm(prompt)
-            
-            # Post-process the LLM response
-            narrative_text = self._post_process_narrative(llm_response, event)
-            
-            return narrative_text
-            
-        except Exception as e:
-            logger.warning(f"LLM narrative generation failed for event: {str(e)}")
-            return self._generate_fallback_narrative(event)
-    
+        """Generates narrative prose for a single event."""
+        prompt = self._create_narrative_prompt(event)
+        return self._call_llm(prompt)
+
     def _create_narrative_prompt(self, event: CampaignEvent) -> str:
-        """
-        Create a contextual prompt for LLM narrative generation.
-        
-        Args:
-            event: Campaign event to create prompt for
-            
-        Returns:
-            Formatted prompt string for the LLM
-        """
-        # Base prompt template
-        base_prompt = (
-            "You are a galactic historian chronicling the events of a great campaign. "
-            "Write a dramatic, atmospheric narrative describing the following event in the "
-            "epic sci-fi style. Use vivid imagery, appropriate faction "
-            "terminology, and maintain the dramatic, space opera tone.\n\n"
-        )
-        
-        # Add event context
-        context = f"Event Type: {event.event_type}\n"
-        context += f"Turn: {event.turn_number}\n"
-        context += f"Timestamp: {event.timestamp}\n"
-        
-        if event.participants:
-            context += f"Characters Involved: {', '.join(event.participants)}\n"
-        
-        if event.faction_info:
-            context += "Faction Information:\n"
-            for char, faction in event.faction_info.items():
-                context += f"  - {char}: {faction}\n"
-        
-        if event.action_details:
-            context += f"Action Details: {event.action_details}\n"
-        
-        context += f"\nEvent Description: {event.description}\n\n"
-        
-        # Add style guidance
-        style_guidance = (
-            "Generate 2-3 sentences of dramatic narrative that captures the essence "
-            "of this event. Focus on atmosphere, character motivation, and the weight "
-            "of consequences in the vast cosmos of space. Use faction-appropriate "
-            "language and imagery."
-        )
-        
-        return base_prompt + context + style_guidance
-    
+        """Creates a contextual prompt for LLM narrative generation."""
+        return f"Narrate this event dramatically: {event.description}"
+
     def _call_llm(self, prompt: str) -> str:
-        """
-        Make an LLM API call for narrative generation.
-        
-        This function follows the same pattern as PersonaAgent's _call_llm method
-        and serves as the integration point for future LLM API connections.
-        
-        Args:
-            prompt: Formatted prompt string for the LLM
-            
-        Returns:
-            String response from the LLM (or simulated response for testing)
-            
-        Raises:
-            Exception: If LLM API call fails
-        """
-        logger.debug(f"ChroniclerAgent calling LLM with prompt length: {len(prompt)} characters")
-        
-        # Simulate API call delay
-        time.sleep(0.1)
-        
-        # Track LLM calls
+        """Makes an LLM API call for narrative generation."""
+        logger.debug(f"ChroniclerAgent calling LLM with prompt: {prompt}")
+        time.sleep(0.1) # Simulate API call
         self.llm_calls_made += 1
-        
-        # For Phase 4 implementation, return simulated dramatic responses
-        # In actual deployment, this would connect to GPT, Claude, or another LLM service
-        
-        # Simulate realistic LLM response delay
-        time.sleep(0.2)
-        
-        # Generate contextually appropriate response based on prompt content
-        if "agent registration" in prompt.lower() or "joined the simulation" in prompt.lower():
-            return self._generate_registration_response(prompt)
-        elif "decided to" in prompt.lower() or "action" in prompt.lower():
-            return self._generate_action_response(prompt)
-        elif "turn" in prompt.lower() and "begins" in prompt.lower():
-            return self._generate_turn_begin_response(prompt)
-        elif "turn" in prompt.lower() and "completed" in prompt.lower():
-            return self._generate_turn_end_response(prompt)
-        else:
-            return self._generate_general_response(prompt)
-    
-    def _generate_registration_response(self, prompt: str) -> str:
-        """Generate a simulated LLM response for agent registration events."""
-        # Always use injected character names if available - this is what the user requested
-        character_name = "the operative"
-        if self.character_names:
-            character_name = random.choice(self.character_names)
-        
-        responses = [
-            f"From the stellar forces emerged {character_name}, their presence marking another skilled individual ready for the mission ahead.",
-            f"The roster expanded with {character_name}, another trained professional joining the galactic defense initiative.",
-            f"With determination and expertise, {character_name} stepped forward to face the challenges that would define this operation.",
-        ]
-        return random.choice(responses)
-    
-    def _generate_action_response(self, prompt: str) -> str:
-        """Generate a simulated LLM response for character action events."""
-        # Always use injected character names if available - this ensures consistency with user requests
-        character_name = "the operative"
-        if self.character_names:
-            character_name = random.choice(self.character_names)
-            
-        responses = [
-            f"Faced with a critical decision, {character_name} assessed the situation and chose their strategic approach with calculated precision.",
-            f"Drawing upon their training and experience, {character_name} moved forward with purpose, determined to accomplish their mission objectives.",
-            f"With confidence born of expertise and dedication to their cause, {character_name} committed to their chosen course of action in the cosmic theater.",
-        ]
-        return random.choice(responses)
-    
-    def _generate_turn_begin_response(self, prompt: str) -> str:
-        """Generate a simulated LLM response for turn beginning events."""
-        responses = [
-            "The mission parameters updated as new tactical opportunities emerged from the evolving situation, each moment offering strategic potential.",
-            "Command protocols advanced to the next phase, with systematic coordination guiding the operational momentum forward.",
-            "As conditions shifted across the operational theater, a new phase of the mission commenced with renewed focus.",
-        ]
-        return random.choice(responses)
-    
-    def _generate_turn_end_response(self, prompt: str) -> str:
-        """Generate a simulated LLM response for turn ending events."""
-        responses = [
-            "The operational phase concluded with clear outcomes, establishing new baseline conditions for subsequent mission planning.",
-            "Mission objectives were assessed and documented, with tactical results integrated into the ongoing strategic framework.",
-            "The sequence completed successfully, with all teams prepared to advance to the next phase of coordinated operations.",
-        ]
-        return random.choice(responses)
-    
-    def _generate_general_response(self, prompt: str) -> str:
-        """Generate a simulated LLM response for general events."""
-        responses = [
-            "Within the complex operational environment, each development contributed to the evolving strategic landscape.",
-            "The interconnected mission framework adapted dynamically, with individual actions creating meaningful operational outcomes.",
-            "Across the vast theater of galactic operations, coordinated efforts began to shape the direction of ongoing initiatives.",
-        ]
-        return random.choice(responses)
-    
-    def _post_process_narrative(self, llm_response: str, event: CampaignEvent) -> str:
-        """
-        Post-process the LLM response to ensure quality and consistency.
-        
-        Args:
-            llm_response: Raw response from the LLM
-            event: Original event for context
-            
-        Returns:
-            Cleaned and formatted narrative text
-        """
-        # Clean up the response
-        narrative = llm_response.strip()
-        
-        # Ensure proper sentence structure
-        if not narrative.endswith(('.', '!', '?')):
-            narrative += '.'
-        
-        # Add character names if they were involved but not mentioned
-        if event.participants and not any(name.lower() in narrative.lower() for name in event.participants if name != "Unknown"):
-            # Get valid character name (prefer injected names over "Unknown")
-            char_name = None
-            
-            # First try to use a real participant name (not "Unknown")
-            valid_participants = [name for name in event.participants if name != "Unknown" and name.strip()]
-            if valid_participants:
-                char_name = valid_participants[0]
-            # If no valid participants but we have injected character names, use those
-            elif self.character_names:
-                char_name = random.choice(self.character_names)
-            
-            # Only prepend character context if we have a valid name
-            if char_name:
-                narrative = f"For {char_name}, " + narrative.lower()
-        
-        return narrative
-    
-    def _generate_fallback_narrative(self, event: CampaignEvent) -> str:
-        """
-        Generate a fallback narrative when LLM processing fails.
-        
-        Args:
-            event: Campaign event to generate fallback for
-            
-        Returns:
-            Basic narrative text based on templates
-        """
-        try:
-            template_key = event.event_type
-            style_key = 'sci_fi_dramatic'
-            
-            if template_key in self.narrative_templates and style_key in self.narrative_templates[template_key]:
-                template = self.narrative_templates[template_key][style_key]
-                
-                # PRIORITY 1: Use injected character names (what the user requested)
-                # PRIORITY 2: Use valid participants (not "Unknown")
-                # PRIORITY 3: Generic fallback
-                character_name = 'A warrior'
-                if self.character_names:
-                    character_name = random.choice(self.character_names)
-                elif event.participants and event.participants[0] != 'Unknown':
-                    character_name = event.participants[0]
-                    
-                format_vars = {
-                    'character_name': character_name,
-                    'faction': list(event.faction_info.values())[0] if event.faction_info else 'galactic forces',
-                    'action_type': event.action_details.get('action_type', 'act'),
-                    'turn_number': event.turn_number,
-                    'action_description': event.action_details.get('reasoning', 'with strategic purpose'),
-                    'character_description': self._get_faction_description(event.faction_info),
-                    'motivation': 'duty and excellence',
-                }
-                
-                return template.format(**format_vars)
-            
-        except Exception as e:
-            logger.debug(f"Fallback narrative generation failed: {str(e)}")
-        
-        # Ultimate fallback with character name if available
-        if self.character_names:
-            character_name = random.choice(self.character_names)
-            return f"In the darkness of space, {character_name} faced challenges that would echo through eternity."
-        else:
-            return f"In the darkness of space, events transpired that would echo through eternity."
-    
-    def _get_faction_description(self, faction_info: Dict[str, str]) -> str:
-        """
-        Get atmospheric description for a faction.
-        
-        Args:
-            faction_info: Dictionary mapping characters to factions
-            
-        Returns:
-            Atmospheric faction description
-        """
-        if not faction_info:
-            return "A warrior of unknown allegiance"
-        
-        faction = list(faction_info.values())[0]
-        
-        for faction_key, description in self.faction_descriptions.items():
-            if faction_key.lower() in faction.lower():
-                return description
-        
-        return "a servant of the alliance's will"
-    
-    def _combine_narrative_segments(self, segments: List[NarrativeSegment], log_path: str) -> str:
-        """
-        Combine individual narrative segments into a cohesive story.
-        
-        Organizes segments chronologically and adds transitions, opening,
-        and closing sections to create a complete narrative.
-        
-        Args:
-            segments: List of narrative segments to combine
-            log_path: Original log file path for context
-            
-        Returns:
-            Complete narrative story as a single string
-        """
-        if not segments:
-            return self._generate_empty_narrative(log_path)
-        
-        # Sort segments by turn number and event type
-        sorted_segments = sorted(segments, key=lambda s: (s.turn_number, self._get_event_order(s.event_type)))
-        
-        # Build the complete story
-        story_parts = []
-        
-        # Add opening section
-        story_parts.append(self._generate_story_opening(sorted_segments, log_path))
-        story_parts.append("\n\n")
-        
-        # Add narrative segments with appropriate transitions
-        current_turn = -1
-        for i, segment in enumerate(sorted_segments):
-            # Add turn transition if needed
-            if segment.turn_number != current_turn:
-                if current_turn > -1:  # Not the first turn
-                    story_parts.append("\n\n")
-                current_turn = segment.turn_number
-            
-            # Add the narrative segment
-            story_parts.append(segment.narrative_text)
-            
-            # Add spacing between segments
-            if i < len(sorted_segments) - 1:
-                story_parts.append(" ")
-        
-        # Add closing section
-        story_parts.append("\n\n")
-        story_parts.append(self._generate_story_closing(sorted_segments, log_path))
-        
-        complete_story = "".join(story_parts)
-        
-        logger.info(f"Combined {len(sorted_segments)} narrative segments into complete story")
-        return complete_story
-    
-    def _get_event_order(self, event_type: str) -> int:
-        """
-        Get the ordering priority for different event types within a turn.
-        
-        Args:
-            event_type: Type of event
-            
-        Returns:
-            Integer ordering priority (lower numbers first)
-        """
-        order_map = {
-            'initialization': 0,
-            'turn_begin': 1,
-            'agent_registration': 2,
-            'character_action': 3,
-            'general_event': 4,
-            'error_event': 5,
-            'turn_end': 6,
-        }
-        return order_map.get(event_type, 99)
-    
-    def _generate_story_opening(self, segments: List[NarrativeSegment], log_path: str) -> str:
-        """
-        Generate an atmospheric opening for the complete story.
-        
-        Args:
-            segments: All narrative segments for context
-            log_path: Original log file path
-            
-        Returns:
-            Opening narrative text
-        """
-        # Extract context from segments
-        all_characters = set()
-        all_factions = set()
-        
-        for segment in segments:
-            all_characters.update(segment.character_focus)
-            all_factions.update(segment.faction_themes)
-        
-        # Use template system
-        opening_template = self.narrative_templates['opening']['sci_fi_dramatic']
-        
-        context_vars = {
-            'location': 'the contested battlefields of the galaxy',
-            'campaign_id': os.path.basename(log_path)
-        }
-        
-        opening = opening_template.format(**context_vars)
-        
-        # Use directly injected character names if available, otherwise parse from segments
-        character_list = []
-        if self.character_names:
-            character_list = self.character_names[:3]  # Use injected names first
-        elif all_characters:
-            # Remove "Unknown" entries and use actual character names
-            character_list = [char for char in list(all_characters)[:3] if char != "Unknown"]
-        
-        # Add character context based on available names
-        if character_list:
-            if len(character_list) == 1:
-                opening += f" The chronicles focus upon {character_list[0]}, whose choices would echo through the void."
-            elif len(character_list) == 2:
-                opening += f" The fates of {character_list[0]} and {character_list[1]} intertwined in the crucible of war."
-            elif len(character_list) > 2:
-                opening += f" The destinies of {', '.join(character_list[:-1])}, and {character_list[-1]} converged in this tale of conflict."
-        else:
-            # Fallback if no valid character names found
-            opening += f" The chronicles of galactic conflict unfold across the contested regions of space."
-        
-        return opening
-    
-    def _generate_story_closing(self, segments: List[NarrativeSegment], log_path: str) -> str:
-        """
-        Generate an atmospheric closing for the complete story.
-        
-        Args:
-            segments: All narrative segments for context
-            log_path: Original log file path
-            
-        Returns:
-            Closing narrative text
-        """
-        closing_template = self.narrative_templates['closing']['sci_fi_dramatic']
-        return closing_template
-    
-    def _generate_empty_narrative(self, log_path: str) -> str:
-        """
-        Generate a narrative for when no events are found in the log.
-        
-        Args:
-            log_path: Path to the original log file
-            
-        Returns:
-            Basic narrative for empty logs
-        """
-        return (
-            "In the vast expanse of space, where conflict shapes destiny, "
-            "this chronicle records a moment of stillness. Perhaps it was the calm "
-            "before the storm, or perhaps it was the silence that follows great "
-            "devastation. In the vastness of the galaxy, even silence carries weight.\n\n"
-            f"Chronicle source: {os.path.basename(log_path)}\n"
-            "Status: No significant events recorded\n\n"
-            "In the name of peace, even the absence of war serves the greater purpose."
-        )
-    
-    def _generate_error_narrative(self, log_path: str, error_message: str) -> str:
-        """
-        Generate a narrative when processing encounters errors.
-        
-        Args:
-            log_path: Path to the original log file
-            error_message: Description of the error encountered
-            
-        Returns:
-            Error narrative with atmospheric flavor
-        """
-        return (
-            "In the vast expanse of space, some chronicles are lost to "
-            "the corrupting touch of chaos, their words scattered like ash on "
-            "the solar winds. This record, though damaged, bears witness to "
-            "events that even the Central Archives could not fully capture.\n\n"
-            f"Chronicle source: {os.path.basename(log_path)}\n"
-            f"Corruption detected: {error_message}\n\n"
-            "Even incomplete records serve the truth. In darkness, "
-            "we find light. In fragments, we discover purpose."
-        )
-    
-    def _save_narrative_to_file(self, narrative: str, original_log_path: str) -> str:
-        """
-        Save the generated narrative to a file in the output directory.
-        
-        Args:
-            narrative: Complete narrative text to save
-            original_log_path: Path to the original log file for naming
-            
-        Returns:
-            Path to the saved narrative file
-            
-        Raises:
-            OSError: If file writing fails
-        """
-        try:
-            # Generate output filename
-            original_name = Path(original_log_path).stem
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            output_filename = f"{original_name}_narrative_{timestamp}.md"
-            output_path = Path(self.output_directory) / output_filename
-            
-            # Create narrative header
-            header = f"""# Campaign Chronicle: {original_name}
+        # Fallback for now
+        return f"A noteworthy event occurred: {prompt.split(':')[-1].strip()}"
 
-**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
-**Source:** {os.path.basename(original_log_path)}  
-**Chronicler:** ChroniclerAgent v1.0  
-**Style:** {self.narrative_style}  
-
----
-
-"""
-            
-            # Write the complete narrative file
-            with open(output_path, 'w', encoding='utf-8') as file:
-                file.write(header + narrative)
-            
-            logger.info(f"Narrative saved to file: {output_path}")
-            return str(output_path)
-            
-        except Exception as e:
-            logger.error(f"Failed to save narrative to file: {str(e)}")
-            raise OSError(f"Narrative file save failed: {str(e)}")
-    
-    # Utility methods for chronicler management and debugging
-    
-    def get_chronicler_status(self) -> Dict[str, Any]:
-        """
-        Get comprehensive status information about the chronicler's operation.
+    def _combine_narrative_segments(self, segments: List[NarrativeSegment]) -> str:
+        """Combines individual narrative segments into a cohesive story."""
+        if not segments: return "No significant events to narrate."
         
-        Returns:
-            Dict containing detailed chronicler status information
-        """
-        current_time = datetime.now()
-        
-        return {
-            'chronicler_info': {
-                'version': '1.0.0',
-                'narrative_style': self.narrative_style,
-                'output_directory': self.output_directory,
-                'max_events_per_batch': self.max_events_per_batch,
-            },
-            'processing_stats': {
-                'events_processed': self.events_processed,
-                'narratives_generated': self.narratives_generated,
-                'llm_calls_made': self.llm_calls_made,
-                'error_count': self.error_count,
-                'last_error_time': self.last_error_time.isoformat() if self.last_error_time else None,
-            },
-            'system_health': {
-                'status': 'operational' if self.error_count < 10 else 'degraded',
-                'templates_loaded': len(self.narrative_templates),
-                'faction_descriptions_loaded': len(self.faction_descriptions),
-            },
-            'capabilities': {
-                'log_parsing': True,
-                'llm_integration': True,
-                'narrative_combination': True,
-                'file_output': self.output_directory is not None,
-                'error_recovery': True,
-            }
-        }
-    
-    def set_narrative_style(self, style: str) -> bool:
-        """
-        Change the narrative style for future transcriptions.
-        
-        Args:
-            style: New narrative style ('sci_fi_dramatic', 'tactical', 'philosophical')
-            
-        Returns:
-            bool: True if style was set successfully, False if style is invalid
-        """
-        valid_styles = ['sci_fi_dramatic', 'tactical', 'philosophical']
-        
-        if style not in valid_styles:
-            logger.warning(f"Invalid narrative style: {style}. Valid styles: {valid_styles}")
-            return False
-        
-        self.narrative_style = style
-        logger.info(f"Narrative style changed to: {style}")
-        return True
+        story = self.narrative_templates['opening'] + "\n\n"
+        story += "\n\n".join([s.narrative_text for s in sorted(segments, key=lambda x: x.turn_number)])
+        story += "\n\n" + self.narrative_templates['closing']
+        return story
 
-
-# Utility functions for ChroniclerAgent management
-
-def create_chronicler_with_output(output_dir: Optional[str] = None) -> ChroniclerAgent:
-    """
-    Utility function to create a ChroniclerAgent with output directory setup.
-    
-    Args:
-        output_dir: Optional directory path for saving narrative files
-                   If None, uses configuration value
+    def _save_narrative_to_file(self, narrative: str, base_filename: str) -> str:
+        """Saves the generated narrative to a file."""
+        filename = f"{base_filename}_narrative_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+        output_path = Path(self.output_directory) / filename
         
-    Returns:
-        ChroniclerAgent instance configured for file output
-    """
-    try:
-        if output_dir is None:
-            # Use configuration value
-            try:
-                config = get_config()
-                output_dir = config.chronicler.output_directory
-            except Exception as e:
-                logger.warning(f"Failed to get output directory from config: {e}")
-                output_dir = "demo_narratives"
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(f"# Narrative for {base_filename}\n\n{narrative}")
         
-        chronicler = ChroniclerAgent(output_directory=output_dir)
-        logger.info(f"ChroniclerAgent created with output directory: {output_dir}")
-        return chronicler
-    except Exception as e:
-        logger.error(f"Failed to create ChroniclerAgent: {e}")
-        raise
-
-
-def batch_transcribe_logs(chronicler: ChroniclerAgent, log_paths: List[str]) -> List[str]:
-    """
-    Utility function to transcribe multiple campaign logs in batch.
-    
-    Args:
-        chronicler: ChroniclerAgent instance to use
-        log_paths: List of paths to campaign log files
-        
-    Returns:
-        List of generated narrative strings
-    """
-    narratives = []
-    
-    logger.info(f"Starting batch transcription: {len(log_paths)} logs")
-    
-    for i, log_path in enumerate(log_paths):
-        try:
-            logger.info(f"Transcribing log {i + 1}/{len(log_paths)}: {log_path}")
-            narrative = chronicler.transcribe_log(log_path)
-            narratives.append(narrative)
-        except Exception as e:
-            logger.error(f"Failed to transcribe log {log_path}: {e}")
-            narratives.append(f"ERROR: Failed to transcribe {log_path}")
-    
-    logger.info(f"Batch transcription completed: {len(narratives)} narratives generated")
-    return narratives
-
-
-# Example usage and testing functions
+        logger.info(f"Narrative saved to: {output_path}")
+        return str(output_path)
 
 def example_usage():
-    """
-    Example usage of the ChroniclerAgent class.
-    
-    Demonstrates how to create and use ChroniclerAgent for narrative transcription.
-    """
-    print("ChroniclerAgent Example Usage:")
-    print("==============================")
-    
-    try:
-        # Create ChroniclerAgent
-        chronicler = ChroniclerAgent()
-        print(f"✓ ChroniclerAgent created successfully")
-        print(f"  Narrative style: {chronicler.narrative_style}")
-        print(f"  Max events per batch: {chronicler.max_events_per_batch}")
-        
-        # Example transcription (would need actual campaign log file)
-        # narrative = chronicler.transcribe_log("campaign_log.md")
-        # print(f"✓ Campaign transcribed: {len(narrative)} characters generated")
-        
-        # Get chronicler status
-        status = chronicler.get_chronicler_status()
-        print(f"✓ Chronicler status: {status['system_health']['status']}")
-        print(f"  Templates loaded: {status['system_health']['templates_loaded']}")
-        
-        # Test style change
-        success = chronicler.set_narrative_style('tactical')
-        print(f"✓ Style change: {'Success' if success else 'Failed'}")
-        
-        print("\nChroniclerAgent is ready for campaign transcription!")
-        
-    except Exception as e:
-        print(f"✗ Example failed: {e}")
-
+    """Example usage of the ChroniclerAgent class."""
+    print("ChroniclerAgent class is ready for use.")
 
 if __name__ == "__main__":
-    # Run example usage when script is executed directly
     example_usage()

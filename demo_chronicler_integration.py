@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from chronicler_agent import ChroniclerAgent
 from director_agent import DirectorAgent
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
 import logging
 
 # Configure logging for demo output

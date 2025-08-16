@@ -33,10 +33,14 @@ import os
 from pathlib import Path
 from datetime import datetime
 
+import time
+from src.event_bus import EventBus
+
 # Import core agent classes
 from director_agent import DirectorAgent
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
 from character_factory import CharacterFactory
+from chronicler_agent import ChroniclerAgent
 
 # Import configuration system
 from config_loader import get_config, get_simulation_turns, get_default_character_sheets, get_log_file_path
@@ -85,7 +89,7 @@ def verify_character_sheets():
     return True
 
 
-def initialize_director_agent():
+def initialize_director_agent(event_bus: EventBus):
     """
     Initialize the DirectorAgent (Game Master AI) for simulation orchestration.
     
@@ -94,7 +98,7 @@ def initialize_director_agent():
     """
     try:
         logger.info("Initializing DirectorAgent (Game Master AI)...")
-        director = DirectorAgent()
+        director = DirectorAgent(event_bus)
         
         logger.info("DirectorAgent initialized successfully")
         logger.info(f"Campaign log path: {director.campaign_log_path}")
@@ -106,7 +110,7 @@ def initialize_director_agent():
         return None
 
 
-def create_persona_agents():
+def create_persona_agents(event_bus: EventBus):
     """
     Create PersonaAgent instances for Warhammer 40k characters from configuration using CharacterFactory.
     
@@ -117,7 +121,7 @@ def create_persona_agents():
         logger.info("Creating PersonaAgent instances using CharacterFactory...")
         
         # Initialize the character factory
-        factory = CharacterFactory()
+        factory = CharacterFactory(event_bus)
         
         # Get character sheets from configuration
         config = get_config()
@@ -203,60 +207,24 @@ def run_3_turn_simulation(director):
     try:
         num_turns = get_simulation_turns()
         logger.info("=" * 60)
-        logger.info(f"STARTING {num_turns}-TURN WARHAMMER 40K SIMULATION")
+        logger.info(f"STARTING {num_turns}-TURN SIMULATION")
         logger.info("=" * 60)
         
         simulation_start = datetime.now()
-        turn_results = []
         
-        # Execute turns based on configuration
-        num_turns = get_simulation_turns()
         for turn_number in range(1, num_turns + 1):
-            logger.info(f"\n{'='*20} TURN {turn_number}/3 {'='*20}")
-            
-            try:
-                # Execute turn
-                turn_result = director.run_turn()
-                turn_results.append(turn_result)
-                
-                # Log turn summary
-                actions_count = turn_result.get('total_actions', 0)
-                errors_count = len(turn_result.get('errors', []))
-                duration = turn_result.get('turn_duration', 0)
-                
-                logger.info(f"Turn {turn_number}/{num_turns} completed successfully:")
-                logger.info(f"  - Actions generated: {actions_count}")
-                logger.info(f"  - Errors encountered: {errors_count}")
-                logger.info(f"  - Turn duration: {duration:.2f} seconds")
-                
-                # Log participating agents
-                participants = turn_result.get('participating_agents', [])
-                logger.info(f"  - Participating agents: {len(participants)}")
-                for agent_id in participants:
-                    logger.info(f"    * {agent_id}")
-                
-                # Brief pause between turns for readability
-                import time
-                time.sleep(0.5)
-                
-            except Exception as e:
-                logger.error(f"Error during turn {turn_number}: {str(e)}")
-                # Continue with next turn despite error
-                continue
+            logger.info(f"\n{'='*20} TURN {turn_number}/{num_turns} {'='*20}")
+            director.run_turn()
+            # Wait for events to be processed. This is a temporary solution.
+            time.sleep(1)
         
-        # Calculate simulation statistics
         simulation_end = datetime.now()
         total_duration = (simulation_end - simulation_start).total_seconds()
-        total_actions = sum(result.get('total_actions', 0) for result in turn_results)
-        total_errors = sum(len(result.get('errors', [])) for result in turn_results)
         
         logger.info("=" * 60)
         logger.info(f"{num_turns}-TURN SIMULATION COMPLETED")
         logger.info("=" * 60)
         logger.info(f"Total simulation time: {total_duration:.2f} seconds")
-        logger.info(f"Total turns executed: {len(turn_results)}")
-        logger.info(f"Total actions generated: {total_actions}")
-        logger.info(f"Total errors encountered: {total_errors}")
         
         return True
         
@@ -264,6 +232,17 @@ def run_3_turn_simulation(director):
         logger.error(f"Critical error during simulation: {str(e)}")
         return False
 
+
+def initialize_chronicler_agent(event_bus: EventBus):
+    """Initializes the ChroniclerAgent."""
+    try:
+        logger.info("Initializing ChroniclerAgent...")
+        chronicler = ChroniclerAgent(event_bus)
+        logger.info("ChroniclerAgent initialized successfully.")
+        return chronicler
+    except Exception as e:
+        logger.error(f"Failed to initialize ChroniclerAgent: {e}")
+        return None
 
 def main():
     """
@@ -275,18 +254,23 @@ def main():
         character_sheets = config.characters.default_sheets
         
         print("=" * 70)
-        print("WARHAMMER 40K MULTI-AGENT SIMULATOR")
-        print(f"{num_turns}-Turn Demonstration with {len(character_sheets)} Characters")
+        print("STORYFORGE AI - INTERACTIVE STORY ENGINE")
+        print(f"{num_turns}-Turn Simulation with {len(character_sheets)} Characters")
         print("=" * 70)
         
     except Exception as e:
         logger.warning(f"Failed to load configuration display info: {e}")
         print("=" * 70)
-        print("WARHAMMER 40K MULTI-AGENT SIMULATOR")
+        print("STORYFORGE AI - INTERACTIVE STORY ENGINE")
         print("Multi-Turn Character Demonstration")
         print("=" * 70)
     
     try:
+        # Step 0: Initialize Event Bus
+        print("\n0. Initializing Event Bus...")
+        event_bus = EventBus()
+        print("✓ Event Bus initialized")
+
         # Step 1: Verify required files exist
         print("\n1. Verifying character sheet files...")
         if not verify_character_sheets():
@@ -296,44 +280,49 @@ def main():
         
         # Step 2: Initialize DirectorAgent
         print("\n2. Initializing DirectorAgent...")
-        director = initialize_director_agent()
+        director = initialize_director_agent(event_bus)
         if director is None:
             print("✗ DirectorAgent initialization failed")
             sys.exit(1)
         print("✓ DirectorAgent initialized successfully")
+
+        # Step 3: Initialize ChroniclerAgent
+        print("\n3. Initializing ChroniclerAgent...")
+        chronicler = initialize_chronicler_agent(event_bus)
+        if chronicler is None:
+            print("✗ ChroniclerAgent initialization failed")
+            sys.exit(1)
+        print("✓ ChroniclerAgent initialized successfully")
         
-        # Step 3: Create PersonaAgent instances
-        print("\n3. Creating PersonaAgent instances...")
-        agents = create_persona_agents()
+        # Step 4: Create PersonaAgent instances
+        print("\n4. Creating PersonaAgent instances...")
+        agents = create_persona_agents(event_bus)
         if not agents or any(agent is None for agent in agents):
             print("✗ PersonaAgent creation failed")
             sys.exit(1)
         print(f"✓ {len(agents)} PersonaAgent instances created successfully")
         
-        # Step 4: Register agents with director
-        print("\n4. Registering agents with DirectorAgent...")
+        # Step 5: Register agents with director
+        print("\n5. Registering agents with DirectorAgent...")
         if not register_agents_with_director(director, *agents):
             print("✗ Agent registration failed")
             sys.exit(1)
         print("✓ All agents registered successfully")
         
-        # Step 5: Run simulation
+        # Step 6: Run simulation
         num_turns = get_simulation_turns()
-        print(f"\n5. Executing {num_turns}-turn simulation...")
+        print(f"\n6. Executing {num_turns}-turn simulation...")
         if not run_3_turn_simulation(director):
             print("✗ Simulation execution failed")
             sys.exit(1)
         print(f"✓ {num_turns}-turn simulation completed successfully")
         
-        # Step 6: Finalize campaign log
-        print("\n6. Finalizing campaign log...")
-        try:
-            director.close_campaign_log()
-            print("✓ Campaign log finalized")
-        except Exception as e:
-            logger.warning(f"Could not properly close campaign log: {e}")
-            print("⚠ Campaign log may not be properly closed")
-        
+        # Step 7: Finalize narrative
+        print("\n7. Finalizing narrative...")
+        event_bus.emit("SIMULATION_END")
+        time.sleep(1) # Give chronicler time to process
+        print("✓ Narrative finalized")
+
         # Final success message
         config = get_config()
         log_file = config.paths.log_file_path
@@ -342,7 +331,6 @@ def main():
         print(f"Campaign log generated: {log_file}")
         print("Simulation log available: simulation.log")
         print("=" * 70)
-        print("\nFor the Emperor! In the grim darkness of the far future, there is only war...")
         
     except KeyboardInterrupt:
         print("\n\n⚠ Simulation interrupted by user")

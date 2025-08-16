@@ -31,7 +31,8 @@ from unittest.mock import Mock, patch, MagicMock
 from dataclasses import dataclass
 
 # Import the PersonaAgent-related classes that DirectorAgent will use
-from persona_agent import PersonaAgent, CharacterAction, ActionPriority, ThreatLevel
+from src.persona_agent import PersonaAgent, ThreatLevel
+from shared_types import CharacterAction, ActionPriority
 # Import the actual DirectorAgent implementation
 from director_agent import DirectorAgent
 

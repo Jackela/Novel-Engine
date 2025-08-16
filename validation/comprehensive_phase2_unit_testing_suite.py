@@ -24,7 +24,7 @@ try:
     from chronicler_agent import ChroniclerAgent
     from director_agent import DirectorAgent
     from config_loader import ConfigLoader, get_config
-    from persona_agent import PersonaAgent
+    from src.persona_agent import PersonaAgent
     from shared_types import CharacterAction
 except ImportError as e:
     print(f"⚠️ Import warning: {e}")
