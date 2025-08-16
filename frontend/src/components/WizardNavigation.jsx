@@ -70,7 +70,7 @@ function WizardNavigation({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [currentStep, canProceed]);
+  }, [currentStep, canProceed, handleCancel, handleComplete, handleNext, handlePrevious]);
 
   /**
    * Handle navigation to next step
@@ -464,9 +464,9 @@ function MinimalNavigation({ currentStep, totalSteps, onNext, onPrevious, canPro
   );
 }
 
-/**
- * Navigation Hook for external control
- */
+// Navigation Hook commented out to fix Fast Refresh issues
+// Move to separate hooks file if needed
+/*
 export function useWizardNavigation(initialStep = 0, totalSteps = 0) {
   const [currentStep, setCurrentStep] = useState(initialStep);
   const [completedSteps, setCompletedSteps] = useState([]);
@@ -517,5 +517,6 @@ export function useWizardNavigation(initialStep = 0, totalSteps = 0) {
     progress: totalSteps > 0 ? (currentStep + 1) / totalSteps : 0
   };
 }
+*/
 
 export default WizardNavigation;

@@ -56,7 +56,7 @@ function SuccessStep({
 
     const goals = suggestUserGoals(userPreferences);
     setUserGoals(goals);
-  }, [setupData, userPreferences]);
+  }, [setupData, userPreferences, calculateAchievements]);
 
   /**
    * Calculate user achievements
@@ -162,7 +162,7 @@ function SuccessStep({
   /**
    * Calculate approximate setup time
    */
-  function calculateSetupTime(setup) {
+  function calculateSetupTime(_setup) {
     // Simple estimation based on available data
     return Math.floor(Math.random() * 8) + 3; // 3-10 minutes
   }

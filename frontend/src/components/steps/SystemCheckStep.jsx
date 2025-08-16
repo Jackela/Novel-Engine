@@ -24,7 +24,7 @@ function SystemCheckStep({
   className = ''
 }) {
   // Validation hooks
-  const { validationData, isValidating, validateEnvironment } = useEnvironmentValidator();
+  const { validationData, validateEnvironment } = useEnvironmentValidator();
   const { healthData, startMonitoring, performHealthCheck } = useHealthMonitor();
   const { config: portConfig, detectConfig, isDetecting } = usePortDetection();
 
@@ -77,7 +77,7 @@ function SystemCheckStep({
     if (autoStart && currentStage === 0 && overallStatus === 'pending') {
       startValidation();
     }
-  }, [autoStart]);
+  }, [autoStart, currentStage, overallStatus, startValidation]);
 
   // Update progress when stage changes
   useEffect(() => {
@@ -88,7 +88,7 @@ function SystemCheckStep({
       setValidationProgress(completedWeight);
       onValidationProgress?.(completedWeight);
     }
-  }, [currentStage, onValidationProgress]);
+  }, [currentStage, onValidationProgress, validationStages]);
 
   /**
    * Start the validation process
@@ -186,7 +186,7 @@ function SystemCheckStep({
       console.error('Validation failed:', error);
       setOverallStatus('error');
     }
-  }, [validateEnvironment, validationData, portConfig, detectConfig, performHealthCheck]);
+  }, [validateEnvironment, validationData, portConfig, detectConfig, performHealthCheck, completeValidation, runPerformanceTests, runValidationStage]);
 
   /**
    * Run a specific validation stage

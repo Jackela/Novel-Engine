@@ -18,7 +18,7 @@ import './DemoStep.css';
 function DemoStep({
   onStoryGenerated,
   onContinue,
-  apiUrl,
+  apiUrl: _apiUrl,
   hasApiKey = false,
   autoSelectStory = false,
   showComparison = true,
@@ -28,7 +28,7 @@ function DemoStep({
   // Component state
   const [currentPhase, setCurrentPhase] = useState('selection'); // selection, generation, preview, completed
   const [selectedStory, setSelectedStory] = useState(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [_isGenerating, setIsGenerating] = useState(false);
   const [generatedStory, setGeneratedStory] = useState(null);
   const [currentTurn, setCurrentTurn] = useState(0);
   const [showFullStory, setShowFullStory] = useState(false);
@@ -49,7 +49,7 @@ function DemoStep({
     if (autoSelectStory && enhancedStories.length > 0) {
       handleStorySelection(enhancedStories[0]);
     }
-  }, [autoSelectStory, enhancedStories]);
+  }, [autoSelectStory, enhancedStories, handleStorySelection]);
 
   // Auto-advance turns during preview
   useEffect(() => {
@@ -115,7 +115,7 @@ function DemoStep({
     setTimeout(() => {
       generateStory(story);
     }, 1000);
-  }, []);
+  }, [generateStory]);
 
   /**
    * Generate story with realistic progression
@@ -204,7 +204,7 @@ function DemoStep({
   /**
    * Get character decision style
    */
-  const getDecisionStyle = (character) => {
+  const getDecisionStyle = (_character) => {
     const styles = ['analytical', 'intuitive', 'cautious', 'bold', 'diplomatic'];
     return styles[Math.floor(Math.random() * styles.length)];
   };
