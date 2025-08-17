@@ -8,6 +8,9 @@
  * - Automatic port scanning and detection
  * - Environment-based configuration
  * - Fallback strategies for different setups
+ */
+
+import React from 'react';
  * - Real-time health monitoring
  * - User-friendly error reporting
  */
