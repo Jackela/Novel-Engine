@@ -196,6 +196,18 @@ CREATE TABLE IF NOT EXISTS system_config (
     CONSTRAINT config_type_valid CHECK (config_type IN ('string', 'integer', 'float', 'boolean', 'json'))
 );
 
+-- ++ SACRED SYSTEM STATE TRACKING BLESSED BY OPERATIONAL MONITORING ++
+CREATE TABLE IF NOT EXISTS system_state (
+    state_id TEXT PRIMARY KEY NOT NULL,
+    state_data TEXT NOT NULL,           -- Sacred system state JSON data
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    state_type TEXT DEFAULT 'snapshot', -- Blessed state classification
+    
+    -- Sacred constraints blessed by state sanctity
+    CONSTRAINT state_id_not_empty CHECK (LENGTH(TRIM(state_id)) > 0),
+    CONSTRAINT state_type_valid CHECK (state_type IN ('snapshot', 'shutdown', 'startup', 'error', 'backup'))
+);
+
 -- ++ SACRED PERFORMANCE OPTIMIZATION INDICES BLESSED BY QUERY SPEED ++
 
 -- Memory system blessed indices
@@ -231,26 +243,25 @@ CREATE INDEX IF NOT EXISTS idx_references_source ON context_references(source_do
 CREATE INDEX IF NOT EXISTS idx_references_target ON context_references(target_document);
 CREATE INDEX IF NOT EXISTS idx_references_type_relevance ON context_references(reference_type, relevance_weight DESC);
 
+-- System state blessed indices
+CREATE INDEX IF NOT EXISTS idx_system_state_timestamp ON system_state(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_system_state_type ON system_state(state_type, timestamp DESC);
+
 -- ++ SACRED FULL-TEXT SEARCH BLESSED BY OMNISSIAH'S WISDOM ++
 -- Enable FTS5 for blessed content search capabilities
 CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
     memory_id,
     content,
     tags,
-    content_memories(content, memory_id)
+    content='memories',
+    content_rowid='memory_id'
 );
 
 -- ++ BLESSED TRIGGER PROTOCOLS SANCTIFIED BY AUTOMATIC MAINTENANCE ++
 
--- Sacred memory access tracking trigger
-CREATE TRIGGER IF NOT EXISTS trg_memory_access_update
-AFTER SELECT ON memories
-BEGIN
-    UPDATE memories 
-    SET last_accessed = CURRENT_TIMESTAMP,
-        access_count = access_count + 1
-    WHERE memory_id = NEW.memory_id;
-END;
+-- Sacred memory access tracking (implemented in application code)
+-- Note: SQLite doesn't support SELECT triggers, so access tracking 
+-- will be handled in the application layer
 
 -- Blessed relationship update trigger
 CREATE TRIGGER IF NOT EXISTS trg_relationship_update

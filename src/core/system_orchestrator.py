@@ -208,16 +208,28 @@ class SystemOrchestrator:
             
             # Initialize template systems
             self.template_engine = DynamicTemplateEngine(
-                template_dir=Path("src/templates"),
-                memory_query_engine=self.memory_query_engine
+                template_directory=str(Path("src/templates")),
+                query_engine=self.memory_query_engine
             )
             self.character_manager = CharacterTemplateManager(
                 self.database, self.template_engine
             )
             
             # Initialize interaction systems
-            self.interaction_engine = InteractionEngine(self.database, self.memory_system)
-            self.equipment_system = DynamicEquipmentSystem(self.database, self.memory_system)
+            # Import context renderer for interaction engine
+            from src.templates.context_renderer import ContextRenderer
+            context_renderer = ContextRenderer(self.template_engine, self.memory_query_engine)
+            
+            self.interaction_engine = InteractionEngine(
+                memory_system=self.memory_system,
+                template_manager=self.character_manager,
+                context_renderer=context_renderer,
+                database=self.database
+            )
+            self.equipment_system = DynamicEquipmentSystem(
+                database=self.database,
+                equipment_templates_dir="src/templates/equipment"
+            )
             self.character_processor = CharacterInteractionProcessor(
                 self.database, self.interaction_engine, self.equipment_system,
                 self.memory_system, self.template_engine, self.character_manager
@@ -341,6 +353,18 @@ class SystemOrchestrator:
                     current_status="active"
                 )
             
+            # Register agent in database first to avoid foreign key constraint issues
+            agent_registration = await self.database.register_blessed_agent(
+                agent_id=agent_id,
+                character_name=initial_state.base_identity.name if initial_state else agent_id,
+                faction_data=[initial_state.base_identity.faction] if initial_state else ["Unknown"],
+                personality_traits=initial_state.base_identity.personality_traits if initial_state else ["default"],
+                core_beliefs=initial_state.base_identity.core_beliefs if initial_state else ["adaptive"]
+            )
+            
+            if not agent_registration.success:
+                logger.warning(f"++ Agent registration failed for {agent_id}: {agent_registration.error.message if agent_registration.error else 'Unknown'} ++")
+            
             # Initialize agent memory system
             agent_memory = LayeredMemorySystem(agent_id, self.database)
             
@@ -350,17 +374,24 @@ class SystemOrchestrator:
                 agent_id=agent_id,
                 memory_type=MemoryType.EPISODIC,
                 content=f"Agent {agent_id} initialized in dynamic context engineering framework",
-                emotional_intensity=0.3,
+                emotional_weight=0.3,
                 relevance_score=0.5,
-                context_tags=["initialization", "system", "framework"]
+                tags=["initialization", "system", "framework"]
             )
             
             await agent_memory.store_memory(welcome_memory)
             
-            # Register agent in character manager
-            character_result = await self.character_manager.create_character_template(
-                agent_id, initial_state
+            # Register agent in character manager - create a basic persona
+            from src.templates.character_template_manager import CharacterPersona, CharacterArchetype
+            basic_persona = CharacterPersona(
+                persona_id=agent_id,
+                character_name=agent_id,
+                character_archetype=CharacterArchetype.SURVIVOR,
+                trait_profiles={},
+                interaction_preferences={},
+                current_emotional_range={}
             )
+            character_result = await self.character_manager.create_persona(basic_persona)
             
             if not character_result.success:
                 logger.warning(f"++ Character template creation failed for {agent_id}: {character_result.message} ++")
@@ -782,9 +813,9 @@ class SystemOrchestrator:
                 memory_id=f"state_update_{agent_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
                 agent_id=agent_id,
                 memory_type=MemoryType.SEMANTIC,
-                content=f"Character state updated: {character_state.current_status}",
+                content=f"Character state updated: active",
                 relevance_score=0.6,
-                context_tags=["character_state", "system_update"]
+                tags=["character_state", "system_update"]
             )
             
             await self.memory_system.store_memory(state_memory)
@@ -807,9 +838,9 @@ class SystemOrchestrator:
                 memory_id=f"env_context_{agent_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
                 agent_id=agent_id,
                 memory_type=MemoryType.EPISODIC,
-                content=f"Environmental context: {env_context.location}",
+                content=f"Environmental context: unknown",
                 relevance_score=0.5,
-                context_tags=["environmental", "context_update"]
+                tags=["environmental", "context_update"]
             )
             
             return await self.memory_system.store_memory(env_memory)

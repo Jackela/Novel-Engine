@@ -12,7 +12,7 @@ import json
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 import uuid
 
@@ -24,12 +24,13 @@ logger = logging.getLogger(__name__)
 
 class InteractionRequest(BaseModel):
     """Request model for initiating character interactions."""
-    participants: List[str] = Field(..., min_items=2)
+    participants: List[str] = Field(..., min_length=2)
     interaction_type: InteractionType = InteractionType.DIALOGUE
     priority: InteractionPriority = InteractionPriority.NORMAL
     topic: str = Field("", max_length=200)
     
-    @validator('participants')
+    @field_validator('participants')
+    @classmethod
     def validate_participants(cls, v):
         if len(v) != len(set(v)):
             raise ValueError('Duplicate participants not allowed')

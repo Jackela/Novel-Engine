@@ -9,9 +9,15 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
+    "test:safe": "node scripts/test-safe.js",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:coverage:safe": "node scripts/test-safe.js --coverage",
+    "test:cleanup": "node scripts/test-cleanup.js",
+    "test:single": "node scripts/test-safe.js",
+    "test:e2e": "playwright test",
+    "pretest": "node scripts/test-cleanup.js",
+    "posttest": "node scripts/test-cleanup.js"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",

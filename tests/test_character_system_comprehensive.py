@@ -26,6 +26,7 @@ from unittest.mock import patch, MagicMock
 from src.persona_agent import PersonaAgent
 from character_factory import CharacterFactory
 from director_agent import DirectorAgent
+from src.event_bus import EventBus
 
 # Test Constants
 GENERIC_CHARACTERS = ["pilot", "scientist", "engineer", "test"]
@@ -37,9 +38,13 @@ class TestCharacterLoading:
     
     def test_all_generic_characters_loadable(self):
         """Test that all generic characters can be loaded successfully"""
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        
         for char_name in GENERIC_CHARACTERS:
-            agent = PersonaAgent(character_name=char_name)
-            assert agent.character_name == char_name
+            agent = factory.create_character(char_name)
+            assert agent.character_directory_name == char_name
+            assert agent.character_name is not None  # Should have actual character name
             assert agent.agent_id is not None
             assert hasattr(agent, 'character_context')
     
@@ -108,13 +113,18 @@ class TestCharacterLoading:
     
     def test_character_load_error_handling(self):
         """Test error handling for invalid character loading"""
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        
         with pytest.raises(Exception):
-            PersonaAgent(character_name="nonexistent_character")
+            factory.create_character("nonexistent_character")
     
     def test_character_context_loading(self):
         """Test character context loading functionality"""
-        agent = PersonaAgent(character_name="pilot")
-        agent._load_character_context()
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        agent = factory.create_character("pilot")
+        # Context is already loaded during initialization
         
         assert agent.character_context is not None
         assert len(agent.character_context) > 100  # Should have substantial content
@@ -127,7 +137,9 @@ class TestGenericCharacterProfiles:
     
     def test_pilot_character_profile(self):
         """Test pilot character profile details"""
-        agent = PersonaAgent(character_name="pilot")
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        agent = factory.create_character("pilot")
         
         # Check character context
         context = agent.character_context.lower()
@@ -153,7 +165,9 @@ class TestGenericCharacterProfiles:
     
     def test_scientist_character_profile(self):
         """Test scientist character profile details"""
-        agent = PersonaAgent(character_name="scientist")
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        agent = factory.create_character("scientist")
         
         context = agent.character_context.lower()
         assert "maya patel" in context
@@ -179,7 +193,9 @@ class TestGenericCharacterProfiles:
     
     def test_engineer_character_profile(self):
         """Test engineer character profile details"""
-        agent = PersonaAgent(character_name="engineer")
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        agent = factory.create_character("engineer")
         
         context = agent.character_context.lower()
         assert "jordan kim" in context
@@ -207,7 +223,9 @@ class TestGenericCharacterProfiles:
     
     def test_test_character_profile(self):
         """Test test character profile for development purposes"""
-        agent = PersonaAgent(character_name="test")
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        agent = factory.create_character("test")
         
         context = agent.character_context.lower()
         assert "test subject" in context
@@ -316,7 +334,8 @@ class TestCharacterFactory:
     
     def test_character_factory_initialization(self):
         """Test character factory initialization"""
-        factory = CharacterFactory()
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
         assert factory is not None
         assert hasattr(factory, 'create_character') or hasattr(factory, 'load_character')
     
@@ -364,7 +383,9 @@ class TestCharacterMemorySystem:
     
     def test_character_memory_initialization(self):
         """Test character memory system initialization"""
-        agent = PersonaAgent(character_name="pilot")
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        agent = factory.create_character("pilot")
         
         # Test memory update functionality
         agent.update_memory("test_event", "Test memory entry")
@@ -374,12 +395,15 @@ class TestCharacterMemorySystem:
     
     def test_memory_persistence_across_sessions(self):
         """Test that character memory persists across sessions"""
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        
         # First session
-        agent1 = PersonaAgent(character_name="test")
+        agent1 = factory.create_character("test")
         agent1.update_memory("session1", "First session data")
         
         # Second session (new instance)
-        agent2 = PersonaAgent(character_name="test")
+        agent2 = factory.create_character("test")
         
         # Memory should persist (if implemented)
         # This is more of a design test for future implementation
@@ -387,7 +411,9 @@ class TestCharacterMemorySystem:
     
     def test_memory_log_format(self):
         """Test memory log format and structure"""
-        agent = PersonaAgent(character_name="scientist")
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        agent = factory.create_character("scientist")
         agent.update_memory("experiment_1", "Conducted xenobiology research")
         
         # Test memory logging doesn't crash
@@ -399,7 +425,9 @@ class TestCharacterInteractions:
     
     def test_character_decision_making(self):
         """Test character decision-making processes"""
-        agent = PersonaAgent(character_name="pilot")
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        agent = factory.create_character("pilot")
         
         # Test decision loop functionality
         decision = agent.decision_loop("Navigate through asteroid field")
@@ -411,9 +439,12 @@ class TestCharacterInteractions:
     
     def test_character_context_awareness(self):
         """Test character context awareness in decisions"""
-        pilot = PersonaAgent(character_name="pilot")
-        scientist = PersonaAgent(character_name="scientist")
-        engineer = PersonaAgent(character_name="engineer")
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        
+        pilot = factory.create_character("pilot")
+        scientist = factory.create_character("scientist")
+        engineer = factory.create_character("engineer")
         
         # Each character should have distinct context
         assert pilot.character_context != scientist.character_context
@@ -443,11 +474,13 @@ class TestCharacterInteractions:
     
     def test_multi_character_simulation(self):
         """Test multi-character simulation setup"""
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
         director = DirectorAgent()
         
         # Register multiple characters
-        pilot = PersonaAgent(character_name="pilot")
-        scientist = PersonaAgent(character_name="scientist")
+        pilot = factory.create_character("pilot")
+        scientist = factory.create_character("scientist")
         
         director.register_agent(pilot)
         director.register_agent(scientist)
@@ -464,8 +497,11 @@ class TestPerformanceAndScalability:
         """Test character loading performance"""
         import time
         
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
+        
         start_time = time.time()
-        agent = PersonaAgent(character_name="pilot")
+        agent = factory.create_character("pilot")
         end_time = time.time()
         
         loading_time = end_time - start_time
@@ -473,11 +509,13 @@ class TestPerformanceAndScalability:
     
     def test_multiple_character_memory_usage(self):
         """Test memory usage with multiple characters"""
+        event_bus = EventBus()
+        factory = CharacterFactory(event_bus)
         agents = []
         
         # Load all generic characters
         for char_name in GENERIC_CHARACTERS:
-            agent = PersonaAgent(character_name=char_name)
+            agent = factory.create_character(char_name)
             agents.append(agent)
         
         assert len(agents) == len(GENERIC_CHARACTERS)
@@ -491,7 +529,9 @@ class TestPerformanceAndScalability:
         import concurrent.futures
         
         def load_character(char_name):
-            return PersonaAgent(character_name=char_name)
+            event_bus = EventBus()
+            factory = CharacterFactory(event_bus)
+            return factory.create_character(char_name)
         
         # Load characters concurrently
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:

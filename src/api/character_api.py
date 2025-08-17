@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, HTTPException, Query, Path, Body
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from src.core.system_orchestrator import SystemOrchestrator
 from src.core.data_models import CharacterState, EmotionalState
@@ -36,13 +36,15 @@ class CharacterCreationRequest(BaseModel):
     inventory: List[str] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
     
-    @validator('agent_id')
+    @field_validator('agent_id')
+    @classmethod
     def validate_agent_id(cls, v):
         if not v.replace('_', '').replace('-', '').isalnum():
             raise ValueError('Agent ID must be alphanumeric with hyphens or underscores.')
         return v.lower()
     
-    @validator('skills')
+    @field_validator('skills')
+    @classmethod
     def validate_skills(cls, v):
         for skill, value in v.items():
             if not 0.0 <= value <= 1.0:

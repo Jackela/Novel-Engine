@@ -480,6 +480,37 @@ class PersonaAgent:
         action = self._make_decision(world_state_update)
         self.event_bus.emit("AGENT_ACTION_COMPLETE", agent=self, action=action)
     
+    @property
+    def character_name(self) -> str:
+        """
+        Get the character's name from the loaded character data.
+        
+        Returns:
+            str: The character's name, or 'Unknown' if not available
+        """
+        return self.character_data.get('name', 'Unknown')
+    
+    @property
+    def character_directory_name(self) -> str:
+        """
+        Get the character's directory name (useful for file organization).
+        
+        Returns:
+            str: The directory name of the character
+        """
+        return os.path.basename(os.path.normpath(self.character_directory_path))
+    
+    @property
+    def character_context(self) -> str:
+        """
+        Get the character's loaded context (markdown content).
+        
+        Returns:
+            str: The character's context from loaded files
+        """
+        hybrid_context = self.character_data.get('hybrid_context', {})
+        return hybrid_context.get('markdown_content', '')
+    
     def _derive_agent_id_from_path(self, path: str) -> str:
         """
         Derive a unique agent ID from the character directory path.

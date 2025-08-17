@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -12,6 +12,8 @@ import {
   CircularProgress,
   Alert,
   Divider,
+  Badge,
+  Tooltip,
 } from '@mui/material';
 import {
   Psychology as PsychologyIcon,
@@ -21,7 +23,11 @@ import {
   Schedule as ScheduleIcon,
   Speed as SpeedIcon,
   Memory as MemoryIcon,
+  Wifi as WifiIcon,
+  WifiOff as WifiOffIcon,
+  SignalWifi4Bar as SignalIcon,
 } from '@mui/icons-material';
+import { useWebSocketProgress, ProgressUpdate } from '../../hooks/useWebSocketProgress';
 
 interface Props {
   isGenerating: boolean;
@@ -29,6 +35,8 @@ interface Props {
   currentStage: string;
   estimatedTimeRemaining: number;
   error: string | null;
+  generationId?: string | null;
+  enableRealTimeUpdates?: boolean;
 }
 
 const GENERATION_STAGES = [
@@ -71,11 +79,60 @@ const GENERATION_STAGES = [
 
 export default function GenerationProgress({
   isGenerating,
-  progress,
-  currentStage,
-  estimatedTimeRemaining,
+  progress: propProgress,
+  currentStage: propCurrentStage,
+  estimatedTimeRemaining: propEstimatedTime,
   error,
+  generationId,
+  enableRealTimeUpdates = true,
 }: Props) {
+  // State for real-time updates
+  const [realtimeData, setRealtimeData] = useState<{
+    progress: number;
+    currentStage: string;
+    estimatedTimeRemaining: number;
+    stageDetail?: string;
+    activeAgents?: string[];
+  } | null>(null);
+
+  // WebSocket hook for real-time updates
+  const {
+    isConnected: wsConnected,
+    lastUpdate,
+    error: wsError,
+    connectionAttempts,
+  } = useWebSocketProgress({
+    generationId,
+    enabled: enableRealTimeUpdates && isGenerating && !!generationId,
+    onUpdate: (update: ProgressUpdate) => {
+      setRealtimeData({
+        progress: update.progress,
+        currentStage: update.stage,
+        estimatedTimeRemaining: update.estimated_time_remaining,
+        stageDetail: update.stage_detail,
+        activeAgents: update.active_agents,
+      });
+    },
+    onError: (error) => {
+      console.warn('WebSocket progress error:', error);
+    },
+  });
+
+  // Use real-time data if available, otherwise fall back to props
+  const progress = realtimeData?.progress ?? propProgress;
+  const currentStage = realtimeData?.currentStage ?? propCurrentStage;
+  const estimatedTimeRemaining = realtimeData?.estimatedTimeRemaining ?? propEstimatedTime;
+  const stageDetail = realtimeData?.stageDetail;
+  const activeAgents = realtimeData?.activeAgents ?? [];
+
+  // Connection status for display
+  const connectionStatus = enableRealTimeUpdates && generationId
+    ? wsConnected
+      ? 'connected'
+      : connectionAttempts > 0
+      ? 'reconnecting'
+      : 'disconnected'
+    : 'disabled';
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -128,12 +185,65 @@ export default function GenerationProgress({
           )}
           
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {isGenerating ? 'Generating Story...' : 'Story Generation Complete'}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {isGenerating ? 'Generating Story...' : 'Story Generation Complete'}
+              </Typography>
+              
+              {/* Real-time connection indicator */}
+              {enableRealTimeUpdates && generationId && (
+                <Tooltip
+                  title={
+                    connectionStatus === 'connected'
+                      ? 'Real-time updates active'
+                      : connectionStatus === 'reconnecting'
+                      ? `Reconnecting... (attempt ${connectionAttempts})`
+                      : connectionStatus === 'disconnected'
+                      ? 'Real-time updates disconnected'
+                      : 'Real-time updates disabled'
+                  }
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {connectionStatus === 'connected' && (
+                      <Badge color="success" variant="dot">
+                        <SignalIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                      </Badge>
+                    )}
+                    {connectionStatus === 'reconnecting' && (
+                      <Badge color="warning" variant="dot">
+                        <WifiIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+                      </Badge>
+                    )}
+                    {connectionStatus === 'disconnected' && (
+                      <WifiOffIcon sx={{ fontSize: 16, color: 'error.main' }} />
+                    )}
+                  </Box>
+                </Tooltip>
+              )}
+            </Box>
+            
             <Typography variant="body2" color="text.secondary">
-              {currentStage}
+              {stageDetail || currentStage}
             </Typography>
+            
+            {/* Active agents indicator */}
+            {activeAgents.length > 0 && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Active: 
+                </Typography>
+                {activeAgents.map((agent, index) => (
+                  <Chip
+                    key={agent}
+                    label={agent.replace('Agent', '')}
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                    sx={{ height: 16, fontSize: '0.625rem' }}
+                  />
+                ))}
+              </Box>
+            )}
           </Box>
 
           {isGenerating && (
@@ -247,16 +357,43 @@ export default function GenerationProgress({
             );
           })}
         </List>
+        </Collapse>
       </Paper>
 
-      {/* Performance Metrics (when generating) */}
+      {/* Performance Metrics - Collapsible on Mobile */}
       {isGenerating && (
-        <Paper sx={{ p: 3, mt: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            Performance Metrics
-          </Typography>
+        <Paper sx={{ p: { xs: 2, sm: 3 }, mt: 3 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            mb: 2
+          }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Performance Metrics
+            </Typography>
+            
+            {isMobile && (
+              <IconButton
+                onClick={() => setShowMetrics(!showMetrics)}
+                size="small"
+                aria-label={showMetrics ? 'Hide metrics' : 'Show metrics'}
+              >
+                {showMetrics ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </IconButton>
+            )}
+          </Box>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+          <Collapse in={showMetrics || !isMobile}>
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { 
+              xs: '1fr', 
+              sm: 'repeat(auto-fit, minmax(150px, 1fr))',
+              md: 'repeat(auto-fit, minmax(200px, 1fr))'
+            }, 
+            gap: 2 
+          }}>
             <Box sx={{ textAlign: 'center' }}>
               <SpeedIcon sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -287,11 +424,19 @@ export default function GenerationProgress({
               </Typography>
             </Box>
           </Box>
+          </Collapse>
         </Paper>
       )}
 
-      {/* Tips and Information */}
-      <Paper sx={{ p: 3, mt: 3, bgcolor: 'action.hover' }}>
+      {/* Tips and Information - Enhanced Mobile Layout */}
+      <Paper sx={{ 
+        p: { xs: 2, sm: 3 }, 
+        mt: 3, 
+        bgcolor: 'action.hover',
+        '& .MuiListItem-root': {
+          px: { xs: 0, sm: 2 },
+        }
+      }}>
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
           What's Happening?
         </Typography>
@@ -300,26 +445,30 @@ export default function GenerationProgress({
           Our AI agents are working together to create your story:
         </Typography>
 
-        <List dense>
-          <ListItem sx={{ py: 0.5 }}>
+        <List dense sx={{
+          '& .MuiListItemText-secondary': {
+            fontSize: { xs: '0.875rem', sm: '0.875rem' }
+          }
+        }}>
+          <ListItem sx={{ py: { xs: 1, sm: 0.5 } }}>
             <ListItemText
               primary="Character Analysis"
               secondary="Each character's personality, motivations, and relationships are analyzed"
             />
           </ListItem>
-          <ListItem sx={{ py: 0.5 }}>
+          <ListItem sx={{ py: { xs: 1, sm: 0.5 } }}>
             <ListItemText
               primary="Narrative Planning"
               secondary="The overall story structure and key plot points are planned"
             />
           </ListItem>
-          <ListItem sx={{ py: 0.5 }}>
+          <ListItem sx={{ py: { xs: 1, sm: 0.5 } }}>
             <ListItemText
               primary="Turn Generation"
               secondary="Multiple AI agents take turns writing from each character's perspective"
             />
           </ListItem>
-          <ListItem sx={{ py: 0.5 }}>
+          <ListItem sx={{ py: { xs: 1, sm: 0.5 } }}>
             <ListItemText
               primary="Quality Control"
               secondary="The story is reviewed for consistency and narrative flow"

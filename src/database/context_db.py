@@ -57,21 +57,24 @@ class ContextDatabase:
     """
     
     def __init__(self, database_path: str = "context.db", 
-                 connection_pool_size: int = SacredConstants.CONNECTION_POOL_SIZE):
+                 connection_pool_size: int = SacredConstants.CONNECTION_POOL_SIZE,
+                 agent_id: Optional[str] = None):
         """
         ++ SACRED DATABASE INITIALIZATION BLESSED BY CONFIGURATION ++
         
         Args:
             database_path: Path to blessed SQLite database file
             connection_pool_size: Sacred connection pool limit
+            agent_id: Optional agent ID for this database instance
         """
         self.database_path = Path(database_path)
         self.connection_pool_size = connection_pool_size
+        self.agent_id = agent_id or "system_database"
         self._connection_pool: List[aiosqlite.Connection] = []
         self._pool_lock = asyncio.Lock()
         self._initialized = False
         
-        logger.info(f"++ SACRED DATABASE INITIALIZED: {self.database_path} ++")
+        logger.info(f"++ SACRED DATABASE INITIALIZED: {self.database_path} for agent {self.agent_id} ++")
     
     async def initialize_sacred_temple(self) -> StandardResponse:
         """
@@ -615,6 +618,41 @@ class ContextDatabase:
                 )
             )
     
+    async def health_check(self) -> Dict[str, Any]:
+        """
+        ++ SACRED DATABASE HEALTH CHECK BLESSED BY MONITORING ++
+        
+        Perform database health check to verify connectivity and basic operations.
+        """
+        try:
+            async with self.get_blessed_connection() as connection:
+                # Test basic database connectivity
+                cursor = await connection.execute("SELECT 1")
+                result = await cursor.fetchone()
+                
+                # Check if we got expected result
+                if result and result[0] == 1:
+                    return {
+                        "healthy": True,
+                        "database_path": str(self.database_path),
+                        "agent_id": self.agent_id,
+                        "connection_pool_size": len(self._connection_pool),
+                        "initialized": self._initialized
+                    }
+                else:
+                    return {
+                        "healthy": False,
+                        "error": "Database query returned unexpected result"
+                    }
+        except Exception as e:
+            logger.error(f"++ SACRED DATABASE HEALTH CHECK FAILED: {e} ++")
+            return {
+                "healthy": False,
+                "error": str(e),
+                "database_path": str(self.database_path),
+                "agent_id": self.agent_id
+            }
+
     async def close_sacred_temple(self):
         """++ SACRED DATABASE CLOSURE RITUAL BLESSED BY RESOURCE CLEANUP ++"""
         try:
@@ -623,6 +661,7 @@ class ContextDatabase:
                     await connection.close()
                 self._connection_pool.clear()
             
+            self._initialized = False
             logger.info("++ SACRED DATABASE TEMPLE CLOSED WITH BLESSING ++")
             
         except Exception as e:
