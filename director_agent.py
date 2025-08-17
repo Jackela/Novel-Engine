@@ -27,9 +27,6 @@ from src.persona_agent import PersonaAgent
 from shared_types import CharacterAction
 from src.event_bus import EventBus
 
-<<<<<<< Updated upstream
-# Import configuration loader
-=======
 # Try to import Iron Laws types at module level
 try:
     from src.shared_types import (
@@ -43,8 +40,7 @@ except ImportError as e:
     logger.warning(f"Iron Laws types not available: {e}")
     IRON_LAWS_AVAILABLE = False
 
-# 引入配置系统圣典，获取指挥中心的运行参数...
->>>>>>> Stashed changes
+# Import configuration loader
 from config_loader import get_config, get_campaign_log_filename
 
 # Import narrative components

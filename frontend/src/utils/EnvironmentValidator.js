@@ -6,7 +6,8 @@
  */
 
 import React from 'react';
- * 
+
+/**
  * Features:
  * - Browser compatibility checking
  * - System requirements validation
