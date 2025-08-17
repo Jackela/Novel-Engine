@@ -306,6 +306,8 @@ export function withErrorHandling(asyncFunction, options = {}) {
   };
 }
 
+import React from 'react';
+
 /**
  * React hook for error handling
  */

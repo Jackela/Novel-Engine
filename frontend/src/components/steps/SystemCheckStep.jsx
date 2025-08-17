@@ -355,7 +355,8 @@ function SystemCheckStep({
         return Math.max(0, 100 - (latency / 20));
       }
       return 50;
-    } catch (_error) {
+    } catch (error) {
+      console.warn('Network test failed:', error);
       return 30;
     }
   };
@@ -373,7 +374,8 @@ function SystemCheckStep({
       const duration = endTime - startTime;
       
       return data === testData ? Math.max(0, 100 - duration) : 0;
-    } catch (_error) {
+    } catch (error) {
+      console.warn('Storage test failed:', error);
       return 50;
     }
   };

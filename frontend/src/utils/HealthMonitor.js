@@ -11,7 +11,6 @@
  */
 
 import React from 'react';
- */
 
 import { globalPortDetector } from './PortDetector';
 

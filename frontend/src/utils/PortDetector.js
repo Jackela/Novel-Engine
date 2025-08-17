@@ -11,6 +11,9 @@
  */
 
 import React from 'react';
+
+/**
+ * Additional features:
  * - Real-time health monitoring
  * - User-friendly error reporting
  */

@@ -39,7 +39,7 @@ jobs:
         
         # Create comprehensive test file
         cat > tests/test_backend_ci.py << 'EOF'
-import pytest
+        import pytest
 import sys
 import sqlite3
 import json
