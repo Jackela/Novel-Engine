@@ -37,7 +37,7 @@ function SystemCheckStep({
   const [showTroubleshooting, setShowTroubleshooting] = useState(false);
 
   // Validation stages
-  const validationStages = [
+  const validationStages = useMemo(() => [
     {
       id: 'browser',
       title: 'Browser Compatibility',
@@ -70,7 +70,7 @@ function SystemCheckStep({
       estimatedTime: 3000,
       weight: 20
     }
-  ];
+  ], []);
 
   // Auto-start validation
   useEffect(() => {
@@ -191,7 +191,7 @@ function SystemCheckStep({
   /**
    * Run a specific validation stage
    */
-  const runValidationStage = async (stageIndex, validationFunction) => {
+   const runValidationStage = useCallback(async (stageIndex, validationFunction) => {
     setCurrentStage(stageIndex);
     
     const stage = validationStages[stageIndex];
@@ -234,12 +234,12 @@ function SystemCheckStep({
 
       setCurrentStage(stageIndex + 1);
     }
-  };
+  }, [validationStages, onValidationProgress]);
 
   /**
    * Complete the validation process
    */
-  const completeValidation = () => {
+  const completeValidation = useCallback(() => {
     const results = Object.values(stageResults);
     const avgScore = results.reduce((sum, result) => sum + result.score, 0) / results.length;
     const criticalFailures = results.filter(r => r.level === 'fail').length;
@@ -271,12 +271,12 @@ function SystemCheckStep({
       warnings,
       timestamp: new Date().toISOString()
     });
-  };
+  }, [stageResults, startMonitoring, onValidationComplete]);
 
   /**
    * Run performance tests
    */
-  const runPerformanceTests = async () => {
+  const runPerformanceTests = useCallback(async () => {
     const tests = {
       memoryUsage: testMemoryUsage(),
       renderPerformance: await testRenderPerformance(),
@@ -298,7 +298,7 @@ function SystemCheckStep({
       details: tests,
       recommendations
     };
-  };
+  }, []);
 
   /**
    * Performance test utilities
