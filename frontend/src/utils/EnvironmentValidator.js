@@ -3,6 +3,9 @@
  * 
  * Validates system requirements and environment compatibility
  * for StoryForge AI optimal operation
+ */
+
+import React from 'react';
  * 
  * Features:
  * - Browser compatibility checking
@@ -342,11 +345,13 @@ export class EnvironmentValidator {
         });
         networkInfo.reachable = testResponse.ok;
       } catch (error) {
+        console.warn('Network connectivity test failed:', error);
         warnings.push('Network connectivity test failed');
         networkInfo.reachable = false;
       }
 
     } catch (error) {
+      console.warn('Unable to perform network validation:', error);
       warnings.push('Unable to perform network validation');
     }
 
@@ -378,6 +383,7 @@ export class EnvironmentValidator {
       localStorage.removeItem(testKey);
       storageInfo.localStorage = true;
     } catch (error) {
+      console.warn('Local storage test failed:', error);
       storageInfo.localStorage = false;
       issues.push('Local storage is not available or restricted');
     }
@@ -389,6 +395,7 @@ export class EnvironmentValidator {
       sessionStorage.removeItem(testKey);
       storageInfo.sessionStorage = true;
     } catch (error) {
+      console.warn('Session storage test failed:', error);
       storageInfo.sessionStorage = false;
       warnings.push('Session storage is not available');
     }
@@ -412,7 +419,7 @@ export class EnvironmentValidator {
         if (estimate.quota < 50 * 1024 * 1024) { // 50MB
           warnings.push('Low storage quota may limit some features');
         }
-      } catch (error) {
+      } catch (_error) {
         // Ignore quota estimation errors
       }
     }

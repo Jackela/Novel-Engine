@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useEnvironmentValidator } from '../../utils/EnvironmentValidator';
 import { useHealthMonitor } from '../../utils/HealthMonitor';
 import { usePortDetection } from '../../utils/PortDetector';
@@ -25,8 +25,8 @@ function SystemCheckStep({
 }) {
   // Validation hooks
   const { validationData, validateEnvironment } = useEnvironmentValidator();
-  const { healthData, startMonitoring, performHealthCheck } = useHealthMonitor();
-  const { config: portConfig, detectConfig, isDetecting } = usePortDetection();
+  const { healthData: _healthData, startMonitoring, performHealthCheck } = useHealthMonitor();
+  const { config: portConfig, detectConfig, isDetecting: _isDetecting } = usePortDetection();
 
   // Component state
   const [currentStage, setCurrentStage] = useState(0);
@@ -355,7 +355,7 @@ function SystemCheckStep({
         return Math.max(0, 100 - (latency / 20));
       }
       return 50;
-    } catch (error) {
+    } catch (_error) {
       return 30;
     }
   };
@@ -373,7 +373,7 @@ function SystemCheckStep({
       const duration = endTime - startTime;
       
       return data === testData ? Math.max(0, 100 - duration) : 0;
-    } catch (error) {
+    } catch (_error) {
       return 50;
     }
   };
