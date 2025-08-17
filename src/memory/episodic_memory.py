@@ -111,7 +111,7 @@ class EpisodicMemory:
             self._episodes[memory.memory_id] = episode
             self._update_indices(memory, themes)
             
-            db_result = await self.database.store_memory(memory)
+            db_result = await self.database.store_blessed_memory(memory)
             if not db_result.success:
                 logger.error(f"Database store failed: {db_result.error.message}")
             
@@ -352,7 +352,7 @@ class EpisodicMemory:
             consolidated_count = 0
             for episode in consolidation_candidates[:50]:
                 episode.memory_item.relevance_score *= 1.1
-                await self.database.store_memory(episode.memory_item)
+                await self.database.store_blessed_memory(episode.memory_item)
                 consolidated_count += 1
             
             self.consolidated_episodes += consolidated_count

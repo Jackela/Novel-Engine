@@ -50,6 +50,7 @@ interface GenerationState {
   currentStage: string;
   estimatedTimeRemaining: number;
   error: string | null;
+  generationId?: string | null;
 }
 
 export default function StoryWorkshop() {
@@ -74,6 +75,7 @@ export default function StoryWorkshop() {
     currentStage: '',
     estimatedTimeRemaining: 0,
     error: null,
+    generationId: null,
   });
 
   // Fetch available characters
@@ -93,6 +95,7 @@ export default function StoryWorkshop() {
           currentStage: 'Initializing story generation...',
           estimatedTimeRemaining: 120, // 2 minutes estimate
           error: null,
+          generationId: null, // Will be set from response
         });
         setActiveStep(2); // Move to generation step
       },
@@ -104,6 +107,7 @@ export default function StoryWorkshop() {
           currentStage: 'Story generation completed',
           estimatedTimeRemaining: 0,
           error: null,
+          generationId: response.generation_id || null,
         });
         setActiveStep(3); // Move to review step
       },
@@ -441,6 +445,8 @@ export default function StoryWorkshop() {
                   currentStage={generationState.currentStage}
                   estimatedTimeRemaining={generationState.estimatedTimeRemaining}
                   error={generationState.error}
+                  generationId={generationState.generationId}
+                  enableRealTimeUpdates={true}
                 />
 
                 {generationState.error && (

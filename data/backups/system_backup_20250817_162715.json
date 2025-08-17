@@ -1,0 +1,10 @@
+{
+  "timestamp": "2025-08-17T16:27:15.418620",
+  "active_agents": [],
+  "operation_count": 0,
+  "system_health": "critical",
+  "configuration": {
+    "mode": "autonomous",
+    "max_concurrent_agents": 10
+  }
+}

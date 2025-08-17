@@ -4,7 +4,7 @@ FastAPI Server Unit Tests
 =========================
 
 Comprehensive pytest test suite for the FastAPI web server that provides
-RESTful API endpoints for the Warhammer 40k Multi-Agent Simulator.
+RESTful API endpoints for the StoryForge AI Interactive Story Engine.
 
 This test file includes:
 - FastAPI TestClient setup for API endpoint testing
@@ -90,7 +90,7 @@ class TestRootEndpoint:
         response_data = response.json()
         assert isinstance(response_data, dict)
         assert "message" in response_data
-        assert response_data["message"] == "Warhammer 40k Simulator API is running!"
+        assert response_data["message"] == "StoryForge AI Interactive Story Engine is running!"
     
     def test_root_endpoint_response_model(self, client: TestClient):
         """
@@ -108,7 +108,7 @@ class TestRootEndpoint:
         
         # Validate response matches HealthResponse model structure
         health_response = HealthResponse(**response_data)
-        assert health_response.message == "Warhammer 40k Simulator API is running!"
+        assert health_response.message == "StoryForge AI Interactive Story Engine is running!"
     
     @patch('api_server.logger')
     def test_root_endpoint_logging(self, mock_logger: Mock, client: TestClient):
@@ -142,7 +142,7 @@ class TestRootEndpoint:
         # Root endpoint should still return success
         assert response.status_code == status.HTTP_200_OK
         response_data = response.json()
-        assert response_data["message"] == "Warhammer 40k Simulator API is running!"
+        assert response_data["message"] == "StoryForge AI Interactive Story Engine is running!"
 
 
 class TestHealthEndpoint:
@@ -351,7 +351,7 @@ class TestAPIDocumentation:
         openapi_data = response.json()
         assert "info" in openapi_data
         assert "title" in openapi_data["info"]
-        assert openapi_data["info"]["title"] == "Warhammer 40k Simulator API"
+        assert openapi_data["info"]["title"] == "StoryForge AI API"
 
 
 class TestServerConfiguration:
@@ -371,8 +371,8 @@ class TestServerConfiguration:
         openapi_data = response.json()
         info = openapi_data["info"]
         
-        assert info["title"] == "Warhammer 40k Simulator API"
-        assert "Warhammer 40k Multi-Agent Simulator" in info["description"]
+        assert info["title"] == "StoryForge AI API"
+        assert "StoryForge AI Interactive Story Engine" in info["description"]
         assert info["version"] == "1.0.0"
     
     @patch('api_server.get_config')
@@ -672,7 +672,7 @@ class TestIntegrationScenarios:
         root_response = client.get("/")
         assert root_response.status_code == status.HTTP_200_OK
         root_data = root_response.json()
-        assert "Warhammer 40k Simulator API is running!" in root_data["message"]
+        assert "StoryForge AI Interactive Story Engine is running!" in root_data["message"]
         
         # Test detailed health check
         health_response = client.get("/health")

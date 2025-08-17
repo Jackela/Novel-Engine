@@ -14,9 +14,75 @@ import {
   ExportOptions
 } from '../types';
 
+// Cache interface for API responses
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
+class APICache {
+  private cache = new Map<string, CacheEntry<any>>();
+  private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly MAX_CACHE_SIZE = 500;
+  
+  set<T>(key: string, data: T, ttl: number = this.DEFAULT_TTL): void {
+    // Clean expired entries if cache is getting large
+    if (this.cache.size >= this.MAX_CACHE_SIZE) {
+      this.cleanup();
+    }
+    
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl
+    });
+  }
+  
+  get<T>(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    
+    // Check if expired
+    if (Date.now() - entry.timestamp > entry.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return entry.data as T;
+  }
+  
+  invalidate(pattern: string): void {
+    for (const key of this.cache.keys()) {
+      if (key.includes(pattern)) {
+        this.cache.delete(key);
+      }
+    }
+  }
+  
+  private cleanup(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.cache.entries()) {
+      if (now - entry.timestamp > entry.ttl) {
+        this.cache.delete(key);
+      }
+    }
+  }
+  
+  clear(): void {
+    this.cache.clear();
+  }
+  
+  size(): number {
+    return this.cache.size;
+  }
+}
+
 class NovelEngineAPI {
   private client: AxiosInstance;
   private baseURL: string;
+  private cache = new APICache();
+  private requestDeduplication = new Map<string, Promise<any>>();
 
   constructor(baseURL: string = 'http://localhost:8000') {
     this.baseURL = baseURL;
@@ -79,23 +145,104 @@ class NovelEngineAPI {
     return response.data;
   }
 
-  // Character APIs
+  // Enhanced Character APIs with caching
   async getCharacters(): Promise<string[]> {
-    const response = await this.client.get<{ characters: string[] }>('/characters');
-    return response.data.characters;
+    const cacheKey = 'characters:list';
+    
+    // Check cache first
+    const cached = this.cache.get<string[]>(cacheKey);
+    if (cached) {
+      console.log('📋 Characters loaded from cache');
+      return cached;
+    }
+    
+    // Check for in-flight request
+    if (this.requestDeduplication.has(cacheKey)) {
+      console.log('⏳ Waiting for in-flight characters request');
+      return this.requestDeduplication.get(cacheKey);
+    }
+    
+    // Make new request
+    const requestPromise = this.client.get<{ characters: string[] }>('/characters')
+      .then(response => {
+        const characters = response.data.characters;
+        this.cache.set(cacheKey, characters, 2 * 60 * 1000); // 2 minutes TTL
+        this.requestDeduplication.delete(cacheKey);
+        return characters;
+      })
+      .catch(error => {
+        this.requestDeduplication.delete(cacheKey);
+        throw error;
+      });
+    
+    this.requestDeduplication.set(cacheKey, requestPromise);
+    return requestPromise;
   }
 
   async getCharacterDetails(name: string): Promise<Character> {
-    const response = await this.client.get<any>(`/characters/${encodeURIComponent(name)}`);
-    return this.transformCharacterResponse(response.data, name);
+    const cacheKey = `character:details:${name}`;
+    
+    // Check cache first
+    const cached = this.cache.get<Character>(cacheKey);
+    if (cached) {
+      console.log(`📋 Character ${name} loaded from cache`);
+      return cached;
+    }
+    
+    // Check for in-flight request
+    if (this.requestDeduplication.has(cacheKey)) {
+      return this.requestDeduplication.get(cacheKey);
+    }
+    
+    const requestPromise = this.client.get<any>(`/characters/${encodeURIComponent(name)}`)
+      .then(response => {
+        const character = this.transformCharacterResponse(response.data, name);
+        this.cache.set(cacheKey, character, 5 * 60 * 1000); // 5 minutes TTL
+        this.requestDeduplication.delete(cacheKey);
+        return character;
+      })
+      .catch(error => {
+        this.requestDeduplication.delete(cacheKey);
+        throw error;
+      });
+    
+    this.requestDeduplication.set(cacheKey, requestPromise);
+    return requestPromise;
   }
 
   async getEnhancedCharacterData(name: string): Promise<Character> {
+    const cacheKey = `character:enhanced:${name}`;
+    
+    // Check cache first
+    const cached = this.cache.get<Character>(cacheKey);
+    if (cached) {
+      console.log(`📋 Enhanced character ${name} loaded from cache`);
+      return cached;
+    }
+    
     try {
-      const response = await this.client.get<any>(`/characters/${encodeURIComponent(name)}/enhanced`);
-      return this.transformEnhancedCharacterResponse(response.data);
+      // Check for in-flight request
+      if (this.requestDeduplication.has(cacheKey)) {
+        return this.requestDeduplication.get(cacheKey);
+      }
+      
+      const requestPromise = this.client.get<any>(`/characters/${encodeURIComponent(name)}/enhanced`)
+        .then(response => {
+          const character = this.transformEnhancedCharacterResponse(response.data);
+          this.cache.set(cacheKey, character, 10 * 60 * 1000); // 10 minutes TTL for enhanced data
+          this.requestDeduplication.delete(cacheKey);
+          return character;
+        })
+        .catch(error => {
+          this.requestDeduplication.delete(cacheKey);
+          throw error;
+        });
+      
+      this.requestDeduplication.set(cacheKey, requestPromise);
+      return await requestPromise;
     } catch (error) {
       // Fallback to regular character details
+      console.warn(`Enhanced character data failed for ${name}, falling back:`, error);
       return this.getCharacterDetails(name);
     }
   }
@@ -117,28 +264,65 @@ class NovelEngineAPI {
       },
     });
 
+    const character = this.transformCharacterCreationResponse(response.data, characterData);
+    
+    // Invalidate character list cache and cache new character
+    this.cache.invalidate('characters:list');
+    this.cache.set(`character:details:${characterData.name}`, character, 5 * 60 * 1000);
+
     return {
       success: true,
-      data: this.transformCharacterCreationResponse(response.data, characterData),
+      data: character,
       timestamp: new Date().toISOString(),
     };
   }
 
   // Story and Simulation APIs
-  async runSimulation(storyData: StoryFormData): Promise<ApiResponse<StoryProject>> {
-    const simulationRequest = {
-      character_names: storyData.characters,
-      turns: storyData.settings.turns,
-      narrative_style: storyData.settings.narrativeStyle,
-    };
+  async runSimulation(storyData: StoryFormData): Promise<ApiResponse<StoryProject> & { generation_id?: string }> {
+    // First try the new story generation API with real-time progress
+    try {
+      const generationRequest = {
+        characters: storyData.characters,
+        title: storyData.title,
+      };
+      const response = await this.client.post<{generation_id: string, status: string, message: string}>('/api/v1/stories/generate', generationRequest);
+      
+      // Return response with generation_id for WebSocket tracking
+      return {
+        success: true,
+        generation_id: response.data.generation_id,
+        data: this.transformSimulationResponse({ participants: storyData.characters }, storyData),
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      // Fallback to original simulation API
+      console.warn('New story generation API not available, falling back to legacy simulation:', error);
+      
+      const simulationRequest = {
+        character_names: storyData.characters,
+        turns: storyData.settings.turns,
+        narrative_style: storyData.settings.narrativeStyle,
+      };
 
-    const response = await this.client.post<any>('/simulations', simulationRequest);
-    
-    return {
-      success: true,
-      data: this.transformSimulationResponse(response.data, storyData),
-      timestamp: new Date().toISOString(),
-    };
+      const response = await this.client.post<any>('/simulations', simulationRequest);
+      
+      return {
+        success: true,
+        data: this.transformSimulationResponse(response.data, storyData),
+        timestamp: new Date().toISOString(),
+      };
+    }
+  }
+
+  async getGenerationStatus(generationId: string): Promise<{
+    generation_id: string;
+    status: string;
+    progress: number;
+    stage: string;
+    estimated_time_remaining: number;
+  }> {
+    const response = await this.client.get<any>(`/api/v1/stories/status/${generationId}`);
+    return response.data;
   }
 
   // Campaign APIs
@@ -307,6 +491,29 @@ class NovelEngineAPI {
     return items;
   }
 
+  // Cache management methods
+  clearCache(): void {
+    this.cache.clear();
+    this.requestDeduplication.clear();
+    console.log('🧹 API cache cleared');
+  }
+  
+  invalidateCharacterCache(characterName?: string): void {
+    if (characterName) {
+      this.cache.invalidate(`character:${characterName}`);
+    } else {
+      this.cache.invalidate('character:');
+    }
+    console.log(`🧹 Character cache invalidated${characterName ? ` for ${characterName}` : ''}`);
+  }
+  
+  getCacheStats(): { size: number; hitRate?: number } {
+    return {
+      size: this.cache.size(),
+      // Note: hit rate would require additional tracking
+    };
+  }
+  
   // Utility methods
   async testConnection(): Promise<boolean> {
     try {
@@ -321,6 +528,30 @@ class NovelEngineAPI {
   getBaseURL(): string {
     return this.baseURL;
   }
+  
+  // Connection quality monitoring
+  async testConnectionQuality(): Promise<{
+    connected: boolean;
+    latency: number;
+    timestamp: number;
+  }> {
+    const start = performance.now();
+    try {
+      await this.getHealth();
+      const latency = performance.now() - start;
+      return {
+        connected: true,
+        latency,
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      return {
+        connected: false,
+        latency: -1,
+        timestamp: Date.now(),
+      };
+    }
+  }
 
   // Export functionality (to be implemented)
   async exportStory(projectId: string, options: ExportOptions): Promise<Blob> {
@@ -329,6 +560,15 @@ class NovelEngineAPI {
   }
 }
 
-// Create and export singleton instance
+// Create and export singleton instance with enhanced caching
 export const api = new NovelEngineAPI();
+
+// Export cache management utilities
+export const apiCache = {
+  clear: () => api.clearCache(),
+  invalidateCharacters: (name?: string) => api.invalidateCharacterCache(name),
+  getStats: () => api.getCacheStats(),
+  testQuality: () => api.testConnectionQuality(),
+};
+
 export default api;

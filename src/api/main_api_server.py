@@ -58,12 +58,12 @@ async def lifespan(app: FastAPI):
         logger.info("System Orchestrator started.")
         
         character_api = create_character_api(global_orchestrator)
+        story_generation_api = create_story_generation_api(global_orchestrator)
         interaction_api = create_interaction_api(global_orchestrator)
-        story_api = create_story_generation_api(global_orchestrator)
         
         character_api._setup_routes()
         interaction_api.setup_routes(app)
-        story_api.setup_routes(app)
+        story_generation_api.setup_routes(app)
         
         app.state.orchestrator = global_orchestrator
         logger.info("All API components initialized.")
