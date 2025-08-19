@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-08-19T20:33:33.531232",
+  "test_type": "完整End-to-End测试",
+  "execution_summary": {
+    "api_server": "成功启动 (http://127.0.0.1:8003)",
+    "frontend_server": "成功启动 (http://localhost:5173)",
+    "playwright_tests": "2个测试全部通过",
+    "execution_time": "6.8秒",
+    "browser": "Chromium"
+  },
+  "test_results": {
+    "total_tests": 2,
+    "passed_tests": 2,
+    "failed_tests": 0,
+    "success_rate": "100%"
+  },
+  "tests_executed": [
+    {
+      "name": "基础页面加载测试",
+      "status": "PASSED",
+      "details": {
+        "page_title": "Vite + React",
+        "page_loaded": true,
+        "screenshot_generated": true,
+        "body_visible": true
+      }
+    },
+    {
+      "name": "UI元素交互测试",
+      "status": "PASSED",
+      "details": {
+        "buttons_found": 1,
+        "links_found": 0,
+        "inputs_found": 0,
+        "button_click_test": "成功"
+      }
+    }
+  ],
+  "generated_artifacts": [
+    "frontend/e2e-test-result.png - 完整页面截图",
+    "frontend/src/tests/e2e-basic.spec.js - E2E测试文件"
+  ],
+  "server_validation": {
+    "api_health_check": {
+      "url": "http://127.0.0.1:8003/health",
+      "status": "healthy",
+      "gemini_key_set": true,
+      "gemini_available": true
+    },
+    "frontend_response": {
+      "url": "http://localhost:5173",
+      "status": "200 OK",
+      "content_type": "text/html",
+      "framework": "Vite + React"
+    }
+  }
+}
