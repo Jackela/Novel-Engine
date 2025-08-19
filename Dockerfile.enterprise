@@ -1,0 +1,125 @@
+# Multi-stage build for Novel Engine Enterprise Multi-Agent System
+FROM python:3.11-slim as base
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Development stage
+FROM base as development
+
+# Install development dependencies
+RUN apt-get update && apt-get install -y \
+    vim \
+    htop \
+    postgresql-client \
+    redis-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt requirements-dev.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+
+# Copy source code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/data /app/reports
+
+EXPOSE 8000 8001 8002
+
+CMD ["python", "run_complete_enterprise_simulation.py"]
+
+# Production stage
+FROM base as production
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash novelengine
+
+# Copy requirements
+COPY requirements.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt gunicorn uvicorn
+
+# Copy source code
+COPY --chown=novelengine:novelengine . .
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/data /app/reports && \
+    chown -R novelengine:novelengine /app
+
+# Switch to non-root user
+USER novelengine
+
+EXPOSE 8000
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "api_server:app"]
+
+# Enterprise stage - optimized for multi-agent coordination
+FROM base as enterprise
+
+# Install additional enterprise dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    redis-tools \
+    rabbitmq-server \
+    htop \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create enterprise user
+RUN useradd --create-home --shell /bin/bash --groups sudo enterpriseengine
+
+# Copy requirements
+COPY requirements.txt requirements-enterprise.txt ./
+
+# Install Python dependencies including enterprise packages
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-enterprise.txt
+
+# Copy source code
+COPY --chown=enterpriseengine:enterpriseengine . .
+
+# Create enterprise directories
+RUN mkdir -p \
+    /app/logs \
+    /app/data \
+    /app/reports \
+    /app/enterprise_dashboards \
+    /app/multi_agent_coordination \
+    /app/emergent_narratives \
+    && chown -R enterpriseengine:enterpriseengine /app
+
+# Install enterprise health check script
+COPY --chown=enterpriseengine:enterpriseengine scripts/enterprise-health-check.py /app/scripts/
+
+# Make scripts executable
+RUN chmod +x /app/scripts/enterprise-health-check.py
+
+# Switch to enterprise user
+USER enterpriseengine
+
+# Expose enterprise ports
+EXPOSE 8000 8001 8002
+
+# Enterprise health check
+HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=3 \
+    CMD python /app/scripts/enterprise-health-check.py
+
+# Enterprise startup command
+CMD ["python", "run_complete_enterprise_simulation.py", "--mode", "enterprise", "--enable-all-waves", "--enable-monitoring", "--enable-optimization"]

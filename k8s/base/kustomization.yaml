@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: novel-engine
+
+commonLabels:
+  app.kubernetes.io/name: novel-engine
+  app.kubernetes.io/instance: novel-engine
+  app.kubernetes.io/version: "1.0.0"
+  app.kubernetes.io/component: api
+  app.kubernetes.io/part-of: novel-engine
+  app.kubernetes.io/managed-by: kustomize
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - configmap.yaml
+  - secret.yaml
+  - pvc.yaml
+  - serviceaccount.yaml
+  - hpa.yaml
+  - pdb.yaml
+
+images:
+  - name: novel-engine
+    newTag: latest
+
+configMapGenerator:
+  - name: novel-engine-version
+    literals:
+      - version=1.0.0
+      - build-date=2024-08-18
+      - git-commit=unknown
+
+secretGenerator:
+  - name: novel-engine-runtime-secrets
+    type: Opaque
+    literals:
+      - runtime-token=generated-at-deploy-time

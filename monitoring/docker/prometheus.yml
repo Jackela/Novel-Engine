@@ -1,0 +1,203 @@
+# Prometheus configuration for Novel Engine monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'novel-engine-monitor'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  - "alert_rules/*.yml"
+
+# Scrape configuration
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Novel Engine Observability Server
+  - job_name: 'novel-engine-observability'
+    static_configs:
+      - targets: ['observability:9090']
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+    honor_labels: true
+    params:
+      format: ['prometheus']
+
+  # Novel Engine Main Application
+  - job_name: 'novel-engine-app'
+    static_configs:
+      - targets: ['novel-engine:8000']
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+    honor_labels: true
+
+  # Node Exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # cAdvisor for container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Custom service discovery for dynamic targets
+  - job_name: 'novel-engine-services'
+    consul_sd_configs:
+      - server: 'consul:8500'
+        services: ['novel-engine']
+    relabel_configs:
+      - source_labels: [__meta_consul_service]
+        target_label: service
+      - source_labels: [__meta_consul_node]
+        target_label: node
+      - source_labels: [__meta_consul_service_port]
+        target_label: port
+
+  # Health check monitoring
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - http://novel-engine:8000/health
+        - http://novel-engine:8000/health/ready
+        - http://observability:9090/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Database monitoring (if using external DB)
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Redis monitoring (if using Redis)
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+# Storage configuration
+storage:
+  tsdb:
+    retention.time: 30d
+    retention.size: 50GB
+    path: /prometheus
+    wal-compression: true
+
+# Web configuration
+web:
+  enable-lifecycle: true
+  enable-admin-api: true
+  external-url: http://localhost:9091
+  route-prefix: /
+
+# Recording rules for performance optimization
+recording_rules:
+  - name: novel_engine_aggregations
+    interval: 30s
+    rules:
+      # Request rate aggregations
+      - record: novel_engine:http_requests:rate5m
+        expr: sum(rate(http_requests_total[5m])) by (instance, endpoint, method)
+      
+      - record: novel_engine:http_requests:rate1h
+        expr: sum(rate(http_requests_total[1h])) by (instance, endpoint, method)
+      
+      # Error rate aggregations  
+      - record: novel_engine:http_errors:rate5m
+        expr: sum(rate(http_errors_total[5m])) by (instance, endpoint, method)
+      
+      - record: novel_engine:error_rate:5m
+        expr: |
+          sum(rate(http_errors_total[5m])) by (instance) /
+          sum(rate(http_requests_total[5m])) by (instance) * 100
+      
+      # Response time aggregations
+      - record: novel_engine:http_duration:p50_5m
+        expr: histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (instance, le))
+      
+      - record: novel_engine:http_duration:p95_5m
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (instance, le))
+      
+      - record: novel_engine:http_duration:p99_5m
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (instance, le))
+      
+      # Story generation metrics
+      - record: novel_engine:story_generation:rate5m
+        expr: sum(rate(story_generation_requests_total[5m])) by (instance, story_type)
+      
+      - record: novel_engine:story_generation:success_rate5m
+        expr: |
+          sum(rate(story_generation_requests_total{success="true"}[5m])) by (instance) /
+          sum(rate(story_generation_requests_total[5m])) by (instance) * 100
+      
+      # System resource aggregations
+      - record: novel_engine:cpu_usage:avg5m
+        expr: avg(system_cpu_usage_percent) by (instance)
+      
+      - record: novel_engine:memory_usage:avg5m
+        expr: avg(system_memory_usage_percent) by (instance)
+      
+      - record: novel_engine:disk_usage:current
+        expr: avg(system_disk_usage_percent) by (instance)
+      
+      # Database metrics
+      - record: novel_engine:db_query_duration:p95_5m
+        expr: histogram_quantile(0.95, sum(rate(database_query_duration_seconds_bucket[5m])) by (instance, le))
+      
+      - record: novel_engine:db_connections:current
+        expr: sum(database_connections_active) by (instance)
+      
+      # Cache metrics
+      - record: novel_engine:cache_hit_rate:5m
+        expr: |
+          sum(rate(cache_hit_count[5m])) by (instance) /
+          (sum(rate(cache_hit_count[5m])) by (instance) + sum(rate(cache_miss_count[5m])) by (instance)) * 100
+
+# Remote write configuration (for long-term storage)
+remote_write:
+  - url: "http://cortex:9009/api/v1/push"
+    queue_config:
+      max_samples_per_send: 1000
+      max_retries: 3
+      min_backoff: 30ms
+      max_backoff: 100ms
+    write_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'novel_engine:.*'
+        action: keep
+
+# Remote read configuration
+remote_read:
+  - url: "http://cortex:9009/api/v1/read"
+    read_recent: true

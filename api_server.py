@@ -36,6 +36,8 @@ from src.constraints_loader import (
 import time
 import uuid
 import re
+import json
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -247,14 +249,34 @@ async def get_characters() -> CharactersListResponse:
     """Retrieves a list of available characters."""
     try:
         characters_path = _get_characters_directory_path()
-        if not os.path.isdir(characters_path):
-            raise HTTPException(status_code=404, detail="Characters directory not found.")
+        logger.info(f"Looking for characters in: {characters_path}")
         
-        characters = sorted([d for d in os.listdir(characters_path) if os.path.isdir(os.path.join(characters_path, d))])
+        if not os.path.isdir(characters_path):
+            logger.warning(f"Characters directory not found at: {characters_path}")
+            # Create directory if it doesn't exist
+            os.makedirs(characters_path, exist_ok=True)
+            return CharactersListResponse(characters=[])
+        
+        # Get all directories in characters folder
+        characters = []
+        for item in os.listdir(characters_path):
+            item_path = os.path.join(characters_path, item)
+            if os.path.isdir(item_path):
+                characters.append(item)
+                logger.debug(f"Found character directory: {item}")
+        
+        characters = sorted(characters)
+        logger.info(f"Found {len(characters)} characters: {characters}")
         return CharactersListResponse(characters=characters)
+    except FileNotFoundError as e:
+        logger.error(f"File not found error: {e}")
+        raise HTTPException(status_code=404, detail="Characters directory not found.")
+    except PermissionError as e:
+        logger.error(f"Permission error accessing characters: {e}")
+        raise HTTPException(status_code=500, detail="Permission denied accessing characters directory.")
     except Exception as e:
-        logger.error(f"Error retrieving characters: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve characters.")
+        logger.error(f"Unexpected error retrieving characters: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve characters: {str(e)}")
 
 @app.post("/simulations", response_model=SimulationResponse)
 async def run_simulation(request: SimulationRequest) -> SimulationResponse:
@@ -263,37 +285,196 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
     logger.info(f"Simulation requested for: {request.character_names}")
 
     try:
-        config = get_config()
-        turns_to_execute = request.turns or config.simulation.turns
+        # Validate request
+        if not request.character_names:
+            raise HTTPException(status_code=400, detail="At least one character name is required")
         
+        # Load configuration
+        config = get_config()
+        turns_to_execute = request.turns or getattr(config.simulation, 'turns', 3)
+        
+        # Validate characters exist
+        characters_path = _get_characters_directory_path()
+        for char_name in request.character_names:
+            char_path = os.path.join(characters_path, char_name)
+            if not os.path.isdir(char_path):
+                raise HTTPException(status_code=404, detail=f"Character '{char_name}' not found")
+        
+        # Initialize components
         event_bus = EventBus()
         character_factory = CharacterFactory(event_bus)
-        agents = [character_factory.create_character(name) for name in request.character_names]
+        
+        # Create agents with error handling
+        agents = []
+        for name in request.character_names:
+            try:
+                agent = character_factory.create_character(name)
+                agents.append(agent)
+                logger.info(f"Successfully created agent for character: {name}")
+            except Exception as e:
+                logger.error(f"Failed to create agent for character {name}: {e}")
+                raise HTTPException(status_code=400, detail=f"Failed to load character '{name}': {str(e)}")
 
-        log_path = f"simulation_{uuid.uuid4().hex[:8]}.md"
+        # Generate unique log path
+        log_path = f"logs/simulation_{uuid.uuid4().hex[:8]}.md"
+        os.makedirs("logs", exist_ok=True)
+        
+        # Initialize director and register agents
         director = DirectorAgent(event_bus, campaign_log_path=log_path)
         for agent in agents:
             director.register_agent(agent)
+            logger.info(f"Registered agent: {agent.character.name}")
 
-        for _ in range(turns_to_execute):
-            director.run_turn()
+        # Execute simulation turns
+        logger.info(f"Starting simulation with {turns_to_execute} turns")
+        for turn_num in range(turns_to_execute):
+            try:
+                logger.info(f"Executing turn {turn_num + 1}/{turns_to_execute}")
+                director.run_turn()
+            except Exception as e:
+                logger.error(f"Error during turn {turn_num + 1}: {e}")
+                # Continue with remaining turns
+                continue
 
-        chronicler = ChroniclerAgent(character_names=request.character_names)
-        story = chronicler.transcribe_log(log_path)
+        # Generate story with chronicler
+        try:
+            chronicler = ChroniclerAgent(event_bus, character_names=request.character_names)
+            story = chronicler.transcribe_log(log_path)
+        except Exception as e:
+            logger.error(f"Story generation failed: {e}")
+            # Fallback to basic story generation
+            story = f"A story featuring {', '.join(request.character_names)} was generated, but detailed transcription failed."
         
-        os.remove(log_path)
+        # Clean up log file
+        try:
+            if os.path.exists(log_path):
+                os.remove(log_path)
+        except Exception as e:
+            logger.warning(f"Failed to clean up log file {log_path}: {e}")
+
+        duration = time.time() - start_time
+        logger.info(f"Simulation completed in {duration:.2f} seconds")
 
         return SimulationResponse(
             story=story,
             participants=request.character_names,
             turns_executed=turns_to_execute,
-            duration_seconds=time.time() - start_time
+            duration_seconds=duration
         )
+    except HTTPException:
+        # Re-raise HTTP exceptions without modification
+        raise
     except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=f"Character not found: {e}")
+        logger.error(f"File not found during simulation: {e}")
+        raise HTTPException(status_code=404, detail=f"Required file not found: {str(e)}")
     except Exception as e:
-        logger.error(f"Simulation failed: {e}")
-        raise HTTPException(status_code=500, detail="Simulation execution failed.")
+        logger.error(f"Simulation failed with unexpected error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Simulation execution failed: {str(e)}")
+
+@app.get("/characters/{character_id}", response_model=CharacterDetailResponse)
+async def get_character_detail(character_id: str) -> CharacterDetailResponse:
+    """Retrieves detailed information about a specific character."""
+    try:
+        characters_path = _get_characters_directory_path()
+        character_path = os.path.join(characters_path, character_id)
+        
+        if not os.path.isdir(character_path):
+            raise HTTPException(status_code=404, detail=f"Character '{character_id}' not found")
+        
+        # Load character data using CharacterFactory
+        try:
+            event_bus = EventBus()
+            character_factory = CharacterFactory(event_bus)
+            agent = character_factory.create_character(character_id)
+            character = agent.character
+            
+            return CharacterDetailResponse(
+                character_id=character_id,
+                name=character.name,
+                background_summary=getattr(character, 'background_summary', 'No background available'),
+                personality_traits=getattr(character, 'personality_traits', 'No personality traits available'),
+                current_status=getattr(character, 'current_status', 'Unknown'),
+                narrative_context=getattr(character, 'narrative_context', 'No narrative context'),
+                skills=getattr(character, 'skills', {}),
+                relationships=getattr(character, 'relationships', {}),
+                current_location=getattr(character, 'current_location', 'Unknown'),
+                inventory=getattr(character, 'inventory', []),
+                metadata=getattr(character, 'metadata', {})
+            )
+        except Exception as e:
+            logger.error(f"Error loading character {character_id}: {e}")
+            # Fallback to basic character info from directory
+            return CharacterDetailResponse(
+                character_id=character_id,
+                name=character_id.replace('_', ' ').title(),
+                background_summary="Character data could not be loaded",
+                personality_traits="Unknown",
+                current_status="Data unavailable",
+                narrative_context="Character files could not be parsed"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error retrieving character {character_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve character details: {str(e)}")
+
+@app.get("/campaigns", response_model=CampaignsListResponse)
+async def get_campaigns() -> CampaignsListResponse:
+    """Retrieves a list of available campaigns."""
+    try:
+        # Look for campaign files in logs or campaigns directory
+        campaigns_paths = ["campaigns", "logs", "private/campaigns"]
+        campaigns = []
+        
+        for campaigns_path in campaigns_paths:
+            if os.path.isdir(campaigns_path):
+                for item in os.listdir(campaigns_path):
+                    if item.endswith('.md') or item.endswith('.json'):
+                        campaign_name = item.replace('.md', '').replace('.json', '')
+                        if campaign_name not in campaigns:
+                            campaigns.append(campaign_name)
+        
+        campaigns = sorted(campaigns)
+        logger.info(f"Found {len(campaigns)} campaigns: {campaigns}")
+        return CampaignsListResponse(campaigns=campaigns)
+        
+    except Exception as e:
+        logger.error(f"Error retrieving campaigns: {e}", exc_info=True)
+        return CampaignsListResponse(campaigns=[])
+
+@app.post("/campaigns", response_model=CampaignCreationResponse)
+async def create_campaign(request: CampaignCreationRequest) -> CampaignCreationResponse:
+    """Creates a new campaign."""
+    try:
+        campaign_id = f"campaign_{uuid.uuid4().hex[:8]}"
+        campaigns_dir = "campaigns"
+        os.makedirs(campaigns_dir, exist_ok=True)
+        
+        campaign_file = os.path.join(campaigns_dir, f"{campaign_id}.json")
+        campaign_data = {
+            "id": campaign_id,
+            "name": request.name,
+            "description": request.description or "",
+            "participants": request.participants,
+            "created_at": datetime.now().isoformat(),
+            "status": "created"
+        }
+        
+        with open(campaign_file, 'w') as f:
+            json.dump(campaign_data, f, indent=2)
+        
+        logger.info(f"Created campaign {campaign_id}: {request.name}")
+        return CampaignCreationResponse(
+            campaign_id=campaign_id,
+            name=request.name,
+            status="created",
+            created_at=campaign_data["created_at"]
+        )
+        
+    except Exception as e:
+        logger.error(f"Error creating campaign: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create campaign: {str(e)}")
 
 def run_server(host: str = "127.0.0.1", port: int = 8000, debug: bool = False):
     """Runs the FastAPI server."""

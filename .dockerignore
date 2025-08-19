@@ -1,0 +1,79 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Development files
+.vscode/
+.cursor/
+.bmad-core/
+.benchmarks/
+.claude/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Test files and artifacts
+test_*.db
+test_*.db-*
+*_test.py
+test_*.py
+*.test
+simulation_*.md
+*_results_*.json
+*_report_*.json
+*_report_*.md
+
+# Development artifacts
+.actrc
+act-runner.*
+evaluation/
+exports/
+staging/backups/
+web-bundles/
+
+# Documentation (included in deployment for reference but not runtime)
+*.md
+!README.md
+!LEGAL.md
+
+# Configuration templates (production config managed separately)
+config.yaml
+settings.yaml
+.env.*
+
+# Large data files
+data/
+logs/
+htmlcov/
+
+# IDE files
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

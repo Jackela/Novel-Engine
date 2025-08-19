@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: novel-engine-config
+  labels:
+    app: novel-engine
+data:
+  settings.yaml: |
+    system:
+      environment: production
+      debug: false
+      log_level: INFO
+      
+    api:
+      host: "0.0.0.0"
+      port: 8000
+      cors_origins:
+        - "https://novel-engine.example.com"
+      max_request_size: 16777216
+      
+    database:
+      url: "sqlite:////app/data/novel-engine.db"
+      pool_size: 5
+      max_overflow: 10
+      pool_timeout: 30
+      
+    cache:
+      redis_url: "redis://redis:6379/0"
+      default_ttl: 3600
+      max_memory: "128mb"
+      
+    security:
+      secret_key: "production-secret-key-change-me"
+      algorithm: "HS256"
+      access_token_expire_minutes: 30
+      
+    monitoring:
+      metrics_enabled: true
+      health_check_enabled: true
+      prometheus_enabled: true
+      
+    performance:
+      max_workers: 4
+      request_timeout: 30
+      narrative_generation_timeout: 300
+      cache_enabled: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  labels:
+    app: redis
+data:
+  redis.conf: |
+    # Redis production configuration
+    bind 0.0.0.0
+    port 6379
+    
+    # Memory management
+    maxmemory 256mb
+    maxmemory-policy allkeys-lru
+    
+    # Persistence
+    save 900 1
+    save 300 10
+    save 60 10000
+    
+    # Security
+    protected-mode yes
+    
+    # Performance
+    tcp-keepalive 300
+    timeout 0
+    
+    # Logging
+    loglevel notice
+    
+    # Append only file
+    appendonly yes
+    appendfsync everysec

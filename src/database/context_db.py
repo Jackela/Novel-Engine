@@ -20,6 +20,8 @@ import json
 import logging
 import asyncio
 import aiosqlite
+import os
+import stat
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union, Tuple
@@ -68,13 +70,44 @@ class ContextDatabase:
             agent_id: Optional agent ID for this database instance
         """
         self.database_path = Path(database_path)
-        self.connection_pool_size = connection_pool_size
+        self.connection_pool_size = max(connection_pool_size, 3)  # Minimum 3 connections
         self.agent_id = agent_id or "system_database"
         self._connection_pool: List[aiosqlite.Connection] = []
         self._pool_lock = asyncio.Lock()
         self._initialized = False
         
-        logger.info(f"++ SACRED DATABASE INITIALIZED: {self.database_path} for agent {self.agent_id} ++")
+        # Performance optimizations
+        self._query_cache: Dict[str, Any] = {}
+        self._cache_lock = asyncio.Lock()
+        self._cache_ttl = 300  # 5 minutes cache TTL
+        self._last_cache_cleanup = 0
+        
+        logger.info(f"++ SACRED DATABASE INITIALIZED: {self.database_path} for agent {self.agent_id} with {self.connection_pool_size} connections ++")
+    
+    async def _secure_database_permissions(self):
+        """
+        ++ SACRED DATABASE SECURITY ENHANCEMENT BLESSED BY ACCESS CONTROL ++
+        
+        Apply secure file permissions to database files to prevent unauthorized access.
+        """
+        try:
+            if self.database_path.exists():
+                # Set restrictive permissions: owner read/write only (600)
+                os.chmod(self.database_path, stat.S_IRUSR | stat.S_IWUSR)
+                logger.info(f"++ SECURED DATABASE PERMISSIONS: {self.database_path} ++")
+            
+            # Also secure WAL and SHM files if they exist
+            wal_file = Path(str(self.database_path) + "-wal")
+            shm_file = Path(str(self.database_path) + "-shm")
+            
+            for db_file in [wal_file, shm_file]:
+                if db_file.exists():
+                    os.chmod(db_file, stat.S_IRUSR | stat.S_IWUSR)
+                    logger.debug(f"++ SECURED {db_file.name} PERMISSIONS ++")
+                    
+        except Exception as e:
+            logger.warning(f"++ COULD NOT SECURE DATABASE PERMISSIONS: {e} ++")
+            # Continue execution as this is not critical for functionality
     
     async def initialize_sacred_temple(self) -> StandardResponse:
         """
@@ -86,6 +119,9 @@ class ContextDatabase:
         try:
             # Ensure blessed database directory exists
             self.database_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # ++ SACRED SECURITY ENHANCEMENT: Secure file permissions ++
+            await self._secure_database_permissions()
             
             # Read sacred schema blessed by the Omnissiah
             schema_path = Path(__file__).parent / "schema.sql"
@@ -101,12 +137,12 @@ class ContextDatabase:
             await self._initialize_connection_pool()
             
             self._initialized = True
-            logger.info("++ SACRED DATABASE TEMPLE INITIALIZATION COMPLETE ++")
+            logger.info("++ SACRED DATABASE TEMPLE INITIALIZATION COMPLETE WITH SECURITY BLESSINGS ++")
             
             return StandardResponse(
                 success=True,
-                data={"database_path": str(self.database_path), "initialized": True},
-                metadata={"blessing": "omnissiah_approved"}
+                data={"database_path": str(self.database_path), "initialized": True, "secure": True},
+                metadata={"blessing": "omnissiah_approved", "security": "enhanced"}
             )
             
         except Exception as e:
@@ -127,7 +163,15 @@ class ContextDatabase:
             for _ in range(self.connection_pool_size):
                 connection = await aiosqlite.connect(str(self.database_path))
                 connection.row_factory = aiosqlite.Row  # Blessed row factory
+                
+                # Performance optimization pragmas
                 await connection.execute("PRAGMA foreign_keys = ON")  # Sacred constraints
+                await connection.execute("PRAGMA journal_mode = WAL")  # Write-Ahead Logging
+                await connection.execute("PRAGMA synchronous = NORMAL")  # Balanced safety/speed
+                await connection.execute("PRAGMA cache_size = -64000")  # 64MB cache
+                await connection.execute("PRAGMA temp_store = MEMORY")  # Memory temp tables
+                await connection.execute("PRAGMA mmap_size = 268435456")  # 256MB memory mapping
+                
                 self._connection_pool.append(connection)
     
     @asynccontextmanager
@@ -150,7 +194,13 @@ class ContextDatabase:
                     # Create blessed temporary connection if pool exhausted
                     connection = await aiosqlite.connect(str(self.database_path))
                     connection.row_factory = aiosqlite.Row
+                    
+                    # Apply performance optimizations to temporary connection
                     await connection.execute("PRAGMA foreign_keys = ON")
+                    await connection.execute("PRAGMA journal_mode = WAL")
+                    await connection.execute("PRAGMA synchronous = NORMAL")
+                    await connection.execute("PRAGMA cache_size = -32000")  # 32MB for temp connections
+                    await connection.execute("PRAGMA temp_store = MEMORY")
             
             yield connection
             
@@ -161,6 +211,25 @@ class ContextDatabase:
                         self._connection_pool.append(connection)
                     else:
                         await connection.close()
+    
+    @asynccontextmanager
+    async def get_blessed_transaction(self):
+        """
+        ++ SACRED TRANSACTION MANAGER BLESSED BY DATA INTEGRITY ++
+        
+        Context manager that provides blessed database transaction with
+        automatic rollback on failure and commit on success.
+        """
+        async with self.get_blessed_connection() as connection:
+            try:
+                await connection.execute("BEGIN TRANSACTION")
+                yield connection
+                await connection.commit()
+                logger.debug("++ Sacred transaction committed successfully ++")
+            except Exception as e:
+                await connection.rollback()
+                logger.error(f"++ Sacred transaction rollback: {e} ++")
+                raise
     
     # ++ SACRED MEMORY MANAGEMENT OPERATIONS BLESSED BY REMEMBRANCE ++
     

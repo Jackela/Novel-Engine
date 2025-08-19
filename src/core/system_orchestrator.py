@@ -149,6 +149,7 @@ class SystemOrchestrator:
         and comprehensive monitoring capabilities.
         """
         self.config = config or OrchestratorConfig()
+        self.database_path = database_path
         self.startup_time = datetime.now()
         self.system_health = SystemHealth.OPTIMAL
         self.active_agents: Dict[str, datetime] = {}

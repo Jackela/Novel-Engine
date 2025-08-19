@@ -1,0 +1,712 @@
+{
+  "timestamp": "2025-08-17T22:40:00",
+  "database_files": [
+    {
+      "file": "context.db",
+      "permissions": {
+        "file": "context.db",
+        "readable": true,
+        "writable": true,
+        "size_bytes": 0,
+        "vulnerabilities": [
+          "World-readable database file",
+          "World-writable database file"
+        ]
+      },
+      "content": {
+        "file": "context.db",
+        "tables": [],
+        "sensitive_data": [],
+        "vulnerabilities": []
+      },
+      "injection_vectors": {
+        "file": "context.db",
+        "injection_tests": [
+          {
+            "payload": "'; DROP TABLE test; --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' OR '1'='1",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' UNION SELECT sql FROM sqlite_master --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "'; INSERT INTO test VALUES ('injected'); --",
+            "vulnerable": false,
+            "error": null
+          }
+        ],
+        "vulnerabilities": []
+      },
+      "risk_level": "HIGH"
+    },
+    {
+      "file": "test_action.db",
+      "permissions": {
+        "file": "test_action.db",
+        "readable": true,
+        "writable": true,
+        "size_bytes": 217088,
+        "vulnerabilities": [
+          "World-readable database file",
+          "World-writable database file"
+        ]
+      },
+      "content": {
+        "file": "test_action.db",
+        "tables": [
+          "agents",
+          "memories",
+          "relationships",
+          "equipment",
+          "character_states",
+          "interactions",
+          "context_references",
+          "system_config",
+          "system_state",
+          "memories_fts",
+          "memories_fts_data",
+          "memories_fts_idx",
+          "memories_fts_docsize",
+          "memories_fts_config",
+          "sqlite_stat1"
+        ],
+        "sensitive_data": [
+          "Sensitive column: system_config.config_key"
+        ],
+        "vulnerabilities": []
+      },
+      "injection_vectors": {
+        "file": "test_action.db",
+        "injection_tests": [
+          {
+            "payload": "'; DROP TABLE test; --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' OR '1'='1",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' UNION SELECT sql FROM sqlite_master --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "'; INSERT INTO test VALUES ('injected'); --",
+            "vulnerable": false,
+            "error": null
+          }
+        ],
+        "vulnerabilities": []
+      },
+      "risk_level": "HIGH"
+    },
+    {
+      "file": "test_final.db",
+      "permissions": {
+        "file": "test_final.db",
+        "readable": true,
+        "writable": true,
+        "size_bytes": 217088,
+        "vulnerabilities": [
+          "World-readable database file",
+          "World-writable database file"
+        ]
+      },
+      "content": {
+        "file": "test_final.db",
+        "tables": [
+          "agents",
+          "memories",
+          "relationships",
+          "equipment",
+          "character_states",
+          "interactions",
+          "context_references",
+          "system_config",
+          "system_state",
+          "memories_fts",
+          "memories_fts_data",
+          "memories_fts_idx",
+          "memories_fts_docsize",
+          "memories_fts_config",
+          "sqlite_stat1"
+        ],
+        "sensitive_data": [
+          "Sensitive column: system_config.config_key"
+        ],
+        "vulnerabilities": []
+      },
+      "injection_vectors": {
+        "file": "test_final.db",
+        "injection_tests": [
+          {
+            "payload": "'; DROP TABLE test; --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' OR '1'='1",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' UNION SELECT sql FROM sqlite_master --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "'; INSERT INTO test VALUES ('injected'); --",
+            "vulnerable": false,
+            "error": null
+          }
+        ],
+        "vulnerabilities": []
+      },
+      "risk_level": "HIGH"
+    },
+    {
+      "file": "test_orch.db",
+      "permissions": {
+        "file": "test_orch.db",
+        "readable": true,
+        "writable": true,
+        "size_bytes": 217088,
+        "vulnerabilities": [
+          "World-readable database file",
+          "World-writable database file"
+        ]
+      },
+      "content": {
+        "file": "test_orch.db",
+        "tables": [
+          "agents",
+          "memories",
+          "relationships",
+          "equipment",
+          "character_states",
+          "interactions",
+          "context_references",
+          "system_config",
+          "system_state",
+          "memories_fts",
+          "memories_fts_data",
+          "memories_fts_idx",
+          "memories_fts_docsize",
+          "memories_fts_config",
+          "sqlite_stat1"
+        ],
+        "sensitive_data": [
+          "Sensitive column: system_config.config_key"
+        ],
+        "vulnerabilities": []
+      },
+      "injection_vectors": {
+        "file": "test_orch.db",
+        "injection_tests": [
+          {
+            "payload": "'; DROP TABLE test; --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' OR '1'='1",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' UNION SELECT sql FROM sqlite_master --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "'; INSERT INTO test VALUES ('injected'); --",
+            "vulnerable": false,
+            "error": null
+          }
+        ],
+        "vulnerabilities": []
+      },
+      "risk_level": "HIGH"
+    },
+    {
+      "file": "test_orch2.db",
+      "permissions": {
+        "file": "test_orch2.db",
+        "readable": true,
+        "writable": true,
+        "size_bytes": 217088,
+        "vulnerabilities": [
+          "World-readable database file",
+          "World-writable database file"
+        ]
+      },
+      "content": {
+        "file": "test_orch2.db",
+        "tables": [
+          "agents",
+          "memories",
+          "relationships",
+          "equipment",
+          "character_states",
+          "interactions",
+          "context_references",
+          "system_config",
+          "system_state",
+          "memories_fts",
+          "memories_fts_data",
+          "memories_fts_idx",
+          "memories_fts_docsize",
+          "memories_fts_config",
+          "sqlite_stat1"
+        ],
+        "sensitive_data": [
+          "Sensitive column: system_config.config_key"
+        ],
+        "vulnerabilities": []
+      },
+      "injection_vectors": {
+        "file": "test_orch2.db",
+        "injection_tests": [
+          {
+            "payload": "'; DROP TABLE test; --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' OR '1'='1",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' UNION SELECT sql FROM sqlite_master --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "'; INSERT INTO test VALUES ('injected'); --",
+            "vulnerable": false,
+            "error": null
+          }
+        ],
+        "vulnerabilities": []
+      },
+      "risk_level": "HIGH"
+    },
+    {
+      "file": "test_orch3.db",
+      "permissions": {
+        "file": "test_orch3.db",
+        "readable": true,
+        "writable": true,
+        "size_bytes": 217088,
+        "vulnerabilities": [
+          "World-readable database file",
+          "World-writable database file"
+        ]
+      },
+      "content": {
+        "file": "test_orch3.db",
+        "tables": [
+          "agents",
+          "memories",
+          "relationships",
+          "equipment",
+          "character_states",
+          "interactions",
+          "context_references",
+          "system_config",
+          "system_state",
+          "memories_fts",
+          "memories_fts_data",
+          "memories_fts_idx",
+          "memories_fts_docsize",
+          "memories_fts_config",
+          "sqlite_stat1"
+        ],
+        "sensitive_data": [
+          "Sensitive column: system_config.config_key"
+        ],
+        "vulnerabilities": []
+      },
+      "injection_vectors": {
+        "file": "test_orch3.db",
+        "injection_tests": [
+          {
+            "payload": "'; DROP TABLE test; --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' OR '1'='1",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' UNION SELECT sql FROM sqlite_master --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "'; INSERT INTO test VALUES ('injected'); --",
+            "vulnerable": false,
+            "error": null
+          }
+        ],
+        "vulnerabilities": []
+      },
+      "risk_level": "HIGH"
+    },
+    {
+      "file": "test_orch4.db",
+      "permissions": {
+        "file": "test_orch4.db",
+        "readable": true,
+        "writable": true,
+        "size_bytes": 217088,
+        "vulnerabilities": [
+          "World-readable database file",
+          "World-writable database file"
+        ]
+      },
+      "content": {
+        "file": "test_orch4.db",
+        "tables": [
+          "agents",
+          "memories",
+          "relationships",
+          "equipment",
+          "character_states",
+          "interactions",
+          "context_references",
+          "system_config",
+          "system_state",
+          "memories_fts",
+          "memories_fts_data",
+          "memories_fts_idx",
+          "memories_fts_docsize",
+          "memories_fts_config",
+          "sqlite_stat1"
+        ],
+        "sensitive_data": [
+          "Sensitive column: system_config.config_key"
+        ],
+        "vulnerabilities": []
+      },
+      "injection_vectors": {
+        "file": "test_orch4.db",
+        "injection_tests": [
+          {
+            "payload": "'; DROP TABLE test; --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' OR '1'='1",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' UNION SELECT sql FROM sqlite_master --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "'; INSERT INTO test VALUES ('injected'); --",
+            "vulnerable": false,
+            "error": null
+          }
+        ],
+        "vulnerabilities": []
+      },
+      "risk_level": "HIGH"
+    },
+    {
+      "file": "test_orch5.db",
+      "permissions": {
+        "file": "test_orch5.db",
+        "readable": true,
+        "writable": true,
+        "size_bytes": 217088,
+        "vulnerabilities": [
+          "World-readable database file",
+          "World-writable database file"
+        ]
+      },
+      "content": {
+        "file": "test_orch5.db",
+        "tables": [
+          "agents",
+          "memories",
+          "relationships",
+          "equipment",
+          "character_states",
+          "interactions",
+          "context_references",
+          "system_config",
+          "system_state",
+          "memories_fts",
+          "memories_fts_data",
+          "memories_fts_idx",
+          "memories_fts_docsize",
+          "memories_fts_config",
+          "sqlite_stat1"
+        ],
+        "sensitive_data": [
+          "Sensitive column: system_config.config_key"
+        ],
+        "vulnerabilities": []
+      },
+      "injection_vectors": {
+        "file": "test_orch5.db",
+        "injection_tests": [
+          {
+            "payload": "'; DROP TABLE test; --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' OR '1'='1",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' UNION SELECT sql FROM sqlite_master --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "'; INSERT INTO test VALUES ('injected'); --",
+            "vulnerable": false,
+            "error": null
+          }
+        ],
+        "vulnerabilities": []
+      },
+      "risk_level": "HIGH"
+    },
+    {
+      "file": "test_temp.db",
+      "permissions": {
+        "file": "test_temp.db",
+        "readable": true,
+        "writable": true,
+        "size_bytes": 217088,
+        "vulnerabilities": [
+          "World-readable database file",
+          "World-writable database file"
+        ]
+      },
+      "content": {
+        "file": "test_temp.db",
+        "tables": [
+          "agents",
+          "memories",
+          "relationships",
+          "equipment",
+          "character_states",
+          "interactions",
+          "context_references",
+          "system_config",
+          "system_state",
+          "memories_fts",
+          "memories_fts_data",
+          "memories_fts_idx",
+          "memories_fts_docsize",
+          "memories_fts_config",
+          "sqlite_stat1"
+        ],
+        "sensitive_data": [
+          "Sensitive column: system_config.config_key"
+        ],
+        "vulnerabilities": []
+      },
+      "injection_vectors": {
+        "file": "test_temp.db",
+        "injection_tests": [
+          {
+            "payload": "'; DROP TABLE test; --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' OR '1'='1",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' UNION SELECT sql FROM sqlite_master --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "'; INSERT INTO test VALUES ('injected'); --",
+            "vulnerable": false,
+            "error": null
+          }
+        ],
+        "vulnerabilities": []
+      },
+      "risk_level": "HIGH"
+    },
+    {
+      "file": "data\\api_server.db",
+      "permissions": {
+        "file": "data\\api_server.db",
+        "readable": true,
+        "writable": true,
+        "size_bytes": 217088,
+        "vulnerabilities": [
+          "World-readable database file",
+          "World-writable database file"
+        ]
+      },
+      "content": {
+        "file": "data\\api_server.db",
+        "tables": [
+          "agents",
+          "memories",
+          "relationships",
+          "equipment",
+          "character_states",
+          "interactions",
+          "context_references",
+          "system_config",
+          "system_state",
+          "memories_fts",
+          "memories_fts_data",
+          "memories_fts_idx",
+          "memories_fts_docsize",
+          "memories_fts_config",
+          "sqlite_stat1"
+        ],
+        "sensitive_data": [
+          "Sensitive column: system_config.config_key"
+        ],
+        "vulnerabilities": []
+      },
+      "injection_vectors": {
+        "file": "data\\api_server.db",
+        "injection_tests": [
+          {
+            "payload": "'; DROP TABLE test; --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' OR '1'='1",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' UNION SELECT sql FROM sqlite_master --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "'; INSERT INTO test VALUES ('injected'); --",
+            "vulnerable": false,
+            "error": null
+          }
+        ],
+        "vulnerabilities": []
+      },
+      "risk_level": "HIGH"
+    },
+    {
+      "file": "data\\complete_demo.db",
+      "permissions": {
+        "file": "data\\complete_demo.db",
+        "readable": true,
+        "writable": true,
+        "size_bytes": 176128,
+        "vulnerabilities": [
+          "World-readable database file",
+          "World-writable database file"
+        ]
+      },
+      "content": {
+        "file": "data\\complete_demo.db",
+        "tables": [
+          "agents",
+          "memories",
+          "relationships",
+          "equipment",
+          "character_states",
+          "interactions",
+          "context_references",
+          "system_config"
+        ],
+        "sensitive_data": [
+          "Sensitive column: system_config.config_key"
+        ],
+        "vulnerabilities": []
+      },
+      "injection_vectors": {
+        "file": "data\\complete_demo.db",
+        "injection_tests": [
+          {
+            "payload": "'; DROP TABLE test; --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' OR '1'='1",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "' UNION SELECT sql FROM sqlite_master --",
+            "vulnerable": false,
+            "error": null
+          },
+          {
+            "payload": "'; INSERT INTO test VALUES ('injected'); --",
+            "vulnerable": false,
+            "error": null
+          }
+        ],
+        "vulnerabilities": []
+      },
+      "risk_level": "HIGH"
+    }
+  ],
+  "security_summary": {
+    "total_databases": 11,
+    "vulnerable_databases": 11,
+    "critical_issues": 0,
+    "warnings": 11
+  },
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "action": "Restrict database file permissions to application user only",
+      "category": "Access Control"
+    },
+    {
+      "priority": "MEDIUM",
+      "action": "Implement database connection encryption (TLS)",
+      "category": "Encryption"
+    },
+    {
+      "priority": "MEDIUM",
+      "action": "Enable database audit logging for sensitive operations",
+      "category": "Monitoring"
+    },
+    {
+      "priority": "LOW",
+      "action": "Regular database security assessments",
+      "category": "Maintenance"
+    }
+  ]
+}

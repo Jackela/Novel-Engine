@@ -11,7 +11,7 @@ import asyncio
 import json
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from fastapi import FastAPI, BackgroundTasks, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, BackgroundTasks, WebSocket, WebSocketDisconnect, HTTPException
 from pydantic import BaseModel, Field
 import uuid
 import asyncio.queues
@@ -77,7 +77,7 @@ class ConnectionPool:
 class StoryGenerationAPI:
     """API for story export and narrative generation with optimized WebSocket handling."""
     
-    def __init__(self, orchestrator: SystemOrchestrator):
+    def __init__(self, orchestrator: Optional[SystemOrchestrator]):
         """Initializes the story generation API with performance optimizations."""
         self.orchestrator = orchestrator
         self.active_generations: Dict[str, Any] = {}
@@ -85,6 +85,11 @@ class StoryGenerationAPI:
         self.generation_semaphore = Semaphore(5)  # Limit concurrent generations
         self.cleanup_task = None
         logger.info("Story Generation API initialized with performance optimizations.")
+    
+    def set_orchestrator(self, orchestrator: SystemOrchestrator):
+        """Set the orchestrator after initialization."""
+        self.orchestrator = orchestrator
+        logger.info("Story Generation API orchestrator set.")
         
     async def start_background_tasks(self):
         """Start background cleanup tasks."""
@@ -128,22 +133,40 @@ class StoryGenerationAPI:
         @app.post("/api/v1/stories/generate", response_model=StoryGenerationResponse)
         async def generate_story(request: StoryGenerationRequest, background_tasks: BackgroundTasks):
             """Generates a story from character interactions."""
-            generation_id = f"story_{uuid.uuid4().hex[:8]}"
+            if not self.orchestrator:
+                raise HTTPException(status_code=503, detail="System not ready. Please try again.")
             
-            self.active_generations[generation_id] = {
-                "status": "initiated", 
-                "request": request,
-                "progress": 0,
-                "stage": "initializing",
-                "start_time": datetime.now()
-            }
-            background_tasks.add_task(self._generate_story_async, generation_id)
-            
-            return StoryGenerationResponse(
-                generation_id=generation_id,
-                status="initiated",
-                message="Story generation initiated."
-            )
+            try:
+                # Validate that all characters exist
+                active_agents = getattr(self.orchestrator, 'active_agents', {})
+                missing_characters = [char for char in request.characters if char not in active_agents]
+                if missing_characters:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"Characters not found: {', '.join(missing_characters)}"
+                    )
+                
+                generation_id = f"story_{uuid.uuid4().hex[:8]}"
+                
+                self.active_generations[generation_id] = {
+                    "status": "initiated", 
+                    "request": request,
+                    "progress": 0,
+                    "stage": "initializing",
+                    "start_time": datetime.now()
+                }
+                background_tasks.add_task(self._generate_story_async, generation_id)
+                
+                return StoryGenerationResponse(
+                    generation_id=generation_id,
+                    status="initiated",
+                    message="Story generation initiated."
+                )
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.error(f"Error initiating story generation: {e}")
+                raise HTTPException(status_code=500, detail="Internal server error.")
         
         @app.websocket("/api/v1/stories/progress/{generation_id}")
         async def websocket_progress(websocket: WebSocket, generation_id: str):
@@ -375,9 +398,14 @@ class StoryGenerationAPI:
     async def _initialize_generation_context(self, generation_id: str):
         """Initialize generation context with orchestrator."""
         try:
+            if not self.orchestrator:
+                logger.error(f"No orchestrator available for generation {generation_id}")
+                return None
+            
             state = self.active_generations[generation_id]
             # Use actual orchestrator for context initialization
-            return await self.orchestrator.create_agent_context(f"story_gen_{generation_id}")
+            result = await self.orchestrator.create_agent_context(f"story_gen_{generation_id}")
+            return result if result.success else None
         except Exception as e:
             logger.error(f"Context initialization failed for {generation_id}: {e}")
             return None
@@ -385,12 +413,16 @@ class StoryGenerationAPI:
     async def _prepare_character_contexts(self, characters: List[str]):
         """Prepare character contexts in parallel."""
         try:
-            # Create character contexts in parallel
-            tasks = [
-                self.orchestrator.create_agent_context(char) 
-                for char in characters
-            ]
-            return await asyncio.gather(*tasks, return_exceptions=True)
+            if not self.orchestrator:
+                logger.error("No orchestrator available for character context preparation")
+                return []
+            
+            # Check if characters already exist (they should from validation)
+            active_agents = getattr(self.orchestrator, 'active_agents', {})
+            existing_characters = [char for char in characters if char in active_agents]
+            
+            # For existing characters, just return success indicators
+            return [{"character": char, "status": "ready"} for char in existing_characters]
         except Exception as e:
             logger.error(f"Character context preparation failed: {e}")
             return []
@@ -436,10 +468,10 @@ class StoryGenerationAPI:
             logger.error(f"Story finalization failed for {generation_id}: {e}")
             return "Story generation completed with errors"
 
-async def create_story_generation_api(orchestrator: SystemOrchestrator) -> StoryGenerationAPI:
+def create_story_generation_api(orchestrator: Optional[SystemOrchestrator]) -> StoryGenerationAPI:
     """Creates and configures an optimized story generation API instance."""
     api = StoryGenerationAPI(orchestrator)
-    await api.start_background_tasks()
+    # Background tasks will be started when the server starts
     return api
 
 __all__ = ['StoryGenerationAPI', 'create_story_generation_api']

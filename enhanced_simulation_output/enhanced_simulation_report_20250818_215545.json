@@ -1,0 +1,96 @@
+{
+  "success": true,
+  "mode": "enterprise",
+  "integration_level": "enterprise",
+  "turns_executed": 4,
+  "agents_participated": 2,
+  "campaign_context": {
+    "title": "Custom Campaign",
+    "setting": "From campaign brief",
+    "objectives": [
+      "Complete campaign objectives"
+    ]
+  },
+  "turn_results": [
+    {
+      "success": false,
+      "turn_number": 1,
+      "error": "'EnterpriseMultiAgentOrchestrator' object has no attribute 'ai_orchestrator'",
+      "system_health": "healthy",
+      "recovery_initiated": true,
+      "execution_time": 0.000179
+    },
+    {
+      "success": false,
+      "turn_number": 2,
+      "error": "'EnterpriseMultiAgentOrchestrator' object has no attribute 'ai_orchestrator'",
+      "system_health": "healthy",
+      "recovery_initiated": true,
+      "execution_time": 0.000321
+    },
+    {
+      "success": false,
+      "turn_number": 3,
+      "error": "'EnterpriseMultiAgentOrchestrator' object has no attribute 'ai_orchestrator'",
+      "system_health": "healthy",
+      "recovery_initiated": true,
+      "execution_time": 0.000933
+    },
+    {
+      "success": false,
+      "turn_number": 4,
+      "error": "'EnterpriseMultiAgentOrchestrator' object has no attribute 'ai_orchestrator'",
+      "system_health": "healthy",
+      "recovery_initiated": true,
+      "execution_time": 0.001799
+    }
+  ],
+  "performance_metrics": [],
+  "enterprise_dashboards": [
+    {
+      "turn": 1,
+      "timestamp": "2025-08-18 21:55:43.435446",
+      "dashboard": {
+        "error": "'EnterpriseMultiAgentOrchestrator' object has no attribute 'validation_results'",
+        "timestamp": "2025-08-18 21:55:43.435444"
+      }
+    },
+    {
+      "turn": 2,
+      "timestamp": "2025-08-18 21:55:44.060739",
+      "dashboard": {
+        "error": "'EnterpriseMultiAgentOrchestrator' object has no attribute 'validation_results'",
+        "timestamp": "2025-08-18 21:55:44.060727"
+      }
+    },
+    {
+      "turn": 3,
+      "timestamp": "2025-08-18 21:55:44.619184",
+      "dashboard": {
+        "error": "'EnterpriseMultiAgentOrchestrator' object has no attribute 'validation_results'",
+        "timestamp": "2025-08-18 21:55:44.619178"
+      }
+    }
+  ],
+  "narrative_evolution": [],
+  "errors": [
+    "Turn 1 failed: 'EnterpriseMultiAgentOrchestrator' object has no attribute 'ai_orchestrator'",
+    "Turn 2 failed: 'EnterpriseMultiAgentOrchestrator' object has no attribute 'ai_orchestrator'",
+    "Turn 3 failed: 'EnterpriseMultiAgentOrchestrator' object has no attribute 'ai_orchestrator'",
+    "Turn 4 failed: 'EnterpriseMultiAgentOrchestrator' object has no attribute 'ai_orchestrator'"
+  ],
+  "execution_time": 1.787245,
+  "summary": {
+    "simulation_mode": "enterprise",
+    "integration_level": "enterprise",
+    "turns_completed": 4,
+    "agents_participated": 2,
+    "success_rate": 0.0,
+    "average_turn_time": 0.000808,
+    "total_execution_time": 1.787245,
+    "enterprise_features_used": true,
+    "multi_agent_enhancements": "All 5 waves active",
+    "errors_encountered": 4,
+    "integration_status": "Successful"
+  }
+}

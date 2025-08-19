@@ -1,6 +1,6 @@
 [run]
 # Coverage configuration for StoryForge AI
-source = .
+source = src
 omit = 
     */tests/*
     */test_*

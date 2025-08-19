@@ -1,0 +1,56 @@
+{
+  "success": true,
+  "mode": "enhanced",
+  "integration_level": "enterprise",
+  "turns_executed": 2,
+  "agents_participated": 2,
+  "campaign_context": {
+    "title": "Enhanced Multi-Agent Simulation",
+    "setting": "Integrated Novel Engine simulation with all 5 waves of enhancement",
+    "objectives": [
+      "Demonstrate multi-agent coordination",
+      "Showcase emergent narrative capabilities",
+      "Validate enterprise integration"
+    ]
+  },
+  "turn_results": [
+    {
+      "success": true,
+      "mode": "classic",
+      "director_result": {
+        "status": "empty_turn"
+      },
+      "agents_processed": 2,
+      "execution_time": 0.001323,
+      "turn_number": 1
+    },
+    {
+      "success": true,
+      "mode": "classic",
+      "director_result": {
+        "status": "empty_turn"
+      },
+      "agents_processed": 2,
+      "execution_time": 0.007445,
+      "turn_number": 2
+    }
+  ],
+  "performance_metrics": [],
+  "enterprise_dashboards": [],
+  "narrative_evolution": [],
+  "errors": [],
+  "execution_time": 1.066705,
+  "summary": {
+    "simulation_mode": "enhanced",
+    "integration_level": "enterprise",
+    "turns_completed": 2,
+    "agents_participated": 2,
+    "success_rate": 1.0,
+    "average_turn_time": 0.004384,
+    "total_execution_time": 1.066705,
+    "enterprise_features_used": false,
+    "multi_agent_enhancements": "Partial",
+    "errors_encountered": 0,
+    "integration_status": "Successful"
+  }
+}
