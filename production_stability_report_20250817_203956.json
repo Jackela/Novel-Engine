@@ -1,0 +1,201 @@
+{
+  "timestamp": "2025-08-17T20:39:56.555387",
+  "test_duration_seconds": 137.795995,
+  "overall_status": "NOT_READY",
+  "production_ready": false,
+  "summary": {
+    "total_tests": 8,
+    "passed_tests": 4,
+    "failed_tests": 4,
+    "success_rate": 50.0
+  },
+  "test_results": [
+    {
+      "test_name": "API Health Check",
+      "success": true,
+      "duration": 2.0687501430511475,
+      "message": "API healthy, response: {'status': 'healthy', 'api': 'running', 'timestamp': '2025-08-17T20:37:40.827599', 'version': '1.0.0', 'config': 'loaded'}",
+      "metrics": {
+        "response_time_ms": 2068.7501430511475
+      },
+      "timestamp": "2025-08-17T20:37:40.828480"
+    },
+    {
+      "test_name": "Character List",
+      "success": true,
+      "duration": 2.0411787033081055,
+      "message": "Found 4 characters",
+      "metrics": {
+        "character_count": 4,
+        "response_time_ms": 2041.1787033081055
+      },
+      "timestamp": "2025-08-17T20:37:42.869998"
+    },
+    {
+      "test_name": "Story Generation",
+      "success": false,
+      "duration": 4.085856914520264,
+      "message": "HTTP 404",
+      "metrics": {},
+      "timestamp": "2025-08-17T20:37:46.956182"
+    },
+    {
+      "test_name": "Error Handling Resilience",
+      "success": false,
+      "duration": 8.184791564941406,
+      "message": "Passed 1/3 error scenarios, system responsive: True",
+      "metrics": {
+        "error_scenarios": [
+          [
+            "Invalid endpoint",
+            true
+          ],
+          [
+            "Malformed request",
+            false
+          ],
+          [
+            "Empty character list",
+            false
+          ]
+        ],
+        "system_responsive": true
+      },
+      "timestamp": "2025-08-17T20:37:55.141396"
+    },
+    {
+      "test_name": "Memory Leak Detection",
+      "success": true,
+      "duration": 43.15457034111023,
+      "message": "Memory: 39.2MB \u2192 39.2MB (\u0394-0.0MB)",
+      "metrics": {
+        "initial_memory_mb": 39.19140625,
+        "final_memory_mb": 39.16796875,
+        "memory_increase_mb": -0.0234375,
+        "iterations": 20,
+        "memory_readings": [
+          39.19140625,
+          39.1953125,
+          39.19921875,
+          39.19921875,
+          39.19921875,
+          39.19921875,
+          39.19921875,
+          39.23828125,
+          39.23828125,
+          39.23828125,
+          39.23828125,
+          39.23828125,
+          39.23828125,
+          39.23828125,
+          39.23828125,
+          39.23828125,
+          39.23828125,
+          39.23828125,
+          39.23828125,
+          39.23828125,
+          39.16796875
+        ]
+      },
+      "timestamp": "2025-08-17T20:38:38.296679"
+    },
+    {
+      "test_name": "Concurrent API Access",
+      "success": false,
+      "duration": 6.600920677185059,
+      "message": "Concurrent test: 100.0% success rate, P95: 2080ms",
+      "metrics": {
+        "response_time_stats": {
+          "mean": 2050.2779165903726,
+          "median": 2044.8074340820312,
+          "p95": 2080.317258834839,
+          "p99": 2080.317258834839,
+          "max": 2080.317258834839,
+          "min": 2041.6529178619385
+        },
+        "system_stats": {
+          "avg_memory_mb": 39.53786057692308,
+          "peak_memory_mb": 39.56640625,
+          "avg_cpu_percent": 0.0,
+          "peak_cpu_percent": 0.0
+        },
+        "request_stats": {
+          "total_requests": 15,
+          "successful_requests": 15,
+          "failed_requests": 0,
+          "success_rate": 100.0
+        },
+        "duration_seconds": 6.60122
+      },
+      "timestamp": "2025-08-17T20:38:44.914587"
+    },
+    {
+      "test_name": "Concurrent API Access",
+      "success": false,
+      "duration": 10.632275104522705,
+      "message": "Concurrent test: 100.0% success rate, P95: 2062ms",
+      "metrics": {
+        "response_time_stats": {
+          "mean": 2048.5668420791626,
+          "median": 2047.5586652755737,
+          "p95": 2062.486410140991,
+          "p99": 2066.5042400360107,
+          "max": 2066.5042400360107,
+          "min": 2037.9443168640137
+        },
+        "system_stats": {
+          "avg_memory_mb": 39.95386904761905,
+          "peak_memory_mb": 39.98828125,
+          "avg_cpu_percent": 0.0,
+          "peak_cpu_percent": 0.0
+        },
+        "request_stats": {
+          "total_requests": 50,
+          "successful_requests": 50,
+          "failed_requests": 0,
+          "success_rate": 100.0
+        },
+        "duration_seconds": 10.632558
+      },
+      "timestamp": "2025-08-17T20:38:55.547536"
+    },
+    {
+      "test_name": "Long Running Stability",
+      "success": true,
+      "duration": 61.00568985939026,
+      "message": "Long-running test: 100.0% success rate over 1.0 minutes",
+      "metrics": {
+        "response_time_stats": {
+          "mean": 2049.2162346839905,
+          "median": 2046.2181568145752,
+          "p95": 2110.949754714966,
+          "p99": 2110.949754714966,
+          "max": 2110.949754714966,
+          "min": 2032.2227478027344
+        },
+        "system_stats": {
+          "avg_memory_mb": 39.551953125,
+          "peak_memory_mb": 39.5546875,
+          "avg_cpu_percent": 0.0,
+          "peak_cpu_percent": 0.0
+        },
+        "request_stats": {
+          "total_requests": 20,
+          "successful_requests": 20,
+          "failed_requests": 0,
+          "success_rate": 100.0
+        },
+        "duration_seconds": 61.005998
+      },
+      "timestamp": "2025-08-17T20:39:56.554345"
+    }
+  ],
+  "production_criteria": {
+    "api_health_responsive": true,
+    "basic_functionality": true,
+    "error_handling": false,
+    "memory_stable": true,
+    "concurrent_load": false,
+    "story_generation": false
+  }
+}

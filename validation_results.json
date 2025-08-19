@@ -1,0 +1,43 @@
+{
+  "application_layer": {
+    "score": 100.0,
+    "tests": [
+      "\u2705 _test_api_server_startup",
+      "\u2705 _test_health_endpoint",
+      "\u2705 _test_characters_endpoint",
+      "\u2705 _test_character_detail_endpoint",
+      "\u2705 _test_campaigns_endpoint",
+      "\u2705 _test_simulation_endpoint"
+    ],
+    "errors": []
+  },
+  "performance": {
+    "score": 60.0,
+    "tests": [
+      "\u274c _test_response_times",
+      "\u2705 _test_concurrent_requests",
+      "\u2705 _test_caching_system",
+      "\u274c _test_database_performance",
+      "\u2705 _test_memory_optimization"
+    ],
+    "errors": []
+  },
+  "integration": {
+    "score": 100.0,
+    "tests": [
+      "\u2705 _test_component_imports",
+      "\u2705 _test_eventbus_functionality",
+      "\u2705 _test_system_orchestrator",
+      "\u2705 _test_agent_coordination",
+      "\u2705 _test_end_to_end_workflow"
+    ],
+    "errors": []
+  },
+  "overall": {
+    "score": 88.0,
+    "success_rate": 87.5,
+    "production_ready": true,
+    "total_tests": 16,
+    "passed_tests": 14
+  }
+}

@@ -1,0 +1,269 @@
+{
+  "timestamp": "2025-08-17T22:36:26.068633",
+  "test_duration_seconds": 1.5826926231384277,
+  "integration_status": "NOT_READY",
+  "production_readiness_score": 33.33,
+  "integration_ready": false,
+  "summary": {
+    "total_tests": 12,
+    "passed_tests": 4,
+    "failed_tests": 8,
+    "success_rate": 33.33,
+    "critical_tests": 6,
+    "critical_passed": 2,
+    "critical_success_rate": 33.33
+  },
+  "test_categories": {
+    "ComponentIntegration": {
+      "total_tests": 3,
+      "passed_tests": 1,
+      "failed_tests": 2,
+      "success_rate": 33.33,
+      "status": "FAIL"
+    },
+    "DatabaseIntegration": {
+      "total_tests": 1,
+      "passed_tests": 1,
+      "failed_tests": 0,
+      "success_rate": 100.0,
+      "status": "PASS"
+    },
+    "ExternalServiceIntegration": {
+      "total_tests": 1,
+      "passed_tests": 1,
+      "failed_tests": 0,
+      "success_rate": 100.0,
+      "status": "PASS"
+    },
+    "ConfigurationIntegration": {
+      "total_tests": 1,
+      "passed_tests": 0,
+      "failed_tests": 1,
+      "success_rate": 0.0,
+      "status": "FAIL"
+    },
+    "EndToEndWorkflow": {
+      "total_tests": 2,
+      "passed_tests": 0,
+      "failed_tests": 2,
+      "success_rate": 0.0,
+      "status": "FAIL"
+    },
+    "DeploymentIntegration": {
+      "total_tests": 2,
+      "passed_tests": 1,
+      "failed_tests": 1,
+      "success_rate": 50.0,
+      "status": "FAIL"
+    },
+    "PerformanceIntegration": {
+      "total_tests": 2,
+      "passed_tests": 0,
+      "failed_tests": 2,
+      "success_rate": 0.0,
+      "status": "FAIL"
+    }
+  },
+  "detailed_results": [
+    {
+      "category": "ComponentIntegration",
+      "test_name": "EventBusIntegration",
+      "success": true,
+      "duration": 0.202,
+      "message": "EventBus handling 2 events with 1 subscriptions",
+      "details": {
+        "events_processed": 2,
+        "subscribers": 1
+      },
+      "critical": true
+    },
+    {
+      "category": "ComponentIntegration",
+      "test_name": "DirectorPersonaCoordination",
+      "success": false,
+      "duration": 0.864,
+      "message": "Director-Persona coordination failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "details": {},
+      "critical": true
+    },
+    {
+      "category": "ComponentIntegration",
+      "test_name": "CharacterFactoryIntegration",
+      "success": false,
+      "duration": 0.001,
+      "message": "CharacterFactory integration failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "details": {},
+      "critical": true
+    },
+    {
+      "category": "DatabaseIntegration",
+      "test_name": "SQLiteOperations",
+      "success": true,
+      "duration": 0.019,
+      "message": "Database operations: 3 records, transaction handling passed",
+      "details": {
+        "records_inserted": 3,
+        "transaction_handling": true,
+        "database_path": "C:\\Users\\k7407\\AppData\\Local\\Temp\\tmpivqc8isa.db"
+      },
+      "critical": true
+    },
+    {
+      "category": "ExternalServiceIntegration",
+      "test_name": "GeminiAPIIntegration",
+      "success": true,
+      "duration": 0.002,
+      "message": "Gemini API integration: fallback mode",
+      "details": {
+        "api_available": true,
+        "api_integration_success": false,
+        "fallback_success": true
+      },
+      "critical": false
+    },
+    {
+      "category": "ConfigurationIntegration",
+      "test_name": "ConfigLoadingAndEnvironment",
+      "success": false,
+      "duration": 0.013,
+      "message": "Configuration integration failed: argument of type 'AppConfig' is not iterable",
+      "details": {},
+      "critical": true
+    },
+    {
+      "category": "EndToEndWorkflow",
+      "test_name": "CompleteStoryGeneration",
+      "success": false,
+      "duration": 0.003,
+      "message": "End-to-end workflow failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "details": {},
+      "critical": true
+    },
+    {
+      "category": "EndToEndWorkflow",
+      "test_name": "CharacterManagement",
+      "success": false,
+      "duration": 0.001,
+      "message": "Character management workflow failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "details": {},
+      "critical": false
+    },
+    {
+      "category": "DeploymentIntegration",
+      "test_name": "StagingDeploymentValidation",
+      "success": true,
+      "duration": 0.001,
+      "message": "Deployment validation: files present, env vars ready",
+      "details": {
+        "staging_config_exists": true,
+        "deployment_script_exists": true,
+        "required_files_present": true,
+        "environment_variables_ready": true,
+        "deployment_readiness": true
+      },
+      "critical": false
+    },
+    {
+      "category": "DeploymentIntegration",
+      "test_name": "ServiceCoordination",
+      "success": false,
+      "duration": 0.433,
+      "message": "Service coordination: API failed, init ok, health failed",
+      "details": {
+        "api_startup": false,
+        "component_initialization": true,
+        "health_check_ready": false,
+        "service_coordination": false
+      },
+      "critical": false
+    },
+    {
+      "category": "PerformanceIntegration",
+      "test_name": "ConcurrentOperations",
+      "success": false,
+      "duration": 0.001,
+      "message": "Concurrent operations test failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "details": {},
+      "critical": false
+    },
+    {
+      "category": "PerformanceIntegration",
+      "test_name": "MemoryAndResourceManagement",
+      "success": false,
+      "duration": 0.039,
+      "message": "Memory and resource integration test failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "details": {},
+      "critical": false
+    }
+  ],
+  "integration_gaps": [
+    {
+      "category": "ComponentIntegration",
+      "test": "DirectorPersonaCoordination",
+      "issue": "Director-Persona coordination failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "critical": true
+    },
+    {
+      "category": "ComponentIntegration",
+      "test": "CharacterFactoryIntegration",
+      "issue": "CharacterFactory integration failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "critical": true
+    },
+    {
+      "category": "ConfigurationIntegration",
+      "test": "ConfigLoadingAndEnvironment",
+      "issue": "Configuration integration failed: argument of type 'AppConfig' is not iterable",
+      "critical": true
+    },
+    {
+      "category": "EndToEndWorkflow",
+      "test": "CompleteStoryGeneration",
+      "issue": "End-to-end workflow failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "critical": true
+    },
+    {
+      "category": "EndToEndWorkflow",
+      "test": "CharacterManagement",
+      "issue": "Character management workflow failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "critical": false
+    },
+    {
+      "category": "DeploymentIntegration",
+      "test": "ServiceCoordination",
+      "issue": "Service coordination: API failed, init ok, health failed",
+      "critical": false
+    },
+    {
+      "category": "PerformanceIntegration",
+      "test": "ConcurrentOperations",
+      "issue": "Concurrent operations test failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "critical": false
+    },
+    {
+      "category": "PerformanceIntegration",
+      "test": "MemoryAndResourceManagement",
+      "issue": "Memory and resource integration test failed: cannot import name 'CharacterAction' from 'shared_types' (E:\\Code\\Novel-Engine\\src\\shared_types.py)",
+      "critical": false
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "category": "Critical Components",
+      "issue": "Critical component integration failures detected",
+      "action": "Fix all critical component integration issues before deployment"
+    },
+    {
+      "priority": "MEDIUM",
+      "category": "Overall Integration",
+      "issue": "Overall integration success rate below threshold",
+      "action": "Address integration gaps to improve success rate above 80%"
+    },
+    {
+      "priority": "MEDIUM",
+      "category": "Test Failures",
+      "issue": "8 integration tests failing",
+      "action": "Review and fix failing integration tests"
+    }
+  ]
+}

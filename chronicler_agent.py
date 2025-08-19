@@ -215,6 +215,130 @@ class ChroniclerAgent:
         logger.info(f"Narrative saved to: {output_path}")
         return str(output_path)
 
+    def transcribe_log(self, campaign_log_path: str) -> str:
+        """
+        Transcribes a campaign log file into a narrative story.
+        
+        This method provides backward compatibility with the API server by reading
+        a campaign log file and converting it into a narrative story using the
+        ChroniclerAgent's narrative generation capabilities.
+        
+        Args:
+            campaign_log_path: Path to the campaign log file to transcribe
+            
+        Returns:
+            str: The generated narrative story
+            
+        Raises:
+            FileNotFoundError: If the campaign log file doesn't exist
+            Exception: If narrative generation fails
+        """
+        try:
+            # Read the campaign log file
+            if not os.path.exists(campaign_log_path):
+                raise FileNotFoundError(f"Campaign log file not found: {campaign_log_path}")
+            
+            with open(campaign_log_path, 'r', encoding='utf-8') as f:
+                log_content = f.read()
+            
+            # Parse the log content into events
+            events = self._parse_campaign_log(log_content)
+            
+            # Generate narrative segments for each event
+            narrative_segments = []
+            for event in events:
+                narrative_text = self._generate_event_narrative(event)
+                if narrative_text:
+                    narrative_segments.append(NarrativeSegment(
+                        turn_number=event.turn_number,
+                        event_type=event.event_type,
+                        narrative_text=narrative_text
+                    ))
+            
+            # Combine all segments into a complete story
+            complete_story = self._combine_narrative_segments(narrative_segments)
+            
+            logger.info(f"Transcribed campaign log {campaign_log_path} into {len(complete_story)} character story")
+            return complete_story
+            
+        except Exception as e:
+            logger.error(f"Failed to transcribe campaign log {campaign_log_path}: {e}")
+            # Return a basic story if transcription fails
+            return f"A tale unfolds from the campaign records, though the details remain shrouded in mystery. {len(self.character_names)} brave souls participated in this adventure."
+
+    def _parse_campaign_log(self, log_content: str) -> List[CampaignEvent]:
+        """
+        Parses campaign log content into structured events.
+        
+        Args:
+            log_content: Raw content of the campaign log file
+            
+        Returns:
+            List[CampaignEvent]: Parsed events from the log
+        """
+        events = []
+        turn_number = 0
+        
+        # Split content into lines and process
+        lines = log_content.split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Look for turn markers
+            if '=== STARTING TURN' in line.upper() or 'TURN' in line.upper() and 'BEGINS' in line.upper():
+                turn_number += 1
+                events.append(CampaignEvent(
+                    turn_number=turn_number,
+                    timestamp=datetime.now().isoformat(),
+                    event_type='turn_start',
+                    description=f"Turn {turn_number} begins",
+                    raw_text=line
+                ))
+                continue
+            
+            # Look for agent actions
+            if 'decided to' in line.lower() or 'chose to' in line.lower():
+                # Extract character name and action
+                participants = []
+                action_description = line
+                
+                # Try to extract character names
+                for char_name in self.character_names:
+                    if char_name.lower() in line.lower():
+                        participants.append(char_name)
+                
+                events.append(CampaignEvent(
+                    turn_number=turn_number,
+                    timestamp=datetime.now().isoformat(),
+                    event_type='character_action',
+                    description=action_description,
+                    participants=participants,
+                    raw_text=line
+                ))
+                continue
+            
+            # Look for agent registration
+            if 'joined' in line.lower() or 'registration' in line.lower():
+                participants = []
+                for char_name in self.character_names:
+                    if char_name.lower() in line.lower():
+                        participants.append(char_name)
+                
+                events.append(CampaignEvent(
+                    turn_number=0,
+                    timestamp=datetime.now().isoformat(),
+                    event_type='agent_registration',
+                    description=line,
+                    participants=participants,
+                    raw_text=line
+                ))
+        
+        logger.info(f"Parsed {len(events)} events from campaign log")
+        return events
+
 def example_usage():
     """Example usage of the ChroniclerAgent class."""
     print("ChroniclerAgent class is ready for use.")

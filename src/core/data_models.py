@@ -23,7 +23,7 @@ from typing import Dict, List, Optional, Any, Union
 from uuid import uuid4
 
 # Import blessed existing types to maintain sacred compatibility
-from shared_types import CharacterAction, ActionPriority
+from shared_types import ProposedAction, ActionType
 
 
 class MemoryType(Enum):

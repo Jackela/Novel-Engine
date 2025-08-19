@@ -37,7 +37,10 @@ try:
     )
     IRON_LAWS_AVAILABLE = True
 except ImportError as e:
-    logger.warning(f"Iron Laws types not available: {e}")
+    # Create a dummy logger for the module level since the real one isn't configured yet
+    import logging
+    temp_logger = logging.getLogger(__name__)
+    temp_logger.warning(f"Iron Laws types not available: {e}")
     IRON_LAWS_AVAILABLE = False
 
 # Import configuration loader

@@ -1,0 +1,266 @@
+{
+  "timestamp": "2025-08-17T22:39:32.545147",
+  "test_duration_seconds": 1.7070693969726562,
+  "production_status": "NOT_READY",
+  "production_readiness_score": 73.86,
+  "production_ready": false,
+  "summary": {
+    "total_tests": 11,
+    "passed_tests": 8,
+    "failed_tests": 3,
+    "success_rate": 72.73,
+    "critical_tests": 4,
+    "critical_passed": 3,
+    "critical_success_rate": 75.0
+  },
+  "test_categories": {
+    "ComponentIntegration": {
+      "total_tests": 3,
+      "passed_tests": 2,
+      "failed_tests": 1,
+      "success_rate": 66.67,
+      "status": "FAIL"
+    },
+    "DatabaseIntegration": {
+      "total_tests": 1,
+      "passed_tests": 1,
+      "failed_tests": 0,
+      "success_rate": 100.0,
+      "status": "PASS"
+    },
+    "ExternalServiceIntegration": {
+      "total_tests": 1,
+      "passed_tests": 1,
+      "failed_tests": 0,
+      "success_rate": 100.0,
+      "status": "PASS"
+    },
+    "EndToEndWorkflow": {
+      "total_tests": 2,
+      "passed_tests": 1,
+      "failed_tests": 1,
+      "success_rate": 50.0,
+      "status": "FAIL"
+    },
+    "DeploymentIntegration": {
+      "total_tests": 2,
+      "passed_tests": 2,
+      "failed_tests": 0,
+      "success_rate": 100.0,
+      "status": "PASS"
+    },
+    "PerformanceIntegration": {
+      "total_tests": 2,
+      "passed_tests": 1,
+      "failed_tests": 1,
+      "success_rate": 50.0,
+      "status": "FAIL"
+    }
+  },
+  "detailed_results": [
+    {
+      "category": "ComponentIntegration",
+      "test_name": "ConfigurationSystem",
+      "success": true,
+      "duration": 0.06,
+      "message": "Configuration: loaded, structure ok, env vars ok",
+      "details": {
+        "config_loaded": true,
+        "structure_valid": true,
+        "environment_override": true,
+        "config_keys": [
+          "simulation",
+          "paths",
+          "characters",
+          "director",
+          "chronicler",
+          "llm",
+          "testing",
+          "performance",
+          "features",
+          "validation"
+        ]
+      },
+      "critical": true
+    },
+    {
+      "category": "ComponentIntegration",
+      "test_name": "BasicComponentLoading",
+      "success": true,
+      "duration": 1.04,
+      "message": "Component loading: 4/4 components loaded successfully",
+      "details": {
+        "DirectorAgent": true,
+        "ChroniclerAgent": true,
+        "CharacterFactory": true,
+        "SharedTypes": true
+      },
+      "critical": true
+    },
+    {
+      "category": "ComponentIntegration",
+      "test_name": "ChroniclerIntegration",
+      "success": false,
+      "duration": 0.0,
+      "message": "Chronicler integration failed: ChroniclerAgent.__init__() missing 1 required positional argument: 'event_bus'",
+      "details": {},
+      "critical": false
+    },
+    {
+      "category": "DatabaseIntegration",
+      "test_name": "SQLiteOperations",
+      "success": true,
+      "duration": 0.024,
+      "message": "Database: 3 records, queries ok, transactions ok",
+      "details": {
+        "records_inserted": 3,
+        "query_results": 2,
+        "transaction_rollback": true,
+        "database_path": "C:\\Users\\k7407\\AppData\\Local\\Temp\\tmpag6gxxja.db"
+      },
+      "critical": true
+    },
+    {
+      "category": "ExternalServiceIntegration",
+      "test_name": "GeminiAPIIntegration",
+      "success": true,
+      "duration": 0.0,
+      "message": "Gemini API: key available, integration ready, fallback ok",
+      "details": {
+        "api_key_available": true,
+        "api_integration_ready": true,
+        "fallback_ready": true
+      },
+      "critical": false
+    },
+    {
+      "category": "EndToEndWorkflow",
+      "test_name": "MinimalStoryGeneration",
+      "success": false,
+      "duration": 0.0,
+      "message": "Minimal story generation workflow failed: ChroniclerAgent.__init__() missing 1 required positional argument: 'event_bus'",
+      "details": {},
+      "critical": true
+    },
+    {
+      "category": "EndToEndWorkflow",
+      "test_name": "CharacterDataWorkflow",
+      "success": true,
+      "duration": 0.004,
+      "message": "Character workflow: 475 files found, data structure ok",
+      "details": {
+        "character_files_found": 475,
+        "character_data_created": true,
+        "workflow_ready": true
+      },
+      "critical": false
+    },
+    {
+      "category": "DeploymentIntegration",
+      "test_name": "ProductionFileStructure",
+      "success": true,
+      "duration": 0.0,
+      "message": "File structure: 4/4 required, 3/3 dirs, score 1.00",
+      "details": {
+        "required_files": {
+          "requirements.txt": true,
+          "config.yaml": true,
+          "README.md": true,
+          "api_server.py": true
+        },
+        "optional_files": {
+          "LICENSE": true,
+          "NOTICE": true,
+          ".gitignore": true
+        },
+        "directories": {
+          "characters": true,
+          "docs": true,
+          "src": true
+        },
+        "readiness_score": 0.9999999999999999
+      },
+      "critical": false
+    },
+    {
+      "category": "DeploymentIntegration",
+      "test_name": "APIServerReadiness",
+      "success": true,
+      "duration": 0.496,
+      "message": "API server: import ok, app available, config ready",
+      "details": {
+        "api_import": true,
+        "app_available": true,
+        "endpoints_available": true,
+        "config_ready": true
+      },
+      "critical": false
+    },
+    {
+      "category": "PerformanceIntegration",
+      "test_name": "ConcurrentOperationSafety",
+      "success": true,
+      "duration": 0.004,
+      "message": "Concurrent ops: 5/5 workers, 0 errors, thread safety ok",
+      "details": {
+        "successful_workers": 5,
+        "total_workers": 5,
+        "errors": 0,
+        "thread_safety": true
+      },
+      "critical": false
+    },
+    {
+      "category": "PerformanceIntegration",
+      "test_name": "MemoryUsageStability",
+      "success": false,
+      "duration": 0.075,
+      "message": "Memory: -3 objects growth, 0/5 operations, stability ok",
+      "details": {
+        "initial_objects": 58986,
+        "final_objects": 58983,
+        "memory_growth": -3,
+        "operations_completed": 0,
+        "memory_stable": true
+      },
+      "critical": false
+    }
+  ],
+  "production_issues": [
+    {
+      "category": "ComponentIntegration",
+      "test": "ChroniclerIntegration",
+      "issue": "Chronicler integration failed: ChroniclerAgent.__init__() missing 1 required positional argument: 'event_bus'",
+      "critical": false,
+      "impact": "MEDIUM"
+    },
+    {
+      "category": "EndToEndWorkflow",
+      "test": "MinimalStoryGeneration",
+      "issue": "Minimal story generation workflow failed: ChroniclerAgent.__init__() missing 1 required positional argument: 'event_bus'",
+      "critical": true,
+      "impact": "HIGH"
+    },
+    {
+      "category": "PerformanceIntegration",
+      "test": "MemoryUsageStability",
+      "issue": "Memory: -3 objects growth, 0/5 operations, stability ok",
+      "critical": false,
+      "impact": "MEDIUM"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "CRITICAL",
+      "category": "Critical Components",
+      "issue": "Critical component integration failures detected",
+      "action": "Fix all critical component integration issues before production deployment"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Overall Integration",
+      "issue": "Overall integration success rate below production threshold",
+      "action": "Address integration gaps to improve success rate above 75%"
+    }
+  ]
+}

@@ -132,6 +132,54 @@ features:
   # Enable real-time updates
   realtime_updates: false
 
+# Security Configuration
+# ----------------------
+security:
+  # Enable security headers (production recommended)
+  enable_security_headers: true
+  
+  # Force HTTPS in production
+  force_https: false
+  
+  # Enable input validation
+  enable_input_validation: true
+  
+  # Enable rate limiting
+  enable_rate_limiting: true
+  
+  # Maximum file upload size (MB)
+  max_upload_size_mb: 10
+  
+  # Session timeout (minutes)
+  session_timeout_minutes: 60
+  
+  # Enable audit logging
+  enable_audit_logging: true
+  
+  # Database encryption (future implementation)
+  enable_database_encryption: false
+
+# Production Hardening
+# --------------------
+production:
+  # Disable debug features in production
+  disable_debug_features: true
+  
+  # Disable API documentation in production
+  disable_api_docs: false
+  
+  # Enable comprehensive logging
+  enable_comprehensive_logging: true
+  
+  # Enable performance monitoring
+  enable_performance_monitoring: true
+  
+  # Enable health checks
+  enable_health_checks: true
+  
+  # Enable graceful shutdown
+  enable_graceful_shutdown: true
+
 # Validation Rules
 # ----------------
 validation:
