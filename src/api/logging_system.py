@@ -22,7 +22,7 @@ from contextlib import contextmanager
 from collections import deque
 
 from fastapi import Request, Response
-from fastapi.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 class LogLevel(str, Enum):
     """Enhanced log levels."""

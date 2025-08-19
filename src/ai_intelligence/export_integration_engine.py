@@ -36,7 +36,6 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
-
 class ExportFormat(Enum):
     """Supported export formats."""
     PDF = "pdf"
@@ -50,7 +49,6 @@ class ExportFormat(Enum):
     RTF = "rtf"
     LATEX = "latex"
 
-
 class ShareMode(Enum):
     """Story sharing modes."""
     PRIVATE = "private"             # Private, no sharing
@@ -59,7 +57,6 @@ class ShareMode(Enum):
     COLLABORATIVE = "collaborative" # Allow collaborative editing
     READ_ONLY = "read_only"         # Read-only sharing
     COMMUNITY = "community"         # Community sharing
-
 
 class IntegrationType(Enum):
     """Types of external integrations."""
@@ -72,7 +69,6 @@ class IntegrationType(Enum):
     FEEDBACK = "feedback"
     COLLABORATION = "collaboration"
 
-
 class VersionAction(Enum):
     """Version control actions."""
     CREATE = "create"
@@ -82,7 +78,6 @@ class VersionAction(Enum):
     TAG = "tag"
     RESTORE = "restore"
     ARCHIVE = "archive"
-
 
 @dataclass
 class ExportRequest:
@@ -100,7 +95,6 @@ class ExportRequest:
     created_at: datetime = field(default_factory=datetime.now)
     priority: str = "normal"  # low, normal, high, urgent
 
-
 @dataclass
 class ExportResult:
     """Export operation result."""
@@ -116,7 +110,6 @@ class ExportResult:
     download_url: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)
     expires_at: Optional[datetime] = None
-
 
 @dataclass
 class ShareConfiguration:
@@ -137,7 +130,6 @@ class ShareConfiguration:
     access_count: int = 0
     last_accessed: Optional[datetime] = None
 
-
 @dataclass
 class StoryVersion:
     """Story version for version control."""
@@ -157,7 +149,6 @@ class StoryVersion:
     file_size: int = 0
     changes_summary: Optional[Dict[str, Any]] = None
 
-
 @dataclass
 class IntegrationConnection:
     """External integration connection."""
@@ -172,7 +163,6 @@ class IntegrationConnection:
     sync_frequency: Optional[str] = None  # manual, daily, weekly
     created_at: datetime = field(default_factory=datetime.now)
     metadata: Dict[str, Any] = field(default_factory=dict)
-
 
 class ExportIntegrationEngine:
     """
@@ -1217,7 +1207,6 @@ class ExportIntegrationEngine:
     async def _handle_collaboration_integration(self, connection: IntegrationConnection, operation: str) -> Dict[str, Any]:
         """Handle collaboration platform integration."""
         return {"success": True, "message": "Collaboration integration placeholder"}
-
 
 def create_export_integration_engine(storage_path: str = "exports", max_file_size: int = 100 * 1024 * 1024) -> ExportIntegrationEngine:
     """

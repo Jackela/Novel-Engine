@@ -41,11 +41,9 @@ from shared_types import CharacterAction, ActionPriority
 # 引入叙事引擎组件，将史诗传说融入人格决策...
 from narrative_actions import NarrativeActionType, NarrativeActionResolver
 
-
 # 启动神圣的代理行为追踪仪式，记录人格机灵的每一次决策与行动...
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 class ThreatLevel(Enum):
     """Enumeration for threat assessment levels used in character decision-making."""
@@ -54,8 +52,6 @@ class ThreatLevel(Enum):
     MODERATE = "moderate"
     HIGH = "high"
     CRITICAL = "critical"
-
-
 
 @dataclass
 class WorldEvent:
@@ -74,7 +70,6 @@ class WorldEvent:
     data: Dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
 
-
 @dataclass
 class SubjectiveInterpretation:
     """
@@ -90,7 +85,6 @@ class SubjectiveInterpretation:
     threat_assessment: ThreatLevel = ThreatLevel.NEGLIGIBLE
     relationship_changes: Dict[str, float] = field(default_factory=dict)  # Changes to relationships
     memory_priority: float = 0.5  # How likely this is to be remembered (0.0 to 1.0)
-
 
 # Gemini API配置与辅助函数圣典 - 建立与机器学习神谕的通信桥梁...
 def _validate_gemini_api_key() -> Optional[str]:
@@ -116,8 +110,7 @@ def _validate_gemini_api_key() -> Optional[str]:
     logger.debug("Gemini API key validated successfully")
     return api_key
 
-
-# Global session for connection pooling - maintained by sacred protocols
+# Global session for connection pooling - maintained by standard protocols
 _http_session = None
 
 def _get_http_session() -> requests.Session:
@@ -283,7 +276,6 @@ def _make_gemini_api_request_direct(prompt: str, api_key: str, timeout: int = 30
         logger.error(f"Gemini API request failed: {e}")
         return None
 
-
 def _generate_fallback_response(agent_id: str, prompt: str, character_data: Dict, 
                                personality_traits: Dict, decision_weights: Dict, 
                                subjective_worldview: Dict) -> str:
@@ -305,93 +297,150 @@ def _generate_fallback_response(agent_id: str, prompt: str, character_data: Dict
     """
     logger.debug(f"Agent {agent_id} using fallback response generation")
     
-    # 模拟API调用延迟以保持一致性，模拟与神谕通信的神圣仪式...
-    if os.getenv('DEVELOPMENT_MODE') == 'true':
-        import time
-        time.sleep(0.1)
+    _simulate_api_delay()
     
-    # 为测试和开发而返回确定但真实的响应，模拟神谕的智慧响应...
-    # 基于角色特质和情境语境，结合人格机灵的独特性...
-    character_name = character_data.get('name', 'Unknown')
-    primary_faction = subjective_worldview.get('primary_faction', 'Unknown')
+    response_seed = _calculate_response_seed(agent_id, prompt, subjective_worldview)
     
-    # 根据角色特质模拟不同的响应模式，展现人格机灵的多样性...
-    cautious_trait = personality_traits.get('cautious', 0.5)
-    aggressive_trait = personality_traits.get('aggressive', 0.5)
-    faction_loyalty = decision_weights.get('faction_loyalty', 0.5)
-    
-    # 为测试生成确定但多样的响应，确保模拟结果的可预测性...
-    # 添加历史上下文和动态变化以防止重复响应的神圣异端现象...
-    current_time = int(time.time() * 1000) % 10000  # 毫秒级时间变化
-    recent_events_count = len(subjective_worldview.get('recent_events', []))
-    known_entities_count = len(subjective_worldview.get('known_entities', {}))
-    
-    # 使用增强的种子计算，集成时间、上下文和历史因素...
-    response_seed = hash((agent_id, prompt[:100], current_time, recent_events_count, known_entities_count)) % 1000
-    
-    if 'threat' in prompt.lower() and 'high' in prompt.lower():
-        if cautious_trait > 0.6:
-            responses = [
-                "ACTION: retreat\nTARGET: none\nREASONING: As a cautious operative, I must withdraw to assess the threat properly and avoid unnecessary risks to the mission.",
-                "ACTION: defensive_action\nTARGET: none\nREASONING: My cautious nature demands I take defensive measures to protect myself and gather more intelligence before acting.",
-                "ACTION: call_for_help\nTARGET: none\nREASONING: Prudence dictates I should request backup before engaging such a significant threat."
-            ]
-        elif aggressive_trait > 0.6:
-            # 为攻击性角色生成动态化的多样响应，根据当前上下文调整...
-            entity_count = len(subjective_worldview.get('known_entities', {}))
-            faction_name = subjective_worldview.get('primary_faction', 'my faction')
-            character_name = character_data.get('name', 'I')
-            
-            responses = [
-                f"ACTION: attack\nTARGET: hostile_forces\nREASONING: As {character_name} of {faction_name}, I must eliminate these threats before they can harm innocents. {entity_count} entities detected - direct action required!",
-                f"ACTION: suppress\nTARGET: enemy_position\nREASONING: My aggressive nature compels me to neutralize this threat immediately. For {faction_name} - no enemy shall stand!",
-                f"ACTION: attack\nTARGET: hostile_forces\nREASONING: The enemy shows no mercy, so neither shall I. Time to show them the true power of {faction_name}!",
-                f"ACTION: charge\nTARGET: enemy_forces\nREASONING: {character_name} never retreats! A frontal assault will scatter these cowards and bring glory to {faction_name}!",
-                f"ACTION: overwhelm\nTARGET: hostile_entities\nREASONING: Multiple contacts detected - I'll use my aggressive tactics to overwhelm them before they can coordinate their defense."
-            ]
-        else:
-            responses = [
-                "ACTION: observe\nTARGET: none\nREASONING: I need to gather more information about this threat before committing to a course of action.",
-                "ACTION: communicate\nTARGET: nearby_allies\nREASONING: Coordination with allies is essential before responding to this threat."
-            ]
-    elif 'battle' in prompt.lower() or 'combat' in prompt.lower():
-        if faction_loyalty > 0.7:
-            faction_name = subjective_worldview.get('primary_faction', 'my faction')
-            character_name = character_data.get('name', 'I')
-            responses = [
-                f"ACTION: attack\nTARGET: enemy_forces\nREASONING: {character_name}'s unwavering loyalty to {faction_name} compels me to engage without hesitation!",
-                f"ACTION: guard\nTARGET: faction_assets\nREASONING: Protecting {faction_name} interests is my sacred duty in this combat situation.",
-                f"ACTION: flank\nTARGET: enemy_position\nREASONING: For {faction_name}! I'll use tactical superiority to outmaneuver the enemy forces.",
-                f"ACTION: focus_fire\nTARGET: priority_targets\nREASONING: {character_name} will concentrate firepower on high-value targets to maximize damage to enemy forces."
-            ]
-        else:
-            responses = [
-                "ACTION: observe\nTARGET: none\nREASONING: I should assess the battle situation carefully before committing to any action.",
-                "ACTION: move\nTARGET: tactical_position\nREASONING: Repositioning to a more advantageous location seems prudent given the combat situation."
-            ]
-    else:
-        # 各种情境的默认响应模板，角色的本能反应...
-        character_name = character_data.get('name', 'I')
-        faction_name = subjective_worldview.get('primary_faction', 'my faction')
-        responses = [
-            f"ACTION: observe\nTARGET: none\nREASONING: {character_name} must gather intel before committing to action. Knowledge is power.",
-            f"ACTION: investigate\nTARGET: area_of_interest\nREASONING: As a {faction_name} operative, thorough reconnaissance is essential before making tactical decisions.",
-            f"ACTION: communicate\nTARGET: nearby_entities\nREASONING: {character_name} seeks to establish contact - information exchange could prove valuable.",
-            f"ACTION: patrol\nTARGET: perimeter\nREASONING: Maintaining situational awareness through active patrol serves {faction_name} interests.",
-            f"ACTION: prepare\nTARGET: none\nREASONING: {character_name} will ready equipment and position for whatever comes next. Preparation prevents failure.",
-            f"ACTION: analyze\nTARGET: environment\nREASONING: Understanding the tactical situation fully before action ensures {faction_name} superiority."
-        ]
+    responses = _get_responses_for_prompt(
+        prompt, character_data, personality_traits, 
+        decision_weights, subjective_worldview
+    )
     
     selected_response = responses[response_seed % len(responses)]
     
     logger.debug(f"Agent {agent_id} fallback response generated: {selected_response[:50]}...")
     
-    # 模拟API偶尔失败以测试健壮的错误处理，验证机器灵魂的韧性...
-    if response_seed % 50 == 0:  # 2% failure rate
-        raise Exception("Simulated LLM API timeout")
+    _simulate_api_failure(response_seed)
     
     return selected_response
 
+
+def _simulate_api_delay() -> None:
+    """Simulate API call delay for consistency in development mode."""
+    if os.getenv('DEVELOPMENT_MODE') == 'true':
+        import time
+        time.sleep(0.1)
+
+
+def _calculate_response_seed(agent_id: str, prompt: str, subjective_worldview: Dict) -> int:
+    """Calculate deterministic seed for response selection."""
+    current_time = int(time.time() * 1000) % 10000
+    recent_events_count = len(subjective_worldview.get('recent_events', []))
+    known_entities_count = len(subjective_worldview.get('known_entities', {}))
+    
+    return hash((agent_id, prompt[:100], current_time, recent_events_count, known_entities_count)) % 1000
+
+
+def _get_responses_for_prompt(prompt: str, character_data: Dict, personality_traits: Dict,
+                             decision_weights: Dict, subjective_worldview: Dict) -> List[str]:
+    """Get appropriate responses based on prompt type and character traits."""
+    prompt_lower = prompt.lower()
+    
+    if 'threat' in prompt_lower and 'high' in prompt_lower:
+        return _get_threat_responses(character_data, personality_traits, subjective_worldview)
+    elif 'battle' in prompt_lower or 'combat' in prompt_lower:
+        return _get_combat_responses(character_data, decision_weights, subjective_worldview)
+    else:
+        return _get_default_responses(character_data, subjective_worldview)
+
+
+def _get_threat_responses(character_data: Dict, personality_traits: Dict, 
+                         subjective_worldview: Dict) -> List[str]:
+    """Generate responses for high threat situations based on character traits."""
+    cautious_trait = personality_traits.get('cautious', 0.5)
+    aggressive_trait = personality_traits.get('aggressive', 0.5)
+    
+    if cautious_trait > 0.6:
+        return _get_cautious_threat_responses()
+    elif aggressive_trait > 0.6:
+        return _get_aggressive_threat_responses(character_data, subjective_worldview)
+    else:
+        return _get_neutral_threat_responses()
+
+
+def _get_cautious_threat_responses() -> List[str]:
+    """Generate cautious responses to threats."""
+    return [
+        "ACTION: retreat\nTARGET: none\nREASONING: As a cautious operative, I must withdraw to assess the threat properly and avoid unnecessary risks to the mission.",
+        "ACTION: defensive_action\nTARGET: none\nREASONING: My cautious nature demands I take defensive measures to protect myself and gather more intelligence before acting.",
+        "ACTION: call_for_help\nTARGET: none\nREASONING: Prudence dictates I should request backup before engaging such a significant threat."
+    ]
+
+
+def _get_aggressive_threat_responses(character_data: Dict, subjective_worldview: Dict) -> List[str]:
+    """Generate aggressive responses to threats."""
+    entity_count = len(subjective_worldview.get('known_entities', {}))
+    faction_name = subjective_worldview.get('primary_faction', 'my faction')
+    character_name = character_data.get('name', 'I')
+    
+    return [
+        f"ACTION: attack\nTARGET: hostile_forces\nREASONING: As {character_name} of {faction_name}, I must eliminate these threats before they can harm innocents. {entity_count} entities detected - direct action required!",
+        f"ACTION: suppress\nTARGET: enemy_position\nREASONING: My aggressive nature compels me to neutralize this threat immediately. For {faction_name} - no enemy shall stand!",
+        f"ACTION: attack\nTARGET: hostile_forces\nREASONING: The enemy shows no mercy, so neither shall I. Time to show them the true power of {faction_name}!",
+        f"ACTION: charge\nTARGET: enemy_forces\nREASONING: {character_name} never retreats! A frontal assault will scatter these cowards and bring glory to {faction_name}!",
+        f"ACTION: overwhelm\nTARGET: hostile_entities\nREASONING: Multiple contacts detected - I'll use my aggressive tactics to overwhelm them before they can coordinate their defense."
+    ]
+
+
+def _get_neutral_threat_responses() -> List[str]:
+    """Generate neutral responses to threats."""
+    return [
+        "ACTION: observe\nTARGET: none\nREASONING: I need to gather more information about this threat before committing to a course of action.",
+        "ACTION: communicate\nTARGET: nearby_allies\nREASONING: Coordination with allies is essential before responding to this threat."
+    ]
+
+
+def _get_combat_responses(character_data: Dict, decision_weights: Dict, 
+                         subjective_worldview: Dict) -> List[str]:
+    """Generate responses for battle/combat situations."""
+    faction_loyalty = decision_weights.get('faction_loyalty', 0.5)
+    
+    if faction_loyalty > 0.7:
+        return _get_loyal_combat_responses(character_data, subjective_worldview)
+    else:
+        return _get_cautious_combat_responses()
+
+
+def _get_loyal_combat_responses(character_data: Dict, subjective_worldview: Dict) -> List[str]:
+    """Generate combat responses for highly loyal characters."""
+    faction_name = subjective_worldview.get('primary_faction', 'my faction')
+    character_name = character_data.get('name', 'I')
+    
+    return [
+        f"ACTION: attack\nTARGET: enemy_forces\nREASONING: {character_name}'s unwavering loyalty to {faction_name} compels me to engage without hesitation!",
+        f"ACTION: guard\nTARGET: faction_assets\nREASONING: Protecting {faction_name} interests is my standard duty in this combat situation.",
+        f"ACTION: flank\nTARGET: enemy_position\nREASONING: For {faction_name}! I'll use tactical superiority to outmaneuver the enemy forces.",
+        f"ACTION: focus_fire\nTARGET: priority_targets\nREASONING: {character_name} will concentrate firepower on high-value targets to maximize damage to enemy forces."
+    ]
+
+
+def _get_cautious_combat_responses() -> List[str]:
+    """Generate cautious combat responses."""
+    return [
+        "ACTION: observe\nTARGET: none\nREASONING: I should assess the battle situation carefully before committing to any action.",
+        "ACTION: move\nTARGET: tactical_position\nREASONING: Repositioning to a more advantageous location seems prudent given the combat situation."
+    ]
+
+
+def _get_default_responses(character_data: Dict, subjective_worldview: Dict) -> List[str]:
+    """Generate default responses for general situations."""
+    character_name = character_data.get('name', 'I')
+    faction_name = subjective_worldview.get('primary_faction', 'my faction')
+    
+    return [
+        f"ACTION: observe\nTARGET: none\nREASONING: {character_name} must gather intel before committing to action. Knowledge is power.",
+        f"ACTION: investigate\nTARGET: area_of_interest\nREASONING: As a {faction_name} operative, thorough reconnaissance is essential before making tactical decisions.",
+        f"ACTION: communicate\nTARGET: nearby_entities\nREASONING: {character_name} seeks to establish contact - information exchange could prove valuable.",
+        f"ACTION: patrol\nTARGET: perimeter\nREASONING: Maintaining situational awareness through active patrol serves {faction_name} interests.",
+        f"ACTION: prepare\nTARGET: none\nREASONING: {character_name} will ready equipment and position for whatever comes next. Preparation prevents failure.",
+        f"ACTION: analyze\nTARGET: environment\nREASONING: Understanding the tactical situation fully before action ensures {faction_name} superiority."
+    ]
+
+
+def _simulate_api_failure(response_seed: int) -> None:
+    """Simulate occasional API failures for testing error handling."""
+    if response_seed % 50 == 0:  # 2% failure rate
+        raise Exception("Simulated LLM API timeout")
 
 class PersonaAgent:
     """
@@ -2176,117 +2225,17 @@ class PersonaAgent:
         character_name = self.character_data.get('name', 'Unknown Character')
         primary_faction = self.subjective_worldview.get('primary_faction', 'Unknown Faction')
         
-        # Build character background section
-        character_background = f"""CHARACTER IDENTITY:
-Name: {character_name}
-Faction: {primary_faction}
-Rank/Role: {self.character_data.get('rank_role', 'Unknown')}
-Current Status: {self.current_status}
-Morale Level: {self.morale_level:.2f} (-1.0 to 1.0 scale)"""
-        
-        # Build personality traits section
-        personality_section = "PERSONALITY TRAITS:\n"
-        for trait, value in self.personality_traits.items():
-            personality_section += f"- {trait.replace('_', ' ').title()}: {value:.2f} (strength on 0.0-1.0 scale)\n"
-        
-        # Build decision weights section
-        decision_weights_section = "DECISION-MAKING PRIORITIES:\n"
-        for weight, value in self.decision_weights.items():
-            decision_weights_section += f"- {weight.replace('_', ' ').title()}: {value:.2f} (importance on 0.0-1.0 scale)\n"
-        
-        # Build current situation section
-        threat_level = situation_assessment.get('threat_level', ThreatLevel.NEGLIGIBLE)
-        current_goals = situation_assessment.get('current_goals', [])
-        
-        # Add turn-specific context to prevent identical prompts
-        current_turn = world_state_update.get('current_turn', 'Unknown')
-        simulation_time = world_state_update.get('simulation_time', 'Unknown')
-        
-        situation_section = f"""CURRENT SITUATION:
-Turn Number: {current_turn}
-Simulation Time: {simulation_time}
-Threat Level: {threat_level.value}
-Location: {self.current_location or 'Unknown'}
-Active Goals: {len(current_goals)} mission objectives
-Known Entities: {len(self.subjective_worldview.get('known_entities', {}))}
-Recent Events: {len(self.subjective_worldview.get('recent_events', []))}"""
-        
-        # Build world state update section
-        world_state_section = "WORLD STATE UPDATE:\n"
-        recent_events = world_state_update.get('recent_events', [])
-        if recent_events:
-            world_state_section += "Recent Events:\n"
-            for event in recent_events[-3:]:  # Last 3 events
-                world_state_section += f"- {event.get('type', 'unknown')}: {event.get('description', 'No description')}\n"
-        else:
-            world_state_section += "No significant recent events reported.\n"
-        
-        location_updates = world_state_update.get('location_updates', {})
-        if location_updates:
-            world_state_section += "Location Updates:\n"
-            for location, info in location_updates.items():
-                world_state_section += f"- {location}: {info}\n"
-        
-        # Build narrative context section
-        narrative_section = ""
-        if hasattr(self, 'narrative_state') and self.narrative_state:
-            narrative_section = "NARRATIVE CONTEXT:\n"
-            campaign_title = self.narrative_state.get('current_campaign', '')
-            if campaign_title:
-                narrative_section += f"Campaign: {campaign_title}\n"
-            
-            story_setting = self.narrative_state.get('story_setting', '')
-            if story_setting:
-                narrative_section += f"Setting: {story_setting}\n"
-            
-            current_atmosphere = self.narrative_state.get('current_atmosphere', '')
-            if current_atmosphere:
-                narrative_section += f"Atmosphere: {current_atmosphere}\n"
-            
-            current_prompt = self.narrative_state.get('current_narrative_prompt', '')
-            if current_prompt:
-                narrative_section += f"Character Situation: {current_prompt}\n"
-            
-            faction_prompt = self.narrative_state.get('faction_narrative_prompt', '')
-            if faction_prompt:
-                narrative_section += f"Faction Context: {faction_prompt}\n"
-            
-            story_markers = self.narrative_state.get('story_markers', [])
-            if story_markers:
-                narrative_section += f"Story Progress: {', '.join(story_markers[-3:])}\n"  # Last 3 markers
-            
-            narrative_section += "\n"
-        
-        # Build available actions section
-        actions_section = "AVAILABLE ACTIONS:\n"
-        for i, action in enumerate(available_actions, 1):
-            action_desc = action.get('description', 'No description')
-            if 'narrative_type' in action:
-                action_desc += f" (Story Action: {action['narrative_type']})"
-            actions_section += f"{i}. {action.get('type', 'unknown')}: {action_desc}\n"
-        
-        # Build action history context to prevent repetitive responses
-        action_history_section = "ACTION HISTORY:\n"
-        # Add timestamp-based differentiation for each prompt 
-        import datetime
-        current_timestamp = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]  # Include milliseconds
-        action_history_section += f"Current Time: {current_timestamp}\n"
-        action_history_section += f"Turn Context: This is turn {current_turn} of the simulation.\n"
-        if hasattr(self, 'last_action_taken'):
-            action_history_section += f"Previous Action: {getattr(self, 'last_action_taken', 'None')}\n"
-        else:
-            action_history_section += "Previous Action: This is my first decision in the simulation.\n"
-        action_history_section += f"Agent State: Active and operational with current morale {self.morale_level:.2f}\n"
-        
-        # Build relationships context
-        relationships_section = "KEY RELATIONSHIPS:\n"
-        important_relationships = {k: v for k, v in self.relationships.items() if abs(v) > 0.3}
-        if important_relationships:
-            for entity, strength in important_relationships.items():
-                relationship_type = 'Strong Ally' if strength > 0.7 else 'Ally' if strength > 0.3 else 'Enemy' if strength < -0.3 else 'Strong Enemy'
-                relationships_section += f"- {entity}: {relationship_type} ({strength:.2f})\n"
-        else:
-            relationships_section += "No significant relationships recorded.\n"
+        # Build all prompt sections
+        character_background = self._build_character_background_section(character_name, primary_faction)
+        personality_section = self._build_personality_section()
+        decision_weights_section = self._build_decision_weights_section()
+        situation_section = self._build_situation_section(world_state_update, situation_assessment)
+        world_state_section = self._build_world_state_section(world_state_update)
+        narrative_section = self._build_narrative_section()
+        action_history_section = self._build_action_history_section(world_state_update)
+        relationships_section = self._build_relationships_section()
+        actions_section = self._build_actions_section(available_actions)
+        decision_request = self._build_decision_request_section(character_name, primary_faction)
         
         # Construct final prompt
         prompt = f"""{character_background}
@@ -2300,7 +2249,155 @@ Recent Events: {len(self.subjective_worldview.get('recent_events', []))}"""
 {action_history_section}
 {relationships_section}
 {actions_section}
-DECISION REQUEST:
+{decision_request}"""
+        
+        logger.debug(f"Agent {self.agent_id} constructed prompt of {len(prompt)} characters")
+        return prompt
+
+    def _build_character_background_section(self, character_name: str, primary_faction: str) -> str:
+        """Build the character identity section of the prompt."""
+        return f"""CHARACTER IDENTITY:
+Name: {character_name}
+Faction: {primary_faction}
+Rank/Role: {self.character_data.get('rank_role', 'Unknown')}
+Current Status: {self.current_status}
+Morale Level: {self.morale_level:.2f} (-1.0 to 1.0 scale)"""
+
+    def _build_personality_section(self) -> str:
+        """Build the personality traits section of the prompt."""
+        section = "PERSONALITY TRAITS:\n"
+        for trait, value in self.personality_traits.items():
+            section += f"- {trait.replace('_', ' ').title()}: {value:.2f} (strength on 0.0-1.0 scale)\n"
+        return section
+
+    def _build_decision_weights_section(self) -> str:
+        """Build the decision-making priorities section of the prompt."""
+        section = "DECISION-MAKING PRIORITIES:\n"
+        for weight, value in self.decision_weights.items():
+            section += f"- {weight.replace('_', ' ').title()}: {value:.2f} (importance on 0.0-1.0 scale)\n"
+        return section
+
+    def _build_situation_section(self, world_state_update: Dict[str, Any], 
+                                situation_assessment: Dict[str, Any]) -> str:
+        """Build the current situation section of the prompt."""
+        threat_level = situation_assessment.get('threat_level', ThreatLevel.NEGLIGIBLE)
+        current_goals = situation_assessment.get('current_goals', [])
+        current_turn = world_state_update.get('current_turn', 'Unknown')
+        simulation_time = world_state_update.get('simulation_time', 'Unknown')
+        
+        return f"""CURRENT SITUATION:
+Turn Number: {current_turn}
+Simulation Time: {simulation_time}
+Threat Level: {threat_level.value}
+Location: {self.current_location or 'Unknown'}
+Active Goals: {len(current_goals)} mission objectives
+Known Entities: {len(self.subjective_worldview.get('known_entities', {}))}
+Recent Events: {len(self.subjective_worldview.get('recent_events', []))}"""
+
+    def _build_world_state_section(self, world_state_update: Dict[str, Any]) -> str:
+        """Build the world state update section of the prompt."""
+        section = "WORLD STATE UPDATE:\n"
+        
+        # Add recent events
+        recent_events = world_state_update.get('recent_events', [])
+        if recent_events:
+            section += "Recent Events:\n"
+            for event in recent_events[-3:]:  # Last 3 events
+                section += f"- {event.get('type', 'unknown')}: {event.get('description', 'No description')}\n"
+        else:
+            section += "No significant recent events reported.\n"
+        
+        # Add location updates
+        location_updates = world_state_update.get('location_updates', {})
+        if location_updates:
+            section += "Location Updates:\n"
+            for location, info in location_updates.items():
+                section += f"- {location}: {info}\n"
+        
+        return section
+
+    def _build_narrative_section(self) -> str:
+        """Build the narrative context section of the prompt."""
+        if not (hasattr(self, 'narrative_state') and self.narrative_state):
+            return ""
+        
+        section = "NARRATIVE CONTEXT:\n"
+        
+        narrative_elements = [
+            ('current_campaign', 'Campaign'),
+            ('story_setting', 'Setting'),
+            ('current_atmosphere', 'Atmosphere'),
+            ('current_narrative_prompt', 'Character Situation'),
+            ('faction_narrative_prompt', 'Faction Context')
+        ]
+        
+        for key, label in narrative_elements:
+            value = self.narrative_state.get(key, '')
+            if value:
+                section += f"{label}: {value}\n"
+        
+        story_markers = self.narrative_state.get('story_markers', [])
+        if story_markers:
+            section += f"Story Progress: {', '.join(story_markers[-3:])}\n"
+        
+        return section + "\n"
+
+    def _build_action_history_section(self, world_state_update: Dict[str, Any]) -> str:
+        """Build the action history section of the prompt."""
+        import datetime
+        current_timestamp = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        current_turn = world_state_update.get('current_turn', 'Unknown')
+        
+        section = f"""ACTION HISTORY:
+Current Time: {current_timestamp}
+Turn Context: This is turn {current_turn} of the simulation.\n"""
+        
+        if hasattr(self, 'last_action_taken'):
+            section += f"Previous Action: {getattr(self, 'last_action_taken', 'None')}\n"
+        else:
+            section += "Previous Action: This is my first decision in the simulation.\n"
+        
+        section += f"Agent State: Active and operational with current morale {self.morale_level:.2f}\n"
+        return section
+
+    def _build_relationships_section(self) -> str:
+        """Build the key relationships section of the prompt."""
+        section = "KEY RELATIONSHIPS:\n"
+        important_relationships = {k: v for k, v in self.relationships.items() if abs(v) > 0.3}
+        
+        if important_relationships:
+            for entity, strength in important_relationships.items():
+                relationship_type = self._get_relationship_type(strength)
+                section += f"- {entity}: {relationship_type} ({strength:.2f})\n"
+        else:
+            section += "No significant relationships recorded.\n"
+        
+        return section
+
+    def _get_relationship_type(self, strength: float) -> str:
+        """Determine relationship type based on strength."""
+        if strength > 0.7:
+            return 'Strong Ally'
+        elif strength > 0.3:
+            return 'Ally'
+        elif strength < -0.3:
+            return 'Enemy' if strength > -0.7 else 'Strong Enemy'
+        else:
+            return 'Neutral'
+
+    def _build_actions_section(self, available_actions: List[Dict[str, Any]]) -> str:
+        """Build the available actions section of the prompt."""
+        section = "AVAILABLE ACTIONS:\n"
+        for i, action in enumerate(available_actions, 1):
+            action_desc = action.get('description', 'No description')
+            if 'narrative_type' in action:
+                action_desc += f" (Story Action: {action['narrative_type']})"
+            section += f"{i}. {action.get('type', 'unknown')}: {action_desc}\n"
+        return section
+
+    def _build_decision_request_section(self, character_name: str, primary_faction: str) -> str:
+        """Build the decision request section of the prompt."""
+        return f"""DECISION REQUEST:
 As {character_name}, a {primary_faction} character with the personality and priorities described above, what action would you take in this situation? Consider your character's traits, faction loyalty, current goals, and the recent events.
 
 Please respond in the following format:
@@ -2312,9 +2409,7 @@ Example response:
 ACTION: 3
 TARGET: hostile_entity_alpha
 REASONING: As a loyal servant of the Imperium, my duty requires me to engage threats to protect innocent civilians. My aggressive nature and high mission success priority compel me to take direct action."""
-        
-        logger.debug(f"Agent {self.agent_id} constructed prompt of {len(prompt)} characters")
-        return prompt
+
     
     def _call_llm(self, prompt: str) -> str:
         """
@@ -3093,7 +3188,6 @@ REASONING: As a loyal servant of the Imperium, my duty requires me to engage thr
                 reasoning=f"{self.character_data.get('name', 'I')} takes time to assess the current situation and plan the next course of action."
             )
 
-
 # Module-level utility functions
 
 def create_character_from_template(template_path: str, character_name: str, **overrides) -> PersonaAgent:
@@ -3123,7 +3217,6 @@ def create_character_from_template(template_path: str, character_name: str, **ov
         agent.current_location = overrides['location']
     
     return agent
-
 
 def analyze_agent_compatibility(agent1: PersonaAgent, agent2: PersonaAgent) -> Dict[str, float]:
     """
@@ -3237,8 +3330,6 @@ def analyze_agent_compatibility(agent1: PersonaAgent, agent2: PersonaAgent) -> D
                 logger.info(f"Agent {self.agent_id} received faction-specific narrative prompt: {faction_prompt}")
                 self.narrative_state['faction_narrative_prompt'] = faction_prompt
                 break
-    
-
 
 # Example usage and testing functions (for development purposes)
 
@@ -3281,7 +3372,6 @@ def example_usage():
         
     except Exception as e:
         print(f"Example requires actual character sheet file: {e}")
-
 
 if __name__ == "__main__":
     # Run example usage when script is executed directly

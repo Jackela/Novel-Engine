@@ -22,14 +22,12 @@ from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
 
-
 class CacheLevel(Enum):
     """Cache level priorities for intelligent memory management."""
     CRITICAL = "critical"      # Essential data - never evict
     HIGH = "high"             # Frequently accessed - evict last
     MEDIUM = "medium"         # Standard caching - normal eviction
     LOW = "low"              # Temporary data - evict first
-
 
 @dataclass
 class CacheEntry:
@@ -54,26 +52,59 @@ class CacheEntry:
         self.last_accessed = time.time()
         self.access_count += 1
 
-
 class CacheBackend(ABC):
     """Abstract cache backend interface."""
     
     @abstractmethod
     async def get(self, key: str) -> Optional[Any]:
+        """
+        Retrieve a value from the cache by key.
+        
+        Args:
+            key: The cache key to retrieve
+            
+        Returns:
+            The cached value if found, None otherwise
+        """
         pass
     
     @abstractmethod
     async def set(self, key: str, value: Any, ttl: Optional[float] = None) -> bool:
+        """
+        Store a value in the cache with optional TTL.
+        
+        Args:
+            key: The cache key to store under
+            value: The value to cache
+            ttl: Time to live in seconds, None for no expiration
+            
+        Returns:
+            True if successfully stored, False otherwise
+        """
         pass
     
     @abstractmethod
     async def delete(self, key: str) -> bool:
+        """
+        Remove a value from the cache.
+        
+        Args:
+            key: The cache key to remove
+            
+        Returns:
+            True if key was found and removed, False otherwise
+        """
         pass
     
     @abstractmethod
     async def clear(self) -> bool:
+        """
+        Clear all entries from the cache.
+        
+        Returns:
+            True if cache was successfully cleared
+        """
         pass
-
 
 class MemoryCache(CacheBackend):
     """High-performance in-memory cache with intelligent eviction."""
@@ -245,7 +276,6 @@ class MemoryCache(CacheBackend):
             'hit_rate': hit_rate,
             'max_size': self.max_size
         }
-
 
 class PerformanceCache:
     """Main performance cache system with multiple backends and intelligent routing."""
@@ -422,10 +452,8 @@ class PerformanceCache:
         logger.info("Pre-warming template cache")
         # Would load templates here
 
-
 # Global cache instance
 _global_cache: Optional[PerformanceCache] = None
-
 
 async def get_global_cache() -> PerformanceCache:
     """Get or create global cache instance."""
@@ -435,7 +463,6 @@ async def get_global_cache() -> PerformanceCache:
         await _global_cache.start_background_tasks()
     return _global_cache
 
-
 async def close_global_cache():
     """Close global cache and cleanup resources."""
     global _global_cache
@@ -443,7 +470,6 @@ async def close_global_cache():
         await _global_cache.stop_background_tasks()
         await _global_cache.memory_cache.clear()
         _global_cache = None
-
 
 __all__ = [
     'PerformanceCache', 'CacheLevel', 'CacheEntry', 'MemoryCache',

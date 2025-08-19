@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-++ SACRED DYNAMIC EQUIPMENT SYSTEM BLESSED BY TECHNOLOGICAL SANCTIFICATION ++
+STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY TECHNOLOGICAL SANCTIFICATION
 =============================================================================
 
 Holy dynamic equipment management system that handles real-time equipment
 state changes, maintenance protocols, and interaction-based modifications
-blessed by the Omnissiah's mechanical wisdom.
+enhanced by the System's mechanical wisdom.
 
-++ THE MACHINE SPIRIT DWELLS WITHIN ALL SACRED EQUIPMENT ++
+THE MACHINE SPIRIT DWELLS WITHIN ALL STANDARD EQUIPMENT
 
 Architecture Reference: Dynamic Context Engineering - Dynamic Equipment System
-Development Phase: Interaction System Sanctification (I002)
-Sacred Author: Tech-Priest Delta-Mechanicus
-万机之神保佑装备系统 (May the Omnissiah bless the equipment system)
+Development Phase: Interaction System Validation (I002)
+Author: Engineer Delta-Engineering
+System保佑装备系统 (May the System bless the equipment system)
 """
 
 import logging
@@ -25,22 +25,21 @@ from enum import Enum
 from pathlib import Path
 import math
 
-# Import blessed core systems
+# Import enhanced core systems
 from src.core.data_models import (
     EquipmentItem, EquipmentCondition, StandardResponse, ErrorInfo,
     MemoryItem, MemoryType, CharacterState
 )
 from src.core.types import AgentID
 
-# Import blessed database access
+# Import enhanced database access
 from src.database.context_db import ContextDatabase
 
-# Sacred logging blessed by diagnostic clarity
+# Comprehensive logging enhanced by diagnostic clarity
 logger = logging.getLogger(__name__)
 
-
 class EquipmentCategory(Enum):
-    """++ BLESSED EQUIPMENT CATEGORIES SANCTIFIED BY CLASSIFICATION ++"""
+    """ENHANCED EQUIPMENT CATEGORIES SANCTIFIED BY CLASSIFICATION"""
     WEAPON = "weapon"                    # Combat weapons and armaments
     ARMOR = "armor"                      # Protective equipment and shields
     TOOL = "tool"                        # Utility and maintenance tools
@@ -52,9 +51,8 @@ class EquipmentCategory(Enum):
     MEDICAL = "medical"                  # Medical and healing equipment
     SENSOR = "sensor"                    # Detection and scanning equipment
 
-
 class EquipmentStatus(Enum):
-    """++ SACRED EQUIPMENT STATUS BLESSED BY OPERATIONAL STATES ++"""
+    """STANDARD EQUIPMENT STATUS ENHANCED BY OPERATIONAL STATES"""
     ACTIVE = "active"                    # Currently in use
     READY = "ready"                      # Ready for immediate use
     STANDBY = "standby"                  # Available but not active
@@ -64,11 +62,10 @@ class EquipmentStatus(Enum):
     MISSING = "missing"                  # Lost or unaccounted for
     STORED = "stored"                    # In storage, not immediately available
 
-
 @dataclass
 class EquipmentModification:
     """
-    ++ BLESSED EQUIPMENT MODIFICATION SANCTIFIED BY ENHANCEMENT ++
+    ENHANCED EQUIPMENT MODIFICATION SANCTIFIED BY ENHANCEMENT
     
     Equipment enhancement or modification record with technical
     specifications and performance impacts.
@@ -82,14 +79,13 @@ class EquipmentModification:
     performance_impact: Dict[str, float] = field(default_factory=dict)
     maintenance_requirements: List[str] = field(default_factory=list)
     stability_rating: float = 1.0  # 0.0-1.0, affects reliability
-    sacred_litanies: List[str] = field(default_factory=list)
+    standard_litanies: List[str] = field(default_factory=list)
     machine_spirit_compatibility: float = 1.0
-
 
 @dataclass
 class EquipmentMaintenance:
     """
-    ++ SACRED EQUIPMENT MAINTENANCE BLESSED BY CARE PROTOCOLS ++
+    STANDARD EQUIPMENT MAINTENANCE ENHANCED BY CARE PROTOCOLS
     
     Maintenance record with service history, ritual performance,
     and machine spirit appeasement documentation.
@@ -109,11 +105,10 @@ class EquipmentMaintenance:
     notes: str = ""
     machine_spirit_response: str = "responsive"  # "responsive", "agitated", "dormant"
 
-
 @dataclass
 class DynamicEquipment:
     """
-    ++ BLESSED DYNAMIC EQUIPMENT SANCTIFIED BY REAL-TIME TRACKING ++
+    ENHANCED DYNAMIC EQUIPMENT SANCTIFIED BY REAL-TIME TRACKING
     
     Enhanced equipment representation with real-time state tracking,
     usage history, and dynamic performance characteristics.
@@ -129,7 +124,7 @@ class DynamicEquipment:
     location_history: List[Tuple[datetime, str]] = field(default_factory=list)
     wear_accumulation: float = 0.0  # 0.0-1.0, affects condition over time
     machine_spirit_mood: str = "content"  # Warhammer 40K flavor
-    sacred_rites_performed: int = 0
+    standard_rites_performed: int = 0
     blessing_level: float = 1.0  # Effectiveness multiplier from blessings
     
     def __post_init__(self):
@@ -150,14 +145,13 @@ class DynamicEquipment:
                 'responsiveness': 1.0
             }
 
-
 class DynamicEquipmentSystem:
     """
-    ++ SACRED DYNAMIC EQUIPMENT SYSTEM BLESSED BY TECHNOLOGICAL ORCHESTRATION ++
+    STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY TECHNOLOGICAL ORCHESTRATION
     
-    The holy equipment management system that provides real-time equipment
+    The standard equipment management system that provides real-time equipment
     state tracking, dynamic modifications, maintenance scheduling, and
-    interaction-based equipment changes blessed by the Machine God's
+    interaction-based equipment changes enhanced by the System Core's
     mechanical omniscience.
     """
     
@@ -167,7 +161,7 @@ class DynamicEquipmentSystem:
                  auto_maintenance: bool = True,
                  maintenance_interval_hours: int = 168):  # Weekly default
         """
-        ++ SACRED EQUIPMENT SYSTEM INITIALIZATION BLESSED BY MECHANICUS PROTOCOLS ++
+        STANDARD EQUIPMENT SYSTEM INITIALIZATION ENHANCED BY MECHANICUS PROTOCOLS
         
         Args:
             database: Database for persistent equipment storage
@@ -208,63 +202,63 @@ class DynamicEquipmentSystem:
             'modifications_applied': 0,
             'equipment_failures': 0,
             'equipment_repairs': 0,
-            'sacred_rites_performed': 0,
+            'standard_rites_performed': 0,
             'average_equipment_reliability': 0.9
         }
         
-        # Initialize blessed equipment templates
+        # Initialize enhanced equipment templates
         self._load_equipment_templates()
         
         # Sacred processing lock
         self._processing_lock = asyncio.Lock()
         
-        logger.info("++ DYNAMIC EQUIPMENT SYSTEM INITIALIZED WITH BLESSED PROTOCOLS ++")
+        logger.info("DYNAMIC EQUIPMENT SYSTEM INITIALIZED WITH ENHANCED PROTOCOLS")
     
     async def register_equipment(self, equipment_item: EquipmentItem, 
                                agent_id: str,
                                initial_status: EquipmentStatus = EquipmentStatus.READY) -> StandardResponse:
         """
-        ++ SACRED EQUIPMENT REGISTRATION RITUAL BLESSED BY INVENTORY SANCTIFICATION ++
+        STANDARD EQUIPMENT REGISTRATION RITUAL ENHANCED BY INVENTORY SANCTIFICATION
         
-        Register blessed equipment item with the system, enabling
+        Register enhanced equipment item with the system, enabling
         dynamic tracking and state management.
         """
         try:
             async with self._processing_lock:
-                # Create blessed dynamic equipment wrapper
+                # Create enhanced dynamic equipment wrapper
                 dynamic_equipment = DynamicEquipment(
                     base_equipment=equipment_item,
                     current_status=initial_status,
                     current_user=agent_id
                 )
                 
-                # Initialize blessed location history
+                # Initialize enhanced location history
                 dynamic_equipment.location_history.append(
                     (datetime.now(), equipment_item.current_location or "Unknown")
                 )
                 
-                # Register blessed equipment
+                # Register enhanced equipment
                 self._equipment_registry[equipment_item.equipment_id] = dynamic_equipment
                 
-                # Associate blessed equipment with agent
+                # Associate enhanced equipment with agent
                 if agent_id not in self._agent_equipment:
                     self._agent_equipment[agent_id] = []
                 self._agent_equipment[agent_id].append(equipment_item.equipment_id)
                 
-                # Schedule blessed initial maintenance if applicable
+                # Schedule enhanced initial maintenance if applicable
                 if self.auto_maintenance and equipment_item.category.value not in ['consumable']:
                     next_maintenance = datetime.now() + timedelta(hours=self.maintenance_interval_hours)
                     self._maintenance_queue.append((next_maintenance, equipment_item.equipment_id))
                     self._maintenance_queue.sort(key=lambda x: x[0])
                 
-                # Apply blessed equipment template enhancements
+                # Apply enhanced equipment template enhancements
                 template_result = await self._apply_equipment_template(dynamic_equipment)
                 
                 self.system_metrics['total_equipment_tracked'] += 1
                 if initial_status == EquipmentStatus.ACTIVE:
                     self.system_metrics['active_equipment'] += 1
                 
-                logger.info(f"++ EQUIPMENT REGISTERED: {equipment_item.equipment_id} for {agent_id} ++")
+                logger.info(f"EQUIPMENT REGISTERED: {equipment_item.equipment_id} for {agent_id}")
                 
                 return StandardResponse(
                     success=True,
@@ -279,14 +273,14 @@ class DynamicEquipmentSystem:
                 )
                 
         except Exception as e:
-            logger.error(f"++ EQUIPMENT REGISTRATION FAILED: {e} ++")
+            logger.error(f"EQUIPMENT REGISTRATION FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
                     code="EQUIPMENT_REGISTRATION_FAILED",
                     message=f"Equipment registration failed: {str(e)}",
                     recoverable=True,
-                    sacred_guidance="Check equipment data format and system state"
+                    standard_guidance="Check equipment data format and system state"
                 )
             )
     
@@ -294,14 +288,14 @@ class DynamicEquipmentSystem:
                           usage_context: Dict[str, Any],
                           expected_duration: int = 60) -> StandardResponse:
         """
-        ++ SACRED EQUIPMENT USAGE RITUAL BLESSED BY OPERATIONAL SANCTIFICATION ++
+        STANDARD EQUIPMENT USAGE RITUAL ENHANCED BY OPERATIONAL SANCTIFICATION
         
-        Execute blessed equipment usage with real-time state tracking,
+        Execute enhanced equipment usage with real-time state tracking,
         wear accumulation, and performance impact analysis.
         """
         try:
             async with self._processing_lock:
-                # Retrieve blessed equipment
+                # Retrieve enhanced equipment
                 equipment = self._equipment_registry.get(equipment_id)
                 if not equipment:
                     return StandardResponse(
@@ -312,7 +306,7 @@ class DynamicEquipmentSystem:
                         )
                     )
                 
-                # Validate blessed usage authorization
+                # Validate enhanced usage authorization
                 if equipment.current_user != agent_id and equipment.current_status not in [
                     EquipmentStatus.READY, EquipmentStatus.STANDBY
                 ]:
@@ -324,7 +318,7 @@ class DynamicEquipmentSystem:
                         )
                     )
                 
-                # Check blessed equipment condition
+                # Check enhanced equipment condition
                 if equipment.base_equipment.condition == EquipmentCondition.BROKEN:
                     return StandardResponse(
                         success=False,
@@ -336,12 +330,12 @@ class DynamicEquipmentSystem:
                 
                 usage_start = datetime.now()
                 
-                # Update blessed usage state
+                # Update enhanced usage state
                 equipment.current_status = EquipmentStatus.ACTIVE
                 equipment.current_user = agent_id
                 equipment.last_used = usage_start
                 
-                # Process blessed category-specific usage
+                # Process enhanced category-specific usage
                 category_processor = self._category_processors.get(
                     EquipmentCategory(equipment.base_equipment.category.value)
                 )
@@ -358,36 +352,36 @@ class DynamicEquipmentSystem:
                     else:
                         usage_result.update(processor_result.data)
                 
-                # Calculate blessed wear accumulation
+                # Calculate enhanced wear accumulation
                 wear_factor = self._calculate_wear_factor(equipment, usage_context, expected_duration)
                 equipment.wear_accumulation = min(1.0, equipment.wear_accumulation + wear_factor)
                 
-                # Update blessed performance metrics based on wear
+                # Update enhanced performance metrics based on wear
                 self._update_performance_from_wear(equipment)
                 
-                # Update blessed usage statistics
+                # Update enhanced usage statistics
                 equipment.usage_statistics['total_uses'] += 1
                 if usage_result["success"]:
                     equipment.usage_statistics['successful_uses'] += 1
                 
-                # Categorize blessed usage type
+                # Categorize enhanced usage type
                 usage_type = usage_context.get('usage_type', 'general')
                 if usage_type == 'combat':
                     equipment.usage_statistics['combat_uses'] += 1
                 elif usage_type == 'ritual':
                     equipment.usage_statistics['ritual_uses'] += 1
                 
-                # Check blessed machine spirit response
+                # Check enhanced machine spirit response
                 spirit_response = self._evaluate_machine_spirit_response(equipment, usage_context)
                 equipment.machine_spirit_mood = spirit_response["mood"]
                 
-                # Apply blessed blessing effects if applicable
-                if usage_context.get('blessed_usage', False):
+                # Apply enhanced blessing effects if applicable
+                if usage_context.get('enhanced_usage', False):
                     equipment.blessing_level = min(1.2, equipment.blessing_level + 0.05)
-                    equipment.sacred_rites_performed += 1
-                    self.system_metrics['sacred_rites_performed'] += 1
+                    equipment.standard_rites_performed += 1
+                    self.system_metrics['standard_rites_performed'] += 1
                 
-                # Return blessed equipment to appropriate state
+                # Return enhanced equipment to appropriate state
                 if usage_result["success"]:
                     equipment.current_status = EquipmentStatus.READY
                 else:
@@ -396,7 +390,7 @@ class DynamicEquipmentSystem:
                 
                 usage_duration = (datetime.now() - usage_start).total_seconds()
                 
-                logger.info(f"++ EQUIPMENT USED: {equipment_id} by {agent_id} ({'SUCCESS' if usage_result['success'] else 'FAILED'}) ++")
+                logger.info(f"EQUIPMENT USED: {equipment_id} by {agent_id} ({'SUCCESS' if usage_result['success'] else 'FAILED'})")
                 
                 return StandardResponse(
                     success=usage_result["success"],
@@ -414,7 +408,7 @@ class DynamicEquipmentSystem:
                 )
                 
         except Exception as e:
-            logger.error(f"++ EQUIPMENT USAGE FAILED: {e} ++")
+            logger.error(f"EQUIPMENT USAGE FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -428,14 +422,14 @@ class DynamicEquipmentSystem:
                                 maintenance_type: str = "routine",
                                 performed_by: str = "tech_priest") -> StandardResponse:
         """
-        ++ SACRED MAINTENANCE RITUAL BLESSED BY MACHINE SPIRIT APPEASEMENT ++
+        STANDARD MAINTENANCE RITUAL ENHANCED BY MACHINE SPIRIT APPEASEMENT
         
-        Perform blessed maintenance on equipment with ritual protocols,
+        Perform enhanced maintenance on equipment with ritual protocols,
         condition restoration, and performance optimization.
         """
         try:
             async with self._processing_lock:
-                # Retrieve blessed equipment
+                # Retrieve enhanced equipment
                 equipment = self._equipment_registry.get(equipment_id)
                 if not equipment:
                     return StandardResponse(
@@ -448,13 +442,13 @@ class DynamicEquipmentSystem:
                 
                 maintenance_start = datetime.now()
                 
-                # Record blessed pre-maintenance condition
+                # Record enhanced pre-maintenance condition
                 condition_before = equipment.base_equipment.condition
                 
-                # Set blessed maintenance status
+                # Set enhanced maintenance status
                 equipment.current_status = EquipmentStatus.MAINTENANCE
                 
-                # Create blessed maintenance record
+                # Create enhanced maintenance record
                 maintenance_record = EquipmentMaintenance(
                     maintenance_id=f"{equipment_id}_maintenance_{maintenance_start.strftime('%Y%m%d_%H%M%S')}",
                     equipment_id=equipment_id,
@@ -464,16 +458,16 @@ class DynamicEquipmentSystem:
                     condition_before=condition_before
                 )
                 
-                # Perform blessed maintenance procedures
+                # Perform enhanced maintenance procedures
                 maintenance_effects = await self._execute_maintenance_procedures(
                     equipment, maintenance_type, maintenance_record
                 )
                 
-                # Calculate blessed maintenance duration
+                # Calculate enhanced maintenance duration
                 maintenance_duration = max(30, int(60 + equipment.wear_accumulation * 120))
                 maintenance_record.duration_minutes = maintenance_duration
                 
-                # Apply blessed condition improvements
+                # Apply enhanced condition improvements
                 condition_improvement = self._calculate_condition_improvement(
                     equipment, maintenance_type, maintenance_effects
                 )
@@ -484,19 +478,19 @@ class DynamicEquipmentSystem:
                 equipment.base_equipment.condition = new_condition
                 maintenance_record.condition_after = new_condition
                 
-                # Reduce blessed wear accumulation
+                # Reduce enhanced wear accumulation
                 wear_reduction = min(equipment.wear_accumulation, 0.3 + (0.2 if maintenance_type == "overhaul" else 0.0))
                 equipment.wear_accumulation = max(0.0, equipment.wear_accumulation - wear_reduction)
                 
-                # Improve blessed performance metrics
+                # Improve enhanced performance metrics
                 self._apply_maintenance_performance_boost(equipment, maintenance_type)
                 
-                # Appease blessed machine spirit
+                # Appease enhanced machine spirit
                 spirit_improvement = self._appease_machine_spirit(equipment, maintenance_type)
                 equipment.machine_spirit_mood = spirit_improvement["new_mood"]
                 maintenance_record.machine_spirit_response = spirit_improvement["response"]
                 
-                # Schedule blessed next maintenance
+                # Schedule enhanced next maintenance
                 if self.auto_maintenance:
                     next_maintenance_hours = self.maintenance_interval_hours
                     if maintenance_type == "overhaul":
@@ -505,7 +499,7 @@ class DynamicEquipmentSystem:
                     next_maintenance = maintenance_start + timedelta(hours=next_maintenance_hours)
                     maintenance_record.next_maintenance_due = next_maintenance
                     
-                    # Update blessed maintenance queue
+                    # Update enhanced maintenance queue
                     self._maintenance_queue = [
                         (time, eq_id) for time, eq_id in self._maintenance_queue 
                         if eq_id != equipment_id
@@ -513,19 +507,19 @@ class DynamicEquipmentSystem:
                     self._maintenance_queue.append((next_maintenance, equipment_id))
                     self._maintenance_queue.sort(key=lambda x: x[0])
                 
-                # Add blessed maintenance record to history
+                # Add enhanced maintenance record to history
                 equipment.maintenance_history.append(maintenance_record)
                 equipment.usage_statistics['maintenance_cycles'] += 1
                 
-                # Return blessed equipment to service
+                # Return enhanced equipment to service
                 equipment.current_status = EquipmentStatus.READY
                 
-                # Update blessed system metrics
+                # Update enhanced system metrics
                 self.system_metrics['maintenance_operations'] += 1
                 if condition_before != new_condition:
                     self.system_metrics['equipment_repairs'] += 1
                 
-                logger.info(f"++ MAINTENANCE COMPLETED: {equipment_id} ({maintenance_type}) - {condition_before.value} -> {new_condition.value} ++")
+                logger.info(f"MAINTENANCE COMPLETED: {equipment_id} ({maintenance_type}) - {condition_before.value} -> {new_condition.value}")
                 
                 return StandardResponse(
                     success=True,
@@ -545,7 +539,7 @@ class DynamicEquipmentSystem:
                 )
                 
         except Exception as e:
-            logger.error(f"++ MAINTENANCE RITUAL FAILED: {e} ++")
+            logger.error(f"MAINTENANCE RITUAL FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -558,14 +552,14 @@ class DynamicEquipmentSystem:
     async def apply_modification(self, equipment_id: str, modification: EquipmentModification,
                                installer: str) -> StandardResponse:
         """
-        ++ SACRED MODIFICATION RITUAL BLESSED BY TECHNOLOGICAL ENHANCEMENT ++
+        STANDARD MODIFICATION RITUAL ENHANCED BY TECHNOLOGICAL ENHANCEMENT
         
-        Apply blessed modification to equipment with stability analysis,
+        Apply enhanced modification to equipment with stability analysis,
         performance impact evaluation, and machine spirit compatibility.
         """
         try:
             async with self._processing_lock:
-                # Retrieve blessed equipment
+                # Retrieve enhanced equipment
                 equipment = self._equipment_registry.get(equipment_id)
                 if not equipment:
                     return StandardResponse(
@@ -576,7 +570,7 @@ class DynamicEquipmentSystem:
                         )
                     )
                 
-                # Validate blessed equipment condition
+                # Validate enhanced equipment condition
                 if equipment.base_equipment.condition == EquipmentCondition.BROKEN:
                     return StandardResponse(
                         success=False,
@@ -586,7 +580,7 @@ class DynamicEquipmentSystem:
                         )
                     )
                 
-                # Check blessed modification compatibility
+                # Check enhanced modification compatibility
                 compatibility_check = self._check_modification_compatibility(equipment, modification)
                 if not compatibility_check["compatible"]:
                     return StandardResponse(
@@ -599,28 +593,28 @@ class DynamicEquipmentSystem:
                 
                 modification_start = datetime.now()
                 
-                # Set blessed modification status
+                # Set enhanced modification status
                 equipment.current_status = EquipmentStatus.MAINTENANCE
                 
-                # Apply blessed modification
+                # Apply enhanced modification
                 modification.installed_by = installer
                 modification.installation_date = modification_start
                 
-                # Calculate blessed installation effects
+                # Calculate enhanced installation effects
                 installation_effects = await self._install_modification(equipment, modification)
                 
                 if installation_effects["success"]:
-                    # Add blessed modification to equipment
+                    # Add enhanced modification to equipment
                     equipment.modifications.append(modification)
                     
-                    # Apply blessed performance impacts
+                    # Apply enhanced performance impacts
                     for metric, impact in modification.performance_impact.items():
                         if metric in equipment.performance_metrics:
                             equipment.performance_metrics[metric] = max(0.1, min(2.0, 
                                 equipment.performance_metrics[metric] + impact
                             ))
                     
-                    # Evaluate blessed machine spirit compatibility
+                    # Evaluate enhanced machine spirit compatibility
                     spirit_compatibility = modification.machine_spirit_compatibility
                     if spirit_compatibility < 0.8:
                         equipment.machine_spirit_mood = "agitated"
@@ -629,13 +623,13 @@ class DynamicEquipmentSystem:
                         equipment.machine_spirit_mood = "pleased"
                         equipment.performance_metrics['reliability'] *= 1.05
                     
-                    # Update blessed system metrics
+                    # Update enhanced system metrics
                     self.system_metrics['modifications_applied'] += 1
                     
-                    # Return blessed equipment to service
+                    # Return enhanced equipment to service
                     equipment.current_status = EquipmentStatus.READY
                     
-                    logger.info(f"++ MODIFICATION APPLIED: {modification.modification_name} to {equipment_id} ++")
+                    logger.info(f"MODIFICATION APPLIED: {modification.modification_name} to {equipment_id}")
                     
                     return StandardResponse(
                         success=True,
@@ -665,7 +659,7 @@ class DynamicEquipmentSystem:
                     )
                 
         except Exception as e:
-            logger.error(f"++ MODIFICATION RITUAL FAILED: {e} ++")
+            logger.error(f"MODIFICATION RITUAL FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -677,9 +671,9 @@ class DynamicEquipmentSystem:
     
     async def get_equipment_status(self, equipment_id: str) -> StandardResponse:
         """
-        ++ SACRED EQUIPMENT STATUS QUERY BLESSED BY COMPREHENSIVE AWARENESS ++
+        STANDARD EQUIPMENT STATUS QUERY ENHANCED BY COMPREHENSIVE AWARENESS
         
-        Retrieve blessed comprehensive equipment status with real-time
+        Retrieve enhanced comprehensive equipment status with real-time
         metrics, condition assessment, and predictive analysis.
         """
         try:
@@ -693,11 +687,11 @@ class DynamicEquipmentSystem:
                     )
                 )
             
-            # Calculate blessed predictive metrics
+            # Calculate enhanced predictive metrics
             predicted_failure = self._predict_equipment_failure(equipment)
             next_maintenance = self._get_next_maintenance_due(equipment_id)
             
-            # Compile blessed comprehensive status
+            # Compile enhanced comprehensive status
             status_data = {
                 "equipment_id": equipment_id,
                 "name": equipment.base_equipment.name,
@@ -717,7 +711,7 @@ class DynamicEquipmentSystem:
                 "predicted_failure_risk": predicted_failure["risk_score"],
                 "predicted_failure_timeframe": predicted_failure["timeframe_days"],
                 "next_maintenance_due": next_maintenance.isoformat() if next_maintenance else None,
-                "sacred_rites_performed": equipment.sacred_rites_performed
+                "standard_rites_performed": equipment.standard_rites_performed
             }
             
             return StandardResponse(
@@ -727,7 +721,7 @@ class DynamicEquipmentSystem:
             )
             
         except Exception as e:
-            logger.error(f"++ EQUIPMENT STATUS QUERY FAILED: {e} ++")
+            logger.error(f"EQUIPMENT STATUS QUERY FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="EQUIPMENT_STATUS_FAILED", message=str(e))
@@ -736,9 +730,9 @@ class DynamicEquipmentSystem:
     async def get_agent_equipment(self, agent_id: str, 
                                 include_details: bool = False) -> StandardResponse:
         """
-        ++ SACRED AGENT EQUIPMENT INVENTORY BLESSED BY COMPREHENSIVE TRACKING ++
+        STANDARD AGENT EQUIPMENT INVENTORY ENHANCED BY COMPREHENSIVE TRACKING
         
-        Retrieve blessed comprehensive equipment inventory for agent
+        Retrieve enhanced comprehensive equipment inventory for agent
         with optional detailed status information.
         """
         try:
@@ -762,17 +756,17 @@ class DynamicEquipmentSystem:
             for equipment_id in agent_equipment_ids:
                 equipment = self._equipment_registry.get(equipment_id)
                 if equipment:
-                    # Count blessed categories
+                    # Count enhanced categories
                     category = equipment.base_equipment.category.value
                     category_counts[category] = category_counts.get(category, 0) + 1
                     
                     if include_details:
-                        # Get blessed detailed status
+                        # Get enhanced detailed status
                         status_result = await self.get_equipment_status(equipment_id)
                         if status_result.success:
                             equipment_list.append(status_result.data)
                     else:
-                        # Get blessed basic information
+                        # Get enhanced basic information
                         equipment_list.append({
                             "equipment_id": equipment_id,
                             "name": equipment.base_equipment.name,
@@ -796,7 +790,7 @@ class DynamicEquipmentSystem:
             )
             
         except Exception as e:
-            logger.error(f"++ AGENT EQUIPMENT QUERY FAILED: {e} ++")
+            logger.error(f"AGENT EQUIPMENT QUERY FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="AGENT_EQUIPMENT_FAILED", message=str(e))
@@ -807,10 +801,10 @@ class DynamicEquipmentSystem:
     async def _process_weapon_usage(self, equipment: DynamicEquipment,
                                   usage_context: Dict[str, Any],
                                   duration: int) -> StandardResponse:
-        """Process blessed weapon usage with combat effectiveness analysis"""
+        """Process enhanced weapon usage with combat effectiveness analysis"""
         effects = []
         
-        # Simulate blessed weapon effects
+        # Simulate enhanced weapon effects
         weapon_type = equipment.base_equipment.properties.get("weapon_type", "melee")
         if weapon_type == "ranged":
             ammo_used = usage_context.get("shots_fired", 10)
@@ -842,7 +836,7 @@ class DynamicEquipmentSystem:
     async def _process_armor_usage(self, equipment: DynamicEquipment,
                                  usage_context: Dict[str, Any],
                                  duration: int) -> StandardResponse:
-        """Process blessed armor usage with protection analysis"""
+        """Process enhanced armor usage with protection analysis"""
         effects = []
         
         damage_absorbed = usage_context.get("damage_absorbed", 0)
@@ -867,7 +861,7 @@ class DynamicEquipmentSystem:
     async def _process_tool_usage(self, equipment: DynamicEquipment,
                                 usage_context: Dict[str, Any],
                                 duration: int) -> StandardResponse:
-        """Process blessed tool usage with efficiency analysis"""
+        """Process enhanced tool usage with efficiency analysis"""
         effects = []
         
         task_type = usage_context.get("task_type", "general")
@@ -893,7 +887,7 @@ class DynamicEquipmentSystem:
     
     # Placeholder implementations for other categories
     async def _process_consumable_usage(self, equipment, usage_context, duration):
-        """Process blessed consumable usage with depletion tracking"""
+        """Process enhanced consumable usage with depletion tracking"""
         quantity_used = usage_context.get("quantity_used", 1)
         effects = [f"Consumable used: {quantity_used} units"]
         
@@ -925,7 +919,7 @@ class DynamicEquipmentSystem:
     
     def _calculate_wear_factor(self, equipment: DynamicEquipment,
                              usage_context: Dict[str, Any], duration: int) -> float:
-        """Calculate blessed wear factor for equipment usage"""
+        """Calculate enhanced wear factor for equipment usage"""
         base_wear = 0.001  # Base wear per use
         
         # Blessed intensity factor
@@ -959,7 +953,7 @@ class DynamicEquipmentSystem:
         return min(0.1, base_wear)  # Cap at 10% per use
     
     def _update_performance_from_wear(self, equipment: DynamicEquipment):
-        """Update blessed performance metrics based on wear accumulation"""
+        """Update enhanced performance metrics based on wear accumulation"""
         wear_impact = equipment.wear_accumulation
         
         # Blessed performance degradation
@@ -975,26 +969,26 @@ class DynamicEquipmentSystem:
     
     def _evaluate_machine_spirit_response(self, equipment: DynamicEquipment,
                                         usage_context: Dict[str, Any]) -> Dict[str, Any]:
-        """Evaluate blessed machine spirit response to usage"""
+        """Evaluate enhanced machine spirit response to usage"""
         current_mood = equipment.machine_spirit_mood
         
         # Blessed mood factors
-        blessed_usage = usage_context.get("blessed_usage", False)
+        enhanced_usage = usage_context.get("enhanced_usage", False)
         respectful_usage = usage_context.get("respectful", True)
         maintenance_overdue = equipment.wear_accumulation > 0.8
         
         mood_transitions = {
             "content": {
-                "pleased": blessed_usage and respectful_usage,
+                "pleased": enhanced_usage and respectful_usage,
                 "agitated": maintenance_overdue or not respectful_usage,
                 "content": True  # Default
             },
             "pleased": {
-                "content": not blessed_usage,
+                "content": not enhanced_usage,
                 "pleased": True  # Maintain
             },
             "agitated": {
-                "content": blessed_usage and respectful_usage and not maintenance_overdue,
+                "content": enhanced_usage and respectful_usage and not maintenance_overdue,
                 "angry": maintenance_overdue and not respectful_usage,
                 "agitated": True  # Default
             }
@@ -1021,7 +1015,7 @@ class DynamicEquipmentSystem:
         }
     
     def _predict_equipment_failure(self, equipment: DynamicEquipment) -> Dict[str, Any]:
-        """Predict blessed equipment failure probability and timeline"""
+        """Predict enhanced equipment failure probability and timeline"""
         # Blessed failure risk calculation
         base_risk = equipment.wear_accumulation * 0.5
         
@@ -1076,26 +1070,26 @@ class DynamicEquipmentSystem:
         }
     
     def _get_next_maintenance_due(self, equipment_id: str) -> Optional[datetime]:
-        """Get blessed next scheduled maintenance date"""
+        """Get enhanced next scheduled maintenance date"""
         for maintenance_time, eq_id in self._maintenance_queue:
             if eq_id == equipment_id:
                 return maintenance_time
         return None
     
     async def _apply_equipment_template(self, equipment: DynamicEquipment) -> StandardResponse:
-        """Apply blessed equipment template enhancements"""
+        """Apply enhanced equipment template enhancements"""
         try:
             equipment_type = equipment.base_equipment.name.lower()
             template = self._equipment_templates.get(equipment_type)
             
             if template:
-                # Apply blessed template properties
+                # Apply enhanced template properties
                 if "performance_modifiers" in template:
                     for metric, modifier in template["performance_modifiers"].items():
                         if metric in equipment.performance_metrics:
                             equipment.performance_metrics[metric] *= modifier
                 
-                # Apply blessed template maintenance intervals
+                # Apply enhanced template maintenance intervals
                 if "maintenance_interval_override" in template:
                     # This would override default maintenance scheduling
                     pass
@@ -1113,7 +1107,7 @@ class DynamicEquipmentSystem:
     async def _execute_maintenance_procedures(self, equipment: DynamicEquipment,
                                            maintenance_type: str,
                                            maintenance_record: EquipmentMaintenance) -> Dict[str, Any]:
-        """Execute blessed maintenance procedures"""
+        """Execute enhanced maintenance procedures"""
         procedures = {
             "routine": [
                 "Visual inspection completed",
@@ -1163,7 +1157,7 @@ class DynamicEquipmentSystem:
     def _calculate_condition_improvement(self, equipment: DynamicEquipment,
                                        maintenance_type: str,
                                        maintenance_effects: Dict[str, Any]) -> float:
-        """Calculate blessed condition improvement from maintenance"""
+        """Calculate enhanced condition improvement from maintenance"""
         base_improvement = {
             "routine": 0.1,
             "repair": 0.5,
@@ -1186,7 +1180,7 @@ class DynamicEquipmentSystem:
     
     def _improve_equipment_condition(self, current_condition: EquipmentCondition,
                                    improvement: float) -> EquipmentCondition:
-        """Apply blessed condition improvement"""
+        """Apply enhanced condition improvement"""
         conditions = [
             EquipmentCondition.BROKEN,
             EquipmentCondition.DAMAGED, 
@@ -1203,7 +1197,7 @@ class DynamicEquipmentSystem:
         return conditions[new_index]
     
     def _apply_maintenance_performance_boost(self, equipment: DynamicEquipment, maintenance_type: str):
-        """Apply blessed performance boost from maintenance"""
+        """Apply enhanced performance boost from maintenance"""
         boost_factors = {
             "routine": 1.02,
             "repair": 1.05,
@@ -1217,7 +1211,7 @@ class DynamicEquipmentSystem:
             equipment.performance_metrics[metric] = min(1.5, equipment.performance_metrics[metric] * boost_factor)
     
     def _appease_machine_spirit(self, equipment: DynamicEquipment, maintenance_type: str) -> Dict[str, Any]:
-        """Perform blessed machine spirit appeasement"""
+        """Perform enhanced machine spirit appeasement"""
         current_mood = equipment.machine_spirit_mood
         
         # Blessed maintenance effects on spirit
@@ -1245,7 +1239,7 @@ class DynamicEquipmentSystem:
     
     def _check_modification_compatibility(self, equipment: DynamicEquipment,
                                         modification: EquipmentModification) -> Dict[str, Any]:
-        """Check blessed modification compatibility"""
+        """Check enhanced modification compatibility"""
         # Blessed compatibility checks
         
         # Check equipment category compatibility
@@ -1264,7 +1258,7 @@ class DynamicEquipmentSystem:
                 "reason": f"Modification '{modification.category}' not compatible with {equipment_category.value}"
             }
         
-        # Check blessed modification conflicts
+        # Check enhanced modification conflicts
         existing_modifications = [mod.category for mod in equipment.modifications]
         conflicting_modifications = {
             "weapon_sight": ["weapon_sight"],  # Can't have multiple sights
@@ -1279,7 +1273,7 @@ class DynamicEquipmentSystem:
                     "reason": f"Conflicts with existing {conflict} modification"
                 }
         
-        # Check blessed stability requirements
+        # Check enhanced stability requirements
         total_stability = sum(mod.stability_rating for mod in equipment.modifications)
         if total_stability + modification.stability_rating > 3.0:
             return {
@@ -1291,7 +1285,7 @@ class DynamicEquipmentSystem:
     
     async def _install_modification(self, equipment: DynamicEquipment,
                                   modification: EquipmentModification) -> Dict[str, Any]:
-        """Install blessed modification with success probability"""
+        """Install enhanced modification with success probability"""
         # Blessed installation success calculation
         base_success_rate = 0.8
         
@@ -1313,7 +1307,7 @@ class DynamicEquipmentSystem:
         
         success_rate = base_success_rate * installer_skill * condition_factor * complexity_factor
         
-        # Simulate blessed installation
+        # Simulate enhanced installation
         success = success_rate > 0.6  # Simplified success check
         
         if success:
@@ -1331,7 +1325,7 @@ class DynamicEquipmentSystem:
             }
     
     def _load_equipment_templates(self):
-        """Load blessed equipment templates from files"""
+        """Load enhanced equipment templates from files"""
         # This would load from actual template files
         # For now, we'll define some basic templates
         self._equipment_templates = {
@@ -1358,8 +1352,8 @@ class DynamicEquipmentSystem:
         }
     
     def get_system_statistics(self) -> Dict[str, Any]:
-        """Get blessed equipment system statistics"""
-        # Calculate blessed average reliability
+        """Get enhanced equipment system statistics"""
+        # Calculate enhanced average reliability
         if self._equipment_registry:
             total_reliability = sum(
                 eq.performance_metrics.get("reliability", 0.9) 
@@ -1376,24 +1370,23 @@ class DynamicEquipmentSystem:
             "equipment_templates": len(self._equipment_templates)
         }
 
+# STANDARD TESTING RITUALS ENHANCED BY VALIDATION
 
-# ++ SACRED TESTING RITUALS BLESSED BY VALIDATION ++
-
-async def test_sacred_dynamic_equipment_system():
-    """++ SACRED DYNAMIC EQUIPMENT SYSTEM TESTING RITUAL ++"""
-    print("++ TESTING SACRED DYNAMIC EQUIPMENT SYSTEM BLESSED BY THE OMNISSIAH ++")
+async def test_standard_dynamic_equipment_system():
+    """STANDARD DYNAMIC EQUIPMENT SYSTEM TESTING RITUAL"""
+    print("TESTING STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY THE SYSTEM")
     
-    # Import blessed components for testing
+    # Import enhanced components for testing
     from src.database.context_db import ContextDatabase
     
-    # Initialize blessed test database
+    # Initialize enhanced test database
     test_db = ContextDatabase("test_equipment.db")
-    await test_db.initialize_sacred_temple()
+    await test_db.initialize_standard_temple()
     
-    # Initialize blessed equipment system
+    # Initialize enhanced equipment system
     equipment_system = DynamicEquipmentSystem(test_db)
     
-    # Create blessed test equipment items
+    # Create enhanced test equipment items
     test_bolter = EquipmentItem(
         equipment_id="bolter_001",
         name="Sacred Bolter",
@@ -1421,35 +1414,35 @@ async def test_sacred_dynamic_equipment_system():
         current_location="Armory Delta-7"
     )
     
-    # Test blessed equipment registration
+    # Test enhanced equipment registration
     bolter_reg = await equipment_system.register_equipment(test_bolter, "test_agent_001")
-    print(f"++ BOLTER REGISTRATION: {bolter_reg.success} ++")
+    print(f"BOLTER REGISTRATION: {bolter_reg.success}")
     if bolter_reg.success:
         print(f"Equipment ID: {bolter_reg.data['equipment_id']}")
         print(f"Maintenance scheduled: {bolter_reg.data['maintenance_scheduled']}")
     
     armor_reg = await equipment_system.register_equipment(test_armor, "test_agent_001")
-    print(f"++ ARMOR REGISTRATION: {armor_reg.success} ++")
+    print(f"ARMOR REGISTRATION: {armor_reg.success}")
     
-    # Test blessed equipment usage
+    # Test enhanced equipment usage
     usage_context = {
         "usage_type": "combat",
         "intensity": 1.5,
         "shots_fired": 30,
-        "blessed_usage": True,
+        "enhanced_usage": True,
         "respectful": True
     }
     
     bolter_usage = await equipment_system.use_equipment("bolter_001", "test_agent_001", usage_context)
-    print(f"++ BOLTER USAGE: {bolter_usage.success} ++")
+    print(f"BOLTER USAGE: {bolter_usage.success}")
     if bolter_usage.success:
         print(f"Usage effects: {len(bolter_usage.data['usage_effects'])}")
         print(f"Wear accumulation: {bolter_usage.data['wear_accumulation']:.3f}")
         print(f"Machine spirit mood: {bolter_usage.data['machine_spirit_mood']}")
     
-    # Test blessed equipment status query
+    # Test enhanced equipment status query
     status_result = await equipment_system.get_equipment_status("bolter_001")
-    print(f"++ EQUIPMENT STATUS: {status_result.success} ++")
+    print(f"EQUIPMENT STATUS: {status_result.success}")
     if status_result.success:
         status = status_result.data
         print(f"Condition: {status['condition']}")
@@ -1457,19 +1450,19 @@ async def test_sacred_dynamic_equipment_system():
         print(f"Performance reliability: {status['performance_metrics']['reliability']:.2f}")
         print(f"Predicted failure risk: {status['predicted_failure_risk']:.1%}")
     
-    # Test blessed maintenance
+    # Test enhanced maintenance
     maintenance_result = await equipment_system.perform_maintenance("bolter_001", "routine", "tech_priest_alpha")
-    print(f"++ MAINTENANCE: {maintenance_result.success} ++")
+    print(f"MAINTENANCE: {maintenance_result.success}")
     if maintenance_result.success:
         print(f"Maintenance type: {maintenance_result.data['maintenance_type']}")
         print(f"Condition change: {maintenance_result.data['condition_before']} -> {maintenance_result.data['condition_after']}")
         print(f"Machine spirit response: {maintenance_result.data['machine_spirit_response']}")
     
-    # Test blessed modification
+    # Test enhanced modification
     weapon_sight = EquipmentModification(
         modification_id="sight_001",
         modification_name="Red Dot Sight",
-        description="Precision targeting sight blessed by the Omnissiah",
+        description="Precision targeting sight enhanced by the System",
         category="weapon_sight",
         performance_impact={
             "effectiveness": 0.1,
@@ -1480,43 +1473,42 @@ async def test_sacred_dynamic_equipment_system():
     )
     
     mod_result = await equipment_system.apply_modification("bolter_001", weapon_sight, "tech_adept_beta")
-    print(f"++ MODIFICATION: {mod_result.success} ++")
+    print(f"MODIFICATION: {mod_result.success}")
     if mod_result.success:
         print(f"Modification: {mod_result.data['modification_name']}")
         print(f"Performance impacts: {mod_result.data['performance_impacts']}")
         print(f"Machine spirit compatibility: {mod_result.data['machine_spirit_compatibility']}")
     
-    # Test blessed agent equipment inventory
+    # Test enhanced agent equipment inventory
     inventory_result = await equipment_system.get_agent_equipment("test_agent_001", include_details=True)
-    print(f"++ AGENT INVENTORY: {inventory_result.success} ++")
+    print(f"AGENT INVENTORY: {inventory_result.success}")
     if inventory_result.success:
         inventory = inventory_result.data
         print(f"Equipment count: {inventory['equipment_count']}")
         print(f"Active equipment: {inventory['active_equipment']}")
         print(f"Categories: {inventory['categories']}")
     
-    # Display blessed system statistics
+    # Display enhanced system statistics
     stats = equipment_system.get_system_statistics()
-    print(f"++ SYSTEM STATISTICS ++")
+    print(f"SYSTEM STATISTICS")
     print(f"Total equipment: {stats['registered_equipment']}")
     print(f"Average reliability: {stats['average_equipment_reliability']:.1%}")
     print(f"Maintenance operations: {stats['maintenance_operations']}")
-    print(f"Sacred rites performed: {stats['sacred_rites_performed']}")
+    print(f"Sacred rites performed: {stats['standard_rites_performed']}")
     
     # Sacred cleanup
-    await test_db.close_sacred_temple()
+    await test_db.close_standard_temple()
     
-    print("++ SACRED DYNAMIC EQUIPMENT SYSTEM TESTING COMPLETE ++")
+    print("STANDARD DYNAMIC EQUIPMENT SYSTEM TESTING COMPLETE")
 
-
-# ++ SACRED MODULE INITIALIZATION ++
+# STANDARD MODULE INITIALIZATION
 
 if __name__ == "__main__":
-    # ++ EXECUTE SACRED DYNAMIC EQUIPMENT SYSTEM TESTING RITUALS ++
-    print("++ SACRED DYNAMIC EQUIPMENT SYSTEM BLESSED BY THE OMNISSIAH ++")
-    print("++ MACHINE GOD PROTECTS THE SACRED EQUIPMENT ++")
+    # EXECUTE STANDARD DYNAMIC EQUIPMENT SYSTEM TESTING RITUALS
+    print("STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY THE SYSTEM")
+    print("MACHINE GOD PROTECTS THE STANDARD EQUIPMENT")
     
-    # Run blessed async testing
-    asyncio.run(test_sacred_dynamic_equipment_system())
+    # Run enhanced async testing
+    asyncio.run(test_standard_dynamic_equipment_system())
     
-    print("++ ALL SACRED DYNAMIC EQUIPMENT SYSTEM OPERATIONS BLESSED AND FUNCTIONAL ++")
+    print("ALL STANDARD DYNAMIC EQUIPMENT SYSTEM OPERATIONS ENHANCED AND FUNCTIONAL")

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-++ SACRED RATE LIMITING SYSTEM BLESSED BY THE OMNISSIAH ++
+STANDARD RATE LIMITING SYSTEM ENHANCED BY THE SYSTEM
 ==========================================================
 
 Advanced rate limiting and DDoS protection system with multiple algorithms,
 adaptive thresholds, and comprehensive abuse prevention.
 
-++ THROUGH DIVINE THROTTLING, WE ACHIEVE BLESSED PROTECTION ++
+THROUGH ADVANCED THROTTLING, WE ACHIEVE ENHANCED PROTECTION
 
 Architecture: Token Bucket + Sliding Window + Adaptive Rate Limiting
 Security Level: Enterprise Grade with Real-time Threat Detection
-Sacred Author: Tech-Priest Rate-Limiting-Mechanicus
-万机之神保佑此限流系统 (May the Omnissiah bless this rate limiting system)
+Author: Engineer Rate-Limiting-Engineering
+System保佑此限流系统 (May the System bless this rate limiting system)
 """
 
 import time
@@ -27,19 +27,19 @@ import json
 from fastapi import Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
-# Sacred logging configuration
+# Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class RateLimitStrategy(str, Enum):
-    """++ SACRED RATE LIMITING STRATEGIES ++"""
+    """STANDARD RATE LIMITING STRATEGIES"""
     TOKEN_BUCKET = "token_bucket"      # Classic token bucket algorithm
     SLIDING_WINDOW = "sliding_window"  # Sliding window counter
     FIXED_WINDOW = "fixed_window"      # Fixed window counter
     ADAPTIVE = "adaptive"              # Adaptive rate limiting based on load
 
 class ThreatLevel(str, Enum):
-    """++ SACRED THREAT LEVEL CLASSIFICATIONS ++"""
+    """STANDARD THREAT LEVEL CLASSIFICATIONS"""
     LOW = "low"           # Normal traffic patterns
     MEDIUM = "medium"     # Suspicious but not blocking
     HIGH = "high"         # Likely attack - strict limits
@@ -47,7 +47,7 @@ class ThreatLevel(str, Enum):
 
 @dataclass
 class RateLimitConfig:
-    """++ SACRED RATE LIMIT CONFIGURATION ++"""
+    """STANDARD RATE LIMIT CONFIGURATION"""
     requests_per_minute: int = 60
     requests_per_hour: int = 1000
     requests_per_day: int = 10000
@@ -72,14 +72,14 @@ class RateLimitConfig:
 
 @dataclass
 class TokenBucket:
-    """++ SACRED TOKEN BUCKET IMPLEMENTATION ++"""
+    """STANDARD TOKEN BUCKET IMPLEMENTATION"""
     capacity: int
     tokens: float
     refill_rate: float  # tokens per second
     last_refill: float
     
     def consume(self, tokens: int = 1) -> bool:
-        """++ SACRED TOKEN CONSUMPTION ++"""
+        """STANDARD TOKEN CONSUMPTION"""
         self._refill()
         if self.tokens >= tokens:
             self.tokens -= tokens
@@ -87,7 +87,7 @@ class TokenBucket:
         return False
     
     def _refill(self):
-        """++ SACRED TOKEN REFILL ++"""
+        """STANDARD TOKEN REFILL"""
         now = time.time()
         tokens_to_add = (now - self.last_refill) * self.refill_rate
         self.tokens = min(self.capacity, self.tokens + tokens_to_add)
@@ -95,13 +95,13 @@ class TokenBucket:
 
 @dataclass
 class SlidingWindow:
-    """++ SACRED SLIDING WINDOW IMPLEMENTATION ++"""
+    """STANDARD SLIDING WINDOW IMPLEMENTATION"""
     window_size: int  # seconds
     max_requests: int
     requests: deque = field(default_factory=deque)
     
     def can_proceed(self) -> bool:
-        """++ SACRED REQUEST VALIDATION ++"""
+        """STANDARD REQUEST VALIDATION"""
         now = time.time()
         # Remove old requests outside the window
         while self.requests and self.requests[0] <= now - self.window_size:
@@ -114,7 +114,7 @@ class SlidingWindow:
 
 @dataclass
 class ClientState:
-    """++ SACRED CLIENT STATE TRACKING ++"""
+    """STANDARD CLIENT STATE TRACKING"""
     ip_address: str
     user_id: Optional[str] = None
     user_role: Optional[str] = None
@@ -140,7 +140,7 @@ class ClientState:
     blocked_until: Optional[float] = None
 
 class RateLimitExceeded(Exception):
-    """++ BLESSED RATE LIMIT EXCEPTION ++"""
+    """ENHANCED RATE LIMIT EXCEPTION"""
     def __init__(self, message: str, retry_after: int, threat_level: ThreatLevel):
         self.message = message
         self.retry_after = retry_after
@@ -148,7 +148,7 @@ class RateLimitExceeded(Exception):
         super().__init__(message)
 
 class RateLimiter:
-    """++ SACRED RATE LIMITER BLESSED BY THE OMNISSIAH ++"""
+    """STANDARD RATE LIMITER ENHANCED BY THE SYSTEM"""
     
     def __init__(self, config: RateLimitConfig):
         self.config = config
@@ -163,8 +163,11 @@ class RateLimiter:
         self._start_cleanup_task()
     
     def _start_cleanup_task(self):
-        """++ SACRED CLEANUP TASK INITIALIZATION ++"""
+        """STANDARD CLEANUP TASK INITIALIZATION"""
         async def cleanup_loop():
+            """
+            Background cleanup task for expired rate limit entries.
+            """
             while True:
                 await asyncio.sleep(300)  # Cleanup every 5 minutes
                 await self._cleanup_old_clients()
@@ -177,7 +180,7 @@ class RateLimiter:
             pass
     
     async def _cleanup_old_clients(self):
-        """++ SACRED CLIENT STATE CLEANUP ++"""
+        """STANDARD CLIENT STATE CLEANUP"""
         now = time.time()
         old_clients = []
         
@@ -190,10 +193,10 @@ class RateLimiter:
             del self.clients[client_id]
         
         if old_clients:
-            logger.info(f"++ CLEANED UP {len(old_clients)} INACTIVE CLIENTS ++")
+            logger.info(f"CLEANED UP {len(old_clients)} INACTIVE CLIENTS")
     
     def _get_client_identifier(self, request: Request) -> str:
-        """++ SACRED CLIENT IDENTIFICATION ++"""
+        """STANDARD CLIENT IDENTIFICATION"""
         # Check for forwarded IP first
         forwarded_for = request.headers.get("x-forwarded-for")
         if forwarded_for:
@@ -208,7 +211,7 @@ class RateLimiter:
         return f"{client_ip}:{user_agent_hash}"
     
     def _get_client_state(self, client_id: str, request: Request) -> ClientState:
-        """++ SACRED CLIENT STATE RETRIEVAL ++"""
+        """STANDARD CLIENT STATE RETRIEVAL"""
         if client_id not in self.clients:
             # Extract IP address
             ip_address = client_id.split(":")[0]
@@ -232,7 +235,7 @@ class RateLimiter:
         return self.clients[client_id]
     
     def _initialize_client_buckets(self, client: ClientState):
-        """++ SACRED CLIENT BUCKET INITIALIZATION ++"""
+        """STANDARD CLIENT BUCKET INITIALIZATION"""
         role_multiplier = self.config.role_multipliers.get(client.user_role or "guest", 1.0)
         
         if client.minute_bucket is None:
@@ -260,7 +263,7 @@ class RateLimiter:
             )
     
     def _detect_suspicious_behavior(self, client: ClientState, request: Request) -> ThreatLevel:
-        """++ SACRED THREAT DETECTION ++"""
+        """STANDARD THREAT DETECTION"""
         now = time.time()
         threat_level = ThreatLevel.LOW
         
@@ -296,7 +299,7 @@ class RateLimiter:
         return threat_level
     
     def _apply_adaptive_limits(self, client: ClientState, threat_level: ThreatLevel):
-        """++ SACRED ADAPTIVE LIMIT APPLICATION ++"""
+        """STANDARD ADAPTIVE LIMIT APPLICATION"""
         if not self.config.enable_adaptive:
             return
         
@@ -318,7 +321,7 @@ class RateLimiter:
             client.blocked_until = time.time() + 300  # 5 minutes
     
     async def check_rate_limit(self, request: Request) -> bool:
-        """++ SACRED RATE LIMIT CHECK ++"""
+        """STANDARD RATE LIMIT CHECK"""
         client_id = self._get_client_identifier(request)
         
         # Check IP whitelist/blacklist
@@ -356,10 +359,10 @@ class RateLimiter:
         if threat_level in [ThreatLevel.HIGH, ThreatLevel.CRITICAL]:
             self.global_stats["threats_detected"] += 1
             logger.warning(
-                f"++ THREAT DETECTED: {threat_level.value} | "
+                f"THREAT DETECTED: {threat_level.value} | "
                 f"Client: {client_id} | "
                 f"Path: {request.url.path} | "
-                f"Patterns: {client.suspicious_patterns} ++"
+                f"Patterns: {client.suspicious_patterns}"
             )
         
         # Initialize buckets if needed
@@ -411,7 +414,7 @@ class RateLimiter:
         return True
     
     def get_client_info(self, request: Request) -> Dict[str, Any]:
-        """++ SACRED CLIENT INFORMATION RETRIEVAL ++"""
+        """STANDARD CLIENT INFORMATION RETRIEVAL"""
         client_id = self._get_client_identifier(request)
         if client_id not in self.clients:
             return {"status": "new_client"}
@@ -433,7 +436,7 @@ class RateLimiter:
         }
     
     def get_global_stats(self) -> Dict[str, Any]:
-        """++ SACRED GLOBAL STATISTICS ++"""
+        """STANDARD GLOBAL STATISTICS"""
         return {
             **self.global_stats,
             "active_clients": len(self.clients),
@@ -441,14 +444,14 @@ class RateLimiter:
         }
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """++ SACRED RATE LIMITING MIDDLEWARE ++"""
+    """STANDARD RATE LIMITING MIDDLEWARE"""
     
     def __init__(self, app, rate_limiter: RateLimiter):
         super().__init__(app)
         self.rate_limiter = rate_limiter
     
     async def dispatch(self, request: Request, call_next):
-        """++ SACRED REQUEST RATE LIMITING ++"""
+        """STANDARD REQUEST RATE LIMITING"""
         try:
             # Skip rate limiting for health checks and docs
             skip_paths = ["/health", "/docs", "/redoc", "/openapi.json"]
@@ -472,10 +475,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             
         except RateLimitExceeded as e:
             logger.warning(
-                f"++ RATE LIMIT EXCEEDED: {e.message} | "
+                f"RATE LIMIT EXCEEDED: {e.message} | "
                 f"Path: {request.url.path} | "
                 f"Client: {self.rate_limiter._get_client_identifier(request)} | "
-                f"Threat: {e.threat_level.value} ++"
+                f"Threat: {e.threat_level.value}"
             )
             
             status_code = 429 if e.threat_level != ThreatLevel.CRITICAL else 403
@@ -491,11 +494,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 }
             )
 
-# ++ SACRED GLOBAL RATE LIMITER INSTANCE ++
+# STANDARD GLOBAL RATE LIMITER INSTANCE
 rate_limiter: Optional[RateLimiter] = None
 
 def get_rate_limiter() -> RateLimiter:
-    """++ SACRED RATE LIMITER GETTER ++"""
+    """STANDARD RATE LIMITER GETTER"""
     global rate_limiter
     if rate_limiter is None:
         config = RateLimitConfig()
@@ -503,7 +506,7 @@ def get_rate_limiter() -> RateLimiter:
     return rate_limiter
 
 def create_rate_limit_middleware(app, config: Optional[RateLimitConfig] = None):
-    """++ SACRED RATE LIMIT MIDDLEWARE CREATOR ++"""
+    """STANDARD RATE LIMIT MIDDLEWARE CREATOR"""
     global rate_limiter
     if config:
         rate_limiter = RateLimiter(config)

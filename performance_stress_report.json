@@ -1,0 +1,110 @@
+{
+  "timestamp": "2025-08-19T14:34:16.647858",
+  "summary": {
+    "total_requests": 26201,
+    "total_successes": 26201,
+    "total_errors": 0,
+    "overall_success_rate": 100.0,
+    "average_rps": 1171.5497919806867,
+    "average_response_time_ms": 1229.1343648171423,
+    "peak_memory_mb": 22607.97265625,
+    "average_cpu_percent": 48.76,
+    "performance_grade": "C"
+  },
+  "test_results": [
+    {
+      "test_name": "api_load_test",
+      "requests_per_second": 4170.901074073375,
+      "avg_response_time_ms": 79.08908352851867,
+      "p95_response_time_ms": 113.21403980255127,
+      "p99_response_time_ms": 115.9618878364563,
+      "error_rate_percent": 0.0,
+      "memory_usage_mb": 21779.6796875,
+      "cpu_usage_percent": 38.5,
+      "success_count": 5000,
+      "error_count": 0,
+      "total_requests": 5000,
+      "test_duration": 1.1987817287445068
+    },
+    {
+      "test_name": "cache_stress_test",
+      "requests_per_second": 489.9413620425794,
+      "avg_response_time_ms": 0.02146340608596802,
+      "p95_response_time_ms": 0.03790855407714844,
+      "p99_response_time_ms": 0.07224082946777344,
+      "error_rate_percent": 0.0,
+      "memory_usage_mb": 22607.97265625,
+      "cpu_usage_percent": 60.1,
+      "success_count": 20000,
+      "error_count": 0,
+      "total_requests": 20000,
+      "test_duration": 40.82121157646179
+    },
+    {
+      "test_name": "concurrent_operations",
+      "requests_per_second": 548.6164657507763,
+      "avg_response_time_ms": 36.437978982925415,
+      "p95_response_time_ms": 17.533981800079346,
+      "p99_response_time_ms": 1037.3308610916138,
+      "error_rate_percent": 0.0,
+      "memory_usage_mb": 22276.93359375,
+      "cpu_usage_percent": 45.9,
+      "success_count": 1000,
+      "error_count": 0,
+      "total_requests": 1000,
+      "test_duration": 1.8227670192718506
+    },
+    {
+      "test_name": "memory_stress_test",
+      "requests_per_second": 0.16625898378569162,
+      "avg_response_time_ms": 6014.712572097778,
+      "p95_response_time_ms": 6014.712572097778,
+      "p99_response_time_ms": 6014.712572097778,
+      "error_rate_percent": 0.0,
+      "memory_usage_mb": 22265.34765625,
+      "cpu_usage_percent": 36.6,
+      "success_count": 1,
+      "error_count": 0,
+      "total_requests": 1,
+      "test_duration": 6.014712572097778
+    },
+    {
+      "test_name": "database_load_test",
+      "requests_per_second": 648.1237990529178,
+      "avg_response_time_ms": 15.410726070404053,
+      "p95_response_time_ms": 17.4674391746521,
+      "p99_response_time_ms": 18.753037452697754,
+      "error_rate_percent": 0.0,
+      "memory_usage_mb": 22224.5234375,
+      "cpu_usage_percent": 62.7,
+      "success_count": 200,
+      "error_count": 0,
+      "total_requests": 200,
+      "test_duration": 0.30858302116394043
+    }
+  ],
+  "resource_analysis": {
+    "cpu_usage": {
+      "average": 45.63666666666667,
+      "peak": 90.1,
+      "minimum": 21.8
+    },
+    "memory_usage": {
+      "average_percent": 33.68333333333334,
+      "peak_percent": 34.7,
+      "average_mb": 22028.140755208333
+    },
+    "io_activity": {
+      "total_read_mb": 689413.0249023438,
+      "total_write_mb": 904972.8193359375
+    },
+    "network_activity": {
+      "total_sent_mb": 15057.806985855103,
+      "total_recv_mb": 56434.06261920929
+    }
+  },
+  "recommendations": [
+    "Slow response time in memory_stress_test: 6014.7ms - optimize processing",
+    "Low throughput in memory_stress_test: 0.2 RPS - scale horizontally"
+  ]
+}

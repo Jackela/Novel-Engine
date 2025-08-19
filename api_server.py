@@ -9,7 +9,6 @@ for the story generation system.
 import logging
 import uvicorn
 import os
-import shutil
 from typing import Dict, Any, List, Optional, Union
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Request
@@ -18,7 +17,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import BaseModel, field_validator, Field
-from typing import List as TypingList
 
 from config_loader import get_config
 from character_factory import CharacterFactory

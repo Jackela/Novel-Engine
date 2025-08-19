@@ -27,14 +27,12 @@ from contextlib import asynccontextmanager
 
 logger = logging.getLogger(__name__)
 
-
 class EventPriority(Enum):
     """Event priority levels for processing optimization."""
     LOW = 1
     NORMAL = 2
     HIGH = 3
     CRITICAL = 4
-
 
 class EventStatus(Enum):
     """Event processing status tracking."""
@@ -45,7 +43,6 @@ class EventStatus(Enum):
     FAILED = "failed"
     DEAD_LETTER = "dead_letter"
     REPLAYING = "replaying"
-
 
 @dataclass
 class Event:
@@ -113,7 +110,6 @@ class Event:
         data['tags'] = set(data['tags'])
         return cls(**data)
 
-
 class EventHandler(ABC):
     """Abstract base class for event handlers."""
     
@@ -140,7 +136,6 @@ class EventHandler(ABC):
     def handler_id(self) -> str:
         """Unique identifier for this handler."""
         return f"{self.__class__.__module__}.{self.__class__.__name__}"
-
 
 @dataclass
 class HandlerRegistry:
@@ -180,7 +175,6 @@ class HandlerRegistry:
         """Get all handlers for a specific event type."""
         return self.handlers.get(event_type, [])
 
-
 class EventBusConfig:
     """Configuration for the event bus."""
     
@@ -199,7 +193,6 @@ class EventBusConfig:
         self.batch_processing_enabled = True
         self.batch_size = 10
         self.metrics_enabled = True
-
 
 class CircuitBreaker:
     """Circuit breaker for event processing resilience."""
@@ -237,7 +230,6 @@ class CircuitBreaker:
                 logger.warning(f"Circuit breaker opened after {self.failure_count} failures")
             
             raise e
-
 
 class EventMetrics:
     """Event processing metrics collection."""
@@ -288,7 +280,6 @@ class EventMetrics:
             'events_per_second': self.events_processed / max(uptime, 1),
             'uptime_seconds': uptime
         }
-
 
 class EventBus:
     """

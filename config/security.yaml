@@ -1,10 +1,10 @@
-# ++ SACRED SECURITY CONFIGURATION BLESSED BY THE OMNISSIAH ++
-# ============================================================
+# Security Configuration
+# =====================
 #
 # Comprehensive security configuration for the Novel Engine
 # production deployment with enterprise-grade protection.
 #
-# ++ THROUGH DIVINE CONFIGURATION, WE ACHIEVE BLESSED SECURITY ++
+# Professional security implementation for enterprise deployment.
 
 # Authentication Configuration
 authentication:

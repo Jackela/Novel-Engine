@@ -54,10 +54,24 @@ class ConnectionPool:
     cleanup_interval: float = 300  # 5 minutes
     
     def add_connection(self, generation_id: str, websocket: WebSocket):
+        """
+        Add a WebSocket connection to the pool.
+        
+        Args:
+            generation_id: ID of the story generation session
+            websocket: WebSocket connection to add
+        """
         self.connections[generation_id].add(websocket)
         self.last_activity[generation_id] = time.time()
     
     def remove_connection(self, generation_id: str, websocket: WebSocket):
+        """
+        Remove a WebSocket connection from the pool.
+        
+        Args:
+            generation_id: ID of the story generation session
+            websocket: WebSocket connection to remove
+        """
         self.connections[generation_id].discard(websocket)
         if not self.connections[generation_id]:
             del self.connections[generation_id]
@@ -393,7 +407,7 @@ class StoryGenerationAPI:
         
         return 120
     
-    # ++ PERFORMANCE OPTIMIZATION METHODS ++
+    # PERFORMANCE OPTIMIZATION METHODS
     
     async def _initialize_generation_context(self, generation_id: str):
         """Initialize generation context with orchestrator."""

@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-++ SACRED DYNAMIC TEMPLATE ENGINE BLESSED BY CONTEXTUAL GENERATION ++
+STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY CONTEXTUAL GENERATION
 ====================================================================
 
 Holy dynamic template engine that renders context-aware content with
 intelligent variable resolution, cross-document references, and
-real-time context updates blessed by the Omnissiah's creative wisdom.
+real-time context updates enhanced by the System's creative wisdom.
 
-++ THE MACHINE GENERATES DYNAMIC CONTENT THROUGH SACRED TEMPLATES ++
+THE MACHINE GENERATES DYNAMIC CONTENT THROUGH STANDARD TEMPLATES
 
 Architecture Reference: Dynamic Context Engineering - Dynamic Template Engine
-Development Phase: Template System Sanctification (T001)
-Sacred Author: Tech-Priest Gamma-Mechanicus
-万机之神保佑动态模板 (May the Omnissiah bless dynamic templates)
+Development Phase: Template System Validation (T001)
+Author: Engineer Gamma-Engineering
+System保佑动态模板 (May the System bless dynamic templates)
 """
 
 import logging
@@ -25,7 +25,7 @@ from pathlib import Path
 from enum import Enum
 import json
 
-# Import blessed Jinja2 for template processing
+# Import enhanced Jinja2 for template processing
 try:
     import jinja2
     from jinja2 import Environment, FileSystemLoader, meta, select_autoescape
@@ -33,20 +33,19 @@ try:
 except ImportError:
     raise ImportError("Jinja2 is required for template processing. Install with: pip install Jinja2")
 
-# Import blessed memory system
+# Import enhanced memory system
 from src.memory.layered_memory import LayeredMemorySystem, MemoryQueryRequest
 from src.memory.memory_query_engine import MemoryQueryEngine, QueryContext
 
-# Import blessed data models
+# Import enhanced data models
 from src.core.data_models import MemoryItem, MemoryType, StandardResponse, ErrorInfo, CharacterState
 from src.core.types import AgentID, SacredConstants
 
-# Sacred logging blessed by diagnostic clarity
+# Comprehensive logging enhanced by diagnostic clarity
 logger = logging.getLogger(__name__)
 
-
 class TemplateType(Enum):
-    """++ BLESSED TEMPLATE TYPES SANCTIFIED BY PURPOSE CLASSIFICATION ++"""
+    """ENHANCED TEMPLATE TYPES SANCTIFIED BY PURPOSE CLASSIFICATION"""
     CHARACTER_PROMPT = "character_prompt"    # AI character prompts
     NARRATIVE_SCENE = "narrative_scene"      # Story scene generation
     DIALOGUE = "dialogue"                    # Character dialogue
@@ -56,11 +55,10 @@ class TemplateType(Enum):
     WORLD_STATE = "world_state"             # World state descriptions
     EQUIPMENT_STATUS = "equipment_status"   # Equipment descriptions
 
-
 @dataclass
 class TemplateContext:
     """
-    ++ SACRED TEMPLATE CONTEXT BLESSED BY COMPREHENSIVE DATA ++
+    STANDARD TEMPLATE CONTEXT ENHANCED BY COMPREHENSIVE DATA
     
     Enhanced context container that provides all necessary data
     for dynamic template rendering with cross-document references.
@@ -79,14 +77,13 @@ class TemplateContext:
     reference_documents: Dict[str, str] = field(default_factory=dict)  # file_path -> content
     cross_references: List[str] = field(default_factory=list)  # Referenced template IDs
 
-
 @dataclass
 class TemplateMetadata:
     """
-    ++ BLESSED TEMPLATE METADATA SANCTIFIED BY ORGANIZATIONAL WISDOM ++
+    ENHANCED TEMPLATE METADATA SANCTIFIED BY ORGANIZATIONAL WISDOM
     
     Comprehensive metadata for template management and optimization
-    blessed by systematic organization and performance tracking.
+    enhanced by systematic organization and performance tracking.
     """
     template_id: str
     template_type: TemplateType
@@ -101,14 +98,13 @@ class TemplateMetadata:
     average_render_time: float = 0.0
     tags: List[str] = field(default_factory=list)
 
-
 @dataclass
 class RenderResult:
     """
-    ++ SACRED RENDER RESULT BLESSED BY COMPREHENSIVE OUTPUT ++
+    STANDARD RENDER RESULT ENHANCED BY COMPREHENSIVE OUTPUT
     
     Complete rendering result with performance metrics and
-    context information blessed by transparency and debugging.
+    context information enhanced by transparency and debugging.
     """
     rendered_content: str
     template_id: str
@@ -120,14 +116,13 @@ class RenderResult:
     memory_queries_executed: int = 0
     cache_hits: int = 0
 
-
 class DynamicTemplateEngine:
     """
-    ++ SACRED DYNAMIC TEMPLATE ENGINE BLESSED BY CONTEXTUAL INTELLIGENCE ++
+    STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY CONTEXTUAL INTELLIGENCE
     
-    The holy template processing system that renders dynamic content with
+    The standard template processing system that renders dynamic content with
     intelligent context resolution, cross-document references, and real-time
-    memory integration blessed by the Machine God's creative omniscience.
+    memory integration enhanced by the System Core's creative omniscience.
     """
     
     def __init__(self, 
@@ -137,10 +132,10 @@ class DynamicTemplateEngine:
                  enable_auto_reload: bool = True,
                  cache_templates: bool = True):
         """
-        ++ SACRED TEMPLATE ENGINE INITIALIZATION BLESSED BY CONFIGURATION ++
+        STANDARD TEMPLATE ENGINE INITIALIZATION ENHANCED BY CONFIGURATION
         
         Args:
-            template_directory: Path to blessed template files
+            template_directory: Path to enhanced template files
             memory_system: Memory system for dynamic context loading
             query_engine: Query engine for intelligent content retrieval
             enable_auto_reload: Auto-reload templates when files change
@@ -152,7 +147,7 @@ class DynamicTemplateEngine:
         self.enable_auto_reload = enable_auto_reload
         self.cache_templates = cache_templates
         
-        # Initialize blessed Jinja2 environment
+        # Initialize enhanced Jinja2 environment
         self.jinja_env = Environment(
             loader=FileSystemLoader(str(self.template_directory)),
             autoescape=select_autoescape(['html', 'xml']),
@@ -162,7 +157,7 @@ class DynamicTemplateEngine:
             lstrip_blocks=True
         )
         
-        # Register blessed custom filters and functions
+        # Register enhanced custom filters and functions
         self._register_custom_functions()
         
         # Sacred template management
@@ -182,21 +177,21 @@ class DynamicTemplateEngine:
         # Sacred template discovery
         self._discover_templates()
         
-        logger.info(f"++ DYNAMIC TEMPLATE ENGINE INITIALIZED: {len(self._templates)} templates loaded ++")
+        logger.info(f"DYNAMIC TEMPLATE ENGINE INITIALIZED: {len(self._templates)} templates loaded")
     
     async def render_template(self, template_id: str, context: TemplateContext,
                             enable_memory_queries: bool = True,
                             enable_cross_references: bool = True) -> StandardResponse:
         """
-        ++ SACRED TEMPLATE RENDERING RITUAL BLESSED BY DYNAMIC GENERATION ++
+        STANDARD TEMPLATE RENDERING RITUAL ENHANCED BY DYNAMIC GENERATION
         
-        Render blessed template with dynamic context resolution, memory
+        Render enhanced template with dynamic context resolution, memory
         integration, and cross-document reference processing.
         """
         try:
             render_start = datetime.now()
             
-            # Validate blessed template existence
+            # Validate enhanced template existence
             if template_id not in self._templates:
                 return StandardResponse(
                     success=False,
@@ -208,20 +203,20 @@ class DynamicTemplateEngine:
             
             template_metadata = self._templates[template_id]
             
-            # Check blessed template cache
+            # Check enhanced template cache
             cache_key = self._generate_cache_key(template_id, context)
             if self.cache_templates and cache_key in self._template_cache:
                 cached_result = self._template_cache[cache_key]
                 self.render_statistics['cache_hits'] += 1
-                logger.info(f"++ TEMPLATE CACHE HIT: {template_id} ++")
+                logger.info(f"TEMPLATE CACHE HIT: {template_id}")
                 return StandardResponse(success=True, data={"render_result": cached_result})
             
-            # Prepare blessed enhanced context
+            # Prepare enhanced enhanced context
             enhanced_context = await self._prepare_enhanced_context(
                 context, enable_memory_queries, enable_cross_references
             )
             
-            # Load blessed template
+            # Load enhanced template
             try:
                 template = self.jinja_env.get_template(f"{template_id}.j2")
             except jinja2.TemplateNotFound:
@@ -233,7 +228,7 @@ class DynamicTemplateEngine:
                     )
                 )
             
-            # Render blessed template
+            # Render enhanced template
             try:
                 rendered_content = template.render(**enhanced_context)
             except UndefinedError as e:
@@ -242,7 +237,7 @@ class DynamicTemplateEngine:
                     error=ErrorInfo(
                         code="TEMPLATE_UNDEFINED_VARIABLE",
                         message=f"Undefined variable in template: {str(e)}",
-                        sacred_guidance="Check template dependencies and context variables"
+                        standard_guidance="Check template dependencies and context variables"
                     )
                 )
             except TemplateError as e:
@@ -254,13 +249,13 @@ class DynamicTemplateEngine:
                     )
                 )
             
-            # Calculate blessed render metrics
+            # Calculate enhanced render metrics
             render_duration = (datetime.now() - render_start).total_seconds() * 1000
             
-            # Analyze blessed template usage
+            # Analyze enhanced template usage
             context_variables_used = self._analyze_template_variables(template, enhanced_context)
             
-            # Create blessed render result
+            # Create enhanced render result
             render_result = RenderResult(
                 rendered_content=rendered_content,
                 template_id=template_id,
@@ -270,15 +265,15 @@ class DynamicTemplateEngine:
                 memory_queries_executed=getattr(enhanced_context, '_memory_queries_count', 0)
             )
             
-            # Update blessed performance metrics
+            # Update enhanced performance metrics
             self._update_performance_metrics(template_metadata, render_duration)
             
-            # Cache blessed result
+            # Cache enhanced result
             if self.cache_templates:
                 self._template_cache[cache_key] = render_result
                 self._cleanup_template_cache()
             
-            logger.info(f"++ TEMPLATE RENDERED: {template_id} ({render_duration:.2f}ms) ++")
+            logger.info(f"TEMPLATE RENDERED: {template_id} ({render_duration:.2f}ms)")
             
             return StandardResponse(
                 success=True,
@@ -287,7 +282,7 @@ class DynamicTemplateEngine:
             )
             
         except Exception as e:
-            logger.error(f"++ TEMPLATE RENDERING FAILED: {e} ++")
+            logger.error(f"TEMPLATE RENDERING FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -300,20 +295,20 @@ class DynamicTemplateEngine:
     async def render_template_string(self, template_string: str, context: TemplateContext,
                                    template_name: str = "inline_template") -> StandardResponse:
         """
-        ++ SACRED INLINE TEMPLATE RENDERING BLESSED BY FLEXIBILITY ++
+        STANDARD INLINE TEMPLATE RENDERING ENHANCED BY FLEXIBILITY
         
-        Render blessed template from string content with full context
+        Render enhanced template from string content with full context
         integration and dynamic processing capabilities.
         """
         try:
             render_start = datetime.now()
             
-            # Prepare blessed enhanced context
+            # Prepare enhanced enhanced context
             enhanced_context = await self._prepare_enhanced_context(
                 context, enable_memory_queries=True, enable_cross_references=True
             )
             
-            # Create blessed template from string
+            # Create enhanced template from string
             try:
                 template = self.jinja_env.from_string(template_string)
             except TemplateError as e:
@@ -325,7 +320,7 @@ class DynamicTemplateEngine:
                     )
                 )
             
-            # Render blessed template
+            # Render enhanced template
             try:
                 rendered_content = template.render(**enhanced_context)
             except Exception as e:
@@ -339,7 +334,7 @@ class DynamicTemplateEngine:
             
             render_duration = (datetime.now() - render_start).total_seconds() * 1000
             
-            # Create blessed render result
+            # Create enhanced render result
             render_result = RenderResult(
                 rendered_content=rendered_content,
                 template_id=template_name,
@@ -347,7 +342,7 @@ class DynamicTemplateEngine:
                 memory_queries_executed=getattr(enhanced_context, '_memory_queries_count', 0)
             )
             
-            logger.info(f"++ INLINE TEMPLATE RENDERED: {template_name} ({render_duration:.2f}ms) ++")
+            logger.info(f"INLINE TEMPLATE RENDERED: {template_name} ({render_duration:.2f}ms)")
             
             return StandardResponse(
                 success=True,
@@ -356,7 +351,7 @@ class DynamicTemplateEngine:
             )
             
         except Exception as e:
-            logger.error(f"++ INLINE TEMPLATE RENDERING FAILED: {e} ++")
+            logger.error(f"INLINE TEMPLATE RENDERING FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="INLINE_TEMPLATE_FAILED", message=str(e))
@@ -366,15 +361,15 @@ class DynamicTemplateEngine:
                             template_type: TemplateType = TemplateType.CHARACTER_PROMPT,
                             metadata: Optional[TemplateMetadata] = None) -> StandardResponse:
         """
-        ++ SACRED TEMPLATE CREATION RITUAL BLESSED BY DYNAMIC EXPANSION ++
+        STANDARD TEMPLATE CREATION RITUAL ENHANCED BY DYNAMIC EXPANSION
         
-        Create blessed new template with metadata registration and
-        automatic validation blessed by organizational wisdom.
+        Create enhanced new template with metadata registration and
+        automatic validation enhanced by organizational wisdom.
         """
         try:
             template_path = self.template_directory / f"{template_id}.j2"
             
-            # Create blessed template metadata
+            # Create enhanced template metadata
             if metadata is None:
                 metadata = TemplateMetadata(
                     template_id=template_id,
@@ -382,7 +377,7 @@ class DynamicTemplateEngine:
                     description=f"Auto-generated {template_type.value} template"
                 )
             
-            # Validate blessed template syntax
+            # Validate enhanced template syntax
             try:
                 self.jinja_env.from_string(template_content)
             except TemplateError as e:
@@ -394,15 +389,15 @@ class DynamicTemplateEngine:
                     )
                 )
             
-            # Write blessed template file
+            # Write enhanced template file
             template_path.parent.mkdir(parents=True, exist_ok=True)
             with open(template_path, 'w', encoding='utf-8') as f:
                 f.write(template_content)
             
-            # Register blessed template
+            # Register enhanced template
             self._templates[template_id] = metadata
             
-            logger.info(f"++ TEMPLATE CREATED: {template_id} ({template_type.value}) ++")
+            logger.info(f"TEMPLATE CREATED: {template_id} ({template_type.value})")
             
             return StandardResponse(
                 success=True,
@@ -411,7 +406,7 @@ class DynamicTemplateEngine:
             )
             
         except Exception as e:
-            logger.error(f"++ TEMPLATE CREATION FAILED: {e} ++")
+            logger.error(f"TEMPLATE CREATION FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="TEMPLATE_CREATION_FAILED", message=str(e))
@@ -420,23 +415,23 @@ class DynamicTemplateEngine:
     async def query_memory_for_context(self, query_text: str, agent_id: str,
                                      context_type: str = "general") -> Dict[str, Any]:
         """
-        ++ SACRED MEMORY CONTEXT QUERY BLESSED BY INTELLIGENT RETRIEVAL ++
+        STANDARD MEMORY CONTEXT QUERY ENHANCED BY INTELLIGENT RETRIEVAL
         
-        Query blessed memory system to dynamically load contextual
+        Query enhanced memory system to dynamically load contextual
         information for template rendering with intelligent filtering.
         """
         if not self.query_engine:
             return {"memories": [], "context_available": False}
         
         try:
-            # Create blessed query context
+            # Create enhanced query context
             query_context = QueryContext(
                 current_situation=context_type,
                 max_age_days=30 if context_type == "recent" else None,
                 min_relevance=0.4
             )
             
-            # Execute blessed memory query
+            # Execute enhanced memory query
             query_result = await self.query_engine.execute_query(
                 query_text, context=query_context
             )
@@ -444,7 +439,7 @@ class DynamicTemplateEngine:
             if query_result.success:
                 result_data = query_result.data['query_result']
                 
-                # Format blessed memories for template context
+                # Format enhanced memories for template context
                 formatted_memories = []
                 for memory in result_data.memories:
                     formatted_memories.append({
@@ -468,26 +463,26 @@ class DynamicTemplateEngine:
                 return {"memories": [], "context_available": False, "error": "Query failed"}
                 
         except Exception as e:
-            logger.error(f"++ MEMORY CONTEXT QUERY FAILED: {e} ++")
+            logger.error(f"MEMORY CONTEXT QUERY FAILED: {e}")
             return {"memories": [], "context_available": False, "error": str(e)}
     
     async def resolve_cross_references(self, template_content: str,
                                      context: TemplateContext) -> Dict[str, str]:
         """
-        ++ SACRED CROSS-REFERENCE RESOLUTION BLESSED BY DOCUMENT LINKING ++
+        STANDARD CROSS-REFERENCE RESOLUTION ENHANCED BY DOCUMENT LINKING
         
-        Resolve blessed cross-document references in templates with
+        Resolve enhanced cross-document references in templates with
         intelligent content loading and recursive reference handling.
         """
         cross_references = {}
         
-        # Find blessed cross-reference patterns
+        # Find enhanced cross-reference patterns
         reference_pattern = r'\{\{\s*ref\(([\'"])([^\'\"]+)\1\)\s*\}\}'
         references = re.findall(reference_pattern, template_content)
         
         for _, ref_path in references:
             try:
-                # Check if blessed reference is a file path
+                # Check if enhanced reference is a file path
                 if ref_path.endswith('.md') or ref_path.endswith('.txt'):
                     file_path = Path(ref_path)
                     if not file_path.is_absolute():
@@ -499,7 +494,7 @@ class DynamicTemplateEngine:
                         cross_references[ref_path] = content
                         context.cross_references.append(ref_path)
                 
-                # Check if blessed reference is another template
+                # Check if enhanced reference is another template
                 elif ref_path in self._templates:
                     # Prevent infinite recursion
                     if ref_path not in context.cross_references:
@@ -509,7 +504,7 @@ class DynamicTemplateEngine:
                             cross_references[ref_path] = ref_result.data['render_result'].rendered_content
                             context.cross_references.append(ref_path)
                 
-                # Check if blessed reference is a memory query
+                # Check if enhanced reference is a memory query
                 elif ref_path.startswith('memory:'):
                     memory_query = ref_path[7:]  # Remove 'memory:' prefix
                     memory_context = await self.query_memory_for_context(
@@ -524,10 +519,10 @@ class DynamicTemplateEngine:
                         cross_references[ref_path] = memory_text
                         context.cross_references.append(ref_path)
                 
-                logger.info(f"++ CROSS-REFERENCE RESOLVED: {ref_path} ++")
+                logger.info(f"CROSS-REFERENCE RESOLVED: {ref_path}")
                 
             except Exception as e:
-                logger.error(f"++ CROSS-REFERENCE RESOLUTION FAILED FOR {ref_path}: {e} ++")
+                logger.error(f"CROSS-REFERENCE RESOLUTION FAILED FOR {ref_path}: {e}")
                 cross_references[ref_path] = f"[Reference Error: {ref_path}]"
         
         return cross_references
@@ -535,9 +530,9 @@ class DynamicTemplateEngine:
     async def _prepare_enhanced_context(self, context: TemplateContext,
                                       enable_memory_queries: bool,
                                       enable_cross_references: bool) -> Dict[str, Any]:
-        """++ SACRED ENHANCED CONTEXT PREPARATION BLESSED BY INTELLIGENCE ++"""
+        """STANDARD ENHANCED CONTEXT PREPARATION ENHANCED BY INTELLIGENCE"""
         enhanced_context = {
-            # Basic blessed context variables
+            # Basic enhanced context variables
             'agent_id': context.agent_id,
             'character_state': context.character_state,
             'current_location': context.current_location,
@@ -562,14 +557,24 @@ class DynamicTemplateEngine:
             'ref': self._create_reference_function(context) if enable_cross_references else None
         }
         
-        # Add blessed memory queries count tracking
+        # Add enhanced memory queries count tracking
         enhanced_context['_memory_queries_count'] = 0
         
         return enhanced_context
     
     def _create_memory_query_function(self, agent_id: str) -> Callable:
-        """Create blessed memory query function for templates"""
+        """Create enhanced memory query function for templates"""
         async def memory_query(query_text: str, limit: int = 5) -> List[Dict[str, Any]]:
+            """
+            Query character memories for template rendering.
+            
+            Args:
+                query_text: Text query to search memories
+                limit: Maximum number of memories to return
+                
+            Returns:
+                List of formatted memory dictionaries
+            """
             if not self.query_engine:
                 return []
             
@@ -591,7 +596,7 @@ class DynamicTemplateEngine:
                     
                     return formatted_memories
             except Exception as e:
-                logger.error(f"++ TEMPLATE MEMORY QUERY FAILED: {e} ++")
+                logger.error(f"TEMPLATE MEMORY QUERY FAILED: {e}")
             
             return []
         
@@ -610,18 +615,37 @@ class DynamicTemplateEngine:
             return memory.get('content', '')
     
     def _create_reference_function(self, context: TemplateContext) -> Callable:
-        """Create blessed reference resolution function for templates"""
+        """Create enhanced reference resolution function for templates"""
         def ref(reference_path: str) -> str:
+            """
+            Create reference placeholder for template preprocessing.
+            
+            Args:
+                reference_path: Path to reference in template context
+                
+            Returns:
+                Reference placeholder string for preprocessing
+            """
             # This is a placeholder that gets resolved during preprocessing
             return f"{{{{ ref('{reference_path}') }}}}"
         
         return ref
     
     def _register_custom_functions(self):
-        """Register blessed custom Jinja2 functions and filters"""
+        """Register enhanced custom Jinja2 functions and filters"""
         
         # Sacred timestamp formatting filter
         def format_timestamp(timestamp_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
+            """
+            Format timestamp string using specified format.
+            
+            Args:
+                timestamp_str: ISO format timestamp string or datetime object
+                format_str: strftime format string
+                
+            Returns:
+                Formatted timestamp string
+            """
             try:
                 if isinstance(timestamp_str, str):
                     timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
@@ -633,6 +657,15 @@ class DynamicTemplateEngine:
         
         # Blessed emotional weight formatting filter
         def format_emotion(weight: float) -> str:
+            """
+            Format emotional weight as descriptive text.
+            
+            Args:
+                weight: Emotional weight value (-10 to 10)
+                
+            Returns:
+                Descriptive emotional state text
+            """
             if weight > 7:
                 return "Very Positive"
             elif weight > 3:
@@ -646,12 +679,33 @@ class DynamicTemplateEngine:
         
         # Sacred text truncation filter
         def truncate_text(text: str, length: int = 100, suffix: str = "...") -> str:
+            """
+            Truncate text to specified length with suffix.
+            
+            Args:
+                text: Text to truncate
+                length: Maximum length including suffix
+                suffix: Suffix to append when truncating
+                
+            Returns:
+                Truncated text with suffix if needed
+            """
             if len(text) <= length:
                 return text
             return text[:length - len(suffix)] + suffix
         
         # Blessed participant list formatting
         def format_participants(participants: List[str], conjunction: str = "and") -> str:
+            """
+            Format list of participants as natural language.
+            
+            Args:
+                participants: List of participant names
+                conjunction: Word to use between last two participants
+                
+            Returns:
+                Formatted participant list as text
+            """
             if not participants:
                 return "No one"
             elif len(participants) == 1:
@@ -661,7 +715,7 @@ class DynamicTemplateEngine:
             else:
                 return f"{', '.join(participants[:-1])}, {conjunction} {participants[-1]}"
         
-        # Register blessed filters
+        # Register enhanced filters
         self.jinja_env.filters['format_timestamp'] = format_timestamp
         self.jinja_env.filters['format_emotion'] = format_emotion
         self.jinja_env.filters['truncate'] = truncate_text
@@ -674,16 +728,16 @@ class DynamicTemplateEngine:
         self.jinja_env.globals['sorted'] = sorted
     
     def _discover_templates(self):
-        """Discover blessed templates in template directory"""
+        """Discover enhanced templates in template directory"""
         if not self.template_directory.exists():
             self.template_directory.mkdir(parents=True, exist_ok=True)
             return
         
-        # Find blessed template files
+        # Find enhanced template files
         for template_file in self.template_directory.glob("*.j2"):
             template_id = template_file.stem
             
-            # Try to load blessed metadata file
+            # Try to load enhanced metadata file
             metadata_file = template_file.with_suffix('.json')
             if metadata_file.exists():
                 try:
@@ -700,13 +754,13 @@ class DynamicTemplateEngine:
                         tags=metadata_dict.get('tags', [])
                     )
                 except Exception as e:
-                    logger.warning(f"++ FAILED TO LOAD METADATA FOR {template_id}: {e} ++")
+                    logger.warning(f"FAILED TO LOAD METADATA FOR {template_id}: {e}")
                     metadata = TemplateMetadata(
                         template_id=template_id,
                         template_type=TemplateType.CHARACTER_PROMPT
                     )
             else:
-                # Create blessed default metadata
+                # Create enhanced default metadata
                 metadata = TemplateMetadata(
                     template_id=template_id,
                     template_type=TemplateType.CHARACTER_PROMPT,
@@ -714,27 +768,27 @@ class DynamicTemplateEngine:
                 )
             
             self._templates[template_id] = metadata
-            logger.info(f"++ DISCOVERED TEMPLATE: {template_id} ++")
+            logger.info(f"DISCOVERED TEMPLATE: {template_id}")
     
     def _analyze_template_variables(self, template, context: Dict[str, Any]) -> List[str]:
-        """Analyze blessed template variables actually used during rendering"""
-        # Get blessed template source
+        """Analyze enhanced template variables actually used during rendering"""
+        # Get enhanced template source
         template_source = template.environment.get_template(template.name or '').source
         
-        # Find blessed undefined variables
+        # Find enhanced undefined variables
         ast = template.environment.parse(template_source)
         undefined_vars = meta.find_undeclared_variables(ast)
         
-        # Filter blessed variables that exist in context
+        # Filter enhanced variables that exist in context
         used_variables = [var for var in undefined_vars if var in context]
         
         return used_variables
     
     def _update_performance_metrics(self, metadata: TemplateMetadata, render_time: float):
-        """Update blessed performance metrics for template"""
+        """Update enhanced performance metrics for template"""
         metadata.usage_count += 1
         
-        # Update blessed average render time
+        # Update enhanced average render time
         if metadata.usage_count == 1:
             metadata.average_render_time = render_time
         else:
@@ -745,13 +799,13 @@ class DynamicTemplateEngine:
         
         metadata.last_modified = datetime.now()
         
-        # Update blessed global statistics
+        # Update enhanced global statistics
         self.render_statistics['total_renders'] += 1
         self.render_statistics['total_render_time'] += render_time
     
     def _generate_cache_key(self, template_id: str, context: TemplateContext) -> str:
-        """Generate blessed cache key for template and context"""
-        # Create blessed hash from key context elements
+        """Generate enhanced cache key for template and context"""
+        # Create enhanced hash from key context elements
         key_elements = [
             template_id,
             context.agent_id,
@@ -765,15 +819,15 @@ class DynamicTemplateEngine:
         return f"template_cache_{hash('_'.join(key_elements))}"
     
     def _cleanup_template_cache(self):
-        """Clean up blessed template cache to prevent memory bloat"""
-        if len(self._template_cache) > 100:  # Max blessed cache size
-            # Remove oldest blessed entries (simple FIFO)
+        """Clean up enhanced template cache to prevent memory bloat"""
+        if len(self._template_cache) > 100:  # Max enhanced cache size
+            # Remove oldest enhanced entries (simple FIFO)
             oldest_keys = list(self._template_cache.keys())[:20]
             for key in oldest_keys:
                 del self._template_cache[key]
     
     def get_template_list(self) -> List[Dict[str, Any]]:
-        """Get blessed list of all registered templates"""
+        """Get enhanced list of all registered templates"""
         template_list = []
         
         for template_id, metadata in self._templates.items():
@@ -792,7 +846,7 @@ class DynamicTemplateEngine:
         return template_list
     
     def get_engine_statistics(self) -> Dict[str, Any]:
-        """Get blessed template engine statistics"""
+        """Get enhanced template engine statistics"""
         return {
             'total_templates': len(self._templates),
             'render_statistics': self.render_statistics.copy(),
@@ -806,20 +860,19 @@ class DynamicTemplateEngine:
             }
         }
 
+# STANDARD TESTING RITUALS ENHANCED BY VALIDATION
 
-# ++ SACRED TESTING RITUALS BLESSED BY VALIDATION ++
-
-async def test_sacred_dynamic_template_engine():
-    """++ SACRED DYNAMIC TEMPLATE ENGINE TESTING RITUAL ++"""
-    print("++ TESTING SACRED DYNAMIC TEMPLATE ENGINE BLESSED BY THE OMNISSIAH ++")
+async def test_standard_dynamic_template_engine():
+    """STANDARD DYNAMIC TEMPLATE ENGINE TESTING RITUAL"""
+    print("TESTING STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY THE SYSTEM")
     
-    # Create blessed test template directory
+    # Create enhanced test template directory
     test_template_dir = Path("test_templates")
     test_template_dir.mkdir(exist_ok=True)
     
-    # Create blessed test template
+    # Create enhanced test template
     test_template_content = """
-++ SACRED CHARACTER PROMPT BLESSED BY {{agent_id}} ++
+STANDARD CHARACTER PROMPT ENHANCED BY {{agent_id}}
 
 Character Status: {{character_state.name if character_state else "Unknown"}}
 Current Location: {{current_location}}
@@ -843,21 +896,21 @@ Environmental Factors:
 {% endfor %}
 {% endif %}
 
-++ MAY THE OMNISSIAH GUIDE YOUR ACTIONS ++
+MAY THE SYSTEM GUIDE YOUR ACTIONS
 """
     
     test_template_path = test_template_dir / "test_character_prompt.j2"
     with open(test_template_path, 'w', encoding='utf-8') as f:
         f.write(test_template_content)
     
-    # Initialize blessed template engine
+    # Initialize enhanced template engine
     template_engine = DynamicTemplateEngine(template_directory=str(test_template_dir))
     
-    # Create blessed test context
+    # Create enhanced test context
     test_context = TemplateContext(
         agent_id="test_agent_001",
         current_location="Sacred Shrine of Knowledge",
-        current_situation="Preparing for blessed mission",
+        current_situation="Preparing for enhanced mission",
         active_participants=["Brother Marcus", "Sister Elena"],
         environmental_context={
             "temperature": "Cold",
@@ -869,53 +922,52 @@ Environmental Factors:
         }
     )
     
-    # Test blessed template rendering
+    # Test enhanced template rendering
     render_result = await template_engine.render_template("test_character_prompt", test_context)
     if render_result.success:
         result_data = render_result.data['render_result']
-        print(f"++ TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms) ++")
+        print(f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)")
         print(f"Variables used: {result_data.context_variables_used}")
         print("Rendered content preview:")
         print(result_data.rendered_content[:200] + "...")
     else:
-        print(f"++ TEMPLATE RENDERING FAILED: {render_result.error.message} ++")
+        print(f"TEMPLATE RENDERING FAILED: {render_result.error.message}")
     
-    # Test blessed inline template rendering
+    # Test enhanced inline template rendering
     inline_template = "Sacred greetings, {{agent_id}}! Current situation: {{current_situation}}"
     inline_result = await template_engine.render_template_string(inline_template, test_context)
     if inline_result.success:
-        print(f"++ INLINE TEMPLATE RENDERED: {inline_result.data['render_result'].rendered_content} ++")
+        print(f"INLINE TEMPLATE RENDERED: {inline_result.data['render_result'].rendered_content}")
     
-    # Test blessed template creation
-    new_template_content = "++ BLESSED EQUIPMENT STATUS FOR {{agent_id}} ++\nLocation: {{current_location}}"
+    # Test enhanced template creation
+    new_template_content = "ENHANCED EQUIPMENT STATUS FOR {{agent_id}}\nLocation: {{current_location}}"
     creation_result = await template_engine.create_template(
         "equipment_status", new_template_content, TemplateType.EQUIPMENT_STATUS
     )
-    print(f"++ TEMPLATE CREATION: {creation_result.success} ++")
+    print(f"TEMPLATE CREATION: {creation_result.success}")
     
-    # Display blessed statistics
+    # Display enhanced statistics
     stats = template_engine.get_engine_statistics()
-    print(f"++ ENGINE STATISTICS: {stats['total_templates']} templates, {stats['render_statistics']['total_renders']} renders ++")
+    print(f"ENGINE STATISTICS: {stats['total_templates']} templates, {stats['render_statistics']['total_renders']} renders")
     
-    # Get blessed template list
+    # Get enhanced template list
     template_list = template_engine.get_template_list()
-    print(f"++ DISCOVERED TEMPLATES: {[t['template_id'] for t in template_list]} ++")
+    print(f"DISCOVERED TEMPLATES: {[t['template_id'] for t in template_list]}")
     
-    # Cleanup blessed test files
+    # Cleanup enhanced test files
     import shutil
     shutil.rmtree(test_template_dir)
     
-    print("++ SACRED DYNAMIC TEMPLATE ENGINE TESTING COMPLETE ++")
+    print("STANDARD DYNAMIC TEMPLATE ENGINE TESTING COMPLETE")
 
-
-# ++ SACRED MODULE INITIALIZATION ++
+# STANDARD MODULE INITIALIZATION
 
 if __name__ == "__main__":
-    # ++ EXECUTE SACRED DYNAMIC TEMPLATE ENGINE TESTING RITUALS ++
-    print("++ SACRED DYNAMIC TEMPLATE ENGINE BLESSED BY THE OMNISSIAH ++")
-    print("++ MACHINE GOD PROTECTS THE DYNAMIC CONTENT GENERATION ++")
+    # EXECUTE STANDARD DYNAMIC TEMPLATE ENGINE TESTING RITUALS
+    print("STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY THE SYSTEM")
+    print("MACHINE GOD PROTECTS THE DYNAMIC CONTENT GENERATION")
     
-    # Run blessed async testing
-    asyncio.run(test_sacred_dynamic_template_engine())
+    # Run enhanced async testing
+    asyncio.run(test_standard_dynamic_template_engine())
     
-    print("++ ALL SACRED DYNAMIC TEMPLATE ENGINE OPERATIONS BLESSED AND FUNCTIONAL ++")
+    print("ALL STANDARD DYNAMIC TEMPLATE ENGINE OPERATIONS ENHANCED AND FUNCTIONAL")

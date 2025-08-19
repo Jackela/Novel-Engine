@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-++ SACRED SSL/TLS CONFIGURATION BLESSED BY CRYPTOGRAPHIC PROTECTION ++
+STANDARD SSL/TLS CONFIGURATION ENHANCED BY CRYPTOGRAPHIC PROTECTION
 =====================================================================
 
 Production-grade SSL/TLS configuration system providing secure HTTPS
 deployment with modern cryptographic standards and security protocols.
 
-++ THROUGH ENCRYPTED CHANNELS, WE ACHIEVE SECURE COMMUNICATION ++
+THROUGH ENCRYPTED CHANNELS, WE ACHIEVE SECURE COMMUNICATION
 
 Architecture: Comprehensive SSL/TLS configuration and certificate management
 Security Level: Enterprise Grade with Perfect Forward Secrecy
-Sacred Author: Tech-Priest Security-Mechanicus
-万机之神保佑此SSL配置系统 (May the Omnissiah bless this SSL configuration system)
+Author: Engineer Security-Engineering
+System保佑此SSL配置系统 (May the System bless this SSL configuration system)
 """
 
 import os
@@ -28,13 +28,13 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-# Sacred logging configuration
+# Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @dataclass
 class SSLConfig:
-    """++ SACRED SSL CONFIGURATION BLESSED BY SECURITY ++"""
+    """STANDARD SSL CONFIGURATION ENHANCED BY SECURITY"""
     cert_file: str
     key_file: str
     ca_file: Optional[str] = None
@@ -45,20 +45,20 @@ class SSLConfig:
     ssl_context: Optional[ssl.SSLContext] = None
 
 class SSLCertificateManager:
-    """++ SACRED SSL CERTIFICATE MANAGER BLESSED BY CRYPTOGRAPHY ++"""
+    """STANDARD SSL CERTIFICATE MANAGER ENHANCED BY CRYPTOGRAPHY"""
     
     def __init__(self, cert_dir: str = "certs"):
         self.cert_dir = Path(cert_dir)
         self.cert_dir.mkdir(exist_ok=True, mode=0o700)  # Secure permissions
         
-        logger.info(f"++ SSL CERTIFICATE MANAGER INITIALIZED: {self.cert_dir} ++")
+        logger.info(f"SSL CERTIFICATE MANAGER INITIALIZED: {self.cert_dir}")
     
     def generate_self_signed_cert(self, 
                                  domain: str = "localhost",
                                  alt_names: List[str] = None,
                                  days: int = 365) -> Tuple[str, str]:
         """
-        ++ SACRED SELF-SIGNED CERTIFICATE GENERATION ++
+        STANDARD SELF-SIGNED CERTIFICATE GENERATION
         
         Generate self-signed certificate for development/testing.
         """
@@ -141,11 +141,11 @@ class SSLCertificateManager:
         os.chmod(key_file, 0o600)
         os.chmod(cert_file, 0o644)
         
-        logger.info(f"++ SELF-SIGNED CERTIFICATE GENERATED: {cert_file}, {key_file} ++")
+        logger.info(f"SELF-SIGNED CERTIFICATE GENERATED: {cert_file}, {key_file}")
         return str(cert_file), str(key_file)
     
     def validate_certificate(self, cert_file: str, key_file: str) -> bool:
-        """++ SACRED CERTIFICATE VALIDATION ++"""
+        """STANDARD CERTIFICATE VALIDATION"""
         try:
             # Load certificate
             with open(cert_file, 'rb') as f:
@@ -163,28 +163,28 @@ class SSLCertificateManager:
             public_numbers = public_key.public_numbers()
             
             if private_numbers.public_numbers.n != public_numbers.n:
-                logger.error("++ CERTIFICATE VALIDATION FAILED: Key mismatch ++")
+                logger.error("CERTIFICATE VALIDATION FAILED: Key mismatch")
                 return False
             
             # Check expiration
             if cert.not_valid_after < datetime.utcnow():
-                logger.error("++ CERTIFICATE VALIDATION FAILED: Certificate expired ++")
+                logger.error("CERTIFICATE VALIDATION FAILED: Certificate expired")
                 return False
             
             # Check validity period
             if cert.not_valid_before > datetime.utcnow():
-                logger.error("++ CERTIFICATE VALIDATION FAILED: Certificate not yet valid ++")
+                logger.error("CERTIFICATE VALIDATION FAILED: Certificate not yet valid")
                 return False
             
-            logger.info("++ CERTIFICATE VALIDATION SUCCESSFUL ++")
+            logger.info("CERTIFICATE VALIDATION SUCCESSFUL")
             return True
             
         except Exception as e:
-            logger.error(f"++ CERTIFICATE VALIDATION ERROR: {e} ++")
+            logger.error(f"CERTIFICATE VALIDATION ERROR: {e}")
             return False
     
     def get_certificate_info(self, cert_file: str) -> Dict:
-        """++ SACRED CERTIFICATE INFORMATION EXTRACTION ++"""
+        """STANDARD CERTIFICATE INFORMATION EXTRACTION"""
         try:
             with open(cert_file, 'rb') as f:
                 cert_data = f.read()
@@ -218,11 +218,11 @@ class SSLCertificateManager:
             return info
             
         except Exception as e:
-            logger.error(f"++ CERTIFICATE INFO EXTRACTION ERROR: {e} ++")
+            logger.error(f"CERTIFICATE INFO EXTRACTION ERROR: {e}")
             return {}
 
 class SSLContextBuilder:
-    """++ SACRED SSL CONTEXT BUILDER BLESSED BY SECURITY ++"""
+    """STANDARD SSL CONTEXT BUILDER ENHANCED BY SECURITY"""
     
     @staticmethod
     def create_secure_context(cert_file: str, 
@@ -230,7 +230,7 @@ class SSLContextBuilder:
                             ca_file: Optional[str] = None,
                             require_client_cert: bool = False) -> ssl.SSLContext:
         """
-        ++ SACRED SECURE SSL CONTEXT CREATION ++
+        STANDARD SECURE SSL CONTEXT CREATION
         
         Creates SSL context with modern security standards:
         - TLS 1.2+ only
@@ -270,7 +270,7 @@ class SSLContextBuilder:
         
         context.check_hostname = False  # Disable for self-signed certs
         
-        logger.info("++ SECURE SSL CONTEXT CREATED ++")
+        logger.info("SECURE SSL CONTEXT CREATED")
         return context
     
     @staticmethod
@@ -278,7 +278,7 @@ class SSLContextBuilder:
                             cert_file: Optional[str] = None,
                             key_file: Optional[str] = None,
                             verify_ssl: bool = True) -> ssl.SSLContext:
-        """++ SACRED CLIENT SSL CONTEXT CREATION ++"""
+        """STANDARD CLIENT SSL CONTEXT CREATION"""
         context = ssl.create_default_context()
         
         if not verify_ssl:
@@ -295,19 +295,19 @@ class SSLContextBuilder:
         context.minimum_version = ssl.TLSVersion.TLSv1_2
         context.set_ciphers('ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS')
         
-        logger.info("++ CLIENT SSL CONTEXT CREATED ++")
+        logger.info("CLIENT SSL CONTEXT CREATED")
         return context
 
 class HTTPSConfigGenerator:
-    """++ SACRED HTTPS CONFIGURATION GENERATOR ++"""
+    """STANDARD HTTPS CONFIGURATION GENERATOR"""
     
     @staticmethod
     def generate_nginx_ssl_config(cert_file: str, 
                                  key_file: str,
                                  domain: str = "novel-engine.local") -> str:
-        """++ SACRED NGINX SSL CONFIGURATION GENERATION ++"""
+        """STANDARD NGINX SSL CONFIGURATION GENERATION"""
         config = f"""
-# ++ SACRED NGINX SSL CONFIGURATION BLESSED BY SECURITY ++
+# STANDARD NGINX SSL CONFIGURATION ENHANCED BY SECURITY
 server {{
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
@@ -376,9 +376,9 @@ server {{
     def generate_apache_ssl_config(cert_file: str, 
                                   key_file: str,
                                   domain: str = "novel-engine.local") -> str:
-        """++ SACRED APACHE SSL CONFIGURATION GENERATION ++"""
+        """STANDARD APACHE SSL CONFIGURATION GENERATION"""
         config = f"""
-# ++ SACRED APACHE SSL CONFIGURATION BLESSED BY SECURITY ++
+# STANDARD APACHE SSL CONFIGURATION ENHANCED BY SECURITY
 <VirtualHost *:443>
     ServerName {domain}
     DocumentRoot /var/www/html
@@ -419,7 +419,7 @@ server {{
         return config.strip()
 
 def setup_development_ssl(domain: str = "localhost") -> SSLConfig:
-    """++ SACRED DEVELOPMENT SSL SETUP ++"""
+    """STANDARD DEVELOPMENT SSL SETUP"""
     cert_manager = SSLCertificateManager()
     cert_file, key_file = cert_manager.generate_self_signed_cert(
         domain=domain,
@@ -439,7 +439,7 @@ def setup_development_ssl(domain: str = "localhost") -> SSLConfig:
 def setup_production_ssl(cert_file: str, 
                         key_file: str, 
                         ca_file: Optional[str] = None) -> SSLConfig:
-    """++ SACRED PRODUCTION SSL SETUP ++"""
+    """STANDARD PRODUCTION SSL SETUP"""
     cert_manager = SSLCertificateManager()
     
     # Validate certificates

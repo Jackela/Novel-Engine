@@ -18,7 +18,6 @@ from src.templates.character_template_manager import CharacterArchetype
 
 logger = logging.getLogger(__name__)
 
-
 class CharacterCreationRequest(BaseModel):
     """Request model for character creation."""
     agent_id: str = Field(..., min_length=3, max_length=50)
@@ -39,6 +38,18 @@ class CharacterCreationRequest(BaseModel):
     @field_validator('agent_id')
     @classmethod
     def validate_agent_id(cls, v):
+        """
+        Validate agent ID format.
+        
+        Args:
+            v: The agent ID value to validate
+            
+        Returns:
+            Lowercase version of the valid agent ID
+            
+        Raises:
+            ValueError: If agent ID contains invalid characters
+        """
         if not v.replace('_', '').replace('-', '').isalnum():
             raise ValueError('Agent ID must be alphanumeric with hyphens or underscores.')
         return v.lower()
@@ -46,6 +57,18 @@ class CharacterCreationRequest(BaseModel):
     @field_validator('skills')
     @classmethod
     def validate_skills(cls, v):
+        """
+        Validate skill values are within acceptable range.
+        
+        Args:
+            v: Dictionary of skill names to values
+            
+        Returns:
+            Validated skills dictionary
+            
+        Raises:
+            ValueError: If any skill value is outside the 0.0-1.0 range
+        """
         for skill, value in v.items():
             if not 0.0 <= value <= 1.0:
                 raise ValueError(f'Skill {skill} must be between 0.0 and 1.0.')

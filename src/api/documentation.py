@@ -345,6 +345,12 @@ def setup_enhanced_docs(app: FastAPI):
     
     # Override default OpenAPI schema generation
     def custom_openapi():
+        """
+        Generate custom OpenAPI schema with enhanced documentation.
+        
+        Returns:
+            Enhanced OpenAPI schema dictionary
+        """
         return doc_generator.generate_openapi_schema()
     
     app.openapi = custom_openapi

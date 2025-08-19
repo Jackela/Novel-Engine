@@ -46,7 +46,6 @@ from .export_integration_engine import ExportIntegrationEngine, ExportRequest
 
 logger = logging.getLogger(__name__)
 
-
 class IntegrationMode(Enum):
     """Integration operation modes."""
     TRADITIONAL_ONLY = "traditional_only"        # Use only traditional systems
@@ -55,14 +54,12 @@ class IntegrationMode(Enum):
     FULL_AI = "full_ai"                          # Complete AI intelligence mode
     EXPERIMENTAL = "experimental"                # Experimental AI features enabled
 
-
 class SystemIntegrationLevel(Enum):
     """Levels of system integration between traditional and AI systems."""
     ISOLATED = "isolated"                        # Systems operate independently
     COORDINATED = "coordinated"                  # Basic coordination and data sharing
     INTEGRATED = "integrated"                    # Deep integration with shared workflows
     UNIFIED = "unified"                          # Fully unified operation
-
 
 @dataclass
 class IntegrationConfig:
@@ -85,7 +82,6 @@ class IntegrationConfig:
     fallback_threshold: float = 0.1              # Error rate threshold for fallback
     performance_threshold: float = 2.0           # Response time threshold (seconds)
 
-
 @dataclass
 class IntegrationMetrics:
     """Metrics for system integration performance."""
@@ -99,7 +95,6 @@ class IntegrationMetrics:
     system_health_score: float = 1.0            # Overall integration health (0.0-1.0)
     cross_system_events: int = 0
     performance_improvements: Dict[str, float] = field(default_factory=dict)
-
 
 class IntegrationOrchestrator:
     """
@@ -656,7 +651,6 @@ class IntegrationOrchestrator:
             IntegrationMode.EXPERIMENTAL: IntelligenceLevel.EXPERIMENTAL
         }
         return mapping.get(self.config.integration_mode, IntelligenceLevel.STANDARD)
-
 
 # Export main class
 __all__ = ['IntegrationOrchestrator', 'IntegrationConfig', 'IntegrationMode', 'SystemIntegrationLevel']

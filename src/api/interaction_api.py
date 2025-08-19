@@ -32,6 +32,18 @@ class InteractionRequest(BaseModel):
     @field_validator('participants')
     @classmethod
     def validate_participants(cls, v):
+        """
+        Validate that all participants are unique.
+        
+        Args:
+            v: List of participant IDs
+            
+        Returns:
+            Validated participants list
+            
+        Raises:
+            ValueError: If duplicate participants are found
+        """
         if len(v) != len(set(v)):
             raise ValueError('Duplicate participants not allowed')
         return v
@@ -49,12 +61,26 @@ class WebSocketConnectionManager:
         self.active_connections: Dict[str, List[WebSocket]] = {}
     
     async def connect(self, websocket: WebSocket, interaction_id: str):
+        """
+        Connect a WebSocket to an interaction.
+        
+        Args:
+            websocket: The WebSocket connection to add
+            interaction_id: ID of the interaction to join
+        """
         await websocket.accept()
         if interaction_id not in self.active_connections:
             self.active_connections[interaction_id] = []
         self.active_connections[interaction_id].append(websocket)
     
     def disconnect(self, websocket: WebSocket, interaction_id: str):
+        """
+        Disconnect a WebSocket from an interaction.
+        
+        Args:
+            websocket: The WebSocket connection to remove
+            interaction_id: ID of the interaction to leave
+        """
         if interaction_id in self.active_connections:
             self.active_connections[interaction_id].remove(websocket)
             if not self.active_connections[interaction_id]:

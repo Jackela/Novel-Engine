@@ -30,7 +30,6 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-
 class MetricType(Enum):
     """Types of metrics tracked by the analytics platform."""
     STORY_GENERATION = "story_generation"
@@ -42,7 +41,6 @@ class MetricType(Enum):
     USAGE_PATTERNS = "usage_patterns"
     SUCCESS_INDICATORS = "success_indicators"
 
-
 class TimeWindow(Enum):
     """Time windows for analytics aggregation."""
     REAL_TIME = "real_time"       # Last 5 minutes
@@ -52,7 +50,6 @@ class TimeWindow(Enum):
     MONTHLY = "monthly"           # Last 30 days
     ALL_TIME = "all_time"         # All available data
 
-
 class EngagementLevel(Enum):
     """User engagement levels."""
     HIGH = "high"                 # Very active users
@@ -60,7 +57,6 @@ class EngagementLevel(Enum):
     LOW = "low"                   # Infrequent users
     NEW = "new"                   # New users
     INACTIVE = "inactive"         # Users who haven't been active recently
-
 
 @dataclass
 class AnalyticsEvent:
@@ -75,7 +71,6 @@ class AnalyticsEvent:
     properties: Dict[str, Any] = field(default_factory=dict)
     metrics: Dict[str, float] = field(default_factory=dict)
     tags: List[str] = field(default_factory=list)
-
 
 @dataclass
 class UserEngagement:
@@ -92,7 +87,6 @@ class UserEngagement:
     quality_improvements: float = 0.0
     retention_score: float = 0.0
 
-
 @dataclass
 class CharacterAnalytics:
     """Character usage and popularity analytics."""
@@ -107,7 +101,6 @@ class CharacterAnalytics:
     quality_contribution: float = 0.0
     user_feedback: List[str] = field(default_factory=list)
     usage_contexts: Dict[str, int] = field(default_factory=dict)
-
 
 @dataclass
 class StoryAnalytics:
@@ -125,7 +118,6 @@ class StoryAnalytics:
     improvement_suggestions_applied: int = 0
     export_count: int = 0
 
-
 @dataclass
 class SystemMetrics:
     """System performance and health metrics."""
@@ -140,7 +132,6 @@ class SystemMetrics:
     database_performance: float = 0.0
     cache_hit_rate: float = 0.0
 
-
 @dataclass
 class AnalyticsReport:
     """Comprehensive analytics report."""
@@ -154,7 +145,6 @@ class AnalyticsReport:
     recommendations: List[str] = field(default_factory=list)
     visualizations: Dict[str, Any] = field(default_factory=dict)
     raw_data: Optional[Dict[str, Any]] = None
-
 
 class AnalyticsPlatform:
     """
@@ -1135,7 +1125,6 @@ class AnalyticsPlatform:
             "Experiment with different story genres",
             "Use story quality improvement suggestions"
         ]
-
 
 def create_analytics_platform(data_retention_days: int = 90) -> AnalyticsPlatform:
     """

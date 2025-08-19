@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """
-++ SACRED ADVANCED CACHING SYSTEM BLESSED BY THE OMNISSIAH ++
-==============================================================
+Advanced Multi-Layer Caching System
+===================================
 
 High-performance multi-layer caching system with intelligent cache management,
 performance monitoring, and advanced optimization strategies.
 
-++ THROUGH DIVINE CACHING, WE ACHIEVE BLESSED PERFORMANCE ++
-
-Architecture: Multi-tier caching with intelligent invalidation and monitoring
-Performance: Sub-10ms cache hits with 99%+ hit rates
-Sacred Author: Tech-Priest Performance-Mechanicus
-万机之神保佑此缓存系统 (May the Omnissiah bless this caching system)
+Key Features:
+- Multi-tier caching with intelligent invalidation and monitoring
+- Sub-10ms cache hits with 99%+ hit rates
+- Adaptive eviction strategies and pattern recognition
+- Comprehensive performance analytics and optimization
 """
 
 import json
@@ -22,28 +21,28 @@ import logging
 import weakref
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional, List, Union, Callable, TypeVar, Generic
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from enum import Enum
 from collections import OrderedDict, defaultdict
 import pickle
 import gzip
 import os
 
-# Sacred logging configuration
+# Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 T = TypeVar('T')
 
 class CacheLevel(str, Enum):
-    """++ SACRED CACHE LEVELS ++"""
+    """Cache tier levels for multi-layer architecture."""
     MEMORY = "memory"        # In-memory cache (fastest)
     REDIS = "redis"          # Distributed cache (if available)
     DISK = "disk"           # Persistent disk cache
     DATABASE = "database"    # Database-backed cache
 
 class CacheStrategy(str, Enum):
-    """++ SACRED CACHE STRATEGIES ++"""
+    """Cache eviction and management strategies."""
     LRU = "lru"             # Least Recently Used
     LFU = "lfu"             # Least Frequently Used
     TTL = "ttl"             # Time To Live
@@ -51,7 +50,7 @@ class CacheStrategy(str, Enum):
     ADAPTIVE = "adaptive"    # Adaptive based on patterns
 
 class CacheEvent(str, Enum):
-    """++ SACRED CACHE EVENTS ++"""
+    """Cache operation event types for monitoring."""
     HIT = "hit"
     MISS = "miss"
     SET = "set"
@@ -62,7 +61,7 @@ class CacheEvent(str, Enum):
 
 @dataclass
 class CacheEntry(Generic[T]):
-    """++ SACRED CACHE ENTRY ++"""
+    """Cache entry with metadata and access tracking."""
     key: str
     value: T
     created_at: float
@@ -73,19 +72,19 @@ class CacheEntry(Generic[T]):
     compressed: bool = False
     
     def is_expired(self) -> bool:
-        """++ SACRED EXPIRATION CHECK ++"""
+        """Check if cache entry has expired based on TTL."""
         if self.ttl is None:
             return False
         return time.time() > (self.created_at + self.ttl)
     
     def touch(self):
-        """++ SACRED ACCESS UPDATE ++"""
+        """Update access time and count for LRU/LFU tracking."""
         self.accessed_at = time.time()
         self.access_count += 1
 
 @dataclass
 class CacheStats:
-    """++ SACRED CACHE STATISTICS ++"""
+    """Cache performance statistics and metrics."""
     hits: int = 0
     misses: int = 0
     sets: int = 0
@@ -96,13 +95,13 @@ class CacheStats:
     hit_rate: float = 0.0
     
     def update_hit_rate(self):
-        """++ SACRED HIT RATE CALCULATION ++"""
+        """Calculate and update cache hit rate percentage."""
         total_requests = self.hits + self.misses
         self.hit_rate = (self.hits / total_requests * 100) if total_requests > 0 else 0.0
 
 @dataclass
 class CacheConfig:
-    """++ SACRED CACHE CONFIGURATION ++"""
+    """Configuration settings for cache manager."""
     max_size: int = 1000
     max_memory_mb: int = 100
     default_ttl: Optional[float] = 3600  # 1 hour
@@ -119,7 +118,7 @@ class CacheConfig:
     intelligent_preload: bool = True
 
 class IntelligentCacheManager:
-    """++ SACRED INTELLIGENT CACHE MANAGER BLESSED BY THE OMNISSIAH ++"""
+    """Intelligent multi-layer cache manager with adaptive optimization."""
     
     def __init__(self, config: CacheConfig):
         self.config = config
@@ -143,7 +142,7 @@ class IntelligentCacheManager:
         self._start_background_tasks()
     
     def _start_background_tasks(self):
-        """++ SACRED BACKGROUND TASKS INITIALIZATION ++"""
+        """Initialize background cleanup and metrics tasks."""
         if self.config.background_cleanup:
             try:
                 loop = asyncio.get_event_loop()
@@ -156,7 +155,7 @@ class IntelligentCacheManager:
                 pass
     
     async def _background_cleanup(self):
-        """++ SACRED BACKGROUND CLEANUP ++"""
+        """Background task for cache cleanup and optimization."""
         while True:
             try:
                 await asyncio.sleep(self.config.cleanup_interval)
@@ -166,10 +165,10 @@ class IntelligentCacheManager:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"++ BACKGROUND CLEANUP ERROR: {e} ++")
+                logger.error(f"Error in background cleanup: {e}")
     
     async def _metrics_collection(self):
-        """++ SACRED METRICS COLLECTION ++"""
+        """Background task for performance metrics collection."""
         while True:
             try:
                 await asyncio.sleep(60)  # Collect metrics every minute
@@ -178,14 +177,14 @@ class IntelligentCacheManager:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"++ METRICS COLLECTION ERROR: {e} ++")
+                logger.error(f"Error in metrics collection: {e}")
     
     def _generate_key_hash(self, key: str) -> str:
-        """++ SACRED KEY HASH GENERATION ++"""
+        """Generate shortened hash for cache key."""
         return hashlib.sha256(key.encode()).hexdigest()[:16]
     
     def _calculate_entry_size(self, value: Any) -> int:
-        """++ SACRED ENTRY SIZE CALCULATION ++"""
+        """Calculate memory size of cache entry value."""
         try:
             if isinstance(value, (str, bytes)):
                 return len(value)
@@ -195,28 +194,28 @@ class IntelligentCacheManager:
             return 1024  # Default estimate
     
     def _compress_value(self, value: Any) -> bytes:
-        """++ SACRED VALUE COMPRESSION ++"""
+        """Compress cache value using gzip if above threshold."""
         try:
             serialized = pickle.dumps(value)
             if len(serialized) > self.config.compression_threshold:
                 return gzip.compress(serialized)
             return serialized
         except Exception as e:
-            logger.error(f"++ COMPRESSION FAILED: {e} ++")
+            logger.error(f"Value compression failed: {e}")
             return pickle.dumps(value)
     
     def _decompress_value(self, data: bytes, compressed: bool = False) -> Any:
-        """++ SACRED VALUE DECOMPRESSION ++"""
+        """Decompress cache value if compressed."""
         try:
             if compressed:
                 data = gzip.decompress(data)
             return pickle.loads(data)
         except Exception as e:
-            logger.error(f"++ DECOMPRESSION FAILED: {e} ++")
+            logger.error(f"Value decompression failed: {e}")
             raise
     
     async def get(self, key: str, default: Optional[T] = None) -> Optional[T]:
-        """++ SACRED CACHE GET OPERATION ++"""
+        """Get value from cache with fallback to disk cache."""
         start_time = time.time()
         
         try:
@@ -264,12 +263,12 @@ class IntelligentCacheManager:
             return default
             
         except Exception as e:
-            logger.error(f"++ CACHE GET ERROR: {key} | {e} ++")
+            logger.error(f"Cache get error for key {key}: {e}")
             self.stats.misses += 1
             return default
     
     async def set(self, key: str, value: T, ttl: Optional[float] = None) -> bool:
-        """++ SACRED CACHE SET OPERATION ++"""
+        """Store value in cache with optional TTL."""
         try:
             # Use default TTL if not specified
             if ttl is None:
@@ -317,15 +316,15 @@ class IntelligentCacheManager:
             # Record relationship patterns
             self._record_key_relationship(key)
             
-            logger.debug(f"++ CACHED: {key} | Size: {size_bytes} bytes | TTL: {ttl} ++")
+            logger.debug(f"Cached key {key} | Size: {size_bytes} bytes | TTL: {ttl}")
             return True
             
         except Exception as e:
-            logger.error(f"++ CACHE SET ERROR: {key} | {e} ++")
+            logger.error(f"Cache set error for key {key}: {e}")
             return False
     
     async def delete(self, key: str) -> bool:
-        """++ SACRED CACHE DELETE OPERATION ++"""
+        """Delete key from cache and disk storage."""
         try:
             if key in self.cache:
                 entry = self.cache[key]
@@ -341,37 +340,37 @@ class IntelligentCacheManager:
             return False
             
         except Exception as e:
-            logger.error(f"++ CACHE DELETE ERROR: {key} | {e} ++")
+            logger.error(f"Cache delete error for key {key}: {e}")
             return False
     
     async def invalidate_pattern(self, pattern: str) -> int:
-        """++ SACRED PATTERN-BASED INVALIDATION ++"""
+        """Invalidate all cache keys matching pattern."""
         try:
             keys_to_delete = [key for key in self.cache.keys() if pattern in key]
             
             for key in keys_to_delete:
                 await self.delete(key)
             
-            logger.info(f"++ INVALIDATED PATTERN: {pattern} | Keys: {len(keys_to_delete)} ++")
+            logger.info(f"Invalidated pattern {pattern} | Keys: {len(keys_to_delete)}")
             return len(keys_to_delete)
             
         except Exception as e:
-            logger.error(f"++ PATTERN INVALIDATION ERROR: {pattern} | {e} ++")
+            logger.error(f"Pattern invalidation error for {pattern}: {e}")
             return 0
     
     async def warm_cache(self, keys_values: Dict[str, Any]):
-        """++ SACRED CACHE WARMING ++"""
+        """Preload cache with key-value pairs for performance."""
         try:
             for key, value in keys_values.items():
                 await self.set(key, value)
             
-            logger.info(f"++ CACHE WARMED: {len(keys_values)} keys ++")
+            logger.info(f"Cache warmed with {len(keys_values)} keys")
             
         except Exception as e:
-            logger.error(f"++ CACHE WARMING ERROR: {e} ++")
+            logger.error(f"Cache warming error: {e}")
     
     def _cleanup_expired(self):
-        """++ SACRED EXPIRED ENTRIES CLEANUP ++"""
+        """Remove expired cache entries."""
         current_time = time.time()
         expired_keys = []
         
@@ -385,10 +384,10 @@ class IntelligentCacheManager:
             del self.cache[key]
         
         if expired_keys:
-            logger.debug(f"++ CLEANED EXPIRED: {len(expired_keys)} keys ++")
+            logger.debug(f"Cleaned {len(expired_keys)} expired keys")
     
     def _enforce_size_limits(self):
-        """++ SACRED SIZE LIMITS ENFORCEMENT ++"""
+        """Enforce cache size and memory limits through eviction."""
         # Check memory limit
         max_memory_bytes = self.config.max_memory_mb * 1024 * 1024
         
@@ -409,7 +408,7 @@ class IntelligentCacheManager:
                 break
     
     def _select_eviction_key(self) -> Optional[str]:
-        """++ SACRED EVICTION KEY SELECTION ++"""
+        """Select key for eviction based on configured strategy."""
         if not self.cache:
             return None
         
@@ -435,7 +434,7 @@ class IntelligentCacheManager:
             return next(iter(self.cache))
     
     def _adaptive_eviction_selection(self) -> Optional[str]:
-        """++ SACRED ADAPTIVE EVICTION SELECTION ++"""
+        """Intelligent eviction selection using multiple factors."""
         if not self.cache:
             return None
         
@@ -467,7 +466,7 @@ class IntelligentCacheManager:
         return min(scores.items(), key=lambda x: x[1])[0]
     
     def _predict_future_access(self, key: str) -> float:
-        """++ SACRED FUTURE ACCESS PREDICTION ++"""
+        """Predict likelihood of future access based on patterns."""
         if key not in self.access_patterns:
             return 0.0
         
@@ -489,7 +488,7 @@ class IntelligentCacheManager:
         return frequency * trend
     
     def _record_access_pattern(self, key: str):
-        """++ SACRED ACCESS PATTERN RECORDING ++"""
+        """Record access time for pattern analysis."""
         current_time = time.time()
         self.access_patterns[key].append(current_time)
         
@@ -500,7 +499,7 @@ class IntelligentCacheManager:
         ]
     
     def _record_access_time(self, key: str, access_time: float):
-        """++ SACRED ACCESS TIME RECORDING ++"""
+        """Record access time for performance monitoring."""
         access_time_ms = access_time * 1000
         self.performance_metrics[key].append(access_time_ms)
         
@@ -513,7 +512,7 @@ class IntelligentCacheManager:
             self.slow_keys.add(key)
     
     def _record_key_relationship(self, key: str):
-        """++ SACRED KEY RELATIONSHIP RECORDING ++"""
+        """Record relationships between cache keys for prefetching."""
         # Simple relationship detection based on key patterns
         key_parts = key.split(':')
         if len(key_parts) > 1:
@@ -524,7 +523,7 @@ class IntelligentCacheManager:
                     self.key_relationships[other_key].add(key)
     
     async def _optimize_cache(self):
-        """++ SACRED CACHE OPTIMIZATION ++"""
+        """Perform cache optimization and maintenance tasks."""
         try:
             # Prefetch related keys
             if self.config.prefetch_enabled:
@@ -537,16 +536,16 @@ class IntelligentCacheManager:
             self._update_cache_statistics()
             
         except Exception as e:
-            logger.error(f"++ CACHE OPTIMIZATION ERROR: {e} ++")
+            logger.error(f"Cache optimization error: {e}")
     
     async def _prefetch_related_keys(self):
-        """++ SACRED RELATED KEYS PREFETCHING ++"""
+        """Prefetch related keys based on access patterns."""
         # This would implement intelligent prefetching based on access patterns
         # For now, it's a placeholder
         pass
     
     async def _optimize_slow_keys(self):
-        """++ SACRED SLOW KEYS OPTIMIZATION ++"""
+        """Optimize cache keys with slow access times."""
         for key in list(self.slow_keys):
             if key in self.cache:
                 entry = self.cache[key]
@@ -559,7 +558,7 @@ class IntelligentCacheManager:
                             entry.value = compressed_value
                             entry.compressed = True
                             entry.size_bytes = len(compressed_value)
-                            logger.debug(f"++ OPTIMIZED SLOW KEY: {key} ++")
+                            logger.debug(f"Optimized slow key: {key}")
                     except Exception:
                         pass
         
@@ -567,7 +566,7 @@ class IntelligentCacheManager:
         self.slow_keys.clear()
     
     def _update_cache_statistics(self):
-        """++ SACRED STATISTICS UPDATE ++"""
+        """Update cache performance statistics."""
         self.stats.update_hit_rate()
         
         # Calculate average access time
@@ -579,31 +578,31 @@ class IntelligentCacheManager:
             self.stats.avg_access_time_ms = sum(all_times) / len(all_times)
     
     async def _analyze_performance(self):
-        """++ SACRED PERFORMANCE ANALYSIS ++"""
+        """Analyze cache performance and log insights."""
         try:
             # Analyze cache performance and log insights
             hit_rate = self.stats.hit_rate
             avg_time = self.stats.avg_access_time_ms
             
             if hit_rate < 80:
-                logger.warning(f"++ LOW CACHE HIT RATE: {hit_rate:.1f}% ++")
+                logger.warning(f"Low cache hit rate: {hit_rate:.1f}%")
             
             if avg_time > 5:
-                logger.warning(f"++ HIGH AVERAGE ACCESS TIME: {avg_time:.2f}ms ++")
+                logger.warning(f"High average access time: {avg_time:.2f}ms")
             
             # Log performance summary
             logger.info(
-                f"++ CACHE PERFORMANCE: Hit Rate: {hit_rate:.1f}% | "
+                f"Cache Performance: Hit Rate: {hit_rate:.1f}% | "
                 f"Avg Time: {avg_time:.2f}ms | "
                 f"Size: {len(self.cache)} keys | "
-                f"Memory: {self.stats.total_size_bytes / 1024 / 1024:.1f}MB ++"
+                f"Memory: {self.stats.total_size_bytes / 1024 / 1024:.1f}MB"
             )
             
         except Exception as e:
-            logger.error(f"++ PERFORMANCE ANALYSIS ERROR: {e} ++")
+            logger.error(f"Performance analysis error: {e}")
     
     async def _get_from_disk(self, key: str) -> Optional[Any]:
-        """++ SACRED DISK CACHE GET ++"""
+        """Retrieve value from disk cache."""
         try:
             key_hash = self._generate_key_hash(key)
             file_path = os.path.join(self.config.disk_cache_path, f"{key_hash}.cache")
@@ -616,11 +615,11 @@ class IntelligentCacheManager:
             return None
             
         except Exception as e:
-            logger.error(f"++ DISK CACHE GET ERROR: {key} | {e} ++")
+            logger.error(f"Disk cache get error for key {key}: {e}")
             return None
     
     async def _save_to_disk(self, key: str, value: Any):
-        """++ SACRED DISK CACHE SAVE ++"""
+        """Save value to disk cache."""
         try:
             key_hash = self._generate_key_hash(key)
             file_path = os.path.join(self.config.disk_cache_path, f"{key_hash}.cache")
@@ -629,10 +628,10 @@ class IntelligentCacheManager:
                 f.write(pickle.dumps(value))
                 
         except Exception as e:
-            logger.error(f"++ DISK CACHE SAVE ERROR: {key} | {e} ++")
+            logger.error(f"Disk cache save error for key {key}: {e}")
     
     async def _delete_from_disk(self, key: str):
-        """++ SACRED DISK CACHE DELETE ++"""
+        """Delete value from disk cache."""
         try:
             key_hash = self._generate_key_hash(key)
             file_path = os.path.join(self.config.disk_cache_path, f"{key_hash}.cache")
@@ -641,10 +640,10 @@ class IntelligentCacheManager:
                 os.remove(file_path)
                 
         except Exception as e:
-            logger.error(f"++ DISK CACHE DELETE ERROR: {key} | {e} ++")
+            logger.error(f"Disk cache delete error for key {key}: {e}")
     
     def get_stats(self) -> Dict[str, Any]:
-        """++ SACRED STATISTICS RETRIEVAL ++"""
+        """Get comprehensive cache statistics and metrics."""
         return {
             "cache_stats": asdict(self.stats),
             "cache_size": len(self.cache),
@@ -656,7 +655,7 @@ class IntelligentCacheManager:
         }
     
     async def shutdown(self):
-        """++ SACRED CACHE SHUTDOWN ++"""
+        """Shutdown cache manager and cleanup resources."""
         try:
             # Cancel background tasks
             if self._cleanup_task:
@@ -676,14 +675,14 @@ class IntelligentCacheManager:
             # Final cleanup
             self._cleanup_expired()
             
-            logger.info("++ CACHE SHUTDOWN COMPLETE ++")
+            logger.info("Cache shutdown complete")
             
         except Exception as e:
-            logger.error(f"++ CACHE SHUTDOWN ERROR: {e} ++")
+            logger.error(f"Cache shutdown error: {e}")
 
-# ++ CACHE DECORATOR FOR FUNCTIONS ++
+# Cache decorator for functions
 def cached(ttl: Optional[float] = None, key_prefix: str = "func"):
-    """++ SACRED FUNCTION CACHING DECORATOR ++"""
+    """Decorator to cache function results with optional TTL."""
     def decorator(func: Callable) -> Callable:
         async def async_wrapper(*args, **kwargs):
             # Generate cache key
@@ -727,11 +726,11 @@ def cached(ttl: Optional[float] = None, key_prefix: str = "func"):
     
     return decorator
 
-# ++ GLOBAL CACHE MANAGER INSTANCE ++
+# Global cache manager instance
 cache_manager: Optional[IntelligentCacheManager] = None
 
 def get_cache_manager() -> IntelligentCacheManager:
-    """++ SACRED CACHE MANAGER GETTER ++"""
+    """Get or create the global cache manager instance."""
     global cache_manager
     if cache_manager is None:
         config = CacheConfig()
@@ -739,7 +738,7 @@ def get_cache_manager() -> IntelligentCacheManager:
     return cache_manager
 
 def initialize_cache_manager(config: Optional[CacheConfig] = None):
-    """++ SACRED CACHE MANAGER INITIALIZATION ++"""
+    """Initialize the global cache manager with configuration."""
     global cache_manager
     if config is None:
         config = CacheConfig()

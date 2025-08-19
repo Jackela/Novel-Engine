@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-++ SACRED SECURITY FRAMEWORK TEST SUITE BLESSED BY THE OMNISSIAH ++
-====================================================================
+Security Framework Test Suite
+============================
 
 Comprehensive test suite for the enterprise-grade security framework
 validating authentication, authorization, input validation, and more.
 
-++ THROUGH DIVINE TESTING, WE ACHIEVE BLESSED VALIDATION ++
+Professional security testing implementation.
 
 Test Coverage: Authentication, Authorization, Input Validation, Rate Limiting,
                Security Headers, Data Protection, Security Logging
-Sacred Author: Tech-Priest Testing-Mechanicus
-万机之神保佑此测试套件 (May the Omnissiah bless this test suite)
+Author: Novel Engine Development Team
+Professional test suite for enterprise security validation.
 """
 
 import pytest
@@ -46,7 +46,7 @@ from src.security.security_logging import (
 )
 
 class TestSecurityService:
-    """++ SACRED SECURITY SERVICE TESTS ++"""
+    """Security Service Tests"""
     
     @pytest.fixture
     async def security_service(self):
@@ -232,7 +232,7 @@ class TestSecurityService:
         assert validated_user.username == "apiuser"
 
 class TestInputValidator:
-    """++ SACRED INPUT VALIDATOR TESTS ++"""
+    """Input Validator Tests"""
     
     @pytest.fixture
     def validator(self):
@@ -323,7 +323,7 @@ class TestInputValidator:
             validator.validate_json(malicious_json)
 
 class TestRateLimiter:
-    """++ SACRED RATE LIMITER TESTS ++"""
+    """Rate Limiter Tests"""
     
     @pytest.fixture
     def rate_limiter(self):
@@ -403,7 +403,7 @@ class TestRateLimiter:
             assert result is True
 
 class TestSecurityHeaders:
-    """++ SACRED SECURITY HEADERS TESTS ++"""
+    """Security Headers Tests"""
     
     @pytest.fixture
     def security_headers(self):
@@ -468,7 +468,7 @@ class TestSecurityHeaders:
         assert "geolocation=()" in permissions_header
 
 class TestDataProtection:
-    """++ SACRED DATA PROTECTION TESTS ++"""
+    """Data Protection Tests"""
     
     @pytest.fixture
     async def data_protection_service(self):
@@ -587,7 +587,7 @@ class TestDataProtection:
         # For now, we just verify no exception was raised
 
 class TestSecurityLogging:
-    """++ SACRED SECURITY LOGGING TESTS ++"""
+    """Security Logging Tests"""
     
     @pytest.fixture
     async def security_logger(self):
@@ -683,7 +683,7 @@ class TestSecurityLogging:
         assert len(events) > 0
 
 class TestIntegratedSecurity:
-    """++ SACRED INTEGRATED SECURITY TESTS ++"""
+    """Integrated Security Tests"""
     
     @pytest.mark.asyncio
     async def test_end_to_end_security_flow(self):

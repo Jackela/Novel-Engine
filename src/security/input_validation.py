@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-++ SACRED INPUT VALIDATION SYSTEM BLESSED BY THE OMNISSIAH ++
+STANDARD INPUT VALIDATION SYSTEM ENHANCED BY THE SYSTEM
 =============================================================
 
 Comprehensive input validation and sanitization system providing protection
 against injection attacks, XSS, and malicious input patterns.
 
-++ THROUGH DIVINE VALIDATION, WE ACHIEVE BLESSED PURITY ++
+THROUGH ADVANCED VALIDATION, WE ACHIEVE ENHANCED PURITY
 
 Architecture: Multi-layer validation with sanitization and pattern matching
 Security Level: Enterprise Grade with Zero Trust Input Handling
-Sacred Author: Tech-Priest Validation-Mechanicus
-万机之神保佑此验证系统 (May the Omnissiah bless this validation system)
+Author: Engineer Validation-Engineering
+System保佑此验证系统 (May the System bless this validation system)
 """
 
 import re
@@ -27,19 +27,19 @@ from fastapi import Request, HTTPException
 from pydantic import BaseModel, Field, validator
 from starlette.middleware.base import BaseHTTPMiddleware
 
-# Sacred logging configuration
+# Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ValidationSeverity(str, Enum):
-    """++ SACRED VALIDATION SEVERITY LEVELS ++"""
+    """STANDARD VALIDATION SEVERITY LEVELS"""
     LOW = "low"           # Warning - log but allow
     MEDIUM = "medium"     # Block with 400 error
     HIGH = "high"         # Block with 400 error + security log
     CRITICAL = "critical" # Block with 403 error + immediate security alert
 
 class InputType(str, Enum):
-    """++ SACRED INPUT TYPE CLASSIFICATIONS ++"""
+    """STANDARD INPUT TYPE CLASSIFICATIONS"""
     TEXT = "text"
     USERNAME = "username"
     EMAIL = "email"
@@ -53,7 +53,7 @@ class InputType(str, Enum):
 
 @dataclass
 class ValidationRule:
-    """++ SACRED VALIDATION RULE BLESSED BY SECURITY ++"""
+    """STANDARD VALIDATION RULE ENHANCED BY SECURITY"""
     name: str
     pattern: Pattern[str]
     severity: ValidationSeverity
@@ -62,13 +62,13 @@ class ValidationRule:
 
 @dataclass
 class SanitizationRule:
-    """++ SACRED SANITIZATION RULE BLESSED BY PURIFICATION ++"""
+    """STANDARD SANITIZATION RULE ENHANCED BY PURIFICATION"""
     name: str
     sanitizer: Callable[[str], str]
     input_types: List[InputType]
 
 class ValidationError(Exception):
-    """++ BLESSED VALIDATION EXCEPTION ++"""
+    """ENHANCED VALIDATION EXCEPTION"""
     def __init__(self, message: str, severity: ValidationSeverity, rule_name: str):
         self.message = message
         self.severity = severity
@@ -76,7 +76,7 @@ class ValidationError(Exception):
         super().__init__(message)
 
 class InputValidator:
-    """++ SACRED INPUT VALIDATOR BLESSED BY THE OMNISSIAH ++"""
+    """STANDARD INPUT VALIDATOR ENHANCED BY THE SYSTEM"""
     
     def __init__(self):
         self.validation_rules: List[ValidationRule] = []
@@ -84,7 +84,7 @@ class InputValidator:
         self._initialize_default_rules()
     
     def _initialize_default_rules(self):
-        """++ SACRED DEFAULT RULES INITIALIZATION ++"""
+        """STANDARD DEFAULT RULES INITIALIZATION"""
         
         # SQL Injection Protection
         sql_injection_patterns = [
@@ -271,17 +271,17 @@ class InputValidator:
         ]
     
     def add_validation_rule(self, rule: ValidationRule):
-        """++ SACRED CUSTOM VALIDATION RULE ADDITION ++"""
+        """STANDARD CUSTOM VALIDATION RULE ADDITION"""
         self.validation_rules.append(rule)
-        logger.info(f"++ VALIDATION RULE ADDED: {rule.name} ++")
+        logger.info(f"VALIDATION RULE ADDED: {rule.name}")
     
     def add_sanitization_rule(self, rule: SanitizationRule):
-        """++ SACRED CUSTOM SANITIZATION RULE ADDITION ++"""
+        """STANDARD CUSTOM SANITIZATION RULE ADDITION"""
         self.sanitization_rules.append(rule)
-        logger.info(f"++ SANITIZATION RULE ADDED: {rule.name} ++")
+        logger.info(f"SANITIZATION RULE ADDED: {rule.name}")
     
     def validate_input(self, value: str, input_type: InputType) -> str:
-        """++ SACRED INPUT VALIDATION BLESSED BY SECURITY ++"""
+        """STANDARD INPUT VALIDATION ENHANCED BY SECURITY"""
         if not isinstance(value, str):
             if value is None:
                 return ""
@@ -302,10 +302,10 @@ class InputValidator:
                     
                     # Log security event
                     logger.warning(
-                        f"++ VALIDATION VIOLATION: {rule.name} | "
+                        f"VALIDATION VIOLATION: {rule.name} | "
                         f"Type: {input_type.value} | "
                         f"Severity: {rule.severity.value} | "
-                        f"Value: {value[:100]}{'...' if len(value) > 100 else ''} ++"
+                        f"Value: {value[:100]}{'...' if len(value) > 100 else ''}"
                     )
                     
                     # Raise exception for medium+ severity
@@ -318,20 +318,20 @@ class InputValidator:
                 try:
                     value = rule.sanitizer(value)
                 except Exception as e:
-                    logger.error(f"++ SANITIZATION ERROR: {rule.name} | Error: {e} ++")
+                    logger.error(f"SANITIZATION ERROR: {rule.name} | Error: {e}")
         
         # Log sanitization if value changed
         if value != original_value:
             logger.info(
-                f"++ INPUT SANITIZED: Type: {input_type.value} | "
+                f"INPUT SANITIZED: Type: {input_type.value} | "
                 f"Original length: {len(original_value)} | "
-                f"Sanitized length: {len(value)} ++"
+                f"Sanitized length: {len(value)}"
             )
         
         return value
     
     def validate_json(self, json_str: str) -> Dict[str, Any]:
-        """++ SACRED JSON VALIDATION ++"""
+        """STANDARD JSON VALIDATION"""
         try:
             # First validate as text
             validated_str = self.validate_input(json_str, InputType.JSON)
@@ -348,7 +348,7 @@ class InputValidator:
             raise ValidationError(f"Invalid JSON format: {e}", ValidationSeverity.MEDIUM, "json_parse_error")
     
     def _validate_json_recursive(self, obj: Any) -> Any:
-        """++ SACRED RECURSIVE JSON VALIDATION ++"""
+        """STANDARD RECURSIVE JSON VALIDATION"""
         if isinstance(obj, dict):
             return {key: self._validate_json_recursive(value) for key, value in obj.items()}
         elif isinstance(obj, list):
@@ -359,7 +359,7 @@ class InputValidator:
             return obj
     
     def validate_request_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """++ SACRED REQUEST DATA VALIDATION ++"""
+        """STANDARD REQUEST DATA VALIDATION"""
         validated_data = {}
         
         for key, value in data.items():
@@ -380,7 +380,7 @@ class InputValidator:
         return validated_data
     
     def _determine_input_type(self, field_name: str) -> InputType:
-        """++ SACRED INPUT TYPE DETERMINATION ++"""
+        """STANDARD INPUT TYPE DETERMINATION"""
         field_name_lower = field_name.lower()
         
         if 'email' in field_name_lower:
@@ -401,14 +401,14 @@ class InputValidator:
             return InputType.TEXT
 
 class ValidationMiddleware(BaseHTTPMiddleware):
-    """++ SACRED VALIDATION MIDDLEWARE BLESSED BY PROTECTION ++"""
+    """STANDARD VALIDATION MIDDLEWARE ENHANCED BY PROTECTION"""
     
     def __init__(self, app, validator: InputValidator):
         super().__init__(app)
         self.validator = validator
     
     async def dispatch(self, request: Request, call_next):
-        """++ SACRED REQUEST VALIDATION ++"""
+        """STANDARD REQUEST VALIDATION"""
         try:
             # Skip validation for certain paths
             skip_paths = ["/health", "/docs", "/redoc", "/openapi.json"]
@@ -454,11 +454,11 @@ class ValidationMiddleware(BaseHTTPMiddleware):
             
         except ValidationError as e:
             logger.warning(
-                f"++ VALIDATION FAILED: {e.rule_name} | "
+                f"VALIDATION FAILED: {e.rule_name} | "
                 f"Severity: {e.severity.value} | "
                 f"Path: {request.url.path} | "
                 f"Method: {request.method} | "
-                f"IP: {request.client.host if request.client else 'unknown'} ++"
+                f"IP: {request.client.host if request.client else 'unknown'}"
             )
             
             if e.severity == ValidationSeverity.CRITICAL:
@@ -471,24 +471,24 @@ class ValidationMiddleware(BaseHTTPMiddleware):
                 detail=f"Input validation failed: {e.message}"
             )
         except Exception as e:
-            logger.error(f"++ VALIDATION MIDDLEWARE ERROR: {e} ++")
+            logger.error(f"VALIDATION MIDDLEWARE ERROR: {e}")
             raise HTTPException(
                 status_code=500,
                 detail="Internal validation error"
             )
 
-# ++ SACRED GLOBAL VALIDATOR INSTANCE ++
+# STANDARD GLOBAL VALIDATOR INSTANCE
 input_validator: Optional[InputValidator] = None
 
 def get_input_validator() -> InputValidator:
-    """++ SACRED INPUT VALIDATOR GETTER ++"""
+    """STANDARD INPUT VALIDATOR GETTER"""
     global input_validator
     if input_validator is None:
         input_validator = InputValidator()
     return input_validator
 
 def create_validation_middleware(app):
-    """++ SACRED VALIDATION MIDDLEWARE CREATOR ++"""
+    """STANDARD VALIDATION MIDDLEWARE CREATOR"""
     validator = get_input_validator()
     return ValidationMiddleware(app, validator)
 

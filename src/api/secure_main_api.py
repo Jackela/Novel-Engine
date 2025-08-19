@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 """
-++ SACRED SECURE API SERVER BLESSED BY THE OMNISSIAH ++
-=======================================================
+Secure FastAPI Server for Novel Engine
+======================================
 
 Enterprise-grade secure FastAPI server with comprehensive security framework,
 authentication, authorization, input validation, and performance optimization.
 
-++ THROUGH DIVINE SECURITY, WE ACHIEVE BLESSED PROTECTION ++
-
 Architecture: Zero Trust API with Defense in Depth Security
 Security Level: Enterprise Grade (OWASP Top 10 Compliant)
 Performance: High-throughput with async operations and caching
-Sacred Author: Tech-Priest Secure-API-Mechanicus
-万机之神保佑此安全API服务器 (May the Omnissiah bless this secure API server)
+Author: Novel Engine Development Team
 """
 
 import os
@@ -48,7 +45,7 @@ from src.api.character_api import create_character_api
 from src.api.interaction_api import create_interaction_api
 from src.api.story_generation_api import create_story_generation_api
 
-# Sacred logging configuration
+# Comprehensive logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s | %(levelname)s | %(name)s | %(funcName)s:%(lineno)d | %(message)s'
@@ -56,7 +53,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class SecureAPIConfig:
-    """++ SACRED SECURE API CONFIGURATION ++"""
+    """Secure API Configuration Manager"""
     
     def __init__(self):
         # Basic server configuration
@@ -89,7 +86,7 @@ class SecureAPIConfig:
         os.makedirs("data", exist_ok=True)
 
 class OptimizedSecureJSONResponse(JSONResponse):
-    """++ SACRED OPTIMIZED JSON RESPONSE WITH SECURITY ++"""
+    """Optimized JSON Response with Security Headers"""
     
     def __init__(self, content: Any = None, status_code: int = 200,
                  headers: Optional[Dict[str, str]] = None,
@@ -117,26 +114,26 @@ class OptimizedSecureJSONResponse(JSONResponse):
         
         super().__init__(content=content, status_code=status_code, headers=headers)
 
-# ++ REQUEST/RESPONSE MODELS ++
+# REQUEST/RESPONSE MODELS
 class UserRegistrationRequest(BaseModel):
-    """++ SACRED USER REGISTRATION REQUEST ++"""
+    """User Registration Request Model"""
     username: str = Field(min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_-]+$")
     email: EmailStr
     password: str = Field(min_length=8)
     role: UserRole = UserRole.READER
 
 class UserLoginRequest(BaseModel):
-    """++ SACRED USER LOGIN REQUEST ++"""
+    """User Login Request Model"""
     username: str
     password: str
 
 class ApiKeyResponse(BaseModel):
-    """++ SACRED API KEY RESPONSE ++"""
+    """API Key Response Model"""
     api_key: str
     message: str
 
 class SystemHealthResponse(BaseModel):
-    """++ SACRED SYSTEM HEALTH RESPONSE ++"""
+    """System Health Response Model"""
     status: str
     timestamp: datetime
     version: str
@@ -146,12 +143,13 @@ class SystemHealthResponse(BaseModel):
     rate_limit_stats: Optional[Dict[str, Any]] = None
 
 class SecureSimulationRequest(BaseModel):
-    """++ SACRED SECURE SIMULATION REQUEST ++"""
+    """Secure Simulation Request Model"""
     character_names: List[str] = Field(min_length=2, max_length=6)
     turns: Optional[int] = Field(default=3, ge=1, le=10)
     style: Optional[str] = Field(default="narrative", max_length=50)
     
     class Config:
+        """Pydantic configuration for story generation request."""
         schema_extra = {
             "example": {
                 "character_names": ["Alice", "Bob"],
@@ -161,7 +159,7 @@ class SecureSimulationRequest(BaseModel):
         }
 
 class SecureSimulationResponse(BaseModel):
-    """++ SACRED SECURE SIMULATION RESPONSE ++"""
+    """Secure Simulation Response Model"""
     simulation_id: str
     story: str
     participants: List[str]
@@ -170,17 +168,17 @@ class SecureSimulationResponse(BaseModel):
     timestamp: datetime
     user_id: str
 
-# ++ GLOBAL STATE ++
+# GLOBAL STATE
 global_orchestrator: Optional[SystemOrchestrator] = None
 security_service: Optional[SecurityService] = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """++ SACRED APPLICATION LIFECYCLE MANAGEMENT ++"""
+    """Application Lifecycle Management"""
     global global_orchestrator, security_service
     
     config = SecureAPIConfig()
-    logger.info("++ STARTING SECURE API SERVER ++")
+    logger.info("Starting secure API server")
     
     try:
         # Initialize security service
@@ -189,7 +187,7 @@ async def lifespan(app: FastAPI):
             config.secret_key
         )
         await security_service.initialize_database()
-        logger.info("++ SECURITY SERVICE INITIALIZED ++")
+        logger.info("Security service initialized")
         
         # Initialize system orchestrator
         orchestrator_config = OrchestratorConfig(
@@ -205,7 +203,7 @@ async def lifespan(app: FastAPI):
         
         if not startup_result.success:
             error_msg = startup_result.error.message if startup_result.error else "Unknown error"
-            logger.error(f"++ SYSTEM ORCHESTRATOR STARTUP FAILED: {error_msg} ++")
+            logger.error(f"System orchestrator startup failed: {error_msg}")
             raise Exception(f"System Orchestrator startup failed: {error_msg}")
         
         app.state.orchestrator = global_orchestrator
@@ -221,11 +219,11 @@ async def lifespan(app: FastAPI):
         if hasattr(app.state, 'interaction_api'):
             app.state.interaction_api.set_orchestrator(global_orchestrator)
         
-        logger.info("++ SECURE API SERVER STARTED SUCCESSFULLY ++")
+        logger.info("Secure API server started successfully")
         yield
         
     finally:
-        logger.info("++ SHUTTING DOWN SECURE API SERVER ++")
+        logger.info("Shutting down secure API server")
         
         # Stop background tasks
         if hasattr(app.state, 'story_api'):
@@ -235,10 +233,10 @@ async def lifespan(app: FastAPI):
         if global_orchestrator:
             await global_orchestrator.shutdown()
         
-        logger.info("++ SECURE API SERVER SHUTDOWN COMPLETE ++")
+        logger.info("Secure API server shutdown complete")
 
 def create_secure_app() -> FastAPI:
-    """++ SACRED SECURE APPLICATION CREATION ++"""
+    """Create Secure FastAPI Application"""
     config = SecureAPIConfig()
     
     # Create FastAPI app with security-focused configuration
@@ -252,7 +250,7 @@ def create_secure_app() -> FastAPI:
         openapi_url="/openapi.json" if config.enable_docs else None
     )
     
-    # ++ MIDDLEWARE CONFIGURATION (Order matters - last added = first executed) ++
+    # MIDDLEWARE CONFIGURATION (Order matters - last added = first executed)
     
     # Security headers (first layer of protection)
     if config.environment == "production":
@@ -296,11 +294,11 @@ def create_secure_app() -> FastAPI:
     if config.environment == "production" and config.cors_origins:
         app.add_middleware(TrustedHostMiddleware, allowed_hosts=config.cors_origins)
     
-    # ++ EXCEPTION HANDLERS ++
+    # EXCEPTION HANDLERS
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
-        """++ SACRED GENERAL EXCEPTION HANDLER ++"""
-        logger.error(f"++ UNHANDLED EXCEPTION: {exc} | Path: {request.url.path} ++", exc_info=True)
+        """General Exception Handler"""
+        logger.error(f"Unhandled exception: {exc} | Path: {request.url.path}", exc_info=True)
         return OptimizedSecureJSONResponse(
             status_code=500,
             content={
@@ -313,7 +311,7 @@ def create_secure_app() -> FastAPI:
     
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
-        """++ SACRED HTTP EXCEPTION HANDLER ++"""
+        """HTTP Exception Handler"""
         return OptimizedSecureJSONResponse(
             status_code=exc.status_code,
             content={
@@ -323,13 +321,13 @@ def create_secure_app() -> FastAPI:
             }
         )
     
-    # ++ AUTHENTICATION ROUTES ++
+    # AUTHENTICATION ROUTES
     @app.post("/auth/register", response_model=TokenPair, tags=["Authentication"])
     async def register_user(
         registration: UserRegistrationRequest,
         request: Request
     ):
-        """++ SACRED USER REGISTRATION ++"""
+        """User Registration Endpoint"""
         try:
             security_service = get_security_service()
             
@@ -350,11 +348,11 @@ def create_secure_app() -> FastAPI:
             # Create token pair
             token_pair = await security_service.create_token_pair(user)
             
-            logger.info(f"++ USER REGISTERED SUCCESSFULLY: {user.username} ({user.role.value}) ++")
+            logger.info(f"User registered successfully: {user.username} ({user.role.value})")
             return token_pair
             
         except Exception as e:
-            logger.error(f"++ USER REGISTRATION FAILED: {e} ++")
+            logger.error(f"User registration failed: {e}")
             raise HTTPException(
                 status_code=400,
                 detail=str(e)
@@ -365,7 +363,7 @@ def create_secure_app() -> FastAPI:
         login: UserLoginRequest,
         request: Request
     ):
-        """++ SACRED USER LOGIN ++"""
+        """User Login Endpoint"""
         try:
             security_service = get_security_service()
             
@@ -386,13 +384,13 @@ def create_secure_app() -> FastAPI:
             # Create token pair
             token_pair = await security_service.create_token_pair(user)
             
-            logger.info(f"++ USER LOGIN SUCCESSFUL: {user.username} ++")
+            logger.info(f"User login successful: {user.username}")
             return token_pair
             
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"++ USER LOGIN FAILED: {e} ++")
+            logger.error(f"User login failed: {e}")
             raise HTTPException(
                 status_code=500,
                 detail="Login failed"
@@ -402,13 +400,13 @@ def create_secure_app() -> FastAPI:
     async def refresh_token(
         refresh_token: str = Field(..., description="Refresh token")
     ):
-        """++ SACRED TOKEN REFRESH ++"""
+        """Token Refresh Endpoint"""
         try:
             security_service = get_security_service()
             token_pair = await security_service.refresh_access_token(refresh_token)
             return token_pair
         except Exception as e:
-            logger.error(f"++ TOKEN REFRESH FAILED: {e} ++")
+            logger.error(f"Token refresh failed: {e}")
             raise HTTPException(
                 status_code=401,
                 detail="Invalid refresh token"
@@ -418,9 +416,9 @@ def create_secure_app() -> FastAPI:
     async def logout_user(
         current_user: User = Depends(get_security_service().get_current_user)
     ):
-        """++ SACRED USER LOGOUT ++"""
+        """User Logout Endpoint"""
         # In a production system, you would revoke the token here
-        logger.info(f"++ USER LOGOUT: {current_user.username} ++")
+        logger.info(f"User logout: {current_user.username}")
         return OptimizedSecureJSONResponse(
             content={"message": "Logged out successfully"}
         )
@@ -429,27 +427,27 @@ def create_secure_app() -> FastAPI:
     async def generate_api_key(
         current_user: User = Depends(get_security_service().require_permission(Permission.API_ACCESS))
     ):
-        """++ SACRED API KEY GENERATION ++"""
+        """API Key Generation Endpoint"""
         try:
             security_service = get_security_service()
             api_key = await security_service.generate_api_key(current_user.id)
             
-            logger.info(f"++ API KEY GENERATED: {current_user.username} ++")
+            logger.info(f"API key generated: {current_user.username}")
             return ApiKeyResponse(
                 api_key=api_key,
                 message="API key generated successfully"
             )
         except Exception as e:
-            logger.error(f"++ API KEY GENERATION FAILED: {e} ++")
+            logger.error(f"API key generation failed: {e}")
             raise HTTPException(
                 status_code=500,
                 detail="Failed to generate API key"
             )
     
-    # ++ SYSTEM ROUTES ++
+    # SYSTEM ROUTES
     @app.get("/", tags=["System"])
     async def root():
-        """++ SACRED ROOT ENDPOINT ++"""
+        """Root API Endpoint"""
         config = SecureAPIConfig()
         return OptimizedSecureJSONResponse(
             content={
@@ -480,7 +478,7 @@ def create_secure_app() -> FastAPI:
     
     @app.get("/health", response_model=SystemHealthResponse, tags=["System"])
     async def health_check(request: Request):
-        """++ SACRED SYSTEM HEALTH CHECK ++"""
+        """System Health Check Endpoint"""
         try:
             orchestrator = getattr(app.state, 'orchestrator', None)
             rate_limiter = get_rate_limiter()
@@ -505,7 +503,7 @@ def create_secure_app() -> FastAPI:
             )
             
         except Exception as e:
-            logger.error(f"++ HEALTH CHECK FAILED: {e} ++")
+            logger.error(f"Health check failed: {e}")
             return OptimizedSecureJSONResponse(
                 status_code=503,
                 content={
@@ -515,17 +513,17 @@ def create_secure_app() -> FastAPI:
                 }
             )
     
-    # ++ SECURE SIMULATION ENDPOINT ++
+    # SECURE SIMULATION ENDPOINT
     @app.post("/simulations", response_model=SecureSimulationResponse, tags=["Simulations"])
     async def run_secure_simulation(
         request: SecureSimulationRequest,
         current_user: User = Depends(get_security_service().require_permission(Permission.SIMULATION_CREATE))
     ):
-        """++ SACRED SECURE SIMULATION EXECUTION ++"""
+        """Secure Simulation Execution Endpoint"""
         start_time = datetime.now(timezone.utc)
         simulation_id = secrets.token_urlsafe(16)
         
-        logger.info(f"++ SIMULATION REQUESTED: {request.character_names} | User: {current_user.username} ++")
+        logger.info(f"Simulation requested: {request.character_names} | User: {current_user.username}")
         
         try:
             orchestrator = getattr(app.state, 'orchestrator', None)
@@ -558,26 +556,26 @@ def create_secure_app() -> FastAPI:
                 user_id=current_user.id
             )
             
-            logger.info(f"++ SIMULATION COMPLETED: {simulation_id} | Duration: {duration:.2f}s ++")
+            logger.info(f"Simulation completed: {simulation_id} | Duration: {duration:.2f}s")
             return response
             
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"++ SIMULATION FAILED: {e} ++")
+            logger.error(f"Simulation failed: {e}")
             raise HTTPException(
                 status_code=500,
                 detail="Simulation execution failed"
             )
     
-    # ++ REGISTER API ROUTES ++
+    # REGISTER API ROUTES
     _register_secure_api_routes(app)
     
-    logger.info("++ SECURE API ROUTES REGISTERED SUCCESSFULLY ++")
+    logger.info("Secure API routes registered successfully")
     return app
 
 def _register_secure_api_routes(app: FastAPI):
-    """++ SACRED SECURE API ROUTES REGISTRATION ++"""
+    """Secure API Routes Registration"""
     # Create secure API instances
     character_api = create_character_api(None)  # Will be set during lifespan
     story_generation_api = create_story_generation_api(None)
@@ -594,7 +592,7 @@ def _register_secure_api_routes(app: FastAPI):
     interaction_api.setup_routes(app)
 
 def main():
-    """++ SACRED MAIN ENTRY POINT ++"""
+    """Main Application Entry Point"""
     config = SecureAPIConfig()
     
     # Configure logging level
@@ -604,7 +602,7 @@ def main():
     # Create secure app
     app = create_secure_app()
     
-    logger.info(f"++ STARTING SECURE API SERVER: {config.host}:{config.port} | Environment: {config.environment} ++")
+    logger.info(f"Starting secure API server: {config.host}:{config.port} | Environment: {config.environment}")
     
     # Start server
     uvicorn.run(

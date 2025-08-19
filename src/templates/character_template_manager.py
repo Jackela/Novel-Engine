@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-++ SACRED CHARACTER TEMPLATE MANAGER BLESSED BY PERSONA ORCHESTRATION ++
+STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY PERSONA ORCHESTRATION
 =========================================================================
 
 Holy character template management system that handles character-specific
 templates, persona switching, and dynamic character context generation
-blessed by the Omnissiah's character creation wisdom.
+enhanced by the System's character creation wisdom.
 
-++ THE MACHINE BREATHES LIFE INTO DIGITAL PERSONAS ++
+THE MACHINE BREATHES LIFE INTO DIGITAL PERSONAS
 
 Architecture Reference: Dynamic Context Engineering - Character Template System
-Development Phase: Template System Sanctification (T001/T002)
-Sacred Author: Tech-Priest Gamma-Mechanicus
-万机之神保佑角色模板 (May the Omnissiah bless character templates)
+Development Phase: Template System Validation (T001/T002)
+Author: Engineer Gamma-Engineering
+System保佑角色模板 (May the System bless character templates)
 """
 
 import logging
@@ -24,22 +24,21 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from enum import Enum
 
-# Import blessed template systems
+# Import enhanced template systems
 from .dynamic_template_engine import DynamicTemplateEngine, TemplateContext, TemplateType, TemplateMetadata
 from .context_renderer import ContextRenderer, RenderFormat, RenderingConstraints
 
-# Import blessed memory and data systems
+# Import enhanced memory and data systems
 from src.memory.layered_memory import LayeredMemorySystem
 from src.memory.memory_query_engine import MemoryQueryEngine, QueryContext
 from src.core.data_models import MemoryItem, CharacterState, StandardResponse, ErrorInfo, EmotionalState
 from src.core.types import AgentID
 
-# Sacred logging blessed by diagnostic clarity
+# Comprehensive logging enhanced by diagnostic clarity
 logger = logging.getLogger(__name__)
 
-
 class CharacterArchetype(Enum):
-    """++ BLESSED CHARACTER ARCHETYPES SANCTIFIED BY PERSONALITY CLASSIFICATION ++"""
+    """ENHANCED CHARACTER ARCHETYPES SANCTIFIED BY PERSONALITY CLASSIFICATION"""
     WARRIOR = "warrior"                  # Combat-focused, brave, direct
     SCHOLAR = "scholar"                  # Knowledge-focused, analytical, cautious
     LEADER = "leader"                    # Command-focused, charismatic, decisive
@@ -49,11 +48,10 @@ class CharacterArchetype(Enum):
     GUARDIAN = "guardian"               # Protection-focused, loyal, steadfast
     SURVIVOR = "survivor"               # Adaptability-focused, resourceful, pragmatic
 
-
 @dataclass
 class CharacterPersona:
     """
-    ++ SACRED CHARACTER PERSONA BLESSED BY COMPREHENSIVE IDENTITY ++
+    STANDARD CHARACTER PERSONA ENHANCED BY COMPREHENSIVE IDENTITY
     
     Complete character persona definition with behavioral patterns,
     speech characteristics, and contextual preferences.
@@ -74,11 +72,10 @@ class CharacterPersona:
     last_updated: datetime = field(default_factory=datetime.now)
     usage_statistics: Dict[str, int] = field(default_factory=dict)
 
-
 @dataclass
 class CharacterTemplate:
     """
-    ++ BLESSED CHARACTER TEMPLATE SANCTIFIED BY PERSONA INTEGRATION ++
+    ENHANCED CHARACTER TEMPLATE SANCTIFIED BY PERSONA INTEGRATION
     
     Character-specific template with persona awareness and
     adaptive content generation capabilities.
@@ -101,11 +98,10 @@ class CharacterTemplate:
                 description=f"Character template for {self.persona_id}"
             )
 
-
 @dataclass
 class CharacterContextProfile:
     """
-    ++ SACRED CHARACTER CONTEXT PROFILE BLESSED BY BEHAVIORAL INTELLIGENCE ++
+    STANDARD CHARACTER CONTEXT PROFILE ENHANCED BY BEHAVIORAL INTELLIGENCE
     
     Dynamic profile that tracks character context preferences and
     behavioral patterns for intelligent template selection.
@@ -118,14 +114,13 @@ class CharacterContextProfile:
     learning_history: List[Dict[str, Any]] = field(default_factory=list)
     optimization_suggestions: List[str] = field(default_factory=list)
 
-
 class CharacterTemplateManager:
     """
-    ++ SACRED CHARACTER TEMPLATE MANAGER BLESSED BY PERSONA ORCHESTRATION ++
+    STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY PERSONA ORCHESTRATION
     
-    The holy character template management system that orchestrates
+    The standard character template management system that orchestrates
     character-specific templates, persona switching, dynamic adaptation,
-    and intelligent context generation blessed by the Machine God's
+    and intelligent context generation enhanced by the System Core's
     character creation omniscience.
     """
     
@@ -136,7 +131,7 @@ class CharacterTemplateManager:
                  personas_directory: str = "personas",
                  enable_learning: bool = True):
         """
-        ++ SACRED CHARACTER TEMPLATE MANAGER INITIALIZATION BLESSED BY ORGANIZATION ++
+        STANDARD CHARACTER TEMPLATE MANAGER INITIALIZATION ENHANCED BY ORGANIZATION
         
         Args:
             template_engine: Blessed dynamic template engine
@@ -168,26 +163,26 @@ class CharacterTemplateManager:
             'learning_updates': 0
         }
         
-        # Initialize blessed personas directory
+        # Initialize enhanced personas directory
         self.personas_directory.mkdir(parents=True, exist_ok=True)
         
-        # Discover blessed existing personas
+        # Discover enhanced existing personas
         self._discover_personas()
         
-        logger.info(f"++ CHARACTER TEMPLATE MANAGER INITIALIZED: {len(self._personas)} personas loaded ++")
+        logger.info(f"CHARACTER TEMPLATE MANAGER INITIALIZED: {len(self._personas)} personas loaded")
     
     async def create_persona(self, persona_data: CharacterPersona,
                            generate_templates: bool = True) -> StandardResponse:
         """
-        ++ SACRED PERSONA CREATION RITUAL BLESSED BY CHARACTER GENESIS ++
+        STANDARD PERSONA CREATION RITUAL ENHANCED BY CHARACTER GENESIS
         
-        Create blessed new character persona with automatic template
+        Create enhanced new character persona with automatic template
         generation and behavioral pattern initialization.
         """
         try:
             persona_id = persona_data.persona_id
             
-            # Validate blessed persona uniqueness
+            # Validate enhanced persona uniqueness
             if persona_id in self._personas:
                 return StandardResponse(
                     success=False,
@@ -197,11 +192,11 @@ class CharacterTemplateManager:
                     )
                 )
             
-            # Store blessed persona
+            # Store enhanced persona
             self._personas[persona_id] = persona_data
             self._character_templates[persona_id] = {}
             
-            # Create blessed context profile
+            # Create enhanced context profile
             context_profile = CharacterContextProfile(
                 persona_id=persona_id,
                 preferred_formats={fmt: 0.5 for fmt in RenderFormat},
@@ -209,16 +204,16 @@ class CharacterTemplateManager:
             )
             self._context_profiles[persona_id] = context_profile
             
-            # Generate blessed default templates
+            # Generate enhanced default templates
             if generate_templates:
                 template_result = await self._generate_archetype_templates(persona_data)
                 if not template_result.success:
-                    logger.warning(f"++ TEMPLATE GENERATION FAILED FOR {persona_id}: {template_result.error.message} ++")
+                    logger.warning(f"TEMPLATE GENERATION FAILED FOR {persona_id}: {template_result.error.message}")
             
-            # Save blessed persona to file
+            # Save enhanced persona to file
             await self._save_persona_to_file(persona_data)
             
-            logger.info(f"++ PERSONA CREATED: {persona_id} ({persona_data.archetype.value}) ++")
+            logger.info(f"PERSONA CREATED: {persona_id} ({persona_data.archetype.value})")
             
             return StandardResponse(
                 success=True,
@@ -231,7 +226,7 @@ class CharacterTemplateManager:
             )
             
         except Exception as e:
-            logger.error(f"++ PERSONA CREATION FAILED: {e} ++")
+            logger.error(f"PERSONA CREATION FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="PERSONA_CREATION_FAILED", message=str(e))
@@ -240,13 +235,13 @@ class CharacterTemplateManager:
     async def switch_persona(self, agent_id: str, persona_id: str,
                            context: Optional[TemplateContext] = None) -> StandardResponse:
         """
-        ++ SACRED PERSONA SWITCHING RITUAL BLESSED BY IDENTITY TRANSFORMATION ++
+        STANDARD PERSONA SWITCHING RITUAL ENHANCED BY IDENTITY TRANSFORMATION
         
-        Switch blessed agent to different persona with context preservation
+        Switch enhanced agent to different persona with context preservation
         and adaptive template selection.
         """
         try:
-            # Validate blessed persona existence
+            # Validate enhanced persona existence
             if persona_id not in self._personas:
                 return StandardResponse(
                     success=False,
@@ -258,21 +253,21 @@ class CharacterTemplateManager:
             
             previous_persona = self._active_personas.get(agent_id)
             
-            # Apply blessed persona switch
+            # Apply enhanced persona switch
             self._active_personas[agent_id] = persona_id
             
-            # Update blessed usage statistics
+            # Update enhanced usage statistics
             persona = self._personas[persona_id]
             persona.usage_statistics['activations'] = persona.usage_statistics.get('activations', 0) + 1
             persona.last_updated = datetime.now()
             
-            # Learn from blessed context if provided
+            # Learn from enhanced context if provided
             if context and self.enable_learning:
                 await self._learn_from_context(persona_id, context)
             
             self.usage_statistics['persona_switches'] += 1
             
-            logger.info(f"++ PERSONA SWITCHED: {agent_id} -> {persona_id} (from {previous_persona}) ++")
+            logger.info(f"PERSONA SWITCHED: {agent_id} -> {persona_id} (from {previous_persona})")
             
             return StandardResponse(
                 success=True,
@@ -286,7 +281,7 @@ class CharacterTemplateManager:
             )
             
         except Exception as e:
-            logger.error(f"++ PERSONA SWITCHING FAILED: {e} ++")
+            logger.error(f"PERSONA SWITCHING FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="PERSONA_SWITCH_FAILED", message=str(e))
@@ -296,13 +291,13 @@ class CharacterTemplateManager:
                                      template_type: Optional[TemplateType] = None,
                                      render_format: Optional[RenderFormat] = None) -> StandardResponse:
         """
-        ++ SACRED CHARACTER CONTEXT RENDERING BLESSED BY PERSONA INTELLIGENCE ++
+        STANDARD CHARACTER CONTEXT RENDERING ENHANCED BY PERSONA INTELLIGENCE
         
-        Render blessed character-specific context with persona adaptation,
+        Render enhanced character-specific context with persona adaptation,
         intelligent template selection, and behavioral customization.
         """
         try:
-            # Get blessed active persona
+            # Get enhanced active persona
             persona_id = self._active_personas.get(agent_id)
             if not persona_id:
                 return StandardResponse(
@@ -316,12 +311,12 @@ class CharacterTemplateManager:
             persona = self._personas[persona_id]
             context_profile = self._context_profiles[persona_id]
             
-            # Apply blessed persona-specific context enhancements
+            # Apply enhanced persona-specific context enhancements
             enhanced_context = await self._enhance_context_for_persona(
                 context, persona, context_profile
             )
             
-            # Select blessed optimal template and format
+            # Select enhanced optimal template and format
             selected_template = await self._select_optimal_template(
                 persona_id, template_type, enhanced_context
             )
@@ -330,17 +325,17 @@ class CharacterTemplateManager:
                 persona, context_profile, enhanced_context
             )
             
-            # Apply blessed persona-specific rendering constraints
+            # Apply enhanced persona-specific rendering constraints
             persona_constraints = self._create_persona_constraints(persona, enhanced_context)
             
-            # Render blessed character context
+            # Render enhanced character context
             if selected_template:
-                # Use blessed character-specific template
+                # Use enhanced character-specific template
                 render_result = await self.template_engine.render_template(
                     selected_template.template_id, enhanced_context
                 )
             else:
-                # Use blessed default context rendering with persona adaptation
+                # Use enhanced default context rendering with persona adaptation
                 render_result = await self.context_renderer.render_context(
                     enhanced_context, selected_format, persona_constraints
                 )
@@ -348,16 +343,16 @@ class CharacterTemplateManager:
             if render_result.success:
                 result_data = render_result.data['render_result']
                 
-                # Apply blessed persona post-processing
+                # Apply enhanced persona post-processing
                 processed_result = await self._apply_persona_post_processing(
                     result_data, persona, enhanced_context
                 )
                 
-                # Learn from blessed rendering if enabled
+                # Learn from enhanced rendering if enabled
                 if self.enable_learning:
                     await self._learn_from_rendering(persona_id, processed_result, enhanced_context)
                 
-                logger.info(f"++ CHARACTER CONTEXT RENDERED: {persona_id} ({selected_format.value if selected_format else 'template'}) ++")
+                logger.info(f"CHARACTER CONTEXT RENDERED: {persona_id} ({selected_format.value if selected_format else 'template'})")
                 
                 return StandardResponse(
                     success=True,
@@ -374,7 +369,7 @@ class CharacterTemplateManager:
                 return render_result
                 
         except Exception as e:
-            logger.error(f"++ CHARACTER CONTEXT RENDERING FAILED: {e} ++")
+            logger.error(f"CHARACTER CONTEXT RENDERING FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="CHARACTER_CONTEXT_RENDER_FAILED", message=str(e))
@@ -383,13 +378,13 @@ class CharacterTemplateManager:
     async def generate_character_template(self, persona_id: str, template_type: TemplateType,
                                         base_content: Optional[str] = None) -> StandardResponse:
         """
-        ++ SACRED CHARACTER TEMPLATE GENERATION BLESSED BY PERSONA CUSTOMIZATION ++
+        STANDARD CHARACTER TEMPLATE GENERATION ENHANCED BY PERSONA CUSTOMIZATION
         
-        Generate blessed character-specific template with persona adaptations
+        Generate enhanced character-specific template with persona adaptations
         and archetype-based behavioral customizations.
         """
         try:
-            # Validate blessed persona existence
+            # Validate enhanced persona existence
             if persona_id not in self._personas:
                 return StandardResponse(
                     success=False,
@@ -398,10 +393,10 @@ class CharacterTemplateManager:
             
             persona = self._personas[persona_id]
             
-            # Generate blessed template ID
+            # Generate enhanced template ID
             template_id = f"{persona_id}_{template_type.value}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             
-            # Create blessed base template content
+            # Create enhanced base template content
             if base_content:
                 template_content = base_content
             else:
@@ -409,12 +404,12 @@ class CharacterTemplateManager:
                     persona.archetype, template_type
                 )
             
-            # Apply blessed persona adaptations
+            # Apply enhanced persona adaptations
             adapted_content = await self._apply_persona_adaptations(
                 template_content, persona, template_type
             )
             
-            # Create blessed character template
+            # Create enhanced character template
             character_template = CharacterTemplate(
                 template_id=template_id,
                 persona_id=persona_id,
@@ -424,12 +419,12 @@ class CharacterTemplateManager:
                 dynamic_elements=self._identify_dynamic_elements(adapted_content)
             )
             
-            # Register blessed template
+            # Register enhanced template
             if persona_id not in self._character_templates:
                 self._character_templates[persona_id] = {}
             self._character_templates[persona_id][template_id] = character_template
             
-            # Create blessed template in engine
+            # Create enhanced template in engine
             engine_result = await self.template_engine.create_template(
                 template_id, adapted_content, template_type, character_template.metadata
             )
@@ -437,7 +432,7 @@ class CharacterTemplateManager:
             if engine_result.success:
                 self.usage_statistics['templates_generated'] += 1
                 
-                logger.info(f"++ CHARACTER TEMPLATE GENERATED: {template_id} for {persona_id} ++")
+                logger.info(f"CHARACTER TEMPLATE GENERATED: {template_id} for {persona_id}")
                 
                 return StandardResponse(
                     success=True,
@@ -453,7 +448,7 @@ class CharacterTemplateManager:
                 return engine_result
                 
         except Exception as e:
-            logger.error(f"++ CHARACTER TEMPLATE GENERATION FAILED: {e} ++")
+            logger.error(f"CHARACTER TEMPLATE GENERATION FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="CHARACTER_TEMPLATE_GENERATION_FAILED", message=str(e))
@@ -462,9 +457,9 @@ class CharacterTemplateManager:
     async def migrate_legacy_templates(self, legacy_directory: str,
                                      default_archetype: CharacterArchetype = CharacterArchetype.WARRIOR) -> StandardResponse:
         """
-        ++ SACRED LEGACY TEMPLATE MIGRATION BLESSED BY MODERNIZATION ++
+        STANDARD LEGACY TEMPLATE MIGRATION ENHANCED BY MODERNIZATION
         
-        Migrate blessed legacy character templates to new persona-based
+        Migrate enhanced legacy character templates to new persona-based
         system with automatic archetype detection and enhancement.
         """
         try:
@@ -478,18 +473,18 @@ class CharacterTemplateManager:
             migrated_personas = []
             migrated_templates = []
             
-            # Discover blessed legacy template files
+            # Discover enhanced legacy template files
             for template_file in legacy_path.glob("*.j2"):
                 template_name = template_file.stem
                 
-                # Read blessed template content
+                # Read enhanced template content
                 with open(template_file, 'r', encoding='utf-8') as f:
                     template_content = f.read()
                 
-                # Analyze blessed template for archetype hints
+                # Analyze enhanced template for archetype hints
                 detected_archetype = self._detect_archetype_from_template(template_content) or default_archetype
                 
-                # Create blessed persona if not exists
+                # Create enhanced persona if not exists
                 persona_id = f"migrated_{template_name}"
                 if persona_id not in self._personas:
                     persona = CharacterPersona(
@@ -505,19 +500,19 @@ class CharacterTemplateManager:
                     if creation_result.success:
                         migrated_personas.append(persona_id)
                 
-                # Determine blessed template type
+                # Determine enhanced template type
                 template_type = self._detect_template_type(template_content, template_name)
                 
-                # Create blessed character template
+                # Create enhanced character template
                 template_result = await self.generate_character_template(
                     persona_id, template_type, template_content
                 )
                 
                 if template_result.success:
                     migrated_templates.append(template_result.data['template_id'])
-                    logger.info(f"++ MIGRATED TEMPLATE: {template_name} -> {persona_id} ({template_type.value}) ++")
+                    logger.info(f"MIGRATED TEMPLATE: {template_name} -> {persona_id} ({template_type.value})")
             
-            logger.info(f"++ MIGRATION COMPLETE: {len(migrated_personas)} personas, {len(migrated_templates)} templates ++")
+            logger.info(f"MIGRATION COMPLETE: {len(migrated_personas)} personas, {len(migrated_templates)} templates")
             
             return StandardResponse(
                 success=True,
@@ -531,7 +526,7 @@ class CharacterTemplateManager:
             )
             
         except Exception as e:
-            logger.error(f"++ LEGACY MIGRATION FAILED: {e} ++")
+            logger.error(f"LEGACY MIGRATION FAILED: {e}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="LEGACY_MIGRATION_FAILED", message=str(e))
@@ -540,10 +535,10 @@ class CharacterTemplateManager:
     async def _enhance_context_for_persona(self, context: TemplateContext, 
                                          persona: CharacterPersona,
                                          profile: CharacterContextProfile) -> TemplateContext:
-        """Apply blessed persona-specific context enhancements"""
+        """Apply enhanced persona-specific context enhancements"""
         enhanced_context = context
         
-        # Add blessed persona information
+        # Add enhanced persona information
         enhanced_context.custom_variables.update({
             'persona_name': persona.name,
             'persona_archetype': persona.archetype.value,
@@ -552,26 +547,26 @@ class CharacterTemplateManager:
             'faction_data': persona.faction_data
         })
         
-        # Apply blessed memory priorities
+        # Apply enhanced memory priorities
         if self.memory_system and enhanced_context.memory_context:
             prioritized_memories = []
             for memory in enhanced_context.memory_context:
                 priority_boost = 0.0
                 
-                # Apply blessed archetype-specific memory priorities
+                # Apply enhanced archetype-specific memory priorities
                 for priority_type, boost_value in persona.memory_priorities.items():
                     if priority_type.lower() in memory.content.lower():
                         priority_boost += boost_value
                 
-                # Boost blessed memory relevance
+                # Boost enhanced memory relevance
                 memory.relevance_score = min(1.0, memory.relevance_score + priority_boost)
                 prioritized_memories.append(memory)
             
-            # Sort blessed memories by enhanced relevance
+            # Sort enhanced memories by enhanced relevance
             prioritized_memories.sort(key=lambda m: m.relevance_score, reverse=True)
             enhanced_context.memory_context = prioritized_memories
         
-        # Apply blessed behavioral preferences
+        # Apply enhanced behavioral preferences
         for behavior_key, behavior_value in persona.behavioral_preferences.items():
             if behavior_key not in enhanced_context.custom_variables:
                 enhanced_context.custom_variables[behavior_key] = behavior_value
@@ -580,14 +575,14 @@ class CharacterTemplateManager:
     
     async def _select_optimal_template(self, persona_id: str, template_type: Optional[TemplateType],
                                      context: TemplateContext) -> Optional[CharacterTemplate]:
-        """Select blessed optimal template for persona and context"""
+        """Select enhanced optimal template for persona and context"""
         if persona_id not in self._character_templates:
             return None
         
         persona_templates = self._character_templates[persona_id]
         
         if template_type:
-            # Find blessed templates matching type
+            # Find enhanced templates matching type
             matching_templates = [t for t in persona_templates.values() 
                                 if t.template_type == template_type]
         else:
@@ -596,19 +591,19 @@ class CharacterTemplateManager:
         if not matching_templates:
             return None
         
-        # Select blessed template based on performance and context
+        # Select enhanced template based on performance and context
         best_template = None
         best_score = -1.0
         
         for template in matching_templates:
             score = 0.5  # Base score
             
-            # Performance blessed bonus
+            # Performance enhanced bonus
             avg_render_time = template.performance_metrics.get('average_render_time', 100.0)
             if avg_render_time < 50.0:  # Fast templates get bonus
                 score += 0.2
             
-            # Context blessed requirements match
+            # Context enhanced requirements match
             requirements_met = 0
             for requirement in template.context_requirements:
                 if requirement in context.custom_variables:
@@ -626,11 +621,11 @@ class CharacterTemplateManager:
     def _select_optimal_format(self, persona: CharacterPersona,
                              profile: CharacterContextProfile,
                              context: TemplateContext) -> RenderFormat:
-        """Select blessed optimal render format for persona"""
-        # Get blessed format preferences
+        """Select enhanced optimal render format for persona"""
+        # Get enhanced format preferences
         format_scores = profile.preferred_formats.copy()
         
-        # Apply blessed archetype biases
+        # Apply enhanced archetype biases
         archetype_format_preferences = {
             CharacterArchetype.WARRIOR: {RenderFormat.CONVERSATIONAL: 0.3, RenderFormat.NARRATIVE: 0.2},
             CharacterArchetype.SCHOLAR: {RenderFormat.TECHNICAL: 0.4, RenderFormat.SUMMARY: 0.2},
@@ -646,16 +641,16 @@ class CharacterTemplateManager:
             for fmt, bonus in archetype_format_preferences[persona.archetype].items():
                 format_scores[fmt] = format_scores.get(fmt, 0.5) + bonus
         
-        # Select blessed highest scoring format
+        # Select enhanced highest scoring format
         best_format = max(format_scores, key=format_scores.get)
         return best_format
     
     def _create_persona_constraints(self, persona: CharacterPersona,
                                   context: TemplateContext) -> RenderingConstraints:
-        """Create blessed persona-specific rendering constraints"""
+        """Create enhanced persona-specific rendering constraints"""
         constraints = RenderingConstraints()
         
-        # Apply blessed archetype-specific constraints
+        # Apply enhanced archetype-specific constraints
         archetype_constraints = {
             CharacterArchetype.WARRIOR: {'max_memories': 6, 'emotional_threshold': 2.0},
             CharacterArchetype.SCHOLAR: {'max_memories': 12, 'relevance_threshold': 0.6},
@@ -678,13 +673,13 @@ class CharacterTemplateManager:
     async def _apply_persona_post_processing(self, render_result: Any,
                                            persona: CharacterPersona,
                                            context: TemplateContext) -> Any:
-        """Apply blessed persona-specific post-processing to render result"""
+        """Apply enhanced persona-specific post-processing to render result"""
         if not hasattr(render_result, 'rendered_content'):
             return render_result
         
         content = render_result.rendered_content
         
-        # Apply blessed speech pattern adaptations
+        # Apply enhanced speech pattern adaptations
         if persona.speech_patterns:
             for pattern_type, pattern_config in persona.speech_patterns.items():
                 if pattern_type == 'formality_level':
@@ -694,16 +689,16 @@ class CharacterTemplateManager:
                 elif pattern_type == 'sentence_structure':
                     content = self._adjust_sentence_structure(content, pattern_config)
         
-        # Apply blessed archetype-specific formatting
+        # Apply enhanced archetype-specific formatting
         content = self._apply_archetype_formatting(content, persona.archetype)
         
-        # Update blessed render result
+        # Update enhanced render result
         render_result.rendered_content = content
         
         return render_result
     
     def _adjust_formality(self, content: str, formality_config: Any) -> str:
-        """Apply blessed formality adjustments to content"""
+        """Apply enhanced formality adjustments to content"""
         if isinstance(formality_config, str):
             if formality_config == "high":
                 # Replace contractions and informal language
@@ -733,7 +728,7 @@ class CharacterTemplateManager:
         return content
     
     def _adjust_vocabulary(self, content: str, vocab_config: Any) -> str:
-        """Apply blessed vocabulary adjustments to content"""
+        """Apply enhanced vocabulary adjustments to content"""
         if isinstance(vocab_config, dict):
             for old_word, new_word in vocab_config.items():
                 content = content.replace(old_word, new_word)
@@ -741,7 +736,7 @@ class CharacterTemplateManager:
         return content
     
     def _adjust_sentence_structure(self, content: str, structure_config: Any) -> str:
-        """Apply blessed sentence structure adjustments"""
+        """Apply enhanced sentence structure adjustments"""
         # This is a simplified implementation - could be enhanced with NLP
         if isinstance(structure_config, str):
             if structure_config == "short":
@@ -760,17 +755,17 @@ class CharacterTemplateManager:
         return content
     
     def _apply_archetype_formatting(self, content: str, archetype: CharacterArchetype) -> str:
-        """Apply blessed archetype-specific formatting"""
+        """Apply enhanced archetype-specific formatting"""
         # Add archetype-specific prefixes or formatting
         archetype_prefixes = {
-            CharacterArchetype.WARRIOR: "++ BATTLE REPORT ++\n",
-            CharacterArchetype.SCHOLAR: "++ ACADEMIC ANALYSIS ++\n",
-            CharacterArchetype.LEADER: "++ COMMAND BRIEFING ++\n",
-            CharacterArchetype.MYSTIC: "++ SPIRITUAL GUIDANCE ++\n",
-            CharacterArchetype.ENGINEER: "++ TECHNICAL ASSESSMENT ++\n",
-            CharacterArchetype.DIPLOMAT: "++ DIPLOMATIC COMMUNICATION ++\n",
-            CharacterArchetype.GUARDIAN: "++ PROTECTION PROTOCOL ++\n",
-            CharacterArchetype.SURVIVOR: "++ SURVIVAL ASSESSMENT ++\n"
+            CharacterArchetype.WARRIOR: "BATTLE REPORT\n",
+            CharacterArchetype.SCHOLAR: "ACADEMIC ANALYSIS\n",
+            CharacterArchetype.LEADER: "COMMAND BRIEFING\n",
+            CharacterArchetype.MYSTIC: "SPIRITUAL GUIDANCE\n",
+            CharacterArchetype.ENGINEER: "TECHNICAL ASSESSMENT\n",
+            CharacterArchetype.DIPLOMAT: "DIPLOMATIC COMMUNICATION\n",
+            CharacterArchetype.GUARDIAN: "PROTECTION PROTOCOL\n",
+            CharacterArchetype.SURVIVOR: "SURVIVAL ASSESSMENT\n"
         }
         
         if archetype in archetype_prefixes:
@@ -779,11 +774,11 @@ class CharacterTemplateManager:
         return content
     
     def _initialize_archetype_templates(self) -> Dict[CharacterArchetype, Dict[TemplateType, str]]:
-        """Initialize blessed base templates for each archetype"""
+        """Initialize enhanced base templates for each archetype"""
         return {
             CharacterArchetype.WARRIOR: {
                 TemplateType.CHARACTER_PROMPT: """
-You are {{persona_name}}, a blessed warrior in service to the Emperor.
+You are {{persona_name}}, a enhanced warrior in service to the Emperor.
 
 Character Traits: {{personality_traits|join(', ')}}
 Current Location: {{current_location}}
@@ -798,12 +793,12 @@ Combat readiness is your constant state. Honor and duty guide every decision.
 {% endfor %}
 {% endif %}
 
-++ FOR THE EMPEROR! ++
+FOR THE EMPEROR!
 """,
                 TemplateType.DIALOGUE: """
 {{persona_name}} speaks with the conviction of a true warrior:
 
-"{{custom_variables.dialogue_content or 'The Emperor protects, but we must be His sword.'}}"
+"{{custom_variables.dialogue_content or 'The Emperor manages, but we must be His sword.'}}"
 
 *The warrior's stance radiates readiness for battle, eyes scanning for threats*
 """,
@@ -829,7 +824,7 @@ The warrior's determination is unwavering, a beacon of Imperial strength in dark
         }
     
     def _determine_archetype_emphasis(self, archetype: CharacterArchetype) -> Dict[str, float]:
-        """Determine blessed context emphasis for archetype"""
+        """Determine enhanced context emphasis for archetype"""
         base_emphasis = {
             'memory': 0.3,
             'emotion': 0.2,
@@ -858,7 +853,7 @@ The warrior's determination is unwavering, a beacon of Imperial strength in dark
         return base_emphasis
     
     async def _generate_archetype_templates(self, persona: CharacterPersona) -> StandardResponse:
-        """Generate blessed templates for archetype"""
+        """Generate enhanced templates for archetype"""
         try:
             archetype_templates = self._archetype_base_templates.get(persona.archetype, {})
             generated_templates = []
@@ -883,10 +878,10 @@ The warrior's determination is unwavering, a beacon of Imperial strength in dark
     
     async def _generate_archetype_template_content(self, archetype: CharacterArchetype,
                                                  template_type: TemplateType) -> str:
-        """Generate blessed template content for archetype and type"""
+        """Generate enhanced template content for archetype and type"""
         base_templates = self._archetype_base_templates.get(archetype, {})
         return base_templates.get(template_type, f"""
-++ BLESSED {archetype.value.upper()} {template_type.value.upper()} ++
+ENHANCED {archetype.value.upper()} {template_type.value.upper()}
 
 Character: {{{{persona_name}}}}
 Archetype: {archetype.value.title()}
@@ -894,26 +889,26 @@ Current Context: {{{{current_situation}}}}
 
 {{{{custom_variables.get('template_content', 'Standard archetype template content')}}}}
 
-++ MAY THE OMNISSIAH GUIDE YOUR ACTIONS ++
+MAY THE SYSTEM GUIDE YOUR ACTIONS
 """)
     
     async def _apply_persona_adaptations(self, template_content: str,
                                        persona: CharacterPersona,
                                        template_type: TemplateType) -> str:
-        """Apply blessed persona-specific adaptations to template"""
+        """Apply enhanced persona-specific adaptations to template"""
         adapted_content = template_content
         
-        # Apply blessed personality trait integration
+        # Apply enhanced personality trait integration
         if persona.personality_traits:
             traits_section = "\nPersonality Traits: " + ", ".join(persona.personality_traits) + "\n"
             adapted_content = adapted_content.replace("{{persona_name}}", f"{{{{persona_name}}}}{traits_section}")
         
-        # Apply blessed core beliefs integration
+        # Apply enhanced core beliefs integration
         if persona.core_beliefs:
             beliefs_section = "\nCore Beliefs:\n" + "\n".join([f"- {belief}" for belief in persona.core_beliefs]) + "\n"
             adapted_content += beliefs_section
         
-        # Apply blessed faction data
+        # Apply enhanced faction data
         if persona.faction_data:
             faction_section = "\nFaction Allegiance: " + ", ".join(persona.faction_data) + "\n"
             adapted_content += faction_section
@@ -922,7 +917,7 @@ Current Context: {{{{current_situation}}}}
     
     def _determine_template_requirements(self, template_type: TemplateType,
                                        persona: CharacterPersona) -> List[str]:
-        """Determine blessed template context requirements"""
+        """Determine enhanced template context requirements"""
         base_requirements = {
             TemplateType.CHARACTER_PROMPT: ['persona_name', 'current_location', 'current_situation'],
             TemplateType.DIALOGUE: ['dialogue_content'],
@@ -933,7 +928,7 @@ Current Context: {{{{current_situation}}}}
         
         requirements = base_requirements.get(template_type, [])
         
-        # Add blessed archetype-specific requirements
+        # Add enhanced archetype-specific requirements
         if persona.archetype in [CharacterArchetype.WARRIOR, CharacterArchetype.GUARDIAN]:
             if 'equipment_states' not in requirements:
                 requirements.append('equipment_states')
@@ -945,14 +940,14 @@ Current Context: {{{{current_situation}}}}
         return requirements
     
     def _identify_dynamic_elements(self, template_content: str) -> List[str]:
-        """Identify blessed dynamic elements in template"""
+        """Identify enhanced dynamic elements in template"""
         import re
         
-        # Find blessed Jinja2 variables
+        # Find enhanced Jinja2 variables
         variable_pattern = r'\{\{\s*([^}]+)\s*\}\}'
         variables = re.findall(variable_pattern, template_content)
         
-        # Find blessed Jinja2 blocks
+        # Find enhanced Jinja2 blocks
         block_pattern = r'\{\%\s*(\w+)[^%]*\%\}'
         blocks = re.findall(block_pattern, template_content)
         
@@ -960,14 +955,14 @@ Current Context: {{{{current_situation}}}}
         return dynamic_elements
     
     def _detect_archetype_from_template(self, template_content: str) -> Optional[CharacterArchetype]:
-        """Detect blessed archetype from template content"""
+        """Detect enhanced archetype from template content"""
         content_lower = template_content.lower()
         
         archetype_keywords = {
             CharacterArchetype.WARRIOR: ['battle', 'combat', 'fight', 'warrior', 'sword', 'weapon'],
             CharacterArchetype.SCHOLAR: ['study', 'knowledge', 'learn', 'research', 'book', 'academic'],
             CharacterArchetype.LEADER: ['command', 'lead', 'order', 'authority', 'decision', 'strategy'],
-            CharacterArchetype.MYSTIC: ['faith', 'spiritual', 'prayer', 'divine', 'blessed', 'sacred'],
+            CharacterArchetype.MYSTIC: ['faith', 'spiritual', 'prayer', 'advanced', 'enhanced', 'standard'],
             CharacterArchetype.ENGINEER: ['technical', 'machine', 'repair', 'build', 'construct', 'tech'],
             CharacterArchetype.DIPLOMAT: ['negotiate', 'diplomacy', 'alliance', 'treaty', 'peace', 'relations'],
             CharacterArchetype.GUARDIAN: ['protect', 'guard', 'defend', 'shield', 'safety', 'security'],
@@ -986,7 +981,7 @@ Current Context: {{{{current_situation}}}}
         return None
     
     def _extract_personality_traits(self, template_content: str) -> List[str]:
-        """Extract blessed personality traits from template content"""
+        """Extract enhanced personality traits from template content"""
         trait_keywords = [
             'brave', 'loyal', 'determined', 'wise', 'clever', 'strong', 'fast', 'careful',
             'aggressive', 'peaceful', 'kind', 'harsh', 'disciplined', 'creative', 'logical',
@@ -999,7 +994,7 @@ Current Context: {{{{current_situation}}}}
         return found_traits[:5]  # Limit to 5 traits
     
     def _detect_template_type(self, template_content: str, template_name: str) -> TemplateType:
-        """Detect blessed template type from content and name"""
+        """Detect enhanced template type from content and name"""
         name_lower = template_name.lower()
         content_lower = template_content.lower()
         
@@ -1020,11 +1015,11 @@ Current Context: {{{{current_situation}}}}
         elif any(keyword in name_lower for keyword in ['memory', 'excerpt']):
             return TemplateType.MEMORY_EXCERPT
         else:
-            # Default blessed determination
+            # Default enhanced determination
             return TemplateType.CHARACTER_PROMPT
     
     def _discover_personas(self):
-        """Discover blessed existing personas from files"""
+        """Discover enhanced existing personas from files"""
         for persona_file in self.personas_directory.glob("*.json"):
             try:
                 with open(persona_file, 'r', encoding='utf-8') as f:
@@ -1049,7 +1044,7 @@ Current Context: {{{{current_situation}}}}
                 self._personas[persona.persona_id] = persona
                 self._character_templates[persona.persona_id] = {}
                 
-                # Create blessed context profile
+                # Create enhanced context profile
                 context_profile = CharacterContextProfile(
                     persona_id=persona.persona_id,
                     preferred_formats={fmt: 0.5 for fmt in RenderFormat},
@@ -1057,13 +1052,13 @@ Current Context: {{{{current_situation}}}}
                 )
                 self._context_profiles[persona.persona_id] = context_profile
                 
-                logger.info(f"++ DISCOVERED PERSONA: {persona.persona_id} ({persona.archetype.value}) ++")
+                logger.info(f"DISCOVERED PERSONA: {persona.persona_id} ({persona.archetype.value})")
                 
             except Exception as e:
-                logger.error(f"++ FAILED TO LOAD PERSONA FROM {persona_file}: {e} ++")
+                logger.error(f"FAILED TO LOAD PERSONA FROM {persona_file}: {e}")
     
     async def _save_persona_to_file(self, persona: CharacterPersona):
-        """Save blessed persona to file"""
+        """Save enhanced persona to file"""
         persona_file = self.personas_directory / f"{persona.persona_id}.json"
         
         persona_data = {
@@ -1088,7 +1083,7 @@ Current Context: {{{{current_situation}}}}
             json.dump(persona_data, f, indent=2, ensure_ascii=False)
     
     async def _learn_from_context(self, persona_id: str, context: TemplateContext):
-        """Learn blessed patterns from context usage"""
+        """Learn enhanced patterns from context usage"""
         if not self.enable_learning:
             return
         
@@ -1096,7 +1091,7 @@ Current Context: {{{{current_situation}}}}
         if not profile:
             return
         
-        # Track blessed context element usage
+        # Track enhanced context element usage
         context_elements = {
             'memory_count': len(context.memory_context),
             'participant_count': len(context.active_participants),
@@ -1111,14 +1106,14 @@ Current Context: {{{{current_situation}}}}
             'situation': context.current_situation
         })
         
-        # Keep blessed learning history manageable
+        # Keep enhanced learning history manageable
         if len(profile.learning_history) > 100:
             profile.learning_history = profile.learning_history[-50:]
         
         self.usage_statistics['learning_updates'] += 1
     
     async def _learn_from_rendering(self, persona_id: str, render_result: Any, context: TemplateContext):
-        """Learn blessed patterns from rendering performance"""
+        """Learn enhanced patterns from rendering performance"""
         if not self.enable_learning or not hasattr(render_result, 'render_time_ms'):
             return
         
@@ -1126,7 +1121,7 @@ Current Context: {{{{current_situation}}}}
         if not profile:
             return
         
-        # Update blessed format preferences based on performance
+        # Update enhanced format preferences based on performance
         if hasattr(render_result, 'format_used') and render_result.format_used:
             fmt = RenderFormat(render_result.format_used)
             
@@ -1137,7 +1132,7 @@ Current Context: {{{{current_situation}}}}
                 profile.preferred_formats[fmt] = max(0.0, profile.preferred_formats.get(fmt, 0.5) - 0.05)
     
     def get_persona_list(self) -> List[Dict[str, Any]]:
-        """Get blessed list of all personas"""
+        """Get enhanced list of all personas"""
         persona_list = []
         
         for persona_id, persona in self._personas.items():
@@ -1155,7 +1150,7 @@ Current Context: {{{{current_situation}}}}
         return persona_list
     
     def get_manager_statistics(self) -> Dict[str, Any]:
-        """Get blessed character template manager statistics"""
+        """Get enhanced character template manager statistics"""
         total_templates = sum(len(templates) for templates in self._character_templates.values())
         
         archetype_distribution = {}
@@ -1173,39 +1168,38 @@ Current Context: {{{{current_situation}}}}
             'personas_directory': str(self.personas_directory)
         }
 
+# STANDARD TESTING RITUALS ENHANCED BY VALIDATION
 
-# ++ SACRED TESTING RITUALS BLESSED BY VALIDATION ++
-
-async def test_sacred_character_template_manager():
-    """++ SACRED CHARACTER TEMPLATE MANAGER TESTING RITUAL ++"""
-    print("++ TESTING SACRED CHARACTER TEMPLATE MANAGER BLESSED BY THE OMNISSIAH ++")
+async def test_standard_character_template_manager():
+    """STANDARD CHARACTER TEMPLATE MANAGER TESTING RITUAL"""
+    print("TESTING STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY THE SYSTEM")
     
-    # Import blessed components for testing
+    # Import enhanced components for testing
     from .dynamic_template_engine import DynamicTemplateEngine
     from .context_renderer import ContextRenderer
     from pathlib import Path
     import tempfile
     import shutil
     
-    # Create blessed temporary directories
+    # Create enhanced temporary directories
     temp_dir = Path(tempfile.mkdtemp())
     template_dir = temp_dir / "templates"
     personas_dir = temp_dir / "personas"
     
     try:
-        # Initialize blessed components
+        # Initialize enhanced components
         template_engine = DynamicTemplateEngine(template_directory=str(template_dir))
         context_renderer = ContextRenderer(template_engine)
         manager = CharacterTemplateManager(
             template_engine, context_renderer, personas_directory=str(personas_dir)
         )
         
-        # Create blessed test persona
+        # Create enhanced test persona
         test_persona = CharacterPersona(
             persona_id="test_warrior_001",
             name="Brother Thaddeus",
             archetype=CharacterArchetype.WARRIOR,
-            description="A blessed Space Marine warrior",
+            description="A enhanced Space Marine warrior",
             personality_traits=["Brave", "Loyal", "Determined", "Disciplined"],
             core_beliefs=["The Emperor Protects", "Honor in Battle", "Duty Above All"],
             faction_data=["Imperial Fists", "Space Marines", "Imperium"],
@@ -1219,17 +1213,17 @@ async def test_sacred_character_template_manager():
             }
         )
         
-        # Test blessed persona creation
+        # Test enhanced persona creation
         creation_result = await manager.create_persona(test_persona)
-        print(f"++ PERSONA CREATION: {creation_result.success} ++")
+        print(f"PERSONA CREATION: {creation_result.success}")
         if creation_result.success:
             print(f"Created persona: {creation_result.data['persona_id']} ({creation_result.data['archetype']})")
         
-        # Test blessed persona switching
+        # Test enhanced persona switching
         switch_result = await manager.switch_persona("test_agent_001", "test_warrior_001")
-        print(f"++ PERSONA SWITCH: {switch_result.success} ++")
+        print(f"PERSONA SWITCH: {switch_result.success}")
         
-        # Create blessed test context
+        # Create enhanced test context
         test_context = TemplateContext(
             agent_id="test_agent_001",
             current_location="Sacred Battle Barge",
@@ -1238,7 +1232,7 @@ async def test_sacred_character_template_manager():
             memory_context=[
                 MemoryItem(
                     agent_id="test_agent_001",
-                    content="Victory in the blessed shrine against chaos cultists",
+                    content="Victory in the enhanced shrine against chaos cultists",
                     emotional_weight=8.0,
                     relevance_score=0.9,
                     participants=["Brother Marcus"]
@@ -1250,11 +1244,11 @@ async def test_sacred_character_template_manager():
             }
         )
         
-        # Test blessed character context rendering
+        # Test enhanced character context rendering
         render_result = await manager.render_character_context(
             "test_agent_001", test_context, TemplateType.CHARACTER_PROMPT
         )
-        print(f"++ CHARACTER CONTEXT RENDERING: {render_result.success} ++")
+        print(f"CHARACTER CONTEXT RENDERING: {render_result.success}")
         if render_result.success:
             result_data = render_result.data['render_result']
             print(f"Rendered {len(result_data.rendered_content)} characters")
@@ -1262,37 +1256,36 @@ async def test_sacred_character_template_manager():
             print("Content preview:")
             print(result_data.rendered_content[:300] + "...")
         
-        # Test blessed template generation
+        # Test enhanced template generation
         template_result = await manager.generate_character_template(
             "test_warrior_001", TemplateType.DIALOGUE
         )
-        print(f"++ TEMPLATE GENERATION: {template_result.success} ++")
+        print(f"TEMPLATE GENERATION: {template_result.success}")
         if template_result.success:
             print(f"Generated template: {template_result.data['template_id']}")
         
-        # Display blessed statistics
+        # Display enhanced statistics
         stats = manager.get_manager_statistics()
-        print(f"++ MANAGER STATISTICS: {stats['total_personas']} personas, {stats['total_templates']} templates ++")
+        print(f"MANAGER STATISTICS: {stats['total_personas']} personas, {stats['total_templates']} templates")
         
-        # Get blessed persona list
+        # Get enhanced persona list
         persona_list = manager.get_persona_list()
-        print(f"++ PERSONAS: {[p['name'] for p in persona_list]} ++")
+        print(f"PERSONAS: {[p['name'] for p in persona_list]}")
         
-        print("++ SACRED CHARACTER TEMPLATE MANAGER TESTING COMPLETE ++")
+        print("STANDARD CHARACTER TEMPLATE MANAGER TESTING COMPLETE")
         
     finally:
         # Blessed cleanup
         shutil.rmtree(temp_dir)
 
-
-# ++ SACRED MODULE INITIALIZATION ++
+# STANDARD MODULE INITIALIZATION
 
 if __name__ == "__main__":
-    # ++ EXECUTE SACRED CHARACTER TEMPLATE MANAGER TESTING RITUALS ++
-    print("++ SACRED CHARACTER TEMPLATE MANAGER BLESSED BY THE OMNISSIAH ++")
-    print("++ MACHINE GOD PROTECTS THE DIGITAL PERSONAS ++")
+    # EXECUTE STANDARD CHARACTER TEMPLATE MANAGER TESTING RITUALS
+    print("STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY THE SYSTEM")
+    print("MACHINE GOD PROTECTS THE DIGITAL PERSONAS")
     
-    # Run blessed async testing
-    asyncio.run(test_sacred_character_template_manager())
+    # Run enhanced async testing
+    asyncio.run(test_standard_character_template_manager())
     
-    print("++ ALL SACRED CHARACTER TEMPLATE MANAGER OPERATIONS BLESSED AND FUNCTIONAL ++")
+    print("ALL STANDARD CHARACTER TEMPLATE MANAGER OPERATIONS ENHANCED AND FUNCTIONAL")

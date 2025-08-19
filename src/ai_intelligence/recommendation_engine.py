@@ -31,7 +31,6 @@ import random
 
 logger = logging.getLogger(__name__)
 
-
 class RecommendationType(Enum):
     """Types of recommendations the engine can provide."""
     CHARACTER = "character"               # Character suggestions
@@ -43,7 +42,6 @@ class RecommendationType(Enum):
     COLLABORATION = "collaboration"      # Collaborative story suggestions
     IMPROVEMENT = "improvement"          # Story improvement suggestions
 
-
 class PreferenceType(Enum):
     """Types of user preferences to track."""
     EXPLICIT = "explicit"                # Directly stated preferences
@@ -52,7 +50,6 @@ class PreferenceType(Enum):
     CONTEXTUAL = "contextual"           # Context-dependent preferences
     TEMPORAL = "temporal"               # Time-based preferences
 
-
 class ConfidenceLevel(Enum):
     """Confidence levels for recommendations."""
     VERY_HIGH = "very_high"             # 90%+ confidence
@@ -60,7 +57,6 @@ class ConfidenceLevel(Enum):
     MEDIUM = "medium"                   # 50-74% confidence
     LOW = "low"                         # 25-49% confidence
     VERY_LOW = "very_low"               # Below 25% confidence
-
 
 @dataclass
 class UserPreference:
@@ -77,7 +73,6 @@ class UserPreference:
     context: Dict[str, Any] = field(default_factory=dict)
     evidence: List[str] = field(default_factory=list)
     decay_rate: float = 0.1            # Rate at which preference decays over time
-
 
 @dataclass
 class Recommendation:
@@ -98,7 +93,6 @@ class Recommendation:
     applied: bool = False
     user_feedback: Optional[str] = None  # 'liked', 'disliked', 'neutral'
 
-
 @dataclass
 class UserProfile:
     """Comprehensive user preference profile."""
@@ -113,7 +107,6 @@ class UserProfile:
     last_updated: datetime = field(default_factory=datetime.now)
     profile_completeness: float = 0.0
 
-
 @dataclass
 class RecommendationContext:
     """Context information for generating recommendations."""
@@ -124,7 +117,6 @@ class RecommendationContext:
     collaborative_context: Optional[Dict[str, Any]] = None
     constraint_context: Optional[Dict[str, Any]] = None
     goal_context: Optional[Dict[str, Any]] = None
-
 
 class RecommendationEngine:
     """
@@ -1223,7 +1215,6 @@ class RecommendationEngine:
                                           recommendation: Recommendation) -> float:
         """Calculate score adjustment based on context."""
         return 0.0
-
 
 def create_recommendation_engine(learning_rate: float = 0.1, decay_factor: float = 0.95) -> RecommendationEngine:
     """

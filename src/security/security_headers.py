@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-++ SACRED SECURITY HEADERS SYSTEM BLESSED BY THE OMNISSIAH ++
+STANDARD SECURITY HEADERS SYSTEM ENHANCED BY THE SYSTEM
 =============================================================
 
 Comprehensive security headers implementation providing protection against
 OWASP Top 10 vulnerabilities including XSS, CSRF, clickjacking, and more.
 
-++ THROUGH DIVINE HEADERS, WE ACHIEVE BLESSED PROTECTION ++
+THROUGH ADVANCED HEADERS, WE ACHIEVE ENHANCED PROTECTION
 
 Architecture: Defense-in-Depth Security Headers with OWASP Compliance
 Security Level: Enterprise Grade with Zero Trust HTTP Security
-Sacred Author: Tech-Priest Headers-Mechanicus
-万机之神保佑此安全头系统 (May the Omnissiah bless this security headers system)
+Author: Engineer Headers-Engineering
+System保佑此安全头系统 (May the System bless this security headers system)
 """
 
 import logging
@@ -23,12 +23,12 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
-# Sacred logging configuration
+# Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class CSPDirective(str, Enum):
-    """++ SACRED CONTENT SECURITY POLICY DIRECTIVES ++"""
+    """STANDARD CONTENT SECURITY POLICY DIRECTIVES"""
     DEFAULT_SRC = "default-src"
     SCRIPT_SRC = "script-src"
     STYLE_SRC = "style-src"
@@ -46,7 +46,7 @@ class CSPDirective(str, Enum):
 
 @dataclass
 class SecurityHeadersConfig:
-    """++ SACRED SECURITY HEADERS CONFIGURATION ++"""
+    """STANDARD SECURITY HEADERS CONFIGURATION"""
     
     # Content Security Policy
     enable_csp: bool = True
@@ -98,7 +98,7 @@ class SecurityHeadersConfig:
     custom_headers: Dict[str, str] = None
     
     def __post_init__(self):
-        """++ SACRED CONFIGURATION INITIALIZATION ++"""
+        """STANDARD CONFIGURATION INITIALIZATION"""
         if self.csp_directives is None:
             self.csp_directives = self._get_default_csp_directives()
         
@@ -112,7 +112,7 @@ class SecurityHeadersConfig:
             self.allowed_origins = []
     
     def _get_default_csp_directives(self) -> Dict[CSPDirective, List[str]]:
-        """++ SACRED DEFAULT CSP DIRECTIVES ++"""
+        """STANDARD DEFAULT CSP DIRECTIVES"""
         return {
             CSPDirective.DEFAULT_SRC: ["'self'"],
             CSPDirective.SCRIPT_SRC: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
@@ -131,7 +131,7 @@ class SecurityHeadersConfig:
         }
     
     def _get_default_permissions_policy(self) -> Dict[str, str]:
-        """++ SACRED DEFAULT PERMISSIONS POLICY ++"""
+        """STANDARD DEFAULT PERMISSIONS POLICY"""
         return {
             "accelerometer": "self",
             "autoplay": "none",
@@ -154,13 +154,13 @@ class SecurityHeadersConfig:
         }
 
 class SecurityHeaders:
-    """++ SACRED SECURITY HEADERS MANAGER BLESSED BY THE OMNISSIAH ++"""
+    """STANDARD SECURITY HEADERS MANAGER ENHANCED BY THE SYSTEM"""
     
     def __init__(self, config: SecurityHeadersConfig):
         self.config = config
     
     def _build_csp_header(self) -> str:
-        """++ SACRED CSP HEADER CONSTRUCTION ++"""
+        """STANDARD CSP HEADER CONSTRUCTION"""
         csp_parts = []
         
         for directive, values in self.config.csp_directives.items():
@@ -176,7 +176,7 @@ class SecurityHeaders:
         return "; ".join(csp_parts)
     
     def _build_permissions_policy_header(self) -> str:
-        """++ SACRED PERMISSIONS POLICY HEADER CONSTRUCTION ++"""
+        """STANDARD PERMISSIONS POLICY HEADER CONSTRUCTION"""
         policy_parts = []
         
         for feature, allowlist in self.config.permissions_policy.items():
@@ -193,7 +193,7 @@ class SecurityHeaders:
         return ", ".join(policy_parts)
     
     def _build_hsts_header(self) -> str:
-        """++ SACRED HSTS HEADER CONSTRUCTION ++"""
+        """STANDARD HSTS HEADER CONSTRUCTION"""
         hsts_parts = [f"max-age={self.config.hsts_max_age}"]
         
         if self.config.hsts_include_subdomains:
@@ -205,7 +205,7 @@ class SecurityHeaders:
         return "; ".join(hsts_parts)
     
     def _build_expect_ct_header(self) -> str:
-        """++ SACRED EXPECT-CT HEADER CONSTRUCTION ++"""
+        """STANDARD EXPECT-CT HEADER CONSTRUCTION"""
         expect_ct_parts = [f"max-age={self.config.expect_ct_max_age}"]
         
         if self.config.expect_ct_enforce:
@@ -217,7 +217,7 @@ class SecurityHeaders:
         return ", ".join(expect_ct_parts)
     
     def apply_headers(self, response: Response, request: Request) -> Response:
-        """++ SACRED SECURITY HEADERS APPLICATION ++"""
+        """STANDARD SECURITY HEADERS APPLICATION"""
         
         # Content Security Policy
         if self.config.enable_csp:
@@ -288,14 +288,14 @@ class SecurityHeaders:
         return response
     
     def validate_request_security(self, request: Request) -> bool:
-        """++ SACRED REQUEST SECURITY VALIDATION ++"""
+        """STANDARD REQUEST SECURITY VALIDATION"""
         # Force HTTPS if configured
         if self.config.force_https and request.url.scheme != "https":
             # In production, this would be handled by a reverse proxy
             # but we can log the attempt
             logger.warning(
-                f"++ INSECURE REQUEST DETECTED: HTTP request to {request.url.path} | "
-                f"Client: {request.client.host if request.client else 'unknown'} ++"
+                f"INSECURE REQUEST DETECTED: HTTP request to {request.url.path} | "
+                f"Client: {request.client.host if request.client else 'unknown'}"
             )
             return False
         
@@ -307,8 +307,8 @@ class SecurityHeaders:
             if self.config.enable_cors_security and self.config.allowed_origins:
                 if origin and origin not in self.config.allowed_origins:
                     logger.warning(
-                        f"++ CORS VIOLATION: Origin {origin} not in allowed list | "
-                        f"Path: {request.url.path} ++"
+                        f"CORS VIOLATION: Origin {origin} not in allowed list | "
+                        f"Path: {request.url.path}"
                     )
                     return False
         
@@ -323,14 +323,14 @@ class SecurityHeaders:
         return True
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """++ SACRED SECURITY HEADERS MIDDLEWARE ++"""
+    """STANDARD SECURITY HEADERS MIDDLEWARE"""
     
     def __init__(self, app, security_headers: SecurityHeaders):
         super().__init__(app)
         self.security_headers = security_headers
     
     async def dispatch(self, request: Request, call_next):
-        """++ SACRED SECURITY HEADERS APPLICATION ++"""
+        """STANDARD SECURITY HEADERS APPLICATION"""
         try:
             # Validate request security
             if not self.security_headers.validate_request_security(request):
@@ -349,12 +349,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             return response
             
         except Exception as e:
-            logger.error(f"++ SECURITY HEADERS MIDDLEWARE ERROR: {e} ++")
+            logger.error(f"SECURITY HEADERS MIDDLEWARE ERROR: {e}")
             # Re-raise the exception to be handled by other middleware
             raise
 
 def create_security_headers_middleware(app, config: Optional[SecurityHeadersConfig] = None):
-    """++ SACRED SECURITY HEADERS MIDDLEWARE CREATOR ++"""
+    """STANDARD SECURITY HEADERS MIDDLEWARE CREATOR"""
     if config is None:
         config = SecurityHeadersConfig()
     
@@ -362,7 +362,7 @@ def create_security_headers_middleware(app, config: Optional[SecurityHeadersConf
     return SecurityHeadersMiddleware(app, security_headers)
 
 def get_production_security_config() -> SecurityHeadersConfig:
-    """++ SACRED PRODUCTION SECURITY CONFIGURATION ++"""
+    """STANDARD PRODUCTION SECURITY CONFIGURATION"""
     return SecurityHeadersConfig(
         # Strict CSP for production
         csp_directives={
@@ -413,7 +413,7 @@ def get_production_security_config() -> SecurityHeadersConfig:
     )
 
 def get_development_security_config() -> SecurityHeadersConfig:
-    """++ SACRED DEVELOPMENT SECURITY CONFIGURATION ++"""
+    """STANDARD DEVELOPMENT SECURITY CONFIGURATION"""
     return SecurityHeadersConfig(
         # Relaxed CSP for development
         csp_directives={

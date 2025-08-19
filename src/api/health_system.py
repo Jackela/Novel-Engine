@@ -149,6 +149,15 @@ class HealthMonitor:
     def register_database_check(self, database_path: str):
         """Register database connectivity check."""
         async def check_database():
+            """
+            Check database connectivity and health.
+            
+            Returns:
+                Database health status and metrics
+                
+            Raises:
+                Exception: If database connectivity fails
+            """
             try:
                 # Test database connection
                 conn = sqlite3.connect(database_path, timeout=2.0)
@@ -186,6 +195,15 @@ class HealthMonitor:
     def register_orchestrator_check(self, orchestrator):
         """Register system orchestrator check."""
         async def check_orchestrator():
+            """
+            Check system orchestrator health and status.
+            
+            Returns:
+                Orchestrator health status and metrics
+                
+            Raises:
+                Exception: If orchestrator is not initialized or unhealthy
+            """
             try:
                 if not orchestrator:
                     raise Exception("Orchestrator not initialized")
@@ -219,6 +237,12 @@ class HealthMonitor:
         
         # Memory check
         async def check_memory():
+            """
+            Check system memory usage and availability.
+            
+            Returns:
+                Memory health status and usage metrics
+            """
             memory = psutil.virtual_memory()
             memory_usage_percent = memory.percent
             
@@ -236,6 +260,12 @@ class HealthMonitor:
         
         # CPU check
         async def check_cpu():
+            """
+            Check CPU usage and performance metrics.
+            
+            Returns:
+                CPU health status and performance metrics
+            """
             # Get CPU usage over 1 second
             cpu_percent = psutil.cpu_percent(interval=1)
             
@@ -253,6 +283,12 @@ class HealthMonitor:
         
         # Disk check
         async def check_filesystem():
+            """
+            Check filesystem health and disk space availability.
+            
+            Returns:
+                Filesystem health status and disk usage metrics
+            """
             disk_usage = psutil.disk_usage('.')
             usage_percent = (disk_usage.used / disk_usage.total) * 100
             

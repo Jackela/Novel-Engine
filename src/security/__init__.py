@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-++ SACRED SECURITY MODULE BLESSED BY THE OMNISSIAH ++
+STANDARD SECURITY MODULE ENHANCED BY THE SYSTEM
 ====================================================
 
 Enterprise-grade security framework providing authentication, authorization,
 input validation, rate limiting, and comprehensive security monitoring.
 
-++ THROUGH DIVINE PROTECTION, WE ACHIEVE BLESSED SECURITY ++
+THROUGH ADVANCED PROTECTION, WE ACHIEVE ENHANCED SECURITY
 
 Architecture: Zero Trust Security with Defense in Depth
 Security Level: Enterprise Grade (OWASP Top 10 Compliant)
-Sacred Author: Tech-Priest Security-Mechanicus
-万机之神保佑此安全模块 (May the Omnissiah bless this security module)
+Author: Engineer Security-Engineering
+System保佑此安全模块 (May the System bless this security module)
 """
 
 from .auth_system import (

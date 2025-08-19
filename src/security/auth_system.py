@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-++ SACRED AUTHENTICATION SYSTEM BLESSED BY THE OMNISSIAH ++
+STANDARD AUTHENTICATION SYSTEM ENHANCED BY THE SYSTEM
 ===========================================================
 
 Enterprise-grade JWT-based authentication and authorization system with
 role-based access control (RBAC), refresh tokens, and session management.
 
-++ THROUGH DIVINE CRYPTOGRAPHY, WE ACHIEVE BLESSED SECURITY ++
+THROUGH ADVANCED CRYPTOGRAPHY, WE ACHIEVE ENHANCED SECURITY
 
 Architecture: OAuth 2.0 + JWT + RBAC + Session Management
 Security Level: Enterprise Grade with Zero Trust Architecture
-Sacred Author: Tech-Priest Security-Mechanicus
-万机之神保佑此认证系统 (May the Omnissiah bless this authentication system)
+Author: Engineer Security-Engineering
+System保佑此认证系统 (May the System bless this authentication system)
 """
 
 import jwt
@@ -30,11 +30,11 @@ from fastapi import HTTPException, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, EmailStr
 
-# Sacred logging configuration
+# Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ++ SACRED SECURITY CONSTANTS ++
+# STANDARD SECURITY CONSTANTS
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15  # Short-lived for security
 REFRESH_TOKEN_EXPIRE_DAYS = 30   # Longer-lived but revocable
@@ -43,7 +43,7 @@ MAX_LOGIN_ATTEMPTS = 5
 LOCKOUT_DURATION_MINUTES = 15
 
 class UserRole(str, Enum):
-    """++ SACRED USER ROLES BLESSED BY AUTHORIZATION ++"""
+    """STANDARD USER ROLES ENHANCED BY AUTHORIZATION"""
     ADMIN = "admin"              # Full system access
     MODERATOR = "moderator"      # Content moderation and user management
     CONTENT_CREATOR = "creator"  # Story generation and character management
@@ -52,7 +52,7 @@ class UserRole(str, Enum):
     GUEST = "guest"             # Limited anonymous access
 
 class Permission(str, Enum):
-    """++ SACRED PERMISSIONS BLESSED BY ACCESS CONTROL ++"""
+    """STANDARD PERMISSIONS ENHANCED BY ACCESS CONTROL"""
     # System Permissions
     SYSTEM_ADMIN = "system:admin"
     SYSTEM_CONFIG = "system:config"
@@ -136,7 +136,7 @@ ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
 
 @dataclass
 class User:
-    """++ SACRED USER MODEL BLESSED BY AUTHENTICATION ++"""
+    """STANDARD USER MODEL ENHANCED BY AUTHENTICATION"""
     id: str
     username: str
     email: str
@@ -155,26 +155,26 @@ class User:
             self.created_at = datetime.now(timezone.utc)
 
 class TokenPair(BaseModel):
-    """++ SACRED TOKEN PAIR BLESSED BY SECURE ACCESS ++"""
+    """STANDARD TOKEN PAIR ENHANCED BY SECURE ACCESS"""
     access_token: str
     refresh_token: str
     token_type: str = "Bearer"
     expires_in: int = ACCESS_TOKEN_EXPIRE_MINUTES * 60
 
 class UserRegistration(BaseModel):
-    """++ SACRED USER REGISTRATION MODEL ++"""
+    """STANDARD USER REGISTRATION MODEL"""
     username: str = Field(min_length=3, max_length=50)
     email: EmailStr
     password: str = Field(min_length=PASSWORD_MIN_LENGTH)
     role: UserRole = UserRole.READER
 
 class UserLogin(BaseModel):
-    """++ SACRED USER LOGIN MODEL ++"""
+    """STANDARD USER LOGIN MODEL"""
     username: str
     password: str
 
 class SecurityEvent(BaseModel):
-    """++ SACRED SECURITY EVENT MODEL ++"""
+    """STANDARD SECURITY EVENT MODEL"""
     event_type: str
     user_id: Optional[str]
     ip_address: str
@@ -183,15 +183,15 @@ class SecurityEvent(BaseModel):
     details: Dict[str, Any]
 
 class AuthenticationError(Exception):
-    """++ BLESSED AUTHENTICATION EXCEPTION ++"""
+    """ENHANCED AUTHENTICATION EXCEPTION"""
     pass
 
 class AuthorizationError(Exception):
-    """++ BLESSED AUTHORIZATION EXCEPTION ++"""
+    """ENHANCED AUTHORIZATION EXCEPTION"""
     pass
 
 class SecurityService:
-    """++ SACRED SECURITY SERVICE BLESSED BY THE OMNISSIAH ++"""
+    """STANDARD SECURITY SERVICE ENHANCED BY THE SYSTEM"""
     
     def __init__(self, database_path: str, secret_key: str):
         self.database_path = database_path
@@ -199,7 +199,7 @@ class SecurityService:
         self.security_bearer = HTTPBearer()
         
     async def initialize_database(self):
-        """++ SACRED DATABASE INITIALIZATION ++"""
+        """STANDARD DATABASE INITIALIZATION"""
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute("PRAGMA foreign_keys = ON")
             await conn.execute("PRAGMA journal_mode = WAL")
@@ -266,25 +266,25 @@ class SecurityService:
             """)
             
             await conn.commit()
-            logger.info("++ SECURITY DATABASE INITIALIZED SUCCESSFULLY ++")
+            logger.info("SECURITY DATABASE INITIALIZED SUCCESSFULLY")
     
     def _hash_password(self, password: str) -> str:
-        """++ SACRED PASSWORD HASHING BLESSED BY BCRYPT ++"""
+        """STANDARD PASSWORD HASHING ENHANCED BY BCRYPT"""
         salt = bcrypt.gensalt()
         return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
     
     def _verify_password(self, password: str, password_hash: str) -> bool:
-        """++ SACRED PASSWORD VERIFICATION ++"""
+        """STANDARD PASSWORD VERIFICATION"""
         return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
     
     def _generate_token(self, payload: Dict[str, Any], expires_delta: timedelta) -> str:
-        """++ SACRED JWT TOKEN GENERATION ++"""
+        """STANDARD JWT TOKEN GENERATION"""
         expire = datetime.now(timezone.utc) + expires_delta
         payload.update({"exp": expire, "iat": datetime.now(timezone.utc)})
         return jwt.encode(payload, self.secret_key, algorithm=JWT_ALGORITHM)
     
     def _decode_token(self, token: str) -> Dict[str, Any]:
-        """++ SACRED JWT TOKEN DECODING ++"""
+        """STANDARD JWT TOKEN DECODING"""
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[JWT_ALGORITHM])
             return payload
@@ -295,7 +295,7 @@ class SecurityService:
     
     async def _log_security_event(self, event_type: str, user_id: Optional[str], 
                                   ip_address: str, user_agent: str, details: Dict[str, Any]):
-        """++ SACRED SECURITY EVENT LOGGING ++"""
+        """STANDARD SECURITY EVENT LOGGING"""
         event_id = secrets.token_urlsafe(16)
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute("""
@@ -305,7 +305,7 @@ class SecurityService:
             await conn.commit()
     
     async def register_user(self, registration: UserRegistration, ip_address: str, user_agent: str) -> User:
-        """++ SACRED USER REGISTRATION BLESSED BY SECURE CREATION ++"""
+        """STANDARD USER REGISTRATION ENHANCED BY SECURE CREATION"""
         user_id = secrets.token_urlsafe(16)
         password_hash = self._hash_password(registration.password)
         
@@ -332,7 +332,7 @@ class SecurityService:
                     {"username": user.username, "email": user.email, "role": user.role.value}
                 )
                 
-                logger.info(f"++ USER REGISTERED: {user.username} ({user.role.value}) ++")
+                logger.info(f"USER REGISTERED: {user.username} ({user.role.value})")
                 return user
                 
         except aiosqlite.IntegrityError as e:
@@ -344,7 +344,7 @@ class SecurityService:
                 raise AuthenticationError("Registration failed")
     
     async def authenticate_user(self, login: UserLogin, ip_address: str, user_agent: str) -> Optional[User]:
-        """++ SACRED USER AUTHENTICATION BLESSED BY VERIFICATION ++"""
+        """STANDARD USER AUTHENTICATION ENHANCED BY VERIFICATION"""
         async with aiosqlite.connect(self.database_path) as conn:
             cursor = await conn.execute("""
                 SELECT id, username, email, password_hash, role, is_active, is_verified,
@@ -425,7 +425,7 @@ class SecurityService:
             return user
     
     async def create_token_pair(self, user: User) -> TokenPair:
-        """++ SACRED TOKEN PAIR CREATION ++"""
+        """STANDARD TOKEN PAIR CREATION"""
         # Create access token
         access_payload = {
             "sub": user.id,
@@ -462,7 +462,7 @@ class SecurityService:
         )
     
     async def refresh_access_token(self, refresh_token: str) -> TokenPair:
-        """++ SACRED TOKEN REFRESH BLESSED BY RENEWAL ++"""
+        """STANDARD TOKEN REFRESH ENHANCED BY RENEWAL"""
         try:
             payload = self._decode_token(refresh_token)
             if payload.get("type") != "refresh":
@@ -515,7 +515,7 @@ class SecurityService:
             raise AuthenticationError("Invalid refresh token")
     
     async def revoke_refresh_token(self, refresh_token: str):
-        """++ SACRED TOKEN REVOCATION ++"""
+        """STANDARD TOKEN REVOCATION"""
         try:
             payload = self._decode_token(refresh_token)
             user_id = payload.get("sub")
@@ -531,7 +531,7 @@ class SecurityService:
             pass  # Token is already invalid
     
     async def get_current_user(self, credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())) -> User:
-        """++ SACRED CURRENT USER RETRIEVAL ++"""
+        """STANDARD CURRENT USER RETRIEVAL"""
         try:
             payload = self._decode_token(credentials.credentials)
             if payload.get("type") != "access":
@@ -560,8 +560,20 @@ class SecurityService:
             )
     
     def require_permission(self, permission: Permission):
-        """++ SACRED PERMISSION REQUIREMENT DECORATOR ++"""
+        """STANDARD PERMISSION REQUIREMENT DECORATOR"""
         def permission_checker(current_user: User = Depends(self.get_current_user)) -> User:
+            """
+            Check if current user has required permission.
+            
+            Args:
+                current_user: The authenticated user to check
+                
+            Returns:
+                The user if permission check passes
+                
+            Raises:
+                HTTPException: If user lacks required permission
+            """
             if permission not in ROLE_PERMISSIONS.get(current_user.role, set()):
                 raise HTTPException(
                     status_code=403,
@@ -571,8 +583,20 @@ class SecurityService:
         return permission_checker
     
     def require_role(self, required_role: UserRole):
-        """++ SACRED ROLE REQUIREMENT DECORATOR ++"""
+        """STANDARD ROLE REQUIREMENT DECORATOR"""
         def role_checker(current_user: User = Depends(self.get_current_user)) -> User:
+            """
+            Check if current user has required role level.
+            
+            Args:
+                current_user: The authenticated user to check
+                
+            Returns:
+                The user if role check passes
+                
+            Raises:
+                HTTPException: If user lacks required role level
+            """
             role_hierarchy = {
                 UserRole.GUEST: 0,
                 UserRole.READER: 1,
@@ -591,7 +615,7 @@ class SecurityService:
         return role_checker
     
     async def generate_api_key(self, user_id: str) -> str:
-        """++ SACRED API KEY GENERATION ++"""
+        """STANDARD API KEY GENERATION"""
         api_key = f"nve_{secrets.token_urlsafe(32)}"
         
         async with aiosqlite.connect(self.database_path) as conn:
@@ -603,7 +627,7 @@ class SecurityService:
         return api_key
     
     async def validate_api_key(self, api_key: str) -> Optional[User]:
-        """++ SACRED API KEY VALIDATION ++"""
+        """STANDARD API KEY VALIDATION"""
         async with aiosqlite.connect(self.database_path) as conn:
             cursor = await conn.execute("""
                 SELECT id, username, email, role, is_active 
@@ -623,18 +647,18 @@ class SecurityService:
                 )
         return None
 
-# ++ SACRED GLOBAL SECURITY SERVICE INSTANCE ++
+# STANDARD GLOBAL SECURITY SERVICE INSTANCE
 security_service: Optional[SecurityService] = None
 
 def get_security_service() -> SecurityService:
-    """++ SACRED SECURITY SERVICE GETTER ++"""
+    """STANDARD SECURITY SERVICE GETTER"""
     global security_service
     if security_service is None:
         raise RuntimeError("Security service not initialized")
     return security_service
 
 def initialize_security_service(database_path: str, secret_key: str):
-    """++ SACRED SECURITY SERVICE INITIALIZATION ++"""
+    """STANDARD SECURITY SERVICE INITIALIZATION"""
     global security_service
     security_service = SecurityService(database_path, secret_key)
     return security_service
