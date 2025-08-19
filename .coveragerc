@@ -1,6 +1,6 @@
 [run]
 # Coverage configuration for StoryForge AI
-source = src
+source = .
 omit = 
     */tests/*
     */test_*
@@ -23,6 +23,21 @@ omit =
     fix_*.py
     run_*.py
     simple_*.py
+    debug_*.py
+    validate_*.py
+    testing_*.py
+    wave_*.py
+    *_report*.py
+    final_*.py
+    minimal_*.py
+    cleanup_*.py
+    test_*.py
+    *_test.py
+    complete_*.py
+    enhanced_*.py
+    production_*.py
+    security_*.py
+    scalability_*.py
 
 [report]
 # Reporting options

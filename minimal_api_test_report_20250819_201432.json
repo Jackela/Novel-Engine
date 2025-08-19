@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-08-19T20:14:32.912852",
+  "summary": {
+    "total": 4,
+    "successful": 4,
+    "failed": 0,
+    "success_rate": "100.0%"
+  },
+  "details": {
+    "root": {
+      "success": true,
+      "data": {
+        "message": "Minimal Test API is running",
+        "status": "ok"
+      }
+    },
+    "health": {
+      "success": true,
+      "data": {
+        "status": "healthy",
+        "timestamp": 1755598472.3632364,
+        "gemini_key_set": true,
+        "gemini_available": true,
+        "api_version": "1.0.0"
+      }
+    },
+    "characters": {
+      "success": true,
+      "data": {
+        "characters": [
+          "engineer",
+          "pilot",
+          "scientist",
+          "test"
+        ]
+      }
+    },
+    "gemini": {
+      "success": true,
+      "data": {
+        "success": true,
+        "response": "Test response successful.\n"
+      }
+    }
+  }
+}
