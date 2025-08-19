@@ -42,7 +42,6 @@ from shared_types import CharacterAction
 
 logger = logging.getLogger(__name__)
 
-
 class OrchestratorStatus(Enum):
     """AI Orchestrator status levels."""
     INITIALIZING = "initializing"
@@ -53,7 +52,6 @@ class OrchestratorStatus(Enum):
     ERROR = "error"
     SHUTDOWN = "shutdown"
 
-
 class IntelligenceLevel(Enum):
     """AI intelligence operation levels."""
     BASIC = "basic"                   # Basic AI features only
@@ -62,7 +60,6 @@ class IntelligenceLevel(Enum):
     EXPERIMENTAL = "experimental"     # Experimental AI features enabled
     CUSTOM = "custom"                 # Custom configuration
 
-
 class SystemPriority(Enum):
     """System priority levels for resource allocation."""
     CRITICAL = "critical"             # Critical system operations
@@ -70,7 +67,6 @@ class SystemPriority(Enum):
     NORMAL = "normal"                 # Normal priority operations
     LOW = "low"                       # Low priority operations
     BACKGROUND = "background"         # Background processing
-
 
 @dataclass
 class AISystemConfig:
@@ -94,7 +90,6 @@ class AISystemConfig:
     auto_scaling: bool = True
     debug_mode: bool = False
 
-
 @dataclass
 class AIPerformanceMetrics:
     """AI system performance metrics."""
@@ -114,7 +109,6 @@ class AIPerformanceMetrics:
     error_rate: float = 0.0
     uptime_seconds: int = 0
 
-
 @dataclass
 class AIOperation:
     """Individual AI operation tracking."""
@@ -132,7 +126,6 @@ class AIOperation:
     dependencies: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-
 @dataclass
 class IntelligenceInsight:
     """AI-generated insights about system performance and patterns."""
@@ -146,7 +139,6 @@ class IntelligenceInsight:
     supporting_data: Dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
     category: str = "performance"  # performance, quality, user_behavior, system_health
-
 
 class AIIntelligenceOrchestrator:
     """
@@ -1102,7 +1094,6 @@ class AIIntelligenceOrchestrator:
                 }
             )
             await self.analytics.track_event(event)
-
 
 def create_ai_intelligence_orchestrator(event_bus: EventBus, config: Optional[AISystemConfig] = None) -> AIIntelligenceOrchestrator:
     """

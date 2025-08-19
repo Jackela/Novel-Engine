@@ -76,6 +76,7 @@ class APIResponse(BaseModel, Generic[T]):
     pagination: Optional[PaginationInfo] = Field(None, description="Pagination info for list responses")
     
     class Config:
+        """Pydantic configuration for response model serialization."""
         json_encoders = {
             datetime: lambda dt: dt.isoformat()
         }

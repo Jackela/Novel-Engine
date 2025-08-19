@@ -64,7 +64,6 @@ class WorkingMemoryItem:
         frequency_bonus = min(0.2, self.access_frequency * 0.05)
         return base_priority + attention_bonus + activation_bonus + frequency_bonus
 
-
 class WorkingMemory:
     """
     Manages the agent's immediate conscious focus, adhering to cognitive
@@ -255,7 +254,6 @@ class WorkingMemory:
     
     def __repr__(self) -> str:
         return f"WorkingMemory(agent={self.agent_id}, size={len(self._items)}/{self.capacity})"
-
 
 if __name__ == "__main__":
     print("Testing Working Memory...")

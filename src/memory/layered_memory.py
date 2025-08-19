@@ -27,7 +27,6 @@ from src.database.context_db import ContextDatabase
 
 logger = logging.getLogger(__name__)
 
-
 class MemoryPriority(Enum):
     """Enumeration for memory priority levels."""
     CRITICAL = "critical"
@@ -35,7 +34,6 @@ class MemoryPriority(Enum):
     MEDIUM = "medium"
     LOW = "low"
     ARCHIVED = "archived"
-
 
 @dataclass
 class MemoryQueryRequest:
@@ -54,7 +52,6 @@ class MemoryQueryRequest:
     include_emotional_context: bool = True
     priority_boost: Dict[MemoryType, float] = field(default_factory=dict)
 
-
 @dataclass
 class MemoryQueryResult:
     """
@@ -69,7 +66,6 @@ class MemoryQueryResult:
     emotional_context: Dict[str, Any] = field(default_factory=dict)
     working_memory_state: Dict[str, Any] = field(default_factory=dict)
     consolidated_insights: List[str] = field(default_factory=list)
-
 
 class LayeredMemorySystem:
     """
@@ -493,7 +489,6 @@ class LayeredMemorySystem:
             # 'emotional': self.emotional_memory.total_emotional_experiences
         }
 
-
 async def test_layered_memory():
     """Tests the LayeredMemorySystem."""
     print("Testing Layered Memory System...")
@@ -542,7 +537,6 @@ async def test_layered_memory():
     
     await db.close()
     print("Layered Memory System testing complete.")
-
 
 if __name__ == "__main__":
     asyncio.run(test_layered_memory())

@@ -23,7 +23,6 @@ from src.database.context_db import ContextDatabase
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class KnowledgeFact:
     """
@@ -60,7 +59,6 @@ class KnowledgeFact:
         """Returns a natural language representation of the fact."""
         return f"{self.subject} {self.predicate} {self.object_value}"
 
-
 @dataclass
 class ConceptNode:
     """
@@ -73,7 +71,6 @@ class ConceptNode:
     child_concepts: Set[str] = field(default_factory=set)
     associated_facts: Set[str] = field(default_factory=set)
     importance_score: float = 0.0
-
 
 class SemanticMemory:
     """
@@ -311,7 +308,6 @@ class SemanticMemory:
             "average_confidence": total_confidence / len(self._facts) if self._facts else 0,
         }
 
-
 async def test_semantic_memory():
     """Tests the SemanticMemory system."""
     print("Testing Semantic Memory...")
@@ -344,7 +340,6 @@ async def test_semantic_memory():
     
     await db.close()
     print("Semantic Memory testing complete.")
-
 
 if __name__ == "__main__":
     asyncio.run(test_semantic_memory())

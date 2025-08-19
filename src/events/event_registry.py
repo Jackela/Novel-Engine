@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from typing import Dict, Set, Optional, Any, List
 from datetime import datetime
 
-
 class EventType(Enum):
     """
     Centralized registry of all event types in the Novel Engine.
@@ -85,7 +84,6 @@ class EventType(Enum):
     RATE_LIMIT_EXCEEDED = "security.rate_limit_exceeded"
     SECURITY_VIOLATION = "security.violation"
 
-
 @dataclass
 class EventSchema:
     """Schema definition for an event type."""
@@ -98,7 +96,6 @@ class EventSchema:
     examples: List[Dict[str, Any]]
     deprecated: bool = False
     successor: Optional[EventType] = None
-
 
 class EventRegistry:
     """

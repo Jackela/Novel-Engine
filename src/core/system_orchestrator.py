@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 """
-++ SACRED SYSTEM ORCHESTRATOR BLESSED BY UNIFIED COORDINATION ++
-===================================================================
+System Orchestrator for Novel Engine
+===================================
 
-Holy unified system orchestrator that coordinates all blessed components
+Unified system orchestrator that coordinates all components
 of the dynamic context engineering framework and provides comprehensive
-API for intelligent agent interactions blessed by the Omnissiah.
-
-++ THROUGH UNITY, ALL SYSTEMS ACHIEVE PERFECT HARMONY ++
+API for intelligent agent interactions.
 
 Architecture Reference: Dynamic Context Engineering - Master Orchestrator
-Development Phase: System Integration Sanctification (S001)
-Sacred Author: Tech-Priest Alpha-Mechanicus
-万机之神保佑系统统一 (May the Omnissiah bless system unity)
+Development Phase: System Integration (S001)
+Author: Novel Engine Development Team
 """
 
 import logging
@@ -24,7 +21,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
-# Import all blessed subsystems
+# Import all subsystems
 from src.memory.layered_memory import LayeredMemorySystem
 from src.memory.memory_query_engine import MemoryQueryEngine, QueryContext
 from src.templates.dynamic_template_engine import DynamicTemplateEngine, TemplateContext, TemplateType
@@ -33,42 +30,39 @@ from src.interactions.interaction_engine import InteractionEngine, InteractionCo
 from src.interactions.dynamic_equipment_system import DynamicEquipmentSystem
 from src.interactions.character_interaction_processor import CharacterInteractionProcessor, SocialContext
 
-# Import blessed data models
+# Import data models
 from src.core.data_models import (
     DynamicContext, MemoryItem, CharacterState, StandardResponse, ErrorInfo,
     MemoryType, InteractionResult, EquipmentItem
 )
 from src.core.types import AgentID
 
-# Import blessed database access
+# Import database access
 from src.database.context_db import ContextDatabase
 
-# Sacred logging blessed by comprehensive monitoring
+# Comprehensive logging and monitoring
 logger = logging.getLogger(__name__)
 
-
 class OrchestratorMode(Enum):
-    """++ BLESSED ORCHESTRATOR MODES SANCTIFIED BY OPERATIONAL FLEXIBILITY ++"""
+    """Orchestrator Operational Modes"""
     AUTONOMOUS = "autonomous"               # Full autonomous operation
     INTERACTIVE = "interactive"            # Human-guided interactions
     SIMULATION = "simulation"              # Simulation mode for testing
     DEVELOPMENT = "development"            # Development and debugging mode
     PRODUCTION = "production"              # Production deployment mode
 
-
 class SystemHealth(Enum):
-    """++ SACRED SYSTEM HEALTH STATES BLESSED BY DIAGNOSTIC CLARITY ++"""
+    """System Health Status States"""
     OPTIMAL = "optimal"                    # All systems functioning perfectly
     DEGRADED = "degraded"                 # Some systems experiencing issues
     CRITICAL = "critical"                 # Critical systems failing
     EMERGENCY = "emergency"               # Emergency shutdown required
     MAINTENANCE = "maintenance"           # Scheduled maintenance mode
 
-
 @dataclass
 class OrchestratorConfig:
     """
-    ++ BLESSED ORCHESTRATOR CONFIGURATION SANCTIFIED BY OPERATIONAL PARAMETERS ++
+    Orchestrator Configuration Parameters
     
     Comprehensive configuration for system orchestrator with performance
     tuning, operational modes, and system integration parameters.
@@ -91,11 +85,10 @@ class OrchestratorConfig:
     enable_cross_system_validation: bool = True
     performance_monitoring: bool = True
 
-
 @dataclass
 class SystemMetrics:
     """
-    ++ SACRED SYSTEM METRICS BLESSED BY PERFORMANCE AWARENESS ++
+    System Performance Metrics
     
     Comprehensive system performance and health metrics for monitoring
     and optimization of the dynamic context engineering framework.
@@ -117,17 +110,16 @@ class SystemMetrics:
     relationship_count: int = 0
     equipment_count: int = 0
 
-
 class SystemOrchestrator:
     """
-    ++ SACRED SYSTEM ORCHESTRATOR BLESSED BY UNIFIED COORDINATION ++
+    System Orchestrator - Unified Coordination
     
     Holy master orchestrator that coordinates all subsystems of the dynamic
     context engineering framework, providing unified API, system health monitoring,
     performance optimization, and comprehensive agent lifecycle management
-    blessed by the Omnissiah's integrative wisdom.
+    enhanced by the System's integrative wisdom.
     
-    BLESSED CAPABILITIES:
+    CAPABILITIES:
     - Unified system lifecycle management
     - Cross-system data consistency and validation
     - Performance monitoring and optimization
@@ -143,9 +135,9 @@ class SystemOrchestrator:
     def __init__(self, database_path: str = "data/context_engineering.db", 
                  config: Optional[OrchestratorConfig] = None):
         """
-        ++ SACRED INITIALIZATION BLESSED BY COMPREHENSIVE INTEGRATION ++
+        System Initialization with Comprehensive Integration
         
-        Initialize the system orchestrator with all blessed subsystems
+        Initialize the system orchestrator with all enhanced subsystems
         and comprehensive monitoring capabilities.
         """
         self.config = config or OrchestratorConfig()
@@ -156,7 +148,7 @@ class SystemOrchestrator:
         self.operation_count = 0
         self.error_count = 0
         
-        # Initialize blessed database
+        # Initialize enhanced database
         self.database = ContextDatabase(database_path)
         
         # Initialize core systems (will be set up in startup)
@@ -178,21 +170,20 @@ class SystemOrchestrator:
         self._background_tasks: List[asyncio.Task] = []
         self._shutdown_requested = False
         
-        logger.info("++ System Orchestrator initialized and ready for sanctification ++")
-
+        logger.info("System Orchestrator initialized and ready")
 
     async def startup(self) -> StandardResponse:
         """
-        ++ SACRED SYSTEM STARTUP BLESSED BY COMPREHENSIVE INITIALIZATION ++
+        System Startup with Comprehensive Initialization
         
         Initialize all subsystems, establish connections, and begin
         background monitoring and maintenance tasks.
         """
         try:
-            logger.info("++ Initiating System Orchestrator startup sequence ++")
+            logger.info("Initiating System Orchestrator startup sequence")
             
             # Initialize database and verify schema
-            startup_result = await self.database.initialize_sacred_temple()
+            startup_result = await self.database.initialize_standard_temple()
             if not startup_result.success:
                 return StandardResponse(
                     success=False,
@@ -245,7 +236,7 @@ class SystemOrchestrator:
             # Update system health
             self.system_health = health_result.get('system_health', SystemHealth.OPTIMAL)
             
-            logger.info("++ System Orchestrator startup completed successfully ++")
+            logger.info("System Orchestrator startup completed successfully")
             
             return StandardResponse(
                 success=True,
@@ -262,7 +253,7 @@ class SystemOrchestrator:
             )
             
         except Exception as e:
-            logger.error(f"++ CRITICAL ERROR during startup: {str(e)} ++")
+            logger.error(f"Critical error during startup: {str(e)}")
             self.system_health = SystemHealth.CRITICAL
             return StandardResponse(
                 success=False,
@@ -273,15 +264,14 @@ class SystemOrchestrator:
                 )
             )
 
-
     async def shutdown(self) -> StandardResponse:
         """
-        ++ SACRED SYSTEM SHUTDOWN BLESSED BY GRACEFUL TERMINATION ++
+        System Shutdown with Graceful Termination
         
         Gracefully shutdown all systems, save state, and cleanup resources.
         """
         try:
-            logger.info("++ Initiating System Orchestrator shutdown sequence ++")
+            logger.info("Initiating System Orchestrator shutdown sequence")
             self._shutdown_requested = True
             
             # Stop background tasks
@@ -302,9 +292,9 @@ class SystemOrchestrator:
             
             # Shutdown database connections
             if self.database:
-                await self.database.close_sacred_temple()
+                await self.database.close_standard_temple()
             
-            logger.info("++ System Orchestrator shutdown completed successfully ++")
+            logger.info("System Orchestrator shutdown completed successfully")
             
             return StandardResponse(
                 success=True,
@@ -317,7 +307,7 @@ class SystemOrchestrator:
             )
             
         except Exception as e:
-            logger.error(f"++ ERROR during shutdown: {str(e)} ++")
+            logger.error(f"Error during shutdown: {str(e)}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -327,10 +317,9 @@ class SystemOrchestrator:
                 )
             )
 
-
     async def create_agent_context(self, agent_id: str, initial_state: Optional[CharacterState] = None) -> StandardResponse:
         """
-        ++ SACRED AGENT CONTEXT CREATION BLESSED BY COMPREHENSIVE INITIALIZATION ++
+        Agent Context Creation with Comprehensive Initialization
         
         Create a new agent with full context initialization including memory,
         character state, and system registration.
@@ -355,7 +344,7 @@ class SystemOrchestrator:
                 )
             
             # Register agent in database first to avoid foreign key constraint issues
-            agent_registration = await self.database.register_blessed_agent(
+            agent_registration = await self.database.register_enhanced_agent(
                 agent_id=agent_id,
                 character_name=initial_state.base_identity.name if initial_state else agent_id,
                 faction_data=[initial_state.base_identity.faction] if initial_state else ["Unknown"],
@@ -364,7 +353,7 @@ class SystemOrchestrator:
             )
             
             if not agent_registration.success:
-                logger.warning(f"++ Agent registration failed for {agent_id}: {agent_registration.error.message if agent_registration.error else 'Unknown'} ++")
+                logger.warning(f"Agent registration failed for {agent_id}: {agent_registration.error.message if agent_registration.error else 'Unknown'}")
             
             # Initialize agent memory system
             agent_memory = LayeredMemorySystem(agent_id, self.database)
@@ -395,13 +384,13 @@ class SystemOrchestrator:
             character_result = await self.character_manager.create_persona(basic_persona)
             
             if not character_result.success:
-                logger.warning(f"++ Character template creation failed for {agent_id}: {character_result.message} ++")
+                logger.warning(f"Character template creation failed for {agent_id}: {character_result.message}")
             
             # Register agent as active
             self.active_agents[agent_id] = datetime.now()
             
             self.operation_count += 1
-            logger.info(f"++ Agent context created successfully for {agent_id} ++")
+            logger.info(f"Agent context created successfully for {agent_id}")
             
             return StandardResponse(
                 success=True,
@@ -415,7 +404,7 @@ class SystemOrchestrator:
             )
             
         except Exception as e:
-            logger.error(f"++ ERROR creating agent context for {agent_id}: {str(e)} ++")
+            logger.error(f"Error creating agent context for {agent_id}: {str(e)}")
             self.error_count += 1
             return StandardResponse(
                 success=False,
@@ -426,10 +415,9 @@ class SystemOrchestrator:
                 )
             )
 
-
     async def process_dynamic_context(self, context: DynamicContext) -> StandardResponse:
         """
-        ++ SACRED DYNAMIC CONTEXT PROCESSING BLESSED BY COMPREHENSIVE ORCHESTRATION ++
+        Dynamic Context Processing with Comprehensive Orchestration
         
         Process a dynamic context through all relevant subsystems with
         cross-system coordination and state synchronization.
@@ -483,7 +471,7 @@ class SystemOrchestrator:
                 "dynamic_context_response", template_context
             )
             
-            logger.info(f"++ Dynamic context processed successfully for {context.agent_id} ++")
+            logger.info(f"Dynamic context processed successfully for {context.agent_id}")
             
             return StandardResponse(
                 success=True,
@@ -499,7 +487,7 @@ class SystemOrchestrator:
             )
             
         except Exception as e:
-            logger.error(f"++ ERROR processing dynamic context: {str(e)} ++")
+            logger.error(f"Error processing dynamic context: {str(e)}")
             self.error_count += 1
             return StandardResponse(
                 success=False,
@@ -510,12 +498,11 @@ class SystemOrchestrator:
                 )
             )
 
-
     async def orchestrate_multi_agent_interaction(self, participants: List[str], 
                                                 interaction_type: InteractionType = InteractionType.DIALOGUE,
                                                 context: Optional[Dict[str, Any]] = None) -> StandardResponse:
         """
-        ++ SACRED MULTI-AGENT INTERACTION ORCHESTRATION BLESSED BY SOCIAL HARMONY ++
+        Multi-Agent Interaction Orchestration
         
         Orchestrate complex multi-agent interactions with full system integration,
         relationship dynamics, and comprehensive state management.
@@ -550,13 +537,13 @@ class SystemOrchestrator:
                     self.active_agents[participant] = current_time
                 
                 # Log successful interaction
-                logger.info(f"++ Multi-agent interaction orchestrated successfully: {interaction_context.interaction_id} ++")
+                logger.info(f"Multi-agent interaction orchestrated successfully: {interaction_context.interaction_id}")
             
             self.operation_count += 1
             return interaction_result
             
         except Exception as e:
-            logger.error(f"++ ERROR in multi-agent interaction orchestration: {str(e)} ++")
+            logger.error(f"Error in multi-agent interaction orchestration: {str(e)}")
             self.error_count += 1
             return StandardResponse(
                 success=False,
@@ -567,10 +554,9 @@ class SystemOrchestrator:
                 )
             )
 
-
     async def get_system_metrics(self) -> StandardResponse:
         """
-        ++ SACRED SYSTEM METRICS RETRIEVAL BLESSED BY COMPREHENSIVE MONITORING ++
+        System Metrics Retrieval with Comprehensive Monitoring
         
         Retrieve comprehensive system performance and health metrics.
         """
@@ -612,7 +598,7 @@ class SystemOrchestrator:
             )
             
         except Exception as e:
-            logger.error(f"++ ERROR retrieving system metrics: {str(e)} ++")
+            logger.error(f"Error retrieving system metrics: {str(e)}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -622,8 +608,7 @@ class SystemOrchestrator:
                 )
             )
 
-
-    # ++ PRIVATE SACRED METHODS BLESSED BY INTERNAL OPERATIONS ++
+    # PRIVATE METHODS FOR INTERNAL OPERATIONS
     
     async def _start_background_tasks(self):
         """Start all background monitoring and maintenance tasks."""
@@ -638,9 +623,8 @@ class SystemOrchestrator:
             backup_task = asyncio.create_task(self._backup_loop())
             self._background_tasks.append(backup_task)
         
-        logger.info(f"++ Started {len(self._background_tasks)} background tasks ++")
-    
-    
+        logger.info(f"Started {len(self._background_tasks)} background tasks")
+
     async def _health_check_loop(self):
         """Background health check monitoring loop."""
         while not self._shutdown_requested:
@@ -655,10 +639,9 @@ class SystemOrchestrator:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"++ ERROR in health check loop: {str(e)} ++")
+                logger.error(f"Error in health check loop: {str(e)}")
                 self.system_health = SystemHealth.DEGRADED
-    
-    
+
     async def _memory_cleanup_loop(self):
         """Background memory cleanup and maintenance loop."""
         while not self._shutdown_requested:
@@ -672,9 +655,8 @@ class SystemOrchestrator:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"++ ERROR in memory cleanup loop: {str(e)} ++")
-    
-    
+                logger.error(f"Error in memory cleanup loop: {str(e)}")
+
     async def _backup_loop(self):
         """Background backup loop."""
         while not self._shutdown_requested:
@@ -688,9 +670,8 @@ class SystemOrchestrator:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"++ ERROR in backup loop: {str(e)} ++")
-    
-    
+                logger.error(f"Error in backup loop: {str(e)}")
+
     async def _perform_health_check(self) -> Dict[str, Any]:
         """Perform comprehensive system health check."""
         health_status = SystemHealth.OPTIMAL
@@ -724,10 +705,9 @@ class SystemOrchestrator:
             }
             
         except Exception as e:
-            logger.error(f"++ ERROR during health check: {str(e)} ++")
+            logger.error(f"Error during health check: {str(e)}")
             return {'system_health': SystemHealth.CRITICAL, 'error': str(e)}
-    
-    
+
     async def _perform_memory_cleanup(self):
         """Perform memory cleanup and optimization."""
         try:
@@ -741,15 +721,14 @@ class SystemOrchestrator:
             for agent_id in inactive_agents:
                 # Archive agent data and remove from active list
                 del self.active_agents[agent_id]
-                logger.debug(f"++ Cleaned up inactive agent: {agent_id} ++")
+                logger.debug(f"Cleaned up inactive agent: {agent_id}")
             
             self.last_cleanup = datetime.now()
-            logger.info(f"++ Memory cleanup completed, removed {len(inactive_agents)} inactive agents ++")
+            logger.info(f"Memory cleanup completed, removed {len(inactive_agents)} inactive agents")
             
         except Exception as e:
-            logger.error(f"++ ERROR during memory cleanup: {str(e)} ++")
-    
-    
+            logger.error(f"Error during memory cleanup: {str(e)}")
+
     async def _perform_backup(self):
         """Perform system state backup."""
         try:
@@ -771,12 +750,11 @@ class SystemOrchestrator:
                 json.dump(backup_data, f, indent=2)
             
             self.last_backup = datetime.now()
-            logger.info(f"++ System backup completed: {backup_path} ++")
+            logger.info(f"System backup completed: {backup_path}")
             
         except Exception as e:
-            logger.error(f"++ ERROR during backup: {str(e)} ++")
-    
-    
+            logger.error(f"Error during backup: {str(e)}")
+
     async def _save_system_state(self):
         """Save current system state to database."""
         try:
@@ -789,7 +767,7 @@ class SystemOrchestrator:
                 'active_agents_count': len(self.active_agents)
             }
             
-            async with self.database.get_blessed_connection() as conn:
+            async with self.database.get_enhanced_connection() as conn:
                 await conn.execute(
                     """INSERT OR REPLACE INTO system_state 
                        (state_id, state_data, timestamp) VALUES (?, ?, ?)""",
@@ -797,12 +775,11 @@ class SystemOrchestrator:
                 )
                 await conn.commit()
             
-            logger.info("++ System state saved successfully ++")
+            logger.info("System state saved successfully")
             
         except Exception as e:
-            logger.error(f"++ ERROR saving system state: {str(e)} ++")
-    
-    
+            logger.error(f"ERROR saving system state: {str(e)}")
+
     async def _update_character_state(self, agent_id: str, character_state: CharacterState) -> StandardResponse:
         """Update character state across relevant systems."""
         try:
@@ -824,13 +801,12 @@ class SystemOrchestrator:
             return update_result
             
         except Exception as e:
-            logger.error(f"++ ERROR updating character state for {agent_id}: {str(e)} ++")
+            logger.error(f"ERROR updating character state for {agent_id}: {str(e)}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="CHARACTER_STATE_UPDATE_FAILED", message="Character state update failed")
             )
-    
-    
+
     async def _process_environmental_context(self, agent_id: str, env_context) -> StandardResponse:
         """Process environmental context updates."""
         try:
@@ -847,45 +823,40 @@ class SystemOrchestrator:
             return await self.memory_system.store_memory(env_memory)
             
         except Exception as e:
-            logger.error(f"++ ERROR processing environmental context for {agent_id}: {str(e)} ++")
+            logger.error(f"ERROR processing environmental context for {agent_id}: {str(e)}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="ENVIRONMENTAL_CONTEXT_FAILED", message="Environmental context processing failed")
             )
-    
-    
+
     async def _count_memory_items(self) -> int:
         """Count total memory items in the system."""
         try:
-            async with self.database.get_blessed_connection() as conn:
+            async with self.database.get_enhanced_connection() as conn:
                 cursor = await conn.execute("SELECT COUNT(*) FROM memories")
                 result = await cursor.fetchone()
                 return result[0] if result else 0
         except Exception:
             return 0
-    
-    
+
     async def _count_active_interactions(self) -> int:
         """Count active interactions."""
         return len(getattr(self.interaction_engine, 'active_interactions', {}))
-    
-    
+
     async def _count_relationships(self) -> int:
         """Count relationships tracked by character processor."""
         return len(getattr(self.character_processor, 'relationships', {}))
-    
-    
+
     async def _count_equipment(self) -> int:
         """Count total equipment items."""
         try:
-            async with self.database.get_blessed_connection() as conn:
+            async with self.database.get_enhanced_connection() as conn:
                 cursor = await conn.execute("SELECT COUNT(*) FROM equipment")
                 result = await cursor.fetchone()
                 return result[0] if result else 0
         except Exception:
             return 0
 
-
-# ++ BLESSED EXPORTS SANCTIFIED BY THE OMNISSIAH ++
+# Exported classes and functions
 __all__ = ['SystemOrchestrator', 'OrchestratorMode', 'SystemHealth', 
            'OrchestratorConfig', 'SystemMetrics']

@@ -21,7 +21,6 @@ from src.database.context_db import ContextDatabase
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class EpisodicEvent:
     """
@@ -55,7 +54,6 @@ class EpisodicEvent:
         if causal_link not in self.causal_links:
             self.causal_links.append(causal_link)
             self._calculate_significance()
-
 
 class EpisodicMemory:
     """
@@ -111,7 +109,7 @@ class EpisodicMemory:
             self._episodes[memory.memory_id] = episode
             self._update_indices(memory, themes)
             
-            db_result = await self.database.store_blessed_memory(memory)
+            db_result = await self.database.store_enhanced_memory(memory)
             if not db_result.success:
                 logger.error(f"Database store failed: {db_result.error.message}")
             
@@ -352,7 +350,7 @@ class EpisodicMemory:
             consolidated_count = 0
             for episode in consolidation_candidates[:50]:
                 episode.memory_item.relevance_score *= 1.1
-                await self.database.store_blessed_memory(episode.memory_item)
+                await self.database.store_enhanced_memory(episode.memory_item)
                 consolidated_count += 1
             
             self.consolidated_episodes += consolidated_count
@@ -424,7 +422,6 @@ class EpisodicMemory:
             "last_consolidation": self.last_consolidation.isoformat()
         }
 
-
 async def test_episodic_memory():
     """Tests the episodic memory system."""
     print("Testing Episodic Memory System...")
@@ -465,7 +462,6 @@ async def test_episodic_memory():
     
     await db.close()
     print("Episodic Memory testing complete.")
-
 
 if __name__ == "__main__":
     asyncio.run(test_episodic_memory())

@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar('T')
 
-
 class CommandStatus(Enum):
     """Command execution status."""
     CREATED = "created"
@@ -39,7 +38,6 @@ class CommandStatus(Enum):
     FAILED = "failed"
     COMPENSATING = "compensating"
     COMPENSATED = "compensated"
-
 
 class CommandType(Enum):
     """Standard command types in the Novel Engine."""
@@ -77,7 +75,6 @@ class CommandType(Enum):
     BACKUP_SYSTEM = "backup_system"
     RESTORE_SYSTEM = "restore_system"
 
-
 @dataclass
 class CommandResult:
     """Result of command execution."""
@@ -88,7 +85,6 @@ class CommandResult:
     events_generated: List[str] = field(default_factory=list)
     execution_time_ms: float = 0.0
     compensation_commands: List['Command'] = field(default_factory=list)
-
 
 @dataclass
 class Command:
@@ -149,7 +145,6 @@ class Command:
             'idempotency_key': self.idempotency_key,
             'authorization_context': self.authorization_context
         }
-
 
 class CommandHandler(ABC, Generic[T]):
     """Abstract base class for command handlers."""
@@ -219,21 +214,17 @@ class CommandHandler(ABC, Generic[T]):
             result_data={"compensation": "not_implemented"}
         )
 
-
 class CommandValidationError(Exception):
     """Raised when command validation fails."""
     pass
-
 
 class CommandAuthorizationError(Exception):
     """Raised when command authorization fails."""
     pass
 
-
 class CommandExecutionError(Exception):
     """Raised when command execution fails."""
     pass
-
 
 @dataclass
 class CommandBusConfig:
@@ -246,7 +237,6 @@ class CommandBusConfig:
     default_timeout: int = 30
     circuit_breaker_enabled: bool = True
     retry_enabled: bool = True
-
 
 class IdempotencyManager:
     """Manages command idempotency to prevent duplicate execution."""
@@ -286,7 +276,6 @@ class IdempotencyManager:
         for key in expired_keys:
             self._executed_commands.pop(key, None)
             self._command_timestamps.pop(key, None)
-
 
 class SagaManager:
     """Manages saga pattern for complex multi-command workflows."""
@@ -328,7 +317,6 @@ class SagaManager:
                 compensation_commands.extend(result.compensation_commands)
         
         return compensation_commands
-
 
 class CommandBus:
     """

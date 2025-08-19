@@ -25,7 +25,6 @@ from src.database.context_db import ContextDatabase
 
 logger = logging.getLogger(__name__)
 
-
 class QueryType(Enum):
     """Enumeration of different query types supported by the engine."""
     SIMPLE_TEXT = "simple_text"
@@ -35,7 +34,6 @@ class QueryType(Enum):
     CONTEXTUAL = "contextual"
     ASSOCIATIVE = "associative"
     HYBRID = "hybrid"
-
 
 @dataclass
 class QueryContext:
@@ -54,7 +52,6 @@ class QueryContext:
     max_age_days: Optional[int] = None
     min_relevance: float = 0.3
 
-
 @dataclass
 class QueryMetrics:
     """
@@ -69,7 +66,6 @@ class QueryMetrics:
     query_complexity: float = 0.0
     cache_hits: int = 0
     processing_steps: List[str] = field(default_factory=list)
-
 
 class MemoryQueryEngine:
     """
@@ -467,7 +463,6 @@ class MemoryQueryEngine:
             "cache_hit_rate": hits / total if total > 0 else 0,
         }
 
-
 async def test_memory_query_engine():
     """Tests the MemoryQueryEngine."""
     print("Testing Memory Query Engine...")
@@ -499,7 +494,6 @@ async def test_memory_query_engine():
     
     await db.close()
     print("Memory Query Engine testing complete.")
-
 
 if __name__ == "__main__":
     asyncio.run(test_memory_query_engine())

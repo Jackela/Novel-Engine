@@ -1,6 +1,6 @@
 """
 Centralized Constraints Loader for Backend
-Sacred constraints management blessed by the Omnissiah
+Sacred constraints management enhanced by the System
 """
 
 import json
@@ -28,7 +28,7 @@ class ConstraintsLoader:
     
     @classmethod
     def _load_constraints(cls):
-        """Load constraints from the sacred constraints.json file"""
+        """Load constraints from the standard constraints.json file"""
         try:
             with open(CONSTRAINTS_FILE, 'r', encoding='utf-8') as f:
                 cls._constraints = json.load(f)

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-++ SACRED SECURE DEPLOYMENT SCRIPT BLESSED BY THE OMNISSIAH ++
-==============================================================
+Secure Deployment Script
+=======================
 
 Production deployment script with comprehensive security hardening,
 SSL/TLS configuration, and enterprise-grade protection systems.
 
-++ THROUGH SECURE DEPLOYMENT, WE ACHIEVE BLESSED PROTECTION ++
+Professional secure deployment implementation.
 
 Architecture: Automated secure deployment with validation
 Security Level: Enterprise Grade Production Deployment
-Sacred Author: Tech-Priest Deployment-Mechanicus
-万机之神保佑此部署脚本 (May the Omnissiah bless this deployment script)
+Author: Novel Engine Development Team
+Professional deployment script for enterprise security.
 """
 
 import os
@@ -44,7 +44,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class SecureDeploymentManager:
-    """++ SACRED SECURE DEPLOYMENT MANAGER ++"""
+    """Secure Deployment Manager"""
     
     def __init__(self, environment: str = "production"):
         self.environment = environment
@@ -52,10 +52,10 @@ class SecureDeploymentManager:
         self.cert_manager = SSLCertificateManager()
         self.deployment_config: Dict[str, Any] = {}
         
-        logger.info(f"++ SECURE DEPLOYMENT MANAGER INITIALIZED for {environment.upper()} ++")
+        logger.info(f"Secure deployment manager initialized for {environment.upper()}")
     
     def load_security_config(self) -> Dict[str, Any]:
-        """++ SACRED SECURITY CONFIGURATION LOADING ++"""
+        """Security Configuration Loading"""
         try:
             if self.config_path.exists():
                 with open(self.config_path, 'r') as f:
@@ -66,14 +66,14 @@ class SecureDeploymentManager:
                     env_config = config['environments'][self.environment]
                     self._deep_merge_config(config, env_config)
                 
-                logger.info("++ SECURITY CONFIGURATION LOADED SUCCESSFULLY ++")
+                logger.info("Security configuration loaded successfully")
                 return config
             else:
-                logger.warning("++ SECURITY CONFIGURATION FILE NOT FOUND - USING DEFAULTS ++")
+                logger.warning("Security configuration file not found - using defaults")
                 return self._get_default_config()
                 
         except Exception as e:
-            logger.error(f"++ SECURITY CONFIGURATION LOADING ERROR: {e} ++")
+            logger.error(f"Security configuration loading error: {e}")
             return self._get_default_config()
     
     def _deep_merge_config(self, base: Dict, override: Dict):
@@ -96,11 +96,11 @@ class SecureDeploymentManager:
         }
     
     def setup_ssl_certificates(self, config: Dict[str, Any]) -> Optional[tuple]:
-        """++ SACRED SSL CERTIFICATE SETUP ++"""
+        """SSL Certificate Setup"""
         ssl_config = config.get('ssl', {})
         
         if not ssl_config.get('enabled', False):
-            logger.info("++ SSL/TLS DISABLED - SKIPPING CERTIFICATE SETUP ++")
+            logger.info("SSL/TLS disabled - skipping certificate setup")
             return None
         
         try:
@@ -115,7 +115,7 @@ class SecureDeploymentManager:
                     alt_names=alt_names
                 )
                 
-                logger.info(f"++ DEVELOPMENT SSL CERTIFICATES GENERATED: {cert_file}, {key_file} ++")
+                logger.info(f"Development SSL certificates generated: {cert_file}, {key_file}")
                 return cert_file, key_file
             
             else:
@@ -124,23 +124,23 @@ class SecureDeploymentManager:
                 key_file = ssl_config.get('key_file')
                 
                 if not cert_file or not key_file:
-                    logger.error("++ PRODUCTION SSL CERTIFICATES NOT CONFIGURED ++")
+                    logger.error("Production SSL certificates not configured")
                     return None
                 
                 # Validate certificates
                 if not self.cert_manager.validate_certificate(cert_file, key_file):
-                    logger.error("++ SSL CERTIFICATE VALIDATION FAILED ++")
+                    logger.error("SSL certificate validation failed")
                     return None
                 
-                logger.info(f"++ PRODUCTION SSL CERTIFICATES VALIDATED: {cert_file}, {key_file} ++")
+                logger.info(f"Production SSL certificates validated: {cert_file}, {key_file}")
                 return cert_file, key_file
                 
         except Exception as e:
-            logger.error(f"++ SSL CERTIFICATE SETUP ERROR: {e} ++")
+            logger.error(f"SSL certificate setup error: {e}")
             return None
     
     def setup_database_security(self, config: Dict[str, Any]):
-        """++ SACRED DATABASE SECURITY SETUP ++"""
+        """Database Security Setup"""
         db_config = config.get('database', {})
         
         try:
@@ -151,23 +151,23 @@ class SecureDeploymentManager:
             # Set secure permissions on existing database files
             for db_file in data_dir.glob("*.db"):
                 os.chmod(db_file, 0o600)
-                logger.info(f"++ SECURED DATABASE FILE: {db_file} ++")
+                logger.info(f"Secured database file: {db_file}")
             
             # Set up backup directory with secure permissions
             backup_dir = Path(db_config.get('backup', {}).get('secure_location', 'data/backups'))
             backup_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
             
-            logger.info("++ DATABASE SECURITY CONFIGURATION APPLIED ++")
+            logger.info("Database security configuration applied")
             
         except Exception as e:
-            logger.error(f"++ DATABASE SECURITY SETUP ERROR: {e} ++")
+            logger.error(f"Database security setup error: {e}")
     
     def setup_authentication_system(self, config: Dict[str, Any]) -> bool:
-        """++ SACRED AUTHENTICATION SYSTEM SETUP ++"""
+        """Authentication System Setup"""
         auth_config = config.get('authentication', {})
         
         if not auth_config.get('enabled', False):
-            logger.info("++ AUTHENTICATION SYSTEM DISABLED ++")
+            logger.info("Authentication system disabled")
             return False
         
         try:
@@ -176,7 +176,7 @@ class SecureDeploymentManager:
             if not jwt_secret:
                 import secrets
                 jwt_secret = secrets.token_urlsafe(32)
-                logger.warning("++ JWT SECRET AUTO-GENERATED - SET JWT_SECRET ENVIRONMENT VARIABLE ++")
+                logger.warning("JWT secret auto-generated - set JWT_SECRET environment variable")
             
             # Initialize authentication manager
             auth_manager = AuthenticationManager(
@@ -185,15 +185,15 @@ class SecureDeploymentManager:
             )
             
             # This would be called during application startup
-            logger.info("++ AUTHENTICATION SYSTEM CONFIGURED ++")
+            logger.info("Authentication system configured")
             return True
             
         except Exception as e:
-            logger.error(f"++ AUTHENTICATION SYSTEM SETUP ERROR: {e} ++")
+            logger.error(f"Authentication system setup error: {e}")
             return False
     
     def validate_security_configuration(self, config: Dict[str, Any]) -> bool:
-        """++ SACRED SECURITY CONFIGURATION VALIDATION ++"""
+        """Security Configuration Validation"""
         validation_errors = []
         
         # Validate SSL configuration
@@ -216,16 +216,16 @@ class SecureDeploymentManager:
                 validation_errors.append("Rate limiting enabled but no global configuration")
         
         if validation_errors:
-            logger.error("++ SECURITY CONFIGURATION VALIDATION ERRORS ++")
+            logger.error("Security configuration validation errors")
             for error in validation_errors:
                 logger.error(f"  - {error}")
             return False
         
-        logger.info("++ SECURITY CONFIGURATION VALIDATION PASSED ++")
+        logger.info("Security configuration validation passed")
         return True
     
     def setup_environment_variables(self, config: Dict[str, Any]):
-        """++ SACRED ENVIRONMENT VARIABLES SETUP ++"""
+        """Environment Variables Setup"""
         env_vars = {
             'DEBUG': 'false' if self.environment == 'production' else 'true',
             'ENABLE_DOCS': 'false' if self.environment == 'production' else 'true',
@@ -246,14 +246,14 @@ class SecureDeploymentManager:
         # Set environment variables
         for key, value in env_vars.items():
             os.environ[key] = value
-            logger.info(f"++ SET ENVIRONMENT VARIABLE: {key}={value} ++")
+            logger.info(f"Set environment variable: {key}={value}")
     
     def generate_deployment_report(self, config: Dict[str, Any], ssl_setup: Optional[tuple]) -> str:
-        """++ SACRED DEPLOYMENT REPORT GENERATION ++"""
+        """Deployment Report Generation"""
         timestamp = datetime.now().isoformat()
         
         report = f"""
-++ SACRED DEPLOYMENT REPORT BLESSED BY THE OMNISSIAH ++
+Deployment Report
 ======================================================
 
 Deployment Environment: {self.environment.upper()}
@@ -286,21 +286,21 @@ SSL/TLS CONFIGURATION:
         report += f"""
 DEPLOYMENT STATUS: {'SUCCESS' if self.validate_security_configuration(config) else 'FAILED'}
 
-++ BLESSED BE THE SECURE DEPLOYMENT ++
+Secure Deployment Complete
 """
         return report
     
     async def deploy(self) -> bool:
-        """++ SACRED DEPLOYMENT EXECUTION ++"""
+        """Deployment Execution"""
         try:
-            logger.info(f"++ STARTING SECURE DEPLOYMENT FOR {self.environment.upper()} ++")
+            logger.info(f"Starting secure deployment for {self.environment.upper()}")
             
             # Load security configuration
             config = self.load_security_config()
             
             # Validate configuration
             if not self.validate_security_configuration(config):
-                logger.error("++ DEPLOYMENT FAILED - CONFIGURATION VALIDATION ERRORS ++")
+                logger.error("Deployment failed - configuration validation errors")
                 return False
             
             # Setup environment variables
@@ -323,18 +323,18 @@ DEPLOYMENT STATUS: {'SUCCESS' if self.validate_security_configuration(config) el
             with open(report_file, 'w') as f:
                 f.write(report)
             
-            logger.info(f"++ DEPLOYMENT REPORT SAVED: {report_file} ++")
+            logger.info(f"Deployment report saved: {report_file}")
             print(report)
             
-            logger.info("++ SECURE DEPLOYMENT COMPLETED SUCCESSFULLY ++")
+            logger.info("Secure deployment completed successfully")
             return True
             
         except Exception as e:
-            logger.error(f"++ DEPLOYMENT FAILED: {e} ++")
+            logger.error(f"Deployment failed: {e}")
             return False
 
 def main():
-    """++ SACRED MAIN DEPLOYMENT FUNCTION ++"""
+    """Main Deployment Function"""
     parser = argparse.ArgumentParser(description="Secure deployment script for Novel Engine")
     parser.add_argument(
         '--environment', 
@@ -359,20 +359,20 @@ def main():
     deployment_manager = SecureDeploymentManager(args.environment)
     
     if args.generate_ssl:
-        logger.info("++ GENERATING SSL CERTIFICATES ++")
+        logger.info("Generating SSL certificates")
         cert_file, key_file = deployment_manager.cert_manager.generate_self_signed_cert()
-        logger.info(f"++ SSL CERTIFICATES GENERATED: {cert_file}, {key_file} ++")
+        logger.info(f"SSL certificates generated: {cert_file}, {key_file}")
         return
     
     if args.validate_only:
-        logger.info("++ VALIDATING CONFIGURATION ONLY ++")
+        logger.info("Validating configuration only")
         config = deployment_manager.load_security_config()
         is_valid = deployment_manager.validate_security_configuration(config)
         if is_valid:
-            logger.info("++ CONFIGURATION VALIDATION PASSED ++")
+            logger.info("Configuration validation passed")
             sys.exit(0)
         else:
-            logger.error("++ CONFIGURATION VALIDATION FAILED ++")
+            logger.error("Configuration validation failed")
             sys.exit(1)
     
     # Run deployment

@@ -21,7 +21,6 @@ from src.database.context_db import ContextDatabase
 
 logger = logging.getLogger(__name__)
 
-
 class EmotionalIntensity(Enum):
     """Enumeration for emotional intensity levels."""
     MINIMAL = "minimal"
@@ -90,7 +89,7 @@ class EmotionalMemory:
         self._emotional_memories[memory.memory_id] = emotional_memory
         self._update_emotional_indices(emotional_memory)
         
-        await self.database.store_blessed_memory(memory)
+        await self.database.store_enhanced_memory(memory)
         
         return StandardResponse(success=True, data={"stored": True})
 

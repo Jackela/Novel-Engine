@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """
-++ SACRED PERFORMANCE MONITORING SYSTEM BLESSED BY THE OMNISSIAH ++
-====================================================================
+Performance Monitoring System
+============================
 
 Comprehensive performance monitoring system with real-time metrics,
 alerting, profiling, and intelligent analysis.
 
-++ THROUGH DIVINE MONITORING, WE ACHIEVE BLESSED VISIBILITY ++
-
-Architecture: Real-time metrics collection with intelligent alerting
-Performance: Sub-1ms metric collection overhead
-Sacred Author: Tech-Priest Monitoring-Mechanicus
-万机之神保佑此监控系统 (May the Omnissiah bless this monitoring system)
+Key Features:
+- Real-time metrics collection with intelligent alerting
+- Sub-1ms metric collection overhead
+- Comprehensive system resource monitoring
+- Automated alerting and threshold management
 """
 
 import time
@@ -27,12 +26,12 @@ import statistics
 import json
 import os
 
-# Sacred logging configuration
+# Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class MetricType(str, Enum):
-    """++ SACRED METRIC TYPES ++"""
+    """Performance metric types for monitoring system."""
     COUNTER = "counter"         # Monotonically increasing values
     GAUGE = "gauge"            # Point-in-time values
     HISTOGRAM = "histogram"    # Distribution of values
@@ -40,7 +39,7 @@ class MetricType(str, Enum):
     RATE = "rate"             # Rate of change
 
 class AlertSeverity(str, Enum):
-    """++ SACRED ALERT SEVERITY LEVELS ++"""
+    """Alert severity levels for performance monitoring."""
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -48,7 +47,7 @@ class AlertSeverity(str, Enum):
 
 @dataclass
 class PerformanceMetric:
-    """++ SACRED PERFORMANCE METRIC ++"""
+    """Performance metric data structure."""
     name: str
     value: float
     timestamp: float
@@ -66,7 +65,7 @@ class PerformanceMetric:
 
 @dataclass
 class PerformanceAlert:
-    """++ SACRED PERFORMANCE ALERT ++"""
+    """Performance alert data structure."""
     alert_id: str
     metric_name: str
     severity: AlertSeverity
@@ -79,7 +78,7 @@ class PerformanceAlert:
 
 @dataclass
 class MonitoringConfig:
-    """++ SACRED MONITORING CONFIGURATION ++"""
+    """Configuration settings for performance monitoring."""
     collection_interval: float = 1.0  # seconds
     retention_period: int = 3600      # seconds (1 hour)
     max_metrics_per_type: int = 1000
@@ -107,13 +106,13 @@ class MonitoringConfig:
         }
 
 class SystemResourceMonitor:
-    """++ SACRED SYSTEM RESOURCE MONITOR ++"""
+    """System resource monitoring for CPU, memory, disk, and network metrics."""
     
     def __init__(self):
         self.process = psutil.Process()
     
     def get_cpu_metrics(self) -> Dict[str, float]:
-        """++ SACRED CPU METRICS COLLECTION ++"""
+        """Collect CPU usage and performance metrics."""
         return {
             "cpu_usage_percent": psutil.cpu_percent(interval=None),
             "cpu_count": psutil.cpu_count(),
@@ -123,7 +122,7 @@ class SystemResourceMonitor:
         }
     
     def get_memory_metrics(self) -> Dict[str, float]:
-        """++ SACRED MEMORY METRICS COLLECTION ++"""
+        """Collect memory usage and allocation metrics."""
         memory = psutil.virtual_memory()
         process_memory = self.process.memory_info()
         
@@ -140,7 +139,7 @@ class SystemResourceMonitor:
         }
     
     def get_disk_metrics(self) -> Dict[str, float]:
-        """++ SACRED DISK METRICS COLLECTION ++"""
+        """Collect disk usage and I/O metrics."""
         disk_usage = psutil.disk_usage('/')
         disk_io = psutil.disk_io_counters()
         
@@ -162,7 +161,7 @@ class SystemResourceMonitor:
         return metrics
     
     def get_network_metrics(self) -> Dict[str, float]:
-        """++ SACRED NETWORK METRICS COLLECTION ++"""
+        """Collect network usage and traffic metrics."""
         network_io = psutil.net_io_counters()
         
         if network_io:
@@ -180,7 +179,7 @@ class SystemResourceMonitor:
         return {}
 
 class PerformanceMonitor:
-    """++ SACRED PERFORMANCE MONITOR BLESSED BY THE OMNISSIAH ++"""
+    """Main performance monitoring system with metrics collection and alerting."""
     
     def __init__(self, config: MonitoringConfig):
         self.config = config
@@ -213,7 +212,7 @@ class PerformanceMonitor:
         self._start_monitoring()
     
     def _start_monitoring(self):
-        """++ SACRED MONITORING INITIALIZATION ++"""
+        """Initialize monitoring background tasks."""
         try:
             loop = asyncio.get_event_loop()
             self._monitoring_task = loop.create_task(self._monitoring_loop())
@@ -223,7 +222,7 @@ class PerformanceMonitor:
             pass
     
     async def _monitoring_loop(self):
-        """++ SACRED MONITORING LOOP ++"""
+        """Main monitoring loop for continuous metric collection."""
         while True:
             try:
                 await asyncio.sleep(self.config.collection_interval)
@@ -239,10 +238,10 @@ class PerformanceMonitor:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"++ MONITORING LOOP ERROR: {e} ++")
+                logger.error(f"Error in monitoring loop: {e}")
     
     async def _cleanup_loop(self):
-        """++ SACRED CLEANUP LOOP ++"""
+        """Background cleanup loop for old metrics and alerts."""
         while True:
             try:
                 await asyncio.sleep(300)  # Cleanup every 5 minutes
@@ -251,10 +250,10 @@ class PerformanceMonitor:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"++ CLEANUP LOOP ERROR: {e} ++")
+                logger.error(f"Error in cleanup loop: {e}")
     
     async def _collect_system_metrics(self):
-        """++ SACRED SYSTEM METRICS COLLECTION ++"""
+        """Collect comprehensive system performance metrics."""
         try:
             current_time = time.time()
             
@@ -279,11 +278,11 @@ class PerformanceMonitor:
                 self.record_metric(name, value, MetricType.COUNTER, current_time)
             
         except Exception as e:
-            logger.error(f"++ SYSTEM METRICS COLLECTION ERROR: {e} ++")
+            logger.error(f"Error collecting system metrics: {e}")
     
     def record_metric(self, name: str, value: float, metric_type: MetricType, 
                      timestamp: Optional[float] = None, tags: Optional[Dict[str, str]] = None):
-        """++ SACRED METRIC RECORDING ++"""
+        """Record a performance metric with timestamp and optional tags."""
         if timestamp is None:
             timestamp = time.time()
         
@@ -302,7 +301,7 @@ class PerformanceMonitor:
     
     def record_request_duration(self, endpoint: str, duration_ms: float, 
                                status_code: int = 200, error: Optional[str] = None):
-        """++ SACRED REQUEST DURATION RECORDING ++"""
+        """Record HTTP request duration and performance metrics."""
         current_time = time.time()
         
         # Record general request metrics
@@ -330,7 +329,7 @@ class PerformanceMonitor:
     
     def record_database_query(self, query_type: str, duration_ms: float, 
                              table: Optional[str] = None, error: Optional[str] = None):
-        """++ SACRED DATABASE QUERY RECORDING ++"""
+        """Record database query performance metrics."""
         current_time = time.time()
         tags = {"query_type": query_type}
         
@@ -345,7 +344,7 @@ class PerformanceMonitor:
                               current_time, tags)
     
     def record_cache_operation(self, operation: str, hit: bool, duration_ms: float):
-        """++ SACRED CACHE OPERATION RECORDING ++"""
+        """Record cache operation performance and hit rate metrics."""
         current_time = time.time()
         tags = {"operation": operation}
         
@@ -369,11 +368,11 @@ class PerformanceMonitor:
         self.record_metric("cache_hit_rate_percent", hit_rate, MetricType.GAUGE, current_time)
     
     def record_concurrent_users(self, count: int):
-        """++ SACRED CONCURRENT USERS RECORDING ++"""
+        """Record current number of concurrent users."""
         self.record_metric("concurrent_users", count, MetricType.GAUGE)
     
     async def _check_alerts(self):
-        """++ SACRED ALERT CHECKING ++"""
+        """Check metrics against alert thresholds and trigger alerts."""
         if not self.config.enable_alerts:
             return
         
@@ -428,15 +427,15 @@ class PerformanceMonitor:
                         await self._handle_alert_resolution(alert)
     
     async def _handle_alert(self, alert: PerformanceAlert):
-        """++ SACRED ALERT HANDLING ++"""
+        """Handle triggered performance alert."""
         log_level = logging.CRITICAL if alert.severity == AlertSeverity.CRITICAL else logging.WARNING
         
         logger.log(
             log_level,
-            f"++ PERFORMANCE ALERT: {alert.severity.value.upper()} | "
+            f"Performance Alert: {alert.severity.value.upper()} | "
             f"{alert.metric_name} = {alert.actual_value:.2f} "
             f"(threshold: {alert.threshold_value:.2f}) | "
-            f"{alert.message} ++"
+            f"{alert.message}"
         )
         
         # In a production system, you might:
@@ -445,14 +444,14 @@ class PerformanceMonitor:
         # - Take remedial actions
     
     async def _handle_alert_resolution(self, alert: PerformanceAlert):
-        """++ SACRED ALERT RESOLUTION HANDLING ++"""
+        """Handle resolution of performance alert."""
         logger.info(
-            f"++ ALERT RESOLVED: {alert.metric_name} | "
-            f"Alert duration: {alert.resolution_timestamp - alert.timestamp:.1f}s ++"
+            f"Alert Resolved: {alert.metric_name} | "
+            f"Alert duration: {alert.resolution_timestamp - alert.timestamp:.1f}s"
         )
     
     def _cleanup_old_metrics(self):
-        """++ SACRED OLD METRICS CLEANUP ++"""
+        """Remove old metrics beyond retention period."""
         cutoff_time = time.time() - self.config.retention_period
         
         for metric_name, metric_list in self.metrics.items():
@@ -461,7 +460,7 @@ class PerformanceMonitor:
                 metric_list.popleft()
     
     def _cleanup_old_alerts(self):
-        """++ SACRED OLD ALERTS CLEANUP ++"""
+        """Remove old alerts from history."""
         cutoff_time = time.time() - 86400  # Keep alerts for 24 hours
         
         # Clean up alert history
@@ -470,7 +469,7 @@ class PerformanceMonitor:
             self.alert_history.popleft()
     
     async def _export_metrics(self):
-        """++ SACRED METRICS EXPORT ++"""
+        """Export metrics to JSON files for external analysis."""
         try:
             current_time = time.time()
             export_data = {
@@ -507,11 +506,11 @@ class PerformanceMonitor:
                     os.remove(os.path.join(self.config.export_path, old_file))
                     
         except Exception as e:
-            logger.error(f"++ METRICS EXPORT ERROR: {e} ++")
+            logger.error(f"Error exporting metrics: {e}")
     
     def get_metric_stats(self, metric_name: str, 
                         time_range_seconds: int = 300) -> Optional[Dict[str, float]]:
-        """++ SACRED METRIC STATISTICS ++"""
+        """Get statistical summary of metric over specified time range."""
         if metric_name not in self.metrics:
             return None
         
@@ -536,7 +535,7 @@ class PerformanceMonitor:
         }
     
     def get_endpoint_stats(self) -> Dict[str, Dict[str, Any]]:
-        """++ SACRED ENDPOINT STATISTICS ++"""
+        """Get performance statistics for all monitored endpoints."""
         stats = {}
         
         for endpoint, metrics in self.endpoint_metrics.items():
@@ -553,7 +552,7 @@ class PerformanceMonitor:
         return stats
     
     def get_performance_summary(self) -> Dict[str, Any]:
-        """++ SACRED PERFORMANCE SUMMARY ++"""
+        """Get comprehensive performance summary report."""
         current_time = time.time()
         
         # Get recent response times
@@ -581,7 +580,7 @@ class PerformanceMonitor:
         return summary
     
     def get_alerts(self, include_resolved: bool = False) -> List[Dict[str, Any]]:
-        """++ SACRED ALERTS RETRIEVAL ++"""
+        """Get list of active and optionally resolved alerts."""
         alerts = []
         
         # Active alerts
@@ -597,7 +596,7 @@ class PerformanceMonitor:
         return sorted(alerts, key=lambda x: x["timestamp"], reverse=True)
     
     async def shutdown(self):
-        """++ SACRED MONITOR SHUTDOWN ++"""
+        """Shutdown monitoring system and cleanup resources."""
         try:
             # Cancel background tasks
             if self._monitoring_task:
@@ -618,14 +617,14 @@ class PerformanceMonitor:
             if self.config.export_metrics:
                 await self._export_metrics()
             
-            logger.info("++ PERFORMANCE MONITOR SHUTDOWN COMPLETE ++")
+            logger.info("Performance monitor shutdown complete")
             
         except Exception as e:
-            logger.error(f"++ MONITOR SHUTDOWN ERROR: {e} ++")
+            logger.error(f"Error during monitor shutdown: {e}")
 
-# ++ PERFORMANCE MEASUREMENT DECORATOR ++
+# Performance measurement decorator
 def measure_performance(metric_name: str = None):
-    """++ SACRED PERFORMANCE MEASUREMENT DECORATOR ++"""
+    """Decorator to measure and record function performance metrics."""
     def decorator(func: Callable) -> Callable:
         async def async_wrapper(*args, **kwargs):
             start_time = time.time()
@@ -654,11 +653,11 @@ def measure_performance(metric_name: str = None):
     
     return decorator
 
-# ++ GLOBAL PERFORMANCE MONITOR INSTANCE ++
+# Global performance monitor instance
 performance_monitor: Optional[PerformanceMonitor] = None
 
 def get_performance_monitor() -> PerformanceMonitor:
-    """++ SACRED PERFORMANCE MONITOR GETTER ++"""
+    """Get or create the global performance monitor instance."""
     global performance_monitor
     if performance_monitor is None:
         config = MonitoringConfig()
@@ -666,7 +665,7 @@ def get_performance_monitor() -> PerformanceMonitor:
     return performance_monitor
 
 def initialize_performance_monitor(config: Optional[MonitoringConfig] = None):
-    """++ SACRED PERFORMANCE MONITOR INITIALIZATION ++"""
+    """Initialize the global performance monitor with configuration."""
     global performance_monitor
     if config is None:
         config = MonitoringConfig()

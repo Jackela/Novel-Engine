@@ -26,7 +26,6 @@ from pydantic import BaseModel, Field, field_validator, model_validator, ConfigD
 from uuid import uuid4
 import json
 
-
 # =============================================================================
 # Base Types and Enums
 # =============================================================================
@@ -49,7 +48,6 @@ class ActionType(str, Enum):
     INTERACT = "interact"
     CAST_SPELL = "cast_spell"
 
-
 class ValidationStatus(str, Enum):
     """Enumeration of Iron Laws validation results."""
     PENDING = "pending"
@@ -59,14 +57,12 @@ class ValidationStatus(str, Enum):
     REJECTED = "rejected"
     ERROR = "error"
 
-
 class ActionIntensity(str, Enum):
     """Enumeration of action intensity levels."""
     LOW = "low"
     NORMAL = "normal"
     HIGH = "high"
     EXTREME = "extreme"
-
 
 class EntityType(str, Enum):
     """Enumeration of entity types in the world state."""
@@ -77,14 +73,12 @@ class EntityType(str, Enum):
     RESOURCE = "resource"
     STRUCTURE = "structure"
 
-
 class ValidationResult(str, Enum):
     """Iron Laws validation results."""
     VALID = "valid"
     INVALID = "invalid"
     REQUIRES_REPAIR = "requires_repair"
     CATASTROPHIC_FAILURE = "catastrophic_failure"
-
 
 class FogOfWarChannel(str, Enum):
     """Information channels for Fog of War filtering."""
@@ -94,7 +88,6 @@ class FogOfWarChannel(str, Enum):
     RUMOR = "rumor"
     SENSOR = "sensor"
 
-
 class SimulationPhase(str, Enum):
     """Current phase of simulation execution."""
     INITIALIZATION = "initialization"
@@ -103,7 +96,6 @@ class SimulationPhase(str, Enum):
     RESOLUTION = "resolution"
     CLEANUP = "cleanup"
     COMPLETED = "completed"
-
 
 # =============================================================================
 # Coordinate and Spatial Types
@@ -129,7 +121,6 @@ class Position(BaseModel):
         }
     )
 
-
 class BoundingBox(BaseModel):
     """Rectangular bounding area definition."""
     min_x: float = Field(..., description="Minimum X coordinate")
@@ -139,12 +130,20 @@ class BoundingBox(BaseModel):
     
     @model_validator(mode='after')
     def validate_bounds(self):
+        """
+        Validate that bounding box dimensions are logical.
+        
+        Returns:
+            Self if validation passes
+            
+        Raises:
+            ValueError: If max values are not greater than min values
+        """
         if self.max_x <= self.min_x:
             raise ValueError('max_x must be greater than min_x')
         if self.max_y <= self.min_y:
             raise ValueError('max_y must be greater than min_y')
         return self
-
 
 class Area(BaseModel):
     """Named area with bounding box and properties."""
@@ -152,7 +151,6 @@ class Area(BaseModel):
     bounds: BoundingBox = Field(..., description="Area boundaries")
     area_type: str = Field(..., description="Type of area (battlefield, building, etc.)")
     properties: Dict[str, Any] = Field(default_factory=dict, description="Area-specific properties")
-
 
 # =============================================================================
 # Resource and Equipment Types
@@ -166,6 +164,15 @@ class ResourceValue(BaseModel):
     
     @model_validator(mode='after')
     def validate_current_not_exceed_maximum(self):
+        """
+        Validate that current value does not exceed maximum.
+        
+        Returns:
+            Self if validation passes
+            
+        Raises:
+            ValueError: If current value exceeds maximum
+        """
         if self.current > self.maximum:
             raise ValueError('Current value cannot exceed maximum')
         return self
@@ -174,7 +181,6 @@ class ResourceValue(BaseModel):
     def percentage(self) -> float:
         """Get resource as percentage of maximum."""
         return (self.current / self.maximum) * 100.0 if self.maximum > 0 else 0.0
-
 
 class Equipment(BaseModel):
     """Equipment item with properties and condition."""
@@ -200,7 +206,6 @@ class Equipment(BaseModel):
         }
     )
 
-
 # =============================================================================
 # Character and Agent Types  
 # =============================================================================
@@ -217,10 +222,21 @@ class CharacterStats(BaseModel):
     @field_validator('strength', 'dexterity', 'intelligence', 'willpower', 'perception', 'charisma')
     @classmethod
     def validate_stats_range(cls, v):
+        """
+        Validate that all stats are within acceptable range.
+        
+        Args:
+            v: Dictionary of stat values to validate
+            
+        Returns:
+            Validated stats dictionary
+            
+        Raises:
+            ValueError: If any stat is outside the 0-100 range
+        """
         if not isinstance(v, int) or v < 1 or v > 10:
             raise ValueError('All stats must be integers between 1 and 10')
         return v
-
 
 class CharacterResources(BaseModel):
     """Character resource pools."""
@@ -230,7 +246,6 @@ class CharacterResources(BaseModel):
     ammo: Dict[str, int] = Field(default_factory=dict, description="Ammunition by type")
     special_resources: Dict[str, ResourceValue] = Field(default_factory=dict, description="Custom resource pools")
 
-
 class CharacterState(BaseModel):
     """Current state and status effects of a character."""
     conscious: bool = Field(default=True, description="Whether character is conscious")
@@ -239,7 +254,6 @@ class CharacterState(BaseModel):
     status_effects: List[str] = Field(default_factory=list, description="Active status effects")
     injuries: List[str] = Field(default_factory=list, description="Current injuries")
     fatigue_level: float = Field(default=0.0, ge=0.0, le=1.0, description="Fatigue level (0.0-1.0)")
-
 
 class CharacterData(BaseModel):
     """Complete character data structure."""
@@ -277,7 +291,6 @@ class CharacterData(BaseModel):
         }
     )
 
-
 # =============================================================================
 # Action and Decision Types
 # =============================================================================
@@ -289,7 +302,6 @@ class ActionTarget(BaseModel):
     position: Optional[Position] = Field(default=None, description="Target position if applicable")
     properties: Dict[str, Any] = Field(default_factory=dict, description="Target-specific properties")
 
-
 class ActionParameters(BaseModel):
     """Parameters for action execution."""
     intensity: Optional[Union[ActionIntensity, float]] = Field(default=ActionIntensity.NORMAL, description="Action intensity level or numeric value")
@@ -298,7 +310,6 @@ class ActionParameters(BaseModel):
     modifiers: Dict[str, float] = Field(default_factory=dict, description="Action modifiers")
     resources_consumed: Dict[str, float] = Field(default_factory=dict, description="Resources required")
     conditions: List[str] = Field(default_factory=list, description="Required conditions")
-
 
 class ProposedAction(BaseModel):
     """Action proposed by an agent before validation."""
@@ -326,7 +337,6 @@ class ProposedAction(BaseModel):
         }
     )
 
-
 class ValidatedAction(BaseModel):
     """Action that has passed Iron Laws validation."""
     action_id: str = Field(..., description="Unique action identifier")
@@ -338,7 +348,6 @@ class ValidatedAction(BaseModel):
     validation_details: Dict[str, Any] = Field(default_factory=dict, description="Validation specifics")
     repairs_applied: List[str] = Field(default_factory=list, description="Repairs made during validation")
     estimated_effects: Dict[str, Any] = Field(default_factory=dict, description="Predicted action effects")
-
 
 # =============================================================================
 # Iron Laws Validation Types
@@ -352,7 +361,6 @@ class IronLawsViolation(BaseModel):
     description: str = Field(..., description="Violation description")
     affected_entities: List[str] = Field(default_factory=list, description="Entities affected by violation")
     suggested_repair: Optional[str] = Field(default=None, description="Suggested fix for violation")
-
 
 class IronLawsReport(BaseModel):
     """Complete Iron Laws validation report."""
@@ -377,7 +385,6 @@ class IronLawsReport(BaseModel):
             counts[violation.severity] += 1
         return counts
 
-
 # =============================================================================
 # World State and Environment Types
 # =============================================================================
@@ -392,7 +399,6 @@ class WorldEntity(BaseModel):
     visibility: float = Field(default=1.0, ge=0.0, le=1.0, description="Base visibility factor")
     last_updated: datetime = Field(default_factory=datetime.now, description="Last update timestamp")
 
-
 class EnvironmentalCondition(BaseModel):
     """Environmental factors affecting the simulation."""
     condition_type: str = Field(..., description="Type of environmental condition")
@@ -400,7 +406,6 @@ class EnvironmentalCondition(BaseModel):
     affected_area: Optional[Area] = Field(default=None, description="Area affected by condition")
     duration_remaining: Optional[float] = Field(default=None, ge=0.0, description="Remaining duration")
     effects: Dict[str, float] = Field(default_factory=dict, description="Condition effects on entities")
-
 
 class WorldState(BaseModel):
     """Complete world state snapshot."""
@@ -425,7 +430,6 @@ class WorldState(BaseModel):
                     entities_in_area.append(entity)
         return entities_in_area
 
-
 # =============================================================================
 # Fog of War and Information Types
 # =============================================================================
@@ -437,7 +441,6 @@ class InformationSource(BaseModel):
     reliability: float = Field(..., ge=0.0, le=1.0, description="Source reliability factor")
     access_channels: List[FogOfWarChannel] = Field(..., description="Available information channels")
     range_modifiers: Dict[str, float] = Field(default_factory=dict, description="Channel-specific range modifiers")
-
 
 class InformationFragment(BaseModel):
     """Piece of information with provenance and reliability."""
@@ -451,7 +454,6 @@ class InformationFragment(BaseModel):
     accuracy: float = Field(default=1.0, ge=0.0, le=1.0, description="Information accuracy")
     freshness: float = Field(default=1.0, ge=0.0, le=1.0, description="Information recency factor")
 
-
 class FogOfWarFilter(BaseModel):
     """Fog of War filtering configuration."""
     observer_id: str = Field(..., description="Character/entity observing")
@@ -462,7 +464,6 @@ class FogOfWarFilter(BaseModel):
     rumor_reliability: float = Field(default=0.3, ge=0.0, le=1.0, description="Rumor information reliability")
     channel_preferences: Dict[FogOfWarChannel, float] = Field(default_factory=dict, description="Channel weighting")
 
-
 class FilteredWorldView(BaseModel):
     """World state as seen by a specific observer through Fog of War."""
     observer_id: str = Field(..., description="Observer character/entity")
@@ -472,7 +473,6 @@ class FilteredWorldView(BaseModel):
     uncertainty_markers: List[str] = Field(default_factory=list, description="Areas of uncertainty")
     last_updated: datetime = Field(default_factory=datetime.now, description="Last filter update")
     filter_config: FogOfWarFilter = Field(..., description="Filter configuration used")
-
 
 # =============================================================================
 # Turn Brief and RAG Types
@@ -487,7 +487,6 @@ class KnowledgeFragment(BaseModel):
     knowledge_type: str = Field(..., description="Type of knowledge (rule, fact, strategy, etc.)")
     tags: List[str] = Field(default_factory=list, description="Content tags for categorization")
     last_accessed: datetime = Field(default_factory=datetime.now, description="Last access timestamp")
-
 
 class ContextualPrompt(BaseModel):
     """AI prompt with context injection."""
@@ -517,7 +516,6 @@ class ContextualPrompt(BaseModel):
         
         return "\n".join(components)
 
-
 class TurnBrief(BaseModel):
     """Complete briefing package for a character's turn."""
     character_id: str = Field(..., description="Character receiving the brief")
@@ -543,7 +541,6 @@ class TurnBrief(BaseModel):
         }
     )
 
-
 # =============================================================================
 # Simulation Control Types
 # =============================================================================
@@ -559,7 +556,6 @@ class SimulationConfig(BaseModel):
     performance_mode: Literal["accuracy", "balanced", "speed"] = Field(default="balanced")
     logging_level: Literal["debug", "info", "warning", "error"] = Field(default="info")
 
-
 class SimulationState(BaseModel):
     """Current state of simulation execution."""
     simulation_id: str = Field(..., description="Unique simulation identifier")
@@ -572,7 +568,6 @@ class SimulationState(BaseModel):
     last_update: datetime = Field(default_factory=datetime.now, description="Last state update")
     metrics: Dict[str, Any] = Field(default_factory=dict, description="Simulation metrics")
 
-
 class TurnResult(BaseModel):
     """Results of a completed simulation turn."""
     turn_number: int = Field(..., ge=0, description="Completed turn number")
@@ -584,7 +579,6 @@ class TurnResult(BaseModel):
     errors: List[str] = Field(default_factory=list, description="Errors encountered during turn")
     warnings: List[str] = Field(default_factory=list, description="Warnings generated during turn")
     duration_seconds: float = Field(..., ge=0.0, description="Turn execution time")
-
 
 # =============================================================================
 # API and Communication Types
@@ -600,7 +594,6 @@ class APIResponse(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now, description="Response timestamp")
     request_id: Optional[str] = Field(default=None, description="Request identifier for tracing")
 
-
 class SystemStatus(BaseModel):
     """System health and status information."""
     system_name: str = Field(default="Novel Engine", description="System name")
@@ -612,7 +605,6 @@ class SystemStatus(BaseModel):
     cpu_usage_percent: Optional[float] = Field(default=None, ge=0.0, le=100.0, description="CPU usage percentage")
     last_error: Optional[str] = Field(default=None, description="Last error message")
     components: Dict[str, str] = Field(default_factory=dict, description="Component status")
-
 
 # =============================================================================
 # Caching and Performance Types
@@ -635,7 +627,6 @@ class CacheEntry(BaseModel):
             return False
         return (datetime.now() - self.created_at).total_seconds() > self.ttl_seconds
 
-
 class PerformanceMetrics(BaseModel):
     """Performance tracking metrics."""
     operation_name: str = Field(..., description="Name of operation being measured")
@@ -646,7 +637,6 @@ class PerformanceMetrics(BaseModel):
     cache_misses: int = Field(default=0, ge=0, description="Number of cache misses")
     error_count: int = Field(default=0, ge=0, description="Number of errors encountered")
     timestamp: datetime = Field(default_factory=datetime.now, description="Measurement timestamp")
-
 
 # =============================================================================
 # State Hashing and Consistency Types
@@ -670,7 +660,6 @@ class StateHash(BaseModel):
             raise ValueError('Hash value must be a valid hexadecimal string')
         return v
 
-
 class ConsistencyCheck(BaseModel):
     """Consistency validation results."""
     check_id: str = Field(default_factory=lambda: str(uuid4()), description="Unique check identifier")
@@ -681,7 +670,6 @@ class ConsistencyCheck(BaseModel):
     confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="Confidence in consistency check")
     timestamp: datetime = Field(default_factory=datetime.now, description="Check execution time")
     remediation_suggestions: List[str] = Field(default_factory=list, description="Suggested fixes")
-
 
 # =============================================================================
 # Model Registry and Exports
@@ -728,7 +716,6 @@ __all__ = [
     # Consistency Types
     "StateHash", "ConsistencyCheck"
 ]
-
 
 # Model validation registry for runtime type checking
 MODEL_REGISTRY = {

@@ -316,11 +316,11 @@ def create_sample_campaign_brief() -> CampaignBrief:
                    "the narrative rather than combat.",
         key_events=events,
         character_ecology={
-            "factions_present": ["Imperial Guard", "Space Marines", "Adeptus Mechanicus"],
+            "factions_present": ["Imperial Guard", "Space Marines", "Engineering Corps"],
             "npc_archetypes": ["Station Servitors", "Auto-systems", "Hidden Survivors"],
             "relationship_dynamics": {
                 "imperial_unity": "Imperial forces must work together to uncover the truth",
-                "tech_mysteries": "Mechanicus agents seek to understand what happened to the station's machine spirits"
+                "tech_mysteries": "Engineering agents seek to understand what happened to the station's automated systems"
             }
         },
         environmental_elements=[

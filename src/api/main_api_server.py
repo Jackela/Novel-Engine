@@ -55,6 +55,7 @@ try:
     from src.security.rate_limiting import RateLimitMiddleware, InMemoryRateLimitBackend, RateLimitStrategy
     from src.security.auth_system import AuthenticationManager, get_current_user, require_permission, Permission
     from src.security.ssl_config import setup_development_ssl, setup_production_ssl
+    from src.security.enhanced_security import EnhancedSecurityMiddleware
     SECURITY_AVAILABLE = True
 except ImportError:
     SECURITY_AVAILABLE = False
@@ -94,7 +95,6 @@ class OptimizedJSONResponse(JSONResponse):
         headers["Server-Timing"] = f"api;dur=0"
         
         super().__init__(content=content, status_code=status_code, headers=headers)
-
 
 class APIServerConfig:
     """Configuration for the API server."""
@@ -280,7 +280,11 @@ def create_app() -> FastAPI:
             app.add_middleware(ValidationMiddleware, validator=validator)
             logger.info("Input validation middleware enabled")
             
-            # 3. Security headers (final protection layer)
+            # 3. Enhanced security middleware (threat detection and protection)
+            app.add_middleware(EnhancedSecurityMiddleware, config={"strict_mode": not config.debug})
+            logger.info("Enhanced security middleware enabled")
+            
+            # 4. Security headers (final protection layer)
             security_config = get_production_security_config()
             security_headers = SecurityHeaders(security_config)
             app.add_middleware(SecurityHeadersMiddleware, security_headers=security_headers)

@@ -685,6 +685,9 @@ async def test_integration_suite():
 if __name__ == "__main__":
     # Run tests directly
     async def main():
+        """
+        Run the complete integration test suite.
+        """
         framework = IntegrationTestFramework()
         await framework.run_test_suite()
     

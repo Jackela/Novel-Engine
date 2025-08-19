@@ -39,7 +39,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Security Configuration
-JWT_SECRET_KEY = secrets.token_urlsafe(32)
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not JWT_SECRET_KEY:
+    logger.error("JWT_SECRET_KEY environment variable is required")
+    raise ValueError("JWT_SECRET_KEY environment variable must be set")
+
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
 
@@ -177,7 +181,7 @@ async def lifespan(app: FastAPI):
     logger.info("Starting production-hardened Novel Engine API server...")
     
     # Validate environment
-    required_env_vars = ["ENVIRONMENT", "SECRET_KEY"]
+    required_env_vars = ["ENVIRONMENT", "SECRET_KEY", "JWT_SECRET_KEY", "ADMIN_PASSWORD"]
     missing_vars = [var for var in required_env_vars if not os.getenv(var)]
     
     if missing_vars:
@@ -272,7 +276,17 @@ async def login(request: Request, username: str, password: str) -> Dict[str, str
     # TODO: Implement proper authentication against your user database
     # This is a placeholder implementation
     
-    if username == "admin" and password == os.getenv("ADMIN_PASSWORD"):
+    admin_username = os.getenv("ADMIN_USERNAME", "admin")
+    admin_password = os.getenv("ADMIN_PASSWORD")
+    
+    if not admin_password:
+        logger.error("ADMIN_PASSWORD environment variable is required")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service configuration error"
+        )
+    
+    if username == admin_username and password == admin_password:
         access_token = AuthenticationManager.create_access_token(
             data={"sub": username}
         )

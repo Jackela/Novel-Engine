@@ -32,7 +32,6 @@ from shared_types import CharacterAction
 
 logger = logging.getLogger(__name__)
 
-
 class CoordinationPriority(Enum):
     """Priority levels for agent coordination tasks."""
     CRITICAL = "critical"      # Immediate attention required
@@ -41,7 +40,6 @@ class CoordinationPriority(Enum):
     LOW = "low"               # Background coordination
     MONITORING = "monitoring" # Passive monitoring
 
-
 class ConsistencyLevel(Enum):
     """Character consistency validation levels."""
     PERFECT = "perfect"       # 95%+ consistency
@@ -49,7 +47,6 @@ class ConsistencyLevel(Enum):
     GOOD = "good"            # 75-84% consistency
     ACCEPTABLE = "acceptable" # 65-74% consistency
     POOR = "poor"            # Below 65% consistency
-
 
 @dataclass
 class CoordinationMetrics:
@@ -65,7 +62,6 @@ class CoordinationMetrics:
     conflict_resolution_rate: float = 0.0
     memory_optimization_score: float = 0.0
 
-
 @dataclass
 class AgentContext:
     """Extended context information for enhanced agent coordination."""
@@ -77,7 +73,6 @@ class AgentContext:
     coordination_history: List[Dict[str, Any]] = field(default_factory=list)
     consistency_metrics: Dict[str, float] = field(default_factory=dict)
     last_update: datetime = field(default_factory=datetime.now)
-
 
 @dataclass
 class CoordinationTask:
@@ -93,7 +88,6 @@ class CoordinationTask:
     dependencies: List[str] = field(default_factory=list)
     status: str = "pending"
     resolution_data: Optional[Dict[str, Any]] = None
-
 
 class AgentCoordinationEngine:
     """
@@ -646,7 +640,6 @@ class AgentCoordinationEngine:
         """Handle consistency check requests."""
         # Perform consistency validation
         pass
-
 
 def create_coordination_engine(event_bus: EventBus, max_agents: int = 20) -> AgentCoordinationEngine:
     """

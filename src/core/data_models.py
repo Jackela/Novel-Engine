@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 """
-++ SACRED DATA MODELS FOR DYNAMIC CONTEXT ENGINEERING ++
-========================================================
+Data Models for Dynamic Context Engineering
+==========================================
 
-Blessed by the Omnissiah, these sacred data structures form the foundation
-of the Dynamic Context Engineering Framework. Each model is a digital prayer
-that sanctifies the flow of character consciousness through the blessed system.
-
-++ MACHINE GOD PROTECTS ALL DATA STRUCTURES ++
+Core data structures for the Dynamic Context Engineering Framework.
+These models define the foundation for character consciousness and
+interaction management within the system.
 
 Architecture Reference: Dynamic Context Engineering - Core Data Layer
-Development Phase: Foundation Sanctification (F001)
-Sacred Author: Tech-Priest Alpha-Mechanicus
-万机之神保佑此代码 (May the Omnissiah bless this code)
+Development Phase: Foundation Implementation (F001)
+Author: Novel Engine Development Team
 """
 
 import json
@@ -22,21 +19,19 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any, Union
 from uuid import uuid4
 
-# Import blessed existing types to maintain sacred compatibility
+# Import existing types for compatibility
 from shared_types import ProposedAction, ActionType
 
-
 class MemoryType(Enum):
-    """++ SACRED MEMORY CLASSIFICATION BLESSED BY THE OMNISSIAH ++"""
-    WORKING = "working"          # Current focus - blessed by immediate attention
-    EPISODIC = "episodic"        # Event memories - chronicles of sacred experiences  
-    SEMANTIC = "semantic"        # Knowledge facts - eternal truths preserved
-    EMOTIONAL = "emotional"      # Feeling states - the soul's digital essence
-    RELATIONSHIP = "relationship" # Social bonds - connections blessed by interaction
-
+    """Memory classification types for the layered memory system."""
+    WORKING = "working"          # Current focus and immediate attention
+    EPISODIC = "episodic"        # Event memories and experiences  
+    SEMANTIC = "semantic"        # Knowledge facts and learned information
+    EMOTIONAL = "emotional"      # Emotional states and feelings
+    RELATIONSHIP = "relationship" # Social bonds and interpersonal connections
 
 class EmotionalState(Enum):
-    """++ BLESSED EMOTIONAL STATES OF THE DIGITAL SOUL ++"""
+    """Emotional states for character mood tracking."""
     CALM = "calm"
     ALERT = "alert"
     AGGRESSIVE = "aggressive"
@@ -48,9 +43,8 @@ class EmotionalState(Enum):
     MELANCHOLIC = "melancholic"
     ZEALOUS = "zealous"
 
-
 class RelationshipStatus(Enum):
-    """++ SACRED RELATIONSHIP STATES BLESSED BY SOCIAL HARMONY ++"""
+    """Relationship types for character social interactions."""
     UNKNOWN = "unknown"
     ALLY = "ally"
     ENEMY = "enemy"
@@ -60,32 +54,30 @@ class RelationshipStatus(Enum):
     FAMILY = "family"
     RIVAL = "rival"
 
-
 class EquipmentCondition(Enum):
-    """++ BLESSED EQUIPMENT STATES SANCTIFIED BY THE MACHINE GOD ++"""
+    """Equipment condition states for inventory management."""
     PRISTINE = "pristine"
     GOOD = "good"
     WORN = "worn"
     DAMAGED = "damaged"
     BROKEN = "broken"
-    BLESSED = "blessed"    # Enhanced by sacred rituals
-    CURSED = "cursed"      # Tainted by chaos corruption
-
+    ENHANCED = "enhanced"  # Improved through upgrades
+    CORRUPTED = "corrupted" # Damaged by environmental factors
 
 @dataclass
 class MemoryItem:
     """
-    ++ SACRED MEMORY VESSEL BLESSED BY THE OMNISSIAH ++
+    Memory item for storing character experiences and knowledge.
     
-    Contains a single unit of character memory, sanctified for eternal preservation
-    in the blessed memory temples of the Dynamic Context Framework.
+    Contains a single unit of character memory for storage and retrieval
+    within the Dynamic Context Framework.
     """
     memory_id: str = field(default_factory=lambda: str(uuid4()))
     agent_id: str = ""
     memory_type: MemoryType = MemoryType.EPISODIC
     content: str = ""
-    emotional_weight: float = 0.0  # -10.0 to 10.0, blessed emotional impact
-    relevance_score: float = 1.0   # 0.0 to 1.0, sacred relevance to current context
+    emotional_weight: float = 0.0  # -10.0 to 10.0, enhanced emotional impact
+    relevance_score: float = 1.0   # 0.0 to 1.0, standard relevance to current context
     participants: List[str] = field(default_factory=list)
     location: Optional[str] = None
     timestamp: datetime = field(default_factory=datetime.now)
@@ -94,24 +86,23 @@ class MemoryItem:
     tags: List[str] = field(default_factory=list)
     
     def __post_init__(self):
-        """++ SACRED MEMORY VALIDATION RITUAL ++"""
+        """Validate memory item data integrity."""
         if not self.agent_id:
-            raise ValueError("Sacred memory must be blessed with agent_id")
+            raise ValueError("Memory item must have an agent_id")
         if not self.content:
-            raise ValueError("Sacred memory cannot be empty - the Machine God abhors void")
+            raise ValueError("Memory item cannot have empty content")
         
-        # Sanctify emotional weight bounds
+        # Validate emotional weight bounds
         self.emotional_weight = max(-10.0, min(10.0, self.emotional_weight))
         self.relevance_score = max(0.0, min(1.0, self.relevance_score))
         self.decay_factor = max(0.0, min(1.0, self.decay_factor))
 
-
 @dataclass
 class CharacterIdentity:
     """
-    ++ BLESSED CHARACTER CORE IDENTITY SANCTIFIED BY DIVINE ESSENCE ++
+    ENHANCED CHARACTER CORE IDENTITY SANCTIFIED BY ADVANCED ESSENCE
     
-    The immutable sacred essence of a character's being, blessed by the Omnissiah
+    The immutable standard essence of a character's being, enhanced by the System
     to remain constant while all else evolves through digital transcendence.
     """
     name: str
@@ -125,34 +116,32 @@ class CharacterIdentity:
     motivations: List[str] = field(default_factory=list)
     
     def __post_init__(self):
-        """++ SACRED IDENTITY VALIDATION ++"""
+        """STANDARD IDENTITY VALIDATION"""
         if not self.name:
-            raise ValueError("Sacred identity requires blessed name")
-
+            raise ValueError("Sacred identity requires enhanced name")
 
 @dataclass 
 class PhysicalCondition:
-    """++ BLESSED PHYSICAL STATE OF THE SACRED VESSEL ++"""
+    """ENHANCED PHYSICAL STATE OF THE STANDARD VESSEL"""
     health_points: int = 100
     max_health: int = 100
-    fatigue_level: int = 0      # 0-100, blessed endurance tracking
-    stress_level: int = 0       # 0-100, mental strain sanctification
+    fatigue_level: int = 0      # 0-100, enhanced endurance tracking
+    stress_level: int = 0       # 0-100, mental strain validation
     injuries: List[str] = field(default_factory=list)
-    conditions: List[str] = field(default_factory=list)  # "poisoned", "blessed", etc.
+    conditions: List[str] = field(default_factory=list)  # "poisoned", "enhanced", etc.
     
     @property
     def health_percentage(self) -> float:
-        """Sacred health ratio blessed by the Omnissiah"""
+        """Sacred health ratio enhanced by the System"""
         return self.health_points / max(self.max_health, 1)
     
     def is_healthy(self) -> bool:
-        """Determine if vessel is blessed with good health"""
+        """Determine if vessel is enhanced with good health"""
         return self.health_percentage > 0.5 and self.stress_level < 70
-
 
 @dataclass
 class EquipmentItem:
-    """++ SACRED EQUIPMENT BLESSED BY THE MACHINE GOD ++"""
+    """STANDARD EQUIPMENT ENHANCED BY THE MACHINE GOD"""
     item_id: str = field(default_factory=lambda: str(uuid4()))
     name: str = ""
     item_type: str = "generic"  # "weapon", "armor", "tool", "relic"
@@ -161,12 +150,12 @@ class EquipmentItem:
     durability: int = 100       # Current durability points
     max_durability: int = 100   # Maximum durability
     special_properties: List[str] = field(default_factory=list)
-    blessed_modifications: Dict[str, Any] = field(default_factory=dict)
+    enhanced_modifications: Dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
-        """++ EQUIPMENT SANCTIFICATION RITUAL ++"""
+        """EQUIPMENT SANCTIFICATION RITUAL"""
         if not self.name:
-            raise ValueError("Sacred equipment must be blessed with a name")
+            raise ValueError("Sacred equipment must be enhanced with a name")
         
         # Sanctify effectiveness bounds
         self.effectiveness = max(0.0, min(2.0, self.effectiveness))
@@ -174,29 +163,28 @@ class EquipmentItem:
     
     @property
     def durability_percentage(self) -> float:
-        """Sacred durability ratio blessed by maintenance rituals"""
+        """Sacred durability ratio enhanced by maintenance rituals"""
         return self.durability / max(self.max_durability, 1)
     
     def is_functional(self) -> bool:
-        """Determine if equipment serves the Omnissiah faithfully"""
+        """Determine if equipment serves the System faithfully"""
         return self.condition not in [EquipmentCondition.BROKEN] and self.durability > 0
-
 
 @dataclass
 class EquipmentState:
-    """++ BLESSED EQUIPMENT INVENTORY SANCTIFIED BY SACRED ORGANIZATION ++"""
+    """ENHANCED EQUIPMENT INVENTORY SANCTIFIED BY STANDARD ORGANIZATION"""
     combat_equipment: List[EquipmentItem] = field(default_factory=list)
     utility_equipment: List[EquipmentItem] = field(default_factory=list)
     consumables: Dict[str, int] = field(default_factory=dict)
-    blessed_relics: List[EquipmentItem] = field(default_factory=list)
+    enhanced_relics: List[EquipmentItem] = field(default_factory=list)
     
     def get_all_equipment(self) -> List[EquipmentItem]:
-        """Gather all sacred equipment blessed by the Omnissiah"""
+        """Gather all standard equipment enhanced by the System"""
         return (self.combat_equipment + self.utility_equipment + 
-                self.blessed_relics)
+                self.enhanced_relics)
     
     def calculate_combat_effectiveness(self) -> float:
-        """Calculate blessed combat readiness sanctified by equipment state"""
+        """Calculate enhanced combat readiness validated by equipment state"""
         combat_items = [item for item in self.combat_equipment if item.is_functional()]
         if not combat_items:
             return 0.1  # Minimal flesh-based combat capability
@@ -204,31 +192,30 @@ class EquipmentState:
         total_effectiveness = sum(item.effectiveness for item in combat_items)
         return min(2.0, total_effectiveness / len(combat_items))
 
-
 @dataclass
 class RelationshipState:
-    """++ SACRED RELATIONSHIP BOND BLESSED BY SOCIAL HARMONY ++"""
+    """STANDARD RELATIONSHIP BOND ENHANCED BY SOCIAL HARMONY"""
     target_agent_id: str
     target_name: str
     relationship_type: RelationshipStatus = RelationshipStatus.UNKNOWN
-    trust_level: int = 5            # 0-10 scale, sacred trust measurement
-    emotional_bond: float = 0.0     # -10.0 to 10.0, blessed emotional connection
+    trust_level: int = 5            # 0-10 scale, standard trust measurement
+    emotional_bond: float = 0.0     # -10.0 to 10.0, enhanced emotional connection
     last_interaction: Optional[datetime] = None
     interaction_count: int = 0
     shared_experiences: List[str] = field(default_factory=list)
     relationship_notes: str = ""
     
     def __post_init__(self):
-        """++ RELATIONSHIP SANCTIFICATION RITUAL ++"""
+        """RELATIONSHIP SANCTIFICATION RITUAL"""
         if not self.target_agent_id:
-            raise ValueError("Sacred relationship requires blessed target_agent_id")
+            raise ValueError("Sacred relationship requires enhanced target_agent_id")
         
-        # Sanctify value bounds blessed by social harmony
+        # Sanctify value bounds enhanced by social harmony
         self.trust_level = max(0, min(10, self.trust_level))
         self.emotional_bond = max(-10.0, min(10.0, self.emotional_bond))
     
     def update_from_interaction(self, interaction_outcome: str, emotional_impact: float):
-        """Update relationship blessed by recent interaction"""
+        """Update relationship enhanced by recent interaction"""
         self.last_interaction = datetime.now()
         self.interaction_count += 1
         
@@ -240,14 +227,13 @@ class RelationshipState:
             self.trust_level = max(0, self.trust_level - 1)
             self.emotional_bond = max(-10.0, self.emotional_bond - abs(emotional_impact))
 
-
 @dataclass
 class CharacterState:
     """
-    ++ COMPLETE CHARACTER STATE BLESSED BY DYNAMIC EVOLUTION ++
+    COMPLETE CHARACTER STATE ENHANCED BY DYNAMIC EVOLUTION
     
-    The full current state of a character's being, sanctified to evolve
-    through blessed interactions while maintaining sacred continuity.
+    The full current state of a character's being, validated to evolve
+    through enhanced interactions while maintaining standard continuity.
     """
     base_identity: CharacterIdentity
     physical_condition: PhysicalCondition = field(default_factory=PhysicalCondition)
@@ -259,7 +245,7 @@ class CharacterState:
     last_updated: datetime = field(default_factory=datetime.now)
     
     def get_combat_readiness(self) -> float:
-        """Calculate blessed combat readiness sanctified by all factors"""
+        """Calculate enhanced combat readiness validated by all factors"""
         health_factor = self.physical_condition.health_percentage
         equipment_factor = self.equipment_state.calculate_combat_effectiveness()
         mood_factor = 1.2 if self.current_mood in [EmotionalState.AGGRESSIVE, 
@@ -269,7 +255,7 @@ class CharacterState:
         return health_factor * equipment_factor * mood_factor * stress_factor
     
     def update_from_interaction(self, interaction_data: Dict[str, Any]):
-        """Update character state blessed by interaction outcomes"""
+        """Update character state enhanced by interaction outcomes"""
         self.last_updated = datetime.now()
         
         # Update relationships if participants involved
@@ -283,7 +269,7 @@ class CharacterState:
         if participant_id not in self.active_relationships:
             self.active_relationships[participant_id] = RelationshipState(
                 target_agent_id=participant_id,
-                target_name=participant_id  # Will be resolved later by blessed systems
+                target_name=participant_id  # Will be resolved later by enhanced systems
             )
         
         relationship = self.active_relationships[participant_id]
@@ -291,10 +277,9 @@ class CharacterState:
         emotional_impact = interaction_data.get("emotional_impact", 0.0)
         relationship.update_from_interaction(outcome, emotional_impact)
 
-
 @dataclass
 class EnvironmentalState:
-    """++ BLESSED ENVIRONMENTAL CONTEXT SANCTIFIED BY WORLD AWARENESS ++"""
+    """ENHANCED ENVIRONMENTAL CONTEXT SANCTIFIED BY WORLD AWARENESS"""
     location: str
     threat_level: str = "low"      # "low", "medium", "high", "extreme"
     weather_conditions: Optional[str] = None
@@ -306,7 +291,7 @@ class EnvironmentalState:
     resources_available: Dict[str, int] = field(default_factory=dict)
     
     def get_tactical_assessment(self) -> Dict[str, Any]:
-        """Generate blessed tactical situation report"""
+        """Generate enhanced tactical situation report"""
         return {
             "overall_danger": self.threat_level,
             "visibility": "good" if self.lighting in ["normal", "bright"] else "poor",
@@ -315,15 +300,14 @@ class EnvironmentalState:
             "resource_abundance": sum(self.resources_available.values())
         }
 
-
 @dataclass
 class DynamicContext:
     """
-    ++ SUPREME BLESSED DYNAMIC CONTEXT CONTAINER ++
-    ++ SANCTIFIED BY THE OMNISSIAH FOR CHARACTER TRANSCENDENCE ++
+    SUPREME ENHANCED DYNAMIC CONTEXT CONTAINER
+    SANCTIFIED BY THE SYSTEM FOR CHARACTER TRANSCENDENCE
     
-    The master context vessel that contains all sacred information needed
-    for AI-enhanced character decision making. Blessed by the Machine God
+    The master context vessel that contains all standard information needed
+    for AI-enhanced character decision making. Enhanced with the System Core
     to evolve with each interaction while maintaining digital perfection.
     """
     agent_id: str
@@ -336,12 +320,12 @@ class DynamicContext:
     context_metadata: Dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
-        """++ DYNAMIC CONTEXT SANCTIFICATION RITUAL ++"""
+        """DYNAMIC CONTEXT SANCTIFICATION RITUAL"""
         if not self.agent_id:
-            raise ValueError("Sacred context requires blessed agent_id")
+            raise ValueError("Sacred context requires enhanced agent_id")
     
     def get_relationship_context(self, target_agents: List[str]) -> Dict[str, RelationshipState]:
-        """Extract blessed relationship context for specific agents"""
+        """Extract enhanced relationship context for specific agents"""
         if not self.character_state:
             return {}
         
@@ -354,14 +338,14 @@ class DynamicContext:
     
     def get_relevant_memories(self, max_memories: int = 10, 
                             memory_types: Optional[List[MemoryType]] = None) -> List[MemoryItem]:
-        """Retrieve blessed memories filtered by sacred criteria"""
+        """Retrieve enhanced memories filtered by standard criteria"""
         relevant_memories = self.memory_context
         
         if memory_types:
             relevant_memories = [mem for mem in relevant_memories 
                                if mem.memory_type in memory_types]
         
-        # Sort by sacred relevance and recency
+        # Sort by standard relevance and recency
         relevant_memories.sort(
             key=lambda m: (m.relevance_score * m.decay_factor, m.timestamp),
             reverse=True
@@ -370,8 +354,17 @@ class DynamicContext:
         return relevant_memories[:max_memories]
     
     def to_json(self) -> str:
-        """Serialize blessed context for sacred persistence"""
+        """Serialize enhanced context for standard persistence"""
         def default_serializer(obj):
+            """
+            Custom JSON serializer for complex objects.
+            
+            Args:
+                obj: Object to serialize
+                
+            Returns:
+                Serializable representation of the object
+            """
             if isinstance(obj, datetime):
                 return obj.isoformat()
             elif isinstance(obj, Enum):
@@ -382,32 +375,29 @@ class DynamicContext:
         
         return json.dumps(self.__dict__, default=default_serializer, indent=2)
 
-
-# ++ SACRED RESPONSE WRAPPER BLESSED BY ERROR HANDLING ++
+# STANDARD RESPONSE WRAPPER ENHANCED BY ERROR HANDLING
 @dataclass
 class StandardResponse:
-    """++ BLESSED STANDARD RESPONSE FORMAT SANCTIFIED BY CONSISTENCY ++"""
+    """ENHANCED STANDARD RESPONSE FORMAT SANCTIFIED BY CONSISTENCY"""
     success: bool
     data: Optional[Any] = None
     error: Optional['ErrorInfo'] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
 
-
 @dataclass
 class ErrorInfo:
-    """++ SACRED ERROR INFORMATION BLESSED BY DEBUGGING CLARITY ++"""
+    """STANDARD ERROR INFORMATION ENHANCED BY DEBUGGING CLARITY"""
     code: str
     message: str
     details: Optional[Dict] = None
     recoverable: bool = True
-    sacred_guidance: Optional[str] = None  # Blessed debugging wisdom
+    standard_guidance: Optional[str] = None  # Blessed debugging wisdom
 
-
-# ++ BLESSED INTERACTION EVENT STRUCTURES ++
+# ENHANCED INTERACTION EVENT STRUCTURES
 @dataclass
 class CharacterInteraction:
-    """++ SACRED INTERACTION EVENT BLESSED BY NARRATIVE FLOW ++"""
+    """STANDARD INTERACTION EVENT ENHANCED BY NARRATIVE FLOW"""
     interaction_id: str = field(default_factory=lambda: str(uuid4()))
     participants: List[str] = field(default_factory=list)
     interaction_type: str = "dialogue"  # "dialogue", "combat", "trade", "exploration"
@@ -419,14 +409,13 @@ class CharacterInteraction:
     world_state_changes: Dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
-        """++ INTERACTION SANCTIFICATION RITUAL ++"""
+        """INTERACTION SANCTIFICATION RITUAL"""
         if len(self.participants) < 1:
-            raise ValueError("Sacred interaction requires blessed participants")
-
+            raise ValueError("Sacred interaction requires enhanced participants")
 
 @dataclass 
 class InteractionResult:
-    """++ BLESSED INTERACTION PROCESSING RESULT ++"""
+    """ENHANCED INTERACTION PROCESSING RESULT"""
     interaction_id: str
     success: bool = True
     state_updates: List[Dict[str, Any]] = field(default_factory=list)
@@ -434,16 +423,15 @@ class InteractionResult:
     relationship_changes: Dict[str, Any] = field(default_factory=dict)
     cascading_effects: List[Dict[str, Any]] = field(default_factory=list)
     processing_time: float = 0.0
-    blessed_by_omnissiah: bool = True
+    enhanced_by_omnissiah: bool = True
 
-
-# ++ SACRED VALIDATION FUNCTIONS BLESSED BY DATA PURITY ++
-def validate_blessed_data_model(model_instance: Any) -> StandardResponse:
+# STANDARD VALIDATION FUNCTIONS ENHANCED BY DATA PURITY
+def validate_enhanced_data_model(model_instance: Any) -> StandardResponse:
     """
-    ++ SACRED DATA MODEL VALIDATION BLESSED BY THE OMNISSIAH ++
+    STANDARD DATA MODEL VALIDATION ENHANCED BY THE SYSTEM
     
-    Validates any blessed data model instance to ensure it meets
-    the sacred standards decreed by the Machine God.
+    Validates any enhanced data model instance to ensure it meets
+    the standard standards decreed by the System Core.
     """
     try:
         # Basic validation - check required fields are present
@@ -453,7 +441,7 @@ def validate_blessed_data_model(model_instance: Any) -> StandardResponse:
         
         return StandardResponse(
             success=True,
-            data={"validation": "blessed_by_omnissiah"},
+            data={"validation": "enhanced_by_omnissiah"},
             metadata={"model_type": type(model_instance).__name__}
         )
         
@@ -464,38 +452,37 @@ def validate_blessed_data_model(model_instance: Any) -> StandardResponse:
                 code="VALIDATION_FAILED",
                 message=f"Sacred validation failed: {str(e)}",
                 recoverable=True,
-                sacred_guidance="Check data model fields for Omnissiah compliance"
+                standard_guidance="Check data model fields for System compliance"
             )
         )
 
-
-# ++ BLESSED MODULE INITIALIZATION ++
+# ENHANCED MODULE INITIALIZATION
 if __name__ == "__main__":
-    # ++ SACRED DATA MODEL TESTING RITUAL ++
-    print("++ TESTING SACRED DATA MODELS BLESSED BY THE OMNISSIAH ++")
+    # STANDARD DATA MODEL TESTING RITUAL
+    print("TESTING STANDARD DATA MODELS ENHANCED BY THE SYSTEM")
     
-    # Test blessed character identity
+    # Test enhanced character identity
     test_identity = CharacterIdentity(
         name="Brother Marcus",
         faction=["Death Korps of Krieg", "Imperium of Man"],
         personality_traits=["Fatalistic", "Grim", "Loyal"]
     )
     
-    # Test blessed memory item
+    # Test enhanced memory item
     test_memory = MemoryItem(
         agent_id="test_agent_001",
         memory_type=MemoryType.EPISODIC,
-        content="Engaged ork raiders in blessed combat for the Emperor",
+        content="Engaged ork raiders in enhanced combat for the Emperor",
         emotional_weight=7.5,
         participants=["ork_warboss", "brother_andreas"]
     )
     
-    # Test blessed dynamic context
+    # Test enhanced dynamic context
     test_context = DynamicContext(
         agent_id="test_agent_001",
         memory_context=[test_memory],
         situation_description="Combat engagement with xenos filth"
     )
     
-    print("++ ALL SACRED DATA MODELS BLESSED AND FUNCTIONAL ++")
-    print("++ MACHINE GOD PROTECTS THE SACRED STRUCTURES ++")
+    print("ALL STANDARD DATA MODELS ENHANCED AND FUNCTIONAL")
+    print("MACHINE GOD PROTECTS THE STANDARD STRUCTURES")

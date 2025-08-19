@@ -29,7 +29,6 @@ import math
 
 logger = logging.getLogger(__name__)
 
-
 class QualityDimension(Enum):
     """Dimensions for story quality analysis."""
     PLOT_COHERENCE = "plot_coherence"
@@ -42,7 +41,6 @@ class QualityDimension(Enum):
     GENRE_CONSISTENCY = "genre_consistency"
     NARRATIVE_VOICE = "narrative_voice"
     CONFLICT_RESOLUTION = "conflict_resolution"
-
 
 class StoryGenre(Enum):
     """Supported story genres for quality analysis."""
@@ -59,7 +57,6 @@ class StoryGenre(Enum):
     CYBERPUNK = "cyberpunk"
     STEAMPUNK = "steampunk"
 
-
 class QualityLevel(Enum):
     """Quality level classifications."""
     EXCEPTIONAL = "exceptional"  # 90-100%
@@ -68,7 +65,6 @@ class QualityLevel(Enum):
     ACCEPTABLE = "acceptable"    # 60-69%
     POOR = "poor"               # 40-59%
     VERY_POOR = "very_poor"     # Below 40%
-
 
 @dataclass
 class QualityScore:
@@ -79,7 +75,6 @@ class QualityScore:
     evidence: List[str] = field(default_factory=list)
     suggestions: List[str] = field(default_factory=list)
     analysis_details: Dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass
 class StoryQualityReport:
@@ -101,7 +96,6 @@ class StoryQualityReport:
     analysis_timestamp: datetime = field(default_factory=datetime.now)
     processing_time: float = 0.0
 
-
 @dataclass
 class GenreTemplate:
     """Template defining quality criteria for specific genres."""
@@ -112,7 +106,6 @@ class GenreTemplate:
     style_guidelines: Dict[str, Any]
     common_patterns: List[str]
     genre_specific_metrics: Dict[str, Any]
-
 
 class StoryQualityEngine:
     """
@@ -1238,7 +1231,6 @@ class StoryQualityEngine:
             return "medium"
         else:
             return base_effort
-
 
 def create_story_quality_engine() -> StoryQualityEngine:
     """
