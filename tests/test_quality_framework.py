@@ -99,7 +99,9 @@ class TestSystemOrchestrator:
     @pytest.fixture 
     def mock_database(self):
         """Mock database for testing."""
-        return Mock(spec=ContextDatabase)
+        mock_db = Mock(spec=ContextDatabase)
+        mock_db.agent_id = "test_agent_orchestrator"
+        return mock_db
         
     @pytest.fixture
     def orchestrator(self, mock_event_bus, mock_database):
@@ -119,24 +121,31 @@ class TestSystemOrchestrator:
     async def test_orchestrator_startup(self, orchestrator):
         """Test orchestrator startup process."""
         # Mock the startup dependencies
-        orchestrator.database.initialize = AsyncMock()
-        orchestrator.event_bus.start = AsyncMock()
+        orchestrator.database.initialize_standard_temple = AsyncMock(return_value=Mock(success=True))
+        orchestrator.database.health_check = AsyncMock(return_value={"healthy": True})
         
-        await orchestrator.startup()
+        result = await orchestrator.startup()
         
-        orchestrator.database.initialize.assert_called_once()
-        orchestrator.event_bus.start.assert_called_once()
+        orchestrator.database.initialize_standard_temple.assert_called_once()
+        assert result.success == True
         
     @pytest.mark.asyncio
     async def test_orchestrator_shutdown(self, orchestrator):
         """Test orchestrator shutdown process."""
-        orchestrator.database.close = AsyncMock()
-        orchestrator.event_bus.stop = AsyncMock()
+        orchestrator.database.close_standard_temple = AsyncMock()
         
-        await orchestrator.shutdown()
+        # Mock the connection context manager for _save_system_state
+        mock_connection = AsyncMock()
+        mock_connection.execute = AsyncMock()
+        mock_connection.commit = AsyncMock()
+        mock_connection.__aenter__ = AsyncMock(return_value=mock_connection)
+        mock_connection.__aexit__ = AsyncMock(return_value=None)
+        orchestrator.database.get_enhanced_connection = AsyncMock(return_value=mock_connection)
         
-        orchestrator.database.close.assert_called_once()
-        orchestrator.event_bus.stop.assert_called_once()
+        result = await orchestrator.shutdown()
+        
+        orchestrator.database.close_standard_temple.assert_called_once()
+        assert result.success == True
 
 
 class TestEventBus:
@@ -388,8 +397,19 @@ class TestIntegrationScenarios:
         database = Mock(spec=ContextDatabase)
         database.initialize = AsyncMock()
         database.close = AsyncMock()
+        database.initialize_standard_temple = AsyncMock(return_value=Mock(success=True))
+        database.close_standard_temple = AsyncMock()
         database.store_context = AsyncMock()
         database.get_context = AsyncMock(return_value={"context": "test"})
+        database.agent_id = "test_agent_db"
+        
+        # Mock the connection context manager
+        mock_connection = AsyncMock()
+        mock_connection.execute = AsyncMock()
+        mock_connection.commit = AsyncMock()
+        mock_connection.__aenter__ = AsyncMock(return_value=mock_connection)
+        mock_connection.__aexit__ = AsyncMock(return_value=None)
+        database.get_enhanced_connection = AsyncMock(return_value=mock_connection)
         
         orchestrator = SystemOrchestrator(
             event_bus=event_bus,
@@ -409,11 +429,11 @@ class TestIntegrationScenarios:
         
         # Test startup
         await system["orchestrator"].startup()
-        system["database"].initialize.assert_called_once()
+        system["database"].initialize_standard_temple.assert_called_once()
         
         # Test shutdown
         await system["orchestrator"].shutdown()
-        system["database"].close.assert_called_once()
+        system["database"].close_standard_temple.assert_called_once()
         
     @pytest.mark.asyncio
     async def test_character_interaction_workflow(self, full_system_setup):

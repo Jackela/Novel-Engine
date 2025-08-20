@@ -22,6 +22,8 @@ class EventBus:
     def __init__(self):
         """Initializes the EventBus."""
         self._subscribers: Dict[str, List[Callable]] = defaultdict(list)
+        # Compatibility alias for tests expecting _handlers
+        self._handlers = self._subscribers
         logger.info("EventBus initialized.")
 
     def subscribe(self, event_type: str, callback: Callable):
