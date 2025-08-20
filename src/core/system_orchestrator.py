@@ -133,7 +133,8 @@ class SystemOrchestrator:
     """
     
     def __init__(self, database_path: str = "data/context_engineering.db", 
-                 config: Optional[OrchestratorConfig] = None):
+                 config: Optional[OrchestratorConfig] = None,
+                 event_bus=None, database=None):
         """
         System Initialization with Comprehensive Integration
         
@@ -148,8 +149,11 @@ class SystemOrchestrator:
         self.operation_count = 0
         self.error_count = 0
         
-        # Initialize enhanced database
-        self.database = ContextDatabase(database_path)
+        # Initialize enhanced database (use provided database or create new one)
+        self.database = database if database is not None else ContextDatabase(database_path)
+        
+        # Initialize event bus (use provided or create default)
+        self.event_bus = event_bus
         
         # Initialize core systems (will be set up in startup)
         self.memory_system: Optional[LayeredMemorySystem] = None
