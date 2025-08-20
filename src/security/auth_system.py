@@ -666,5 +666,9 @@ def initialize_security_service(database_path: str, secret_key: str):
 __all__ = [
     'UserRole', 'Permission', 'User', 'TokenPair', 'UserRegistration', 'UserLogin',
     'SecurityEvent', 'AuthenticationError', 'AuthorizationError', 'SecurityService',
-    'get_security_service', 'initialize_security_service', 'ROLE_PERMISSIONS'
+    'get_security_service', 'initialize_security_service', 'ROLE_PERMISSIONS',
+    'AuthenticationManager'  # Legacy compatibility alias
 ]
+
+# Export alias for legacy compatibility
+AuthenticationManager = SecurityService

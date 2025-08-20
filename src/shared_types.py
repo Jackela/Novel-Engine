@@ -678,7 +678,7 @@ class ConsistencyCheck(BaseModel):
 # All models for easy importing
 __all__ = [
     # Enums
-    "ActionType", "EntityType", "ValidationResult", "FogOfWarChannel", "SimulationPhase",
+    "ActionType", "EntityType", "ValidationResult", "FogOfWarChannel", "SimulationPhase", "DecisionType",
     
     # Spatial Types
     "Position", "BoundingBox", "Area",
@@ -714,7 +714,10 @@ __all__ = [
     "CacheEntry", "PerformanceMetrics",
     
     # Consistency Types
-    "StateHash", "ConsistencyCheck"
+    "StateHash", "ConsistencyCheck",
+    
+    # Test compatibility
+    "SharedTypes"
 ]
 
 # Model validation registry for runtime type checking
@@ -729,3 +732,19 @@ MODEL_REGISTRY = {
     "turn_result": TurnResult,
     "api_response": APIResponse
 }
+
+# =============================================================================
+# SharedTypes class for test compatibility
+# =============================================================================
+
+class DecisionType(str, Enum):
+    """Decision type enumeration for character decision-making."""
+    IMMEDIATE = "immediate"
+    STRATEGIC = "strategic"
+    REACTIVE = "reactive"
+    PLANNED = "planned"
+
+class SharedTypes:
+    """Shared types container for test compatibility."""
+    ActionType = ActionType
+    DecisionType = DecisionType

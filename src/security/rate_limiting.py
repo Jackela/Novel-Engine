@@ -443,6 +443,53 @@ class RateLimiter:
             "timestamp": time.time()
         }
 
+class InMemoryRateLimitBackend:
+    """STANDARD IN-MEMORY RATE LIMIT BACKEND"""
+    
+    def __init__(self):
+        self.clients: Dict[str, ClientState] = {}
+        self.global_stats = {
+            "total_requests": 0,
+            "blocked_requests": 0,
+            "unique_clients": 0,
+            "threats_detected": 0
+        }
+    
+    def get_client_state(self, client_id: str) -> Optional[ClientState]:
+        """Retrieve client state from memory backend"""
+        return self.clients.get(client_id)
+    
+    def set_client_state(self, client_id: str, client_state: ClientState):
+        """Store client state in memory backend"""
+        self.clients[client_id] = client_state
+    
+    def update_stats(self, stat_name: str, increment: int = 1):
+        """Update global statistics"""
+        if stat_name in self.global_stats:
+            self.global_stats[stat_name] += increment
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get global statistics"""
+        return {
+            **self.global_stats,
+            "active_clients": len(self.clients),
+            "timestamp": time.time()
+        }
+    
+    def cleanup_old_clients(self, max_age: float = 3600.0):
+        """Remove clients inactive for more than max_age seconds"""
+        now = time.time()
+        old_clients = []
+        
+        for client_id, client in self.clients.items():
+            if now - client.last_request > max_age:
+                old_clients.append(client_id)
+        
+        for client_id in old_clients:
+            del self.clients[client_id]
+        
+        return len(old_clients)
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """STANDARD RATE LIMITING MIDDLEWARE"""
     
@@ -517,5 +564,5 @@ def create_rate_limit_middleware(app, config: Optional[RateLimitConfig] = None):
 __all__ = [
     'RateLimitStrategy', 'ThreatLevel', 'RateLimitConfig', 'TokenBucket', 
     'SlidingWindow', 'ClientState', 'RateLimitExceeded', 'RateLimiter',
-    'RateLimitMiddleware', 'get_rate_limiter', 'create_rate_limit_middleware'
+    'InMemoryRateLimitBackend', 'RateLimitMiddleware', 'get_rate_limiter', 'create_rate_limit_middleware'
 ]

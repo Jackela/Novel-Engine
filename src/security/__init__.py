@@ -26,8 +26,8 @@ from .input_validation import (
 )
 
 from .rate_limiting import (
-    RateLimiter, RateLimitConfig, RateLimitExceeded,
-    create_rate_limit_middleware, get_rate_limiter
+    RateLimiter, RateLimitConfig, RateLimitExceeded, RateLimitStrategy,
+    InMemoryRateLimitBackend, create_rate_limit_middleware, get_rate_limiter
 )
 
 from .security_headers import (
@@ -45,8 +45,8 @@ __all__ = [
     'create_validation_middleware', 'get_input_validator',
     
     # Rate Limiting
-    'RateLimiter', 'RateLimitConfig', 'RateLimitExceeded',
-    'create_rate_limit_middleware', 'get_rate_limiter',
+    'RateLimiter', 'RateLimitConfig', 'RateLimitExceeded', 'RateLimitStrategy',
+    'InMemoryRateLimitBackend', 'create_rate_limit_middleware', 'get_rate_limiter',
     
     # Security Headers
     'SecurityHeaders', 'create_security_headers_middleware'
