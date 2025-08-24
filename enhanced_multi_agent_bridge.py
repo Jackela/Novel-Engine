@@ -36,6 +36,12 @@ from shared_types import CharacterAction
 from src.ai_intelligence.ai_orchestrator import AIIntelligenceOrchestrator, AISystemConfig
 from src.ai_intelligence.agent_coordination_engine import AgentCoordinationEngine, CoordinationPriority
 
+# Import unified LLM service for smart coordination
+from src.llm_service import (
+    get_llm_service, UnifiedLLMService, LLMRequest, LLMResponse,
+    ResponseFormat, CostControl, generate_character_action, generate_narrative_content
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -76,6 +82,19 @@ class AgentDialogue:
 
 
 @dataclass
+class LLMCoordinationConfig:
+    """Configuration for LLM-powered smart coordination."""
+    enable_smart_batching: bool = True
+    max_batch_size: int = 5
+    batch_timeout_ms: int = 2000
+    priority_queue_enabled: bool = True
+    cost_tracking_enabled: bool = True
+    max_parallel_llm_calls: int = 3
+    dialogue_generation_budget: float = 2.0  # USD per hour
+    coordination_temperature: float = 0.8
+
+
+@dataclass
 class EnhancedWorldState:
     """Enhanced world state with AI intelligence integration."""
     turn_number: int
@@ -87,6 +106,7 @@ class EnhancedWorldState:
     story_goals: Dict[str, Any]
     ai_insights: List[Dict[str, Any]]
     coordination_status: Dict[str, Any]
+    llm_coordination_stats: Dict[str, Any] = field(default_factory=dict)
 
 
 class EnhancedMultiAgentBridge:
@@ -97,16 +117,37 @@ class EnhancedMultiAgentBridge:
     while maintaining backward compatibility with existing simulation flow.
     """
     
-    def __init__(self, event_bus: EventBus, director_agent: Optional[DirectorAgent] = None):
+    def __init__(self, event_bus: EventBus, director_agent: Optional[DirectorAgent] = None,
+                 llm_coordination_config: Optional[LLMCoordinationConfig] = None):
         """
         Initialize the Enhanced Multi-Agent Bridge.
         
         Args:
             event_bus: Core event bus for agent communication
             director_agent: Optional existing director agent
+            llm_coordination_config: Configuration for LLM-powered coordination
         """
         self.event_bus = event_bus
         self.director_agent = director_agent
+        
+        # Initialize LLM coordination
+        self.llm_config = llm_coordination_config or LLMCoordinationConfig()
+        self.llm_service = get_llm_service(CostControl(
+            daily_budget=self.llm_config.dialogue_generation_budget * 24,
+            hourly_limit=100,
+            rate_limit_enabled=self.llm_config.cost_tracking_enabled
+        ))
+        
+        # Smart coordination systems
+        self.llm_request_queue: List[Tuple[LLMRequest, str, Any]] = []
+        self.llm_batch_timer: Optional[float] = None
+        self.parallel_llm_calls: int = 0
+        self.coordination_stats = {
+            "total_llm_calls": 0,
+            "batch_efficiency": 0.0,
+            "cost_savings": 0.0,
+            "dialogue_quality_score": 0.0
+        }
         
         # Initialize AI Intelligence Orchestrator
         ai_config = AISystemConfig(
