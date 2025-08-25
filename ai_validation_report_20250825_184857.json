@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-08-25T18:48:44.367468",
+  "test_type": "AI Validation using Playwright",
+  "objective": "Validate real AI generation vs templates/state machines",
+  "scenarios_tested": 5,
+  "results": [],
+  "overall_assessment": {},
+  "error": "No server available"
+}

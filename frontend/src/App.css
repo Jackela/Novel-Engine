@@ -1,479 +1,512 @@
-/*
- * 🏛️ APP LAYOUT - SACRED ARCHITECTURE
- * ===================================
- * Main application layout using the Sacred Design System
- * Refactored by Artisan-Priest Ultima
- */
+/* Novel Engine Application Styles */
+/* ================================ */
 
-/* 🏗️ MAIN APPLICATION LAYOUT */
-.App {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(
-    135deg, 
-    var(--color-bg-primary), 
-    var(--color-bg-secondary), 
-    var(--color-bg-tertiary)
-  );
-  color: var(--color-text-primary);
-  font-family: var(--font-family-sans);
+/* CSS Variables for Theme System */
+:root {
+  /* Light Theme Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-hover: #f0f0f0;
+  --bg-selected: #e3f2fd;
+  --text-color: #212529;
+  --text-muted: #6c757d;
+  --border-color: #dee2e6;
+  --primary-color: #007bff;
+  --primary-dark: #0056b3;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #17a2b8;
+  --secondary-color: #6c757d;
 }
 
-/* 🎭 HEADER STYLES - Imperial Crown */
+[data-theme="dark"] {
+  /* Dark Theme Colors */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #262626;
+  --bg-hover: #333333;
+  --bg-selected: #1e3a8a;
+  --text-color: #ffffff;
+  --text-muted: #b3b3b3;
+  --border-color: #404040;
+  --primary-color: #3b82f6;
+  --primary-dark: #2563eb;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --info-color: #06b6d4;
+  --secondary-color: #6b7280;
+}
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+  background-color: var(--bg-secondary);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+
+/* Main App Container */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.app--light {
+  background: var(--bg-primary);
+}
+
+.app--dark {
+  background: var(--bg-primary);
+}
+
+/* Header Styles */
 .app-header {
-  text-align: center;
-  padding: var(--spacing-3xl) var(--spacing-lg);
-  background: var(--color-bg-overlay);
-  border-bottom: 2px solid var(--color-primary-gold);
-  backdrop-filter: blur(10px);
-}
-
-.app-header h1 {
-  margin: 0;
-  font-family: var(--font-family-serif);
-  font-size: var(--font-size-4xl);
-  font-weight: var(--font-weight-heavy);
-  color: var(--color-primary-gold);
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  animation: glowGold 3s var(--ease-in-out) infinite alternate;
-}
-
-.app-subtitle {
-  margin: var(--spacing-md) 0 0 0;
-  font-size: var(--font-size-xl);
-  color: var(--color-text-secondary);
-  opacity: 0.9;
-  font-style: italic;
-  font-weight: var(--font-weight-light);
-}
-
-/* 📜 MAIN CONTENT AREA */
-.app-main {
-  flex: 1;
-  padding: var(--spacing-3xl) var(--spacing-lg);
-  max-width: var(--container-lg);
-  margin: 0 auto;
-  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3xl);
-}
-
-/* 📊 STATUS CONTAINER - Sacred Information Panel */
-.status-container {
-  background: var(--color-bg-elevated);
-  border-radius: var(--border-radius-2xl);
-  padding: var(--spacing-3xl);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--color-border-primary);
-  box-shadow: var(--shadow-lg);
-}
-
-.status-container h2 {
-  margin-top: 0;
-  margin-bottom: var(--spacing-xl);
-  color: var(--color-primary-gold);
-  text-align: center;
-  font-family: var(--font-family-serif);
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-}
-
-/* ⏳ LOADING STATE - Machine Spirit Awakening */
-.status-loading {
-  text-align: center;
-  padding: var(--spacing-3xl);
-  display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  gap: var(--spacing-xl);
+  padding: 12px 24px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  min-height: 60px;
 }
 
-.loading-spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid var(--color-primary-gold-alpha-30);
-  border-top: 4px solid var(--color-primary-gold);
-  border-radius: var(--border-radius-full);
-  animation: spin var(--duration-slowest) linear infinite;
-  box-shadow: var(--shadow-glow);
+.app-header__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.status-loading p {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-lg);
+.app-title {
   margin: 0;
-  font-weight: var(--font-weight-medium);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-color);
+  background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* ❌ ERROR STATE - Imperial Warnings */
-.status-error {
-  text-align: center;
-  padding: var(--spacing-3xl);
-  background: var(--color-error-bg);
-  border-radius: var(--border-radius-xl);
-  border: 1px solid var(--color-error);
-  box-shadow: var(--shadow-md);
+.session-id {
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
-.status-error h3 {
-  color: var(--color-error-light);
-  margin-top: 0;
-  margin-bottom: var(--spacing-lg);
-  font-family: var(--font-family-serif);
-  font-size: var(--font-size-2xl);
+.app-header__center {
+  display: flex;
+  align-items: center;
 }
 
-.status-error p {
-  color: var(--color-error-light);
-  margin-bottom: var(--spacing-2xl);
-  font-size: var(--font-size-lg);
-  opacity: 0.9;
+.view-selector {
+  display: flex;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 2px;
 }
 
-/* ✅ SUCCESS STATE - Emperor's Blessing */
-.status-success {
-  text-align: center;
-  padding: var(--spacing-3xl);
-  background: var(--color-success-bg);
-  border-radius: var(--border-radius-xl);
-  border: 1px solid var(--color-success);
-  box-shadow: var(--shadow-md);
-  animation: fadeIn var(--duration-slow) var(--ease-out);
-}
-
-.status-success h3 {
-  color: var(--color-success-light);
-  margin-top: 0;
-  margin-bottom: var(--spacing-lg);
-  font-family: var(--font-family-serif);
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-}
-
-.connection-info {
-  color: var(--color-success-light);
-  margin-bottom: var(--spacing-2xl);
-  font-style: italic;
-  font-size: var(--font-size-base);
-  opacity: 0.9;
-}
-
-/* 🎛️ SACRED BUTTONS - Imperial Controls */
-.retry-button, 
-.refresh-button, 
-.nav-button {
-  background: linear-gradient(45deg, var(--color-primary-gold), var(--color-primary-gold-light));
-  color: var(--color-text-inverse);
+.view-btn {
+  padding: 8px 16px;
   border: none;
-  padding: var(--spacing-md) var(--spacing-2xl);
-  border-radius: var(--border-radius-lg);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-out);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  text-decoration: none;
-  display: inline-flex;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-color);
+}
+
+.view-btn.active {
+  background: var(--primary-color);
+  color: white;
+  font-weight: 600;
+}
+
+.app-header__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-btn {
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-md);
-  position: relative;
+}
+
+.control-btn:hover {
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+}
+
+.control-btn.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.connection-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.connection-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.connection-dot.connected {
+  background: var(--success-color);
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+.connection-dot.disconnected {
+  background: var(--danger-color);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.connection-text {
+  font-weight: 500;
+}
+
+/* Main Content */
+.app-content {
+  flex: 1;
+  display: flex;
   overflow: hidden;
+  background: var(--bg-primary);
 }
 
-.retry-button:hover, 
-.refresh-button:hover, 
-.nav-button:hover {
-  background: linear-gradient(45deg, var(--color-primary-gold-light), var(--color-primary-gold));
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
+/* Panel Layouts */
+.single-panel {
+  flex: 1;
+  display: flex;
+  padding: 20px;
 }
 
-.retry-button:active, 
-.refresh-button:active, 
-.nav-button:active {
-  transform: translateY(0);
+.single-panel .full-height {
+  flex: 1;
+  height: 100%;
 }
 
-/* 📋 SIMULATOR INFO - System Status Panel */
-.simulator-info {
-  background: var(--color-bg-card);
-  border-radius: var(--border-radius-2xl);
-  padding: var(--spacing-3xl);
-  border: 1px solid var(--color-border-secondary);
-  backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-md);
+.split-panel {
+  flex: 1;
+  display: flex;
+  gap: 1px;
+  background: var(--border-color);
 }
 
-.simulator-info h2 {
-  margin-top: 0;
-  margin-bottom: var(--spacing-2xl);
-  color: var(--color-primary-gold);
-  text-align: center;
-  font-family: var(--font-family-serif);
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
+.split-panel__left,
+.split-panel__right {
+  flex: 1;
+  background: var(--bg-primary);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 🔲 INFO GRID - Sacred Component Layout */
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--spacing-2xl);
-  margin-top: var(--spacing-2xl);
+.split-panel__left {
+  flex: 1.5; /* Give narrative more space */
 }
 
-.info-card {
-  background: var(--color-bg-elevated);
-  border-radius: var(--border-radius-xl);
-  padding: var(--spacing-2xl);
-  border: 1px solid var(--color-border-secondary);
-  transition: all var(--duration-normal) var(--ease-out);
-  box-shadow: var(--shadow-sm);
+.split-panel__right {
+  flex: 1;
 }
 
-.info-card:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: var(--color-border-strong);
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.info-card h4 {
-  margin-top: 0;
-  margin-bottom: var(--spacing-lg);
-  color: var(--color-primary-gold);
-  font-family: var(--font-family-serif);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  border-bottom: 1px solid var(--color-border-primary);
-  padding-bottom: var(--spacing-sm);
-}
-
-.info-card p {
-  margin: var(--spacing-sm) 0;
-  color: var(--color-text-secondary);
-  line-height: var(--line-height-relaxed);
-  font-size: var(--font-size-base);
-}
-
-/* 🦶 FOOTER - Imperial Seal */
+/* Footer Styles */
 .app-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 24px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.app-footer__left,
+.app-footer__center,
+.app-footer__right {
+  flex: 1;
+}
+
+.app-footer__center {
   text-align: center;
-  padding: var(--spacing-2xl);
-  background: var(--color-bg-overlay);
-  border-top: 1px solid var(--color-border-primary);
-  margin-top: auto;
-  backdrop-filter: blur(10px);
 }
 
-.app-footer p {
-  margin: 0;
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
-  font-style: italic;
+.app-footer__right {
+  text-align: right;
 }
 
-/* 📱 RESPONSIVE DESIGN - Adaptive Sacred Architecture */
+.keyboard-shortcuts {
+  font-family: monospace;
+  opacity: 0.7;
+}
 
-/* Tablet Landscape */
+/* Development Metrics Overlay */
+.dev-metrics {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 11px;
+  opacity: 0.8;
+  z-index: 9999;
+  min-width: 200px;
+}
+
+.dev-metrics .metric {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  padding: 2px 0;
+}
+
+.dev-metrics .metric:last-child {
+  margin-bottom: 0;
+}
+
+.dev-metrics span {
+  color: var(--text-muted);
+}
+
+.dev-metrics code {
+  color: var(--text-color);
+  background: transparent;
+  padding: 0;
+  font-size: 10px;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Responsive Design */
 @media (max-width: 1024px) {
-  .info-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-xl);
+  .split-panel {
+    flex-direction: column;
   }
   
-  .app-main {
-    max-width: var(--container-md);
-    padding: var(--spacing-2xl);
-    gap: var(--spacing-2xl);
+  .split-panel__left,
+  .split-panel__right {
+    flex: 1;
+  }
+  
+  .app-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    min-height: auto;
+  }
+  
+  .app-header__center {
+    order: 3;
+    flex: 100%;
+    justify-content: center;
   }
 }
 
-/* Tablet Portrait */
 @media (max-width: 768px) {
   .app-header {
-    padding: var(--spacing-2xl) var(--spacing-lg);
+    flex-direction: column;
+    padding: 16px;
   }
   
-  .app-header h1 {
-    font-size: var(--font-size-3xl);
+  .app-header__left,
+  .app-header__right {
+    width: 100%;
+    justify-content: space-between;
   }
   
-  .app-subtitle {
-    font-size: var(--font-size-lg);
+  .app-header__center {
+    width: 100%;
+    margin: 12px 0;
   }
   
-  .app-main {
-    padding: var(--spacing-xl);
-    gap: var(--spacing-xl);
+  .view-selector {
+    width: 100%;
+    justify-content: space-around;
   }
   
-  .status-container, 
-  .simulator-info {
-    padding: var(--spacing-2xl);
+  .view-btn {
+    flex: 1;
+    justify-content: center;
   }
   
-  .info-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-lg);
+  .single-panel {
+    padding: 12px;
   }
   
-  .info-card {
-    padding: var(--spacing-xl);
+  .app-footer {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+  
+  .app-footer__left,
+  .app-footer__center,
+  .app-footer__right {
+    flex: none;
+  }
+  
+  .keyboard-shortcuts {
+    display: none; /* Hide on mobile */
+  }
+  
+  .dev-metrics {
+    top: auto;
+    bottom: 80px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
   }
 }
 
-/* Mobile Landscape */
-@media (max-width: 600px) {
-  .app-header {
-    padding: var(--spacing-2xl) var(--spacing-lg);
-  }
-  
-  .app-header h1 {
-    font-size: var(--font-size-2xl);
-    letter-spacing: 1px;
-  }
-  
-  .app-subtitle {
-    font-size: var(--font-size-base);
-  }
-  
-  .status-container, 
-  .simulator-info {
-    padding: var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
-  }
-  
-  .info-card {
-    padding: var(--spacing-lg);
-  }
-  
-  .status-container h2,
-  .simulator-info h2 {
-    font-size: var(--font-size-2xl);
-  }
-}
-
-/* Mobile Portrait */
 @media (max-width: 480px) {
-  .app-header {
-    padding: var(--spacing-xl) var(--spacing-lg);
+  .app-title {
+    font-size: 20px;
   }
   
-  .app-header h1 {
-    font-size: var(--font-size-xl);
-    line-height: var(--line-height-tight);
+  .session-id {
+    font-size: 10px;
   }
   
-  .app-subtitle {
-    font-size: var(--font-size-sm);
+  .view-btn {
+    padding: 6px 12px;
+    font-size: 12px;
   }
   
-  .app-main {
-    padding: var(--spacing-sm);
-    gap: var(--spacing-lg);
+  .control-btn {
+    min-width: 32px;
+    height: 32px;
+    font-size: 14px;
   }
   
-  .status-container, 
-  .simulator-info {
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-lg);
+  .connection-indicator {
+    font-size: 10px;
   }
   
-  .retry-button, 
-  .refresh-button, 
-  .nav-button {
-    padding: var(--spacing-sm) var(--spacing-lg);
-    font-size: var(--font-size-sm);
-  }
-  
-  .status-loading {
-    padding: var(--spacing-xl);
-  }
-  
-  .loading-spinner {
-    width: 36px;
-    height: 36px;
-    border-width: 3px;
+  .single-panel {
+    padding: 8px;
   }
 }
 
-/* 🎯 ACCESSIBILITY ENHANCEMENTS */
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .view-btn,
+  .control-btn {
+    border-width: 2px;
+  }
+  
+  .view-btn.active {
+    border: 2px solid white;
+  }
+  
+  .connection-dot.connected {
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.5);
+  }
+}
+
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
-  .app-header h1,
-  .loading-spinner,
-  .info-card,
-  .retry-button,
-  .refresh-button,
-  .nav-button {
-    animation: none;
+  .app,
+  .view-btn,
+  .control-btn,
+  .connection-dot {
     transition: none;
   }
   
-  .info-card:hover,
-  .retry-button:hover,
-  .refresh-button:hover,
-  .nav-button:hover {
+  .connection-dot.disconnected {
+    animation: none;
+  }
+  
+  .control-btn:hover {
     transform: none;
   }
 }
 
-/* High Contrast Mode Support */
-@media (prefers-contrast: high) {
-  .status-container,
-  .simulator-info,
-  .info-card {
-    border-width: 2px;
-    background: var(--color-bg-primary);
+/* Print Styles */
+@media print {
+  .app-header,
+  .app-footer,
+  .dev-metrics {
+    display: none;
   }
   
-  .app-header h1 {
-    text-shadow: none;
+  .app-content {
+    height: auto;
+  }
+  
+  .split-panel {
+    flex-direction: column;
   }
 }
-
-/* 🌟 ADDITIONAL ENHANCEMENTS */
-
-/* Focus States for Better Accessibility */
-.retry-button:focus,
-.refresh-button:focus,
-.nav-button:focus {
-  outline: 2px solid var(--color-primary-gold);
-  outline-offset: 2px;
-}
-
-/* Enhanced Loading State */
-.status-loading .loading-spinner {
-  filter: drop-shadow(var(--shadow-glow));
-}
-
-/* Subtle Animations for Better UX */
-.status-container,
-.simulator-info {
-  animation: slideUp var(--duration-slow) var(--ease-out);
-}
-
-.info-card {
-  animation: fadeIn var(--duration-normal) var(--ease-out);
-  animation-delay: calc(var(--animation-index, 0) * 100ms);
-}
-
-/* Dark Mode Optimization */
-@media (prefers-color-scheme: dark) {
-  .app-header,
-  .app-footer {
-    backdrop-filter: blur(15px);
-  }
-}
-
-/*
- * 🏁 END OF APP LAYOUT STYLES
- * Sacred architecture complete!
- * For the Emperor and the Omnissiah!
- */

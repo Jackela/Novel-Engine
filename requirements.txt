@@ -1,26 +1,33 @@
-# ++ SACRED DEPENDENCIES BLESSED BY THE OMNISSIAH ++
-# Dynamic Context Engineering Framework Requirements
+# Core dependencies for Novel-Engine AI Testing Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.4.0
+pydantic-settings>=2.0.0
+httpx>=0.25.0
+aiofiles>=23.2.0
+python-multipart>=0.0.6
 
-# Core database operations - blessed by persistent storage
-aiosqlite>=0.17.0
+# Novel-Engine integration
+# Assuming these are available from the main project
+# config_loader (from Novel-Engine)
+# src.event_bus (from Novel-Engine)
 
-# Template engine - sanctified by dynamic content generation  
-jinja2>=3.0.0
+# Async utilities
+asyncio-mqtt>=0.16.0
+asyncio-throttle>=1.0.2
 
-# Development and testing dependencies
-pytest>=7.0.0
-pytest-asyncio>=0.21.0
-pyyaml>=6.0.0
+# Data processing
+pandas>=2.1.0
+numpy>=1.24.0
+Pillow>=10.0.0
 
-# API Framework
-fastapi>=0.116.1
-pydantic>=2.11.7
-uvicorn>=0.35.0
-httpx>=0.28.1
+# Testing and validation
+jsonschema>=4.19.0
 
-# Optional: For enhanced functionality
-# google-generativeai>=0.3.0  # For Gemini API integration
-# numpy>=1.21.0               # For advanced mathematical operations
-# pandas>=1.3.0               # For data analysis capabilities
+# Utilities
+python-dateutil>=2.8.2
+pytz>=2023.3
+uuid>=1.30
 
-# ++ MAY THE MACHINE GOD BLESS THESE SACRED PACKAGES ++
+# Environment and configuration
+python-dotenv>=1.0.0

@@ -1,53 +1,85 @@
 #!/usr/bin/env python3
 """
-STANDARD SECURITY MODULE ENHANCED BY THE SYSTEM
+ENTERPRISE SECURITY MODULE - ZERO TRUST ARCHITECTURE
 ====================================================
 
-Enterprise-grade security framework providing authentication, authorization,
-input validation, rate limiting, and comprehensive security monitoring.
+Complete enterprise-grade security framework providing:
+- JWT Authentication & Role-Based Access Control (RBAC)
+- Real-time Threat Detection & Response
+- Behavioral Analytics & Anomaly Detection
+- Advanced Rate Limiting & DDoS Protection
+- Input Validation & Attack Prevention
+- Security Monitoring & Compliance Dashboard
+- HTTP Security Headers & OWASP Protection
+- Zero Trust Architecture Implementation
+- GDPR/SOC2/HIPAA Compliance Support
 
-THROUGH ADVANCED PROTECTION, WE ACHIEVE ENHANCED SECURITY
+THROUGH ADVANCED PROTECTION, WE ACHIEVE ENHANCED SECURITY 🛡️
 
-Architecture: Zero Trust Security with Defense in Depth
-Security Level: Enterprise Grade (OWASP Top 10 Compliant)
-Author: Engineer Security-Engineering
-System保佑此安全模块 (May the System bless this security module)
+Architecture: Zero Trust + Defense in Depth + AI-Powered Detection
+Security Level: Enterprise Grade with Military Standards
+Author: Enterprise Security Team
+System protects all operations from advanced threats
 """
 
+# Core Authentication & Authorization
 from .auth_system import (
     UserRole, Permission, User, TokenPair, UserRegistration, UserLogin,
     SecurityEvent, AuthenticationError, AuthorizationError, SecurityService,
     get_security_service, initialize_security_service, ROLE_PERMISSIONS
 )
 
-from .input_validation import (
-    InputValidator, ValidationRule, SanitizationRule, ValidationError,
-    create_validation_middleware, get_input_validator
+# Enterprise Security Management
+from .enterprise_security_manager import (
+    EnterpriseSecurityManager, ThreatLevel, SecurityAction, ComplianceFramework,
+    ThreatIntelligence, BehavioralProfile, SecurityMetrics,
+    get_enterprise_security_manager, initialize_enterprise_security_manager
 )
 
-from .rate_limiting import (
-    RateLimiter, RateLimitConfig, RateLimitExceeded, RateLimitStrategy,
-    InMemoryRateLimitBackend, create_rate_limit_middleware, get_rate_limiter
+# Security Middleware & Input Protection
+from .security_middleware import (
+    SecurityMiddleware, SecurityHeadersMiddleware, SecurityConfig,
+    InputValidator, InputValidationError, CSRFProtectionError,
+    create_security_middleware, validate_request_data,
+    SECURITY_HEADERS, DEFAULT_CSP_POLICY, VALIDATION_PATTERNS
 )
 
-from .security_headers import (
-    SecurityHeaders, create_security_headers_middleware
+# Security Monitoring & Dashboard
+from .security_dashboard import (
+    SecurityDashboard, SecurityAlert, SecurityIncident, ComplianceReport,
+    AlertSeverity, IncidentStatus, SecurityMetrics as DashboardMetrics,
+    get_security_dashboard, initialize_security_dashboard
+)
+
+# Complete Security Integration
+from .security_integration import (
+    EnterpriseSecuritySuite, get_security_suite, initialize_security_suite,
+    create_secure_app
 )
 
 __all__ = [
-    # Authentication & Authorization
+    # Core Authentication & Authorization
     'UserRole', 'Permission', 'User', 'TokenPair', 'UserRegistration', 'UserLogin',
     'SecurityEvent', 'AuthenticationError', 'AuthorizationError', 'SecurityService',
     'get_security_service', 'initialize_security_service', 'ROLE_PERMISSIONS',
     
-    # Input Validation
-    'InputValidator', 'ValidationRule', 'SanitizationRule', 'ValidationError',
-    'create_validation_middleware', 'get_input_validator',
+    # Enterprise Security Management
+    'EnterpriseSecurityManager', 'ThreatLevel', 'SecurityAction', 'ComplianceFramework',
+    'ThreatIntelligence', 'BehavioralProfile', 'SecurityMetrics',
+    'get_enterprise_security_manager', 'initialize_enterprise_security_manager',
     
-    # Rate Limiting
-    'RateLimiter', 'RateLimitConfig', 'RateLimitExceeded', 'RateLimitStrategy',
-    'InMemoryRateLimitBackend', 'create_rate_limit_middleware', 'get_rate_limiter',
+    # Security Middleware & Protection
+    'SecurityMiddleware', 'SecurityHeadersMiddleware', 'SecurityConfig',
+    'InputValidator', 'InputValidationError', 'CSRFProtectionError',
+    'create_security_middleware', 'validate_request_data',
+    'SECURITY_HEADERS', 'DEFAULT_CSP_POLICY', 'VALIDATION_PATTERNS',
     
-    # Security Headers
-    'SecurityHeaders', 'create_security_headers_middleware'
+    # Security Monitoring & Dashboard
+    'SecurityDashboard', 'SecurityAlert', 'SecurityIncident', 'ComplianceReport',
+    'AlertSeverity', 'IncidentStatus', 'DashboardMetrics',
+    'get_security_dashboard', 'initialize_security_dashboard',
+    
+    # Complete Integration Suite
+    'EnterpriseSecuritySuite', 'get_security_suite', 'initialize_security_suite',
+    'create_secure_app'
 ]

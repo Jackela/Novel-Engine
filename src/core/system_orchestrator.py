@@ -30,6 +30,10 @@ from src.interactions.interaction_engine import InteractionEngine, InteractionCo
 from src.interactions.dynamic_equipment_system import DynamicEquipmentSystem
 from src.interactions.character_interaction_processor import CharacterInteractionProcessor, SocialContext
 
+# Import core narrative engines
+from src.core.subjective_reality import SubjectiveRealityEngine
+from src.core.emergent_narrative import EmergentNarrativeEngine
+
 # Import data models
 from src.core.data_models import (
     DynamicContext, MemoryItem, CharacterState, StandardResponse, ErrorInfo,
@@ -164,6 +168,10 @@ class SystemOrchestrator:
         self.equipment_system: Optional[DynamicEquipmentSystem] = None
         self.character_processor: Optional[CharacterInteractionProcessor] = None
         
+        # Initialize narrative engines (will be set up in startup)
+        self.subjective_reality_engine: Optional[SubjectiveRealityEngine] = None
+        self.emergent_narrative_engine: Optional[EmergentNarrativeEngine] = None
+        
         # System monitoring
         self.metrics_history: List[SystemMetrics] = []
         self.last_health_check = datetime.now()
@@ -231,6 +239,17 @@ class SystemOrchestrator:
                 self.memory_system, self.template_engine, self.character_manager
             )
             
+            # Initialize narrative engines
+            logger.info("Initializing narrative engines")
+            self.subjective_reality_engine = SubjectiveRealityEngine()
+            self.emergent_narrative_engine = EmergentNarrativeEngine()
+            
+            # Initialize narrative engines
+            await self.subjective_reality_engine.initialize()
+            await self.emergent_narrative_engine.initialize()
+            
+            logger.info("Narrative engines initialized successfully")
+            
             # Start background tasks
             await self._start_background_tasks()
             
@@ -293,6 +312,12 @@ class SystemOrchestrator:
             # Perform final backup if enabled
             if self.config.enable_auto_backup:
                 await self._perform_backup()
+            
+            # Shutdown narrative engines
+            if self.subjective_reality_engine and hasattr(self.subjective_reality_engine, 'cleanup'):
+                await self.subjective_reality_engine.cleanup()
+            if self.emergent_narrative_engine and hasattr(self.emergent_narrative_engine, 'cleanup'):
+                await self.emergent_narrative_engine.cleanup()
             
             # Shutdown database connections
             if self.database:
@@ -539,6 +564,9 @@ class SystemOrchestrator:
                 current_time = datetime.now()
                 for participant in participants:
                     self.active_agents[participant] = current_time
+                
+                # Record interaction in emergent narrative engine
+                await self._record_narrative_event(interaction_context, interaction_result)
                 
                 # Log successful interaction
                 logger.info(f"Multi-agent interaction orchestrated successfully: {interaction_context.interaction_id}")
@@ -832,6 +860,53 @@ class SystemOrchestrator:
                 success=False,
                 error=ErrorInfo(code="ENVIRONMENTAL_CONTEXT_FAILED", message="Environmental context processing failed")
             )
+
+    async def _record_narrative_event(self, interaction_context: InteractionContext, 
+                                    interaction_result: StandardResponse) -> None:
+        """Record interaction as narrative event in EmergentNarrativeEngine."""
+        try:
+            if not self.emergent_narrative_engine or not interaction_result.success:
+                return
+            
+            # Create narrative event from interaction
+            event_data = {
+                'event_id': interaction_context.interaction_id,
+                'event_type': interaction_context.interaction_type.value if hasattr(interaction_context.interaction_type, 'value') else str(interaction_context.interaction_type),
+                'participants': interaction_context.participants,
+                'timestamp': datetime.now().isoformat(),
+                'interaction_data': interaction_result.data if interaction_result.data else {},
+                'metadata': interaction_context.metadata or {}
+            }
+            
+            # Record event in causal graph
+            await self.emergent_narrative_engine.causal_graph.add_event(event_data)
+            
+            # Check for causal relationships between participants
+            for participant in interaction_context.participants:
+                await self._analyze_agent_causal_relationships(participant, event_data)
+            
+            logger.debug(f"Recorded narrative event: {interaction_context.interaction_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to record narrative event: {e}")
+    
+    async def _analyze_agent_causal_relationships(self, agent_id: str, event_data: Dict[str, Any]) -> None:
+        """Analyze and record causal relationships for agent actions."""
+        try:
+            if not self.emergent_narrative_engine:
+                return
+                
+            # Get recent events for this agent
+            recent_events = await self.emergent_narrative_engine.get_agent_recent_events(agent_id, hours=1)
+            
+            # Analyze potential causal relationships
+            if len(recent_events) > 1:
+                await self.emergent_narrative_engine.analyze_event_causality(
+                    recent_events[-1], event_data
+                )
+                
+        except Exception as e:
+            logger.error(f"Failed to analyze causal relationships for {agent_id}: {e}")
 
     async def _count_memory_items(self) -> int:
         """Count total memory items in the system."""

@@ -1,0 +1,444 @@
+# Horizontal Pod Autoscaler (HPA) Configuration
+# =============================================
+
+# HPA for API Service
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: novel-engine-api-hpa
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: api
+    tier: autoscaling
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: novel-engine-api
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  # CPU utilization target
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  
+  # Memory utilization target
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  
+  # Custom metrics (requires metrics server and custom metrics API)
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "100"
+  
+  - type: Object
+    object:
+      metric:
+        name: active_agents_total
+      target:
+        type: Value
+        value: "50"
+      describedObject:
+        apiVersion: v1
+        kind: Service
+        name: novel-engine-api-service
+  
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5 minutes
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 60  # 1 minute
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4
+        periodSeconds: 15
+      selectPolicy: Max
+
+---
+
+# HPA for WebSocket Service
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: novel-engine-websocket-hpa
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: websocket
+    tier: autoscaling
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: novel-engine-websocket
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 75
+  
+  # WebSocket-specific metrics
+  - type: Pods
+    pods:
+      metric:
+        name: websocket_connections_per_pod
+      target:
+        type: AverageValue
+        averageValue: "100"
+  
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600  # 10 minutes (longer for websockets)
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 60
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+      - type: Pods
+        value: 2
+        periodSeconds: 30
+      selectPolicy: Max
+
+---
+
+# HPA for Frontend Service (if needed)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: novel-engine-frontend-hpa
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: frontend
+    tier: autoscaling
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: novel-engine-frontend
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+  
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
+  
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+      selectPolicy: Max
+
+---
+
+# Pod Disruption Budget for API
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: novel-engine-api-pdb
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: api
+    tier: availability
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: novel-engine
+      component: api
+
+---
+
+# Pod Disruption Budget for WebSocket
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: novel-engine-websocket-pdb
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: websocket
+    tier: availability
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: novel-engine
+      component: websocket
+
+---
+
+# Pod Disruption Budget for Frontend
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: novel-engine-frontend-pdb
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: frontend
+    tier: availability
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: novel-engine
+      component: frontend
+
+---
+
+# Vertical Pod Autoscaler (VPA) for Database Pods
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: postgres-vpa
+  namespace: novel-engine
+  labels:
+    app: postgres
+    component: database
+    tier: autoscaling
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: postgres
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: postgres
+      minAllowed:
+        cpu: 100m
+        memory: 256Mi
+      maxAllowed:
+        cpu: 2
+        memory: 4Gi
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
+
+---
+
+# VPA for Redis
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: redis-vpa
+  namespace: novel-engine
+  labels:
+    app: redis
+    component: cache
+    tier: autoscaling
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: redis
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: redis
+      minAllowed:
+        cpu: 50m
+        memory: 128Mi
+      maxAllowed:
+        cpu: 1
+        memory: 2Gi
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
+
+---
+
+# Custom Metrics Configuration for KEDA (Kubernetes Event-Driven Autoscaling)
+# Requires KEDA operator to be installed
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: novel-engine-keda-scaler
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: api
+    tier: autoscaling
+spec:
+  scaleTargetRef:
+    name: novel-engine-api
+  minReplicaCount: 3
+  maxReplicaCount: 50
+  pollingInterval: 30
+  cooldownPeriod: 300
+  idleReplicaCount: 3
+  triggers:
+  # Redis queue length scaling
+  - type: redis
+    metadata:
+      address: redis-service:6379
+      password: 
+      listName: narrative_generation_queue
+      listLength: '10'
+      enableTLS: 'false'
+    authenticationRef:
+      name: redis-auth
+  
+  # Prometheus metrics scaling
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus:9090
+      metricName: http_requests_per_second
+      threshold: '100'
+      query: rate(http_requests_total{job="novel-engine-api"}[2m])
+    authenticationRef:
+      name: prometheus-auth
+  
+  # RabbitMQ queue scaling (if using message queues)
+  # - type: rabbitmq
+  #   metadata:
+  #     protocol: amqp
+  #     host: rabbitmq-service:5672
+  #     queueName: agent-actions
+  #     mode: QueueLength
+  #     value: '10'
+  #   authenticationRef:
+  #     name: rabbitmq-auth
+
+---
+
+# TriggerAuthentication for KEDA
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: redis-auth
+  namespace: novel-engine
+spec:
+  secretTargetRef:
+    - parameter: password
+      name: redis-secrets
+      key: redis_password
+
+---
+
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: prometheus-auth
+  namespace: novel-engine
+spec:
+  secretTargetRef:
+    - parameter: username
+      name: prometheus-auth
+      key: username
+    - parameter: password
+      name: prometheus-auth
+      key: password
+
+---
+
+# Custom Resource for Application-Aware Scaling
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: narrativeworkloads.novel-engine.com
+spec:
+  group: novel-engine.com
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              activeAgents:
+                type: integer
+                minimum: 0
+              queuedNarratives:
+                type: integer
+                minimum: 0
+              averageProcessingTime:
+                type: number
+                minimum: 0
+              targetLatency:
+                type: number
+                minimum: 0
+          status:
+            type: object
+            properties:
+              recommendedReplicas:
+                type: integer
+                minimum: 0
+              lastScaleTime:
+                type: string
+                format: date-time
+  scope: Namespaced
+  names:
+    plural: narrativeworkloads
+    singular: narrativeworkload
+    kind: NarrativeWorkload

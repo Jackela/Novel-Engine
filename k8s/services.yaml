@@ -1,0 +1,269 @@
+# Kubernetes Services
+# ==================
+
+# Novel Engine API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: novel-engine-api-service
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: api
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: http
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: novel-engine
+    component: api
+  sessionAffinity: None
+
+---
+
+# Novel Engine WebSocket Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: novel-engine-websocket-service
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: websocket
+spec:
+  type: ClusterIP
+  ports:
+  - name: websocket
+    port: 8001
+    targetPort: websocket
+    protocol: TCP
+  selector:
+    app: novel-engine
+    component: websocket
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
+
+---
+
+# Novel Engine Frontend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: novel-engine-frontend-service
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: https
+    protocol: TCP
+  selector:
+    app: novel-engine
+    component: frontend
+
+---
+
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: novel-engine
+  labels:
+    app: postgres
+    component: database
+spec:
+  type: ClusterIP
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: postgres
+    protocol: TCP
+  selector:
+    app: postgres
+    component: database
+
+---
+
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: novel-engine
+  labels:
+    app: redis
+    component: cache
+spec:
+  type: ClusterIP
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: redis
+    protocol: TCP
+  selector:
+    app: redis
+    component: cache
+
+---
+
+# Load Balancer Service for External Access
+apiVersion: v1
+kind: Service
+metadata:
+  name: novel-engine-loadbalancer
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: loadbalancer
+  annotations:
+    # AWS Load Balancer annotations
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "60"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    
+    # Health check annotations
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/health"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "8000"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "HTTP"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-interval: "30"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-timeout: "5"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold: "2"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-unhealthy-threshold: "2"
+    
+    # Additional AWS annotations
+    service.beta.kubernetes.io/aws-load-balancer-access-log-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-name: "novel-engine-access-logs"
+    service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-prefix: "nlb"
+spec:
+  type: LoadBalancer
+  ports:
+  - name: https
+    port: 443
+    targetPort: https
+    protocol: TCP
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: novel-engine
+    component: frontend
+  loadBalancerSourceRanges:
+  # Restrict to specific IP ranges if needed
+  - 0.0.0.0/0
+
+---
+
+# Headless Service for StatefulSet (if needed)
+apiVersion: v1
+kind: Service
+metadata:
+  name: novel-engine-headless
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: headless
+spec:
+  clusterIP: None
+  ports:
+  - name: api
+    port: 8000
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: novel-engine
+    component: api
+
+---
+
+# Service Monitor for Prometheus (Custom Resource)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: novel-engine-monitor
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: novel-engine
+      component: api
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+  namespaceSelector:
+    matchNames:
+    - novel-engine
+
+---
+
+# External Service for AWS RDS (if using external database)
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: postgres-external
+#   namespace: novel-engine
+#   labels:
+#     app: postgres
+#     component: external
+# spec:
+#   type: ExternalName
+#   externalName: novel-engine-db.c1234567890.us-east-1.rds.amazonaws.com
+#   ports:
+#   - name: postgres
+#     port: 5432
+#     targetPort: 5432
+#     protocol: TCP
+
+---
+
+# External Service for ElastiCache (if using external Redis)
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: redis-external
+#   namespace: novel-engine
+#   labels:
+#     app: redis
+#     component: external
+# spec:
+#   type: ExternalName
+#   externalName: novel-engine-redis.abc123.cache.amazonaws.com
+#   ports:
+#   - name: redis
+#     port: 6379
+#     targetPort: 6379
+#     protocol: TCP

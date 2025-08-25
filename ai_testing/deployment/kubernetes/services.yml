@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-testing-orchestrator
+  namespace: ai-testing
+  labels:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: orchestrator
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: orchestrator
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-testing-browser-automation
+  namespace: ai-testing
+  labels:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: browser-automation
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8001
+    targetPort: 8001
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: browser-automation
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-testing-api-testing
+  namespace: ai-testing
+  labels:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: api-testing
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8002
+    targetPort: 8002
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: api-testing
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-testing-ai-quality
+  namespace: ai-testing
+  labels:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: ai-quality
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8003
+    targetPort: 8003
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: ai-quality
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-testing-results-aggregation
+  namespace: ai-testing
+  labels:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: results-aggregation
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8004
+    targetPort: 8004
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: results-aggregation
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-testing-notification
+  namespace: ai-testing
+  labels:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: notification
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8005
+    targetPort: 8005
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: notification
+
+---
+# LoadBalancer service for external access to orchestrator
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-testing-orchestrator-external
+  namespace: ai-testing
+  labels:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: orchestrator-external
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: novel-engine-ai-testing
+    app.kubernetes.io/component: orchestrator

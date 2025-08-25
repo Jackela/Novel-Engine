@@ -42,8 +42,8 @@ paths:
 characters:
   # Default character directories to load
   default_sheets:
-    - characters/krieg
-    - characters/ork
+    - characters/engineer
+    - characters/scientist
   
   # Maximum number of character actions per turn
   max_actions_per_turn: 5

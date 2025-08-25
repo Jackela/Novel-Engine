@@ -86,6 +86,24 @@ class Permission(str, Enum):
     SIMULATION_CREATE = "simulation:create"
     SIMULATION_READ = "simulation:read"
     SIMULATION_MANAGE = "simulation:manage"
+    
+    # Narrative Permissions
+    NARRATIVE_GENERATE = "narrative:generate"
+    NARRATIVE_READ = "narrative:read"
+    NARRATIVE_BUILD = "narrative:build"
+    
+    # Belief Model Permissions  
+    BELIEF_READ = "belief:read"
+    BELIEF_UPDATE = "belief:update"
+    
+    # Causality Permissions
+    CAUSALITY_READ = "causality:read"
+    CAUSALITY_ANALYZE = "causality:analyze"
+    
+    # Negotiation Permissions
+    NEGOTIATION_CREATE = "negotiation:create"
+    NEGOTIATION_READ = "negotiation:read"
+    NEGOTIATION_PARTICIPATE = "negotiation:participate"
 
 # Role-Permission Mapping
 ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
@@ -98,7 +116,11 @@ ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
         Permission.CHARACTER_CREATE, Permission.CHARACTER_READ, Permission.CHARACTER_UPDATE,
         Permission.CHARACTER_DELETE,
         Permission.API_ACCESS, Permission.API_RATE_UNLIMITED,
-        Permission.SIMULATION_CREATE, Permission.SIMULATION_READ, Permission.SIMULATION_MANAGE
+        Permission.SIMULATION_CREATE, Permission.SIMULATION_READ, Permission.SIMULATION_MANAGE,
+        Permission.NARRATIVE_GENERATE, Permission.NARRATIVE_READ, Permission.NARRATIVE_BUILD,
+        Permission.BELIEF_READ, Permission.BELIEF_UPDATE,
+        Permission.CAUSALITY_READ, Permission.CAUSALITY_ANALYZE,
+        Permission.NEGOTIATION_CREATE, Permission.NEGOTIATION_READ, Permission.NEGOTIATION_PARTICIPATE
     },
     UserRole.MODERATOR: {
         Permission.SYSTEM_HEALTH,
@@ -114,7 +136,10 @@ ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
         Permission.STORY_CREATE, Permission.STORY_READ, Permission.STORY_UPDATE,
         Permission.CHARACTER_CREATE, Permission.CHARACTER_READ, Permission.CHARACTER_UPDATE,
         Permission.API_ACCESS,
-        Permission.SIMULATION_CREATE, Permission.SIMULATION_READ
+        Permission.SIMULATION_CREATE, Permission.SIMULATION_READ,
+        Permission.NARRATIVE_GENERATE, Permission.NARRATIVE_READ, Permission.NARRATIVE_BUILD,
+        Permission.BELIEF_READ, Permission.CAUSALITY_READ,
+        Permission.NEGOTIATION_CREATE, Permission.NEGOTIATION_READ, Permission.NEGOTIATION_PARTICIPATE
     },
     UserRole.API_USER: {
         Permission.SYSTEM_HEALTH,

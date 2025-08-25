@@ -24,12 +24,14 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import uvicorn
 import secrets
-from functools import wraps
+# Removed unused import: from functools import wraps
 
 from src.core.system_orchestrator import SystemOrchestrator, OrchestratorConfig, OrchestratorMode
 from src.api.character_api import create_character_api
 from src.api.interaction_api import create_interaction_api
 from src.api.story_generation_api import create_story_generation_api
+from src.api.subjective_reality_api import create_subjective_reality_api
+from src.api.emergent_narrative_api import create_emergent_narrative_api
 
 # Import new integration systems
 from src.api.response_models import (
@@ -47,6 +49,10 @@ from src.api.documentation import setup_enhanced_docs
 from src.api.logging_system import (
     setup_logging, LogLevel, LogCategory, LogContext
 )
+
+# Import Context7 integration and enhanced documentation
+from src.api.context7_integration_api import create_context7_integration_api
+from src.api.enhanced_documentation_system import EnhancedDocumentationSystem
 
 # Import security systems (if available)
 try:
@@ -179,6 +185,12 @@ async def lifespan(app: FastAPI):
             await app.state.story_api.start_background_tasks()
         if hasattr(app.state, 'interaction_api'):
             app.state.interaction_api.set_orchestrator(global_orchestrator)
+        if hasattr(app.state, 'subjective_reality_api'):
+            app.state.subjective_reality_api.orchestrator = global_orchestrator
+        if hasattr(app.state, 'emergent_narrative_api'):
+            app.state.emergent_narrative_api.orchestrator = global_orchestrator
+        if hasattr(app.state, 'context7_integration_api'):
+            app.state.context7_integration_api.orchestrator = global_orchestrator
         
         # Initialize authentication system if enabled and available
         if config.enable_auth and SECURITY_AVAILABLE:
@@ -356,6 +368,17 @@ def create_app() -> FastAPI:
                 "stories": "/api/v1/stories",
                 "story_generation": "/api/v1/stories/generate",
                 "interactions": "/api/v1/interactions",
+                "turn_briefs": "/api/v1/turns/{turn_id}/briefs",
+                "agent_brief": "/api/v1/turns/{turn_id}/briefs/{agent_id}",
+                "agent_beliefs": "/api/v1/agents/{agent_id}/beliefs",
+                "emergent_narratives": "/api/v1/narratives/emergent/generate",
+                "narrative_build": "/api/v1/narratives/build",
+                "causal_graph": "/api/v1/causality/graph",
+                "context7_examples": "/api/v1/context7/examples",
+                "context7_validation": "/api/v1/context7/validate",
+                "context7_documentation": "/api/v1/context7/documentation",
+                "context7_best_practices": "/api/v1/context7/best-practices/{framework}",
+                "context7_status": "/api/v1/context7/status",
                 "metrics": "/api/v1/metrics",
                 "performance": "/api/v1/metrics/performance",
                 "legacy_characters": "/characters",
@@ -366,10 +389,18 @@ def create_app() -> FastAPI:
                 "Character Management",
                 "Story Generation", 
                 "Real-time Interactions",
+                "Subjective Reality Engine",
+                "Emergent Narrative Generation",
+                "Personalized Turn Briefs",
+                "Causal Graph Analysis",
+                "Context7 Integration",
+                "Interactive Code Examples",
+                "API Pattern Validation",
+                "Framework Best Practices",
+                "Enhanced Documentation",
                 "Performance Monitoring",
                 "Health Checks",
-                "API Versioning",
-                "Comprehensive Documentation"
+                "API Versioning"
             ]
         }
         
@@ -466,18 +497,32 @@ def _register_api_routes(app: FastAPI):
     character_api = create_character_api(None)  # Will be set during lifespan
     story_generation_api = create_story_generation_api(None)
     interaction_api = create_interaction_api(None)
+    subjective_reality_api = create_subjective_reality_api(None)
+    emergent_narrative_api = create_emergent_narrative_api(None)
+    context7_integration_api = create_context7_integration_api(None)
     
     # Store API instances in app state for lifespan initialization
     app.state.character_api = character_api
     app.state.story_api = story_generation_api
     app.state.interaction_api = interaction_api
+    app.state.subjective_reality_api = subjective_reality_api
+    app.state.emergent_narrative_api = emergent_narrative_api
+    app.state.context7_integration_api = context7_integration_api
     
     # Setup routes
     character_api.setup_routes(app)
     story_generation_api.setup_routes(app)
     interaction_api.setup_routes(app)
+    subjective_reality_api.setup_routes(app)
+    emergent_narrative_api.setup_routes(app)
+    context7_integration_api.setup_routes(app)
     
-    logger.info("API routes registered successfully.")
+    # Setup enhanced documentation system
+    enhanced_docs = EnhancedDocumentationSystem(app, context7_integration_api)
+    enhanced_docs.setup_routes(app)
+    app.state.enhanced_docs = enhanced_docs
+    
+    logger.info("API routes registered successfully with Context7 integration.")
 
 def _register_legacy_routes(app: FastAPI):
     """Register legacy routes for backward compatibility."""

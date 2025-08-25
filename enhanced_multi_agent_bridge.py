@@ -21,9 +21,12 @@ import asyncio
 import logging
 import time
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, field
 from enum import Enum
+import heapq
+from collections import defaultdict, deque
+import threading
 
 # Import existing Novel Engine components
 from src.event_bus import EventBus
@@ -33,7 +36,7 @@ from chronicler_agent import ChroniclerAgent
 from shared_types import CharacterAction
 
 # Import advanced AI intelligence systems
-from src.ai_intelligence.ai_orchestrator import AIIntelligenceOrchestrator, AISystemConfig
+from src.ai_intelligence.ai_orchestrator import AIIntelligenceOrchestrator, AISystemConfig, IntelligenceLevel
 from src.ai_intelligence.agent_coordination_engine import AgentCoordinationEngine, CoordinationPriority
 
 # Import unified LLM service for smart coordination
@@ -43,6 +46,15 @@ from src.llm_service import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class RequestPriority(Enum):
+    """Priority levels for LLM requests."""
+    CRITICAL = 1    # Immediate processing, bypass batching
+    HIGH = 2        # High priority, minimal batching delay
+    NORMAL = 3      # Standard batching
+    LOW = 4         # Extended batching allowed
+    BACKGROUND = 5  # Process when resources available
 
 
 class CommunicationType(Enum):
@@ -92,6 +104,114 @@ class LLMCoordinationConfig:
     max_parallel_llm_calls: int = 3
     dialogue_generation_budget: float = 2.0  # USD per hour
     coordination_temperature: float = 0.8
+    max_turn_time_seconds: float = 5.0  # Performance budget
+    batch_priority_threshold: float = 0.7  # High priority requests bypass batching
+    cost_alert_threshold: float = 0.8  # Alert when 80% of budget used
+
+
+@dataclass
+class LLMBatchRequest:
+    """Represents a batched LLM request."""
+    request_id: str
+    priority: RequestPriority
+    request_type: str  # 'dialogue', 'coordination', 'analysis'
+    prompt: str
+    context: Dict[str, Any]
+    created_at: float
+    callback: Optional[callable] = None
+    timeout_seconds: float = 5.0
+    estimated_cost: float = 0.0
+    tokens_estimate: int = 0
+    
+    def __lt__(self, other):
+        """For priority queue ordering."""
+        return (self.priority.value, self.created_at) < (other.priority.value, other.created_at)
+
+
+@dataclass
+class CostTracker:
+    """Tracks LLM usage costs and budgets."""
+    hourly_budget: float
+    daily_budget: float
+    current_hour_spend: float = 0.0
+    current_day_spend: float = 0.0
+    last_reset_hour: int = field(default_factory=lambda: datetime.now().hour)
+    last_reset_day: int = field(default_factory=lambda: datetime.now().day)
+    total_requests: int = 0
+    total_tokens: int = 0
+    average_cost_per_request: float = 0.0
+    cost_by_request_type: Dict[str, float] = field(default_factory=dict)
+    
+    def update_cost(self, request_type: str, cost: float, tokens: int) -> bool:
+        """Update cost tracking. Returns True if within budget."""
+        current_time = datetime.now()
+        
+        # Reset hourly tracking if needed
+        if current_time.hour != self.last_reset_hour:
+            self.current_hour_spend = 0.0
+            self.last_reset_hour = current_time.hour
+        
+        # Reset daily tracking if needed  
+        if current_time.day != self.last_reset_day:
+            self.current_day_spend = 0.0
+            self.last_reset_day = current_time.day
+        
+        # Update totals
+        self.current_hour_spend += cost
+        self.current_day_spend += cost
+        self.total_requests += 1
+        self.total_tokens += tokens
+        
+        # Update averages
+        self.average_cost_per_request = self.current_day_spend / max(1, self.total_requests)
+        
+        # Update by request type
+        if request_type not in self.cost_by_request_type:
+            self.cost_by_request_type[request_type] = 0.0
+        self.cost_by_request_type[request_type] += cost
+        
+        # Check budget compliance
+        return (self.current_hour_spend <= self.hourly_budget and 
+                self.current_day_spend <= self.daily_budget)
+
+
+@dataclass
+class PerformanceBudget:
+    """Tracks performance budgets and timing."""
+    max_turn_time: float
+    max_batch_time: float = 2.0
+    max_llm_call_time: float = 1.5
+    turn_start_time: Optional[float] = None
+    batch_timings: List[float] = field(default_factory=list)
+    llm_call_timings: List[float] = field(default_factory=list)
+    budget_violations: int = 0
+    
+    def start_turn(self):
+        """Start turn timing."""
+        self.turn_start_time = time.time()
+    
+    def get_remaining_time(self) -> float:
+        """Get remaining time in current turn."""
+        if self.turn_start_time is None:
+            return self.max_turn_time
+        elapsed = time.time() - self.turn_start_time
+        return max(0, self.max_turn_time - elapsed)
+    
+    def is_budget_exceeded(self) -> bool:
+        """Check if time budget is exceeded."""
+        return self.get_remaining_time() <= 0
+    
+    def record_batch_time(self, duration: float):
+        """Record batch processing time."""
+        self.batch_timings.append(duration)
+        if duration > self.max_batch_time:
+            self.budget_violations += 1
+    
+    def record_llm_time(self, duration: float):
+        """Record LLM call time."""
+        self.llm_call_timings.append(duration)
+        if duration > self.max_llm_call_time:
+            self.budget_violations += 1
 
 
 @dataclass
@@ -138,20 +258,41 @@ class EnhancedMultiAgentBridge:
             rate_limit_enabled=self.llm_config.cost_tracking_enabled
         ))
         
-        # Smart coordination systems
-        self.llm_request_queue: List[Tuple[LLMRequest, str, Any]] = []
+        # Smart coordination systems with advanced batching and prioritization
+        self.llm_request_queue = []  # Priority queue (heapq)
+        self.llm_batch_queue: deque = deque()  # Batch processing queue
         self.llm_batch_timer: Optional[float] = None
         self.parallel_llm_calls: int = 0
+        self.batch_lock = threading.Lock()  # Thread safety for batching
+        
+        # Cost tracking system
+        self.cost_tracker = CostTracker(
+            hourly_budget=self.llm_config.dialogue_generation_budget,
+            daily_budget=self.llm_config.dialogue_generation_budget * 24
+        )
+        
+        # Performance budget enforcement
+        self.performance_budget = PerformanceBudget(
+            max_turn_time=self.llm_config.max_turn_time_seconds
+        )
+        
+        # Enhanced coordination stats
         self.coordination_stats = {
             "total_llm_calls": 0,
             "batch_efficiency": 0.0,
             "cost_savings": 0.0,
-            "dialogue_quality_score": 0.0
+            "dialogue_quality_score": 0.0,
+            "batched_requests": 0,
+            "priority_bypasses": 0,
+            "budget_violations": 0,
+            "average_batch_size": 0.0,
+            "cost_per_request": 0.0,
+            "performance_score": 1.0
         }
         
         # Initialize AI Intelligence Orchestrator
         ai_config = AISystemConfig(
-            intelligence_level="advanced",
+            intelligence_level=IntelligenceLevel.ADVANCED,
             enable_agent_coordination=True,
             enable_story_quality=True,
             enable_analytics=True,
@@ -182,7 +323,418 @@ class EnhancedMultiAgentBridge:
         # Bridge initialization
         self._setup_enhanced_event_handlers()
         
+        # Initialize batch processing task
+        self._batch_processor_task = None
+        self._batch_processor_running = False
+        
         logger.info("Enhanced Multi-Agent Bridge initialized with AI intelligence integration")
+    
+    async def queue_llm_request(self, request_type: str, prompt: str, 
+                               context: Dict[str, Any], priority: RequestPriority = RequestPriority.NORMAL,
+                               timeout_seconds: float = 5.0) -> Dict[str, Any]:
+        """Queue an LLM request with smart batching and priority handling."""
+        try:
+            request_id = f"{request_type}_{datetime.now().strftime('%H%M%S%f')}"
+            
+            # Estimate cost and tokens
+            estimated_tokens = len(prompt.split()) * 1.3  # Rough estimate
+            estimated_cost = estimated_tokens * 0.00001  # Rough cost estimate
+            
+            # Check budget constraints
+            if not await self._check_budget_availability(estimated_cost):
+                return {
+                    "success": False,
+                    "error": "Budget exceeded",
+                    "budget_status": self._get_budget_status()
+                }
+            
+            # Create batch request
+            batch_request = LLMBatchRequest(
+                request_id=request_id,
+                priority=priority,
+                request_type=request_type,
+                prompt=prompt,
+                context=context,
+                created_at=time.time(),
+                timeout_seconds=timeout_seconds,
+                estimated_cost=estimated_cost,
+                tokens_estimate=int(estimated_tokens)
+            )
+            
+            # Handle high priority requests immediately
+            if priority in [RequestPriority.CRITICAL, RequestPriority.HIGH] and \
+               priority.value / 5.0 <= self.llm_config.batch_priority_threshold:
+                self.coordination_stats["priority_bypasses"] += 1
+                return await self._process_immediate_request(batch_request)
+            
+            # Add to priority queue for batching
+            with self.batch_lock:
+                heapq.heappush(self.llm_request_queue, batch_request)
+                
+                # Start batch processor if not running
+                if not self._batch_processor_running:
+                    await self._start_batch_processor()
+            
+            # Wait for batch processing with timeout
+            return await self._wait_for_batch_result(request_id, timeout_seconds)
+            
+        except Exception as e:
+            logger.error(f"Failed to queue LLM request: {e}")
+            return {"success": False, "error": str(e)}
+    
+    async def _check_budget_availability(self, estimated_cost: float) -> bool:
+        """Check if request can proceed within budget constraints."""
+        current_hour_remaining = (self.cost_tracker.hourly_budget - 
+                                 self.cost_tracker.current_hour_spend)
+        current_day_remaining = (self.cost_tracker.daily_budget - 
+                                self.cost_tracker.current_day_spend)
+        
+        return (estimated_cost <= current_hour_remaining and 
+                estimated_cost <= current_day_remaining)
+    
+    def _get_budget_status(self) -> Dict[str, Any]:
+        """Get current budget status."""
+        hour_usage = (self.cost_tracker.current_hour_spend / 
+                     max(0.01, self.cost_tracker.hourly_budget))
+        day_usage = (self.cost_tracker.current_day_spend / 
+                    max(0.01, self.cost_tracker.daily_budget))
+        
+        return {
+            "hourly_usage_percent": min(100, hour_usage * 100),
+            "daily_usage_percent": min(100, day_usage * 100),
+            "remaining_hourly_budget": max(0, self.cost_tracker.hourly_budget - 
+                                          self.cost_tracker.current_hour_spend),
+            "remaining_daily_budget": max(0, self.cost_tracker.daily_budget - 
+                                         self.cost_tracker.current_day_spend),
+            "total_requests_today": self.cost_tracker.total_requests,
+            "average_cost_per_request": self.cost_tracker.average_cost_per_request
+        }
+    
+    async def _process_immediate_request(self, batch_request: LLMBatchRequest) -> Dict[str, Any]:
+        """Process high-priority request immediately without batching."""
+        start_time = time.time()
+        
+        try:
+            # Check performance budget
+            if self.performance_budget.is_budget_exceeded():
+                self.coordination_stats["budget_violations"] += 1
+                return {
+                    "success": False, 
+                    "error": "Turn time budget exceeded",
+                    "request_id": batch_request.request_id
+                }
+            
+            # Process single request
+            llm_request = LLMRequest(
+                prompt=batch_request.prompt,
+                response_format="text",
+                temperature=0.8,
+                requester="llm_coordination"
+            )
+            
+            response = await self.llm_service.generate_response(llm_request)
+            
+            # Track costs and performance
+            processing_time = time.time() - start_time
+            self.performance_budget.record_llm_time(processing_time)
+            
+            # Update cost tracking
+            actual_cost = response.cost if hasattr(response, 'cost') else batch_request.estimated_cost
+            actual_tokens = response.tokens_used if hasattr(response, 'tokens_used') else batch_request.tokens_estimate
+            
+            self.cost_tracker.update_cost(
+                batch_request.request_type, 
+                actual_cost, 
+                actual_tokens
+            )
+            
+            # Update stats
+            self.coordination_stats["total_llm_calls"] += 1
+            self.coordination_stats["cost_per_request"] = self.cost_tracker.average_cost_per_request
+            
+            # Calculate cost savings from not using individual requests
+            estimated_individual_cost = batch_request.estimated_cost * 1.5  # Assume 50% overhead for individual
+            savings = estimated_individual_cost - actual_cost
+            self.coordination_stats["cost_savings"] += savings
+            
+            return {
+                "success": True,
+                "request_id": batch_request.request_id,
+                "response": response.content,
+                "processing_time": processing_time,
+                "cost": actual_cost,
+                "tokens_used": actual_tokens,
+                "processed_immediately": True
+            }
+            
+        except Exception as e:
+            logger.error(f"Immediate request processing failed: {e}")
+            return {
+                "success": False,
+                "request_id": batch_request.request_id,
+                "error": str(e)
+            }
+    
+    async def _start_batch_processor(self):
+        """Start the batch processing task."""
+        if self._batch_processor_running:
+            return
+            
+        self._batch_processor_running = True
+        self._batch_processor_task = asyncio.create_task(self._batch_processor())
+    
+    async def _batch_processor(self):
+        """Main batch processing loop."""
+        try:
+            while self._batch_processor_running:
+                await self._process_batch_cycle()
+                await asyncio.sleep(0.1)  # Brief pause between cycles
+        except Exception as e:
+            logger.error(f"Batch processor error: {e}")
+        finally:
+            self._batch_processor_running = False
+    
+    async def _process_batch_cycle(self):
+        """Process one cycle of batch requests."""
+        if not self.llm_request_queue:
+            return
+        
+        batch_start_time = time.time()
+        batch_requests = []
+        
+        # Collect requests for batching
+        with self.batch_lock:
+            batch_size = min(len(self.llm_request_queue), self.llm_config.max_batch_size)
+            
+            # Check if we should wait for more requests or process now
+            if batch_size < self.llm_config.max_batch_size:
+                oldest_request_time = self.llm_request_queue[0].created_at if self.llm_request_queue else time.time()
+                wait_time = (time.time() - oldest_request_time) * 1000  # Convert to ms
+                
+                # If we haven't waited long enough and have performance budget, wait
+                if (wait_time < self.llm_config.batch_timeout_ms and 
+                    not self.performance_budget.is_budget_exceeded()):
+                    return
+            
+            # Extract batch
+            for _ in range(batch_size):
+                if self.llm_request_queue:
+                    batch_requests.append(heapq.heappop(self.llm_request_queue))
+        
+        if not batch_requests:
+            return
+        
+        # Process batch
+        await self._process_request_batch(batch_requests)
+        
+        # Record batch timing
+        batch_time = time.time() - batch_start_time
+        self.performance_budget.record_batch_time(batch_time)
+        
+        # Update batch efficiency stats
+        self.coordination_stats["batched_requests"] += len(batch_requests)
+        total_batches = self.coordination_stats["batched_requests"] / max(1, len(batch_requests))
+        self.coordination_stats["average_batch_size"] = (
+            self.coordination_stats["batched_requests"] / max(1, total_batches)
+        )
+    
+    async def _process_request_batch(self, batch_requests: List[LLMBatchRequest]):
+        """Process a batch of LLM requests efficiently."""
+        try:
+            # Group requests by type for better batching efficiency
+            requests_by_type = defaultdict(list)
+            for req in batch_requests:
+                requests_by_type[req.request_type].append(req)
+            
+            # Process each type group
+            for request_type, requests in requests_by_type.items():
+                await self._process_typed_batch(request_type, requests)
+                
+        except Exception as e:
+            logger.error(f"Batch processing failed: {e}")
+            # Mark all requests as failed
+            for req in batch_requests:
+                await self._complete_batch_request(req, {
+                    "success": False, 
+                    "error": str(e)
+                })
+    
+    async def _process_typed_batch(self, request_type: str, requests: List[LLMBatchRequest]):
+        """Process a batch of requests of the same type."""
+        try:
+            # Combine prompts for efficient processing
+            combined_prompt = self._create_batch_prompt(request_type, requests)
+            
+            # Create batch LLM request
+            llm_request = LLMRequest(
+                prompt=combined_prompt,
+                response_format="text",
+                temperature=0.8,
+                requester="llm_batch_coordination"
+            )
+            
+            # Process batch request
+            response = await self.llm_service.generate_response(llm_request)
+            
+            # Parse and distribute results
+            batch_results = self._parse_batch_response(response.content, requests)
+            
+            # Update cost tracking
+            total_cost = response.cost if hasattr(response, 'cost') else sum(req.estimated_cost for req in requests)
+            total_tokens = response.tokens_used if hasattr(response, 'tokens_used') else sum(req.tokens_estimate for req in requests)
+            
+            self.cost_tracker.update_cost(request_type, total_cost, total_tokens)
+            
+            # Complete individual requests
+            for req, result in zip(requests, batch_results):
+                await self._complete_batch_request(req, result)
+                
+            # Update stats
+            self.coordination_stats["total_llm_calls"] += 1
+            self.coordination_stats["batch_efficiency"] = len(requests)  # Efficiency = requests per LLM call
+            
+        except Exception as e:
+            logger.error(f"Typed batch processing failed: {e}")
+            for req in requests:
+                await self._complete_batch_request(req, {"success": False, "error": str(e)})
+    
+    def _create_batch_prompt(self, request_type: str, requests: List[LLMBatchRequest]) -> str:
+        """Create an efficient batch prompt for multiple requests."""
+        if request_type == "dialogue":
+            return self._create_dialogue_batch_prompt(requests)
+        elif request_type == "coordination":
+            return self._create_coordination_batch_prompt(requests)
+        else:
+            return self._create_generic_batch_prompt(requests)
+    
+    def _create_dialogue_batch_prompt(self, requests: List[LLMBatchRequest]) -> str:
+        """Create batch prompt for dialogue generation."""
+        prompt_parts = ["Generate character dialogues for the following scenarios:"]
+        
+        for i, req in enumerate(requests):
+            participants = req.context.get("participants", ["Character A", "Character B"])
+            dialogue_type = req.context.get("communication_type", "dialogue")
+            
+            prompt_parts.append(
+                f"\nScenario {i+1}: {dialogue_type} between {', '.join(participants)}\n"
+                f"Context: {req.prompt}\n"
+                f"Required exchanges: {req.context.get('max_exchanges', 2)}"
+            )
+        
+        prompt_parts.append("\nProvide responses in the format: SCENARIO_X_RESPONSE: [response content]")
+        return "\n".join(prompt_parts)
+    
+    def _create_coordination_batch_prompt(self, requests: List[LLMBatchRequest]) -> str:
+        """Create batch prompt for agent coordination."""
+        prompt_parts = ["Provide agent coordination analysis for the following situations:"]
+        
+        for i, req in enumerate(requests):
+            agent_ids = req.context.get("agent_ids", [])
+            coordination_type = req.context.get("coordination_type", "general")
+            
+            prompt_parts.append(
+                f"\nSituation {i+1}: {coordination_type} coordination for agents {', '.join(agent_ids)}\n"
+                f"Context: {req.prompt}\n"
+                f"Priority: {req.priority.name}"
+            )
+        
+        prompt_parts.append("\nProvide responses in the format: SITUATION_X_ANALYSIS: [analysis content]")
+        return "\n".join(prompt_parts)
+    
+    def _create_generic_batch_prompt(self, requests: List[LLMBatchRequest]) -> str:
+        """Create generic batch prompt."""
+        prompt_parts = [f"Process the following {len(requests)} requests:"]
+        
+        for i, req in enumerate(requests):
+            prompt_parts.append(f"\nRequest {i+1}: {req.prompt}")
+        
+        prompt_parts.append("\nProvide responses in the format: REQUEST_X_RESPONSE: [response content]")
+        return "\n".join(prompt_parts)
+    
+    def _parse_batch_response(self, response_content: str, requests: List[LLMBatchRequest]) -> List[Dict[str, Any]]:
+        """Parse batch response into individual results."""
+        results = []
+        lines = response_content.split('\n')
+        
+        # Simple parsing - look for response markers
+        response_markers = ['SCENARIO_', 'SITUATION_', 'REQUEST_']
+        
+        current_response = ""
+        response_index = 0
+        
+        for line in lines:
+            # Check if line starts with a response marker
+            is_marker = any(line.strip().startswith(marker) for marker in response_markers)
+            
+            if is_marker and current_response and response_index < len(requests):
+                # Complete previous response
+                results.append({
+                    "success": True,
+                    "request_id": requests[response_index].request_id,
+                    "response": current_response.strip(),
+                    "processed_in_batch": True
+                })
+                response_index += 1
+                current_response = line.split(":", 1)[-1].strip() if ":" in line else ""
+            elif current_response is not None:
+                current_response += line + "\n"
+        
+        # Handle last response
+        if current_response and response_index < len(requests):
+            results.append({
+                "success": True,
+                "request_id": requests[response_index].request_id,
+                "response": current_response.strip(),
+                "processed_in_batch": True
+            })
+        
+        # Fill any missing results with fallbacks
+        while len(results) < len(requests):
+            missing_index = len(results)
+            results.append({
+                "success": False,
+                "request_id": requests[missing_index].request_id,
+                "error": "Failed to parse batch response",
+                "response": response_content  # Fallback to full response
+            })
+        
+        return results
+    
+    async def _complete_batch_request(self, request: LLMBatchRequest, result: Dict[str, Any]):
+        """Complete a batch request and notify waiters."""
+        # Store result for retrieval
+        if not hasattr(self, '_batch_results'):
+            self._batch_results = {}
+        
+        self._batch_results[request.request_id] = result
+        
+        # Call callback if provided
+        if request.callback:
+            try:
+                await request.callback(result)
+            except Exception as e:
+                logger.error(f"Batch request callback failed: {e}")
+    
+    async def _wait_for_batch_result(self, request_id: str, timeout_seconds: float) -> Dict[str, Any]:
+        """Wait for batch request to complete."""
+        if not hasattr(self, '_batch_results'):
+            self._batch_results = {}
+        
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout_seconds:
+            if request_id in self._batch_results:
+                result = self._batch_results.pop(request_id)
+                return result
+            
+            await asyncio.sleep(0.05)  # 50ms polling
+        
+        # Timeout
+        return {
+            "success": False,
+            "request_id": request_id,
+            "error": "Request timeout"
+        }
     
     async def initialize_ai_systems(self) -> Dict[str, Any]:
         """Initialize all AI intelligence systems."""
@@ -209,6 +761,71 @@ class EnhancedMultiAgentBridge:
             logger.error(f"Failed to initialize AI systems: {e}")
             return {"success": False, "error": str(e)}
     
+    def get_coordination_performance_metrics(self) -> Dict[str, Any]:
+        """Get comprehensive performance and cost metrics."""
+        budget_status = self._get_budget_status()
+        
+        # Calculate performance scores
+        avg_batch_time = (sum(self.performance_budget.batch_timings[-10:]) / 
+                         max(1, len(self.performance_budget.batch_timings[-10:])))
+        avg_llm_time = (sum(self.performance_budget.llm_call_timings[-10:]) / 
+                       max(1, len(self.performance_budget.llm_call_timings[-10:])))
+        
+        performance_score = 1.0
+        if avg_batch_time > self.performance_budget.max_batch_time:
+            performance_score *= 0.8
+        if avg_llm_time > self.performance_budget.max_llm_call_time:
+            performance_score *= 0.8
+        if self.performance_budget.budget_violations > 0:
+            performance_score *= max(0.3, 1.0 - (self.performance_budget.budget_violations * 0.1))
+        
+        self.coordination_stats["performance_score"] = performance_score
+        
+        return {
+            "coordination_stats": self.coordination_stats.copy(),
+            "budget_status": budget_status,
+            "performance_metrics": {
+                "average_batch_time": avg_batch_time,
+                "average_llm_call_time": avg_llm_time,
+                "budget_violations": self.performance_budget.budget_violations,
+                "performance_score": performance_score,
+                "remaining_turn_time": self.performance_budget.get_remaining_time()
+            },
+            "cost_breakdown": self.cost_tracker.cost_by_request_type.copy(),
+            "efficiency_metrics": {
+                "batch_utilization": self.coordination_stats.get("average_batch_size", 0) / max(1, self.llm_config.max_batch_size),
+                "priority_bypass_rate": self.coordination_stats.get("priority_bypasses", 0) / max(1, self.coordination_stats.get("total_llm_calls", 1)),
+                "cost_per_quality_point": self.coordination_stats.get("cost_per_request", 0) / max(0.1, self.coordination_stats.get("dialogue_quality_score", 0.1))
+            }
+        }
+    
+    async def shutdown_coordination_systems(self):
+        """Gracefully shutdown coordination systems."""
+        try:
+            # Stop batch processor
+            self._batch_processor_running = False
+            if self._batch_processor_task:
+                self._batch_processor_task.cancel()
+                try:
+                    await self._batch_processor_task
+                except asyncio.CancelledError:
+                    pass
+            
+            # Process any remaining requests
+            if self.llm_request_queue:
+                logger.info(f"Processing {len(self.llm_request_queue)} remaining requests")
+                remaining_requests = []
+                while self.llm_request_queue:
+                    remaining_requests.append(heapq.heappop(self.llm_request_queue))
+                
+                if remaining_requests:
+                    await self._process_request_batch(remaining_requests)
+            
+            logger.info("LLM coordination systems shut down gracefully")
+            
+        except Exception as e:
+            logger.error(f"Error during coordination system shutdown: {e}")
+    
     async def enhanced_run_turn(self, turn_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Enhanced turn execution with AI intelligence and agent communication.
@@ -217,6 +834,9 @@ class EnhancedMultiAgentBridge:
         with advanced multi-agent coordination and communication capabilities.
         """
         try:
+            # Start performance budget tracking
+            self.performance_budget.start_turn()
+            
             turn_start_time = datetime.now()
             turn_number = (turn_data or {}).get("turn_number", 0)
             
@@ -232,9 +852,16 @@ class EnhancedMultiAgentBridge:
             # Phase 3: Agent dialogue initiation opportunities
             dialogue_opportunities = await self._identify_dialogue_opportunities()
             
-            # Phase 4: Execute dialogues if any are initiated
+            # Phase 4: Execute dialogues if any are initiated (with performance budgets)
             dialogue_results = []
-            for opportunity in dialogue_opportunities:
+            max_dialogues = 3  # Limit dialogues per turn for performance
+            
+            for opportunity in dialogue_opportunities[:max_dialogues]:
+                # Check if we have time remaining for dialogue
+                if self.performance_budget.is_budget_exceeded():
+                    logger.warning("Turn time budget exceeded, skipping remaining dialogues")
+                    break
+                
                 if opportunity["probability"] > 0.7:  # High probability threshold
                     dialogue_result = await self._initiate_agent_dialogue(
                         participants=opportunity["participants"],
@@ -242,6 +869,12 @@ class EnhancedMultiAgentBridge:
                         context=opportunity["context"]
                     )
                     dialogue_results.append(dialogue_result)
+                    
+                    # Quick check for time after each dialogue
+                    remaining_time = self.performance_budget.get_remaining_time()
+                    if remaining_time < 1.0:  # Less than 1 second remaining
+                        logger.info(f"Limited time remaining ({remaining_time:.1f}s), prioritizing turn completion")
+                        break
             
             # Phase 5: Standard turn execution with enhanced coordination
             if self.director_agent:
@@ -264,11 +897,18 @@ class EnhancedMultiAgentBridge:
             await self._update_agent_relationships(dialogue_results)
             await self._update_narrative_intelligence(post_turn_analysis)
             
-            # Phase 8: Generate turn summary with AI insights
-            turn_summary = await self._generate_enhanced_turn_summary(
-                turn_number, base_turn_result, dialogue_results, 
-                pre_turn_analysis, post_turn_analysis
-            )
+            # Phase 8: Generate turn summary with AI insights (performance-aware)
+            remaining_time = self.performance_budget.get_remaining_time()
+            if remaining_time > 0.5:  # Only generate detailed summary if we have time
+                turn_summary = await self._generate_enhanced_turn_summary(
+                    turn_number, base_turn_result, dialogue_results, 
+                    pre_turn_analysis, post_turn_analysis
+                )
+            else:
+                # Fast summary when time is limited
+                turn_summary = self._generate_fast_turn_summary(
+                    turn_number, base_turn_result, dialogue_results
+                )
             
             execution_time = (datetime.now() - turn_start_time).total_seconds()
             
@@ -276,6 +916,9 @@ class EnhancedMultiAgentBridge:
             await self._update_communication_metrics(dialogue_results, execution_time)
             
             logger.info(f"Enhanced turn {turn_number} completed in {execution_time:.2f}s")
+            
+            # Get final coordination metrics
+            coordination_metrics = self.get_coordination_performance_metrics()
             
             return {
                 "success": True,
@@ -293,16 +936,23 @@ class EnhancedMultiAgentBridge:
                     "narrative_developments": len(post_turn_analysis.get("narrative_insights", [])),
                     "ai_insights_generated": len(post_turn_analysis.get("ai_insights", []))
                 },
-                "turn_summary": turn_summary
+                "turn_summary": turn_summary,
+                "llm_coordination": coordination_metrics
             }
             
         except Exception as e:
             logger.error(f"Enhanced turn execution failed: {e}")
+            
+            # Get coordination metrics even on failure
+            coordination_metrics = self.get_coordination_performance_metrics()
+            
             return {
                 "success": False,
                 "turn_number": turn_number,
                 "error": str(e),
-                "fallback_executed": False
+                "fallback_executed": False,
+                "llm_coordination": coordination_metrics,
+                "performance_budget_exceeded": self.performance_budget.is_budget_exceeded()
             }
     
     async def initiate_agent_dialogue(self, initiator_id: str, target_id: str, 
@@ -571,33 +1221,207 @@ class EnhancedMultiAgentBridge:
         )
     
     async def _execute_dialogue(self, dialogue: AgentDialogue) -> Dict[str, Any]:
-        """Execute a dialogue between agents using AI coordination."""
+        """Execute a dialogue between agents using AI coordination with performance budgets."""
         try:
             dialogue.state = DialogueState.ACTIVE
             
-            # Use AI coordination engine if available
-            if self.ai_orchestrator.agent_coordination:
-                coordination_result = await self.ai_orchestrator.agent_coordination.coordinate_agents(
-                    agent_ids=dialogue.participants,
-                    coordination_type=dialogue.communication_type.value,
-                    context={
-                        "dialogue_id": dialogue.dialogue_id,
-                        "max_exchanges": dialogue.max_exchanges,
-                        "context": dialogue.context
-                    }
+            # Check performance budget before processing
+            if self.performance_budget.is_budget_exceeded():
+                self.coordination_stats["budget_violations"] += 1
+                logger.warning(f"Turn time budget exceeded, falling back to fast dialogue for {dialogue.dialogue_id}")
+                return await self._simulate_dialogue(dialogue, fast_mode=True)
+            
+            # Determine priority based on dialogue type and context
+            priority = self._determine_dialogue_priority(dialogue)
+            
+            # Use smart LLM coordination for dialogue generation
+            dialogue_prompt = self._create_dialogue_prompt(dialogue)
+            
+            # Queue LLM request with appropriate priority
+            remaining_time = self.performance_budget.get_remaining_time()
+            llm_result = await self.queue_llm_request(
+                request_type="dialogue",
+                prompt=dialogue_prompt,
+                context={
+                    "dialogue_id": dialogue.dialogue_id,
+                    "participants": dialogue.participants,
+                    "communication_type": dialogue.communication_type.value,
+                    "max_exchanges": dialogue.max_exchanges,
+                    "context": dialogue.context
+                },
+                priority=priority,
+                timeout_seconds=min(remaining_time - 0.5, dialogue.max_exchanges * 0.5)  # Reserve time
+            )
+            
+            if llm_result.get("success"):
+                # Process LLM-generated dialogue
+                dialogue_outcome = self._process_llm_dialogue_result(dialogue, llm_result)
+                
+                # Update quality score
+                quality_score = self._calculate_dialogue_quality(dialogue_outcome, llm_result)
+                dialogue_outcome["quality_score"] = quality_score
+                
+                # Update coordination stats
+                current_avg = self.coordination_stats.get("dialogue_quality_score", 0.0)
+                total_dialogues = self.coordination_stats.get("total_llm_calls", 0) + 1
+                self.coordination_stats["dialogue_quality_score"] = (
+                    (current_avg * (total_dialogues - 1) + quality_score) / total_dialogues
                 )
                 
-                if coordination_result.get("success"):
-                    # Process dialogue result
-                    dialogue_outcome = self._process_dialogue_outcome(dialogue, coordination_result)
-                    return dialogue_outcome
-            
-            # Fallback dialogue simulation
-            return await self._simulate_dialogue(dialogue)
+                return dialogue_outcome
+            else:
+                logger.warning(f"LLM dialogue generation failed for {dialogue.dialogue_id}: {llm_result.get('error')}")
+                return await self._simulate_dialogue(dialogue, fast_mode=True)
             
         except Exception as e:
             logger.error(f"Dialogue execution failed: {e}")
             return {"success": False, "error": str(e)}
+    
+    def _determine_dialogue_priority(self, dialogue: AgentDialogue) -> RequestPriority:
+        """Determine priority for dialogue based on type and context."""
+        # Critical dialogues that must complete
+        if dialogue.communication_type in [CommunicationType.NEGOTIATION]:
+            return RequestPriority.HIGH
+        
+        # Important story dialogues
+        if dialogue.context.get("narrative_requirement"):
+            return RequestPriority.HIGH
+        
+        # Relationship-driven dialogues
+        relationship_tension = abs(dialogue.context.get("relationship_tension", 0))
+        if relationship_tension > 0.7:
+            return RequestPriority.HIGH
+        elif relationship_tension > 0.4:
+            return RequestPriority.NORMAL
+        
+        # Default priority
+        return RequestPriority.NORMAL
+    
+    def _create_dialogue_prompt(self, dialogue: AgentDialogue) -> str:
+        """Create optimized prompt for dialogue generation."""
+        participants = dialogue.participants
+        comm_type = dialogue.communication_type.value
+        context = dialogue.context
+        
+        # Build context-aware prompt
+        prompt_parts = [
+            f"Generate a {comm_type} between {participants[0]} and {participants[1]}.",
+            f"Maximum exchanges: {dialogue.max_exchanges}"
+        ]
+        
+        # Add relationship context
+        if "relationship_tension" in context:
+            tension = context["relationship_tension"]
+            if tension < -0.5:
+                prompt_parts.append(f"These characters have high conflict (tension: {tension:.2f})")
+            elif tension > 0.5:
+                prompt_parts.append(f"These characters have positive relationship (strength: {tension:.2f})")
+        
+        # Add narrative context
+        if context.get("narrative_requirement"):
+            prompt_parts.append("This dialogue is important for story progression.")
+        
+        # Add dialogue type specific guidance
+        if dialogue.communication_type == CommunicationType.NEGOTIATION:
+            prompt_parts.append("Focus on conflict resolution and compromise.")
+        elif dialogue.communication_type == CommunicationType.COLLABORATION:
+            prompt_parts.append("Focus on teamwork and shared goals.")
+        elif dialogue.communication_type == CommunicationType.EMOTIONAL:
+            prompt_parts.append("Focus on emotional expression and connection.")
+        
+        prompt_parts.append("Provide realistic, character-appropriate dialogue.")
+        
+        return "\n".join(prompt_parts)
+    
+    def _process_llm_dialogue_result(self, dialogue: AgentDialogue, llm_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Process LLM-generated dialogue result."""
+        outcome = {
+            "success": True,
+            "dialogue_id": dialogue.dialogue_id,
+            "participants": dialogue.participants,
+            "communication_type": dialogue.communication_type.value,
+            "llm_generated": True,
+            "processing_time": llm_result.get("processing_time", 0),
+            "cost": llm_result.get("cost", 0),
+            "response": llm_result.get("response", ""),
+            "relationship_impact": {},
+            "narrative_impact": {},
+            "resolution": "completed"
+        }
+        
+        # Parse dialogue content and calculate relationship impacts
+        dialogue_content = llm_result.get("response", "")
+        
+        # Simple sentiment analysis for relationship impact
+        positive_indicators = ["agree", "understand", "help", "support", "thank", "appreciate"]
+        negative_indicators = ["disagree", "refuse", "angry", "disappointed", "conflict", "argue"]
+        
+        positive_score = sum(1 for word in positive_indicators if word.lower() in dialogue_content.lower())
+        negative_score = sum(1 for word in negative_indicators if word.lower() in dialogue_content.lower())
+        
+        # Calculate relationship change
+        net_sentiment = (positive_score - negative_score) / max(1, positive_score + negative_score)
+        
+        # Apply relationship impact based on dialogue type
+        base_impact = 0.1
+        if dialogue.communication_type == CommunicationType.COLLABORATION:
+            base_impact = 0.2
+        elif dialogue.communication_type == CommunicationType.NEGOTIATION:
+            base_impact = 0.15
+        elif dialogue.communication_type == CommunicationType.EMOTIONAL:
+            base_impact = 0.25
+        
+        relationship_change = net_sentiment * base_impact
+        
+        for i, agent in enumerate(dialogue.participants):
+            for j, other_agent in enumerate(dialogue.participants):
+                if i != j:
+                    outcome["relationship_impact"][f"{agent}_{other_agent}"] = relationship_change
+        
+        return outcome
+    
+    def _calculate_dialogue_quality(self, dialogue_outcome: Dict[str, Any], llm_result: Dict[str, Any]) -> float:
+        """Calculate quality score for dialogue."""
+        quality_factors = []
+        
+        # Response length factor (not too short, not too long)
+        response_length = len(llm_result.get("response", ""))
+        if 50 <= response_length <= 500:
+            quality_factors.append(0.8)
+        elif 20 <= response_length <= 1000:
+            quality_factors.append(0.6)
+        else:
+            quality_factors.append(0.4)
+        
+        # Processing time factor (faster is better for batching)
+        processing_time = llm_result.get("processing_time", 1.0)
+        if processing_time < 1.0:
+            quality_factors.append(0.9)
+        elif processing_time < 2.0:
+            quality_factors.append(0.7)
+        else:
+            quality_factors.append(0.5)
+        
+        # Relationship impact factor (meaningful interactions)
+        relationship_impact = dialogue_outcome.get("relationship_impact", {})
+        avg_impact = sum(abs(impact) for impact in relationship_impact.values()) / max(1, len(relationship_impact))
+        if avg_impact > 0.1:
+            quality_factors.append(0.8)
+        elif avg_impact > 0.05:
+            quality_factors.append(0.6)
+        else:
+            quality_factors.append(0.4)
+        
+        # Cost efficiency factor
+        cost = llm_result.get("cost", 0.01)
+        if cost < 0.005:  # Very efficient
+            quality_factors.append(0.9)
+        elif cost < 0.02:  # Reasonably efficient
+            quality_factors.append(0.7)
+        else:
+            quality_factors.append(0.5)
+        
+        return sum(quality_factors) / len(quality_factors)
     
     def _process_dialogue_outcome(self, dialogue: AgentDialogue, 
                                 coordination_result: Dict[str, Any]) -> Dict[str, Any]:
@@ -634,23 +1458,45 @@ class EnhancedMultiAgentBridge:
         
         return outcome
     
-    async def _simulate_dialogue(self, dialogue: AgentDialogue) -> Dict[str, Any]:
-        """Simulate dialogue when AI coordination is not available."""
-        # Basic dialogue simulation
+    async def _simulate_dialogue(self, dialogue: AgentDialogue, fast_mode: bool = False) -> Dict[str, Any]:
+        """Simulate dialogue when AI coordination is not available or when in fast mode."""
+        start_time = time.time()
+        
+        # Basic dialogue simulation with performance considerations
         simulated_quality = 0.6 + (hash(dialogue.dialogue_id) % 40) / 100.0
+        
+        # In fast mode, use simpler calculations
+        if fast_mode:
+            simulated_quality *= 0.8  # Slightly lower quality for speed
+            exchanges = min(dialogue.max_exchanges, 1)  # Fewer exchanges
+        else:
+            exchanges = min(dialogue.max_exchanges, 2)
+        
+        # Simple relationship impact based on dialogue type
+        base_impact = 0.05
+        if dialogue.communication_type == CommunicationType.COLLABORATION:
+            base_impact = 0.1
+        elif dialogue.communication_type == CommunicationType.NEGOTIATION:
+            base_impact = 0.08
+        
+        relationship_change = simulated_quality * base_impact
+        
+        processing_time = time.time() - start_time
         
         return {
             "success": True,
             "dialogue_id": dialogue.dialogue_id,
             "participants": dialogue.participants,
             "communication_type": dialogue.communication_type.value,
-            "exchanges": 2,
+            "exchanges": exchanges,
             "quality_score": simulated_quality,
+            "processing_time": processing_time,
+            "cost": 0.0,  # No cost for simulation
             "relationship_impact": {
-                f"{dialogue.participants[0]}_{dialogue.participants[1]}": simulated_quality * 0.1,
-                f"{dialogue.participants[1]}_{dialogue.participants[0]}": simulated_quality * 0.1
+                f"{dialogue.participants[0]}_{dialogue.participants[1]}": relationship_change,
+                f"{dialogue.participants[1]}_{dialogue.participants[0]}": relationship_change
             },
-            "resolution": "simulated"
+            "resolution": "simulated" + ("_fast" if fast_mode else "")
         }
     
     async def _analyze_post_turn_results(self, base_turn_result: Dict[str, Any], 
@@ -684,6 +1530,28 @@ class EnhancedMultiAgentBridge:
             })
         
         return analysis
+    
+    def _generate_fast_turn_summary(self, turn_number: int, 
+                                   base_turn_result: Dict[str, Any],
+                                   dialogue_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate a fast turn summary when time is limited."""
+        return {
+            "turn_number": turn_number,
+            "timestamp": datetime.now().isoformat(),
+            "summary_type": "fast",
+            "base_simulation": {
+                "status": base_turn_result.get("status", "completed")
+            },
+            "enhanced_features": {
+                "dialogues_executed": len(dialogue_results),
+                "successful_dialogues": len([d for d in dialogue_results if d.get("success")]),
+                "llm_generated_dialogues": len([d for d in dialogue_results if d.get("llm_generated")])
+            },
+            "performance": {
+                "time_budget_used": self.llm_config.max_turn_time_seconds - self.performance_budget.get_remaining_time(),
+                "budget_exceeded": self.performance_budget.is_budget_exceeded()
+            }
+        }
     
     async def _update_agent_relationships(self, dialogue_results: List[Dict[str, Any]]):
         """Update agent relationships based on dialogue results."""
@@ -846,21 +1714,138 @@ class EnhancedMultiAgentBridge:
             "timestamp": datetime.now().isoformat(),
             "insight": insight_data
         })
+    
+    # Enhanced utility methods for LLM coordination integration
+    
+    async def generate_coordinated_narrative_content(self, content_type: str, 
+                                                   context: Dict[str, Any],
+                                                   priority: RequestPriority = RequestPriority.NORMAL) -> Dict[str, Any]:
+        """Generate narrative content using coordinated LLM system."""
+        prompt = self._create_narrative_prompt(content_type, context)
+        
+        return await self.queue_llm_request(
+            request_type="narrative",
+            prompt=prompt,
+            context=context,
+            priority=priority,
+            timeout_seconds=min(self.performance_budget.get_remaining_time() - 0.2, 3.0)
+        )
+    
+    def _create_narrative_prompt(self, content_type: str, context: Dict[str, Any]) -> str:
+        """Create optimized prompt for narrative content generation."""
+        if content_type == "scene_description":
+            return f"Describe the current scene with {context.get('participants', [])} present. Setting: {context.get('setting', 'unspecified')}. Mood: {context.get('mood', 'neutral')}."
+        elif content_type == "character_action":
+            return f"Generate a character action for {context.get('character', 'character')} in response to: {context.get('situation', 'current situation')}."
+        elif content_type == "narrative_transition":
+            return f"Create a narrative transition from {context.get('from_state', 'previous state')} to {context.get('to_state', 'new state')}."
+        else:
+            return f"Generate {content_type} content based on: {context}"
+    
+    async def optimize_llm_coordination_settings(self) -> Dict[str, Any]:
+        """Optimize LLM coordination settings based on performance metrics."""
+        metrics = self.get_coordination_performance_metrics()
+        performance_score = metrics["performance_metrics"]["performance_score"]
+        
+        optimizations = []
+        
+        # Adjust batch size based on performance
+        if performance_score < 0.7:
+            if self.llm_config.max_batch_size > 3:
+                self.llm_config.max_batch_size -= 1
+                optimizations.append(f"Reduced batch size to {self.llm_config.max_batch_size}")
+        elif performance_score > 0.9 and self.llm_config.max_batch_size < 7:
+            self.llm_config.max_batch_size += 1
+            optimizations.append(f"Increased batch size to {self.llm_config.max_batch_size}")
+        
+        # Adjust batch timeout based on budget violations
+        budget_violations = metrics["performance_metrics"]["budget_violations"]
+        if budget_violations > 3:
+            self.llm_config.batch_timeout_ms = max(1000, self.llm_config.batch_timeout_ms - 200)
+            optimizations.append(f"Reduced batch timeout to {self.llm_config.batch_timeout_ms}ms")
+        elif budget_violations == 0 and performance_score > 0.8:
+            self.llm_config.batch_timeout_ms = min(3000, self.llm_config.batch_timeout_ms + 200)
+            optimizations.append(f"Increased batch timeout to {self.llm_config.batch_timeout_ms}ms")
+        
+        # Adjust priority threshold based on bypass rate
+        bypass_rate = metrics["efficiency_metrics"]["priority_bypass_rate"]
+        if bypass_rate > 0.5:  # Too many bypasses
+            self.llm_config.batch_priority_threshold = min(0.9, self.llm_config.batch_priority_threshold + 0.1)
+            optimizations.append(f"Increased priority threshold to {self.llm_config.batch_priority_threshold}")
+        elif bypass_rate < 0.2:  # Too few bypasses
+            self.llm_config.batch_priority_threshold = max(0.5, self.llm_config.batch_priority_threshold - 0.1)
+            optimizations.append(f"Decreased priority threshold to {self.llm_config.batch_priority_threshold}")
+        
+        return {
+            "optimizations_applied": optimizations,
+            "new_settings": {
+                "max_batch_size": self.llm_config.max_batch_size,
+                "batch_timeout_ms": self.llm_config.batch_timeout_ms,
+                "batch_priority_threshold": self.llm_config.batch_priority_threshold
+            },
+            "performance_score": performance_score
+        }
 
 
-# Factory function for easy instantiation
+# Factory function for easy instantiation with LLM coordination
 def create_enhanced_multi_agent_bridge(event_bus: EventBus, 
-                                     director_agent: Optional[DirectorAgent] = None) -> EnhancedMultiAgentBridge:
+                                     director_agent: Optional[DirectorAgent] = None,
+                                     llm_coordination_config: Optional[LLMCoordinationConfig] = None) -> EnhancedMultiAgentBridge:
     """
-    Factory function to create and configure an Enhanced Multi-Agent Bridge.
+    Factory function to create and configure an Enhanced Multi-Agent Bridge with LLM coordination.
     
     Args:
         event_bus: Event bus for agent communication
         director_agent: Optional existing director agent
+        llm_coordination_config: Optional LLM coordination configuration
         
     Returns:
-        Configured EnhancedMultiAgentBridge instance
+        Configured EnhancedMultiAgentBridge instance with LLM coordination
     """
-    bridge = EnhancedMultiAgentBridge(event_bus, director_agent)
-    logger.info("Enhanced Multi-Agent Bridge created and configured")
+    # Use default high-performance configuration if not provided
+    if llm_coordination_config is None:
+        llm_coordination_config = LLMCoordinationConfig(
+            enable_smart_batching=True,
+            max_batch_size=5,
+            batch_timeout_ms=2000,
+            priority_queue_enabled=True,
+            cost_tracking_enabled=True,
+            max_parallel_llm_calls=3,
+            dialogue_generation_budget=2.0,
+            coordination_temperature=0.8,
+            max_turn_time_seconds=5.0,
+            batch_priority_threshold=0.7,
+            cost_alert_threshold=0.8
+        )
+    
+    bridge = EnhancedMultiAgentBridge(event_bus, director_agent, llm_coordination_config)
+    logger.info("Enhanced Multi-Agent Bridge created with advanced LLM coordination")
     return bridge
+
+
+# Utility function to create performance-optimized configuration
+def create_performance_optimized_config(max_turn_time_seconds: float = 5.0,
+                                       budget_per_hour: float = 2.0) -> LLMCoordinationConfig:
+    """
+    Create a performance-optimized LLM coordination configuration.
+    
+    Args:
+        max_turn_time_seconds: Maximum time allowed per turn
+        budget_per_hour: Budget in USD per hour for LLM usage
+        
+    Returns:
+        Optimized LLMCoordinationConfig
+    """
+    return LLMCoordinationConfig(
+        enable_smart_batching=True,
+        max_batch_size=7,  # Larger batches for efficiency
+        batch_timeout_ms=1500,  # Shorter timeout for responsiveness
+        priority_queue_enabled=True,
+        cost_tracking_enabled=True,
+        max_parallel_llm_calls=4,  # More parallel calls
+        dialogue_generation_budget=budget_per_hour,
+        coordination_temperature=0.7,  # Slightly more focused
+        max_turn_time_seconds=max_turn_time_seconds,
+        batch_priority_threshold=0.6,  # Lower threshold for more priority processing
+        cost_alert_threshold=0.85  # Higher threshold for cost alerts
+    )

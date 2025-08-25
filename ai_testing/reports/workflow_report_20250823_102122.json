@@ -1,0 +1,75 @@
+{
+  "timestamp": "2025-08-23T10:21:22.277870",
+  "characters": [
+    {
+      "name": "星际游侠·逐光",
+      "personality": [
+        "adventurous",
+        "optimistic",
+        "brave"
+      ],
+      "background": "来自遥远星系的探索者，追寻宇宙终极秘密",
+      "motivation": "找到能够连接所有文明的宇宙之心",
+      "arc": "鲁莽的冒险者 → 深思的领袖 → 宇宙的连接者"
+    },
+    {
+      "name": "量子贤者·静渊",
+      "personality": [
+        "wise",
+        "calm",
+        "analytical"
+      ],
+      "background": "守护古老知识的量子图书馆管理者",
+      "motivation": "保护宇宙知识不被黑暗势力侵蚀",
+      "arc": "知识的守护者 → 智慧的传播者 → 真理的化身"
+    },
+    {
+      "name": "维度舞者·幻音",
+      "personality": [
+        "creative",
+        "empathetic",
+        "mysterious"
+      ],
+      "background": "能够用音乐影响维度振动的艺术家",
+      "motivation": "用和谐的振动修复破碎的现实",
+      "arc": "孤独的艺术家 → 情感的桥梁 → 和谐的创造者"
+    }
+  ],
+  "events_count": 60,
+  "novel_length": 1537,
+  "evaluation": {
+    "overall_score": 83.52687673179332,
+    "word_count": 1537,
+    "character_count": 1435,
+    "dialogue_count": 18,
+    "action_count": 23,
+    "scene_count": 0,
+    "dimensions": {
+      "literary_quality": 88.35112718625355,
+      "narrative_structure": 89.01024468698051,
+      "character_depth": 85.51262590820969,
+      "pacing": 81.34369658692418,
+      "creativity": 83.8247781522953,
+      "emotional_impact": 73.1187878700967
+    },
+    "enhanced_metrics": {
+      "repetition_ratio": 0.5238095238095238,
+      "dialogue_variety": 0.05555555555555555,
+      "character_balance": {
+        "星际游侠·逐光": 43,
+        "量子贤者·静渊": 2,
+        "维度舞者·幻音": 2
+      },
+      "has_tension_arc": true,
+      "literary_devices": {
+        "metaphor": 0,
+        "symbolism": 0,
+        "foreshadowing": 1,
+        "imagery": 45
+      },
+      "average_tension": 0.541,
+      "unique_event_types": 5
+    }
+  },
+  "workflow_complete": true
+}

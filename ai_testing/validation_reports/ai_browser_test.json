@@ -1,0 +1,656 @@
+{
+  "test_summary": {
+    "total_interactions": 17,
+    "successful_actions": 17,
+    "errors_encountered": 0,
+    "quality_assessments": 17,
+    "decisions_made": 17
+  },
+  "ai_decisions": [
+    {
+      "timestamp": 1755853977.1890354,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755853980.8079164,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755853984.4199808,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755853989.7386591,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755853993.3326726,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755853996.9462492,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755854000.5437548,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755854004.142066,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755854007.7450018,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755854011.3734543,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755854015.0035365,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755854018.6170595,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755854022.2260747,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755854025.8333066,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755854029.472246,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755854033.0732079,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    },
+    {
+      "timestamp": 1755854036.670938,
+      "context": {
+        "title": "Vite + React",
+        "url": "http://localhost:5173/",
+        "elements": {
+          "buttons": 1,
+          "inputs": 0,
+          "textareas": 0,
+          "links": 1,
+          "forms": 0,
+          "selects": 0
+        },
+        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+      },
+      "action": "click_first_button",
+      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+    }
+  ],
+  "quality_scores": {
+    "coherence": 0.8354869520895676,
+    "creativity": 0.7697216399576914,
+    "engagement": 0.7923575581101524,
+    "grammar": 0.8858417739760922,
+    "character_consistency": 0.7728092444725486,
+    "overall": 0.8112434337212104
+  },
+  "test_results": {
+    "interactions": [
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      },
+      {
+        "action": "click_first_button",
+        "success": true,
+        "details": {
+          "clicked": "First available button"
+        }
+      }
+    ],
+    "quality_assessments": [
+      {
+        "timestamp": 1755853978.765447,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.9296775063272729,
+          "creativity": 0.8171547214793882,
+          "engagement": 0.768169821897628,
+          "grammar": 0.9765687265097959,
+          "character_consistency": 0.7747270638460885,
+          "overall": 0.8532595680120346
+        }
+      },
+      {
+        "timestamp": 1755853982.3712497,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.7051934110125234,
+          "creativity": 0.6745069728082662,
+          "engagement": 0.6709802936544731,
+          "grammar": 0.9124558208172353,
+          "character_consistency": 0.7481000363243512,
+          "overall": 0.7422473069233698
+        }
+      },
+      {
+        "timestamp": 1755853987.702739,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.7872054171702826,
+          "creativity": 0.8664377436651292,
+          "engagement": 0.7153671396831289,
+          "grammar": 0.9569847348576782,
+          "character_consistency": 0.7968938742885012,
+          "overall": 0.8245777819329441
+        }
+      },
+      {
+        "timestamp": 1755853991.3004456,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.885729414602994,
+          "creativity": 0.7841314569285097,
+          "engagement": 0.9057642445182763,
+          "grammar": 0.9490674171259024,
+          "character_consistency": 0.8824643944752528,
+          "overall": 0.8814313855301871
+        }
+      },
+      {
+        "timestamp": 1755853994.8965425,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.8497812208843982,
+          "creativity": 0.6356127736162984,
+          "engagement": 0.6727082320177841,
+          "grammar": 0.8533697610569219,
+          "character_consistency": 0.7081508848058544,
+          "overall": 0.7439245744762515
+        }
+      },
+      {
+        "timestamp": 1755853998.501502,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.9335024933408553,
+          "creativity": 0.7435327391248875,
+          "engagement": 0.8615618868822098,
+          "grammar": 0.8242345044597786,
+          "character_consistency": 0.8461277667029865,
+          "overall": 0.8417918781021436
+        }
+      },
+      {
+        "timestamp": 1755854002.0984805,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.9035089876757464,
+          "creativity": 0.6817529587785577,
+          "engagement": 0.8359007469185136,
+          "grammar": 0.8903055399329727,
+          "character_consistency": 0.8005303760600919,
+          "overall": 0.8223997218731764
+        }
+      },
+      {
+        "timestamp": 1755854005.7017775,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.9466381584020328,
+          "creativity": 0.7739885619714029,
+          "engagement": 0.800133468622218,
+          "grammar": 0.8936667974662111,
+          "character_consistency": 0.7304064147998082,
+          "overall": 0.8289666802523346
+        }
+      },
+      {
+        "timestamp": 1755854009.3254464,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.7893510071281359,
+          "creativity": 0.8961520494518034,
+          "engagement": 0.7324717490700332,
+          "grammar": 0.9264594171371737,
+          "character_consistency": 0.7150224277026617,
+          "overall": 0.8118913300979615
+        }
+      },
+      {
+        "timestamp": 1755854012.9575198,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.831886458656145,
+          "creativity": 0.8469427509330973,
+          "engagement": 0.6738721694577496,
+          "grammar": 0.9328414962566116,
+          "character_consistency": 0.7738921760836175,
+          "overall": 0.8118870102774443
+        }
+      },
+      {
+        "timestamp": 1755854016.5771275,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.7821355363007396,
+          "creativity": 0.8635978801593178,
+          "engagement": 0.8672450744115059,
+          "grammar": 0.8304694443583429,
+          "character_consistency": 0.78783643359457,
+          "overall": 0.8262568737648952
+        }
+      },
+      {
+        "timestamp": 1755854020.1814554,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.7923220875344014,
+          "creativity": 0.837715297341076,
+          "engagement": 0.7447745568224018,
+          "grammar": 0.8141157186064693,
+          "character_consistency": 0.7035479653288678,
+          "overall": 0.7784951251266432
+        }
+      },
+      {
+        "timestamp": 1755854023.786837,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.8596163261828479,
+          "creativity": 0.7367119806849254,
+          "engagement": 0.700874523365102,
+          "grammar": 0.8222355525701744,
+          "character_consistency": 0.8332049379928141,
+          "overall": 0.7905286641591728
+        }
+      },
+      {
+        "timestamp": 1755854027.4346926,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.814317311571856,
+          "creativity": 0.7987949004641055,
+          "engagement": 0.916766054237407,
+          "grammar": 0.842303149935458,
+          "character_consistency": 0.7696919159845722,
+          "overall": 0.8283746664386797
+        }
+      },
+      {
+        "timestamp": 1755854031.0389342,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.7536780906322558,
+          "creativity": 0.651152926622569,
+          "engagement": 0.8643162965286443,
+          "grammar": 0.8193107887315471,
+          "character_consistency": 0.7037196185164352,
+          "overall": 0.7584355442062902
+        }
+      },
+      {
+        "timestamp": 1755854034.6344047,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.8630746186160588,
+          "creativity": 0.7558674660570576,
+          "engagement": 0.8649015581535306,
+          "grammar": 0.9725413940396626,
+          "character_consistency": 0.7403509433802582,
+          "overall": 0.8393471960493135
+        }
+      },
+      {
+        "timestamp": 1755854038.2315533,
+        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "metrics": {
+          "coherence": 0.7756601394841033,
+          "creativity": 0.7212146991943608,
+          "engagement": 0.8742706716319842,
+          "grammar": 0.8423798937316325,
+          "character_consistency": 0.8230899261465965,
+          "overall": 0.8073230660377355
+        }
+      }
+    ],
+    "errors": [],
+    "timestamp": "2025-08-22 19:12:46"
+  }
+}

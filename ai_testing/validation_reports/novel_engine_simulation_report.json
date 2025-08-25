@@ -1,0 +1,154 @@
+{
+  "timestamp": "2025-08-22T18:37:58.281106",
+  "test_categories": [
+    {
+      "category": "功能测试",
+      "passed": true,
+      "tests": [
+        {
+          "name": "Agent对话生成",
+          "passed": true,
+          "metrics": {
+            "dialogue": [
+              {
+                "agent": "Alice",
+                "text": "我发现了一个秘密通道。",
+                "emotion": "excited"
+              },
+              {
+                "agent": "Bob",
+                "text": "小心，这可能是个陷阱。",
+                "emotion": "worried"
+              },
+              {
+                "agent": "Alice",
+                "text": "但这是我们唯一的机会。",
+                "emotion": "determined"
+              }
+            ],
+            "scene_description": "两个探险者在古老的地下城中发现了一条隐秘的通道",
+            "word_count": 156,
+            "quality_score": 0.85,
+            "generation_time_ms": 523
+          }
+        }
+      ]
+    },
+    {
+      "category": "AI质量评估",
+      "passed": true,
+      "tests": [
+        {
+          "name": "内容质量评估",
+          "passed": true,
+          "metrics": {
+            "coherence": 0.92,
+            "creativity": 0.78,
+            "character_consistency": 0.88,
+            "grammar_correctness": 0.95,
+            "emotional_depth": 0.73,
+            "overall_score": 0.85
+          }
+        }
+      ]
+    },
+    {
+      "category": "性能测试",
+      "passed": true,
+      "tests": [
+        {
+          "name": "负载测试",
+          "passed": true,
+          "metrics": {
+            "total_requests": 100,
+            "successful_requests": 98,
+            "failed_requests": 2,
+            "avg_response_time_ms": 245,
+            "p95_response_time_ms": 890,
+            "p99_response_time_ms": 1250,
+            "requests_per_second": 42.5,
+            "error_rate": 0.02
+          }
+        }
+      ]
+    },
+    {
+      "category": "集成测试",
+      "passed": true,
+      "tests": [
+        {
+          "name": "端到端工作流",
+          "passed": true,
+          "steps": [
+            {
+              "step": "创建项目",
+              "success": true,
+              "time_ms": 120
+            },
+            {
+              "step": "添加角色",
+              "success": true,
+              "time_ms": 85
+            },
+            {
+              "step": "生成对话",
+              "success": true,
+              "time_ms": 523
+            },
+            {
+              "step": "质量评估",
+              "success": true,
+              "time_ms": 312
+            },
+            {
+              "step": "导出结果",
+              "success": true,
+              "time_ms": 67
+            }
+          ],
+          "total_time_ms": 1107
+        }
+      ]
+    },
+    {
+      "category": "错误处理",
+      "passed": true,
+      "tests": [
+        {
+          "name": "错误场景覆盖",
+          "passed": true,
+          "scenarios": [
+            {
+              "scenario": "无效输入",
+              "detected": true,
+              "handled_correctly": true,
+              "error_message": "输入参数不符合要求"
+            },
+            {
+              "scenario": "超时处理",
+              "detected": true,
+              "handled_correctly": true,
+              "error_message": "请求超时，已自动重试"
+            },
+            {
+              "scenario": "服务不可用",
+              "detected": true,
+              "handled_correctly": true,
+              "error_message": "服务暂时不可用，请稍后重试"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "detailed_results": {},
+  "framework_capabilities": {
+    "功能测试能力": 100,
+    "AI质量评估能力": 100,
+    "性能测试能力": 100,
+    "集成测试能力": 100,
+    "错误处理检测": 100
+  },
+  "overall_score": 100.0,
+  "effectiveness": true
+}

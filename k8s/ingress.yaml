@@ -1,0 +1,527 @@
+# Ingress Controllers and SSL Configuration
+# =========================================
+
+# Certificate Issuer (Let's Encrypt)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  labels:
+    app: novel-engine
+    component: ssl
+    tier: security
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@novelengine.com  # Replace with your email
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+    - dns01:
+        route53:
+          region: us-east-1
+          accessKeyID: ""  # Will be provided by secret
+          secretAccessKeySecretRef:
+            name: route53-credentials
+            key: secret-access-key
+
+---
+
+# Staging Certificate Issuer
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+  labels:
+    app: novel-engine
+    component: ssl
+    tier: security
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: admin@novelengine.com
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+
+---
+
+# Main Application Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: novel-engine-ingress
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: ingress
+    tier: networking
+  annotations:
+    # Ingress controller configuration
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    
+    # SSL/TLS configuration
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/tls-acme: "true"
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/server-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+      more_set_headers "Permissions-Policy: geolocation=(), microphone=(), camera=()";
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/rate-limit-connections: "10"
+    
+    # CORS configuration
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.novelengine.com,https://admin.novelengine.com"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET,POST,PUT,DELETE,OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length,Content-Range"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/cors-max-age: "86400"
+    
+    # Performance optimizations
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    
+    # WebSocket support
+    nginx.ingress.kubernetes.io/proxy-set-headers: |
+      X-Forwarded-For $proxy_add_x_forwarded_for;
+      X-Forwarded-Proto $scheme;
+      X-Real-IP $remote_addr;
+      Host $host;
+      Upgrade $http_upgrade;
+      Connection "upgrade";
+    
+    # Custom error pages
+    nginx.ingress.kubernetes.io/custom-http-errors: "404,503,502,500"
+    nginx.ingress.kubernetes.io/default-backend: error-pages
+    
+    # Monitoring and analytics
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Request-ID: $req_id";
+      access_log /var/log/nginx/novel-engine-access.log main;
+
+spec:
+  tls:
+  - hosts:
+    - app.novelengine.com
+    - api.novelengine.com
+    - ws.novelengine.com
+    secretName: novel-engine-tls-cert
+  
+  rules:
+  # Main application frontend
+  - host: app.novelengine.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: novel-engine-frontend-service
+            port:
+              number: 80
+  
+  # API endpoints
+  - host: api.novelengine.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: novel-engine-api-service
+            port:
+              number: 8000
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: novel-engine-api-service
+            port:
+              number: 8000
+      - path: /metrics
+        pathType: Exact
+        backend:
+          service:
+            name: novel-engine-api-service
+            port:
+              number: 9090
+  
+  # WebSocket endpoints
+  - host: ws.novelengine.com
+    http:
+      paths:
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: novel-engine-websocket-service
+            port:
+              number: 8001
+
+---
+
+# Admin Dashboard Ingress (Restricted Access)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: novel-engine-admin-ingress
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: admin-ingress
+    tier: networking
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    
+    # IP whitelist for admin access
+    nginx.ingress.kubernetes.io/whitelist-source-range: |
+      10.0.0.0/8,
+      172.16.0.0/12,
+      192.168.0.0/16,
+      203.0.113.0/24  # Replace with your office IPs
+    
+    # Enhanced security for admin
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: basic-auth-secret
+    nginx.ingress.kubernetes.io/auth-realm: "Novel Engine Admin - Authentication Required"
+    
+    # Stricter rate limiting for admin
+    nginx.ingress.kubernetes.io/rate-limit: "30"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    
+    # Additional security headers
+    nginx.ingress.kubernetes.io/server-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload";
+      more_set_headers "Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'";
+
+spec:
+  tls:
+  - hosts:
+    - admin.novelengine.com
+    secretName: novel-engine-admin-tls-cert
+  
+  rules:
+  - host: admin.novelengine.com
+    http:
+      paths:
+      - path: /admin
+        pathType: Prefix
+        backend:
+          service:
+            name: novel-engine-api-service
+            port:
+              number: 8000
+      - path: /dashboard
+        pathType: Prefix
+        backend:
+          service:
+            name: novel-engine-api-service
+            port:
+              number: 8000
+
+---
+
+# Monitoring Ingress (Prometheus/Grafana)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: novel-engine-monitoring-ingress
+  namespace: monitoring
+  labels:
+    app: novel-engine
+    component: monitoring-ingress
+    tier: networking
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    
+    # IP whitelist for monitoring access
+    nginx.ingress.kubernetes.io/whitelist-source-range: |
+      10.0.0.0/8,
+      172.16.0.0/12,
+      192.168.0.0/16,
+      203.0.113.0/24  # Replace with your monitoring IPs
+    
+    # Authentication
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: monitoring-auth-secret
+    nginx.ingress.kubernetes.io/auth-realm: "Monitoring - Authentication Required"
+
+spec:
+  tls:
+  - hosts:
+    - monitoring.novelengine.com
+    secretName: novel-engine-monitoring-tls-cert
+  
+  rules:
+  - host: monitoring.novelengine.com
+    http:
+      paths:
+      - path: /prometheus
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-service
+            port:
+              number: 9090
+      - path: /grafana
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana-service
+            port:
+              number: 3000
+      - path: /alertmanager
+        pathType: Prefix
+        backend:
+          service:
+            name: alertmanager-service
+            port:
+              number: 9093
+
+---
+
+# Error Pages Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: error-pages
+  namespace: novel-engine
+  labels:
+    app: error-pages
+    component: error-handling
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: error-pages
+
+---
+
+# Error Pages Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: error-pages
+  namespace: novel-engine
+  labels:
+    app: error-pages
+    component: error-handling
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: error-pages
+  template:
+    metadata:
+      labels:
+        app: error-pages
+    spec:
+      containers:
+      - name: error-pages
+        image: nginxdemos/nginx-error-pages:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 50m
+            memory: 32Mi
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+
+---
+
+# Basic Auth Secret for Admin Access
+apiVersion: v1
+kind: Secret
+metadata:
+  name: basic-auth-secret
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: security
+type: Opaque
+data:
+  # Generated with: htpasswd -nb admin your_admin_password | base64 -w 0
+  auth: YWRtaW46JGFwcjEkUzF6ZWNQZzQkTi9aazlUb0xvMnIzSGV0ZGJoVnMxMA==  # admin:admin123
+
+---
+
+# Route53 Credentials Secret for DNS-01 Challenge
+apiVersion: v1
+kind: Secret
+metadata:
+  name: route53-credentials
+  namespace: cert-manager
+  labels:
+    app: novel-engine
+    component: ssl
+type: Opaque
+data:
+  # Base64 encoded AWS secret access key
+  secret-access-key: ""  # Add your AWS secret access key here (base64 encoded)
+
+---
+
+# Nginx ConfigMap for Custom Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-custom-config
+  namespace: ingress-nginx
+  labels:
+    app: novel-engine
+    component: nginx-config
+data:
+  # Global Nginx configuration
+  custom-config: |
+    # Performance tuning
+    worker_processes auto;
+    worker_connections 4096;
+    worker_rlimit_nofile 65535;
+    
+    # Security headers
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    
+    # Rate limiting
+    limit_req_zone $binary_remote_addr zone=global:10m rate=10r/s;
+    limit_req_zone $binary_remote_addr zone=api:10m rate=100r/s;
+    limit_req_zone $binary_remote_addr zone=login:10m rate=1r/s;
+    
+    # Connection limiting
+    limit_conn_zone $binary_remote_addr zone=conn_limit_per_ip:10m;
+    limit_conn conn_limit_per_ip 20;
+    
+    # Timeouts
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 300s;
+    
+    # Buffer sizes
+    client_body_buffer_size 128k;
+    client_max_body_size 50m;
+    proxy_buffer_size 128k;
+    proxy_buffers 8 128k;
+    proxy_busy_buffers_size 256k;
+    
+    # Compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1000;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+      application/atom+xml
+      application/geo+json
+      application/javascript
+      application/x-javascript
+      application/json
+      application/ld+json
+      application/manifest+json
+      application/rdf+xml
+      application/rss+xml
+      application/xhtml+xml
+      application/xml
+      font/eot
+      font/otf
+      font/ttf
+      image/svg+xml
+      text/css
+      text/javascript
+      text/plain
+      text/xml;
+    
+    # Logging format
+    log_format detailed '$remote_addr - $remote_user [$time_local] '
+                       '"$request" $status $body_bytes_sent '
+                       '"$http_referer" "$http_user_agent" '
+                       '$request_time $upstream_response_time '
+                       '$upstream_addr $request_id';
+
+---
+
+# Ingress Nginx Controller Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+data:
+  # SSL configuration
+  ssl-protocols: "TLSv1.2 TLSv1.3"
+  ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+  ssl-prefer-server-ciphers: "true"
+  ssl-session-cache: "shared:SSL:10m"
+  ssl-session-timeout: "10m"
+  
+  # Performance settings
+  worker-processes: "auto"
+  worker-connections: "4096"
+  worker-rlimit-nofile: "65535"
+  
+  # Rate limiting
+  rate-limit-rpm: "300"
+  
+  # Upload limits
+  proxy-body-size: "50m"
+  
+  # Timeouts
+  proxy-connect-timeout: "60"
+  proxy-send-timeout: "60"
+  proxy-read-timeout: "300"
+  
+  # Compression
+  use-gzip: "true"
+  gzip-level: "6"
+  gzip-types: "application/atom+xml application/javascript application/json application/rss+xml application/vnd.ms-fontobject application/x-font-ttf application/x-web-app-manifest+json application/xhtml+xml application/xml font/opentype image/svg+xml image/x-icon text/css text/plain text/x-component"
+  
+  # Security
+  hide-headers: "Server,X-Powered-By"
+  server-tokens: "false"
+  
+  # Monitoring
+  enable-vts-status: "true"
+  vts-default-filter-key: "$geoip_country_code country::*"

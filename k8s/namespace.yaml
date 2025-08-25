@@ -1,0 +1,105 @@
+# Kubernetes Namespace and RBAC Configuration
+# ============================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: novel-engine
+  labels:
+    app: novel-engine
+    environment: production
+    version: v1.0.0
+  annotations:
+    description: "Novel Engine AI-driven interactive storytelling platform"
+    contact: "devops@novel-engine.com"
+
+---
+
+# Service Account for Novel Engine
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: novel-engine-service-account
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+  annotations:
+    description: "Service account for Novel Engine application pods"
+
+---
+
+# ClusterRole for Novel Engine (minimal permissions)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: novel-engine-cluster-role
+  labels:
+    app: novel-engine
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "networkpolicies"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["pods", "nodes"]
+  verbs: ["get", "list"]
+
+---
+
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: novel-engine-cluster-role-binding
+  labels:
+    app: novel-engine
+subjects:
+- kind: ServiceAccount
+  name: novel-engine-service-account
+  namespace: novel-engine
+roleRef:
+  kind: ClusterRole
+  name: novel-engine-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+# Role for namespace-specific operations
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: novel-engine-role
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods/log", "pods/exec"]
+  verbs: ["get", "list", "create"]
+
+---
+
+# RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: novel-engine-role-binding
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+subjects:
+- kind: ServiceAccount
+  name: novel-engine-service-account
+  namespace: novel-engine
+roleRef:
+  kind: Role
+  name: novel-engine-role
+  apiGroup: rbac.authorization.k8s.io
