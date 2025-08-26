@@ -412,7 +412,7 @@ main()
 
 ```python
 from director_agent import DirectorAgent
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
 from chronicler_agent import ChroniclerAgent
 
 # Create director with custom campaign log
@@ -471,7 +471,7 @@ results = run_configured_simulation(director, agents, turns)
 ### Example AI Interaction
 
 ```python
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
 
 # Create character (AI integration automatic if API key available)
 agent = PersonaAgent("character_krieg.md")
@@ -565,7 +565,7 @@ features:
 ### Extending Components
 
 ```python
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
 
 class CustomAgent(PersonaAgent):
     def custom_behavior(self):
@@ -592,13 +592,13 @@ python -c "from config_loader import get_config; print(get_config())"
 echo $GEMINI_API_KEY
 
 # Test API connectivity
-python -c "from persona_agent import _validate_gemini_api_key; print(_validate_gemini_api_key())"
+python -c "from src.persona_agent import _validate_gemini_api_key; print(_validate_gemini_api_key())"
 ```
 
 #### Character Sheet Errors
 ```bash
 # Validate character sheet format
-python -c "from persona_agent import PersonaAgent; PersonaAgent('character_file.md')"
+python -c "from src.persona_agent import PersonaAgent; PersonaAgent('character_file.md')"
 ```
 
 #### Permission Errors
@@ -769,7 +769,7 @@ python api_server.py
 
 #### Cache Statistics
 ```python
-from persona_agent import PersonaAgent
+from src.persona_agent import PersonaAgent
 
 # View cache effectiveness
 agent = PersonaAgent("character_krieg.md")
@@ -779,7 +779,7 @@ print(f"YAML cache info: {agent._parse_cached_yaml.cache_info()}")
 
 #### Connection Pool Monitoring
 ```python
-from persona_agent import _get_http_session
+from src.persona_agent import _get_http_session
 
 session = _get_http_session()
 # Monitor connection pool usage through session.adapters
@@ -1301,7 +1301,7 @@ lsof -i :8000  # Kill any processes using port 8000
 
 2. **Validate character sheets:**
    ```bash
-   python -c "from persona_agent import PersonaAgent; PersonaAgent('character_krieg.md')"
+   python -c "from src.persona_agent import PersonaAgent; PersonaAgent('character_krieg.md')"
    ```
 
 3. **Reset configuration:**
