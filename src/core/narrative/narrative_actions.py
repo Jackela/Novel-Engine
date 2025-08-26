@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from enum import Enum
 from datetime import datetime
 
-from shared_types import CharacterAction, ActionPriority
+from ..types.shared_types import CharacterAction, ActionPriority
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -36,10 +36,10 @@ from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
 # 引入共享类型定义，避免循环导入...
-from shared_types import CharacterAction, ActionPriority
+from src.core.types.shared_types import CharacterAction, ActionPriority
 
 # 引入叙事引擎组件，将史诗传说融入人格决策...
-from narrative_actions import NarrativeActionType, NarrativeActionResolver
+from src.core.narrative.narrative_actions import NarrativeActionType, NarrativeActionResolver
 
 # 启动神圣的代理行为追踪仪式，记录人格机灵的每一次决策与行动...
 logging.basicConfig(level=logging.INFO)

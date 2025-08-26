@@ -17,13 +17,13 @@ __description__ = "Advanced AI Narrative Generation Platform"
 
 # Core exports
 from .core.subjective_reality import SubjectiveRealityEngine
-from .core.emergent_narrative import EmergentNarrativeSystem
+from .core.emergent_narrative import EmergentNarrativeEngine
 from .infrastructure.state_store import UnifiedStateManager
 from .infrastructure.observability import MetricsCollector
 
 __all__ = [
     "SubjectiveRealityEngine",
-    "EmergentNarrativeSystem", 
+    "EmergentNarrativeEngine", 
     "UnifiedStateManager",
     "MetricsCollector"
 ]

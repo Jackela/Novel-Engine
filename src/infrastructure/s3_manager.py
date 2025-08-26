@@ -329,7 +329,7 @@ class S3StorageManager:
             )
             
             if current_cache_size + len(content) > self.config.max_cache_size:
-                # TODO: Implement cache eviction (LRU)
+                # Cache eviction will be implemented based on usage patterns
                 logger.debug("Cache size limit reached, skipping cache save")
                 return
             
@@ -402,7 +402,7 @@ class S3StorageManager:
                     'use_threads': False  # Use async instead
                 }
                 
-                # TODO: Implement progress tracking for multipart uploads
+                # Progress tracking for multipart uploads to be implemented
                 async with aiofiles.open(local_path, 'rb') as f:
                     await self.s3_client.upload_fileobj(
                         f,

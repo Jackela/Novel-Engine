@@ -24,7 +24,7 @@ from pathlib import Path
 
 # Import agent and shared types
 from src.persona_agent import PersonaAgent
-from shared_types import CharacterAction
+from src.core.types.shared_types import CharacterAction
 from src.event_bus import EventBus
 
 # Try to import Iron Laws types at module level
@@ -44,11 +44,11 @@ except ImportError as e:
     IRON_LAWS_AVAILABLE = False
 
 # Import configuration loader
-from config_loader import get_config, get_campaign_log_filename
+from src.core.config.config_loader import get_config, get_campaign_log_filename
 
 # Import narrative components
 from campaign_brief import CampaignBrief, CampaignBriefLoader, NarrativeEvent
-from narrative_actions import NarrativeActionResolver, NarrativeOutcome
+from src.core.narrative.narrative_actions import NarrativeActionResolver, NarrativeOutcome
 
 
 # Configure logging for the director agent
