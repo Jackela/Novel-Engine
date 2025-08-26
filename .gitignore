@@ -177,10 +177,127 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Cursor  
-#  Cursor is an AI-powered code editor.`.cursorignore` specifies files/directories to 
-#  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
-#  refer to https://docs.cursor.com/context/ignore-files
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .cursorignore
 .cursorindexingignore
-/src/caching
+
+# Node.js (Frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+package-lock.json
+yarn.lock
+.npm
+.yarn/
+.pnp.*
+
+# Frontend Build Output
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/out/
+frontend/.nuxt/
+frontend/.output/
+frontend/.vercel
+frontend/.netlify/
+
+# Database Files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+data/*.db*
+data/api_server.db*
+data/novel_engine.db*
+
+# Docker & Deployment
+.docker/
+docker-compose.override.yml
+.env.docker
+.env.k8s
+
+# Logs and Monitoring
+logs/
+*.log
+*.log.*
+*.jsonl
+*.jsonl.gz
+monitoring/logs/
+grafana/data/
+prometheus/data/
+
+# Temporary and Cache Files
+tmp/
+temp/
+.tmp/
+.temp/
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Testing and Coverage
+test-results/
+playwright-report/
+coverage/
+.nyc_output/
+screenshots/
+videos/
+test_artifacts/
+
+# Backup Files
+*.bak
+*.backup
+*~
+*.orig
+
+# Security and Secrets
+*.key
+*.pem
+*.crt
+secrets/
+.secrets/
+vault/
+
+# ML and AI Models
+models/
+*.model
+*.pkl
+*.h5
+*.onnx
+
+# Performance and Profiling
+*.prof
+*.trace
+memory_profiler/
+
+# Local Development
+.local/
+.dev/
+.development/
+
+# Platform Specific
+platform/cache/
+platform/temp/
+
+# Caching System (Legacy - Remove after refactoring)
+/src/caching/
