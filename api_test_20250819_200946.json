@@ -1,8 +1,0 @@
-{
-  "timestamp": "2025-08-19T20:09:46.265390",
-  "gemini_api": "OK",
-  "api_endpoints": [
-    "health: FAIL",
-    "characters: FAIL"
-  ]
-}

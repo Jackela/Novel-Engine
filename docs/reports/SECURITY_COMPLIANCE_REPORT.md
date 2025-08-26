@@ -366,7 +366,7 @@ Permissions-Policy: geolocation=(), microphone=(), camera=()
 
 **Security Configuration Files**:
 - `config/security.yaml` - Comprehensive security settings
-- `scripts/deploy_secure.py` - Automated secure deployment
+- `deploy/security/deploy.py` - Automated secure deployment
 - `certs/` - SSL certificate management (auto-generated for dev)
 - Environment-specific overrides for dev/staging/production
 

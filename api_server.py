@@ -52,7 +52,7 @@ except ImportError as e:
 
 def _find_project_root(start_path: str) -> str:
     """Finds the project root directory by looking for marker files."""
-    markers = ['persona_agent.py', 'director_agent.py', 'config.yaml', '.git']
+    markers = ['persona_agent.py', 'director_agent.py', 'configs/', '.git']
     current_path = os.path.abspath(start_path)
     while current_path != os.path.dirname(current_path):
         if any(os.path.exists(os.path.join(current_path, marker)) for marker in markers):

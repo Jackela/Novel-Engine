@@ -74,7 +74,7 @@ class CharacterFactory:
             FileNotFoundError: If project root cannot be determined
         """
         # 寻找常见项目标记文件，识别神圣领域的在界证据...
-        markers = ['persona_agent.py', 'director_agent.py', 'config.yaml', '.git']
+        markers = ['persona_agent.py', 'director_agent.py', 'configs/', '.git']
         
         current_path = os.path.abspath(start_path)
         while current_path != os.path.dirname(current_path):  # Not at filesystem root

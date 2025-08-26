@@ -1,0 +1,1369 @@
+openapi: 3.0.3
+info:
+  title: Novel Engine M1 API
+  description: |
+    Comprehensive API for Novel Engine M1 - AI-driven interactive storytelling platform
+    
+    ## Overview
+    The Novel Engine M1 API provides access to all system capabilities including:
+    - Dynamic story generation and narrative orchestration
+    - Character management and AI-driven persona agents
+    - Campaign management and session orchestration
+    - Memory management and retrieval services
+    - System monitoring and observability
+    
+    ## Architecture
+    This API follows RESTful design principles with contract-first development,
+    providing consistent interfaces across all microservices through a unified
+    API Gateway.
+    
+    ## Authentication
+    All endpoints require authentication via JWT tokens obtained through the
+    authentication service. Include the token in the Authorization header:
+    `Authorization: Bearer <your-jwt-token>`
+    
+    ## Rate Limiting
+    API requests are rate-limited to ensure system stability:
+    - Standard users: 1000 requests per hour
+    - Premium users: 5000 requests per hour
+    - Service accounts: 10000 requests per hour
+    
+    ## Error Handling
+    All errors follow a consistent format with appropriate HTTP status codes
+    and detailed error messages for debugging and user feedback.
+    
+  version: 1.0.0
+  contact:
+    name: Novel Engine Development Team
+    url: https://github.com/novel-engine/api
+    email: dev@novelengine.ai
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://novelengine.ai/terms
+
+servers:
+  - url: https://api.novelengine.ai/v1
+    description: Production API Server
+  - url: https://staging-api.novelengine.ai/v1
+    description: Staging API Server
+  - url: http://localhost:3000/v1
+    description: Development API Server
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Characters
+    description: Character management and persona agents
+  - name: Stories
+    description: Story generation and narrative management
+  - name: Campaigns
+    description: Campaign management and session orchestration
+  - name: Memory
+    description: Memory storage and retrieval services
+  - name: Interactions
+    description: Character interactions and dialogue processing
+  - name: Monitoring
+    description: System health and monitoring endpoints
+
+paths:
+  # Authentication Endpoints
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user and obtain JWT token
+      description: |
+        Authenticate user credentials and return a JWT token for API access.
+        Supports multiple authentication methods including email/password,
+        OAuth2, and API keys.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              email_password:
+                summary: Email and Password Login
+                value:
+                  email: user@example.com
+                  password: securepassword123
+                  remember_me: true
+              oauth2:
+                summary: OAuth2 Provider Login
+                value:
+                  provider: google
+                  oauth_token: ya29.a0AfH6SMC...
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                success:
+                  summary: Successful Authentication
+                  value:
+                    success: true
+                    data:
+                      access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      refresh_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      expires_in: 3600
+                      token_type: Bearer
+                      user:
+                        id: 550e8400-e29b-41d4-a716-446655440000
+                        email: user@example.com
+                        name: John Doe
+                        role: user
+                    metadata:
+                      timestamp: '2025-08-26T12:00:00Z'
+                      request_id: req_123456789
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimit'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh JWT token
+      description: |
+        Use a refresh token to obtain a new access token without re-authentication.
+        Refresh tokens have longer expiration times than access tokens.
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+                  description: Valid refresh token
+              required:
+                - refresh_token
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Character Management Endpoints
+  /characters:
+    get:
+      tags:
+        - Characters
+      summary: List all characters
+      description: |
+        Retrieve a paginated list of characters with optional filtering and sorting.
+        Supports filtering by character type, creation date, and ownership.
+      operationId: listCharacters
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: type
+          in: query
+          description: Filter by character type
+          schema:
+            $ref: '#/components/schemas/CharacterType'
+        - name: created_after
+          in: query
+          description: Filter characters created after this date
+          schema:
+            type: string
+            format: date-time
+        - name: sort
+          in: query
+          description: Sort order for results
+          schema:
+            type: string
+            enum: [created_at, updated_at, name]
+            default: created_at
+        - name: order
+          in: query
+          description: Sort direction
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Characters retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Characters
+      summary: Create a new character
+      description: |
+        Create a new character with specified personality traits, background,
+        and configuration. The system will automatically generate a unique
+        character ID and initialize default settings.
+      operationId: createCharacter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCharacterRequest'
+            examples:
+              protagonist:
+                summary: Protagonist Character
+                value:
+                  name: Aria Shadowbane
+                  type: protagonist
+                  personality_traits:
+                    openness: 0.8
+                    conscientiousness: 0.7
+                    extraversion: 0.6
+                    agreeableness: 0.5
+                    neuroticism: 0.3
+                  background: A skilled assassin turned reluctant hero
+                  configuration:
+                    ai_model: gpt-4
+                    response_style: dramatic
+                    memory_retention: high
+              npc:
+                summary: Non-Player Character
+                value:
+                  name: Merchant Aldric
+                  type: npc
+                  personality_traits:
+                    openness: 0.4
+                    conscientiousness: 0.9
+                    extraversion: 0.7
+                    agreeableness: 0.8
+                    neuroticism: 0.2
+                  background: Friendly village merchant with hidden secrets
+                  configuration:
+                    ai_model: gpt-3.5-turbo
+                    response_style: friendly
+                    memory_retention: medium
+      responses:
+        '201':
+          description: Character created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /characters/{characterId}:
+    get:
+      tags:
+        - Characters
+      summary: Get character by ID
+      description: |
+        Retrieve detailed information about a specific character including
+        personality traits, memory, relationships, and current status.
+      operationId: getCharacter
+      parameters:
+        - $ref: '#/components/parameters/CharacterIdParam'
+      responses:
+        '200':
+          description: Character retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Characters
+      summary: Update character
+      description: |
+        Update character information including personality traits, background,
+        and configuration. Partial updates are supported.
+      operationId: updateCharacter
+      parameters:
+        - $ref: '#/components/parameters/CharacterIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCharacterRequest'
+      responses:
+        '200':
+          description: Character updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Characters
+      summary: Delete character
+      description: |
+        Permanently delete a character and all associated data including
+        memories, relationships, and interaction history. This action cannot be undone.
+      operationId: deleteCharacter
+      parameters:
+        - $ref: '#/components/parameters/CharacterIdParam'
+      responses:
+        '204':
+          description: Character deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Story Generation Endpoints
+  /stories:
+    get:
+      tags:
+        - Stories
+      summary: List all stories
+      description: |
+        Retrieve a paginated list of stories with optional filtering by genre,
+        theme, creation date, and quality metrics.
+      operationId: listStories
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: genre
+          in: query
+          description: Filter by story genre
+          schema:
+            $ref: '#/components/schemas/StoryGenre'
+        - name: theme
+          in: query
+          description: Filter by story theme
+          schema:
+            type: array
+            items:
+              type: string
+        - name: min_quality
+          in: query
+          description: Minimum quality score filter
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+      responses:
+        '200':
+          description: Stories retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoryListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Stories
+      summary: Generate a new story
+      description: |
+        Generate a new story using AI with specified parameters including genre,
+        themes, characters, and narrative structure preferences.
+      operationId: generateStory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateStoryRequest'
+            examples:
+              fantasy_adventure:
+                summary: Fantasy Adventure Story
+                value:
+                  title: The Crystal of Eternity
+                  genre: fantasy
+                  themes: [adventure, friendship, magic]
+                  characters: [550e8400-e29b-41d4-a716-446655440000]
+                  length: medium
+                  tone: heroic
+                  configuration:
+                    ai_model: gpt-4
+                    creativity: 0.8
+                    coherence_weight: 0.7
+                    character_focus: high
+      responses:
+        '201':
+          description: Story generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Campaign Management Endpoints
+  /campaigns:
+    get:
+      tags:
+        - Campaigns
+      summary: List all campaigns
+      description: |
+        Retrieve a paginated list of campaigns with optional filtering by
+        status, creation date, and participant count.
+      operationId: listCampaigns
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          description: Filter by campaign status
+          schema:
+            $ref: '#/components/schemas/CampaignStatus'
+      responses:
+        '200':
+          description: Campaigns retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Campaigns
+      summary: Create a new campaign
+      description: |
+        Create a new campaign with specified configuration, participants,
+        and initial world state.
+      operationId: createCampaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCampaignRequest'
+      responses:
+        '201':
+          description: Campaign created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Health and Monitoring Endpoints
+  /health:
+    get:
+      tags:
+        - Monitoring
+      summary: System health check
+      description: |
+        Check the health status of all system components including databases,
+        external services, and application services.
+      operationId: healthCheck
+      security: []  # Public endpoint
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                checks:
+                  database: healthy
+                  redis: healthy
+                  ai_service: healthy
+                  memory_service: healthy
+                timestamp: '2025-08-26T12:00:00Z'
+        '503':
+          description: System is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: unhealthy
+                checks:
+                  database: healthy
+                  redis: unhealthy
+                  ai_service: healthy
+                  memory_service: degraded
+                timestamp: '2025-08-26T12:00:00Z'
+
+  /metrics:
+    get:
+      tags:
+        - Monitoring
+      summary: System metrics
+      description: |
+        Retrieve system performance metrics including response times,
+        error rates, and resource utilization.
+      operationId: getMetrics
+      parameters:
+        - name: timeRange
+          in: query
+          description: Time range for metrics
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d]
+            default: 1h
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login endpoint
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for service-to-service authentication
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Page number for pagination (1-based)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    
+    LimitParam:
+      name: limit
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    
+    CharacterIdParam:
+      name: characterId
+      in: path
+      required: true
+      description: Unique character identifier
+      schema:
+        type: string
+        format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+
+  schemas:
+    # Authentication Schemas
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+        password:
+          type: string
+          format: password
+          description: User password
+        provider:
+          type: string
+          enum: [email, google, github, discord]
+          description: Authentication provider
+        oauth_token:
+          type: string
+          description: OAuth2 token (required for OAuth providers)
+        remember_me:
+          type: boolean
+          default: false
+          description: Extended session duration
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                access_token:
+                  type: string
+                  description: JWT access token
+                refresh_token:
+                  type: string
+                  description: JWT refresh token
+                expires_in:
+                  type: integer
+                  description: Token expiration time in seconds
+                token_type:
+                  type: string
+                  enum: [Bearer]
+                user:
+                  $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+        email:
+          type: string
+          format: email
+          description: User email address
+        name:
+          type: string
+          description: User display name
+        role:
+          type: string
+          enum: [admin, user, service]
+          description: User role and permissions
+        created_at:
+          type: string
+          format: date-time
+          description: User creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: User last update timestamp
+
+    # Character Schemas
+    CharacterType:
+      type: string
+      enum: [protagonist, antagonist, npc, narrator]
+      description: Type of character role in stories
+
+    PersonalityTraits:
+      type: object
+      description: Big Five personality model traits
+      properties:
+        openness:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Openness to experience
+        conscientiousness:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Conscientiousness and organization
+        extraversion:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Extraversion and social energy
+        agreeableness:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Agreeableness and cooperation
+        neuroticism:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Neuroticism and emotional stability
+      required:
+        - openness
+        - conscientiousness
+        - extraversion
+        - agreeableness
+        - neuroticism
+
+    CreateCharacterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Character name
+        type:
+          $ref: '#/components/schemas/CharacterType'
+        personality_traits:
+          $ref: '#/components/schemas/PersonalityTraits'
+        background:
+          type: string
+          maxLength: 2000
+          description: Character background and history
+        configuration:
+          type: object
+          properties:
+            ai_model:
+              type: string
+              enum: [gpt-4, gpt-3.5-turbo, claude-3]
+              description: AI model for character responses
+            response_style:
+              type: string
+              enum: [formal, casual, dramatic, humorous]
+              description: Character response style
+            memory_retention:
+              type: string
+              enum: [low, medium, high]
+              description: Memory retention level
+          description: Character AI configuration
+      required:
+        - name
+        - type
+        - personality_traits
+
+    UpdateCharacterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        personality_traits:
+          $ref: '#/components/schemas/PersonalityTraits'
+        background:
+          type: string
+          maxLength: 2000
+        configuration:
+          type: object
+      description: Character update data (all fields optional)
+
+    Character:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique character identifier
+        name:
+          type: string
+          description: Character name
+        type:
+          $ref: '#/components/schemas/CharacterType'
+        personality_traits:
+          $ref: '#/components/schemas/PersonalityTraits'
+        background:
+          type: string
+          description: Character background
+        configuration:
+          type: object
+          description: Character AI configuration
+        status:
+          type: string
+          enum: [active, inactive, archived]
+          description: Character status
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          format: uuid
+          description: User who created the character
+
+    CharacterResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Character'
+
+    CharacterListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                characters:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Character'
+                pagination:
+                  $ref: '#/components/schemas/Pagination'
+
+    # Story Schemas
+    StoryGenre:
+      type: string
+      enum: [fantasy, sci-fi, mystery, romance, horror, adventure, drama, comedy]
+      description: Story genre classification
+
+    GenerateStoryRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 500
+          description: Story title
+        genre:
+          $ref: '#/components/schemas/StoryGenre'
+        themes:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+          description: Story themes and elements
+        characters:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Character IDs to include in story
+        length:
+          type: string
+          enum: [short, medium, long]
+          description: Desired story length
+        tone:
+          type: string
+          enum: [dark, light, heroic, mysterious, comedic]
+          description: Story tone and mood
+        configuration:
+          type: object
+          properties:
+            ai_model:
+              type: string
+              enum: [gpt-4, gpt-3.5-turbo, claude-3]
+            creativity:
+              type: number
+              minimum: 0
+              maximum: 1
+            coherence_weight:
+              type: number
+              minimum: 0
+              maximum: 1
+            character_focus:
+              type: string
+              enum: [low, medium, high]
+      required:
+        - genre
+
+    Story:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        genre:
+          $ref: '#/components/schemas/StoryGenre'
+        themes:
+          type: array
+          items:
+            type: string
+        content:
+          type: string
+          description: Generated story content
+        quality_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: AI-evaluated story quality
+        word_count:
+          type: integer
+          description: Total word count
+        characters:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum: [generating, completed, failed]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          format: uuid
+
+    StoryResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Story'
+
+    StoryListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                stories:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Story'
+                pagination:
+                  $ref: '#/components/schemas/Pagination'
+
+    # Campaign Schemas
+    CampaignStatus:
+      type: string
+      enum: [planning, active, paused, completed, archived]
+      description: Campaign lifecycle status
+
+    CreateCampaignRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Campaign name
+        description:
+          type: string
+          maxLength: 2000
+          description: Campaign description
+        configuration:
+          type: object
+          description: Campaign configuration and settings
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Initial participant user IDs
+      required:
+        - name
+
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/CampaignStatus'
+        configuration:
+          type: object
+        participant_count:
+          type: integer
+        session_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          format: uuid
+
+    CampaignResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Campaign'
+
+    CampaignListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                campaigns:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Campaign'
+                pagination:
+                  $ref: '#/components/schemas/Pagination'
+
+    # Monitoring Schemas
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+
+    MetricsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                response_time_p95:
+                  type: number
+                  description: 95th percentile response time in milliseconds
+                error_rate:
+                  type: number
+                  description: Error rate percentage
+                requests_per_second:
+                  type: number
+                  description: Requests per second
+                active_users:
+                  type: integer
+                  description: Currently active users
+                system_load:
+                  type: number
+                  description: System load average
+
+    # Common Schemas
+    BaseResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the request was successful
+        data:
+          type: object
+          description: Response data (varies by endpoint)
+        error:
+          $ref: '#/components/schemas/ErrorInfo'
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+      required:
+        - success
+
+    ErrorInfo:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code for programmatic handling
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details and context
+        recoverable:
+          type: boolean
+          description: Whether the error condition is recoverable
+
+    ResponseMetadata:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Response generation timestamp
+        request_id:
+          type: string
+          description: Unique request identifier for tracing
+        version:
+          type: string
+          description: API version
+        rate_limit:
+          type: object
+          properties:
+            remaining:
+              type: integer
+            reset_time:
+              type: string
+              format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Items per page
+        total_items:
+          type: integer
+          description: Total number of items
+        total_pages:
+          type: integer
+          description: Total number of pages
+        has_next:
+          type: boolean
+          description: Whether there is a next page
+        has_previous:
+          type: boolean
+          description: Whether there is a previous page
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters or request format
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/BaseResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum: [false]
+                  error:
+                    $ref: '#/components/schemas/ErrorInfo'
+          example:
+            success: false
+            error:
+              code: INVALID_PARAMETERS
+              message: One or more required parameters are missing or invalid
+              details:
+                validation_errors:
+                  - field: email
+                    message: Invalid email format
+              recoverable: true
+            metadata:
+              timestamp: '2025-08-26T12:00:00Z'
+              request_id: req_123456789
+
+    Unauthorized:
+      description: Unauthorized - authentication required or invalid
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/BaseResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum: [false]
+                  error:
+                    $ref: '#/components/schemas/ErrorInfo'
+          example:
+            success: false
+            error:
+              code: AUTHENTICATION_REQUIRED
+              message: Valid authentication token required
+              recoverable: true
+            metadata:
+              timestamp: '2025-08-26T12:00:00Z'
+              request_id: req_123456789
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/BaseResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum: [false]
+                  error:
+                    $ref: '#/components/schemas/ErrorInfo'
+          example:
+            success: false
+            error:
+              code: INSUFFICIENT_PERMISSIONS
+              message: You do not have permission to access this resource
+              recoverable: false
+            metadata:
+              timestamp: '2025-08-26T12:00:00Z'
+              request_id: req_123456789
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/BaseResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum: [false]
+                  error:
+                    $ref: '#/components/schemas/ErrorInfo'
+          example:
+            success: false
+            error:
+              code: RESOURCE_NOT_FOUND
+              message: The requested resource was not found
+              recoverable: false
+            metadata:
+              timestamp: '2025-08-26T12:00:00Z'
+              request_id: req_123456789
+
+    ValidationError:
+      description: Validation error - request data validation failed
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/BaseResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum: [false]
+                  error:
+                    $ref: '#/components/schemas/ErrorInfo'
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: Request data validation failed
+              details:
+                validation_errors:
+                  - field: personality_traits.openness
+                    message: Value must be between 0 and 1
+                  - field: name
+                    message: Name is required and cannot be empty
+              recoverable: true
+            metadata:
+              timestamp: '2025-08-26T12:00:00Z'
+              request_id: req_123456789
+
+    RateLimit:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/BaseResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum: [false]
+                  error:
+                    $ref: '#/components/schemas/ErrorInfo'
+          example:
+            success: false
+            error:
+              code: RATE_LIMIT_EXCEEDED
+              message: API rate limit exceeded. Please try again later.
+              details:
+                retry_after: 3600
+                limit: 1000
+                remaining: 0
+              recoverable: true
+            metadata:
+              timestamp: '2025-08-26T12:00:00Z'
+              request_id: req_123456789
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/BaseResponse'
+              - type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum: [false]
+                  error:
+                    $ref: '#/components/schemas/ErrorInfo'
+          example:
+            success: false
+            error:
+              code: INTERNAL_SERVER_ERROR
+              message: An unexpected error occurred. Please try again later.
+              recoverable: true
+            metadata:
+              timestamp: '2025-08-26T12:00:00Z'
+              request_id: req_123456789

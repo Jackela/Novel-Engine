@@ -998,9 +998,9 @@ class ConfigurationManager:
     
     def __init__(self, config_paths: List[str] = None):
         self.config_paths = config_paths or [
-            '/etc/novel-engine/config.yaml',
-            './config.yaml',
-            './config/config.yaml'
+            '/etc/novel-engine/configs/environments/development.yaml',
+            './configs/environments/development.yaml',
+            './configs/environments/environments.yaml'
         ]
         self.config_data: Dict[str, Any] = {}
         self.environment = os.getenv('ENVIRONMENT', 'development')

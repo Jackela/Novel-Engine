@@ -76,7 +76,7 @@ jobs:
 
     - name: Run staging deployment
       run: |
-        python deployment/deploy_staging.py
+        python deploy/staging/deploy.py
       env:
         STAGING_ENV: true
         PYTHONPATH: ${{ github.workspace }}

@@ -563,7 +563,7 @@ class ProductionIntegrationTestSuite:
             # Check for required production files
             required_files = [
                 'requirements.txt',
-                'config.yaml',
+                'configs/environments/development.yaml',
                 'README.md',
                 'api_server.py'
             ]
