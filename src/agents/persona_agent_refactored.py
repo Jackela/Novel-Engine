@@ -20,12 +20,12 @@ import logging
 from typing import Dict, List, Optional, Any
 
 # Import shared types
-from shared_types import CharacterAction, ActionPriority
+from src.core.types.shared_types import CharacterAction, ActionPriority
 
 # Import decomposed components
-from agents.persona_core import PersonaCore, AgentIdentity, AgentState
-from agents.context_manager import CharacterContextManager
-from agents.decision_engine import DecisionEngine, ThreatLevel, SituationAssessment
+from src.agents.persona_core import PersonaCore, AgentIdentity, AgentState
+from src.agents.context_manager import CharacterContextManager
+from src.agents.decision_engine import DecisionEngine, ThreatLevel, SituationAssessment
 
 logger = logging.getLogger(__name__)
 

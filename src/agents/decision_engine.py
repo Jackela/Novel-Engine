@@ -17,7 +17,7 @@ from enum import Enum
 from dataclasses import dataclass
 
 # Import shared types  
-from shared_types import CharacterAction, ActionPriority
+from src.core.types.shared_types import CharacterAction, ActionPriority
 
 logger = logging.getLogger(__name__)
 

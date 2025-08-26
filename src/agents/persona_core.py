@@ -18,7 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Import shared types
-from shared_types import CharacterAction, ActionPriority
+from src.core.types.shared_types import CharacterAction, ActionPriority
 
 # Core systems integration
 from src.core.error_handler import (

@@ -13,12 +13,12 @@ import os
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 
-# Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Add src to path for proper imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
 
 # Test import of modular components
 try:
-    from interactions.equipment_system import (
+    from src.interactions.equipment_system import (
         DynamicEquipmentSystem, EquipmentCategory, EquipmentStatus,
         EquipmentModification, EquipmentMaintenance, DynamicEquipment,
         create_dynamic_equipment_system, create_maintenance_optimized_config
@@ -26,6 +26,8 @@ try:
     print("✅ Successfully imported all equipment system components")
 except ImportError as e:
     print(f"❌ Import failed: {e}")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Python path: {sys.path[:3]}")  # Show first 3 entries
     sys.exit(1)
 
 # Set up logging
