@@ -82,6 +82,12 @@ try:
     SacredConstants = core_types.SacredConstants
     SacredTypeValidator = core_types.SacredTypeValidator
     
+    # Validation functions
+    is_valid_agent_id = core_types.is_valid_agent_id
+    is_valid_trust_level = core_types.is_valid_trust_level
+    is_valid_emotional_weight = core_types.is_valid_emotional_weight
+    is_valid_relevance_score = core_types.is_valid_relevance_score
+    
 except Exception as e:
     # Fallback definitions for critical types
     AgentID = str
@@ -94,6 +100,16 @@ except Exception as e:
     EmotionalWeight = float
     RelevanceScore = float
     EffectivenessRating = float
+    
+    # Fallback validation functions
+    def is_valid_agent_id(value: str) -> bool:
+        return isinstance(value, str) and 2 <= len(value) <= 100 and value.strip() != ""
+    def is_valid_trust_level(value: int) -> bool:
+        return isinstance(value, int) and 0 <= value <= 10
+    def is_valid_emotional_weight(value: float) -> bool:
+        return isinstance(value, (int, float)) and -10.0 <= float(value) <= 10.0
+    def is_valid_relevance_score(value: float) -> bool:
+        return isinstance(value, (int, float)) and 0.0 <= float(value) <= 1.0
 
 # Export shared types from this package
 from .shared_types import *
@@ -121,5 +137,7 @@ __all__ = [
     # Protocols
     'BlessedSerializable', 'ContextProvider', 'MemoryStorable',
     # Constants and validators
-    'SacredConstants', 'SacredTypeValidator'
+    'SacredConstants', 'SacredTypeValidator',
+    # Validation functions
+    'is_valid_agent_id', 'is_valid_trust_level', 'is_valid_emotional_weight', 'is_valid_relevance_score'
 ]

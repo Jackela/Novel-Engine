@@ -15,6 +15,7 @@ python-multipart>=0.0.6
 # Async utilities
 asyncio-mqtt>=0.16.0
 asyncio-throttle>=1.0.2
+aioredis>=2.0.0
 
 # Data processing
 pandas>=2.1.0

@@ -688,10 +688,22 @@ def initialize_security_service(database_path: str, secret_key: str):
     security_service = SecurityService(database_path, secret_key)
     return security_service
 
+# Standalone wrapper functions for FastAPI dependency injection
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())) -> User:
+    """Standalone wrapper for getting current user from token"""
+    service = get_security_service()
+    return await service.get_current_user(credentials)
+
+def require_permission(permission: Permission):
+    """Standalone wrapper for requiring permission"""
+    service = get_security_service()
+    return service.require_permission(permission)
+
 __all__ = [
     'UserRole', 'Permission', 'User', 'TokenPair', 'UserRegistration', 'UserLogin',
     'SecurityEvent', 'AuthenticationError', 'AuthorizationError', 'SecurityService',
     'get_security_service', 'initialize_security_service', 'ROLE_PERMISSIONS',
+    'get_current_user', 'require_permission',  # Add standalone functions to exports
     'AuthenticationManager'  # Legacy compatibility alias
 ]
 

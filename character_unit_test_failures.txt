@@ -1,0 +1,2563 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-8.4.1, pluggy-1.5.0 -- C:\ProgramData\miniconda3\python.exe
+cachedir: .pytest_cache
+benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+metadata: {'Python': '3.13.5', 'Platform': 'Windows-11-10.0.26120-SP0', 'Packages': {'pytest': '8.4.1', 'pluggy': '1.5.0'}, 'Plugins': {'anyio': '4.9.0', 'asyncio': '1.1.0', 'base-url': '2.1.0', 'benchmark': '5.1.0', 'cov': '6.2.1', 'html': '4.1.1', 'httpx': '0.35.0', 'metadata': '3.1.1', 'mock': '3.14.1', 'playwright': '0.7.0', 'timeout': '2.4.0', 'xdist': '3.8.0'}, 'JAVA_HOME': 'C:\\Program Files\\Java\\jdk-21', 'Base URL': ''}
+rootdir: D:\Code\Novel-Engine
+configfile: pytest.ini
+plugins: anyio-4.9.0, asyncio-1.1.0, base-url-2.1.0, benchmark-5.1.0, cov-6.2.1, html-4.1.1, httpx-0.35.0, metadata-3.1.1, mock-3.14.1, playwright-0.7.0, timeout-2.4.0, xdist-3.8.0
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 276 items
+
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_initialization_success FAILED [  0%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_validation_invalid_level FAILED [  0%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_validation_insufficient_health PASSED [  1%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_validation_racial_abilities FAILED [  1%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_validation_class_skills PASSED [  1%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_validation_age_consistency FAILED [  2%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_profile_success ERROR [  2%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_profile_validation_failure_rollback ERROR [  2%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_stats_success ERROR [  3%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_stats_excessive_health_loss_fails ERROR [  3%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_stats_exceed_maximum_values_fails ERROR [  3%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_stats_rollback_on_validation_failure ERROR [  4%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_level_up_success ERROR [  4%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_level_up_at_maximum_level_fails ERROR [  5%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_heal_success ERROR [  5%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_heal_to_maximum_health ERROR [  5%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_heal_zero_amount_fails ERROR [  6%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_heal_at_full_health_no_change ERROR [  6%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_take_damage_success ERROR [  6%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_take_damage_with_reduction ERROR [  7%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_take_damage_minimum_one ERROR [  7%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_take_damage_zero_amount_fails ERROR [  7%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_take_damage_to_zero_health ERROR [  8%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_is_alive_when_alive ERROR [  8%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_is_alive_when_dead ERROR [  9%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_can_level_up_with_sufficient_xp ERROR [  9%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_can_level_up_insufficient_xp ERROR [  9%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_can_level_up_at_max_level ERROR [ 10%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_get_character_summary ERROR [ 10%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_create_new_character_success FAILED [ 10%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_create_new_character_appropriate_health_mana FAILED [ 11%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_domain_events_creation ERROR [ 11%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_domain_events_profile_update ERROR [ 11%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_domain_events_stats_change ERROR [ 12%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_get_events ERROR [ 12%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_clear_events ERROR [ 13%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_skills_success ERROR [ 13%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_skills_validation_failure_rollback ERROR [ 13%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_version_consistency ERROR [ 14%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_timestamp_updates ERROR [ 14%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_complete_character_lifecycle ERROR [ 14%]
+tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_business_rules_consistency ERROR [ 15%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPhysicalTraits::test_physical_traits_creation_success PASSED [ 15%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPhysicalTraits::test_physical_traits_creation_minimal PASSED [ 15%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPhysicalTraits::test_physical_traits_height_validation_too_short PASSED [ 16%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPhysicalTraits::test_physical_traits_height_validation_too_tall PASSED [ 16%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPhysicalTraits::test_physical_traits_height_validation_boundary_values PASSED [ 17%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPhysicalTraits::test_physical_traits_weight_validation_too_light PASSED [ 17%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPhysicalTraits::test_physical_traits_weight_validation_too_heavy PASSED [ 17%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPhysicalTraits::test_physical_traits_weight_validation_boundary_values PASSED [ 18%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_personality_traits_creation_success PASSED [ 18%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_personality_traits_creation_minimal PASSED [ 18%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_personality_traits_empty_traits_fails PASSED [ 19%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_personality_traits_invalid_score_too_low PASSED [ 19%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_personality_traits_invalid_score_too_high PASSED [ 19%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_personality_traits_boundary_scores PASSED [ 20%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_personality_traits_empty_trait_name_fails PASSED [ 20%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_personality_traits_whitespace_trait_name_fails PASSED [ 21%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_get_trait_score_existing_trait PASSED [ 21%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_get_trait_score_missing_trait_returns_default PASSED [ 21%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_get_trait_score_case_insensitive PASSED [ 22%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_has_trait_existing PASSED [ 22%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_has_trait_missing PASSED [ 22%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestPersonalityTraits::test_has_trait_case_insensitive PASSED [ 23%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestBackground::test_background_creation_success PASSED [ 23%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestBackground::test_background_creation_minimal PASSED [ 23%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestBackground::test_has_education_with_education PASSED [ 24%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestBackground::test_has_education_without_education PASSED [ 24%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestBackground::test_has_education_with_empty_education PASSED [ 25%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestBackground::test_has_family_connections_with_family PASSED [ 25%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestBackground::test_has_family_connections_without_family PASSED [ 25%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestBackground::test_has_family_connections_with_empty_family PASSED [ 26%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_creation_success PASSED [ 26%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_creation_minimal PASSED [ 26%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_empty_name_fails PASSED [ 27%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_whitespace_name_fails PASSED [ 27%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_name_too_long_fails PASSED [ 27%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_negative_age_fails PASSED [ 28%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_age_too_high_fails PASSED [ 28%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_level_too_low_fails PASSED [ 28%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_level_too_high_fails PASSED [ 29%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_too_many_languages_fails PASSED [ 29%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_empty_language_fails PASSED [ 30%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_is_adult_human_adult PASSED [ 30%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_is_adult_human_child PASSED [ 30%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_is_adult_elf_adult PASSED [ 31%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_is_adult_elf_child PASSED [ 31%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_is_adult_dwarf_adult PASSED [ 31%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_is_adult_boundary_values PASSED [ 32%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_get_full_title_with_title PASSED [ 32%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_get_full_title_without_title PASSED [ 32%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_get_character_summary_with_affiliation PASSED [ 33%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_get_character_summary_without_affiliation PASSED [ 33%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_speaks_language_with_languages_list PASSED [ 34%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_speaks_language_case_insensitive PASSED [ 34%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_speaks_language_without_languages_list PASSED [ 34%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_has_trait_above_threshold_true PASSED [ 35%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_has_trait_above_threshold_false PASSED [ 35%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_has_trait_above_missing_trait PASSED [ 35%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_get_personality_summary_strong_traits PASSED [ 36%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_get_personality_summary_no_strong_traits PASSED [ 36%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_get_personality_summary_empty_traits PASSED [ 36%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_immutability PASSED [ 37%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_physical_traits_immutability PASSED [ 37%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_personality_traits_immutability PASSED [ 38%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_background_immutability PASSED [ 38%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_with_all_enum_values PASSED [ 38%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_racial_age_combinations PASSED [ 39%]
+tests/unit/contexts/character/domain/test_character_profile_value_object.py::TestCharacterProfile::test_character_profile_boundary_validations PASSED [ 39%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_core_abilities_creation_success PASSED [ 39%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_core_abilities_validation_too_low PASSED [ 40%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_core_abilities_validation_too_high PASSED [ 40%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_core_abilities_boundary_values PASSED [ 40%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_get_ability_score PASSED [ 41%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_get_ability_modifier PASSED [ 41%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_get_ability_modifier_extreme_values PASSED [ 42%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_get_all_modifiers PASSED [ 42%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_is_exceptional_ability PASSED [ 42%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_get_strongest_ability PASSED [ 43%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_get_weakest_ability PASSED [ 43%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCoreAbilities::test_get_strongest_weakest_tie_handling PASSED [ 43%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_vital_stats_creation_success PASSED [ 44%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_vital_stats_validation_max_health_zero_fails PASSED [ 44%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_vital_stats_validation_current_health_exceeds_max_fails PASSED [ 44%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_vital_stats_validation_current_health_negative_fails PASSED [ 45%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_vital_stats_validation_max_mana_negative_fails PASSED [ 45%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_vital_stats_validation_current_mana_exceeds_max_fails PASSED [ 46%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_vital_stats_validation_armor_class_too_high_fails PASSED [ 46%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_vital_stats_validation_speed_too_high_fails PASSED [ 46%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_vital_stats_boundary_values PASSED [ 47%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_is_alive_with_health PASSED [ 47%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_is_alive_without_health PASSED [ 47%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_is_unconscious_at_zero_health PASSED [ 48%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_is_unconscious_with_health PASSED [ 48%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_is_healthy_at_full_health PASSED [ 48%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_is_healthy_not_at_full_health PASSED [ 49%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_is_wounded_below_half_health PASSED [ 49%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_is_wounded_above_half_health PASSED [ 50%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_is_critically_wounded_below_quarter_health PASSED [ 50%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_is_critically_wounded_above_quarter_health PASSED [ 50%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_health_percentage PASSED [ 51%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_mana_percentage_with_mana PASSED [ 51%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_mana_percentage_no_mana PASSED [ 51%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_stamina_percentage_with_stamina PASSED [ 52%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_stamina_percentage_no_stamina PASSED [ 52%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_get_condition_summary_perfect_health PASSED [ 52%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_get_condition_summary_lightly_wounded PASSED [ 53%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_get_condition_summary_moderately_wounded PASSED [ 53%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_get_condition_summary_heavily_wounded PASSED [ 53%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_get_condition_summary_critically_wounded PASSED [ 54%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestVitalStats::test_get_condition_summary_unconscious PASSED [ 54%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_combat_stats_creation_success PASSED [ 55%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_combat_stats_validation_attack_bonus_too_low_fails PASSED [ 55%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_combat_stats_validation_attack_bonus_too_high_fails PASSED [ 55%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_combat_stats_validation_initiative_modifier_too_low_fails PASSED [ 56%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_combat_stats_validation_critical_chance_too_high_fails PASSED [ 56%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_combat_stats_validation_critical_multiplier_too_low_fails PASSED [ 56%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_combat_stats_boundary_values PASSED [ 57%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_has_spell_resistance_with_resistance PASSED [ 57%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_has_spell_resistance_without_resistance PASSED [ 57%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_has_damage_reduction_with_reduction PASSED [ 58%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_has_damage_reduction_without_reduction PASSED [ 58%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_is_fast_positive_initiative PASSED [ 59%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_is_fast_zero_initiative PASSED [ 59%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_is_fast_negative_initiative PASSED [ 59%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_get_combat_summary_expert_level PASSED [ 60%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_get_combat_summary_novice_level PASSED [ 60%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCombatStats::test_get_combat_summary_average_level PASSED [ 60%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_character_stats_creation_success PASSED [ 61%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_character_stats_validation_negative_experience_fails PASSED [ 61%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_character_stats_validation_negative_skill_points_fails PASSED [ 61%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_character_stats_validation_experience_too_high_fails PASSED [ 62%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_character_stats_validation_skill_points_too_high_fails PASSED [ 62%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_character_stats_boundary_values PASSED [ 63%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_get_ability_modifier PASSED [ 63%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_is_alive_when_alive PASSED [ 63%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_is_alive_when_dead PASSED [ 64%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_can_cast_spells_with_mana PASSED [ 64%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_can_cast_spells_without_mana PASSED [ 64%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_get_overall_power_level_calculations FAILED [ 65%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_needs_rest_low_health PASSED [ 65%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_needs_rest_low_mana PASSED [ 65%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_needs_rest_low_stamina PASSED [ 66%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_needs_rest_good_condition PASSED [ 66%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_get_stats_summary PASSED [ 67%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_character_stats_immutability PASSED [ 67%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_core_abilities_immutability PASSED [ 67%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_vital_stats_immutability PASSED [ 68%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_combat_stats_immutability PASSED [ 68%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_ability_modifier_calculation_precision PASSED [ 68%]
+tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_character_stats_edge_case_combinations PASSED [ 69%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestProficiencyLevel::test_proficiency_level_values PASSED [ 69%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestProficiencyLevel::test_proficiency_level_ordering PASSED [ 69%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillCategory::test_skill_category_values PASSED [ 70%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillCategory::test_skill_category_uniqueness PASSED [ 70%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_skill_creation_success PASSED [ 71%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_skill_creation_minimal PASSED [ 71%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_skill_empty_name_fails PASSED [ 71%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_skill_whitespace_name_fails PASSED [ 72%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_skill_name_too_long_fails PASSED [ 72%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_skill_modifier_too_low_fails PASSED [ 72%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_skill_modifier_too_high_fails PASSED [ 73%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_skill_description_too_long_fails PASSED [ 73%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_skill_boundary_values PASSED [ 73%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_get_total_modifier PASSED [ 74%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_get_total_modifier_untrained PASSED [ 74%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_get_total_modifier_negative PASSED [ 75%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_is_trained_true PASSED [ 75%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_is_trained_false PASSED [ 75%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_is_expert_level_true PASSED [ 76%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_is_expert_level_false PASSED [ 76%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_is_master_level_true PASSED [ 76%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_is_master_level_false PASSED [ 77%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkill::test_get_proficiency_description PASSED [ 77%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_skill_group_creation_success PASSED [ 77%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_skill_group_empty_name_fails PASSED [ 78%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_skill_group_base_modifier_too_low_fails PASSED [ 78%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_skill_group_base_modifier_too_high_fails PASSED [ 78%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_skill_group_empty_skills_fails PASSED [ 79%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_skill_group_mismatched_category_fails PASSED [ 79%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_get_skill_existing PASSED [ 80%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_get_skill_case_insensitive PASSED [ 80%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_get_skill_nonexistent PASSED [ 80%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_has_skill_existing PASSED [ 81%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_has_skill_nonexistent PASSED [ 81%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_get_average_proficiency PASSED [ 81%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_get_average_proficiency_empty_group FAILED [ 82%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_get_expert_skills PASSED [ 82%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_count_trained_skills PASSED [ 82%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_count_trained_skills_with_untrained PASSED [ 83%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_creation_success PASSED [ 83%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_creation_minimal PASSED [ 84%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_empty_skill_groups_fails PASSED [ 84%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_empty_language_name_fails PASSED [ 84%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_language_name_too_long_fails PASSED [ 85%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_empty_specialization_name_fails PASSED [ 85%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_specialization_bonus_too_low_fails PASSED [ 85%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_specialization_bonus_too_high_fails PASSED [ 86%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_by_name_found PASSED [ 86%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_by_name_case_insensitive PASSED [ 86%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_by_name_not_found PASSED [ 87%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_by_category_found PASSED [ 87%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_by_category_wrong_category PASSED [ 88%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_has_skill_sufficient_proficiency PASSED [ 88%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_has_skill_insufficient_proficiency PASSED [ 88%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_has_skill_default_proficiency PASSED [ 89%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_has_skill_nonexistent_skill PASSED [ 89%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_modifier_existing_skill FAILED [ 89%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_modifier_with_specialization PASSED [ 90%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_modifier_without_specialization PASSED [ 90%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_modifier_nonexistent_skill PASSED [ 90%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skills_by_category_existing PASSED [ 91%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skills_by_category_nonexistent PASSED [ 91%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_expert_skills PASSED [ 92%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_master_skills PASSED [ 92%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_all_skills PASSED [ 92%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_count_trained_skills PASSED [ 93%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_speaks_language_existing PASSED [ 93%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_speaks_language_case_insensitive PASSED [ 93%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_speaks_language_unknown PASSED [ 94%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_strongest_category PASSED [ 94%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_strongest_category_empty_skills PASSED [ 94%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_is_specialist_true PASSED [ 95%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_is_specialist_false PASSED [ 95%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_can_perform_action_success PASSED [ 96%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_can_perform_action_failure PASSED [ 96%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_can_perform_action_nonexistent_skill PASSED [ 96%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_summary PASSED [ 97%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_summary_top_skills_ordering PASSED [ 97%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_create_basic_skills PASSED [ 97%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_create_basic_skills_with_level PASSED [ 98%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_immutability FAILED [ 98%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skill_immutability PASSED [ 98%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skill_group_immutability PASSED [ 99%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_with_overlapping_specializations PASSED [ 99%]
+tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_boundary_values_comprehensive FAILED [100%]
+
+=================================== ERRORS ====================================
+____ ERROR at setup of TestCharacterAggregate.test_update_profile_success _____
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826E73790>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174139024'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('92ae9552-0557-49b0-95fb-db5ae99b09d8'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 224553), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 224556), version=1, _events=[])
+character_id = CharacterID('92ae9552-0557-49b0-95fb-db5ae99b09d8')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174139024'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('92ae9552-0557-49b0-95fb-db5ae99b09d8'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 224553), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 224556), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_update_profile_validation_failure_rollback _
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F50550>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174142048'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('61c92921-39ae-48ee-9a8b-54603941cbc8'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 261997), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 262002), version=1, _events=[])
+character_id = CharacterID('61c92921-39ae-48ee-9a8b-54603941cbc8')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174142048'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('61c92921-39ae-48ee-9a8b-54603941cbc8'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 261997), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 262002), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_____ ERROR at setup of TestCharacterAggregate.test_update_stats_success ______
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F50750>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578172804608'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('1756b541-c7f0-4f49-9267-3a2c76804dc3'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 305758), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 305763), version=1, _events=[])
+character_id = CharacterID('1756b541-c7f0-4f49-9267-3a2c76804dc3')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578172804608'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('1756b541-c7f0-4f49-9267-3a2c76804dc3'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 305758), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 305763), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_update_stats_excessive_health_loss_fails _
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826EF75C0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578169865488'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('2c7b10b6-fbb9-46c8-94f4-01464fb24634'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 346643), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 346648), version=1, _events=[])
+character_id = CharacterID('2c7b10b6-fbb9-46c8-94f4-01464fb24634')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578169865488'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('2c7b10b6-fbb9-46c8-94f4-01464fb24634'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 346643), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 346648), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_update_stats_exceed_maximum_values_fails _
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826EF6A80>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174139696'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('2a6346cf-5ba6-41f8-8edd-ba36657d10b2'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 389879), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 389884), version=1, _events=[])
+character_id = CharacterID('2a6346cf-5ba6-41f8-8edd-ba36657d10b2')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174139696'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('2a6346cf-5ba6-41f8-8edd-ba36657d10b2'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 389879), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 389884), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_update_stats_rollback_on_validation_failure _
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F4E350>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174140368'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('2fdb4b59-8ab3-4e59-857f-fd39328d9e65'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 429640), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 429643), version=1, _events=[])
+character_id = CharacterID('2fdb4b59-8ab3-4e59-857f-fd39328d9e65')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174140368'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('2fdb4b59-8ab3-4e59-857f-fd39328d9e65'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 429640), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 429643), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_______ ERROR at setup of TestCharacterAggregate.test_level_up_success ________
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F4E890>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174138352'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('e317586d-3a1a-41a1-9b8f-57cbf79f4408'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 468233), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 468235), version=1, _events=[])
+character_id = CharacterID('e317586d-3a1a-41a1-9b8f-57cbf79f4408')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174138352'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('e317586d-3a1a-41a1-9b8f-57cbf79f4408'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 468233), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 468235), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_level_up_at_maximum_level_fails _
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826D55230>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174133312'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('08ed517c-7261-412b-a39c-41775ae6d9da'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 500777), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 500781), version=1, _events=[])
+character_id = CharacterID('08ed517c-7261-412b-a39c-41775ae6d9da')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174133312'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('08ed517c-7261-412b-a39c-41775ae6d9da'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 500777), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 500781), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_________ ERROR at setup of TestCharacterAggregate.test_heal_success __________
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826D83050>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578169865488'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('d9633edb-aef1-4361-96de-5094896f2a34'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 535911), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 535914), version=1, _events=[])
+character_id = CharacterID('d9633edb-aef1-4361-96de-5094896f2a34')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578169865488'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('d9633edb-aef1-4361-96de-5094896f2a34'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 535911), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 535914), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+____ ERROR at setup of TestCharacterAggregate.test_heal_to_maximum_health _____
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826D83350>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578172796208'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('52c3fbc9-73f9-4f48-8e7b-d66cecf84948'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 568961), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 568964), version=1, _events=[])
+character_id = CharacterID('52c3fbc9-73f9-4f48-8e7b-d66cecf84948')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578172796208'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('52c3fbc9-73f9-4f48-8e7b-d66cecf84948'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 568961), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 568964), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+____ ERROR at setup of TestCharacterAggregate.test_heal_zero_amount_fails _____
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826DF2FC0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174136000'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('50f90ffd-312a-49d8-b27b-05bbf98efc71'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 601352), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 601357), version=1, _events=[])
+character_id = CharacterID('50f90ffd-312a-49d8-b27b-05bbf98efc71')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174136000'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('50f90ffd-312a-49d8-b27b-05bbf98efc71'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 601352), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 601357), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_heal_at_full_health_no_change _
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826DF3280>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174136336'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('7254846a-7823-4013-be2d-2a7a6de418c7'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 633386), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 633389), version=1, _events=[])
+character_id = CharacterID('7254846a-7823-4013-be2d-2a7a6de418c7')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174136336'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('7254846a-7823-4013-be2d-2a7a6de418c7'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 633386), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 633389), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+______ ERROR at setup of TestCharacterAggregate.test_take_damage_success ______
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F55B30>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174140032'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('99b6a726-4140-481a-be81-78e12315f837'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 670059), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 670064), version=1, _events=[])
+character_id = CharacterID('99b6a726-4140-481a-be81-78e12315f837')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174140032'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('99b6a726-4140-481a-be81-78e12315f837'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 670059), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 670064), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+__ ERROR at setup of TestCharacterAggregate.test_take_damage_with_reduction ___
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F55D10>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174134656'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('0bdd6e0b-2936-4870-a325-62924200b44b'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 703098), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 703102), version=1, _events=[])
+character_id = CharacterID('0bdd6e0b-2936-4870-a325-62924200b44b')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174134656'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('0bdd6e0b-2936-4870-a325-62924200b44b'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 703098), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 703102), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+____ ERROR at setup of TestCharacterAggregate.test_take_damage_minimum_one ____
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F23800>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578169865488'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('68b67306-39dd-4249-9eca-09238cefedb8'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 739392), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 739396), version=1, _events=[])
+character_id = CharacterID('68b67306-39dd-4249-9eca-09238cefedb8')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578169865488'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('68b67306-39dd-4249-9eca-09238cefedb8'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 739392), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 739396), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_take_damage_zero_amount_fails _
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F462D0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578172804608'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('1300f532-73c8-4709-b283-1124d45620e2'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 771386), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 771389), version=1, _events=[])
+character_id = CharacterID('1300f532-73c8-4709-b283-1124d45620e2')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578172804608'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('1300f532-73c8-4709-b283-1124d45620e2'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 771386), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 771389), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+__ ERROR at setup of TestCharacterAggregate.test_take_damage_to_zero_health ___
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F464D0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174139360'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('c25362ae-4063-40b3-9457-1f68ffaf0816'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 805178), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 805255), version=1, _events=[])
+character_id = CharacterID('c25362ae-4063-40b3-9457-1f68ffaf0816')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174139360'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('c25362ae-4063-40b3-9457-1f68ffaf0816'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 805178), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 805255), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+______ ERROR at setup of TestCharacterAggregate.test_is_alive_when_alive ______
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F747C0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174139696'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('c162facd-ac71-41d0-9c7e-c1c244e4974a'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 842146), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 842150), version=1, _events=[])
+character_id = CharacterID('c162facd-ac71-41d0-9c7e-c1c244e4974a')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174139696'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('c162facd-ac71-41d0-9c7e-c1c244e4974a'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 842146), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 842150), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+______ ERROR at setup of TestCharacterAggregate.test_is_alive_when_dead _______
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826EA3D20>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174140368'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('121b78e0-fda5-4add-8d9c-cbe88a86ff8a'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 882334), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 882338), version=1, _events=[])
+character_id = CharacterID('121b78e0-fda5-4add-8d9c-cbe88a86ff8a')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174140368'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('121b78e0-fda5-4add-8d9c-cbe88a86ff8a'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 882334), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 882338), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_can_level_up_with_sufficient_xp _
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x00000258262E42F0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174132976'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('d151bf65-fb1a-4f0b-ba9b-781d0fea5f36'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 928263), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 928270), version=1, _events=[])
+character_id = CharacterID('d151bf65-fb1a-4f0b-ba9b-781d0fea5f36')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174132976'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('d151bf65-fb1a-4f0b-ba9b-781d0fea5f36'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 928263), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 928270), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_can_level_up_insufficient_xp __
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x00000258262E4350>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578169865488'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('d1a93175-91ed-4144-ac88-d3c8fa9780ce'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 972469), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 972473), version=1, _events=[])
+character_id = CharacterID('d1a93175-91ed-4144-ac88-d3c8fa9780ce')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578169865488'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('d1a93175-91ed-4144-ac88-d3c8fa9780ce'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 0, 972469), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 0, 972473), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+___ ERROR at setup of TestCharacterAggregate.test_can_level_up_at_max_level ___
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5AE40>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578172796208'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('4166bf41-bd09-4af2-ae3f-2b9f83322d52'), profile=CharacterProfile(name='Test Warrio...etime(2025, 8, 27, 18, 6, 1, 15901), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 15904), version=1, _events=[])
+character_id = CharacterID('4166bf41-bd09-4af2-ae3f-2b9f83322d52')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578172796208'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('4166bf41-bd09-4af2-ae3f-2b9f83322d52'), profile=CharacterProfile(name='Test Warrio...etime(2025, 8, 27, 18, 6, 1, 15901), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 15904), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_____ ERROR at setup of TestCharacterAggregate.test_get_character_summary _____
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B250>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174133984'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('57788079-109a-455b-b97d-d0622e91cc8e'), profile=CharacterProfile(name='Test Warrio...etime(2025, 8, 27, 18, 6, 1, 48477), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 48480), version=1, _events=[])
+character_id = CharacterID('57788079-109a-455b-b97d-d0622e91cc8e')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174133984'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('57788079-109a-455b-b97d-d0622e91cc8e'), profile=CharacterProfile(name='Test Warrio...etime(2025, 8, 27, 18, 6, 1, 48477), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 48480), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+____ ERROR at setup of TestCharacterAggregate.test_domain_events_creation _____
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B390>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174136000'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('d3817769-bc0f-442a-9bed-e4306d6de5ef'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 146627), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 146629), version=1, _events=[])
+character_id = CharacterID('d3817769-bc0f-442a-9bed-e4306d6de5ef')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174136000'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('d3817769-bc0f-442a-9bed-e4306d6de5ef'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 146627), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 146629), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_domain_events_profile_update __
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B430>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578169865488'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('6e7a37eb-7d43-4a04-8cf0-81677adad5ce'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 181937), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 181940), version=1, _events=[])
+character_id = CharacterID('6e7a37eb-7d43-4a04-8cf0-81677adad5ce')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578169865488'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('6e7a37eb-7d43-4a04-8cf0-81677adad5ce'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 181937), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 181940), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+__ ERROR at setup of TestCharacterAggregate.test_domain_events_stats_change ___
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B4D0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578172804608'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('23e27594-d850-4196-ac8d-be638d62a0fd'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 220574), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 220577), version=1, _events=[])
+character_id = CharacterID('23e27594-d850-4196-ac8d-be638d62a0fd')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578172804608'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('23e27594-d850-4196-ac8d-be638d62a0fd'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 220574), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 220577), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+__________ ERROR at setup of TestCharacterAggregate.test_get_events ___________
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B570>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174139696'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('41908a5b-cac1-4fec-a12b-5addc0d85bce'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 263289), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 263292), version=1, _events=[])
+character_id = CharacterID('41908a5b-cac1-4fec-a12b-5addc0d85bce')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174139696'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('41908a5b-cac1-4fec-a12b-5addc0d85bce'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 263289), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 263292), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_________ ERROR at setup of TestCharacterAggregate.test_clear_events __________
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B610>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174136336'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('e8dc2cd2-735b-4ee3-8b30-0eb3fdd2e356'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 302199), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 302203), version=1, _events=[])
+character_id = CharacterID('e8dc2cd2-735b-4ee3-8b30-0eb3fdd2e356')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174136336'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('e8dc2cd2-735b-4ee3-8b30-0eb3fdd2e356'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 302199), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 302203), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_____ ERROR at setup of TestCharacterAggregate.test_update_skills_success _____
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B6B0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174143056'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('bb4fb4e4-4f1f-4807-ad97-57309e0bfc9c'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 341702), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 341706), version=1, _events=[])
+character_id = CharacterID('bb4fb4e4-4f1f-4807-ad97-57309e0bfc9c')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174143056'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('bb4fb4e4-4f1f-4807-ad97-57309e0bfc9c'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 341702), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 341706), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_update_skills_validation_failure_rollback _
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B750>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174144064'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('2212d1e7-b781-4dfe-bb6c-f1c13566357b'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 378374), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 378378), version=1, _events=[])
+character_id = CharacterID('2212d1e7-b781-4dfe-bb6c-f1c13566357b')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174144064'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('2212d1e7-b781-4dfe-bb6c-f1c13566357b'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 378374), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 378378), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_character_version_consistency _
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B7F0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578169865488'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('f950073b-4aaf-4d17-a219-51d27e04c447'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 421226), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 421229), version=1, _events=[])
+character_id = CharacterID('f950073b-4aaf-4d17-a219-51d27e04c447')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578169865488'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('f950073b-4aaf-4d17-a219-51d27e04c447'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 421226), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 421229), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+__ ERROR at setup of TestCharacterAggregate.test_character_timestamp_updates __
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B890>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578172796208'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('bda02459-d778-4fdf-9e02-16832aaf5d64'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 455410), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 455413), version=1, _events=[])
+character_id = CharacterID('bda02459-d778-4fdf-9e02-16832aaf5d64')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578172796208'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('bda02459-d778-4fdf-9e02-16832aaf5d64'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 455410), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 455413), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_complete_character_lifecycle __
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B930>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174143392'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('4fb55b2f-6f70-4df6-91d8-9a2946de62a0'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 494071), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 494074), version=1, _events=[])
+character_id = CharacterID('4fb55b2f-6f70-4df6-91d8-9a2946de62a0')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174143392'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('4fb55b2f-6f70-4df6-91d8-9a2946de62a0'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 494071), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 494074), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_ ERROR at setup of TestCharacterAggregate.test_character_business_rules_consistency _
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B9D0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174139024'>
+
+    @pytest.fixture
+    def sample_character(self, sample_character_profile, sample_character_stats, sample_skills) -> Character:
+        """Create a test Character instance."""
+>       return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('0bf5ff96-b97f-46bc-8077-2bebab8279fe'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 536683), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 536687), version=1, _events=[])
+character_id = CharacterID('0bf5ff96-b97f-46bc-8077-2bebab8279fe')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174139024'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('0bf5ff96-b97f-46bc-8077-2bebab8279fe'), profile=CharacterProfile(name='Test Warrio...ime(2025, 8, 27, 18, 6, 1, 536683), updated_at=datetime.datetime(2025, 8, 27, 18, 6, 1, 536687), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+================================== FAILURES ===================================
+________ TestCharacterAggregate.test_character_initialization_success _________
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826CAA5D0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174133984'>
+
+    def test_character_initialization_success(self, sample_character_profile, sample_character_stats, sample_skills):
+        """Test successful character initialization."""
+>       character = Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('8afe8536-bd8b-4ca8-ba6c-f798881698b2'), profile=CharacterProfile(name='Test Warrio...e(2025, 8, 27, 18, 5, 59, 790331), updated_at=datetime.datetime(2025, 8, 27, 18, 5, 59, 790334), version=1, _events=[])
+character_id = CharacterID('8afe8536-bd8b-4ca8-ba6c-f798881698b2')
+profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+skills = <Mock id='2578174133984'>, created_at = <factory>
+updated_at = <factory>, version = 1
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Character(character_id=CharacterID('8afe8536-bd8b-4ca8-ba6c-f798881698b2'), profile=CharacterProfile(name='Test Warrio...e(2025, 8, 27, 18, 5, 59, 790331), updated_at=datetime.datetime(2025, 8, 27, 18, 5, 59, 790334), version=1, _events=[])
+
+    def __post_init__(self):
+        """Initialize aggregate and validate invariants."""
+        self._validate_character_consistency()
+    
+        # Record creation event if this is a new character
+        if self.version == 1 and not self._events:
+>           self._add_event(CharacterCreated(
+                character_id=self.character_id,
+                character_name=self.profile.name,
+                character_class=self.profile.character_class.value,
+                level=self.profile.level,
+                created_at=self.created_at
+            ))
+E           TypeError: CharacterCreated.__init__() missing 2 required positional arguments: 'event_id' and 'occurred_at'
+
+contexts\character\domain\aggregates\character.py:57: TypeError
+_______ TestCharacterAggregate.test_character_validation_invalid_level ________
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F05BD0>
+sample_character_profile = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174136336'>
+
+    def test_character_validation_invalid_level(self, sample_character_profile, sample_character_stats, sample_skills):
+        """Test character validation with invalid level."""
+        # Set invalid level
+>       invalid_profile = CharacterProfile(
+            name=sample_character_profile.name,
+            gender=sample_character_profile.gender,
+            race=sample_character_profile.race,
+            character_class=sample_character_profile.character_class,
+            age=sample_character_profile.age,
+            level=0,  # Invalid level
+            physical_traits=sample_character_profile.physical_traits,
+            personality_traits=sample_character_profile.personality_traits,
+            background=sample_character_profile.background
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:182: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+name = 'Test Warrior', gender = <Gender.MALE: 'male'>
+race = <CharacterRace.HUMAN: 'human'>
+character_class = <CharacterClass.FIGHTER: 'fighter'>, age = 25, level = 0
+physical_traits = PhysicalTraits(height_cm=180, weight_kg=75, hair_color='brown', eye_color='blue', skin_tone=None, distinguishing_marks=None, physical_description=None)
+personality_traits = PersonalityTraits(traits={'courage': 0.8, 'intelligence': 0.6, 'charisma': 0.5, 'loyalty': 0.9}, alignment=None, motivations=None, fears=None, quirks=None, ideals=None, bonds=None, flaws=None)
+background = Background(backstory=None, homeland=None, family=None, education=None, previous_occupations=None, significant_events=None, reputation=None)
+title = None, affiliation = None, languages = None
+
+>   ???
+
+<string>:15: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = CharacterProfile(name='Test Warrior', gender=<Gender.MALE: 'male'>, race=<CharacterRace.HUMAN: 'human'>, character_cla...ne, previous_occupations=None, significant_events=None, reputation=None), title=None, affiliation=None, languages=None)
+
+    def __post_init__(self):
+        """Validate character profile data."""
+        # Validate required fields
+        if not self.name or not self.name.strip():
+            raise ValueError("Character name cannot be empty")
+    
+        if self.age < 0 or self.age > 10000:
+            raise ValueError("Age must be between 0 and 10000")
+    
+        if self.level < 1 or self.level > 100:
+>           raise ValueError("Level must be between 1 and 100")
+E           ValueError: Level must be between 1 and 100
+
+contexts\character\domain\value_objects\character_profile.py:175: ValueError
+______ TestCharacterAggregate.test_character_validation_racial_abilities ______
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F27490>
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174140032'>
+
+    def test_character_validation_racial_abilities(self, sample_character_stats, sample_skills):
+        """Test racial ability validation."""
+        # Create a dwarf with too low constitution
+        low_con_abilities = CoreAbilities(
+            strength=15, dexterity=14, constitution=10,  # Too low for dwarf
+            intelligence=12, wisdom=13, charisma=11
+        )
+    
+        dwarf_profile = CharacterProfile(
+            name="Test Dwarf",
+            gender=Gender.MALE,
+            race=CharacterRace.DWARF,  # Requires constitution >= 12
+            character_class=CharacterClass.FIGHTER,
+            age=25,
+            level=1,
+            physical_traits=PhysicalTraits(),
+>           personality_traits=PersonalityTraits(traits={}),
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            background=Background()
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:250: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = PersonalityTraits(traits={}, alignment=None, motivations=None, fears=None, quirks=None, ideals=None, bonds=None, flaws=None)
+traits = {}, alignment = None, motivations = None, fears = None, quirks = None
+ideals = None, bonds = None, flaws = None
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = PersonalityTraits(traits={}, alignment=None, motivations=None, fears=None, quirks=None, ideals=None, bonds=None, flaws=None)
+
+    def __post_init__(self):
+        """Validate personality traits."""
+        if not self.traits:
+>           raise ValueError("Personality traits cannot be empty")
+E           ValueError: Personality traits cannot be empty
+
+contexts\character\domain\value_objects\character_profile.py:102: ValueError
+______ TestCharacterAggregate.test_character_validation_age_consistency _______
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826E73570>
+sample_character_stats = CharacterStats(core_abilities=CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, ch...=0, spell_resistance=0, critical_hit_chance=0.05, critical_damage_multiplier=2.0), experience_points=0, skill_points=5)
+sample_skills = <Mock id='2578174141040'>
+
+    def test_character_validation_age_consistency(self, sample_character_stats, sample_skills):
+        """Test age consistency validation."""
+        # Create high-level character with too young age
+        high_level_profile = CharacterProfile(
+            name="Test Veteran",
+            gender=Gender.MALE,
+            race=CharacterRace.HUMAN,
+            character_class=CharacterClass.FIGHTER,
+            age=15,  # Too young for high level
+            level=20,  # High level character
+            physical_traits=PhysicalTraits(),
+>           personality_traits=PersonalityTraits(traits={}),
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            background=Background()
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:300: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = PersonalityTraits(traits={}, alignment=None, motivations=None, fears=None, quirks=None, ideals=None, bonds=None, flaws=None)
+traits = {}, alignment = None, motivations = None, fears = None, quirks = None
+ideals = None, bonds = None, flaws = None
+
+>   ???
+
+<string>:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = PersonalityTraits(traits={}, alignment=None, motivations=None, fears=None, quirks=None, ideals=None, bonds=None, flaws=None)
+
+    def __post_init__(self):
+        """Validate personality traits."""
+        if not self.traits:
+>           raise ValueError("Personality traits cannot be empty")
+E           ValueError: Personality traits cannot be empty
+
+contexts\character\domain\value_objects\character_profile.py:102: ValueError
+__________ TestCharacterAggregate.test_create_new_character_success ___________
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B2F0>
+
+    def test_create_new_character_success(self):
+        """Test successful character creation using factory method."""
+        core_abilities = CoreAbilities(
+            strength=15, dexterity=14, constitution=16,
+            intelligence=12, wisdom=13, charisma=11
+        )
+    
+>       character = Character.create_new_character(
+            name="New Hero",
+            gender=Gender.FEMALE,
+            race=CharacterRace.ELF,
+            character_class=CharacterClass.RANGER,
+            age=22,
+            core_abilities=core_abilities
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:705: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+cls = <class 'contexts.character.domain.aggregates.character.Character'>
+name = 'New Hero', gender = <Gender.FEMALE: 'female'>
+race = <CharacterRace.ELF: 'elf'>
+character_class = <CharacterClass.RANGER: 'ranger'>, age = 22
+core_abilities = CoreAbilities(strength=15, dexterity=14, constitution=16, intelligence=12, wisdom=13, charisma=11)
+
+    @classmethod
+    def create_new_character(
+        cls,
+        name: str,
+        gender: Gender,
+        race: CharacterRace,
+        character_class: CharacterClass,
+        age: int,
+        core_abilities: CoreAbilities
+    ) -> 'Character':
+        """Factory method to create a new character with defaults."""
+        from ..value_objects.character_profile import PhysicalTraits, PersonalityTraits, Background
+    
+        # Create basic profile
+        profile = CharacterProfile(
+            name=name,
+            gender=gender,
+            race=race,
+            character_class=character_class,
+            age=age,
+            level=1,
+            physical_traits=PhysicalTraits(),
+            personality_traits=PersonalityTraits(traits={
+                "courage": 0.5,
+                "intelligence": 0.5,
+                "charisma": 0.5,
+                "loyalty": 0.5
+            }),
+            background=Background()
+        )
+    
+        # Calculate starting health/mana based on class and constitution
+        base_health = 20 + core_abilities.constitution
+        base_mana = 10 + core_abilities.intelligence if character_class in [
+            CharacterClass.WIZARD, CharacterClass.CLERIC, CharacterClass.SORCERER,
+            CharacterClass.WARLOCK, CharacterClass.BARD, CharacterClass.DRUID
+        ] else 5
+    
+        vital_stats = VitalStats(
+            max_health=base_health,
+            current_health=base_health,
+            max_mana=base_mana,
+            current_mana=base_mana,
+            max_stamina=15 + core_abilities.constitution,
+            current_stamina=15 + core_abilities.constitution,
+>           armor_class=10 + core_abilities.get_ability_modifier(core_abilities.__class__.DEXTERITY),
+                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            speed=30
+        )
+E       AttributeError: type object 'CoreAbilities' has no attribute 'DEXTERITY'
+
+contexts\character\domain\aggregates\character.py:467: AttributeError
+__ TestCharacterAggregate.test_create_new_character_appropriate_health_mana ___
+
+self = <tests.unit.contexts.character.domain.test_character_aggregate.TestCharacterAggregate object at 0x0000025826F5B340>
+
+    def test_create_new_character_appropriate_health_mana(self):
+        """Test new character creation calculates appropriate health and mana."""
+        core_abilities = CoreAbilities(
+            strength=10, dexterity=10, constitution=14,
+            intelligence=16, wisdom=10, charisma=10
+        )
+    
+        # Create wizard (magical class)
+>       wizard = Character.create_new_character(
+            name="Test Wizard",
+            gender=Gender.MALE,
+            race=CharacterRace.HUMAN,
+            character_class=CharacterClass.WIZARD,
+            age=25,
+            core_abilities=core_abilities
+        )
+
+tests\unit\contexts\character\domain\test_character_aggregate.py:732: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+cls = <class 'contexts.character.domain.aggregates.character.Character'>
+name = 'Test Wizard', gender = <Gender.MALE: 'male'>
+race = <CharacterRace.HUMAN: 'human'>
+character_class = <CharacterClass.WIZARD: 'wizard'>, age = 25
+core_abilities = CoreAbilities(strength=10, dexterity=10, constitution=14, intelligence=16, wisdom=10, charisma=10)
+
+    @classmethod
+    def create_new_character(
+        cls,
+        name: str,
+        gender: Gender,
+        race: CharacterRace,
+        character_class: CharacterClass,
+        age: int,
+        core_abilities: CoreAbilities
+    ) -> 'Character':
+        """Factory method to create a new character with defaults."""
+        from ..value_objects.character_profile import PhysicalTraits, PersonalityTraits, Background
+    
+        # Create basic profile
+        profile = CharacterProfile(
+            name=name,
+            gender=gender,
+            race=race,
+            character_class=character_class,
+            age=age,
+            level=1,
+            physical_traits=PhysicalTraits(),
+            personality_traits=PersonalityTraits(traits={
+                "courage": 0.5,
+                "intelligence": 0.5,
+                "charisma": 0.5,
+                "loyalty": 0.5
+            }),
+            background=Background()
+        )
+    
+        # Calculate starting health/mana based on class and constitution
+        base_health = 20 + core_abilities.constitution
+        base_mana = 10 + core_abilities.intelligence if character_class in [
+            CharacterClass.WIZARD, CharacterClass.CLERIC, CharacterClass.SORCERER,
+            CharacterClass.WARLOCK, CharacterClass.BARD, CharacterClass.DRUID
+        ] else 5
+    
+        vital_stats = VitalStats(
+            max_health=base_health,
+            current_health=base_health,
+            max_mana=base_mana,
+            current_mana=base_mana,
+            max_stamina=15 + core_abilities.constitution,
+            current_stamina=15 + core_abilities.constitution,
+>           armor_class=10 + core_abilities.get_ability_modifier(core_abilities.__class__.DEXTERITY),
+                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            speed=30
+        )
+E       AttributeError: type object 'CoreAbilities' has no attribute 'DEXTERITY'
+
+contexts\character\domain\aggregates\character.py:467: AttributeError
+________ TestCharacterStats.test_get_overall_power_level_calculations _________
+
+self = <tests.unit.contexts.character.domain.test_character_stats_value_object.TestCharacterStats object at 0x000002582701E7B0>
+
+    def test_get_overall_power_level_calculations(self):
+        """Test overall power level calculations for different characters."""
+        # Create a legendary character
+        legendary_abilities = CoreAbilities(
+            strength=25, dexterity=25, constitution=25,
+            intelligence=25, wisdom=25, charisma=25  # Average: 25
+        )
+        legendary_vital_stats = VitalStats(
+            max_health=500, current_health=500,  # High health
+            max_mana=200, current_mana=200,
+            max_stamina=300, current_stamina=300,
+            armor_class=25, speed=50
+        )
+        legendary_combat_stats = CombatStats(
+            base_attack_bonus=25,  # High attack
+            initiative_modifier=10,
+            damage_reduction=10,
+            spell_resistance=30,
+            critical_hit_chance=0.2,
+            critical_damage_multiplier=3.0
+        )
+    
+        legendary_stats = CharacterStats(
+            core_abilities=legendary_abilities,
+            vital_stats=legendary_vital_stats,
+            combat_stats=legendary_combat_stats,
+            experience_points=5_000_000,
+            skill_points=500
+        )
+    
+        assert legendary_stats.get_overall_power_level() == "Legendary"
+    
+        # Create a novice character
+        novice_abilities = CoreAbilities(
+            strength=8, dexterity=8, constitution=8,
+            intelligence=8, wisdom=8, charisma=8  # Average: 8
+        )
+        novice_vital_stats = VitalStats(
+            max_health=20, current_health=20,  # Low health
+            max_mana=5, current_mana=5,
+            max_stamina=15, current_stamina=15,
+            armor_class=8, speed=25
+        )
+        novice_combat_stats = CombatStats(
+            base_attack_bonus=-2,  # Low attack
+            initiative_modifier=-1,
+            damage_reduction=0,
+            spell_resistance=0,
+            critical_hit_chance=0.05,
+            critical_damage_multiplier=2.0
+        )
+    
+        novice_stats = CharacterStats(
+            core_abilities=novice_abilities,
+            vital_stats=novice_vital_stats,
+            combat_stats=novice_combat_stats,
+            experience_points=0,
+            skill_points=5
+        )
+    
+>       assert novice_stats.get_overall_power_level() == "Novice"
+E       AssertionError: assert 'Average' == 'Novice'
+E         
+E         - Novice
+E         + Average
+
+tests\unit\contexts\character\domain\test_character_stats_value_object.py:1128: AssertionError
+___________ TestSkillGroup.test_get_average_proficiency_empty_group ___________
+
+self = <tests.unit.contexts.character.domain.test_skills_value_object.TestSkillGroup object at 0x0000025827062270>
+
+    def test_get_average_proficiency_empty_group(self):
+        """Test average proficiency for hypothetical empty group."""
+        # This test is theoretical since empty groups fail validation
+        # but tests the method logic
+        skills = {
+            "test": Skill("Test", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0)
+        }
+        group = SkillGroup("Test", SkillCategory.COMBAT, 0, skills)
+    
+        # Manually test the logic by clearing skills (bypassing validation)
+        group = SkillGroup.__new__(SkillGroup)
+>       group.skills = {}
+        ^^^^^^^^^^^^
+
+tests\unit\contexts\character\domain\test_skills_value_object.py:486: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <[AttributeError("'SkillGroup' object has no attribute 'name'") raised in repr()] SkillGroup object at 0x25847451a90>
+name = 'skills', value = {}
+
+>   ???
+E   dataclasses.FrozenInstanceError: cannot assign to field 'skills'
+
+<string>:19: FrozenInstanceError
+______________ TestSkills.test_get_skill_modifier_existing_skill ______________
+
+self = <tests.unit.contexts.character.domain.test_skills_value_object.TestSkills object at 0x0000025826FF8890>
+sample_skills = Skills(skill_groups={<SkillCategory.COMBAT: 'combat'>: SkillGroup(name='Combat', category=<SkillCategory.COMBAT: 'comb...description=None)})}, languages={'Elvish', 'Draconic', 'Common'}, specializations={'melee_combat': 2, 'persuasion': 1})
+
+    def test_get_skill_modifier_existing_skill(self, sample_skills):
+        """Test getting skill modifier for existing skill."""
+        # Melee Combat: EXPERT(4) + modifier(2) = 6
+        modifier = sample_skills.get_skill_modifier("melee_combat")
+    
+>       assert modifier == 6
+E       assert 8 == 6
+
+tests\unit\contexts\character\domain\test_skills_value_object.py:702: AssertionError
+_____________________ TestSkills.test_skills_immutability _____________________
+
+self = <tests.unit.contexts.character.domain.test_skills_value_object.TestSkills object at 0x000002582706A800>
+sample_skills = Skills(skill_groups={<SkillCategory.COMBAT: 'combat'>: SkillGroup(name='Combat', category=<SkillCategory.COMBAT: 'comb...n=None)})}, languages={'Orcish', 'Elvish', 'Draconic', 'Common'}, specializations={'melee_combat': 2, 'persuasion': 1})
+
+    def test_skills_immutability(self, sample_skills):
+        """Test that Skills is immutable (frozen dataclass)."""
+>       with pytest.raises(AttributeError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'AttributeError'>
+
+tests\unit\contexts\character\domain\test_skills_value_object.py:916: Failed
+____________ TestSkills.test_skills_boundary_values_comprehensive _____________
+
+self = <tests.unit.contexts.character.domain.test_skills_value_object.TestSkills object at 0x000002582706AAD0>
+
+    def test_skills_boundary_values_comprehensive(self):
+        """Test skills with various boundary value combinations."""
+        # Create skills with extreme values
+        extreme_skills = {
+            "max_skill": Skill(
+                "Max Skill",
+                SkillCategory.COMBAT,
+                ProficiencyLevel.LEGENDARY,  # Max proficiency
+                20  # Max modifier
+            ),
+            "min_skill": Skill(
+                "Min Skill",
+                SkillCategory.COMBAT,
+                ProficiencyLevel.UNTRAINED,  # Min proficiency
+                -10  # Min modifier
+            )
+        }
+    
+        skill_groups = {
+            SkillCategory.COMBAT: SkillGroup("Combat", SkillCategory.COMBAT, 10, extreme_skills)  # Max base
+        }
+    
+        skills = Skills(
+            skill_groups=skill_groups,
+            languages={"A" * 30},  # Max language name length
+            specializations={"max_skill": 15, "min_skill": -5}  # Max/min specialization bonuses
+        )
+    
+        # Test maximum modifier calculation
+        max_modifier = skills.get_skill_modifier("max_skill")
+        assert max_modifier == 42  # LEGENDARY(7) + modifier(20) + specialization(15)
+    
+        # Test minimum modifier calculation
+        min_modifier = skills.get_skill_modifier("min_skill")
+>       assert min_modifier == -8  # UNTRAINED(0) + modifier(-10) + specialization(-5)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert -15 == -8
+
+tests\unit\contexts\character\domain\test_skills_value_object.py:991: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_initialization_success
+FAILED tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_validation_invalid_level
+FAILED tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_validation_racial_abilities
+FAILED tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_validation_age_consistency
+FAILED tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_create_new_character_success
+FAILED tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_create_new_character_appropriate_health_mana
+FAILED tests/unit/contexts/character/domain/test_character_stats_value_object.py::TestCharacterStats::test_get_overall_power_level_calculations
+FAILED tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkillGroup::test_get_average_proficiency_empty_group
+FAILED tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_get_skill_modifier_existing_skill
+FAILED tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_immutability
+FAILED tests/unit/contexts/character/domain/test_skills_value_object.py::TestSkills::test_skills_boundary_values_comprehensive
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_profile_success
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_profile_validation_failure_rollback
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_stats_success
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_stats_excessive_health_loss_fails
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_stats_exceed_maximum_values_fails
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_stats_rollback_on_validation_failure
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_level_up_success
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_level_up_at_maximum_level_fails
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_heal_success
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_heal_to_maximum_health
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_heal_zero_amount_fails
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_heal_at_full_health_no_change
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_take_damage_success
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_take_damage_with_reduction
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_take_damage_minimum_one
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_take_damage_zero_amount_fails
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_take_damage_to_zero_health
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_is_alive_when_alive
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_is_alive_when_dead
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_can_level_up_with_sufficient_xp
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_can_level_up_insufficient_xp
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_can_level_up_at_max_level
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_get_character_summary
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_domain_events_creation
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_domain_events_profile_update
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_domain_events_stats_change
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_get_events
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_clear_events
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_skills_success
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_update_skills_validation_failure_rollback
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_version_consistency
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_timestamp_updates
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_complete_character_lifecycle
+ERROR tests/unit/contexts/character/domain/test_character_aggregate.py::TestCharacterAggregate::test_character_business_rules_consistency
+================== 11 failed, 231 passed, 34 errors in 4.99s ==================

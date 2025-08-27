@@ -8,7 +8,8 @@ import yaml
 # HACK: Force project root onto path to fix persistent import issue
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.persona_agent import PersonaAgent, ThreatLevel
+from src.persona_agent import PersonaAgent
+from src.agents.persona_agent.protocols import ThreatLevel
 from src.event_bus import EventBus
 from shared_types import CharacterAction
 

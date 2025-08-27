@@ -2,7 +2,8 @@ import unittest
 from unittest.mock import Mock, patch, mock_open, MagicMock
 import os
 import json
-from src.persona_agent import PersonaAgent, WorldEvent, SubjectiveInterpretation, ThreatLevel
+from src.persona_agent import PersonaAgent
+from src.agents.persona_agent.protocols import WorldEvent, SubjectiveInterpretation, ThreatLevel
 from src.event_bus import EventBus
 from shared_types import CharacterAction, ActionPriority
 

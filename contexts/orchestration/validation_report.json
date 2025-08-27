@@ -1,0 +1,256 @@
+{
+  "test_categories": [
+    {
+      "category": "Architecture Validation",
+      "tests_run": 3,
+      "tests_passed": 3,
+      "tests_failed": 0,
+      "execution_time_ms": 0.753,
+      "results": [
+        {
+          "test_name": "Domain Layer Architecture",
+          "passed": true,
+          "details": "Core domain files exist: True",
+          "file_count": 9
+        },
+        {
+          "test_name": "Infrastructure Layer Architecture",
+          "passed": true,
+          "details": "Infrastructure phase implementations exist: True",
+          "file_count": 8
+        },
+        {
+          "test_name": "Application Layer Architecture",
+          "passed": true,
+          "details": "Application services exist: True",
+          "file_count": 3
+        }
+      ]
+    },
+    {
+      "category": "Component Structure",
+      "tests_run": 3,
+      "tests_passed": 3,
+      "tests_failed": 0,
+      "execution_time_ms": 0.705,
+      "results": [
+        {
+          "test_name": "TurnId Value Object Structure",
+          "passed": true,
+          "details": "Immutable dataclass with UUID: True",
+          "validation_checks": [
+            [
+              "Has @dataclass decorator",
+              true
+            ],
+            [
+              "Is frozen/immutable",
+              true
+            ],
+            [
+              "Uses UUID",
+              true
+            ]
+          ]
+        },
+        {
+          "test_name": "Turn Entity Structure",
+          "passed": true,
+          "details": "Turn aggregate with saga support: True",
+          "validation_checks": [
+            [
+              "Has Turn class",
+              true
+            ],
+            [
+              "Has saga methods",
+              true
+            ],
+            [
+              "Has state management",
+              true
+            ]
+          ]
+        },
+        {
+          "test_name": "Saga Coordinator Structure",
+          "passed": true,
+          "details": "Saga coordinator with compensation logic: True",
+          "validation_checks": [
+            [
+              "Has SagaCoordinator class",
+              true
+            ],
+            [
+              "Has compensation methods",
+              true
+            ],
+            [
+              "Has rollback logic",
+              true
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "category": "API Structure",
+      "tests_run": 2,
+      "tests_passed": 2,
+      "tests_failed": 0,
+      "execution_time_ms": 0.339,
+      "results": [
+        {
+          "test_name": "REST API Structure",
+          "passed": true,
+          "details": "FastAPI with required endpoints: True",
+          "validation_checks": [
+            [
+              "Uses FastAPI",
+              true
+            ],
+            [
+              "Has /v1/turns:run endpoint",
+              true
+            ],
+            [
+              "Has /v1/health endpoint",
+              true
+            ],
+            [
+              "Has POST decorators",
+              true
+            ]
+          ]
+        },
+        {
+          "test_name": "Main Entry Point",
+          "passed": true,
+          "details": "Service entry point with uvicorn: True",
+          "validation_checks": [
+            [
+              "Has uvicorn server",
+              true
+            ],
+            [
+              "Has main function",
+              true
+            ],
+            [
+              "Imports API app",
+              true
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Configuration Validation",
+      "tests_run": 2,
+      "tests_passed": 2,
+      "tests_failed": 0,
+      "execution_time_ms": 0.33399999999999996,
+      "results": [
+        {
+          "test_name": "Dependencies Configuration",
+          "passed": true,
+          "details": "Required dependencies specified: True",
+          "validation_checks": [
+            [
+              "Has FastAPI",
+              true
+            ],
+            [
+              "Has uvicorn",
+              true
+            ],
+            [
+              "Has Pydantic",
+              true
+            ],
+            [
+              "Has httpx",
+              true
+            ]
+          ]
+        },
+        {
+          "test_name": "Turn Configuration Validation",
+          "passed": true,
+          "details": "Configuration with validation and defaults: True",
+          "validation_checks": [
+            [
+              "Has dataclass structure",
+              true
+            ],
+            [
+              "Has validation logic",
+              true
+            ],
+            [
+              "Has default values",
+              true
+            ],
+            [
+              "Has timeout configuration",
+              true
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Documentation Coverage",
+      "tests_run": 2,
+      "tests_passed": 2,
+      "tests_failed": 0,
+      "execution_time_ms": 0.933,
+      "results": [
+        {
+          "test_name": "Architecture Documentation",
+          "passed": true,
+          "details": "Comprehensive architecture docs (10027 chars): True",
+          "validation_checks": [
+            [
+              "Describes 5-phase pipeline",
+              true
+            ],
+            [
+              "Describes saga pattern",
+              true
+            ],
+            [
+              "Includes compensation matrix",
+              true
+            ],
+            [
+              "Substantial content",
+              true
+            ]
+          ]
+        },
+        {
+          "test_name": "Module Documentation",
+          "passed": true,
+          "details": "Documented modules: 3/3",
+          "documented_files": 3,
+          "total_files": 3
+        }
+      ]
+    }
+  ],
+  "total_tests": 12,
+  "passed_tests": 12,
+  "failed_tests": 0,
+  "execution_time_ms": 3.764,
+  "overall_success": true,
+  "detailed_results": [],
+  "validation_metadata": {
+    "timestamp": "2025-08-27T13:55:00.642741",
+    "duration_ms": 3.764,
+    "orchestrator_version": "1.0.0",
+    "python_version": "3.13.5 | packaged by Anaconda, Inc. | (main, Jun 12 2025, 16:37:03) [MSC v.1929 64 bit (AMD64)]",
+    "test_environment": "development",
+    "validation_type": "M9 Orchestration Architecture & Component Validation"
+  }
+}

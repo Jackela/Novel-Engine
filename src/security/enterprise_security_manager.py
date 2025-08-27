@@ -27,7 +27,20 @@ import ipaddress
 import asyncio
 import aioredis
 import aiosqlite
-import geoip2.database
+try:
+    import geoip2.database
+    GEOIP2_AVAILABLE = True
+except ImportError:
+    # Stub implementation when geoip2 is not available
+    class MockGeoIP2Database:
+        def __init__(self, *args, **kwargs): pass
+        def city(self, ip): 
+            class MockCity:
+                country = type('', (), {'iso_code': 'US'})()
+                city = type('', (), {'name': 'Unknown'})()
+            return MockCity()
+    geoip2 = type('', (), {'database': type('', (), {'Reader': MockGeoIP2Database})()})()
+    GEOIP2_AVAILABLE = False
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any, Set, Tuple, Union
 from dataclasses import dataclass, asdict, field
@@ -41,7 +54,17 @@ from pathlib import Path
 from fastapi import Request, HTTPException, Depends
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel, Field, IPvAnyAddress
-import user_agents
+try:
+    import user_agents
+    USER_AGENTS_AVAILABLE = True
+except ImportError:
+    # Stub implementation when user_agents is not available
+    class MockUserAgent:
+        def __init__(self):
+            self.browser = type('', (), {'family': 'Unknown'})()
+            self.os = type('', (), {'family': 'Unknown'})()
+    user_agents = type('', (), {'parse': lambda ua: MockUserAgent()})()
+    USER_AGENTS_AVAILABLE = False
 
 # Enhanced logging configuration
 logging.basicConfig(level=logging.INFO)

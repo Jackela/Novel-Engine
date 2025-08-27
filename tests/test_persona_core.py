@@ -16,10 +16,8 @@ from unittest.mock import Mock, AsyncMock, patch, MagicMock
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from agents.persona_core import PersonaCore, AgentIdentity
-from agents.persona_memory import PersonaMemory
-from agents.persona_narrative import PersonaNarrative
-from agents.persona_actions import PersonaActions
+from src.agents.persona_core import PersonaCore, AgentIdentity
+# Note: PersonaMemory, PersonaNarrative, PersonaActions don't exist - removing unused imports
 
 
 class TestAgentIdentity:

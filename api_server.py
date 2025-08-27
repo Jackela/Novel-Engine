@@ -22,7 +22,7 @@ from config_loader import get_config
 from character_factory import CharacterFactory
 from director_agent import DirectorAgent
 from chronicler_agent import ChroniclerAgent
-from src.persona_agent import _validate_gemini_api_key, _make_gemini_api_request
+# Removed stale import: _validate_gemini_api_key, _make_gemini_api_request no longer exist
 from src.event_bus import EventBus
 
 from src.constraints_loader import (
@@ -39,6 +39,15 @@ from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Import World Context API Router
+try:
+    from apps.api.http import world_router
+    WORLD_ROUTER_AVAILABLE = True
+    logger.info("World context router successfully imported.")
+except ImportError as e:
+    WORLD_ROUTER_AVAILABLE = False
+    logger.warning(f"World context router not available: {e}")
 
 try:
     from src.shared_types import (
@@ -153,6 +162,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include World Context Router
+if WORLD_ROUTER_AVAILABLE:
+    app.include_router(world_router, prefix="/api/v1")
+    logger.info("World context router included with prefix /api/v1/worlds")
+else:
+    logger.warning("World context router not available - endpoints will not be accessible")
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):

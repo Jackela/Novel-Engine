@@ -15,8 +15,8 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from enhanced_multi_agent_bridge_refactored import (
-    EnhancedMultiAgentBridge, BridgeConfiguration, create_enhanced_bridge
+from enhanced_multi_agent_bridge import (
+    EnhancedMultiAgentBridge, LLMCoordinationConfig
 )
 from src.bridge.types import RequestPriority, CommunicationType, DialogueState
 from src.bridge.dialogue_manager import DialogueManager

@@ -1,21 +1,21 @@
 """
-Interactions Domain Context
-==========================
+Interaction Bounded Context
 
-Domain context for character interactions, including dialogue processing,
-combat resolution, cooperative actions, and interaction validation.
+This bounded context handles complex interactions between entities in the
+game world. It manages negotiation sessions, diplomatic exchanges, trade
+discussions, and other sophisticated inter-entity communications.
 
-Domain Responsibilities:
-- Character interaction processing and validation
-- Dialogue generation and conversation management
-- Combat and conflict resolution
-- Cooperative action coordination
-- Interaction outcome calculation and effects
+Key Components:
+- NegotiationSession: Aggregate representing ongoing negotiations between entities
+- NegotiationParty: Entity representing participants in negotiations  
+- Proposal: Entity representing specific proposals and terms
+- NegotiationService: Domain service for managing negotiation logic
 
-Bounded Context: All character interaction and communication domain logic
-External Interfaces: Character context, Narrative context, Campaign context
+The Interaction context is responsible for ensuring that negotiations follow
+proper protocols, that proposals are valid and feasible, and that outcomes
+are fairly determined based on the participants' capabilities and positions.
 """
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __context_name__ = "interactions"
-__description__ = "Interaction Domain Context with Dialogue and Action Processing"
+__description__ = "Interaction Bounded Context with Negotiation and Diplomatic Systems"
