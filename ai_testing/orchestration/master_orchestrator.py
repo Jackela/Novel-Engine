@@ -6,39 +6,42 @@ Orchestrates all microservices to provide seamless end-to-end testing capabiliti
 """
 
 import asyncio
-import json
 import logging
 import time
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Tuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
 import httpx
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 # Import Novel-Engine patterns
 try:
     from config_loader import get_config
+
     from src.event_bus import EventBus
 except ImportError:
     # Fallback for testing
-    get_config = lambda: None
-    EventBus = lambda: None
-
-# Import AI testing configuration
-from ai_testing_config import get_ai_testing_service_config
+    def get_config():
+        return None
+    def EventBus():
+        return None
 
 # Import AI testing contracts
 from ai_testing.interfaces.service_contracts import (
-    TestResult, TestExecution, TestContext, TestStatus, ServiceHealthResponse,
-    create_test_context, UITestSpec, APITestSpec, AIQualitySpec
+    ServiceHealthResponse,
+    TestContext,
+    TestResult,
+    TestStatus,
+    create_test_context,
 )
+
+# Import AI testing configuration
+from ai_testing_config import get_ai_testing_service_config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -948,6 +951,7 @@ class MasterOrchestrator:
 # === FastAPI Application ===
 
 from contextlib import asynccontextmanager
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -13,10 +13,7 @@ Each provider implements the ILLMProvider interface and handles:
 - Token estimation and cost calculation
 """
 
-from .openai_provider import OpenAIProvider
 from .ollama_provider import OllamaProvider
+from .openai_provider import OpenAIProvider
 
-__all__ = [
-    'OpenAIProvider',
-    'OllamaProvider'
-]
+__all__ = ["OpenAIProvider", "OllamaProvider"]

@@ -37,9 +37,7 @@ __all__ = [
 
 # Import submodules for easier access
 try:
-    from . import staging
-    from . import production
-    from . import security
+    from . import production, security, staging
 except ImportError:
     # Allow graceful degradation if submodules aren't ready yet
     pass

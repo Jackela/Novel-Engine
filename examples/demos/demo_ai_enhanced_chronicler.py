@@ -32,7 +32,6 @@ import os
 import sys
 import time
 from datetime import datetime
-from pathlib import Path
 
 # Add the current directory to the Python path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -107,24 +106,24 @@ def analyze_campaign_log_quality(log_path: str) -> dict:
             }
         }
         
-        print(f"📊 FILE STATISTICS:")
+        print("📊 FILE STATISTICS:")
         print(f"   • Total lines: {analysis['file_stats']['total_lines']}")
         print(f"   • File size: {analysis['file_stats']['file_size_kb']} KB")
         print(f"   • Total characters: {analysis['file_stats']['total_characters']:,}")
         
-        print(f"\n🤖 AI INTEGRATION METRICS:")
+        print("\n🤖 AI INTEGRATION METRICS:")
         print(f"   • LLM-guided decisions: {analysis['ai_integration_metrics']['llm_guided_decisions']}")
         print(f"   • Character actions: {analysis['ai_integration_metrics']['character_actions']}")
         print(f"   • Reasoning statements: {analysis['ai_integration_metrics']['reasoning_statements']}")
         print(f"   • Avg reasoning length: {analysis['ai_integration_metrics']['avg_reasoning_length']} chars")
         
-        print(f"\n👥 CHARACTER DIVERSITY:")
+        print("\n👥 CHARACTER DIVERSITY:")
         print(f"   • Unique characters: {analysis['character_diversity']['character_count']}")
         print(f"   • Characters: {', '.join(analysis['character_diversity']['unique_characters'])}")
         print(f"   • Unique factions: {analysis['character_diversity']['faction_count']}")
         print(f"   • Factions: {', '.join(analysis['character_diversity']['unique_factions'])}")
         
-        print(f"\n✅ QUALITY INDICATORS:")
+        print("\n✅ QUALITY INDICATORS:")
         for indicator, status in analysis['quality_indicators'].items():
             status_icon = "✅" if status else "❌"
             print(f"   {status_icon} {indicator.replace('_', ' ').title()}: {status}")
@@ -149,13 +148,13 @@ def demonstrate_ai_enhanced_transcription():
     campaign_log_path = "campaign_log.md"
     output_directory = "demo_narratives"
     
-    print(f"📋 DEMONSTRATION CONFIGURATION:")
+    print("📋 DEMONSTRATION CONFIGURATION:")
     print(f"   • Campaign log: {campaign_log_path}")
     print(f"   • Output directory: {output_directory}")
     print(f"   • Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Step 1: Verify campaign log exists and analyze quality
-    print(f"\n" + "=" * 60)
+    print("\n" + "=" * 60)
     if not os.path.exists(campaign_log_path):
         print(f"❌ ERROR: Campaign log not found: {campaign_log_path}")
         print("Please ensure the campaign log has been generated with real AI decisions.")
@@ -168,11 +167,11 @@ def demonstrate_ai_enhanced_transcription():
         print("\n⚠️  WARNING: Campaign log appears to lack real AI-generated decisions")
         print("Expected to find [LLM-Guided] markers indicating Gemini API integration")
     else:
-        print(f"\n✅ CONFIRMED: Real AI integration detected!")
+        print("\n✅ CONFIRMED: Real AI integration detected!")
         print(f"   Found {log_analysis['ai_integration_metrics']['llm_guided_decisions']} LLM-guided decisions")
     
     # Step 2: Initialize ChroniclerAgent
-    print(f"\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("🔧 INITIALIZING CHRONICLER AGENT")
     print("=" * 50)
     
@@ -198,7 +197,7 @@ def demonstrate_ai_enhanced_transcription():
         return
     
     # Step 3: Process the AI-enhanced campaign log
-    print(f"\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("📚 TRANSCRIBING AI-ENHANCED CAMPAIGN LOG")
     print("=" * 50)
     
@@ -217,7 +216,7 @@ def demonstrate_ai_enhanced_transcription():
         end_time = time.time()
         processing_time = end_time - start_time
         
-        print(f"\n✅ TRANSCRIPTION COMPLETED!")
+        print("\n✅ TRANSCRIPTION COMPLETED!")
         print(f"   • Processing time: {processing_time:.2f} seconds")
         print(f"   • Narrative length: {len(complete_narrative):,} characters")
         print(f"   • Events processed: {chronicler.events_processed}")
@@ -229,14 +228,14 @@ def demonstrate_ai_enhanced_transcription():
         return
     
     # Step 4: Display the complete AI-powered narrative
-    print(f"\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("📖 COMPLETE AI-POWERED NARRATIVE STORY")
     print("=" * 60)
     
     print(complete_narrative)
     
     # Step 5: Analysis and quality assessment
-    print(f"\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("📊 NARRATIVE QUALITY ANALYSIS")
     print("=" * 50)
     
@@ -254,13 +253,13 @@ def demonstrate_ai_enhanced_transcription():
     
     term_count = sum(complete_narrative.lower().count(term.lower()) for term in wh40k_terms)
     
-    print(f"📝 NARRATIVE STATISTICS:")
+    print("📝 NARRATIVE STATISTICS:")
     print(f"   • Total words: {narrative_words:,}")
     print(f"   • Total sentences: {narrative_sentences}")
     print(f"   • Average sentence length: {avg_sentence_length:.1f} words")
     print(f"   • Warhammer 40k terminology usage: {term_count} instances")
     
-    print(f"\n🎯 QUALITY ASSESSMENT:")
+    print("\n🎯 QUALITY ASSESSMENT:")
     quality_score = 0
     
     # Check narrative length
@@ -303,7 +302,7 @@ def demonstrate_ai_enhanced_transcription():
         print("   ⚠️  NEEDS IMPROVEMENT: Narrative quality below expectations")
     
     # Step 6: Final summary and file locations
-    print(f"\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("📋 DEMONSTRATION SUMMARY")
     print("=" * 50)
     
@@ -315,7 +314,7 @@ def demonstrate_ai_enhanced_transcription():
     print("   • Warhammer 40k atmospheric preservation")
     print("   • Quality analysis and assessment")
     
-    print(f"\n📁 GENERATED FILES:")
+    print("\n📁 GENERATED FILES:")
     print(f"   • Narrative saved to: {output_directory}/")
     
     # List generated narrative files
@@ -325,7 +324,7 @@ def demonstrate_ai_enhanced_transcription():
         print(f"   • Latest narrative: {latest_file}")
         print(f"   • Full path: {os.path.abspath(os.path.join(output_directory, latest_file))}")
     
-    print(f"\n🚀 END-TO-END AI-POWERED WORKFLOW COMPLETE!")
+    print("\n🚀 END-TO-END AI-POWERED WORKFLOW COMPLETE!")
     print("The Warhammer 40k Multi-Agent Simulator has successfully demonstrated")
     print("the full production capability from real Gemini API character decisions")
     print("through structured campaign logging to final dramatic narrative stories.")
@@ -338,7 +337,7 @@ def show_ai_enhancement_comparison():
     Display a comparison highlighting the improvements from real AI integration
     versus placeholder-based responses.
     """
-    print(f"\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("🔄 AI ENHANCEMENT COMPARISON")
     print("=" * 60)
     

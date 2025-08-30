@@ -1,0 +1,616 @@
+{
+  "timestamp": "2025-08-29T05:32:53.412Z",
+  "viewports": {
+    "desktop": {
+      "name": "desktop",
+      "config": {
+        "width": 1440,
+        "height": 900
+      },
+      "loadTime": 1549,
+      "components": {
+        "World State Map": {
+          "selector": "[data-testid*=\"world\"], [data-testid*=\"map\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Real-time Activity": {
+          "selector": "[data-testid*=\"activity\"], [data-testid*=\"feed\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Performance Metrics": {
+          "selector": "[data-testid*=\"metrics\"], [data-testid*=\"performance\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Turn Pipeline": {
+          "selector": "[data-testid*=\"pipeline\"], [data-testid*=\"turn\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Quick Actions": {
+          "selector": "[data-testid=\"quick-actions\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Character Networks": {
+          "selector": "[data-testid*=\"character\"], [data-testid*=\"network\"]",
+          "present": false,
+          "visible": false,
+          "required": true
+        },
+        "Event Cascade": {
+          "selector": "[data-testid*=\"cascade\"], [data-testid*=\"event\"]",
+          "present": false,
+          "visible": false,
+          "required": true
+        },
+        "Narrative Timeline": {
+          "selector": "[data-testid*=\"timeline\"], [data-testid*=\"narrative\"]",
+          "present": false,
+          "visible": false,
+          "required": true
+        },
+        "Analytics Dashboard": {
+          "selector": "[data-testid*=\"analytics\"], [data-testid*=\"dashboard\"]",
+          "present": true,
+          "visible": true,
+          "required": false
+        }
+      },
+      "quickActions": {
+        "present": true,
+        "visible": true,
+        "dimensions": {
+          "x": 1218.328125,
+          "y": 433,
+          "width": 77.65625,
+          "height": 160
+        },
+        "buttons": [
+          {
+            "index": 0,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 1237.15625,
+              "y": 530.90625,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 1,
+            "visible": true,
+            "enabled": false,
+            "dimensions": {
+              "x": 1237.15625,
+              "y": 574.90625,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 2,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 1237.15625,
+              "y": 647.8125,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 3,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 1237.15625,
+              "y": 691.8125,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 4,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 1237.15625,
+              "y": 764.71875,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 5,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 1237.15625,
+              "y": 808.71875,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 6,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 1237.15625,
+              "y": 852.71875,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          }
+        ],
+        "primaryAction": {
+          "present": true,
+          "visible": true,
+          "enabled": true
+        }
+      },
+      "screenshots": [
+        "final-validation-screenshots\\desktop-full-dashboard.png",
+        "final-validation-screenshots\\desktop-quick-actions-detail.png"
+      ],
+      "errors": [
+        {
+          "type": "component_missing",
+          "message": "Required component missing: Character Networks",
+          "selector": "[data-testid*=\"character\"], [data-testid*=\"network\"]"
+        },
+        {
+          "type": "component_missing",
+          "message": "Required component missing: Event Cascade",
+          "selector": "[data-testid*=\"cascade\"], [data-testid*=\"event\"]"
+        },
+        {
+          "type": "component_missing",
+          "message": "Required component missing: Narrative Timeline",
+          "selector": "[data-testid*=\"timeline\"], [data-testid*=\"narrative\"]"
+        }
+      ],
+      "passed": false
+    },
+    "tablet": {
+      "name": "tablet",
+      "config": {
+        "width": 1024,
+        "height": 768
+      },
+      "loadTime": 1482,
+      "components": {
+        "World State Map": {
+          "selector": "[data-testid*=\"world\"], [data-testid*=\"map\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Real-time Activity": {
+          "selector": "[data-testid*=\"activity\"], [data-testid*=\"feed\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Performance Metrics": {
+          "selector": "[data-testid*=\"metrics\"], [data-testid*=\"performance\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Turn Pipeline": {
+          "selector": "[data-testid*=\"pipeline\"], [data-testid*=\"turn\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Quick Actions": {
+          "selector": "[data-testid=\"quick-actions\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Character Networks": {
+          "selector": "[data-testid*=\"character\"], [data-testid*=\"network\"]",
+          "present": false,
+          "visible": false,
+          "required": true
+        },
+        "Event Cascade": {
+          "selector": "[data-testid*=\"cascade\"], [data-testid*=\"event\"]",
+          "present": false,
+          "visible": false,
+          "required": true
+        },
+        "Narrative Timeline": {
+          "selector": "[data-testid*=\"timeline\"], [data-testid*=\"narrative\"]",
+          "present": false,
+          "visible": false,
+          "required": true
+        },
+        "Analytics Dashboard": {
+          "selector": "[data-testid*=\"analytics\"], [data-testid*=\"dashboard\"]",
+          "present": true,
+          "visible": true,
+          "required": false
+        }
+      },
+      "quickActions": {
+        "present": true,
+        "visible": true,
+        "dimensions": {
+          "x": 892,
+          "y": 739,
+          "width": 108,
+          "height": 140
+        },
+        "buttons": [
+          {
+            "index": 0,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 926,
+              "y": 836.90625,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 1,
+            "visible": true,
+            "enabled": false,
+            "dimensions": {
+              "x": 926,
+              "y": 880.90625,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 2,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 926,
+              "y": 953.8125,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 3,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 926,
+              "y": 997.8125,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 4,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 926,
+              "y": 1070.71875,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 5,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 926,
+              "y": 1114.71875,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 6,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 926,
+              "y": 1158.71875,
+              "width": 40,
+              "height": 40
+            },
+            "touchFriendly": true
+          }
+        ],
+        "primaryAction": {
+          "present": true,
+          "visible": true,
+          "enabled": true
+        }
+      },
+      "screenshots": [
+        "final-validation-screenshots\\tablet-full-dashboard.png",
+        "final-validation-screenshots\\tablet-quick-actions-detail.png"
+      ],
+      "errors": [
+        {
+          "type": "component_missing",
+          "message": "Required component missing: Character Networks",
+          "selector": "[data-testid*=\"character\"], [data-testid*=\"network\"]"
+        },
+        {
+          "type": "component_missing",
+          "message": "Required component missing: Event Cascade",
+          "selector": "[data-testid*=\"cascade\"], [data-testid*=\"event\"]"
+        },
+        {
+          "type": "component_missing",
+          "message": "Required component missing: Narrative Timeline",
+          "selector": "[data-testid*=\"timeline\"], [data-testid*=\"narrative\"]"
+        }
+      ],
+      "passed": false
+    },
+    "mobile": {
+      "name": "mobile",
+      "config": {
+        "width": 375,
+        "height": 667
+      },
+      "loadTime": 1460,
+      "components": {
+        "World State Map": {
+          "selector": "[data-testid*=\"world\"], [data-testid*=\"map\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Real-time Activity": {
+          "selector": "[data-testid*=\"activity\"], [data-testid*=\"feed\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Performance Metrics": {
+          "selector": "[data-testid*=\"metrics\"], [data-testid*=\"performance\"]",
+          "present": false,
+          "visible": false,
+          "required": true
+        },
+        "Turn Pipeline": {
+          "selector": "[data-testid*=\"pipeline\"], [data-testid*=\"turn\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Quick Actions": {
+          "selector": "[data-testid=\"quick-actions\"]",
+          "present": true,
+          "visible": true,
+          "required": true
+        },
+        "Character Networks": {
+          "selector": "[data-testid*=\"character\"], [data-testid*=\"network\"]",
+          "present": false,
+          "visible": false,
+          "required": true
+        },
+        "Event Cascade": {
+          "selector": "[data-testid*=\"cascade\"], [data-testid*=\"event\"]",
+          "present": false,
+          "visible": false,
+          "required": true
+        },
+        "Narrative Timeline": {
+          "selector": "[data-testid*=\"timeline\"], [data-testid*=\"narrative\"]",
+          "present": false,
+          "visible": false,
+          "required": true
+        },
+        "Analytics Dashboard": {
+          "selector": "[data-testid*=\"analytics\"], [data-testid*=\"dashboard\"]",
+          "present": true,
+          "visible": true,
+          "required": false
+        }
+      },
+      "quickActions": {
+        "present": true,
+        "visible": true,
+        "dimensions": {
+          "x": 24,
+          "y": 331,
+          "width": 327,
+          "height": 200
+        },
+        "buttons": [
+          {
+            "index": 0,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 45,
+              "y": 438,
+              "width": 44,
+              "height": 44
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 1,
+            "visible": true,
+            "enabled": false,
+            "dimensions": {
+              "x": 101,
+              "y": 438,
+              "width": 44,
+              "height": 44
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 2,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 157,
+              "y": 438,
+              "width": 44,
+              "height": 44
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 3,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 213,
+              "y": 438,
+              "width": 44,
+              "height": 44
+            },
+            "touchFriendly": true
+          },
+          {
+            "index": 4,
+            "visible": true,
+            "enabled": true,
+            "dimensions": {
+              "x": 269,
+              "y": 438,
+              "width": 44,
+              "height": 44
+            },
+            "touchFriendly": true
+          }
+        ],
+        "primaryAction": {
+          "present": true,
+          "visible": true,
+          "enabled": true
+        }
+      },
+      "screenshots": [
+        "final-validation-screenshots\\mobile-full-dashboard.png",
+        "final-validation-screenshots\\mobile-quick-actions-detail.png"
+      ],
+      "errors": [
+        {
+          "type": "component_missing",
+          "message": "Required component missing: Performance Metrics",
+          "selector": "[data-testid*=\"metrics\"], [data-testid*=\"performance\"]"
+        },
+        {
+          "type": "component_missing",
+          "message": "Required component missing: Character Networks",
+          "selector": "[data-testid*=\"character\"], [data-testid*=\"network\"]"
+        },
+        {
+          "type": "component_missing",
+          "message": "Required component missing: Event Cascade",
+          "selector": "[data-testid*=\"cascade\"], [data-testid*=\"event\"]"
+        },
+        {
+          "type": "component_missing",
+          "message": "Required component missing: Narrative Timeline",
+          "selector": "[data-testid*=\"timeline\"], [data-testid*=\"narrative\"]"
+        }
+      ],
+      "passed": false
+    }
+  },
+  "apiHealth": {
+    "status": "unhealthy",
+    "accessible": false,
+    "error": "fetch failed"
+  },
+  "overallStatus": "REQUIRES ATTENTION",
+  "criticalIssues": [
+    {
+      "viewport": "desktop",
+      "type": "component_missing",
+      "message": "Required component missing: Character Networks",
+      "selector": "[data-testid*=\"character\"], [data-testid*=\"network\"]"
+    },
+    {
+      "viewport": "desktop",
+      "type": "component_missing",
+      "message": "Required component missing: Event Cascade",
+      "selector": "[data-testid*=\"cascade\"], [data-testid*=\"event\"]"
+    },
+    {
+      "viewport": "desktop",
+      "type": "component_missing",
+      "message": "Required component missing: Narrative Timeline",
+      "selector": "[data-testid*=\"timeline\"], [data-testid*=\"narrative\"]"
+    },
+    {
+      "viewport": "tablet",
+      "type": "component_missing",
+      "message": "Required component missing: Character Networks",
+      "selector": "[data-testid*=\"character\"], [data-testid*=\"network\"]"
+    },
+    {
+      "viewport": "tablet",
+      "type": "component_missing",
+      "message": "Required component missing: Event Cascade",
+      "selector": "[data-testid*=\"cascade\"], [data-testid*=\"event\"]"
+    },
+    {
+      "viewport": "tablet",
+      "type": "component_missing",
+      "message": "Required component missing: Narrative Timeline",
+      "selector": "[data-testid*=\"timeline\"], [data-testid*=\"narrative\"]"
+    },
+    {
+      "viewport": "mobile",
+      "type": "component_missing",
+      "message": "Required component missing: Performance Metrics",
+      "selector": "[data-testid*=\"metrics\"], [data-testid*=\"performance\"]"
+    },
+    {
+      "viewport": "mobile",
+      "type": "component_missing",
+      "message": "Required component missing: Character Networks",
+      "selector": "[data-testid*=\"character\"], [data-testid*=\"network\"]"
+    },
+    {
+      "viewport": "mobile",
+      "type": "component_missing",
+      "message": "Required component missing: Event Cascade",
+      "selector": "[data-testid*=\"cascade\"], [data-testid*=\"event\"]"
+    },
+    {
+      "viewport": "mobile",
+      "type": "component_missing",
+      "message": "Required component missing: Narrative Timeline",
+      "selector": "[data-testid*=\"timeline\"], [data-testid*=\"narrative\"]"
+    }
+  ],
+  "productionReady": false
+}

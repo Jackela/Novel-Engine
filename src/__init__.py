@@ -17,75 +17,76 @@ __description__ = "Advanced AI Narrative Generation Platform"
 
 # Core exports - Legacy architecture
 try:
-    from .core.subjective_reality import SubjectiveRealityEngine
     from .core.emergent_narrative import EmergentNarrativeEngine
-    from .infrastructure.state_store import UnifiedStateManager
+    from .core.subjective_reality import SubjectiveRealityEngine
     from .infrastructure.observability import MetricsCollector
-    
+    from .infrastructure.state_store import UnifiedStateManager
+
     # Add legacy exports to __all__
     LEGACY_EXPORTS = [
         "SubjectiveRealityEngine",
-        "EmergentNarrativeEngine", 
+        "EmergentNarrativeEngine",
         "UnifiedStateManager",
-        "MetricsCollector"
+        "MetricsCollector",
     ]
 except ImportError:
     # Legacy components not available
     LEGACY_EXPORTS = []
 
+from .event_bus import EventBus
+
 # Core agent system - Modular architecture
 from .persona_agent import PersonaAgent
-from .event_bus import EventBus
 
 # DirectorAgent components - Exposed modularly
 try:
+    from .agent_lifecycle_manager import AgentLifecycleManager
     from .director_agent_base import DirectorAgentBase
     from .turn_orchestrator import TurnOrchestrator
     from .world_state_coordinator import WorldStateCoordinator
-    from .agent_lifecycle_manager import AgentLifecycleManager
-    
+
     DIRECTOR_COMPONENTS = [
         "DirectorAgentBase",
-        "TurnOrchestrator", 
+        "TurnOrchestrator",
         "WorldStateCoordinator",
-        "AgentLifecycleManager"
+        "AgentLifecycleManager",
     ]
 except ImportError:
     DIRECTOR_COMPONENTS = []
 
 # PersonaAgent components - Exposed modularly
 try:
-    from .persona_agent_core import PersonaAgentCore
-    from .decision_engine import DecisionEngine
     from .character_interpreter import CharacterInterpreter
+    from .decision_engine import DecisionEngine
     from .memory_interface import MemoryInterface
-    
+    from .persona_agent_core import PersonaAgentCore
+
     PERSONA_COMPONENTS = [
         "PersonaAgentCore",
         "DecisionEngine",
-        "CharacterInterpreter", 
-        "MemoryInterface"
+        "CharacterInterpreter",
+        "MemoryInterface",
     ]
 except ImportError:
     PERSONA_COMPONENTS = []
 
 # Integrated architecture - Main exports
 try:
-    from .persona_agent_integrated import PersonaAgent as PersonaAgentIntegrated
     from ..director_agent_integrated import DirectorAgent as DirectorAgentIntegrated
-    
-    INTEGRATED_EXPORTS = [
-        "PersonaAgentIntegrated",
-        "DirectorAgentIntegrated"
-    ]
+    from .persona_agent_integrated import PersonaAgent as PersonaAgentIntegrated
+
+    INTEGRATED_EXPORTS = ["PersonaAgentIntegrated", "DirectorAgentIntegrated"]
 except ImportError:
     INTEGRATED_EXPORTS = []
 
 # Core agent interface
-CORE_EXPORTS = [
-    "PersonaAgent",
-    "EventBus"
-]
+CORE_EXPORTS = ["PersonaAgent", "EventBus"]
 
 # Build complete export list
-__all__ = CORE_EXPORTS + DIRECTOR_COMPONENTS + PERSONA_COMPONENTS + INTEGRATED_EXPORTS + LEGACY_EXPORTS
+__all__ = (
+    CORE_EXPORTS
+    + DIRECTOR_COMPONENTS
+    + PERSONA_COMPONENTS
+    + INTEGRATED_EXPORTS
+    + LEGACY_EXPORTS
+)

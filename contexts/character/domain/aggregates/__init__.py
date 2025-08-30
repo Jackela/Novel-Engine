@@ -8,7 +8,7 @@ a single unit for the purpose of data changes.
 
 The Character aggregate is the main aggregate root that:
 - Maintains consistency across all character-related data
-- Enforces business rules and invariants  
+- Enforces business rules and invariants
 - Raises domain events for state changes
 - Provides the only entry point for character operations
 """

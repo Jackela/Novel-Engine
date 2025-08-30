@@ -20,10 +20,10 @@ Example:
     logger.info('Application started', extra={'version': '1.2.3'})
 """
 
-import logging
 import json
-from typing import Dict, Any, Optional, List
+import logging
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 __version__ = "1.0.0"
 
@@ -213,7 +213,7 @@ def create_log_alert(name: str, query: str, **kwargs) -> str:
     """
     alert_id = f"log-alert-{name.lower().replace(' ', '-')}"
     
-    alert_config = {
+    {
         'alert_id': alert_id,
         'name': name,
         'query': query,

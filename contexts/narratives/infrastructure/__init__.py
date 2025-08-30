@@ -16,11 +16,11 @@ Architecture:
 - Database persistence with transaction management
 """
 
-from .repositories.narrative_arc_repository import NarrativeArcRepository, INarrativeArcRepository
+from .repositories.narrative_arc_repository import (
+    INarrativeArcRepository,
+    NarrativeArcRepository,
+)
 
-__all__ = [
-    'NarrativeArcRepository',
-    'INarrativeArcRepository'
-]
+__all__ = ["NarrativeArcRepository", "INarrativeArcRepository"]
 
 __version__ = "1.0.0"

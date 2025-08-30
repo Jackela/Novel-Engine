@@ -9,6 +9,4 @@ multiple domain objects and implement core business rules.
 
 from .llm_provider import ILLMProvider
 
-__all__ = [
-    "ILLMProvider"
-]
+__all__ = ["ILLMProvider"]

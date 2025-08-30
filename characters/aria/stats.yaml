@@ -1,0 +1,86 @@
+character:
+  name: "Aria Shadowbane"
+  age: 25
+  origin: "Crystal City Shadow Quarter"
+  faction: "Independent Operative"
+  rank: "Shadow Walker"
+  specialization: "Stealth Operations & Artifact Authentication"
+
+combat_stats:
+  stealth: 9
+  agility: 8
+  melee: 7
+  ranged: 7
+  tactics: 8
+  endurance: 6
+  social: 8
+
+equipment:
+  primary_weapon: "Shadowsteel Daggers (Paired)"
+  secondary_weapon: "Silent Crossbow"
+  armor: "Shadow Weave Leather"
+  special_gear:
+    - "Master Lockpick Set"
+    - "Artifact Authentication Kit"
+    - "Climbing Gear"
+    - "Encrypted Communication Device"
+
+psychological_profile:
+  loyalty: 8
+  aggression: 5
+  caution: 9
+  morale: 7
+  corruption_resistance: 8
+  trust_threshold: 3  # Low initial trust, high when earned
+  stress_tolerance: 8
+
+specializations:
+  - "Silent Movement"
+  - "Lock Manipulation"
+  - "Artifact Authentication"
+  - "Information Gathering"
+  - "Alliance Building"
+  - "Ancient History"
+
+relationships:
+  allies:
+    - name: "Elder Thorne"
+      trust_level: 85
+      relationship_type: "Mentor/Strategic Partner"
+    - name: "Shadow Quarter Network" 
+      trust_level: 70
+      relationship_type: "Professional Brotherhood"
+  neutral:
+    - name: "Captain Vex"
+      trust_level: 45
+      relationship_type: "Professional Rival"
+    - name: "Merchant Aldric"
+      trust_level: 60
+      relationship_type: "Business Contact"
+  mentor: "Elder Thorne"
+  network_contacts: "Shadow Quarter Thieves, Crystal City Scholars"
+
+locations:
+  base_of_operations: "Crystal City"
+  familiar_areas:
+    - "Shadow Quarter"
+    - "Ancient Ruins"
+    - "Merchant Quarter"
+    - "Shadow Forest (perimeter)"
+  safe_houses: 3
+
+objectives:
+  primary: "Master of Shadows and Secrets"
+  secondary: "Guardian of Ancient Knowledge"
+  immediate: "Strengthen Alliance Network"
+  
+threat_assessment:
+  personal_threat_level: "Moderate" 
+  network_threat_level: "Low-Moderate"
+  regional_stability: "Moderate-High"
+
+emotional_state:
+  current_confidence: 7
+  stress_level: 4
+  relationship_satisfaction: 6
+  purpose_fulfillment: 7

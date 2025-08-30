@@ -5,12 +5,10 @@ Achieves 100% validation success rate by fixing all remaining issues
 """
 
 import os
+import subprocess
 import sys
 import time
-import json
-import subprocess
 from pathlib import Path
-from typing import Dict, Any
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

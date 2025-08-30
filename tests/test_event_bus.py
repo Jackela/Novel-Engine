@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import Mock
+
 from src.event_bus import EventBus
+
 
 class TestEventBus(unittest.TestCase):
 
@@ -45,5 +47,6 @@ class TestEventBus(unittest.TestCase):
         mock_callback1.assert_called_once()
         mock_callback2.assert_called_once()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

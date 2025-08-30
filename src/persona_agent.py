@@ -8,7 +8,7 @@ to work while providing the benefits of modular architecture.
 
 Original functionality is preserved through the integrated architecture:
 - PersonaAgentCore: Core initialization and basic interfaces
-- DecisionEngine: Decision-making and action selection  
+- DecisionEngine: Decision-making and action selection
 - CharacterInterpreter: Character data loading and interpretation
 - MemoryInterface: Memory management and experience processing
 
@@ -20,4 +20,4 @@ Development Phase: Modular Refactoring - Wave 4 Implementation
 from src.persona_agent_integrated import PersonaAgent
 
 # Re-export for backward compatibility
-__all__ = ['PersonaAgent']
+__all__ = ["PersonaAgent"]

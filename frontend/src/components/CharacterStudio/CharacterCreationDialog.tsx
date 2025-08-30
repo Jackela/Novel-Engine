@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -36,6 +36,7 @@ import {
 import { useDropzone } from 'react-dropzone';
 import { useCreateCharacter } from '../../hooks/useCharacters';
 import { CharacterFormData, CharacterStats, Equipment } from '../../types';
+import { useFocusTrap, announceToScreenReader } from '../../utils/focusManagement';
 
 interface Props {
   open: boolean;
@@ -108,6 +109,13 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
     condition: 1.0,
   });
   const [showEquipmentForm, setShowEquipmentForm] = useState(false);
+  
+  // Focus management for accessibility
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(open, dialogRef, {
+    onEscape: onClose,
+    restoreFocus: true,
+  });
 
   const createCharacter = useCreateCharacter();
 
@@ -307,6 +315,9 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
       onClose={handleClose} 
       maxWidth="md" 
       fullWidth
+      ref={dialogRef}
+      aria-labelledby="character-creation-title"
+      aria-describedby="character-creation-description"
       PaperProps={{
         sx: { minHeight: '80vh' }
       }}

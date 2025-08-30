@@ -1,4 +1,5 @@
 import os
+
 """
 AI Test Orchestrator Service
 
@@ -12,28 +13,35 @@ compatible with existing FastAPI backend structure.
 import asyncio
 import logging
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Set
 from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
 import httpx
 import redis.asyncio as redis
 
+# Import AI testing framework contracts
+from ai_testing.orchestration.master_orchestrator import ServiceEndpoint
+from ai_testing.interfaces.service_contracts import (
+    BatchTestResponse,
+    ITestOrchestrator,
+    ServiceHealthResponse,
+    TestContext,
+    TestExecution,
+    TestResult,
+    TestScenario,
+    TestStatus,
+    TestType,
+    validate_test_scenario,
+)
+
 # Import Novel-Engine patterns
 from config_loader import get_config
-from src.event_bus import EventBus
-from src.shared_types import SystemStatus
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
-# Import AI testing framework contracts
-from ai_testing.interfaces.service_contracts import (
-    ITestOrchestrator, TestScenario, TestExecution, TestResult, TestContext,
-    TestStatus, TestType, ServiceHealthResponse, BatchTestResponse,
-    TestExecutionEvent, validate_test_scenario, create_test_context
-)
+from src.event_bus import EventBus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -93,15 +101,13 @@ class AITestOrchestrator(ITestOrchestrator):
             # Use localhost for local development
             return f"http://localhost:{port}"
 
-def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.event_bus = EventBus()
         self.redis_client: Optional[redis.Redis] = None
         self.http_client: Optional[httpx.AsyncClient] = None
         
         # Service endpoints - use environment-aware configuration
-        from ai_testing.config import ServiceConfig
-        service_urls = ServiceConfig.get_service_urls()
         
         # Environment-aware service endpoints
         self.service_endpoints = {
@@ -225,7 +231,7 @@ def __init__(self, config: Dict[str, Any]):
                 "plan_id": plan.id,
                 "scenario_count": len(scenarios),
                 "estimated_duration": plan.estimated_duration_minutes,
-                "context": context.dict()
+                "context": context.model_dump()
             })
             
             logger.info(f"Test plan created: {plan.id} with {len(scenarios)} scenarios")
@@ -489,7 +495,7 @@ def __init__(self, config: Dict[str, Any]):
             await self.event_bus.publish("test_execution_started", {
                 "execution_id": execution.id,
                 "scenario_id": execution.scenario_id,
-                "context": execution.context.dict()
+                "context": execution.context.model_dump()
             })
             
             # Get scenario details
@@ -538,9 +544,9 @@ def __init__(self, config: Dict[str, Any]):
         
         # Prepare request payload
         payload = {
-            "scenario": scenario.dict(),
-            "execution": execution.dict(),
-            "context": execution.context.dict()
+            "scenario": scenario.model_dump(),
+            "execution": execution.model_dump(),
+            "context": execution.context.model_dump()
         }
         
         # Call service
@@ -596,7 +602,7 @@ def __init__(self, config: Dict[str, Any]):
             await self.redis_client.setex(
                 f"plan:{plan.id}",
                 3600,  # 1 hour TTL
-                plan.json()
+                plan.model_dump_json()
             )
     
     async def _update_plan_in_redis(self, plan: TestPlan):
@@ -611,7 +617,7 @@ def __init__(self, config: Dict[str, Any]):
         if self.redis_client:
             plan_data = await self.redis_client.get(f"plan:{plan_id}")
             if plan_data:
-                plan = TestPlan.parse_raw(plan_data)
+                plan = TestPlan.model_validate_json(plan_data)
                 self.active_plans[plan_id] = plan
                 return plan
         
@@ -623,7 +629,7 @@ def __init__(self, config: Dict[str, Any]):
             await self.redis_client.setex(
                 f"execution:{execution.id}",
                 3600,  # 1 hour TTL
-                execution.json()
+                execution.model_dump_json()
             )
     
     async def _load_execution_from_redis(self, execution_id: str) -> Optional[TestExecution]:
@@ -631,7 +637,7 @@ def __init__(self, config: Dict[str, Any]):
         if self.redis_client:
             execution_data = await self.redis_client.get(f"execution:{execution_id}")
             if execution_data:
-                return TestExecution.parse_raw(execution_data)
+                return TestExecution.model_validate_json(execution_data)
         return None
     
     async def _get_scenario_by_id(self, scenario_id: str) -> Optional[TestScenario]:
@@ -647,7 +653,7 @@ def __init__(self, config: Dict[str, Any]):
         try:
             service_url = self.service_endpoints["results_aggregation"]
             async with self.http_client as client:
-                await client.post(f"{service_url}/results", json=result.dict())
+                await client.post(f"{service_url}/results", json=result.model_dump())
         except Exception as e:
             logger.error(f"Failed to store test result: {e}")
     

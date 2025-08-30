@@ -4,12 +4,12 @@ Gemini LLM Client for AI Novel Generation
 Real AI generation, not templates!
 """
 
-import os
 import json
-import time
 import logging
-from typing import Dict, List, Optional, Any
+import os
+import time
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 try:
     import google.generativeai as genai
@@ -163,7 +163,7 @@ Output format:
             logger.error(f"Failed to generate event: {str(e)}")
             return {
                 "type": event_type,
-                "description": f"[事件生成失败]",
+                "description": "[事件生成失败]",
                 "details": str(e),
                 "characters": characters
             }

@@ -7,7 +7,7 @@ discussions, and other sophisticated inter-entity communications.
 
 Key Components:
 - NegotiationSession: Aggregate representing ongoing negotiations between entities
-- NegotiationParty: Entity representing participants in negotiations  
+- NegotiationParty: Entity representing participants in negotiations
 - Proposal: Entity representing specific proposals and terms
 - NegotiationService: Domain service for managing negotiation logic
 

@@ -1,0 +1,81 @@
+{
+  "timestamp": "2025-08-29T04:50:10.102Z",
+  "viewport": {
+    "width": 375,
+    "height": 667
+  },
+  "screenshot": "mobile-quickactions-fix-validation-1756443009824.png",
+  "quickActions": {
+    "found": true,
+    "title": "Actions",
+    "componentSize": {
+      "width": 327,
+      "height": 200
+    },
+    "totalButtons": 5,
+    "visibleButtons": 5,
+    "buttons": [
+      {
+        "text": "Start",
+        "width": 44,
+        "height": 44,
+        "visible": true,
+        "position": {
+          "x": 45,
+          "y": 437
+        }
+      },
+      {
+        "text": "Stop",
+        "width": 44,
+        "height": 44,
+        "visible": true,
+        "position": {
+          "x": 101,
+          "y": 437
+        }
+      },
+      {
+        "text": "Refresh",
+        "width": 44,
+        "height": 44,
+        "visible": true,
+        "position": {
+          "x": 157,
+          "y": 437
+        }
+      },
+      {
+        "text": "Save",
+        "width": 44,
+        "height": 44,
+        "visible": true,
+        "position": {
+          "x": 213,
+          "y": 437
+        }
+      },
+      {
+        "text": "Settings",
+        "width": 44,
+        "height": 44,
+        "visible": true,
+        "position": {
+          "x": 269,
+          "y": 437
+        }
+      }
+    ],
+    "containerClasses": "MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 css-1ae6f4l-MuiPaper-root",
+    "hasContent": true
+  },
+  "currentTab": "Overview",
+  "fixSuccessful": true,
+  "summary": {
+    "component_found": true,
+    "buttons_visible": 5,
+    "total_buttons": 5,
+    "component_height": 200,
+    "touch_friendly": true
+  }
+}

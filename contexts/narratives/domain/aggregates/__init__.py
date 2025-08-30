@@ -11,8 +11,6 @@ Key Aggregates:
 
 from .narrative_arc import NarrativeArc
 
-__all__ = [
-    'NarrativeArc'
-]
+__all__ = ["NarrativeArc"]
 
 __version__ = "1.0.0"

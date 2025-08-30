@@ -297,8 +297,8 @@
 }
 
 .selection-checkmark {
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   background: linear-gradient(45deg, var(--color-primary-gold), var(--color-primary-gold-light));
   color: var(--color-text-inverse);
   border-radius: var(--border-radius-full);
@@ -306,7 +306,7 @@
   align-items: center;
   justify-content: center;
   font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-lg);
   animation: checkmarkAppear var(--duration-normal) var(--ease-back);
   box-shadow: 
     var(--shadow-md),

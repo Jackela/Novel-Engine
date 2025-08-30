@@ -10,7 +10,7 @@
  * - Performance optimization
  */
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { usePerformanceOptimizer } from './usePerformanceOptimizer';
 
 // Types
@@ -109,10 +109,10 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
       return true;
     }
     
-    // Add to history and cleanup if too large
+    // Add to history and cleanup if too large (optimized for mobile memory)
     messageHistoryRef.current.add(messageId);
-    if (messageHistoryRef.current.size > 10000) {
-      const oldestMessages = Array.from(messageHistoryRef.current).slice(0, 5000);
+    if (messageHistoryRef.current.size > 1000) {
+      const oldestMessages = Array.from(messageHistoryRef.current).slice(0, 500);
       oldestMessages.forEach(id => messageHistoryRef.current.delete(id));
     }
     

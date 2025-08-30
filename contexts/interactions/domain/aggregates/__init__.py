@@ -11,8 +11,6 @@ Key Aggregates:
 
 from .negotiation_session import NegotiationSession
 
-__all__ = [
-    'NegotiationSession'
-]
+__all__ = ["NegotiationSession"]
 
 __version__ = "1.0.0"

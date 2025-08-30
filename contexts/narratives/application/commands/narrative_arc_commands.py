@@ -7,15 +7,15 @@ Commands represent intent to change state and are processed by command handlers.
 """
 
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Set, Any
-from uuid import UUID
 from decimal import Decimal
-from datetime import datetime
+from typing import Any, Dict, List, Optional, Set
+from uuid import UUID
 
 
 @dataclass(frozen=True)
 class CreateNarrativeArcCommand:
     """Command to create a new narrative arc."""
+
     arc_name: str
     arc_type: str
     description: str = ""
@@ -30,6 +30,7 @@ class CreateNarrativeArcCommand:
 @dataclass(frozen=True)
 class UpdateNarrativeArcCommand:
     """Command to update narrative arc properties."""
+
     arc_id: str
     arc_name: Optional[str] = None
     arc_type: Optional[str] = None
@@ -43,6 +44,7 @@ class UpdateNarrativeArcCommand:
 @dataclass(frozen=True)
 class AddPlotPointCommand:
     """Command to add a plot point to a narrative arc."""
+
     arc_id: str
     plot_point_id: str
     plot_point_type: str
@@ -50,9 +52,9 @@ class AddPlotPointCommand:
     title: str
     description: str
     sequence_order: int
-    emotional_intensity: Decimal = Decimal('5.0')
-    dramatic_tension: Decimal = Decimal('5.0')
-    story_significance: Decimal = Decimal('5.0')
+    emotional_intensity: Decimal = Decimal("5.0")
+    dramatic_tension: Decimal = Decimal("5.0")
+    story_significance: Decimal = Decimal("5.0")
     involved_characters: Optional[Set[UUID]] = None
     prerequisite_events: Optional[Set[str]] = None
     consequence_events: Optional[Set[str]] = None
@@ -69,6 +71,7 @@ class AddPlotPointCommand:
 @dataclass(frozen=True)
 class UpdatePlotPointCommand:
     """Command to update a plot point."""
+
     arc_id: str
     plot_point_id: str
     title: Optional[str] = None
@@ -84,6 +87,7 @@ class UpdatePlotPointCommand:
 @dataclass(frozen=True)
 class RemovePlotPointCommand:
     """Command to remove a plot point from a narrative arc."""
+
     arc_id: str
     plot_point_id: str
 
@@ -91,17 +95,18 @@ class RemovePlotPointCommand:
 @dataclass(frozen=True)
 class AddThemeCommand:
     """Command to add a theme to a narrative arc."""
+
     arc_id: str
     theme_id: str
     theme_type: str
     intensity: str
     name: str
     description: str
-    moral_complexity: Decimal = Decimal('5.0')
-    emotional_resonance: Decimal = Decimal('5.0')
-    universal_appeal: Decimal = Decimal('5.0')
-    cultural_significance: Decimal = Decimal('5.0')
-    development_potential: Decimal = Decimal('5.0')
+    moral_complexity: Decimal = Decimal("5.0")
+    emotional_resonance: Decimal = Decimal("5.0")
+    universal_appeal: Decimal = Decimal("5.0")
+    cultural_significance: Decimal = Decimal("5.0")
+    development_potential: Decimal = Decimal("5.0")
     symbolic_elements: Optional[Set[str]] = None
     introduction_sequence: Optional[int] = None
     resolution_sequence: Optional[int] = None
@@ -112,6 +117,7 @@ class AddThemeCommand:
 @dataclass(frozen=True)
 class DevelopThemeCommand:
     """Command to develop a theme at a specific sequence."""
+
     arc_id: str
     theme_id: str
     sequence: int
@@ -121,18 +127,19 @@ class DevelopThemeCommand:
 @dataclass(frozen=True)
 class AddPacingSegmentCommand:
     """Command to add a pacing segment to a narrative arc."""
+
     arc_id: str
     pacing_id: str
     pacing_type: str
     base_intensity: str
     start_sequence: int
     end_sequence: int
-    event_density: Decimal = Decimal('5.0')
+    event_density: Decimal = Decimal("5.0")
     tension_curve: Optional[List[Decimal]] = None
-    dialogue_ratio: Decimal = Decimal('0.4')
-    action_ratio: Decimal = Decimal('0.3')
-    reflection_ratio: Decimal = Decimal('0.3')
-    description_density: Decimal = Decimal('5.0')
+    dialogue_ratio: Decimal = Decimal("0.4")
+    action_ratio: Decimal = Decimal("0.3")
+    reflection_ratio: Decimal = Decimal("0.3")
+    description_density: Decimal = Decimal("5.0")
     character_focus: Optional[Set[UUID]] = None
     narrative_techniques: Optional[Set[str]] = None
     reader_engagement_target: Optional[str] = None
@@ -143,12 +150,13 @@ class AddPacingSegmentCommand:
 @dataclass(frozen=True)
 class AddNarrativeContextCommand:
     """Command to add a narrative context to an arc."""
+
     arc_id: str
     context_id: str
     context_type: str
     name: str
     description: str
-    importance: Decimal = Decimal('5.0')
+    importance: Decimal = Decimal("5.0")
     is_persistent: bool = False
     start_sequence: Optional[int] = None
     end_sequence: Optional[int] = None
@@ -167,6 +175,7 @@ class AddNarrativeContextCommand:
 @dataclass(frozen=True)
 class ActivateContextCommand:
     """Command to activate a narrative context."""
+
     arc_id: str
     context_id: str
 
@@ -174,6 +183,7 @@ class ActivateContextCommand:
 @dataclass(frozen=True)
 class DeactivateContextCommand:
     """Command to deactivate a narrative context."""
+
     arc_id: str
     context_id: str
 
@@ -181,6 +191,7 @@ class DeactivateContextCommand:
 @dataclass(frozen=True)
 class AddCharacterToArcCommand:
     """Command to add a character to a narrative arc."""
+
     arc_id: str
     character_id: UUID
     role: str  # primary, supporting
@@ -190,6 +201,7 @@ class AddCharacterToArcCommand:
 @dataclass(frozen=True)
 class StartNarrativeArcCommand:
     """Command to start a narrative arc."""
+
     arc_id: str
     start_sequence: int
 
@@ -197,6 +209,7 @@ class StartNarrativeArcCommand:
 @dataclass(frozen=True)
 class CompleteNarrativeArcCommand:
     """Command to complete a narrative arc."""
+
     arc_id: str
     end_sequence: int
 
@@ -204,6 +217,7 @@ class CompleteNarrativeArcCommand:
 @dataclass(frozen=True)
 class AnalyzeNarrativeFlowCommand:
     """Command to analyze narrative flow of an arc."""
+
     arc_id: str
     include_recommendations: bool = True
 
@@ -211,6 +225,7 @@ class AnalyzeNarrativeFlowCommand:
 @dataclass(frozen=True)
 class OptimizeSequenceCommand:
     """Command to optimize plot point sequence."""
+
     arc_id: str
     preserve_critical_order: bool = True
     optimization_criteria: Optional[List[str]] = None
@@ -219,18 +234,20 @@ class OptimizeSequenceCommand:
 @dataclass(frozen=True)
 class EstablishCausalLinkCommand:
     """Command to establish causal relationship between plot points."""
+
     arc_id: str
     cause_id: str
     effect_id: str
     relationship_type: str = "direct_cause"
     strength: str = "moderate"
-    certainty: Decimal = Decimal('0.8')
+    certainty: Decimal = Decimal("0.8")
     metadata: Optional[Dict[str, Any]] = None
 
 
 @dataclass(frozen=True)
 class RemoveCausalLinkCommand:
     """Command to remove causal relationship."""
+
     arc_id: str
     cause_id: str
     effect_id: str
@@ -239,6 +256,7 @@ class RemoveCausalLinkCommand:
 @dataclass(frozen=True)
 class AnalyzeCausalityCommand:
     """Command to analyze causality in narrative arc."""
+
     arc_id: str
     include_paths: bool = True
     max_path_depth: int = 5

@@ -19,8 +19,8 @@ Example:
     channel_id = setup_notification_channel('slack', webhook_url='...')
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 __version__ = "1.0.0"
 
@@ -46,7 +46,7 @@ def create_alert_rule(name: str, **kwargs) -> str:
     """
     rule_id = f"alert-{name.lower().replace(' ', '-')}-{datetime.now().strftime('%Y%m%d')}"
     
-    rule_config = {
+    {
         'rule_id': rule_id,
         'name': name,
         'expr': kwargs.get('expr', ''),
@@ -107,7 +107,7 @@ def setup_notification_channel(channel_type: str, **kwargs) -> str:
         }
     }
     
-    channel_config = {
+    {
         'channel_id': channel_id,
         'type': channel_type,
         'name': kwargs.get('name', f'{channel_type.title()} Channel'),
@@ -131,7 +131,7 @@ def configure_escalation_policy(name: str, escalation_steps: List[Dict[str, Any]
     """
     policy_id = f"escalation-{name.lower().replace(' ', '-')}"
     
-    policy_config = {
+    {
         'policy_id': policy_id,
         'name': name,
         'steps': escalation_steps,

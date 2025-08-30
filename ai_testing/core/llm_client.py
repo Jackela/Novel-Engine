@@ -3,13 +3,11 @@ Unified LLM Client for AI Novel Generation
 Supports Gemini 2.0 Flash (primary), OpenAI, and Anthropic
 """
 
-import os
 import logging
-from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass
-
-import sys
 import os
+import sys
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 # Add parent directory to path for imports
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

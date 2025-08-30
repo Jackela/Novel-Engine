@@ -7,44 +7,44 @@ and API guides with examples and integration instructions.
 """
 
 import logging
-from typing import Dict, Any, List, Optional
-from fastapi import FastAPI
-from fastapi.openapi.utils import get_openapi
-from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
-from fastapi.responses import HTMLResponse
-import json
+from typing import Any, Dict, List
 
-from .response_models import *
-from .versioning import APIVersion
+from fastapi import FastAPI
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import HTMLResponse
+
+# Response models not currently used in documentation generation
 
 logger = logging.getLogger(__name__)
 
+
 class DocumentationGenerator:
     """Generate comprehensive API documentation."""
-    
+
     def __init__(self, app: FastAPI):
         self.app = app
-    
+
     def generate_openapi_schema(self, version: str = "1.1.0") -> Dict[str, Any]:
         """Generate enhanced OpenAPI schema with comprehensive documentation."""
-        
+
         if self.app.openapi_schema:
             return self.app.openapi_schema
-        
+
         openapi_schema = get_openapi(
             title="Novel Engine API",
             version=version,
             description=self._get_api_description(),
             routes=self.app.routes,
-            tags=self._get_tags_metadata()
+            tags=self._get_tags_metadata(),
         )
-        
+
         # Enhance schema with additional information
         openapi_schema = self._enhance_openapi_schema(openapi_schema)
-        
+
         self.app.openapi_schema = openapi_schema
         return openapi_schema
-    
+
     def _get_api_description(self) -> str:
         """Get comprehensive API description."""
         return """
@@ -125,92 +125,86 @@ Official SDKs are available for:
 - **Support**: support@novel-engine.app
 - **GitHub**: https://github.com/novel-engine/api
         """
-    
+
     def _get_tags_metadata(self) -> List[Dict[str, Any]]:
         """Get tags metadata for API organization."""
         return [
             {
                 "name": "System",
-                "description": "System health, version info, and API metadata endpoints"
+                "description": "System health, version info, and API metadata endpoints",
             },
             {
                 "name": "Characters",
-                "description": "Character creation, management, and customization endpoints"
+                "description": "Character creation, management, and customization endpoints",
             },
             {
                 "name": "Stories",
-                "description": "Story generation, export, and narrative management endpoints"
+                "description": "Story generation, export, and narrative management endpoints",
             },
             {
                 "name": "Interactions",
-                "description": "Real-time character interactions and conversation management"
+                "description": "Real-time character interactions and conversation management",
             },
             {
                 "name": "Monitoring",
-                "description": "Performance metrics, monitoring, and observability endpoints"
-            }
+                "description": "Performance metrics, monitoring, and observability endpoints",
+            },
         ]
-    
+
     def _enhance_openapi_schema(self, schema: Dict[str, Any]) -> Dict[str, Any]:
         """Enhance OpenAPI schema with additional information."""
-        
+
         # Add servers information
         schema["servers"] = [
-            {
-                "url": "http://localhost:8000",
-                "description": "Development server"
-            },
-            {
-                "url": "https://api.novel-engine.app",
-                "description": "Production server"
-            }
+            {"url": "http://localhost:8000", "description": "Development server"},
+            {"url": "https://api.novel-engine.app", "description": "Production server"},
         ]
-        
+
         # Add contact and license information
         schema["info"]["contact"] = {
             "name": "Novel Engine API Support",
             "url": "https://novel-engine.app/support",
-            "email": "support@novel-engine.app"
+            "email": "support@novel-engine.app",
         }
-        
+
         schema["info"]["license"] = {
             "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT"
+            "url": "https://opensource.org/licenses/MIT",
         }
-        
+
         # Add external documentation
         schema["externalDocs"] = {
             "description": "Full API Documentation",
-            "url": "https://docs.novel-engine.app"
+            "url": "https://docs.novel-engine.app",
         }
-        
+
         # Enhance security schemes
         schema["components"]["securitySchemes"] = {
             "APIKeyHeader": {
                 "type": "apiKey",
                 "in": "header",
                 "name": "X-API-Key",
-                "description": "API key for authenticated requests"
+                "description": "API key for authenticated requests",
             },
             "BearerAuth": {
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": "JWT",
-                "description": "JWT token for authenticated requests"
-            }
+                "description": "JWT token for authenticated requests",
+            },
         }
-        
+
         # Add response examples
         self._add_response_examples(schema)
-        
+
         # Add request examples
         self._add_request_examples(schema)
-        
+
         return schema
-    
+
     def _add_response_examples(self, schema: Dict[str, Any]):
         """Add response examples to schema."""
-        
+
         # Example successful character creation response
         character_success_example = {
             "status": "success",
@@ -220,20 +214,16 @@ Official SDKs are available for:
                 "status": "active",
                 "created_at": "2024-01-01T12:00:00Z",
                 "background_summary": "A skilled ranger and heir to the throne of Gondor",
-                "skills": {
-                    "combat": 0.9,
-                    "leadership": 0.8,
-                    "tracking": 0.95
-                }
+                "skills": {"combat": 0.9, "leadership": 0.8, "tracking": 0.95},
             },
             "metadata": {
                 "timestamp": "2024-01-01T12:00:00Z",
                 "request_id": "req_123456",
                 "api_version": "1.1",
-                "server_time": 0.045
-            }
+                "server_time": 0.045,
+            },
         }
-        
+
         # Example error response
         error_example = {
             "status": "error",
@@ -242,34 +232,36 @@ Official SDKs are available for:
                 "type": "validation_error",
                 "message": "Character name is required",
                 "detail": "The 'name' field cannot be empty",
-                "field": "name"
+                "field": "name",
             },
             "metadata": {
                 "timestamp": "2024-01-01T12:00:00Z",
                 "request_id": "req_123457",
                 "api_version": "1.1",
-                "server_time": 0.012
-            }
+                "server_time": 0.012,
+            },
         }
-        
+
         # Add examples to components
         if "examples" not in schema["components"]:
             schema["components"]["examples"] = {}
-        
-        schema["components"]["examples"].update({
-            "CharacterSuccessResponse": {
-                "summary": "Successful character creation",
-                "value": character_success_example
-            },
-            "ValidationErrorResponse": {
-                "summary": "Validation error example",
-                "value": error_example
+
+        schema["components"]["examples"].update(
+            {
+                "CharacterSuccessResponse": {
+                    "summary": "Successful character creation",
+                    "value": character_success_example,
+                },
+                "ValidationErrorResponse": {
+                    "summary": "Validation error example",
+                    "value": error_example,
+                },
             }
-        })
-    
+        )
+
     def _add_request_examples(self, schema: Dict[str, Any]):
         """Add request examples to schema."""
-        
+
         # Character creation request example
         character_request_example = {
             "agent_id": "aragorn_ranger",
@@ -280,38 +272,38 @@ Official SDKs are available for:
                 "combat": 0.9,
                 "leadership": 0.8,
                 "tracking": 0.95,
-                "diplomacy": 0.7
+                "diplomacy": 0.7,
             },
             "current_location": "Rivendell",
-            "metadata": {
-                "source": "tolkien",
-                "category": "hero"
-            }
+            "metadata": {"source": "tolkien", "category": "hero"},
         }
-        
+
         # Story generation request example
         story_request_example = {
             "characters": ["aragorn_ranger", "legolas_elf", "gimli_dwarf"],
-            "title": "The Fellowship's Journey"
+            "title": "The Fellowship's Journey",
         }
-        
+
         # Add examples to components
-        schema["components"]["examples"].update({
-            "CharacterCreationRequest": {
-                "summary": "Create a new character",
-                "value": character_request_example
-            },
-            "StoryGenerationRequest": {
-                "summary": "Generate a story with multiple characters",
-                "value": story_request_example
+        schema["components"]["examples"].update(
+            {
+                "CharacterCreationRequest": {
+                    "summary": "Create a new character",
+                    "value": character_request_example,
+                },
+                "StoryGenerationRequest": {
+                    "summary": "Generate a story with multiple characters",
+                    "value": story_request_example,
+                },
             }
-        })
+        )
+
 
 def setup_enhanced_docs(app: FastAPI):
     """Setup enhanced API documentation."""
-    
+
     doc_generator = DocumentationGenerator(app)
-    
+
     @app.get("/docs", include_in_schema=False)
     async def custom_swagger_ui_html():
         """Custom Swagger UI with enhanced styling."""
@@ -320,9 +312,9 @@ def setup_enhanced_docs(app: FastAPI):
             title=f"{app.title} - Interactive API Documentation",
             swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
             swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
-            swagger_favicon_url="https://novel-engine.app/favicon.ico"
+            swagger_favicon_url="https://novel-engine.app/favicon.ico",
         )
-    
+
     @app.get("/redoc", include_in_schema=False)
     async def redoc_html():
         """Custom ReDoc documentation."""
@@ -330,32 +322,33 @@ def setup_enhanced_docs(app: FastAPI):
             openapi_url=app.openapi_url,
             title=f"{app.title} - API Reference",
             redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@2.0.0/bundles/redoc.standalone.js",
-            redoc_favicon_url="https://novel-engine.app/favicon.ico"
+            redoc_favicon_url="https://novel-engine.app/favicon.ico",
         )
-    
+
     @app.get("/api/openapi.json", include_in_schema=False)
     async def get_openapi_json():
         """Get OpenAPI schema as JSON."""
         return doc_generator.generate_openapi_schema()
-    
+
     @app.get("/api/documentation", include_in_schema=False)
     async def get_api_guide():
         """Get comprehensive API integration guide."""
         return HTMLResponse(content=_generate_integration_guide())
-    
+
     # Override default OpenAPI schema generation
     def custom_openapi():
         """
         Generate custom OpenAPI schema with enhanced documentation.
-        
+
         Returns:
             Enhanced OpenAPI schema dictionary
         """
         return doc_generator.generate_openapi_schema()
-    
+
     app.openapi = custom_openapi
-    
+
     logger.info("Enhanced API documentation initialized")
+
 
 def _generate_integration_guide() -> str:
     """Generate HTML integration guide."""
@@ -598,4 +591,5 @@ const character = await client.characters.create({
     </html>
     """
 
-__all__ = ['DocumentationGenerator', 'setup_enhanced_docs']
+
+__all__ = ["DocumentationGenerator", "setup_enhanced_docs"]

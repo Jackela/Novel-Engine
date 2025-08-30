@@ -14,33 +14,33 @@ Features:
 """
 
 import asyncio
-import sys
-import os
-import json
-import time
-from pathlib import Path
-from flask import Flask, request, render_template_string, jsonify
-from datetime import datetime
 import logging
+import sys
+import time
 import traceback
+from datetime import datetime
+from pathlib import Path
+
+from flask import Flask, jsonify, render_template_string, request
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 # Import LLM service
 try:
-    from src.llm_service import get_llm_service, LLMRequest, ResponseFormat
+    from src.llm_service import LLMRequest, ResponseFormat, get_llm_service
+
     LLM_AVAILABLE = True
 except ImportError as e:
     print(f"⚠️ LLM service not available: {e}")
     LLM_AVAILABLE = False
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'ai_agent_story_server_key'
-app.config['JSON_AS_ASCII'] = False
+app.config["SECRET_KEY"] = "ai_agent_story_server_key"
+app.config["JSON_AS_ASCII"] = False
 
 # Disable Flask logging for cleaner output
-logging.getLogger('werkzeug').setLevel(logging.ERROR)
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 # AI Agent Optimized HTML Template
 HTML_TEMPLATE = """
@@ -387,166 +387,220 @@ HTML_TEMPLATE = """
 </html>
 """
 
-@app.route('/')
+
+@app.route("/")
 def index():
     """Main story generation interface optimized for AI agents."""
     return render_template_string(HTML_TEMPLATE)
 
-@app.route('/api/generate', methods=['POST'])
+
+@app.route("/api/generate", methods=["POST"])
 def generate_story():
     """
     Generate story using real AI - optimized for AI agent testing.
-    
+
     Returns consistent JSON structure for reliable parsing.
     """
     try:
         data = request.get_json()
-        if not data or 'prompt' not in data:
-            return jsonify({
-                'success': False,
-                'error': 'No prompt provided in request body',
-                'error_type': 'missing_prompt',
-                'timestamp': datetime.now().isoformat()
-            }), 400
-        
-        prompt = data['prompt'].strip()
+        if not data or "prompt" not in data:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "No prompt provided in request body",
+                        "error_type": "missing_prompt",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                ),
+                400,
+            )
+
+        prompt = data["prompt"].strip()
         if not prompt:
-            return jsonify({
-                'success': False,
-                'error': 'Empty prompt provided',
-                'error_type': 'empty_prompt',
-                'timestamp': datetime.now().isoformat()
-            }), 400
-        
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Empty prompt provided",
+                        "error_type": "empty_prompt",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                ),
+                400,
+            )
+
         if not LLM_AVAILABLE:
-            return jsonify({
-                'success': False,
-                'error': 'LLM service not available - check API keys configuration',
-                'error_type': 'service_unavailable',
-                'timestamp': datetime.now().isoformat()
-            }), 503
-        
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "LLM service not available - check API keys configuration",
+                        "error_type": "service_unavailable",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                ),
+                503,
+            )
+
         # Log the generation request
         print(f"🎯 AI Story Generation Request: {prompt[:100]}...")
-        
+
         # Get LLM service and generate response
         llm_service = get_llm_service()
-        
+
         # Create request with optimized settings for story generation
         llm_request = LLMRequest(
             prompt=f"Create an original, creative story based on this prompt: {prompt}",
             response_format=ResponseFormat.NARRATIVE_FORMAT,
             temperature=0.8,  # High creativity
             max_tokens=2500,  # Allow longer stories
-            requester="ai_agent_story_server"
+            requester="ai_agent_story_server",
         )
-        
+
         # Generate response - use asyncio.run for sync context
         start_time = time.time()
         response = asyncio.run(llm_service.generate(llm_request))
         generation_time = int((time.time() - start_time) * 1000)
-        
-        if response.content and not response.content.startswith('[LLM Error'):
-            print(f"✅ Story generated successfully: {len(response.content)} chars in {generation_time}ms")
-            
-            return jsonify({
-                'success': True,
-                'content': response.content,
-                'provider': response.provider.value,
-                'cached': response.cached,
-                'response_time_ms': generation_time,
-                'tokens_used': response.tokens_used,
-                'cost_estimate': response.cost_estimate,
-                'timestamp': datetime.now().isoformat(),
-                'word_count': len(response.content.split()),
-                'char_count': len(response.content)
-            })
+
+        if response.content and not response.content.startswith("[LLM Error"):
+            print(
+                f"✅ Story generated successfully: {len(response.content)} chars in {generation_time}ms"
+            )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "content": response.content,
+                    "provider": response.provider.value,
+                    "cached": response.cached,
+                    "response_time_ms": generation_time,
+                    "tokens_used": response.tokens_used,
+                    "cost_estimate": response.cost_estimate,
+                    "timestamp": datetime.now().isoformat(),
+                    "word_count": len(response.content.split()),
+                    "char_count": len(response.content),
+                }
+            )
         else:
             print(f"❌ Story generation failed: {response.content}")
-            
-            return jsonify({
-                'success': False,
-                'error': response.content or 'AI generation failed',
-                'error_type': 'generation_failed',
-                'provider': response.provider.value if response else 'unknown',
-                'response_time_ms': generation_time,
-                'timestamp': datetime.now().isoformat()
-            }), 500
-    
+
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": response.content or "AI generation failed",
+                        "error_type": "generation_failed",
+                        "provider": response.provider.value if response else "unknown",
+                        "response_time_ms": generation_time,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                ),
+                500,
+            )
+
     except Exception as e:
         error_traceback = traceback.format_exc()
         print(f"❌ Server error in /api/generate: {e}")
         print(f"Traceback: {error_traceback}")
-        
-        return jsonify({
-            'success': False,
-            'error': f'Server error: {str(e)}',
-            'error_type': 'server_error',
-            'timestamp': datetime.now().isoformat()
-        }), 500
 
-@app.route('/api/health')
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"Server error: {str(e)}",
+                    "error_type": "server_error",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ),
+            500,
+        )
+
+
+@app.route("/api/health")
 def health_check():
     """Health check endpoint for monitoring."""
-    return jsonify({
-        'status': 'healthy',
-        'service': 'ai_agent_story_server',
-        'llm_available': LLM_AVAILABLE,
-        'timestamp': datetime.now().isoformat(),
-        'version': '1.0.0'
-    })
+    return jsonify(
+        {
+            "status": "healthy",
+            "service": "ai_agent_story_server",
+            "llm_available": LLM_AVAILABLE,
+            "timestamp": datetime.now().isoformat(),
+            "version": "1.0.0",
+        }
+    )
 
-@app.route('/api/test-prompts')
+
+@app.route("/api/test-prompts")
 def get_test_prompts():
     """Get predefined test prompts for AI agent testing."""
-    return jsonify({
-        'prompts': [
-            {
-                'id': 'time_paradox',
-                'name': 'Time Paradox Challenge',
-                'prompt': 'Write a story where the main character travels back in time to prevent a disaster, but realizes their actions might create a worse timeline. Include specific dialogue and internal conflict.',
-                'complexity': 5,
-                'expected_elements': ['time travel', 'paradox', 'dialogue', 'internal conflict']
-            },
-            {
-                'id': 'meta_narrative',
-                'name': 'Meta-Narrative Awareness',
-                'prompt': 'Create a story where the protagonist gradually realizes they are a character in a story being written. Show their attempts to communicate with the author and break free from the narrative.',
-                'complexity': 4,
-                'expected_elements': ['meta-fiction', 'self-awareness', 'fourth wall', 'author interaction']
-            },
-            {
-                'id': 'quantum_consciousness',
-                'name': 'Quantum Consciousness Split',
-                'prompt': 'Write about a character who exists in multiple parallel realities simultaneously. They can perceive all versions of themselves but struggle to make decisions when every choice leads to different outcomes.',
-                'complexity': 5,
-                'expected_elements': ['quantum', 'parallel realities', 'consciousness', 'decision making']
-            }
-        ]
-    })
+    return jsonify(
+        {
+            "prompts": [
+                {
+                    "id": "time_paradox",
+                    "name": "Time Paradox Challenge",
+                    "prompt": "Write a story where the main character travels back in time to prevent a disaster, but realizes their actions might create a worse timeline. Include specific dialogue and internal conflict.",
+                    "complexity": 5,
+                    "expected_elements": [
+                        "time travel",
+                        "paradox",
+                        "dialogue",
+                        "internal conflict",
+                    ],
+                },
+                {
+                    "id": "meta_narrative",
+                    "name": "Meta-Narrative Awareness",
+                    "prompt": "Create a story where the protagonist gradually realizes they are a character in a story being written. Show their attempts to communicate with the author and break free from the narrative.",
+                    "complexity": 4,
+                    "expected_elements": [
+                        "meta-fiction",
+                        "self-awareness",
+                        "fourth wall",
+                        "author interaction",
+                    ],
+                },
+                {
+                    "id": "quantum_consciousness",
+                    "name": "Quantum Consciousness Split",
+                    "prompt": "Write about a character who exists in multiple parallel realities simultaneously. They can perceive all versions of themselves but struggle to make decisions when every choice leads to different outcomes.",
+                    "complexity": 5,
+                    "expected_elements": [
+                        "quantum",
+                        "parallel realities",
+                        "consciousness",
+                        "decision making",
+                    ],
+                },
+            ]
+        }
+    )
 
-def run_server(host='0.0.0.0', port=8080, debug=False):
+
+def run_server(host="0.0.0.0", port=8080, debug=False):
     """Run the AI agent optimized story server."""
     print("🎭 Starting AI Agent Story Generation Server...")
     print(f"📍 Server URL: http://{host}:{port}")
     print("🤖 Optimized for AI agent access with Playwright")
     print("=" * 60)
-    
+
     if not LLM_AVAILABLE:
         print("⚠️ WARNING: LLM service not available")
         print("   Make sure API keys are properly configured")
         print("   Server will run but story generation will fail")
     else:
         print("✅ LLM service available and ready for AI generation")
-    
+
     print("\n🎯 AI Agent Testing Features:")
     print("   • Stable DOM selectors with data-testid attributes")
     print("   • Consistent JSON API responses")
     print("   • Real-time status indicators")
     print("   • Error recovery mechanisms")
     print("   • Preset prompts for automated testing")
-    
+
     app.run(host=host, port=port, debug=debug, threaded=True)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     run_server(port=8080)

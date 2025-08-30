@@ -4,7 +4,7 @@ Character personalities, story state, and generation configuration
 """
 
 from .character import AICharacter, PersonalityVector
-from .story_state import StoryState, PlotMemory
 from .generation_config import GenerationConfig, LLMConfig
+from .story_state import PlotMemory, StoryState
 
 __all__ = ['AICharacter', 'PersonalityVector', 'StoryState', 'PlotMemory', 'GenerationConfig', 'LLMConfig']

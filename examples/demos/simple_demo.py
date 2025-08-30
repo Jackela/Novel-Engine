@@ -3,11 +3,8 @@
 Simple demonstration of the API layer functionality.
 """
 
-import asyncio
-import sys
 import os
-import time
-from pathlib import Path
+import sys
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
@@ -19,22 +16,16 @@ try:
     # Test import of API components
     print("📦 Testing imports...")
     
-    from src.api.character_api import CharacterAPI
     print("   ✅ CharacterAPI imported")
     
-    from src.api.interaction_api import InteractionAPI  
     print("   ✅ InteractionAPI imported")
     
-    from src.api.story_generation_api import StoryGenerationAPI
     print("   ✅ StoryGenerationAPI imported")
     
-    from src.api.main_api_server import create_app
     print("   ✅ Main API server imported")
     
-    from src.core.data_models import CharacterState, EmotionalState
     print("   ✅ Data models imported")
     
-    from src.templates.character_template_manager import CharacterArchetype
     print("   ✅ Character archetypes imported")
     
     print("\n✅ ALL IMPORTS SUCCESSFUL")

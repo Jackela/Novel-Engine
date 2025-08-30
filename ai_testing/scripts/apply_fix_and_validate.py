@@ -4,13 +4,12 @@ Apply comprehensive fixes and validate the results
 This script will fix all issues and achieve 100% validation success
 """
 
-import os
-import sys
-import time
 import asyncio
 import subprocess
-from pathlib import Path
+import sys
+import time
 from datetime import datetime
+from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -37,7 +36,7 @@ def run_command(command, description):
         )
         
         if result.returncode == 0:
-            print(f"   ✅ Success")
+            print("   ✅ Success")
             if result.stdout:
                 print(f"   Output: {result.stdout[:200]}...")
             return True
@@ -47,7 +46,7 @@ def run_command(command, description):
                 print(f"   Error: {result.stderr[:200]}...")
             return False
     except subprocess.TimeoutExpired:
-        print(f"   ⏱️ Command timed out")
+        print("   ⏱️ Command timed out")
         return False
     except Exception as e:
         print(f"   ❌ Error: {e}")
@@ -68,7 +67,7 @@ async def check_service_health(port, service_name):
             else:
                 print(f"   ❌ {service_name}: HTTP {response.status_code}")
                 return False
-    except Exception as e:
+    except Exception:
         print(f"   ❌ {service_name}: Not responding")
         return False
 
@@ -135,7 +134,7 @@ def run_validation():
         print("❌ validate_deployment.py not found!")
         return False
     
-    print(f"Running validation script...")
+    print("Running validation script...")
     
     try:
         result = subprocess.run(

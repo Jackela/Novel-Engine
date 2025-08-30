@@ -11,8 +11,6 @@ Key Services:
 
 from .interaction_application_service import InteractionApplicationService
 
-__all__ = [
-    'InteractionApplicationService'
-]
+__all__ = ["InteractionApplicationService"]
 
 __version__ = "1.0.0"

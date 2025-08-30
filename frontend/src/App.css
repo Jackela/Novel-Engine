@@ -10,12 +10,12 @@
   --bg-hover: #f0f0f0;
   --bg-selected: #e3f2fd;
   --text-color: #212529;
-  --text-muted: #6c757d;
+  --text-muted: #495057; /* Enhanced contrast for WCAG AA compliance */
   --border-color: #dee2e6;
   --primary-color: #007bff;
   --primary-dark: #0056b3;
   --success-color: #28a745;
-  --warning-color: #ffc107;
+  --warning-color: #d39e00; /* Enhanced contrast for WCAG AA compliance */
   --danger-color: #dc3545;
   --info-color: #17a2b8;
   --secondary-color: #6c757d;
@@ -34,10 +34,29 @@
   --primary-color: #3b82f6;
   --primary-dark: #2563eb;
   --success-color: #10b981;
-  --warning-color: #f59e0b;
+  --warning-color: #fbbf24; /* Enhanced contrast for dark mode WCAG AA compliance */
   --danger-color: #ef4444;
   --info-color: #06b6d4;
   --secondary-color: #6b7280;
+}
+
+/* Accessibility: Skip Links */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 8px;
+  background: var(--primary-color);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  z-index: 10000;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 8px;
 }
 
 /* Global Styles */
@@ -105,11 +124,22 @@ code {
   margin: 0;
   font-size: 24px;
   font-weight: 700;
-  color: var(--text-color);
+  color: var(--primary-color);
+  /* Fallback for accessibility - solid color with proper contrast */
   background: linear-gradient(135deg, var(--primary-color), var(--info-color));
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+/* Ensure proper contrast for users with gradient display issues */
+@media (prefers-contrast: high), (prefers-reduced-motion: reduce) {
+  .app-title {
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: unset;
+    color: var(--primary-color);
+  }
 }
 
 .session-id {
@@ -181,8 +211,8 @@ code {
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 16px;
-  min-width: 36px;
-  height: 36px;
+  min-width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -446,8 +476,8 @@ code {
   }
   
   .control-btn {
-    min-width: 32px;
-    height: 32px;
+    min-width: 44px;
+    height: 44px;
     font-size: 14px;
   }
   
@@ -460,19 +490,48 @@ code {
   }
 }
 
-/* High Contrast Mode */
+/* High Contrast Mode - Enhanced WCAG AA Compliance */
 @media (prefers-contrast: high) {
+  :root {
+    /* High contrast color overrides for WCAG AA compliance */
+    --primary-color: #000080; /* Higher contrast blue */
+    --text-color: #000000;
+    --text-muted: #262626; /* Enhanced high contrast for WCAG AA compliance */
+    --border-color: #000000;
+    --bg-hover: #f0f0f0;
+  }
+  
+  [data-theme="dark"] {
+    --primary-color: #6699ff; /* Lighter blue for dark mode contrast */
+    --text-color: #ffffff;
+    --text-muted: #cccccc;
+    --border-color: #ffffff;
+    --bg-hover: #333333;
+  }
+  
   .view-btn,
   .control-btn {
     border-width: 2px;
+    font-weight: 600; /* Bolder text for better readability */
   }
   
   .view-btn.active {
-    border: 2px solid white;
+    border: 3px solid white;
+    background: var(--primary-color);
   }
   
   .connection-dot.connected {
-    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.5);
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.8);
+    border: 2px solid white;
+  }
+  
+  /* Enhanced focus indicators */
+  button:focus,
+  .control-btn:focus,
+  .view-btn:focus,
+  a:focus {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 3px;
   }
 }
 
@@ -491,6 +550,124 @@ code {
   
   .control-btn:hover {
     transform: none;
+  }
+}
+
+/* Mobile-Specific Performance Optimizations */
+@media (max-width: 768px) {
+  /* Reduce animations on mobile for performance */
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Optimize font rendering on mobile */
+  body {
+    -webkit-font-smoothing: subpixel-antialiased;
+    text-rendering: optimizeSpeed;
+  }
+
+  /* Reduce resource usage */
+  img, video {
+    image-rendering: -webkit-optimize-contrast;
+  }
+
+  /* Mobile hover states - disable hover effects */
+  .mobile-device button:hover,
+  .mobile-device a:hover,
+  .mobile-device .hover-effect:hover {
+    transform: none !important;
+    box-shadow: inherit !important;
+    background-color: inherit !important;
+  }
+
+  /* Touch-friendly scrollbars on mobile */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Data Saver Mode Optimizations */
+@media (prefers-reduced-data) {
+  /* Disable background images */
+  * {
+    background-image: none !important;
+  }
+
+  /* Reduce image quality */
+  img {
+    image-rendering: pixelated;
+  }
+
+  /* Disable video autoplay */
+  video {
+    preload: none;
+  }
+}
+
+/* Memory Pressure Mode */
+.memory-pressure-mode {
+  /* Simplify rendering */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+  }
+
+  /* Disable complex animations */
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Reduce gradient complexity */
+  .app-title {
+    background: var(--primary-color) !important;
+    background-clip: unset !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: unset !important;
+  }
+}
+
+/* Optimize for low-end mobile devices */
+@media (max-width: 480px) and (max-height: 850px) {
+  /* Reduce complexity for low-end phones */
+  .complex-component {
+    display: none;
+  }
+
+  /* Simplify layouts */
+  .grid-layout {
+    display: block !important;
+  }
+
+  /* Reduce padding/margins to save space */
+  .container {
+    padding: 8px !important;
+    margin: 4px !important;
+  }
+
+  /* Minimize dev metrics overlay on small screens */
+  .dev-metrics {
+    font-size: 9px;
+    padding: 8px;
+    max-height: 120px;
+    overflow-y: auto;
   }
 }
 

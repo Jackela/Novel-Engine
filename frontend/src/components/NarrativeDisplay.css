@@ -68,7 +68,7 @@
   align-items: center;
   gap: 16px;
   font-size: 12px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #495057);
 }
 
 .turn-counter {
@@ -165,7 +165,7 @@
   gap: 12px;
   margin-bottom: 8px;
   font-size: 12px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #495057);
 }
 
 .narrative-event__agent {
@@ -234,7 +234,7 @@
 
 .causality__section li {
   font-size: 12px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #495057);
   margin-bottom: 2px;
 }
 
@@ -342,7 +342,7 @@
 }
 
 .action-reasoning {
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #495057);
   line-height: 1.4;
   font-style: italic;
 }
@@ -353,7 +353,7 @@
   align-items: center;
   justify-content: center;
   height: 200px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #495057);
   text-align: center;
 }
 

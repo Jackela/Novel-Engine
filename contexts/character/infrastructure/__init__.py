@@ -18,13 +18,18 @@ external communications, and other infrastructure concerns.
 
 # Conditional imports to handle platform naming conflict
 try:
-    from .repositories.character_repository import SQLAlchemyCharacterRepository
     from .persistence.character_models import (
-        CharacterORM, CharacterProfileORM, CharacterStatsORM, 
-        CharacterSkillsORM, CharacterEventORM, Base
+        Base,
+        CharacterEventORM,
+        CharacterORM,
+        CharacterProfileORM,
+        CharacterSkillsORM,
+        CharacterStatsORM,
     )
+    from .repositories.character_repository import SQLAlchemyCharacterRepository
+
     _IMPORTS_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     # Handle platform naming conflict gracefully
     SQLAlchemyCharacterRepository = None
     CharacterORM = None
@@ -38,10 +43,10 @@ except ImportError as e:
 __all__ = [
     "SQLAlchemyCharacterRepository",
     "CharacterORM",
-    "CharacterProfileORM", 
+    "CharacterProfileORM",
     "CharacterStatsORM",
     "CharacterSkillsORM",
     "CharacterEventORM",
     "Base",
-    "_IMPORTS_AVAILABLE"
+    "_IMPORTS_AVAILABLE",
 ]

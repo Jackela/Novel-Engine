@@ -18,12 +18,11 @@ providing concrete persistence capabilities for domain aggregates.
 # Conditional import to handle platform naming conflict
 try:
     from .character_repository import SQLAlchemyCharacterRepository
+
     _REPOSITORY_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     # Handle platform naming conflict gracefully
     SQLAlchemyCharacterRepository = None
     _REPOSITORY_AVAILABLE = False
 
-__all__ = [
-    "SQLAlchemyCharacterRepository"
-]
+__all__ = ["SQLAlchemyCharacterRepository"]

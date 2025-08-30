@@ -3,7 +3,7 @@
 Character Domain Repository Interfaces
 
 This package contains repository interfaces for the Character domain.
-Following DDD principles, repository interfaces are defined in the 
+Following DDD principles, repository interfaces are defined in the
 domain layer while implementations reside in the infrastructure layer.
 
 The repository provides:
@@ -14,11 +14,15 @@ The repository provides:
 """
 
 from .character_repository import (
-    ICharacterRepository, RepositoryException,
-    ConcurrencyException, NotSupportedException
+    ConcurrencyException,
+    ICharacterRepository,
+    NotSupportedException,
+    RepositoryException,
 )
 
 __all__ = [
-    "ICharacterRepository", "RepositoryException", 
-    "ConcurrencyException", "NotSupportedException",
+    "ICharacterRepository",
+    "RepositoryException",
+    "ConcurrencyException",
+    "NotSupportedException",
 ]

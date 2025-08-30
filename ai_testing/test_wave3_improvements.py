@@ -5,11 +5,13 @@ Test Wave 3 Improvements - Content Generation Variety
 
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).parent))
 
-from complete_workflow_test import CompleteNovelWorkflow
-from collections import Counter
 import json
+from collections import Counter
+
+from complete_workflow_test import CompleteNovelWorkflow
 
 
 def test_content_variety():
@@ -21,7 +23,7 @@ def test_content_variety():
     workflow = CompleteNovelWorkflow()
     
     # Step 1: Create characters
-    characters = workflow.create_custom_characters()
+    workflow.create_custom_characters()
     
     # Step 2: Generate events with improved variety
     events = workflow.advance_story_rounds(rounds=60)

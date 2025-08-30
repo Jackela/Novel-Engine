@@ -6,17 +6,17 @@ Specialized processors for different interaction types with category-specific lo
 """
 
 from .interaction_type_processors import (
-    InteractionTypeProcessorManager,
     BaseInteractionProcessor,
-    DialogueProcessor,
     CombatProcessor,
-    CooperationProcessor
+    CooperationProcessor,
+    DialogueProcessor,
+    InteractionTypeProcessorManager,
 )
 
 __all__ = [
-    'InteractionTypeProcessorManager',
-    'BaseInteractionProcessor',
-    'DialogueProcessor',
-    'CombatProcessor', 
-    'CooperationProcessor'
+    "InteractionTypeProcessorManager",
+    "BaseInteractionProcessor",
+    "DialogueProcessor",
+    "CombatProcessor",
+    "CooperationProcessor",
 ]

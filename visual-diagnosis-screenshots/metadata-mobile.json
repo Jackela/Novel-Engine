@@ -1,0 +1,777 @@
+{
+  "breakpoint": "mobile",
+  "viewport": {
+    "width": 375,
+    "height": 667,
+    "name": "Mobile"
+  },
+  "timestamp": "2025-08-28T05:27:27.648Z",
+  "analysis": {
+    "scrollHeight": 1795,
+    "clientHeight": 667,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "components": [
+      {
+        "testId": "dashboard-layout",
+        "visible": true,
+        "bounds": {
+          "x": 0,
+          "y": -486,
+          "width": 375,
+          "height": 1795,
+          "top": -486,
+          "right": 375,
+          "bottom": 1309,
+          "left": 0
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "visible"
+        }
+      },
+      {
+        "testId": "world-state-map",
+        "visible": true,
+        "bounds": {
+          "x": 16,
+          "y": -405,
+          "width": 343,
+          "height": 250,
+          "top": -405,
+          "right": 359,
+          "bottom": -155,
+          "left": 16
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "PersonIcon",
+        "visible": false,
+        "bounds": {
+          "x": 45,
+          "y": -320,
+          "width": 18,
+          "height": 18,
+          "top": -320,
+          "right": 63,
+          "bottom": -302,
+          "left": 45
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "StarIcon",
+        "visible": false,
+        "bounds": {
+          "x": 160.5,
+          "y": -320,
+          "width": 18,
+          "height": 18,
+          "top": -320,
+          "right": 178.5,
+          "bottom": -302,
+          "left": 160.5
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "LocationOnIcon",
+        "visible": false,
+        "bounds": {
+          "x": 108,
+          "y": -313,
+          "width": 20,
+          "height": 20,
+          "top": -313,
+          "right": 128,
+          "bottom": -293,
+          "left": 108
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "LocationOnIcon",
+        "visible": false,
+        "bounds": {
+          "x": 159.765625,
+          "y": -229.1875,
+          "width": 20,
+          "height": 20,
+          "top": -229.1875,
+          "right": 179.765625,
+          "bottom": -209.1875,
+          "left": 159.765625
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "LocationOnIcon",
+        "visible": false,
+        "bounds": {
+          "x": 254.046875,
+          "y": -313,
+          "width": 20,
+          "height": 20,
+          "top": -313,
+          "right": 274.046875,
+          "bottom": -293,
+          "left": 254.046875
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "LocationOnIcon",
+        "visible": false,
+        "bounds": {
+          "x": 59.796875,
+          "y": -146.375,
+          "width": 20,
+          "height": 20,
+          "top": -146.375,
+          "right": 79.796875,
+          "bottom": -126.375,
+          "left": 59.796875
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "real-time-activity",
+        "visible": true,
+        "bounds": {
+          "x": 16,
+          "y": -139,
+          "width": 343,
+          "height": 200,
+          "top": -139,
+          "right": 359,
+          "bottom": 61,
+          "left": 16
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "MoreVertIcon",
+        "visible": false,
+        "bounds": {
+          "x": 316,
+          "y": -117,
+          "width": 24,
+          "height": 24,
+          "top": -117,
+          "right": 340,
+          "bottom": -93,
+          "left": 316
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "NotificationsIcon",
+        "visible": false,
+        "bounds": {
+          "x": 33,
+          "y": -61.015625,
+          "width": 20,
+          "height": 20,
+          "top": -61.015625,
+          "right": 53,
+          "bottom": -41.015625,
+          "left": 33
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "PersonIcon",
+        "visible": false,
+        "bounds": {
+          "x": 35,
+          "y": -5,
+          "width": 20,
+          "height": 20,
+          "top": -5,
+          "right": 55,
+          "bottom": 15,
+          "left": 35
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "AutoStoriesIcon",
+        "visible": false,
+        "bounds": {
+          "x": 35,
+          "y": 68,
+          "width": 20,
+          "height": 20,
+          "top": 68,
+          "right": 55,
+          "bottom": 88,
+          "left": 35
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "SpeedIcon",
+        "visible": false,
+        "bounds": {
+          "x": 35,
+          "y": 141,
+          "width": 20,
+          "height": 20,
+          "top": 141,
+          "right": 55,
+          "bottom": 161,
+          "left": 35
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "PsychologyIcon",
+        "visible": false,
+        "bounds": {
+          "x": 35,
+          "y": 214,
+          "width": 20,
+          "height": 20,
+          "top": 214,
+          "right": 55,
+          "bottom": 234,
+          "left": 35
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "performance-metrics",
+        "visible": true,
+        "bounds": {
+          "x": 16,
+          "y": 77,
+          "width": 343,
+          "height": 180,
+          "top": 77,
+          "right": 359,
+          "bottom": 257,
+          "left": 16
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "CircleIcon",
+        "visible": false,
+        "bounds": {
+          "x": 33,
+          "y": 157,
+          "width": 12,
+          "height": 12,
+          "top": 157,
+          "right": 45,
+          "bottom": 169,
+          "left": 33
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "turn-pipeline-status",
+        "visible": true,
+        "bounds": {
+          "x": 16,
+          "y": 273,
+          "width": 343,
+          "height": 120,
+          "top": 273,
+          "right": 359,
+          "bottom": 393,
+          "left": 16
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "CheckCircleIcon",
+        "visible": false,
+        "bounds": {
+          "x": 33,
+          "y": 401,
+          "width": 20,
+          "height": 20,
+          "top": 401,
+          "right": 53,
+          "bottom": 421,
+          "left": 33
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "GroupsIcon",
+        "visible": false,
+        "bounds": {
+          "x": 61,
+          "y": 413.015625,
+          "width": 20,
+          "height": 20,
+          "top": 413.015625,
+          "right": 81,
+          "bottom": 433.015625,
+          "left": 61
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "CheckCircleIcon",
+        "visible": false,
+        "bounds": {
+          "x": 33,
+          "y": 464.96875,
+          "width": 20,
+          "height": 20,
+          "top": 464.96875,
+          "right": 53,
+          "bottom": 484.96875,
+          "left": 33
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "PsychologyIcon",
+        "visible": false,
+        "bounds": {
+          "x": 33,
+          "y": 532.4375,
+          "width": 20,
+          "height": 20,
+          "top": 532.4375,
+          "right": 53,
+          "bottom": 552.4375,
+          "left": 33
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "GroupsIcon",
+        "visible": false,
+        "bounds": {
+          "x": 61,
+          "y": 547.953125,
+          "width": 20,
+          "height": 20,
+          "top": 547.953125,
+          "right": 81,
+          "bottom": 567.953125,
+          "left": 61
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "AccessTimeIcon",
+        "visible": false,
+        "bounds": {
+          "x": 33,
+          "y": 589.953125,
+          "width": 20,
+          "height": 20,
+          "top": 589.953125,
+          "right": 53,
+          "bottom": 609.953125,
+          "left": 33
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "AccessTimeIcon",
+        "visible": false,
+        "bounds": {
+          "x": 33,
+          "y": 633.96875,
+          "width": 20,
+          "height": 20,
+          "top": 633.96875,
+          "right": 53,
+          "bottom": 653.96875,
+          "left": 33
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "quick-actions",
+        "visible": true,
+        "bounds": {
+          "x": 16,
+          "y": 409,
+          "width": 343,
+          "height": 120,
+          "top": 409,
+          "right": 359,
+          "bottom": 529,
+          "left": 16
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "run-turn-button",
+        "visible": true,
+        "bounds": {
+          "x": 41,
+          "y": 480,
+          "width": 36,
+          "height": 36,
+          "top": 480,
+          "right": 77,
+          "bottom": 516,
+          "left": 41
+        },
+        "computedStyle": {
+          "display": "flex",
+          "visibility": "visible",
+          "overflow": "visible"
+        }
+      },
+      {
+        "testId": "PlayArrowIcon",
+        "visible": false,
+        "bounds": {
+          "x": 47,
+          "y": 486,
+          "width": 24,
+          "height": 24,
+          "top": 486,
+          "right": 71,
+          "bottom": 510,
+          "left": 47
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "StopIcon",
+        "visible": false,
+        "bounds": {
+          "x": 91,
+          "y": 486,
+          "width": 24,
+          "height": 24,
+          "top": 486,
+          "right": 115,
+          "bottom": 510,
+          "left": 91
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "RefreshIcon",
+        "visible": false,
+        "bounds": {
+          "x": 135,
+          "y": 486,
+          "width": 24,
+          "height": 24,
+          "top": 486,
+          "right": 159,
+          "bottom": 510,
+          "left": 135
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "SaveIcon",
+        "visible": false,
+        "bounds": {
+          "x": 179,
+          "y": 486,
+          "width": 24,
+          "height": 24,
+          "top": 486,
+          "right": 203,
+          "bottom": 510,
+          "left": 179
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "SettingsIcon",
+        "visible": false,
+        "bounds": {
+          "x": 223,
+          "y": 486,
+          "width": 24,
+          "height": 24,
+          "top": 486,
+          "right": 247,
+          "bottom": 510,
+          "left": 223
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "PersonIcon",
+        "visible": false,
+        "bounds": {
+          "x": 90.640625,
+          "y": 644.953125,
+          "width": 20,
+          "height": 20,
+          "top": 644.953125,
+          "right": 110.640625,
+          "bottom": 664.953125,
+          "left": 90.640625
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "LinkIcon",
+        "visible": false,
+        "bounds": {
+          "x": 253.59375,
+          "y": 645.953125,
+          "width": 18,
+          "height": 18,
+          "top": 645.953125,
+          "right": 271.59375,
+          "bottom": 663.953125,
+          "left": 253.59375
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "PersonIcon",
+        "visible": false,
+        "bounds": {
+          "x": 90.640625,
+          "y": 708.875,
+          "width": 20,
+          "height": 20,
+          "top": 708.875,
+          "right": 110.640625,
+          "bottom": 728.875,
+          "left": 90.640625
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "LinkIcon",
+        "visible": false,
+        "bounds": {
+          "x": 253.90625,
+          "y": 709.875,
+          "width": 18,
+          "height": 18,
+          "top": 709.875,
+          "right": 271.90625,
+          "bottom": 727.875,
+          "left": 253.90625
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "PersonIcon",
+        "visible": false,
+        "bounds": {
+          "x": 90.640625,
+          "y": 772.796875,
+          "width": 20,
+          "height": 20,
+          "top": 772.796875,
+          "right": 110.640625,
+          "bottom": 792.796875,
+          "left": 90.640625
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "LinkIcon",
+        "visible": false,
+        "bounds": {
+          "x": 253.9375,
+          "y": 773.796875,
+          "width": 18,
+          "height": 18,
+          "top": 773.796875,
+          "right": 271.9375,
+          "bottom": 791.796875,
+          "left": 253.9375
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "MoreVertIcon",
+        "visible": false,
+        "bounds": {
+          "x": 316,
+          "y": 1215,
+          "width": 24,
+          "height": 24,
+          "top": 1215,
+          "right": 340,
+          "bottom": 1239,
+          "left": 316
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "ExpandMoreIcon",
+        "visible": false,
+        "bounds": {
+          "x": 305,
+          "y": 1282,
+          "width": 24,
+          "height": 24,
+          "top": 1282,
+          "right": 329,
+          "bottom": 1306,
+          "left": 305
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      }
+    ]
+  }
+}

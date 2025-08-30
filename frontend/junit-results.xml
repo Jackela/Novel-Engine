@@ -1,0 +1,152 @@
+<testsuites id="" name="" tests="6" failures="2" skipped="0" errors="0" time="39.296943">
+<testsuite name="dashboard-core-uat.spec.ts" timestamp="2025-08-28T10:19:16.211Z" hostname="chromium-desktop" tests="1" failures="0" skipped="0" time="6.179" errors="0">
+<testcase name="Emergent Narrative Dashboard - Core UAT › Performance Validation: Dashboard Load Time" classname="dashboard-core-uat.spec.ts" time="6.179">
+<system-out>
+<![CDATA[⚡ Performance Validation: Dashboard load time testing
+⚡ Dashboard Load Time: 1235ms
+⚡ World Map Load Time: 55ms
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="dashboard-core-uat.spec.ts" timestamp="2025-08-28T10:19:16.211Z" hostname="firefox-desktop" tests="1" failures="0" skipped="0" time="9.542" errors="0">
+<testcase name="Emergent Narrative Dashboard - Core UAT › Performance Validation: Dashboard Load Time" classname="dashboard-core-uat.spec.ts" time="9.542">
+<system-out>
+<![CDATA[⚡ Performance Validation: Dashboard load time testing
+⚡ Dashboard Load Time: 1655ms
+⚡ World Map Load Time: 31ms
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="dashboard-core-uat.spec.ts" timestamp="2025-08-28T10:19:16.211Z" hostname="webkit-desktop" tests="1" failures="1" skipped="0" time="35.524" errors="0">
+<testcase name="Emergent Narrative Dashboard - Core UAT › Performance Validation: Dashboard Load Time" classname="dashboard-core-uat.spec.ts" time="35.524">
+<failure message="dashboard-core-uat.spec.ts:257:3 Performance Validation: Dashboard Load Time" type="FAILURE">
+<![CDATA[  [webkit-desktop] › dashboard-core-uat.spec.ts:257:3 › Emergent Narrative Dashboard - Core UAT › Performance Validation: Dashboard Load Time › Measure Dashboard Load Performance 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: expect(received).toBeLessThan(expected)
+
+    Expected: < 5000
+    Received:   14872
+
+      268 |       
+      269 |       // Validate load time meets performance requirements (< 5 seconds)
+    > 270 |       expect(loadTime).toBeLessThan(5000);
+          |                        ^
+      271 |       
+      272 |       // Measure time to first meaningful paint (World State Map visible)
+      273 |       const worldMapLoadStart = Date.now();
+        at D:\Code\Novel-Engine\frontend\tests\e2e\dashboard-core-uat.spec.ts:270:24
+        at D:\Code\Novel-Engine\frontend\tests\e2e\dashboard-core-uat.spec.ts:260:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[⚡ Performance Validation: Dashboard load time testing
+
+[[ATTACHMENT|test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\test-failed-1.png]]
+
+[[ATTACHMENT|test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\video.webm]]
+
+[[ATTACHMENT|test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\error-context.md]]
+
+[[ATTACHMENT|test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="dashboard-core-uat.spec.ts" timestamp="2025-08-28T10:19:16.211Z" hostname="tablet" tests="1" failures="0" skipped="0" time="6.287" errors="0">
+<testcase name="Emergent Narrative Dashboard - Core UAT › Performance Validation: Dashboard Load Time" classname="dashboard-core-uat.spec.ts" time="6.287">
+<system-out>
+<![CDATA[⚡ Performance Validation: Dashboard load time testing
+⚡ Dashboard Load Time: 1286ms
+⚡ World Map Load Time: 23ms
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="dashboard-core-uat.spec.ts" timestamp="2025-08-28T10:19:16.211Z" hostname="mobile" tests="1" failures="1" skipped="0" time="30.327" errors="0">
+<testcase name="Emergent Narrative Dashboard - Core UAT › Performance Validation: Dashboard Load Time" classname="dashboard-core-uat.spec.ts" time="30.327">
+<failure message="dashboard-core-uat.spec.ts:257:3 Performance Validation: Dashboard Load Time" type="FAILURE">
+<![CDATA[  [mobile] › dashboard-core-uat.spec.ts:257:3 › Emergent Narrative Dashboard - Core UAT › Performance Validation: Dashboard Load Time 
+
+    TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+    Call log:
+      - waiting for locator('[data-testid="performance-metrics"]') to be visible
+
+
+       at pages\DashboardPage.ts:90
+
+      88 |     await this.worldStateMap.waitFor({ state: 'visible', timeout: 10000 });
+      89 |     await this.realTimeActivity.waitFor({ state: 'visible', timeout: 10000 });
+    > 90 |     await this.performanceMetrics.waitFor({ state: 'visible', timeout: 10000 });
+         |                                   ^
+      91 |     await this.turnPipelineStatus.waitFor({ state: 'visible', timeout: 10000 });
+      92 |     
+      93 |     // Wait for initial data load (loading states should disappear)
+        at DashboardPage.waitForDashboardLoad (D:\Code\Novel-Engine\frontend\tests\e2e\pages\DashboardPage.ts:90:35)
+        at DashboardPage.navigateToDashboard (D:\Code\Novel-Engine\frontend\tests\e2e\pages\DashboardPage.ts:77:5)
+        at D:\Code\Novel-Engine\frontend\tests\e2e\dashboard-core-uat.spec.ts:21:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\test-failed-1.png]]
+
+[[ATTACHMENT|test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\video.webm]]
+
+[[ATTACHMENT|test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\error-context.md]]
+
+[[ATTACHMENT|test-results\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="dashboard-core-uat.spec.ts" timestamp="2025-08-28T10:19:16.211Z" hostname="high-dpi" tests="1" failures="0" skipped="0" time="7.439" errors="0">
+<testcase name="Emergent Narrative Dashboard - Core UAT › Performance Validation: Dashboard Load Time" classname="dashboard-core-uat.spec.ts" time="7.439">
+<system-out>
+<![CDATA[⚡ Performance Validation: Dashboard load time testing
+⚡ Dashboard Load Time: 1499ms
+⚡ World Map Load Time: 32ms
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

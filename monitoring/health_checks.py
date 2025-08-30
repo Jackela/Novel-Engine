@@ -10,20 +10,19 @@ Implements comprehensive health checks with:
 """
 
 import asyncio
-import time
 import logging
-from typing import Dict, List, Optional, Any, Callable, Union
-from dataclasses import dataclass, field
-from enum import Enum
-import aiosqlite
-import aiohttp
-import psutil
 import os
-from datetime import datetime, timedelta
-from fastapi import FastAPI, Response, HTTPException
+import time
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
+
+import aiohttp
+import aiosqlite
+import psutil
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-import socket
-from contextlib import asynccontextmanager
 
 logger = logging.getLogger(__name__)
 
@@ -436,9 +435,9 @@ class HealthCheckManager:
             
             # Check if the story generation module can be imported
             from src.ai_intelligence.story_quality_engine import StoryQualityEngine
-            
+
             # Simple functionality test
-            engine = StoryQualityEngine()
+            StoryQualityEngine()
             
             return {
                 "status": HealthStatus.HEALTHY.value,

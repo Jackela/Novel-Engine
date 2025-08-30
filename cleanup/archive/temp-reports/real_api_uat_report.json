@@ -1,0 +1,711 @@
+{
+  "test_execution_summary": {
+    "timestamp": "2025-08-28T12:04:34.388240",
+    "total_tests": 17,
+    "passed": 12,
+    "failed": 5,
+    "errors": 0,
+    "pass_rate": "70.6%",
+    "average_execution_time_ms": 7.95
+  },
+  "test_results_by_category": {
+    "happy_path": [
+      {
+        "test_id": "HP01",
+        "test_name": "Root Endpoint Access",
+        "category": "happy_path",
+        "description": "User accesses the root API endpoint to verify system is running",
+        "status": "PASS",
+        "expected_status_code": 200,
+        "actual_status_code": 200,
+        "response_data": {
+          "message": "StoryForge AI Interactive Story Engine is running!"
+        },
+        "error_message": null,
+        "execution_time_ms": 7.73,
+        "timestamp": "2025-08-28T12:04:34.259299"
+      },
+      {
+        "test_id": "HP02",
+        "test_name": "Health Check",
+        "category": "happy_path",
+        "description": "User checks system health status",
+        "status": "PASS",
+        "expected_status_code": 200,
+        "actual_status_code": 200,
+        "response_data": {
+          "status": "healthy",
+          "api": "running",
+          "timestamp": "2025-08-28T12:04:34.260520",
+          "version": "1.0.0",
+          "config": "loaded"
+        },
+        "error_message": null,
+        "execution_time_ms": 1.76,
+        "timestamp": "2025-08-28T12:04:34.261135"
+      },
+      {
+        "test_id": "HP03",
+        "test_name": "Character Listing",
+        "category": "happy_path",
+        "description": "User retrieves list of available characters",
+        "status": "PASS",
+        "expected_status_code": 200,
+        "actual_status_code": 200,
+        "response_data": {
+          "characters": [
+            "engineer",
+            "pilot",
+            "scientist",
+            "test"
+          ]
+        },
+        "error_message": null,
+        "execution_time_ms": 1.48,
+        "timestamp": "2025-08-28T12:04:34.262658"
+      },
+      {
+        "test_id": "HP04",
+        "test_name": "Character Retrieval",
+        "category": "happy_path",
+        "description": "User retrieves specific character details",
+        "status": "PASS",
+        "expected_status_code": 200,
+        "actual_status_code": 200,
+        "response_data": {
+          "character_id": "pilot",
+          "name": "Pilot",
+          "background_summary": "Character data could not be loaded",
+          "personality_traits": "Unknown",
+          "current_status": "Data unavailable",
+          "narrative_context": "Character files could not be parsed",
+          "skills": {},
+          "relationships": {},
+          "current_location": "",
+          "inventory": [],
+          "metadata": {}
+        },
+        "error_message": null,
+        "execution_time_ms": 20.64,
+        "timestamp": "2025-08-28T12:04:34.283362"
+      },
+      {
+        "test_id": "HP05",
+        "test_name": "Story Generation",
+        "category": "happy_path",
+        "description": "User generates story with valid characters and parameters",
+        "status": "FAIL",
+        "expected_status_code": 200,
+        "actual_status_code": 500,
+        "response_data": {
+          "error": "Internal Server Error",
+          "detail": "Simulation execution failed: 'PersonaAgent' object has no attribute 'character'"
+        },
+        "error_message": "Expected status 200, got 500",
+        "execution_time_ms": 25.82,
+        "timestamp": "2025-08-28T12:04:34.309252"
+      }
+    ],
+    "sad_path": [
+      {
+        "test_id": "SP01",
+        "test_name": "Nonexistent Endpoint",
+        "category": "sad_path",
+        "description": "User tries to access endpoint that doesn't exist",
+        "status": "PASS",
+        "expected_status_code": 404,
+        "actual_status_code": 404,
+        "response_data": {
+          "error": "Not Found",
+          "detail": "The requested endpoint does not exist."
+        },
+        "error_message": null,
+        "execution_time_ms": 1.38,
+        "timestamp": "2025-08-28T12:04:34.310691"
+      },
+      {
+        "test_id": "SP02",
+        "test_name": "Nonexistent Character",
+        "category": "sad_path",
+        "description": "User tries to retrieve character that doesn't exist",
+        "status": "PASS",
+        "expected_status_code": 404,
+        "actual_status_code": 404,
+        "response_data": {
+          "error": "Not Found",
+          "detail": "Character 'nonexistent_character' not found"
+        },
+        "error_message": null,
+        "execution_time_ms": 1.32,
+        "timestamp": "2025-08-28T12:04:34.312051"
+      },
+      {
+        "test_id": "SP03",
+        "test_name": "Invalid Characters in Simulation",
+        "category": "sad_path",
+        "description": "User tries to generate story with nonexistent characters",
+        "status": "PASS",
+        "expected_status_code": 404,
+        "actual_status_code": 404,
+        "response_data": {
+          "error": "Not Found",
+          "detail": "Character 'nonexistent1' not found"
+        },
+        "error_message": null,
+        "execution_time_ms": 1.44,
+        "timestamp": "2025-08-28T12:04:34.313528"
+      },
+      {
+        "test_id": "SP04",
+        "test_name": "Invalid Narrative Style",
+        "category": "sad_path",
+        "description": "User tries to use invalid narrative style",
+        "status": "FAIL",
+        "expected_status_code": 422,
+        "actual_status_code": 500,
+        "response_data": {
+          "error": "Internal Server Error",
+          "detail": "Simulation execution failed: 'PersonaAgent' object has no attribute 'character'"
+        },
+        "error_message": "Expected status 422, got 500",
+        "execution_time_ms": 10.35,
+        "timestamp": "2025-08-28T12:04:34.323927"
+      },
+      {
+        "test_id": "SP05",
+        "test_name": "Insufficient Characters",
+        "category": "sad_path",
+        "description": "User tries to generate story with insufficient characters",
+        "status": "PASS",
+        "expected_status_code": 422,
+        "actual_status_code": 422,
+        "response_data": {
+          "detail": [
+            {
+              "type": "too_short",
+              "loc": [
+                "body",
+                "character_names"
+              ],
+              "msg": "List should have at least 2 items after validation, not 1",
+              "input": [
+                "pilot"
+              ],
+              "ctx": {
+                "field_type": "List",
+                "min_length": 2,
+                "actual_length": 1
+              }
+            }
+          ]
+        },
+        "error_message": null,
+        "execution_time_ms": 1.7,
+        "timestamp": "2025-08-28T12:04:34.325698"
+      },
+      {
+        "test_id": "SP06",
+        "test_name": "Invalid Turns Count",
+        "category": "sad_path",
+        "description": "User tries to use invalid turns parameter",
+        "status": "PASS",
+        "expected_status_code": 422,
+        "actual_status_code": 422,
+        "response_data": {
+          "detail": [
+            {
+              "type": "less_than_equal",
+              "loc": [
+                "body",
+                "turns"
+              ],
+              "msg": "Input should be less than or equal to 10",
+              "input": 999,
+              "ctx": {
+                "le": 10
+              }
+            }
+          ]
+        },
+        "error_message": null,
+        "execution_time_ms": 1.58,
+        "timestamp": "2025-08-28T12:04:34.327341"
+      },
+      {
+        "test_id": "SP07",
+        "test_name": "Malformed Request",
+        "category": "sad_path",
+        "description": "User sends malformed JSON request",
+        "status": "PASS",
+        "expected_status_code": 422,
+        "actual_status_code": 422,
+        "response_data": {
+          "detail": [
+            {
+              "type": "json_invalid",
+              "loc": [
+                "body",
+                0
+              ],
+              "msg": "JSON decode error",
+              "input": {},
+              "ctx": {
+                "error": "Expecting value"
+              }
+            }
+          ]
+        },
+        "error_message": null,
+        "execution_time_ms": 1.43,
+        "timestamp": "2025-08-28T12:04:34.328840"
+      }
+    ],
+    "edge_case": [
+      {
+        "test_id": "EC01",
+        "test_name": "Minimum Boundary Test",
+        "category": "edge_case",
+        "description": "User generates story with minimum valid parameters",
+        "status": "FAIL",
+        "expected_status_code": 200,
+        "actual_status_code": 500,
+        "response_data": {
+          "error": "Internal Server Error",
+          "detail": "Simulation execution failed: 'PersonaAgent' object has no attribute 'character'"
+        },
+        "error_message": "Expected status 200, got 500",
+        "execution_time_ms": 10.91,
+        "timestamp": "2025-08-28T12:04:34.339813"
+      },
+      {
+        "test_id": "EC02",
+        "test_name": "Maximum Boundary Test",
+        "category": "edge_case",
+        "description": "User generates story with maximum valid parameters",
+        "status": "FAIL",
+        "expected_status_code": 200,
+        "actual_status_code": 500,
+        "response_data": {
+          "error": "Internal Server Error",
+          "detail": "Simulation execution failed: 'PersonaAgent' object has no attribute 'character'"
+        },
+        "error_message": "Expected status 200, got 500",
+        "execution_time_ms": 39.49,
+        "timestamp": "2025-08-28T12:04:34.379359"
+      },
+      {
+        "test_id": "EC03",
+        "test_name": "Empty Request Body",
+        "category": "edge_case",
+        "description": "User sends empty request to simulation endpoint",
+        "status": "PASS",
+        "expected_status_code": 422,
+        "actual_status_code": 422,
+        "response_data": {
+          "detail": [
+            {
+              "type": "missing",
+              "loc": [
+                "body",
+                "character_names"
+              ],
+              "msg": "Field required",
+              "input": {}
+            }
+          ]
+        },
+        "error_message": null,
+        "execution_time_ms": 1.59,
+        "timestamp": "2025-08-28T12:04:34.381003"
+      },
+      {
+        "test_id": "EC04",
+        "test_name": "Wrong HTTP Method",
+        "category": "edge_case",
+        "description": "User uses GET instead of POST for simulation endpoint",
+        "status": "PASS",
+        "expected_status_code": 405,
+        "actual_status_code": 405,
+        "response_data": {
+          "error": "Unknown Error",
+          "detail": "Method Not Allowed"
+        },
+        "error_message": null,
+        "execution_time_ms": 1.12,
+        "timestamp": "2025-08-28T12:04:34.382161"
+      },
+      {
+        "test_id": "EC05",
+        "test_name": "Case Sensitivity",
+        "category": "edge_case",
+        "description": "User tries to access character with different case",
+        "status": "FAIL",
+        "expected_status_code": 404,
+        "actual_status_code": 200,
+        "response_data": {
+          "character_id": "PILOT",
+          "name": "Pilot",
+          "background_summary": "Character data could not be loaded",
+          "personality_traits": "Unknown",
+          "current_status": "Data unavailable",
+          "narrative_context": "Character files could not be parsed",
+          "skills": {},
+          "relationships": {},
+          "current_location": "",
+          "inventory": [],
+          "metadata": {}
+        },
+        "error_message": "Expected status 404, got 200",
+        "execution_time_ms": 5.49,
+        "timestamp": "2025-08-28T12:04:34.387693"
+      }
+    ]
+  },
+  "detailed_results": [
+    {
+      "test_id": "HP01",
+      "test_name": "Root Endpoint Access",
+      "category": "happy_path",
+      "description": "User accesses the root API endpoint to verify system is running",
+      "status": "PASS",
+      "expected_status_code": 200,
+      "actual_status_code": 200,
+      "response_data": {
+        "message": "StoryForge AI Interactive Story Engine is running!"
+      },
+      "error_message": null,
+      "execution_time_ms": 7.73,
+      "timestamp": "2025-08-28T12:04:34.259299"
+    },
+    {
+      "test_id": "HP02",
+      "test_name": "Health Check",
+      "category": "happy_path",
+      "description": "User checks system health status",
+      "status": "PASS",
+      "expected_status_code": 200,
+      "actual_status_code": 200,
+      "response_data": {
+        "status": "healthy",
+        "api": "running",
+        "timestamp": "2025-08-28T12:04:34.260520",
+        "version": "1.0.0",
+        "config": "loaded"
+      },
+      "error_message": null,
+      "execution_time_ms": 1.76,
+      "timestamp": "2025-08-28T12:04:34.261135"
+    },
+    {
+      "test_id": "HP03",
+      "test_name": "Character Listing",
+      "category": "happy_path",
+      "description": "User retrieves list of available characters",
+      "status": "PASS",
+      "expected_status_code": 200,
+      "actual_status_code": 200,
+      "response_data": {
+        "characters": [
+          "engineer",
+          "pilot",
+          "scientist",
+          "test"
+        ]
+      },
+      "error_message": null,
+      "execution_time_ms": 1.48,
+      "timestamp": "2025-08-28T12:04:34.262658"
+    },
+    {
+      "test_id": "HP04",
+      "test_name": "Character Retrieval",
+      "category": "happy_path",
+      "description": "User retrieves specific character details",
+      "status": "PASS",
+      "expected_status_code": 200,
+      "actual_status_code": 200,
+      "response_data": {
+        "character_id": "pilot",
+        "name": "Pilot",
+        "background_summary": "Character data could not be loaded",
+        "personality_traits": "Unknown",
+        "current_status": "Data unavailable",
+        "narrative_context": "Character files could not be parsed",
+        "skills": {},
+        "relationships": {},
+        "current_location": "",
+        "inventory": [],
+        "metadata": {}
+      },
+      "error_message": null,
+      "execution_time_ms": 20.64,
+      "timestamp": "2025-08-28T12:04:34.283362"
+    },
+    {
+      "test_id": "HP05",
+      "test_name": "Story Generation",
+      "category": "happy_path",
+      "description": "User generates story with valid characters and parameters",
+      "status": "FAIL",
+      "expected_status_code": 200,
+      "actual_status_code": 500,
+      "response_data": {
+        "error": "Internal Server Error",
+        "detail": "Simulation execution failed: 'PersonaAgent' object has no attribute 'character'"
+      },
+      "error_message": "Expected status 200, got 500",
+      "execution_time_ms": 25.82,
+      "timestamp": "2025-08-28T12:04:34.309252"
+    },
+    {
+      "test_id": "SP01",
+      "test_name": "Nonexistent Endpoint",
+      "category": "sad_path",
+      "description": "User tries to access endpoint that doesn't exist",
+      "status": "PASS",
+      "expected_status_code": 404,
+      "actual_status_code": 404,
+      "response_data": {
+        "error": "Not Found",
+        "detail": "The requested endpoint does not exist."
+      },
+      "error_message": null,
+      "execution_time_ms": 1.38,
+      "timestamp": "2025-08-28T12:04:34.310691"
+    },
+    {
+      "test_id": "SP02",
+      "test_name": "Nonexistent Character",
+      "category": "sad_path",
+      "description": "User tries to retrieve character that doesn't exist",
+      "status": "PASS",
+      "expected_status_code": 404,
+      "actual_status_code": 404,
+      "response_data": {
+        "error": "Not Found",
+        "detail": "Character 'nonexistent_character' not found"
+      },
+      "error_message": null,
+      "execution_time_ms": 1.32,
+      "timestamp": "2025-08-28T12:04:34.312051"
+    },
+    {
+      "test_id": "SP03",
+      "test_name": "Invalid Characters in Simulation",
+      "category": "sad_path",
+      "description": "User tries to generate story with nonexistent characters",
+      "status": "PASS",
+      "expected_status_code": 404,
+      "actual_status_code": 404,
+      "response_data": {
+        "error": "Not Found",
+        "detail": "Character 'nonexistent1' not found"
+      },
+      "error_message": null,
+      "execution_time_ms": 1.44,
+      "timestamp": "2025-08-28T12:04:34.313528"
+    },
+    {
+      "test_id": "SP04",
+      "test_name": "Invalid Narrative Style",
+      "category": "sad_path",
+      "description": "User tries to use invalid narrative style",
+      "status": "FAIL",
+      "expected_status_code": 422,
+      "actual_status_code": 500,
+      "response_data": {
+        "error": "Internal Server Error",
+        "detail": "Simulation execution failed: 'PersonaAgent' object has no attribute 'character'"
+      },
+      "error_message": "Expected status 422, got 500",
+      "execution_time_ms": 10.35,
+      "timestamp": "2025-08-28T12:04:34.323927"
+    },
+    {
+      "test_id": "SP05",
+      "test_name": "Insufficient Characters",
+      "category": "sad_path",
+      "description": "User tries to generate story with insufficient characters",
+      "status": "PASS",
+      "expected_status_code": 422,
+      "actual_status_code": 422,
+      "response_data": {
+        "detail": [
+          {
+            "type": "too_short",
+            "loc": [
+              "body",
+              "character_names"
+            ],
+            "msg": "List should have at least 2 items after validation, not 1",
+            "input": [
+              "pilot"
+            ],
+            "ctx": {
+              "field_type": "List",
+              "min_length": 2,
+              "actual_length": 1
+            }
+          }
+        ]
+      },
+      "error_message": null,
+      "execution_time_ms": 1.7,
+      "timestamp": "2025-08-28T12:04:34.325698"
+    },
+    {
+      "test_id": "SP06",
+      "test_name": "Invalid Turns Count",
+      "category": "sad_path",
+      "description": "User tries to use invalid turns parameter",
+      "status": "PASS",
+      "expected_status_code": 422,
+      "actual_status_code": 422,
+      "response_data": {
+        "detail": [
+          {
+            "type": "less_than_equal",
+            "loc": [
+              "body",
+              "turns"
+            ],
+            "msg": "Input should be less than or equal to 10",
+            "input": 999,
+            "ctx": {
+              "le": 10
+            }
+          }
+        ]
+      },
+      "error_message": null,
+      "execution_time_ms": 1.58,
+      "timestamp": "2025-08-28T12:04:34.327341"
+    },
+    {
+      "test_id": "SP07",
+      "test_name": "Malformed Request",
+      "category": "sad_path",
+      "description": "User sends malformed JSON request",
+      "status": "PASS",
+      "expected_status_code": 422,
+      "actual_status_code": 422,
+      "response_data": {
+        "detail": [
+          {
+            "type": "json_invalid",
+            "loc": [
+              "body",
+              0
+            ],
+            "msg": "JSON decode error",
+            "input": {},
+            "ctx": {
+              "error": "Expecting value"
+            }
+          }
+        ]
+      },
+      "error_message": null,
+      "execution_time_ms": 1.43,
+      "timestamp": "2025-08-28T12:04:34.328840"
+    },
+    {
+      "test_id": "EC01",
+      "test_name": "Minimum Boundary Test",
+      "category": "edge_case",
+      "description": "User generates story with minimum valid parameters",
+      "status": "FAIL",
+      "expected_status_code": 200,
+      "actual_status_code": 500,
+      "response_data": {
+        "error": "Internal Server Error",
+        "detail": "Simulation execution failed: 'PersonaAgent' object has no attribute 'character'"
+      },
+      "error_message": "Expected status 200, got 500",
+      "execution_time_ms": 10.91,
+      "timestamp": "2025-08-28T12:04:34.339813"
+    },
+    {
+      "test_id": "EC02",
+      "test_name": "Maximum Boundary Test",
+      "category": "edge_case",
+      "description": "User generates story with maximum valid parameters",
+      "status": "FAIL",
+      "expected_status_code": 200,
+      "actual_status_code": 500,
+      "response_data": {
+        "error": "Internal Server Error",
+        "detail": "Simulation execution failed: 'PersonaAgent' object has no attribute 'character'"
+      },
+      "error_message": "Expected status 200, got 500",
+      "execution_time_ms": 39.49,
+      "timestamp": "2025-08-28T12:04:34.379359"
+    },
+    {
+      "test_id": "EC03",
+      "test_name": "Empty Request Body",
+      "category": "edge_case",
+      "description": "User sends empty request to simulation endpoint",
+      "status": "PASS",
+      "expected_status_code": 422,
+      "actual_status_code": 422,
+      "response_data": {
+        "detail": [
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "character_names"
+            ],
+            "msg": "Field required",
+            "input": {}
+          }
+        ]
+      },
+      "error_message": null,
+      "execution_time_ms": 1.59,
+      "timestamp": "2025-08-28T12:04:34.381003"
+    },
+    {
+      "test_id": "EC04",
+      "test_name": "Wrong HTTP Method",
+      "category": "edge_case",
+      "description": "User uses GET instead of POST for simulation endpoint",
+      "status": "PASS",
+      "expected_status_code": 405,
+      "actual_status_code": 405,
+      "response_data": {
+        "error": "Unknown Error",
+        "detail": "Method Not Allowed"
+      },
+      "error_message": null,
+      "execution_time_ms": 1.12,
+      "timestamp": "2025-08-28T12:04:34.382161"
+    },
+    {
+      "test_id": "EC05",
+      "test_name": "Case Sensitivity",
+      "category": "edge_case",
+      "description": "User tries to access character with different case",
+      "status": "FAIL",
+      "expected_status_code": 404,
+      "actual_status_code": 200,
+      "response_data": {
+        "character_id": "PILOT",
+        "name": "Pilot",
+        "background_summary": "Character data could not be loaded",
+        "personality_traits": "Unknown",
+        "current_status": "Data unavailable",
+        "narrative_context": "Character files could not be parsed",
+        "skills": {},
+        "relationships": {},
+        "current_location": "",
+        "inventory": [],
+        "metadata": {}
+      },
+      "error_message": "Expected status 404, got 200",
+      "execution_time_ms": 5.49,
+      "timestamp": "2025-08-28T12:04:34.387693"
+    }
+  ]
+}

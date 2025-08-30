@@ -9,7 +9,4 @@ to provide high-level business capabilities.
 
 from .execute_llm_service import ExecuteLLMService, LLMExecutionResult
 
-__all__ = [
-    'ExecuteLLMService',
-    'LLMExecutionResult'
-]
+__all__ = ["ExecuteLLMService", "LLMExecutionResult"]

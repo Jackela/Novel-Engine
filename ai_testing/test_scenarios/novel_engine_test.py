@@ -6,17 +6,18 @@ Novel-Engine Actual Test Scenarios
 
 import asyncio
 import json
-from typing import Dict, List, Any
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ai_testing.interfaces.service_contracts import (
-    TestScenario, TestContext, TestType, APITestSpec, 
-    create_test_context
+    APITestSpec,
+    TestScenario,
+    TestType,
 )
+
 
 class NovelEngineTestScenarios:
     """Novel-Engine的实际测试场景"""
@@ -319,7 +320,7 @@ async def run_actual_tests():
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ 测试计划创建成功")
+            print("✅ 测试计划创建成功")
             print(f"   Session ID: {result.get('test_session_id')}")
             print(f"   总体通过: {result.get('overall_passed')}")
             print(f"   质量分数: {result.get('overall_score'):.2f}")

@@ -7,4 +7,4 @@ Core interaction processing engine with phase management and orchestration.
 
 from .interaction_processor import InteractionProcessor
 
-__all__ = ['InteractionProcessor']
+__all__ = ["InteractionProcessor"]

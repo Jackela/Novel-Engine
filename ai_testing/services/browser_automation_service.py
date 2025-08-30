@@ -6,43 +6,46 @@ Provides multi-browser testing, visual regression, accessibility validation, and
 """
 
 import asyncio
-import base64
-import json
 import logging
 import time
 import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
 import httpx
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Playwright imports
-from playwright.async_api import async_playwright, Browser, BrowserContext, Page, Playwright
-from playwright.async_api import Error as PlaywrightError
+from playwright.async_api import Browser, BrowserContext
+from playwright.async_api import Page, Playwright, async_playwright
+from pydantic import BaseModel, Field
 
 # Import Novel-Engine patterns
 try:
     from config_loader import get_config
+
     from src.event_bus import EventBus
 except ImportError:
     # Fallback for testing
-    get_config = lambda: None
-    EventBus = lambda: None
-
-# Import AI testing configuration
-from ai_testing_config import get_ai_testing_service_config
+    def get_config():
+        return None
+    def EventBus():
+        return None
 
 # Import AI testing contracts
 from ai_testing.interfaces.service_contracts import (
-    IBrowserAutomation, TestResult, TestExecution, TestContext, UITestSpec,
-    TestStatus, ServiceHealthResponse, create_test_context
+    IBrowserAutomation,
+    ServiceHealthResponse,
+    TestContext,
+    TestResult,
+    TestStatus,
+    UITestSpec,
 )
+
+# Import AI testing configuration
+from ai_testing_config import get_ai_testing_service_config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -299,7 +302,7 @@ class BrowserAutomationService(IBrowserAutomation):
         self.config = config
         try:
             self.event_bus = EventBus()
-        except:
+        except Exception:
             self.event_bus = None
         self.browser_manager = BrowserManager(config)
         self.http_client: Optional[httpx.AsyncClient] = None
@@ -446,7 +449,7 @@ class BrowserAutomationService(IBrowserAutomation):
             accessibility_result = await self._run_accessibility_tests(page)
             
             await page.close()
-            return accessibility_result.dict()
+            return accessibility_result.model_dump()
             
         finally:
             await self.browser_manager.close_context(context_id)
@@ -465,7 +468,7 @@ class BrowserAutomationService(IBrowserAutomation):
             performance_metrics = await self._measure_performance(page, page_url)
             
             await page.close()
-            return performance_metrics.dict()
+            return performance_metrics.model_dump()
             
         finally:
             await self.browser_manager.close_context(context_id)
@@ -523,19 +526,19 @@ class BrowserAutomationService(IBrowserAutomation):
             # Performance measurement
             if test_spec.performance_metrics:
                 performance_metrics = await self._measure_performance(page, test_spec.page_url)
-                results["performance_metrics"] = performance_metrics.dict()
+                results["performance_metrics"] = performance_metrics.model_dump()
             
             # Accessibility testing
             if test_spec.accessibility_standards:
                 accessibility_results = await self._run_accessibility_tests(page)
-                results["accessibility_results"] = accessibility_results.dict()
+                results["accessibility_results"] = accessibility_results.model_dump()
             
             # Visual regression testing
             if test_spec.screenshot_comparison:
                 visual_results = await self._run_visual_regression_test(
                     page, test_spec.page_url, test_spec.visual_threshold
                 )
-                results["visual_results"] = visual_results.dict()
+                results["visual_results"] = visual_results.model_dump()
             
             # Calculate overall results
             actions_success_rate = results["actions_completed"] / max(results["total_actions"], 1)

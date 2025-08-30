@@ -19,9 +19,8 @@ Example:
     compliance_status = validate_compliance('production')
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime
-import os
+from typing import Any, Dict
 
 __version__ = "1.0.0"
 

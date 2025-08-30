@@ -17,9 +17,9 @@ Usage:
 """
 
 import logging
-from src.persona_agent import PersonaAgent
-from shared_types import CharacterAction
+
 from character_factory import CharacterFactory
+
 
 # Configure logging to show LLM integration details
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')

@@ -7,4 +7,4 @@ Equipment registration, state management, and agent assignment functionality.
 
 from .equipment_registry import EquipmentRegistry
 
-__all__ = ['EquipmentRegistry']
+__all__ = ["EquipmentRegistry"]

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -46,6 +46,7 @@ import {
   Timeline as TimelineIcon,
 } from '@mui/icons-material';
 import { Character } from '../../types';
+import { useFocusTrap } from '../../utils/focusManagement';
 
 interface Props {
   open: boolean;
@@ -91,6 +92,13 @@ export default function CharacterDetailsDialog({
 }: Props) {
   const [activeTab, setActiveTab] = useState(0);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  
+  // Focus management for accessibility
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(open, dialogRef, {
+    onEscape: onClose,
+    restoreFocus: true,
+  });
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -210,6 +218,9 @@ export default function CharacterDetailsDialog({
       onClose={onClose} 
       maxWidth="lg" 
       fullWidth
+      ref={dialogRef}
+      aria-labelledby="character-details-title"
+      aria-describedby="character-details-description"
       PaperProps={{
         sx: { minHeight: '80vh', maxHeight: '90vh' }
       }}
@@ -229,7 +240,12 @@ export default function CharacterDetailsDialog({
           </Avatar>
           
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h4" component="div" sx={{ fontWeight: 700, mb: 0.5 }}>
+            <Typography 
+              variant="h4" 
+              component="div" 
+              id="character-details-title"
+              sx={{ fontWeight: 700, mb: 0.5 }}
+            >
               {character.name}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -316,7 +332,11 @@ export default function CharacterDetailsDialog({
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                       Character Description
                     </Typography>
-                    <Typography variant="body1" sx={{ lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                    <Typography 
+                      variant="body1" 
+                      id="character-details-description"
+                      sx={{ lineHeight: 1.7, whiteSpace: 'pre-wrap' }}
+                    >
                       {character.description}
                     </Typography>
                     {characterStats && (

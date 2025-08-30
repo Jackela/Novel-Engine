@@ -19,27 +19,42 @@ Each command has validation logic and is processed by a dedicated handler
 that coordinates with the domain layer to execute the requested operation.
 """
 
-from .character_commands import (
-    CreateCharacterCommand, UpdateCharacterStatsCommand,
-    UpdateCharacterSkillCommand, LevelUpCharacterCommand,
-    DeleteCharacterCommand, HealCharacterCommand, DamageCharacterCommand
-)
 from .character_command_handlers import (
-    CreateCharacterCommandHandler, UpdateCharacterStatsCommandHandler,
-    UpdateCharacterSkillCommandHandler, LevelUpCharacterCommandHandler,
-    DeleteCharacterCommandHandler, HealCharacterCommandHandler,
-    DamageCharacterCommandHandler, CharacterCommandHandlerRegistry
+    CharacterCommandHandlerRegistry,
+    CreateCharacterCommandHandler,
+    DamageCharacterCommandHandler,
+    DeleteCharacterCommandHandler,
+    HealCharacterCommandHandler,
+    LevelUpCharacterCommandHandler,
+    UpdateCharacterSkillCommandHandler,
+    UpdateCharacterStatsCommandHandler,
+)
+from .character_commands import (
+    CreateCharacterCommand,
+    DamageCharacterCommand,
+    DeleteCharacterCommand,
+    HealCharacterCommand,
+    LevelUpCharacterCommand,
+    UpdateCharacterSkillCommand,
+    UpdateCharacterStatsCommand,
 )
 
 __all__ = [
     # Commands
-    "CreateCharacterCommand", "UpdateCharacterStatsCommand",
-    "UpdateCharacterSkillCommand", "LevelUpCharacterCommand",
-    "DeleteCharacterCommand", "HealCharacterCommand", "DamageCharacterCommand",
-    
+    "CreateCharacterCommand",
+    "UpdateCharacterStatsCommand",
+    "UpdateCharacterSkillCommand",
+    "LevelUpCharacterCommand",
+    "DeleteCharacterCommand",
+    "HealCharacterCommand",
+    "DamageCharacterCommand",
     # Command Handlers
-    "CreateCharacterCommandHandler", "UpdateCharacterStatsCommandHandler",
-    "UpdateCharacterSkillCommandHandler", "LevelUpCharacterCommandHandler",
-    "DeleteCharacterCommandHandler", "HealCharacterCommandHandler",
-    "DamageCharacterCommandHandler", "CharacterCommandHandlerRegistry",
+    "CreateCharacterCommandHandler",
+    "UpdateCharacterStatsCommandHandler",
+    "UpdateCharacterSkillCommandHandler",
+    "LevelUpCharacterCommandHandler",
+    "DeleteCharacterCommandHandler",
+    "HealCharacterCommandHandler",
+    "DamageCharacterCommandHandler",
+    "CharacterCommandHandlerRegistry",
 ]

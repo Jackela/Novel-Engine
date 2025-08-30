@@ -14,10 +14,7 @@ The monitoring infrastructure integrates with the existing PerformanceTracker
 domain service to provide enterprise-grade observability capabilities.
 """
 
-from .prometheus_collector import PrometheusMetricsCollector
 from .metrics_middleware import PrometheusMiddleware
+from .prometheus_collector import PrometheusMetricsCollector
 
-__all__ = [
-    'PrometheusMetricsCollector',
-    'PrometheusMiddleware'
-]
+__all__ = ["PrometheusMetricsCollector", "PrometheusMiddleware"]

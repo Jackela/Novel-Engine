@@ -9,25 +9,26 @@ and intelligent test case optimization.
 import json
 import logging
 import uuid
-import yaml
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Set, Union
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
 
-from pydantic import BaseModel, Field, validator
 import httpx
-
-# Import Novel-Engine patterns
-from config_loader import get_config
-from src.event_bus import EventBus
+import yaml
 
 # Import AI testing contracts
 from ai_testing.interfaces.service_contracts import (
-    TestScenario, APITestSpec, UITestSpec, AIQualitySpec,
-    TestType, QualityMetric, TestContext, create_test_context
+    QualityMetric,
+    TestScenario,
+    TestType,
 )
+
+# Import Novel-Engine patterns
+from pydantic import BaseModel, Field
+
+from src.event_bus import EventBus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -751,7 +752,7 @@ class ScenarioManager:
         # Create collection
         collection = await self.create_collection(
             name=f"Novel-Engine {generation_type.title()} Test Suite",
-            description=f"AI-generated comprehensive test scenarios for Novel-Engine",
+            description="AI-generated comprehensive test scenarios for Novel-Engine",
             scenario_ids=[s.id for s in scenarios]
         )
         
@@ -772,7 +773,7 @@ class ScenarioManager:
             raise ValueError(f"Collection {collection_id} not found")
         
         export_data = {
-            "collection": collection.dict(),
+            "collection": collection.model_dump(),
             "export_timestamp": datetime.utcnow().isoformat(),
             "format_version": "1.0"
         }
@@ -863,12 +864,12 @@ class ScenarioManager:
     async def _save_scenario(self, scenario: TestScenario):
         """Save scenario to file"""
         scenario_file = self.scenarios_directory / f"{scenario.id}.json"
-        scenario_file.write_text(scenario.json(indent=2))
+        scenario_file.write_text(scenario.model_dump_json(indent=2))
     
     async def _save_collection(self, collection: ScenarioCollection):
         """Save collection to file"""
         collection_file = self.scenarios_directory / f"collection_{collection.id}.json"
-        collection_file.write_text(collection.json(indent=2))
+        collection_file.write_text(collection.model_dump_json(indent=2))
     
     async def _load_existing_scenarios(self):
         """Load existing scenarios from files"""

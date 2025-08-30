@@ -6,15 +6,16 @@ Director Base Components
 Base interfaces and types for director components.
 """
 
-from typing import Dict, Any, Protocol, runtime_checkable, Optional
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from typing import Optional, Protocol, runtime_checkable
 
 
 @runtime_checkable
 class ComponentInitializer(Protocol):
     """Protocol for components that need initialization."""
+
     async def initialize(self) -> bool:
         """Initialize the component."""
         ...
@@ -27,6 +28,7 @@ class ComponentInitializer(Protocol):
 @dataclass
 class ComponentStatus:
     """Status information for a component."""
+
     name: str
     initialized: bool
     last_activity: Optional[datetime]
@@ -36,8 +38,9 @@ class ComponentStatus:
 
 class LogLevel(Enum):
     """Log level enumeration."""
+
     DEBUG = "debug"
-    INFO = "info" 
+    INFO = "info"
     WARNING = "warning"
     ERROR = "error"
     CRITICAL = "critical"

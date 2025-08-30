@@ -10,26 +10,30 @@ import json
 import logging
 import time
 import uuid
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
 import httpx
-
-# Import Novel-Engine patterns
-from config_loader import get_config
-from src.event_bus import EventBus
 
 # Import AI testing contracts
 from ai_testing.interfaces.service_contracts import (
-    IAIQualityAssessment, TestResult, TestExecution, TestContext, AIQualitySpec,
-    QualityMetric, TestStatus, ServiceHealthResponse, create_test_context
+    AIQualitySpec,
+    IAIQualityAssessment,
+    QualityMetric,
+    ServiceHealthResponse,
+    TestContext,
+    TestResult,
+    TestStatus,
 )
+
+# Import Novel-Engine patterns
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+
+from src.event_bus import EventBus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -544,7 +548,7 @@ class AIQualityAssessmentService(IAIQualityAssessment):
                 quality_scores=assessment_result.quality_scores,
                 ai_analysis=assessment_result.detailed_analysis,
                 recommendations=assessment_result.recommendations,
-                ai_quality_results=assessment_result.dict()
+                ai_quality_results=assessment_result.model_dump()
             )
             
         except Exception as e:
@@ -617,7 +621,7 @@ class AIQualityAssessmentService(IAIQualityAssessment):
                     "overall_score": 0.0
                 })
             else:
-                results.append(result.dict())
+                results.append(result.model_dump())
         
         return results
     
@@ -1001,7 +1005,10 @@ class AIQualityAssessmentService(IAIQualityAssessment):
         context
     ):
         """Assess AI output quality using LLM-as-Judge (Interface method)"""
-        from ..interfaces.service_contracts import TestResult, TestStatus, AIQualitySpec, TestContext
+        from ..interfaces.service_contracts import (
+            TestResult,
+            TestStatus,
+        )
         
         request = QualityAssessmentRequest(
             assessment_id=test_spec.quality_spec_id,
@@ -1023,7 +1030,7 @@ class AIQualityAssessmentService(IAIQualityAssessment):
             passed=result.overall_score >= 0.7,
             score=result.overall_score,
             duration_ms=int(result.assessment_time_ms),
-            ai_quality_results=result.dict(),
+            ai_quality_results=result.model_dump(),
             quality_scores={
                 QualityMetric(score.metric): score.score 
                 for score in result.quality_scores
@@ -1059,7 +1066,6 @@ class AIQualityAssessmentService(IAIQualityAssessment):
         results
     ) -> Dict[str, Any]:
         """Generate comprehensive quality assessment report (Interface method)"""
-        from ..interfaces.service_contracts import TestResult
         
         report = {
             "timestamp": datetime.utcnow().isoformat(),
@@ -1102,6 +1108,7 @@ class AIQualityAssessmentService(IAIQualityAssessment):
 # === FastAPI Application ===
 
 from contextlib import asynccontextmanager
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -19,9 +19,8 @@ Example:
     datasource_id = configure_datasource('prometheus', url='http://prometheus:9090')
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime
-import json
+from typing import Any, Dict, List
 
 __version__ = "1.0.0"
 
@@ -48,7 +47,7 @@ def provision_dashboard(name: str, **kwargs) -> str:
     """
     dashboard_id = f"grafana-{name.lower().replace(' ', '-')}-{datetime.now().strftime('%Y%m%d')}"
     
-    dashboard_config = {
+    {
         'dashboard_id': dashboard_id,
         'name': name,
         'uid': kwargs.get('uid', dashboard_id),
@@ -132,7 +131,7 @@ def configure_datasource(datasource_type: str, **kwargs) -> str:
         }
     }
     
-    datasource_config = {
+    {
         'datasource_id': datasource_id,
         'name': kwargs.get('name', f'{datasource_type.title()} Data Source'),
         'type': datasource_type,
@@ -285,7 +284,7 @@ def import_dashboard(dashboard_json: Dict[str, Any], **kwargs) -> str:
     """
     dashboard_id = dashboard_json.get('uid', f"imported-{datetime.now().strftime('%Y%m%d-%H%M%S')}")
     
-    import_result = {
+    {
         'dashboard_id': dashboard_id,
         'title': dashboard_json.get('title', 'Imported Dashboard'),
         'folder': kwargs.get('folder', 'General'),

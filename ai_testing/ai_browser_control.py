@@ -8,11 +8,12 @@ rather than following a hardcoded script.
 """
 
 import asyncio
+import logging
 import random
 import time
-from typing import Dict, List, Any, Optional
-from playwright.async_api import async_playwright, Page, Browser
-import logging
+from typing import Any, Dict, List, Optional
+
+from playwright.async_api import Browser, Page, async_playwright
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ class AIBrowserController:
             await self.page.goto("http://localhost:5173", wait_until="networkidle")
             logger.info("✅ Connected to frontend")
             return "frontend"
-        except:
+        except Exception:
             try:
                 # Fallback to API
                 await self.page.goto("http://localhost:8000", wait_until="networkidle")
@@ -345,7 +346,7 @@ class AIBrowserController:
             decision = await self.make_decision(context)
             
             # Execute action
-            result = await self.execute_action(decision)
+            await self.execute_action(decision)
             
             interaction_count += 1
             logger.info(f"   Interaction {interaction_count} completed")

@@ -7,8 +7,10 @@ This demonstration shows how the centralized configuration system works
 and how it can be used to customize simulation behavior without modifying code.
 """
 
-from config_loader import get_config, ConfigLoader
 import os
+
+from config_loader import ConfigLoader, get_config
+
 
 def demo_basic_config():
     """Demonstrate basic configuration usage."""
@@ -32,8 +34,12 @@ def demo_convenience_functions():
     print("=== Convenience Functions ===")
     
     from config_loader import (
-        get_simulation_turns, get_character_sheets_path, get_log_file_path,
-        get_output_directory, get_default_character_sheets, get_campaign_log_filename
+        get_campaign_log_filename,
+        get_character_sheets_path,
+        get_default_character_sheets,
+        get_log_file_path,
+        get_output_directory,
+        get_simulation_turns,
     )
     
     print(f"Simulation turns: {get_simulation_turns()}")
@@ -117,8 +123,8 @@ def demo_usage_in_components():
     print("=== Component Configuration Usage ===")
     
     # Show how DirectorAgent would use configuration
-    from director_agent import DirectorAgent
     from chronicler_agent import ChroniclerAgent
+    from director_agent import DirectorAgent
     
     print("DirectorAgent configuration integration:")
     director = DirectorAgent()

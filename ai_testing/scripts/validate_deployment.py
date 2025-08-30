@@ -11,16 +11,21 @@ import json
 import logging
 import sys
 import time
-from datetime import datetime
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 import httpx
 from rich.console import Console
-from rich.table import Table
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 from rich.panel import Panel
-from rich.text import Text
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+)
+from rich.table import Table
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -525,7 +530,7 @@ class DeploymentValidator:
             start_time = time.time()
             
             try:
-                response = await client.get(f"{service.url}/health")
+                await client.get(f"{service.url}/health")
                 duration_ms = int((time.time() - start_time) * 1000)
                 response_times.append(duration_ms)
                 
@@ -674,7 +679,7 @@ class DeploymentValidator:
                     details={"status_code": response.status_code},
                     error_message=f"Health endpoint returned HTTP {response.status_code}"
                 ))
-                console.print(f"    ❌ Information exposure: [red]Health endpoint error[/red]")
+                console.print("    ❌ Information exposure: [red]Health endpoint error[/red]")
         
         except Exception as e:
             duration_ms = int((time.time() - start_time) * 1000)

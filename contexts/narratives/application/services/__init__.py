@@ -8,8 +8,6 @@ narrative operations and provide the main interface for the application layer.
 
 from .narrative_arc_application_service import NarrativeArcApplicationService
 
-__all__ = [
-    'NarrativeArcApplicationService'
-]
+__all__ = ["NarrativeArcApplicationService"]
 
 __version__ = "1.0.0"

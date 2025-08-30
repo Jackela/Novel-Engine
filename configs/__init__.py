@@ -29,10 +29,7 @@ __all__ = [
 
 # Import submodules for easier access
 try:
-    from . import environments
-    from . import security
-    from . import nginx
-    from . import prometheus
+    from . import environments, nginx, prometheus, security
 except ImportError:
     # Allow graceful degradation if submodules aren't ready yet
     pass

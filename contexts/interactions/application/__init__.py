@@ -12,13 +12,11 @@ Key Components:
 - Application Services: High-level business operations orchestration
 """
 
-from .commands import *
-from .queries import *
 from .services.interaction_application_service import InteractionApplicationService
 
 __all__ = [
     # Application Service
-    'InteractionApplicationService'
+    "InteractionApplicationService"
 ]
 
 __version__ = "1.0.0"

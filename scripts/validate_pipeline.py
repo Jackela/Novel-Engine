@@ -9,8 +9,8 @@ before running full evaluation suite.
 Development Phase: Work Order PR-07.3 - Pipeline Validation
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add project root to path
@@ -171,12 +171,12 @@ def test_dry_run():
         # Import pipeline runner
         sys.path.insert(0, "scripts")
         from run_evaluation_pipeline import EvaluationPipeline, load_pipeline_config
-        
+
         # Load configuration
         config = load_pipeline_config(Path("evaluation/pipeline_config.yaml"))
         
         # Create pipeline
-        pipeline = EvaluationPipeline(config)
+        EvaluationPipeline(config)
         
         print("  ✅ Pipeline instance created successfully")
         print("  ✅ Configuration loaded successfully")

@@ -22,22 +22,22 @@ Architecture Reference:
 Development Phase: Work Order PR-07.3 - Automated Testing Pipeline
 """
 
-import os
-import sys
-import json
-import yaml
-import time
-import logging
 import argparse
-import subprocess
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass, field
-from statistics import mean, median, stdev
+import json
+import logging
 import smtplib
-from email.mime.text import MIMEText
+import subprocess
+import sys
+import time
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from pathlib import Path
+from statistics import mean
+from typing import Any, Dict, List, Optional, Tuple
+
+import yaml
 
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -457,16 +457,16 @@ SUMMARY:
 """
         
         if not results.quality_gates_passed:
-            body += f"\nQUALITY GATE FAILURES:\n"
+            body += "\nQUALITY GATE FAILURES:\n"
             for failure in results.gate_failures:
                 body += f"- {failure}\n"
         
         if regressions:
-            body += f"\nPERFORMANCE REGRESSIONS DETECTED:\n"
+            body += "\nPERFORMANCE REGRESSIONS DETECTED:\n"
             for regression in regressions:
                 body += f"- {regression}\n"
         
-        body += f"\nIRON LAWS VIOLATIONS:\n"
+        body += "\nIRON LAWS VIOLATIONS:\n"
         for law_code, violations in results.violations_by_law.items():
             body += f"- {law_code}: {violations} violations\n"
         
@@ -749,7 +749,7 @@ def main():
         results = pipeline.run_pipeline()
         
         # Print summary
-        print(f"\n🎯 Pipeline Execution Summary:")
+        print("\n🎯 Pipeline Execution Summary:")
         print(f"   Status: {'✅ SUCCESS' if results.pipeline_success else '❌ FAILED'}")
         print(f"   Seeds Evaluated: {results.total_seeds_evaluated}")
         print(f"   Pass Rate: {results.pass_rate:.1%}")
@@ -757,7 +757,7 @@ def main():
         print(f"   Execution Time: {results.execution_time:.1f}s")
         
         if results.gate_failures:
-            print(f"\n⚠️ Quality Gate Failures:")
+            print("\n⚠️ Quality Gate Failures:")
             for failure in results.gate_failures:
                 print(f"   - {failure}")
         

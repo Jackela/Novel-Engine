@@ -19,8 +19,7 @@ Example:
     infra_dashboard = get_infrastructure_dashboard()
 """
 
-from typing import Dict, Any, List
-from datetime import datetime
+from typing import Any, Dict
 
 __version__ = "1.0.0"
 

@@ -1,128 +1,172 @@
 /*
- * 🎨 WARHAMMER 40K MULTI-AGENT SIMULATOR - SACRED DESIGN SYSTEM
+ * 🎨 EMERGENT NARRATIVE DASHBOARD - PROFESSIONAL DESIGN SYSTEM
  * ================================================================
- * Artisan-Priest Ultima's Aesthetic Sanctification
- * Minimalist-Gothic Theme with Imperial Colors
- * For the glory of the God-Emperor and the Omnissiah
+ * Sophisticated Visual Design System for Creative Professionals
+ * Modern Dark Theme with Accessible, Data-Driven Aesthetics
  */
 
-/* Import Sacred Fonts - Typography Hierarchy */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
+/* Import Professional Typography - Inter & JetBrains Mono */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
 :root {
-  /* 🎨 SACRED COLOR PALETTE - Imperial Colors */
-  /* Primary Colors - The Emperor's Gold */
-  --color-primary-gold: #FFD700;
-  --color-primary-gold-light: #FFED4A;
-  --color-primary-gold-dark: #E6C200;
-  --color-primary-gold-alpha-10: rgba(255, 215, 0, 0.1);
-  --color-primary-gold-alpha-20: rgba(255, 215, 0, 0.2);
-  --color-primary-gold-alpha-30: rgba(255, 215, 0, 0.3);
-  --color-primary-gold-alpha-40: rgba(255, 215, 0, 0.4);
+  /* 🎨 SOPHISTICATED COLOR PALETTE - Professional Brand Identity */
   
-  /* Secondary Colors - Mechanicus Colors */
-  --color-secondary-teal: #4ECDC4;
-  --color-secondary-teal-light: #6EDDD5;
-  --color-secondary-teal-dark: #45B7AA;
-  --color-secondary-orange: #FF6B35;
-  --color-secondary-orange-light: #FF8C42;
-  --color-secondary-orange-dark: #E55A2B;
+  /* Primary - Sophisticated Indigo */
+  --color-primary: #6366f1;
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
+
+  /* Secondary - Elegant Purple Accent */
+  --color-secondary: #8b5cf6;
+  --color-secondary-50: #f3e8ff;
+  --color-secondary-100: #e9d5ff;
+  --color-secondary-200: #d8b4fe;
+  --color-secondary-300: #c084fc;
+  --color-secondary-400: #a855f7;
+  --color-secondary-500: #8b5cf6;
+  --color-secondary-600: #7c3aed;
+  --color-secondary-700: #6d28d9;
+  --color-secondary-800: #5b21b6;
+  --color-secondary-900: #4c1d95;
+
+  /* Background Hierarchy - Professional Dark Theme */
+  --color-bg-primary: #0a0a0b;
+  --color-bg-secondary: #111113;
+  --color-bg-tertiary: #1a1a1d;
+  --color-bg-elevated: #232328;
+  --color-bg-interactive: #2a2a30;
+  --color-bg-overlay: rgba(10, 10, 11, 0.95);
+
+  /* Border System - Subtle Professional Boundaries */
+  --color-border-primary: #2a2a30;
+  --color-border-secondary: #3a3a42;
+  --color-border-tertiary: #4a4a52;
+  --color-border-focus: #6366f1;
+  --color-border-hover: #5a5a62;
+
+  /* Text Hierarchy - Sophisticated Typography */
+  --color-text-primary: #f0f0f2;
+  --color-text-secondary: #b0b0b8;
+  --color-text-tertiary: #808088;
+  --color-text-quaternary: #606068;
+  --color-text-inverse: #0a0a0b;
+
+  /* Semantic Color System - Professional Status Indicators */
   
-  /* Tertiary Colors - Support Palette */
-  --color-tertiary-purple: #9C27B0;
-  --color-tertiary-purple-light: #BA68C8;
-  --color-tertiary-purple-dark: #673AB7;
+  /* Success - Refined Green */
+  --color-success: #10b981;
+  --color-success-bg: #064e3b;
+  --color-success-border: #065f46;
+  --color-success-text: #6ee7b7;
+
+  /* Warning - Sophisticated Amber */
+  --color-warning: #f59e0b;
+  --color-warning-bg: #78350f;
+  --color-warning-border: #92400e;
+  --color-warning-text: #fcd34d;
+
+  /* Error - Refined Red */
+  --color-error: #ef4444;
+  --color-error-bg: #7f1d1d;
+  --color-error-border: #991b1b;
+  --color-error-text: #fca5a5;
+
+  /* Info - Professional Blue */
+  --color-info: #3b82f6;
+  --color-info-bg: #1e3a8a;
+  --color-info-border: #1e40af;
+  --color-info-text: #93c5fd;
+
+  /* Data Visualization Palette - High Contrast & Accessible */
   
-  /* Dark Theme - Gothic Background */
-  --color-bg-primary: #0A0A0A;
-  --color-bg-secondary: #1A1A2E;
-  --color-bg-tertiary: #16213E;
-  --color-bg-quaternary: #0F3460;
-  --color-bg-card: rgba(255, 255, 255, 0.05);
-  --color-bg-elevated: rgba(255, 255, 255, 0.1);
-  --color-bg-overlay: rgba(0, 0, 0, 0.8);
+  /* Character Type Colors */
+  --color-character-protagonist: #8b5cf6;
+  --color-character-supporting: #06b6d4;
+  --color-character-neutral: #10b981;
+  --color-character-antagonist: #ef4444;
+  --color-character-npc: #f59e0b;
+  --color-character-special: #ec4899;
+
+  /* Narrative Arc Colors */
+  --color-arc-main: #6366f1;
+  --color-arc-subplot: #8b5cf6;
+  --color-arc-character: #06b6d4;
+  --color-arc-romance: #ec4899;
+  --color-arc-conflict: #ef4444;
+  --color-arc-mystery: #7c3aed;
+
+  /* Event & Activity Colors */
+  --color-event-action: #10b981;
+  --color-event-dialogue: #3b82f6;
+  --color-event-conflict: #ef4444;
+  --color-event-discovery: #f59e0b;
+  --color-event-emotional: #ec4899;
+  --color-event-system: #64748b;
+
+  /* 📏 SOPHISTICATED SPACING SYSTEM - Base Unit: 4px */
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;   /* 4px */
+  --spacing-2: 0.5rem;    /* 8px */
+  --spacing-3: 0.75rem;   /* 12px */
+  --spacing-4: 1rem;      /* 16px */
+  --spacing-5: 1.25rem;   /* 20px */
+  --spacing-6: 1.5rem;    /* 24px */
+  --spacing-8: 2rem;      /* 32px */
+  --spacing-10: 2.5rem;   /* 40px */
+  --spacing-12: 3rem;     /* 48px */
+  --spacing-16: 4rem;     /* 64px */
+  --spacing-20: 5rem;     /* 80px */
+
+  /* 🔤 PROFESSIONAL TYPOGRAPHY SYSTEM */
   
-  /* Text Colors - Imperial Typography */
-  --color-text-primary: #E4E4E4;
-  --color-text-secondary: #C0C7D1;
-  --color-text-tertiary: #888888;
-  --color-text-accent: var(--color-primary-gold);
-  --color-text-inverse: #1A1A2E;
+  /* Font Families */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Monaco', 'Menlo', monospace;
+
+  /* Typography Scale & Hierarchy */
   
-  /* State Colors - Status Indicators */
-  --color-success: #4CAF50;
-  --color-success-light: #81C784;
-  --color-success-dark: #388E3C;
-  --color-success-bg: rgba(76, 175, 80, 0.1);
-  
-  --color-warning: #FFC107;
-  --color-warning-light: #FFD54F;
-  --color-warning-dark: #F57C00;
-  --color-warning-bg: rgba(255, 193, 7, 0.1);
-  
-  --color-error: #F44336;
-  --color-error-light: #EF5350;
-  --color-error-dark: #D32F2F;
-  --color-error-bg: rgba(244, 67, 54, 0.1);
-  
-  --color-info: #2196F3;
-  --color-info-light: #42A5F5;
-  --color-info-dark: #1976D2;
-  --color-info-bg: rgba(33, 150, 243, 0.1);
-  
-  /* Border Colors - Sacred Boundaries */
-  --color-border-primary: rgba(255, 215, 0, 0.3);
-  --color-border-secondary: rgba(78, 205, 196, 0.3);
-  --color-border-subtle: rgba(255, 255, 255, 0.1);
-  --color-border-strong: rgba(255, 215, 0, 0.6);
-  
-  /* 📏 SACRED SPACING SCALE - The Emperor's Measurements */
-  --spacing-xs: 0.25rem;    /* 4px */
-  --spacing-sm: 0.5rem;     /* 8px */
-  --spacing-md: 0.75rem;    /* 12px */
-  --spacing-lg: 1rem;       /* 16px */
-  --spacing-xl: 1.25rem;    /* 20px */
-  --spacing-2xl: 1.5rem;    /* 24px */
-  --spacing-3xl: 2rem;      /* 32px */
-  --spacing-4xl: 2.5rem;    /* 40px */
-  --spacing-5xl: 3rem;      /* 48px */
-  --spacing-6xl: 4rem;      /* 64px */
-  --spacing-7xl: 5rem;      /* 80px */
-  --spacing-8xl: 6rem;      /* 96px */
-  
-  /* 🔤 TYPOGRAPHY HIERARCHY - Sacred Text Scales */
-  --font-family-serif: 'Cinzel', 'Times New Roman', serif;
-  --font-family-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
-  --font-family-mono: 'Orbitron', 'Courier New', monospace;
-  
-  /* Font Sizes - Imperial Scale */
-  --font-size-xs: 0.75rem;    /* 12px */
-  --font-size-sm: 0.875rem;   /* 14px */
-  --font-size-base: 1rem;     /* 16px */
-  --font-size-lg: 1.125rem;   /* 18px */
-  --font-size-xl: 1.25rem;    /* 20px */
-  --font-size-2xl: 1.5rem;    /* 24px */
-  --font-size-3xl: 1.875rem;  /* 30px */
-  --font-size-4xl: 2.25rem;   /* 36px */
-  --font-size-5xl: 3rem;      /* 48px */
-  --font-size-6xl: 3.75rem;   /* 60px */
-  
-  /* Font Weights - Imperial Authority */
+  /* Display Typography - Major Headlines */
+  --text-display-lg: 4.5rem/1.1;   /* 72px */
+  --text-display-md: 3.75rem/1.1;  /* 60px */
+  --text-display-sm: 3rem/1.2;     /* 48px */
+
+  /* Heading Hierarchy */
+  --text-heading-xl: 2.25rem/1.2;  /* 36px */
+  --text-heading-lg: 1.875rem/1.3; /* 30px */
+  --text-heading-md: 1.5rem/1.4;   /* 24px */
+  --text-heading-sm: 1.25rem/1.4;  /* 20px */
+  --text-heading-xs: 1.125rem/1.4; /* 18px */
+
+  /* Body Text */
+  --text-body-lg: 1.125rem/1.6;    /* 18px */
+  --text-body-base: 1rem/1.5;      /* 16px */
+  --text-body-sm: 0.875rem/1.4;    /* 14px */
+  --text-body-xs: 0.75rem/1.3;     /* 12px */
+
+  /* Monospace Typography */
+  --text-mono-lg: 1rem/1.5;        /* 16px */
+  --text-mono-base: 0.875rem/1.4;  /* 14px */
+  --text-mono-sm: 0.75rem/1.3;     /* 12px */
+
+  /* Font Weights */
   --font-weight-light: 300;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  --font-weight-heavy: 900;
+
+  /* 📐 SOPHISTICATED LAYOUT SYSTEM */
   
-  /* Line Heights - Sacred Proportions */
-  --line-height-tight: 1.2;
-  --line-height-normal: 1.5;
-  --line-height-relaxed: 1.7;
-  
-  /* 📐 LAYOUT MEASUREMENTS - Architectural Sacred Geometry */
+  /* Border Radius */
   --border-radius-none: 0;
   --border-radius-sm: 0.25rem;   /* 4px */
   --border-radius-md: 0.5rem;    /* 8px */
@@ -130,47 +174,46 @@
   --border-radius-xl: 1rem;      /* 16px */
   --border-radius-2xl: 1.5rem;   /* 24px */
   --border-radius-full: 9999px;
-  
-  /* Shadows - Imperial Depth */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.2);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 20px var(--color-primary-gold-alpha-30);
-  --shadow-glow-teal: 0 0 20px rgba(78, 205, 196, 0.3);
-  --shadow-glow-orange: 0 0 20px rgba(255, 107, 53, 0.3);
-  
-  /* 📱 RESPONSIVE BREAKPOINTS - Adaptive Sacred Design */
+
+  /* Elevation & Shadow System - Refined for Dark Theme */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  /* Focus and Interactive Shadows */
+  --shadow-focus: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  --shadow-interactive: var(--shadow-md);
+
+  /* 📱 RESPONSIVE BREAKPOINTS - Modern Adaptive Design */
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
-  
-  /* Container Widths - Sacred Boundaries */
-  --container-sm: 100%;
-  --container-md: 900px;
-  --container-lg: 1200px;
-  --container-xl: 1400px;
-  --container-2xl: 1600px;
-  
-  /* 🎬 ANIMATION SYSTEM - Sacred Motion */
-  --duration-instant: 0ms;
-  --duration-fast: 150ms;
-  --duration-normal: 300ms;
-  --duration-slow: 500ms;
-  --duration-slower: 750ms;
-  --duration-slowest: 1000ms;
-  
-  /* Easing Functions - Natural Motion */
-  --ease-linear: linear;
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-back: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --ease-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  
-  /* Z-Index Scale - Layer Management */
+
+  /* Component Spacing Guidelines */
+  --tile-padding-desktop: var(--spacing-6);
+  --tile-padding-tablet: var(--spacing-5);
+  --tile-padding-mobile: var(--spacing-4);
+  --tile-header-margin: var(--spacing-4);
+  --tile-section-margin: var(--spacing-6);
+  --tile-element-margin: var(--spacing-3);
+
+  /* 🎬 SOPHISTICATED ANIMATION SYSTEM */
+  --timing-fast: 150ms;
+  --timing-standard: 250ms;
+  --timing-slow: 350ms;
+  --timing-extra-slow: 500ms;
+
+  /* Easing Functions */
+  --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --easing-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Z-Index Scale */
   --z-behind: -1;
   --z-base: 0;
   --z-raised: 10;
@@ -182,7 +225,7 @@
   --z-tooltip: 3000;
 }
 
-/* 🎨 GLOBAL STYLES - Imperial Foundation */
+/* 🎨 PROFESSIONAL GLOBAL STYLES */
 *,
 *::before,
 *::after {
@@ -201,87 +244,83 @@ html {
 }
 
 body {
-  font-family: var(--font-family-sans);
-  font-size: var(--font-size-base);
+  font-family: var(--font-primary);
+  font-size: var(--text-body-base);
   font-weight: var(--font-weight-normal);
-  line-height: var(--line-height-normal);
+  line-height: 1.5;
   color: var(--color-text-primary);
-  background: linear-gradient(135deg, var(--color-bg-primary), var(--color-bg-secondary), var(--color-bg-tertiary));
+  background-color: var(--color-bg-primary);
   min-height: 100vh;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
 }
 
-/* 🔤 TYPOGRAPHY SYSTEM - Sacred Text Hierarchy */
+/* 🔤 SOPHISTICATED TYPOGRAPHY HIERARCHY */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-family-serif);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
-  color: var(--color-text-accent);
-  margin-bottom: var(--spacing-lg);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-4);
 }
 
 h1 {
-  font-size: var(--font-size-5xl);
-  font-weight: var(--font-weight-heavy);
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  font: var(--text-heading-xl) var(--font-primary);
+  font-weight: var(--font-weight-bold);
 }
 
 h2 {
-  font-size: var(--font-size-4xl);
+  font: var(--text-heading-lg) var(--font-primary);
   font-weight: var(--font-weight-bold);
-  letter-spacing: 1px;
 }
 
 h3 {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
+  font: var(--text-heading-md) var(--font-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 h4 {
-  font-size: var(--font-size-2xl);
+  font: var(--text-heading-sm) var(--font-primary);
   font-weight: var(--font-weight-semibold);
 }
 
 h5 {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
+  font: var(--text-heading-xs) var(--font-primary);
+  font-weight: var(--font-weight-medium);
 }
 
 h6 {
-  font-size: var(--font-size-lg);
+  font: var(--text-body-lg) var(--font-primary);
   font-weight: var(--font-weight-medium);
 }
 
 p {
-  margin-bottom: var(--spacing-lg);
-  line-height: var(--line-height-relaxed);
+  font: var(--text-body-base) var(--font-primary);
   color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-4);
+  line-height: 1.6;
 }
 
-/* 🔗 INTERACTIVE ELEMENTS - Sacred Links & Buttons */
+/* 🔗 PROFESSIONAL INTERACTIVE ELEMENTS */
 a {
-  color: var(--color-primary-gold);
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: var(--font-weight-medium);
-  transition: color var(--duration-normal) var(--ease-out);
+  transition: color var(--timing-standard) var(--easing-standard);
 }
 
 a:hover {
-  color: var(--color-primary-gold-light);
-  text-shadow: var(--shadow-glow);
+  color: var(--color-primary-400);
 }
 
 a:focus {
-  outline: 2px solid var(--color-primary-gold);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
   border-radius: var(--border-radius-sm);
 }
 
-/* 🎛️ FORM ELEMENTS - Imperial Controls */
+/* 🎛️ SOPHISTICATED FORM CONTROLS */
 input, textarea, select, button {
   font-family: inherit;
   font-size: inherit;
@@ -289,22 +328,33 @@ input, textarea, select, button {
 }
 
 button {
+  background: var(--color-primary);
+  color: white;
   border: none;
   border-radius: var(--border-radius-lg);
-  padding: var(--spacing-md) var(--spacing-xl);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
+  padding: var(--spacing-3) var(--spacing-5);
+  font: var(--text-body-base) var(--font-primary);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-out);
+  transition: all var(--timing-standard) var(--easing-standard);
   position: relative;
   overflow: hidden;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+}
+
+button:hover {
+  background: var(--color-primary-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
 }
 
 button:focus {
-  outline: 2px solid var(--color-primary-gold);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  border-color: var(--color-border-focus);
+}
+
+button:active {
+  transform: translateY(0);
 }
 
 button:disabled {
@@ -314,42 +364,96 @@ button:disabled {
   box-shadow: none !important;
 }
 
-/* 📱 RESPONSIVE UTILITIES - Adaptive Design */
+/* 🎨 BENTO TILE PATTERN - Core Dashboard Component */
+.bento-tile {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: 12px;
+  padding: var(--tile-padding-desktop);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--timing-standard) var(--easing-standard);
+  overflow: hidden;
+  position: relative;
+}
+
+.bento-tile:hover {
+  border-color: var(--color-border-secondary);
+  box-shadow: var(--shadow-md);
+}
+
+.bento-tile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--tile-header-margin);
+  padding-bottom: var(--spacing-3);
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.bento-tile-title {
+  font: var(--text-heading-sm) var(--font-primary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.bento-tile-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+/* 🎯 INTERACTIVE STATE PATTERNS */
+.interactive-hover {
+  transition: all var(--timing-fast) var(--easing-standard);
+}
+
+.interactive-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-border-hover);
+}
+
+.focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  border-color: var(--color-border-focus);
+}
+
+/* 📱 RESPONSIVE TYPOGRAPHY SCALING */
 @media (max-width: 768px) {
   :root {
-    --font-size-5xl: 2.5rem;
-    --font-size-4xl: 2rem;
-    --font-size-3xl: 1.5rem;
+    --text-heading-xl: 1.875rem/1.2;  /* 30px */
+    --text-heading-lg: 1.5rem/1.3;    /* 24px */
+    --text-heading-md: 1.25rem/1.4;   /* 20px */
+    --text-body-lg: 1rem/1.5;         /* 16px */
   }
   
-  body {
-    font-size: var(--font-size-sm);
+  .bento-tile {
+    padding: var(--tile-padding-mobile);
   }
 }
 
 @media (max-width: 480px) {
   :root {
-    --font-size-5xl: 2rem;
-    --font-size-4xl: 1.75rem;
-    --font-size-3xl: 1.25rem;
+    --text-heading-xl: 1.5rem/1.2;    /* 24px */
+    --text-heading-lg: 1.25rem/1.3;   /* 20px */
+    --text-heading-md: 1.125rem/1.4;  /* 18px */
   }
 }
 
-/* 🎭 ANIMATION UTILITIES - Sacred Motion Classes */
+/* 🎭 SOPHISTICATED ANIMATION UTILITIES */
 .fade-in {
-  animation: fadeIn var(--duration-normal) var(--ease-out);
+  animation: fadeIn var(--timing-standard) var(--easing-decelerate);
 }
 
 .slide-up {
-  animation: slideUp var(--duration-normal) var(--ease-out);
+  animation: slideUp var(--timing-standard) var(--easing-decelerate);
 }
 
-.glow-gold {
-  animation: glowGold 2s var(--ease-in-out) infinite alternate;
-}
-
-.spin {
-  animation: spin var(--duration-slowest) linear infinite;
+.slide-in {
+  animation: slideIn 300ms var(--easing-decelerate);
 }
 
 /* Keyframe Definitions */
@@ -369,21 +473,18 @@ button:disabled {
   }
 }
 
-@keyframes glowGold {
-  from { 
-    text-shadow: 0 0 10px var(--color-primary-gold-alpha-30);
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  to { 
-    text-shadow: 0 0 20px var(--color-primary-gold-alpha-40);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* 🎯 ACCESSIBILITY ENHANCEMENTS - Imperial Inclusion */
+/* 🎯 ACCESSIBILITY ENHANCEMENTS - WCAG 2.1 AA Compliance */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -403,7 +504,7 @@ button:disabled {
   }
 }
 
-/* 🖨️ PRINT STYLES - Imperial Documentation */
+/* 🖨️ PROFESSIONAL PRINT STYLES */
 @media print {
   body {
     background: white !important;
@@ -416,7 +517,7 @@ button:disabled {
   }
 }
 
-/* 🎨 UTILITY CLASSES - Sacred Helpers */
+/* 🎨 PROFESSIONAL UTILITY CLASSES */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -433,20 +534,19 @@ button:disabled {
 .text-left { text-align: left; }
 .text-right { text-align: right; }
 
-.font-serif { font-family: var(--font-family-serif); }
-.font-sans { font-family: var(--font-family-sans); }
-.font-mono { font-family: var(--font-family-mono); }
+.font-primary { font-family: var(--font-primary); }
+.font-mono { font-family: var(--font-mono); }
 
 .text-primary { color: var(--color-text-primary); }
 .text-secondary { color: var(--color-text-secondary); }
-.text-accent { color: var(--color-text-accent); }
+.text-tertiary { color: var(--color-text-tertiary); }
 
 .bg-primary { background-color: var(--color-bg-primary); }
 .bg-secondary { background-color: var(--color-bg-secondary); }
-.bg-card { background-color: var(--color-bg-card); }
+.bg-tertiary { background-color: var(--color-bg-tertiary); }
 
 /*
- * 🏁 END OF SACRED DESIGN SYSTEM
- * For the Emperor! For the Omnissiah!
- * By Artisan-Priest Ultima
+ * 🏁 END OF PROFESSIONAL DESIGN SYSTEM
+ * Sophisticated • Accessible • Data-Driven
+ * Emergent Narrative Dashboard Design System v1.0
  */

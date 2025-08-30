@@ -19,8 +19,8 @@ Example:
     journey_results = run_user_journey('user_login_flow')
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict
 
 __version__ = "1.0.0"
 
@@ -45,7 +45,7 @@ def create_uptime_check(url: str, **kwargs) -> str:
     """
     check_id = f"uptime-{hash(url) % 10000}"
     
-    check_config = {
+    {
         'check_id': check_id,
         'url': url,
         'method': kwargs.get('method', 'GET'),

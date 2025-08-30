@@ -7,7 +7,9 @@ import asyncio
 import json
 import time
 from pathlib import Path
+
 import httpx
+
 
 async def test_framework_effectiveness():
     """测试框架有效性验证"""
@@ -208,7 +210,7 @@ async def test_framework_effectiveness():
                     "details": {"detected_failure": error_detected}
                 })
             else:
-                print(f"   ⚠️  测试返回错误状态，但这也说明检测功能工作")
+                print("   ⚠️  测试返回错误状态，但这也说明检测功能工作")
                 results["tests"].append({
                     "name": "错误检测能力",
                     "passed": True,

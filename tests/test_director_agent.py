@@ -1,9 +1,12 @@
 import unittest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
+
 from director_agent import DirectorAgent
-from src.persona_agent import PersonaAgent
+
+from shared_types import CharacterAction
 from src.event_bus import EventBus
-from shared_types import CharacterAction, ActionPriority
+from src.persona_agent import PersonaAgent
+
 
 class TestDirectorAgent(unittest.TestCase):
 
@@ -14,7 +17,9 @@ class TestDirectorAgent(unittest.TestCase):
     def test_initialization(self):
         """Test that the DirectorAgent initializes correctly and subscribes to events."""
         self.assertEqual(self.director.event_bus, self.event_bus)
-        self.event_bus.subscribe.assert_called_once_with("AGENT_ACTION_COMPLETE", self.director._handle_agent_action)
+        self.event_bus.subscribe.assert_called_once_with(
+            "AGENT_ACTION_COMPLETE", self.director._handle_agent_action
+        )
 
     def test_run_turn_emits_event(self):
         """Test that run_turn emits a TURN_START event."""
@@ -27,14 +32,16 @@ class TestDirectorAgent(unittest.TestCase):
         self.director.register_agent(mock_agent)
 
         self.director.run_turn()
-        self.event_bus.emit.assert_called_once_with("TURN_START", world_state_update=unittest.mock.ANY)
+        self.event_bus.emit.assert_called_once_with(
+            "TURN_START", world_state_update=unittest.mock.ANY
+        )
 
     def test_handle_agent_action(self):
         """Test that _handle_agent_action correctly processes an agent's action."""
         # Create a mock agent and action
         mock_agent = Mock(spec=PersonaAgent)
         mock_agent.agent_id = "test_agent"
-        mock_agent.character_data = {'name': 'Test Agent'}
+        mock_agent.character_data = {"name": "Test Agent"}
 
         mock_action = Mock(spec=CharacterAction)
         mock_action.action_type = "test_action"
@@ -54,12 +61,13 @@ class TestDirectorAgent(unittest.TestCase):
         """Test that _handle_agent_action handles cases where the agent does nothing."""
         mock_agent = Mock(spec=PersonaAgent)
         mock_agent.agent_id = "test_agent"
-        mock_agent.character_data = {'name': 'Test Agent'}
+        mock_agent.character_data = {"name": "Test Agent"}
 
         self.director.log_event = Mock()
         self.director._handle_agent_action(mock_agent, None)
         self.director.log_event.assert_called_once()
         self.assertEqual(self.director.total_actions_processed, 0)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

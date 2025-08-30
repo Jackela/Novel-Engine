@@ -41,7 +41,7 @@ async def test_improvements():
         repetitive_phrase = "是时候了，让我们继续前进"
         repetition_count = novel_text.count(repetitive_phrase)
         
-        print(f"\n🔍 Repetition Check:")
+        print("\n🔍 Repetition Check:")
         print(f"  '{repetitive_phrase}' count: {repetition_count}")
         if repetition_count <= 1:
             print("  ✅ PASS: Repetition eliminated!")
@@ -53,7 +53,7 @@ async def test_improvements():
         unique_dialogues = set(e['content'] for e in dialogue_events)
         dialogue_variety = len(unique_dialogues) / max(1, len(dialogue_events))
         
-        print(f"\n💬 Dialogue Variety:")
+        print("\n💬 Dialogue Variety:")
         print(f"  Total dialogues: {len(dialogue_events)}")
         print(f"  Unique dialogues: {len(unique_dialogues)}")
         print(f"  Variety ratio: {dialogue_variety:.1%}")
@@ -67,7 +67,7 @@ async def test_improvements():
         enhanced_types = {'conflict', 'discovery', 'crisis', 'revelation'}
         found_enhanced = event_types & enhanced_types
         
-        print(f"\n🎭 Enhanced Event Types:")
+        print("\n🎭 Enhanced Event Types:")
         print(f"  Event types found: {event_types}")
         print(f"  Enhanced types used: {found_enhanced}")
         if found_enhanced:
@@ -78,7 +78,7 @@ async def test_improvements():
         # Check character arcs
         characters_with_arcs = sum(1 for c in data['characters'] if c.get('arc_description'))
         
-        print(f"\n👥 Character Development:")
+        print("\n👥 Character Development:")
         print(f"  Characters with arcs: {characters_with_arcs}/3")
         if characters_with_arcs == 3:
             print("  ✅ PASS: All characters have development arcs!")
@@ -86,7 +86,7 @@ async def test_improvements():
             print("  ⚠️ WARNING: Some characters lack development arcs")
         
         # Check overall quality
-        print(f"\n⭐ Overall Quality:")
+        print("\n⭐ Overall Quality:")
         print(f"  Score: {evaluation['overall_score']:.1f}/100")
         if evaluation['overall_score'] > 90:
             print("  ✅ PASS: Excellent quality achieved!")

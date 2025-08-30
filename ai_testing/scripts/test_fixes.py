@@ -4,9 +4,10 @@ Quick test script to validate the deployment fixes
 """
 
 import asyncio
-import httpx
-import json
 from datetime import datetime
+
+import httpx
+
 
 async def test_fixes():
     """Test the deployment fixes"""
@@ -81,10 +82,10 @@ async def test_fixes():
                 result_data = response.json()
                 test_passed = result_data.get("passed", False)
                 if test_passed:
-                    print(f"   ✅ API Testing service: Test execution successful")
+                    print("   ✅ API Testing service: Test execution successful")
                     results.append(("API Testing Functionality", True, "Test execution successful"))
                 else:
-                    print(f"   ⚠️  API Testing service: Test failed but service working")
+                    print("   ⚠️  API Testing service: Test failed but service working")
                     results.append(("API Testing Functionality", True, "Service working, test failed"))
             else:
                 print(f"   ❌ API Testing service: HTTP {response.status_code}")

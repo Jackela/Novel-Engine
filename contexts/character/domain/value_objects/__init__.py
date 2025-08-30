@@ -15,21 +15,40 @@ Value objects included:
 
 from .character_id import CharacterID
 from .character_profile import (
-    CharacterProfile, Gender, CharacterRace, CharacterClass,
-    PhysicalTraits, PersonalityTraits, Background
+    Background,
+    CharacterClass,
+    CharacterProfile,
+    CharacterRace,
+    Gender,
+    PersonalityTraits,
+    PhysicalTraits,
 )
 from .character_stats import (
-    CharacterStats, CoreAbilities, VitalStats, CombatStats,
-    AbilityScore
+    AbilityScore,
+    CharacterStats,
+    CombatStats,
+    CoreAbilities,
+    VitalStats,
 )
-from .skills import (
-    Skills, Skill, SkillGroup, SkillCategory, ProficiencyLevel
-)
+from .skills import ProficiencyLevel, Skill, SkillCategory, SkillGroup, Skills
 
 __all__ = [
     "CharacterID",
-    "CharacterProfile", "Gender", "CharacterRace", "CharacterClass",
-    "PhysicalTraits", "PersonalityTraits", "Background",
-    "CharacterStats", "CoreAbilities", "VitalStats", "CombatStats", "AbilityScore",
-    "Skills", "Skill", "SkillGroup", "SkillCategory", "ProficiencyLevel",
+    "CharacterProfile",
+    "Gender",
+    "CharacterRace",
+    "CharacterClass",
+    "PhysicalTraits",
+    "PersonalityTraits",
+    "Background",
+    "CharacterStats",
+    "CoreAbilities",
+    "VitalStats",
+    "CombatStats",
+    "AbilityScore",
+    "Skills",
+    "Skill",
+    "SkillGroup",
+    "SkillCategory",
+    "ProficiencyLevel",
 ]

@@ -1,9 +1,11 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from director_agent import DirectorAgent
-from src.persona_agent import PersonaAgent
+
 from src.event_bus import EventBus
-from shared_types import CharacterAction
+from src.persona_agent import PersonaAgent
+
 
 class TestEventIntegration(unittest.TestCase):
 
@@ -15,13 +17,20 @@ class TestEventIntegration(unittest.TestCase):
         event_bus = EventBus()
 
         # Mock file system operations for agent creation
-        with patch('os.path.isdir', return_value=True), \
-             patch('os.listdir', return_value=['character.md']), \
-             patch('builtins.open', unittest.mock.mock_open(read_data='# Character Sheet: Test Agent')):
+        with patch("os.path.isdir", return_value=True), patch(
+            "os.listdir", return_value=["character.md"]
+        ), patch(
+            "builtins.open",
+            unittest.mock.mock_open(read_data="# Character Sheet: Test Agent"),
+        ):
 
             # Instantiate the agents and director with the real event bus
             director = DirectorAgent(event_bus=event_bus)
-            agent = PersonaAgent(character_directory_path='characters/test', event_bus=event_bus, agent_id='test_agent')
+            agent = PersonaAgent(
+                character_directory_path="characters/test",
+                event_bus=event_bus,
+                agent_id="test_agent",
+            )
 
             # Mock the methods we want to spy on
             agent.handle_turn_start = MagicMock()
@@ -50,5 +59,6 @@ class TestEventIntegration(unittest.TestCase):
             # This is a bit of a simplification, as we are not checking the action content
             director._handle_agent_action.assert_called_once()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

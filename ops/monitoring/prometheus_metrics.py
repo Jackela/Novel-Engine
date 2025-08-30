@@ -9,18 +9,18 @@ Implements comprehensive Prometheus metrics collection with:
 - Custom metrics for Novel Engine operations (agent coordination, story generation)
 """
 
-import time
 import asyncio
 import logging
-from typing import Dict, List, Optional, Any, Union, Callable
-from dataclasses import dataclass
-from collections import defaultdict, Counter
-from enum import Enum
-import psutil
-import os
-from datetime import datetime, timedelta
+import time
+from collections import defaultdict
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Response
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Union
+
+import psutil
+from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 
 logger = logging.getLogger(__name__)
@@ -370,10 +370,10 @@ class PrometheusMetricsCollector:
                 
                 # Add percentiles
                 if count > 0:
-                    sorted_values = sorted(values)
-                    p50_idx = int(0.5 * (count - 1))
-                    p95_idx = int(0.95 * (count - 1))
-                    p99_idx = int(0.99 * (count - 1))
+                    sorted(values)
+                    int(0.5 * (count - 1))
+                    int(0.95 * (count - 1))
+                    int(0.99 * (count - 1))
                     
                     lines.append(f"# HELP {base_name}_bucket Cumulative counters for {base_name}")
                     lines.append(f"# TYPE {base_name}_bucket counter")
@@ -444,7 +444,7 @@ async def time_request(method: str, endpoint: str):
     
     try:
         yield
-    except Exception as e:
+    except Exception:
         status_code = 500
         raise
     finally:
@@ -465,7 +465,7 @@ def time_operation(operation_name: str, labels: Dict[str, str] = None):
                 else:
                     result = func(*args, **kwargs)
                 return result
-            except Exception as e:
+            except Exception:
                 success = False
                 raise
             finally:

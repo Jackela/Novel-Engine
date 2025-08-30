@@ -4,7 +4,39 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <meta name="description" content="Novel Engine - AI-Powered Interactive Story Generation Platform" />
+    <meta name="theme-color" content="#007bff" />
+    <title>Novel Engine - AI Story Generator</title>
+    
+    <!-- Process polyfill - must be loaded before any modules -->
+    <script>
+      // Create process global before any modules load
+      if (typeof global === 'undefined') {
+        window.global = globalThis;
+      }
+      
+      if (typeof process === 'undefined') {
+        window.process = {
+          env: {
+            NODE_ENV: 'development',
+            REACT_APP_API_BASE_URL: 'http://localhost:3000/v1',
+            REACT_APP_API_TIMEOUT: '10000',
+            REACT_APP_API_URL: 'http://localhost:8000',
+            REACT_APP_DOCKER: 'false'
+          },
+          platform: 'browser',
+          version: '18.0.0',
+          versions: { node: '18.0.0' },
+          nextTick: function(callback, ...args) {
+            return setTimeout(() => callback(...args), 0);
+          },
+          cwd: function() { return '/'; },
+          argv: [],
+          stdout: { write: function() {} },
+          stderr: { write: function() {} }
+        };
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

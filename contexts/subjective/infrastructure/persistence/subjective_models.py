@@ -7,31 +7,43 @@ Subjective bounded context aggregates and related entities.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional, Any
-import json
+from typing import Any, Dict, Optional
 
-from sqlalchemy import Column, String, DateTime, Integer, Text, JSON, Float, Boolean, ForeignKey, Enum as SQLEnum
+from sqlalchemy import (
+    JSON,
+    Column,
+    DateTime,
+)
+from sqlalchemy import (
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship, backref
-from sqlalchemy.sql import func
+from sqlalchemy.orm import backref, relationship
 
 try:
     from core_platform.persistence.models import BaseModel, FullAuditModel
 except ImportError:
     # Fallback for when platform models aren't available
     from sqlalchemy.orm import DeclarativeBase
-    
+
     class Base(DeclarativeBase):
         """Base class for all SQLAlchemy models."""
+
         pass
-    
+
     class BaseModel(Base):
         __abstract__ = True
         id = Column(String, primary_key=True)
         created_at = Column(DateTime, default=datetime.now, nullable=False)
-        updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
-    
+        updated_at = Column(
+            DateTime, default=datetime.now, onupdate=datetime.now, nullable=False
+        )
+
     class FullAuditModel(BaseModel):
         __abstract__ = True
         version = Column(Integer, default=1, nullable=False)
@@ -40,22 +52,22 @@ except ImportError:
 class TurnBriefORM(FullAuditModel):
     """
     SQLAlchemy ORM model for TurnBrief aggregate persistence.
-    
+
     This model stores the core TurnBrief data and relationships
     to other tables containing detailed perception and knowledge data.
     """
-    
+
     __tablename__ = "subjective_turn_briefs"
-    
+
     # Primary key and identity
     turn_brief_id = Column(UUID(as_uuid=True), unique=True, nullable=False, index=True)
     entity_id = Column(String(255), nullable=False, index=True, unique=True)
-    
+
     # World state tracking
     world_state_version = Column(Integer, nullable=False, index=True)
     last_world_update = Column(DateTime, nullable=False)
     last_perception_update = Column(DateTime, nullable=False)
-    
+
     # Awareness state (stored as JSON for flexibility)
     base_alertness = Column(String(50), nullable=False)
     current_alertness = Column(String(50), nullable=False)
@@ -64,42 +76,44 @@ class TurnBriefORM(FullAuditModel):
     awareness_modifiers = Column(JSON, nullable=True)
     fatigue_level = Column(Float, nullable=False, default=0.0)
     stress_level = Column(Float, nullable=False, default=0.0)
-    
+
     # Perception capabilities (stored as JSON)
     perception_capabilities = Column(JSON, nullable=False)
-    
+
     # Visible subjects (stored as JSON mapping subject_id -> visibility_level)
     visible_subjects = Column(JSON, nullable=True, default={})
-    
+
     # Known threats (stored as JSON mapping subject_id -> threat_info)
     known_threats = Column(JSON, nullable=True, default={})
-    
+
     # Relationships
     knowledge_items = relationship(
         "KnowledgeItemORM",
         back_populates="turn_brief",
         cascade="all, delete-orphan",
-        lazy="select"
+        lazy="select",
     )
-    
+
     perception_records = relationship(
         "PerceptionRecordORM",
         back_populates="turn_brief",
         cascade="all, delete-orphan",
-        lazy="select"
+        lazy="select",
     )
-    
+
     def __repr__(self):
-        return (f"<TurnBriefORM(turn_brief_id='{self.turn_brief_id}', "
-                f"entity_id='{self.entity_id}', "
-                f"world_state_version={self.world_state_version})>")
-    
+        return (
+            f"<TurnBriefORM(turn_brief_id='{self.turn_brief_id}', "
+            f"entity_id='{self.entity_id}', "
+            f"world_state_version={self.world_state_version})>"
+        )
+
     @hybrid_property
     def is_active(self) -> bool:
         """Check if the TurnBrief is considered active (updated recently)."""
         cutoff = datetime.now().timestamp() - 3600  # 1 hour
         return self.updated_at.timestamp() > cutoff
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
         return {
@@ -120,59 +134,68 @@ class TurnBriefORM(FullAuditModel):
             "known_threats": self.known_threats,
             "version": self.version,
             "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat()
+            "updated_at": self.updated_at.isoformat(),
         }
 
 
 class KnowledgeItemORM(BaseModel):
     """
     SQLAlchemy ORM model for individual knowledge items.
-    
+
     This model stores detailed knowledge information including
     metadata about reliability, sources, and temporal validity.
     """
-    
+
     __tablename__ = "subjective_knowledge_items"
-    
+
     # Primary key
-    knowledge_item_id = Column(UUID(as_uuid=True), unique=True, nullable=False, index=True)
-    
+    knowledge_item_id = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, index=True
+    )
+
     # Foreign key to TurnBrief
-    turn_brief_id = Column(UUID(as_uuid=True), ForeignKey("subjective_turn_briefs.turn_brief_id"), nullable=False, index=True)
-    
+    turn_brief_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("subjective_turn_briefs.turn_brief_id"),
+        nullable=False,
+        index=True,
+    )
+
     # Knowledge content
     subject = Column(String(500), nullable=False, index=True)
     information = Column(Text, nullable=False)
     knowledge_type = Column(String(50), nullable=False, index=True)
     certainty_level = Column(String(50), nullable=False)
     source = Column(String(50), nullable=False)
-    
+
     # Temporal information
     acquired_at = Column(DateTime, nullable=False)
     expires_at = Column(DateTime, nullable=True, index=True)
-    
+
     # Tags (stored as JSON array)
     tags = Column(JSON, nullable=True, default=[])
-    
+
     # Additional metadata
     reliability_score = Column(Float, nullable=True)
     context_data = Column(JSON, nullable=True)
-    
+
     # Relationship
     turn_brief = relationship("TurnBriefORM", back_populates="knowledge_items")
-    
+
     def __repr__(self):
-        return (f"<KnowledgeItemORM(knowledge_item_id='{self.knowledge_item_id}', "
-                f"subject='{self.subject}', "
-                f"knowledge_type='{self.knowledge_type}')>")
-    
+        return (
+            f"<KnowledgeItemORM(knowledge_item_id='{self.knowledge_item_id}', "
+            f"subject='{self.subject}', "
+            f"knowledge_type='{self.knowledge_type}')>"
+        )
+
     @hybrid_property
     def is_current(self) -> bool:
         """Check if the knowledge is still current (not expired)."""
         if not self.expires_at:
             return True
         return datetime.now() < self.expires_at
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
         return {
@@ -189,55 +212,64 @@ class KnowledgeItemORM(BaseModel):
             "reliability_score": self.reliability_score,
             "context_data": self.context_data,
             "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat()
+            "updated_at": self.updated_at.isoformat(),
         }
 
 
 class PerceptionRecordORM(BaseModel):
     """
     SQLAlchemy ORM model for perception records.
-    
+
     This model stores detailed information about individual
     perceptions including sensory details and environmental context.
     """
-    
+
     __tablename__ = "subjective_perception_records"
-    
+
     # Primary key
-    perception_record_id = Column(UUID(as_uuid=True), unique=True, nullable=False, index=True)
-    
+    perception_record_id = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, index=True
+    )
+
     # Foreign key to TurnBrief
-    turn_brief_id = Column(UUID(as_uuid=True), ForeignKey("subjective_turn_briefs.turn_brief_id"), nullable=False, index=True)
-    
+    turn_brief_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("subjective_turn_briefs.turn_brief_id"),
+        nullable=False,
+        index=True,
+    )
+
     # Perception details
     perceived_subject = Column(String(500), nullable=False, index=True)
     perception_type = Column(String(50), nullable=False, index=True)
     visibility_level = Column(String(50), nullable=False)
     distance = Column(Float, nullable=False)
-    
+
     # Positions (stored as JSON for 3D coordinates)
     observer_position = Column(JSON, nullable=True)
     target_position = Column(JSON, nullable=True)
-    
+
     # Environmental context
     environmental_conditions = Column(JSON, nullable=True)
     additional_details = Column(JSON, nullable=True)
-    
+
     # Temporal information
     perceived_at = Column(DateTime, nullable=False, default=datetime.now, index=True)
-    
+
     # Quality indicators
     confidence_score = Column(Float, nullable=True)
     clarity_score = Column(Float, nullable=True)
-    
+
     # Relationship
     turn_brief = relationship("TurnBriefORM", back_populates="perception_records")
-    
+
     def __repr__(self):
-        return (f"<PerceptionRecordORM(perception_record_id='{self.perception_record_id}', "
-                f"perceived_subject='{self.perceived_subject}', "
-                f"perception_type='{self.perception_type}')>")
-    
+        return (
+            f"<PerceptionRecordORM(perception_record_id='{self.perception_record_id}', "
+            f"perceived_subject='{self.perceived_subject}', "
+            f"perception_type='{self.perception_type}')>"
+        )
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
         return {
@@ -255,70 +287,84 @@ class PerceptionRecordORM(BaseModel):
             "confidence_score": self.confidence_score,
             "clarity_score": self.clarity_score,
             "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat()
+            "updated_at": self.updated_at.isoformat(),
         }
 
 
 class ThreatAssessmentORM(BaseModel):
     """
     SQLAlchemy ORM model for threat assessments.
-    
+
     This model stores detailed information about detected threats
     including assessment metadata and tracking history.
     """
-    
+
     __tablename__ = "subjective_threat_assessments"
-    
+
     # Primary key
-    threat_assessment_id = Column(UUID(as_uuid=True), unique=True, nullable=False, index=True)
-    
+    threat_assessment_id = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, index=True
+    )
+
     # Foreign key to TurnBrief
-    turn_brief_id = Column(UUID(as_uuid=True), ForeignKey("subjective_turn_briefs.turn_brief_id"), nullable=False, index=True)
-    
+    turn_brief_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("subjective_turn_briefs.turn_brief_id"),
+        nullable=False,
+        index=True,
+    )
+
     # Threat identification
     threat_subject = Column(String(500), nullable=False, index=True)
     threat_type = Column(String(100), nullable=False, index=True)
     threat_level = Column(String(50), nullable=False, index=True)
-    
+
     # Assessment details
     confidence = Column(Float, nullable=False)
     detection_method = Column(String(50), nullable=False)
     estimated_distance = Column(Float, nullable=True)
-    
+
     # Threat capabilities and metadata
     threat_capabilities = Column(JSON, nullable=True)
     assessment_context = Column(JSON, nullable=True)
-    
+
     # Temporal tracking
     first_detected = Column(DateTime, nullable=False, default=datetime.now)
     last_seen = Column(DateTime, nullable=False, default=datetime.now)
     lost_at = Column(DateTime, nullable=True, index=True)
-    
+
     # Status and tracking
-    status = Column(String(50), nullable=False, default="active")  # active, lost, neutralized
+    status = Column(
+        String(50), nullable=False, default="active"
+    )  # active, lost, neutralized
     loss_reason = Column(String(200), nullable=True)
     last_known_position = Column(JSON, nullable=True)
-    
+
     # Relationship
-    turn_brief = relationship("TurnBriefORM", backref=backref("threat_assessments", cascade="all, delete-orphan"))
-    
+    turn_brief = relationship(
+        "TurnBriefORM",
+        backref=backref("threat_assessments", cascade="all, delete-orphan"),
+    )
+
     def __repr__(self):
-        return (f"<ThreatAssessmentORM(threat_assessment_id='{self.threat_assessment_id}', "
-                f"threat_subject='{self.threat_subject}', "
-                f"threat_level='{self.threat_level}', "
-                f"status='{self.status}')>")
-    
+        return (
+            f"<ThreatAssessmentORM(threat_assessment_id='{self.threat_assessment_id}', "
+            f"threat_subject='{self.threat_subject}', "
+            f"threat_level='{self.threat_level}', "
+            f"status='{self.status}')>"
+        )
+
     @hybrid_property
     def is_active(self) -> bool:
         """Check if the threat is currently active."""
         return self.status == "active"
-    
+
     @hybrid_property
     def tracking_duration(self) -> Optional[float]:
         """Get the duration the threat has been tracked (in seconds)."""
         end_time = self.lost_at or datetime.now()
         return (end_time - self.first_detected).total_seconds()
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
         return {
@@ -339,50 +385,54 @@ class ThreatAssessmentORM(BaseModel):
             "loss_reason": self.loss_reason,
             "last_known_position": self.last_known_position,
             "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat()
+            "updated_at": self.updated_at.isoformat(),
         }
 
 
 class InformationSharingLogORM(BaseModel):
     """
     SQLAlchemy ORM model for tracking information sharing between entities.
-    
+
     This model logs when knowledge is shared between entities,
     providing an audit trail for information propagation.
     """
-    
+
     __tablename__ = "subjective_information_sharing_log"
-    
+
     # Primary key
     sharing_log_id = Column(UUID(as_uuid=True), unique=True, nullable=False, index=True)
-    
+
     # Source and target information
     source_entity_id = Column(String(255), nullable=False, index=True)
     target_entity_id = Column(String(255), nullable=False, index=True)
-    
+
     # Sharing details
     knowledge_subjects = Column(JSON, nullable=False)  # List of subjects shared
     communication_method = Column(String(100), nullable=False)
     reliability_modifier = Column(Float, nullable=False, default=0.9)
-    
+
     # Context information
     sharing_context = Column(JSON, nullable=True)
     environmental_conditions = Column(JSON, nullable=True)
     distance_at_sharing = Column(Float, nullable=True)
-    
+
     # Temporal information
     shared_at = Column(DateTime, nullable=False, default=datetime.now, index=True)
-    
+
     # Success metrics
-    success_rate = Column(Float, nullable=True)  # Percentage of knowledge successfully shared
+    success_rate = Column(
+        Float, nullable=True
+    )  # Percentage of knowledge successfully shared
     failure_reasons = Column(JSON, nullable=True)  # Reasons for any failures
-    
+
     def __repr__(self):
-        return (f"<InformationSharingLogORM(sharing_log_id='{self.sharing_log_id}', "
-                f"source_entity_id='{self.source_entity_id}', "
-                f"target_entity_id='{self.target_entity_id}', "
-                f"shared_at='{self.shared_at}')>")
-    
+        return (
+            f"<InformationSharingLogORM(sharing_log_id='{self.sharing_log_id}', "
+            f"source_entity_id='{self.source_entity_id}', "
+            f"target_entity_id='{self.target_entity_id}', "
+            f"shared_at='{self.shared_at}')>"
+        )
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
         return {
@@ -399,5 +449,5 @@ class InformationSharingLogORM(BaseModel):
             "success_rate": self.success_rate,
             "failure_reasons": self.failure_reasons,
             "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat()
+            "updated_at": self.updated_at.isoformat(),
         }

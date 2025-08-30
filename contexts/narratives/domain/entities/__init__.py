@@ -12,12 +12,9 @@ Key Domain Entities:
 - Subplot: Secondary story line within main narrative
 """
 
-from .story_element import StoryElement
 from .narrative_thread import NarrativeThread
+from .story_element import StoryElement
 
-__all__ = [
-    'StoryElement',
-    'NarrativeThread'
-]
+__all__ = ["StoryElement", "NarrativeThread"]
 
 __version__ = "1.0.0"

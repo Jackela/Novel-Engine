@@ -8,44 +8,41 @@ framework patterns, and best practices integration.
 """
 
 import logging
-import json
-from typing import Dict, Any, Optional, List, Union
-from datetime import datetime
 from pathlib import Path
-from fastapi import FastAPI, Request
+from typing import Any, Dict, List
+
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
-from jinja2 import Environment, FileSystemLoader, Template
+from jinja2 import Environment, FileSystemLoader
 
 logger = logging.getLogger(__name__)
 
+
 class EnhancedDocumentationSystem:
     """Enhanced documentation system with Context7 integration."""
-    
+
     def __init__(self, app: FastAPI, context7_api=None):
         self.app = app
         self.context7_api = context7_api
         self.template_env = self._setup_templates()
         self._api_inventory = self._build_api_inventory()
-        
+
     def _setup_templates(self) -> Environment:
         """Setup Jinja2 template environment."""
         # Create templates directory if it doesn't exist
         templates_dir = Path("src/templates")
         templates_dir.mkdir(exist_ok=True)
-        
+
         # Create basic template if it doesn't exist
         docs_template_path = templates_dir / "enhanced_docs.html"
         if not docs_template_path.exists():
             self._create_default_template(docs_template_path)
-        
-        return Environment(
-            loader=FileSystemLoader(str(templates_dir)),
-            autoescape=True
-        )
-    
+
+        return Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
+
     def _create_default_template(self, template_path: Path):
         """Create default documentation template."""
-        template_content = '''<!DOCTYPE html>
+        template_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -413,11 +410,11 @@ novel-engine stories generate --title "My Story"</code></pre>
         });
     </script>
 </body>
-</html>'''
-        
-        with open(template_path, 'w', encoding='utf-8') as f:
+</html>"""
+
+        with open(template_path, "w", encoding="utf-8") as f:
             f.write(template_content)
-    
+
     def _build_api_inventory(self) -> Dict[str, Any]:
         """Build comprehensive API inventory."""
         return {
@@ -427,95 +424,105 @@ novel-engine stories generate --title "My Story"</code></pre>
                     "method": "GET",
                     "summary": "List all characters",
                     "description": "Retrieve a list of all available characters",
-                    "category": "Characters"
+                    "category": "Characters",
                 },
                 {
                     "path": "/api/v1/characters",
-                    "method": "POST", 
+                    "method": "POST",
                     "summary": "Create new character",
                     "description": "Create a new character with detailed attributes",
-                    "category": "Characters"
+                    "category": "Characters",
                 },
                 {
                     "path": "/api/v1/stories/generate",
                     "method": "POST",
                     "summary": "Generate story",
                     "description": "Generate a new story with specified parameters",
-                    "category": "Stories"
+                    "category": "Stories",
                 },
                 {
                     "path": "/api/v1/interactions",
                     "method": "POST",
                     "summary": "Create interaction",
                     "description": "Create a new character interaction",
-                    "category": "Interactions"
+                    "category": "Interactions",
                 },
                 {
                     "path": "/api/v1/turns/{turn_id}/briefs/{agent_id}",
                     "method": "GET",
                     "summary": "Get turn brief",
                     "description": "Get personalized turn brief for an agent",
-                    "category": "Narrative"
+                    "category": "Narrative",
                 },
                 {
                     "path": "/api/v1/narratives/emergent/generate",
                     "method": "POST",
                     "summary": "Generate emergent narrative",
                     "description": "Generate emergent narrative based on interactions",
-                    "category": "Narrative"
-                }
+                    "category": "Narrative",
+                },
             ],
-            "categories": ["Characters", "Stories", "Interactions", "Narrative", "Context7"],
+            "categories": [
+                "Characters",
+                "Stories",
+                "Interactions",
+                "Narrative",
+                "Context7",
+            ],
             "features": [
                 {
                     "title": "Character Management",
-                    "description": "Create, modify, and manage complex character profiles with personality traits, backgrounds, and relationships."
+                    "description": "Create, modify, and manage complex character profiles with personality traits, backgrounds, and relationships.",
                 },
                 {
                     "title": "Story Generation",
-                    "description": "Generate dynamic stories with multiple characters, complex plots, and narrative coherence."
+                    "description": "Generate dynamic stories with multiple characters, complex plots, and narrative coherence.",
                 },
                 {
                     "title": "Subjective Reality",
-                    "description": "Each character has their own perspective and knowledge base, creating realistic interactions."
+                    "description": "Each character has their own perspective and knowledge base, creating realistic interactions.",
                 },
                 {
                     "title": "Emergent Narratives",
-                    "description": "Stories emerge naturally from character interactions and causal relationships."
+                    "description": "Stories emerge naturally from character interactions and causal relationships.",
                 },
                 {
                     "title": "Context7 Integration",
-                    "description": "Enhanced documentation with interactive examples and framework best practices."
-                }
-            ]
+                    "description": "Enhanced documentation with interactive examples and framework best practices.",
+                },
+            ],
         }
-    
-    async def generate_code_examples_for_endpoint(self, endpoint_path: str) -> List[Dict[str, Any]]:
+
+    async def generate_code_examples_for_endpoint(
+        self, endpoint_path: str
+    ) -> List[Dict[str, Any]]:
         """Generate Context7-powered code examples for an endpoint."""
         if not self.context7_api:
             return self._get_fallback_examples(endpoint_path)
-        
+
         try:
             # Generate examples in multiple formats
             formats = ["python", "curl", "javascript"]
             examples = []
-            
+
             for format_type in formats:
                 # This would call the Context7 API to generate examples
                 example = {
                     "format": format_type,
                     "language": format_type if format_type != "curl" else "bash",
                     "code": self._generate_example_code(endpoint_path, format_type),
-                    "explanation": f"Example usage in {format_type}"
+                    "explanation": f"Example usage in {format_type}",
                 }
                 examples.append(example)
-            
+
             return examples
-            
+
         except Exception as e:
-            logger.warning(f"Failed to generate Context7 examples for {endpoint_path}: {e}")
+            logger.warning(
+                f"Failed to generate Context7 examples for {endpoint_path}: {e}"
+            )
             return self._get_fallback_examples(endpoint_path)
-    
+
     def _get_fallback_examples(self, endpoint_path: str) -> List[Dict[str, Any]]:
         """Get fallback examples when Context7 is not available."""
         return [
@@ -523,20 +530,20 @@ novel-engine stories generate --title "My Story"</code></pre>
                 "format": "python",
                 "language": "python",
                 "code": f'import httpx\nresponse = await httpx.get("http://localhost:8000{endpoint_path}")\nprint(response.json())',
-                "explanation": "Basic Python example using httpx"
+                "explanation": "Basic Python example using httpx",
             },
             {
                 "format": "curl",
-                "language": "bash", 
+                "language": "bash",
                 "code": f'curl -X GET "http://localhost:8000{endpoint_path}"',
-                "explanation": "Command line example using curl"
-            }
+                "explanation": "Command line example using curl",
+            },
         ]
-    
+
     def _generate_example_code(self, endpoint_path: str, format_type: str) -> str:
         """Generate example code for different formats."""
         if format_type == "python":
-            return f'''import httpx
+            return f"""import httpx
 import asyncio
 
 async def call_api():
@@ -546,26 +553,28 @@ async def call_api():
         return response.json()
 
 result = asyncio.run(call_api())
-print(result)'''
+print(result)"""
         elif format_type == "curl":
             return f'curl -X GET "http://localhost:8000{endpoint_path}" -H "Content-Type: application/json"'
         elif format_type == "javascript":
-            return f'''const response = await fetch('http://localhost:8000{endpoint_path}');
+            return f"""const response = await fetch('http://localhost:8000{endpoint_path}');
 const data = await response.json();
-console.log(data);'''
+console.log(data);"""
         else:
             return f"# Example for {endpoint_path} in {format_type}"
-    
+
     async def generate_enhanced_documentation(self) -> str:
         """Generate enhanced HTML documentation."""
         try:
             # Enhance endpoints with Context7 examples
             enhanced_endpoints = []
             for endpoint in self._api_inventory["endpoints"]:
-                examples = await self.generate_code_examples_for_endpoint(endpoint["path"])
+                examples = await self.generate_code_examples_for_endpoint(
+                    endpoint["path"]
+                )
                 endpoint_with_examples = {**endpoint, "examples": examples}
                 enhanced_endpoints.append(endpoint_with_examples)
-            
+
             template = self.template_env.get_template("enhanced_docs.html")
             return template.render(
                 title="Novel Engine API Documentation",
@@ -573,13 +582,13 @@ console.log(data);'''
                 version="1.1.0",
                 overview="The Novel Engine API provides a powerful framework for creating dynamic, narrative-driven experiences with intelligent character interactions and emergent storytelling.",
                 endpoints=enhanced_endpoints,
-                features=self._api_inventory["features"]
+                features=self._api_inventory["features"],
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to generate enhanced documentation: {e}")
             return self._generate_fallback_documentation()
-    
+
     def _generate_fallback_documentation(self) -> str:
         """Generate fallback documentation when template fails."""
         return """
@@ -605,20 +614,22 @@ console.log(data);'''
         </body>
         </html>
         """
-    
+
     def setup_routes(self, app: FastAPI):
         """Setup enhanced documentation routes."""
-        
+
         @app.get("/docs", response_class=HTMLResponse, include_in_schema=False)
         async def enhanced_docs():
             """Enhanced interactive documentation."""
             return await self.generate_enhanced_documentation()
-        
-        @app.get("/api/documentation", response_class=HTMLResponse, include_in_schema=False)
+
+        @app.get(
+            "/api/documentation", response_class=HTMLResponse, include_in_schema=False
+        )
         async def api_documentation():
             """API documentation endpoint."""
             return await self.generate_enhanced_documentation()
-        
+
         @app.get("/api/v1/postman/collection")
         async def get_postman_collection():
             """Get Postman collection for API testing."""
@@ -626,7 +637,7 @@ console.log(data);'''
                 "info": {
                     "name": "Novel Engine API",
                     "version": "1.1.0",
-                    "description": "Comprehensive API collection for Novel Engine"
+                    "description": "Comprehensive API collection for Novel Engine",
                 },
                 "item": [
                     {
@@ -637,29 +648,34 @@ console.log(data);'''
                             "url": {
                                 "raw": "{{base_url}}/health",
                                 "host": ["{{base_url}}"],
-                                "path": ["health"]
-                            }
-                        }
+                                "path": ["health"],
+                            },
+                        },
                     },
                     {
                         "name": "List Characters",
                         "request": {
                             "method": "GET",
-                            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+                            "header": [
+                                {"key": "Authorization", "value": "Bearer {{token}}"}
+                            ],
                             "url": {
                                 "raw": "{{base_url}}/api/v1/characters",
                                 "host": ["{{base_url}}"],
-                                "path": ["api", "v1", "characters"]
-                            }
-                        }
-                    }
+                                "path": ["api", "v1", "characters"],
+                            },
+                        },
+                    },
                 ],
                 "variable": [
                     {"key": "base_url", "value": "http://localhost:8000"},
-                    {"key": "token", "value": "YOUR_JWT_TOKEN"}
-                ]
+                    {"key": "token", "value": "YOUR_JWT_TOKEN"},
+                ],
             }
-            
-            return JSONResponse(content=collection, headers={
-                "Content-Disposition": "attachment; filename=novel-engine-api.postman_collection.json"
-            })
+
+            return JSONResponse(
+                content=collection,
+                headers={
+                    "Content-Disposition": "attachment; filename=novel-engine-api.postman_collection.json"
+                },
+            )

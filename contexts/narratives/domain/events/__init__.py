@@ -15,56 +15,50 @@ Key Domain Events:
 """
 
 from .narrative_events import (
-    NarrativeEvent,
-    NarrativeArcCreated,
-    NarrativeArcUpdated,
-    NarrativeArcCompleted,
-    PlotPointAdded,
-    PlotPointUpdated,
-    PlotPointRemoved,
-    ThemeIntroduced,
-    ThemeIntensityChanged,
-    ThemeResolved,
     CausalLinkEstablished,
     CausalLinkRemoved,
+    ContextActivated,
+    ContextDeactivated,
+    ContextUpdated,
+    NarrativeArcCompleted,
+    NarrativeArcCreated,
+    NarrativeArcUpdated,
+    NarrativeEvent,
     NarrativeFlowChanged,
     PacingAdjusted,
-    ContextUpdated,
-    ContextActivated,
-    ContextDeactivated
+    PlotPointAdded,
+    PlotPointRemoved,
+    PlotPointUpdated,
+    ThemeIntensityChanged,
+    ThemeIntroduced,
+    ThemeResolved,
 )
 
 __all__ = [
     # Base event
-    'NarrativeEvent',
-    
+    "NarrativeEvent",
     # Narrative Arc events
-    'NarrativeArcCreated',
-    'NarrativeArcUpdated', 
-    'NarrativeArcCompleted',
-    
+    "NarrativeArcCreated",
+    "NarrativeArcUpdated",
+    "NarrativeArcCompleted",
     # Plot Point events
-    'PlotPointAdded',
-    'PlotPointUpdated',
-    'PlotPointRemoved',
-    
+    "PlotPointAdded",
+    "PlotPointUpdated",
+    "PlotPointRemoved",
     # Theme events
-    'ThemeIntroduced',
-    'ThemeIntensityChanged',
-    'ThemeResolved',
-    
+    "ThemeIntroduced",
+    "ThemeIntensityChanged",
+    "ThemeResolved",
     # Causal events
-    'CausalLinkEstablished',
-    'CausalLinkRemoved',
-    
+    "CausalLinkEstablished",
+    "CausalLinkRemoved",
     # Flow and Pacing events
-    'NarrativeFlowChanged',
-    'PacingAdjusted',
-    
+    "NarrativeFlowChanged",
+    "PacingAdjusted",
     # Context events
-    'ContextUpdated',
-    'ContextActivated',
-    'ContextDeactivated'
+    "ContextUpdated",
+    "ContextActivated",
+    "ContextDeactivated",
 ]
 
 __version__ = "1.0.0"

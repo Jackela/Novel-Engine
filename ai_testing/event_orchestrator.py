@@ -3,14 +3,14 @@
 Dynamic Event Orchestrator - Intelligent event sequencing based on story structure
 """
 
-from dataclasses import dataclass
-from typing import List, Dict, Optional, Tuple
-from enum import Enum
-import random
 import math
+import random
+from dataclasses import dataclass
+from enum import Enum
+from typing import Dict, List
 
-from story_architect import StoryBlueprint, PlotStage
 from dialogue_engine import ContextAwareDialogueEngine
+from story_architect import PlotStage, StoryBlueprint
 
 
 class EventPriority(Enum):
@@ -558,7 +558,7 @@ class DynamicEventOrchestrator:
             location = guidance.get("location", "此地")
             return {
                 "description": f"{char_name}在{location}采取了关键行动",
-                "details": f"这一刻将被历史铭记"
+                "details": "这一刻将被历史铭记"
             }
         
         # Select action and mark as used

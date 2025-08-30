@@ -1,0 +1,571 @@
+{
+  "config": {
+    "configFile": "D:\\Code\\Novel-Engine\\frontend\\playwright.config.ts",
+    "rootDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-setup.ts",
+    "globalTeardown": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 6
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "junit-results.xml"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "chromium-desktop",
+        "name": "chromium-desktop",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "firefox-desktop",
+        "name": "firefox-desktop",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "webkit-desktop",
+        "name": "webkit-desktop",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "tablet",
+        "name": "tablet",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "mobile",
+        "name": "mobile",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "high-dpi",
+        "name": "high-dpi",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.54.1",
+    "workers": 8,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true,
+      "timeout": 120000,
+      "env": {
+        "NODE_ENV": "test",
+        "REACT_APP_API_BASE_URL": "http://localhost:8000/v1",
+        "REACT_APP_WS_URL": "ws://localhost:8001/ws"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "dashboard-core-uat.spec.ts",
+      "file": "dashboard-core-uat.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Emergent Narrative Dashboard - Core UAT",
+          "file": "dashboard-core-uat.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Performance Validation: Dashboard Load Time",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-desktop",
+                  "projectName": "chromium-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6179,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "⚡ Performance Validation: Dashboard load time testing\n"
+                        },
+                        {
+                          "text": "⚡ Dashboard Load Time: 1235ms\n"
+                        },
+                        {
+                          "text": "⚡ World Map Load Time: 55ms\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Measure Dashboard Load Performance",
+                          "duration": 1300
+                        }
+                      ],
+                      "startTime": "2025-08-28T10:19:17.540Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "dfc455c1ccceb431a182-d1527f179521840af3a3",
+              "file": "dashboard-core-uat.spec.ts",
+              "line": 257,
+              "column": 3
+            },
+            {
+              "title": "Performance Validation: Dashboard Load Time",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox-desktop",
+                  "projectName": "firefox-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 9542,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "⚡ Performance Validation: Dashboard load time testing\n"
+                        },
+                        {
+                          "text": "⚡ Dashboard Load Time: 1655ms\n"
+                        },
+                        {
+                          "text": "⚡ World Map Load Time: 31ms\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Measure Dashboard Load Performance",
+                          "duration": 1695
+                        }
+                      ],
+                      "startTime": "2025-08-28T10:19:17.526Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "dfc455c1ccceb431a182-55ebd8e31c22857e8ac4",
+              "file": "dashboard-core-uat.spec.ts",
+              "line": 257,
+              "column": 3
+            },
+            {
+              "title": "Performance Validation: Dashboard Load Time",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit-desktop",
+                  "projectName": "webkit-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "timedOut",
+                      "duration": 35524,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\dashboard-core-uat.spec.ts",
+                            "column": 24,
+                            "line": 270
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m5000\u001b[39m\nReceived:   \u001b[31m14872\u001b[39m\n\n  268 |       \n  269 |       // Validate load time meets performance requirements (< 5 seconds)\n> 270 |       expect(loadTime).toBeLessThan(5000);\n      |                        ^\n  271 |       \n  272 |       // Measure time to first meaningful paint (World State Map visible)\n  273 |       const worldMapLoadStart = Date.now();\n    at D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\dashboard-core-uat.spec.ts:270:24\n    at D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\dashboard-core-uat.spec.ts:260:5"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "⚡ Performance Validation: Dashboard load time testing\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Measure Dashboard Load Performance",
+                          "duration": 14878,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m5000\u001b[39m\nReceived:   \u001b[31m14872\u001b[39m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m5000\u001b[39m\nReceived:   \u001b[31m14872\u001b[39m\n    at D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\dashboard-core-uat.spec.ts:270:24\n    at D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\dashboard-core-uat.spec.ts:260:5",
+                            "location": {
+                              "file": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\dashboard-core-uat.spec.ts",
+                              "column": 24,
+                              "line": 270
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 268 |\u001b[39m       \n \u001b[90m 269 |\u001b[39m       \u001b[90m// Validate load time meets performance requirements (< 5 seconds)\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 270 |\u001b[39m       expect(loadTime)\u001b[33m.\u001b[39mtoBeLessThan(\u001b[35m5000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 271 |\u001b[39m       \n \u001b[90m 272 |\u001b[39m       \u001b[90m// Measure time to first meaningful paint (World State Map visible)\u001b[39m\n \u001b[90m 273 |\u001b[39m       \u001b[36mconst\u001b[39m worldMapLoadStart \u001b[33m=\u001b[39m \u001b[33mDate\u001b[39m\u001b[33m.\u001b[39mnow()\u001b[33m;\u001b[39m\u001b[0m"
+                          }
+                        }
+                      ],
+                      "startTime": "2025-08-28T10:19:17.527Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Code\\Novel-Engine\\frontend\\test-results\\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Code\\Novel-Engine\\frontend\\test-results\\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Code\\Novel-Engine\\frontend\\test-results\\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Code\\Novel-Engine\\frontend\\test-results\\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-webkit-desktop\\trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "dfc455c1ccceb431a182-1a5f539582bac65735cf",
+              "file": "dashboard-core-uat.spec.ts",
+              "line": 257,
+              "column": 3
+            },
+            {
+              "title": "Performance Validation: Dashboard Load Time",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "tablet",
+                  "projectName": "tablet",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 6287,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "⚡ Performance Validation: Dashboard load time testing\n"
+                        },
+                        {
+                          "text": "⚡ Dashboard Load Time: 1286ms\n"
+                        },
+                        {
+                          "text": "⚡ World Map Load Time: 23ms\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Measure Dashboard Load Performance",
+                          "duration": 1318
+                        }
+                      ],
+                      "startTime": "2025-08-28T10:19:17.556Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "dfc455c1ccceb431a182-10ccf9bfe1df60b75aed",
+              "file": "dashboard-core-uat.spec.ts",
+              "line": 257,
+              "column": 3
+            },
+            {
+              "title": "Performance Validation: Dashboard Load Time",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "failed",
+                      "duration": 30327,
+                      "error": {
+                        "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"performance-metrics\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"performance-metrics\"]') to be visible\u001b[22m\n\n    at DashboardPage.waitForDashboardLoad (D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\pages\\DashboardPage.ts:90:35)\n    at DashboardPage.navigateToDashboard (D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\pages\\DashboardPage.ts:77:5)\n    at D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\dashboard-core-uat.spec.ts:21:5",
+                        "location": {
+                          "file": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\pages\\DashboardPage.ts",
+                          "column": 35,
+                          "line": 90
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39mpages\\DashboardPage.ts:90\n\n\u001b[0m \u001b[90m 88 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mworldStateMap\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 89 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mrealTimeActivity\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 90 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mperformanceMetrics\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 91 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mturnPipelineStatus\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 92 |\u001b[39m     \n \u001b[90m 93 |\u001b[39m     \u001b[90m// Wait for initial data load (loading states should disappear)\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\pages\\DashboardPage.ts",
+                            "column": 35,
+                            "line": 90
+                          },
+                          "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"performance-metrics\"]') to be visible\u001b[22m\n\n\n   at pages\\DashboardPage.ts:90\n\n  88 |     await this.worldStateMap.waitFor({ state: 'visible', timeout: 10000 });\n  89 |     await this.realTimeActivity.waitFor({ state: 'visible', timeout: 10000 });\n> 90 |     await this.performanceMetrics.waitFor({ state: 'visible', timeout: 10000 });\n     |                                   ^\n  91 |     await this.turnPipelineStatus.waitFor({ state: 'visible', timeout: 10000 });\n  92 |     \n  93 |     // Wait for initial data load (loading states should disappear)\n    at DashboardPage.waitForDashboardLoad (D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\pages\\DashboardPage.ts:90:35)\n    at DashboardPage.navigateToDashboard (D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\pages\\DashboardPage.ts:77:5)\n    at D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\dashboard-core-uat.spec.ts:21:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-28T10:19:17.591Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Code\\Novel-Engine\\frontend\\test-results\\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Code\\Novel-Engine\\frontend\\test-results\\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Code\\Novel-Engine\\frontend\\test-results\\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\Code\\Novel-Engine\\frontend\\test-results\\dashboard-core-uat-Emergen-93fdc-idation-Dashboard-Load-Time-mobile\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\pages\\DashboardPage.ts",
+                        "column": 35,
+                        "line": 90
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "dfc455c1ccceb431a182-ca7cd7e7b72f6717c66f",
+              "file": "dashboard-core-uat.spec.ts",
+              "line": 257,
+              "column": 3
+            },
+            {
+              "title": "Performance Validation: Dashboard Load Time",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "high-dpi",
+                  "projectName": "high-dpi",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 7439,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "⚡ Performance Validation: Dashboard load time testing\n"
+                        },
+                        {
+                          "text": "⚡ Dashboard Load Time: 1499ms\n"
+                        },
+                        {
+                          "text": "⚡ World Map Load Time: 32ms\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Measure Dashboard Load Performance",
+                          "duration": 1540
+                        }
+                      ],
+                      "startTime": "2025-08-28T10:19:17.555Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "dfc455c1ccceb431a182-dd0f48eb196bb8b89866",
+              "file": "dashboard-core-uat.spec.ts",
+              "line": 257,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "message": "ReferenceError: config is not defined",
+      "stack": "ReferenceError: config is not defined\n    at generateTestMetrics (D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-teardown.ts:80:16)\n    at globalTeardown (D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-teardown.ts:23:9)",
+      "location": {
+        "file": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-teardown.ts",
+        "column": 16,
+        "line": 80
+      },
+      "snippet": "\u001b[90m   at \u001b[39msetup\\global-teardown.ts:80\n\n\u001b[0m \u001b[90m 78 |\u001b[39m     }\u001b[33m,\u001b[39m\n \u001b[90m 79 |\u001b[39m     configuration\u001b[33m:\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 80 |\u001b[39m       timeout\u001b[33m:\u001b[39m config\u001b[33m.\u001b[39mtimeout\u001b[33m,\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 81 |\u001b[39m       retries\u001b[33m:\u001b[39m config\u001b[33m.\u001b[39mretries\u001b[33m,\u001b[39m\n \u001b[90m 82 |\u001b[39m       workers\u001b[33m:\u001b[39m config\u001b[33m.\u001b[39mworkers\u001b[33m,\u001b[39m\n \u001b[90m 83 |\u001b[39m       projects\u001b[33m:\u001b[39m config\u001b[33m.\u001b[39mprojects\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mlength \u001b[33m||\u001b[39m \u001b[35m0\u001b[39m\u001b[0m"
+    }
+  ],
+  "stats": {
+    "startTime": "2025-08-28T10:19:14.140Z",
+    "duration": 39296.943,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

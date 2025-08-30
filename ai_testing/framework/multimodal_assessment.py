@@ -5,33 +5,26 @@ Advanced quality assessment framework for evaluating AI-generated content across
 Supports text, visual, audio, and structured data quality evaluation with cross-modal validation.
 """
 
-import asyncio
 import base64
-import hashlib
-import json
 import logging
+import statistics
 import time
 import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-import statistics
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-import httpx
-from PIL import Image, ImageStat, ImageFilter
 import numpy as np
-from pydantic import BaseModel, Field
-
-# Import Novel-Engine patterns
-from config_loader import get_config
-from src.event_bus import EventBus
 
 # Import AI testing contracts
-from ai_testing.interfaces.service_contracts import (
-    QualityMetric, TestResult, TestContext
-)
+
+# Import Novel-Engine patterns
+from PIL import Image, ImageFilter, ImageStat
+from pydantic import BaseModel, Field
+
+from src.event_bus import EventBus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -175,7 +168,7 @@ class VisualQualityAssessor:
             all_scores = {**aesthetic_scores, **content_scores}
             
             # Calculate overall score
-            overall_score = statistics.mean(all_scores.values()) if all_scores else 0.0
+            statistics.mean(all_scores.values()) if all_scores else 0.0
             
             # Generate analysis
             content_analysis = self._generate_visual_analysis(

@@ -4,13 +4,12 @@ Quality Gates Script for Novel Engine
 Implements comprehensive code quality validation and enforcement.
 """
 
+import argparse
+import json
+import os
 import subprocess
 import sys
-import os
-import json
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-import argparse
+from typing import Dict, Tuple
 
 
 class QualityGate:
@@ -343,7 +342,7 @@ class QualityGateRunner:
                     results["overall_passed"] = False
                     
         # Final report
-        print(f"\n📊 Quality Gates Summary")
+        print("\n📊 Quality Gates Summary")
         print(f"{'=' * 30}")
         print(f"Total Gates: {results['summary']['total']}")
         print(f"Passed: {results['summary']['passed']}")

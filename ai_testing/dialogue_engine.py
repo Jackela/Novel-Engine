@@ -3,11 +3,11 @@
 Context-Aware Dialogue Engine with Memory and Character Voice Differentiation
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Set, Optional, Tuple
-from collections import deque
-import random
 import hashlib
+import random
+from collections import deque
+from dataclasses import dataclass, field
+from typing import Dict, List, Set, Tuple
 
 
 @dataclass

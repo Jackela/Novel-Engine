@@ -5,7 +5,7 @@ Orchestration Domain Layer
 Core domain abstractions for turn pipeline orchestration including:
 - Turn aggregate root with saga coordination
 - Pipeline step entities and coordination
-- Value objects for turn state and configuration  
+- Value objects for turn state and configuration
 - Domain events for turn lifecycle and phases
 - Saga patterns with compensation logic
 """

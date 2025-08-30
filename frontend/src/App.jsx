@@ -5,6 +5,8 @@ import CharacterSelection from './components/CharacterSelection.jsx';
 import CharacterCreation from './components/CharacterCreation.jsx';
 import TestCharacterSelection from './components/TestCharacterSelection.jsx';
 import SimpleCharacterSelection from './components/SimpleCharacterSelection.jsx';
+import EmergentDashboard from './components/EmergentDashboard';
+import './styles/design-system.css';
 import './App.css';
 
 // Home component - Application dashboard providing users with system status and navigation
@@ -79,12 +81,16 @@ function Home() {
 
   return (
     <div className="App">
+      {/* Skip Link for Accessibility */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <header className="app-header">
         <h1>StoryForge AI - Interactive Story Engine</h1>
         <p className="app-subtitle">AI-Powered Narrative Generation Platform</p>
       </header>
 
-      <main className="app-main">
+      <main className="app-main" id="main-content">
         <div className="status-container">
           <h2>Backend Connection Status</h2>
           
@@ -160,7 +166,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<EmergentDashboard />} />
+        <Route path="/home-old" element={<Home />} />
         <Route path="/character-selection" element={<SimpleCharacterSelection />} />
         <Route path="/character-creation" element={<CharacterCreation />} />
       </Routes>

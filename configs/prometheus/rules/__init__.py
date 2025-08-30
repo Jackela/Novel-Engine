@@ -18,7 +18,7 @@ Example:
     infra_rules = load_infrastructure_rules()
 """
 
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 __version__ = "1.0.0"
 

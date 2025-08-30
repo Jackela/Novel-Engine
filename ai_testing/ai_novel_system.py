@@ -10,20 +10,18 @@ Architecture:
 """
 
 import asyncio
-import json
-import random
-import time
-import sys
-import math
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, asdict, field
-from enum import Enum
-from collections import deque
 import hashlib
-
+import json
 import logging
+import random
+import sys
+import time
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -31,9 +29,9 @@ logger = logging.getLogger(__name__)
 sys.path.append(str(Path(__file__).parent))
 
 try:
-    from story_architect import StoryArchitect, StoryBlueprint, PlotStage
     from dialogue_engine import ContextAwareDialogueEngine, DialogueMemory
     from event_orchestrator import DynamicEventOrchestrator
+    from story_architect import PlotStage, StoryArchitect, StoryBlueprint
 except ImportError:
     # If modules not available, we'll define simplified versions inline
     logger.warning("Wave Mode modules not found, using integrated versions")
@@ -663,7 +661,6 @@ class EnhancedLiteraryWriter:
         
         chapter = chapter_titles.get(chapter_num, f"第{chapter_num}章") + "\n\n"
         
-        current_location = None
         paragraph = []
         
         for event in events:
@@ -673,7 +670,6 @@ class EnhancedLiteraryWriter:
                     chapter += self._format_paragraph(paragraph) + "\n\n"
                     paragraph = []
                 chapter += f"【{event.content}】\n\n"
-                current_location = event.content
                 
             elif event.event_type == ActionType.DIALOGUE:
                 # Format dialogue with context
@@ -710,7 +706,7 @@ class EnhancedLiteraryWriter:
     
     def _enhance_dialogue(self, event: StoryEvent, characters: List[Character]) -> str:
         """Enhance dialogue with literary elements"""
-        character = next((c for c in characters if c.name == event.character), None)
+        next((c for c in characters if c.name == event.character), None)
         
         emotion_descriptions = {
             "contemplative": "沉思着说",
@@ -999,7 +995,7 @@ async def generate_complete_novel():
         print(f"  Generated {len(events)} unique events")
         print(f"  Zero repetition achieved: {len(dialogue_engine.memory.said_phrases)} unique dialogues")
         
-    except (ImportError, NameError) as e:
+    except (ImportError, NameError):
         # Fallback to enhanced generator without external modules
         print("📝 Using integrated Wave Mode enhancements...")
         generator = EnhancedDialogueGenerator()

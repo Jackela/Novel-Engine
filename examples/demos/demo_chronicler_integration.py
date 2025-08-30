@@ -8,14 +8,16 @@ Warhammer 40k Multi-Agent Simulator ecosystem, showing how campaign logs can
 be transformed into dramatic narrative stories.
 """
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+import logging
 
 from chronicler_agent import ChroniclerAgent
 from director_agent import DirectorAgent
-from src.persona_agent import PersonaAgent
-import logging
+
 
 # Configure logging for demo output
 logging.basicConfig(level=logging.INFO)
@@ -43,7 +45,7 @@ def demonstrate_basic_transcription():
         narrative = chronicler.transcribe_log(log_path)
         
         # Show results
-        print(f"✓ Transcription completed!")
+        print("✓ Transcription completed!")
         print(f"  Narrative length: {len(narrative)} characters")
         
         # Get chronicler status
@@ -125,7 +127,7 @@ def demonstrate_file_output():
         
         # Transcribe with file output
         print("Transcribing with file output...")
-        narrative = chronicler.transcribe_log(log_path)
+        chronicler.transcribe_log(log_path)
         
         # Check if file was created
         narrative_files = [f for f in os.listdir(output_dir) if f.endswith('.md')]

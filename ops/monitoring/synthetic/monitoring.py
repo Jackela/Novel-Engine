@@ -10,16 +10,17 @@ Implements comprehensive synthetic monitoring with:
 """
 
 import asyncio
-import time
+import json
 import logging
-from typing import Dict, List, Optional, Any, Callable
+import ssl
+import time
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
 import aiohttp
-import json
-from contextlib import asynccontextmanager
-import ssl
 import certifi
 
 logger = logging.getLogger(__name__)

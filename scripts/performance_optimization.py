@@ -7,21 +7,26 @@ Comprehensive performance optimization and monitoring system for Novel Engine.
 Implements intelligent performance tuning, bottleneck detection, and system optimization.
 """
 
-import asyncio
-import time
-import logging
-import json
 import argparse
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, asdict
-from pathlib import Path
+import asyncio
+import json
+import logging
+import time
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-import psutil
-import aioredis
-import asyncpg
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import aiofiles
+import psutil
 import requests
-from prometheus_client import CollectorRegistry, Gauge, Counter, Histogram, push_to_gateway
+from prometheus_client import (
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    push_to_gateway,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -447,7 +452,7 @@ class AutoOptimizer:
         logger.info("Starting optimization cycle...")
         
         # Collect current metrics
-        metrics = await self.monitor.collect_metrics()
+        await self.monitor.collect_metrics()
         
         # Analyze performance
         recommendations = self.monitor.analyze_performance()

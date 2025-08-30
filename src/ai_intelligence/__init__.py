@@ -12,65 +12,62 @@ and ensures proper integration with the existing Novel Engine framework.
 """
 
 from .agent_coordination_engine import (
-    AgentCoordinationEngine,
     AgentContext,
-    CoordinationTask,
+    AgentCoordinationEngine,
+    ConsistencyLevel,
     CoordinationMetrics,
     CoordinationPriority,
-    ConsistencyLevel
+    CoordinationTask,
 )
-
-from .story_quality_engine import (
-    StoryQualityEngine,
-    QualityScore,
-    StoryQualityReport,
-    QualityDimension,
-    QualityLevel,
-    StoryGenre,
-    GenreTemplate
+from .ai_orchestrator import (
+    AIIntelligenceOrchestrator,
+    AIPerformanceMetrics,
+    AISystemConfig,
+    IntelligenceInsight,
+    IntelligenceLevel,
+    OrchestratorStatus,
+    SystemPriority,
 )
-
 from .analytics_platform import (
-    AnalyticsPlatform,
     AnalyticsEvent,
-    UserEngagement,
+    AnalyticsPlatform,
     CharacterAnalytics,
-    SystemMetrics as AnalyticsSystemMetrics,
+    EngagementLevel,
     MetricType,
+)
+from .analytics_platform import SystemMetrics as AnalyticsSystemMetrics
+from .analytics_platform import (
     TimeWindow,
-    EngagementLevel
+    UserEngagement,
 )
-
-from .recommendation_engine import (
-    RecommendationEngine,
-    UserPreference,
-    Recommendation,
-    UserProfile,
-    RecommendationType,
-    PreferenceType,
-    ConfidenceLevel
-)
-
 from .export_integration_engine import (
+    ExportFormat,
     ExportIntegrationEngine,
     ExportRequest,
     ExportResult,
-    ShareConfiguration,
-    StoryVersion,
-    ExportFormat,
-    ShareMode,
     IntegrationType,
-    VersionAction
+    ShareConfiguration,
+    ShareMode,
+    StoryVersion,
+    VersionAction,
 )
-
-from .ai_orchestrator import (
-    AIIntelligenceOrchestrator,
-    AISystemConfig,
-    AIPerformanceMetrics,
-    IntelligenceInsight,
-    OrchestratorStatus,
-    IntelligenceLevel,
-    SystemPriority
+from .recommendation_engine import (
+    ConfidenceLevel,
+    PreferenceType,
+    Recommendation,
+    RecommendationEngine,
+    RecommendationType,
+    UserPreference,
+    UserProfile,
+)
+from .story_quality_engine import (
+    GenreTemplate,
+    QualityDimension,
+    QualityLevel,
+    QualityScore,
+    StoryGenre,
+    StoryQualityEngine,
+    StoryQualityReport,
 )
 
 # Version information
@@ -81,21 +78,19 @@ __author__ = "Novel Engine AI Intelligence Team"
 __all__ = [
     # Agent Coordination
     "AgentCoordinationEngine",
-    "AgentContext", 
+    "AgentContext",
     "CoordinationTask",
     "CoordinationMetrics",
     "CoordinationPriority",
     "ConsistencyLevel",
-    
     # Story Quality
     "StoryQualityEngine",
     "QualityScore",
-    "StoryQualityReport", 
+    "StoryQualityReport",
     "QualityDimension",
     "QualityLevel",
     "StoryGenre",
     "GenreTemplate",
-    
     # Analytics Platform
     "AnalyticsPlatform",
     "AnalyticsEvent",
@@ -103,9 +98,8 @@ __all__ = [
     "CharacterAnalytics",
     "AnalyticsSystemMetrics",
     "MetricType",
-    "TimeWindow", 
+    "TimeWindow",
     "EngagementLevel",
-    
     # Recommendation Engine
     "RecommendationEngine",
     "UserPreference",
@@ -114,7 +108,6 @@ __all__ = [
     "RecommendationType",
     "PreferenceType",
     "ConfidenceLevel",
-    
     # Export Integration
     "ExportIntegrationEngine",
     "ExportRequest",
@@ -125,7 +118,6 @@ __all__ = [
     "ShareMode",
     "IntegrationType",
     "VersionAction",
-    
     # AI Orchestrator
     "AIIntelligenceOrchestrator",
     "AISystemConfig",
@@ -133,31 +125,32 @@ __all__ = [
     "IntelligenceInsight",
     "OrchestratorStatus",
     "IntelligenceLevel",
-    "SystemPriority"
+    "SystemPriority",
 ]
 
 # Module metadata
 INTELLIGENCE_SYSTEMS = [
     "agent_coordination_engine",
-    "story_quality_engine", 
+    "story_quality_engine",
     "analytics_platform",
     "recommendation_engine",
     "export_integration_engine",
-    "ai_orchestrator"
+    "ai_orchestrator",
 ]
 
 SUPPORTED_FEATURES = [
     "multi_agent_coordination",
     "character_consistency_validation",
     "story_quality_analysis",
-    "real_time_analytics", 
+    "real_time_analytics",
     "user_engagement_tracking",
     "personalized_recommendations",
     "adaptive_story_generation",
     "multi_format_export",
     "version_control",
-    "intelligent_orchestration"
+    "intelligent_orchestration",
 ]
+
 
 def get_module_info():
     """Get information about the AI intelligence module."""
@@ -166,5 +159,5 @@ def get_module_info():
         "author": __author__,
         "systems": INTELLIGENCE_SYSTEMS,
         "features": SUPPORTED_FEATURES,
-        "description": "Novel Engine AI Intelligence Framework"
+        "description": "Novel Engine AI Intelligence Framework",
     }

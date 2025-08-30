@@ -6,13 +6,12 @@ Validates the test migration process and ensures all tests are properly
 organized without loss of functionality.
 """
 
-import os
-import sys
-import subprocess
-from pathlib import Path
-from typing import List, Dict, Tuple
 import json
+import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -290,13 +289,13 @@ class TestMigrationValidator:
             print(f"  {location}: {count} files")
         print(f"  TOTAL: {total_files} test files")
         
-        print(f"\n📁 DIRECTORY STRUCTURE:")
+        print("\n📁 DIRECTORY STRUCTURE:")
         dir_results = self.results["validation_results"]["directory_structure"]
         passed = sum(1 for v in dir_results.values() if v)
         total = len(dir_results)
         print(f"  {passed}/{total} checks passed")
         
-        print(f"\n🔍 PYTEST DISCOVERY:")
+        print("\n🔍 PYTEST DISCOVERY:")
         pytest_results = self.results["validation_results"]["pytest_discovery"]
         for test_type, result in pytest_results.items():
             if isinstance(result, dict):
@@ -304,7 +303,7 @@ class TestMigrationValidator:
                 test_info = result.get("test_count", "No tests found")
                 print(f"  {status} {test_type}: {test_info}")
         
-        print(f"\n📋 RECOMMENDATIONS:")
+        print("\n📋 RECOMMENDATIONS:")
         for rec in self.results["recommendations"]:
             print(f"  {rec}")
         
@@ -318,7 +317,7 @@ def main():
     try:
         results = validator.run_validation()
         validator.print_summary()
-        output_path = validator.save_results()
+        validator.save_results()
         
         return results["migration_status"] == "ready"
         

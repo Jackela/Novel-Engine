@@ -7,14 +7,15 @@ Queries represent requests for information without changing state.
 """
 
 from dataclasses import dataclass
-from typing import Optional, List, Set, Dict, Any
-from uuid import UUID
 from decimal import Decimal
+from typing import List, Optional
+from uuid import UUID
 
 
 @dataclass(frozen=True)
 class GetNarrativeArcQuery:
     """Query to get a narrative arc by ID."""
+
     arc_id: str
     include_details: bool = True
     include_events: bool = False
@@ -23,6 +24,7 @@ class GetNarrativeArcQuery:
 @dataclass(frozen=True)
 class GetNarrativeArcsByTypeQuery:
     """Query to get narrative arcs by type."""
+
     arc_type: str
     status: Optional[str] = None
     limit: Optional[int] = None
@@ -32,6 +34,7 @@ class GetNarrativeArcsByTypeQuery:
 @dataclass(frozen=True)
 class SearchNarrativeArcsQuery:
     """Query to search narrative arcs."""
+
     search_term: Optional[str] = None
     arc_types: Optional[List[str]] = None
     statuses: Optional[List[str]] = None
@@ -52,6 +55,7 @@ class SearchNarrativeArcsQuery:
 @dataclass(frozen=True)
 class GetPlotPointQuery:
     """Query to get a specific plot point."""
+
     arc_id: str
     plot_point_id: str
 
@@ -59,6 +63,7 @@ class GetPlotPointQuery:
 @dataclass(frozen=True)
 class GetPlotPointsInSequenceQuery:
     """Query to get plot points in sequence order."""
+
     arc_id: str
     start_sequence: Optional[int] = None
     end_sequence: Optional[int] = None
@@ -67,6 +72,7 @@ class GetPlotPointsInSequenceQuery:
 @dataclass(frozen=True)
 class GetPlotPointsByTypeQuery:
     """Query to get plot points by type."""
+
     arc_id: str
     plot_point_types: List[str]
     include_details: bool = True
@@ -75,6 +81,7 @@ class GetPlotPointsByTypeQuery:
 @dataclass(frozen=True)
 class GetThemeQuery:
     """Query to get a specific theme."""
+
     arc_id: str
     theme_id: str
 
@@ -82,6 +89,7 @@ class GetThemeQuery:
 @dataclass(frozen=True)
 class GetThemesAtSequenceQuery:
     """Query to get themes active at a specific sequence."""
+
     arc_id: str
     sequence: int
 
@@ -89,6 +97,7 @@ class GetThemesAtSequenceQuery:
 @dataclass(frozen=True)
 class GetThemesByTypeQuery:
     """Query to get themes by type."""
+
     arc_id: str
     theme_types: List[str]
 
@@ -96,6 +105,7 @@ class GetThemesByTypeQuery:
 @dataclass(frozen=True)
 class GetPacingSegmentQuery:
     """Query to get a specific pacing segment."""
+
     arc_id: str
     pacing_id: str
 
@@ -103,6 +113,7 @@ class GetPacingSegmentQuery:
 @dataclass(frozen=True)
 class GetPacingAtSequenceQuery:
     """Query to get pacing segment at a specific sequence."""
+
     arc_id: str
     sequence: int
 
@@ -110,6 +121,7 @@ class GetPacingAtSequenceQuery:
 @dataclass(frozen=True)
 class GetNarrativeContextQuery:
     """Query to get a specific narrative context."""
+
     arc_id: str
     context_id: str
 
@@ -117,6 +129,7 @@ class GetNarrativeContextQuery:
 @dataclass(frozen=True)
 class GetActiveContextsQuery:
     """Query to get all active narrative contexts."""
+
     arc_id: str
     at_sequence: Optional[int] = None
 
@@ -124,6 +137,7 @@ class GetActiveContextsQuery:
 @dataclass(frozen=True)
 class GetCharactersInArcQuery:
     """Query to get characters involved in an arc."""
+
     arc_id: str
     role: Optional[str] = None  # primary, supporting, or None for all
 
@@ -131,6 +145,7 @@ class GetCharactersInArcQuery:
 @dataclass(frozen=True)
 class GetArcsByCharacterQuery:
     """Query to get arcs containing a specific character."""
+
     character_id: UUID
     role: Optional[str] = None
     status: Optional[str] = None
@@ -139,6 +154,7 @@ class GetArcsByCharacterQuery:
 @dataclass(frozen=True)
 class GetArcMetricsQuery:
     """Query to get narrative arc metrics and analysis."""
+
     arc_id: str
     include_coherence: bool = True
     include_flow_analysis: bool = False
@@ -148,6 +164,7 @@ class GetArcMetricsQuery:
 @dataclass(frozen=True)
 class GetArcSummaryQuery:
     """Query to get a comprehensive arc summary."""
+
     arc_id: str
     include_statistics: bool = True
     include_progression: bool = True
@@ -156,6 +173,7 @@ class GetArcSummaryQuery:
 @dataclass(frozen=True)
 class GetRelatedArcsQuery:
     """Query to get arcs related to a specific arc."""
+
     arc_id: str
     include_parent: bool = True
     include_children: bool = True
@@ -165,6 +183,7 @@ class GetRelatedArcsQuery:
 @dataclass(frozen=True)
 class GetNarrativeFlowAnalysisQuery:
     """Query to get narrative flow analysis."""
+
     arc_id: str
     include_recommendations: bool = True
     include_tension_progression: bool = True
@@ -173,6 +192,7 @@ class GetNarrativeFlowAnalysisQuery:
 @dataclass(frozen=True)
 class GetSequenceOptimizationQuery:
     """Query to get sequence optimization suggestions."""
+
     arc_id: str
     optimization_criteria: Optional[List[str]] = None
     preserve_critical_order: bool = True
@@ -181,6 +201,7 @@ class GetSequenceOptimizationQuery:
 @dataclass(frozen=True)
 class GetCausalAnalysisQuery:
     """Query to get causal relationship analysis."""
+
     arc_id: str
     include_paths: bool = True
     include_loops: bool = True
@@ -190,6 +211,7 @@ class GetCausalAnalysisQuery:
 @dataclass(frozen=True)
 class GetCausalPathsQuery:
     """Query to get causal paths between plot points."""
+
     arc_id: str
     start_node: str
     end_node: str
@@ -199,6 +221,7 @@ class GetCausalPathsQuery:
 @dataclass(frozen=True)
 class GetNodeInfluenceQuery:
     """Query to get influence score of a plot point."""
+
     arc_id: str
     node_id: str
 
@@ -206,6 +229,7 @@ class GetNodeInfluenceQuery:
 @dataclass(frozen=True)
 class GetArcTimelineQuery:
     """Query to get arc timeline with all elements."""
+
     arc_id: str
     start_sequence: Optional[int] = None
     end_sequence: Optional[int] = None
@@ -218,6 +242,7 @@ class GetArcTimelineQuery:
 @dataclass(frozen=True)
 class GetProgressionAnalysisQuery:
     """Query to analyze arc progression and development."""
+
     arc_id: str
     analyze_character_development: bool = True
     analyze_theme_development: bool = True
@@ -227,6 +252,7 @@ class GetProgressionAnalysisQuery:
 @dataclass(frozen=True)
 class GetCompletionAnalysisQuery:
     """Query to analyze arc completion readiness."""
+
     arc_id: str
     check_plot_resolution: bool = True
     check_theme_resolution: bool = True
@@ -236,6 +262,7 @@ class GetCompletionAnalysisQuery:
 @dataclass(frozen=True)
 class GetArcStatisticsQuery:
     """Query to get statistical information about an arc."""
+
     arc_id: str
     include_distribution_metrics: bool = True
     include_complexity_metrics: bool = True
@@ -245,6 +272,7 @@ class GetArcStatisticsQuery:
 @dataclass(frozen=True)
 class GetCrossArcAnalysisQuery:
     """Query to analyze relationships between multiple arcs."""
+
     arc_ids: List[str]
     analyze_character_overlap: bool = True
     analyze_theme_consistency: bool = True
@@ -254,6 +282,7 @@ class GetCrossArcAnalysisQuery:
 @dataclass(frozen=True)
 class GetNarrativeHealthQuery:
     """Query to get overall narrative health assessment."""
+
     arc_id: str
     check_structural_integrity: bool = True
     check_pacing_balance: bool = True

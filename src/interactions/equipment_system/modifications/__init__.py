@@ -7,4 +7,4 @@ Equipment modification installation, compatibility checking, and enhancement man
 
 from .modification_system import ModificationSystem
 
-__all__ = ['ModificationSystem']
+__all__ = ["ModificationSystem"]

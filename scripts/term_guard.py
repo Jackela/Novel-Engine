@@ -26,17 +26,18 @@ Architecture Reference:
 Development Phase: Work Order PR-04 - IP Cleaning Tool Implementation
 """
 
-import re
-import json
-import yaml
-import logging
-from typing import Dict, List, Tuple, Optional, Set, Any
-from pathlib import Path
-from dataclasses import dataclass, field
-from enum import Enum
 import argparse
 import hashlib
+import json
+import logging
+import re
+from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+import yaml
 
 # Configure logging for the Term Guard system
 logging.basicConfig(level=logging.INFO)
@@ -472,7 +473,7 @@ def main():
             
             if args.analyze_only:
                 violations = term_guard.analyze_content(content)
-                print(f"\n🔍 Analysis Results:")
+                print("\n🔍 Analysis Results:")
                 print(f"Found {len(violations)} potential IP violations")
                 
                 for i, violation in enumerate(violations, 1):
@@ -484,7 +485,7 @@ def main():
             else:
                 cleaned_content, report = term_guard.clean_content(content)
                 
-                print(f"\n🧹 Cleaning Results:")
+                print("\n🧹 Cleaning Results:")
                 print(f"Original length: {report.original_length} characters")
                 print(f"Cleaned length: {report.cleaned_length} characters")
                 print(f"Violations found: {len(report.violations_found)}")

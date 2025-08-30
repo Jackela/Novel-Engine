@@ -14,9 +14,6 @@ Key Domain Services:
 from .causal_graph_service import CausalGraphService
 from .narrative_flow_service import NarrativeFlowService
 
-__all__ = [
-    'CausalGraphService',
-    'NarrativeFlowService'
-]
+__all__ = ["CausalGraphService", "NarrativeFlowService"]
 
 __version__ = "1.0.0"

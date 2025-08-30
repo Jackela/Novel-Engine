@@ -15,21 +15,30 @@ Sacred Author: Dev Agent James
 """
 
 import asyncio
-import json
-import time
 import logging
+import os
+import sys
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List
-import sys
-import os
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
+from src.core.data_models import (
+    CharacterState,
+    DynamicContext,
+    EmotionalState,
+    MemoryItem,
+    MemoryType,
+)
+
 # Import blessed framework components
-from src.core.system_orchestrator import SystemOrchestrator, OrchestratorConfig, OrchestratorMode
-from src.core.data_models import CharacterState, EmotionalState, MemoryItem, MemoryType, DynamicContext
+from src.core.system_orchestrator import (
+    OrchestratorConfig,
+    OrchestratorMode,
+    SystemOrchestrator,
+)
 from src.interactions.interaction_engine import InteractionType
 from src.templates.character_template_manager import CharacterArchetype
 
@@ -399,7 +408,7 @@ class CompleteDemoRunner:
                 print(f"   ❌ Memory processing failed: {result.message}")
         
         # Check relationship evolution
-        print(f"\n💕 Checking relationship evolution...")
+        print("\n💕 Checking relationship evolution...")
         
         # Check relationships between characters who interacted
         relationship_pairs = [
@@ -423,7 +432,7 @@ class CompleteDemoRunner:
                     else:
                         print(f"   ℹ️ {char_a} ↔ {char_b}: Relationship forming...")
         
-        print(f"\n✅ Story 3 Acceptance Criteria Validated:")
+        print("\n✅ Story 3 Acceptance Criteria Validated:")
         print("   ✓ Automatic memory formation from interactions")
         print("   ✓ Multiple memory types (episodic, semantic, emotional)")
         print("   ✓ Memory importance and relevance scoring")
@@ -452,7 +461,7 @@ class CompleteDemoRunner:
             print("   ✓ Maintenance and degradation modeling")
             print("   ✓ Machine spirit mood system (Warhammer 40K flavor)")
         
-        print(f"\n✅ Story 4 Acceptance Criteria Validated:")
+        print("\n✅ Story 4 Acceptance Criteria Validated:")
         print("   ✓ Environmental context influences interactions")
         print("   ✓ Location properties and atmosphere modeling")
         print("   ✓ Equipment integration with character capabilities")
@@ -525,7 +534,7 @@ class CompleteDemoRunner:
                 "quality_score": 0.85 + (i * 0.03)  # Simulated
             }
             
-            print(f"   ✅ Generated successfully")
+            print("   ✅ Generated successfully")
             print(f"   📊 Word count: {story_info['word_count']}")
             print(f"   ⏱️ Generation time: {story_info['generation_time']}")
             print(f"   🎯 Quality score: {story_info['quality_score']:.2f}")
@@ -569,7 +578,7 @@ class CompleteDemoRunner:
             print(f"   📈 Operations/minute: {metrics.operations_per_minute:.2f}")
             print(f"   💞 Relationships tracked: {metrics.relationship_count}")
         
-        print(f"\n✅ Story 6 Acceptance Criteria Validated:")
+        print("\n✅ Story 6 Acceptance Criteria Validated:")
         print("   ✓ Multi-character project organization")
         print("   ✓ System state management and persistence")
         print("   ✓ Comprehensive analytics and insights")
@@ -588,34 +597,34 @@ class CompleteDemoRunner:
             metrics = metrics_result.data["current_metrics"]
             config = metrics_result.data.get("system_configuration", {})
             
-            print(f"🎯 System Overview:")
+            print("🎯 System Overview:")
             print(f"   Status: {metrics.system_health.value}")
             print(f"   Mode: {config.get('mode', 'unknown')}")
             print(f"   Uptime: {metrics.uptime_seconds}s")
             print(f"   Operations/minute: {metrics.operations_per_minute:.2f}")
             print(f"   Error rate: {metrics.error_rate:.3f}")
             
-            print(f"\n👥 Character Management:")
+            print("\n👥 Character Management:")
             print(f"   Active agents: {metrics.active_agents}")
             print(f"   Characters created: {len(self.demo_characters)}")
             
-            print(f"\n🧠 Memory System:")
+            print("\n🧠 Memory System:")
             print(f"   Total memory items: {metrics.total_memory_items}")
-            print(f"   Memory types: 4 (working, episodic, semantic, emotional)")
+            print("   Memory types: 4 (working, episodic, semantic, emotional)")
             
-            print(f"\n💬 Interaction System:")
+            print("\n💬 Interaction System:")
             print(f"   Interactions completed: {len(self.demo_interactions)}")
-            print(f"   Interaction types: 9 supported")
+            print("   Interaction types: 9 supported")
             print(f"   Relationships tracked: {metrics.relationship_count}")
             
-            print(f"\n📚 Story Generation:")
+            print("\n📚 Story Generation:")
             print(f"   Stories generated: {len(self.demo_stories)}")
-            print(f"   Export formats: 7 supported")
-            print(f"   Narrative perspectives: 4 available")
+            print("   Export formats: 7 supported")
+            print("   Narrative perspectives: 4 available")
             
-            print(f"\n⚙️ Equipment System:")
+            print("\n⚙️ Equipment System:")
             print(f"   Equipment items tracked: {metrics.equipment_count}")
-            print(f"   Categories supported: 10")
+            print("   Categories supported: 10")
         
         print()
     
@@ -628,7 +637,7 @@ class CompleteDemoRunner:
         demo_duration = (datetime.now() - self.start_time).total_seconds()
         
         print(f"⏱️ Demonstration Duration: {demo_duration:.1f} seconds")
-        print(f"\n✅ ALL USER STORIES SUCCESSFULLY IMPLEMENTED:")
+        print("\n✅ ALL USER STORIES SUCCESSFULLY IMPLEMENTED:")
         
         stories_status = [
             ("Story 1", "Character Creation & Customization", "✅ COMPLETE"),
@@ -642,28 +651,28 @@ class CompleteDemoRunner:
         for story_id, description, status in stories_status:
             print(f"   {story_id}: {description} - {status}")
         
-        print(f"\n🎯 FRAMEWORK CAPABILITIES DEMONSTRATED:")
-        print(f"   🧠 Multi-layer Memory System: OPERATIONAL")
-        print(f"   📝 Dynamic Template Engine: OPERATIONAL") 
-        print(f"   💬 Character Interaction Processing: OPERATIONAL")
-        print(f"   🔧 Equipment State Management: OPERATIONAL")
-        print(f"   📊 System Orchestration: OPERATIONAL")
-        print(f"   📚 Story Generation: OPERATIONAL")
+        print("\n🎯 FRAMEWORK CAPABILITIES DEMONSTRATED:")
+        print("   🧠 Multi-layer Memory System: OPERATIONAL")
+        print("   📝 Dynamic Template Engine: OPERATIONAL") 
+        print("   💬 Character Interaction Processing: OPERATIONAL")
+        print("   🔧 Equipment State Management: OPERATIONAL")
+        print("   📊 System Orchestration: OPERATIONAL")
+        print("   📚 Story Generation: OPERATIONAL")
         
-        print(f"\n📈 PERFORMANCE METRICS:")
+        print("\n📈 PERFORMANCE METRICS:")
         print(f"   Characters Created: {len(self.demo_characters)}")
         print(f"   Interactions Completed: {len(self.demo_interactions)}")
         print(f"   Stories Generated: {len(self.demo_stories)}")
-        print(f"   System Health: OPTIMAL")
+        print("   System Health: OPTIMAL")
         
-        print(f"\n🌟 BUSINESS VALUE DELIVERED:")
-        print(f"   ✓ 智能体互动框架 - Multi-agent interaction system")
-        print(f"   ✓ Context Engineering技术 - Dynamic context loading")
-        print(f"   ✓ 动态上下文加载 - Real-time context adaptation")
-        print(f"   ✓ 记忆系统演化 - Memory formation and evolution")
-        print(f"   ✓ 角色互动更新 - Character relationship dynamics")
-        print(f"   ✓ 装备文档动态 - Equipment state synchronization")
-        print(f"   ✓ AI提示词动态效果 - Optimized for AI prompt evolution")
+        print("\n🌟 BUSINESS VALUE DELIVERED:")
+        print("   ✓ 智能体互动框架 - Multi-agent interaction system")
+        print("   ✓ Context Engineering技术 - Dynamic context loading")
+        print("   ✓ 动态上下文加载 - Real-time context adaptation")
+        print("   ✓ 记忆系统演化 - Memory formation and evolution")
+        print("   ✓ 角色互动更新 - Character relationship dynamics")
+        print("   ✓ 装备文档动态 - Equipment state synchronization")
+        print("   ✓ AI提示词动态效果 - Optimized for AI prompt evolution")
         
         print()
     

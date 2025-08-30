@@ -8,14 +8,14 @@ Validates all critical components and enterprise features.
 """
 
 import asyncio
-import sys
-import time
 import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
+import sys
+import time
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 
 # Health check configuration
 @dataclass
@@ -89,8 +89,10 @@ class EnterpriseHealthChecker:
             
             # Check if enhanced simulation is available
             try:
-                from run_complete_enterprise_simulation import CompleteEnterpriseSimulation
-                sim = CompleteEnterpriseSimulation()
+                from run_complete_enterprise_simulation import (
+                    CompleteEnterpriseSimulation,
+                )
+                CompleteEnterpriseSimulation()
                 status = "healthy"
                 details = {"enterprise_mode": "available", "all_waves": "active"}
             except Exception as e:
@@ -125,8 +127,6 @@ class EnterpriseHealthChecker:
         start_time = time.time()
         try:
             # Check if multi-agent systems are available
-            from enhanced_simulation_orchestrator import EnhancedSimulationOrchestrator
-            from enterprise_multi_agent_orchestrator import EnterpriseMultiAgentOrchestrator
             
             details = {
                 "enhanced_orchestrator": "available",
@@ -203,7 +203,7 @@ class EnterpriseHealthChecker:
         try:
             # Check if database configuration is available
             from config_loader import ConfigLoader
-            config = ConfigLoader.get_instance()
+            ConfigLoader.get_instance()
             
             details = {
                 "config_loaded": True,
@@ -271,7 +271,7 @@ class EnterpriseHealthChecker:
         start_time = time.time()
         try:
             import psutil
-            
+
             # Get system metrics
             memory = psutil.virtual_memory()
             cpu_percent = psutil.cpu_percent(interval=1)

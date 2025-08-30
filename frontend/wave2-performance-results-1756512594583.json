@@ -1,0 +1,193 @@
+{
+  "timestamp": "2025-08-30T00:09:33.087Z",
+  "testType": "performance_validation",
+  "pageLoad": {
+    "times": [
+      1624,
+      902,
+      873,
+      732,
+      754
+    ],
+    "average": 977,
+    "rating": "excellent"
+  },
+  "interactions": {
+    "responses": [
+      {
+        "element": "Button 1",
+        "responseTime": 160,
+        "acceptable": true
+      },
+      {
+        "element": "Button 2",
+        "responseTime": 273,
+        "acceptable": true
+      },
+      {
+        "element": "Button 3",
+        "responseTime": 305,
+        "acceptable": false
+      },
+      {
+        "element": "Button 4",
+        "responseTime": 1149,
+        "acceptable": false
+      },
+      {
+        "element": "Button 5",
+        "responseTime": 287,
+        "acceptable": true
+      },
+      {
+        "element": "Button 6",
+        "responseTime": 199,
+        "acceptable": true
+      },
+      {
+        "element": "Button 7",
+        "responseTime": 299,
+        "acceptable": true
+      },
+      {
+        "element": "Button 8",
+        "responseTime": 247,
+        "acceptable": true
+      },
+      {
+        "element": "Button 9",
+        "responseTime": 150,
+        "acceptable": true
+      }
+    ],
+    "average": 341,
+    "rating": "acceptable"
+  },
+  "memory": {
+    "samples": [
+      {
+        "sample": 1,
+        "timestamp": 12643,
+        "usedJSHeapSize": 53450854,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 2,
+        "timestamp": 13306,
+        "usedJSHeapSize": 55525946,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 3,
+        "timestamp": 13822,
+        "usedJSHeapSize": 55531486,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 4,
+        "timestamp": 14337,
+        "usedJSHeapSize": 55539258,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 5,
+        "timestamp": 14991,
+        "usedJSHeapSize": 55799510,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 6,
+        "timestamp": 15504,
+        "usedJSHeapSize": 58367398,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 7,
+        "timestamp": 16008,
+        "usedJSHeapSize": 58373694,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 8,
+        "timestamp": 16661,
+        "usedJSHeapSize": 58640378,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 9,
+        "timestamp": 17176,
+        "usedJSHeapSize": 60353354,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 10,
+        "timestamp": 17680,
+        "usedJSHeapSize": 60359082,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 11,
+        "timestamp": 18330,
+        "usedJSHeapSize": 61464402,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 12,
+        "timestamp": 18845,
+        "usedJSHeapSize": 61470298,
+        "totalJSHeapSize": 139514198,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 13,
+        "timestamp": 19348,
+        "usedJSHeapSize": 44385276,
+        "totalJSHeapSize": 121163040,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 14,
+        "timestamp": 20016,
+        "usedJSHeapSize": 46231650,
+        "totalJSHeapSize": 121163342,
+        "jsHeapSizeLimit": 4294705152
+      },
+      {
+        "sample": 15,
+        "timestamp": 20529,
+        "usedJSHeapSize": 46236714,
+        "totalJSHeapSize": 121163342,
+        "jsHeapSizeLimit": 4294705152
+      }
+    ],
+    "peak": 61470298,
+    "average": 55448620,
+    "efficiency": "good"
+  },
+  "rendering": {
+    "metrics": {
+      "domContentLoaded": null,
+      "loadComplete": null,
+      "firstPaint": 140,
+      "firstContentfulPaint": 244,
+      "domElements": 1136,
+      "interactiveElements": 10
+    },
+    "rating": "excellent"
+  },
+  "overall": {
+    "score": 85,
+    "rating": "good"
+  }
+}

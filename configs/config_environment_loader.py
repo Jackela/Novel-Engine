@@ -14,13 +14,13 @@ Features:
 - Thread-safe operation
 """
 
-import os
 import logging
-import yaml
-from typing import Dict, Any, Optional, List, Union
-from pathlib import Path
+import os
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 logger = logging.getLogger(__name__)
 

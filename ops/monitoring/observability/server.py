@@ -12,50 +12,41 @@ Central server that integrates all monitoring components:
 
 import asyncio
 import logging
-from typing import Dict, List, Optional, Any
 from datetime import datetime
-from fastapi import FastAPI, HTTPException, Response, Depends
-from fastapi.responses import JSONResponse, PlainTextResponse
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+from typing import Any, Dict, List, Optional
 
-# Import monitoring components
-from ..prometheus_metrics import (
-    PrometheusMetricsCollector, 
-    setup_prometheus_endpoint,
-    start_background_collection,
-    metrics_collector
-)
-from ..opentelemetry_tracing import (
-    TracingConfig,
-    setup_tracing,
-    get_tracing_health
-)
-from ..logging.structured import (
-    LoggingConfig,
-    setup_structured_logging,
-    get_structured_logger
-)
-from ..health_checks import (
-    HealthCheckManager,
-    create_health_endpoint,
-    health_manager
-)
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
 from ..alerts.alerting import (
     AlertManager,
     NotificationConfig,
-    create_default_alert_rules
+    create_default_alert_rules,
 )
 from ..dashboards.data import (
-    DashboardDataCollector,
     DashboardConfig,
+    DashboardDataCollector,
+    MetricData,
     initialize_dashboard_collector,
-    MetricData
+)
+from ..health_checks import create_health_endpoint
+from ..logging.structured import (
+    LoggingConfig,
+    setup_structured_logging,
+)
+from ..opentelemetry_tracing import TracingConfig, get_tracing_health, setup_tracing
+
+# Import monitoring components
+from ..prometheus_metrics import (
+    metrics_collector,
+    setup_prometheus_endpoint,
+    start_background_collection,
 )
 from ..synthetic.monitoring import (
     SyntheticMonitor,
+    create_api_health_check,
     create_http_check,
-    create_api_health_check
 )
 
 logger = logging.getLogger(__name__)

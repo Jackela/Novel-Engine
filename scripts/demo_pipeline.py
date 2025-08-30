@@ -11,10 +11,10 @@ Development Phase: Work Order PR-07.3 - Pipeline Demo
 """
 
 import json
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
-import sys
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -118,12 +118,12 @@ def demo_pipeline_execution():
         # Import pipeline components
         sys.path.insert(0, "scripts")
         from run_evaluation_pipeline import EvaluationPipeline, load_pipeline_config
-        
+
         # Load configuration
         config = load_pipeline_config(Path("evaluation/pipeline_config.yaml"))
         
         # Create and run pipeline
-        pipeline = EvaluationPipeline(config)
+        EvaluationPipeline(config)
         
         # Simulate running the evaluation (without actually calling Novel Engine)
         print("  ⚡ Initializing pipeline...")
@@ -152,7 +152,7 @@ def demo_pipeline_execution():
         print(f"  ⏱️ Total Execution Time: {total_time:.1f}s")
         
         # Check quality gates
-        print(f"\n4️⃣ Quality Gate Assessment:")
+        print("\n4️⃣ Quality Gate Assessment:")
         pass_rate = passed_seeds / total_seeds
         violation_rate = total_violations / sum(r.get("total_actions", 100) for r in mock_results)
         
@@ -176,15 +176,15 @@ def demo_pipeline_execution():
                        violation_rate <= config.maximum_violation_rate and
                        total_violations <= config.critical_violation_threshold)
         
-        print(f"\n5️⃣ Overall Pipeline Status:")
+        print("\n5️⃣ Overall Pipeline Status:")
         if gates_passed:
             print("  🎉 PIPELINE SUCCESS - All quality gates passed!")
         else:
             print("  ⚠️ PIPELINE PARTIAL SUCCESS - Some quality gates failed")
         
-        print(f"\n📍 Report Files Generated:")
-        print(f"  📊 Results: evaluation/results/")
-        print(f"  📈 Reports would be generated in full pipeline run")
+        print("\n📍 Report Files Generated:")
+        print("  📊 Results: evaluation/results/")
+        print("  📈 Reports would be generated in full pipeline run")
         
         return True
         

@@ -9,25 +9,25 @@ Implements comprehensive structured logging with:
 - Security event monitoring and alerting
 """
 
+import gzip
 import json
 import logging
 import logging.handlers
-import asyncio
-import time
-from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass, field, asdict
-from enum import Enum
-from datetime import datetime, timezone
-import traceback
 import os
-import sys
-from pathlib import Path
-import socket
-from contextlib import contextmanager
-import threading
-from collections import deque
-import gzip
 import shutil
+import socket
+import sys
+import threading
+import time
+import traceback
+from collections import deque
+from contextlib import contextmanager
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 
 class LogLevel(Enum):
     """Structured log levels"""
@@ -651,11 +651,11 @@ def log_performance(
         
         # Determine log level
         if exception:
-            level = LogLevel.ERROR
+            pass
         elif expected_duration_ms and duration_ms > expected_duration_ms * 2:
-            level = LogLevel.WARNING
+            pass
         else:
-            level = LogLevel.INFO
+            pass
         
         message = f"Operation {operation} "
         if success:

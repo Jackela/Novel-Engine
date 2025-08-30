@@ -8,8 +8,6 @@ Query handlers process queries and return appropriate data without modifying sta
 
 from .narrative_arc_query_handlers import NarrativeArcQueryHandler
 
-__all__ = [
-    'NarrativeArcQueryHandler'
-]
+__all__ = ["NarrativeArcQueryHandler"]
 
 __version__ = "1.0.0"

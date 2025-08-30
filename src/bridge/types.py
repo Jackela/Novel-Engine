@@ -6,33 +6,36 @@ Bridge Types and Enums
 Type definitions for Enhanced Multi-Agent Bridge components.
 """
 
-from enum import Enum
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class RequestPriority(Enum):
     """Priority levels for LLM requests."""
-    CRITICAL = 1    # Immediate processing, bypass batching
-    HIGH = 2        # High priority, minimal batching delay
-    NORMAL = 3      # Standard batching
-    LOW = 4         # Extended batching allowed
+
+    CRITICAL = 1  # Immediate processing, bypass batching
+    HIGH = 2  # High priority, minimal batching delay
+    NORMAL = 3  # Standard batching
+    LOW = 4  # Extended batching allowed
     BACKGROUND = 5  # Process when resources available
 
 
 class CommunicationType(Enum):
     """Types of agent-to-agent communication."""
-    DIALOGUE = "dialogue"                 # Direct conversation between agents
-    NEGOTIATION = "negotiation"           # Conflict resolution and bargaining
-    COLLABORATION = "collaboration"       # Joint action planning
+
+    DIALOGUE = "dialogue"  # Direct conversation between agents
+    NEGOTIATION = "negotiation"  # Conflict resolution and bargaining
+    COLLABORATION = "collaboration"  # Joint action planning
     INFORMATION_SHARING = "info_sharing"  # Knowledge exchange
-    EMOTIONAL = "emotional"               # Emotional interactions
-    STRATEGIC = "strategic"               # Strategic planning and alliances
+    EMOTIONAL = "emotional"  # Emotional interactions
+    STRATEGIC = "strategic"  # Strategic planning and alliances
 
 
 class DialogueState(Enum):
     """States of agent dialogue interactions."""
+
     INITIATING = "initiating"
     ACTIVE = "active"
     WAITING_RESPONSE = "waiting_response"
@@ -44,6 +47,7 @@ class DialogueState(Enum):
 @dataclass
 class AgentDialogue:
     """Represents an active dialogue between agents."""
+
     dialogue_id: str
     communication_type: CommunicationType
     participants: List[str]
@@ -60,6 +64,7 @@ class AgentDialogue:
 @dataclass
 class LLMCoordinationConfig:
     """Configuration for LLM-powered smart coordination."""
+
     enable_smart_batching: bool = True
     max_batch_size: int = 5
     batch_timeout_ms: int = 100
@@ -75,6 +80,7 @@ class LLMCoordinationConfig:
 @dataclass
 class BatchedRequest:
     """Represents a batched LLM request."""
+
     request_id: str
     agent_id: str
     request_type: str
@@ -87,6 +93,7 @@ class BatchedRequest:
 @dataclass
 class CoordinationMetrics:
     """Metrics for coordination system performance."""
+
     total_requests: int = 0
     successful_requests: int = 0
     failed_requests: int = 0

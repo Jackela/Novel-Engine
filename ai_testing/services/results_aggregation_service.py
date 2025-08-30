@@ -5,41 +5,46 @@ Comprehensive test results aggregation and analysis service for Novel-Engine AI 
 Collects, analyzes, and reports results from all testing services with intelligent insights.
 """
 
-import asyncio
 import json
 import logging
+import statistics
 import time
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
-import statistics
-from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+import httpx
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-import httpx
 
 # Import Novel-Engine patterns
 try:
     from config_loader import get_config
+
     from src.event_bus import EventBus
 except ImportError:
     # Fallback for testing
-    get_config = lambda: None
-    EventBus = lambda: None
-
-# Import AI testing configuration
-from ai_testing_config import get_ai_testing_service_config
+    def get_config():
+        return None
+    def EventBus():
+        return None
 
 # Import AI testing contracts
 from ai_testing.interfaces.service_contracts import (
-    IResultsAggregation, TestResult, TestExecution, TestContext, 
-    QualityMetric, TestStatus, ServiceHealthResponse, TestType
+    IResultsAggregation,
+    QualityMetric,
+    ServiceHealthResponse,
+    TestResult,
+    TestStatus,
+    TestType,
 )
+
+# Import AI testing configuration
+from ai_testing_config import get_ai_testing_service_config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -640,7 +645,7 @@ class ResultsAnalyzer:
         first_timestamp = timestamps[0]
         x_values = [(ts - first_timestamp).total_seconds() / (24 * 3600) for ts in timestamps]
         
-        n = len(x_values)
+        len(x_values)
         x_mean = statistics.mean(x_values)
         y_mean = statistics.mean(values)
         
@@ -963,7 +968,7 @@ class ResultsAggregationService(IResultsAggregation):
         report = self.aggregated_reports[report_id]
         
         if format == ReportFormat.JSON:
-            return report.json(indent=2)
+            return report.model_dump_json(indent=2)
         elif format == ReportFormat.CSV:
             return self._export_to_csv(report)
         elif format == ReportFormat.MARKDOWN:
@@ -1332,7 +1337,7 @@ class ResultsAggregationService(IResultsAggregation):
         md_content = []
         
         # Header
-        md_content.append(f"# Test Results Report")
+        md_content.append("# Test Results Report")
         md_content.append(f"**Period:** {report.start_time} to {report.end_time}")
         md_content.append(f"**Generated:** {report.generation_time}")
         md_content.append("")
@@ -1570,6 +1575,7 @@ class ResultsAggregationService(IResultsAggregation):
 # === FastAPI Application ===
 
 from contextlib import asynccontextmanager
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

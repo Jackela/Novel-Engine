@@ -10,19 +10,18 @@ Comprehensive test suite for Novel Engine covering:
 
 Test Organization:
 - unit/: Unit tests for individual components
-- integration/: Integration tests for system interactions  
+- integration/: Integration tests for system interactions
 - security/: Security and compliance tests
 - legacy/: Historical tests for compatibility
 - root_tests/: Consolidated root-level tests
 """
 
-import pytest
-import asyncio
 from pathlib import Path
 
 # Test configuration
 TEST_ROOT = Path(__file__).parent
 PROJECT_ROOT = TEST_ROOT.parent
+
 
 # Common test utilities
 def get_test_config():
@@ -30,11 +29,13 @@ def get_test_config():
     return {
         "database_url": "sqlite:///test.db",
         "redis_url": "redis://localhost:6379/15",
-        "log_level": "DEBUG"
+        "log_level": "DEBUG",
     }
+
 
 def setup_test_environment():
     """Set up test environment with necessary fixtures."""
     import os
+
     os.environ["ENVIRONMENT"] = "test"
     os.environ["LOG_LEVEL"] = "DEBUG"

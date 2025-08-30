@@ -5,12 +5,11 @@ Fix All Remaining Validation Issues Script
 This script applies all necessary fixes to achieve >80% success rate.
 """
 
-import os
-import sys
 import subprocess
 import time
+
 import psutil
-import signal
+
 
 def kill_all_python_processes():
     """Kill all Python processes on Windows"""
@@ -26,7 +25,7 @@ def kill_all_python_processes():
     for method in methods:
         try:
             subprocess.run(method, shell=True, capture_output=True)
-        except:
+        except Exception:
             pass
     
     # Additional method using psutil
@@ -35,9 +34,9 @@ def kill_all_python_processes():
             if 'python' in proc.info['name'].lower():
                 try:
                     proc.terminate()
-                except:
+                except Exception:
                     pass
-    except:
+    except Exception:
         pass
     
     time.sleep(3)
@@ -67,7 +66,7 @@ def check_service_health(port):
         response = requests.get(f"http://localhost:{port}/health", timeout=5)
         data = response.json()
         return data.get('status') in ['healthy', 'ready']
-    except:
+    except (requests.RequestException, ValueError, TimeoutError):
         return False
 
 def apply_config_fixes():
@@ -265,6 +264,5 @@ if __name__ == "__main__":
     except ImportError:
         print("Installing requests...")
         subprocess.run("pip install requests", shell=True)
-        import requests
     
     main()

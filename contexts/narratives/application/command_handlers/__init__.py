@@ -8,8 +8,6 @@ Command handlers process commands and coordinate between application and domain 
 
 from .narrative_arc_command_handlers import NarrativeArcCommandHandler
 
-__all__ = [
-    'NarrativeArcCommandHandler'
-]
+__all__ = ["NarrativeArcCommandHandler"]
 
 __version__ = "1.0.0"

@@ -6,31 +6,32 @@ for AI acceptance testing in Novel-Engine. Built on pytest patterns with
 AI-specific extensions.
 """
 
-import asyncio
-import json
+import hashlib
 import logging
+import statistics
 import time
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable, Union, Awaitable
 from dataclasses import dataclass, field
-from pathlib import Path
-import hashlib
-import statistics
+from typing import Any, Dict, List, Optional
 
-import pytest
 import httpx
-from pydantic import BaseModel, Field
-
-# Import Novel-Engine patterns
-from config_loader import get_config
-from src.event_bus import EventBus
+import pytest
 
 # Import AI testing contracts
 from ai_testing.interfaces.service_contracts import (
-    TestScenario, TestResult, TestExecution, TestContext, TestStatus,
-    QualityMetric, TestType, create_test_context
+    QualityMetric,
+    TestContext,
+    TestResult,
+    TestScenario,
+    TestStatus,
+    TestType,
+    create_test_context,
 )
+
+# Import Novel-Engine patterns
+from config_loader import get_config
+
+from src.event_bus import EventBus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -184,7 +185,7 @@ class AITestingFramework:
                 "scenario_id": scenario.id,
                 "scenario_name": scenario.name,
                 "test_type": scenario.test_type.value,
-                "context": context.dict()
+                "context": context.model_dump()
             })
             
             # Execute test based on type
@@ -382,7 +383,7 @@ class AITestingFramework:
     ) -> Dict[str, Any]:
         """Execute UI test scenario (delegated to Browser Automation Service)"""
         # This would be implemented when integrating with Playwright service
-        ui_spec = scenario.config.get("ui_spec", {})
+        scenario.config.get("ui_spec", {})
         
         # Mock UI test result for now
         metrics.add_assertion_result("ui_elements_present", True)
@@ -411,7 +412,7 @@ class AITestingFramework:
         
         # Get AI input and expected criteria
         input_prompt = ai_spec.get("input_prompt", "")
-        assessment_criteria = ai_spec.get("assessment_criteria", {})
+        ai_spec.get("assessment_criteria", {})
         
         # Mock AI quality assessment (would integrate with AI Quality Service)
         quality_scores = {
@@ -458,7 +459,7 @@ class AITestingFramework:
     ) -> Dict[str, Any]:
         """Execute integration test scenario"""
         # Integration test combines multiple test types
-        integration_spec = scenario.config.get("integration_spec", {})
+        scenario.config.get("integration_spec", {})
         
         api_passed = True
         ui_passed = True

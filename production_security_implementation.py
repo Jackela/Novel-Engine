@@ -8,16 +8,12 @@ security assessment findings. It addresses OWASP Top 10 vulnerabilities and
 production security requirements.
 """
 
-import os
-import ssl
-import secrets
-import hashlib
-import logging
 import json
+import logging
+import secrets
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
-from contextlib import asynccontextmanager
+from typing import Any, Dict
 
 # Security configuration templates
 SECURITY_HEADERS_CONFIG = """
@@ -96,13 +92,14 @@ server {
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class ProductionSecurityImplementation:
     """Implements production security measures for Novel Engine."""
-    
+
     def __init__(self, project_root: str = "."):
         self.project_root = Path(project_root)
         self.security_measures = []
-    
+
     def generate_secure_api_server(self) -> str:
         """Generate a hardened version of the API server."""
         return '''#!/usr/bin/env python3
@@ -134,7 +131,7 @@ from slowapi.middleware import SlowAPIMiddleware
 import hashlib
 import jwt
 from datetime import datetime, timedelta
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 # Import existing modules
 from config_loader import get_config
@@ -255,10 +252,11 @@ class AuthenticationManager:
 
 # Pydantic models with validation
 class SimulationRequest(BaseModel):
-    character_names: List[str] = Field(..., min_items=2, max_items=6)
+    character_names: List[str] = Field(..., min_length=2, max_length=6)
     turns: Optional[int] = Field(None, ge=1, le=10)
     
-    @validator('character_names')
+    @field_validator('character_names')
+    @classmethod
     def validate_names(cls, v):
         return InputValidator.validate_character_names(v)
 
@@ -489,22 +487,29 @@ def run_production_server(host: str = "127.0.0.1", port: int = 8000):
 if __name__ == "__main__":
     run_production_server()
 '''
-    
+
     def generate_environment_config(self) -> str:
         """Generate secure environment configuration."""
-        return '''# Production Environment Configuration
+        return (
+            """# Production Environment Configuration
 # Copy this to .env and update with your values
 
 # Environment
 ENVIRONMENT=production
 
 # Security Keys (generate new ones for production)
-SECRET_KEY=''' + secrets.token_urlsafe(32) + '''
-JWT_SECRET_KEY=''' + secrets.token_urlsafe(32) + '''
+SECRET_KEY="""
+            + secrets.token_urlsafe(32)
+            + """
+JWT_SECRET_KEY="""
+            + secrets.token_urlsafe(32)
+            + """
 
 # Admin Credentials (change these!)
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=''' + secrets.token_urlsafe(16) + '''
+ADMIN_PASSWORD="""
+            + secrets.token_urlsafe(16)
+            + """
 
 # SSL Configuration
 SSL_CERT_PATH=/path/to/your/certificate.pem
@@ -512,7 +517,9 @@ SSL_KEY_PATH=/path/to/your/private-key.pem
 
 # Database Configuration
 DATABASE_URL=sqlite:///data/production.db
-DATABASE_PASSWORD=''' + secrets.token_urlsafe(16) + '''
+DATABASE_PASSWORD="""
+            + secrets.token_urlsafe(16)
+            + """
 
 # API Configuration
 API_HOST=0.0.0.0
@@ -530,8 +537,9 @@ CORS_ORIGINS=https://your-domain.com,https://api.your-domain.com
 LOG_LEVEL=INFO
 ENABLE_METRICS=true
 METRICS_PORT=9090
-'''
-    
+"""
+        )
+
     def generate_security_middleware(self) -> str:
         """Generate security middleware module."""
         return '''#!/usr/bin/env python3
@@ -721,7 +729,7 @@ class SecurityMiddleware:
         
         return response
 '''
-    
+
     def generate_database_security_config(self) -> str:
         """Generate database security configuration."""
         return '''# Database Security Configuration
@@ -802,18 +810,18 @@ def verify_hashed_data(data: str, stored_hash: str) -> bool:
 # 5. Regular security audits and backups
 # 6. Monitor database access logs
 '''
-    
+
     def implement_security_measures(self) -> Dict[str, Any]:
         """Implement comprehensive security measures."""
         logger.info("Implementing production security measures")
-        
+
         results = {
             "timestamp": datetime.now().isoformat(),
             "implemented_measures": [],
             "files_created": [],
-            "recommendations": []
+            "recommendations": [],
         }
-        
+
         # Create security files
         security_files = {
             "production_api_server.py": self.generate_secure_api_server(),
@@ -821,112 +829,116 @@ def verify_hashed_data(data: str, stored_hash: str) -> bool:
             "security_middleware.py": self.generate_security_middleware(),
             "database_security.py": self.generate_database_security_config(),
             "nginx_security.conf": NGINX_SSL_CONFIG,
-            "security_headers.conf": SECURITY_HEADERS_CONFIG
+            "security_headers.conf": SECURITY_HEADERS_CONFIG,
         }
-        
+
         for filename, content in security_files.items():
             file_path = self.project_root / filename
             file_path.write_text(content)
             results["files_created"].append(str(file_path))
             logger.info(f"Created security file: {filename}")
-        
+
         # Create logs directory
         logs_dir = self.project_root / "logs"
         logs_dir.mkdir(exist_ok=True)
-        
+
         # Create secure data directory
         data_dir = self.project_root / "data"
         data_dir.mkdir(mode=0o700, exist_ok=True)
-        
+
         # Security measures implemented
         results["implemented_measures"] = [
             "Production-hardened API server with authentication",
             "JWT-based authentication system",
-            "Rate limiting and request throttling", 
+            "Rate limiting and request throttling",
             "Input validation and sanitization",
             "Security headers middleware",
             "IP blocking and request analysis",
             "Comprehensive security logging",
             "Database security configuration",
             "SSL/TLS configuration templates",
-            "Environment variable templates"
+            "Environment variable templates",
         ]
-        
+
         # Generate recommendations
         results["recommendations"] = [
             {
                 "priority": "CRITICAL",
                 "action": "Generate SSL certificates and update nginx configuration",
-                "category": "Encryption"
+                "category": "Encryption",
             },
             {
-                "priority": "CRITICAL", 
+                "priority": "CRITICAL",
                 "action": "Update .env.production with your actual values",
-                "category": "Configuration"
+                "category": "Configuration",
             },
             {
                 "priority": "HIGH",
                 "action": "Set up user authentication database",
-                "category": "Authentication"
+                "category": "Authentication",
             },
             {
                 "priority": "HIGH",
                 "action": "Configure reverse proxy (nginx/apache) with security headers",
-                "category": "Infrastructure"
+                "category": "Infrastructure",
             },
             {
                 "priority": "MEDIUM",
                 "action": "Set up security monitoring and alerting",
-                "category": "Monitoring"
+                "category": "Monitoring",
             },
             {
                 "priority": "MEDIUM",
                 "action": "Implement database backups with encryption",
-                "category": "Data Protection"
+                "category": "Data Protection",
             },
             {
                 "priority": "LOW",
                 "action": "Set up automated security testing in CI/CD",
-                "category": "DevSecOps"
-            }
+                "category": "DevSecOps",
+            },
         ]
-        
+
         return results
+
 
 def main():
     """Main execution function."""
     implementer = ProductionSecurityImplementation()
     results = implementer.implement_security_measures()
-    
+
     # Save implementation report
     output_file = "security_implementation_report.json"
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         json.dump(results, f, indent=2)
-    
+
     # Print summary
-    print("\\n" + "="*70)
+    print("\\n" + "=" * 70)
     print("PRODUCTION SECURITY IMPLEMENTATION COMPLETE")
-    print("="*70)
+    print("=" * 70)
     print(f"Files created: {len(results['files_created'])}")
     print(f"Security measures: {len(results['implemented_measures'])}")
-    
+
     print("\\n📁 FILES CREATED:")
-    for file_path in results['files_created']:
+    for file_path in results["files_created"]:
         print(f"  • {file_path}")
-    
+
     print("\\n🔒 SECURITY MEASURES IMPLEMENTED:")
-    for measure in results['implemented_measures'][:5]:
+    for measure in results["implemented_measures"][:5]:
         print(f"  • {measure}")
-    if len(results['implemented_measures']) > 5:
+    if len(results["implemented_measures"]) > 5:
         print(f"  • ... and {len(results['implemented_measures']) - 5} more")
-    
+
     print("\\n⚠️  CRITICAL NEXT STEPS:")
-    critical_recs = [r for r in results['recommendations'] if r['priority'] == 'CRITICAL']
+    critical_recs = [
+        r for r in results["recommendations"] if r["priority"] == "CRITICAL"
+    ]
     for rec in critical_recs:
         print(f"  • {rec['action']}")
-    
+
     print(f"\\n📄 Implementation report saved to: {output_file}")
-    print("="*70)
+    print("=" * 70)
+
 
 if __name__ == "__main__":
     main()

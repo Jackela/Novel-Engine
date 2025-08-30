@@ -4,12 +4,12 @@ Quality Implementation Validation Script
 Validates that all quality enhancement components are properly implemented.
 """
 
-import os
-import sys
 import json
+import os
 import subprocess
+import sys
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict
 
 
 class QualityValidator:

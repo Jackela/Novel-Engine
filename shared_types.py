@@ -12,14 +12,19 @@ Development Phase: Phase 1 Validation - Import Compatibility
 # Import from both types modules for full compatibility
 try:
     # Import from the main shared types module
-    from src.shared_types import *
-    
     # Also import from the core types module to get CharacterAction
-    from src.core.types.shared_types import CharacterAction, ActionType as CoreActionType, ActionPriority
-    
+    from src.core.types.shared_types import (
+        ActionPriority,
+    )
+    from src.core.types.shared_types import ActionType as CoreActionType
+    from src.core.types.shared_types import (
+        CharacterAction,
+    )
+    from src.shared_types import *  # noqa: F403
+
     # Handle potential naming conflicts by keeping both available
     TYPES_AVAILABLE = True
-    
+
 except ImportError as e:
     # Fallback if modules aren't available
     TYPES_AVAILABLE = False
@@ -28,24 +33,34 @@ except ImportError as e:
 # Re-export everything for backward compatibility
 try:
     # Core types that should always be available
-    _core_exports = ['CharacterAction', 'ActionType', 'ActionPriority']
-    
+    _core_exports = ["CharacterAction", "ActionType", "ActionPriority"]
+
     # Extended types from main module
     _extended_exports = [
-        'CampaignEvent', 'NarrativeSegment', 'WorldEvent',
-        'SubjectiveInterpretation', 'ThreatLevel', 'EventType',
-        'CharacterData', 'DecisionContext', 'MemoryEntry', 'AgentConfig',
-        'ProposedAction', 'ValidatedAction', 'ActionTarget', 'ActionParameters'
+        "CampaignEvent",
+        "NarrativeSegment",
+        "WorldEvent",
+        "SubjectiveInterpretation",
+        "ThreatLevel",
+        "EventType",
+        "CharacterData",
+        "DecisionContext",
+        "MemoryEntry",
+        "AgentConfig",
+        "ProposedAction",
+        "ValidatedAction",
+        "ActionTarget",
+        "ActionParameters",
     ]
-    
+
     # Dynamically build __all__ based on what's available
     __all__ = []
     for name in _core_exports + _extended_exports:
         if name in globals():
             __all__.append(name)
-            
+
     if not __all__:
-        __all__ = ['TYPES_AVAILABLE']
-        
+        __all__ = ["TYPES_AVAILABLE"]
+
 except Exception:
-    __all__ = ['TYPES_AVAILABLE']
+    __all__ = ["TYPES_AVAILABLE"]

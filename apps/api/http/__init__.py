@@ -11,6 +11,4 @@ Available Routers:
 
 from .world_router import router as world_router
 
-__all__ = [
-    "world_router"
-]
+__all__ = ["world_router"]

@@ -10,11 +10,8 @@ Key Components:
 - Query Handlers: Implementation of query processing and data retrieval
 """
 
-from .interaction_queries import *
 from .interaction_query_handlers import InteractionQueryHandler
 
-__all__ = [
-    'InteractionQueryHandler'
-]
+__all__ = ["InteractionQueryHandler"]
 
 __version__ = "1.0.0"

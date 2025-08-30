@@ -6,30 +6,26 @@ responsive design validation, and user interaction simulation.
 """
 
 import asyncio
-import json
-import logging
-import time
-import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple, Union
 import hashlib
+import logging
 import statistics
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from PIL import Image, ImageChops
 import numpy as np
-from playwright.async_api import Page, BrowserContext
-import cv2
-
-# Import Novel-Engine patterns
-from config_loader import get_config
-from src.event_bus import EventBus
 
 # Import AI testing contracts
 from ai_testing.interfaces.service_contracts import (
-    TestResult, TestExecution, TestContext, UITestSpec,
-    QualityMetric, create_test_context
+    TestContext,
+    UITestSpec,
 )
+
+# Import Novel-Engine patterns
+from PIL import Image, ImageChops
+from playwright.async_api import Page
+
+from src.event_bus import EventBus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -70,7 +66,7 @@ class VisualDiff:
             
             # Convert to numpy arrays for analysis
             img1_array = np.array(img1)
-            img2_array = np.array(img2)
+            np.array(img2)
             diff_array = np.array(diff_img)
             
             # Calculate metrics

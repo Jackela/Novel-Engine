@@ -8,24 +8,22 @@ for Novel-Engine AI acceptance testing with WCAG compliance and Core Web Vitals.
 import asyncio
 import json
 import logging
-import time
 import statistics
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
+import time
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
-from playwright.async_api import Page, BrowserContext
-import aiohttp
-
-# Import Novel-Engine patterns
-from config_loader import get_config
-from src.event_bus import EventBus
 
 # Import AI testing contracts
 from ai_testing.interfaces.service_contracts import (
-    TestResult, TestContext, QualityMetric
+    QualityMetric,
+    TestContext,
 )
+
+# Import Novel-Engine patterns
+from playwright.async_api import Page
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -12,8 +12,6 @@ Key Services:
 
 from .negotiation_service import NegotiationService
 
-__all__ = [
-    'NegotiationService'
-]
+__all__ = ["NegotiationService"]
 
 __version__ = "1.0.0"

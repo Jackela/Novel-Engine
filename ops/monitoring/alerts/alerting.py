@@ -10,22 +10,23 @@ Implements comprehensive alerting system with:
 """
 
 import asyncio
-import time
-import logging
-import smtplib
 import json
-from typing import Dict, List, Optional, Any, Callable, Union
-from dataclasses import dataclass, field, asdict
-from enum import Enum
-from datetime import datetime, timedelta
-import statistics
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import aiohttp
-from collections import deque, defaultdict
-import sqlite3
-import aiosqlite
+import logging
 import os
+import smtplib
+import sqlite3
+import statistics
+import time
+from collections import defaultdict, deque
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import aiohttp
+import aiosqlite
 
 logger = logging.getLogger(__name__)
 
@@ -774,7 +775,7 @@ class AlertManager:
     def get_alert_statistics(self) -> Dict[str, Any]:
         """Get alert statistics"""
         active_count = len(self.active_alerts)
-        total_count = len(self.alert_history)
+        len(self.alert_history)
         
         # Count by severity
         severity_counts = defaultdict(int)

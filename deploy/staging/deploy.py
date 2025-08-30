@@ -18,17 +18,17 @@ Usage:
     python deploy/staging/deploy.py [--validate-only] [--rollback]
 """
 
-import os
-import sys
-import shutil
-import json
-import subprocess
-import time
-import logging
 import argparse
+import json
+import logging
+import os
+import shutil
+import subprocess
+import sys
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+
 import requests
 import yaml
 
@@ -78,7 +78,7 @@ class StagingDeployment:
         for directory in directories:
             (self.project_root / directory).mkdir(parents=True, exist_ok=True)
         
-        logger.info(f"✅ Staging directories created")
+        logger.info("✅ Staging directories created")
     
     def validate_system(self) -> bool:
         """Run comprehensive system validation."""
@@ -388,7 +388,7 @@ def rollback():
     try:
         subprocess.run(["pkill", "-f", "api_server.py"], check=False)
     except (FileNotFoundError, OSError, shutil.Error) as e:
-        logger.warning(f"Failed to backup configuration: {e}")
+        logger.warning(f"Failed to stop services: {e}")
     
     # Restore configuration files
     config_files = ["configs/environments/development.yaml", "configs/environments/settings.yaml", "requirements.txt"]
@@ -477,7 +477,7 @@ if __name__ == "__main__":
         logger.info("🎉 Staging deployment completed successfully!")
         logger.info(f"📊 Deployment ID: {self.deployment_id}")
         logger.info(f"🔄 Rollback available: {self.backup_dir / 'rollback.py'}")
-        logger.info(f"🌐 API Server: http://localhost:8000")
+        logger.info("🌐 API Server: http://localhost:8000")
         logger.info(f"📊 Health Status: {self.health_check_url}")
         
         return True

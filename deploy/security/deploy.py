@@ -14,23 +14,24 @@ Author: Novel Engine Development Team
 Professional deployment script for enterprise security.
 """
 
+import argparse
+import asyncio
+import logging
 import os
 import sys
-import logging
-import asyncio
-import argparse
-import subprocess
-import yaml
-from pathlib import Path
-from typing import Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import yaml
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.security.ssl_config import setup_development_ssl, setup_production_ssl, SSLCertificateManager
 from src.security.auth_system import AuthenticationManager
-from src.api.main_api_server import create_app, APIServerConfig
+from src.security.ssl_config import (
+    SSLCertificateManager,
+)
 
 # Sacred logging configuration
 logging.basicConfig(
@@ -179,7 +180,7 @@ class SecureDeploymentManager:
                 logger.warning("JWT secret auto-generated - set JWT_SECRET environment variable")
             
             # Initialize authentication manager
-            auth_manager = AuthenticationManager(
+            AuthenticationManager(
                 database_path="data/api_server.db",
                 jwt_secret=jwt_secret
             )
@@ -313,7 +314,7 @@ Secure Deployment Complete
             self.setup_database_security(config)
             
             # Setup authentication system
-            auth_setup = self.setup_authentication_system(config)
+            self.setup_authentication_system(config)
             
             # Generate deployment report
             report = self.generate_deployment_report(config, ssl_setup)

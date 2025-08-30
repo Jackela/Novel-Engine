@@ -16,44 +16,48 @@ Components:
 
 # Core components
 from .core import (
-    InteractionType, InteractionPriority, InteractionContext,
-    InteractionPhase, InteractionOutcome, InteractionEngineConfig
+    InteractionContext,
+    InteractionEngineConfig,
+    InteractionOutcome,
+    InteractionPhase,
+    InteractionPriority,
+    InteractionType,
 )
-
-# Main facade
-from .interaction_engine_modular import InteractionEngine
 
 # Factory functions
+# Main facade
 from .interaction_engine_modular import (
+    InteractionEngine,
     create_interaction_engine,
-    create_performance_optimized_config
+    create_performance_optimized_config,
 )
+from .processing import InteractionProcessor
+from .queue_management import QueueManager
+from .state_management import StateManager
+from .type_processors import InteractionTypeProcessorManager
 
 # Component imports for advanced usage
 from .validation import InteractionValidator
-from .processing import InteractionProcessor
-from .type_processors import InteractionTypeProcessorManager
-from .state_management import StateManager
-from .queue_management import QueueManager
 
 __all__ = [
     # Core types
-    'InteractionType', 'InteractionPriority', 'InteractionContext',
-    'InteractionPhase', 'InteractionOutcome', 'InteractionEngineConfig',
-    
+    "InteractionType",
+    "InteractionPriority",
+    "InteractionContext",
+    "InteractionPhase",
+    "InteractionOutcome",
+    "InteractionEngineConfig",
     # Main engine
-    'InteractionEngine',
-    
+    "InteractionEngine",
     # Factory functions
-    'create_interaction_engine',
-    'create_performance_optimized_config',
-    
+    "create_interaction_engine",
+    "create_performance_optimized_config",
     # Advanced components
-    'InteractionValidator',
-    'InteractionProcessor', 
-    'InteractionTypeProcessorManager',
-    'StateManager',
-    'QueueManager'
+    "InteractionValidator",
+    "InteractionProcessor",
+    "InteractionTypeProcessorManager",
+    "StateManager",
+    "QueueManager",
 ]
 
 __version__ = "4.0.0"

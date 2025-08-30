@@ -8,40 +8,45 @@ Provides automated API testing, validation, performance measurement, and integra
 import asyncio
 import json
 import logging
+import statistics
 import time
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
-from pathlib import Path
-import statistics
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
 import httpx
-import jsonschema
-from jsonschema import validate, ValidationError
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from jsonschema import ValidationError, validate
+from pydantic import BaseModel, Field
 
 # Import Novel-Engine patterns
 try:
     from config_loader import get_config
+
     from src.event_bus import EventBus
 except ImportError:
     # Fallback for testing
-    get_config = lambda: None
-    EventBus = lambda: None
-
-# Import AI testing configuration
-from ai_testing_config import get_ai_testing_service_config
+    def get_config():
+        return None
+    def EventBus():
+        return None
 
 # Import AI testing contracts
 from ai_testing.interfaces.service_contracts import (
-    IAPITesting, TestResult, TestExecution, TestContext, APITestSpec,
-    TestStatus, ServiceHealthResponse, create_test_context
+    APITestSpec,
+    IAPITesting,
+    ServiceHealthResponse,
+    TestContext,
+    TestResult,
+    TestStatus,
+    create_test_context,
 )
+
+# Import AI testing configuration
+from ai_testing_config import get_ai_testing_service_config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -375,7 +380,7 @@ class APITestExecutor:
                     load_test_tasks.append(task)
         
         # Execute load test
-        start_time = time.time()
+        time.time()
         load_results = await asyncio.gather(*load_test_tasks, return_exceptions=True)
         
         # Process load test results
@@ -1046,6 +1051,7 @@ class APITestingService(IAPITesting):
 
 from contextlib import asynccontextmanager
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI lifespan management"""
@@ -1132,7 +1138,6 @@ async def test_single_endpoint(
 ):
     """Test a single API endpoint"""
     try:
-        service: APITestingService = app.state.api_testing_service
         
         # For validation testing, create a simple direct test
         import httpx

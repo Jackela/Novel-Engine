@@ -7,12 +7,13 @@ ensuring consistent communication patterns and data models across the testing fr
 Compatible with Novel-Engine architecture patterns and extends existing shared_types.py
 """
 
-from typing import Dict, List, Optional, Union, Any, Literal
+import uuid
+from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field, validator, ConfigDict
-from abc import ABC, abstractmethod
-import uuid
+from typing import Any, Dict, List, Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 # === Core Data Models ===
 

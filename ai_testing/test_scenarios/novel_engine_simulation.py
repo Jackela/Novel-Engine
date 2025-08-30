@@ -6,11 +6,12 @@ Novel-Engine功能模拟测试
 
 import asyncio
 import json
-import time
-from typing import Dict, Any, List
-from pathlib import Path
-import httpx
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict
+
+import httpx
+
 
 class NovelEngineSimulator:
     """模拟Novel-Engine的API端点"""
@@ -78,7 +79,7 @@ async def comprehensive_framework_test():
         "framework_capabilities": {}
     }
     
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx.AsyncClient(timeout=60.0):
         
         # === 测试类别1: 功能测试能力 ===
         print("\n📝 类别1: 功能测试能力验证")

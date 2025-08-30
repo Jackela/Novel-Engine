@@ -16,30 +16,33 @@ Components:
 
 # Core components
 from .core import (
-    EquipmentCategory, EquipmentStatus, EquipmentModification, 
-    EquipmentMaintenance, DynamicEquipment
+    DynamicEquipment,
+    EquipmentCategory,
+    EquipmentMaintenance,
+    EquipmentModification,
+    EquipmentStatus,
 )
 
-# Main facade
-from .dynamic_equipment_system_modular import DynamicEquipmentSystem
-
 # Factory functions
+# Main facade
 from .dynamic_equipment_system_modular import (
+    DynamicEquipmentSystem,
     create_dynamic_equipment_system,
-    create_maintenance_optimized_config
+    create_maintenance_optimized_config,
 )
 
 __all__ = [
     # Core types
-    'EquipmentCategory', 'EquipmentStatus', 'EquipmentModification',
-    'EquipmentMaintenance', 'DynamicEquipment',
-    
+    "EquipmentCategory",
+    "EquipmentStatus",
+    "EquipmentModification",
+    "EquipmentMaintenance",
+    "DynamicEquipment",
     # Main system
-    'DynamicEquipmentSystem',
-    
+    "DynamicEquipmentSystem",
     # Factory functions
-    'create_dynamic_equipment_system',
-    'create_maintenance_optimized_config'
+    "create_dynamic_equipment_system",
+    "create_maintenance_optimized_config",
 ]
 
 __version__ = "3.0.0"

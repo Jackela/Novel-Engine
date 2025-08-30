@@ -9,10 +9,10 @@ Key Repositories:
 - SQLAlchemyNegotiationSessionRepository: SQLAlchemy-based repository implementation
 """
 
-from .sqlalchemy_negotiation_session_repository import SQLAlchemyNegotiationSessionRepository
+from .sqlalchemy_negotiation_session_repository import (
+    SQLAlchemyNegotiationSessionRepository,
+)
 
-__all__ = [
-    'SQLAlchemyNegotiationSessionRepository'
-]
+__all__ = ["SQLAlchemyNegotiationSessionRepository"]
 
 __version__ = "1.0.0"

@@ -19,9 +19,9 @@ Example:
     health_status = monitor_deployment(deployment_id)
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime
 import os
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 __version__ = "1.0.0"
 
@@ -56,7 +56,7 @@ def deploy_application(version: str, strategy: str = 'rolling', **kwargs) -> str
     
     # Placeholder for actual production deployment logic
     # Will be implemented during migration
-    deployment_config = {
+    {
         'deployment_id': deployment_id,
         'version': version,
         'environment': 'production',
@@ -134,7 +134,7 @@ def emergency_rollback(deployment_id: str, reason: str) -> str:
     rollback_id = f"prod-emergency-rollback-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     
     # Log emergency rollback
-    rollback_info = {
+    {
         'rollback_id': rollback_id,
         'original_deployment': deployment_id,
         'reason': reason,

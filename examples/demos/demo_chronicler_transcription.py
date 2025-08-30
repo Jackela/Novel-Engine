@@ -22,16 +22,15 @@ Author: ChroniclerAgent Development Team
 Phase: Phase 4 - Story Transcription (Final Integration)
 """
 
+import logging
 import os
 import sys
-import logging
 from datetime import datetime
-from pathlib import Path
 
 # Add the current directory to Python path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from chronicler_agent import ChroniclerAgent, create_chronicler_with_output
+from chronicler_agent import create_chronicler_with_output
 
 # Configure logging for demonstration
 logging.basicConfig(
@@ -71,7 +70,7 @@ def demonstrate_chronicler_transcription():
         start_time = datetime.now()
         chronicler = create_chronicler_with_output(output_directory)
         
-        print(f"✅ ChroniclerAgent initialized successfully")
+        print("✅ ChroniclerAgent initialized successfully")
         print(f"   Narrative Style: {chronicler.narrative_style}")
         print(f"   Output Directory: {chronicler.output_directory}")
         print(f"   Max Events per Batch: {chronicler.max_events_per_batch}")
@@ -104,7 +103,7 @@ def demonstrate_chronicler_transcription():
         transcription_time = datetime.now()
         processing_duration = (transcription_time - start_time).total_seconds()
         
-        print(f"✅ Narrative transcription completed successfully")
+        print("✅ Narrative transcription completed successfully")
         print(f"   Processing Time: {processing_duration:.2f} seconds")
         print(f"   Narrative Length: {len(complete_narrative):,} characters")
         print()
@@ -139,17 +138,17 @@ def demonstrate_chronicler_transcription():
         has_opening = len(complete_narrative) > 100
         has_proper_structure = "." in complete_narrative and len(complete_narrative.split('.')) > 3
         
-        print(f"🪖 Character Representation:")
+        print("🪖 Character Representation:")
         print(f"   Trooper 86 (Death Korps): {'✅ Present' if has_trooper_86 else '❌ Missing'}")
         print(f"   Griznork (Orks): {'✅ Present' if has_griznork else '❌ Missing'}")
         print()
         
-        print(f"🌌 Warhammer 40k Atmosphere:")
+        print("🌌 Warhammer 40k Atmosphere:")
         print(f"   Atmospheric Terms: {wh40k_score}/{len(wh40k_terms)} detected")
         print(f"   Atmosphere Quality: {'✅ Excellent' if wh40k_score >= 5 else '⚠️ Adequate' if wh40k_score >= 3 else '❌ Poor'}")
         print()
         
-        print(f"📝 Narrative Structure:")
+        print("📝 Narrative Structure:")
         print(f"   Length: {'✅ Sufficient' if has_opening else '❌ Too Short'}")
         print(f"   Structure: {'✅ Coherent' if has_proper_structure else '❌ Fragmented'}")
         print()
@@ -160,20 +159,20 @@ def demonstrate_chronicler_transcription():
         
         status = chronicler.get_chronicler_status()
         
-        print(f"📈 Processing Statistics:")
+        print("📈 Processing Statistics:")
         print(f"   Events Processed: {status['processing_stats']['events_processed']}")
         print(f"   Narratives Generated: {status['processing_stats']['narratives_generated']}")
         print(f"   LLM Calls Made: {status['processing_stats']['llm_calls_made']}")
         print(f"   Error Count: {status['processing_stats']['error_count']}")
         print()
         
-        print(f"🏥 System Health:")
+        print("🏥 System Health:")
         print(f"   Status: {status['system_health']['status'].upper()}")
         print(f"   Templates Loaded: {status['system_health']['templates_loaded']}")
         print(f"   Faction Descriptions: {status['system_health']['faction_descriptions_loaded']}")
         print()
         
-        print(f"🔧 Capabilities:")
+        print("🔧 Capabilities:")
         for capability, enabled in status['capabilities'].items():
             status_icon = "✅" if enabled else "❌"
             print(f"   {capability.replace('_', ' ').title()}: {status_icon}")

@@ -4,7 +4,7 @@ Alembic Environment Configuration for Novel Engine Platform
 
 Database migration environment with support for:
 - Multiple database configurations
-- Async and sync migration support  
+- Async and sync migration support
 - Auto-generation from SQLAlchemy models
 - Transaction safety and rollback capability
 """
@@ -12,19 +12,17 @@ Database migration environment with support for:
 import asyncio
 import logging
 from logging.config import fileConfig
-from typing import Optional
-
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-# Import all models to ensure they're registered with SQLAlchemy metadata
-from core_platform.persistence.models import Base, OutboxEvent, EventStore
-
 # Import configuration
 from core_platform.config.settings import get_database_settings
+
+# Import all models to ensure they're registered with SQLAlchemy metadata
+from core_platform.persistence.models import Base
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # this is the Alembic Config object
 config = context.config
@@ -33,7 +31,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-logger = logging.getLogger('alembic.env')
+logger = logging.getLogger("alembic.env")
 
 # Add your model's MetaData object here for 'autogenerate' support
 target_metadata = Base.metadata
@@ -116,7 +114,7 @@ def run_migrations_online() -> None:
     # Override the sqlalchemy.url config option
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = get_database_url()
-    
+
     connectable = context.config.attributes.get("connection", None)
 
     if connectable is None:
@@ -125,6 +123,7 @@ def run_migrations_online() -> None:
 
         if connectable is None:
             from sqlalchemy import create_engine
+
             connectable = create_engine(
                 get_database_url(),
                 poolclass=pool.NullPool,
@@ -137,16 +136,16 @@ def run_migrations_online() -> None:
 async def run_async_migrations() -> None:
     """
     Run migrations in async mode.
-    
+
     This is useful for applications that use async SQLAlchemy.
     """
     configuration = config.get_section(config.config_ini_section)
-    
+
     # Convert sync URL to async URL
     database_url = get_database_url()
     if database_url.startswith("postgresql://"):
         database_url = database_url.replace("postgresql://", "postgresql+asyncpg://")
-    
+
     configuration["sqlalchemy.url"] = database_url
 
     connectable = async_engine_from_config(
@@ -164,18 +163,21 @@ async def run_async_migrations() -> None:
 def include_object(object, name, type_, reflected, compare_to):
     """
     Filter objects to include in migrations.
-    
+
     This function can be used to exclude certain tables, columns, etc.
     from auto-generation.
     """
     # Skip temporary or system tables
     if type_ == "table" and name.startswith("_temp"):
         return False
-    
+
     # Skip certain schemas if needed
-    if hasattr(object, 'schema') and object.schema in ['information_schema', 'pg_catalog']:
+    if hasattr(object, "schema") and object.schema in [
+        "information_schema",
+        "pg_catalog",
+    ]:
         return False
-    
+
     return True
 
 
@@ -185,7 +187,7 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     logger.info("Running migrations in online mode")
-    
+
     # Check if we should run async migrations
     if context.config.attributes.get("async_mode", False):
         logger.info("Running async migrations")

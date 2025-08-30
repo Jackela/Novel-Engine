@@ -6,18 +6,9 @@ Validates complete system integration and orchestration.
 """
 
 import asyncio
-import json
-import pytest
-import httpx
-from datetime import datetime, timedelta
-from typing import Dict, List, Any
 
-from ai_testing.interfaces.service_contracts import (
-    TestResult, TestContext, TestStatus, create_test_context
-)
-from ai_testing.orchestration.master_orchestrator import (
-    ComprehensiveTestRequest, OrchestrationStrategy, TestingPhase
-)
+import httpx
+import pytest
 
 # Test configuration
 TEST_BASE_URL = "http://localhost:8000"
@@ -510,7 +501,7 @@ async def test_full_system_integration():
         health_snapshot = result["service_health_snapshot"]
         assert len(health_snapshot) > 0
         
-        print(f"✓ Full system integration test completed successfully")
+        print("✓ Full system integration test completed successfully")
         print(f"  - Test Session ID: {result['test_session_id']}")
         print(f"  - Overall Score: {result['overall_score']:.3f}")
         print(f"  - Total Duration: {result['total_duration_ms']}ms")

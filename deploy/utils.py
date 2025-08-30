@@ -7,11 +7,13 @@ Helper utilities for deployment operations, validation, and common tasks.
 """
 
 import os
-import sys
 import subprocess
-import yaml
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Union
+
+import yaml
+
 
 def get_project_root() -> Path:
     """Get the project root directory."""
@@ -118,14 +120,14 @@ def get_deployment_info() -> Dict[str, str]:
         result = run_command(['git', 'rev-parse', 'HEAD'])
         if result.returncode == 0:
             info['git_commit'] = result.stdout.strip()
-    except:
+    except (subprocess.SubprocessError, FileNotFoundError):
         info['git_commit'] = 'unknown'
     
     try:
         result = run_command(['git', 'branch', '--show-current'])
         if result.returncode == 0:
             info['git_branch'] = result.stdout.strip()
-    except:
+    except (subprocess.SubprocessError, FileNotFoundError):
         info['git_branch'] = 'unknown'
     
     # Environment detection
@@ -177,7 +179,7 @@ def main():
     if args.info:
         info = get_deployment_info()
         print(f"\n{'='*60}")
-        print(f" Deployment Information")
+        print(" Deployment Information")
         print(f"{'='*60}")
         for key, value in info.items():
             formatted_key = key.replace('_', ' ').title()

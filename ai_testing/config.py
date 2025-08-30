@@ -4,8 +4,9 @@ Handles environment-specific settings for local, Docker, and cloud deployments
 """
 
 import os
-from typing import Dict, Any
 from enum import Enum
+from typing import Dict
+
 
 class Environment(Enum):
     """Deployment environment types"""
@@ -78,7 +79,7 @@ class ServiceConfig:
         urls = ServiceConfig.get_service_urls()
         # Handle both hyphenated and underscored names
         normalized_name = service_name.replace("_", "-")
-        return urls.get(normalized_name, f"http://localhost:8000")
+        return urls.get(normalized_name, "http://localhost:8000")
     
     @staticmethod
     def get_base_url() -> str:

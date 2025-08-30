@@ -19,8 +19,8 @@ Example:
     template = load_template('infrastructure_overview')
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 __version__ = "1.0.0"
 
@@ -47,7 +47,7 @@ def create_dashboard(name: str, template: Optional[str] = None, **kwargs) -> str
     """
     dashboard_id = f"dashboard-{name.lower().replace(' ', '-')}-{datetime.now().strftime('%Y%m%d')}"
     
-    dashboard_config = {
+    {
         'dashboard_id': dashboard_id,
         'name': name,
         'template': template,

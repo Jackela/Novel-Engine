@@ -12,13 +12,14 @@ This module implements a fully autonomous AI system that:
 
 import asyncio
 import json
+import logging
 import random
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from playwright.async_api import async_playwright, Page, Browser
-import logging
+from typing import Any, Dict, List, Optional
+
+from playwright.async_api import Browser, Page, async_playwright
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -99,9 +100,9 @@ class AICharacterGenerator:
             f"在他们的旅程中，{name}学会了如何在混沌与秩序之间找到平衡。",
             f"他们的{traits[2]}特质使他们成为了独一无二的存在。",
             f"每一次与{name}的相遇都会改变一个人的命运。",
-            f"他们相信每个灵魂都有其独特的使命和价值。",
+            "他们相信每个灵魂都有其独特的使命和价值。",
             f"在最黑暗的时刻，{name}总是能找到希望的光芒。",
-            f"他们的故事激励着无数追寻梦想的人。"
+            "他们的故事激励着无数追寻梦想的人。"
         ]
         
         full_description = base_description + " " + " ".join(random.sample(additional_details, 3))
@@ -333,7 +334,7 @@ class AINovelController:
                                         response_data = json.loads(response_text)
                                         self.generated_story = response_data.get("story", "")
                                         logger.info(f"  Got story from API: {len(self.generated_story)} chars")
-                                    except:
+                                    except (json.JSONDecodeError, KeyError):
                                         pass
             
             # If still no story, generate a simulated one
@@ -739,7 +740,7 @@ async def run_complete_test():
         print()
         print(f"✅ Characters Selected: {len(selected)}")
         print()
-        print(f"📖 Story Generated:")
+        print("📖 Story Generated:")
         print(f"   - Word Count: {story_content['word_count']}")
         print(f"   - Character Count: {story_content['character_count']}")
         print(f"   - Dialogue Lines: {len(story_content['dialogues'])}")

@@ -21,8 +21,8 @@ Example:
         pass
 """
 
-from typing import Dict, Any, Optional, List
 from contextlib import contextmanager
+from typing import Any, Dict, Optional
 
 __version__ = "1.0.0"
 
@@ -91,12 +91,6 @@ def track_metric(metric_name: str, value: float, tags: Optional[Dict[str, str]] 
         value: Metric value
         tags: Optional tags for the metric
     """
-    metric_data = {
-        'name': metric_name,
-        'value': value,
-        'tags': tags or {},
-        'timestamp': 'now'
-    }
     # Placeholder - would actually send to metrics backend
 
 def configure_tracing(config: Dict[str, Any]) -> Dict[str, Any]:

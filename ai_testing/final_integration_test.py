@@ -5,9 +5,9 @@ Final Integration Test - Comprehensive validation of all Wave Mode improvements
 
 import asyncio
 import json
-from pathlib import Path
-from datetime import datetime
 import sys
+from datetime import datetime
+from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -34,10 +34,10 @@ def run_comprehensive_test():
         workflow = CompleteNovelWorkflow()
         
         # Create characters
-        characters = workflow.create_custom_characters()
+        workflow.create_custom_characters()
         
         # Generate events
-        events = workflow.advance_story_rounds(rounds=60)
+        workflow.advance_story_rounds(rounds=60)
         
         # Generate novel
         novel = workflow.generate_novel()

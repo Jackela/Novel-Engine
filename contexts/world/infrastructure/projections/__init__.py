@@ -7,21 +7,21 @@ for the World context, providing optimized query performance through
 denormalized data structures and event-driven consistency.
 """
 
-from .world_read_model import WorldSliceReadModel, EntitySummary
 from .world_projector import (
-    WorldProjector, 
+    WorldProjector,
     WorldProjectorException,
     get_world_projector,
     initialize_world_projector,
-    shutdown_world_projector
+    shutdown_world_projector,
 )
+from .world_read_model import EntitySummary, WorldSliceReadModel
 
 __all__ = [
     "WorldSliceReadModel",
-    "EntitySummary", 
+    "EntitySummary",
     "WorldProjector",
     "WorldProjectorException",
     "get_world_projector",
-    "initialize_world_projector", 
-    "shutdown_world_projector"
+    "initialize_world_projector",
+    "shutdown_world_projector",
 ]

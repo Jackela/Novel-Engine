@@ -24,7 +24,7 @@ interface CacheEntry<T> {
 class APICache {
   private cache = new Map<string, CacheEntry<any>>();
   private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
-  private readonly MAX_CACHE_SIZE = 500;
+  private readonly MAX_CACHE_SIZE = 200; // Reduced for mobile memory optimization
   
   set<T>(key: string, data: T, ttl: number = this.DEFAULT_TTL): void {
     // Clean expired entries if cache is getting large

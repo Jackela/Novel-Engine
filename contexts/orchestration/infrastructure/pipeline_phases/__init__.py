@@ -7,17 +7,17 @@ integration and external system coordination.
 """
 
 from .base_phase import BasePhaseImplementation
-from .world_update_phase import WorldUpdatePhase
-from .subjective_brief_phase import SubjectiveBriefPhase
-from .interaction_orchestration_phase import InteractionOrchestrationPhase
 from .event_integration_phase import EventIntegrationPhase
+from .interaction_orchestration_phase import InteractionOrchestrationPhase
 from .narrative_integration_phase import NarrativeIntegrationPhase
+from .subjective_brief_phase import SubjectiveBriefPhase
+from .world_update_phase import WorldUpdatePhase
 
 __all__ = [
-    'BasePhaseImplementation',
-    'WorldUpdatePhase',
-    'SubjectiveBriefPhase',
-    'InteractionOrchestrationPhase', 
-    'EventIntegrationPhase',
-    'NarrativeIntegrationPhase'
+    "BasePhaseImplementation",
+    "WorldUpdatePhase",
+    "SubjectiveBriefPhase",
+    "InteractionOrchestrationPhase",
+    "EventIntegrationPhase",
+    "NarrativeIntegrationPhase",
 ]

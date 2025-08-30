@@ -4,10 +4,10 @@ Real AI Generation Test
 Validates that we have genuine LLM generation, not template selection
 """
 
-import sys
-import os
 import json
 import logging
+import os
+import sys
 from datetime import datetime
 
 # Add the ai_testing directory to the Python path
@@ -37,7 +37,7 @@ def test_real_ai_generation():
         test_results = llm_client.test_generation()
         
         # Display results
-        print(f"\n📊 Test Results:")
+        print("\n📊 Test Results:")
         print(f"Provider: {test_results['provider']}")
         print(f"Connection: {'✅' if test_results['connection'] else '❌'}")
         print(f"Dialogue Test: {'✅' if test_results['dialogue_test'] else '❌'}")
@@ -99,7 +99,7 @@ def test_real_ai_generation():
         
         # Analyze uniqueness
         unique_dialogues = len(set(d["dialogue"] for d in dialogues))
-        print(f"\n📈 Uniqueness Analysis:")
+        print("\n📈 Uniqueness Analysis:")
         print(f"Generated dialogues: {len(dialogues)}")
         print(f"Unique dialogues: {unique_dialogues}")
         print(f"Uniqueness rate: {unique_dialogues/len(dialogues)*100:.1f}%")
@@ -111,7 +111,7 @@ def test_real_ai_generation():
             for d in dialogues
         )
         
-        print(f"\n🔍 Template Pattern Check:")
+        print("\n🔍 Template Pattern Check:")
         print(f"Template patterns detected: {'❌ Yes' if has_template_patterns else '✅ No'}")
         
         # Final assessment
@@ -124,7 +124,7 @@ def test_real_ai_generation():
         
         overall_success = all(success_criteria)
         
-        print(f"\n🎯 MVP Validation:")
+        print("\n🎯 MVP Validation:")
         print(f"Real AI generation: {'✅' if test_results['overall_success'] else '❌'}")
         print(f"Character uniqueness: {'✅' if unique_dialogues == len(dialogues) else '❌'}")
         print(f"No template patterns: {'✅' if not has_template_patterns else '❌'}")

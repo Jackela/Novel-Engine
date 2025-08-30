@@ -9,32 +9,31 @@ Implements comprehensive distributed tracing with:
 - Error tracking and debugging support
 """
 
-import time
-import logging
 import asyncio
-from typing import Dict, List, Optional, Any, Union, Callable
-from dataclasses import dataclass, field
-from contextlib import contextmanager, asynccontextmanager
-from functools import wraps
-import traceback
 import inspect
-from datetime import datetime
+import logging
+import time
+from contextlib import asynccontextmanager, contextmanager
+from dataclasses import dataclass, field
+from functools import wraps
+from typing import Any, Callable, Dict, Optional
+
+import opentelemetry.baggage as baggage
 
 # OpenTelemetry imports
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-from opentelemetry.sdk.resources import Resource
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
+from opentelemetry.instrumentation.asyncio import AsyncIOInstrumentor
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.instrumentation.sqlite3 import SQLite3Instrumentor
-from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
-from opentelemetry.instrumentation.asyncio import AsyncIOInstrumentor
-from opentelemetry.trace import Status, StatusCode
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 from opentelemetry.sdk.trace.sampling import TraceIdRatioBased
-import opentelemetry.baggage as baggage
+from opentelemetry.trace import Status, StatusCode
 
 logger = logging.getLogger(__name__)
 

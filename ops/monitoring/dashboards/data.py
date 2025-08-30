@@ -10,15 +10,14 @@ Provides data collection and aggregation for comprehensive monitoring dashboards
 """
 
 import asyncio
-import time
-import logging
-from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
-from collections import defaultdict, deque
-import statistics
 import json
+import logging
 import os
+import statistics
+from collections import deque
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 

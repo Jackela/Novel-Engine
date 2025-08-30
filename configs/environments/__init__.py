@@ -20,7 +20,7 @@ Example:
 """
 
 import os
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 __version__ = "1.0.0"
 

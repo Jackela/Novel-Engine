@@ -274,7 +274,7 @@
 
 .item-score {
   font-weight: 600;
-  color: #666;
+  color: #495057;
 }
 
 .item-details {
@@ -492,7 +492,7 @@
 
 .character-card span {
   font-size: 0.85rem;
-  color: #666;
+  color: #495057;
 }
 
 .generation-controls {

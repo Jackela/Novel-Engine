@@ -12,18 +12,18 @@ Infrastructure implementations for turn orchestration including:
 
 from .pipeline_phases import (
     BasePhaseImplementation,
-    WorldUpdatePhase,
-    SubjectiveBriefPhase,
-    InteractionOrchestrationPhase,
     EventIntegrationPhase,
-    NarrativeIntegrationPhase
+    InteractionOrchestrationPhase,
+    NarrativeIntegrationPhase,
+    SubjectiveBriefPhase,
+    WorldUpdatePhase,
 )
 
 __all__ = [
-    'BasePhaseImplementation',
-    'WorldUpdatePhase',
-    'SubjectiveBriefPhase', 
-    'InteractionOrchestrationPhase',
-    'EventIntegrationPhase',
-    'NarrativeIntegrationPhase'
+    "BasePhaseImplementation",
+    "WorldUpdatePhase",
+    "SubjectiveBriefPhase",
+    "InteractionOrchestrationPhase",
+    "EventIntegrationPhase",
+    "NarrativeIntegrationPhase",
 ]

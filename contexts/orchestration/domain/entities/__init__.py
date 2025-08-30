@@ -10,6 +10,4 @@ Domain entities for turn orchestration including:
 
 from .turn import Turn
 
-__all__ = [
-    'Turn'
-]
+__all__ = ["Turn"]

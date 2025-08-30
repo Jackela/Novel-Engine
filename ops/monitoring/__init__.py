@@ -18,8 +18,7 @@ Example:
     from ops.monitoring.synthetic import create_health_checks
 """
 
-from typing import Dict, Any, List, Optional
-import os
+from typing import Any, Dict
 
 __version__ = "1.0.0"
 
@@ -40,13 +39,7 @@ __all__ = [
 
 # Import submodules
 try:
-    from . import observability
-    from . import synthetic
-    from . import dashboards
-    from . import alerts
-    from . import logging
-    from . import docker
-    from . import grafana
+    from . import alerts, dashboards, docker, grafana, logging, observability, synthetic
 except ImportError:
     # Allow graceful degradation if submodules aren't ready yet
     pass

@@ -10,7 +10,7 @@
  * - Virtual scrolling and windowing
  */
 
-import { useCallback, useEffect, useRef, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import { unstable_scheduleCallback, unstable_LowPriority } from 'scheduler';
 
 // Performance monitoring types

@@ -7,4 +7,4 @@ Equipment performance monitoring, failure prediction, and analytics.
 
 from .performance_monitor import PerformanceMonitor
 
-__all__ = ['PerformanceMonitor']
+__all__ = ["PerformanceMonitor"]

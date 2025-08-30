@@ -1,0 +1,114 @@
+{
+  "timestamp": "2025-08-29T21:29:29.562Z",
+  "character": "Aria Shadowbane",
+  "goal": "Explore world and build trust with Merchant Aldric",
+  "turns": [
+    {
+      "turn": 1,
+      "action": "initial_observation",
+      "description": "Aria surveys the transformed professional dashboard",
+      "result": {
+        "title": "Novel Engine - AI Story Generator",
+        "theme": "rgb(10, 10, 11)",
+        "tileCount": 10,
+        "buttonCount": 10,
+        "worldMapVisible": true
+      },
+      "success": true,
+      "screenshot": "aria-turn-1-1756502975797.png"
+    },
+    {
+      "turn": 2,
+      "action": "explore_world_map",
+      "description": "Aria examines the world state map for locations",
+      "result": {
+        "mapInteractionAttempted": true
+      },
+      "success": true,
+      "screenshot": "aria-turn-2-1756502979244.png"
+    },
+    {
+      "turn": 3,
+      "action": "locate_merchant_aldric",
+      "description": "Aria searches for Merchant Aldric in the interface",
+      "result": {
+        "merchantMentioned": true,
+        "aldricMentioned": true,
+        "merchantQuarterFound": true,
+        "allMerchantReferences": [
+          "merchant quarter\nm\n1\nancient ruins\ne\n1\nshadow forest\nc\nlast updated: 07:29:30\nreal-time activity\n2\n\nlive feed\n\n5 events\n\naria shadowbane initiated a stealth sequence\n\naria shadowbane\njust now\n\nnew narrative thread: \"the ancient prophecy\" introduced\n\n2m ago\n\ngenerated 3 dialogue responses for merchant encounter\n\n3m ago\n\nmerchant aldric engaged in dialogue with party\n\nmerchant aldric\n4m ago\n\nupdated character relationship: trust +2 (aria → aldric",
+          "merchant aldric",
+          "merchant aldric • trader\n\ntrust: 65% • 3 connections\nevent cascade flow\n5 events\n6 dependencies\n2 active\n\nancient prophecy\n\nprophecy discovery triggers quest\ncompleted\n\nmerchant meeting\n\naldric"
+        ]
+      },
+      "success": true,
+      "screenshot": "aria-turn-3-1756502979445.png"
+    },
+    {
+      "turn": 4,
+      "action": "interact_with_elements",
+      "description": "Aria interacts with dashboard elements",
+      "result": {
+        "buttonsClicked": true,
+        "chipsClicked": true
+      },
+      "success": true,
+      "screenshot": "aria-turn-4-1756502984787.png"
+    },
+    {
+      "turn": 5,
+      "action": "build_trust",
+      "description": "Aria focuses on building trust with Merchant Aldric",
+      "result": {
+        "trustKeywords": 10,
+        "merchantContext": true,
+        "interactiveElements": 10
+      },
+      "success": true,
+      "screenshot": "aria-turn-5-1756502985195.png"
+    }
+  ],
+  "screenshots": [
+    "aria-turn-1-1756502975797.png",
+    "aria-turn-2-1756502979244.png",
+    "aria-turn-3-1756502979445.png",
+    "aria-turn-4-1756502984787.png",
+    "aria-turn-5-1756502985195.png"
+  ],
+  "errors": [
+    {
+      "type": "console_error",
+      "message": "Warning: Received `%s` for a non-boolean attribute `%s`.\n\nIf you want to write it to the DOM, pass a string instead: %s=\"%s\" or %s={value.toString()}.%s true active active true active \n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Avatar2 (http://localhost:3002/node_modules/.vite/deps/@mui_material.js?v=7e9b9789:10721:17)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Grid2 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:2821:24)\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Grid2 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:2821:24)\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Box3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:352:19)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Box3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:352:19)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Box3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:352:19)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Box3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:352:19)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Paper2 (http://localhost:3002/node_modules/.vite/deps/@mui_material.js?v=7e9b9789:2155:17)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at GridTile (http://localhost:3002/src/components/layout/GridTile.tsx:95:3)\n    at WorldStateMap (http://localhost:3002/src/components/dashboard/WorldStateMap.tsx:87:26)\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Box3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:352:19)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at BentoGrid (http://localhost:3002/src/components/layout/BentoGrid.tsx:52:22)\n    at main\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Container3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:2001:19)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Box3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:352:19)\n    at DashboardLayout (http://localhost:3002/src/components/layout/DashboardLayout.tsx:41:28)\n    at Dashboard (http://localhost:3002/src/components/dashboard/Dashboard.tsx:52:22)\n    at ProtectedRoute (http://localhost:3002/src/App.tsx:253:27)\n    at RenderedRoute (http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=7e9b9789:4088:5)\n    at Routes (http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=7e9b9789:4558:5)\n    at Router (http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=7e9b9789:4501:15)\n    at BrowserRouter (http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=7e9b9789:5247:5)\n    at AppRoutes\n    at DefaultPropsProvider (http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:8651:3)\n    at RtlProvider (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:1022:5)\n    at ThemeProvider (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:974:5)\n    at ThemeProvider2 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:1107:5)\n    at ThemeProvider3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:3161:12)\n    at Provider (http://localhost:3002/node_modules/.vite/deps/react-redux.js?v=7e9b9789:1175:3)\n    at App (http://localhost:3002/src/App.tsx:359:3)",
+      "timestamp": "2025-08-29T21:29:30.970Z"
+    },
+    {
+      "type": "console_error",
+      "message": "MUI: You are providing a disabled `button` child to the Tooltip component.\nA disabled element does not fire events.\nTooltip needs to listen to the child element's events to display the title.\n\nAdd a simple wrapper element, such as a `span`.",
+      "timestamp": "2025-08-29T21:29:31.046Z"
+    },
+    {
+      "type": "console_error",
+      "message": "Warning: validateDOMNesting(...): %s cannot appear as a descendant of <%s>.%s <div> p \n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Chip2 (http://localhost:3002/node_modules/.vite/deps/@mui_material.js?v=7e9b9789:8261:17)\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Grid2 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:2821:24)\n    at p\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Typography2 (http://localhost:3002/node_modules/.vite/deps/@mui_material.js?v=7e9b9789:4456:22)\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at ListItemText2 (http://localhost:3002/node_modules/.vite/deps/@mui_material.js?v=7e9b9789:23736:17)\n    at li\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at ListItem2 (http://localhost:3002/node_modules/.vite/deps/@mui_material.js?v=7e9b9789:23232:17)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at ul\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at List2 (http://localhost:3002/node_modules/.vite/deps/@mui_material.js?v=7e9b9789:22703:17)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Box3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:352:19)\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Box3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:352:19)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Paper2 (http://localhost:3002/node_modules/.vite/deps/@mui_material.js?v=7e9b9789:2155:17)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at GridTile (http://localhost:3002/src/components/layout/GridTile.tsx:95:3)\n    at RealTimeActivity (http://localhost:3002/src/components/dashboard/RealTimeActivity.tsx:72:29)\n    at Suspense\n    at LazyWrapper (http://localhost:3002/src/components/dashboard/Dashboard.tsx:38:24)\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Box3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:352:19)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at BentoGrid (http://localhost:3002/src/components/layout/BentoGrid.tsx:52:22)\n    at main\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Container3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:2001:19)\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at div\n    at http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:1487:49\n    at Box3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:352:19)\n    at DashboardLayout (http://localhost:3002/src/components/layout/DashboardLayout.tsx:41:28)\n    at Dashboard (http://localhost:3002/src/components/dashboard/Dashboard.tsx:52:22)\n    at ProtectedRoute (http://localhost:3002/src/App.tsx:253:27)\n    at RenderedRoute (http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=7e9b9789:4088:5)\n    at Routes (http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=7e9b9789:4558:5)\n    at Router (http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=7e9b9789:4501:15)\n    at BrowserRouter (http://localhost:3002/node_modules/.vite/deps/react-router-dom.js?v=7e9b9789:5247:5)\n    at AppRoutes\n    at DefaultPropsProvider (http://localhost:3002/node_modules/.vite/deps/chunk-5Q4IBKJ2.js?v=7e9b9789:8651:3)\n    at RtlProvider (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:1022:5)\n    at ThemeProvider (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:974:5)\n    at ThemeProvider2 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:1107:5)\n    at ThemeProvider3 (http://localhost:3002/node_modules/.vite/deps/chunk-FPQFGAWG.js?v=7e9b9789:3161:12)\n    at Provider (http://localhost:3002/node_modules/.vite/deps/react-redux.js?v=7e9b9789:1175:3)\n    at App (http://localhost:3002/src/App.tsx:359:3)",
+      "timestamp": "2025-08-29T21:29:31.120Z"
+    },
+    {
+      "type": "console_error",
+      "message": "MUI: You are providing a disabled `button` child to the Tooltip component.\nA disabled element does not fire events.\nTooltip needs to listen to the child element's events to display the title.\n\nAdd a simple wrapper element, such as a `span`.",
+      "timestamp": "2025-08-29T21:29:44.877Z"
+    },
+    {
+      "type": "console_error",
+      "message": "MUI: You are providing a disabled `button` child to the Tooltip component.\nA disabled element does not fire events.\nTooltip needs to listen to the child element's events to display the title.\n\nAdd a simple wrapper element, such as a `span`.",
+      "timestamp": "2025-08-29T21:29:44.996Z"
+    }
+  ],
+  "status": "completed",
+  "finalAssessment": {
+    "noErrors": true,
+    "responsive": true,
+    "interactive": true,
+    "professionalTheme": true
+  },
+  "successfulTurns": 5,
+  "totalErrors": 5
+}

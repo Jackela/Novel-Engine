@@ -6,21 +6,21 @@ Provides intelligent alerting, escalation, and communication across multiple cha
 """
 
 import asyncio
-import json
 import logging
 import time
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
 # Email imports with fallback
 try:
     import smtplib
-    from email.mime.text import MIMEText as MimeText
-    from email.mime.multipart import MIMEMultipart as MimeMultipart  
-    from email.mime.base import MIMEBase as MimeBase
     from email import encoders
+    from email.mime.base import MIMEBase as MimeBase
+    from email.mime.multipart import MIMEMultipart as MimeMultipart
+    from email.mime.text import MIMEText as MimeText
     EMAIL_AVAILABLE = True
 except ImportError:
     EMAIL_AVAILABLE = False
@@ -29,29 +29,33 @@ except ImportError:
     MimeBase = None
     encoders = None
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
 import httpx
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 # Import Novel-Engine patterns
 try:
     from config_loader import get_config
+
     from src.event_bus import EventBus
 except ImportError:
     # Fallback for testing
-    get_config = lambda: None
-    EventBus = lambda: None
-
-# Import AI testing configuration
-from ai_testing_config import get_ai_testing_service_config
+    def get_config():
+        return None
+    def EventBus():
+        return None
 
 # Import AI testing contracts
 from ai_testing.interfaces.service_contracts import (
-    INotificationService, TestResult, TestExecution, TestContext,
-    QualityMetric, TestStatus, ServiceHealthResponse
+    INotificationService,
+    ServiceHealthResponse,
+    TestContext,
+    TestResult,
 )
+
+# Import AI testing configuration
+from ai_testing_config import get_ai_testing_service_config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -186,6 +190,15 @@ class Alert(BaseModel):
     acknowledged: bool = False
     acknowledged_by: Optional[str] = None
     resolved: bool = False
+
+class NotificationRequest(BaseModel):
+    """Notification request for sending notifications"""
+    notification_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    message: str
+    priority: NotificationPriority
+    channels: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 class Notification(BaseModel):
     """Individual notification instance"""
@@ -453,7 +466,6 @@ class FileChannelHandler(ChannelHandler):
     async def send(self, notification: Notification) -> bool:
         """Write notification to file"""
         try:
-            from pathlib import Path
             date_str = datetime.now().strftime("%Y%m%d")
             filename = self.filename_pattern.replace("{date}", date_str)
             filepath = self.output_directory / filename
@@ -1292,6 +1304,7 @@ This is an automated notification from Novel-Engine AI Testing System.
 
 from contextlib import asynccontextmanager
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI lifespan management"""
@@ -1335,7 +1348,7 @@ async def health_check():
     
     channels_status = "connected" if service.channel_handlers else "disconnected"
     active_alerts = len(service.active_alerts)
-    pending_notifications = len(service.pending_notifications)
+    len(service.pending_notifications)
     
     status = "healthy" if channels_status == "connected" else "degraded"
     

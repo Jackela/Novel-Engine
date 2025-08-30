@@ -6,23 +6,27 @@ Interaction scheduling, priority management, and queue processing system.
 Handles queuing, prioritization, and scheduling of interaction requests.
 """
 
-import logging
 import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Set, Callable
+import logging
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
 from queue import PriorityQueue
-from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from ..core.types import (
-    InteractionContext, InteractionType, InteractionPriority,
-    InteractionPhase, InteractionOutcome, InteractionEngineConfig
+    InteractionContext,
+    InteractionEngineConfig,
+    InteractionOutcome,
+    InteractionPhase,
+    InteractionPriority,
+    InteractionType,
 )
 
 # Import enhanced core systems
 try:
-    from src.core.data_models import StandardResponse, ErrorInfo, CharacterState
+    from src.core.data_models import CharacterState, ErrorInfo, StandardResponse
     from src.core.types import AgentID
 except ImportError:
     # Fallback for testing

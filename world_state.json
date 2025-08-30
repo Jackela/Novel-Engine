@@ -31,6 +31,9 @@
     },
     "test_key": "test_value"
   },
-  "last_updated": "2025-08-25T16:17:50.727948",
-  "version": "1.0"
+  "metadata": {
+    "last_updated": "2025-08-30T10:36:30.543453",
+    "change_count": 1,
+    "checksum": "36e60f709c3977d2e4d940ed423acbe5"
+  }
 }

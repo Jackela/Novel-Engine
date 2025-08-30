@@ -7,7 +7,7 @@ contexts, implementing a sophisticated pipeline that coordinates:
 
 1. World State Updates - Entity positions, environment changes, time progression
 2. Subjective Brief Generation - Agent perception updates using AI Gateway
-3. Interaction Orchestration - Agent decision-making and negotiation processes  
+3. Interaction Orchestration - Agent decision-making and negotiation processes
 4. Event Integration - Writing results back to World state with consistency
 5. Narrative Integration - Story coherence using AI Gateway and causal analysis
 

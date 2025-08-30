@@ -14,43 +14,77 @@ Following DDD principles, this layer:
 """
 
 from .aggregates.character import Character
-from .value_objects.character_id import CharacterID
-from .value_objects.character_profile import (
-    CharacterProfile, Gender, CharacterRace, CharacterClass,
-    PhysicalTraits, PersonalityTraits, Background
-)
-from .value_objects.character_stats import (
-    CharacterStats, CoreAbilities, VitalStats, CombatStats,
-    AbilityScore
-)
-from .value_objects.skills import (
-    Skills, Skill, SkillGroup, SkillCategory, ProficiencyLevel
-)
 from .events.character_events import (
-    CharacterEvent, CharacterCreated, CharacterUpdated,
-    CharacterStatsChanged, CharacterLeveledUp, CharacterDeleted
+    CharacterCreated,
+    CharacterDeleted,
+    CharacterEvent,
+    CharacterLeveledUp,
+    CharacterStatsChanged,
+    CharacterUpdated,
 )
 from .repositories.character_repository import (
-    ICharacterRepository, RepositoryException, 
-    ConcurrencyException, NotSupportedException
+    ConcurrencyException,
+    ICharacterRepository,
+    NotSupportedException,
+    RepositoryException,
+)
+from .value_objects.character_id import CharacterID
+from .value_objects.character_profile import (
+    Background,
+    CharacterClass,
+    CharacterProfile,
+    CharacterRace,
+    Gender,
+    PersonalityTraits,
+    PhysicalTraits,
+)
+from .value_objects.character_stats import (
+    AbilityScore,
+    CharacterStats,
+    CombatStats,
+    CoreAbilities,
+    VitalStats,
+)
+from .value_objects.skills import (
+    ProficiencyLevel,
+    Skill,
+    SkillCategory,
+    SkillGroup,
+    Skills,
 )
 
 __all__ = [
     # Aggregates
     "Character",
-    
     # Value Objects
     "CharacterID",
-    "CharacterProfile", "Gender", "CharacterRace", "CharacterClass",
-    "PhysicalTraits", "PersonalityTraits", "Background",
-    "CharacterStats", "CoreAbilities", "VitalStats", "CombatStats", "AbilityScore",
-    "Skills", "Skill", "SkillGroup", "SkillCategory", "ProficiencyLevel",
-    
+    "CharacterProfile",
+    "Gender",
+    "CharacterRace",
+    "CharacterClass",
+    "PhysicalTraits",
+    "PersonalityTraits",
+    "Background",
+    "CharacterStats",
+    "CoreAbilities",
+    "VitalStats",
+    "CombatStats",
+    "AbilityScore",
+    "Skills",
+    "Skill",
+    "SkillGroup",
+    "SkillCategory",
+    "ProficiencyLevel",
     # Domain Events
-    "CharacterEvent", "CharacterCreated", "CharacterUpdated",
-    "CharacterStatsChanged", "CharacterLeveledUp", "CharacterDeleted",
-    
+    "CharacterEvent",
+    "CharacterCreated",
+    "CharacterUpdated",
+    "CharacterStatsChanged",
+    "CharacterLeveledUp",
+    "CharacterDeleted",
     # Repository Interface
-    "ICharacterRepository", "RepositoryException",
-    "ConcurrencyException", "NotSupportedException",
+    "ICharacterRepository",
+    "RepositoryException",
+    "ConcurrencyException",
+    "NotSupportedException",
 ]

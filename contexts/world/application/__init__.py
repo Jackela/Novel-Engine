@@ -21,8 +21,4 @@ from .use_cases import UpdateWorldStateUC
 # Import result types
 from .use_cases.update_world_state_uc import UpdateWorldStateResult
 
-__all__ = [
-    "ApplyWorldDelta",
-    "UpdateWorldStateUC", 
-    "UpdateWorldStateResult"
-]
+__all__ = ["ApplyWorldDelta", "UpdateWorldStateUC", "UpdateWorldStateResult"]

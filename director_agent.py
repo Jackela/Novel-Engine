@@ -9,7 +9,7 @@ to work while providing the benefits of modular architecture.
 Original functionality is preserved through the integrated architecture:
 - DirectorAgentBase: Core initialization and basic interfaces
 - TurnOrchestrator: Turn execution and coordination
-- WorldStateCoordinator: World state management and persistence  
+- WorldStateCoordinator: World state management and persistence
 - AgentLifecycleManager: Iron Laws validation and action adjudication
 """
 
@@ -17,4 +17,4 @@ Original functionality is preserved through the integrated architecture:
 from director_agent_integrated import DirectorAgent
 
 # Re-export for backward compatibility
-__all__ = ['DirectorAgent']
+__all__ = ["DirectorAgent"]

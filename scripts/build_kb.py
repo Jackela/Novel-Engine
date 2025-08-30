@@ -21,16 +21,16 @@ Startup Guards:
 5. Knowledge base integrity checking
 """
 
-import os
-import sys
-import yaml
+import argparse
 import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-import argparse
-import time
+import os
+import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict
+
+import yaml
 
 
 class StartupGuard:

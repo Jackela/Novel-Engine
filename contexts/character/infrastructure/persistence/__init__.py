@@ -17,9 +17,15 @@ providing object-relational mapping and data access capabilities.
 
 # Conditional import to handle platform naming conflict
 try:
-    from .character_models import CharacterORM, CharacterProfileORM, CharacterStatsORM, CharacterSkillsORM
+    from .character_models import (
+        CharacterORM,
+        CharacterProfileORM,
+        CharacterSkillsORM,
+        CharacterStatsORM,
+    )
+
     _MODELS_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     # Handle platform naming conflict gracefully
     CharacterORM = None
     CharacterProfileORM = None
@@ -29,7 +35,7 @@ except ImportError as e:
 
 __all__ = [
     "CharacterORM",
-    "CharacterProfileORM", 
+    "CharacterProfileORM",
     "CharacterStatsORM",
-    "CharacterSkillsORM"
+    "CharacterSkillsORM",
 ]

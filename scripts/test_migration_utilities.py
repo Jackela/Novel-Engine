@@ -6,13 +6,12 @@ Utilities to help migrate tests from the current structure to the new
 organized structure based on the comprehensive audit.
 """
 
-import os
-import shutil
-import re
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
 import json
+import re
+import shutil
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 
 class TestMigrationUtilities:
@@ -398,15 +397,15 @@ class TestMigrationUtilities:
         print(f"Medium confidence: {stats['medium_confidence']}")  
         print(f"Low confidence: {stats['low_confidence']}")
         
-        print(f"\n📊 BY CATEGORY:")
+        print("\n📊 BY CATEGORY:")
         for category, count in stats["categories"].items():
             print(f"  {category}: {count} files")
         
-        print(f"\n📁 DIRECTORIES TO CREATE:")
+        print("\n📁 DIRECTORIES TO CREATE:")
         for dir_path in plan["directories_to_create"]:
             print(f"  {dir_path}")
         
-        print(f"\n🔄 HIGH CONFIDENCE MIGRATIONS:")
+        print("\n🔄 HIGH CONFIDENCE MIGRATIONS:")
         high_conf_files = [f for f in plan["files_to_migrate"] if f["confidence"] > 0.7]
         for migration in high_conf_files[:10]:  # Show first 10
             print(f"  {migration['source']} -> {migration['target']} ({migration['confidence']:.2f})")

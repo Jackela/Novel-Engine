@@ -7,22 +7,22 @@ phase outcomes, performance metrics, and comprehensive turn analytics.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from .phase_status import PhaseType, PhaseStatus
+from .phase_status import PhaseStatus, PhaseType
 
 
 @dataclass(frozen=True)
 class PhaseResult:
     """
     Immutable value object representing the result of a single pipeline phase.
-    
+
     Encapsulates complete phase execution outcome including timing,
     events processed, resources consumed, and any generated artifacts.
-    
+
     Attributes:
         phase_type: Type of pipeline phase
         phase_status: Final execution status of the phase
@@ -35,7 +35,7 @@ class PhaseResult:
         compensation_applied: List of compensation actions if any
         cross_context_calls: Record of calls made to other contexts
         metadata: Additional phase-specific result data
-        
+
     Business Rules:
         - Phase must have valid status
         - Events generated/consumed must be valid UUIDs
@@ -43,7 +43,7 @@ class PhaseResult:
         - AI usage must be valid if phase used AI services
         - Error details required if status indicates failure
     """
-    
+
     phase_type: PhaseType
     phase_status: PhaseStatus
     events_generated: List[UUID] = field(default_factory=list)
@@ -55,27 +55,27 @@ class PhaseResult:
     compensation_applied: List[str] = field(default_factory=list)
     cross_context_calls: List[Dict[str, Any]] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def __post_init__(self):
         """Validate phase result structure and business rules."""
         # Validate phase status consistency
         if self.phase_type != self.phase_status.phase_type:
             raise ValueError("Phase type must match phase status type")
-        
+
         # Validate events are UUIDs
         for event_id in self.events_generated + self.events_consumed:
             if not isinstance(event_id, UUID):
                 raise ValueError("Event IDs must be UUIDs")
-        
+
         # Validate performance metrics are non-negative
         for metric, value in self.performance_metrics.items():
             if not isinstance(value, (int, float)) or value < 0:
                 raise ValueError(f"Performance metric {metric} must be non-negative")
-        
+
         # Validate error details for failed phases
         if self.phase_status.status.is_failure() and not self.error_details:
             raise ValueError("Failed phases must have error details")
-    
+
     @classmethod
     def create_successful(
         cls,
@@ -86,11 +86,11 @@ class PhaseResult:
         artifacts_created: List[str] = None,
         performance_metrics: Dict[str, float] = None,
         ai_usage: Optional[Dict[str, Any]] = None,
-        metadata: Dict[str, Any] = None
-    ) -> 'PhaseResult':
+        metadata: Dict[str, Any] = None,
+    ) -> "PhaseResult":
         """
         Create successful phase result.
-        
+
         Args:
             phase_type: Type of pipeline phase
             phase_status: Completed phase status
@@ -100,7 +100,7 @@ class PhaseResult:
             performance_metrics: Performance measurements
             ai_usage: AI service usage statistics
             metadata: Additional result data
-            
+
         Returns:
             PhaseResult for successful phase execution
         """
@@ -112,9 +112,9 @@ class PhaseResult:
             artifacts_created=artifacts_created or [],
             performance_metrics=performance_metrics or {},
             ai_usage=ai_usage,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
-    
+
     @classmethod
     def create_failed(
         cls,
@@ -124,11 +124,11 @@ class PhaseResult:
         events_consumed: List[UUID] = None,
         performance_metrics: Dict[str, float] = None,
         compensation_applied: List[str] = None,
-        metadata: Dict[str, Any] = None
-    ) -> 'PhaseResult':
+        metadata: Dict[str, Any] = None,
+    ) -> "PhaseResult":
         """
         Create failed phase result.
-        
+
         Args:
             phase_type: Type of pipeline phase
             phase_status: Failed phase status
@@ -137,7 +137,7 @@ class PhaseResult:
             performance_metrics: Performance measurements
             compensation_applied: Compensation actions taken
             metadata: Additional error context
-            
+
         Returns:
             PhaseResult for failed phase execution
         """
@@ -148,48 +148,50 @@ class PhaseResult:
             performance_metrics=performance_metrics or {},
             error_details=error_details,
             compensation_applied=compensation_applied or [],
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
-    
+
     def get_execution_time(self) -> Optional[timedelta]:
         """Get phase execution duration."""
         return self.phase_status.get_execution_time()
-    
+
     def get_events_net_change(self) -> int:
         """Get net change in events (generated - consumed)."""
         return len(self.events_generated) - len(self.events_consumed)
-    
+
     def was_successful(self) -> bool:
         """Check if phase completed successfully."""
         return self.phase_status.status.is_successful()
-    
+
     def was_compensated(self) -> bool:
         """Check if phase required compensation."""
         return len(self.compensation_applied) > 0
-    
+
     def used_ai_services(self) -> bool:
         """Check if phase used AI services."""
         return self.ai_usage is not None and len(self.ai_usage) > 0
-    
+
     def get_ai_cost(self) -> Decimal:
         """Get AI cost for this phase."""
         if not self.ai_usage:
-            return Decimal('0.00')
-        return Decimal(str(self.ai_usage.get('total_cost', '0.00')))
-    
+            return Decimal("0.00")
+        return Decimal(str(self.ai_usage.get("total_cost", "0.00")))
+
     def get_performance_summary(self) -> Dict[str, Any]:
         """Get comprehensive performance summary."""
         execution_time = self.get_execution_time()
-        
+
         return {
-            'execution_time_ms': int(execution_time.total_seconds() * 1000) if execution_time else None,
-            'events_processed': len(self.events_consumed),
-            'events_generated': len(self.events_generated),
-            'artifacts_created': len(self.artifacts_created),
-            'ai_cost': float(self.get_ai_cost()),
-            'cross_context_calls': len(self.cross_context_calls),
-            'compensation_required': self.was_compensated(),
-            'success': self.was_successful()
+            "execution_time_ms": (
+                int(execution_time.total_seconds() * 1000) if execution_time else None
+            ),
+            "events_processed": len(self.events_consumed),
+            "events_generated": len(self.events_generated),
+            "artifacts_created": len(self.artifacts_created),
+            "ai_cost": float(self.get_ai_cost()),
+            "cross_context_calls": len(self.cross_context_calls),
+            "compensation_required": self.was_compensated(),
+            "success": self.was_successful(),
         }
 
 
@@ -197,10 +199,10 @@ class PhaseResult:
 class PipelineResult:
     """
     Immutable value object representing the complete result of pipeline execution.
-    
+
     Encapsulates comprehensive turn outcome including all phase results,
     overall performance metrics, resource consumption, and audit information.
-    
+
     Attributes:
         turn_id: Unique identifier for the turn
         overall_status: Final pipeline execution status
@@ -215,7 +217,7 @@ class PipelineResult:
         audit_trail: Complete execution audit trail
         error_summary: Summary of any errors encountered
         metadata: Additional pipeline result information
-        
+
     Business Rules:
         - Must have at least one phase result
         - Overall status must reflect phase outcomes
@@ -223,7 +225,7 @@ class PipelineResult:
         - Resource consumption must be accurate
         - Audit trail must be complete for compliance
     """
-    
+
     turn_id: UUID
     overall_status: str  # "completed", "failed", "partially_completed", "compensated"
     phase_results: List[PhaseResult]
@@ -237,67 +239,72 @@ class PipelineResult:
     audit_trail: List[Dict[str, Any]] = field(default_factory=list)
     error_summary: Optional[Dict[str, Any]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def __post_init__(self):
         """Validate pipeline result structure and business rules."""
         # Must have phase results
         if not self.phase_results:
             raise ValueError("Pipeline result must have at least one phase result")
-        
+
         # Validate overall status
         valid_statuses = {"completed", "failed", "partially_completed", "compensated"}
         if self.overall_status not in valid_statuses:
             raise ValueError(f"Overall status must be one of {valid_statuses}")
-        
+
         # Validate metrics are non-negative
         if self.total_events_processed < 0:
             raise ValueError("Total events processed cannot be negative")
-        
+
         if self.total_ai_cost < 0:
             raise ValueError("Total AI cost cannot be negative")
-        
+
         # Validate phase result consistency
         phase_types_seen = set()
         for result in self.phase_results:
             if result.phase_type in phase_types_seen:
                 raise ValueError(f"Duplicate phase result for {result.phase_type}")
             phase_types_seen.add(result.phase_type)
-    
+
     @classmethod
     def create_successful(
         cls,
         turn_id: UUID,
         phase_results: List[PhaseResult],
         total_execution_time: timedelta,
-        metadata: Dict[str, Any] = None
-    ) -> 'PipelineResult':
+        metadata: Dict[str, Any] = None,
+    ) -> "PipelineResult":
         """
         Create successful pipeline result.
-        
+
         Args:
             turn_id: Turn identifier
             phase_results: Results from all phases
             total_execution_time: Complete execution time
             metadata: Additional result information
-            
+
         Returns:
             PipelineResult for successful pipeline execution
         """
         # Calculate aggregated metrics
         total_events = sum(len(r.events_consumed) for r in phase_results)
         total_ai_cost = sum(r.get_ai_cost() for r in phase_results)
-        
+
         # Build performance summary
         performance_summary = {
-            'phases_completed': len(phase_results),
-            'phases_successful': sum(1 for r in phase_results if r.was_successful()),
-            'total_execution_time_ms': int(total_execution_time.total_seconds() * 1000),
-            'average_phase_time_ms': int(total_execution_time.total_seconds() * 1000) // len(phase_results),
-            'events_per_second': total_events / total_execution_time.total_seconds() if total_execution_time.total_seconds() > 0 else 0,
-            'ai_operations': sum(1 for r in phase_results if r.used_ai_services()),
-            'compensation_required': any(r.was_compensated() for r in phase_results)
+            "phases_completed": len(phase_results),
+            "phases_successful": sum(1 for r in phase_results if r.was_successful()),
+            "total_execution_time_ms": int(total_execution_time.total_seconds() * 1000),
+            "average_phase_time_ms": int(total_execution_time.total_seconds() * 1000)
+            // len(phase_results),
+            "events_per_second": (
+                total_events / total_execution_time.total_seconds()
+                if total_execution_time.total_seconds() > 0
+                else 0
+            ),
+            "ai_operations": sum(1 for r in phase_results if r.used_ai_services()),
+            "compensation_required": any(r.was_compensated() for r in phase_results),
         }
-        
+
         return cls(
             turn_id=turn_id,
             overall_status="completed",
@@ -306,9 +313,9 @@ class PipelineResult:
             total_events_processed=total_events,
             total_ai_cost=total_ai_cost,
             performance_summary=performance_summary,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
-    
+
     @classmethod
     def create_failed(
         cls,
@@ -317,11 +324,11 @@ class PipelineResult:
         total_execution_time: timedelta,
         error_summary: Dict[str, Any],
         saga_actions_taken: List[str] = None,
-        metadata: Dict[str, Any] = None
-    ) -> 'PipelineResult':
+        metadata: Dict[str, Any] = None,
+    ) -> "PipelineResult":
         """
         Create failed pipeline result.
-        
+
         Args:
             turn_id: Turn identifier
             phase_results: Results from completed/attempted phases
@@ -329,25 +336,25 @@ class PipelineResult:
             error_summary: Summary of errors encountered
             saga_actions_taken: Compensation actions performed
             metadata: Additional error context
-            
+
         Returns:
             PipelineResult for failed pipeline execution
         """
         # Determine overall status based on phase results and saga actions
         has_successful_phases = any(r.was_successful() for r in phase_results)
         has_compensation = bool(saga_actions_taken)
-        
+
         if has_compensation:
             overall_status = "compensated"
         elif has_successful_phases:
             overall_status = "partially_completed"
         else:
             overall_status = "failed"
-        
+
         # Calculate metrics for completed phases
         total_events = sum(len(r.events_consumed) for r in phase_results)
         total_ai_cost = sum(r.get_ai_cost() for r in phase_results)
-        
+
         return cls(
             turn_id=turn_id,
             overall_status=overall_status,
@@ -357,16 +364,16 @@ class PipelineResult:
             total_ai_cost=total_ai_cost,
             saga_actions_taken=saga_actions_taken or [],
             error_summary=error_summary,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
-    
+
     def get_phase_result(self, phase_type: PhaseType) -> Optional[PhaseResult]:
         """
         Get result for specific phase.
-        
+
         Args:
             phase_type: Type of phase to get result for
-            
+
         Returns:
             PhaseResult if phase was executed, None otherwise
         """
@@ -374,121 +381,126 @@ class PipelineResult:
             if result.phase_type == phase_type:
                 return result
         return None
-    
+
     def get_successful_phases(self) -> List[PhaseResult]:
         """Get list of successfully completed phases."""
         return [r for r in self.phase_results if r.was_successful()]
-    
+
     def get_failed_phases(self) -> List[PhaseResult]:
         """Get list of failed phases."""
         return [r for r in self.phase_results if not r.was_successful()]
-    
+
     def was_fully_successful(self) -> bool:
         """Check if all phases completed successfully."""
         return self.overall_status == "completed"
-    
+
     def required_compensation(self) -> bool:
         """Check if saga compensation was required."""
         return len(self.saga_actions_taken) > 0
-    
+
     def get_completion_percentage(self) -> float:
         """
         Get overall completion percentage.
-        
+
         Returns:
             Percentage of phases that completed successfully (0.0-1.0)
         """
         if not self.phase_results:
             return 0.0
-        
+
         successful_count = len(self.get_successful_phases())
         total_phases = 5  # Always 5 phases in the pipeline
-        
+
         return successful_count / total_phases
-    
+
     def get_performance_score(self) -> float:
         """
         Calculate overall performance score.
-        
+
         Returns:
             Performance score from 0.0 to 1.0 based on success rate and timing
         """
         completion_score = self.get_completion_percentage()
-        
+
         # Bonus for full completion
         if self.was_fully_successful():
             completion_score *= 1.1
-        
+
         # Penalty for compensation required
         if self.required_compensation():
             completion_score *= 0.8
-        
+
         return min(1.0, completion_score)
-    
+
     def get_total_events_generated(self) -> int:
         """Get total events generated across all phases."""
         return sum(len(r.events_generated) for r in self.phase_results)
-    
+
     def get_average_phase_time(self) -> Optional[timedelta]:
         """Get average execution time per phase."""
         if not self.phase_results:
             return None
-        
+
         total_seconds = self.total_execution_time.total_seconds()
         avg_seconds = total_seconds / len(self.phase_results)
-        
+
         return timedelta(seconds=avg_seconds)
-    
+
     def get_resource_efficiency_score(self) -> float:
         """
         Calculate resource efficiency score.
-        
+
         Returns:
             Efficiency score from 0.0 to 1.0 based on resource usage
         """
         if not self.phase_results:
             return 0.0
-        
+
         # Base efficiency on events processed per second
         events_per_second = (
             self.total_events_processed / self.total_execution_time.total_seconds()
-            if self.total_execution_time.total_seconds() > 0 else 0
+            if self.total_execution_time.total_seconds() > 0
+            else 0
         )
-        
+
         # Normalize to reasonable range (0-100 events/second = 0-1.0 score)
         efficiency_score = min(1.0, events_per_second / 100.0)
-        
+
         # Bonus for AI efficiency (more events per dollar spent)
         if self.total_ai_cost > 0:
-            events_per_dollar = float(self.total_events_processed) / float(self.total_ai_cost)
-            ai_efficiency = min(1.0, events_per_dollar / 100.0)  # Normalize to 100 events/$1
+            events_per_dollar = float(self.total_events_processed) / float(
+                self.total_ai_cost
+            )
+            ai_efficiency = min(
+                1.0, events_per_dollar / 100.0
+            )  # Normalize to 100 events/$1
             efficiency_score = (efficiency_score + ai_efficiency) / 2
-        
+
         return efficiency_score
-    
+
     def get_executive_summary(self) -> Dict[str, Any]:
         """
         Get executive summary of pipeline execution.
-        
+
         Returns:
             High-level summary suitable for dashboards and reports
         """
         return {
-            'turn_id': str(self.turn_id),
-            'overall_status': self.overall_status,
-            'execution_time_seconds': self.total_execution_time.total_seconds(),
-            'phases_completed': len(self.get_successful_phases()),
-            'total_phases': len(self.phase_results),
-            'completion_percentage': self.get_completion_percentage() * 100,
-            'events_processed': self.total_events_processed,
-            'events_generated': self.get_total_events_generated(),
-            'ai_cost': float(self.total_ai_cost),
-            'performance_score': self.get_performance_score(),
-            'resource_efficiency': self.get_resource_efficiency_score(),
-            'compensation_required': self.required_compensation(),
-            'success': self.was_fully_successful()
+            "turn_id": str(self.turn_id),
+            "overall_status": self.overall_status,
+            "execution_time_seconds": self.total_execution_time.total_seconds(),
+            "phases_completed": len(self.get_successful_phases()),
+            "total_phases": len(self.phase_results),
+            "completion_percentage": self.get_completion_percentage() * 100,
+            "events_processed": self.total_events_processed,
+            "events_generated": self.get_total_events_generated(),
+            "ai_cost": float(self.total_ai_cost),
+            "performance_score": self.get_performance_score(),
+            "resource_efficiency": self.get_resource_efficiency_score(),
+            "compensation_required": self.required_compensation(),
+            "success": self.was_fully_successful(),
         }
-    
+
     def __str__(self) -> str:
         """String representation for general use."""
         return (
@@ -496,7 +508,7 @@ class PipelineResult:
             f"phases={len(self.phase_results)}/{5}, "
             f"time={self.total_execution_time.total_seconds():.1f}s)"
         )
-    
+
     def __repr__(self) -> str:
         """Detailed representation for debugging."""
         return (

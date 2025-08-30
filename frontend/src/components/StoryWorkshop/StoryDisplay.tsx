@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Card,
@@ -43,6 +43,7 @@ import {
   Speed as SpeedIcon,
 } from '@mui/icons-material';
 import { StoryProject } from '../../types';
+import { useFocusTrap } from '../../utils/focusManagement';
 
 interface Props {
   story: StoryProject;
@@ -55,6 +56,13 @@ export default function StoryDisplay({ story, onEdit }: Props) {
   const [fontSize, setFontSize] = useState(16);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [showMetadata, setShowMetadata] = useState(false);
+  
+  // Focus management for metadata dialog
+  const metadataDialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(showMetadata, metadataDialogRef, {
+    onEscape: () => setShowMetadata(false),
+    restoreFocus: true,
+  });
 
   const handleStartEdit = () => {
     setEditedContent(story.storyContent || '');
@@ -361,15 +369,22 @@ export default function StoryDisplay({ story, onEdit }: Props) {
         onClose={() => setShowMetadata(false)}
         maxWidth="sm"
         fullWidth
+        ref={metadataDialogRef}
+        aria-labelledby="story-metadata-title"
+        aria-describedby="story-metadata-description"
       >
         <DialogTitle>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography 
+            variant="h6" 
+            id="story-metadata-title"
+            sx={{ fontWeight: 600 }}
+          >
             Story Metadata
           </Typography>
         </DialogTitle>
         
         <DialogContent>
-          <List>
+          <List id="story-metadata-description">
             <ListItem>
               <ListItemText
                 primary="Story ID"
