@@ -62,11 +62,15 @@ docs = [
 ]
 
 [tool.setuptools]
-package-dir = {"" = "."}
+packages = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "."
 
 [tool.setuptools.packages.find]
-include = ["src*"]
-exclude = ["tests*"]
+where = ["."]
+include = ["src*", "novel_engine*"]
+exclude = ["tests*", "ai_testing*", "frontend*", "docs*", "logs*"]
 
 # Black code formatting
 [tool.black]
