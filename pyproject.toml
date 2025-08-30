@@ -61,16 +61,10 @@ docs = [
     "mkdocstrings[python]>=0.19.0",
 ]
 
-[tool.setuptools]
-packages = ["src"]
-
-[tool.setuptools.package-dir]
-"" = "."
-
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*", "novel_engine*"]
-exclude = ["tests*", "ai_testing*", "frontend*", "docs*", "logs*"]
+include = ["src*"]
+exclude = ["tests*", "ai_testing*", "frontend*", "docs*", "logs*", "build*", "dist*"]
 
 # Black code formatting
 [tool.black]
