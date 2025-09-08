@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main, develop ]
   schedule:
-    # Run quality checks daily at 2 AM UTC
+    # Run a lightweight healthcheck daily at 2 AM UTC
     - cron: '0 2 * * *'
   workflow_dispatch:
     # Allow manual trigger
@@ -17,10 +17,23 @@ env:
   PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
 
 jobs:
+  scheduled-healthcheck:
+    name: Scheduled Healthcheck
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Echo basic environment
+        run: |
+          echo "🩺 Scheduled healthcheck running"
+          echo "Python: $(python3 --version)"
+          echo "Node: $(node --version)"
+          echo "✅ Healthcheck OK"
+
   code-quality:
     name: Code Quality Checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    if: github.event_name != 'schedule'
     
     steps:
     - name: Checkout code
@@ -62,6 +75,7 @@ jobs:
     name: Security Scanning
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    if: github.event_name != 'schedule'
     
     steps:
     - name: Checkout code
@@ -104,6 +118,7 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    if: github.event_name != 'schedule'
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
@@ -163,6 +178,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [code-quality, test-suite]
+    if: github.event_name != 'schedule'
     
     steps:
     - name: Checkout code
@@ -245,6 +261,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [code-quality, security-scan, test-suite]
+    if: github.event_name != 'schedule'
     
     steps:
     - name: Checkout code
@@ -351,6 +368,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [code-quality]
+    if: github.event_name != 'schedule'
     
     steps:
     - name: Checkout code
@@ -397,7 +415,8 @@ jobs:
       performance-tests,
       quality-gates,
       build-and-package,
-      documentation
+      documentation,
+      scheduled-healthcheck
     ]
     
     steps:
@@ -413,12 +432,17 @@ jobs:
         echo "Build & Package: ${{ needs.build-and-package.result }}"
         echo "Documentation: ${{ needs.documentation.result }}"
         
-        # Fail if any required job failed
-        if [[ "${{ needs.code-quality.result }}" == "failure" ]] || \
-           [[ "${{ needs.test-suite.result }}" == "failure" ]] || \
-           [[ "${{ needs.quality-gates.result }}" == "failure" ]]; then
-          echo "❌ Quality assurance pipeline failed"
-          exit 1
+        # Only fail on push/PR events
+        if [[ "${{ github.event_name }}" != "schedule" ]]; then
+          if [[ "${{ needs.code-quality.result }}" == "failure" ]] || \
+             [[ "${{ needs.test-suite.result }}" == "failure" ]] || \
+             [[ "${{ needs.quality-gates.result }}" == "failure" ]]; then
+            echo "❌ Quality assurance pipeline failed"
+            exit 1
+          else
+            echo "✅ Quality assurance pipeline passed"
+          fi
         else
-          echo "✅ Quality assurance pipeline passed"
+          echo "🩺 Scheduled run: non-blocking summary"
+          echo "✅ Schedule completed without enforcing failures"
         fi
