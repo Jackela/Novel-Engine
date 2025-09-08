@@ -1,60 +1,20 @@
 import React, { useState } from 'react';
+import { Space, Badge, Progress, Tag, Typography, Statistic } from 'antd';
+import {
+  ActivityOutlined,
+  TeamOutlined,
+  EnvironmentOutlined,
+  ClockCircleOutlined,
+  RiseOutlined,
+  RightCircleOutlined,
+  AlertOutlined,
+  SettingOutlined,
+} from '@ant-design/icons';
+import AntBentoGrid, { createTile, TileConfig } from './AntBentoGrid';
 import '../styles/design-system.css';
 import './EmergentDashboard.css';
 
-// Icons - simple SVG icons
-const Icons = {
-  Activity: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-    </svg>
-  ),
-  Users: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-      <circle cx="9" cy="7" r="4"></circle>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-    </svg>
-  ),
-  Map: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-      <line x1="8" y1="2" x2="8" y2="18"></line>
-      <line x1="16" y1="6" x2="16" y2="22"></line>
-    </svg>
-  ),
-  Clock: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10"></circle>
-      <polyline points="12 6 12 12 16 14"></polyline>
-    </svg>
-  ),
-  TrendingUp: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-      <polyline points="17 6 23 6 23 12"></polyline>
-    </svg>
-  ),
-  ChevronRight: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="9 18 15 12 9 6"></polyline>
-    </svg>
-  ),
-  AlertCircle: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10"></circle>
-      <line x1="12" y1="8" x2="12" y2="12"></line>
-      <line x1="12" y1="16" x2="12.01" y2="16"></line>
-    </svg>
-  ),
-  Settings: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="3"></circle>
-      <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M20.46 20.46l-4.24-4.24M1.54 20.46l4.24-4.24"></path>
-    </svg>
-  ),
-};
+const { Text, Title } = Typography;
 
 // Mock data for entities on the world map
 const worldEntities = [
@@ -78,231 +38,340 @@ const eventCascade = [
   { id: '3', type: 'dialogue', impact: 'low', character: 'Merchant', description: 'Shared rumors' },
 ];
 
+// World State Map Component
+const WorldStateMap: React.FC<{ 
+  selectedEntity: string | null; 
+  onEntitySelect: (id: string) => void 
+}> = ({ selectedEntity, onEntitySelect }) => {
+  return (
+    <div className="world-map" style={{ height: '100%', position: 'relative', minHeight: 400 }}>
+      <div className="map-container" style={{ 
+        position: 'relative', 
+        height: 'calc(100% - 40px)', 
+        background: 'linear-gradient(180deg, #1a1a1d 0%, #111113 100%)',
+        borderRadius: 8,
+        overflow: 'hidden'
+      }}>
+        {worldEntities.map((entity) => (
+          <div
+            key={entity.id}
+            className={`map-entity entity-${entity.type} ${selectedEntity === entity.id ? 'selected' : ''}`}
+            style={{ 
+              position: 'absolute',
+              left: `${entity.x}%`, 
+              top: `${entity.y}%`,
+              cursor: 'pointer',
+              transform: 'translate(-50%, -50%)',
+              transition: 'all 0.3s ease'
+            }}
+            onClick={() => onEntitySelect(entity.id)}
+            title={entity.name}
+          >
+            <div className="entity-marker" style={{
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              background: entity.type === 'protagonist' ? '#6366f1' :
+                        entity.type === 'antagonist' ? '#ef4444' :
+                        entity.type === 'supporting' ? '#10b981' : '#808088',
+              boxShadow: '0 0 10px rgba(99, 102, 241, 0.5)'
+            }}></div>
+            <span className="entity-label" style={{
+              position: 'absolute',
+              top: '100%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: 10,
+              color: '#b0b0b8',
+              whiteSpace: 'nowrap',
+              marginTop: 4
+            }}>{entity.name}</span>
+          </div>
+        ))}
+        <div className="map-grid" style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'linear-gradient(#2a2a30 1px, transparent 1px), linear-gradient(90deg, #2a2a30 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+          opacity: 0.1
+        }}></div>
+      </div>
+      <Space style={{ marginTop: 12 }} wrap>
+        <Badge color="#6366f1" text="Protagonist" />
+        <Badge color="#10b981" text="Supporting" />
+        <Badge color="#ef4444" text="Antagonist" />
+        <Badge color="#808088" text="NPC" />
+      </Space>
+    </div>
+  );
+};
+
+// Character Networks Component
+const CharacterNetworks: React.FC = () => {
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Space size="large">
+        <Statistic title="Active Characters" value={12} valueStyle={{ color: '#6366f1' }} />
+        <Statistic title="Relationships" value={34} valueStyle={{ color: '#10b981' }} />
+      </Space>
+      <div style={{ flex: 1, minHeight: 150 }}>
+        <svg className="network-graph" viewBox="0 0 300 200" style={{ width: '100%', height: '100%' }}>
+          {/* Character relationship lines */}
+          <line x1="50" y1="50" x2="150" y2="100" stroke="#6366f1" strokeWidth="2" opacity="0.5" />
+          <line x1="150" y1="100" x2="250" y2="50" stroke="#8b5cf6" strokeWidth="2" opacity="0.5" />
+          <line x1="150" y1="100" x2="200" y2="150" stroke="#10b981" strokeWidth="2" opacity="0.5" />
+          
+          {/* Character nodes */}
+          <circle cx="50" cy="50" r="8" fill="#6366f1" />
+          <circle cx="150" cy="100" r="10" fill="#6366f1" />
+          <circle cx="250" cy="50" r="8" fill="#10b981" />
+          <circle cx="200" cy="150" r="6" fill="#808088" />
+        </svg>
+      </div>
+    </div>
+  );
+};
+
+// Narrative Timeline Component
+const NarrativeTimeline: React.FC = () => {
+  const typeColors = {
+    main: '#6366f1',
+    character: '#10b981',
+    mystery: '#f59e0b'
+  };
+
+  return (
+    <Space direction="vertical" style={{ width: '100%' }} size="middle">
+      {narrativeArcs.map((arc) => (
+        <div key={arc.id}>
+          <Space style={{ marginBottom: 8, width: '100%', justifyContent: 'space-between' }}>
+            <Space>
+              <Tag color={typeColors[arc.type as keyof typeof typeColors]}>{arc.type}</Tag>
+              <Text strong>{arc.name}</Text>
+            </Space>
+            <Text type="secondary">{arc.progress}%</Text>
+          </Space>
+          <Progress 
+            percent={arc.progress} 
+            strokeColor={typeColors[arc.type as keyof typeof typeColors]}
+            showInfo={false}
+            strokeWidth={8}
+          />
+        </div>
+      ))}
+    </Space>
+  );
+};
+
+// Activity Stream Component
+const ActivityStream: React.FC = () => {
+  return (
+    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Text type="secondary" style={{ fontSize: 12 }}>2m ago</Text>
+        <Text>Aria discovered ancient tome</Text>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Text type="secondary" style={{ fontSize: 12 }}>5m ago</Text>
+        <Text>Kael engaged in combat</Text>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Text type="secondary" style={{ fontSize: 12 }}>12m ago</Text>
+        <Text>New quest unlocked</Text>
+      </div>
+    </Space>
+  );
+};
+
+// Performance Metrics Component
+const PerformanceMetrics: React.FC = () => {
+  return (
+    <Space direction="vertical" style={{ width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text type="secondary">Response Time</Text>
+        <Text strong style={{ color: '#10b981' }}>32ms</Text>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text type="secondary">Token Usage</Text>
+        <Text strong style={{ color: '#6366f1' }}>2.4K/10K</Text>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text type="secondary">Cache Hit Rate</Text>
+        <Text strong style={{ color: '#10b981' }}>94%</Text>
+      </div>
+    </Space>
+  );
+};
+
+// Event Cascade Component
+const EventCascadeFlow: React.FC = () => {
+  const impactColors = {
+    high: '#ef4444',
+    medium: '#f59e0b',
+    low: '#10b981'
+  };
+
+  const typeIcons = {
+    discovery: '🔍',
+    conflict: '⚔️',
+    dialogue: '💬'
+  };
+
+  return (
+    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+      {eventCascade.map((event) => (
+        <div key={event.id} style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 8,
+          padding: '4px 8px',
+          background: '#1a1a1d',
+          borderRadius: 6,
+          borderLeft: `3px solid ${impactColors[event.impact as keyof typeof impactColors]}`
+        }}>
+          <span>{typeIcons[event.type as keyof typeof typeIcons]}</span>
+          <Text>{event.description}</Text>
+        </div>
+      ))}
+    </Space>
+  );
+};
+
+// Pipeline Status Component
+const PipelineStatus: React.FC = () => {
+  const stages = [
+    { name: 'Input', status: 'complete' },
+    { name: 'Process', status: 'complete' },
+    { name: 'Generate', status: 'active' },
+    { name: 'Output', status: 'pending' }
+  ];
+
+  const statusSymbols = {
+    complete: '✓',
+    active: '...',
+    pending: '-'
+  };
+
+  const statusColors = {
+    complete: '#10b981',
+    active: '#6366f1',
+    pending: '#606068'
+  };
+
+  return (
+    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+      {stages.map((stage, index) => (
+        <div key={index} style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '6px 12px',
+          background: stage.status === 'active' ? '#1a1a1d' : 'transparent',
+          borderRadius: 6,
+          transition: 'all 0.3s ease'
+        }}>
+          <Text style={{ color: statusColors[stage.status as keyof typeof statusColors] }}>
+            {stage.name}
+          </Text>
+          <Text strong style={{ color: statusColors[stage.status as keyof typeof statusColors] }}>
+            {statusSymbols[stage.status as keyof typeof statusSymbols]}
+          </Text>
+        </div>
+      ))}
+    </Space>
+  );
+};
+
 const EmergentDashboardSimple: React.FC = () => {
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
 
+  // Create tile configurations with proper Ant Design components
+  const tiles: TileConfig[] = [
+    // Large tile - World State Map
+    createTile(
+      'world-map',
+      'large',
+      'World State Map',
+      <WorldStateMap selectedEntity={selectedEntity} onEntitySelect={setSelectedEntity} />,
+      {
+        extra: <Badge status="success" text="Live" />,
+        style: { minHeight: 450 }
+      }
+    ),
+
+    // Medium tiles
+    createTile(
+      'character-networks',
+      'medium',
+      'Character Networks',
+      <CharacterNetworks />,
+      {
+        style: { minHeight: 300 }
+      }
+    ),
+    
+    createTile(
+      'narrative-timeline',
+      'medium',
+      'Narrative Timeline',
+      <NarrativeTimeline />,
+      {
+        style: { minHeight: 300 }
+      }
+    ),
+
+    // Small tiles
+    createTile(
+      'activity-stream',
+      'small',
+      'Activity Stream',
+      <ActivityStream />,
+      {
+        style: { minHeight: 200 }
+      }
+    ),
+    
+    createTile(
+      'performance',
+      'small',
+      'Performance',
+      <PerformanceMetrics />,
+      {
+        style: { minHeight: 200 }
+      }
+    ),
+    
+    createTile(
+      'event-cascade',
+      'small',
+      'Event Cascade',
+      <EventCascadeFlow />,
+      {
+        style: { minHeight: 200 }
+      }
+    ),
+    
+    createTile(
+      'pipeline-status',
+      'small',
+      'Pipeline Status',
+      <PipelineStatus />,
+      {
+        style: { minHeight: 200 }
+      }
+    ),
+  ];
+
   return (
-    <div className="emergent-dashboard">
-      {/* Dashboard Header */}
-      <header className="dashboard-header">
-        <div className="header-content">
-          <h1 className="dashboard-title">Emergent Narrative Dashboard</h1>
-          <div className="header-actions">
-            <button className="btn-primary">New Campaign</button>
-            <button className="btn-secondary">
-              <Icons.Settings />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Bento Grid Layout */}
-      <div className="bento-grid">
-        {/* World State Map - Large tile */}
-        <div className="bento-tile tile-large">
-          <div className="tile-header">
-            <h2 className="tile-title">
-              <Icons.Map />
-              World State Map
-            </h2>
-            <span className="badge badge-success">Live</span>
-          </div>
-          <div className="world-map">
-            <div className="map-container">
-              {worldEntities.map((entity) => (
-                <div
-                  key={entity.id}
-                  className={`map-entity entity-${entity.type} ${selectedEntity === entity.id ? 'selected' : ''}`}
-                  style={{ left: `${entity.x}%`, top: `${entity.y}%` }}
-                  onClick={() => setSelectedEntity(entity.id)}
-                  title={entity.name}
-                >
-                  <div className="entity-marker"></div>
-                  <span className="entity-label">{entity.name}</span>
-                </div>
-              ))}
-              <div className="map-grid"></div>
-            </div>
-            <div className="map-legend">
-              <div className="legend-item">
-                <span className="legend-dot protagonist"></span>
-                Protagonist
-              </div>
-              <div className="legend-item">
-                <span className="legend-dot supporting"></span>
-                Supporting
-              </div>
-              <div className="legend-item">
-                <span className="legend-dot antagonist"></span>
-                Antagonist
-              </div>
-              <div className="legend-item">
-                <span className="legend-dot npc"></span>
-                NPC
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Character Networks - Medium tile */}
-        <div className="bento-tile tile-medium">
-          <div className="tile-header">
-            <h2 className="tile-title">
-              <Icons.Users />
-              Character Networks
-            </h2>
-          </div>
-          <div className="character-network">
-            <div className="network-stats">
-              <div className="stat">
-                <span className="stat-value">12</span>
-                <span className="stat-label">Active Characters</span>
-              </div>
-              <div className="stat">
-                <span className="stat-value">34</span>
-                <span className="stat-label">Relationships</span>
-              </div>
-            </div>
-            <div className="network-visual">
-              <svg className="network-graph" viewBox="0 0 300 200">
-                {/* Character relationship lines */}
-                <line x1="50" y1="50" x2="150" y2="100" stroke="var(--color-primary)" strokeWidth="2" opacity="0.5" />
-                <line x1="150" y1="100" x2="250" y2="50" stroke="var(--color-secondary)" strokeWidth="2" opacity="0.5" />
-                <line x1="150" y1="100" x2="200" y2="150" stroke="var(--color-success)" strokeWidth="2" opacity="0.5" />
-                
-                {/* Character nodes */}
-                <circle cx="50" cy="50" r="8" fill="var(--color-character-protagonist)" />
-                <circle cx="150" cy="100" r="10" fill="var(--color-character-protagonist)" />
-                <circle cx="250" cy="50" r="8" fill="var(--color-character-supporting)" />
-                <circle cx="200" cy="150" r="6" fill="var(--color-character-npc)" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Narrative Timeline - Medium tile */}
-        <div className="bento-tile tile-medium">
-          <div className="tile-header">
-            <h2 className="tile-title">
-              <Icons.Clock />
-              Narrative Timeline
-            </h2>
-          </div>
-          <div className="narrative-timeline">
-            {narrativeArcs.map((arc) => (
-              <div key={arc.id} className="timeline-arc">
-                <div className="arc-header">
-                  <span className={`arc-type arc-${arc.type}`}>{arc.type}</span>
-                  <span className="arc-name">{arc.name}</span>
-                </div>
-                <div className="arc-progress">
-                  <div className="progress-bar">
-                    <div 
-                      className="progress-fill"
-                      style={{ width: `${arc.progress}%` }}
-                    ></div>
-                  </div>
-                  <span className="progress-text">{arc.progress}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Real-time Activity Stream - Small tile */}
-        <div className="bento-tile tile-small">
-          <div className="tile-header">
-            <h2 className="tile-title">
-              <Icons.Activity />
-              Activity Stream
-            </h2>
-          </div>
-          <div className="activity-stream">
-            <div className="activity-item">
-              <span className="activity-time">2m ago</span>
-              <span className="activity-text">Aria discovered ancient tome</span>
-            </div>
-            <div className="activity-item">
-              <span className="activity-time">5m ago</span>
-              <span className="activity-text">Kael engaged in combat</span>
-            </div>
-            <div className="activity-item">
-              <span className="activity-time">12m ago</span>
-              <span className="activity-text">New quest unlocked</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Performance Metrics - Small tile */}
-        <div className="bento-tile tile-small">
-          <div className="tile-header">
-            <h2 className="tile-title">
-              <Icons.TrendingUp />
-              Performance
-            </h2>
-          </div>
-          <div className="performance-metrics">
-            <div className="metric">
-              <span className="metric-label">Response Time</span>
-              <span className="metric-value">32ms</span>
-            </div>
-            <div className="metric">
-              <span className="metric-label">Token Usage</span>
-              <span className="metric-value">2.4K/10K</span>
-            </div>
-            <div className="metric">
-              <span className="metric-label">Cache Hit Rate</span>
-              <span className="metric-value">94%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Event Cascade Flow - Small tile */}
-        <div className="bento-tile tile-small">
-          <div className="tile-header">
-            <h2 className="tile-title">
-              <Icons.AlertCircle />
-              Event Cascade
-            </h2>
-          </div>
-          <div className="event-cascade">
-            {eventCascade.map((event) => (
-              <div key={event.id} className={`event-item impact-${event.impact}`}>
-                <span className={`event-type type-${event.type}`}>{event.type}</span>
-                <span className="event-desc">{event.description}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Turn Pipeline Status - Small tile */}
-        <div className="bento-tile tile-small">
-          <div className="tile-header">
-            <h2 className="tile-title">
-              <Icons.ChevronRight />
-              Pipeline Status
-            </h2>
-          </div>
-          <div className="pipeline-status">
-            <div className="pipeline-stage complete">
-              <span className="stage-name">Input</span>
-              <span className="stage-status">✓</span>
-            </div>
-            <div className="pipeline-stage complete">
-              <span className="stage-name">Process</span>
-              <span className="stage-status">✓</span>
-            </div>
-            <div className="pipeline-stage active">
-              <span className="stage-name">Generate</span>
-              <span className="stage-status">...</span>
-            </div>
-            <div className="pipeline-stage pending">
-              <span className="stage-name">Output</span>
-              <span className="stage-status">-</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="emergent-dashboard" style={{ 
+      width: '100%',
+      maxWidth: '1600px',
+      margin: '0 auto'
+    }}>
+      <AntBentoGrid 
+        tiles={tiles}
+        gutter={[16, 16]}
+      />
     </div>
   );
 };

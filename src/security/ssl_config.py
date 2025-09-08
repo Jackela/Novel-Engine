@@ -18,7 +18,7 @@ import logging
 import os
 import ssl
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -90,8 +90,8 @@ class SSLCertificateManager:
             .issuer_name(issuer)
             .public_key(private_key.public_key())
             .serial_number(x509.random_serial_number())
-            .not_valid_before(datetime.utcnow())
-            .not_valid_after(datetime.utcnow() + timedelta(days=days))
+            .not_valid_before(datetime.now(timezone.utc))
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=days))
             .add_extension(
                 x509.SubjectAlternativeName(
                     [
@@ -181,12 +181,12 @@ class SSLCertificateManager:
                 return False
 
             # Check expiration
-            if cert.not_valid_after < datetime.utcnow():
+            if cert.not_valid_after < datetime.now(timezone.utc):
                 logger.error("CERTIFICATE VALIDATION FAILED: Certificate expired")
                 return False
 
             # Check validity period
-            if cert.not_valid_before > datetime.utcnow():
+            if cert.not_valid_before > datetime.now(timezone.utc):
                 logger.error("CERTIFICATE VALIDATION FAILED: Certificate not yet valid")
                 return False
 

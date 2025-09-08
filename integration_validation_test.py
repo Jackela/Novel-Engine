@@ -204,9 +204,7 @@ def test_configuration_integration():
         event_bus = EventBus()
 
         # Test director with config
-        DirectorAgent(
-            event_bus=event_bus, campaign_log_path="test_config_campaign.md"
-        )
+        DirectorAgent(event_bus=event_bus, campaign_log_path="test_config_campaign.md")
         logger.info("✅ DirectorAgent with configuration successful")
 
         # Clean up

@@ -186,9 +186,7 @@ def apply_enhanced_simulation_fixes():
         import enhanced_simulation_orchestrator as eso
 
         # Patch character factory creation
-        getattr(
-            eso.EnhancedSimulationOrchestrator, "_create_character_factory", None
-        )
+        getattr(eso.EnhancedSimulationOrchestrator, "_create_character_factory", None)
 
         def patched_create_character_factory(self):
             """Create character factory with proper event bus integration."""

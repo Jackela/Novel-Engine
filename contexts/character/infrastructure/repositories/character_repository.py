@@ -8,7 +8,7 @@ domain objects and database entities.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import and_, func
@@ -116,7 +116,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
                     self._update_orm_from_domain(existing_orm, character, session)
                     existing_orm.version = character.version
-                    existing_orm.updated_at = datetime.utcnow()
+                    existing_orm.updated_at = datetime.now(timezone.utc)
                 else:
                     # Create new character
                     character_orm = self._map_domain_to_orm(character)
@@ -434,7 +434,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                             )
                         self._update_orm_from_domain(existing_orm, character, session)
                         existing_orm.version = character.version
-                        existing_orm.updated_at = datetime.utcnow()
+                        existing_orm.updated_at = datetime.now(timezone.utc)
                     else:
                         character_orm = self._map_domain_to_orm(character)
                         session.add(character_orm)

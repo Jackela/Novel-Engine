@@ -10,7 +10,7 @@ import asyncio
 import logging
 import tempfile
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict
 from unittest.mock import mock_open, patch
@@ -501,7 +501,7 @@ Developed expertise in systematic validation and quality assurance.
         """Test that circuit breaker blocks requests when open."""
         # Force circuit breaker open
         self.service._circuit_breaker["state"] = "OPEN"
-        self.service._circuit_breaker["last_failure_time"] = datetime.utcnow()
+        self.service._circuit_breaker["last_failure_time"] = datetime.now(timezone.utc)
 
         with self.assertRaises(ServiceUnavailableError):
             await self.service.load_character_context("test")
@@ -510,9 +510,9 @@ Developed expertise in systematic validation and quality assurance.
         """Test circuit breaker recovery to half-open state."""
         # Force circuit breaker open with old failure time
         self.service._circuit_breaker["state"] = "OPEN"
-        self.service._circuit_breaker["last_failure_time"] = (
-            datetime.utcnow() - timedelta(minutes=10)
-        )
+        self.service._circuit_breaker["last_failure_time"] = datetime.now(
+            timezone.utc
+        ) - timedelta(minutes=10)
 
         character_id = "recovery_test"
         self.create_test_character_files(character_id)

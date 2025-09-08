@@ -127,9 +127,7 @@ class PerformanceValidator:
             for i in range(test_characters):
                 start_time = time.time()
                 try:
-                    await factory.create_character_async(
-                        f"perf_test_char_{i}"
-                    )
+                    await factory.create_character_async(f"perf_test_char_{i}")
                     creation_time = (
                         time.time() - start_time
                     ) * 1000  # Convert to milliseconds

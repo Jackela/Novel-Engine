@@ -399,9 +399,7 @@ class RateLimiter:
         # Check endpoint-specific limits
         endpoint_config = self.config.endpoint_configs.get(request.url.path)
         if endpoint_config:
-            endpoint_config.get(
-                "requests_per_minute", self.config.requests_per_minute
-            )
+            endpoint_config.get("requests_per_minute", self.config.requests_per_minute)
             if client.minute_bucket and not client.minute_bucket.consume():
                 raise RateLimitExceeded(
                     f"Rate limit exceeded for endpoint {request.url.path}",

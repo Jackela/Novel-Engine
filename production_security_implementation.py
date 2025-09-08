@@ -11,7 +11,7 @@ production security requirements.
 import json
 import logging
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
 
@@ -130,7 +130,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 import hashlib
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, Field, field_validator
 
 # Import existing modules
@@ -225,9 +225,9 @@ class AuthenticationManager:
         to_encode = data.copy()
         
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
+            expire = datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
         
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
@@ -365,7 +365,7 @@ async def health_check(request: Request) -> Dict[str, Any]:
     """Comprehensive health check endpoint."""
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "version": "1.0.0-production",
         "environment": os.getenv("ENVIRONMENT", "development")
     }
@@ -558,7 +558,7 @@ from typing import Set, Dict, Any
 from fastapi import Request, HTTPException, status
 from fastapi.responses import JSONResponse
 from collections import defaultdict, deque
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -597,7 +597,7 @@ class IPBlocklist:
         
         # Check temporary blocks
         if ip in self.temp_blocked:
-            if datetime.utcnow() > self.temp_blocked[ip]:
+            if datetime.now(timezone.utc) > self.temp_blocked[ip]:
                 del self.temp_blocked[ip]
                 return False
             return True
@@ -606,7 +606,7 @@ class IPBlocklist:
     
     def temp_block(self, ip: str):
         """Temporarily block an IP address."""
-        self.temp_blocked[ip] = datetime.utcnow() + self.block_duration
+        self.temp_blocked[ip] = datetime.now(timezone.utc) + self.block_duration
         logger.warning(f"Temporarily blocked IP: {ip}")
     
     def permanent_block(self, ip: str):

@@ -229,7 +229,7 @@ class TestInteractionEngineModularComponents:
         """Test InteractionEngine modular initialization."""
         if not REAL_COMPONENTS:
             pytest.skip("Real components not available")
-            
+
         config = InteractionEngineConfig(
             max_concurrent_interactions=5,
             enable_parallel_processing=True,

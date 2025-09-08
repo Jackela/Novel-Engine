@@ -252,9 +252,7 @@ class EmergentNarrativeOrchestrator:
             )
 
             # Phase 5: Apply story-driven behavior modifications
-            await self._apply_narrative_influences(
-                agents, narrative_influences
-            )
+            await self._apply_narrative_influences(agents, narrative_influences)
 
             # Phase 6: Execute enhanced turn with narrative awareness
             enhanced_turn_result = await self.enhanced_bridge.enhanced_run_turn(
@@ -281,9 +279,7 @@ class EmergentNarrativeOrchestrator:
             )
 
             # Phase 9: Adjust narrative state and pacing
-            await self._update_narrative_state(
-                narrative_analysis, story_moments
-            )
+            await self._update_narrative_state(narrative_analysis, story_moments)
 
             execution_time = (datetime.now() - turn_start_time).total_seconds()
 

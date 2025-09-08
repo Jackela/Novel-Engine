@@ -118,6 +118,7 @@ except Exception:
     def is_valid_relevance_score(value: float) -> bool:
         return isinstance(value, (int, float)) and 0.0 <= float(value) <= 1.0
 
+
 __all__ = [
     # Core ID types
     "AgentID",

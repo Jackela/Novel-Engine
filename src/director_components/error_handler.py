@@ -16,7 +16,6 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Type
 
 
-
 class ErrorSeverity(Enum):
     """Error severity levels."""
 

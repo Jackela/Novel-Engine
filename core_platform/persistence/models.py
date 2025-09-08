@@ -42,7 +42,7 @@ class SoftDeleteMixin:
     def soft_delete(self):
         """Mark the record as deleted."""
         self.is_deleted = True
-        self.deleted_at = datetime.utcnow()
+        self.deleted_at = datetime.now(timezone.utc)
 
     def restore(self):
         """Restore a soft deleted record."""
@@ -199,7 +199,7 @@ class OutboxEvent(BaseModel):
     def mark_processed(self):
         """Mark the event as successfully processed."""
         self.processed = True
-        self.processed_at = datetime.utcnow()
+        self.processed_at = datetime.now(timezone.utc)
         self.error_message = None
 
     def mark_failed(self, error: str):
@@ -253,7 +253,9 @@ class EventStore(BaseModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.global_sequence:
-            self.global_sequence = f"{int(datetime.utcnow().timestamp() * 1000000)}"
+            self.global_sequence = (
+                f"{int(datetime.now(timezone.utc).timestamp() * 1000000)}"
+            )
 
 
 # Event listeners for automatic audit trail

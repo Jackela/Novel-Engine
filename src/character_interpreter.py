@@ -359,26 +359,41 @@ class CharacterInterpreter:
         try:
             # Extract name
             name_patterns = [
-                r"(?:name|character):\s*([^\n]+)",
-                r"#\s*([^\n]+)",  # First header
-                r"character name:\s*([^\n]+)",
+                r"\*\*Name\*\*:\s*([^\n]+)",  # **Name**: pattern
+                r"- \*\*Name\*\*:\s*([^\n]+)",  # - **Name**: pattern
+                r"(?:^|\n)Name:\s*([^\n]+)",  # Name: at start of line
+                r"(?:character name|character):\s*([^\n]+)",
             ]
 
             for pattern in name_patterns:
-                match = re.search(pattern, content, re.IGNORECASE)
+                match = re.search(pattern, content, re.IGNORECASE | re.MULTILINE)
                 if match:
-                    basic_info["name"] = match.group(1).strip()
-                    break
+                    name = match.group(1).strip()
+                    # Skip if it's the filename separator
+                    if not name.startswith("===") and not name.endswith("==="):
+                        basic_info["name"] = name
+                        break
+
+            # Fallback: look for first non-separator header
+            if "name" not in basic_info:
+                header_match = re.search(
+                    r"^#{1,3}\s+(?!===)([^\n]+)(?<!===)$", content, re.MULTILINE
+                )
+                if header_match:
+                    basic_info["name"] = header_match.group(1).strip()
 
             # Extract faction
             faction_patterns = [
+                r"\*\*Affiliation\*\*:\s*([^\n]+)",  # **Affiliation**: pattern
+                r"- \*\*Affiliation\*\*:\s*([^\n]+)",  # - **Affiliation**: pattern
+                r"(?:^|\n)Affiliation:\s*([^\n]+)",  # Affiliation: at start of line
                 r"faction:\s*([^\n]+)",
                 r"allegiance:\s*([^\n]+)",
                 r"organization:\s*([^\n]+)",
             ]
 
             for pattern in faction_patterns:
-                match = re.search(pattern, content, re.IGNORECASE)
+                match = re.search(pattern, content, re.IGNORECASE | re.MULTILINE)
                 if match:
                     basic_info["faction"] = match.group(1).strip()
                     break
@@ -693,6 +708,14 @@ class CharacterInterpreter:
             if isinstance(relationships, dict):
                 for entity, relationship_desc in relationships.items():
                     # Convert relationship descriptions to numeric values
+                    # Handle both string and list descriptions
+                    if isinstance(relationship_desc, list):
+                        relationship_desc = " ".join(
+                            str(item) for item in relationship_desc
+                        )
+                    elif not isinstance(relationship_desc, str):
+                        relationship_desc = str(relationship_desc)
+
                     desc_lower = relationship_desc.lower()
 
                     if any(

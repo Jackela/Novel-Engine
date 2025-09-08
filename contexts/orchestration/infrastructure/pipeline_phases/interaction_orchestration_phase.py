@@ -108,9 +108,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                     )
 
             # Step 4: Process interaction outcomes
-            await self._process_interaction_outcomes(
-                context, session_results
-            )
+            await self._process_interaction_outcomes(context, session_results)
 
             # Step 5: Generate interaction events
             interaction_events = await self._generate_interaction_events(

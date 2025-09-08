@@ -136,9 +136,7 @@ def test_persona_agent_patch():
 
         # Measure original performance
         original_start = time.perf_counter()
-        test_agent._call_llm(
-            "Test prompt for performance measurement"
-        )
+        test_agent._call_llm("Test prompt for performance measurement")
         original_time = time.perf_counter() - original_start
 
         # Apply async patch
@@ -150,9 +148,7 @@ def test_persona_agent_patch():
 
         # Measure patched performance
         patched_start = time.perf_counter()
-        test_agent._call_llm(
-            "Test prompt for performance measurement"
-        )
+        test_agent._call_llm("Test prompt for performance measurement")
         patched_time = time.perf_counter() - patched_start
 
         # Calculate improvement

@@ -61,8 +61,6 @@ from src.core.system_orchestrator import (
 # Removed unused import: from functools import wraps
 
 
-
-
 # Import security systems (if available)
 try:
     from src.security.auth_system import (
@@ -797,7 +795,6 @@ def _register_legacy_routes(app: FastAPI):
                 # Create a story generation request
                 import time
                 import uuid
-
 
                 start_time = time.time()
                 generation_id = f"legacy_{uuid.uuid4().hex[:8]}"

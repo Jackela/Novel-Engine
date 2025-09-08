@@ -28,9 +28,13 @@ from src.persona_agent import PersonaAgent  # noqa: F401
 
 # Integrated implementations for advanced usage
 try:
-    from director_agent_integrated import DirectorAgent as DirectorAgentIntegrated  # noqa: F401
+    from director_agent_integrated import (
+        DirectorAgent as DirectorAgentIntegrated,
+    )  # noqa: F401
 
-    from src.persona_agent_integrated import PersonaAgent as PersonaAgentIntegrated  # noqa: F401
+    from src.persona_agent_integrated import (
+        PersonaAgent as PersonaAgentIntegrated,
+    )  # noqa: F401
 
     INTEGRATED_AVAILABLE = True
 except ImportError:
