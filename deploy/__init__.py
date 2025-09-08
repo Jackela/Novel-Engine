@@ -27,13 +27,7 @@ __version__ = "1.0.0"
 __author__ = "Novel Engine DevOps Team"
 
 # Deployment module exports
-__all__ = [
-    "staging",
-    "production", 
-    "security",
-    "deploy_strategies",
-    "rollback_manager"
-]
+__all__ = ["staging", "production", "security", "deploy_strategies", "rollback_manager"]
 
 # Import submodules for easier access
 try:
@@ -43,6 +37,6 @@ except ImportError:
     pass
 
 # Deployment configuration constants
-SUPPORTED_ENVIRONMENTS = ['staging', 'production']
-DEPLOYMENT_STRATEGIES = ['rolling', 'blue_green', 'canary']
+SUPPORTED_ENVIRONMENTS = ["staging", "production"]
+DEPLOYMENT_STRATEGIES = ["rolling", "blue_green", "canary"]
 ROLLBACK_RETENTION_DAYS = 30

@@ -179,7 +179,9 @@ class EnhancedMultiAgentBridge:
 
             # Initialize coordination engine if available
             try:
-                if AgentCoordinationEngine is not type("AgentCoordinationEngine", (), {}):
+                if AgentCoordinationEngine is not type(
+                    "AgentCoordinationEngine", (), {}
+                ):
                     self._coordination_engine = AgentCoordinationEngine()
                     # Additional initialization would go here
             except Exception as e:

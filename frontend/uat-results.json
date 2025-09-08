@@ -1,0 +1,173 @@
+🚀 Setting up Emergent Narrative Dashboard UAT environment...
+📡 Setting up mock API server...
+📡 Mock API server configured
+🔐 Preparing authentication tokens...
+🔐 Authentication tokens prepared
+🌱 Seeding test data...
+🌱 Test data seeded successfully
+🌐 Verifying dashboard accessibility...
+🧹 Cleaning up Emergent Narrative Dashboard UAT environment...
+🛑 Shutting down mock API server...
+🛑 Mock API server shutdown complete
+🗑️ Clearing test data...
+🗑️ Test data cleared
+📊 Generating test metrics...
+{
+  "config": {
+    "configFile": "D:\\Code\\Novel-Engine\\frontend\\playwright.config.ts",
+    "rootDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-setup.ts",
+    "globalTeardown": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium-desktop",
+        "name": "chromium-desktop",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "firefox-desktop",
+        "name": "firefox-desktop",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "webkit-desktop",
+        "name": "webkit-desktop",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "tablet",
+        "name": "tablet",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "mobile",
+        "name": "mobile",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "D:/Code/Novel-Engine/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "high-dpi",
+        "name": "high-dpi",
+        "testDir": "D:/Code/Novel-Engine/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.0",
+    "workers": 8,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true,
+      "timeout": 120000,
+      "env": {
+        "NODE_ENV": "test",
+        "REACT_APP_API_BASE_URL": "http://localhost:8000/v1",
+        "REACT_APP_WS_URL": "ws://localhost:8001/ws"
+      }
+    }
+  },
+  "suites": [],
+  "errors": [
+    {
+      "message": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\k7407\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1181\\chrome-win\\headless_shell.exe\n╔═════════════════════════════════════════════════════════════════════════╗\n║ Looks like Playwright Test or Playwright was just installed or updated. ║\n║ Please run the following command to download new browsers:              ║\n║                                                                         ║\n║     npx playwright install                                              ║\n║                                                                         ║\n║ <3 Playwright Team                                                      ║\n╚═════════════════════════════════════════════════════════════════════════╝",
+      "stack": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\k7407\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1181\\chrome-win\\headless_shell.exe\n╔═════════════════════════════════════════════════════════════════════════╗\n║ Looks like Playwright Test or Playwright was just installed or updated. ║\n║ Please run the following command to download new browsers:              ║\n║                                                                         ║\n║     npx playwright install                                              ║\n║                                                                         ║\n║ <3 Playwright Team                                                      ║\n╚═════════════════════════════════════════════════════════════════════════╝\n    at verifyDashboardAccessibility (D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-setup.ts:146:34)\n    at globalSetup (D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-setup.ts:26:9)",
+      "location": {
+        "file": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-setup.ts",
+        "column": 34,
+        "line": 146
+      },
+      "snippet": "\u001b[90m   at \u001b[39msetup\\global-setup.ts:146\n\n\u001b[0m \u001b[90m 144 |\u001b[39m   console\u001b[33m.\u001b[39mlog(\u001b[32m'🌐 Verifying dashboard accessibility...'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 145 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 146 |\u001b[39m   \u001b[36mconst\u001b[39m browser \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m chromium\u001b[33m.\u001b[39mlaunch()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 147 |\u001b[39m   \u001b[36mconst\u001b[39m context \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m browser\u001b[33m.\u001b[39mnewContext()\u001b[33m;\u001b[39m\n \u001b[90m 148 |\u001b[39m   \u001b[36mconst\u001b[39m page \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m context\u001b[33m.\u001b[39mnewPage()\u001b[33m;\u001b[39m\n \u001b[90m 149 |\u001b[39m   \u001b[0m"
+    },
+    {
+      "message": "ReferenceError: config is not defined",
+      "stack": "ReferenceError: config is not defined\n    at generateTestMetrics (D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-teardown.ts:80:16)\n    at globalTeardown (D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-teardown.ts:23:9)",
+      "location": {
+        "file": "D:\\Code\\Novel-Engine\\frontend\\tests\\e2e\\setup\\global-teardown.ts",
+        "column": 16,
+        "line": 80
+      },
+      "snippet": "\u001b[90m   at \u001b[39msetup\\global-teardown.ts:80\n\n\u001b[0m \u001b[90m 78 |\u001b[39m     }\u001b[33m,\u001b[39m\n \u001b[90m 79 |\u001b[39m     configuration\u001b[33m:\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 80 |\u001b[39m       timeout\u001b[33m:\u001b[39m config\u001b[33m.\u001b[39mtimeout\u001b[33m,\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 81 |\u001b[39m       retries\u001b[33m:\u001b[39m config\u001b[33m.\u001b[39mretries\u001b[33m,\u001b[39m\n \u001b[90m 82 |\u001b[39m       workers\u001b[33m:\u001b[39m config\u001b[33m.\u001b[39mworkers\u001b[33m,\u001b[39m\n \u001b[90m 83 |\u001b[39m       projects\u001b[33m:\u001b[39m config\u001b[33m.\u001b[39mprojects\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mlength \u001b[33m||\u001b[39m \u001b[35m0\u001b[39m\u001b[0m"
+    }
+  ],
+  "stats": {
+    "startTime": "2025-08-30T04:15:14.453Z",
+    "duration": 671.4539999999997,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

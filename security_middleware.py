@@ -9,7 +9,7 @@ This module provides comprehensive security middleware for the FastAPI applicati
 import logging
 import time
 from collections import defaultdict, deque
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Set
 
 from fastapi import HTTPException, Request, status
@@ -51,7 +51,7 @@ class IPBlocklist:
 
         # Check temporary blocks
         if ip in self.temp_blocked:
-            if datetime.utcnow() > self.temp_blocked[ip]:
+            if datetime.now(timezone.utc) > self.temp_blocked[ip]:
                 del self.temp_blocked[ip]
                 return False
             return True
@@ -60,7 +60,7 @@ class IPBlocklist:
 
     def temp_block(self, ip: str):
         """Temporarily block an IP address."""
-        self.temp_blocked[ip] = datetime.utcnow() + self.block_duration
+        self.temp_blocked[ip] = datetime.now(timezone.utc) + self.block_duration
         logger.warning(f"Temporarily blocked IP: {ip}")
 
     def permanent_block(self, ip: str):

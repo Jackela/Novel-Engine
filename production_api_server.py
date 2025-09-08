@@ -13,7 +13,7 @@ import secrets
 import ssl
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 import jwt
@@ -130,9 +130,9 @@ class AuthenticationManager:
         to_encode = data.copy()
 
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
+            expire = datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
 
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
@@ -285,7 +285,7 @@ async def health_check(request: Request) -> Dict[str, Any]:
     """Comprehensive health check endpoint."""
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "version": "1.0.0-production",
         "environment": os.getenv("ENVIRONMENT", "development"),
     }

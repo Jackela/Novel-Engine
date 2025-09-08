@@ -9,7 +9,7 @@ to ensure eventual consistency between database operations and message publishin
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import and_, delete, or_, select, update
@@ -253,7 +253,7 @@ class OutboxPublisher:
     async def _get_unpublished_events(self, session: AsyncSession) -> List[OutboxEvent]:
         """Get unpublished events from the outbox."""
         # Calculate retry cutoff time
-        retry_cutoff = datetime.utcnow() - timedelta(seconds=self.retry_delay)
+        retry_cutoff = datetime.now(timezone.utc) - timedelta(seconds=self.retry_delay)
 
         stmt = (
             select(OutboxEvent)
@@ -322,7 +322,11 @@ class OutboxPublisher:
         stmt = (
             update(OutboxEvent)
             .where(OutboxEvent.id.in_(event_ids))
-            .values(processed=True, processed_at=datetime.utcnow(), error_message=None)
+            .values(
+                processed=True,
+                processed_at=datetime.now(timezone.utc),
+                error_message=None,
+            )
         )
 
         await session.execute(stmt)
@@ -357,7 +361,7 @@ class OutboxPublisher:
     async def _cleanup_processed_events(self) -> None:
         """Clean up old processed events."""
         try:
-            cutoff_time = datetime.utcnow() - timedelta(hours=self.cleanup_age)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=self.cleanup_age)
 
             async with get_async_db_session() as session:
                 stmt = delete(OutboxEvent).where(

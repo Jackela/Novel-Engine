@@ -348,7 +348,6 @@ class AsyncProcessingTest:
                 "data": ["item_" + str(i) for i in range(100)],
             }
 
-
             # Measure synchronous file operations
             start_time = time.time()
 

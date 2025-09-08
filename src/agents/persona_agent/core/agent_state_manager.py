@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-
 @dataclass
 class AgentState:
     """Represents the current state of a PersonaAgent."""

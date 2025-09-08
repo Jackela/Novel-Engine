@@ -13,7 +13,7 @@ import asyncio
 import hashlib
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -184,7 +184,7 @@ class ContextLoaderService:
             SecurityError: If security violations are detected
         """
         self._load_stats["total_attempts"] += 1
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         # Check circuit breaker
         await self._check_circuit_breaker()
@@ -249,7 +249,9 @@ class ContextLoaderService:
                         self._load_stats["failed_loads"] += 1
                         await self._record_failure()
 
-                    load_duration = (datetime.utcnow() - start_time).total_seconds()
+                    load_duration = (
+                        datetime.now(timezone.utc) - start_time
+                    ).total_seconds()
                     self.logger.info(
                         f"Context loading completed for {character_identifier} "
                         f"in {load_duration:.2f}s - Success: {character_context.load_success}, "
@@ -866,7 +868,7 @@ class ContextLoaderService:
 
     async def _check_circuit_breaker(self):
         """Check circuit breaker state and potentially raise ServiceUnavailableError."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         if self._circuit_breaker["state"] == "OPEN":
             time_since_failure = now - self._circuit_breaker["last_failure_time"]
@@ -892,7 +894,7 @@ class ContextLoaderService:
     async def _record_failure(self):
         """Record failed operation for circuit breaker."""
         self._circuit_breaker["failure_count"] += 1
-        self._circuit_breaker["last_failure_time"] = datetime.utcnow()
+        self._circuit_breaker["last_failure_time"] = datetime.now(timezone.utc)
 
         if (
             self._circuit_breaker["failure_count"]
@@ -907,7 +909,7 @@ class ContextLoaderService:
         """Record partial failure (less severe than full failure)."""
         # Only count as half a failure for circuit breaker
         self._circuit_breaker["failure_count"] += 0.5
-        self._circuit_breaker["last_failure_time"] = datetime.utcnow()
+        self._circuit_breaker["last_failure_time"] = datetime.now(timezone.utc)
 
     async def _security_check(self, character_id: str):
         """
@@ -1002,7 +1004,7 @@ class ContextLoaderService:
             return None
 
         cache_time = self._cache_timestamps.get(character_id)
-        if not cache_time or (datetime.utcnow() - cache_time) > self.cache_ttl:
+        if not cache_time or (datetime.now(timezone.utc) - cache_time) > self.cache_ttl:
             # Cache expired
             self._cache.pop(character_id, None)
             self._cache_timestamps.pop(character_id, None)
@@ -1017,7 +1019,7 @@ class ContextLoaderService:
         # Create a copy to avoid reference issues
         cache_entry = CharacterContext.model_validate(character_context.model_dump())
         self._cache[character_id] = cache_entry
-        self._cache_timestamps[character_id] = datetime.utcnow()
+        self._cache_timestamps[character_id] = datetime.now(timezone.utc)
 
         # Basic cache size management
         if len(self._cache) > 100:  # Max 100 entries

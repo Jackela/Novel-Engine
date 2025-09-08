@@ -102,9 +102,7 @@ class APIResponse(BaseModel, Generic[T]):
         None, description="Pagination info for list responses"
     )
 
-    model_config = ConfigDict(
-        json_encoders={datetime: lambda dt: dt.isoformat()}
-    )
+    model_config = ConfigDict(json_encoders={datetime: lambda dt: dt.isoformat()})
 
 
 class SuccessResponse(APIResponse[T]):

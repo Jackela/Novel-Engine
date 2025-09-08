@@ -85,9 +85,7 @@ def test_memory_usage():
         from src.persona_agent import PersonaAgent
 
         event_bus = EventBus()
-        DirectorAgent(
-            event_bus=event_bus, campaign_log_path="test_memory_campaign.md"
-        )
+        DirectorAgent(event_bus=event_bus, campaign_log_path="test_memory_campaign.md")
 
         # Create test character for PersonaAgent
         test_char_content = """

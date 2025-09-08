@@ -988,9 +988,7 @@ if __name__ == "__main__":
 
         # Generate container configurations
         print("\nGenerating container configurations...")
-        (
-            scalability_framework.orchestration_config.generate_docker_compose()
-        )
+        (scalability_framework.orchestration_config.generate_docker_compose())
         print("Docker Compose generated")
 
         k8s_manifests = (

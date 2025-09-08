@@ -28,6 +28,7 @@
     "posttest": "node scripts/test-cleanup.js"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.0.0",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.14.3",
@@ -38,6 +39,7 @@
     "@reduxjs/toolkit": "^1.9.5",
     "@vitest/coverage-v8": "^1.6.1",
     "@vitest/ui": "^1.6.1",
+    "antd": "^5.27.1",
     "axios": "^1.11.0",
     "d3": "^7.8.5",
     "date-fns": "^2.30.0",

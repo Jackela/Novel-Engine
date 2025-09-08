@@ -285,13 +285,34 @@ Each entry includes timestamps, participating agents, and detailed event descrip
         Returns:
             Dictionary containing turn execution results
         """
+        import asyncio
+
         try:
-            # Use turn orchestrator to execute turn
-            turn_result = self.turn_orchestrator.run_turn(
-                registered_agents=self.base.registered_agents,
-                world_state_data=self.base.world_state_data,
-                log_event_callback=self.log_event,
-            )
+            # Use turn orchestrator to execute turn (handle async call)
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If we're already in an async context, create a new task
+                import concurrent.futures
+
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(
+                        asyncio.run,
+                        self.turn_orchestrator.run_turn(
+                            registered_agents=self.base.registered_agents,
+                            world_state_data=self.base.world_state_data,
+                            log_event_callback=self.log_event,
+                        ),
+                    )
+                    turn_result = future.result()
+            else:
+                # If no loop is running, use asyncio.run
+                turn_result = asyncio.run(
+                    self.turn_orchestrator.run_turn(
+                        registered_agents=self.base.registered_agents,
+                        world_state_data=self.base.world_state_data,
+                        log_event_callback=self.log_event,
+                    )
+                )
 
             # Update base counters
             if turn_result.get("status") == "turn_started":

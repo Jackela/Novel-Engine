@@ -790,8 +790,6 @@ async def cleanup_memory_optimization():
     logger.info("Memory optimization cleanup completed")
 
 
-
-
 @asynccontextmanager
 async def memory_optimization_context():
     """Context manager for memory optimization setup and cleanup."""

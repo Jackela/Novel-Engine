@@ -456,7 +456,7 @@ class StoryGenerationAPI:
             ],  # Mock data
         )
 
-        await websocket.send_text(update.json())
+        await websocket.send_text(update.model_dump_json())
 
     def _calculate_time_remaining(self, state: Dict[str, Any]) -> int:
         """Calculate estimated time remaining based on progress."""

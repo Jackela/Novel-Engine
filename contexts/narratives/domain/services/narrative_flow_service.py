@@ -692,9 +692,7 @@ class NarrativeFlowService:
             pp for pp in plot_points if pp.importance.value == "critical"
         ]
         major_points = [pp for pp in plot_points if pp.importance.value == "major"]
-        [
-            pp for pp in plot_points if pp.importance.value not in ["critical", "major"]
-        ]
+        [pp for pp in plot_points if pp.importance.value not in ["critical", "major"]]
 
         # Ensure proper story structure
         # 1. Inciting incident should come early

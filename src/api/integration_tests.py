@@ -18,7 +18,6 @@ import pytest
 import websockets
 
 
-
 @dataclass
 class TestScenario:
     """Test scenario configuration."""
@@ -212,9 +211,7 @@ class IntegrationTestFramework:
                     )
 
             # Test detailed health endpoint if available
-            await client.get(
-                f"{self.base_url}/api/v1/health/detailed"
-            )
+            await client.get(f"{self.base_url}/api/v1/health/detailed")
 
             return TestResult(
                 scenario_name="health_check",
