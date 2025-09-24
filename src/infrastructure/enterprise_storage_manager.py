@@ -19,7 +19,11 @@ from .postgresql_manager import (
     PostgreSQLManager,
     create_postgresql_config_from_env,
 )
-from .redis_manager import RedisConfig, RedisManager, create_redis_config_from_env
+from .redis_manager import (
+    RedisConfig,
+    RedisManager,
+    create_redis_config_from_env,
+)
 from .s3_manager import S3Config, S3StorageManager, create_s3_config_from_env
 
 logger = logging.getLogger(__name__)
@@ -72,7 +76,9 @@ class EnterpriseStorageConfig:
     s3_config: Optional[S3Config] = None
 
     # Storage policies by data category
-    storage_policies: Dict[DataCategory, StoragePolicy] = field(default_factory=dict)
+    storage_policies: Dict[DataCategory, StoragePolicy] = field(
+        default_factory=dict
+    )
 
     # Global settings
     enable_distributed_locks: bool = True
@@ -119,11 +125,13 @@ class EnterpriseStorageConfig:
             ),
             # Sessions: Redis primary (ephemeral)
             DataCategory.SESSIONS: StoragePolicy(
-                primary_backend=StorageBackend.REDIS, ttl_seconds=7200  # 2 hours
+                primary_backend=StorageBackend.REDIS,
+                ttl_seconds=7200,  # 2 hours
             ),
             # Cache data: Redis only
             DataCategory.CACHE: StoragePolicy(
-                primary_backend=StorageBackend.REDIS, ttl_seconds=3600  # 1 hour default
+                primary_backend=StorageBackend.REDIS,
+                ttl_seconds=3600,  # 1 hour default
             ),
             # File storage: S3 primary
             DataCategory.FILES: StoragePolicy(
@@ -143,7 +151,8 @@ class EnterpriseStorageConfig:
             ),
             # Metrics: Redis primary (ephemeral)
             DataCategory.METRICS: StoragePolicy(
-                primary_backend=StorageBackend.REDIS, ttl_seconds=86400  # 24 hours
+                primary_backend=StorageBackend.REDIS,
+                ttl_seconds=86400,  # 24 hours
             ),
         }
 
@@ -180,7 +189,9 @@ class EnterpriseStorageManager:
             "operations": {
                 "total": 0,
                 "by_backend": {backend.value: 0 for backend in StorageBackend},
-                "by_category": {category.value: 0 for category in DataCategory},
+                "by_category": {
+                    category.value: 0 for category in DataCategory
+                },
                 "errors": 0,
             },
             "performance": {"avg_response_time": 0.0, "response_times": []},
@@ -197,7 +208,9 @@ class EnterpriseStorageManager:
 
             # Initialize PostgreSQL
             if self.config.postgresql_config:
-                self.postgresql = PostgreSQLManager(self.config.postgresql_config)
+                self.postgresql = PostgreSQLManager(
+                    self.config.postgresql_config
+                )
                 await self.postgresql.initialize()
                 logger.info("PostgreSQL backend initialized")
 
@@ -215,13 +228,17 @@ class EnterpriseStorageManager:
 
             # Start health monitoring
             if self.config.health_check_interval > 0:
-                self._health_check_task = asyncio.create_task(self._health_check_loop())
+                self._health_check_task = asyncio.create_task(
+                    self._health_check_loop()
+                )
 
             self._initialized = True
             logger.info("Enterprise storage manager initialization complete")
 
         except Exception as e:
-            logger.error(f"Failed to initialize enterprise storage manager: {e}")
+            logger.error(
+                f"Failed to initialize enterprise storage manager: {e}"
+            )
             raise
 
     async def _health_check_loop(self) -> None:
@@ -248,7 +265,9 @@ class EnterpriseStorageManager:
                 if self.redis:
                     try:
                         health = await self.redis.health_check()
-                        self._metrics["health"]["redis"] = health.get("healthy", False)
+                        self._metrics["health"]["redis"] = health.get(
+                            "healthy", False
+                        )
                     except Exception as e:
                         self._metrics["health"]["redis"] = False
                         logger.warning(f"Redis health check failed: {e}")
@@ -257,7 +276,9 @@ class EnterpriseStorageManager:
                 if self.s3:
                     try:
                         health = await self.s3.health_check()
-                        self._metrics["health"]["s3"] = health.get("healthy", False)
+                        self._metrics["health"]["s3"] = health.get(
+                            "healthy", False
+                        )
                     except Exception as e:
                         self._metrics["health"]["s3"] = False
                         logger.warning(f"S3 health check failed: {e}")
@@ -267,7 +288,9 @@ class EnterpriseStorageManager:
             except Exception as e:
                 logger.error(f"Health check loop error: {e}")
 
-    def _get_backend_for_category(self, category: DataCategory) -> StorageBackend:
+    def _get_backend_for_category(
+        self, category: DataCategory
+    ) -> StorageBackend:
         """Get primary storage backend for data category."""
         policy = self.config.storage_policies.get(category)
         if policy:
@@ -286,7 +309,10 @@ class EnterpriseStorageManager:
         return None
 
     async def _record_operation_metrics(
-        self, category: DataCategory, backend: StorageBackend, response_time: float
+        self,
+        category: DataCategory,
+        backend: StorageBackend,
+        response_time: float,
     ):
         """Record operation metrics."""
         self._metrics["operations"]["total"] += 1
@@ -334,10 +360,16 @@ class EnterpriseStorageManager:
 
             # Backup to S3 if configured
             policy = self.config.storage_policies.get(DataCategory.CHARACTERS)
-            if policy and policy.backup_backend == StorageBackend.S3 and self.s3:
+            if (
+                policy
+                and policy.backup_backend == StorageBackend.S3
+                and self.s3
+            ):
                 import json
 
-                backup_content = json.dumps(character_data, default=str).encode("utf-8")
+                backup_content = json.dumps(
+                    character_data, default=str
+                ).encode("utf-8")
                 await self.s3.store_character_asset(
                     character_id=character_id,
                     asset_type="backup",
@@ -348,10 +380,14 @@ class EnterpriseStorageManager:
             # Record metrics
             response_time = asyncio.get_event_loop().time() - start_time
             await self._record_operation_metrics(
-                DataCategory.CHARACTERS, StorageBackend.POSTGRESQL, response_time
+                DataCategory.CHARACTERS,
+                StorageBackend.POSTGRESQL,
+                response_time,
             )
 
-            logger.debug(f"Stored character {character_id} across enterprise backends")
+            logger.debug(
+                f"Stored character {character_id} across enterprise backends"
+            )
             return True
 
         except Exception as e:
@@ -359,7 +395,9 @@ class EnterpriseStorageManager:
             logger.error(f"Failed to store character {character_id}: {e}")
             raise
 
-    async def get_character(self, character_id: str) -> Optional[Dict[str, Any]]:
+    async def get_character(
+        self, character_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Get character data with caching."""
         if not self._initialized:
             await self.initialize()
@@ -372,20 +410,28 @@ class EnterpriseStorageManager:
                 DataCategory.CHARACTERS
             )
             if cache_backend == StorageBackend.REDIS and self.redis:
-                cached_data = await self.redis.connection_pool.get_cached_character(
-                    character_id
+                cached_data = (
+                    await self.redis.connection_pool.get_cached_character(
+                        character_id
+                    )
                 )
                 if cached_data:
-                    response_time = asyncio.get_event_loop().time() - start_time
+                    response_time = (
+                        asyncio.get_event_loop().time() - start_time
+                    )
                     await self._record_operation_metrics(
-                        DataCategory.CHARACTERS, StorageBackend.REDIS, response_time
+                        DataCategory.CHARACTERS,
+                        StorageBackend.REDIS,
+                        response_time,
                     )
                     return cached_data
 
             # Fetch from primary backend
             if self.postgresql:
-                results = await self.postgresql.connection_pool.search_characters(
-                    search_query=character_id, limit=1
+                results = (
+                    await self.postgresql.connection_pool.search_characters(
+                        search_query=character_id, limit=1
+                    )
                 )
 
                 if results:
@@ -397,7 +443,9 @@ class EnterpriseStorageManager:
                             character_id, character_data
                         )
 
-                    response_time = asyncio.get_event_loop().time() - start_time
+                    response_time = (
+                        asyncio.get_event_loop().time() - start_time
+                    )
                     await self._record_operation_metrics(
                         DataCategory.CHARACTERS,
                         StorageBackend.POSTGRESQL,
@@ -434,16 +482,20 @@ class EnterpriseStorageManager:
 
             # Store in primary backend (PostgreSQL)
             if self.postgresql:
-                memory_id = await self.postgresql.connection_pool.store_memory_item(
-                    agent_id=agent_id,
-                    memory_type=memory_type,
-                    content=content,
-                    importance_score=importance_score,
-                    embedding=embedding,
+                memory_id = (
+                    await self.postgresql.connection_pool.store_memory_item(
+                        agent_id=agent_id,
+                        memory_type=memory_type,
+                        content=content,
+                        importance_score=importance_score,
+                        embedding=embedding,
+                    )
                 )
 
             # Cache recent memories in Redis
-            cache_backend = self._get_cache_backend_for_category(DataCategory.MEMORY)
+            cache_backend = self._get_cache_backend_for_category(
+                DataCategory.MEMORY
+            )
             if cache_backend == StorageBackend.REDIS and self.redis:
                 cache_key = f"memory:{agent_id}:{memory_type}"
                 memory_data = {
@@ -457,7 +509,9 @@ class EnterpriseStorageManager:
                 await self.redis.connection_pool.lpush(
                     cache_key,
                     memory_data,
-                    ttl=self.config.storage_policies[DataCategory.MEMORY].ttl_seconds,
+                    ttl=self.config.storage_policies[
+                        DataCategory.MEMORY
+                    ].ttl_seconds,
                 )
 
             # Record metrics
@@ -489,17 +543,21 @@ class EnterpriseStorageManager:
         try:
             # Search in PostgreSQL (primary)
             if self.postgresql:
-                results = await self.postgresql.connection_pool.search_memories(
-                    agent_id=agent_id,
-                    search_query=search_query,
-                    memory_types=memory_types,
-                    limit=limit,
+                results = (
+                    await self.postgresql.connection_pool.search_memories(
+                        agent_id=agent_id,
+                        search_query=search_query,
+                        memory_types=memory_types,
+                        limit=limit,
+                    )
                 )
 
                 # Record metrics
                 response_time = asyncio.get_event_loop().time() - start_time
                 await self._record_operation_metrics(
-                    DataCategory.MEMORY, StorageBackend.POSTGRESQL, response_time
+                    DataCategory.MEMORY,
+                    StorageBackend.POSTGRESQL,
+                    response_time,
                 )
 
                 return results
@@ -508,7 +566,9 @@ class EnterpriseStorageManager:
 
         except Exception as e:
             self._metrics["operations"]["errors"] += 1
-            logger.error(f"Failed to search memories for agent {agent_id}: {e}")
+            logger.error(
+                f"Failed to search memories for agent {agent_id}: {e}"
+            )
             raise
 
     # Session operations
@@ -558,7 +618,9 @@ class EnterpriseStorageManager:
         start_time = asyncio.get_event_loop().time()
 
         try:
-            session_data = await self.redis.connection_pool.get_session(session_id)
+            session_data = await self.redis.connection_pool.get_session(
+                session_id
+            )
 
             # Record metrics
             response_time = asyncio.get_event_loop().time() - start_time
@@ -588,26 +650,38 @@ class EnterpriseStorageManager:
                 cache_key = f"system_state:{key}"
                 cached_value = await self.redis.connection_pool.get(cache_key)
                 if cached_value is not None:
-                    response_time = asyncio.get_event_loop().time() - start_time
+                    response_time = (
+                        asyncio.get_event_loop().time() - start_time
+                    )
                     await self._record_operation_metrics(
-                        DataCategory.SYSTEM_STATE, StorageBackend.REDIS, response_time
+                        DataCategory.SYSTEM_STATE,
+                        StorageBackend.REDIS,
+                        response_time,
                     )
                     return cached_value
 
             # Get from PostgreSQL
             if self.postgresql:
-                value = await self.postgresql.connection_pool.get_system_state(key)
+                value = await self.postgresql.connection_pool.get_system_state(
+                    key
+                )
 
                 # Update cache
                 if value is not None and self.redis:
                     cache_key = f"system_state:{key}"
-                    policy = self.config.storage_policies.get(DataCategory.SYSTEM_STATE)
+                    policy = self.config.storage_policies.get(
+                        DataCategory.SYSTEM_STATE
+                    )
                     ttl = policy.ttl_seconds if policy else 300
-                    await self.redis.connection_pool.set(cache_key, value, ttl=ttl)
+                    await self.redis.connection_pool.set(
+                        cache_key, value, ttl=ttl
+                    )
 
                 response_time = asyncio.get_event_loop().time() - start_time
                 await self._record_operation_metrics(
-                    DataCategory.SYSTEM_STATE, StorageBackend.POSTGRESQL, response_time
+                    DataCategory.SYSTEM_STATE,
+                    StorageBackend.POSTGRESQL,
+                    response_time,
                 )
 
                 return value
@@ -638,14 +712,18 @@ class EnterpriseStorageManager:
             # Update cache
             if self.redis:
                 cache_key = f"system_state:{key}"
-                policy = self.config.storage_policies.get(DataCategory.SYSTEM_STATE)
+                policy = self.config.storage_policies.get(
+                    DataCategory.SYSTEM_STATE
+                )
                 ttl = policy.ttl_seconds if policy else 300
                 await self.redis.connection_pool.set(cache_key, value, ttl=ttl)
 
             # Record metrics
             response_time = asyncio.get_event_loop().time() - start_time
             await self._record_operation_metrics(
-                DataCategory.SYSTEM_STATE, StorageBackend.POSTGRESQL, response_time
+                DataCategory.SYSTEM_STATE,
+                StorageBackend.POSTGRESQL,
+                response_time,
             )
 
             return True
@@ -694,7 +772,9 @@ class EnterpriseStorageManager:
             logger.error(f"Failed to store file {file_path}: {e}")
             raise
 
-    async def get_file(self, file_path: str, use_cache: bool = True) -> Optional[bytes]:
+    async def get_file(
+        self, file_path: str, use_cache: bool = True
+    ) -> Optional[bytes]:
         """Get file from S3 with caching."""
         if not self._initialized:
             await self.initialize()
@@ -705,7 +785,9 @@ class EnterpriseStorageManager:
         start_time = asyncio.get_event_loop().time()
 
         try:
-            content = await self.s3.download_bytes(file_path, use_cache=use_cache)
+            content = await self.s3.download_bytes(
+                file_path, use_cache=use_cache
+            )
 
             # Record metrics
             response_time = asyncio.get_event_loop().time() - start_time
@@ -789,7 +871,10 @@ class EnterpriseStorageManager:
                 if not redis_health.get("healthy", False):
                     health_status["overall_healthy"] = False
             except Exception as e:
-                health_status["backends"]["redis"] = {"healthy": False, "error": str(e)}
+                health_status["backends"]["redis"] = {
+                    "healthy": False,
+                    "error": str(e),
+                }
                 health_status["overall_healthy"] = False
 
         # Check S3
@@ -800,7 +885,10 @@ class EnterpriseStorageManager:
                 if not s3_health.get("healthy", False):
                     health_status["overall_healthy"] = False
             except Exception as e:
-                health_status["backends"]["s3"] = {"healthy": False, "error": str(e)}
+                health_status["backends"]["s3"] = {
+                    "healthy": False,
+                    "error": str(e),
+                }
                 health_status["overall_healthy"] = False
 
         return health_status

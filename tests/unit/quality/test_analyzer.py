@@ -21,9 +21,7 @@ from typing import Any, Dict
 sys.path.append("src")
 
 # Import quality analyzer
-from quality.code_quality_analyzer import (
-    CodeQualityAnalyzer,
-)
+from src.quality.code_quality_analyzer import CodeQualityAnalyzer
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -155,7 +153,9 @@ class CodeQualityTest:
                 "analysis_time_seconds": time.time() - start_time,
             }
 
-    def _generate_detailed_report(self, report: Dict[str, Any], analysis_time: float):
+    def _generate_detailed_report(
+        self, report: Dict[str, Any], analysis_time: float
+    ):
         """Generate detailed code quality analysis report."""
 
         # Create comprehensive report
@@ -181,10 +181,15 @@ Wave 6.1 - Technical Debt Assessment & Quality Metrics
 
         for severity, count in report["issues_by_severity"].items():
             if count > 0:
-                emoji = {"critical": "🔥", "high": "⚠️", "medium": "📋", "low": "ℹ️"}.get(
-                    severity, "•"
+                emoji = {
+                    "critical": "🔥",
+                    "high": "⚠️",
+                    "medium": "📋",
+                    "low": "ℹ️",
+                }.get(severity, "•")
+                detailed_report += (
+                    f"\n{emoji} {severity.upper()}: {count} issues"
                 )
-                detailed_report += f"\n{emoji} {severity.upper()}: {count} issues"
 
         detailed_report += """
 
@@ -202,9 +207,7 @@ Wave 6.1 - Technical Debt Assessment & Quality Metrics
                     "security": "🛡️",
                     "testing": "🧪",
                 }.get(category, "•")
-                detailed_report += (
-                    f"\n{emoji} {category.replace('_', ' ').title()}: {count} issues"
-                )
+                detailed_report += f"\n{emoji} {category.replace('_', ' ').title()}: {count} issues"
 
         detailed_report += """
 
@@ -213,7 +216,9 @@ Wave 6.1 - Technical Debt Assessment & Quality Metrics
 🔥 MOST PROBLEMATIC FILES:
 """
 
-        for i, file_info in enumerate(report["most_problematic_files"][:10], 1):
+        for i, file_info in enumerate(
+            report["most_problematic_files"][:10], 1
+        ):
             grade = self._calculate_grade(file_info["quality_score"])
             detailed_report += f"""
 {i:2d}. {file_info['file']}
@@ -262,7 +267,9 @@ Wave 6.1 - Technical Debt Assessment & Quality Metrics
 
         # High-impact issues analysis
         high_issues = [
-            issue for issue in report["detailed_issues"] if issue["severity"] == "high"
+            issue
+            for issue in report["detailed_issues"]
+            if issue["severity"] == "high"
         ]
 
         if high_issues:
@@ -290,15 +297,11 @@ Wave 6.1 - Technical Debt Assessment & Quality Metrics
                 if len(issues) > 3:
                     detailed_report += " (showing top 3):"
                     for issue in issues[:3]:
-                        detailed_report += (
-                            f"\n   • {issue['file_path']}:{issue['line_number']}"
-                        )
+                        detailed_report += f"\n   • {issue['file_path']}:{issue['line_number']}"
                 else:
                     detailed_report += ":"
                     for issue in issues:
-                        detailed_report += (
-                            f"\n   • {issue['file_path']}:{issue['line_number']}"
-                        )
+                        detailed_report += f"\n   • {issue['file_path']}:{issue['line_number']}"
 
         detailed_report += f"""
 
@@ -321,7 +324,9 @@ Wave 6.1 - Technical Debt Assessment & Quality Metrics
             debt_by_category.items(), key=lambda x: x[1], reverse=True
         ):
             hours = minutes / 60
-            percentage = (minutes / max(1, sum(debt_by_category.values()))) * 100
+            percentage = (
+                minutes / max(1, sum(debt_by_category.values()))
+            ) * 100
             detailed_report += f"\n• {category.replace('_', ' ').title()}: {hours:.1f}h ({percentage:.1f}%)"
 
         detailed_report += f"""
@@ -369,7 +374,9 @@ Code Quality Analysis Complete - Wave 6.1 Assessment Ready
                 f"TECHNICAL_DEBT_ANALYSIS = {json.dumps(report, indent=2, default=str)}\n"
             )
 
-        logger.info(f"Detailed technical debt assessment written to {report_path}")
+        logger.info(
+            f"Detailed technical debt assessment written to {report_path}"
+        )
 
         # Display summary
         print(detailed_report)
@@ -401,7 +408,9 @@ Code Quality Analysis Complete - Wave 6.1 Assessment Ready
             component_results["initialization"] = True
 
             # Test file discovery
-            python_files = analyzer._find_python_files(["test_*", "__pycache__"])
+            python_files = analyzer._find_python_files(
+                ["test_*", "__pycache__"]
+            )
             component_results["file_discovery"] = {
                 "success": True,
                 "files_found": len(python_files),
@@ -418,7 +427,9 @@ Code Quality Analysis Complete - Wave 6.1 Assessment Ready
                         "quality_score": metrics.calculate_quality_score(),
                         "issues_found": len(metrics.issues),
                     }
-                    logger.info(f"Single file analysis successful: {test_file}")
+                    logger.info(
+                        f"Single file analysis successful: {test_file}"
+                    )
                 except Exception as e:
                     component_results["file_analysis"] = {
                         "success": False,
@@ -462,14 +473,18 @@ def main():
                 logger.info(
                     f"   Quality Score: {report['summary']['overall_quality_score']:.1f}/100"
                 )
-                logger.info(f"   Grade: {report['summary']['maintainability_grade']}")
+                logger.info(
+                    f"   Grade: {report['summary']['maintainability_grade']}"
+                )
                 logger.info(
                     f"   Technical Debt: {report['summary']['technical_debt_hours']:.1f} hours"
                 )
                 logger.info(
                     f"   Critical Issues: {report['issues_by_severity']['critical']}"
                 )
-                logger.info(f"   High Issues: {report['issues_by_severity']['high']}")
+                logger.info(
+                    f"   High Issues: {report['issues_by_severity']['high']}"
+                )
 
                 return analysis_results
             else:

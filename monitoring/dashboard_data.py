@@ -16,7 +16,7 @@ import os
 import statistics
 from collections import deque
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,9 @@ class TimeSeriesData:
         """Get average value over specified time period"""
         cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         recent_points = [
-            point.value for point in self.data_points if point.timestamp >= cutoff_time
+            point.value
+            for point in self.data_points
+            if point.timestamp >= cutoff_time
         ]
 
         if not recent_points:
@@ -60,11 +62,15 @@ class TimeSeriesData:
 
         return statistics.mean(recent_points)
 
-    def get_percentile(self, percentile: int, minutes: int = 60) -> Optional[float]:
+    def get_percentile(
+        self, percentile: int, minutes: int = 60
+    ) -> Optional[float]:
         """Get percentile value over specified time period"""
         cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         recent_points = [
-            point.value for point in self.data_points if point.timestamp >= cutoff_time
+            point.value
+            for point in self.data_points
+            if point.timestamp >= cutoff_time
         ]
 
         if not recent_points:
@@ -126,9 +132,9 @@ class DashboardDataCollector:
 
         # Data storage
         self.time_series_data: Dict[str, TimeSeriesData] = {}
-        self.aggregated_data: Dict[str, Dict[str, TimeSeriesData]] = (
-            {}
-        )  # interval -> metric -> data
+        self.aggregated_data: Dict[
+            str, Dict[str, TimeSeriesData]
+        ] = {}  # interval -> metric -> data
 
         # Dashboard definitions
         self.dashboards: Dict[str, Dashboard] = {}
@@ -150,7 +156,9 @@ class DashboardDataCollector:
         if metric_name not in self.time_series_data:
             self.time_series_data[metric_name] = TimeSeriesData(
                 metric_name=metric_name,
-                data_points=deque(maxlen=self.config.max_data_points_per_series),
+                data_points=deque(
+                    maxlen=self.config.max_data_points_per_series
+                ),
             )
 
         self.time_series_data[metric_name].data_points.append(metric_data)
@@ -164,12 +172,16 @@ class DashboardDataCollector:
 
         # Parse time range
         duration_minutes = self._parse_time_range(time_range)
-        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=duration_minutes)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(
+            minutes=duration_minutes
+        )
 
         # Filter data points
         series = self.time_series_data[metric_name]
         filtered_points = [
-            point for point in series.data_points if point.timestamp >= cutoff_time
+            point
+            for point in series.data_points
+            if point.timestamp >= cutoff_time
         ]
 
         return TimeSeriesData(
@@ -254,7 +266,9 @@ class DashboardDataCollector:
 
             for metric_name, series in self.time_series_data.items():
                 if metric_name not in self.aggregated_data[interval]:
-                    self.aggregated_data[interval][metric_name] = TimeSeriesData(
+                    self.aggregated_data[interval][
+                        metric_name
+                    ] = TimeSeriesData(
                         metric_name=metric_name,
                         data_points=deque(
                             maxlen=self.config.max_data_points_per_series
@@ -281,7 +295,9 @@ class DashboardDataCollector:
         # Check if we need a new aggregated data point
         if aggregated_series.data_points:
             last_point = aggregated_series.data_points[-1]
-            time_since_last = (current_time - last_point.timestamp).total_seconds() / 60
+            time_since_last = (
+                current_time - last_point.timestamp
+            ).total_seconds() / 60
 
             if time_since_last < interval_minutes:
                 return  # Not time for new aggregation yet
@@ -308,7 +324,9 @@ class DashboardDataCollector:
             timestamp=current_time,
             labels=relevant_points[0].labels if relevant_points else {},
             unit=relevant_points[0].unit if relevant_points else "",
-            description=relevant_points[0].description if relevant_points else "",
+            description=relevant_points[0].description
+            if relevant_points
+            else "",
         )
 
         aggregated_series.data_points.append(aggregated_point)
@@ -321,14 +339,18 @@ class DashboardDataCollector:
 
         # Clean raw data
         for series in self.time_series_data.values():
-            while series.data_points and series.data_points[0].timestamp < cutoff_time:
+            while (
+                series.data_points
+                and series.data_points[0].timestamp < cutoff_time
+            ):
                 series.data_points.popleft()
 
         # Clean aggregated data
         for interval_data in self.aggregated_data.values():
             for series in interval_data.values():
                 while (
-                    series.data_points and series.data_points[0].timestamp < cutoff_time
+                    series.data_points
+                    and series.data_points[0].timestamp < cutoff_time
                 ):
                     series.data_points.popleft()
 
@@ -369,7 +391,10 @@ class DashboardDataCollector:
                     title="Error Rate",
                     widget_type="gauge",
                     metric_queries=["http_error_rate_percent"],
-                    config={"max_value": 5, "thresholds": {"good": 1, "warning": 3}},
+                    config={
+                        "max_value": 5,
+                        "thresholds": {"good": 1, "warning": 3},
+                    },
                 ),
                 DashboardWidget(
                     id="story_generation_stats",
@@ -427,7 +452,10 @@ class DashboardDataCollector:
                     id="network_io",
                     title="Network I/O",
                     widget_type="chart",
-                    metric_queries=["network_bytes_sent", "network_bytes_recv"],
+                    metric_queries=[
+                        "network_bytes_sent",
+                        "network_bytes_recv",
+                    ],
                     time_range="1h",
                     config={"chart_type": "line"},
                 ),
@@ -610,7 +638,9 @@ class DashboardDataCollector:
         try:
             # Get data for each metric query
             for metric_query in widget.metric_queries:
-                metric_data = self.get_metric_data(metric_query, widget.time_range)
+                metric_data = self.get_metric_data(
+                    metric_query, widget.time_range
+                )
 
                 if metric_data:
                     widget_data["data"][metric_query] = {
@@ -727,7 +757,9 @@ class DashboardDataCollector:
                 if metric_name.endswith("_percent") and latest_value:
                     if latest_value > 95:
                         overview["status"] = "critical"
-                    elif latest_value > 85 and overview["status"] != "critical":
+                    elif (
+                        latest_value > 85 and overview["status"] != "critical"
+                    ):
                         overview["status"] = "warning"
 
         return overview

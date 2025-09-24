@@ -62,7 +62,9 @@ class CacheEntry:
         """Check if cache entry is expired."""
         if self.ttl_seconds is None:
             return False
-        return (datetime.now() - self.created_at).total_seconds() > self.ttl_seconds
+        return (
+            datetime.now() - self.created_at
+        ).total_seconds() > self.ttl_seconds
 
     def touch(self):
         """Update access metadata."""
@@ -108,7 +110,6 @@ class IntelligentCache:
         default_ttl: int = 3600,
         strategy: CacheStrategy = CacheStrategy.ADAPTIVE,
     ):
-
         self.l1_max_size = l1_max_size
         self.l2_max_size = l2_max_size
         self.l3_max_size = l3_max_size
@@ -191,7 +192,9 @@ class IntelligentCache:
             self.l1_stats.misses += 1
             return None
 
-    async def put(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    async def put(
+        self, key: str, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """Store value in cache with intelligent placement."""
         try:
             ttl = ttl or self.default_ttl
@@ -239,7 +242,8 @@ class IntelligentCache:
         elif self.strategy == CacheStrategy.LFU:
             # Remove least frequently used
             min_key = min(
-                self.l1_cache.keys(), key=lambda k: self.l1_cache[k].access_count
+                self.l1_cache.keys(),
+                key=lambda k: self.l1_cache[k].access_count,
             )
             entry = self.l1_cache.pop(min_key)
             key = min_key
@@ -256,7 +260,9 @@ class IntelligentCache:
 
         self.l1_stats.evictions += 1
         self.l1_stats.size_bytes -= entry.size_bytes
-        logger.debug(f"Evicted from L1: {key} (strategy: {self.strategy.value})")
+        logger.debug(
+            f"Evicted from L1: {key} (strategy: {self.strategy.value})"
+        )
 
     def _adaptive_eviction(self) -> Tuple[str, CacheEntry]:
         """AI-driven adaptive eviction strategy."""
@@ -265,7 +271,9 @@ class IntelligentCache:
 
         for key, entry in self.l1_cache.items():
             # Calculate composite score
-            recency_score = (datetime.now() - entry.last_accessed).total_seconds()
+            recency_score = (
+                datetime.now() - entry.last_accessed
+            ).total_seconds()
             frequency_score = 1.0 / max(1, entry.access_count)
             size_penalty = entry.size_bytes / 1024  # Penalize larger items
 
@@ -299,7 +307,8 @@ class IntelligentCache:
 
         # Calculate access intervals
         intervals = [
-            access_times[i] - access_times[i - 1] for i in range(1, len(access_times))
+            access_times[i] - access_times[i - 1]
+            for i in range(1, len(access_times))
         ]
 
         if not intervals:
@@ -510,18 +519,24 @@ class IntelligentCache:
         datetime.now()
 
         # Clean L1
-        expired_l1 = [key for key, entry in self.l1_cache.items() if entry.is_expired()]
+        expired_l1 = [
+            key for key, entry in self.l1_cache.items() if entry.is_expired()
+        ]
         for key in expired_l1:
             entry = self.l1_cache.pop(key)
             self.l1_stats.size_bytes -= entry.size_bytes
 
         # Clean L2
-        expired_l2 = [key for key, entry in self.l2_cache.items() if entry.is_expired()]
+        expired_l2 = [
+            key for key, entry in self.l2_cache.items() if entry.is_expired()
+        ]
         for key in expired_l2:
             self.l2_cache.pop(key)
 
         # Clean L3
-        expired_l3 = [key for key, entry in self.l3_cache.items() if entry.is_expired()]
+        expired_l3 = [
+            key for key, entry in self.l3_cache.items() if entry.is_expired()
+        ]
         for key in expired_l3:
             self.l3_cache.pop(key)
             asyncio.create_task(self._remove_from_disk(key))
@@ -703,7 +718,8 @@ class LLMResponseCache(IntelligentCache):
             return exact_response
 
         # Try fuzzy matching if exact match fails
-        # This is a simplified approach - in production, you'd use embedding similarity
+        # This is a simplified approach - in production, you'd use embedding
+        # similarity
         similar_keys = self._find_similar_keys(key, similarity_threshold)
 
         for similar_key in similar_keys:
@@ -716,7 +732,9 @@ class LLMResponseCache(IntelligentCache):
 
         return None
 
-    def _find_similar_keys(self, target_key: str, threshold: float) -> List[str]:
+    def _find_similar_keys(
+        self, target_key: str, threshold: float
+    ) -> List[str]:
         """Find similar cache keys using simple string similarity."""
         similar_keys = []
 
@@ -780,7 +798,9 @@ class WorldStatePrefetcher:
 
             # Keep only recent history
             if len(pattern_data["request_history"]) > 100:
-                pattern_data["request_history"] = pattern_data["request_history"][-100:]
+                pattern_data["request_history"] = pattern_data[
+                    "request_history"
+                ][-100:]
 
             # Analyze common query patterns
             query_signature = self._create_query_signature(world_state_request)
@@ -814,12 +834,14 @@ class WorldStatePrefetcher:
         """Prefetch data for predicted future requests."""
         try:
             # Analyze recent request patterns
-            recent_requests = pattern_data["request_history"][-10:]  # Last 10 requests
+            # Last 10 requests
+            recent_requests = pattern_data["request_history"][-10:]
 
             if len(recent_requests) < 3:
                 return  # Need more data for prediction
 
-            # Simple prediction: if agent frequently requests turn N, prefetch turn N+1
+            # Simple prediction: if agent frequently requests turn N, prefetch
+            # turn N+1
             for request_data in recent_requests:
                 request = request_data["request"]
 
@@ -854,7 +876,8 @@ class WorldStatePrefetcher:
         self, agent_id: str, pattern_data: Dict[str, Any]
     ) -> List[str]:
         """Predict which other agents this agent commonly interacts with."""
-        # This is a simplified prediction - in production you'd use more sophisticated ML
+        # This is a simplified prediction - in production you'd use more
+        # sophisticated ML
         related_agents = []
 
         # Analyze request history for agent interaction patterns
@@ -883,7 +906,8 @@ class WorldStatePrefetcher:
             }
 
             # Store in cache with shorter TTL since it's predicted data
-            await self.cache.put(prefetch_key, prefetched_data, ttl=1800)  # 30 minutes
+            # 30 minutes
+            await self.cache.put(prefetch_key, prefetched_data, ttl=1800)
 
             logger.debug(f"Prefetched data for key: {prefetch_key}")
 
@@ -953,9 +977,9 @@ async def get_comprehensive_caching_report() -> Dict[str, Any]:
 
     # World State Cache stats
     if _global_world_state_cache:
-        report["world_state_cache"] = (
-            _global_world_state_cache.get_comprehensive_stats()
-        )
+        report[
+            "world_state_cache"
+        ] = _global_world_state_cache.get_comprehensive_stats()
 
     # System memory usage
     process = psutil.Process()

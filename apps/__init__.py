@@ -7,7 +7,7 @@ M1 architecture. Each service represents a distinct application boundary with
 specific responsibilities and interfaces.
 
 Services:
-- api-gateway: Main API orchestration and routing
+- api_gateway: Main API orchestration and routing
 - story-engine: Core narrative generation service
 - character-service: Character management and lifecycle
 - campaign-manager: Campaign orchestration and management

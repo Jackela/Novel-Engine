@@ -55,7 +55,10 @@ class SSLCertificateManager:
         logger.info(f"SSL CERTIFICATE MANAGER INITIALIZED: {self.cert_dir}")
 
     def generate_self_signed_cert(
-        self, domain: str = "localhost", alt_names: List[str] = None, days: int = 365
+        self,
+        domain: str = "localhost",
+        alt_names: List[str] = None,
+        days: int = 365,
     ) -> Tuple[str, str]:
         """
         STANDARD SELF-SIGNED CERTIFICATE GENERATION
@@ -155,7 +158,9 @@ class SSLCertificateManager:
         os.chmod(key_file, 0o600)
         os.chmod(cert_file, 0o644)
 
-        logger.info(f"SELF-SIGNED CERTIFICATE GENERATED: {cert_file}, {key_file}")
+        logger.info(
+            f"SELF-SIGNED CERTIFICATE GENERATED: {cert_file}, {key_file}"
+        )
         return str(cert_file), str(key_file)
 
     def validate_certificate(self, cert_file: str, key_file: str) -> bool:
@@ -169,7 +174,9 @@ class SSLCertificateManager:
             # Load private key
             with open(key_file, "rb") as f:
                 key_data = f.read()
-            private_key = serialization.load_pem_private_key(key_data, password=None)
+            private_key = serialization.load_pem_private_key(
+                key_data, password=None
+            )
 
             # Validate key matches certificate
             public_key = cert.public_key()
@@ -182,12 +189,16 @@ class SSLCertificateManager:
 
             # Check expiration
             if cert.not_valid_after < datetime.now(timezone.utc):
-                logger.error("CERTIFICATE VALIDATION FAILED: Certificate expired")
+                logger.error(
+                    "CERTIFICATE VALIDATION FAILED: Certificate expired"
+                )
                 return False
 
             # Check validity period
             if cert.not_valid_before > datetime.now(timezone.utc):
-                logger.error("CERTIFICATE VALIDATION FAILED: Certificate not yet valid")
+                logger.error(
+                    "CERTIFICATE VALIDATION FAILED: Certificate not yet valid"
+                )
                 return False
 
             logger.info("CERTIFICATE VALIDATION SUCCESSFUL")
@@ -338,25 +349,25 @@ server {{
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
     server_name {domain};
-    
+
     # SSL Certificate Configuration
     ssl_certificate {cert_file};
     ssl_certificate_key {key_file};
-    
+
     # SSL Security Settings
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
     ssl_prefer_server_ciphers off;
-    
+
     # SSL Session Settings
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 10m;
     ssl_session_tickets off;
-    
+
     # OCSP Stapling
     ssl_stapling on;
     ssl_stapling_verify on;
-    
+
     # Security Headers
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
     add_header X-Frame-Options DENY always;
@@ -364,7 +375,7 @@ server {{
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" always;
-    
+
     # Novel Engine Application
     location / {{
         proxy_pass http://127.0.0.1:8000;
@@ -374,12 +385,12 @@ server {{
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-Port $server_port;
-        
+
         # Timeouts
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
-        
+
         # Buffer settings
         proxy_buffering on;
         proxy_buffer_size 128k;
@@ -408,17 +419,17 @@ server {{
 <VirtualHost *:443>
     ServerName {domain}
     DocumentRoot /var/www/html
-    
+
     # SSL Configuration
     SSLEngine on
     SSLCertificateFile {cert_file}
     SSLCertificateKeyFile {key_file}
-    
+
     # SSL Security Settings
     SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1
     SSLCipherSuite ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384
     SSLHonorCipherOrder off
-    
+
     # Security Headers
     Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
     Header always set X-Frame-Options DENY
@@ -426,12 +437,12 @@ server {{
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
-    
+
     # Proxy to Novel Engine
     ProxyPreserveHost On
     ProxyPass / http://127.0.0.1:8000/
     ProxyPassReverse / http://127.0.0.1:8000/
-    
+
     # Additional proxy headers
     ProxyAddHeaders On
 </VirtualHost>

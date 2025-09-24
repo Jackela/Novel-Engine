@@ -25,7 +25,12 @@ from enum import Enum
 from typing import Any, AsyncIterator, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from ..value_objects.common import ModelCapability, ModelId, ProviderId, TokenBudget
+from ..value_objects.common import (
+    ModelCapability,
+    ModelId,
+    ProviderId,
+    TokenBudget,
+)
 
 
 class LLMRequestType(Enum):
@@ -146,7 +151,9 @@ class LLMRequest:
             raise ValueError("model_id must be a ModelId instance")
 
         if not self.prompt or not isinstance(self.prompt, str):
-            raise ValueError("prompt is required and must be a non-empty string")
+            raise ValueError(
+                "prompt is required and must be a non-empty string"
+            )
 
         # Validate numeric parameters
         if not (0.0 <= self.temperature <= 2.0):
@@ -172,7 +179,10 @@ class LLMRequest:
                 )
 
         # Validate timeout
-        if not isinstance(self.timeout_seconds, int) or self.timeout_seconds <= 0:
+        if (
+            not isinstance(self.timeout_seconds, int)
+            or self.timeout_seconds <= 0
+        ):
             raise ValueError("timeout_seconds must be a positive integer")
 
         # Validate stop sequences are unique
@@ -192,7 +202,10 @@ class LLMRequest:
         """Factory method for chat/conversation requests."""
         # Convert messages to prompt format (simplified)
         prompt = "\n".join(
-            [f"{msg.get('role', 'user')}: {msg.get('content', '')}" for msg in messages]
+            [
+                f"{msg.get('role', 'user')}: {msg.get('content', '')}"
+                for msg in messages
+            ]
         )
 
         # Merge default metadata with custom metadata
@@ -355,17 +368,25 @@ class LLMResponse:
             if not self.content:
                 raise ValueError("Successful responses must have content")
 
-        if self.status in {LLMResponseStatus.FAILED, LLMResponseStatus.INVALID_REQUEST}:
+        if self.status in {
+            LLMResponseStatus.FAILED,
+            LLMResponseStatus.INVALID_REQUEST,
+        }:
             if not self.error_details:
                 raise ValueError("Failed responses must have error_details")
 
         # Validate usage stats are non-negative
         for key, value in self.usage_stats.items():
             if not isinstance(value, int) or value < 0:
-                raise ValueError(f"usage_stats[{key}] must be a non-negative integer")
+                raise ValueError(
+                    f"usage_stats[{key}] must be a non-negative integer"
+                )
 
         # Validate cost estimate is non-negative
-        if not isinstance(self.cost_estimate, Decimal) or self.cost_estimate < 0:
+        if (
+            not isinstance(self.cost_estimate, Decimal)
+            or self.cost_estimate < 0
+        ):
             raise ValueError("cost_estimate must be a non-negative Decimal")
 
     @classmethod
@@ -576,7 +597,9 @@ class ILLMProvider(ABC):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            return loop.run_until_complete(self.generate_async(request, budget))
+            return loop.run_until_complete(
+                self.generate_async(request, budget)
+            )
         finally:
             loop.close()
 

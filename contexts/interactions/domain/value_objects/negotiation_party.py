@@ -90,13 +90,17 @@ class NegotiationCapability:
         # Ensure all domain names are valid strings
         for domain in self.applicable_domains:
             if not isinstance(domain, str) or not domain.strip():
-                raise ValueError("All applicable_domains must be non-empty strings")
+                raise ValueError(
+                    "All applicable_domains must be non-empty strings"
+                )
 
         # Validate prerequisites
         if self.prerequisites:
             for prereq in self.prerequisites:
                 if not isinstance(prereq, str) or not prereq.strip():
-                    raise ValueError("All prerequisites must be non-empty strings")
+                    raise ValueError(
+                        "All prerequisites must be non-empty strings"
+                    )
 
     def applies_to_domain(self, domain: str) -> bool:
         """Check if capability applies to specific domain."""
@@ -143,12 +147,20 @@ class PartyPreferences:
             raise ValueError("risk_tolerance must be between 0 and 100")
 
         if not (0 <= self.time_pressure_sensitivity <= 100):
-            raise ValueError("time_pressure_sensitivity must be between 0 and 100")
+            raise ValueError(
+                "time_pressure_sensitivity must be between 0 and 100"
+            )
 
-        if self.preferred_session_duration and self.preferred_session_duration <= 0:
+        if (
+            self.preferred_session_duration
+            and self.preferred_session_duration <= 0
+        ):
             raise ValueError("preferred_session_duration must be positive")
 
-        if self.maximum_session_duration and self.maximum_session_duration <= 0:
+        if (
+            self.maximum_session_duration
+            and self.maximum_session_duration <= 0
+        ):
             raise ValueError("maximum_session_duration must be positive")
 
         if (
@@ -168,7 +180,9 @@ class PartyPreferences:
         ]:
             for item in string_set:
                 if not isinstance(item, str) or not item.strip():
-                    raise ValueError(f"All {field_name} must be non-empty strings")
+                    raise ValueError(
+                        f"All {field_name} must be non-empty strings"
+                    )
 
     def is_compatible_with(self, other: "PartyPreferences") -> bool:
         """Check if preferences are compatible with another party."""
@@ -176,7 +190,10 @@ class PartyPreferences:
         if (
             self.maximum_session_duration
             and other.maximum_session_duration
-            and min(self.maximum_session_duration, other.maximum_session_duration) < 30
+            and min(
+                self.maximum_session_duration, other.maximum_session_duration
+            )
+            < 30
         ):
             return False  # Minimum viable session time
 
@@ -184,7 +201,9 @@ class PartyPreferences:
         if (
             self.language_preferences
             and other.language_preferences
-            and not self.language_preferences.intersection(other.language_preferences)
+            and not self.language_preferences.intersection(
+                other.language_preferences
+            )
         ):
             return False
 
@@ -192,14 +211,23 @@ class PartyPreferences:
         if self.taboo_topics.intersection(other.taboo_topics):
             return True  # Shared taboos are compatible
 
-        # Style compatibility (simplified)
+        # Style compatibility (simplified) - P3 Sprint 2 Pattern: Use valid enum values and safe comparison
         incompatible_styles = {
-            (NegotiationStyle.AGGRESSIVE, NegotiationStyle.AVOIDING),
+            (NegotiationStyle.COMPETITIVE, NegotiationStyle.AVOIDING),
             (NegotiationStyle.COMPETITIVE, NegotiationStyle.ACCOMMODATING),
         }
 
-        style_pair = tuple(sorted([self.negotiation_style, other.negotiation_style]))
-        return style_pair not in incompatible_styles
+        # P3 Sprint 2 Pattern: Compare enum values instead of sorting enum objects to avoid type errors
+        style_pair = tuple(
+            sorted(
+                [self.negotiation_style.value, other.negotiation_style.value]
+            )
+        )
+        style_value_pairs = {
+            (style1.value, style2.value)
+            for style1, style2 in incompatible_styles
+        }
+        return style_pair not in style_value_pairs
 
     def __eq__(self, other: Any) -> bool:
         """Compare PartyPreferences instances for equality."""
@@ -209,8 +237,10 @@ class PartyPreferences:
             self.negotiation_style == other.negotiation_style
             and self.communication_preference == other.communication_preference
             and self.risk_tolerance == other.risk_tolerance
-            and self.time_pressure_sensitivity == other.time_pressure_sensitivity
-            and self.preferred_session_duration == other.preferred_session_duration
+            and self.time_pressure_sensitivity
+            == other.time_pressure_sensitivity
+            and self.preferred_session_duration
+            == other.preferred_session_duration
             and self.maximum_session_duration == other.maximum_session_duration
             and self.cultural_considerations == other.cultural_considerations
             and self.taboo_topics == other.taboo_topics
@@ -263,7 +293,9 @@ class NegotiationParty:
         # Validate active mandates
         for mandate in self.active_mandates:
             if not isinstance(mandate, str) or not mandate.strip():
-                raise ValueError("All active_mandates must be non-empty strings")
+                raise ValueError(
+                    "All active_mandates must be non-empty strings"
+                )
 
         # Authority level validation
         if (
@@ -276,9 +308,13 @@ class NegotiationParty:
             AuthorityLevel.ADVISORY_ONLY,
             AuthorityLevel.OBSERVER_ONLY,
         ]:
-            raise ValueError("Advisor role should have advisory or observer authority")
+            raise ValueError(
+                "Advisor role should have advisory or observer authority"
+            )
 
-    def get_capability(self, capability_name: str) -> Optional[NegotiationCapability]:
+    def get_capability(
+        self, capability_name: str
+    ) -> Optional[NegotiationCapability]:
         """Get specific capability by name."""
         return next(
             (
@@ -289,9 +325,13 @@ class NegotiationParty:
             None,
         )
 
-    def get_capabilities_for_domain(self, domain: str) -> List[NegotiationCapability]:
+    def get_capabilities_for_domain(
+        self, domain: str
+    ) -> List[NegotiationCapability]:
         """Get all capabilities applicable to specific domain."""
-        return [cap for cap in self.capabilities if cap.applies_to_domain(domain)]
+        return [
+            cap for cap in self.capabilities if cap.applies_to_domain(domain)
+        ]
 
     def get_effective_proficiency(
         self, capability_name: str, domain: str
@@ -304,7 +344,9 @@ class NegotiationParty:
         base_proficiency = capability.get_effective_proficiency()
 
         # Apply reputation modifier if available
-        reputation_modifier = self.reputation_modifiers.get(domain, Decimal("0"))
+        reputation_modifier = self.reputation_modifiers.get(
+            domain, Decimal("0")
+        )
         adjusted = base_proficiency + reputation_modifier
 
         return max(Decimal("0"), min(Decimal("100"), adjusted))
@@ -333,7 +375,8 @@ class NegotiationParty:
 
         # At least one party must have decision-making authority
         if not (
-            self.can_make_binding_decisions() or other.can_make_binding_decisions()
+            self.can_make_binding_decisions()
+            or other.can_make_binding_decisions()
         ):
             return False
 
@@ -357,11 +400,15 @@ class NegotiationParty:
 
         # Calculate weighted average proficiency
         total_proficiency = sum(
-            self.get_effective_proficiency(cap.capability_name, domain) or Decimal("0")
+            self.get_effective_proficiency(cap.capability_name, domain)
+            or Decimal("0")
             for cap in relevant_capabilities
         )
 
-        avg_proficiency = total_proficiency / len(relevant_capabilities)
+        # P3 Sprint 2 Pattern: Ensure Decimal arithmetic remains in Decimal type
+        avg_proficiency = total_proficiency / Decimal(
+            len(relevant_capabilities)
+        )
 
         # Apply authority multiplier
         negotiation_power = avg_proficiency * authority_multiplier
@@ -385,7 +432,9 @@ class NegotiationParty:
     ) -> "NegotiationParty":
         """Create new party with updated capability."""
         updated_capabilities = [
-            capability if cap.capability_name == capability.capability_name else cap
+            capability
+            if cap.capability_name == capability.capability_name
+            else cap
             for cap in self.capabilities
         ]
 
@@ -470,8 +519,11 @@ class NegotiationParty:
         if not self.capabilities:
             return Decimal("0")
 
-        total = sum(cap.get_effective_proficiency() for cap in self.capabilities)
-        return total / len(self.capabilities)
+        total = sum(
+            cap.get_effective_proficiency() for cap in self.capabilities
+        )
+        # P3 Sprint 2 Pattern: Ensure Decimal arithmetic for return type consistency
+        return total / Decimal(len(self.capabilities))
 
     def __eq__(self, other: Any) -> bool:
         """Compare NegotiationParty instances for equality."""

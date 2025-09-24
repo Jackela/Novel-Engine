@@ -70,7 +70,14 @@ class TestPacingIntensityEnum:
 
     def test_all_intensity_levels_exist(self):
         """Test that all expected intensity levels are defined."""
-        expected_levels = {"GLACIAL", "SLOW", "MODERATE", "BRISK", "FAST", "BREAKNECK"}
+        expected_levels = {
+            "GLACIAL",
+            "SLOW",
+            "MODERATE",
+            "BRISK",
+            "FAST",
+            "BREAKNECK",
+        }
         actual_levels = {item.name for item in PacingIntensity}
         assert actual_levels == expected_levels
 
@@ -173,7 +180,12 @@ class TestStoryPacingCreation:
 
     def test_create_full_story_pacing(self):
         """Test creating story pacing with all fields specified."""
-        tension_curve = [Decimal("2.0"), Decimal("5.0"), Decimal("8.0"), Decimal("3.0")]
+        tension_curve = [
+            Decimal("2.0"),
+            Decimal("5.0"),
+            Decimal("8.0"),
+            Decimal("3.0"),
+        ]
         emotional_peaks = [3, 7]
         rest_periods = [1, 9]
         metadata = {"author": "test", "version": "1.0"}
@@ -217,7 +229,8 @@ class TestStoryPacingCreation:
         assert pacing.end_sequence == 10
         assert pacing.segment_name == "Climactic Battle"
         assert (
-            pacing.segment_description == "The final confrontation builds to crescendo"
+            pacing.segment_description
+            == "The final confrontation builds to crescendo"
         )
         assert pacing.event_density == Decimal("8.0")
         assert pacing.dialogue_ratio == Decimal("0.2")
@@ -301,7 +314,9 @@ class TestStoryPacingValidation:
     def test_invalid_sequence_numbers_raise_errors(self):
         """Test that invalid sequence numbers raise validation errors."""
         # Negative start sequence
-        with pytest.raises(ValueError, match="Sequence numbers must be non-negative"):
+        with pytest.raises(
+            ValueError, match="Sequence numbers must be non-negative"
+        ):
             StoryPacing(
                 pacing_id="test",
                 pacing_type=PacingType.STEADY,
@@ -311,7 +326,9 @@ class TestStoryPacingValidation:
             )
 
         # Negative end sequence
-        with pytest.raises(ValueError, match="Sequence numbers must be non-negative"):
+        with pytest.raises(
+            ValueError, match="Sequence numbers must be non-negative"
+        ):
             StoryPacing(
                 pacing_id="test",
                 pacing_type=PacingType.STEADY,
@@ -347,7 +364,9 @@ class TestStoryPacingValidation:
     def test_invalid_ratios_raise_errors(self):
         """Test that invalid ratio values raise validation errors."""
         # Dialogue ratio out of range
-        with pytest.raises(ValueError, match="dialogue_ratio must be between 0 and 1"):
+        with pytest.raises(
+            ValueError, match="dialogue_ratio must be between 0 and 1"
+        ):
             StoryPacing(
                 pacing_id="test",
                 pacing_type=PacingType.STEADY,
@@ -358,7 +377,9 @@ class TestStoryPacingValidation:
             )
 
         # Action ratio negative
-        with pytest.raises(ValueError, match="action_ratio must be between 0 and 1"):
+        with pytest.raises(
+            ValueError, match="action_ratio must be between 0 and 1"
+        ):
             StoryPacing(
                 pacing_id="test",
                 pacing_type=PacingType.STEADY,
@@ -369,7 +390,9 @@ class TestStoryPacingValidation:
             )
 
         # Ratios don't sum to ~1.0
-        with pytest.raises(ValueError, match="should sum to approximately 1.0"):
+        with pytest.raises(
+            ValueError, match="should sum to approximately 1.0"
+        ):
             StoryPacing(
                 pacing_id="test",
                 pacing_type=PacingType.STEADY,
@@ -412,7 +435,9 @@ class TestStoryPacingValidation:
     def test_invalid_scale_values_raise_errors(self):
         """Test that invalid scale values (1-10) raise validation errors."""
         # Event density too low
-        with pytest.raises(ValueError, match="event_density must be between 1 and 10"):
+        with pytest.raises(
+            ValueError, match="event_density must be between 1 and 10"
+        ):
             StoryPacing(
                 pacing_id="test",
                 pacing_type=PacingType.STEADY,
@@ -496,7 +521,11 @@ class TestStoryPacingValidation:
                 base_intensity=PacingIntensity.MODERATE,
                 start_sequence=1,
                 end_sequence=5,
-                tension_curve=[Decimal("5.0"), Decimal("12.0"), Decimal("3.0")],
+                tension_curve=[
+                    Decimal("5.0"),
+                    Decimal("12.0"),
+                    Decimal("3.0"),
+                ],
             )
 
     def test_invalid_peak_positions_raise_errors(self):
@@ -696,7 +725,9 @@ class TestStoryPacingProperties:
 
         # Test variance calculation
         avg = expected_average
-        expected_variance = sum((t - avg) ** 2 for t in tension_values) / Decimal("4")
+        expected_variance = sum(
+            (t - avg) ** 2 for t in tension_values
+        ) / Decimal("4")
         assert pacing.tension_variance == expected_variance
 
     def test_tension_properties_single_value(self):
@@ -1009,9 +1040,7 @@ class TestStoryPacingStringRepresentation:
             end_sequence=15,
         )
 
-        expected = (
-            "StoryPacing(id='test-pacing', type=wave, intensity=brisk, range=[5, 15])"
-        )
+        expected = "StoryPacing(id='test-pacing', type=wave, intensity=brisk, range=[5, 15])"
         assert repr(pacing) == expected
 
 

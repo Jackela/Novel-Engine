@@ -36,7 +36,9 @@ class DialogueManager:
     """
 
     def __init__(
-        self, llm_processor: LLMBatchProcessor, logger: Optional[logging.Logger] = None
+        self,
+        llm_processor: LLMBatchProcessor,
+        logger: Optional[logging.Logger] = None,
     ):
         self.llm_processor = llm_processor
         self.logger = logger or logging.getLogger(__name__)
@@ -123,7 +125,10 @@ class DialogueManager:
         try:
             dialogue = self._active_dialogues.get(dialogue_id)
             if not dialogue:
-                return {"error": "dialogue_not_found", "dialogue_id": dialogue_id}
+                return {
+                    "error": "dialogue_not_found",
+                    "dialogue_id": dialogue_id,
+                }
 
             if fast_mode:
                 return await self._simulate_dialogue_fast(dialogue)
@@ -176,7 +181,9 @@ class DialogueManager:
                 self._stats["successful_dialogues"] += 1
 
                 # Calculate and record quality
-                quality = self._calculate_dialogue_quality(dialogue_result, llm_result)
+                quality = self._calculate_dialogue_quality(
+                    dialogue_result, llm_result
+                )
                 self._update_quality_stats(quality)
 
                 return dialogue_result
@@ -200,7 +207,9 @@ class DialogueManager:
                 "dialogue_id": dialogue.dialogue_id,
             }
 
-    async def _simulate_dialogue_fast(self, dialogue: AgentDialogue) -> Dict[str, Any]:
+    async def _simulate_dialogue_fast(
+        self, dialogue: AgentDialogue
+    ) -> Dict[str, Any]:
         """Fast simulation mode for dialogue."""
         try:
             dialogue.state = DialogueState.ACTIVE
@@ -243,7 +252,7 @@ class DialogueManager:
                 f"# Agent Dialogue: {dialogue.communication_type.value.title()}",
                 "",
                 f"**Dialogue Type:** {dialogue.communication_type.value}",
-                f"**Initiator:** {initiator} ({initiator_info.get('role', 'Unknown')})",
+                f"**Initiator:** {initiator} ({initiator_info.get( 'role', 'Unknown')})",
                 f"**Target:** {target} ({target_info.get('role', 'Unknown')})",
                 "",
                 "## Agent Profiles",
@@ -261,7 +270,9 @@ class DialogueManager:
 
             # Add context if available
             if dialogue.context:
-                prompt_parts.extend(["## Dialogue Context", str(dialogue.context), ""])
+                prompt_parts.extend(
+                    ["## Dialogue Context", str(dialogue.context), ""]
+                )
 
             # Add dialogue type specific instructions
             if dialogue.communication_type == CommunicationType.NEGOTIATION:
@@ -273,7 +284,9 @@ class DialogueManager:
                         "Include emotional undertones and relationship dynamics.",
                     ]
                 )
-            elif dialogue.communication_type == CommunicationType.COLLABORATION:
+            elif (
+                dialogue.communication_type == CommunicationType.COLLABORATION
+            ):
                 prompt_parts.extend(
                     [
                         "## Instructions",
@@ -314,7 +327,9 @@ class DialogueManager:
             self.logger.error(f"Error creating dialogue prompt: {e}")
             return f"Generate a {dialogue.communication_type.value} between {dialogue.participants}"
 
-    def _determine_dialogue_priority(self, dialogue: AgentDialogue) -> RequestPriority:
+    def _determine_dialogue_priority(
+        self, dialogue: AgentDialogue
+    ) -> RequestPriority:
         """Determine processing priority for dialogue."""
         try:
             # Critical communication types get high priority
@@ -357,7 +372,10 @@ class DialogueManager:
                     relationship_impact = line.replace(
                         "**Relationship Impact:**", ""
                     ).strip()
-                elif any(participant in line for participant in dialogue.participants):
+                elif any(
+                    participant in line
+                    for participant in dialogue.participants
+                ):
                     dialogue_lines.append(line)
 
             return {
@@ -368,7 +386,9 @@ class DialogueManager:
                 "dialogue_content": "\n".join(dialogue_lines),
                 "outcome": outcome,
                 "relationship_impact": relationship_impact,
-                "exchanges": len([line for line in dialogue_lines if ":" in line]),
+                "exchanges": len(
+                    [line for line in dialogue_lines if ":" in line]
+                ),
                 "llm_cost": llm_result.get("cost", 0.0),
                 "processing_time": llm_result.get("processing_time", 0.0),
                 "timestamp": datetime.now().isoformat(),
@@ -471,16 +491,21 @@ class DialogueManager:
     def _get_agent_info(self, agent_id: str) -> Dict[str, Any]:
         """Get cached agent information."""
         return self._agent_cache.get(
-            agent_id, {"role": "Unknown", "personality": {}, "status": "active"}
+            agent_id,
+            {"role": "Unknown", "personality": {}, "status": "active"},
         )
 
-    def update_agent_cache(self, agent_id: str, agent_info: Dict[str, Any]) -> None:
+    def update_agent_cache(
+        self, agent_id: str, agent_info: Dict[str, Any]
+    ) -> None:
         """Update agent information cache."""
         self._agent_cache[agent_id] = agent_info
 
     def get_active_dialogues(self) -> List[Dict[str, Any]]:
         """Get list of currently active dialogues."""
-        return [asdict(dialogue) for dialogue in self._active_dialogues.values()]
+        return [
+            asdict(dialogue) for dialogue in self._active_dialogues.values()
+        ]
 
     def get_dialogue_history(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Get recent dialogue history."""
@@ -504,7 +529,8 @@ class DialogueManager:
                     * 100,
                     "most_common_type": (
                         max(
-                            self._stats["dialogues_by_type"].items(), key=lambda x: x[1]
+                            self._stats["dialogues_by_type"].items(),
+                            key=lambda x: x[1],
                         )[0]
                         if self._stats["dialogues_by_type"]
                         else "none"
@@ -538,7 +564,7 @@ class DialogueManager:
                     self._active_dialogues[dialogue_id]
                 )
                 self.logger.info(
-                    f"Completed dialogue {dialogue_id} during shutdown: {result.get('outcome', 'unknown')}"
+                    f"Completed dialogue {dialogue_id} during shutdown: {result.get( 'outcome', 'unknown')}"
                 )
 
             self.logger.info("Dialogue manager shutdown complete")

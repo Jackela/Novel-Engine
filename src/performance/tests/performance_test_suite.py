@@ -36,7 +36,8 @@ import psutil
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -127,7 +128,8 @@ class ResourceMonitor:
                 ] and "api_server.py" in " ".join(proc.info["cmdline"] or []):
                     self.process = psutil.Process(proc.info["pid"])
                     logger.info(
-                        f"Monitoring process {proc.info['pid']}: {proc.info['name']}"
+                        f"Monitoring process {proc.info['pid']}: "
+                        f"{proc.info['name']}"
                     )
                     break
             except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -135,7 +137,8 @@ class ResourceMonitor:
 
         if not self.process:
             logger.warning(
-                f"Target process {target_process_name} not found, monitoring system-wide"
+                f"Target process {target_process_name} not found, "
+                "monitoring system-wide"
             )
 
         # Start monitoring thread
@@ -190,7 +193,9 @@ class ResourceMonitor:
                     cpu_percent=cpu_percent,
                     memory_percent=memory_percent,
                     memory_mb=(
-                        memory_info.rss / 1024 / 1024 if self.process else memory_mb
+                        memory_info.rss / 1024 / 1024
+                        if self.process
+                        else memory_mb
                     ),
                     disk_io_read=disk_read,
                     disk_io_write=disk_write,
@@ -302,7 +307,8 @@ class PerformanceTestSuite:
     ) -> PerformanceMetrics:
         """Test endpoint with concurrent users for specified duration."""
         logger.info(
-            f"Running concurrent test: {concurrent_users} users on {endpoint} for {duration_seconds}s"
+            f"Running concurrent test: {concurrent_users} users on {endpoint} "
+            f"for {duration_seconds}s"
         )
 
         metrics = PerformanceMetrics()
@@ -313,7 +319,9 @@ class PerformanceTestSuite:
             """Single user session making requests."""
             session_metrics = PerformanceMetrics()
             while time.time() < end_time:
-                response_time, success, error = await self.make_request(endpoint)
+                response_time, success, error = await self.make_request(
+                    endpoint
+                )
                 session_metrics.response_times.append(response_time)
 
                 if success:
@@ -356,7 +364,9 @@ class PerformanceTestSuite:
         step_duration: int = 30,
     ) -> Dict[str, Any]:
         """Progressive stress test to find breaking point."""
-        logger.info(f"Running stress test for {endpoint}: 0 to {max_users} users")
+        logger.info(
+            f"Running stress test for {endpoint}: 0 to {max_users} users"
+        )
 
         results = []
         current_users = step_size
@@ -367,21 +377,24 @@ class PerformanceTestSuite:
                 endpoint, current_users, step_duration
             )
 
+            total_requests = metrics.success_count + metrics.error_count
+            error_rate = (
+                metrics.error_count / total_requests
+                if total_requests > 0
+                else 1.0
+            )
             result = {
                 "concurrent_users": current_users,
                 "metrics": asdict(metrics),
-                "error_rate": (
-                    metrics.error_count / (metrics.success_count + metrics.error_count)
-                    if (metrics.success_count + metrics.error_count) > 0
-                    else 1.0
-                ),
+                "error_rate": error_rate,
             }
             results.append(result)
 
             # Stop if error rate exceeds 50%
             if result["error_rate"] > 0.5:
                 logger.warning(
-                    f"High error rate ({result['error_rate']:.2%}) at {current_users} users"
+                    f"High error rate ({result['error_rate']:.2%}) at "
+                    f"{current_users} users"
                 )
                 break
 
@@ -398,7 +411,8 @@ class PerformanceTestSuite:
     ) -> Dict[str, Any]:
         """Test multiple endpoints simultaneously."""
         logger.info(
-            f"Running endpoint load test with {concurrent_users} users across {len(endpoints)} endpoints"
+            f"Running endpoint load test with {concurrent_users} users across "
+            f"{len(endpoints)} endpoints"
         )
 
         results = {}
@@ -421,7 +435,8 @@ class PerformanceTestSuite:
     ) -> Dict[str, Any]:
         """Test story generation under load using sync requests."""
         logger.info(
-            f"Running simulation load test with {concurrent_simulations} concurrent simulations"
+            f"Running simulation load test with {concurrent_simulations} "
+            "concurrent simulations"
         )
 
         def run_single_simulation():
@@ -432,18 +447,24 @@ class PerformanceTestSuite:
 
             try:
                 # Create simulation request
-                simulation_data = {"character_names": ["engineer", "pilot"], "turns": 3}
+                simulation_data = {
+                    "character_names": ["engineer", "pilot"],
+                    "turns": 3,
+                }
 
                 with httpx.Client(timeout=60.0) as client:
                     response = client.post(
-                        f"{self.config.base_url}/simulate", json=simulation_data
+                        f"{self.config.base_url}/simulate",
+                        json=simulation_data,
                     )
 
                 end_time = time.time()
                 response_time = end_time - start_time
 
                 success = response.status_code < 400
-                error_msg = f"HTTP {response.status_code}" if not success else ""
+                error_msg = (
+                    f"HTTP {response.status_code}" if not success else ""
+                )
 
                 return {
                     "response_time": response_time,
@@ -462,7 +483,9 @@ class PerformanceTestSuite:
                 }
 
         # Run concurrent simulations
-        with ThreadPoolExecutor(max_workers=concurrent_simulations) as executor:
+        with ThreadPoolExecutor(
+            max_workers=concurrent_simulations
+        ) as executor:
             futures = [
                 executor.submit(run_single_simulation)
                 for _ in range(concurrent_simulations)
@@ -530,8 +553,10 @@ class PerformanceTestSuite:
 
                     # Log key metrics
                     logger.info(
-                        f"Baseline {endpoint}: avg={metrics.avg_response_time:.3f}s, "
-                        f"p95={metrics.p95_response_time:.3f}s, errors={metrics.error_count}"
+                        f"Baseline {endpoint}: "
+                        f"avg={metrics.avg_response_time:.3f}s, "
+                        f"p95={metrics.p95_response_time:.3f}s, "
+                        f"errors={metrics.error_count}"
                     )
 
                 except Exception as e:
@@ -551,10 +576,12 @@ class PerformanceTestSuite:
                     # Log summary
                     for endpoint, metrics in load_results.items():
                         if "error" not in metrics:
+                            throughput = metrics.get("throughput", 0)
+                            error_count = metrics.get("error_count", 0)
                             logger.info(
                                 f"{users} users {endpoint}: "
-                                f"throughput={metrics.get('throughput', 0):.2f} req/s, "
-                                f"errors={metrics.get('error_count', 0)}"
+                                f"throughput={throughput:.2f} req/s, "
+                                f"errors={error_count}"
                             )
 
                 except Exception as e:
@@ -574,7 +601,9 @@ class PerformanceTestSuite:
                     # Find maximum stable load
                     max_stable = 0
                     for result in stress_results["results"]:
-                        if result["error_rate"] < 0.05:  # Less than 5% error rate
+                        if (
+                            result["error_rate"] < 0.05
+                        ):  # Less than 5% error rate
                             max_stable = result["concurrent_users"]
 
                     logger.info(
@@ -590,9 +619,8 @@ class PerformanceTestSuite:
             for sim_count in [3, 5, 8]:
                 try:
                     sim_results = self.run_simulation_load_test(sim_count)
-                    results["simulation_tests"][
-                        f"{sim_count}_simulations"
-                    ] = sim_results
+                    key = f"{sim_count}_simulations"
+                    results["simulation_tests"][key] = sim_results
 
                     logger.info(
                         f"{sim_count} simulations: "
@@ -601,10 +629,11 @@ class PerformanceTestSuite:
                     )
 
                 except Exception as e:
-                    logger.error(f"Simulation test failed for {sim_count}: {e}")
-                    results["simulation_tests"][f"{sim_count}_simulations"] = {
-                        "error": str(e)
-                    }
+                    logger.error(
+                        f"Simulation test failed for {sim_count}: {e}"
+                    )
+                    key = f"{sim_count}_simulations"
+                    results["simulation_tests"][key] = {"error": str(e)}
 
         finally:
             # Stop monitoring and collect resource metrics
@@ -620,9 +649,8 @@ class PerformanceTestSuite:
         report = []
         report.append("# Novel Engine Performance Test Report")
         report.append(f"Generated: {results['test_start_time']}")
-        report.append(
-            f"Test Duration: {results.get('total_test_duration', 0):.2f} seconds"
-        )
+        test_duration = results.get("total_test_duration", 0)
+        report.append(f"Test Duration: {test_duration:.2f} seconds")
         report.append("")
 
         # Executive Summary
@@ -639,10 +667,12 @@ class PerformanceTestSuite:
         if baseline_avg_times:
             avg_baseline = statistics.mean(baseline_avg_times)
             report.append(
-                f"- **Baseline Performance**: Average response time {avg_baseline:.3f}s"
+                f"- **Baseline Performance**: "
+                f"Average response time {avg_baseline:.3f}s"
             )
             report.append(
-                f"- **Baseline Reliability**: {baseline_errors} errors across all baseline tests"
+                f"- **Baseline Reliability**: {baseline_errors} errors "
+                f"across all baseline tests"
             )
 
         # Analyze load test results
@@ -657,18 +687,24 @@ class PerformanceTestSuite:
                             max_throughput = throughput
                             max_concurrent_users = int(test_name.split("_")[0])
 
-        report.append(f"- **Maximum Throughput**: {max_throughput:.2f} requests/second")
         report.append(
-            f"- **Concurrent User Capacity**: {max_concurrent_users} users tested successfully"
+            f"- **Maximum Throughput**: {max_throughput:.2f} requests/second"
+        )
+        report.append(
+            f"- **Concurrent User Capacity**: "
+            f"{max_concurrent_users} users tested successfully"
         )
 
         # System resource usage
         resource_metrics = results.get("resource_metrics", {})
         if resource_metrics:
             cpu_avg = resource_metrics.get("cpu_percent", {}).get("avg", 0)
-            memory_avg = resource_metrics.get("memory_percent", {}).get("avg", 0)
+            memory_avg = resource_metrics.get("memory_percent", {}).get(
+                "avg", 0
+            )
             report.append(
-                f"- **Resource Usage**: CPU {cpu_avg:.1f}%, Memory {memory_avg:.1f}%"
+                f"- **Resource Usage**: "
+                f"CPU {cpu_avg:.1f}%, Memory {memory_avg:.1f}%"
             )
 
         report.append("")
@@ -679,10 +715,12 @@ class PerformanceTestSuite:
         # Baseline Tests
         report.append("### Baseline Performance Tests")
         report.append(
-            "| Endpoint | Avg Response (ms) | P95 Response (ms) | P99 Response (ms) | Error Count |"
+            "| Endpoint | Avg Response (ms) | P95 Response (ms) | "
+            "P99 Response (ms) | Error Count |"
         )
         report.append(
-            "|----------|-------------------|-------------------|-------------------|-------------|"
+            "|----------|-------------------|-------------------|"
+            "-------------------|-------------|"
         )
 
         for endpoint, metrics in results.get("baseline_tests", {}).items():
@@ -692,10 +730,13 @@ class PerformanceTestSuite:
                 p99_ms = metrics.get("p99_response_time", 0) * 1000
                 errors = metrics.get("error_count", 0)
                 report.append(
-                    f"| {endpoint} | {avg_ms:.1f} | {p95_ms:.1f} | {p99_ms:.1f} | {errors} |"
+                    f"| {endpoint} | {avg_ms:.1f} | {p95_ms:.1f} | "
+                    f"{p99_ms:.1f} | {errors} |"
                 )
             else:
-                report.append(f"| {endpoint} | ERROR | ERROR | ERROR | ERROR |")
+                report.append(
+                    f"| {endpoint} | ERROR | ERROR | ERROR | ERROR |"
+                )
 
         report.append("")
 
@@ -705,10 +746,12 @@ class PerformanceTestSuite:
             users = test_name.replace("_", " ").title()
             report.append(f"#### {users}")
             report.append(
-                "| Endpoint | Throughput (req/s) | Avg Response (ms) | Error Rate | Total Requests |"
+                "| Endpoint | Throughput (req/s) | Avg Response (ms) | "
+                "Error Rate | Total Requests |"
             )
             report.append(
-                "|----------|-------------------|-------------------|------------|----------------|"
+                "|----------|-------------------|-------------------|"
+                "------------|----------------|"
             )
 
             if "error" not in test_results:
@@ -716,19 +759,22 @@ class PerformanceTestSuite:
                     if "error" not in metrics:
                         throughput = metrics.get("throughput", 0)
                         avg_ms = metrics.get("avg_response_time", 0) * 1000
-                        total_req = metrics.get("success_count", 0) + metrics.get(
-                            "error_count", 0
-                        )
+                        total_req = metrics.get(
+                            "success_count", 0
+                        ) + metrics.get("error_count", 0)
                         error_rate = (
                             metrics.get("error_count", 0) / total_req
                             if total_req > 0
                             else 0
                         )
                         report.append(
-                            f"| {endpoint} | {throughput:.2f} | {avg_ms:.1f} | {error_rate:.2%} | {total_req} |"
+                            f"| {endpoint} | {throughput:.2f} | {avg_ms:.1f} | "
+                            f"{error_rate:.2%} | {total_req} |"
                         )
                     else:
-                        report.append(f"| {endpoint} | ERROR | ERROR | ERROR | ERROR |")
+                        report.append(
+                            f"| {endpoint} | ERROR | ERROR | ERROR | ERROR |"
+                        )
             else:
                 report.append("| ALL | ERROR | ERROR | ERROR | ERROR |")
 
@@ -740,10 +786,12 @@ class PerformanceTestSuite:
             if "error" not in stress_data:
                 report.append(f"#### {endpoint}")
                 report.append(
-                    "| Concurrent Users | Throughput (req/s) | Avg Response (ms) | Error Rate |"
+                    "| Concurrent Users | Throughput (req/s) | "
+                    "Avg Response (ms) | Error Rate |"
                 )
                 report.append(
-                    "|------------------|-------------------|-------------------|------------|"
+                    "|------------------|-------------------|"
+                    "-------------------|------------|"
                 )
 
                 for result in stress_data.get("results", []):
@@ -753,7 +801,8 @@ class PerformanceTestSuite:
                     avg_ms = metrics.get("avg_response_time", 0) * 1000
                     error_rate = result["error_rate"]
                     report.append(
-                        f"| {users} | {throughput:.2f} | {avg_ms:.1f} | {error_rate:.2%} |"
+                        f"| {users} | {throughput:.2f} | {avg_ms:.1f} | "
+                        f"{error_rate:.2%} |"
                     )
 
                 report.append("")
@@ -761,20 +810,25 @@ class PerformanceTestSuite:
         # Simulation Tests
         report.append("### Story Generation Load Tests")
         report.append(
-            "| Concurrent Simulations | Success Rate | Avg Response Time (s) | Max Response Time (s) |"
+            "| Concurrent Simulations | Success Rate | "
+            "Avg Response Time (s) | Max Response Time (s) |"
         )
         report.append(
-            "|------------------------|--------------|----------------------|----------------------|"
+            "|------------------------|--------------|"
+            "----------------------|----------------------|"
         )
 
-        for test_name, sim_results in results.get("simulation_tests", {}).items():
+        for test_name, sim_results in results.get(
+            "simulation_tests", {}
+        ).items():
             if "error" not in sim_results:
                 sim_count = test_name.replace("_", " ").title()
                 success_rate = 1 - sim_results.get("error_rate", 1)
                 avg_time = sim_results.get("avg_response_time", 0)
                 max_time = sim_results.get("max_response_time", 0)
                 report.append(
-                    f"| {sim_count} | {success_rate:.2%} | {avg_time:.2f} | {max_time:.2f} |"
+                    f"| {sim_count} | {success_rate:.2%} | "
+                    f"{avg_time:.2f} | {max_time:.2f} |"
                 )
             else:
                 report.append(f"| {test_name} | ERROR | ERROR | ERROR |")
@@ -789,20 +843,32 @@ class PerformanceTestSuite:
 
             cpu_data = resource_metrics.get("cpu_percent", {})
             if cpu_data:
+                cpu_avg = cpu_data.get("avg", 0)
+                cpu_max = cpu_data.get("max", 0)
+                cpu_min = cpu_data.get("min", 0)
                 report.append(
-                    f"| CPU Usage (%) | {cpu_data.get('avg', 0):.1f} | {cpu_data.get('max', 0):.1f} | {cpu_data.get('min', 0):.1f} |"
+                    f"| CPU Usage (%) | {cpu_avg:.1f} | "
+                    f"{cpu_max:.1f} | {cpu_min:.1f} |"
                 )
 
             memory_data = resource_metrics.get("memory_percent", {})
             if memory_data:
+                mem_avg = memory_data.get("avg", 0)
+                mem_max = memory_data.get("max", 0)
+                mem_min = memory_data.get("min", 0)
                 report.append(
-                    f"| Memory Usage (%) | {memory_data.get('avg', 0):.1f} | {memory_data.get('max', 0):.1f} | {memory_data.get('min', 0):.1f} |"
+                    f"| Memory Usage (%) | {mem_avg:.1f} | "
+                    f"{mem_max:.1f} | {mem_min:.1f} |"
                 )
 
             memory_mb_data = resource_metrics.get("memory_mb", {})
             if memory_mb_data:
+                mb_avg = memory_mb_data.get("avg", 0)
+                mb_max = memory_mb_data.get("max", 0)
+                mb_min = memory_mb_data.get("min", 0)
                 report.append(
-                    f"| Memory Usage (MB) | {memory_mb_data.get('avg', 0):.1f} | {memory_mb_data.get('max', 0):.1f} | {memory_mb_data.get('min', 0):.1f} |"
+                    f"| Memory Usage (MB) | {mb_avg:.1f} | "
+                    f"{mb_max:.1f} | {mb_min:.1f} |"
                 )
 
             report.append("")
@@ -815,15 +881,18 @@ class PerformanceTestSuite:
             avg_baseline = statistics.mean(baseline_avg_times)
             if avg_baseline < 0.2:
                 report.append(
-                    "✅ **Response Times**: Excellent baseline performance (<200ms target met)"
+                    "✅ **Response Times**: Excellent baseline performance "
+                    "(<200ms target met)"
                 )
             elif avg_baseline < 0.5:
                 report.append(
-                    "⚠️ **Response Times**: Good baseline performance (<500ms, but could be optimized)"
+                    "⚠️ **Response Times**: Good baseline performance "
+                    "(<500ms, but could be optimized)"
                 )
             else:
                 report.append(
-                    "❌ **Response Times**: Poor baseline performance (>500ms, optimization needed)"
+                    "❌ **Response Times**: Poor baseline performance "
+                    "(>500ms, optimization needed)"
                 )
 
         # Throughput analysis
@@ -834,27 +903,35 @@ class PerformanceTestSuite:
                 )
             elif max_throughput >= 20:
                 report.append(
-                    "⚠️ **Throughput**: Moderate capacity (20-50 req/s, consider optimization)"
+                    "⚠️ **Throughput**: Moderate capacity "
+                    "(20-50 req/s, consider optimization)"
                 )
             else:
                 report.append(
-                    "❌ **Throughput**: Low capacity (<20 req/s, significant optimization needed)"
+                    "❌ **Throughput**: Low capacity "
+                    "(<20 req/s, significant optimization needed)"
                 )
 
         # Resource efficiency
         if resource_metrics:
             cpu_avg = resource_metrics.get("cpu_percent", {}).get("avg", 0)
-            memory_avg = resource_metrics.get("memory_percent", {}).get("avg", 0)
+            memory_avg = resource_metrics.get("memory_percent", {}).get(
+                "avg", 0
+            )
 
             if cpu_avg < 50 and memory_avg < 70:
-                report.append("✅ **Resource Efficiency**: Good resource utilization")
+                report.append(
+                    "✅ **Resource Efficiency**: Good resource utilization"
+                )
             elif cpu_avg < 80 and memory_avg < 85:
                 report.append(
-                    "⚠️ **Resource Efficiency**: Moderate resource usage, monitor under higher load"
+                    "⚠️ **Resource Efficiency**: Moderate resource usage, "
+                    "monitor under higher load"
                 )
             else:
                 report.append(
-                    "❌ **Resource Efficiency**: High resource usage, optimization recommended"
+                    "❌ **Resource Efficiency**: High resource usage, "
+                    "optimization recommended"
                 )
 
         # Specific recommendations
@@ -867,9 +944,9 @@ class PerformanceTestSuite:
             if "error" not in test_results:
                 for endpoint, metrics in test_results.items():
                     if "error" not in metrics:
-                        total_req = metrics.get("success_count", 0) + metrics.get(
-                            "error_count", 0
-                        )
+                        total_req = metrics.get(
+                            "success_count", 0
+                        ) + metrics.get("error_count", 0)
                         error_rate = (
                             metrics.get("error_count", 0) / total_req
                             if total_req > 0
@@ -879,24 +956,39 @@ class PerformanceTestSuite:
                             high_error_endpoints.append(endpoint)
 
         if high_error_endpoints:
+            endpoint_list = ", ".join(set(high_error_endpoints))
             report.append(
-                f"1. **Error Rate Optimization**: High error rates detected for: {', '.join(set(high_error_endpoints))}"
+                f"1. **Error Rate Optimization**: "
+                f"High error rates detected for: {endpoint_list}"
             )
-            report.append("   - Review error handling and timeout configurations")
-            report.append("   - Implement circuit breaker patterns for resilience")
+            report.append(
+                "   - Review error handling and timeout configurations"
+            )
+            report.append(
+                "   - Implement circuit breaker patterns for resilience"
+            )
 
         # Response time recommendations
         slow_endpoints = []
         for endpoint, metrics in results.get("baseline_tests", {}).items():
-            if "error" not in metrics and metrics.get("avg_response_time", 0) > 0.2:
+            if (
+                "error" not in metrics
+                and metrics.get("avg_response_time", 0) > 0.2
+            ):
                 slow_endpoints.append(endpoint)
 
         if slow_endpoints:
+            endpoint_list = ", ".join(slow_endpoints)
             report.append(
-                f"2. **Response Time Optimization**: Slow endpoints detected: {', '.join(slow_endpoints)}"
+                f"2. **Response Time Optimization**: "
+                f"Slow endpoints detected: {endpoint_list}"
             )
-            report.append("   - Implement caching for frequently accessed data")
-            report.append("   - Optimize database queries and add appropriate indexes")
+            report.append(
+                "   - Implement caching for frequently accessed data"
+            )
+            report.append(
+                "   - Optimize database queries and add appropriate indexes"
+            )
             report.append(
                 "   - Consider implementing async processing for complex operations"
             )
@@ -904,10 +996,14 @@ class PerformanceTestSuite:
         # Resource optimization
         if resource_metrics:
             cpu_max = resource_metrics.get("cpu_percent", {}).get("max", 0)
-            memory_max = resource_metrics.get("memory_percent", {}).get("max", 0)
+            memory_max = resource_metrics.get("memory_percent", {}).get(
+                "max", 0
+            )
 
             if cpu_max > 80:
-                report.append("3. **CPU Optimization**: High CPU usage detected")
+                report.append(
+                    "3. **CPU Optimization**: High CPU usage detected"
+                )
                 report.append("   - Profile CPU-intensive operations")
                 report.append("   - Consider implementing connection pooling")
                 report.append(
@@ -915,9 +1011,15 @@ class PerformanceTestSuite:
                 )
 
             if memory_max > 85:
-                report.append("4. **Memory Optimization**: High memory usage detected")
-                report.append("   - Check for memory leaks in long-running processes")
-                report.append("   - Implement proper cleanup of temporary objects")
+                report.append(
+                    "4. **Memory Optimization**: High memory usage detected"
+                )
+                report.append(
+                    "   - Check for memory leaks in long-running processes"
+                )
+                report.append(
+                    "   - Implement proper cleanup of temporary objects"
+                )
                 report.append(
                     "   - Consider implementing memory-efficient data structures"
                 )
@@ -927,9 +1029,12 @@ class PerformanceTestSuite:
         report.append("   - Implement horizontal scaling with load balancing")
         report.append("   - Add Redis caching layer for session management")
         report.append(
-            "   - Consider implementing queue-based processing for story generation"
+            "   - Consider implementing queue-based processing for "
+            "story generation"
         )
-        report.append("   - Set up proper monitoring and alerting for production")
+        report.append(
+            "   - Set up proper monitoring and alerting for production"
+        )
 
         report.append("")
         report.append("## Production Readiness Assessment")
@@ -972,18 +1077,23 @@ class PerformanceTestSuite:
 
         if overall_score >= 90:
             report.append(
-                "🟢 **READY FOR PRODUCTION**: Excellent performance across all metrics"
+                "🟢 **READY FOR PRODUCTION**: "
+                "Excellent performance across all metrics"
             )
         elif overall_score >= 75:
             report.append(
-                "🟡 **CONDITIONAL READINESS**: Good performance with minor optimizations needed"
+                "🟡 **CONDITIONAL READINESS**: "
+                "Good performance with minor optimizations needed"
             )
         else:
             report.append(
-                "🔴 **NOT READY FOR PRODUCTION**: Significant performance issues require resolution"
+                "🔴 **NOT READY FOR PRODUCTION**: "
+                "Significant performance issues require resolution"
             )
 
-        report.append(f"**Overall Performance Score**: {overall_score:.1f}/100")
+        report.append(
+            f"**Overall Performance Score**: {overall_score:.1f}/100"
+        )
 
         return "\n".join(report)
 

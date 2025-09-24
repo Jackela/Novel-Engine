@@ -81,7 +81,9 @@ class TurnBrief:
     version: int = field(default=1)
 
     # Domain events (not persisted)
-    _events: List[SubjectiveDomainEvent] = field(default_factory=list, init=False)
+    _events: List[SubjectiveDomainEvent] = field(
+        default_factory=list, init=False
+    )
 
     def __post_init__(self):
         """Validate TurnBrief state after initialization."""
@@ -99,7 +101,9 @@ class TurnBrief:
             raise ValueError("Updated time cannot be before creation time")
 
         if self.last_world_update < self.created_at:
-            raise ValueError("Last world update cannot be before creation time")
+            raise ValueError(
+                "Last world update cannot be before creation time"
+            )
 
     @classmethod
     def create_for_entity(
@@ -251,7 +255,9 @@ class TurnBrief:
             )
             self._add_event(event)
 
-        self._add_update_event("awareness_state", ["alertness_change", "focus_change"])
+        self._add_update_event(
+            "awareness_state", ["alertness_change", "focus_change"]
+        )
 
     def add_perception(
         self,
@@ -488,7 +494,11 @@ class TurnBrief:
         self._add_event(event)
 
         affected_subjects = list(
-            set(newly_revealed + newly_concealed + list(visibility_changes.keys()))
+            set(
+                newly_revealed
+                + newly_concealed
+                + list(visibility_changes.keys())
+            )
         )
         self._add_update_event("fog_of_war", affected_subjects)
 
@@ -526,7 +536,10 @@ class TurnBrief:
             The best visibility level achievable at that distance
         """
         if perception_type:
-            if perception_type not in self.perception_capabilities.perception_ranges:
+            if (
+                perception_type
+                not in self.perception_capabilities.perception_ranges
+            ):
                 return VisibilityLevel.INVISIBLE
             perception_range = self.perception_capabilities.perception_ranges[
                 perception_type
@@ -536,14 +549,19 @@ class TurnBrief:
             # Get the best visibility from any perception type
             focused_perception = None
             if (
-                self.awareness_state.attention_focus == AttentionFocus.TARGET_SPECIFIC
+                self.awareness_state.attention_focus
+                == AttentionFocus.TARGET_SPECIFIC
                 and self.awareness_state.focus_target
             ):
                 # If focused on a specific target, we might have enhanced perception
-                focused_perception = PerceptionType.VISUAL  # Default to visual focus
+                focused_perception = (
+                    PerceptionType.VISUAL
+                )  # Default to visual focus
 
-            return self.perception_capabilities.get_best_visibility_at_distance(
-                distance, focused_perception
+            return (
+                self.perception_capabilities.get_best_visibility_at_distance(
+                    distance, focused_perception
+                )
             )
 
     def is_subject_visible(self, subject: str) -> bool:
@@ -556,7 +574,9 @@ class TurnBrief:
         Returns:
             True if the subject is visible (any level except invisible)
         """
-        visibility = self.visible_subjects.get(subject, VisibilityLevel.INVISIBLE)
+        visibility = self.visible_subjects.get(
+            subject, VisibilityLevel.INVISIBLE
+        )
         return visibility != VisibilityLevel.INVISIBLE
 
     def get_subject_visibility(self, subject: str) -> VisibilityLevel:
@@ -572,7 +592,9 @@ class TurnBrief:
         return self.visible_subjects.get(subject, VisibilityLevel.INVISIBLE)
 
     def has_knowledge_about(
-        self, subject: str, min_certainty: CertaintyLevel = CertaintyLevel.MINIMAL
+        self,
+        subject: str,
+        min_certainty: CertaintyLevel = CertaintyLevel.MINIMAL,
     ) -> bool:
         """
         Check if the entity has knowledge about a specific subject.

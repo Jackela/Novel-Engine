@@ -15,7 +15,12 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
+from src.core.data_models import (
+    ErrorInfo,
+    MemoryItem,
+    MemoryType,
+    StandardResponse,
+)
 from src.core.types import AgentID
 from src.database.context_db import ContextDatabase
 
@@ -52,10 +57,15 @@ class EpisodicEvent:
 
         self.significance_score = min(
             1.0,
-            base_significance + social_factor + causal_factor + emotional_peak_factor,
+            base_significance
+            + social_factor
+            + causal_factor
+            + emotional_peak_factor,
         )
 
-    def add_causal_link(self, linked_memory_id: str, link_type: str = "follows"):
+    def add_causal_link(
+        self, linked_memory_id: str, link_type: str = "follows"
+    ):
         """Adds a causal link to another memory and recalculates significance."""
         causal_link = f"{link_type}:{linked_memory_id}"
         if causal_link not in self.causal_links:
@@ -127,7 +137,9 @@ class EpisodicMemory:
 
             db_result = await self.database.store_enhanced_memory(memory)
             if not db_result.success:
-                logger.error(f"Database store failed: {db_result.error.message}")
+                logger.error(
+                    f"Database store failed: {db_result.error.message}"
+                )
 
             self.total_episodes += 1
 
@@ -174,20 +186,27 @@ class EpisodicMemory:
                         episode = self._episodes.get(memory_id)
                         if (
                             episode
-                            and start_time <= episode.memory_item.timestamp <= end_time
+                            and start_time
+                            <= episode.memory_item.timestamp
+                            <= end_time
                         ):
                             matching_episodes.append(episode)
 
                 current_date += timedelta(days=1)
 
             matching_episodes.sort(
-                key=lambda ep: (ep.memory_item.timestamp, -ep.significance_score)
+                key=lambda ep: (
+                    ep.memory_item.timestamp,
+                    -ep.significance_score,
+                )
             )
 
             limited_episodes = matching_episodes[:limit]
             result_memories = [ep.memory_item for ep in limited_episodes]
 
-            logger.info(f"Retrieved {len(result_memories)} episodes by timeframe")
+            logger.info(
+                f"Retrieved {len(result_memories)} episodes by timeframe"
+            )
 
             return StandardResponse(
                 success=True,
@@ -202,7 +221,9 @@ class EpisodicMemory:
             logger.error(f"Temporal retrieval failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="TEMPORAL_RETRIEVAL_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="TEMPORAL_RETRIEVAL_FAILED", message=str(e)
+                ),
             )
 
     async def retrieve_episodes_by_participants(
@@ -242,7 +263,9 @@ class EpisodicMemory:
             limited_episodes = matching_episodes[:limit]
             result_memories = [ep.memory_item for ep in limited_episodes]
 
-            logger.info(f"Retrieved {len(result_memories)} episodes by participants")
+            logger.info(
+                f"Retrieved {len(result_memories)} episodes by participants"
+            )
 
             return StandardResponse(
                 success=True,
@@ -257,7 +280,9 @@ class EpisodicMemory:
             logger.error(f"Participant retrieval failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="PARTICIPANT_RETRIEVAL_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="PARTICIPANT_RETRIEVAL_FAILED", message=str(e)
+                ),
             )
 
     async def retrieve_episodes_by_theme(
@@ -278,7 +303,9 @@ class EpisodicMemory:
                         if memory_id not in unique_episode_ids:
                             episode = self._episodes.get(memory_id)
                             if episode:
-                                content_lower = episode.memory_item.content.lower()
+                                content_lower = (
+                                    episode.memory_item.content.lower()
+                                )
                                 theme_matches = sum(
                                     1
                                     for kw in theme_keywords
@@ -315,11 +342,16 @@ class EpisodicMemory:
             logger.error(f"Thematic retrieval failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="THEMATIC_RETRIEVAL_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="THEMATIC_RETRIEVAL_FAILED", message=str(e)
+                ),
             )
 
     async def link_episodes_causally(
-        self, source_memory_id: str, target_memory_id: str, link_type: str = "leads_to"
+        self,
+        source_memory_id: str,
+        target_memory_id: str,
+        link_type: str = "leads_to",
     ) -> StandardResponse:
         """
         Creates a causal link between two episodes to establish narrative continuity.
@@ -393,7 +425,9 @@ class EpisodicMemory:
 
             self.consolidated_episodes += consolidated_count
             self.last_consolidation = consolidation_start
-            duration_ms = (datetime.now() - consolidation_start).total_seconds() * 1000
+            duration_ms = (
+                datetime.now() - consolidation_start
+            ).total_seconds() * 1000
 
             logger.info(
                 f"Episodic consolidation complete: {consolidated_count} episodes in {duration_ms:.2f}ms"
@@ -419,9 +453,30 @@ class EpisodicMemory:
         """Extracts thematic keywords from content."""
         theme_keywords = {
             "combat": ["fight", "battle", "combat", "war", "attack", "defend"],
-            "social": ["talk", "conversation", "meet", "friend", "ally", "enemy"],
-            "exploration": ["discover", "explore", "find", "search", "investigate"],
-            "emotion": ["fear", "anger", "joy", "sad", "love", "hate", "proud"],
+            "social": [
+                "talk",
+                "conversation",
+                "meet",
+                "friend",
+                "ally",
+                "enemy",
+            ],
+            "exploration": [
+                "discover",
+                "explore",
+                "find",
+                "search",
+                "investigate",
+            ],
+            "emotion": [
+                "fear",
+                "anger",
+                "joy",
+                "sad",
+                "love",
+                "hate",
+                "proud",
+            ],
             "technical": ["build", "repair", "code", "system", "machine"],
         }
 
@@ -496,19 +551,19 @@ async def test_episodic_memory():
         start_time, end_time
     )
     print(
-        f"Temporal Retrieval: {temporal_result.success}, Count: {len(temporal_result.data.get('episodes', []))}"
+        f"Temporal Retrieval: {temporal_result.success}, Count: {len( temporal_result.data.get( 'episodes', []))}"
     )
 
-    participant_result = await episodic_memory.retrieve_episodes_by_participants(
-        ["enemy_a"]
+    participant_result = (
+        await episodic_memory.retrieve_episodes_by_participants(["enemy_a"])
     )
     print(
-        f"Participant Retrieval: {participant_result.success}, Count: {len(participant_result.data.get('episodes', []))}"
+        f"Participant Retrieval: {participant_result.success}, Count: {len( participant_result.data.get( 'episodes', []))}"
     )
 
     theme_result = await episodic_memory.retrieve_episodes_by_theme(["combat"])
     print(
-        f"Thematic Retrieval: {theme_result.success}, Count: {len(theme_result.data.get('episodes', []))}"
+        f"Thematic Retrieval: {theme_result.success}, Count: {len( theme_result.data.get( 'episodes', []))}"
     )
 
     stats = episodic_memory.get_memory_statistics()

@@ -62,7 +62,9 @@ class StoryPacing:
     event_density: Decimal = Decimal("5.0")  # Events per unit time (1-10)
     dialogue_ratio: Decimal = Decimal("0.3")  # Proportion of dialogue (0-1)
     action_ratio: Decimal = Decimal("0.4")  # Proportion of action (0-1)
-    reflection_ratio: Decimal = Decimal("0.3")  # Proportion of reflection (0-1)
+    reflection_ratio: Decimal = Decimal(
+        "0.3"
+    )  # Proportion of reflection (0-1)
 
     # Temporal control
     scene_transitions: int = 0  # Number of scene breaks
@@ -75,7 +77,9 @@ class StoryPacing:
     rest_periods: List[int] = None  # Positions of low-intensity moments
 
     # Reader engagement
-    revelation_frequency: Decimal = Decimal("0.1")  # Major reveals per sequence
+    revelation_frequency: Decimal = Decimal(
+        "0.1"
+    )  # Major reveals per sequence
     cliffhanger_intensity: Decimal = Decimal("0.0")  # End-of-segment suspense
     curiosity_hooks: int = 0  # Questions raised for reader
 
@@ -104,7 +108,9 @@ class StoryPacing:
             object.__setattr__(self, "rest_periods", [])
 
         if self.creation_timestamp is None:
-            object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
+            object.__setattr__(
+                self, "creation_timestamp", datetime.now(timezone.utc)
+            )
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -124,7 +130,9 @@ class StoryPacing:
             raise ValueError("Start sequence must be before end sequence")
 
         # Validate ratio values (0-1)
-        ratio_total = self.dialogue_ratio + self.action_ratio + self.reflection_ratio
+        ratio_total = (
+            self.dialogue_ratio + self.action_ratio + self.reflection_ratio
+        )
         if not (Decimal("0.9") <= ratio_total <= Decimal("1.1")):
             raise ValueError(
                 "Dialogue, action, and reflection ratios should sum to approximately 1.0"
@@ -168,7 +176,9 @@ class StoryPacing:
         # Validate tension curve
         for tension_value in self.tension_curve:
             if not (Decimal("0") <= tension_value <= Decimal("10")):
-                raise ValueError("Tension curve values must be between 0 and 10")
+                raise ValueError(
+                    "Tension curve values must be between 0 and 10"
+                )
 
         # Validate peak and rest positions
         sequence_range = range(self.start_sequence, self.end_sequence + 1)
@@ -214,12 +224,18 @@ class StoryPacing:
     @property
     def is_high_intensity(self) -> bool:
         """Check if this is a high-intensity pacing segment."""
-        return self.base_intensity in [PacingIntensity.FAST, PacingIntensity.BREAKNECK]
+        return self.base_intensity in [
+            PacingIntensity.FAST,
+            PacingIntensity.BREAKNECK,
+        ]
 
     @property
     def is_low_intensity(self) -> bool:
         """Check if this is a low-intensity pacing segment."""
-        return self.base_intensity in [PacingIntensity.GLACIAL, PacingIntensity.SLOW]
+        return self.base_intensity in [
+            PacingIntensity.GLACIAL,
+            PacingIntensity.SLOW,
+        ]
 
     @property
     def average_tension(self) -> Decimal:
@@ -244,9 +260,9 @@ class StoryPacing:
             return Decimal("0")
 
         avg_tension = self.average_tension
-        variance = sum((t - avg_tension) ** 2 for t in self.tension_curve) / Decimal(
-            len(self.tension_curve)
-        )
+        variance = sum(
+            (t - avg_tension) ** 2 for t in self.tension_curve
+        ) / Decimal(len(self.tension_curve))
         return variance
 
     @property
@@ -303,7 +319,9 @@ class StoryPacing:
         engagement += Decimal(str(self.curiosity_hooks * 0.2))
 
         # Add engagement from balanced content mix
-        content_balance = Decimal("1") - abs(self.action_ratio - Decimal("0.4"))
+        content_balance = Decimal("1") - abs(
+            self.action_ratio - Decimal("0.4")
+        )
         engagement += content_balance * Decimal("2")
 
         return min(engagement, Decimal("10"))
@@ -312,9 +330,14 @@ class StoryPacing:
         """Check if a sequence number falls within this pacing segment."""
         return self.start_sequence <= sequence_number <= self.end_sequence
 
-    def get_tension_at_sequence(self, sequence_number: int) -> Optional[Decimal]:
+    def get_tension_at_sequence(
+        self, sequence_number: int
+    ) -> Optional[Decimal]:
         """Get tension level at a specific sequence, if defined."""
-        if not self.contains_sequence(sequence_number) or not self.tension_curve:
+        if (
+            not self.contains_sequence(sequence_number)
+            or not self.tension_curve
+        ):
             return None
 
         # Map sequence to tension curve index
@@ -335,9 +358,9 @@ class StoryPacing:
 
         # Linear interpolation between curve points
         weight = curve_position - index
-        return (self.tension_curve[index] * (Decimal("1") - Decimal(str(weight)))) + (
-            self.tension_curve[index + 1] * Decimal(str(weight))
-        )
+        return (
+            self.tension_curve[index] * (Decimal("1") - Decimal(str(weight)))
+        ) + (self.tension_curve[index + 1] * Decimal(str(weight)))
 
     def is_emotional_peak(self, sequence_number: int) -> bool:
         """Check if a sequence is marked as an emotional peak."""

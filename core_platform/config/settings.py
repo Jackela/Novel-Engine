@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, TypeVar
 import yaml
 
 try:
-    from typing import Any, Callable, Tuple
+    from typing import Callable, Tuple
 
     from pydantic import ConfigDict
     from pydantic_settings import BaseSettings
@@ -73,8 +73,12 @@ class DatabaseSettings(BaseSettings):
     # Connection pool settings
     pool_size: int = Field(default=20, description="Connection pool size")
     max_overflow: int = Field(default=30, description="Maximum pool overflow")
-    pool_timeout: int = Field(default=30, description="Pool timeout in seconds")
-    pool_recycle: int = Field(default=3600, description="Pool recycle time in seconds")
+    pool_timeout: int = Field(
+        default=30, description="Pool timeout in seconds"
+    )
+    pool_recycle: int = Field(
+        default=3600, description="Pool recycle time in seconds"
+    )
 
     # Query settings
     echo: bool = Field(default=False, description="Echo SQL statements")
@@ -97,31 +101,51 @@ class MessagingSettings(BaseSettings):
     )
 
     # Security settings
-    use_ssl: bool = Field(default=False, description="Use SSL for Kafka connection")
-    ssl_cafile: Optional[str] = Field(default=None, description="SSL CA file path")
+    use_ssl: bool = Field(
+        default=False, description="Use SSL for Kafka connection"
+    )
+    ssl_cafile: Optional[str] = Field(
+        default=None, description="SSL CA file path"
+    )
     ssl_certfile: Optional[str] = Field(
         default=None, description="SSL certificate file path"
     )
-    ssl_keyfile: Optional[str] = Field(default=None, description="SSL key file path")
-    ssl_password: Optional[str] = Field(default=None, description="SSL key password")
+    ssl_keyfile: Optional[str] = Field(
+        default=None, description="SSL key file path"
+    )
+    ssl_password: Optional[str] = Field(
+        default=None, description="SSL key password"
+    )
 
     use_sasl: bool = Field(
         default=False, description="Use SASL for Kafka authentication"
     )
     sasl_mechanism: str = Field(default="PLAIN", description="SASL mechanism")
-    sasl_username: Optional[str] = Field(default=None, description="SASL username")
-    sasl_password: Optional[str] = Field(default=None, description="SASL password")
+    sasl_username: Optional[str] = Field(
+        default=None, description="SASL username"
+    )
+    sasl_password: Optional[str] = Field(
+        default=None, description="SASL password"
+    )
 
     # Producer settings
-    producer_acks: str = Field(default="all", description="Producer acknowledgments")
-    producer_retries: int = Field(default=5, description="Producer retry attempts")
-    producer_timeout: int = Field(default=30000, description="Producer timeout in ms")
+    producer_acks: str = Field(
+        default="all", description="Producer acknowledgments"
+    )
+    producer_retries: int = Field(
+        default=5, description="Producer retry attempts"
+    )
+    producer_timeout: int = Field(
+        default=30000, description="Producer timeout in ms"
+    )
 
     # Consumer settings
     consumer_group_prefix: str = Field(
         default="novel-engine", description="Consumer group prefix"
     )
-    consumer_timeout: int = Field(default=30000, description="Consumer timeout in ms")
+    consumer_timeout: int = Field(
+        default=30000, description="Consumer timeout in ms"
+    )
     consumer_max_poll_records: int = Field(
         default=500, description="Max records per poll"
     )
@@ -138,19 +162,31 @@ class CacheSettings(BaseSettings):
     )
 
     # Connection settings
-    max_connections: int = Field(default=20, description="Maximum Redis connections")
-    socket_timeout: int = Field(default=5, description="Socket timeout in seconds")
+    max_connections: int = Field(
+        default=20, description="Maximum Redis connections"
+    )
+    socket_timeout: int = Field(
+        default=5, description="Socket timeout in seconds"
+    )
     socket_connect_timeout: int = Field(
         default=5, description="Socket connect timeout in seconds"
     )
 
     # Cache settings
-    default_ttl: int = Field(default=3600, description="Default cache TTL in seconds")
-    key_prefix: str = Field(default="novel-engine:", description="Cache key prefix")
+    default_ttl: int = Field(
+        default=3600, description="Default cache TTL in seconds"
+    )
+    key_prefix: str = Field(
+        default="novel-engine:", description="Cache key prefix"
+    )
 
     # Serialization
-    serializer: str = Field(default="json", description="Cache serialization format")
-    compression: bool = Field(default=False, description="Enable cache compression")
+    serializer: str = Field(
+        default="json", description="Cache serialization format"
+    )
+    compression: bool = Field(
+        default=False, description="Enable cache compression"
+    )
 
     model_config = ConfigDict(env_prefix="CACHE_", case_sensitive=False)
 
@@ -163,7 +199,9 @@ class SecuritySettings(BaseSettings):
         default="development-secret-key-change-in-production",
         description="JWT secret key",
     )
-    jwt_algorithm: str = Field(default="HS256", description="JWT signing algorithm")
+    jwt_algorithm: str = Field(
+        default="HS256", description="JWT signing algorithm"
+    )
     jwt_access_token_expires: int = Field(
         default=3600, description="Access token expiration in seconds"
     )
@@ -172,7 +210,9 @@ class SecuritySettings(BaseSettings):
     )
 
     # Password settings
-    password_min_length: int = Field(default=8, description="Minimum password length")
+    password_min_length: int = Field(
+        default=8, description="Minimum password length"
+    )
     password_require_uppercase: bool = Field(
         default=True, description="Require uppercase in passwords"
     )
@@ -187,8 +227,12 @@ class SecuritySettings(BaseSettings):
     )
 
     # Session settings
-    session_timeout: int = Field(default=3600, description="Session timeout in seconds")
-    max_login_attempts: int = Field(default=5, description="Maximum login attempts")
+    session_timeout: int = Field(
+        default=3600, description="Session timeout in seconds"
+    )
+    max_login_attempts: int = Field(
+        default=5, description="Maximum login attempts"
+    )
     lockout_duration: int = Field(
         default=900, description="Account lockout duration in seconds"
     )
@@ -198,14 +242,18 @@ class SecuritySettings(BaseSettings):
         default=["http://localhost:3000", "http://localhost:8000"],
         description="Allowed CORS origins",
     )
-    cors_credentials: bool = Field(default=True, description="Allow CORS credentials")
+    cors_credentials: bool = Field(
+        default=True, description="Allow CORS credentials"
+    )
     cors_methods: List[str] = Field(
         default=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         description="Allowed CORS methods",
     )
 
     # Rate limiting
-    rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
+    rate_limit_enabled: bool = Field(
+        default=True, description="Enable rate limiting"
+    )
     rate_limit_requests: int = Field(
         default=100, description="Rate limit requests per window"
     )
@@ -229,15 +277,23 @@ class MonitoringSettings(BaseSettings):
     log_max_bytes: int = Field(
         default=10485760, description="Log file max size in bytes"
     )  # 10MB
-    log_backup_count: int = Field(default=5, description="Log file backup count")
+    log_backup_count: int = Field(
+        default=5, description="Log file backup count"
+    )
 
     # Metrics settings
-    metrics_enabled: bool = Field(default=True, description="Enable metrics collection")
+    metrics_enabled: bool = Field(
+        default=True, description="Enable metrics collection"
+    )
     metrics_port: int = Field(default=9090, description="Metrics server port")
-    metrics_path: str = Field(default="/metrics", description="Metrics endpoint path")
+    metrics_path: str = Field(
+        default="/metrics", description="Metrics endpoint path"
+    )
 
     # Health check settings
-    health_check_enabled: bool = Field(default=True, description="Enable health checks")
+    health_check_enabled: bool = Field(
+        default=True, description="Enable health checks"
+    )
     health_check_interval: int = Field(
         default=30, description="Health check interval in seconds"
     )
@@ -264,11 +320,15 @@ class StorageSettings(BaseSettings):
     endpoint_url: str = Field(
         default="http://localhost:9000", description="Storage endpoint URL"
     )
-    access_key: str = Field(default="novel_engine", description="Storage access key")
+    access_key: str = Field(
+        default="novel_engine", description="Storage access key"
+    )
     secret_key: str = Field(
         default="novel_engine_dev_password", description="Storage secret key"
     )
-    bucket_name: str = Field(default="novel-engine", description="Default bucket name")
+    bucket_name: str = Field(
+        default="novel-engine", description="Default bucket name"
+    )
     region: str = Field(default="us-east-1", description="Storage region")
 
     # Upload settings
@@ -291,8 +351,12 @@ class AppSettings(BaseSettings):
     """Main application configuration."""
 
     # Application metadata
-    app_name: str = Field(default="Novel Engine", description="Application name")
-    app_version: str = Field(default="1.0.0", description="Application version")
+    app_name: str = Field(
+        default="Novel Engine", description="Application name"
+    )
+    app_version: str = Field(
+        default="1.0.0", description="Application version"
+    )
     app_description: str = Field(
         default="AI-driven interactive storytelling platform",
         description="Application description",
@@ -310,9 +374,13 @@ class AppSettings(BaseSettings):
     workers: int = Field(default=1, description="Number of worker processes")
 
     # Feature flags
-    enable_analytics: bool = Field(default=True, description="Enable analytics")
+    enable_analytics: bool = Field(
+        default=True, description="Enable analytics"
+    )
     enable_caching: bool = Field(default=True, description="Enable caching")
-    enable_rate_limiting: bool = Field(default=True, description="Enable rate limiting")
+    enable_rate_limiting: bool = Field(
+        default=True, description="Enable rate limiting"
+    )
 
     # External services
     ai_service_url: str = Field(
@@ -411,7 +479,9 @@ class PlatformConfig:
     def _track_config_sources(self) -> None:
         """Track configuration sources for debugging."""
         # Environment variables
-        self.sources.append(ConfigSource(name="Environment Variables", loaded=True))
+        self.sources.append(
+            ConfigSource(name="Environment Variables", loaded=True)
+        )
 
         # Configuration file
         config_loaded = os.path.exists(self.config_path)
@@ -516,7 +586,9 @@ class PlatformConfig:
             or "localhost" in self.database.url
             and self.is_production()
         ):
-            errors.append("Database URL should not use localhost in production")
+            errors.append(
+                "Database URL should not use localhost in production"
+            )
 
         return errors
 

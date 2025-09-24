@@ -55,7 +55,9 @@ class TurnEngineProtocol(Protocol):
         ...
 
     @abstractmethod
-    async def finalize_turn(self, turn_result: Dict[str, Any]) -> Dict[str, Any]:
+    async def finalize_turn(
+        self, turn_result: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Finalize turn and update state."""
         ...
 
@@ -88,7 +90,9 @@ class NarrativeProtocol(Protocol):
     """Protocol for narrative orchestration."""
 
     @abstractmethod
-    async def generate_narrative_context(self, agent_id: str) -> Dict[str, Any]:
+    async def generate_narrative_context(
+        self, agent_id: str
+    ) -> Dict[str, Any]:
         """Generate narrative context for agent."""
         ...
 

@@ -81,7 +81,9 @@ def run_user_journey(journey_name: str, **kwargs) -> Dict[str, Any]:
         "passed_steps": kwargs.get("steps", 5),
         "failed_steps": 0,
         "total_duration_ms": 2500,
-        "locations_tested": kwargs.get("locations", ["us-east-1", "eu-west-1"]),
+        "locations_tested": kwargs.get(
+            "locations", ["us-east-1", "eu-west-1"]
+        ),
         "performance_metrics": {
             "page_load_time_ms": 800,
             "time_to_interactive_ms": 1200,
@@ -130,7 +132,9 @@ def monitor_ssl_certificate(domain: str) -> Dict[str, Any]:
     }
 
 
-def check_dns_resolution(domain: str, record_type: str = "A") -> Dict[str, Any]:
+def check_dns_resolution(
+    domain: str, record_type: str = "A"
+) -> Dict[str, Any]:
     """
     Check DNS resolution for a domain.
 
@@ -146,7 +150,9 @@ def check_dns_resolution(domain: str, record_type: str = "A") -> Dict[str, Any]:
         "record_type": record_type,
         "resolution_status": "success",
         "response_time_ms": 45,
-        "records": [{"type": record_type, "value": "192.168.1.100", "ttl": 300}],
+        "records": [
+            {"type": record_type, "value": "192.168.1.100", "ttl": 300}
+        ],
         "nameservers_queried": ["8.8.8.8", "1.1.1.1", "208.67.222.222"],
         "dnssec_status": "validated",
         "timestamp": datetime.now().isoformat(),

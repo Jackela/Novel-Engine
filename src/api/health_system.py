@@ -188,7 +188,9 @@ class HealthMonitor:
                         },
                     }
                 else:
-                    raise Exception(f"Database file not found: {database_path}")
+                    raise Exception(
+                        f"Database file not found: {database_path}"
+                    )
 
             except Exception as e:
                 raise Exception(f"Database check failed: {str(e)}")
@@ -228,7 +230,9 @@ class HealthMonitor:
                     "details": {
                         "active_agents": len(active_agents),
                         "health_data": (
-                            health_result.data if health_result.success else None
+                            health_result.data
+                            if health_result.success
+                            else None
                         ),
                     },
                 }
@@ -291,7 +295,9 @@ class HealthMonitor:
                     "usage_percent": cpu_percent,
                     "cpu_count": psutil.cpu_count(),
                     "load_average": (
-                        psutil.getloadavg() if hasattr(psutil, "getloadavg") else None
+                        psutil.getloadavg()
+                        if hasattr(psutil, "getloadavg")
+                        else None
                     ),
                 },
             }
@@ -378,7 +384,9 @@ class HealthMonitor:
             r
             for r in check_results
             if r.status == HealthStatus.UNHEALTHY
-            and any(c.critical for c in checkers_to_run if c.name == r.component)
+            and any(
+                c.critical for c in checkers_to_run if c.name == r.component
+            )
         ]
 
         if critical_failures:
@@ -416,7 +424,9 @@ class HealthMonitor:
 
         return system_health
 
-    def get_cached_health(self, max_age_seconds: int = 30) -> Optional[SystemHealth]:
+    def get_cached_health(
+        self, max_age_seconds: int = 30
+    ) -> Optional[SystemHealth]:
         """Get cached health check result if recent enough."""
         if (
             self.last_check_result
@@ -439,21 +449,32 @@ class HealthMonitor:
 
         return {
             "total_checks_run": len(self.check_history),
-            "recent_healthy_percentage": (healthy_count / len(recent_checks)) * 100,
+            "recent_healthy_percentage": (healthy_count / len(recent_checks))
+            * 100,
             "last_check": (
-                self.last_check_time.isoformat() if self.last_check_time else None
+                self.last_check_time.isoformat()
+                if self.last_check_time
+                else None
             ),
-            "uptime_hours": (datetime.now() - self.app_start_time).total_seconds()
+            "uptime_hours": (
+                datetime.now() - self.app_start_time
+            ).total_seconds()
             / 3600,
         }
 
 
-def create_health_data_response(system_health: SystemHealth) -> HealthCheckData:
+def create_health_data_response(
+    system_health: SystemHealth,
+) -> HealthCheckData:
     """Convert SystemHealth to API response format."""
     return HealthCheckData(
         service_status=system_health.status.value,
         database_status=next(
-            (c.status.value for c in system_health.checks if c.component == "database"),
+            (
+                c.status.value
+                for c in system_health.checks
+                if c.component == "database"
+            ),
             "unknown",
         ),
         orchestrator_status=next(

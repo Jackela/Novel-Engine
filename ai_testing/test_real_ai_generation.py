@@ -33,7 +33,9 @@ def test_real_ai_generation():
 
         # Initialize client
         llm_client = LLMClient(primary_provider="gemini")
-        print(f"✅ LLM client initialized with provider: {llm_client.primary_provider}")
+        print(
+            f"✅ LLM client initialized with provider: {llm_client.primary_provider}"
+        )
 
         # Run comprehensive generation test
         print("\n🧪 Running Generation Tests...")
@@ -43,10 +45,16 @@ def test_real_ai_generation():
         print("\n📊 Test Results:")
         print(f"Provider: {test_results['provider']}")
         print(f"Connection: {'✅' if test_results['connection'] else '❌'}")
-        print(f"Dialogue Test: {'✅' if test_results['dialogue_test'] else '❌'}")
+        print(
+            f"Dialogue Test: {'✅' if test_results['dialogue_test'] else '❌'}"
+        )
         print(f"Event Test: {'✅' if test_results['event_test'] else '❌'}")
-        print(f"Narrative Test: {'✅' if test_results['narrative_test'] else '❌'}")
-        print(f"Overall Success: {'✅' if test_results['overall_success'] else '❌'}")
+        print(
+            f"Narrative Test: {'✅' if test_results['narrative_test'] else '❌'}"
+        )
+        print(
+            f"Overall Success: {'✅' if test_results['overall_success'] else '❌'}"
+        )
 
         if test_results.get("errors"):
             print(f"\n⚠️ Errors: {test_results['errors']}")
@@ -69,17 +77,29 @@ def test_real_ai_generation():
         characters = [
             {
                 "name": "哲学诗人·墨羽",
-                "personality": {"philosophical": 0.9, "mysterious": 0.8, "poetic": 0.9},
+                "personality": {
+                    "philosophical": 0.9,
+                    "mysterious": 0.8,
+                    "poetic": 0.9,
+                },
                 "emotion": "contemplative",
             },
             {
                 "name": "量子工程师·星辰",
-                "personality": {"logical": 0.9, "precise": 0.8, "technical": 0.9},
+                "personality": {
+                    "logical": 0.9,
+                    "precise": 0.8,
+                    "technical": 0.9,
+                },
                 "emotion": "focused",
             },
             {
                 "name": "时空舞者·流光",
-                "personality": {"creative": 0.9, "spontaneous": 0.8, "artistic": 0.9},
+                "personality": {
+                    "creative": 0.9,
+                    "spontaneous": 0.8,
+                    "artistic": 0.9,
+                },
                 "emotion": "inspired",
             },
         ]
@@ -100,7 +120,8 @@ def test_real_ai_generation():
                     "character": character["name"],
                     "dialogue": dialogue,
                     "personality_type": max(
-                        character["personality"], key=character["personality"].get
+                        character["personality"],
+                        key=character["personality"].get,
                     ),
                 }
             )
@@ -116,7 +137,9 @@ def test_real_ai_generation():
         # Validate no template patterns
         template_indicators = ["[", "]", "随机", "模板", "选择"]
         has_template_patterns = any(
-            any(indicator in d["dialogue"] for indicator in template_indicators)
+            any(
+                indicator in d["dialogue"] for indicator in template_indicators
+            )
             for d in dialogues
         )
 
@@ -144,7 +167,9 @@ def test_real_ai_generation():
         print(
             f"Character uniqueness: {'✅' if unique_dialogues == len(dialogues) else '❌'}"
         )
-        print(f"No template patterns: {'✅' if not has_template_patterns else '❌'}")
+        print(
+            f"No template patterns: {'✅' if not has_template_patterns else '❌'}"
+        )
         print(
             f"Content quality: {'✅' if all(len(d['dialogue']) > 5 for d in dialogues) else '❌'}"
         )
@@ -167,7 +192,9 @@ def test_real_ai_generation():
                 "real_ai_generation": test_results["overall_success"],
                 "character_uniqueness": unique_dialogues == len(dialogues),
                 "no_template_patterns": not has_template_patterns,
-                "content_quality": all(len(d["dialogue"]) > 5 for d in dialogues),
+                "content_quality": all(
+                    len(d["dialogue"]) > 5 for d in dialogues
+                ),
             },
         }
 

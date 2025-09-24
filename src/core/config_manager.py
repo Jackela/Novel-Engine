@@ -81,9 +81,7 @@ class ConfigDefaults:
 
     # Logging Configuration
     log_level: str = "INFO"
-    log_format: str = (
-        "%(asctime)s | %(levelname)s | %(name)s | %(funcName)s:%(lineno)d | %(message)s"
-    )
+    log_format: str = "%(asctime)s | %(levelname)s | %(name)s | %(funcName)s:%(lineno)d | %(message)s"
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert defaults to dictionary."""
@@ -150,7 +148,8 @@ class ConfigurationManager:
         # Start with defaults
         self.config_data = self.defaults.to_dict()
 
-        # Load configuration files in priority order (later files override earlier ones)
+        # Load configuration files in priority order (later files override
+        # earlier ones)
         config_files = [
             self.paths.main_config,
             self.paths.security_config,
@@ -164,7 +163,9 @@ class ConfigurationManager:
                 try:
                     file_config = self._load_config_file(config_path)
                     if file_config:
-                        self._merge_configurations(self.config_data, file_config)
+                        self._merge_configurations(
+                            self.config_data, file_config
+                        )
                         logger.info(f"Loaded configuration from {config_path}")
                 except Exception as e:
                     logger.warning(
@@ -191,7 +192,9 @@ class ConfigurationManager:
                     )
                     return None
         except Exception as e:
-            logger.error(f"Error loading configuration file {config_path}: {e}")
+            logger.error(
+                f"Error loading configuration file {config_path}: {e}"
+            )
             return None
 
     def _merge_configurations(
@@ -199,7 +202,11 @@ class ConfigurationManager:
     ) -> None:
         """Recursively merge configuration dictionaries."""
         for key, value in override.items():
-            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            if (
+                key in base
+                and isinstance(base[key], dict)
+                and isinstance(value, dict)
+            ):
                 self._merge_configurations(base[key], value)
             else:
                 base[key] = value
@@ -231,7 +238,9 @@ class ConfigurationManager:
             env_value = os.getenv(env_var)
             if env_value is not None:
                 # Convert environment variable value to appropriate type
-                converted_value = self._convert_env_value(env_value, section, key)
+                converted_value = self._convert_env_value(
+                    env_value, section, key
+                )
 
                 # Set the value in configuration
                 if section not in self.config_data:
@@ -259,12 +268,16 @@ class ConfigurationManager:
             try:
                 return int(value)
             except ValueError:
-                logger.warning(f"Invalid integer value for {section}.{key}: {value}")
+                logger.warning(
+                    f"Invalid integer value for {section}.{key}: {value}"
+                )
                 return value
 
         # List conversions (comma-separated)
         if key == "cors_origins":
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
+            return [
+                origin.strip() for origin in value.split(",") if origin.strip()
+            ]
 
         # Default to string
         return value
@@ -277,7 +290,9 @@ class ConfigurationManager:
         required_sections = ["server", "database", "security"]
         for section in required_sections:
             if section not in self.config_data:
-                errors.append(f"Missing required configuration section: {section}")
+                errors.append(
+                    f"Missing required configuration section: {section}"
+                )
 
         # Validate specific values
         if "server" in self.config_data:
@@ -344,7 +359,9 @@ class ConfigurationManager:
         return self.config_data.copy()
 
     def save_to_file(
-        self, file_path: Union[str, Path], format: ConfigFormat = ConfigFormat.YAML
+        self,
+        file_path: Union[str, Path],
+        format: ConfigFormat = ConfigFormat.YAML,
     ) -> None:
         """
         Save current configuration to file.
@@ -358,7 +375,9 @@ class ConfigurationManager:
         try:
             with open(file_path, "w", encoding="utf-8") as f:
                 if format == ConfigFormat.YAML:
-                    yaml.dump(self.config_data, f, default_flow_style=False, indent=2)
+                    yaml.dump(
+                        self.config_data, f, default_flow_style=False, indent=2
+                    )
                 elif format == ConfigFormat.JSON:
                     json.dump(self.config_data, f, indent=2)
                 else:
@@ -375,7 +394,9 @@ class ConfigurationManager:
 _config_manager: Optional[ConfigurationManager] = None
 
 
-def get_config_manager(base_path: Optional[str] = None) -> ConfigurationManager:
+def get_config_manager(
+    base_path: Optional[str] = None,
+) -> ConfigurationManager:
     """Get global configuration manager instance."""
     global _config_manager
 

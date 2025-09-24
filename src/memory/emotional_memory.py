@@ -13,11 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List
 
-from src.core.data_models import (
-    MemoryItem,
-    MemoryType,
-    StandardResponse,
-)
+from src.core.data_models import MemoryItem, MemoryType, StandardResponse
 from src.core.types import AgentID
 from src.database.context_db import ContextDatabase
 
@@ -99,7 +95,9 @@ class EmotionalMemory:
         self.max_memories = max_memories
         self.threshold = threshold
         self._emotional_memories: Dict[str, EmotionalMemoryItem] = {}
-        self._valence_index: Dict[EmotionalValence, List[str]] = defaultdict(list)
+        self._valence_index: Dict[EmotionalValence, List[str]] = defaultdict(
+            list
+        )
         logger.info(f"EmotionalMemory for agent {agent_id} initialized.")
 
     async def store_emotional_experience(
@@ -108,7 +106,8 @@ class EmotionalMemory:
         """Stores an emotional experience if it meets the arousal threshold."""
         if arousal < self.threshold:
             return StandardResponse(
-                success=True, data={"stored": False, "reason": "below_threshold"}
+                success=True,
+                data={"stored": False, "reason": "below_threshold"},
             )
 
         emotional_memory = EmotionalMemoryItem(
@@ -125,7 +124,9 @@ class EmotionalMemory:
         """Updates internal indices for efficient querying."""
         # This is a simplified placeholder for a more complex indexing system.
         category = emotional_memory._derive_emotional_tags()[0]
-        self._valence_index[category].append(emotional_memory.memory_item.memory_id)
+        self._valence_index[category].append(
+            emotional_memory.memory_item.memory_id
+        )
 
 
 async def test_emotional_memory():

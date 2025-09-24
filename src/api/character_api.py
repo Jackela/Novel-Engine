@@ -125,12 +125,15 @@ class CharacterAPI:
             """Creates a new character."""
             if not self.orchestrator:
                 raise HTTPException(
-                    status_code=503, detail="System not ready. Please try again."
+                    status_code=503,
+                    detail="System not ready. Please try again.",
                 )
 
             try:
                 # Convert string to EmotionalState enum
-                emotional_state = EmotionalState.CALM  # Default emotional state
+                emotional_state = (
+                    EmotionalState.CALM
+                )  # Default emotional state
                 if hasattr(EmotionalState, request.dominant_emotion.upper()):
                     emotional_state = getattr(
                         EmotionalState, request.dominant_emotion.upper()
@@ -158,21 +161,26 @@ class CharacterAPI:
                     }
                 else:
                     error_message = (
-                        result.error.message if result.error else "Unknown error"
+                        result.error.message
+                        if result.error
+                        else "Unknown error"
                     )
                     raise HTTPException(status_code=400, detail=error_message)
             except ValueError as e:
                 raise HTTPException(status_code=422, detail=str(e))
             except Exception as e:
                 logger.error(f"Error creating character: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error.")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error."
+                )
 
         @app.get("/api/v1/characters", response_model=CharacterListResponse)
         async def list_characters():
             """List all characters."""
             if not self.orchestrator:
                 raise HTTPException(
-                    status_code=503, detail="System not ready. Please try again."
+                    status_code=503,
+                    detail="System not ready. Please try again.",
                 )
 
             try:
@@ -194,7 +202,9 @@ class CharacterAPI:
                 return CharacterListResponse(characters=characters)
             except Exception as e:
                 logger.error(f"Error listing characters: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error.")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error."
+                )
 
         @app.get("/api/v1/characters/{character_id}", response_model=dict)
         async def get_character(
@@ -203,14 +213,17 @@ class CharacterAPI:
             """Get detailed character information."""
             if not self.orchestrator:
                 raise HTTPException(
-                    status_code=503, detail="System not ready. Please try again."
+                    status_code=503,
+                    detail="System not ready. Please try again.",
                 )
 
             try:
                 # Check if character exists in active agents
                 active_agents = getattr(self.orchestrator, "active_agents", {})
                 if character_id not in active_agents:
-                    raise HTTPException(status_code=404, detail="Character not found")
+                    raise HTTPException(
+                        status_code=404, detail="Character not found"
+                    )
 
                 # Get character information from orchestrator
                 # For now, return basic information
@@ -226,24 +239,32 @@ class CharacterAPI:
                 raise
             except Exception as e:
                 logger.error(f"Error getting character {character_id}: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error.")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error."
+                )
 
         @app.put("/api/v1/characters/{character_id}", response_model=dict)
-        async def update_character(character_id: str, request: CharacterUpdateRequest):
+        async def update_character(
+            character_id: str, request: CharacterUpdateRequest
+        ):
             """Update character information."""
             if not self.orchestrator:
                 raise HTTPException(
-                    status_code=503, detail="System not ready. Please try again."
+                    status_code=503,
+                    detail="System not ready. Please try again.",
                 )
 
             try:
                 # Check if character exists
                 active_agents = getattr(self.orchestrator, "active_agents", {})
                 if character_id not in active_agents:
-                    raise HTTPException(status_code=404, detail="Character not found")
+                    raise HTTPException(
+                        status_code=404, detail="Character not found"
+                    )
 
                 # For now, just acknowledge the update
-                # In the future, this would update the character state in the database
+                # In the future, this would update the character state in the
+                # database
                 updates = {}
                 if request.name:
                     updates["name"] = request.name
@@ -264,10 +285,14 @@ class CharacterAPI:
                 raise
             except Exception as e:
                 logger.error(f"Error updating character {character_id}: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error.")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error."
+                )
 
 
-def create_character_api(orchestrator: Optional[SystemOrchestrator]) -> CharacterAPI:
+def create_character_api(
+    orchestrator: Optional[SystemOrchestrator],
+) -> CharacterAPI:
     """Creates and configures a character API instance."""
     return CharacterAPI(orchestrator)
 

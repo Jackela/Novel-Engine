@@ -34,7 +34,9 @@ __all__ = [
 ]
 
 
-def create_dashboard(name: str, template: Optional[str] = None, **kwargs) -> str:
+def create_dashboard(
+    name: str, template: Optional[str] = None, **kwargs
+) -> str:
     """
     Create a new monitoring dashboard.
 
@@ -96,7 +98,9 @@ def load_template(template_name: str) -> Dict[str, Any]:
                 {
                     "title": "Error Rate",
                     "type": "stat",
-                    "targets": ['rate(http_requests_total{status=~"5.."}[5m])'],
+                    "targets": [
+                        'rate(http_requests_total{status=~"5.."}[5m])'
+                    ],
                     "unit": "percent",
                 },
             ],
@@ -145,7 +149,9 @@ def load_template(template_name: str) -> Dict[str, Any]:
                 {
                     "title": "User Registrations",
                     "type": "graph",
-                    "targets": ["rate(novel_engine_user_registrations_total[1h])"],
+                    "targets": [
+                        "rate(novel_engine_user_registrations_total[1h])"
+                    ],
                     "unit": "users/hour",
                 },
                 {
@@ -158,7 +164,9 @@ def load_template(template_name: str) -> Dict[str, Any]:
         },
     }
 
-    return templates.get(template_name, {"title": "Unknown Template", "panels": []})
+    return templates.get(
+        template_name, {"title": "Unknown Template", "panels": []}
+    )
 
 
 def _get_template_panels(template_name: Optional[str]) -> List[Dict[str, Any]]:
@@ -170,7 +178,9 @@ def _get_template_panels(template_name: Optional[str]) -> List[Dict[str, Any]]:
     return template.get("panels", [])
 
 
-def update_dashboard(dashboard_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+def update_dashboard(
+    dashboard_id: str, updates: Dict[str, Any]
+) -> Dict[str, Any]:
     """
     Update an existing dashboard.
 

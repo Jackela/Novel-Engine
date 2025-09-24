@@ -160,7 +160,6 @@ class HighPerformanceConcurrentProcessor:
         max_concurrent_tasks: int = 1000,
         queue_timeout: float = 30.0,
     ):
-
         # Resource management
         self.resource_manager = AdaptiveResourceManager()
         self.max_workers = max_workers or psutil.cpu_count() * 2
@@ -296,7 +295,10 @@ class HighPerformanceConcurrentProcessor:
             raise RuntimeError("Task queue is full - system overloaded")
 
     async def submit_batch(
-        self, tasks: List[tuple], priority: int = 0, timeout: Optional[float] = None
+        self,
+        tasks: List[tuple],
+        priority: int = 0,
+        timeout: Optional[float] = None,
     ) -> List[str]:
         """
         Submit multiple tasks as a batch.
@@ -329,7 +331,9 @@ class HighPerformanceConcurrentProcessor:
 
         return task_ids
 
-    async def wait_for_task(self, task_id: str, timeout: Optional[float] = None) -> Any:
+    async def wait_for_task(
+        self, task_id: str, timeout: Optional[float] = None
+    ) -> Any:
         """
         Wait for a specific task to complete.
 
@@ -349,13 +353,17 @@ class HighPerformanceConcurrentProcessor:
                 if metrics.status == ProcessingStatus.COMPLETED:
                     return getattr(metrics, "result", None)
                 elif metrics.status == ProcessingStatus.FAILED:
-                    raise RuntimeError(f"Task {task_id} failed: {metrics.error}")
+                    raise RuntimeError(
+                        f"Task {task_id} failed: {metrics.error}"
+                    )
                 elif metrics.status == ProcessingStatus.CANCELLED:
                     raise RuntimeError(f"Task {task_id} was cancelled")
 
             # Check timeout
             if timeout and (time.time() - start_time) > timeout:
-                raise asyncio.TimeoutError(f"Task {task_id} timed out after {timeout}s")
+                raise asyncio.TimeoutError(
+                    f"Task {task_id} timed out after {timeout}s"
+                )
 
             # Brief wait before checking again
             await asyncio.sleep(0.1)
@@ -380,8 +388,10 @@ class HighPerformanceConcurrentProcessor:
                     continue
 
                 # Get optimal worker count
-                optimal_workers = self.resource_manager.get_optimal_worker_count(
-                    self.max_workers
+                optimal_workers = (
+                    self.resource_manager.get_optimal_worker_count(
+                        self.max_workers
+                    )
                 )
 
                 # Process tasks up to optimal worker count
@@ -419,14 +429,17 @@ class HighPerformanceConcurrentProcessor:
         try:
             # Update metrics
             metrics.status = ProcessingStatus.RUNNING
-            self.concurrent_peak = max(self.concurrent_peak, len(self.active_tasks))
+            self.concurrent_peak = max(
+                self.concurrent_peak, len(self.active_tasks)
+            )
 
             # Execute task based on type
             if asyncio.iscoroutinefunction(task.func):
                 # Async function
                 if task.timeout:
                     result = await asyncio.wait_for(
-                        task.func(*task.args, **task.kwargs), timeout=task.timeout
+                        task.func(*task.args, **task.kwargs),
+                        timeout=task.timeout,
                     )
                 else:
                     result = await task.func(*task.args, **task.kwargs)
@@ -443,7 +456,8 @@ class HighPerformanceConcurrentProcessor:
                     )
                 else:
                     result = await loop.run_in_executor(
-                        self.thread_pool, lambda: task.func(*task.args, **task.kwargs)
+                        self.thread_pool,
+                        lambda: task.func(*task.args, **task.kwargs),
                     )
 
             # Task completed successfully
@@ -460,7 +474,9 @@ class HighPerformanceConcurrentProcessor:
             except Exception:
                 pass
 
-            logger.debug(f"Task {task_id} completed in {metrics.duration:.3f}s")
+            logger.debug(
+                f"Task {task_id} completed in {metrics.duration:.3f}s"
+            )
 
         except asyncio.TimeoutError:
             metrics.status = ProcessingStatus.FAILED
@@ -512,7 +528,9 @@ class HighPerformanceConcurrentProcessor:
                         stuck_tasks.append(task_id)
 
                 if stuck_tasks:
-                    logger.warning(f"Found {len(stuck_tasks)} potentially stuck tasks")
+                    logger.warning(
+                        f"Found {len(stuck_tasks)} potentially stuck tasks"
+                    )
 
                 # Sleep for monitoring interval
                 await asyncio.sleep(30.0)
@@ -592,7 +610,11 @@ def get_global_processor() -> HighPerformanceConcurrentProcessor:
 
 
 async def process_concurrently(
-    func: Callable, *args, priority: int = 0, timeout: Optional[float] = None, **kwargs
+    func: Callable,
+    *args,
+    priority: int = 0,
+    timeout: Optional[float] = None,
+    **kwargs,
 ) -> Any:
     """
     Convenience function for concurrent processing.

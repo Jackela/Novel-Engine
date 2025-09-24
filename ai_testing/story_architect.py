@@ -125,7 +125,9 @@ class StoryArchitect:
 
     def _create_plot_points(self, characters: List) -> List[PlotPoint]:
         """Create plot points with proper story structure"""
-        char_names = [c.name if hasattr(c, "name") else str(c) for c in characters]
+        char_names = [
+            c.name if hasattr(c, "name") else str(c) for c in characters
+        ]
 
         plot_points = [
             # Act 1 - Setup (25%)
@@ -215,7 +217,11 @@ class StoryArchitect:
 
         for i, character in enumerate(characters[:3]):
             template = arc_templates[i % len(arc_templates)]
-            name = character.name if hasattr(character, "name") else f"Character_{i}"
+            name = (
+                character.name
+                if hasattr(character, "name")
+                else f"Character_{i}"
+            )
 
             arc = CharacterArc(
                 character_name=name,
@@ -267,13 +273,17 @@ class StoryArchitect:
 
         return curve
 
-    def get_plot_guidance(self, blueprint: StoryBlueprint, current_event: int) -> Dict:
+    def get_plot_guidance(
+        self, blueprint: StoryBlueprint, current_event: int
+    ) -> Dict:
         """Get guidance for next event based on story structure"""
         progress = current_event / blueprint.target_length
 
         # Find current plot stage
         stage_progress = progress * len(blueprint.plot_points)
-        current_stage_index = min(int(stage_progress), len(blueprint.plot_points) - 1)
+        current_stage_index = min(
+            int(stage_progress), len(blueprint.plot_points) - 1
+        )
         current_plot_point = blueprint.plot_points[current_stage_index]
 
         # Get current tension

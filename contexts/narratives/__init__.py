@@ -49,7 +49,11 @@ from .domain.value_objects.plot_point import (
     PlotPointImportance,
     PlotPointType,
 )
-from .domain.value_objects.story_pacing import PacingIntensity, PacingType, StoryPacing
+from .domain.value_objects.story_pacing import (
+    PacingIntensity,
+    PacingType,
+    StoryPacing,
+)
 
 # Infrastructure Layer Exports
 from .infrastructure.repositories.narrative_arc_repository import (
@@ -85,4 +89,6 @@ __all__ = [
 
 __version__ = "1.0.0"
 __context_name__ = "narratives"
-__description__ = "Narrative Domain Context with Story Generation and Management"
+__description__ = (
+    "Narrative Domain Context with Story Generation and Management"
+)

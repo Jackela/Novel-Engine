@@ -15,7 +15,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-
 # Optional imports for advanced features
 try:
     import yaml
@@ -153,7 +152,9 @@ class ConfigurationService:
             return True
 
         except Exception as e:
-            self.logger.error(f"Configuration service initialization failed: {e}")
+            self.logger.error(
+                f"Configuration service initialization failed: {e}"
+            )
             return False
 
     async def get_config(self) -> Dict[str, Any]:
@@ -177,7 +178,9 @@ class ConfigurationService:
                 return self._get_nested_value(self._config_data, key, default)
 
         except Exception as e:
-            self.logger.warning(f"Failed to get config value for key '{key}': {e}")
+            self.logger.warning(
+                f"Failed to get config value for key '{key}': {e}"
+            )
             return default
 
     async def update_config(self, updates: Dict[str, Any]) -> None:
@@ -209,21 +212,15 @@ class ConfigurationService:
                         else:
                             self.logger.warning(
                                 f"Configuration validation warnings: {validation_result['errors']}"
-                            )
-
-                # Record change
-                change_record = {
-                    "timestamp": datetime.now().isoformat(),
-                    "updates": updates,
-                    "environment": self.environment,
-                    "source": "api_update",
-                }
+                            )  # Record change change_record = { "timestamp": datetime.now().isoformat(), "updates": updates, "environment": self.environment, "source": "api_update",}
                 self._config_history.append(change_record)
 
                 # Notify change callbacks
                 await self._notify_config_changes(updates)
 
-                self.logger.info(f"Configuration updated with {len(updates)} changes")
+                self.logger.info(
+                    f"Configuration updated with {len(updates)} changes"
+                )
 
         except Exception as e:
             self.logger.error(f"Configuration update failed: {e}")
@@ -252,15 +249,7 @@ class ConfigurationService:
                         self._config_data = old_config
                         raise ValueError(
                             f"Configuration reload validation failed: {validation_result['errors']}"
-                        )
-
-                # Record reload
-                change_record = {
-                    "timestamp": datetime.now().isoformat(),
-                    "action": "reload",
-                    "environment": self.environment,
-                    "source": "file_reload",
-                }
+                        )  # Record reload change_record = { "timestamp": datetime.now().isoformat(), "action": "reload", "environment": self.environment, "source": "file_reload",}
                 self._config_history.append(change_record)
 
                 # Notify changes if config actually changed
@@ -386,19 +375,27 @@ class ConfigurationService:
         for config_file in config_files:
             if config_file.exists():
                 try:
-                    config_data = await self._load_single_config_file(config_file)
+                    config_data = await self._load_single_config_file(
+                        config_file
+                    )
                     self._merge_config(config_data)
                     self._config_files.append(config_file)
 
                     if self._hot_reload_enabled:
                         self._watched_files.append(str(config_file))
 
-                    self.logger.debug(f"Loaded configuration from: {config_file}")
+                    self.logger.debug(
+                        f"Loaded configuration from: {config_file}"
+                    )
 
                 except Exception as e:
-                    self.logger.error(f"Failed to load config file {config_file}: {e}")
+                    self.logger.error(
+                        f"Failed to load config file {config_file}: {e}"
+                    )
 
-    async def _load_single_config_file(self, file_path: Path) -> Dict[str, Any]:
+    async def _load_single_config_file(
+        self, file_path: Path
+    ) -> Dict[str, Any]:
         """Load configuration from a single file."""
         try:
             with open(file_path, "r", encoding="utf-8") as f:
@@ -432,7 +429,9 @@ class ConfigurationService:
                 except (json.JSONDecodeError, ValueError):
                     parsed_value = value
 
-                self._set_nested_value(self._config_data, config_key, parsed_value)
+                self._set_nested_value(
+                    self._config_data, config_key, parsed_value
+                )
                 self.logger.debug(f"Loaded environment config: {config_key}")
 
     def _merge_config(self, new_config: Dict[str, Any]) -> None:
@@ -469,7 +468,9 @@ class ConfigurationService:
         except (KeyError, TypeError):
             return default
 
-    def _set_nested_value(self, data: Dict[str, Any], key: str, value: Any) -> None:
+    def _set_nested_value(
+        self, data: Dict[str, Any], key: str, value: Any
+    ) -> None:
         """Set value in nested dictionary using dot notation."""
         keys = key.split(".")
         current = data
@@ -492,7 +493,9 @@ class ConfigurationService:
         try:
             # Check required keys
             for schema_key, schema in self._config_schema.items():
-                current_value = self._get_nested_value(self._config_data, schema_key)
+                current_value = self._get_nested_value(
+                    self._config_data, schema_key
+                )
 
                 if schema.required and current_value is None:
                     if schema.default_value is not None:
@@ -523,16 +526,19 @@ class ConfigurationService:
                                 converted_value = (
                                     bool(current_value)
                                     if not isinstance(current_value, str)
-                                    else current_value.lower() in ["true", "1", "yes"]
+                                    else current_value.lower()
+                                    in ["true", "1", "yes"]
                                 )
                             else:
-                                converted_value = schema.data_type(current_value)
+                                converted_value = schema.data_type(
+                                    current_value
+                                )
 
                             self._set_nested_value(
                                 self._config_data, schema_key, converted_value
                             )
                             validation_result["warnings"].append(
-                                f"Converted '{schema_key}' from {type(current_value).__name__} to {schema.data_type.__name__}"
+                                f"Converted '{schema_key}' from {type(current_value).__name__}to {schema.data_type.__name__}"
                             )
                             current_value = converted_value
                         except (ValueError, TypeError):
@@ -558,7 +564,9 @@ class ConfigurationService:
             self.logger.error(f"Configuration validation error: {e}")
             return {"valid": False, "errors": [str(e)], "warnings": []}
 
-    async def _apply_validation_rule(self, key: str, value: Any, rule: str) -> bool:
+    async def _apply_validation_rule(
+        self, key: str, value: Any, rule: str
+    ) -> bool:
         """Apply a validation rule to a configuration value."""
         try:
             if rule == "positive":
@@ -584,7 +592,9 @@ class ConfigurationService:
     async def _setup_file_watching(self) -> None:
         """Setup file system watching for configuration files."""
         if not WATCHDOG_AVAILABLE:
-            self.logger.info("File watching disabled - watchdog package not available")
+            self.logger.info(
+                "File watching disabled - watchdog package not available"
+            )
             return
 
         try:
@@ -618,11 +628,15 @@ class ConfigurationService:
             # Debounce multiple rapid changes
             await asyncio.sleep(0.5)
 
-            self.logger.info(f"Reloading configuration due to file change: {file_path}")
+            self.logger.info(
+                f"Reloading configuration due to file change: {file_path}"
+            )
             success = await self.reload_config()
 
             if success:
-                self.logger.info("Configuration hot-reload completed successfully")
+                self.logger.info(
+                    "Configuration hot-reload completed successfully"
+                )
             else:
                 self.logger.error("Configuration hot-reload failed")
 
@@ -640,7 +654,9 @@ class ConfigurationService:
             except Exception as e:
                 self.logger.error(f"Configuration change callback failed: {e}")
 
-    async def export_config(self, export_path: str, format: str = "json") -> bool:
+    async def export_config(
+        self, export_path: str, format: str = "json"
+    ) -> bool:
         """Export current configuration to file."""
         try:
             async with self._config_lock:

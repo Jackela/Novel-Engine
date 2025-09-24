@@ -133,7 +133,9 @@ class HealthCheckManager:
                 message = result.get("message", "OK")
                 details = result.get("details", {})
             elif isinstance(result, bool):
-                status = HealthStatus.HEALTHY if result else HealthStatus.UNHEALTHY
+                status = (
+                    HealthStatus.HEALTHY if result else HealthStatus.UNHEALTHY
+                )
                 message = "OK" if result else "Check failed"
                 details = {}
             else:
@@ -236,7 +238,9 @@ class HealthCheckManager:
         critical_checks = [
             result
             for result in results
-            if self.checks.get(result.name, HealthCheck("", lambda: None)).critical
+            if self.checks.get(
+                result.name, HealthCheck("", lambda: None)
+            ).critical
         ]
 
         critical_failures = [
@@ -250,7 +254,9 @@ class HealthCheckManager:
 
         # Check for any degraded status
         degraded_checks = [
-            result for result in results if result.status == HealthStatus.DEGRADED
+            result
+            for result in results
+            if result.status == HealthStatus.DEGRADED
         ]
 
         if degraded_checks:
@@ -258,7 +264,9 @@ class HealthCheckManager:
 
         # Check for non-critical failures
         failed_checks = [
-            result for result in results if result.status == HealthStatus.UNHEALTHY
+            result
+            for result in results
+            if result.status == HealthStatus.UNHEALTHY
         ]
 
         if failed_checks:
@@ -266,16 +274,26 @@ class HealthCheckManager:
 
         return HealthStatus.HEALTHY
 
-    def _generate_summary(self, results: List[HealthCheckResult]) -> Dict[str, Any]:
+    def _generate_summary(
+        self, results: List[HealthCheckResult]
+    ) -> Dict[str, Any]:
         """Generate summary statistics from health check results"""
         if not results:
             return {}
 
         total_checks = len(results)
-        healthy_count = sum(1 for r in results if r.status == HealthStatus.HEALTHY)
-        degraded_count = sum(1 for r in results if r.status == HealthStatus.DEGRADED)
-        unhealthy_count = sum(1 for r in results if r.status == HealthStatus.UNHEALTHY)
-        unknown_count = sum(1 for r in results if r.status == HealthStatus.UNKNOWN)
+        healthy_count = sum(
+            1 for r in results if r.status == HealthStatus.HEALTHY
+        )
+        degraded_count = sum(
+            1 for r in results if r.status == HealthStatus.DEGRADED
+        )
+        unhealthy_count = sum(
+            1 for r in results if r.status == HealthStatus.UNHEALTHY
+        )
+        unknown_count = sum(
+            1 for r in results if r.status == HealthStatus.UNKNOWN
+        )
 
         avg_duration = sum(r.duration_ms for r in results) / total_checks
         max_duration = max(r.duration_ms for r in results)
@@ -416,7 +434,10 @@ class HealthCheckManager:
         return {
             "status": status.value,
             "message": message,
-            "details": {"cpu_percent": cpu_percent, "cpu_count": psutil.cpu_count()},
+            "details": {
+                "cpu_percent": cpu_percent,
+                "cpu_count": psutil.cpu_count(),
+            },
         }
 
     async def _check_database(self) -> Dict[str, Any]:
@@ -455,7 +476,9 @@ class HealthCheckManager:
             # a simple story generation request
 
             # Check if the story generation module can be imported
-            from src.ai_intelligence.story_quality_engine import StoryQualityEngine
+            from src.ai_intelligence.story_quality_engine import (
+                StoryQualityEngine,
+            )
 
             # Simple functionality test
             StoryQualityEngine()
@@ -536,14 +559,20 @@ def create_health_endpoint(app: FastAPI):
     @app.get("/health/live")
     async def liveness_probe():
         """Kubernetes liveness probe endpoint"""
-        return {"status": "alive", "timestamp": datetime.now(timezone.utc).isoformat()}
+        return {
+            "status": "alive",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
 
     @app.get("/health/ready")
     async def readiness_probe():
         """Kubernetes readiness probe endpoint"""
         system_health = await health_manager.run_all_checks()
 
-        if system_health.status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED]:
+        if system_health.status in [
+            HealthStatus.HEALTHY,
+            HealthStatus.DEGRADED,
+        ]:
             return JSONResponse(
                 status_code=200,
                 content={
@@ -751,9 +780,7 @@ class HttpSyntheticCheck(SyntheticCheck):
                     response_size = len(await response.read())
 
                     success = response.status == self.expected_status
-                    message = (
-                        f"HTTP {self.method} {self.url} returned {response.status}"
-                    )
+                    message = f"HTTP {self.method} {self.url} returned {response.status}"
 
                     return CheckResult(
                         timestamp=datetime.now(timezone.utc),

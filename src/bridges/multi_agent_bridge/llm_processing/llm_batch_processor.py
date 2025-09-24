@@ -185,7 +185,9 @@ class LLMBatchProcessor:
             self.logger.error(f"Error waiting for result {request_id}: {e}")
             return {"error": str(e), "request_id": request_id}
 
-    async def _should_process_immediately(self, batch_request: LLMBatchRequest) -> bool:
+    async def _should_process_immediately(
+        self, batch_request: LLMBatchRequest
+    ) -> bool:
         """Determine if request should be processed immediately."""
         try:
             # Critical priority always immediate
@@ -193,7 +195,9 @@ class LLMBatchProcessor:
                 return True
 
             # Check budget availability
-            if not self.cost_tracker.is_under_budget(batch_request.estimated_cost):
+            if not self.cost_tracker.is_under_budget(
+                batch_request.estimated_cost
+            ):
                 return False
 
             if not self.performance_budget.is_batch_budget_available():
@@ -272,7 +276,9 @@ class LLMBatchProcessor:
             return
 
         self._batch_processor_running = True
-        self._batch_processor_task = asyncio.create_task(self._batch_processor())
+        self._batch_processor_task = asyncio.create_task(
+            self._batch_processor()
+        )
         self.logger.debug("Batch processor started")
 
     async def _batch_processor(self) -> None:
@@ -295,7 +301,10 @@ class LLMBatchProcessor:
             # Extract requests for batching
             batch_requests = []
             with self._queue_lock:
-                while self._request_queue and len(batch_requests) < self.max_batch_size:
+                while (
+                    self._request_queue
+                    and len(batch_requests) < self.max_batch_size
+                ):
                     batch_requests.append(heapq.heappop(self._request_queue))
 
             if not batch_requests:
@@ -364,7 +373,8 @@ class LLMBatchProcessor:
                             "success": True,
                             "cost": llm_response.cost
                             / len(requests),  # Distribute cost
-                            "tokens": llm_response.tokens_used // len(requests),
+                            "tokens": llm_response.tokens_used
+                            // len(requests),
                             "processing_time": processing_time,
                             "request_id": request.request_id,
                         }
@@ -390,7 +400,9 @@ class LLMBatchProcessor:
                 self._stats["failed_batches"] += 1
 
         except Exception as e:
-            self.logger.error(f"Error processing typed batch {request_type}: {e}")
+            self.logger.error(
+                f"Error processing typed batch {request_type}: {e}"
+            )
 
             # Store error for all requests
             for request in requests:
@@ -411,7 +423,9 @@ class LLMBatchProcessor:
         else:
             return self._create_generic_batch_prompt(requests)
 
-    def _create_dialogue_batch_prompt(self, requests: List[LLMBatchRequest]) -> str:
+    def _create_dialogue_batch_prompt(
+        self, requests: List[LLMBatchRequest]
+    ) -> str:
         """Create batch prompt optimized for dialogue requests."""
         batch_parts = ["# Dialogue Batch Processing", ""]
 
@@ -428,12 +442,16 @@ class LLMBatchProcessor:
 
         return "\n".join(batch_parts)
 
-    def _create_coordination_batch_prompt(self, requests: List[LLMBatchRequest]) -> str:
+    def _create_coordination_batch_prompt(
+        self, requests: List[LLMBatchRequest]
+    ) -> str:
         """Create batch prompt optimized for coordination requests."""
         batch_parts = ["# Agent Coordination Batch Processing", ""]
 
         for i, request in enumerate(requests):
-            batch_parts.append(f"## Coordination Task {i+1} (ID: {request.request_id})")
+            batch_parts.append(
+                f"## Coordination Task {i+1} (ID: {request.request_id})"
+            )
             batch_parts.append(request.prompt)
             batch_parts.append("")
 
@@ -441,11 +459,15 @@ class LLMBatchProcessor:
         batch_parts.append(
             "Process each coordination task and provide strategic recommendations."
         )
-        batch_parts.append("Format: **Coordination {number}:** [coordination response]")
+        batch_parts.append(
+            "Format: **Coordination {number}:** [coordination response]"
+        )
 
         return "\n".join(batch_parts)
 
-    def _create_generic_batch_prompt(self, requests: List[LLMBatchRequest]) -> str:
+    def _create_generic_batch_prompt(
+        self, requests: List[LLMBatchRequest]
+    ) -> str:
         """Create generic batch prompt."""
         batch_parts = ["# Batch Processing", ""]
 
@@ -501,7 +523,9 @@ class LLMBatchProcessor:
         estimated_tokens = len(prompt) // 3  # Conservative estimate
         return (estimated_tokens / 1000) * 0.03
 
-    def _update_batch_stats(self, batch_size: int, processing_time: float) -> None:
+    def _update_batch_stats(
+        self, batch_size: int, processing_time: float
+    ) -> None:
         """Update batch processing statistics."""
         try:
             # Update averages using running average

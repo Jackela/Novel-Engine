@@ -31,5 +31,7 @@ __context_name__ = "orchestration"
 __description__ = "M9 Turn Pipeline Orchestration with Saga Patterns"
 __author__ = "Novel Engine Orchestration Team"
 
+from typing import List
+
 # Core exports will be added as implementation progresses
-__all__ = []
+__all__: List[str] = []

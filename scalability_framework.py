@@ -74,7 +74,9 @@ class NodeInfo:
     @property
     def load_factor(self) -> float:
         """Calculate current load factor (0.0 to 1.0)."""
-        connection_load = self.current_connections / max(self.max_connections, 1)
+        connection_load = self.current_connections / max(
+            self.max_connections, 1
+        )
         cpu_load = self.cpu_usage / 100.0
         memory_load = self.memory_usage / 100.0
         return (connection_load + cpu_load + memory_load) / 3.0
@@ -209,7 +211,8 @@ class LoadBalancer:
     """Advanced load balancer with multiple strategies."""
 
     def __init__(
-        self, strategy: LoadBalancingStrategy = LoadBalancingStrategy.ROUND_ROBIN
+        self,
+        strategy: LoadBalancingStrategy = LoadBalancingStrategy.ROUND_ROBIN,
     ):
         self.strategy = strategy
         self.nodes = {}
@@ -235,10 +238,14 @@ class LoadBalancer:
                     self.hash_ring.remove_node(node_id)
                 logger.info(f"Removed node {node_id} from load balancer")
 
-    def get_node(self, session_key: Optional[str] = None) -> Optional[NodeInfo]:
+    def get_node(
+        self, session_key: Optional[str] = None
+    ) -> Optional[NodeInfo]:
         """Get a node based on the load balancing strategy."""
         with self.lock:
-            healthy_nodes = [node for node in self.nodes.values() if node.is_healthy]
+            healthy_nodes = [
+                node for node in self.nodes.values() if node.is_healthy
+            ]
 
             if not healthy_nodes:
                 return None
@@ -295,7 +302,11 @@ class LoadBalancer:
         return random.choice(nodes)
 
     def update_node_stats(
-        self, node_id: str, connections: int, cpu_usage: float, memory_usage: float
+        self,
+        node_id: str,
+        connections: int,
+        cpu_usage: float,
+        memory_usage: float,
     ):
         """Update node statistics."""
         with self.lock:
@@ -310,13 +321,15 @@ class LoadBalancer:
         """Get load balancer statistics."""
         with self.lock:
             total_nodes = len(self.nodes)
-            healthy_nodes = sum(1 for node in self.nodes.values() if node.is_healthy)
+            healthy_nodes = sum(
+                1 for node in self.nodes.values() if node.is_healthy
+            )
             total_connections = sum(
                 node.current_connections for node in self.nodes.values()
             )
-            avg_load = sum(node.load_factor for node in self.nodes.values()) / max(
-                total_nodes, 1
-            )
+            avg_load = sum(
+                node.load_factor for node in self.nodes.values()
+            ) / max(total_nodes, 1)
 
             return {
                 "strategy": self.strategy.value,
@@ -325,7 +338,8 @@ class LoadBalancer:
                 "total_connections": total_connections,
                 "average_load": avg_load,
                 "nodes": {
-                    node_id: asdict(node) for node_id, node in self.nodes.items()
+                    node_id: asdict(node)
+                    for node_id, node in self.nodes.items()
                 },
             }
 
@@ -361,7 +375,9 @@ class DistributedSessionManager:
         if session_id is None:
             session_id = str(uuid.uuid4())
 
-        session = StatelessSession(session_id=session_id, ttl=ttl or self.default_ttl)
+        session = StatelessSession(
+            session_id=session_id, ttl=ttl or self.default_ttl
+        )
 
         async with self.lock:
             self.sessions[session_id] = session
@@ -381,7 +397,9 @@ class DistributedSessionManager:
                 del self.sessions[session_id]
             return None
 
-    async def update_session(self, session_id: str, data: Dict[str, Any]) -> bool:
+    async def update_session(
+        self, session_id: str, data: Dict[str, Any]
+    ) -> bool:
         """Update session data."""
         async with self.lock:
             session = self.sessions.get(session_id)
@@ -439,7 +457,9 @@ class DistributedSessionManager:
                         del self.sessions[session_id]
 
                 if expired_sessions:
-                    logger.debug(f"Cleaned up {len(expired_sessions)} expired sessions")
+                    logger.debug(
+                        f"Cleaned up {len(expired_sessions)} expired sessions"
+                    )
 
                 await asyncio.sleep(60)  # Cleanup every minute
 
@@ -524,7 +544,9 @@ class AutoScaler:
             return
 
         # Calculate average value
-        avg_value = sum(m["value"] for m in recent_metrics) / len(recent_metrics)
+        avg_value = sum(m["value"] for m in recent_metrics) / len(
+            recent_metrics
+        )
 
         # Get current instance count
         current_instances = len(
@@ -536,7 +558,6 @@ class AutoScaler:
             avg_value > policy.scale_up_threshold
             and current_instances < policy.max_instances
         ):
-
             await self._scale_up(policy, current_instances)
 
         # Scale down decision
@@ -544,7 +565,6 @@ class AutoScaler:
             avg_value < policy.scale_down_threshold
             and current_instances > policy.min_instances
         ):
-
             await self._scale_down(policy, current_instances)
 
     def _get_recent_metrics(
@@ -629,7 +649,12 @@ class ContainerOrchestrationConfig:
                     "depends_on": ["postgres", "redis"],
                     "restart": "unless-stopped",
                     "healthcheck": {
-                        "test": ["CMD", "curl", "-f", "http://localhost:8000/health"],
+                        "test": [
+                            "CMD",
+                            "curl",
+                            "-f",
+                            "http://localhost:8000/health",
+                        ],
                         "interval": "30s",
                         "timeout": "10s",
                         "retries": 3,
@@ -690,7 +715,10 @@ class ContainerOrchestrationConfig:
                                 "image": f"{self.app_name}:latest",
                                 "ports": [{"containerPort": 8000}],
                                 "env": [
-                                    {"name": "NODE_ENV", "value": "production"},
+                                    {
+                                        "name": "NODE_ENV",
+                                        "value": "production",
+                                    },
                                     {
                                         "name": "DATABASE_URL",
                                         "valueFrom": {
@@ -702,18 +730,30 @@ class ContainerOrchestrationConfig:
                                     },
                                 ],
                                 "livenessProbe": {
-                                    "httpGet": {"path": "/health", "port": 8000},
+                                    "httpGet": {
+                                        "path": "/health",
+                                        "port": 8000,
+                                    },
                                     "initialDelaySeconds": 30,
                                     "periodSeconds": 10,
                                 },
                                 "readinessProbe": {
-                                    "httpGet": {"path": "/health", "port": 8000},
+                                    "httpGet": {
+                                        "path": "/health",
+                                        "port": 8000,
+                                    },
                                     "initialDelaySeconds": 5,
                                     "periodSeconds": 5,
                                 },
                                 "resources": {
-                                    "requests": {"memory": "256Mi", "cpu": "100m"},
-                                    "limits": {"memory": "512Mi", "cpu": "500m"},
+                                    "requests": {
+                                        "memory": "256Mi",
+                                        "cpu": "100m",
+                                    },
+                                    "limits": {
+                                        "memory": "512Mi",
+                                        "cpu": "500m",
+                                    },
                                 },
                             }
                         ]
@@ -754,14 +794,20 @@ class ContainerOrchestrationConfig:
                         "type": "Resource",
                         "resource": {
                             "name": "cpu",
-                            "target": {"type": "Utilization", "averageUtilization": 70},
+                            "target": {
+                                "type": "Utilization",
+                                "averageUtilization": 70,
+                            },
                         },
                     },
                     {
                         "type": "Resource",
                         "resource": {
                             "name": "memory",
-                            "target": {"type": "Utilization", "averageUtilization": 80},
+                            "target": {
+                                "type": "Utilization",
+                                "averageUtilization": 80,
+                            },
                         },
                     },
                 ],
@@ -960,12 +1006,16 @@ if __name__ == "__main__":
 
         # Test session management
         print("\nTesting session management...")
-        session_id = await scalability_framework.session_manager.create_session()
+        session_id = (
+            await scalability_framework.session_manager.create_session()
+        )
         await scalability_framework.session_manager.update_session(
             session_id, {"user_id": "test_user"}
         )
 
-        session = await scalability_framework.session_manager.get_session(session_id)
+        session = await scalability_framework.session_manager.get_session(
+            session_id
+        )
         print(f"Session data: {session.data if session else 'Not found'}")
 
         # Test auto-scaling metrics
@@ -984,7 +1034,9 @@ if __name__ == "__main__":
 
         # Get status
         status = scalability_framework.get_framework_status()
-        print(f"\nFramework status: {json.dumps(status, indent=2, default=str)}")
+        print(
+            f"\nFramework status: {json.dumps(status, indent=2, default=str)}"
+        )
 
         # Generate container configurations
         print("\nGenerating container configurations...")

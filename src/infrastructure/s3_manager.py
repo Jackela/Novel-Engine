@@ -14,10 +14,27 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 import aioboto3
 import aiofiles
+
+if TYPE_CHECKING:
+    from types_aiobotocore_s3 import S3Client
+else:
+    S3Client = Any
+
+# Import our type-safe infrastructure
+from .storage_types import (
+    MetricsManager,
+    ProgressCallback,
+    S3ObjectInfo,
+    StorageClient,
+    StorageManager,
+    StorageMetrics,
+    UploadProgress,
+    ensure_s3_client,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -95,39 +112,7 @@ class S3Config:
     enable_logging: bool = True
 
 
-@dataclass
-class S3ObjectInfo:
-    """S3 object information."""
-
-    key: str
-    size: int
-    last_modified: datetime
-    etag: str
-    content_type: str
-    storage_class: str
-    metadata: Dict[str, str] = field(default_factory=dict)
-    version_id: Optional[str] = None
-
-
-@dataclass
-class UploadProgress:
-    """Upload progress tracking."""
-
-    bytes_transferred: int = 0
-    total_bytes: int = 0
-    percentage: float = 0.0
-    start_time: datetime = field(default_factory=datetime.now)
-
-    @property
-    def elapsed_seconds(self) -> float:
-        """Get elapsed time in seconds."""
-        return (datetime.now() - self.start_time).total_seconds()
-
-    @property
-    def transfer_rate(self) -> float:
-        """Get transfer rate in bytes/second."""
-        elapsed = self.elapsed_seconds
-        return self.bytes_transferred / elapsed if elapsed > 0 else 0.0
+# S3ObjectInfo and UploadProgress now imported from storage_types
 
 
 class S3StorageManager:
@@ -142,33 +127,22 @@ class S3StorageManager:
     - Encryption and versioning
     - Upload/download progress tracking
     - Metadata management
+    - Type-safe metrics and operations
     """
 
     def __init__(self, config: S3Config):
         """Initialize S3 storage manager."""
         self.config = config
         self.session: Optional[aioboto3.Session] = None
-        self.s3_client: Optional[Any] = None
+        self.s3_client: Optional[StorageClient] = None
         self._initialized = False
 
         # Cache management
         self._local_cache: Dict[str, Dict[str, Any]] = {}
         self._cache_directory = Path(config.cache_directory)
 
-        # Metrics
-        self._metrics = {
-            "uploads": 0,
-            "downloads": 0,
-            "bytes_uploaded": 0,
-            "bytes_downloaded": 0,
-            "cache_hits": 0,
-            "cache_misses": 0,
-            "errors": 0,
-            "avg_upload_time": 0.0,
-            "avg_download_time": 0.0,
-            "upload_times": [],
-            "download_times": [],
-        }
+        # Type-safe metrics
+        self._metrics_manager = MetricsManager()
 
     async def initialize(self) -> None:
         """Initialize S3 connection and bucket."""
@@ -218,23 +192,25 @@ class S3StorageManager:
 
     async def _ensure_bucket_exists(self) -> None:
         """Ensure S3 bucket exists and configure it."""
+        client = ensure_s3_client(self.s3_client)
+
         try:
             # Check if bucket exists
-            await self.s3_client.head_bucket(Bucket=self.config.bucket_name)
+            await client.head_bucket(Bucket=self.config.bucket_name)
             logger.debug(f"S3 bucket exists: {self.config.bucket_name}")
 
         except Exception:
             # Bucket doesn't exist, create it
             try:
                 if self.config.region_name != "us-east-1":
-                    await self.s3_client.create_bucket(
+                    await client.create_bucket(
                         Bucket=self.config.bucket_name,
                         CreateBucketConfiguration={
                             "LocationConstraint": self.config.region_name
                         },
                     )
                 else:
-                    await self.s3_client.create_bucket(Bucket=self.config.bucket_name)
+                    await client.create_bucket(Bucket=self.config.bucket_name)
 
                 logger.info(f"Created S3 bucket: {self.config.bucket_name}")
 
@@ -249,10 +225,12 @@ class S3StorageManager:
 
     async def _configure_bucket(self) -> None:
         """Configure bucket settings."""
+        client = ensure_s3_client(self.s3_client)
+
         try:
             # Enable versioning if requested
             if self.config.enable_versioning:
-                await self.s3_client.put_bucket_versioning(
+                await client.put_bucket_versioning(
                     Bucket=self.config.bucket_name,
                     VersioningConfiguration={"Status": "Enabled"},
                 )
@@ -278,7 +256,7 @@ class S3StorageManager:
                         "KMSMasterKeyID": self.config.encryption_key_id,
                     }
 
-                await self.s3_client.put_bucket_encryption(
+                await client.put_bucket_encryption(
                     Bucket=self.config.bucket_name,
                     ServerSideEncryptionConfiguration=encryption_config,
                 )
@@ -316,7 +294,7 @@ class S3StorageManager:
                     async with aiofiles.open(cache_file, "rb") as f:
                         content = await f.read()
 
-                    self._metrics["cache_hits"] += 1
+                    self._metrics_manager.increment_cache_hits()
                     return content
                 else:
                     # Cache expired, remove it
@@ -327,7 +305,7 @@ class S3StorageManager:
         except Exception as e:
             logger.debug(f"Cache read failed for {s3_key}: {e}")
 
-        self._metrics["cache_misses"] += 1
+        self._metrics_manager.increment_cache_misses()
         return None
 
     async def _save_to_cache(self, s3_key: str, content: bytes) -> None:
@@ -338,7 +316,9 @@ class S3StorageManager:
         try:
             # Check cache size limit
             current_cache_size = sum(
-                f.stat().st_size for f in self._cache_directory.iterdir() if f.is_file()
+                f.stat().st_size
+                for f in self._cache_directory.iterdir()
+                if f.is_file()
             )
 
             if current_cache_size + len(content) > self.config.max_cache_size:
@@ -369,7 +349,7 @@ class S3StorageManager:
         content_type: Optional[str] = None,
         metadata: Optional[Dict[str, str]] = None,
         storage_class: Optional[S3StorageClass] = None,
-        progress_callback: Optional[callable] = None,
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> S3ObjectInfo:
         """Upload file to S3 with progress tracking."""
         if not self._initialized:
@@ -404,44 +384,44 @@ class S3StorageManager:
             def progress_handler(bytes_transferred: int):
                 progress.bytes_transferred = bytes_transferred
                 progress.percentage = (
-                    (bytes_transferred / file_size) * 100 if file_size > 0 else 0
+                    (bytes_transferred / file_size) * 100
+                    if file_size > 0
+                    else 0
                 )
 
                 if progress_callback:
                     progress_callback(progress)
 
+            client = ensure_s3_client(self.s3_client)
+
             # Use multipart upload for large files
             if file_size > self.config.multipart_threshold:
-
                 # Progress tracking for multipart uploads to be implemented
                 async with aiofiles.open(local_path, "rb") as f:
-                    await self.s3_client.upload_fileobj(
-                        f, self.config.bucket_name, s3_key, ExtraArgs=extra_args
+                    await client.upload_fileobj(
+                        f,
+                        self.config.bucket_name,
+                        s3_key,
+                        ExtraArgs=extra_args,
                     )
             else:
                 async with aiofiles.open(local_path, "rb") as f:
-                    await self.s3_client.upload_fileobj(
-                        f, self.config.bucket_name, s3_key, ExtraArgs=extra_args
+                    await client.upload_fileobj(
+                        f,
+                        self.config.bucket_name,
+                        s3_key,
+                        ExtraArgs=extra_args,
                     )
 
             # Get object info
-            response = await self.s3_client.head_object(
+            response = await client.head_object(
                 Bucket=self.config.bucket_name, Key=s3_key
             )
 
             # Update metrics
             upload_time = (datetime.now() - start_time).total_seconds()
-            self._metrics["uploads"] += 1
-            self._metrics["bytes_uploaded"] += file_size
-            self._metrics["upload_times"].append(upload_time)
-
-            if len(self._metrics["upload_times"]) > 100:
-                self._metrics["upload_times"] = self._metrics["upload_times"][-100:]
-
-            if self._metrics["upload_times"]:
-                self._metrics["avg_upload_time"] = sum(
-                    self._metrics["upload_times"]
-                ) / len(self._metrics["upload_times"])
+            self._metrics_manager.increment_uploads(file_size)
+            self._metrics_manager.add_upload_time(upload_time)
 
             logger.info(
                 f"Uploaded file to S3: {s3_key} ({file_size} bytes in {upload_time:.2f}s)"
@@ -459,8 +439,10 @@ class S3StorageManager:
             )
 
         except Exception as e:
-            self._metrics["errors"] += 1
-            logger.error(f"Failed to upload file {local_path} to S3 key {s3_key}: {e}")
+            self._metrics_manager.increment_errors()
+            logger.error(
+                f"Failed to upload file {local_path} to S3 key {s3_key}: {e}"
+            )
             raise
 
     async def upload_bytes(
@@ -489,23 +471,29 @@ class S3StorageManager:
             if metadata:
                 extra_args["Metadata"] = metadata
 
+            client = ensure_s3_client(self.s3_client)
+
             # Upload content
-            await self.s3_client.put_object(
-                Bucket=self.config.bucket_name, Key=s3_key, Body=content, **extra_args
+            await client.put_object(
+                Bucket=self.config.bucket_name,
+                Key=s3_key,
+                Body=content,
+                **extra_args,
             )
 
             # Get object info
-            response = await self.s3_client.head_object(
+            response = await client.head_object(
                 Bucket=self.config.bucket_name, Key=s3_key
             )
 
             # Update metrics
             upload_time = (datetime.now() - start_time).total_seconds()
-            self._metrics["uploads"] += 1
-            self._metrics["bytes_uploaded"] += len(content)
-            self._metrics["upload_times"].append(upload_time)
+            self._metrics_manager.increment_uploads(len(content))
+            self._metrics_manager.add_upload_time(upload_time)
 
-            logger.debug(f"Uploaded bytes to S3: {s3_key} ({len(content)} bytes)")
+            logger.debug(
+                f"Uploaded bytes to S3: {s3_key} ({len(content)} bytes)"
+            )
 
             return S3ObjectInfo(
                 key=s3_key,
@@ -519,7 +507,7 @@ class S3StorageManager:
             )
 
         except Exception as e:
-            self._metrics["errors"] += 1
+            self._metrics_manager.increment_errors()
             logger.error(f"Failed to upload bytes to S3 key {s3_key}: {e}")
             raise
 
@@ -527,7 +515,7 @@ class S3StorageManager:
         self,
         s3_key: str,
         local_path: Union[str, Path],
-        progress_callback: Optional[callable] = None,
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> bool:
         """Download file from S3 with progress tracking."""
         if not self._initialized:
@@ -539,8 +527,10 @@ class S3StorageManager:
         start_time = datetime.now()
 
         try:
+            client = ensure_s3_client(self.s3_client)
+
             # Get object info first
-            response = await self.s3_client.head_object(
+            response = await client.head_object(
                 Bucket=self.config.bucket_name, Key=s3_key
             )
 
@@ -549,7 +539,7 @@ class S3StorageManager:
 
             # Download file
             async with aiofiles.open(local_path, "wb") as f:
-                response = await self.s3_client.get_object(
+                response = await client.get_object(
                     Bucket=self.config.bucket_name, Key=s3_key
                 )
 
@@ -567,17 +557,8 @@ class S3StorageManager:
 
             # Update metrics
             download_time = (datetime.now() - start_time).total_seconds()
-            self._metrics["downloads"] += 1
-            self._metrics["bytes_downloaded"] += file_size
-            self._metrics["download_times"].append(download_time)
-
-            if len(self._metrics["download_times"]) > 100:
-                self._metrics["download_times"] = self._metrics["download_times"][-100:]
-
-            if self._metrics["download_times"]:
-                self._metrics["avg_download_time"] = sum(
-                    self._metrics["download_times"]
-                ) / len(self._metrics["download_times"])
+            self._metrics_manager.increment_downloads(file_size)
+            self._metrics_manager.add_download_time(download_time)
 
             logger.info(
                 f"Downloaded file from S3: {s3_key} to {local_path} ({file_size} bytes in {download_time:.2f}s)"
@@ -585,11 +566,15 @@ class S3StorageManager:
             return True
 
         except Exception as e:
-            self._metrics["errors"] += 1
-            logger.error(f"Failed to download S3 key {s3_key} to {local_path}: {e}")
+            self._metrics_manager.increment_errors()
+            logger.error(
+                f"Failed to download S3 key {s3_key} to {local_path}: {e}"
+            )
             raise
 
-    async def download_bytes(self, s3_key: str, use_cache: bool = True) -> bytes:
+    async def download_bytes(
+        self, s3_key: str, use_cache: bool = True
+    ) -> bytes:
         """Download object as bytes with caching."""
         if not self._initialized:
             await self.initialize()
@@ -603,8 +588,10 @@ class S3StorageManager:
         start_time = datetime.now()
 
         try:
+            client = ensure_s3_client(self.s3_client)
+
             # Download from S3
-            response = await self.s3_client.get_object(
+            response = await client.get_object(
                 Bucket=self.config.bucket_name, Key=s3_key
             )
 
@@ -616,15 +603,16 @@ class S3StorageManager:
 
             # Update metrics
             download_time = (datetime.now() - start_time).total_seconds()
-            self._metrics["downloads"] += 1
-            self._metrics["bytes_downloaded"] += len(content)
-            self._metrics["download_times"].append(download_time)
+            self._metrics_manager.increment_downloads(len(content))
+            self._metrics_manager.add_download_time(download_time)
 
-            logger.debug(f"Downloaded bytes from S3: {s3_key} ({len(content)} bytes)")
+            logger.debug(
+                f"Downloaded bytes from S3: {s3_key} ({len(content)} bytes)"
+            )
             return content
 
         except Exception as e:
-            self._metrics["errors"] += 1
+            self._metrics_manager.increment_errors()
             logger.error(f"Failed to download S3 key {s3_key}: {e}")
             raise
 
@@ -641,7 +629,8 @@ class S3StorageManager:
             if version_id:
                 delete_args["VersionId"] = version_id
 
-            await self.s3_client.delete_object(**delete_args)
+            client = ensure_s3_client(self.s3_client)
+            await client.delete_object(**delete_args)
 
             # Remove from cache
             if s3_key in self._local_cache:
@@ -655,7 +644,7 @@ class S3StorageManager:
             return True
 
         except Exception as e:
-            self._metrics["errors"] += 1
+            self._metrics_manager.increment_errors()
             logger.error(f"Failed to delete S3 key {s3_key}: {e}")
             raise
 
@@ -670,15 +659,15 @@ class S3StorageManager:
             await self.initialize()
 
         try:
-            list_args = {"Bucket": self.config.bucket_name, "MaxKeys": max_keys}
-
-            if prefix:
-                list_args["Prefix"] = prefix
-
-            if continuation_token:
-                list_args["ContinuationToken"] = continuation_token
-
-            response = await self.s3_client.list_objects_v2(**list_args)
+            client = ensure_s3_client(self.s3_client)
+            response = await client.list_objects_v2(
+                Bucket=self.config.bucket_name,
+                MaxKeys=max_keys,
+                Prefix=prefix if prefix else None,
+                ContinuationToken=continuation_token
+                if continuation_token
+                else None,
+            )
 
             objects = []
             for obj in response.get("Contents", []):
@@ -696,13 +685,17 @@ class S3StorageManager:
             return {
                 "objects": objects,
                 "is_truncated": response.get("IsTruncated", False),
-                "next_continuation_token": response.get("NextContinuationToken"),
+                "next_continuation_token": response.get(
+                    "NextContinuationToken"
+                ),
                 "key_count": response.get("KeyCount", 0),
             }
 
         except Exception as e:
-            self._metrics["errors"] += 1
-            logger.error(f"Failed to list S3 objects with prefix {prefix}: {e}")
+            self._metrics_manager.increment_errors()
+            logger.error(
+                f"Failed to list S3 objects with prefix {prefix}: {e}"
+            )
             raise
 
     async def object_exists(self, s3_key: str) -> bool:
@@ -711,7 +704,10 @@ class S3StorageManager:
             await self.initialize()
 
         try:
-            await self.s3_client.head_object(Bucket=self.config.bucket_name, Key=s3_key)
+            client = ensure_s3_client(self.s3_client)
+            await client.head_object(
+                Bucket=self.config.bucket_name, Key=s3_key
+            )
             return True
 
         except Exception:
@@ -723,7 +719,8 @@ class S3StorageManager:
             await self.initialize()
 
         try:
-            response = await self.s3_client.head_object(
+            client = ensure_s3_client(self.s3_client)
+            response = await client.head_object(
                 Bucket=self.config.bucket_name, Key=s3_key
             )
 
@@ -815,7 +812,10 @@ class S3StorageManager:
         return s3_key
 
     async def store_backup(
-        self, backup_type: str, backup_data: bytes, timestamp: Optional[datetime] = None
+        self,
+        backup_type: str,
+        backup_data: bytes,
+        timestamp: Optional[datetime] = None,
     ) -> str:
         """Store system backup."""
         if timestamp is None:
@@ -851,8 +851,9 @@ class S3StorageManager:
     async def health_check(self) -> Dict[str, Any]:
         """Perform S3 health check."""
         try:
+            client = ensure_s3_client(self.s3_client)
             # Test bucket access
-            await self.s3_client.head_bucket(Bucket=self.config.bucket_name)
+            await client.head_bucket(Bucket=self.config.bucket_name)
 
             # Get bucket statistics
             await self.list_objects(max_keys=1)
@@ -864,7 +865,7 @@ class S3StorageManager:
                 "endpoint": self.config.endpoint_url,
                 "versioning_enabled": self.config.enable_versioning,
                 "encryption_enabled": self.config.enable_encryption,
-                "metrics": self._metrics,
+                "metrics": self._metrics_manager.get_metrics(),
                 "cache_enabled": self.config.enable_local_cache,
                 "cache_stats": {
                     "entries": len(self._local_cache),
@@ -880,30 +881,9 @@ class S3StorageManager:
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> StorageMetrics:
         """Get S3 storage metrics."""
-        upload_times = self._metrics["upload_times"]
-        download_times = self._metrics["download_times"]
-
-        return {
-            "uploads": self._metrics["uploads"],
-            "downloads": self._metrics["downloads"],
-            "bytes_uploaded": self._metrics["bytes_uploaded"],
-            "bytes_downloaded": self._metrics["bytes_downloaded"],
-            "cache_hits": self._metrics["cache_hits"],
-            "cache_misses": self._metrics["cache_misses"],
-            "cache_hit_rate": (
-                self._metrics["cache_hits"]
-                / (self._metrics["cache_hits"] + self._metrics["cache_misses"])
-                if (self._metrics["cache_hits"] + self._metrics["cache_misses"]) > 0
-                else 0.0
-            ),
-            "errors": self._metrics["errors"],
-            "avg_upload_time": self._metrics["avg_upload_time"],
-            "avg_download_time": self._metrics["avg_download_time"],
-            "max_upload_time": max(upload_times) if upload_times else 0.0,
-            "max_download_time": max(download_times) if download_times else 0.0,
-        }
+        return self._metrics_manager.get_metrics()
 
 
 # Factory functions for easy integration
@@ -919,13 +899,16 @@ def create_s3_config_from_env() -> S3Config:
         bucket_name=os.getenv("S3_BUCKET_NAME", "novel-engine-storage"),
         enable_versioning=os.getenv("S3_VERSIONING", "true").lower() == "true",
         enable_encryption=os.getenv("S3_ENCRYPTION", "true").lower() == "true",
-        enable_local_cache=os.getenv("S3_LOCAL_CACHE", "true").lower() == "true",
+        enable_local_cache=os.getenv("S3_LOCAL_CACHE", "true").lower()
+        == "true",
         max_cache_size=int(os.getenv("S3_CACHE_SIZE", "1073741824")),  # 1GB
         cache_ttl=int(os.getenv("S3_CACHE_TTL", "3600")),
     )
 
 
-async def create_s3_manager(config: Optional[S3Config] = None) -> S3StorageManager:
+async def create_s3_manager(
+    config: Optional[S3Config] = None,
+) -> S3StorageManager:
     """Create and initialize S3 storage manager."""
     if config is None:
         config = create_s3_config_from_env()

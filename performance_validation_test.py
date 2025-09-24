@@ -32,7 +32,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import optimized components
 try:
-    from high_performance_concurrent_processor import HighPerformanceConcurrentProcessor
+    from high_performance_concurrent_processor import (
+        HighPerformanceConcurrentProcessor,
+    )
     from optimized_character_factory import OptimizedCharacterFactory
 
     COMPONENTS_AVAILABLE = True
@@ -72,7 +74,9 @@ class PerformanceValidator:
         logger.info("Starting focused performance validation...")
 
         if not COMPONENTS_AVAILABLE:
-            logger.error("Optimized components not available - cannot run validation")
+            logger.error(
+                "Optimized components not available - cannot run validation"
+            )
             return {"error": "Components not available"}
 
         # Test each optimized component
@@ -133,7 +137,9 @@ class PerformanceValidator:
                     ) * 1000  # Convert to milliseconds
                     creation_times.append(creation_time)
                 except Exception as e:
-                    logger.warning(f"Character creation failed for char_{i}: {e}")
+                    logger.warning(
+                        f"Character creation failed for char_{i}: {e}"
+                    )
 
             # Calculate performance metrics
             if creation_times:
@@ -152,7 +158,9 @@ class PerformanceValidator:
                 target_time = 10.0  # <10ms per character
                 baseline_time = 200.0  # Original baseline from requirements
 
-                improvement = ((baseline_time - avg_time) / baseline_time) * 100
+                improvement = (
+                    (baseline_time - avg_time) / baseline_time
+                ) * 100
                 passed = avg_time < target_time
 
                 return ComponentTestResult(
@@ -191,7 +199,9 @@ class PerformanceValidator:
 
     async def _test_concurrent_processor(self) -> ComponentTestResult:
         """Test high-performance concurrent processor."""
-        logger.info("Testing HighPerformanceConcurrentProcessor performance...")
+        logger.info(
+            "Testing HighPerformanceConcurrentProcessor performance..."
+        )
 
         try:
             processor = HighPerformanceConcurrentProcessor()
@@ -224,13 +234,17 @@ class PerformanceValidator:
 
                 # Wait for all tasks to complete
                 logger.info(f"Waiting for {task_count} tasks to complete...")
-                results = await processor.wait_for_batch(task_ids, timeout=60.0)
+                results = await processor.wait_for_batch(
+                    task_ids, timeout=60.0
+                )
 
                 total_time = time.time() - start_time
 
                 # Analyze results
                 successful_tasks = sum(
-                    1 for result in results if not isinstance(result, Exception)
+                    1
+                    for result in results
+                    if not isinstance(result, Exception)
                 )
                 failed_tasks = task_count - successful_tasks
 
@@ -243,7 +257,10 @@ class PerformanceValidator:
                 target_concurrent = 200  # 200+ concurrent tasks
                 success_rate = (successful_tasks / task_count) * 100
 
-                passed = successful_tasks >= target_concurrent and success_rate >= 95
+                passed = (
+                    successful_tasks >= target_concurrent
+                    and success_rate >= 95
+                )
 
                 return ComponentTestResult(
                     component_name="HighPerformanceConcurrentProcessor",
@@ -313,7 +330,10 @@ class PerformanceValidator:
             target_hit_rate = 0.8  # 80% hit rate
             target_read_time = 100.0  # <100 microseconds per read
 
-            passed = hit_rate >= target_hit_rate and avg_read_time < target_read_time
+            passed = (
+                hit_rate >= target_hit_rate
+                and avg_read_time < target_read_time
+            )
 
             return ComponentTestResult(
                 component_name="HighPerformanceCache",
@@ -381,12 +401,16 @@ class PerformanceValidator:
 
             # Calculate memory metrics
             memory_increase = memory_peak - memory_before
-            memory_efficiency = ((memory_peak - memory_after) / memory_peak) * 100
+            memory_efficiency = (
+                (memory_peak - memory_after) / memory_peak
+            ) * 100
             memory_increase_percent = (memory_increase / memory_before) * 100
 
             # Performance targets
             target_memory_increase = 50.0  # <50% memory increase during load
-            target_cleanup_efficiency = 80.0  # >80% memory recovery after cleanup
+            target_cleanup_efficiency = (
+                80.0  # >80% memory recovery after cleanup
+            )
 
             passed = (
                 memory_increase_percent < target_memory_increase
@@ -420,7 +444,9 @@ class PerformanceValidator:
         process = psutil.Process()
         return process.memory_info().rss / 1024 / 1024
 
-    def _generate_summary(self, results: List[ComponentTestResult]) -> Dict[str, Any]:
+    def _generate_summary(
+        self, results: List[ComponentTestResult]
+    ) -> Dict[str, Any]:
         """Generate test summary with performance insights."""
         passed_tests = sum(1 for result in results if result.passed)
 
@@ -437,13 +463,17 @@ class PerformanceValidator:
         return {
             "performance_components": performance_summary,
             "overall_assessment": (
-                "PASSED" if passed_tests == len(results) else "NEEDS_IMPROVEMENT"
+                "PASSED"
+                if passed_tests == len(results)
+                else "NEEDS_IMPROVEMENT"
             ),
             "key_achievements": self._get_key_achievements(results),
             "recommendations": self._get_recommendations(results),
         }
 
-    def _get_key_achievements(self, results: List[ComponentTestResult]) -> List[str]:
+    def _get_key_achievements(
+        self, results: List[ComponentTestResult]
+    ) -> List[str]:
         """Extract key performance achievements."""
         achievements = []
 
@@ -468,7 +498,9 @@ class PerformanceValidator:
 
         return achievements
 
-    def _get_recommendations(self, results: List[ComponentTestResult]) -> List[str]:
+    def _get_recommendations(
+        self, results: List[ComponentTestResult]
+    ) -> List[str]:
         """Generate recommendations based on test results."""
         recommendations = []
 
@@ -549,7 +581,9 @@ async def main():
         if results["summary"]["key_achievements"]:
             print("\n🎯 KEY ACHIEVEMENTS:")
             print("-" * 40)
-            for i, achievement in enumerate(results["summary"]["key_achievements"], 1):
+            for i, achievement in enumerate(
+                results["summary"]["key_achievements"], 1
+            ):
                 print(f"{i}. {achievement}")
 
         # Recommendations
@@ -560,9 +594,7 @@ async def main():
                 print(f"{i}. {rec}")
 
         # Save detailed results
-        results_file = (
-            f"performance_validation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        )
+        results_file = f"performance_validation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(results_file, "w") as f:
             json.dump(results, f, indent=2, default=str)
 
@@ -572,7 +604,9 @@ async def main():
         print("=" * 80)
         if results["validation_status"] == "PASSED":
             print("🎉 PERFORMANCE OPTIMIZATION SUCCESS!")
-            print("All optimized components are performing within target parameters.")
+            print(
+                "All optimized components are performing within target parameters."
+            )
             print(
                 "The Novel Engine performance implementation gaps have been successfully bridged!"
             )

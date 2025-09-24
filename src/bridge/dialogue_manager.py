@@ -125,7 +125,10 @@ class DialogueManager:
                 return False
 
             # Check if dialogue is in valid state for messages
-            if dialogue.state not in [DialogueState.ACTIVE, DialogueState.INITIATING]:
+            if dialogue.state not in [
+                DialogueState.ACTIVE,
+                DialogueState.INITIATING,
+            ]:
                 self.logger.warning(
                     f"Cannot add message to dialogue {dialogue_id} in state {dialogue.state}"
                 )
@@ -146,12 +149,16 @@ class DialogueManager:
             # Check if dialogue should be concluded
             await self._check_dialogue_completion(dialogue)
 
-            self.logger.debug(f"Message added to dialogue {dialogue_id}: {sender_id}")
+            self.logger.debug(
+                f"Message added to dialogue {dialogue_id}: {sender_id}"
+            )
 
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to add message to dialogue {dialogue_id}: {e}")
+            self.logger.error(
+                f"Failed to add message to dialogue {dialogue_id}: {e}"
+            )
             return False
 
     async def conclude_dialogue(
@@ -180,7 +187,9 @@ class DialogueManager:
 
             # Update dialogue state
             dialogue.state = (
-                DialogueState.INTERRUPTED if forced else DialogueState.CONCLUDED
+                DialogueState.INTERRUPTED
+                if forced
+                else DialogueState.CONCLUDED
             )
             dialogue.resolution = resolution
 
@@ -200,7 +209,9 @@ class DialogueManager:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to conclude dialogue {dialogue_id}: {e}")
+            self.logger.error(
+                f"Failed to conclude dialogue {dialogue_id}: {e}"
+            )
             return False
 
     async def get_agent_dialogues(self, agent_id: str) -> List[AgentDialogue]:
@@ -213,7 +224,9 @@ class DialogueManager:
                 if did in self.active_dialogues
             ]
         except Exception as e:
-            self.logger.error(f"Failed to get dialogues for agent {agent_id}: {e}")
+            self.logger.error(
+                f"Failed to get dialogues for agent {agent_id}: {e}"
+            )
             return []
 
     async def get_dialogue(self, dialogue_id: str) -> Optional[AgentDialogue]:
@@ -239,7 +252,9 @@ class DialogueManager:
                 return False
         return True
 
-    async def _check_dialogue_completion(self, dialogue: AgentDialogue) -> None:
+    async def _check_dialogue_completion(
+        self, dialogue: AgentDialogue
+    ) -> None:
         """Check if dialogue should be automatically concluded."""
         try:
             # Auto-conclude if max exchanges reached
@@ -316,7 +331,9 @@ class DialogueManager:
         """Clean up expired or stale dialogues."""
         try:
             now = datetime.now()
-            if now - self._last_cleanup < timedelta(seconds=self._cleanup_interval):
+            if now - self._last_cleanup < timedelta(
+                seconds=self._cleanup_interval
+            ):
                 return 0
 
             expired_dialogues = []
@@ -337,7 +354,9 @@ class DialogueManager:
             self._last_cleanup = now
 
             if cleanup_count > 0:
-                self.logger.info(f"Cleaned up {cleanup_count} expired dialogues")
+                self.logger.info(
+                    f"Cleaned up {cleanup_count} expired dialogues"
+                )
 
             return cleanup_count
 

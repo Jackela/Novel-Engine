@@ -50,9 +50,7 @@ from src.interactions.interaction_engine import (
 # Import all subsystems
 from src.memory.layered_memory import LayeredMemorySystem
 from src.memory.memory_query_engine import MemoryQueryEngine
-from src.templates.character_template_manager import (
-    CharacterTemplateManager,
-)
+from src.templates.character_template_manager import CharacterTemplateManager
 from src.templates.dynamic_template_engine import (
     DynamicTemplateEngine,
     TemplateContext,
@@ -180,9 +178,12 @@ class SystemOrchestrator:
         self.operation_count = 0
         self.error_count = 0
 
-        # Initialize enhanced database (use provided database or create new one)
+        # Initialize enhanced database (use provided database or create new
+        # one)
         self.database = (
-            database if database is not None else ContextDatabase(database_path)
+            database
+            if database is not None
+            else ContextDatabase(database_path)
         )
 
         # Initialize event bus (use provided or create default)
@@ -195,11 +196,17 @@ class SystemOrchestrator:
         self.character_manager: Optional[CharacterTemplateManager] = None
         self.interaction_engine: Optional[InteractionEngine] = None
         self.equipment_system: Optional[DynamicEquipmentSystem] = None
-        self.character_processor: Optional[CharacterInteractionProcessor] = None
+        self.character_processor: Optional[
+            CharacterInteractionProcessor
+        ] = None
 
         # Initialize narrative engines (will be set up in startup)
-        self.subjective_reality_engine: Optional[SubjectiveRealityEngine] = None
-        self.emergent_narrative_engine: Optional[EmergentNarrativeEngine] = None
+        self.subjective_reality_engine: Optional[
+            SubjectiveRealityEngine
+        ] = None
+        self.emergent_narrative_engine: Optional[
+            EmergentNarrativeEngine
+        ] = None
 
         # System monitoring
         self.metrics_history: List[SystemMetrics] = []
@@ -426,11 +433,14 @@ class SystemOrchestrator:
                     agent_id=agent_id, name=agent_id, current_status="active"
                 )
 
-            # Register agent in database first to avoid foreign key constraint issues
+            # Register agent in database first to avoid foreign key constraint
+            # issues
             agent_registration = await self.database.register_enhanced_agent(
                 agent_id=agent_id,
                 character_name=(
-                    initial_state.base_identity.name if initial_state else agent_id
+                    initial_state.base_identity.name
+                    if initial_state
+                    else agent_id
                 ),
                 faction_data=(
                     [initial_state.base_identity.faction]
@@ -511,7 +521,9 @@ class SystemOrchestrator:
             )
 
         except Exception as e:
-            logger.error(f"Error creating agent context for {agent_id}: {str(e)}")
+            logger.error(
+                f"Error creating agent context for {agent_id}: {str(e)}"
+            )
             self.error_count += 1
             return StandardResponse(
                 success=False,
@@ -549,7 +561,9 @@ class SystemOrchestrator:
             memory_results = []
             if context.memory_context:
                 for memory_item in context.memory_context:
-                    memory_result = await self.memory_system.store_memory(memory_item)
+                    memory_result = await self.memory_system.store_memory(
+                        memory_item
+                    )
                     memory_results.append(memory_result.success)
 
             # Process character state updates
@@ -562,8 +576,10 @@ class SystemOrchestrator:
             # Process environmental context if present
             environmental_result = None
             if context.environmental_context:
-                environmental_result = await self._process_environmental_context(
-                    context.agent_id, context.environmental_context
+                environmental_result = (
+                    await self._process_environmental_context(
+                        context.agent_id, context.environmental_context
+                    )
                 )
 
             # Generate dynamic response using templates
@@ -599,7 +615,9 @@ class SystemOrchestrator:
                         else False
                     ),
                     "environmental_processed": (
-                        environmental_result.success if environmental_result else False
+                        environmental_result.success
+                        if environmental_result
+                        else False
                     ),
                     "template_generated": template_result.success,
                     "processing_time": datetime.now(),
@@ -614,7 +632,10 @@ class SystemOrchestrator:
                 error=ErrorInfo(
                     code="DYNAMIC_CONTEXT_PROCESSING_FAILED",
                     message="Dynamic context processing failed",
-                    details={"agent_id": context.agent_id, "exception": str(e)},
+                    details={
+                        "agent_id": context.agent_id,
+                        "exception": str(e),
+                    },
                 ),
             )
 
@@ -633,7 +654,9 @@ class SystemOrchestrator:
         try:
             # Validate all participants exist
             missing_agents = [
-                agent for agent in participants if agent not in self.active_agents
+                agent
+                for agent in participants
+                if agent not in self.active_agents
             ]
             if missing_agents:
                 # Create missing agents
@@ -677,14 +700,19 @@ class SystemOrchestrator:
             return interaction_result
 
         except Exception as e:
-            logger.error(f"Error in multi-agent interaction orchestration: {str(e)}")
+            logger.error(
+                f"Error in multi-agent interaction orchestration: {str(e)}"
+            )
             self.error_count += 1
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
                     code="MULTI_AGENT_INTERACTION_FAILED",
                     message="Multi-agent interaction failed",
-                    details={"participants": participants, "exception": str(e)},
+                    details={
+                        "participants": participants,
+                        "exception": str(e),
+                    },
                 ),
             )
 
@@ -697,7 +725,9 @@ class SystemOrchestrator:
         try:
             uptime = (datetime.now() - self.startup_time).total_seconds()
             operations_per_minute = (
-                (self.operation_count / max(uptime / 60, 1)) if uptime > 0 else 0
+                (self.operation_count / max(uptime / 60, 1))
+                if uptime > 0
+                else 0
             )
             error_rate = (
                 (self.error_count / max(self.operation_count, 1))
@@ -913,7 +943,9 @@ class SystemOrchestrator:
         try:
             state_data = {
                 "shutdown_time": datetime.now().isoformat(),
-                "uptime_seconds": (datetime.now() - self.startup_time).total_seconds(),
+                "uptime_seconds": (
+                    datetime.now() - self.startup_time
+                ).total_seconds(),
                 "total_operations": self.operation_count,
                 "total_errors": self.error_count,
                 "final_health": self.system_health.value,
@@ -922,9 +954,13 @@ class SystemOrchestrator:
 
             async with self.database.get_enhanced_connection() as conn:
                 await conn.execute(
-                    """INSERT OR REPLACE INTO system_state 
+                    """INSERT OR REPLACE INTO system_state
                        (state_id, state_data, timestamp) VALUES (?, ?, ?)""",
-                    ("orchestrator_shutdown", json.dumps(state_data), datetime.now()),
+                    (
+                        "orchestrator_shutdown",
+                        json.dumps(state_data),
+                        datetime.now(),
+                    ),
                 )
                 await conn.commit()
 
@@ -939,8 +975,10 @@ class SystemOrchestrator:
         """Update character state across relevant systems."""
         try:
             # Update in character manager
-            update_result = await self.character_manager.update_character_state(
-                agent_id, character_state
+            update_result = (
+                await self.character_manager.update_character_state(
+                    agent_id, character_state
+                )
             )
 
             # Store state change as memory
@@ -958,7 +996,9 @@ class SystemOrchestrator:
             return update_result
 
         except Exception as e:
-            logger.error(f"ERROR updating character state for {agent_id}: {str(e)}")
+            logger.error(
+                f"ERROR updating character state for {agent_id}: {str(e)}"
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -1003,7 +1043,10 @@ class SystemOrchestrator:
     ) -> None:
         """Record interaction as narrative event in EmergentNarrativeEngine."""
         try:
-            if not self.emergent_narrative_engine or not interaction_result.success:
+            if (
+                not self.emergent_narrative_engine
+                or not interaction_result.success
+            ):
                 return
 
             # Create narrative event from interaction
@@ -1023,11 +1066,15 @@ class SystemOrchestrator:
             }
 
             # Record event in causal graph
-            await self.emergent_narrative_engine.causal_graph.add_event(event_data)
+            await self.emergent_narrative_engine.causal_graph.add_event(
+                event_data
+            )
 
             # Check for causal relationships between participants
             for participant in interaction_context.participants:
-                await self._analyze_agent_causal_relationships(participant, event_data)
+                await self._analyze_agent_causal_relationships(
+                    participant, event_data
+                )
 
             logger.debug(
                 f"Recorded narrative event: {interaction_context.interaction_id}"
@@ -1058,7 +1105,9 @@ class SystemOrchestrator:
                 )
 
         except Exception as e:
-            logger.error(f"Failed to analyze causal relationships for {agent_id}: {e}")
+            logger.error(
+                f"Failed to analyze causal relationships for {agent_id}: {e}"
+            )
 
     async def _count_memory_items(self) -> int:
         """Count total memory items in the system."""

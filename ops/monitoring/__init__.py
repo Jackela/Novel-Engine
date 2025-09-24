@@ -39,7 +39,15 @@ __all__ = [
 
 # Import submodules
 try:
-    from . import alerts, dashboards, docker, grafana, logging, observability, synthetic
+    from . import (
+        alerts,
+        dashboards,
+        docker,
+        grafana,
+        logging,
+        observability,
+        synthetic,
+    )
 except ImportError:
     # Allow graceful degradation if submodules aren't ready yet
     pass

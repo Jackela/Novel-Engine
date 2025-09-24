@@ -7,7 +7,7 @@ providing the business logic execution layer that coordinates between
 application commands and domain objects.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List, cast
 from uuid import UUID
 
 from ...domain.aggregates.negotiation_session import NegotiationSession
@@ -99,7 +99,8 @@ class InteractionCommandHandler:
             "status": session.status.phase.value,
             "max_parties": session.max_parties,
             "events": [
-                event.__class__.__name__ for event in session.get_uncommitted_events()
+                event.__class__.__name__
+                for event in session.get_uncommitted_events()
             ],
         }
 
@@ -132,7 +133,8 @@ class InteractionCommandHandler:
             "terminated_at": session.status.actual_completion_at,
             "duration": session.status.duration,
             "events": [
-                event.__class__.__name__ for event in session.get_uncommitted_events()
+                event.__class__.__name__
+                for event in session.get_uncommitted_events()
             ],
         }
 
@@ -164,7 +166,8 @@ class InteractionCommandHandler:
             "forced": command.force_advancement,
             "advancement_reason": command.advancement_reason,
             "events": [
-                event.__class__.__name__ for event in session.get_uncommitted_events()
+                event.__class__.__name__
+                for event in session.get_uncommitted_events()
             ],
         }
 
@@ -196,7 +199,9 @@ class InteractionCommandHandler:
             updates_made.append("auto_advance_phases")
 
         if command.require_unanimous_agreement is not None:
-            session.require_unanimous_agreement = command.require_unanimous_agreement
+            session.require_unanimous_agreement = (
+                command.require_unanimous_agreement
+            )
             updates_made.append("require_unanimous_agreement")
 
         if command.allow_partial_agreements is not None:
@@ -242,7 +247,9 @@ class InteractionCommandHandler:
 
         # Check timeout
         was_active_before = session.is_active
-        timeout_approaching = session.is_timeout_approaching(command.warning_hours)
+        timeout_approaching = session.is_timeout_approaching(
+            command.warning_hours
+        )
 
         # Handle timeout
         session.check_timeout()
@@ -266,7 +273,8 @@ class InteractionCommandHandler:
             "is_active": session.is_active,
             "time_since_last_activity": session.status.time_since_last_activity,
             "events": [
-                event.__class__.__name__ for event in session.get_uncommitted_events()
+                event.__class__.__name__
+                for event in session.get_uncommitted_events()
             ],
         }
 
@@ -297,7 +305,9 @@ class InteractionCommandHandler:
                 )
                 compatibility_scores.append(float(score))
 
-            compatibility_score = sum(compatibility_scores) / len(compatibility_scores)
+            compatibility_score = sum(compatibility_scores) / len(
+                compatibility_scores
+            )
 
             # Reject if very poor compatibility
             if compatibility_score < 20:
@@ -319,7 +329,8 @@ class InteractionCommandHandler:
             "compatibility_score": compatibility_score,
             "total_parties": len(session.parties),
             "events": [
-                event.__class__.__name__ for event in session.get_uncommitted_events()
+                event.__class__.__name__
+                for event in session.get_uncommitted_events()
             ],
         }
 
@@ -373,7 +384,8 @@ class InteractionCommandHandler:
             ),
             "remaining_parties": len(session.parties),
             "events": [
-                event.__class__.__name__ for event in session.get_uncommitted_events()
+                event.__class__.__name__
+                for event in session.get_uncommitted_events()
             ],
         }
 
@@ -472,7 +484,9 @@ class InteractionCommandHandler:
 
         # Validate submitter is in session
         if command.initiated_by not in session.parties:
-            raise ValueError(f"Submitting party {command.initiated_by} not in session")
+            raise ValueError(
+                f"Submitting party {command.initiated_by} not in session"
+            )
 
         # Submit proposal
         session.submit_proposal(command.proposal, command.initiated_by)
@@ -490,7 +504,8 @@ class InteractionCommandHandler:
             "submission_notes": command.submission_notes,
             "current_phase": session.status.phase.value,
             "events": [
-                event.__class__.__name__ for event in session.get_uncommitted_events()
+                event.__class__.__name__
+                for event in session.get_uncommitted_events()
             ],
         }
 
@@ -508,7 +523,9 @@ class InteractionCommandHandler:
 
         # Check if proposal exists and is active
         if command.proposal_id not in session.active_proposals:
-            raise ValueError(f"Proposal {command.proposal_id} not found or not active")
+            raise ValueError(
+                f"Proposal {command.proposal_id} not found or not active"
+            )
 
         proposal = session.active_proposals[command.proposal_id]
         proposal_title = proposal.title
@@ -519,7 +536,9 @@ class InteractionCommandHandler:
         # Submit replacement if provided
         replacement_submitted = False
         if command.replacement_proposal:
-            session.submit_proposal(command.replacement_proposal, command.initiated_by)
+            session.submit_proposal(
+                command.replacement_proposal, command.initiated_by
+            )
             replacement_submitted = True
 
         # Persist changes
@@ -553,7 +572,9 @@ class InteractionCommandHandler:
 
         # Check if proposal exists and is active
         if command.proposal_id not in session.active_proposals:
-            raise ValueError(f"Proposal {command.proposal_id} not found or not active")
+            raise ValueError(
+                f"Proposal {command.proposal_id} not found or not active"
+            )
 
         existing_proposal = session.active_proposals[command.proposal_id]
 
@@ -590,7 +611,9 @@ class InteractionCommandHandler:
 
         # Check if proposal exists and is active
         if command.proposal_id not in session.active_proposals:
-            raise ValueError(f"Proposal {command.proposal_id} not found or not active")
+            raise ValueError(
+                f"Proposal {command.proposal_id} not found or not active"
+            )
 
         proposal = session.active_proposals[command.proposal_id]
         parties = list(session.parties.values())
@@ -603,7 +626,7 @@ class InteractionCommandHandler:
         )
 
         # Apply optimizations if they meet criteria
-        optimizations_applied = []
+        optimizations_applied: List[str] = []
         if (
             optimization_result["expected_improvement"] > 10
         ):  # 10% improvement threshold
@@ -671,7 +694,8 @@ class InteractionCommandHandler:
             "requires_follow_up": command.response.requires_negotiation(),
             "current_phase": session.status.phase.value,
             "events": [
-                event.__class__.__name__ for event in session.get_uncommitted_events()
+                event.__class__.__name__
+                for event in session.get_uncommitted_events()
             ],
         }
 
@@ -738,11 +762,14 @@ class InteractionCommandHandler:
             "response_id": str(command.response_id),
             "updated_fields": {
                 "term_responses": len(command.updated_term_responses or []),
-                "overall_response": command.updated_overall_response is not None,
+                "overall_response": command.updated_overall_response
+                is not None,
                 "conditions": len(command.updated_conditions or []),
             },
             "update_reason": command.update_reason,
-            "new_acceptance_percentage": updated_response.get_acceptance_percentage(),
+            "new_acceptance_percentage": updated_response.get_acceptance_percentage()
+            if updated_response is not None
+            else 0.0,
         }
 
     # Analysis Command Handlers
@@ -761,7 +788,9 @@ class InteractionCommandHandler:
 
         # Check if proposal exists
         if command.proposal_id not in session.active_proposals:
-            raise ValueError(f"Proposal {command.proposal_id} not found or not active")
+            raise ValueError(
+                f"Proposal {command.proposal_id} not found or not active"
+            )
 
         proposal = session.active_proposals[command.proposal_id]
         parties = list(session.parties.values())
@@ -774,11 +803,17 @@ class InteractionCommandHandler:
         )
 
         # Convert Decimal values to float for JSON serialization
-        analysis["overall_viability_score"] = float(analysis["overall_viability_score"])
-        analysis["acceptance_probability"] = float(analysis["acceptance_probability"])
+        analysis["overall_viability_score"] = float(
+            analysis["overall_viability_score"]
+        )
+        analysis["acceptance_probability"] = float(
+            analysis["acceptance_probability"]
+        )
 
         # Convert party-specific analysis
-        for party_id, party_analysis in analysis["party_specific_analysis"].items():
+        for party_id, party_analysis in analysis[
+            "party_specific_analysis"
+        ].items():
             party_analysis["acceptance_score"] = float(
                 party_analysis["acceptance_score"]
             )
@@ -835,8 +870,9 @@ class InteractionCommandHandler:
 
         # Calculate overall compatibility
         if compatibility_matrix:
-            scores = [
-                comp["compatibility_score"] for comp in compatibility_matrix.values()
+            scores: List[float] = [
+                cast(float, comp["compatibility_score"])
+                for comp in compatibility_matrix.values()
             ]
             overall_compatibility = sum(scores) / len(scores)
         else:
@@ -910,7 +946,8 @@ class InteractionCommandHandler:
         filtered_conflicts = [
             conflict
             for conflict in conflicts
-            if severity_order.index(conflict.get("severity", "low")) >= threshold_index
+            if severity_order.index(conflict.get("severity", "low"))
+            >= threshold_index
         ]
 
         # Convert UUID objects to strings for JSON serialization
@@ -1007,9 +1044,13 @@ class InteractionCommandHandler:
 
                 # Example update logic - extend as needed
                 if "authority_level" in update_data:
-                    from ...domain.value_objects.negotiation_party import AuthorityLevel
+                    from ...domain.value_objects.negotiation_party import (
+                        AuthorityLevel,
+                    )
 
-                    new_authority = AuthorityLevel(update_data["authority_level"])
+                    new_authority = AuthorityLevel(
+                        update_data["authority_level"]
+                    )
                     party = party.with_updated_authority(new_authority)
                     session.parties[party_id] = party
 
@@ -1078,7 +1119,9 @@ class InteractionCommandHandler:
                     {
                         "response_id": str(response.response_id),
                         "proposal_id": str(response.proposal_id),
-                        "responding_party_id": str(response.responding_party_id),
+                        "responding_party_id": str(
+                            response.responding_party_id
+                        ),
                     }
                 )
 
@@ -1098,6 +1141,7 @@ class InteractionCommandHandler:
             "auto_advance_on_completion": command.auto_advance_on_batch_completion,
             "current_phase": session.status.phase.value,
             "events": [
-                event.__class__.__name__ for event in session.get_uncommitted_events()
+                event.__class__.__name__
+                for event in session.get_uncommitted_events()
             ],
         }

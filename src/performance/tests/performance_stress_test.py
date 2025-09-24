@@ -124,16 +124,24 @@ class PerformanceStressTester:
                     memory_percent=memory.percent,
                     memory_mb=memory.used / (1024 * 1024),
                     io_read_mb=(
-                        io_counters.read_bytes / (1024 * 1024) if io_counters else 0
+                        io_counters.read_bytes / (1024 * 1024)
+                        if io_counters
+                        else 0
                     ),
                     io_write_mb=(
-                        io_counters.write_bytes / (1024 * 1024) if io_counters else 0
+                        io_counters.write_bytes / (1024 * 1024)
+                        if io_counters
+                        else 0
                     ),
                     network_sent_mb=(
-                        net_counters.bytes_sent / (1024 * 1024) if net_counters else 0
+                        net_counters.bytes_sent / (1024 * 1024)
+                        if net_counters
+                        else 0
                     ),
                     network_recv_mb=(
-                        net_counters.bytes_recv / (1024 * 1024) if net_counters else 0
+                        net_counters.bytes_recv / (1024 * 1024)
+                        if net_counters
+                        else 0
                     ),
                 )
 
@@ -195,7 +203,9 @@ class PerformanceStressTester:
 
         # Calculate metrics
         rps = total_requests / actual_duration
-        avg_response_time = statistics.mean(response_times) if response_times else 0
+        avg_response_time = (
+            statistics.mean(response_times) if response_times else 0
+        )
         p95_response_time = (
             statistics.quantiles(response_times, n=20)[18]
             if len(response_times) > 20
@@ -206,7 +216,9 @@ class PerformanceStressTester:
             if len(response_times) > 100
             else avg_response_time
         )
-        error_rate = (error_count / total_requests) * 100 if total_requests > 0 else 0
+        error_rate = (
+            (error_count / total_requests) * 100 if total_requests > 0 else 0
+        )
 
         # Get current resource usage
         memory_mb = psutil.virtual_memory().used / (1024 * 1024)
@@ -287,7 +299,9 @@ class PerformanceStressTester:
 
         # Calculate metrics
         rps = len(tasks) / actual_duration
-        avg_response_time = statistics.mean(response_times) if response_times else 0
+        avg_response_time = (
+            statistics.mean(response_times) if response_times else 0
+        )
         p95_response_time = (
             statistics.quantiles(response_times, n=20)[18]
             if len(response_times) > 20
@@ -377,7 +391,9 @@ class PerformanceStressTester:
 
         # Calculate metrics
         rps = total_operations / actual_duration
-        avg_response_time = statistics.mean(response_times) if response_times else 0
+        avg_response_time = (
+            statistics.mean(response_times) if response_times else 0
+        )
         p95_response_time = (
             statistics.quantiles(response_times, n=20)[18]
             if len(response_times) > 20
@@ -389,7 +405,9 @@ class PerformanceStressTester:
             else avg_response_time
         )
         error_rate = (
-            (error_count / total_operations) * 100 if total_operations > 0 else 0
+            (error_count / total_operations) * 100
+            if total_operations > 0
+            else 0
         )
 
         memory_mb = psutil.virtual_memory().used / (1024 * 1024)
@@ -520,7 +538,9 @@ class PerformanceStressTester:
 
         # Calculate metrics
         rps = total_queries / actual_duration
-        avg_response_time = statistics.mean(response_times) if response_times else 0
+        avg_response_time = (
+            statistics.mean(response_times) if response_times else 0
+        )
         p95_response_time = (
             statistics.quantiles(response_times, n=20)[18]
             if len(response_times) > 20
@@ -531,7 +551,9 @@ class PerformanceStressTester:
             if len(response_times) > 100
             else avg_response_time
         )
-        error_rate = (error_count / total_queries) * 100 if total_queries > 0 else 0
+        error_rate = (
+            (error_count / total_queries) * 100 if total_queries > 0 else 0
+        )
 
         memory_mb = psutil.virtual_memory().used / (1024 * 1024)
         cpu_percent = psutil.cpu_percent()
@@ -561,12 +583,16 @@ class PerformanceStressTester:
         total_successes = sum(r.success_count for r in self.results)
         total_errors = sum(r.error_count for r in self.results)
 
-        avg_rps = statistics.mean([r.requests_per_second for r in self.results])
+        avg_rps = statistics.mean(
+            [r.requests_per_second for r in self.results]
+        )
         avg_response_time = statistics.mean(
             [r.average_response_time for r in self.results]
         )
         max_memory_mb = max([r.memory_usage_mb for r in self.results])
-        avg_cpu_percent = statistics.mean([r.cpu_usage_percent for r in self.results])
+        avg_cpu_percent = statistics.mean(
+            [r.cpu_usage_percent for r in self.results]
+        )
 
         # Performance assessment
         performance_grade = self._calculate_performance_grade()
@@ -580,7 +606,9 @@ class PerformanceStressTester:
                 "total_requests": total_requests,
                 "total_successes": total_successes,
                 "total_errors": total_errors,
-                "overall_success_rate": (total_successes / max(total_requests, 1))
+                "overall_success_rate": (
+                    total_successes / max(total_requests, 1)
+                )
                 * 100,
                 "average_rps": avg_rps,
                 "average_response_time_ms": avg_response_time * 1000,
@@ -623,13 +651,18 @@ class PerformanceStressTester:
             response_time_score = max(
                 0, 25 - (result.average_response_time * 1000) / 4
             )  # Target: <100ms
-            error_rate_score = max(0, 25 - result.error_rate)  # Target: 0% errors
+            error_rate_score = max(
+                0, 25 - result.error_rate
+            )  # Target: 0% errors
             resource_score = max(
                 0, 25 - (result.cpu_usage_percent / 4)
             )  # Target: <100% CPU
 
             total_score = (
-                rps_score + response_time_score + error_rate_score + resource_score
+                rps_score
+                + response_time_score
+                + error_rate_score
+                + resource_score
             )
             scores.append(total_score)
 
@@ -670,12 +703,20 @@ class PerformanceStressTester:
                 ),
             },
             "io_activity": {
-                "total_read_mb": sum([m.io_read_mb for m in self.system_metrics]),
-                "total_write_mb": sum([m.io_write_mb for m in self.system_metrics]),
+                "total_read_mb": sum(
+                    [m.io_read_mb for m in self.system_metrics]
+                ),
+                "total_write_mb": sum(
+                    [m.io_write_mb for m in self.system_metrics]
+                ),
             },
             "network_activity": {
-                "total_sent_mb": sum([m.network_sent_mb for m in self.system_metrics]),
-                "total_recv_mb": sum([m.network_recv_mb for m in self.system_metrics]),
+                "total_sent_mb": sum(
+                    [m.network_sent_mb for m in self.system_metrics]
+                ),
+                "total_recv_mb": sum(
+                    [m.network_recv_mb for m in self.system_metrics]
+                ),
             },
         }
 
@@ -691,7 +732,7 @@ class PerformanceStressTester:
 
             if result.average_response_time > 0.1:  # 100ms
                 recommendations.append(
-                    f"Slow response time in {result.test_name}: {result.average_response_time*1000:.1f}ms - optimize processing"
+                    f"Slow response time in {result.test_name}: {result.average_response_time* 1000:.1f}ms - optimize processing"
                 )
 
             if result.cpu_usage_percent > 80:
@@ -733,7 +774,9 @@ async def main():
     print(f"Total Requests: {summary['total_requests']:,}")
     print(f"Success Rate: {summary['overall_success_rate']:.1f}%")
     print(f"Average RPS: {summary['average_rps']:.1f}")
-    print(f"Average Response Time: {summary['average_response_time_ms']:.1f}ms")
+    print(
+        f"Average Response Time: {summary['average_response_time_ms']:.1f}ms"
+    )
     print(f"Peak Memory Usage: {summary['peak_memory_mb']:.1f}MB")
     print(f"Average CPU Usage: {summary['average_cpu_percent']:.1f}%")
     print(f"Performance Grade: {summary['performance_grade']}")

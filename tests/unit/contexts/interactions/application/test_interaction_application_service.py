@@ -2,8 +2,9 @@
 """
 Comprehensive Unit Tests for InteractionApplicationService
 
-Test suite covering application service operations, session management, proposal handling,
-analytics, health monitoring, and business rule enforcement in the Interaction Context.
+Test suite covering application service operations, session management,
+proposal handling, analytics, health monitoring, and business rule enforcement
+in the Interaction Context.
 """
 
 from datetime import datetime, timedelta, timezone
@@ -14,17 +15,23 @@ import pytest
 from contexts.interactions.application.commands.interaction_command_handlers import (
     InteractionCommandHandler,
 )
-from contexts.interactions.application.services.interaction_application_service import (
+from contexts.interactions.application.services import (
     InteractionApplicationService,
+    interaction_application_service,
 )
 from contexts.interactions.domain.aggregates.negotiation_session import (
     NegotiationSession,
 )
-from contexts.interactions.domain.repositories.negotiation_session_repository import (
+from contexts.interactions.domain.repositories import (
     NegotiationSessionRepository,
+    negotiation_session_repository,
 )
-from contexts.interactions.domain.services.negotiation_service import NegotiationService
-from contexts.interactions.domain.value_objects.interaction_id import InteractionId
+from contexts.interactions.domain.services.negotiation_service import (
+    NegotiationService,
+)
+from contexts.interactions.domain.value_objects.interaction_id import (
+    InteractionId,
+)
 from contexts.interactions.domain.value_objects.negotiation_party import (
     NegotiationParty,
 )
@@ -36,7 +43,9 @@ from contexts.interactions.domain.value_objects.negotiation_status import (
 from contexts.interactions.domain.value_objects.proposal_response import (
     ProposalResponse,
 )
-from contexts.interactions.domain.value_objects.proposal_terms import ProposalTerms
+from contexts.interactions.domain.value_objects.proposal_terms import (
+    ProposalTerms,
+)
 
 
 class TestInteractionApplicationServiceInitialization:
@@ -57,22 +66,25 @@ class TestInteractionApplicationServiceInitialization:
         assert isinstance(service.command_handler, InteractionCommandHandler)
 
     def test_initialization_with_minimal_dependencies(self):
-        """Test initialization with minimal dependencies (default negotiation service)."""
+        """Test initialization with minimal dependencies (default service)."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
 
-        service = InteractionApplicationService(session_repository=mock_repository)
+        service = InteractionApplicationService(
+            session_repository=mock_repository
+        )
 
         assert service.session_repository is mock_repository
         assert isinstance(service.negotiation_service, NegotiationService)
         assert isinstance(service.command_handler, InteractionCommandHandler)
 
     def test_command_handler_initialization(self):
-        """Test that command handler is properly initialized with dependencies."""
+        """Test command handler is properly initialized with dependencies."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
         mock_negotiation_service = Mock(spec=NegotiationService)
 
         with patch(
-            "contexts.interactions.application.services.interaction_application_service.InteractionCommandHandler"
+            "contexts.interactions.application.services."
+            "interaction_application_service.InteractionCommandHandler"
         ) as mock_handler_class:
             mock_handler = Mock()
             mock_handler_class.return_value = mock_handler
@@ -163,7 +175,9 @@ class TestNegotiationSessionOperations:
         assert result["events_generated"] == ["session_created"]
 
     @pytest.mark.asyncio
-    async def test_create_negotiation_session_with_defaults(self, mock_dependencies):
+    async def test_create_negotiation_session_with_defaults(
+        self, mock_dependencies
+    ):
         """Test negotiation session creation with default parameters."""
         service = InteractionApplicationService(
             session_repository=mock_dependencies["repository"],
@@ -185,7 +199,9 @@ class TestNegotiationSessionOperations:
         ].handle_create_negotiation_session.return_value = mock_result
 
         await service.create_negotiation_session(
-            session_name="Default Session", session_type="general", created_by=uuid4()
+            session_name="Default Session",
+            session_type="general",
+            created_by=uuid4(),
         )
 
         # Verify default values were used
@@ -277,7 +293,9 @@ class TestNegotiationSessionOperations:
         ].handle_add_party_to_session.return_value = mock_result
 
         result = await service.add_party_to_negotiation(
-            session_id=session_id, party=sample_negotiation_party, initiated_by=uuid4()
+            session_id=session_id,
+            party=sample_negotiation_party,
+            initiated_by=uuid4(),
         )
 
         assert result["session_status"]["can_start"] is False  # < 2 parties
@@ -382,12 +400,19 @@ class TestProposalOperations:
         """Create sample proposal terms for testing."""
         proposal_terms = Mock(spec=ProposalTerms)
         proposal_terms.proposal_id = uuid4()
+        proposal_terms.is_expired = (
+            False  # Ensure proposal is not expired for tests
+        )
         return proposal_terms
 
     @pytest.fixture
     def sample_proposal_response(self):
         """Create sample proposal response for testing."""
-        return Mock(spec=ProposalResponse)
+        response = Mock(spec=ProposalResponse)
+        response.is_expired.return_value = (
+            False  # Ensure response is not expired for tests
+        )
+        return response
 
     @pytest.mark.asyncio
     async def test_submit_proposal_success(
@@ -426,9 +451,9 @@ class TestProposalOperations:
             "submitted_by": uuid4(),
             "events": ["proposal_submitted"],
         }
-        mock_dependencies["command_handler"].handle_submit_proposal.return_value = (
-            mock_submission_result
-        )
+        mock_dependencies[
+            "command_handler"
+        ].handle_submit_proposal.return_value = mock_submission_result
 
         result = await service.submit_proposal(
             session_id=session_id,
@@ -441,7 +466,9 @@ class TestProposalOperations:
         mock_dependencies[
             "command_handler"
         ].handle_analyze_proposal_viability.assert_called_once()
-        mock_dependencies["command_handler"].handle_submit_proposal.assert_called_once()
+        mock_dependencies[
+            "command_handler"
+        ].handle_submit_proposal.assert_called_once()
 
         # Verify result structure
         assert result["operation"] == "submit_proposal"
@@ -449,7 +476,8 @@ class TestProposalOperations:
         assert result["proposal_submitted"]["viability_score"] == 0.78
         assert result["proposal_submitted"]["acceptance_probability"] == 0.65
         assert (
-            result["pre_submission_analysis"] == mock_analysis_result["analysis_result"]
+            result["pre_submission_analysis"]
+            == mock_analysis_result["analysis_result"]
         )
 
     @pytest.mark.asyncio
@@ -493,7 +521,9 @@ class TestProposalOperations:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_calculate_negotiation_momentum.return_value = mock_momentum_result
+        ].handle_calculate_negotiation_momentum.return_value = (
+            mock_momentum_result
+        )
 
         result = await service.submit_proposal_response(
             session_id=session_id,
@@ -513,7 +543,10 @@ class TestProposalOperations:
         assert result["operation"] == "submit_proposal_response"
         assert result["success"] is True
         assert result["response_submitted"]["response_id"] == response_id
-        assert result["response_submitted"]["overall_response"] == "partial_accept"
+        assert (
+            result["response_submitted"]["overall_response"]
+            == "partial_accept"
+        )
         assert result["response_submitted"]["acceptance_percentage"] == 0.75
         assert (
             result["session_status"]["momentum"]
@@ -558,7 +591,9 @@ class TestProposalOperations:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_calculate_negotiation_momentum.return_value = mock_momentum_result
+        ].handle_calculate_negotiation_momentum.return_value = (
+            mock_momentum_result
+        )
 
         result = await service.submit_proposal_response(
             session_id=session_id,
@@ -607,7 +642,9 @@ class TestNegotiationCompletion:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_calculate_negotiation_momentum.return_value = mock_momentum_result
+        ].handle_calculate_negotiation_momentum.return_value = (
+            mock_momentum_result
+        )
 
         # Mock final conflicts analysis
         mock_conflicts_result = {
@@ -615,7 +652,9 @@ class TestNegotiationCompletion:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_detect_negotiation_conflicts.return_value = mock_conflicts_result
+        ].handle_detect_negotiation_conflicts.return_value = (
+            mock_conflicts_result
+        )
 
         # Mock termination result
         mock_termination_result = {
@@ -628,7 +667,9 @@ class TestNegotiationCompletion:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_terminate_negotiation_session.return_value = mock_termination_result
+        ].handle_terminate_negotiation_session.return_value = (
+            mock_termination_result
+        )
 
         result = await service.complete_negotiation(
             session_id=session_id,
@@ -662,7 +703,10 @@ class TestNegotiationCompletion:
         assert result["operation"] == "complete_negotiation"
         assert result["success"] is True
         assert result["completion_summary"]["outcome"] == "agreement_reached"
-        assert result["completion_summary"]["termination_reason"] == "mutual_agreement"
+        assert (
+            result["completion_summary"]["termination_reason"]
+            == "mutual_agreement"
+        )
         assert (
             result["completion_summary"]["completion_notes"]
             == "Successfully reached agreement"
@@ -677,7 +721,9 @@ class TestNegotiationCompletion:
         )
 
     @pytest.mark.asyncio
-    async def test_complete_negotiation_with_conflicts(self, mock_dependencies):
+    async def test_complete_negotiation_with_conflicts(
+        self, mock_dependencies
+    ):
         """Test negotiation completion with unresolved conflicts."""
         service = InteractionApplicationService(
             session_repository=mock_dependencies["repository"],
@@ -697,23 +743,35 @@ class TestNegotiationCompletion:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_calculate_negotiation_momentum.return_value = mock_momentum_result
+        ].handle_calculate_negotiation_momentum.return_value = (
+            mock_momentum_result
+        )
 
         # Mock unresolved conflicts
         mock_conflicts_result = {
             "conflicts_detected": [
-                {"severity": "high", "resolved": False, "type": "pricing_dispute"},
+                {
+                    "severity": "high",
+                    "resolved": False,
+                    "type": "pricing_dispute",
+                },
                 {
                     "severity": "medium",
                     "resolved": False,
                     "type": "timeline_disagreement",
                 },
-                {"severity": "low", "resolved": True, "type": "documentation_format"},
+                {
+                    "severity": "low",
+                    "resolved": True,
+                    "type": "documentation_format",
+                },
             ]
         }
         mock_dependencies[
             "command_handler"
-        ].handle_detect_negotiation_conflicts.return_value = mock_conflicts_result
+        ].handle_detect_negotiation_conflicts.return_value = (
+            mock_conflicts_result
+        )
 
         # Mock termination with stalemate
         mock_termination_result = {
@@ -726,7 +784,9 @@ class TestNegotiationCompletion:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_terminate_negotiation_session.return_value = mock_termination_result
+        ].handle_terminate_negotiation_session.return_value = (
+            mock_termination_result
+        )
 
         result = await service.complete_negotiation(
             session_id=session_id,
@@ -757,7 +817,9 @@ class TestAnalyticalOperations:
         }
 
     @pytest.mark.asyncio
-    async def test_get_negotiation_insights_comprehensive(self, mock_dependencies):
+    async def test_get_negotiation_insights_comprehensive(
+        self, mock_dependencies
+    ):
         """Test comprehensive negotiation insights analysis."""
         service = InteractionApplicationService(
             session_repository=mock_dependencies["repository"],
@@ -771,23 +833,37 @@ class TestAnalyticalOperations:
         mock_compatibility_result = {
             "overall_compatibility": 0.75,
             "party_compatibility_matrix": {},
-            "compatibility_factors": ["shared_interests", "complementary_skills"],
+            "compatibility_factors": [
+                "shared_interests",
+                "complementary_skills",
+            ],
         }
         mock_dependencies[
             "command_handler"
-        ].handle_assess_party_compatibility.return_value = mock_compatibility_result
+        ].handle_assess_party_compatibility.return_value = (
+            mock_compatibility_result
+        )
 
         # Mock strategy recommendation
         mock_strategy_result = {
             "strategy_recommendation": {
                 "primary_strategy": "collaborative",
-                "key_tactics": ["build_rapport", "find_common_ground", "create_value"],
-                "risk_mitigation": ["monitor_momentum", "address_conflicts_early"],
+                "key_tactics": [
+                    "build_rapport",
+                    "find_common_ground",
+                    "create_value",
+                ],
+                "risk_mitigation": [
+                    "monitor_momentum",
+                    "address_conflicts_early",
+                ],
             }
         }
         mock_dependencies[
             "command_handler"
-        ].handle_recommend_negotiation_strategy.return_value = mock_strategy_result
+        ].handle_recommend_negotiation_strategy.return_value = (
+            mock_strategy_result
+        )
 
         # Mock conflicts detection
         mock_conflicts_result = {
@@ -801,7 +877,9 @@ class TestAnalyticalOperations:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_detect_negotiation_conflicts.return_value = mock_conflicts_result
+        ].handle_detect_negotiation_conflicts.return_value = (
+            mock_conflicts_result
+        )
 
         # Mock momentum analysis
         mock_momentum_result = {
@@ -814,10 +892,14 @@ class TestAnalyticalOperations:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_calculate_negotiation_momentum.return_value = mock_momentum_result
+        ].handle_calculate_negotiation_momentum.return_value = (
+            mock_momentum_result
+        )
 
         result = await service.get_negotiation_insights(
-            session_id=session_id, initiated_by=uuid4(), analysis_depth="comprehensive"
+            session_id=session_id,
+            initiated_by=uuid4(),
+            analysis_depth="comprehensive",
         )
 
         # Verify all four analysis operations were called
@@ -838,7 +920,10 @@ class TestAnalyticalOperations:
         assert result["operation"] == "get_negotiation_insights"
         assert result["success"] is True
         assert result["analysis_depth"] == "comprehensive"
-        assert result["insights"]["party_compatibility"] == mock_compatibility_result
+        assert (
+            result["insights"]["party_compatibility"]
+            == mock_compatibility_result
+        )
         assert (
             result["insights"]["recommended_strategy"]
             == mock_strategy_result["strategy_recommendation"]
@@ -863,7 +948,9 @@ class TestAnalyticalOperations:
         assert isinstance(result["recommendations"], list)
 
     @pytest.mark.asyncio
-    async def test_get_negotiation_insights_low_compatibility(self, mock_dependencies):
+    async def test_get_negotiation_insights_low_compatibility(
+        self, mock_dependencies
+    ):
         """Test insights analysis with low party compatibility."""
         service = InteractionApplicationService(
             session_repository=mock_dependencies["repository"],
@@ -877,11 +964,16 @@ class TestAnalyticalOperations:
         mock_compatibility_result = {
             "overall_compatibility": 0.25,  # Low compatibility
             "party_compatibility_matrix": {},
-            "compatibility_issues": ["conflicting_goals", "communication_barriers"],
+            "compatibility_issues": [
+                "conflicting_goals",
+                "communication_barriers",
+            ],
         }
         mock_dependencies[
             "command_handler"
-        ].handle_assess_party_compatibility.return_value = mock_compatibility_result
+        ].handle_assess_party_compatibility.return_value = (
+            mock_compatibility_result
+        )
 
         # Mock defensive strategy
         mock_strategy_result = {
@@ -893,7 +985,9 @@ class TestAnalyticalOperations:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_recommend_negotiation_strategy.return_value = mock_strategy_result
+        ].handle_recommend_negotiation_strategy.return_value = (
+            mock_strategy_result
+        )
 
         # Mock high conflicts
         mock_conflicts_result = {
@@ -905,7 +999,9 @@ class TestAnalyticalOperations:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_detect_negotiation_conflicts.return_value = mock_conflicts_result
+        ].handle_detect_negotiation_conflicts.return_value = (
+            mock_conflicts_result
+        )
 
         # Mock negative momentum
         mock_momentum_result = {
@@ -917,7 +1013,9 @@ class TestAnalyticalOperations:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_calculate_negotiation_momentum.return_value = mock_momentum_result
+        ].handle_calculate_negotiation_momentum.return_value = (
+            mock_momentum_result
+        )
 
         result = await service.get_negotiation_insights(
             session_id=session_id, initiated_by=uuid4()
@@ -957,7 +1055,11 @@ class TestProposalOptimization:
     def mock_negotiation_session(self):
         """Create mock negotiation session for testing."""
         session = Mock(spec=NegotiationSession)
-        session.active_proposals = {uuid4(): Mock(), uuid4(): Mock(), uuid4(): Mock()}
+        session.active_proposals = {
+            uuid4(): Mock(),
+            uuid4(): Mock(),
+            uuid4(): Mock(),
+        }
         return session
 
     @pytest.mark.asyncio
@@ -972,9 +1074,9 @@ class TestProposalOptimization:
         service.command_handler = mock_dependencies["command_handler"]
 
         session_id = uuid4()
-        mock_dependencies["repository"].get_by_id.return_value = (
-            mock_negotiation_session
-        )
+        mock_dependencies[
+            "repository"
+        ].get_by_id.return_value = mock_negotiation_session
 
         # Mock analysis results for each proposal
         proposal_ids = list(mock_negotiation_session.active_proposals.keys())
@@ -983,7 +1085,8 @@ class TestProposalOptimization:
         for i, proposal_id in enumerate(proposal_ids):
             mock_result = {
                 "analysis_result": {
-                    "overall_viability_score": 0.6 + (i * 0.1),  # Varying scores
+                    "overall_viability_score": 0.6
+                    + (i * 0.1),  # Varying scores
                     "optimization_suggestions": [
                         f"suggestion_{i}_1",
                         f"suggestion_{i}_2",
@@ -1033,7 +1136,9 @@ class TestProposalOptimization:
         assert isinstance(result["overall_recommendations"], list)
 
     @pytest.mark.asyncio
-    async def test_optimize_active_proposals_session_not_found(self, mock_dependencies):
+    async def test_optimize_active_proposals_session_not_found(
+        self, mock_dependencies
+    ):
         """Test proposal optimization when session is not found."""
         service = InteractionApplicationService(
             session_repository=mock_dependencies["repository"],
@@ -1043,13 +1148,17 @@ class TestProposalOptimization:
         session_id = uuid4()
         mock_dependencies["repository"].get_by_id.return_value = None
 
-        with pytest.raises(ValueError, match=f"Session {session_id} not found"):
+        with pytest.raises(
+            ValueError, match=f"Session {session_id} not found"
+        ):
             await service.optimize_active_proposals(
                 session_id=session_id, initiated_by=uuid4()
             )
 
     @pytest.mark.asyncio
-    async def test_optimize_active_proposals_no_proposals(self, mock_dependencies):
+    async def test_optimize_active_proposals_no_proposals(
+        self, mock_dependencies
+    ):
         """Test proposal optimization with no active proposals."""
         service = InteractionApplicationService(
             session_repository=mock_dependencies["repository"],
@@ -1101,7 +1210,10 @@ class TestSessionHealthMonitoring:
         session = Mock(spec=NegotiationSession)
         session.created_at = datetime.now(timezone.utc) - timedelta(days=2)
         session.parties = [Mock(), Mock(), Mock()]  # 3 parties
-        session.active_proposals = {uuid4(): Mock(), uuid4(): Mock()}  # 2 proposals
+        session.active_proposals = {
+            uuid4(): Mock(),
+            uuid4(): Mock(),
+        }  # 2 proposals
         session.total_responses = 15
         session.status = Mock()
         session.status.phase = NegotiationPhase.BARGAINING
@@ -1124,7 +1236,9 @@ class TestSessionHealthMonitoring:
         session.status.time_since_last_activity = (
             3600 * 6
         )  # 6 hours ago (exceeds threshold)
-        session.is_timeout_approaching.return_value = True  # Approaching timeout
+        session.is_timeout_approaching.return_value = (
+            True  # Approaching timeout
+        )
         return session
 
     @pytest.mark.asyncio
@@ -1139,7 +1253,9 @@ class TestSessionHealthMonitoring:
         service.command_handler = mock_dependencies["command_handler"]
 
         session_id = uuid4()
-        mock_dependencies["repository"].get_by_id.return_value = mock_healthy_session
+        mock_dependencies[
+            "repository"
+        ].get_by_id.return_value = mock_healthy_session
 
         # Mock low conflicts
         mock_conflicts_result = {
@@ -1147,15 +1263,22 @@ class TestSessionHealthMonitoring:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_detect_negotiation_conflicts.return_value = mock_conflicts_result
+        ].handle_detect_negotiation_conflicts.return_value = (
+            mock_conflicts_result
+        )
 
         # Mock positive momentum
         mock_momentum_result = {
-            "momentum_analysis": {"direction": "positive", "momentum_score": 0.75}
+            "momentum_analysis": {
+                "direction": "positive",
+                "momentum_score": 0.75,
+            }
         }
         mock_dependencies[
             "command_handler"
-        ].handle_calculate_negotiation_momentum.return_value = mock_momentum_result
+        ].handle_calculate_negotiation_momentum.return_value = (
+            mock_momentum_result
+        )
 
         result = await service.monitor_session_health(
             session_id=session_id, initiated_by=uuid4()
@@ -1176,7 +1299,9 @@ class TestSessionHealthMonitoring:
 
         # Should have minimal alerts
         active_alerts = result["health_summary"]["active_alerts"]
-        assert len(active_alerts) <= 1  # Healthy session should have few alerts
+        assert (
+            len(active_alerts) <= 1
+        )  # Healthy session should have few alerts
 
         # Verify key metrics
         assert result["key_metrics"]["total_parties"] == 3
@@ -1198,7 +1323,9 @@ class TestSessionHealthMonitoring:
         service.command_handler = mock_dependencies["command_handler"]
 
         session_id = uuid4()
-        mock_dependencies["repository"].get_by_id.return_value = mock_unhealthy_session
+        mock_dependencies[
+            "repository"
+        ].get_by_id.return_value = mock_unhealthy_session
 
         # Mock many conflicts
         mock_conflicts_result = {
@@ -1211,15 +1338,22 @@ class TestSessionHealthMonitoring:
         }
         mock_dependencies[
             "command_handler"
-        ].handle_detect_negotiation_conflicts.return_value = mock_conflicts_result
+        ].handle_detect_negotiation_conflicts.return_value = (
+            mock_conflicts_result
+        )
 
         # Mock negative momentum
         mock_momentum_result = {
-            "momentum_analysis": {"direction": "negative", "momentum_score": 0.25}
+            "momentum_analysis": {
+                "direction": "negative",
+                "momentum_score": 0.25,
+            }
         }
         mock_dependencies[
             "command_handler"
-        ].handle_calculate_negotiation_momentum.return_value = mock_momentum_result
+        ].handle_calculate_negotiation_momentum.return_value = (
+            mock_momentum_result
+        )
 
         result = await service.monitor_session_health(
             session_id=session_id, initiated_by=uuid4()
@@ -1252,7 +1386,9 @@ class TestSessionHealthMonitoring:
         assert result["key_metrics"]["conflict_count"] == 4
 
     @pytest.mark.asyncio
-    async def test_monitor_session_health_session_not_found(self, mock_dependencies):
+    async def test_monitor_session_health_session_not_found(
+        self, mock_dependencies
+    ):
         """Test health monitoring when session is not found."""
         service = InteractionApplicationService(
             session_repository=mock_dependencies["repository"],
@@ -1262,7 +1398,9 @@ class TestSessionHealthMonitoring:
         session_id = uuid4()
         mock_dependencies["repository"].get_by_id.return_value = None
 
-        with pytest.raises(ValueError, match=f"Session {session_id} not found"):
+        with pytest.raises(
+            ValueError, match=f"Session {session_id} not found"
+        ):
             await service.monitor_session_health(
                 session_id=session_id, initiated_by=uuid4()
             )
@@ -1274,7 +1412,9 @@ class TestPrivateHelperMethods:
     def test_calculate_success_probability(self):
         """Test success probability calculation."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
-        service = InteractionApplicationService(session_repository=mock_repository)
+        service = InteractionApplicationService(
+            session_repository=mock_repository
+        )
 
         # Test high success scenario
         high_success = service._calculate_success_probability(
@@ -1305,10 +1445,14 @@ class TestPrivateHelperMethods:
     def test_generate_recommendations(self):
         """Test recommendation generation logic."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
-        service = InteractionApplicationService(session_repository=mock_repository)
+        service = InteractionApplicationService(
+            session_repository=mock_repository
+        )
 
         # Mock analysis results
-        compatibility_result = {"overall_compatibility": 45.0}  # Below 50 threshold
+        compatibility_result = {
+            "overall_compatibility": 45.0
+        }  # Below 50 threshold
 
         strategy_result = {
             "strategy_recommendation": {"key_tactics": ["tactic1", "tactic2"]}
@@ -1318,9 +1462,15 @@ class TestPrivateHelperMethods:
             "conflicts_detected": [
                 {
                     "severity": "high",
-                    "resolution_suggestions": ["resolve_high_1", "resolve_high_2"],
+                    "resolution_suggestions": [
+                        "resolve_high_1",
+                        "resolve_high_2",
+                    ],
                 },
-                {"severity": "low", "resolution_suggestions": ["resolve_low_1"]},
+                {
+                    "severity": "low",
+                    "resolution_suggestions": ["resolve_low_1"],
+                },
             ]
         }
 
@@ -1331,7 +1481,10 @@ class TestPrivateHelperMethods:
         }
 
         recommendations = service._generate_recommendations(
-            compatibility_result, strategy_result, conflicts_result, momentum_result
+            compatibility_result,
+            strategy_result,
+            conflicts_result,
+            momentum_result,
         )
 
         # Should include compatibility recommendation
@@ -1358,7 +1511,9 @@ class TestPrivateHelperMethods:
     def test_calculate_health_score(self):
         """Test health score calculation."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
-        service = InteractionApplicationService(session_repository=mock_repository)
+        service = InteractionApplicationService(
+            session_repository=mock_repository
+        )
 
         # Mock healthy session
         healthy_session = Mock()
@@ -1384,7 +1539,9 @@ class TestPrivateHelperMethods:
             3600 * 25
         )  # 25 hours (> 24h threshold)
         unhealthy_session.status.phase = NegotiationPhase.BARGAINING
-        unhealthy_session.active_proposals = {}  # No proposals in bargaining phase
+        unhealthy_session.active_proposals = (
+            {}
+        )  # No proposals in bargaining phase
 
         unhealthy_score = service._calculate_health_score(
             session=unhealthy_session,
@@ -1404,7 +1561,9 @@ class TestPrivateHelperMethods:
     def test_get_health_status(self):
         """Test health status description conversion."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
-        service = InteractionApplicationService(session_repository=mock_repository)
+        service = InteractionApplicationService(
+            session_repository=mock_repository
+        )
 
         # Test all health status levels
         assert service._get_health_status(95.0) == "excellent"
@@ -1423,7 +1582,9 @@ class TestPrivateHelperMethods:
     def test_generate_health_recommendations(self):
         """Test health recommendation generation."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
-        service = InteractionApplicationService(session_repository=mock_repository)
+        service = InteractionApplicationService(
+            session_repository=mock_repository
+        )
 
         # Test with various alert types
         health_alerts = [
@@ -1446,7 +1607,9 @@ class TestPrivateHelperMethods:
             "follow-up" in rec.lower() or "meeting" in rec.lower()
             for rec in recommendations
         )
-        assert any("conflict resolution" in rec.lower() for rec in recommendations)
+        assert any(
+            "conflict resolution" in rec.lower() for rec in recommendations
+        )
         assert any(
             "momentum" in rec.lower() or "approach" in rec.lower()
             for rec in recommendations

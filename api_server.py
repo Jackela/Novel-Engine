@@ -28,7 +28,6 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-
 # Removed stale import: _validate_gemini_api_key, _make_gemini_api_request no longer exist
 from src.event_bus import EventBus
 
@@ -46,10 +45,7 @@ except ImportError as e:
     logger.warning(f"World context router not available: {e}")
 
 try:
-    from src.shared_types import (
-        CharacterData,
-        SystemStatus,
-    )
+    from src.shared_types import CharacterData, SystemStatus
 
     SHARED_TYPES_AVAILABLE = True
     logger.info("Shared types successfully imported.")
@@ -64,7 +60,8 @@ def _find_project_root(start_path: str) -> str:
     current_path = os.path.abspath(start_path)
     while current_path != os.path.dirname(current_path):
         if any(
-            os.path.exists(os.path.join(current_path, marker)) for marker in markers
+            os.path.exists(os.path.join(current_path, marker))
+            for marker in markers
         ):
             return current_path
         current_path = os.path.dirname(current_path)
@@ -193,7 +190,9 @@ else:
 
 
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+async def http_exception_handler(
+    request: Request, exc: StarletteHTTPException
+):
     """Custom HTTP exception handler to format errors as expected by tests."""
     error_map = {
         404: "Not Found",
@@ -266,8 +265,6 @@ async def root():
 @app.get("/health")
 async def health():
     """Health check endpoint for monitoring system status."""
-    import time
-    import psutil
 
     # Calculate uptime
     start_time = getattr(app, "start_time", time.time())
@@ -306,7 +303,9 @@ async def get_characters() -> CharactersListResponse:
         logger.info(f"Looking for characters in: {characters_path}")
 
         if not os.path.isdir(characters_path):
-            logger.warning(f"Characters directory not found at: {characters_path}")
+            logger.warning(
+                f"Characters directory not found at: {characters_path}"
+            )
             # Create directory if it doesn't exist
             os.makedirs(characters_path, exist_ok=True)
             return CharactersListResponse(characters=[])
@@ -324,14 +323,19 @@ async def get_characters() -> CharactersListResponse:
         return CharactersListResponse(characters=characters)
     except FileNotFoundError as e:
         logger.error(f"File not found error: {e}")
-        raise HTTPException(status_code=404, detail="Characters directory not found.")
+        raise HTTPException(
+            status_code=404, detail="Characters directory not found."
+        )
     except PermissionError as e:
         logger.error(f"Permission error accessing characters: {e}")
         raise HTTPException(
-            status_code=500, detail="Permission denied accessing characters directory."
+            status_code=500,
+            detail="Permission denied accessing characters directory.",
         )
     except Exception as e:
-        logger.error(f"Unexpected error retrieving characters: {e}", exc_info=True)
+        logger.error(
+            f"Unexpected error retrieving characters: {e}", exc_info=True
+        )
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve characters: {str(e)}"
         )
@@ -347,12 +351,15 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
         # Validate request
         if not request.character_names:
             raise HTTPException(
-                status_code=400, detail="At least one character name is required"
+                status_code=400,
+                detail="At least one character name is required",
             )
 
         # Load configuration
         config = get_config()
-        turns_to_execute = request.turns or getattr(config.simulation, "turns", 3)
+        turns_to_execute = request.turns or getattr(
+            config.simulation, "turns", 3
+        )
 
         # Validate characters exist
         characters_path = _get_characters_directory_path()
@@ -360,7 +367,8 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
             char_path = os.path.join(characters_path, char_name)
             if not os.path.isdir(char_path):
                 raise HTTPException(
-                    status_code=400, detail=f"Character '{char_name}' not found"
+                    status_code=400,
+                    detail=f"Character '{char_name}' not found",
                 )
 
         # Initialize components
@@ -373,9 +381,13 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
             try:
                 agent = character_factory.create_character(name)
                 agents.append(agent)
-                logger.info(f"Successfully created agent for character: {name}")
+                logger.info(
+                    f"Successfully created agent for character: {name}"
+                )
             except Exception as e:
-                logger.error(f"Failed to create agent for character {name}: {e}")
+                logger.error(
+                    f"Failed to create agent for character {name}: {e}"
+                )
                 raise HTTPException(
                     status_code=400,
                     detail=f"Failed to load character '{name}': {str(e)}",
@@ -395,7 +407,9 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
         logger.info(f"Starting simulation with {turns_to_execute} turns")
         for turn_num in range(turns_to_execute):
             try:
-                logger.info(f"Executing turn {turn_num + 1}/{turns_to_execute}")
+                logger.info(
+                    f"Executing turn {turn_num + 1}/{turns_to_execute}"
+                )
                 director.run_turn()
             except Exception as e:
                 logger.error(f"Error during turn {turn_num + 1}: {e}")
@@ -439,7 +453,9 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
             status_code=404, detail=f"Required file not found: {str(e)}"
         )
     except Exception as e:
-        logger.error(f"Simulation failed with unexpected error: {e}", exc_info=True)
+        logger.error(
+            f"Simulation failed with unexpected error: {e}", exc_info=True
+        )
         raise HTTPException(
             status_code=500, detail=f"Simulation execution failed: {str(e)}"
         )
@@ -496,7 +512,9 @@ async def get_character_detail(character_id: str):
             }
 
             char_name = getattr(
-                character, "name", default_names.get(character_id, character_id)
+                character,
+                "name",
+                default_names.get(character_id, character_id),
             )
 
             # Set proper specialization
@@ -524,7 +542,9 @@ async def get_character_detail(character_id: str):
                         "attributes": getattr(character, "attributes", {}),
                     },
                     "background": getattr(character, "background_summary", ""),
-                    "personality": getattr(character, "personality_traits", ""),
+                    "personality": getattr(
+                        character, "personality_traits", ""
+                    ),
                     "relationships": getattr(character, "relationships", {}),
                     "inventory": getattr(character, "inventory", []),
                 },
@@ -561,7 +581,8 @@ async def get_character_detail(character_id: str):
                     "stats": {
                         "character": {
                             "name": default_names.get(
-                                character_id, character_id.replace("_", " ").title()
+                                character_id,
+                                character_id.replace("_", " ").title(),
                             ),
                             "faction": "Galactic Defense Force",
                             "specialization": specialization,
@@ -580,10 +601,12 @@ async def get_character_detail(character_id: str):
         raise
     except Exception as e:
         logger.error(
-            f"Unexpected error retrieving character {character_id}: {e}", exc_info=True
+            f"Unexpected error retrieving character {character_id}: {e}",
+            exc_info=True,
         )
         raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve character details: {str(e)}"
+            status_code=500,
+            detail=f"Failed to retrieve character details: {str(e)}",
         )
 
 
@@ -599,7 +622,9 @@ async def get_campaigns() -> CampaignsListResponse:
             if os.path.isdir(campaigns_path):
                 for item in os.listdir(campaigns_path):
                     if item.endswith(".md") or item.endswith(".json"):
-                        campaign_name = item.replace(".md", "").replace(".json", "")
+                        campaign_name = item.replace(".md", "").replace(
+                            ".json", ""
+                        )
                         if campaign_name not in campaigns:
                             campaigns.append(campaign_name)
 
@@ -613,7 +638,9 @@ async def get_campaigns() -> CampaignsListResponse:
 
 
 @app.post("/campaigns", response_model=CampaignCreationResponse)
-async def create_campaign(request: CampaignCreationRequest) -> CampaignCreationResponse:
+async def create_campaign(
+    request: CampaignCreationRequest,
+) -> CampaignCreationResponse:
     """Creates a new campaign."""
     try:
         campaign_id = f"campaign_{uuid.uuid4().hex[:8]}"
@@ -650,18 +677,22 @@ async def create_campaign(request: CampaignCreationRequest) -> CampaignCreationR
 
 def run_server(host: str = "127.0.0.1", port: int = 8000, debug: bool = False):
     """Runs the FastAPI server."""
-    uvicorn.run("api_server:app", host=host, port=port, reload=debug, log_level="info")
+    uvicorn.run(
+        "api_server:app", host=host, port=port, reload=debug, log_level="info"
+    )
 
 
 @app.get("/meta/system-status")
 async def system_status():
     """Get comprehensive system status information."""
-    import time
-    import psutil
 
     return {
         "status": "operational",
-        "components": {"api": "healthy", "agents": "healthy", "storage": "healthy"},
+        "components": {
+            "api": "healthy",
+            "agents": "healthy",
+            "storage": "healthy",
+        },
         "metrics": {
             "cpu_percent": psutil.cpu_percent(),
             "memory_percent": psutil.virtual_memory().percent,
@@ -701,7 +732,9 @@ async def get_enhanced_character(character_id: str):
         return {
             "id": character_id,
             "name": getattr(
-                character.character, "name", character_id.replace("_", " ").title()
+                character.character,
+                "name",
+                character_id.replace("_", " ").title(),
             ),
             "description": getattr(
                 character.character,
@@ -709,7 +742,9 @@ async def get_enhanced_character(character_id: str):
                 f"Enhanced character profile for {character_id}",
             ),
             "personality": getattr(
-                character.character, "personality_traits", "Unknown personality"
+                character.character,
+                "personality_traits",
+                "Unknown personality",
             ),
             "relationships": getattr(character.character, "relationships", {}),
             "backstory": getattr(character.character, "backstory", ""),
@@ -726,7 +761,8 @@ async def get_enhanced_character(character_id: str):
     except Exception as e:
         logger.error(f"Error getting enhanced character {character_id}: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Error loading enhanced character: {str(e)}"
+            status_code=500,
+            detail=f"Error loading enhanced character: {str(e)}",
         )
 
 

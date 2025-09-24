@@ -81,7 +81,13 @@ class TestPlotPointImportanceEnum:
 
     def test_all_importance_levels_exist(self):
         """Test that all expected importance levels are defined."""
-        expected_levels = {"CRITICAL", "MAJOR", "MODERATE", "MINOR", "SUPPLEMENTAL"}
+        expected_levels = {
+            "CRITICAL",
+            "MAJOR",
+            "MODERATE",
+            "MINOR",
+            "SUPPLEMENTAL",
+        }
         actual_levels = {item.name for item in PlotPointImportance}
         assert actual_levels == expected_levels
 
@@ -185,8 +191,14 @@ class TestPlotPointCreation:
         assert plot_point.emotional_intensity == Decimal("9.5")
         assert plot_point.dramatic_tension == Decimal("10.0")
         assert plot_point.story_significance == Decimal("9.8")
-        assert plot_point.prerequisite_events == ["hero_training", "villain_revealed"]
-        assert plot_point.triggered_consequences == ["world_saved", "hero_transformed"]
+        assert plot_point.prerequisite_events == [
+            "hero_training",
+            "villain_revealed",
+        ]
+        assert plot_point.triggered_consequences == [
+            "world_saved",
+            "hero_transformed",
+        ]
         assert plot_point.reveals_information is True
         assert plot_point.changes_character_relationships is True
         assert plot_point.advances_main_plot is True
@@ -258,7 +270,9 @@ class TestPlotPointValidation:
 
     def test_empty_title_validation(self):
         """Test validation fails with empty title."""
-        with pytest.raises(ValueError, match="Plot point title cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Plot point title cannot be empty"
+        ):
             PlotPoint(
                 plot_point_id="empty-title-test",
                 plot_point_type=PlotPointType.COMPLICATION,
@@ -270,7 +284,9 @@ class TestPlotPointValidation:
 
     def test_whitespace_only_title_validation(self):
         """Test validation fails with whitespace-only title."""
-        with pytest.raises(ValueError, match="Plot point title cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Plot point title cannot be empty"
+        ):
             PlotPoint(
                 plot_point_id="whitespace-title-test",
                 plot_point_type=PlotPointType.COMPLICATION,
@@ -282,7 +298,9 @@ class TestPlotPointValidation:
 
     def test_empty_description_validation(self):
         """Test validation fails with empty description."""
-        with pytest.raises(ValueError, match="Plot point description cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Plot point description cannot be empty"
+        ):
             PlotPoint(
                 plot_point_id="empty-desc-test",
                 plot_point_type=PlotPointType.SETBACK,
@@ -294,7 +312,9 @@ class TestPlotPointValidation:
 
     def test_whitespace_only_description_validation(self):
         """Test validation fails with whitespace-only description."""
-        with pytest.raises(ValueError, match="Plot point description cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Plot point description cannot be empty"
+        ):
             PlotPoint(
                 plot_point_id="whitespace-desc-test",
                 plot_point_type=PlotPointType.SETBACK,
@@ -306,7 +326,9 @@ class TestPlotPointValidation:
 
     def test_negative_sequence_order_validation(self):
         """Test validation fails with negative sequence order."""
-        with pytest.raises(ValueError, match="Sequence order must be non-negative"):
+        with pytest.raises(
+            ValueError, match="Sequence order must be non-negative"
+        ):
             PlotPoint(
                 plot_point_id="negative-seq-test",
                 plot_point_type=PlotPointType.TRIUMPH,
@@ -332,7 +354,8 @@ class TestPlotPointValidation:
     def test_negative_estimated_duration_validation(self):
         """Test validation fails with negative estimated duration."""
         with pytest.raises(
-            ValueError, match="Estimated duration must be positive if specified"
+            ValueError,
+            match="Estimated duration must be positive if specified",
         ):
             PlotPoint(
                 plot_point_id="negative-duration-test",
@@ -347,7 +370,8 @@ class TestPlotPointValidation:
     def test_zero_estimated_duration_validation(self):
         """Test validation fails with zero estimated duration."""
         with pytest.raises(
-            ValueError, match="Estimated duration must be positive if specified"
+            ValueError,
+            match="Estimated duration must be positive if specified",
         ):
             PlotPoint(
                 plot_point_id="zero-duration-test",
@@ -472,7 +496,8 @@ class TestPlotPointValidation:
         long_title = "x" * 201  # 201 characters
 
         with pytest.raises(
-            ValueError, match="Plot point title too long \\(max 200 characters\\)"
+            ValueError,
+            match="Plot point title too long \\(max 200 characters\\)",
         ):
             PlotPoint(
                 plot_point_id="long-title-test",
@@ -659,7 +684,10 @@ class TestPlotPointProperties:
             title="Confrontation Scene",
             description="Major confrontation",
             sequence_order=60,
-            prerequisite_events=["character_development", "relationship_strain"],
+            prerequisite_events=[
+                "character_development",
+                "relationship_strain",
+            ],
         )
 
         assert plot_point.has_prerequisites is True
@@ -942,7 +970,9 @@ class TestPlotPointFactoryMethods:
             story_significance=Decimal("7.0"),
         )
 
-        updated = original.with_updated_intensity(emotional_intensity=Decimal("9.0"))
+        updated = original.with_updated_intensity(
+            emotional_intensity=Decimal("9.0")
+        )
 
         # Updated value should change
         assert updated.emotional_intensity == Decimal("9.0")
@@ -969,7 +999,8 @@ class TestPlotPointFactoryMethods:
         )
 
         updated = original.with_updated_intensity(
-            emotional_intensity=Decimal("10.0"), dramatic_tension=Decimal("10.0")
+            emotional_intensity=Decimal("10.0"),
+            dramatic_tension=Decimal("10.0"),
         )
 
         # Updated values should change
@@ -1016,7 +1047,9 @@ class TestPlotPointFactoryMethods:
             emotional_intensity=Decimal("6.0"),
         )
 
-        updated = original.with_updated_intensity(emotional_intensity=Decimal("9.0"))
+        updated = original.with_updated_intensity(
+            emotional_intensity=Decimal("9.0")
+        )
 
         # Original should remain unchanged
         assert original.emotional_intensity == Decimal("6.0")

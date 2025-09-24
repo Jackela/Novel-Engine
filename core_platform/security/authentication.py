@@ -9,18 +9,33 @@ session management, and security validation for Novel Engine platform.
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
+from uuid import UUID
 
 import bcrypt
 import jwt
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, or_
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    or_,
+)
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
 from ..config.settings import get_security_settings
 from ..persistence.models import BaseModel as DBModel
 from ..persistence.models import TimestampMixin
+from ..persistence.sqlalchemy_types import (
+    AuthenticationTypes,
+    SQLAlchemyTyping,
+    ensure_not_none,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -94,53 +109,58 @@ class User(DBModel, TimestampMixin):
 
     def set_password(self, password: str) -> None:
         """Set user password with proper hashing."""
-        self.salt = secrets.token_hex(32)
-        self.password_hash = self._hash_password(password, self.salt)
-        self.password_changed_at = datetime.now(timezone.utc)
+        salt_value = secrets.token_hex(32)
+        self.salt = salt_value  # type: ignore[assignment]
+        self.password_hash = self._hash_password(password, salt_value)  # type: ignore[assignment]
+        self.password_changed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
 
     def verify_password(self, password: str) -> bool:
         """Verify password against stored hash."""
-        return self._hash_password(password, self.salt) == self.password_hash
+        # At runtime, salt and password_hash are str, not Column[str]
+        salt_value = str(self.salt)
+        hash_value = str(self.password_hash)
+        return self._hash_password(password, salt_value) == hash_value
 
     def is_locked(self) -> bool:
         """Check if account is locked due to failed login attempts."""
-        if self.locked_until is None:
+        # At runtime, locked_until is Optional[datetime], not Column[datetime]
+        locked_until_value = self.locked_until
+        if locked_until_value is None:
             return False
-        return datetime.now(timezone.utc) < self.locked_until
+        # Explicitly convert to bool to handle SQLAlchemy Column operations
+        return bool(locked_until_value > datetime.now(timezone.utc))
 
     def lock_account(self, duration_minutes: int = 15) -> None:
         """Lock account for specified duration."""
-        self.locked_until = datetime.now(timezone.utc) + timedelta(
-            minutes=duration_minutes
-        )
+        self.locked_until = datetime.now(timezone.utc) + timedelta(minutes=duration_minutes)  # type: ignore[assignment]
 
     def unlock_account(self) -> None:
         """Unlock account and reset failed attempts."""
-        self.failed_login_attempts = 0
-        self.locked_until = None
+        self.failed_login_attempts = 0  # type: ignore[assignment]
+        self.locked_until = None  # type: ignore[assignment]
 
     def increment_failed_attempts(self, max_attempts: int = 5) -> None:
         """Increment failed login attempts and lock if necessary."""
-        self.failed_login_attempts += 1
-        if self.failed_login_attempts >= max_attempts:
+        # At runtime, failed_login_attempts is int, not Column[int]
+        current_attempts = int(self.failed_login_attempts)
+        self.failed_login_attempts = current_attempts + 1  # type: ignore[assignment]
+        if int(self.failed_login_attempts) >= max_attempts:
             self.lock_account()
 
     def generate_password_reset_token(self, expires_hours: int = 24) -> str:
         """Generate password reset token."""
         token = secrets.token_urlsafe(32)
-        self.password_reset_token = token
-        self.password_reset_expires = datetime.now(timezone.utc) + timedelta(
-            hours=expires_hours
-        )
+        self.password_reset_token = token  # type: ignore[assignment]
+        self.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=expires_hours)  # type: ignore[assignment]
         return token
 
-    def generate_email_verification_token(self, expires_hours: int = 24) -> str:
+    def generate_email_verification_token(
+        self, expires_hours: int = 24
+    ) -> str:
         """Generate email verification token."""
         token = secrets.token_urlsafe(32)
-        self.email_verification_token = token
-        self.email_verification_expires = datetime.now(timezone.utc) + timedelta(
-            hours=expires_hours
-        )
+        self.email_verification_token = token  # type: ignore[assignment]
+        self.email_verification_expires = datetime.now(timezone.utc) + timedelta(hours=expires_hours)  # type: ignore[assignment]
         return token
 
     @staticmethod
@@ -178,7 +198,9 @@ class Permission(DBModel, TimestampMixin):
     description = Column(Text, nullable=True)
 
     # Relationships
-    role_permissions = relationship("RolePermission", back_populates="permission")
+    role_permissions = relationship(
+        "RolePermission", back_populates="permission"
+    )
 
 
 class UserRole(DBModel, TimestampMixin):
@@ -187,19 +209,29 @@ class UserRole(DBModel, TimestampMixin):
     __tablename__ = "user_roles"
 
     user_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True,
     )
     role_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("roles.id"), nullable=False, index=True
+        PGUUID(as_uuid=True),
+        ForeignKey("roles.id"),
+        nullable=False,
+        index=True,
     )
-    granted_by = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    granted_by = Column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
     granted_at = Column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
     expires_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user = relationship("User", back_populates="user_roles", foreign_keys=[user_id])
+    user = relationship(
+        "User", back_populates="user_roles", foreign_keys=[user_id]
+    )
     role = relationship("Role", back_populates="user_roles")
     granted_by_user = relationship("User", foreign_keys=[granted_by])
 
@@ -210,12 +242,20 @@ class RolePermission(DBModel, TimestampMixin):
     __tablename__ = "role_permissions"
 
     role_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("roles.id"), nullable=False, index=True
+        PGUUID(as_uuid=True),
+        ForeignKey("roles.id"),
+        nullable=False,
+        index=True,
     )
     permission_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("permissions.id"), nullable=False, index=True
+        PGUUID(as_uuid=True),
+        ForeignKey("permissions.id"),
+        nullable=False,
+        index=True,
     )
-    granted_by = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    granted_by = Column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
     granted_at = Column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
@@ -232,10 +272,17 @@ class UserSession(DBModel, TimestampMixin):
     __tablename__ = "user_sessions"
 
     user_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True,
     )
-    session_token = Column(String(255), unique=True, nullable=False, index=True)
-    refresh_token = Column(String(255), unique=True, nullable=False, index=True)
+    session_token = Column(
+        String(255), unique=True, nullable=False, index=True
+    )
+    refresh_token = Column(
+        String(255), unique=True, nullable=False, index=True
+    )
 
     # Session metadata
     ip_address = Column(String(45), nullable=True)
@@ -344,29 +391,39 @@ class AuthenticationService:
         try:
             with get_db_session() as session:
                 # Find user by email
-                user = session.query(User).filter(User.email == email.lower()).first()
+                user = (
+                    session.query(User)
+                    .filter(User.email == email.lower())
+                    .first()
+                )
 
                 if not user:
-                    raise InvalidCredentialsException("Invalid email or password")
+                    raise InvalidCredentialsException(
+                        "Invalid email or password"
+                    )
 
                 # Check account status
                 if not user.is_active:
                     raise AuthenticationException("Account is deactivated")
 
                 if user.is_locked():
-                    raise AuthenticationException("Account is temporarily locked")
+                    raise AuthenticationException(
+                        "Account is temporarily locked"
+                    )
 
                 # Verify password
                 if not user.verify_password(password):
                     user.increment_failed_attempts()
                     session.commit()
-                    raise InvalidCredentialsException("Invalid email or password")
+                    raise InvalidCredentialsException(
+                        "Invalid email or password"
+                    )
 
                 # Reset failed attempts on successful login
-                user.failed_login_attempts = 0
-                user.locked_until = None
-                user.last_login_at = datetime.now(timezone.utc)
-                user.last_login_ip = ip_address
+                user.failed_login_attempts = 0  # type: ignore[assignment]
+                user.locked_until = None  # type: ignore[assignment]
+                user.last_login_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+                user.last_login_ip = ip_address  # type: ignore[assignment]
 
                 # Generate tokens
                 access_token = self._generate_access_token(user)
@@ -438,7 +495,7 @@ class AuthenticationService:
                     session.query(UserSession)
                     .filter(
                         UserSession.refresh_token == refresh_token,
-                        UserSession.is_active is True,
+                        UserSession.is_active == True,  # type: ignore[comparison-overlap]
                     )
                     .first()
                 )
@@ -451,12 +508,10 @@ class AuthenticationService:
                 new_refresh_token = self._generate_refresh_token(user)
 
                 # Update session
-                session_record.session_token = access_token
-                session_record.refresh_token = new_refresh_token
-                session_record.expires_at = datetime.now(timezone.utc) + timedelta(
-                    seconds=self._access_token_expires
-                )
-                session_record.last_activity_at = datetime.now(timezone.utc)
+                session_record.session_token = access_token  # type: ignore[assignment]
+                session_record.refresh_token = new_refresh_token  # type: ignore[assignment]
+                session_record.expires_at = datetime.now(timezone.utc) + timedelta(seconds=self._access_token_expires)  # type: ignore[assignment]
+                session_record.last_activity_at = datetime.now(timezone.utc)  # type: ignore[assignment]
 
                 session.commit()
 
@@ -493,7 +548,9 @@ class AuthenticationService:
         """
         try:
             # Decode token
-            payload = jwt.decode(token, self._secret_key, algorithms=[self._algorithm])
+            payload = jwt.decode(
+                token, self._secret_key, algorithms=[self._algorithm]
+            )
 
             user_id = payload.get("user_id")
             if not user_id:
@@ -512,13 +569,13 @@ class AuthenticationService:
                     session.query(UserSession)
                     .filter(
                         UserSession.session_token == token,
-                        UserSession.is_active is True,
+                        UserSession.is_active == True,  # type: ignore[comparison-overlap]
                     )
                     .first()
                 )
 
                 if session_record:
-                    session_record.last_activity_at = datetime.now(timezone.utc)
+                    session_record.last_activity_at = datetime.now(timezone.utc)  # type: ignore[assignment]
                     session.commit()
 
                 # Get user info
@@ -526,11 +583,11 @@ class AuthenticationService:
 
                 return UserInfo(
                     id=str(user.id),
-                    email=user.email,
-                    username=user.username,
-                    full_name=user.full_name,
-                    is_active=user.is_active,
-                    is_verified=user.is_verified,
+                    email=str(user.email),
+                    username=str(user.username),
+                    full_name=str(user.full_name),
+                    is_active=bool(user.is_active),
+                    is_verified=bool(user.is_verified),
                     roles=user_info.get("roles", []),
                     permissions=user_info.get("permissions", []),
                 )
@@ -559,13 +616,13 @@ class AuthenticationService:
                     session.query(UserSession)
                     .filter(
                         UserSession.session_token == token,
-                        UserSession.is_active is True,
+                        UserSession.is_active == True,  # type: ignore[comparison-overlap]
                     )
                     .first()
                 )
 
                 if session_record:
-                    session_record.is_active = False
+                    session_record.is_active = False  # type: ignore[assignment]
                     session.commit()
 
         except Exception as e:

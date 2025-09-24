@@ -8,7 +8,7 @@ within the Interaction bounded context.
 """
 
 from decimal import Decimal
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence, cast
 
 from ..value_objects.negotiation_party import (
     CommunicationPreference,
@@ -20,6 +20,7 @@ from ..value_objects.proposal_response import ProposalResponse, ResponseType
 from ..value_objects.proposal_terms import (
     ProposalPriority,
     ProposalTerms,
+    ProposalType,
     TermCondition,
 )
 
@@ -54,14 +55,22 @@ class NegotiationService:
 
         # Authority compatibility
         authority_score = self._assess_authority_compatibility(party1, party2)
-        compatibility_score += (authority_score - Decimal("50")) * Decimal("0.3")
+        compatibility_score += (authority_score - Decimal("50")) * Decimal(
+            "0.3"
+        )
 
         # Communication style compatibility
-        communication_score = self._assess_communication_compatibility(party1, party2)
-        compatibility_score += (communication_score - Decimal("50")) * Decimal("0.25")
+        communication_score = self._assess_communication_compatibility(
+            party1, party2
+        )
+        compatibility_score += (communication_score - Decimal("50")) * Decimal(
+            "0.25"
+        )
 
         # Negotiation style compatibility
-        style_score = self._assess_negotiation_style_compatibility(party1, party2)
+        style_score = self._assess_negotiation_style_compatibility(
+            party1, party2
+        )
         compatibility_score += (style_score - Decimal("50")) * Decimal("0.2")
 
         # Domain expertise compatibility
@@ -69,7 +78,9 @@ class NegotiationService:
             domain_score = self._assess_domain_expertise_compatibility(
                 party1, party2, negotiation_domain
             )
-            compatibility_score += (domain_score - Decimal("50")) * Decimal("0.15")
+            compatibility_score += (domain_score - Decimal("50")) * Decimal(
+                "0.15"
+            )
 
         # Time preferences compatibility
         time_score = self._assess_time_compatibility(party1, party2)
@@ -82,25 +93,27 @@ class NegotiationService:
         proposal: ProposalTerms,
         parties: List[NegotiationParty],
         negotiation_domain: Optional[str] = None,
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Analyze the viability of a proposal given the negotiating parties.
 
         Returns comprehensive analysis including acceptance probability,
         risk factors, and optimization suggestions.
         """
-        analysis = {
+        analysis: Dict[str, Any] = {
             "overall_viability_score": Decimal("0"),
             "acceptance_probability": Decimal("0"),
-            "risk_factors": [],
-            "optimization_suggestions": [],
-            "party_specific_analysis": {},
-            "critical_issues": [],
-            "success_factors": [],
+            "risk_factors": cast(List[str], []),
+            "optimization_suggestions": cast(List[str], []),
+            "party_specific_analysis": cast(Dict[str, Any], {}),
+            "critical_issues": cast(List[str], []),
+            "success_factors": cast(List[str], []),
         }
 
         if not parties:
-            analysis["critical_issues"].append("No parties to analyze")
+            cast(List[str], analysis["critical_issues"]).append(
+                "No parties to analyze"
+            )
             return analysis
 
         # Analyze each party's likely response
@@ -110,23 +123,29 @@ class NegotiationService:
                 party_analysis = self._analyze_party_proposal_fit(
                     proposal, party, negotiation_domain
                 )
-                analysis["party_specific_analysis"][
+                cast(Dict[str, Any], analysis["party_specific_analysis"])[
                     str(party.party_id)
                 ] = party_analysis
                 party_scores.append(party_analysis["acceptance_score"])
 
         if party_scores:
             # Overall viability based on decision makers
-            analysis["overall_viability_score"] = sum(party_scores) / len(party_scores)
-            analysis["acceptance_probability"] = self._calculate_acceptance_probability(
-                party_scores, proposal
+            analysis["overall_viability_score"] = sum(party_scores) / len(
+                party_scores
             )
+            analysis[
+                "acceptance_probability"
+            ] = self._calculate_acceptance_probability(party_scores, proposal)
 
         # Identify risk factors
-        analysis["risk_factors"] = self._identify_proposal_risks(proposal, parties)
+        analysis["risk_factors"] = self._identify_proposal_risks(
+            proposal, parties
+        )
 
         # Generate optimization suggestions
-        analysis["optimization_suggestions"] = self._generate_optimization_suggestions(
+        analysis[
+            "optimization_suggestions"
+        ] = self._generate_optimization_suggestions(
             proposal, parties, analysis["party_specific_analysis"]
         )
 
@@ -136,7 +155,9 @@ class NegotiationService:
         )
 
         # Identify success factors
-        analysis["success_factors"] = self._identify_success_factors(proposal, parties)
+        analysis["success_factors"] = self._identify_success_factors(
+            proposal, parties
+        )
 
         return analysis
 
@@ -145,21 +166,21 @@ class NegotiationService:
         parties: List[NegotiationParty],
         negotiation_domain: Optional[str] = None,
         target_outcome: Optional[str] = None,
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Recommend negotiation strategy based on party composition and goals.
 
         Returns strategic recommendations including approach, tactics,
         sequence, and risk mitigation.
         """
-        strategy = {
+        strategy: Dict[str, Any] = {
             "recommended_approach": "collaborative",
-            "phase_sequence": [],
-            "key_tactics": [],
-            "risk_mitigation": [],
-            "success_metrics": [],
-            "timeline_recommendations": {},
-            "party_specific_strategies": {},
+            "phase_sequence": cast(List[str], []),
+            "key_tactics": cast(List[str], []),
+            "risk_mitigation": cast(List[str], []),
+            "success_metrics": cast(List[str], []),
+            "timeline_recommendations": cast(Dict[str, Any], {}),
+            "party_specific_strategies": cast(Dict[str, Any], {}),
         }
 
         if not parties:
@@ -179,7 +200,7 @@ class NegotiationService:
 
         # Recommend phase sequence
         strategy["phase_sequence"] = self._recommend_phase_sequence(
-            parties, strategy["recommended_approach"]
+            parties, cast(str, strategy["recommended_approach"])
         )
 
         # Recommend key tactics
@@ -199,22 +220,24 @@ class NegotiationService:
 
         # Timeline recommendations
         strategy["timeline_recommendations"] = self._recommend_timeline(
-            parties, strategy["recommended_approach"]
+            parties, cast(str, strategy["recommended_approach"])
         )
 
         # Party-specific strategies
         for party in decision_makers:
-            strategy["party_specific_strategies"][str(party.party_id)] = (
-                self._recommend_party_specific_strategy(
-                    party, parties, negotiation_domain
-                )
+            cast(Dict[str, Any], strategy["party_specific_strategies"])[
+                str(party.party_id)
+            ] = self._recommend_party_specific_strategy(
+                party, parties, negotiation_domain
             )
 
         return strategy
 
     def detect_negotiation_conflicts(
-        self, parties: List[NegotiationParty], responses: List[ProposalResponse]
-    ) -> List[Dict[str, any]]:
+        self,
+        parties: List[NegotiationParty],
+        responses: List[ProposalResponse],
+    ) -> List[Dict[str, Any]]:
         """
         Detect conflicts in negotiation based on parties and responses.
 
@@ -248,21 +271,21 @@ class NegotiationService:
         self,
         responses: List[ProposalResponse],
         phase: NegotiationPhase,
-        time_factors: Optional[Dict[str, any]] = None,
-    ) -> Dict[str, any]:
+        time_factors: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Calculate negotiation momentum and trajectory.
 
         Returns momentum analysis including direction, velocity, and predictions.
         """
-        momentum = {
+        momentum: Dict[str, Any] = {
             "momentum_score": Decimal("0"),
             "direction": "stagnant",
             "velocity": "slow",
             "trajectory_prediction": "uncertain",
-            "key_drivers": [],
-            "inhibiting_factors": [],
-            "recommendations": [],
+            "key_drivers": cast(List[str], []),
+            "inhibiting_factors": cast(List[str], []),
+            "recommendations": cast(List[str], []),
         }
 
         if not responses:
@@ -275,7 +298,9 @@ class NegotiationService:
 
         # Overall momentum score
         momentum_factors = [acceptance_trend, response_speed, engagement_level]
-        momentum["momentum_score"] = sum(momentum_factors) / len(momentum_factors)
+        momentum["momentum_score"] = sum(momentum_factors) / len(
+            momentum_factors
+        )
 
         # Determine direction
         momentum["direction"] = self._determine_momentum_direction(
@@ -288,18 +313,26 @@ class NegotiationService:
         )
 
         # Predict trajectory
-        momentum["trajectory_prediction"] = self._predict_negotiation_trajectory(
-            momentum["momentum_score"], momentum["direction"], phase
+        momentum[
+            "trajectory_prediction"
+        ] = self._predict_negotiation_trajectory(
+            cast(Decimal, momentum["momentum_score"]),
+            cast(str, momentum["direction"]),
+            phase,
         )
 
         # Identify key drivers
         momentum["key_drivers"] = self._identify_momentum_drivers(responses)
 
         # Identify inhibiting factors
-        momentum["inhibiting_factors"] = self._identify_momentum_inhibitors(responses)
+        momentum["inhibiting_factors"] = self._identify_momentum_inhibitors(
+            responses
+        )
 
         # Generate recommendations
-        momentum["recommendations"] = self._recommend_momentum_actions(momentum, phase)
+        momentum["recommendations"] = self._recommend_momentum_actions(
+            momentum, phase
+        )
 
         return momentum
 
@@ -308,17 +341,17 @@ class NegotiationService:
         proposal: ProposalTerms,
         parties: List[NegotiationParty],
         negotiation_domain: Optional[str] = None,
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Optimize proposal terms for better acceptance chances.
 
         Returns optimization suggestions and predicted improvements.
         """
-        optimization = {
+        optimization: Dict[str, Any] = {
             "optimized_terms": [],
             "expected_improvement": Decimal("0"),
-            "optimization_rationale": {},
-            "risk_assessment": {},
+            "optimization_rationale": cast(Dict[str, Any], {}),
+            "risk_assessment": cast(Dict[str, Any], {}),
             "implementation_difficulty": "medium",
         }
 
@@ -338,11 +371,13 @@ class NegotiationService:
         for term in proposal.terms:
             analysis = term_analysis[term.term_id]
             if analysis["optimization_potential"] > Decimal("10"):
-                optimized_term = self._optimize_term(term, analysis, decision_makers)
+                optimized_term = self._optimize_term(
+                    term, analysis, decision_makers
+                )
                 optimized_terms.append(optimized_term)
-                optimization["optimization_rationale"][term.term_id] = analysis[
-                    "reasoning"
-                ]
+                cast(Dict[str, Any], optimization["optimization_rationale"])[
+                    term.term_id
+                ] = analysis["reasoning"]
 
         optimization["optimized_terms"] = optimized_terms
 
@@ -369,9 +404,9 @@ class NegotiationService:
         )
 
         # Implementation difficulty
-        optimization["implementation_difficulty"] = (
-            self._assess_implementation_difficulty(optimized_terms)
-        )
+        optimization[
+            "implementation_difficulty"
+        ] = self._assess_implementation_difficulty(optimized_terms)
 
         return optimization
 
@@ -381,9 +416,17 @@ class NegotiationService:
         self, party1: NegotiationParty, party2: NegotiationParty
     ) -> Decimal:
         """Assess authority level compatibility between parties."""
-        if party1.can_make_binding_decisions() and party2.can_make_binding_decisions():
-            return Decimal("80")  # Both can make decisions - good compatibility
-        elif party1.can_make_binding_decisions() or party2.can_make_binding_decisions():
+        if (
+            party1.can_make_binding_decisions()
+            and party2.can_make_binding_decisions()
+        ):
+            return Decimal(
+                "80"
+            )  # Both can make decisions - good compatibility
+        elif (
+            party1.can_make_binding_decisions()
+            or party2.can_make_binding_decisions()
+        ):
             return Decimal("60")  # One decision maker - moderate compatibility
         else:
             return Decimal("20")  # No decision makers - poor compatibility
@@ -397,9 +440,10 @@ class NegotiationService:
 
         # Compatibility matrix for communication styles
         compatibility_matrix = {
-            (CommunicationPreference.DIRECT, CommunicationPreference.DIRECT): Decimal(
-                "90"
-            ),
+            (
+                CommunicationPreference.DIRECT,
+                CommunicationPreference.DIRECT,
+            ): Decimal("90"),
             (
                 CommunicationPreference.DIRECT,
                 CommunicationPreference.DIPLOMATIC,
@@ -408,9 +452,10 @@ class NegotiationService:
                 CommunicationPreference.DIPLOMATIC,
                 CommunicationPreference.DIPLOMATIC,
             ): Decimal("85"),
-            (CommunicationPreference.FORMAL, CommunicationPreference.FORMAL): Decimal(
-                "80"
-            ),
+            (
+                CommunicationPreference.FORMAL,
+                CommunicationPreference.FORMAL,
+            ): Decimal("80"),
             (
                 CommunicationPreference.INFORMAL,
                 CommunicationPreference.INFORMAL,
@@ -483,7 +528,9 @@ class NegotiationService:
             return Decimal("30")  # Both lack expertise - poor compatibility
 
         if not capabilities1 or not capabilities2:
-            return Decimal("60")  # Imbalanced expertise - moderate compatibility
+            return Decimal(
+                "60"
+            )  # Imbalanced expertise - moderate compatibility
 
         # Both have expertise - calculate balance
         power1 = party1.get_negotiation_power(domain)
@@ -523,10 +570,13 @@ class NegotiationService:
         return Decimal("70")  # Generally compatible
 
     def _analyze_party_proposal_fit(
-        self, proposal: ProposalTerms, party: NegotiationParty, domain: Optional[str]
-    ) -> Dict[str, any]:
+        self,
+        proposal: ProposalTerms,
+        party: NegotiationParty,
+        domain: Optional[str],
+    ) -> Dict[str, Any]:
         """Analyze how well a proposal fits a specific party."""
-        analysis = {
+        analysis: Dict[str, Any] = {
             "acceptance_score": Decimal("50"),
             "concerns": [],
             "positive_factors": [],
@@ -546,7 +596,9 @@ class NegotiationService:
                     f"Term {term.term_id}: {term.description}"
                 )
             elif term_score < 40:
-                analysis["concerns"].append(f"Term {term.term_id}: {term.description}")
+                analysis["concerns"].append(
+                    f"Term {term.term_id}: {term.description}"
+                )
             elif term_score > 70:
                 analysis["positive_factors"].append(
                     f"Term {term.term_id}: {term.description}"
@@ -563,7 +615,10 @@ class NegotiationService:
         return analysis
 
     def _score_term_for_party(
-        self, term: TermCondition, party: NegotiationParty, domain: Optional[str]
+        self,
+        term: TermCondition,
+        party: NegotiationParty,
+        domain: Optional[str],
     ) -> Decimal:
         """Score how acceptable a term is for a party."""
         base_score = Decimal("50")
@@ -583,7 +638,9 @@ class NegotiationService:
         if domain:
             expertise = party.get_negotiation_power(domain)
             if expertise > 70:
-                base_score += Decimal("10")  # High expertise = better evaluation
+                base_score += Decimal(
+                    "10"
+                )  # High expertise = better evaluation
             elif expertise < 30:
                 base_score -= Decimal("10")  # Low expertise = worse evaluation
 
@@ -603,12 +660,14 @@ class NegotiationService:
             return Decimal("0")
 
         # Base probability from average scores
-        avg_score = sum(party_scores) / len(party_scores)
-        base_probability = avg_score
+        avg_score = sum(party_scores) / Decimal(str(len(party_scores)))
+        base_probability: Decimal = avg_score
 
         # Adjust for proposal characteristics
         if proposal.is_expired:
-            base_probability *= Decimal("0.1")  # Expired proposals very unlikely
+            base_probability *= Decimal(
+                "0.1"
+            )  # Expired proposals very unlikely
 
         critical_terms = proposal.get_critical_terms()
         if len(critical_terms) > 5:
@@ -628,7 +687,9 @@ class NegotiationService:
             risks.append("Proposal has expired")
 
         if len(proposal.get_critical_terms()) > 3:
-            risks.append("High number of critical terms may reduce flexibility")
+            risks.append(
+                "High number of critical terms may reduce flexibility"
+            )
 
         non_negotiable = proposal.get_non_negotiable_terms()
         if len(non_negotiable) > len(proposal.terms) * 0.7:
@@ -645,13 +706,13 @@ class NegotiationService:
         self,
         proposal: ProposalTerms,
         parties: List[NegotiationParty],
-        party_analyses: Dict[str, any],
+        party_analyses: Dict[str, Any],
     ) -> List[str]:
         """Generate suggestions to optimize the proposal."""
         suggestions = []
 
         # Analyze common concerns
-        common_concerns = {}
+        common_concerns: Dict[str, int] = {}
         for analysis in party_analyses.values():
             for concern in analysis.get("concerns", []):
                 common_concerns[concern] = common_concerns.get(concern, 0) + 1
@@ -664,7 +725,9 @@ class NegotiationService:
         # Suggest making terms negotiable
         non_negotiable = proposal.get_non_negotiable_terms()
         if len(non_negotiable) > 2:
-            suggestions.append("Consider making some non-critical terms negotiable")
+            suggestions.append(
+                "Consider making some non-critical terms negotiable"
+            )
 
         # Suggest breaking down complex proposals
         if proposal.total_terms_count > 8:
@@ -703,11 +766,13 @@ class NegotiationService:
 
         negotiable_count = proposal.negotiable_terms_count
         if negotiable_count > proposal.total_terms_count // 2:
-            factors.append("Good proportion of negotiable terms allows flexibility")
+            factors.append(
+                "Good proportion of negotiable terms allows flexibility"
+            )
 
         if proposal.proposal_type in [
-            ProposalTerms.ProposalType.ALLIANCE_REQUEST,
-            ProposalTerms.ProposalType.RESOURCE_EXCHANGE,
+            ProposalType.ALLIANCE_REQUEST,
+            ProposalType.RESOURCE_EXCHANGE,
         ]:
             factors.append("Proposal type typically has good success rate")
 
@@ -721,7 +786,7 @@ class NegotiationService:
         self, parties: List[NegotiationParty]
     ) -> Dict[str, int]:
         """Analyze dominant negotiation styles in the group."""
-        style_counts = {}
+        style_counts: Dict[str, int] = {}
         for party in parties:
             style = party.preferences.negotiation_style.value
             style_counts[style] = style_counts.get(style, 0) + 1
@@ -730,11 +795,11 @@ class NegotiationService:
 
     def _analyze_negotiation_power_balance(
         self, parties: List[NegotiationParty], domain: Optional[str]
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Analyze the balance of negotiation power."""
-        power_analysis = {
+        power_analysis: Dict[str, Any] = {
             "total_power": Decimal("0"),
-            "power_distribution": {},
+            "power_distribution": cast(Dict[str, Any], {}),
             "imbalance_score": Decimal("0"),
             "dominant_party": None,
         }
@@ -754,7 +819,9 @@ class NegotiationService:
             min_power = min(powers)
 
             if max_power > 0:
-                power_analysis["imbalance_score"] = (max_power - min_power) / max_power
+                power_analysis["imbalance_score"] = (
+                    max_power - min_power
+                ) / max_power
 
                 # Find dominant party
                 for party in parties:
@@ -765,7 +832,7 @@ class NegotiationService:
         return power_analysis
 
     def _recommend_overall_approach(
-        self, dominant_styles: Dict[str, int], power_balance: Dict[str, any]
+        self, dominant_styles: Dict[str, int], power_balance: Dict[str, Any]
     ) -> str:
         """Recommend overall negotiation approach."""
         # If collaborative is dominant, recommend collaborative
@@ -788,7 +855,13 @@ class NegotiationService:
     ) -> List[str]:
         """Recommend negotiation phase sequence."""
         if approach == "collaborative":
-            return ["preparation", "opening", "brainstorming", "bargaining", "closing"]
+            return [
+                "preparation",
+                "opening",
+                "brainstorming",
+                "bargaining",
+                "closing",
+            ]
         elif approach == "diplomatic":
             return [
                 "preparation",
@@ -804,7 +877,7 @@ class NegotiationService:
         self,
         parties: List[NegotiationParty],
         dominant_styles: Dict[str, int],
-        power_balance: Dict[str, any],
+        power_balance: Dict[str, Any],
     ) -> List[str]:
         """Recommend specific negotiation tactics."""
         tactics = []
@@ -830,10 +903,14 @@ class NegotiationService:
         mitigations = []
 
         if dominant_styles.get("competitive", 0) > 1:
-            mitigations.append("Establish ground rules to prevent adversarial behavior")
+            mitigations.append(
+                "Establish ground rules to prevent adversarial behavior"
+            )
 
         if dominant_styles.get("avoiding", 0) > 0:
-            mitigations.append("Create structured agenda to encourage participation")
+            mitigations.append(
+                "Create structured agenda to encourage participation"
+            )
 
         mitigations.append("Plan for timeout scenarios")
         mitigations.append("Establish escalation procedures for deadlocks")
@@ -860,9 +937,9 @@ class NegotiationService:
 
     def _recommend_timeline(
         self, parties: List[NegotiationParty], approach: str
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Recommend timeline for negotiation phases."""
-        timeline = {}
+        timeline: Dict[str, Any] = {}
 
         # Base timeline depends on approach
         if approach == "diplomatic":
@@ -887,7 +964,9 @@ class NegotiationService:
         ]
 
         if len(high_pressure_parties) > len(parties) // 2:
-            timeline["note"] = "Accelerated timeline recommended due to time pressure"
+            timeline[
+                "note"
+            ] = "Accelerated timeline recommended due to time pressure"
 
         return timeline
 
@@ -896,13 +975,13 @@ class NegotiationService:
         party: NegotiationParty,
         all_parties: List[NegotiationParty],
         domain: Optional[str],
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Recommend strategy for specific party."""
-        strategy = {
+        strategy: Dict[str, Any] = {
             "communication_approach": "standard",
-            "key_motivators": [],
-            "potential_concerns": [],
-            "influence_tactics": [],
+            "key_motivators": cast(List[str], []),
+            "potential_concerns": cast(List[str], []),
+            "influence_tactics": cast(List[str], []),
         }
 
         # Communication approach based on preferences
@@ -917,15 +996,23 @@ class NegotiationService:
         # Key motivators based on negotiation style
         neg_style = party.preferences.negotiation_style
         if neg_style == NegotiationStyle.COLLABORATIVE:
-            strategy["key_motivators"].append("mutual benefit")
-            strategy["key_motivators"].append("long-term relationship")
+            cast(List[str], strategy["key_motivators"]).append(
+                "mutual benefit"
+            )
+            cast(List[str], strategy["key_motivators"]).append(
+                "long-term relationship"
+            )
         elif neg_style == NegotiationStyle.COMPETITIVE:
-            strategy["key_motivators"].append("winning outcomes")
-            strategy["key_motivators"].append("competitive advantage")
+            cast(List[str], strategy["key_motivators"]).append(
+                "winning outcomes"
+            )
+            cast(List[str], strategy["key_motivators"]).append(
+                "competitive advantage"
+            )
 
         # Authority-based concerns
         if not party.can_make_binding_decisions():
-            strategy["potential_concerns"].append(
+            cast(List[str], strategy["potential_concerns"]).append(
                 "need for approval from higher authority"
             )
 
@@ -933,14 +1020,18 @@ class NegotiationService:
         if domain:
             power = party.get_negotiation_power(domain)
             if power < 30:
-                strategy["potential_concerns"].append("limited domain expertise")
-                strategy["influence_tactics"].append("provide educational support")
+                cast(List[str], strategy["potential_concerns"]).append(
+                    "limited domain expertise"
+                )
+                cast(List[str], strategy["influence_tactics"]).append(
+                    "provide educational support"
+                )
 
         return strategy
 
     def _detect_style_conflicts(
         self, parties: List[NegotiationParty]
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         """Detect negotiation style conflicts."""
         conflicts = []
 
@@ -953,7 +1044,9 @@ class NegotiationService:
                     conflicts.append(
                         {
                             "type": "negotiation_style_conflict",
-                            "severity": "high" if compatibility < 20 else "medium",
+                            "severity": "high"
+                            if compatibility < 20
+                            else "medium",
                             "parties": [party1.party_id, party2.party_id],
                             "description": f"Incompatible negotiation styles: {party1.preferences.negotiation_style.value} vs {party2.preferences.negotiation_style.value}",
                             "resolution_suggestions": [
@@ -968,7 +1061,7 @@ class NegotiationService:
 
     def _detect_authority_conflicts(
         self, parties: List[NegotiationParty]
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         """Detect authority-related conflicts."""
         conflicts = []
 
@@ -994,7 +1087,9 @@ class NegotiationService:
                 {
                     "type": "authority_imbalance",
                     "severity": "medium",
-                    "parties": [p.party_id for p in parties if not p.is_decision_maker],
+                    "parties": [
+                        p.party_id for p in parties if not p.is_decision_maker
+                    ],
                     "description": "Only one party has decision-making authority",
                     "resolution_suggestions": [
                         "Grant conditional authority to other parties",
@@ -1008,16 +1103,17 @@ class NegotiationService:
 
     def _detect_response_conflicts(
         self, responses: List[ProposalResponse]
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         """Detect conflicts in proposal responses."""
         conflicts = []
 
         # Group responses by proposal
-        proposal_responses = {}
+        proposal_responses: Dict[str, List[ProposalResponse]] = {}
         for response in responses:
-            if response.proposal_id not in proposal_responses:
-                proposal_responses[response.proposal_id] = []
-            proposal_responses[response.proposal_id].append(response)
+            proposal_id_str = str(response.proposal_id)
+            if proposal_id_str not in proposal_responses:
+                proposal_responses[proposal_id_str] = []
+            proposal_responses[proposal_id_str].append(response)
 
         # Analyze each proposal's responses
         for proposal_id, prop_responses in proposal_responses.items():
@@ -1037,7 +1133,9 @@ class NegotiationService:
                     {
                         "type": "response_conflict",
                         "severity": "high",
-                        "parties": [r.responding_party_id for r in prop_responses],
+                        "parties": [
+                            r.responding_party_id for r in prop_responses
+                        ],
                         "description": f"Conflicting responses to proposal {proposal_id}: some accept, some reject",
                         "resolution_suggestions": [
                             "Focus on negotiable terms",
@@ -1051,7 +1149,7 @@ class NegotiationService:
 
     def _detect_cultural_conflicts(
         self, parties: List[NegotiationParty]
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         """Detect cultural conflicts between parties."""
         conflicts = []
 
@@ -1074,7 +1172,11 @@ class NegotiationService:
                 cultural1 = party1.preferences.cultural_considerations
                 cultural2 = party2.preferences.cultural_considerations
 
-                if cultural1 and cultural2 and not cultural1.intersection(cultural2):
+                if (
+                    cultural1
+                    and cultural2
+                    and not cultural1.intersection(cultural2)
+                ):
                     conflicts.append(
                         {
                             "type": "cultural_mismatch",
@@ -1094,7 +1196,7 @@ class NegotiationService:
 
     def _detect_time_conflicts(
         self, parties: List[NegotiationParty]
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         """Detect time-related conflicts."""
         conflicts = []
 
@@ -1128,7 +1230,9 @@ class NegotiationService:
                 )
 
         # Check for time pressure sensitivity conflicts
-        sensitivities = [p.preferences.time_pressure_sensitivity for p in parties]
+        sensitivities = [
+            p.preferences.time_pressure_sensitivity for p in parties
+        ]
         if max(sensitivities) - min(sensitivities) > 50:
             conflicts.append(
                 {
@@ -1146,13 +1250,17 @@ class NegotiationService:
 
         return conflicts
 
-    def _calculate_acceptance_trend(self, responses: List[ProposalResponse]) -> Decimal:
+    def _calculate_acceptance_trend(
+        self, responses: List[ProposalResponse]
+    ) -> Decimal:
         """Calculate trend in acceptance rates over time."""
         if len(responses) < 2:
             return Decimal("50")
 
         # Sort responses by timestamp
-        sorted_responses = sorted(responses, key=lambda r: r.response_timestamp)
+        sorted_responses = sorted(
+            responses, key=lambda r: r.response_timestamp
+        )
 
         # Calculate acceptance percentages
         acceptances = [r.get_acceptance_percentage() for r in sorted_responses]
@@ -1172,7 +1280,9 @@ class NegotiationService:
 
         return Decimal("50")
 
-    def _calculate_response_speed(self, responses: List[ProposalResponse]) -> Decimal:
+    def _calculate_response_speed(
+        self, responses: List[ProposalResponse]
+    ) -> Decimal:
         """Calculate response speed metric."""
         if not responses:
             return Decimal("50")
@@ -1185,7 +1295,9 @@ class NegotiationService:
         speed_score = min(len(recent_responses) * 20, 100)
         return Decimal(str(speed_score))
 
-    def _calculate_engagement_level(self, responses: List[ProposalResponse]) -> Decimal:
+    def _calculate_engagement_level(
+        self, responses: List[ProposalResponse]
+    ) -> Decimal:
         """Calculate engagement level from responses."""
         if not responses:
             return Decimal("0")
@@ -1257,7 +1369,10 @@ class NegotiationService:
                 r
                 for r in responses
                 if r.overall_response
-                in [ResponseType.CONDITIONAL_ACCEPT, ResponseType.COUNTER_PROPOSAL]
+                in [
+                    ResponseType.CONDITIONAL_ACCEPT,
+                    ResponseType.COUNTER_PROPOSAL,
+                ]
             ]
 
             if len(collaborative_responses) > len(responses) / 2:
@@ -1283,7 +1398,7 @@ class NegotiationService:
         return inhibitors
 
     def _recommend_momentum_actions(
-        self, momentum: Dict[str, any], phase: NegotiationPhase
+        self, momentum: Dict[str, Any], phase: NegotiationPhase
     ) -> List[str]:
         """Recommend actions to improve momentum."""
         recommendations = []
@@ -1296,7 +1411,10 @@ class NegotiationService:
             recommendations.append("Set more aggressive timelines")
             recommendations.append("Increase meeting frequency")
 
-        if phase == NegotiationPhase.BARGAINING and momentum["momentum_score"] < 40:
+        if (
+            phase == NegotiationPhase.BARGAINING
+            and momentum["momentum_score"] < 40
+        ):
             recommendations.append("Consider bringing in mediator")
             recommendations.append("Focus on win-win solutions")
 
@@ -1307,25 +1425,33 @@ class NegotiationService:
         term: TermCondition,
         parties: List[NegotiationParty],
         domain: Optional[str],
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Analyze how well a term performs with parties."""
-        analysis = {
+        analysis: Dict[str, Any] = {
             "optimization_potential": Decimal("0"),
             "reasoning": "",
             "suggested_changes": [],
         }
 
         # Simple analysis based on term characteristics
-        if not term.is_negotiable and term.priority != ProposalPriority.CRITICAL:
+        if (
+            not term.is_negotiable
+            and term.priority != ProposalPriority.CRITICAL
+        ):
             analysis["optimization_potential"] = Decimal("30")
-            analysis["reasoning"] = "Non-critical term could be made negotiable"
+            analysis[
+                "reasoning"
+            ] = "Non-critical term could be made negotiable"
             analysis["suggested_changes"].append("Make term negotiable")
 
-        if term.priority == ProposalPriority.LOW and len(term.dependencies or []) > 0:
+        if (
+            term.priority == ProposalPriority.LOW
+            and len(term.dependencies or []) > 0
+        ):
             analysis["optimization_potential"] = Decimal("20")
-            analysis["reasoning"] = (
-                "Low priority term with dependencies adds complexity"
-            )
+            analysis[
+                "reasoning"
+            ] = "Low priority term with dependencies adds complexity"
             analysis["suggested_changes"].append(
                 "Remove dependencies or increase priority"
             )
@@ -1335,7 +1461,7 @@ class NegotiationService:
     def _optimize_term(
         self,
         term: TermCondition,
-        analysis: Dict[str, any],
+        analysis: Dict[str, Any],
         parties: List[NegotiationParty],
     ) -> TermCondition:
         """Optimize a term based on analysis."""
@@ -1365,29 +1491,41 @@ class NegotiationService:
         if not parties:
             return Decimal("0")
 
-        party_scores = []
+        party_scores: List[Decimal] = []
         for party in parties:
             if party.is_decision_maker:
-                analysis = self._analyze_party_proposal_fit(proposal, party, None)
-                party_scores.append(analysis["acceptance_score"])
+                analysis = self._analyze_party_proposal_fit(
+                    proposal, party, None
+                )
+                party_scores.append(
+                    cast(Decimal, analysis["acceptance_score"])
+                )
 
         if party_scores:
-            return sum(party_scores) / len(party_scores)
+            return sum(party_scores) / Decimal(str(len(party_scores)))
 
         return Decimal("0")
 
     def _assess_optimization_risks(
-        self, optimized_terms: List[TermCondition], parties: List[NegotiationParty]
-    ) -> Dict[str, any]:
+        self,
+        optimized_terms: List[TermCondition],
+        parties: List[NegotiationParty],
+    ) -> Dict[str, Any]:
         """Assess risks of proposed optimizations."""
-        risks = {"risk_level": "low", "risk_factors": [], "mitigation_strategies": []}
+        risks: Dict[str, Any] = {
+            "risk_level": "low",
+            "risk_factors": cast(List[str], []),
+            "mitigation_strategies": cast(List[str], []),
+        }
 
         if len(optimized_terms) > 3:
             risks["risk_level"] = "medium"
-            risks["risk_factors"].append(
+            cast(List[str], risks["risk_factors"]).append(
                 "Many simultaneous changes may confuse parties"
             )
-            risks["mitigation_strategies"].append("Phase implementation of changes")
+            cast(List[str], risks["mitigation_strategies"]).append(
+                "Phase implementation of changes"
+            )
 
         return risks
 

@@ -143,7 +143,9 @@ class SystemErrorHandler:
             }
 
             # Start health monitoring
-            self._health_check_task = asyncio.create_task(self._health_check_loop())
+            self._health_check_task = asyncio.create_task(
+                self._health_check_loop()
+            )
 
             self.logger.info("System error handler initialized successfully")
             return True
@@ -221,7 +223,10 @@ class SystemErrorHandler:
             self.logger.critical(
                 f"Error handler failed while handling error: {handler_error}"
             )
-            return {"error": "error_handler_failure", "original_error": str(error)}
+            return {
+                "error": "error_handler_failure",
+                "original_error": str(error),
+            }
 
     async def recover_from_error(self, error_context: Dict[str, Any]) -> bool:
         """
@@ -236,7 +241,9 @@ class SystemErrorHandler:
         try:
             error_id = error_context.get("error_id")
             if not error_id or error_id not in self._error_records:
-                self.logger.warning(f"Cannot recover from unknown error: {error_id}")
+                self.logger.warning(
+                    f"Cannot recover from unknown error: {error_id}"
+                )
                 return False
 
             error_record = self._error_records[error_id]
@@ -247,7 +254,9 @@ class SystemErrorHandler:
             if recovery_result["successful"]:
                 error_record.resolved = True
                 error_record.resolution_time = datetime.now()
-                self.logger.info(f"Successfully recovered from error {error_id}")
+                self.logger.info(
+                    f"Successfully recovered from error {error_id}"
+                )
                 return True
             else:
                 self.logger.warning(f"Failed to recover from error {error_id}")
@@ -294,7 +303,9 @@ class SystemErrorHandler:
                     "system_health": health_status,
                     "error_patterns_learned": len(self._error_patterns),
                     "active_suppressions": len(self._suppressed_errors),
-                    "last_error_time": self._error_statistics["last_error_time"],
+                    "last_error_time": self._error_statistics[
+                        "last_error_time"
+                    ],
                 }
 
         except Exception as e:
@@ -306,14 +317,18 @@ class SystemErrorHandler:
     ) -> None:
         """Register a recovery function for specific error category."""
         self._recovery_functions[error_category] = recovery_func
-        self.logger.info(f"Registered recovery function for category: {error_category}")
+        self.logger.info(
+            f"Registered recovery function for category: {error_category}"
+        )
 
     async def register_fallback_function(
         self, context_key: str, fallback_func: Callable
     ) -> None:
         """Register a fallback function for specific context."""
         self._fallback_functions[context_key] = fallback_func
-        self.logger.info(f"Registered fallback function for context: {context_key}")
+        self.logger.info(
+            f"Registered fallback function for context: {context_key}"
+        )
 
     async def _define_default_error_patterns(self) -> None:
         """Define default error patterns for classification."""
@@ -393,7 +408,9 @@ class SystemErrorHandler:
             "pattern_id": "unknown",
         }
 
-    async def _attempt_recovery(self, error_record: ErrorRecord) -> Dict[str, Any]:
+    async def _attempt_recovery(
+        self, error_record: ErrorRecord
+    ) -> Dict[str, Any]:
         """Attempt error recovery based on strategy."""
         recovery_result = {
             "attempted": True,
@@ -441,7 +458,9 @@ class SystemErrorHandler:
                 "error": str(e),
             }
 
-    async def _retry_operation(self, error_record: ErrorRecord) -> Dict[str, Any]:
+    async def _retry_operation(
+        self, error_record: ErrorRecord
+    ) -> Dict[str, Any]:
         """Retry the failed operation."""
         # Find the pattern for retry configuration
         pattern = None
@@ -459,7 +478,7 @@ class SystemErrorHandler:
             await asyncio.sleep(delay)
 
             self.logger.info(
-                f"Retrying operation for error {error_record.error_id} (attempt {error_record.recovery_attempts})"
+                f"Retrying operation for error {error_record.error_id}(attempt {error_record.recovery_attempts})"
             )
 
             # In a real implementation, this would re-execute the failed operation
@@ -487,7 +506,9 @@ class SystemErrorHandler:
                 "reason": "max_retries_exceeded",
             }
 
-    async def _fallback_operation(self, error_record: ErrorRecord) -> Dict[str, Any]:
+    async def _fallback_operation(
+        self, error_record: ErrorRecord
+    ) -> Dict[str, Any]:
         """Execute fallback operation."""
         context_key = error_record.context.get("operation", "default")
 
@@ -529,7 +550,9 @@ class SystemErrorHandler:
                 "reason": "no_fallback_function",
             }
 
-    async def _restart_component(self, error_record: ErrorRecord) -> Dict[str, Any]:
+    async def _restart_component(
+        self, error_record: ErrorRecord
+    ) -> Dict[str, Any]:
         """Restart affected component."""
         component = error_record.context.get("component", "unknown")
 
@@ -549,7 +572,9 @@ class SystemErrorHandler:
             "restart_time": 2.0,
         }
 
-    async def _escalate_error(self, error_record: ErrorRecord) -> Dict[str, Any]:
+    async def _escalate_error(
+        self, error_record: ErrorRecord
+    ) -> Dict[str, Any]:
         """Escalate error to higher-level handling."""
         self.logger.critical(
             f"Escalating error {error_record.error_id}: {error_record.exception}"
@@ -571,7 +596,9 @@ class SystemErrorHandler:
             "escalation_time": datetime.now().isoformat(),
         }
 
-    async def _shutdown_gracefully(self, error_record: ErrorRecord) -> Dict[str, Any]:
+    async def _shutdown_gracefully(
+        self, error_record: ErrorRecord
+    ) -> Dict[str, Any]:
         """Initiate graceful shutdown."""
         self.logger.critical(
             f"Initiating graceful shutdown due to error {error_record.error_id}"
@@ -589,11 +616,11 @@ class SystemErrorHandler:
             "shutdown_initiated": datetime.now().isoformat(),
         }
 
-    def _generate_error_id(self, error: Exception, context: Dict[str, Any]) -> str:
+    def _generate_error_id(
+        self, error: Exception, context: Dict[str, Any]
+    ) -> str:
         """Generate unique error ID."""
-        error_signature = (
-            f"{type(error).__name__}_{str(error)}_{context.get('operation', 'unknown')}"
-        )
+        error_signature = f"{type(error).__name__}_{str(error)}_{context.get('operation', 'unknown')}"
         error_hash = hashlib.md5(error_signature.encode()).hexdigest()[:12]
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"err_{timestamp}_{error_hash}"
@@ -619,13 +646,21 @@ class SystemErrorHandler:
     def _update_error_statistics(self, error_record: ErrorRecord) -> None:
         """Update error statistics."""
         self._error_statistics["total_errors"] += 1
-        self._error_statistics["errors_by_category"][error_record.category.value] += 1
-        self._error_statistics["errors_by_severity"][error_record.severity.value] += 1
-        self._error_statistics["last_error_time"] = error_record.timestamp.isoformat()
+        self._error_statistics["errors_by_category"][
+            error_record.category.value
+        ] += 1
+        self._error_statistics["errors_by_severity"][
+            error_record.severity.value
+        ] += 1
+        self._error_statistics[
+            "last_error_time"
+        ] = error_record.timestamp.isoformat()
 
     async def _log_error(self, error_record: ErrorRecord) -> None:
         """Log error with appropriate level."""
-        log_message = f"Error {error_record.error_id}: {error_record.exception}"
+        log_message = (
+            f"Error {error_record.error_id}: {error_record.exception}"
+        )
 
         # Get full traceback
         tb_str = "".join(
@@ -677,7 +712,8 @@ class SystemErrorHandler:
         # Determine overall health status
         if error_record.severity == ErrorSeverity.CRITICAL:
             self._system_health["status"] = "critical"
-        elif self._system_health["error_rate"] > 20:  # More than 20 errors per hour
+        # More than 20 errors per hour
+        elif self._system_health["error_rate"] > 20:
             self._system_health["status"] = "degraded"
         elif self._system_health["recovery_success_rate"] < 0.5:
             self._system_health["status"] = "degraded"
@@ -713,7 +749,9 @@ class SystemErrorHandler:
         return {
             "status": self._system_health["status"],
             "error_rate": self._system_health["error_rate"],
-            "recovery_success_rate": self._system_health["recovery_success_rate"],
+            "recovery_success_rate": self._system_health[
+                "recovery_success_rate"
+            ],
             "last_critical_error": (
                 self._system_health["last_critical_error"].isoformat()
                 if self._system_health["last_critical_error"]
@@ -756,7 +794,9 @@ class SystemErrorHandler:
         if len(self._error_records) > self._max_error_history:
             # Keep most recent errors
             sorted_errors = sorted(
-                self._error_records.items(), key=lambda x: x[1].timestamp, reverse=True
+                self._error_records.items(),
+                key=lambda x: x[1].timestamp,
+                reverse=True,
             )
 
             # Keep most recent errors

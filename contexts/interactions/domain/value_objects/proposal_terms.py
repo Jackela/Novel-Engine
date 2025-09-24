@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 from uuid import UUID
 
 
@@ -78,12 +78,22 @@ class TermCondition:
 
         # Validate value based on term type
         if self.term_type == TermType.RESOURCE_QUANTITY:
-            if not isinstance(self.value, (int, float, Decimal)) or self.value < 0:
-                raise ValueError("Resource quantity must be non-negative numeric value")
+            if (
+                not isinstance(self.value, (int, float, Decimal))
+                or self.value < 0
+            ):
+                raise ValueError(
+                    "Resource quantity must be non-negative numeric value"
+                )
 
         elif self.term_type == TermType.MONETARY_VALUE:
-            if not isinstance(self.value, (int, float, Decimal)) or self.value < 0:
-                raise ValueError("Monetary value must be non-negative numeric value")
+            if (
+                not isinstance(self.value, (int, float, Decimal))
+                or self.value < 0
+            ):
+                raise ValueError(
+                    "Monetary value must be non-negative numeric value"
+                )
 
         elif self.term_type == TermType.TIME_DURATION:
             if not isinstance(self.value, int) or self.value <= 0:
@@ -97,7 +107,8 @@ class TermCondition:
         # Validate dependencies
         if self.dependencies:
             if not all(
-                isinstance(dep, str) and dep.strip() for dep in self.dependencies
+                isinstance(dep, str) and dep.strip()
+                for dep in self.dependencies
             ):
                 raise ValueError("All dependencies must be non-empty strings")
 
@@ -194,7 +205,9 @@ class ProposalTerms:
     summary: str
     terms: List[TermCondition]
     validity_period: Optional[datetime] = None
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -234,7 +247,9 @@ class ProposalTerms:
     def _validate_no_circular_dependencies(self):
         """Validate that there are no circular dependencies between terms."""
 
-        def has_circular_dependency(term_id: str, visited: set, path: set) -> bool:
+        def has_circular_dependency(
+            term_id: str, visited: set, path: set
+        ) -> bool:
             if term_id in path:
                 return True
             if term_id in visited:
@@ -252,7 +267,8 @@ class ProposalTerms:
             path.remove(term_id)
             return False
 
-        visited = set()
+        # P3 Sprint 2 Pattern: Explicit type annotation for MyPy compatibility
+        visited: Set[str] = set()
         for term in self.terms:
             if term.term_id not in visited:
                 if has_circular_dependency(term.term_id, visited, set()):
@@ -285,13 +301,17 @@ class ProposalTerms:
 
     def get_term_by_id(self, term_id: str) -> Optional[TermCondition]:
         """Get term by ID."""
-        return next((term for term in self.terms if term.term_id == term_id), None)
+        return next(
+            (term for term in self.terms if term.term_id == term_id), None
+        )
 
     def get_terms_by_type(self, term_type: TermType) -> List[TermCondition]:
         """Get all terms of specified type."""
         return [term for term in self.terms if term.term_type == term_type]
 
-    def get_terms_by_priority(self, priority: ProposalPriority) -> List[TermCondition]:
+    def get_terms_by_priority(
+        self, priority: ProposalPriority
+    ) -> List[TermCondition]:
         """Get all terms with specified priority."""
         return [term for term in self.terms if term.priority == priority]
 
@@ -307,13 +327,16 @@ class ProposalTerms:
         """Get all non-negotiable terms."""
         return [term for term in self.terms if not term.is_negotiable]
 
-    def update_term(self, term_id: str, updated_term: TermCondition) -> "ProposalTerms":
+    def update_term(
+        self, term_id: str, updated_term: TermCondition
+    ) -> "ProposalTerms":
         """Create new ProposalTerms with updated term."""
         if updated_term.term_id != term_id:
             raise ValueError("Updated term ID must match target term ID")
 
         updated_terms = [
-            updated_term if term.term_id == term_id else term for term in self.terms
+            updated_term if term.term_id == term_id else term
+            for term in self.terms
         ]
 
         return ProposalTerms(
@@ -329,7 +352,10 @@ class ProposalTerms:
 
     def add_term(self, term: TermCondition) -> "ProposalTerms":
         """Create new ProposalTerms with additional term."""
-        if any(existing_term.term_id == term.term_id for existing_term in self.terms):
+        if any(
+            existing_term.term_id == term.term_id
+            for existing_term in self.terms
+        ):
             raise ValueError(f"Term with ID {term.term_id} already exists")
 
         return ProposalTerms(
@@ -358,7 +384,9 @@ class ProposalTerms:
                 f"Cannot remove term {term_id}: it has dependents {dependent_ids}"
             )
 
-        updated_terms = [term for term in self.terms if term.term_id != term_id]
+        updated_terms = [
+            term for term in self.terms if term.term_id != term_id
+        ]
 
         if len(updated_terms) == len(self.terms):
             raise ValueError(f"Term with ID {term_id} not found")

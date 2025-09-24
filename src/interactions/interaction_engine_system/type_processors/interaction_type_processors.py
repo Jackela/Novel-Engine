@@ -67,7 +67,9 @@ class BaseInteractionProcessor(ABC):
     """
 
     def __init__(
-        self, config: InteractionEngineConfig, logger: Optional[logging.Logger] = None
+        self,
+        config: InteractionEngineConfig,
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize base processor.
@@ -107,7 +109,9 @@ class BaseInteractionProcessor(ABC):
         pass
 
     @abstractmethod
-    async def validate_context(self, context: InteractionContext) -> StandardResponse:
+    async def validate_context(
+        self, context: InteractionContext
+    ) -> StandardResponse:
         """
         Validate context for this interaction type.
 
@@ -121,7 +125,10 @@ class BaseInteractionProcessor(ABC):
 
     def get_processing_statistics(self) -> Dict[str, Any]:
         """Get processing statistics for this processor."""
-        return {"interaction_type": self.supported_type.value, **self.processing_stats}
+        return {
+            "interaction_type": self.supported_type.value,
+            **self.processing_stats,
+        }
 
     def _update_stats(self, success: bool, duration: float):
         """Update processing statistics."""
@@ -148,7 +155,9 @@ class DialogueProcessor(BaseInteractionProcessor):
     def supported_type(self) -> InteractionType:
         return InteractionType.DIALOGUE
 
-    async def validate_context(self, context: InteractionContext) -> StandardResponse:
+    async def validate_context(
+        self, context: InteractionContext
+    ) -> StandardResponse:
         """Validate dialogue context."""
         try:
             if len(context.participants) < 2:
@@ -297,7 +306,9 @@ class DialogueProcessor(BaseInteractionProcessor):
                 impacts[participant] = {
                     "mood_change": 0.1,
                     "relationship_changes": {
-                        p: 0.05 for p in context.participants if p != participant
+                        p: 0.05
+                        for p in context.participants
+                        if p != participant
                     },
                     "emotional_state": "content",
                 }
@@ -314,7 +325,9 @@ class CombatProcessor(BaseInteractionProcessor):
     def supported_type(self) -> InteractionType:
         return InteractionType.COMBAT
 
-    async def validate_context(self, context: InteractionContext) -> StandardResponse:
+    async def validate_context(
+        self, context: InteractionContext
+    ) -> StandardResponse:
         """Validate combat context."""
         try:
             if len(context.participants) < 2:
@@ -363,7 +376,9 @@ class CombatProcessor(BaseInteractionProcessor):
         start_time = datetime.now()
 
         try:
-            self.logger.info(f"Processing combat interaction: {context.interaction_id}")
+            self.logger.info(
+                f"Processing combat interaction: {context.interaction_id}"
+            )
 
             # Validate context first
             validation = await self.validate_context(context)
@@ -374,7 +389,9 @@ class CombatProcessor(BaseInteractionProcessor):
             combat_state = await self._initialize_combat_state(context)
 
             # Process combat rounds
-            combat_results = await self._process_combat_rounds(context, combat_state)
+            combat_results = await self._process_combat_rounds(
+                context, combat_state
+            )
 
             # Calculate combat outcome
             combat_outcome = await self._determine_combat_outcome(
@@ -493,7 +510,9 @@ class CombatProcessor(BaseInteractionProcessor):
         try:
             return {
                 "result": "victory",
-                "winner": context.participants[0] if context.participants else "none",
+                "winner": context.participants[0]
+                if context.participants
+                else "none",
                 "casualties": [],
                 "experience_gained": 100,
                 "loot_generated": [],
@@ -510,7 +529,9 @@ class CooperationProcessor(BaseInteractionProcessor):
     def supported_type(self) -> InteractionType:
         return InteractionType.COOPERATION
 
-    async def validate_context(self, context: InteractionContext) -> StandardResponse:
+    async def validate_context(
+        self, context: InteractionContext
+    ) -> StandardResponse:
         """Validate cooperation context."""
         try:
             if len(context.participants) < 2:
@@ -608,7 +629,9 @@ class CooperationProcessor(BaseInteractionProcessor):
         try:
             return {
                 "objectives": context.expected_outcomes or ["work_together"],
-                "role_assignments": {p: "collaborator" for p in context.participants},
+                "role_assignments": {
+                    p: "collaborator" for p in context.participants
+                },
                 "coordination_method": "consensus",
                 "success_criteria": [
                     "objective_completion",
@@ -641,7 +664,9 @@ class CooperationProcessor(BaseInteractionProcessor):
         try:
             return {
                 "overall_success": 0.85,
-                "participant_satisfaction": {p: 0.8 for p in context.participants},
+                "participant_satisfaction": {
+                    p: 0.8 for p in context.participants
+                },
                 "objective_completion": 0.9,
                 "team_cohesion_improvement": 0.1,
             }
@@ -659,7 +684,9 @@ class InteractionTypeProcessorManager:
     """
 
     def __init__(
-        self, config: InteractionEngineConfig, logger: Optional[logging.Logger] = None
+        self,
+        config: InteractionEngineConfig,
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize processor manager.
@@ -676,7 +703,7 @@ class InteractionTypeProcessorManager:
         self._initialize_processors()
 
         self.logger.info(
-            f"Interaction type processor manager initialized with {len(self.processors)} processors"
+            f"Interaction type processor manager initialized with {len( self.processors)} processors"
         )
 
     def _initialize_processors(self):
@@ -689,9 +716,9 @@ class InteractionTypeProcessorManager:
             self.processors[InteractionType.COMBAT] = CombatProcessor(
                 self.config, self.logger
             )
-            self.processors[InteractionType.COOPERATION] = CooperationProcessor(
-                self.config, self.logger
-            )
+            self.processors[
+                InteractionType.COOPERATION
+            ] = CooperationProcessor(self.config, self.logger)
 
             # Additional processors would be added here
             # self.processors[InteractionType.NEGOTIATION] = NegotiationProcessor(self.config, self.logger)
@@ -730,7 +757,7 @@ class InteractionTypeProcessorManager:
                 )
 
             self.logger.debug(
-                f"Processing {context.interaction_type.value} interaction: {context.interaction_id}"
+                f"Processing {context.interaction_type.value}interaction: {context.interaction_id}"
             )
             return await processor.process_interaction(context)
 

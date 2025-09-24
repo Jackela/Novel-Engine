@@ -41,7 +41,9 @@ class PerformanceMonitor:
     """
 
     def __init__(
-        self, config: EquipmentSystemConfig, logger: Optional[logging.Logger] = None
+        self,
+        config: EquipmentSystemConfig,
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize performance monitor."""
         self.config = config
@@ -49,7 +51,9 @@ class PerformanceMonitor:
 
         self.logger.info("Performance monitor initialized")
 
-    def predict_equipment_failure(self, equipment: DynamicEquipment) -> Dict[str, Any]:
+    def predict_equipment_failure(
+        self, equipment: DynamicEquipment
+    ) -> Dict[str, Any]:
         """Predict equipment failure probability and timeline."""
         try:
             # Base risk from wear accumulation
@@ -78,8 +82,12 @@ class PerformanceMonitor:
             # Maintenance factor
             days_since_maintenance = 30  # Default
             if equipment.maintenance_history:
-                last_maintenance = equipment.maintenance_history[-1].performed_at
-                days_since_maintenance = (datetime.now() - last_maintenance).days
+                last_maintenance = equipment.maintenance_history[
+                    -1
+                ].performed_at
+                days_since_maintenance = (
+                    datetime.now() - last_maintenance
+                ).days
             maintenance_risk = min(0.4, days_since_maintenance / 100.0)
 
             # Machine spirit factor
@@ -116,7 +124,9 @@ class PerformanceMonitor:
                 else (
                     "High"
                     if total_risk > 0.5
-                    else "Medium" if total_risk > 0.2 else "Low"
+                    else "Medium"
+                    if total_risk > 0.2
+                    else "Low"
                 )
             )
 
@@ -135,9 +145,15 @@ class PerformanceMonitor:
 
         except Exception as e:
             self.logger.error(f"Error predicting equipment failure: {e}")
-            return {"risk_score": 0.5, "risk_level": "Unknown", "error": str(e)}
+            return {
+                "risk_score": 0.5,
+                "risk_level": "Unknown",
+                "error": str(e),
+            }
 
-    def get_performance_metrics(self, equipment: DynamicEquipment) -> Dict[str, Any]:
+    def get_performance_metrics(
+        self, equipment: DynamicEquipment
+    ) -> Dict[str, Any]:
         """Get comprehensive performance metrics for equipment."""
         try:
             # Base metrics
@@ -145,7 +161,9 @@ class PerformanceMonitor:
 
             # Calculate derived metrics
             total_uses = equipment.usage_statistics.get("total_uses", 0)
-            successful_uses = equipment.usage_statistics.get("successful_uses", 0)
+            successful_uses = equipment.usage_statistics.get(
+                "successful_uses", 0
+            )
 
             success_rate = successful_uses / max(1, total_uses)
             metrics["success_rate"] = success_rate
@@ -181,9 +199,13 @@ class PerformanceMonitor:
                 "agitated": -0.05,
                 "angry": -0.15,
             }
-            spirit_bonus = spirit_modifiers.get(equipment.machine_spirit_mood, 0.0)
+            spirit_bonus = spirit_modifiers.get(
+                equipment.machine_spirit_mood, 0.0
+            )
 
-            health_score = (sum(health_factors) / len(health_factors)) + spirit_bonus
+            health_score = (
+                sum(health_factors) / len(health_factors)
+            ) + spirit_bonus
             metrics["overall_health"] = max(0.0, min(1.0, health_score))
 
             return {
@@ -191,7 +213,9 @@ class PerformanceMonitor:
                 "metrics": metrics,
                 "wear_accumulation": equipment.wear_accumulation,
                 "machine_spirit_mood": equipment.machine_spirit_mood,
-                "condition": getattr(equipment.base_equipment, "condition", "unknown"),
+                "condition": getattr(
+                    equipment.base_equipment, "condition", "unknown"
+                ),
                 "last_updated": datetime.now().isoformat(),
             }
 
@@ -231,9 +255,9 @@ class PerformanceMonitor:
                 )
 
             # Performance degradation recommendation
-            avg_performance = sum(equipment.performance_metrics.values()) / max(
-                1, len(equipment.performance_metrics)
-            )
+            avg_performance = sum(
+                equipment.performance_metrics.values()
+            ) / max(1, len(equipment.performance_metrics))
             if avg_performance < 0.7:
                 recommendations.append(
                     {
@@ -246,7 +270,10 @@ class PerformanceMonitor:
                 )
 
             # Modification recommendation
-            if len(equipment.modifications) == 0 and equipment.wear_accumulation < 0.3:
+            if (
+                len(equipment.modifications) == 0
+                and equipment.wear_accumulation < 0.3
+            ):
                 recommendations.append(
                     {
                         "type": "enhancement",

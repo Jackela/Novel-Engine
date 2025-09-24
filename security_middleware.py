@@ -30,9 +30,13 @@ class SecurityEventLogger:
         self.security_logger.addHandler(handler)
         self.security_logger.setLevel(logging.WARNING)
 
-    def log_event(self, event_type: str, client_ip: str, details: Dict[str, Any]):
+    def log_event(
+        self, event_type: str, client_ip: str, details: Dict[str, Any]
+    ):
         """Log a security event."""
-        self.security_logger.warning(f"{event_type} from {client_ip}: {details}")
+        self.security_logger.warning(
+            f"{event_type} from {client_ip}: {details}"
+        )
 
 
 class IPBlocklist:
@@ -60,7 +64,9 @@ class IPBlocklist:
 
     def temp_block(self, ip: str):
         """Temporarily block an IP address."""
-        self.temp_blocked[ip] = datetime.now(timezone.utc) + self.block_duration
+        self.temp_blocked[ip] = (
+            datetime.now(timezone.utc) + self.block_duration
+        )
         logger.warning(f"Temporarily blocked IP: {ip}")
 
     def permanent_block(self, ip: str):
@@ -73,7 +79,9 @@ class RequestAnalyzer:
     """Analyze requests for suspicious patterns."""
 
     def __init__(self):
-        self.request_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=100))
+        self.request_history: Dict[str, deque] = defaultdict(
+            lambda: deque(maxlen=100)
+        )
         self.failed_attempts: Dict[str, int] = defaultdict(int)
         self.security_logger = SecurityEventLogger()
 
@@ -87,7 +95,9 @@ class RequestAnalyzer:
 
         # Check for rapid requests (potential DoS)
         recent_requests = [
-            t for t in self.request_history[client_ip] if now - t < 60  # Last minute
+            t
+            for t in self.request_history[client_ip]
+            if now - t < 60  # Last minute
         ]
 
         if len(recent_requests) > 30:  # More than 30 requests per minute
@@ -122,11 +132,18 @@ class RequestAnalyzer:
         request_query = str(request.url.query).lower()
 
         for pattern in suspicious_patterns:
-            if pattern.lower() in request_path or pattern.lower() in request_query:
+            if (
+                pattern.lower() in request_path
+                or pattern.lower() in request_query
+            ):
                 self.security_logger.log_event(
                     "SUSPICIOUS_REQUEST",
                     client_ip,
-                    {"pattern": pattern, "path": request_path, "query": request_query},
+                    {
+                        "pattern": pattern,
+                        "path": request_path,
+                        "query": request_query,
+                    },
                 )
                 return False
 

@@ -1,0 +1,4 @@
+src\agents\persona_core.py: error: Source file found twice under different module names: "agents.persona_core" and "src.agents.persona_core"
+src\agents\persona_core.py: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#mapping-file-paths-to-modules for more info
+src\agents\persona_core.py: note: Common resolutions include: a) adding `__init__.py` somewhere, b) using `--explicit-package-bases` or adjusting MYPYPATH
+Found 1 error in 1 file (errors prevented further checking)

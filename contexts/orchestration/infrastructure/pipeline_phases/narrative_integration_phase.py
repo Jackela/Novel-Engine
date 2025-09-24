@@ -11,7 +11,11 @@ from decimal import Decimal
 from typing import Any, Dict, List
 
 from ...domain.value_objects import PhaseType
-from .base_phase import BasePhaseImplementation, PhaseExecutionContext, PhaseResult
+from .base_phase import (
+    BasePhaseImplementation,
+    PhaseExecutionContext,
+    PhaseResult,
+)
 
 
 class NarrativeIntegrationPhase(BasePhaseImplementation):
@@ -29,7 +33,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
 
     def __init__(self):
         super().__init__(PhaseType.NARRATIVE_INTEGRATION)
-        self.execution_timeout_ms = 25000  # 25 seconds for AI-intensive operations
+        self.execution_timeout_ms = (
+            25000  # 25 seconds for AI-intensive operations
+        )
         self.ai_gateway_endpoint = "ai_gateway"
         self.narrative_service_endpoint = "narrative_context"
 
@@ -99,7 +105,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
             )
 
             # Step 5: Store narrative content and update context
-            await self._store_and_integrate_narrative(context, narrative_results)
+            await self._store_and_integrate_narrative(
+                context, narrative_results
+            )
 
             # Step 6: Generate narrative integration events
             integration_events = await self._generate_narrative_events(
@@ -116,19 +124,27 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
                 "turn_events_processed", float(turn_events_processed)
             )
             context.record_performance_metric(
-                "narrative_content_generated", float(narrative_content_generated)
+                "narrative_content_generated",
+                float(narrative_content_generated),
             )
             context.record_performance_metric(
                 "story_arcs_updated", float(story_arcs_updated)
             )
-            context.record_performance_metric("ai_cost_total", float(total_ai_cost))
+            context.record_performance_metric(
+                "ai_cost_total", float(total_ai_cost)
+            )
             context.record_performance_metric(
                 "failed_generations", float(failed_generations)
             )
 
             # Calculate success metrics
             success_rate = narrative_content_generated / max(
-                1, len(narrative_context.get("active_perspectives", ["omniscient"]))
+                1,
+                len(
+                    narrative_context.get(
+                        "active_perspectives", ["omniscient"]
+                    )
+                ),
             )
 
             return PhaseResult(
@@ -151,7 +167,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
                         "failed_generations": failed_generations,
                         "success_rate": success_rate,
                         "total_ai_cost": float(total_ai_cost),
-                        "narrative_perspectives": list(narrative_results.keys()),
+                        "narrative_perspectives": list(
+                            narrative_results.keys()
+                        ),
                         "narrative_depth": context.configuration.narrative_analysis_depth,
                     }
                 },
@@ -281,21 +299,31 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
             "get_active_perspectives",
             {
                 "participants": context.participants,
-                "story_context": narrative_state.get("current_story_context", {}),
+                "story_context": narrative_state.get(
+                    "current_story_context", {}
+                ),
             },
         )
 
-        active_perspectives = perspective_response.get("perspectives", ["omniscient"])
+        active_perspectives = perspective_response.get(
+            "perspectives", ["omniscient"]
+        )
 
         return {
             "current_story_state": narrative_state,
             "active_perspectives": active_perspectives,
             "story_arcs": narrative_state.get("story_arcs", []),
             "plot_threads": narrative_state.get("plot_threads", []),
-            "character_development": narrative_state.get("character_development", {}),
-            "narrative_style": narrative_state.get("narrative_style", "third_person"),
+            "character_development": narrative_state.get(
+                "character_development", {}
+            ),
+            "narrative_style": narrative_state.get(
+                "narrative_style", "third_person"
+            ),
             "genre_context": narrative_state.get("genre_context", "fantasy"),
-            "pacing_context": narrative_state.get("pacing_context", "moderate"),
+            "pacing_context": narrative_state.get(
+                "pacing_context", "moderate"
+            ),
         }
 
     async def _generate_narrative_content(
@@ -328,7 +356,8 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
                 context.configuration.narrative_analysis_depth
             )
             max_tokens = self._calculate_narrative_max_tokens(
-                context.configuration.narrative_analysis_depth, len(turn_events)
+                context.configuration.narrative_analysis_depth,
+                len(turn_events),
             )
 
             # Step 3: Call AI Gateway for narrative generation
@@ -344,8 +373,12 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
 
             # Step 4: Process and validate narrative content
             narrative_content = ai_response.get("content", "")
-            if not self._validate_narrative_content(narrative_content, turn_events):
-                raise ValueError("Generated narrative content is invalid or incomplete")
+            if not self._validate_narrative_content(
+                narrative_content, turn_events
+            ):
+                raise ValueError(
+                    "Generated narrative content is invalid or incomplete"
+                )
 
             # Step 5: Enrich narrative with metadata
             enriched_narrative = {
@@ -372,7 +405,11 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "perspective": perspective}
+            return {
+                "success": False,
+                "error": str(e),
+                "perspective": perspective,
+            }
 
     async def _update_story_arcs(
         self,
@@ -408,7 +445,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
                     "turn_id": str(context.turn_id),
                     "arc_updates": arc_updates,
                     "supporting_narrative": {
-                        perspective: result.get("narrative", {}).get("content", "")
+                        perspective: result.get("narrative", {}).get(
+                            "content", ""
+                        )
                         for perspective, result in narrative_results.items()
                         if result.get("success")
                     },
@@ -457,15 +496,21 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
                         "perspective": perspective,
                         "narrative": narrative,
                         "integration_metadata": {
-                            "generation_timestamp": narrative["generation_timestamp"],
-                            "events_integrated": narrative["events_integrated"],
+                            "generation_timestamp": narrative[
+                                "generation_timestamp"
+                            ],
+                            "events_integrated": narrative[
+                                "events_integrated"
+                            ],
                             "ai_model_used": narrative["ai_model_used"],
                         },
                     },
                 )
 
                 # Create narrative storage artifact
-                artifact_name = f"turn_narrative_{perspective}_{context.turn_id}"
+                artifact_name = (
+                    f"turn_narrative_{perspective}_{context.turn_id}"
+                )
                 context.artifacts_created.append(artifact_name)
 
     async def _generate_narrative_events(
@@ -500,7 +545,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
                 "story_arcs_updated": arcs_updated,
                 "participants": context.participants,
                 "narrative_depth": context.configuration.narrative_analysis_depth,
-                "total_ai_cost": float(context.ai_usage_tracking.get("total_cost", 0)),
+                "total_ai_cost": float(
+                    context.ai_usage_tracking.get("total_cost", 0)
+                ),
                 "completed_at": datetime.now().isoformat(),
             },
         )
@@ -510,7 +557,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
 
     # Helper methods
 
-    def _create_ai_disabled_result(self, context: PhaseExecutionContext) -> PhaseResult:
+    def _create_ai_disabled_result(
+        self, context: PhaseExecutionContext
+    ) -> PhaseResult:
         """Create result when AI integration is disabled."""
         # Generate simple non-AI narrative summaries
         simple_summaries = 1  # Basic summary without AI
@@ -529,7 +578,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
             },
         )
 
-    def _estimate_narrative_ai_cost(self, context: PhaseExecutionContext) -> Decimal:
+    def _estimate_narrative_ai_cost(
+        self, context: PhaseExecutionContext
+    ) -> Decimal:
         """Estimate AI cost for narrative generation."""
         # Base cost per narrative perspective based on depth
         depth_costs = {
@@ -573,9 +624,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
         event_summary = self._organize_events_for_narrative(turn_events)
 
         # Get previous narrative context for continuity
-        previous_narrative = narrative_context.get("current_story_state", {}).get(
-            "recent_narrative", ""
-        )
+        previous_narrative = narrative_context.get(
+            "current_story_state", {}
+        ).get("recent_narrative", "")
 
         # Build character context if perspective is character-based
         character_context = ""
@@ -599,17 +650,25 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
         # Fill template with context
         prompt = prompt_template.format(
             perspective=perspective,
-            narrative_style=narrative_context.get("narrative_style", "third_person"),
+            narrative_style=narrative_context.get(
+                "narrative_style", "third_person"
+            ),
             genre_context=narrative_context.get("genre_context", "fantasy"),
             previous_narrative=(
-                previous_narrative[:500] if previous_narrative else "Beginning of story"
+                previous_narrative[:500]
+                if previous_narrative
+                else "Beginning of story"
             ),
             character_context=character_context,
             world_events=event_summary.get("world_events", ""),
             interaction_events=event_summary.get("interaction_events", ""),
-            character_development=event_summary.get("character_development", ""),
+            character_development=event_summary.get(
+                "character_development", ""
+            ),
             plot_progression=event_summary.get("plot_progression", ""),
-            story_arcs=narrative_context.get("story_arcs", [])[:3],  # Top 3 active arcs
+            story_arcs=narrative_context.get("story_arcs", [])[
+                :3
+            ],  # Top 3 active arcs
             participants=context.participants,
             turn_duration=context.configuration.world_time_advance,
         )
@@ -628,7 +687,7 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
         Returns:
             Dictionary of organized event summaries
         """
-        event_categories = {
+        event_categories: Dict[str, List[Dict[str, Any]]] = {
             "world_events": [],
             "interaction_events": [],
             "character_development": [],
@@ -668,9 +727,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
                     category, events
                 )
             else:
-                summaries[category] = (
-                    f"No {category.replace('_', ' ')} occurred during this turn."
-                )
+                summaries[
+                    category
+                ] = f"No {category.replace('_', ' ')} occurred during this turn."
 
         return summaries
 
@@ -685,7 +744,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
         elif category == "character_development":
             return f"{len(events)} character development events occurred, showing growth and change."
         elif category == "plot_progression":
-            return f"{len(events)} plot developments advanced the story forward."
+            return (
+                f"{len(events)} plot developments advanced the story forward."
+            )
         else:
             return f"{len(events)} events of type {category} occurred."
 
@@ -719,7 +780,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
         }
         return model_mapping.get(depth, "gpt-4")
 
-    def _calculate_narrative_max_tokens(self, depth: str, event_count: int) -> int:
+    def _calculate_narrative_max_tokens(
+        self, depth: str, event_count: int
+    ) -> int:
         """Calculate max tokens for narrative generation."""
         base_tokens = {
             "basic": 300,
@@ -730,7 +793,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
 
         base = base_tokens.get(depth, 800)
         # Add tokens based on event complexity
-        event_bonus = min(event_count * 50, 500)  # Up to 500 extra tokens for events
+        event_bonus = min(
+            event_count * 50, 500
+        )  # Up to 500 extra tokens for events
 
         return base + event_bonus
 

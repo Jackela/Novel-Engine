@@ -217,7 +217,9 @@ class AnalyticsPlatform:
         """Start background analytics processing tasks."""
         try:
             # Real-time metrics update task
-            real_time_task = asyncio.create_task(self._real_time_metrics_processor())
+            real_time_task = asyncio.create_task(
+                self._real_time_metrics_processor()
+            )
             self.background_tasks.append(real_time_task)
 
             # Hourly aggregation task
@@ -294,7 +296,9 @@ class AnalyticsPlatform:
                 story_id=story_id,
                 properties=generation_data,
                 metrics={
-                    "generation_time": generation_data.get("generation_time", 0.0),
+                    "generation_time": generation_data.get(
+                        "generation_time", 0.0
+                    ),
                     "word_count": generation_data.get("word_count", 0),
                     "quality_score": generation_data.get("quality_score", 0.0),
                 },
@@ -322,9 +326,13 @@ class AnalyticsPlatform:
 
             # Update character usage
             for character_id in generation_data.get("characters_used", []):
-                await self._update_character_usage(character_id, user_id, story_id)
+                await self._update_character_usage(
+                    character_id, user_id, story_id
+                )
 
-            logger.info(f"Tracked story generation: {story_id} for user {user_id}")
+            logger.info(
+                f"Tracked story generation: {story_id} for user {user_id}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to track story generation: {e}")
@@ -348,7 +356,9 @@ class AnalyticsPlatform:
                 session_id=session_id,
                 properties=engagement_data,
                 metrics={
-                    "session_duration": engagement_data.get("session_duration", 0.0),
+                    "session_duration": engagement_data.get(
+                        "session_duration", 0.0
+                    ),
                     "interactions": engagement_data.get("interactions", 0),
                     "features_used": engagement_data.get("features_used", 0),
                 },
@@ -504,7 +514,9 @@ class AnalyticsPlatform:
 
             # Filter recent events
             recent_events = [
-                event for event in self.events if event.timestamp >= last_5_minutes
+                event
+                for event in self.events
+                if event.timestamp >= last_5_minutes
             ]
 
             # Calculate real-time metrics
@@ -512,13 +524,25 @@ class AnalyticsPlatform:
                 "timestamp": current_time,
                 "overview": {
                     "active_users": len(
-                        set(event.user_id for event in recent_events if event.user_id)
+                        set(
+                            event.user_id
+                            for event in recent_events
+                            if event.user_id
+                        )
                     ),
                     "stories_generated": len(
-                        [e for e in recent_events if e.event_type == "story_generation"]
+                        [
+                            e
+                            for e in recent_events
+                            if e.event_type == "story_generation"
+                        ]
                     ),
                     "character_usages": len(
-                        [e for e in recent_events if e.event_type == "character_usage"]
+                        [
+                            e
+                            for e in recent_events
+                            if e.event_type == "character_usage"
+                        ]
                     ),
                     "total_events": len(recent_events),
                 },
@@ -533,7 +557,9 @@ class AnalyticsPlatform:
                 "trends": {
                     "user_activity_trend": self._calculate_activity_trend(),
                     "quality_trend": self._calculate_quality_trend(),
-                    "popular_characters": self._get_popular_characters(recent_events),
+                    "popular_characters": self._get_popular_characters(
+                        recent_events
+                    ),
                     "top_genres": self._get_top_genres(recent_events),
                 },
                 "alerts": self._get_active_alerts(),
@@ -585,14 +611,20 @@ class AnalyticsPlatform:
                 "story_analytics": {
                     "total_stories": len(user_stories),
                     "avg_quality_score": (
-                        statistics.mean([s.quality_score for s in user_stories])
+                        statistics.mean(
+                            [s.quality_score for s in user_stories]
+                        )
                         if user_stories
                         else 0
                     ),
                     "favorite_genres": engagement.favorite_genres,
-                    "word_count_total": sum(s.word_count for s in user_stories),
+                    "word_count_total": sum(
+                        s.word_count for s in user_stories
+                    ),
                     "avg_generation_time": (
-                        statistics.mean([s.generation_time for s in user_stories])
+                        statistics.mean(
+                            [s.generation_time for s in user_stories]
+                        )
                         if user_stories
                         else 0
                     ),
@@ -602,7 +634,9 @@ class AnalyticsPlatform:
                     "quality_improvements": engagement.quality_improvements,
                     "retention_score": engagement.retention_score,
                 },
-                "recommendations": await self._generate_user_recommendations(user_id),
+                "recommendations": await self._generate_user_recommendations(
+                    user_id
+                ),
             }
 
             return insights
@@ -662,7 +696,9 @@ class AnalyticsPlatform:
                     )
 
                 # Sort by usage count
-                all_characters.sort(key=lambda x: x["usage_count"], reverse=True)
+                all_characters.sort(
+                    key=lambda x: x["usage_count"], reverse=True
+                )
 
                 return {
                     "total_characters": len(all_characters),
@@ -685,7 +721,10 @@ class AnalyticsPlatform:
             return {"error": str(e)}
 
     async def export_analytics_data(
-        self, export_format: str, time_window: TimeWindow, data_types: List[str]
+        self,
+        export_format: str,
+        time_window: TimeWindow,
+        data_types: List[str],
     ) -> Dict[str, Any]:
         """
         Export analytics data in specified format.
@@ -705,7 +744,9 @@ class AnalyticsPlatform:
             # Collect requested data types
             if "events" in data_types:
                 filtered_events = self._filter_events_by_time(start_time)
-                export_data["events"] = [asdict(event) for event in filtered_events]
+                export_data["events"] = [
+                    asdict(event) for event in filtered_events
+                ]
 
             if "user_engagement" in data_types:
                 export_data["user_engagement"] = {
@@ -806,7 +847,9 @@ class AnalyticsPlatform:
                     )
 
             # Update engagement level
-            engagement.engagement_level = self._calculate_engagement_level(engagement)
+            engagement.engagement_level = self._calculate_engagement_level(
+                engagement
+            )
 
         except Exception as e:
             logger.error(f"Failed to update user engagement: {e}")
@@ -845,7 +888,9 @@ class AnalyticsPlatform:
                 if not hasattr(char_analytics, "_unique_users_set"):
                     char_analytics._unique_users_set = set()
                 char_analytics._unique_users_set.add(user_id)
-                char_analytics.unique_users = len(char_analytics._unique_users_set)
+                char_analytics.unique_users = len(
+                    char_analytics._unique_users_set
+                )
 
         except Exception as e:
             logger.error(f"Failed to update character usage: {e}")
@@ -899,7 +944,9 @@ class AnalyticsPlatform:
             try:
                 await asyncio.sleep(3600)  # Process every hour
 
-                current_hour = datetime.now().replace(minute=0, second=0, microsecond=0)
+                current_hour = datetime.now().replace(
+                    minute=0, second=0, microsecond=0
+                )
                 hour_start = current_hour - timedelta(hours=1)
 
                 # Aggregate events from the past hour
@@ -910,7 +957,9 @@ class AnalyticsPlatform:
                 ]
 
                 aggregated_data = self._aggregate_events(hour_events)
-                self.hourly_aggregates[current_hour.isoformat()] = aggregated_data
+                self.hourly_aggregates[
+                    current_hour.isoformat()
+                ] = aggregated_data
 
                 logger.info(f"Completed hourly aggregation for {current_hour}")
 
@@ -943,11 +992,17 @@ class AnalyticsPlatform:
             try:
                 await asyncio.sleep(86400)  # Run daily
 
-                cutoff_date = datetime.now() - timedelta(days=self.data_retention_days)
+                cutoff_date = datetime.now() - timedelta(
+                    days=self.data_retention_days
+                )
 
                 # Clean up old events
                 self.events = deque(
-                    (event for event in self.events if event.timestamp >= cutoff_date),
+                    (
+                        event
+                        for event in self.events
+                        if event.timestamp >= cutoff_date
+                    ),
                     maxlen=self.events.maxlen,
                 )
 
@@ -999,15 +1054,21 @@ class AnalyticsPlatform:
             # Apply additional filters
             if "event_type" in filters:
                 filtered_events = [
-                    e for e in filtered_events if e.event_type == filters["event_type"]
+                    e
+                    for e in filtered_events
+                    if e.event_type == filters["event_type"]
                 ]
             if "user_id" in filters:
                 filtered_events = [
-                    e for e in filtered_events if e.user_id == filters["user_id"]
+                    e
+                    for e in filtered_events
+                    if e.user_id == filters["user_id"]
                 ]
             if "story_id" in filters:
                 filtered_events = [
-                    e for e in filtered_events if e.story_id == filters["story_id"]
+                    e
+                    for e in filtered_events
+                    if e.story_id == filters["story_id"]
                 ]
 
         return filtered_events
@@ -1023,7 +1084,9 @@ class AnalyticsPlatform:
 
         if days_since_activity > 7:
             return EngagementLevel.INACTIVE
-        elif engagement.stories_created >= 10 and engagement.session_count >= 5:
+        elif (
+            engagement.stories_created >= 10 and engagement.session_count >= 5
+        ):
             return EngagementLevel.HIGH
         elif engagement.stories_created >= 3 and engagement.session_count >= 2:
             return EngagementLevel.MEDIUM
@@ -1033,7 +1096,10 @@ class AnalyticsPlatform:
     # Report generation methods
 
     async def _generate_engagement_report(
-        self, report_id: str, time_window: TimeWindow, events: List[AnalyticsEvent]
+        self,
+        report_id: str,
+        time_window: TimeWindow,
+        events: List[AnalyticsEvent],
     ) -> AnalyticsReport:
         """Generate user engagement analytics report."""
         # Implementation would analyze user engagement patterns
@@ -1046,7 +1112,10 @@ class AnalyticsPlatform:
         )
 
     async def _generate_story_report(
-        self, report_id: str, time_window: TimeWindow, events: List[AnalyticsEvent]
+        self,
+        report_id: str,
+        time_window: TimeWindow,
+        events: List[AnalyticsEvent],
     ) -> AnalyticsReport:
         """Generate story analytics report."""
         return AnalyticsReport(
@@ -1058,7 +1127,10 @@ class AnalyticsPlatform:
         )
 
     async def _generate_character_report(
-        self, report_id: str, time_window: TimeWindow, events: List[AnalyticsEvent]
+        self,
+        report_id: str,
+        time_window: TimeWindow,
+        events: List[AnalyticsEvent],
     ) -> AnalyticsReport:
         """Generate character analytics report."""
         return AnalyticsReport(
@@ -1070,7 +1142,10 @@ class AnalyticsPlatform:
         )
 
     async def _generate_performance_report(
-        self, report_id: str, time_window: TimeWindow, events: List[AnalyticsEvent]
+        self,
+        report_id: str,
+        time_window: TimeWindow,
+        events: List[AnalyticsEvent],
     ) -> AnalyticsReport:
         """Generate system performance report."""
         return AnalyticsReport(
@@ -1082,7 +1157,10 @@ class AnalyticsPlatform:
         )
 
     async def _generate_comprehensive_report(
-        self, report_id: str, time_window: TimeWindow, events: List[AnalyticsEvent]
+        self,
+        report_id: str,
+        time_window: TimeWindow,
+        events: List[AnalyticsEvent],
     ) -> AnalyticsReport:
         """Generate comprehensive analytics report."""
         return AnalyticsReport(
@@ -1095,13 +1173,19 @@ class AnalyticsPlatform:
 
     # Helper calculation methods
 
-    def _calculate_avg_generation_time(self, events: List[AnalyticsEvent]) -> float:
+    def _calculate_avg_generation_time(
+        self, events: List[AnalyticsEvent]
+    ) -> float:
         """Calculate average story generation time."""
-        generation_events = [e for e in events if e.event_type == "story_generation"]
+        generation_events = [
+            e for e in events if e.event_type == "story_generation"
+        ]
         if not generation_events:
             return 0.0
 
-        times = [e.metrics.get("generation_time", 0) for e in generation_events]
+        times = [
+            e.metrics.get("generation_time", 0) for e in generation_events
+        ]
         return statistics.mean(times) if times else 0.0
 
     def _get_current_system_health(self) -> str:
@@ -1131,7 +1215,8 @@ class AnalyticsPlatform:
         if not self.system_metrics_history:
             return 0.0
 
-        recent_metrics = list(self.system_metrics_history)[-10:]  # Last 10 measurements
+        # Last 10 measurements
+        recent_metrics = list(self.system_metrics_history)[-10:]
         response_times = [m.api_response_time for m in recent_metrics]
         return statistics.mean(response_times) if response_times else 0.0
 
@@ -1144,7 +1229,9 @@ class AnalyticsPlatform:
         """Calculate story quality trend."""
         return "improving"  # Would implement actual quality trend analysis
 
-    def _get_popular_characters(self, events: List[AnalyticsEvent]) -> List[str]:
+    def _get_popular_characters(
+        self, events: List[AnalyticsEvent]
+    ) -> List[str]:
         """Get most popular characters from recent events."""
         character_usage = Counter()
         for event in events:
@@ -1199,7 +1286,9 @@ class AnalyticsPlatform:
     async def _check_system_alerts(self, metrics: SystemMetrics):
         """Check for system alerts and log them."""
         if metrics.error_rate > self.alert_thresholds["error_rate"]:
-            logger.warning(f"High error rate detected: {metrics.error_rate:.2%}")
+            logger.warning(
+                f"High error rate detected: {metrics.error_rate:.2%}"
+            )
 
         if metrics.api_response_time > self.alert_thresholds["response_time"]:
             logger.warning(
@@ -1207,9 +1296,13 @@ class AnalyticsPlatform:
             )
 
         if metrics.system_load > self.alert_thresholds["system_load"]:
-            logger.warning(f"High system load detected: {metrics.system_load:.2%}")
+            logger.warning(
+                f"High system load detected: {metrics.system_load:.2%}"
+            )
 
-    def _aggregate_events(self, events: List[AnalyticsEvent]) -> Dict[str, Any]:
+    def _aggregate_events(
+        self, events: List[AnalyticsEvent]
+    ) -> Dict[str, Any]:
         """Aggregate events for storage."""
         event_types = Counter(e.event_type for e in events)
         unique_users = len(set(e.user_id for e in events if e.user_id))
@@ -1256,7 +1349,9 @@ class AnalyticsPlatform:
         ]
 
 
-def create_analytics_platform(data_retention_days: int = 90) -> AnalyticsPlatform:
+def create_analytics_platform(
+    data_retention_days: int = 90,
+) -> AnalyticsPlatform:
     """
     Factory function to create and configure an Analytics Platform.
 

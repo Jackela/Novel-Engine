@@ -64,10 +64,14 @@ class WorldStateManager:
     """
 
     def __init__(
-        self, state_file: Optional[str] = None, logger: Optional[logging.Logger] = None
+        self,
+        state_file: Optional[str] = None,
+        logger: Optional[logging.Logger] = None,
     ):
         self.logger = logger or logging.getLogger(__name__)
-        self.state_file = Path(state_file) if state_file else Path("world_state.json")
+        self.state_file = (
+            Path(state_file) if state_file else Path("world_state.json")
+        )
 
         # Core state management
         self._current_state: Dict[str, Any] = {}
@@ -95,7 +99,9 @@ class WorldStateManager:
             if self.state_file.exists():
                 success = await self.load_world_state()
                 if not success:
-                    self.logger.warning("Failed to load existing state, starting fresh")
+                    self.logger.warning(
+                        "Failed to load existing state, starting fresh"
+                    )
                     self._current_state = self._create_default_state()
             else:
                 self._current_state = self._create_default_state()
@@ -107,7 +113,9 @@ class WorldStateManager:
             return True
 
         except Exception as e:
-            self.logger.error(f"World state manager initialization failed: {e}")
+            self.logger.error(
+                f"World state manager initialization failed: {e}"
+            )
             return False
 
     async def get_world_state(self) -> Dict[str, Any]:
@@ -142,7 +150,10 @@ class WorldStateManager:
                         ]
 
                     # Create snapshot if needed
-                    if len(self._change_history) % self._snapshot_interval == 0:
+                    if (
+                        len(self._change_history) % self._snapshot_interval
+                        == 0
+                    ):
                         await self._create_snapshot()
 
                     self.logger.debug(f"Applied {len(changes)} state updates")
@@ -219,7 +230,9 @@ class WorldStateManager:
                 return current
 
             except Exception as e:
-                self.logger.error(f"Failed to get state value for path '{path}': {e}")
+                self.logger.error(
+                    f"Failed to get state value for path '{path}': {e}"
+                )
                 return default
 
     async def set_state_value(self, path: str, value: Any) -> bool:
@@ -228,7 +241,9 @@ class WorldStateManager:
             await self.update_world_state({path: value})
             return True
         except Exception as e:
-            self.logger.error(f"Failed to set state value for path '{path}': {e}")
+            self.logger.error(
+                f"Failed to set state value for path '{path}': {e}"
+            )
             return False
 
     async def save_world_state(self) -> bool:
@@ -303,7 +318,9 @@ class WorldStateManager:
     async def _create_snapshot(self) -> None:
         """Create a snapshot of the current state."""
         try:
-            snapshot_id = f"snapshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            snapshot_id = (
+                f"snapshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            )
 
             snapshot = StateSnapshot(
                 snapshot_id=snapshot_id,
@@ -342,14 +359,18 @@ class WorldStateManager:
                 self._current_state = copy.deepcopy(snapshot.state)
                 self._dirty = True
 
-                self.logger.info(f"State restored from snapshot: {snapshot_id}")
+                self.logger.info(
+                    f"State restored from snapshot: {snapshot_id}"
+                )
                 return True
 
             except Exception as e:
                 self.logger.error(f"Failed to restore from snapshot: {e}")
                 return False
 
-    async def get_change_history(self, limit: int = 100) -> List[Dict[str, Any]]:
+    async def get_change_history(
+        self, limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """Get recent change history."""
         async with self._state_lock:
             recent_changes = (
@@ -376,7 +397,8 @@ class WorldStateManager:
                 "snapshot_id": snapshot.snapshot_id,
                 "timestamp": snapshot.timestamp.isoformat(),
                 "change_count": snapshot.change_count,
-                "checksum": snapshot.checksum[:8] + "...",  # Truncated for display
+                # Truncated for display
+                "checksum": snapshot.checksum[:8] + "...",
             }
             for snapshot in self._snapshots
         ]
@@ -446,7 +468,9 @@ class WorldStateManager:
         except Exception:
             return "checksum_error"
 
-    def _generate_change_id(self, path: str, change_type: StateChangeType) -> str:
+    def _generate_change_id(
+        self, path: str, change_type: StateChangeType
+    ) -> str:
         """Generate unique ID for a change."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         path_hash = hashlib.md5(path.encode()).hexdigest()[:8]

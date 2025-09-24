@@ -41,7 +41,10 @@ class TestHealthEndpoints:
         response = client.get("/")
         assert response.status_code == 200
         data = response.json()
-        assert "StoryForge AI Interactive Story Engine is running!" in data["message"]
+        assert (
+            "StoryForge AI Interactive Story Engine is running!"
+            in data["message"]
+        )
         assert "status" in data
         assert "timestamp" in data
 
@@ -206,7 +209,12 @@ class TestSimulationEndpoints:
     def test_simulation_maximum_characters_validation(self):
         """Test validation for maximum character limit"""
         # Create request with too many characters
-        too_many_chars = ["pilot", "scientist", "engineer", "test"] * 3  # 12 characters
+        too_many_chars = [
+            "pilot",
+            "scientist",
+            "engineer",
+            "test",
+        ] * 3  # 12 characters
         invalid_request = {
             "character_names": too_many_chars[:10],  # Still over limit
             "setting": "large facility",
@@ -470,7 +478,9 @@ class TestPerformanceAndLoad:
         # Make 10 concurrent requests
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = [executor.submit(make_request) for _ in range(10)]
-            responses = [f.result() for f in concurrent.futures.as_completed(futures)]
+            responses = [
+                f.result() for f in concurrent.futures.as_completed(futures)
+            ]
 
         # All should succeed
         assert all(r.status_code == 200 for r in responses)

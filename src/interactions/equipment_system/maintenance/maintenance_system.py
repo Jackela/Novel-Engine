@@ -21,7 +21,11 @@ from ..core.types import (
 
 # Import enhanced core systems
 try:
-    from src.core.data_models import EquipmentCondition, ErrorInfo, StandardResponse
+    from src.core.data_models import (
+        EquipmentCondition,
+        ErrorInfo,
+        StandardResponse,
+    )
 except ImportError:
     # Fallback for testing
     class StandardResponse:
@@ -68,7 +72,9 @@ class MaintenanceSystem:
     """
 
     def __init__(
-        self, config: EquipmentSystemConfig, logger: Optional[logging.Logger] = None
+        self,
+        config: EquipmentSystemConfig,
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize maintenance system.
@@ -81,7 +87,8 @@ class MaintenanceSystem:
         self.logger = logger or logging.getLogger(__name__)
 
         # Maintenance scheduling
-        self._maintenance_queue: List[Tuple[datetime, str]] = []  # (time, equipment_id)
+        # (time, equipment_id)
+        self._maintenance_queue: List[Tuple[datetime, str]] = []
         self._maintenance_lock = asyncio.Lock()
 
         # Maintenance procedures and templates
@@ -172,11 +179,14 @@ class MaintenanceSystem:
                     else:  # overhaul
                         hours_ahead = 168  # Major overhaul
 
-                    scheduled_time = datetime.now() + timedelta(hours=hours_ahead)
+                    scheduled_time = datetime.now() + timedelta(
+                        hours=hours_ahead
+                    )
 
                 # Add to maintenance queue
                 heapq.heappush(
-                    self._maintenance_queue, (scheduled_time, equipment.equipment_id)
+                    self._maintenance_queue,
+                    (scheduled_time, equipment.equipment_id),
                 )
 
                 # Update equipment's next maintenance due
@@ -231,7 +241,9 @@ class MaintenanceSystem:
 
                 # Record pre-maintenance condition
                 condition_before = getattr(
-                    equipment.base_equipment, "condition", EquipmentCondition.GOOD
+                    equipment.base_equipment,
+                    "condition",
+                    EquipmentCondition.GOOD,
                 )
                 if hasattr(condition_before, "value"):
                     condition_before = condition_before.value
@@ -250,8 +262,10 @@ class MaintenanceSystem:
                 )
 
                 # Execute maintenance procedures
-                maintenance_effects = await self._execute_maintenance_procedures(
-                    equipment, maintenance_type, maintenance_record
+                maintenance_effects = (
+                    await self._execute_maintenance_procedures(
+                        equipment, maintenance_type, maintenance_record
+                    )
                 )
 
                 # Calculate maintenance duration
@@ -290,16 +304,18 @@ class MaintenanceSystem:
                 )
 
                 # Apply performance improvements
-                self._apply_maintenance_performance_boost(equipment, maintenance_type)
+                self._apply_maintenance_performance_boost(
+                    equipment, maintenance_type
+                )
 
                 # Appease machine spirit
                 spirit_improvement = self._appease_machine_spirit(
                     equipment, maintenance_type
                 )
                 equipment.machine_spirit_mood = spirit_improvement["new_mood"]
-                maintenance_record.machine_spirit_response = spirit_improvement[
-                    "response"
-                ]
+                maintenance_record.machine_spirit_response = (
+                    spirit_improvement["response"]
+                )
 
                 # Update timestamps
                 equipment.last_maintenance = maintenance_start
@@ -339,7 +355,9 @@ class MaintenanceSystem:
                         "condition_before": condition_before,
                         "condition_after": new_condition,
                         "wear_reduction": wear_reduction,
-                        "machine_spirit_response": spirit_improvement["response"],
+                        "machine_spirit_response": spirit_improvement[
+                            "response"
+                        ],
                         "next_maintenance_due": (
                             equipment.next_maintenance_due.isoformat()
                             if equipment.next_maintenance_due
@@ -362,7 +380,9 @@ class MaintenanceSystem:
                 ),
             )
 
-    async def get_maintenance_due(self, equipment: DynamicEquipment) -> Dict[str, Any]:
+    async def get_maintenance_due(
+        self, equipment: DynamicEquipment
+    ) -> Dict[str, Any]:
         """
         Check if equipment maintenance is due.
 
@@ -377,11 +397,14 @@ class MaintenanceSystem:
 
             # Check scheduled maintenance
             is_scheduled = (
-                equipment.next_maintenance_due and equipment.next_maintenance_due <= now
+                equipment.next_maintenance_due
+                and equipment.next_maintenance_due <= now
             )
 
             # Check wear-based maintenance need
-            wear_based_due = equipment.wear_accumulation >= self.config.wear_threshold
+            wear_based_due = (
+                equipment.wear_accumulation >= self.config.wear_threshold
+            )
 
             # Check time-based maintenance (if no scheduled maintenance)
             time_based_due = False
@@ -390,7 +413,8 @@ class MaintenanceSystem:
                     now - equipment.last_maintenance
                 ).total_seconds() / 3600
                 time_based_due = (
-                    hours_since_maintenance >= self.config.maintenance_interval_hours
+                    hours_since_maintenance
+                    >= self.config.maintenance_interval_hours
                 )
             elif not equipment.maintenance_history:
                 # New equipment needs initial maintenance check
@@ -400,7 +424,10 @@ class MaintenanceSystem:
             urgency = "routine"
             if wear_based_due and equipment.wear_accumulation > 0.9:
                 urgency = "critical"
-            elif wear_based_due or equipment.current_status == EquipmentStatus.DAMAGED:
+            elif (
+                wear_based_due
+                or equipment.current_status == EquipmentStatus.DAMAGED
+            ):
                 urgency = "high"
             elif is_scheduled or time_based_due:
                 urgency = "normal"
@@ -419,14 +446,17 @@ class MaintenanceSystem:
                 len(equipment.maintenance_history) > 0
                 and len(equipment.modifications) > 0
             ):
-                # Equipment with modifications might benefit from upgrade maintenance
+                # Equipment with modifications might benefit from upgrade
+                # maintenance
                 last_maintenance = equipment.maintenance_history[-1]
                 if (now - last_maintenance.performed_at).days > 30:
                     maintenance_type = "upgrade"
 
             return {
                 "equipment_id": equipment.equipment_id,
-                "maintenance_due": is_scheduled or wear_based_due or time_based_due,
+                "maintenance_due": is_scheduled
+                or wear_based_due
+                or time_based_due,
                 "urgency": urgency,
                 "recommended_type": maintenance_type,
                 "wear_accumulation": equipment.wear_accumulation,
@@ -473,9 +503,17 @@ class MaintenanceSystem:
                 overdue_equipment.append(maintenance_status)
 
         # Sort by urgency and days overdue
-        urgency_priority = {"critical": 0, "high": 1, "normal": 2, "routine": 3}
+        urgency_priority = {
+            "critical": 0,
+            "high": 1,
+            "normal": 2,
+            "routine": 3,
+        }
         overdue_equipment.sort(
-            key=lambda x: (urgency_priority.get(x["urgency"], 3), -x["days_overdue"])
+            key=lambda x: (
+                urgency_priority.get(x["urgency"], 3),
+                -x["days_overdue"],
+            )
         )
 
         return overdue_equipment
@@ -513,7 +551,9 @@ class MaintenanceSystem:
 
                     # Perform associated litany
                     if litanies:
-                        litany = litanies[len(performed_litanies) % len(litanies)]
+                        litany = litanies[
+                            len(performed_litanies) % len(litanies)
+                        ]
                         performed_litanies.append(litany)
 
             # Record completed procedures and litanies
@@ -561,7 +601,10 @@ class MaintenanceSystem:
         # Modify based on effectiveness
         if effectiveness < 0.5:
             improvement_level = "minimal"
-        elif effectiveness > 0.9 and maintenance_type in ["upgrade", "overhaul"]:
+        elif effectiveness > 0.9 and maintenance_type in [
+            "upgrade",
+            "overhaul",
+        ]:
             improvement_level = "excellent"
 
         return improvement_level
@@ -571,7 +614,14 @@ class MaintenanceSystem:
     ) -> str:
         """Improve equipment condition based on maintenance quality."""
         # Define condition hierarchy
-        condition_order = ["broken", "damaged", "poor", "fair", "good", "excellent"]
+        condition_order = [
+            "broken",
+            "damaged",
+            "poor",
+            "fair",
+            "good",
+            "excellent",
+        ]
 
         try:
             current_index = condition_order.index(current_condition)
@@ -670,11 +720,11 @@ class MaintenanceSystem:
 
         # Generate response based on mood change
         if new_mood == current_mood:
-            response = f"The machine spirit maintains its {current_mood} disposition"
-        else:
             response = (
-                f"The machine spirit's mood improves from {current_mood} to {new_mood}"
+                f"The machine spirit maintains its {current_mood} disposition"
             )
+        else:
+            response = f"The machine spirit's mood improves from {current_mood} to {new_mood}"
 
         return {
             "old_mood": current_mood,

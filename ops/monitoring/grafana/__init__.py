@@ -46,9 +46,7 @@ def provision_dashboard(name: str, **kwargs) -> str:
     Returns:
         str: Dashboard ID
     """
-    dashboard_id = (
-        f"grafana-{name.lower().replace(' ', '-')}-{datetime.now().strftime('%Y%m%d')}"
-    )
+    dashboard_id = f"grafana-{name.lower().replace(' ', '-')}-{datetime.now().strftime('%Y%m%d')}"
 
     {
         "dashboard_id": dashboard_id,
@@ -58,7 +56,9 @@ def provision_dashboard(name: str, **kwargs) -> str:
         "folder": kwargs.get("folder", "General"),
         "template_path": kwargs.get("template_path"),
         "variables": kwargs.get("variables", []),
-        "time_range": kwargs.get("time_range", {"from": "now-1h", "to": "now"}),
+        "time_range": kwargs.get(
+            "time_range", {"from": "now-1h", "to": "now"}
+        ),
         "refresh": kwargs.get("refresh", "30s"),
         "tags": kwargs.get("tags", []),
         "provisioned": True,
@@ -79,7 +79,9 @@ def configure_datasource(datasource_type: str, **kwargs) -> str:
     Returns:
         str: Data source ID
     """
-    datasource_id = f"{datasource_type}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    datasource_id = (
+        f"{datasource_type}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    )
 
     datasource_configs = {
         "prometheus": {
@@ -98,7 +100,9 @@ def configure_datasource(datasource_type: str, **kwargs) -> str:
             "type": "elasticsearch",
             "url": kwargs.get("url", "http://elasticsearch:9200"),
             "access": "proxy",
-            "database": kwargs.get("database", "[novel-engine-logs-]YYYY.MM.DD"),
+            "database": kwargs.get(
+                "database", "[novel-engine-logs-]YYYY.MM.DD"
+            ),
             "jsonData": {
                 "interval": "Daily",
                 "timeField": "@timestamp",

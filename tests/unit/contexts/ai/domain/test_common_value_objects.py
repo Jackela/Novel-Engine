@@ -116,7 +116,9 @@ class TestModelCapabilityEnum:
         """Test model capability membership operations."""
         assert ModelCapability.TEXT_GENERATION in ModelCapability
         assert "text_generation" == ModelCapability.TEXT_GENERATION.value
-        assert ModelCapability.TEXT_GENERATION == ModelCapability("text_generation")
+        assert ModelCapability.TEXT_GENERATION == ModelCapability(
+            "text_generation"
+        )
 
 
 class TestProviderIdCreation:
@@ -169,7 +171,8 @@ class TestProviderIdCreation:
     def test_frozen_dataclass_immutability(self):
         """Test that ProviderId instances are immutable."""
         provider_id = ProviderId(
-            provider_name="Immutable Provider", provider_type=ProviderType.CUSTOM
+            provider_name="Immutable Provider",
+            provider_type=ProviderType.CUSTOM,
         )
 
         with pytest.raises(AttributeError):
@@ -203,20 +206,26 @@ class TestProviderIdValidation:
         with pytest.raises(
             ValueError, match="provider_name must be 2-100 characters long"
         ):
-            ProviderId(provider_name=long_name, provider_type=ProviderType.CUSTOM)
+            ProviderId(
+                provider_name=long_name, provider_type=ProviderType.CUSTOM
+            )
 
     def test_invalid_provider_name_characters_raise_errors(self):
         """Test that invalid provider name characters raise validation errors."""
         with pytest.raises(
             ValueError, match="provider_name contains invalid characters"
         ):
-            ProviderId(provider_name="Invalid@Name!", provider_type=ProviderType.CUSTOM)
+            ProviderId(
+                provider_name="Invalid@Name!",
+                provider_type=ProviderType.CUSTOM,
+            )
 
         with pytest.raises(
             ValueError, match="provider_name contains invalid characters"
         ):
             ProviderId(
-                provider_name="Name<with>brackets", provider_type=ProviderType.CUSTOM
+                provider_name="Name<with>brackets",
+                provider_type=ProviderType.CUSTOM,
             )
 
     def test_valid_provider_name_characters(self):
@@ -239,7 +248,9 @@ class TestProviderIdValidation:
         with pytest.raises(
             ValueError, match="provider_type must be a ProviderType enum"
         ):
-            ProviderId(provider_name="Test", provider_type="openai")  # Should be enum
+            ProviderId(
+                provider_name="Test", provider_type="openai"
+            )  # Should be enum
 
     def test_invalid_api_version_format_raises_error(self):
         """Test that invalid API version format raises validation error."""
@@ -299,7 +310,9 @@ class TestProviderIdValidation:
 
         for region in valid_regions:
             provider_id = ProviderId(
-                provider_name="Test", provider_type=ProviderType.CUSTOM, region=region
+                provider_name="Test",
+                provider_type=ProviderType.CUSTOM,
+                region=region,
             )
             assert provider_id.region == region
 
@@ -321,7 +334,9 @@ class TestProviderIdFactoryMethods:
 
     def test_create_openai_custom_params(self):
         """Test creating OpenAI provider with custom parameters."""
-        provider_id = ProviderId.create_openai(api_version="2.0.0", region="CA")
+        provider_id = ProviderId.create_openai(
+            api_version="2.0.0", region="CA"
+        )
 
         assert provider_id.provider_name == "OpenAI"
         assert provider_id.provider_type == ProviderType.OPENAI
@@ -342,7 +357,9 @@ class TestProviderIdFactoryMethods:
 
     def test_create_anthropic_custom_params(self):
         """Test creating Anthropic provider with custom parameters."""
-        provider_id = ProviderId.create_anthropic(api_version="1.5.0", region="EU")
+        provider_id = ProviderId.create_anthropic(
+            api_version="1.5.0", region="EU"
+        )
 
         assert provider_id.provider_name == "Anthropic"
         assert provider_id.provider_type == ProviderType.ANTHROPIC
@@ -352,7 +369,9 @@ class TestProviderIdFactoryMethods:
     def test_create_custom_provider(self):
         """Test creating custom provider."""
         provider_id = ProviderId.create_custom(
-            name="My Custom Provider", key="custom-key-123", api_version="3.2.1"
+            name="My Custom Provider",
+            key="custom-key-123",
+            api_version="3.2.1",
         )
 
         assert provider_id.provider_name == "My Custom Provider"
@@ -378,14 +397,18 @@ class TestProviderIdMethods:
         ]
 
         for provider_type in official_types:
-            provider_id = ProviderId(provider_name="Test", provider_type=provider_type)
+            provider_id = ProviderId(
+                provider_name="Test", provider_type=provider_type
+            )
             assert provider_id.is_official_provider() is True
 
         # Non-official providers
         non_official_types = [ProviderType.HUGGINGFACE, ProviderType.CUSTOM]
 
         for provider_type in non_official_types:
-            provider_id = ProviderId(provider_name="Test", provider_type=provider_type)
+            provider_id = ProviderId(
+                provider_name="Test", provider_type=provider_type
+            )
             assert provider_id.is_official_provider() is False
 
     def test_supports_region(self):
@@ -405,7 +428,9 @@ class TestProviderIdMethods:
             region="US",
         )
         assert regional_provider.supports_region("US") is True
-        assert regional_provider.supports_region("us") is True  # Case insensitive
+        assert (
+            regional_provider.supports_region("us") is True
+        )  # Case insensitive
         assert regional_provider.supports_region("CA") is False
         assert regional_provider.supports_region("EU") is False
 
@@ -445,7 +470,9 @@ class TestModelIdCreation:
 
     def test_create_minimal_model_id(self):
         """Test creating ModelId with minimal required fields."""
-        model_id = ModelId(model_name="test-model", provider_id=self.provider_id)
+        model_id = ModelId(
+            model_name="test-model", provider_id=self.provider_id
+        )
 
         assert model_id.model_name == "test-model"
         assert model_id.provider_id == self.provider_id
@@ -493,7 +520,9 @@ class TestModelIdCreation:
 
     def test_frozen_dataclass_immutability(self):
         """Test that ModelId instances are immutable."""
-        model_id = ModelId(model_name="immutable-model", provider_id=self.provider_id)
+        model_id = ModelId(
+            model_name="immutable-model", provider_id=self.provider_id
+        )
 
         with pytest.raises(AttributeError):
             model_id.model_name = "modified-name"
@@ -530,11 +559,17 @@ class TestModelIdValidation:
 
     def test_invalid_model_name_characters_raise_errors(self):
         """Test that invalid model name characters raise validation errors."""
-        with pytest.raises(ValueError, match="model_name contains invalid characters"):
+        with pytest.raises(
+            ValueError, match="model_name contains invalid characters"
+        ):
             ModelId(model_name="invalid@model!", provider_id=self.provider_id)
 
-        with pytest.raises(ValueError, match="model_name contains invalid characters"):
-            ModelId(model_name="model with spaces", provider_id=self.provider_id)
+        with pytest.raises(
+            ValueError, match="model_name contains invalid characters"
+        ):
+            ModelId(
+                model_name="model with spaces", provider_id=self.provider_id
+            )
 
     def test_valid_model_name_characters(self):
         """Test that valid model name characters are accepted."""
@@ -565,7 +600,9 @@ class TestModelIdValidation:
             ValueError, match="max_context_tokens must be a positive integer"
         ):
             ModelId(
-                model_name="test", provider_id=self.provider_id, max_context_tokens=-1
+                model_name="test",
+                provider_id=self.provider_id,
+                max_context_tokens=-1,
             )
 
         # Zero context tokens
@@ -573,7 +610,9 @@ class TestModelIdValidation:
             ValueError, match="max_context_tokens must be a positive integer"
         ):
             ModelId(
-                model_name="test", provider_id=self.provider_id, max_context_tokens=0
+                model_name="test",
+                provider_id=self.provider_id,
+                max_context_tokens=0,
             )
 
         # Negative output tokens
@@ -581,12 +620,15 @@ class TestModelIdValidation:
             ValueError, match="max_output_tokens must be a positive integer"
         ):
             ModelId(
-                model_name="test", provider_id=self.provider_id, max_output_tokens=-1
+                model_name="test",
+                provider_id=self.provider_id,
+                max_output_tokens=-1,
             )
 
         # Output tokens exceed context tokens
         with pytest.raises(
-            ValueError, match="max_output_tokens cannot exceed max_context_tokens"
+            ValueError,
+            match="max_output_tokens cannot exceed max_context_tokens",
         ):
             ModelId(
                 model_name="test",
@@ -599,7 +641,8 @@ class TestModelIdValidation:
         """Test that invalid costs raise validation errors."""
         # Negative input cost
         with pytest.raises(
-            ValueError, match="cost_per_input_token must be a non-negative Decimal"
+            ValueError,
+            match="cost_per_input_token must be a non-negative Decimal",
         ):
             ModelId(
                 model_name="test",
@@ -609,7 +652,8 @@ class TestModelIdValidation:
 
         # Negative output cost
         with pytest.raises(
-            ValueError, match="cost_per_output_token must be a non-negative Decimal"
+            ValueError,
+            match="cost_per_output_token must be a non-negative Decimal",
         ):
             ModelId(
                 model_name="test",
@@ -620,7 +664,8 @@ class TestModelIdValidation:
     def test_invalid_capabilities_raise_error(self):
         """Test that invalid capabilities raise validation error."""
         with pytest.raises(
-            ValueError, match="All capabilities must be ModelCapability enum values"
+            ValueError,
+            match="All capabilities must be ModelCapability enum values",
         ):
             ModelId(
                 model_name="test",
@@ -686,7 +731,9 @@ class TestModelIdFactoryMethods:
             provider_name="Anthropic", provider_type=ProviderType.ANTHROPIC
         )
 
-        model_id = ModelId.create_claude(anthropic_provider, variant="claude-3-opus")
+        model_id = ModelId.create_claude(
+            anthropic_provider, variant="claude-3-opus"
+        )
 
         assert model_id.model_name == "claude-3-opus"
         assert model_id.max_context_tokens == 200000
@@ -700,7 +747,9 @@ class TestModelIdFactoryMethods:
             provider_name="Anthropic", provider_type=ProviderType.ANTHROPIC
         )
 
-        model_id = ModelId.create_claude(anthropic_provider, variant="unknown-variant")
+        model_id = ModelId.create_claude(
+            anthropic_provider, variant="unknown-variant"
+        )
 
         assert model_id.model_name == "unknown-variant"
         # Should use claude-3-sonnet config as default
@@ -732,9 +781,17 @@ class TestModelIdMethods:
         )
 
         # Supported capabilities
-        assert model_id.supports_capability(ModelCapability.TEXT_GENERATION) is True
-        assert model_id.supports_capability(ModelCapability.CONVERSATION) is True
-        assert model_id.supports_capability(ModelCapability.CODE_GENERATION) is True
+        assert (
+            model_id.supports_capability(ModelCapability.TEXT_GENERATION)
+            is True
+        )
+        assert (
+            model_id.supports_capability(ModelCapability.CONVERSATION) is True
+        )
+        assert (
+            model_id.supports_capability(ModelCapability.CODE_GENERATION)
+            is True
+        )
 
         # Unsupported capabilities
         assert model_id.supports_capability(ModelCapability.VISION) is False
@@ -750,9 +807,9 @@ class TestModelIdMethods:
         )
 
         cost = model_id.estimate_cost(input_tokens=1000, output_tokens=500)
-        expected_cost = Decimal("1000") * Decimal("0.00001") + Decimal("500") * Decimal(
-            "0.00002"
-        )
+        expected_cost = Decimal("1000") * Decimal("0.00001") + Decimal(
+            "500"
+        ) * Decimal("0.00002")
         assert cost == expected_cost
 
     def test_estimate_cost_zero_tokens(self):
@@ -791,19 +848,25 @@ class TestModelIdMethods:
         assert model_id.get_effective_context_limit(0) == 4096
         assert model_id.get_effective_context_limit(1024) == 3072
         assert model_id.get_effective_context_limit(4096) == 0
-        assert model_id.get_effective_context_limit(5000) == 0  # Cannot go negative
+        assert (
+            model_id.get_effective_context_limit(5000) == 0
+        )  # Cannot go negative
 
     def test_is_deprecated(self):
         """Test is_deprecated method."""
         # Non-deprecated model
         current_model = ModelId(
-            model_name="current-model", provider_id=self.provider_id, deprecated=False
+            model_name="current-model",
+            provider_id=self.provider_id,
+            deprecated=False,
         )
         assert current_model.is_deprecated() is False
 
         # Deprecated model
         old_model = ModelId(
-            model_name="old-model", provider_id=self.provider_id, deprecated=True
+            model_name="old-model",
+            provider_id=self.provider_id,
+            deprecated=True,
         )
         assert old_model.is_deprecated() is True
 
@@ -867,7 +930,9 @@ class TestTokenBudgetCreation:
 
     def test_frozen_dataclass_immutability(self):
         """Test that TokenBudget instances are immutable."""
-        budget = TokenBudget(budget_id="immutable-budget", allocated_tokens=1000)
+        budget = TokenBudget(
+            budget_id="immutable-budget", allocated_tokens=1000
+        )
 
         with pytest.raises(AttributeError):
             budget.budget_id = "modified-id"
@@ -890,22 +955,33 @@ class TestTokenBudgetValidation:
     def test_invalid_budget_id_length_raises_errors(self):
         """Test that invalid budget ID lengths raise validation errors."""
         # Too short
-        with pytest.raises(ValueError, match="budget_id must be 3-100 characters long"):
+        with pytest.raises(
+            ValueError, match="budget_id must be 3-100 characters long"
+        ):
             TokenBudget(budget_id="ab", allocated_tokens=1000)
 
         # Too long
         long_id = "a" * 101
-        with pytest.raises(ValueError, match="budget_id must be 3-100 characters long"):
+        with pytest.raises(
+            ValueError, match="budget_id must be 3-100 characters long"
+        ):
             TokenBudget(budget_id=long_id, allocated_tokens=1000)
 
     def test_invalid_budget_id_characters_raise_error(self):
         """Test that invalid budget ID characters raise validation error."""
-        with pytest.raises(ValueError, match="budget_id contains invalid characters"):
+        with pytest.raises(
+            ValueError, match="budget_id contains invalid characters"
+        ):
             TokenBudget(budget_id="invalid@budget!", allocated_tokens=1000)
 
     def test_valid_budget_id_characters(self):
         """Test that valid budget ID characters are accepted."""
-        valid_ids = ["budget-123", "project_budget", "Budget.v1.0", "dailyBudget2024"]
+        valid_ids = [
+            "budget-123",
+            "project_budget",
+            "Budget.v1.0",
+            "dailyBudget2024",
+        ]
 
         for budget_id in valid_ids:
             budget = TokenBudget(budget_id=budget_id, allocated_tokens=1000)
@@ -929,13 +1005,17 @@ class TestTokenBudgetValidation:
         with pytest.raises(
             ValueError, match="consumed_tokens must be a non-negative integer"
         ):
-            TokenBudget(budget_id="test", allocated_tokens=1000, consumed_tokens=-100)
+            TokenBudget(
+                budget_id="test", allocated_tokens=1000, consumed_tokens=-100
+            )
 
         # Negative reserved tokens
         with pytest.raises(
             ValueError, match="reserved_tokens must be a non-negative integer"
         ):
-            TokenBudget(budget_id="test", allocated_tokens=1000, reserved_tokens=-100)
+            TokenBudget(
+                budget_id="test", allocated_tokens=1000, reserved_tokens=-100
+            )
 
     def test_token_budget_over_allocation_allowed(self):
         """Test that over-allocation scenarios are allowed (handled by business methods)."""
@@ -947,7 +1027,9 @@ class TestTokenBudgetValidation:
             reserved_tokens=500,  # 600 + 500 > 1000
         )
         # Business methods should handle this appropriately
-        assert budget.get_available_tokens() == 0  # Protected to return 0, not negative
+        assert (
+            budget.get_available_tokens() == 0
+        )  # Protected to return 0, not negative
 
     def test_invalid_cost_values_raise_errors(self):
         """Test that invalid cost values raise validation errors."""
@@ -956,7 +1038,9 @@ class TestTokenBudgetValidation:
             ValueError, match="cost_limit must be a non-negative Decimal"
         ):
             TokenBudget(
-                budget_id="test", allocated_tokens=1000, cost_limit=Decimal("-100.00")
+                budget_id="test",
+                allocated_tokens=1000,
+                cost_limit=Decimal("-100.00"),
             )
 
         # Negative accumulated cost
@@ -1011,7 +1095,9 @@ class TestTokenBudgetFactoryMethods:
 
     def test_create_daily_budget_with_cost_limit(self):
         """Test creating daily budget with custom cost limit."""
-        budget = TokenBudget.create_daily_budget("user456", 10000, Decimal("200.00"))
+        budget = TokenBudget.create_daily_budget(
+            "user456", 10000, Decimal("200.00")
+        )
 
         assert budget.budget_id == "daily_user456"
         assert budget.allocated_tokens == 10000
@@ -1075,7 +1161,9 @@ class TestTokenBudgetMethods:
     def test_get_utilization_percentage_zero_allocation(self):
         """Test get_utilization_percentage with zero allocation."""
         # This should not happen in practice due to validation, but test the edge case
-        budget = TokenBudget(budget_id="test", allocated_tokens=1)  # Minimum allocation
+        budget = TokenBudget(
+            budget_id="test", allocated_tokens=1
+        )  # Minimum allocation
         # Manually set to zero to test edge case
         object.__setattr__(budget, "allocated_tokens", 0)
 
@@ -1098,7 +1186,9 @@ class TestTokenBudgetMethods:
     def test_get_cost_utilization_percentage_zero_limit(self):
         """Test get_cost_utilization_percentage with zero cost limit."""
         budget = TokenBudget(
-            budget_id="test", allocated_tokens=10000, cost_limit=Decimal("0.00")
+            budget_id="test",
+            allocated_tokens=10000,
+            cost_limit=Decimal("0.00"),
         )
 
         cost_util = budget.get_cost_utilization_percentage()
@@ -1162,7 +1252,8 @@ class TestTokenBudgetMethods:
         )  # Only 1000 available
 
         with pytest.raises(
-            ValueError, match="Cannot reserve 2000 tokens - insufficient budget"
+            ValueError,
+            match="Cannot reserve 2000 tokens - insufficient budget",
         ):
             budget.reserve_tokens(2000)
 
@@ -1219,7 +1310,8 @@ class TestTokenBudgetMethods:
         )  # Only 1000 available + 1000 reserved = 2000 max consumable
 
         with pytest.raises(
-            ValueError, match="Cannot consume 3000 tokens - exceeds allocated budget"
+            ValueError,
+            match="Cannot consume 3000 tokens - exceeds allocated budget",
         ):
             budget.consume_tokens(3000, Decimal("30.00"))
 
@@ -1235,7 +1327,8 @@ class TestTokenBudgetMethods:
         )  # Only 10.00 cost remaining
 
         with pytest.raises(
-            ValueError, match="Cannot afford additional cost of .* - exceeds cost limit"
+            ValueError,
+            match="Cannot afford additional cost of .* - exceeds cost limit",
         ):
             budget.consume_tokens(1000, Decimal("15.00"))
 
@@ -1375,18 +1468,26 @@ class TestTokenBudgetEquality:
 
     def test_inequality_different_values(self):
         """Test inequality with different values."""
-        budget1 = TokenBudget(budget_id="test-budget-1", allocated_tokens=10000)
+        budget1 = TokenBudget(
+            budget_id="test-budget-1", allocated_tokens=10000
+        )
 
-        budget2 = TokenBudget(budget_id="test-budget-2", allocated_tokens=10000)
+        budget2 = TokenBudget(
+            budget_id="test-budget-2", allocated_tokens=10000
+        )
 
         assert budget1 != budget2
         assert hash(budget1) != hash(budget2)
 
     def test_equality_in_collections(self):
         """Test that equality works correctly in collections."""
-        budget1 = TokenBudget(budget_id="collection-test", allocated_tokens=10000)
+        budget1 = TokenBudget(
+            budget_id="collection-test", allocated_tokens=10000
+        )
 
-        budget2 = TokenBudget(budget_id="collection-test", allocated_tokens=10000)
+        budget2 = TokenBudget(
+            budget_id="collection-test", allocated_tokens=10000
+        )
 
         budget_set = {budget1}
         assert budget2 in budget_set

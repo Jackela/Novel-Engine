@@ -67,7 +67,9 @@ class WorldStateChanged(Event):
     # Additional world context
     world_time: Optional[datetime] = None
     affected_area: Optional[Dict[str, Any]] = None  # Spatial bounds of change
-    cascade_effects: Set[str] = field(default_factory=set)  # IDs of affected entities
+    cascade_effects: Set[str] = field(
+        default_factory=set
+    )  # IDs of affected entities
 
     def __post_init__(self):
         """Initialize world state changed event with proper validation."""
@@ -107,7 +109,9 @@ class WorldStateChanged(Event):
                 "new_state": self.new_state,
                 "change_reason": self.change_reason,
                 "batch_id": self.batch_id,
-                "world_time": self.world_time.isoformat() if self.world_time else None,
+                "world_time": self.world_time.isoformat()
+                if self.world_time
+                else None,
                 "affected_area": self.affected_area,
                 "cascade_effects": list(self.cascade_effects),
             }
@@ -142,7 +146,9 @@ class WorldStateChanged(Event):
             WorldChangeType.ENTITY_UPDATED,
         ]:
             if not self.affected_entity_id:
-                errors.append("affected_entity_id is required for entity changes")
+                errors.append(
+                    "affected_entity_id is required for entity changes"
+                )
 
         # Validate state data consistency
         if self.change_type == WorldChangeType.ENTITY_UPDATED:
@@ -152,7 +158,9 @@ class WorldStateChanged(Event):
                 )
 
         if errors:
-            raise ValueError(f"World event validation failed: {'; '.join(errors)}")
+            raise ValueError(
+                f"World event validation failed: {'; '.join(errors)}"
+            )
 
     @classmethod
     def entity_added(
@@ -314,7 +322,10 @@ class WorldStateChanged(Event):
 
     @classmethod
     def state_snapshot(
-        cls, snapshot_data: Dict[str, Any], reason: str, source: str = "world_context"
+        cls,
+        snapshot_data: Dict[str, Any],
+        reason: str,
+        source: str = "world_context",
     ) -> "WorldStateChanged":
         """
         Create an event for when a complete world state snapshot is taken.

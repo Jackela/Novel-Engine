@@ -1,0 +1,275 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.6, pytest-8.4.2, pluggy-1.5.0
+rootdir: D:\Code\Novel-Engine
+configfile: pytest.ini
+plugins: asyncio-1.1.0, cov-4.1.0, mock-3.12.0, anyio-4.8.0
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 2130 items / 15 errors
+
+=================================== ERRORS ====================================
+____________ ERROR collecting ai_testing/final_integration_test.py ____________
+ImportError while importing test module 'D:\Code\Novel-Engine\ai_testing\final_integration_test.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_testing\final_integration_test.py:14: in <module>
+    from complete_workflow_test import CompleteNovelWorkflow
+E   ModuleNotFoundError: No module named 'complete_workflow_test'
+___________ ERROR collecting ai_testing/test_wave3_improvements.py ____________
+ImportError while importing test module 'D:\Code\Novel-Engine\ai_testing\test_wave3_improvements.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_testing\test_wave3_improvements.py:13: in <module>
+    from complete_workflow_test import CompleteNovelWorkflow
+E   ModuleNotFoundError: No module named 'complete_workflow_test'
+_ ERROR collecting contexts/orchestration/tests/test_end_to_end_validation.py _
+ImportError while importing test module 'D:\Code\Novel-Engine\contexts\orchestration\tests\test_end_to_end_validation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+contexts\orchestration\tests\test_end_to_end_validation.py:24: in <module>
+    from application.services import TurnOrchestrator
+contexts\orchestration\application\__init__.py:18: in <module>
+    from .services import TurnExecutionResult, TurnOrchestrator
+contexts\orchestration\application\services\__init__.py:9: in <module>
+    from .turn_orchestrator import TurnExecutionResult, TurnOrchestrator
+contexts\orchestration\application\services\turn_orchestrator.py:15: in <module>
+    from ...domain.entities import Turn
+E   ImportError: attempted relative import beyond top-level package
+_ ERROR collecting contexts/orchestration/tests/test_prometheus_integration.py _
+ImportError while importing test module 'D:\Code\Novel-Engine\contexts\orchestration\tests\test_prometheus_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+contexts\orchestration\tests\test_prometheus_integration.py:16: in <module>
+    from ..api.turn_api import app, enhanced_performance_tracker
+contexts\orchestration\api\turn_api.py:19: in <module>
+    from ..application.services import TurnOrchestrator
+contexts\orchestration\application\__init__.py:18: in <module>
+    from .services import TurnExecutionResult, TurnOrchestrator
+contexts\orchestration\application\services\__init__.py:9: in <module>
+    from .turn_orchestrator import TurnExecutionResult, TurnOrchestrator
+contexts\orchestration\application\services\turn_orchestrator.py:15: in <module>
+    from ...domain.entities import Turn
+contexts\orchestration\domain\entities\__init__.py:11: in <module>
+    from .turn import Turn
+contexts\orchestration\domain\entities\turn.py:16: in <module>
+    from ..value_objects import (
+E   ImportError: cannot import name 'PhaseStatusEnum' from 'contexts.orchestration.domain.value_objects' (D:\Code\Novel-Engine\contexts\orchestration\domain\value_objects\__init__.py)
+______________ ERROR collecting playwright_ai_validation_test.py ______________
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\_pytest\python.py:498: in importtestmodule
+    mod = import_path(
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\_pytest\pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\_pytest\assertion\rewrite.py:177: in exec_module
+    source_stat, co = _rewrite_test(fn, self.config)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\_pytest\assertion\rewrite.py:357: in _rewrite_test
+    tree = ast.parse(source, filename=strfn)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python312\Lib\ast.py:52: in parse
+    return compile(source, filename, mode, flags,
+E     File "D:\Code\Novel-Engine\playwright_ai_validation_test.py", line 141
+E       description=(\n                    \"Templates cannot generate genuine meta-fictional awareness\"\n                ),
+E                     ^
+E   SyntaxError: unexpected character after line continuation character
+_________ ERROR collecting tests/test_ai_intelligence_integration.py __________
+ImportError while importing test module 'D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_ai_intelligence_integration.py:27: in <module>
+    from src.ai_intelligence.analytics_platform import AnalyticsEvent
+src\ai_intelligence\__init__.py:14: in <module>
+    from .agent_coordination_engine import (
+src\ai_intelligence\agent_coordination_engine.py:26: in <module>
+    from shared_types import CharacterAction
+E   ModuleNotFoundError: No module named 'shared_types'
+_________ ERROR collecting tests/test_api_endpoints_comprehensive.py __________
+ImportError while importing test module 'D:\Code\Novel-Engine\tests\test_api_endpoints_comprehensive.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_api_endpoints_comprehensive.py:22: in <module>
+    from api_server import app
+api_server.py:21: in <module>
+    from chronicler_agent import ChroniclerAgent
+chronicler_agent.py:22: in <module>
+    from shared_types import CharacterAction
+E   ModuleNotFoundError: No module named 'shared_types'
+________________ ERROR collecting tests/test_director_agent.py ________________
+ImportError while importing test module 'D:\Code\Novel-Engine\tests\test_director_agent.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_director_agent.py:6: in <module>
+    from shared_types import CharacterAction
+E   ModuleNotFoundError: No module named 'shared_types'
+_______________ ERROR collecting tests/test_enhanced_bridge.py ________________
+ImportError while importing test module 'D:\Code\Novel-Engine\tests\test_enhanced_bridge.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_enhanced_bridge.py:20: in <module>
+    from enhanced_multi_agent_bridge import EnhancedMultiAgentBridge
+enhanced_multi_agent_bridge.py:34: in <module>
+    from src.ai_intelligence.ai_orchestrator import (
+src\ai_intelligence\__init__.py:14: in <module>
+    from .agent_coordination_engine import (
+src\ai_intelligence\agent_coordination_engine.py:26: in <module>
+    from shared_types import CharacterAction
+E   ModuleNotFoundError: No module named 'shared_types'
+__________ ERROR collecting tests/test_integration_comprehensive.py ___________
+ImportError while importing test module 'D:\Code\Novel-Engine\tests\test_integration_comprehensive.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_integration_comprehensive.py:29: in <module>
+    from api_server import app
+api_server.py:21: in <module>
+    from chronicler_agent import ChroniclerAgent
+chronicler_agent.py:22: in <module>
+    from shared_types import CharacterAction
+E   ImportError: cannot import name 'CharacterAction' from 'shared_types' (D:\Code\Novel-Engine\src\shared_types.py). Did you mean: 'CharacterData'?
+_______________ ERROR collecting tests/test_llm_integration.py ________________
+ImportError while importing test module 'D:\Code\Novel-Engine\tests\test_llm_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_llm_integration.py:12: in <module>
+    from shared_types import CharacterAction
+E   ImportError: cannot import name 'CharacterAction' from 'shared_types' (D:\Code\Novel-Engine\src\shared_types.py). Did you mean: 'CharacterData'?
+________________ ERROR collecting tests/test_persona_agent.py _________________
+ImportError while importing test module 'D:\Code\Novel-Engine\tests\test_persona_agent.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_persona_agent.py:5: in <module>
+    from shared_types import CharacterAction
+E   ImportError: cannot import name 'CharacterAction' from 'shared_types' (D:\Code\Novel-Engine\src\shared_types.py). Did you mean: 'CharacterData'?
+________ ERROR collecting tests/test_story_generation_comprehensive.py ________
+ImportError while importing test module 'D:\Code\Novel-Engine\tests\test_story_generation_comprehensive.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_story_generation_comprehensive.py:25: in <module>
+    from chronicler_agent import CampaignEvent, ChroniclerAgent, NarrativeSegment
+chronicler_agent.py:22: in <module>
+    from shared_types import CharacterAction
+E   ImportError: cannot import name 'CharacterAction' from 'shared_types' (D:\Code\Novel-Engine\src\shared_types.py). Did you mean: 'CharacterData'?
+_ ERROR collecting tests/unit/contexts/interactions/application/test_interaction_application_service.py _
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\_pytest\python.py:498: in importtestmodule
+    mod = import_path(
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\_pytest\pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\_pytest\assertion\rewrite.py:177: in exec_module
+    source_stat, co = _rewrite_test(fn, self.config)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\_pytest\assertion\rewrite.py:357: in _rewrite_test
+    tree = ast.parse(source, filename=strfn)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python312\Lib\ast.py:52: in parse
+    return compile(source, filename, mode, flags,
+E     File "D:\Code\Novel-Engine\tests\unit\contexts\interactions\application\test_interaction_application_service.py", line 15
+E       from contexts.interactions.application.commands. import (
+E                                                        ^^^^^^
+E   SyntaxError: invalid syntax
+____________ ERROR collecting tests/unit/quality/test_analyzer.py _____________
+ImportError while importing test module 'D:\Code\Novel-Engine\tests\unit\quality\test_analyzer.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\quality\test_analyzer.py:24: in <module>
+    from quality.code_quality_analyzer import CodeQualityAnalyzer
+ai_testing\quality\__init__.py:6: in <module>
+    from .authenticity_metrics import AuthenticityMetrics, CreativityScorer
+E   ModuleNotFoundError: No module named 'quality.authenticity_metrics'
+============================== warnings summary ===============================
+ai_testing\interfaces\service_contracts.py:83
+  D:\Code\Novel-Engine\ai_testing\interfaces\service_contracts.py:83: PytestCollectionWarning: cannot collect test class 'TestScenario' because it has a __init__ constructor (from: ai_testing/test_scenarios/novel_engine_test.py)
+    class TestScenario(BaseTestModel):
+
+ai_testing\interfaces\service_contracts.py:32
+  D:\Code\Novel-Engine\ai_testing\interfaces\service_contracts.py:32: PytestCollectionWarning: cannot collect test class 'TestType' because it has a __init__ constructor (from: ai_testing/test_scenarios/novel_engine_test.py)
+    class TestType(str, Enum):
+
+scripts\test_migration_utilities.py:17
+  D:\Code\Novel-Engine\scripts\test_migration_utilities.py:17: PytestCollectionWarning: cannot collect test class 'TestMigrationUtilities' because it has a __init__ constructor (from: scripts/test_migration_utilities.py)
+    class TestMigrationUtilities:
+
+scripts\test_migration_validator.py:21
+  D:\Code\Novel-Engine\scripts\test_migration_validator.py:21: PytestCollectionWarning: cannot collect test class 'TestMigrationValidator' because it has a __init__ constructor (from: scripts/test_migration_validator.py)
+    class TestMigrationValidator:
+
+tests\test_character_system_comprehensive.py:684
+  D:\Code\Novel-Engine\tests\test_character_system_comprehensive.py:684: PytestUnknownMarkWarning: Unknown pytest.mark.character - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = [pytest.mark.character, pytest.mark.unit]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+ERROR ai_testing/final_integration_test.py
+ERROR ai_testing/test_wave3_improvements.py
+ERROR contexts/orchestration/tests/test_end_to_end_validation.py
+ERROR contexts/orchestration/tests/test_prometheus_integration.py
+ERROR playwright_ai_validation_test.py
+ERROR tests/test_ai_intelligence_integration.py
+ERROR tests/test_api_endpoints_comprehensive.py
+ERROR tests/test_director_agent.py
+ERROR tests/test_enhanced_bridge.py
+ERROR tests/test_integration_comprehensive.py
+ERROR tests/test_llm_integration.py
+ERROR tests/test_persona_agent.py
+ERROR tests/test_story_generation_comprehensive.py
+ERROR tests/unit/contexts/interactions/application/test_interaction_application_service.py
+ERROR tests/unit/quality/test_analyzer.py
+!!!!!!!!!!!!!!!!!! Interrupted: 15 errors during collection !!!!!!!!!!!!!!!!!!!
+======================= 5 warnings, 15 errors in 6.08s ========================

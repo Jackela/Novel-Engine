@@ -92,16 +92,26 @@ class SecureAPIConfig:
             "CORS_ORIGINS", "http://localhost:3000" if self.debug else ""
         )
         self.cors_origins = [
-            origin.strip() for origin in cors_origins.split(",") if origin.strip()
+            origin.strip()
+            for origin in cors_origins.split(",")
+            if origin.strip()
         ]
 
         # Performance configuration
-        self.max_concurrent_agents = int(os.getenv("MAX_CONCURRENT_AGENTS", "20"))
-        self.enable_metrics = os.getenv("ENABLE_METRICS", "true").lower() == "true"
+        self.max_concurrent_agents = int(
+            os.getenv("MAX_CONCURRENT_AGENTS", "20")
+        )
+        self.enable_metrics = (
+            os.getenv("ENABLE_METRICS", "true").lower() == "true"
+        )
 
         # Rate limiting configuration
-        self.rate_limit_requests_per_minute = int(os.getenv("RATE_LIMIT_RPM", "60"))
-        self.rate_limit_requests_per_hour = int(os.getenv("RATE_LIMIT_RPH", "1000"))
+        self.rate_limit_requests_per_minute = int(
+            os.getenv("RATE_LIMIT_RPM", "60")
+        )
+        self.rate_limit_requests_per_hour = int(
+            os.getenv("RATE_LIMIT_RPH", "1000")
+        )
 
         # Ensure data directory exists
         os.makedirs("data", exist_ok=True)
@@ -118,7 +128,6 @@ class OptimizedSecureJSONResponse(JSONResponse):
         cache_control: Optional[str] = None,
         max_age: Optional[int] = None,
     ):
-
         if headers is None:
             headers = {}
 
@@ -138,14 +147,18 @@ class OptimizedSecureJSONResponse(JSONResponse):
         # Add timing information for performance monitoring
         headers["Server-Timing"] = "api;dur=0"
 
-        super().__init__(content=content, status_code=status_code, headers=headers)
+        super().__init__(
+            content=content, status_code=status_code, headers=headers
+        )
 
 
 # REQUEST/RESPONSE MODELS
 class UserRegistrationRequest(BaseModel):
     """User Registration Request Model"""
 
-    username: str = Field(min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_-]+$")
+    username: str = Field(
+        min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_-]+$"
+    )
     email: EmailStr
     password: str = Field(min_length=8)
     role: UserRole = UserRole.READER
@@ -306,7 +319,9 @@ def create_secure_app() -> FastAPI:
         security_config = get_development_security_config()
 
     security_config.allowed_origins = config.cors_origins
-    app.add_middleware(create_security_headers_middleware, config=security_config)
+    app.add_middleware(
+        create_security_headers_middleware, config=security_config
+    )
 
     # Rate limiting (second layer)
     rate_limit_config = RateLimitConfig(
@@ -339,14 +354,17 @@ def create_secure_app() -> FastAPI:
 
     # Trusted host middleware (production security)
     if config.environment == "production" and config.cors_origins:
-        app.add_middleware(TrustedHostMiddleware, allowed_hosts=config.cors_origins)
+        app.add_middleware(
+            TrustedHostMiddleware, allowed_hosts=config.cors_origins
+        )
 
     # EXCEPTION HANDLERS
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
         """General Exception Handler"""
         logger.error(
-            f"Unhandled exception: {exc} | Path: {request.url.path}", exc_info=True
+            f"Unhandled exception: {exc} | Path: {request.url.path}",
+            exc_info=True,
         )
         return OptimizedSecureJSONResponse(
             status_code=500,
@@ -371,8 +389,12 @@ def create_secure_app() -> FastAPI:
         )
 
     # AUTHENTICATION ROUTES
-    @app.post("/auth/register", response_model=TokenPair, tags=["Authentication"])
-    async def register_user(registration: UserRegistrationRequest, request: Request):
+    @app.post(
+        "/auth/register", response_model=TokenPair, tags=["Authentication"]
+    )
+    async def register_user(
+        registration: UserRegistrationRequest, request: Request
+    ):
         """User Registration Endpoint"""
         try:
             security_service = get_security_service()
@@ -389,13 +411,15 @@ def create_secure_app() -> FastAPI:
                 role=registration.role,
             )
 
-            user = await security_service.register_user(user_reg, client_ip, user_agent)
+            user = await security_service.register_user(
+                user_reg, client_ip, user_agent
+            )
 
             # Create token pair
             token_pair = await security_service.create_token_pair(user)
 
             logger.info(
-                f"User registered successfully: {user.username} ({user.role.value})"
+                f"User registered successfully: {user.username}({user.role.value})"
             )
             return token_pair
 
@@ -414,7 +438,9 @@ def create_secure_app() -> FastAPI:
             user_agent = request.headers.get("user-agent", "unknown")
 
             # Authenticate user
-            user_login = UserLogin(username=login.username, password=login.password)
+            user_login = UserLogin(
+                username=login.username, password=login.password
+            )
             user = await security_service.authenticate_user(
                 user_login, client_ip, user_agent
             )
@@ -436,18 +462,24 @@ def create_secure_app() -> FastAPI:
             logger.error(f"User login failed: {e}")
             raise HTTPException(status_code=500, detail="Login failed")
 
-    @app.post("/auth/refresh", response_model=TokenPair, tags=["Authentication"])
+    @app.post(
+        "/auth/refresh", response_model=TokenPair, tags=["Authentication"]
+    )
     async def refresh_token(
         refresh_token: str = Field(..., description="Refresh token")
     ):
         """Token Refresh Endpoint"""
         try:
             security_service = get_security_service()
-            token_pair = await security_service.refresh_access_token(refresh_token)
+            token_pair = await security_service.refresh_access_token(
+                refresh_token
+            )
             return token_pair
         except Exception as e:
             logger.error(f"Token refresh failed: {e}")
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
+            raise HTTPException(
+                status_code=401, detail="Invalid refresh token"
+            )
 
     @app.post("/auth/logout", tags=["Authentication"])
     async def logout_user(
@@ -460,7 +492,9 @@ def create_secure_app() -> FastAPI:
             content={"message": "Logged out successfully"}
         )
 
-    @app.post("/auth/api-key", response_model=ApiKeyResponse, tags=["Authentication"])
+    @app.post(
+        "/auth/api-key", response_model=ApiKeyResponse, tags=["Authentication"]
+    )
     async def generate_api_key(
         current_user: User = Depends(
             get_security_service().require_permission(Permission.API_ACCESS)
@@ -477,7 +511,9 @@ def create_secure_app() -> FastAPI:
             )
         except Exception as e:
             logger.error(f"API key generation failed: {e}")
-            raise HTTPException(status_code=500, detail="Failed to generate API key")
+            raise HTTPException(
+                status_code=500, detail="Failed to generate API key"
+            )
 
     # SYSTEM ROUTES
     @app.get("/", tags=["System"])
@@ -522,7 +558,9 @@ def create_secure_app() -> FastAPI:
             health_data = None
             if orchestrator:
                 health_result = await orchestrator.get_system_health()
-                health_data = health_result.data if health_result.success else None
+                health_data = (
+                    health_result.data if health_result.success else None
+                )
 
             # Get rate limiting stats
             rate_limit_stats = rate_limiter.get_global_stats()
@@ -550,12 +588,16 @@ def create_secure_app() -> FastAPI:
 
     # SECURE SIMULATION ENDPOINT
     @app.post(
-        "/simulations", response_model=SecureSimulationResponse, tags=["Simulations"]
+        "/simulations",
+        response_model=SecureSimulationResponse,
+        tags=["Simulations"],
     )
     async def run_secure_simulation(
         request: SecureSimulationRequest,
         current_user: User = Depends(
-            get_security_service().require_permission(Permission.SIMULATION_CREATE)
+            get_security_service().require_permission(
+                Permission.SIMULATION_CREATE
+            )
         ),
     ):
         """Secure Simulation Execution Endpoint"""
@@ -563,7 +605,7 @@ def create_secure_app() -> FastAPI:
         simulation_id = secrets.token_urlsafe(16)
 
         logger.info(
-            f"Simulation requested: {request.character_names} | User: {current_user.username}"
+            f"Simulation requested: {request.character_names}| User: {current_user.username}"
         )
 
         try:
@@ -573,17 +615,23 @@ def create_secure_app() -> FastAPI:
                     status_code=503, detail="System orchestrator not available"
                 )
 
-            # Input validation already handled by middleware, but we can add business logic validation
-            if len(set(request.character_names)) != len(request.character_names):
+            # Input validation already handled by middleware, but we can add
+            # business logic validation
+            if len(set(request.character_names)) != len(
+                request.character_names
+            ):
                 raise HTTPException(
-                    status_code=400, detail="Duplicate character names are not allowed"
+                    status_code=400,
+                    detail="Duplicate character names are not allowed",
                 )
 
             # Execute simulation (this would be the actual simulation logic)
             # For now, return a secure mock response
-            story_content = f"A secure simulation story involving {', '.join(request.character_names)} over {request.turns} turns."
+            story_content = f"A secure simulation story involving {', '.join( request.character_names)}over {request.turns} turns."
 
-            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+            duration = (
+                datetime.now(timezone.utc) - start_time
+            ).total_seconds()
 
             response = SecureSimulationResponse(
                 simulation_id=simulation_id,
@@ -604,7 +652,9 @@ def create_secure_app() -> FastAPI:
             raise
         except Exception as e:
             logger.error(f"Simulation failed: {e}")
-            raise HTTPException(status_code=500, detail="Simulation execution failed")
+            raise HTTPException(
+                status_code=500, detail="Simulation execution failed"
+            )
 
     # REGISTER API ROUTES
     _register_secure_api_routes(app)

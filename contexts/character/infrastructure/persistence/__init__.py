@@ -16,6 +16,8 @@ providing object-relational mapping and data access capabilities.
 """
 
 # Conditional import to handle platform naming conflict
+from typing import Any, Optional, Type
+
 try:
     from .character_models import (
         CharacterORM,
@@ -27,10 +29,10 @@ try:
     _MODELS_AVAILABLE = True
 except ImportError:
     # Handle platform naming conflict gracefully
-    CharacterORM = None
-    CharacterProfileORM = None
-    CharacterStatsORM = None
-    CharacterSkillsORM = None
+    CharacterORM: Optional[Type[Any]] = None  # type: ignore
+    CharacterProfileORM: Optional[Type[Any]] = None  # type: ignore
+    CharacterStatsORM: Optional[Type[Any]] = None  # type: ignore
+    CharacterSkillsORM: Optional[Type[Any]] = None  # type: ignore
     _MODELS_AVAILABLE = False
 
 __all__ = [

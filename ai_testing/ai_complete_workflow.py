@@ -33,7 +33,12 @@ class AICharacterGenerator:
             {
                 "type": "mystic",
                 "names": ["量子诗人", "梦境编织者", "虚空观察者", "时间守护者"],
-                "traits": ["philosophical", "mysterious", "introspective", "wise"],
+                "traits": [
+                    "philosophical",
+                    "mysterious",
+                    "introspective",
+                    "wise",
+                ],
                 "backstory_elements": [
                     "ancient knowledge",
                     "hidden powers",
@@ -55,7 +60,12 @@ class AICharacterGenerator:
             {
                 "type": "explorer",
                 "names": ["维度旅者", "星空漫游者", "时空探索者", "现实跳跃者"],
-                "traits": ["curious", "adventurous", "resourceful", "adaptable"],
+                "traits": [
+                    "curious",
+                    "adventurous",
+                    "resourceful",
+                    "adaptable",
+                ],
                 "backstory_elements": [
                     "distant worlds",
                     "parallel universes",
@@ -77,7 +87,12 @@ class AICharacterGenerator:
             {
                 "type": "scholar",
                 "names": ["知识守护者", "真理追寻者", "记忆档案官", "智慧结晶体"],
-                "traits": ["intelligent", "analytical", "methodical", "knowledgeable"],
+                "traits": [
+                    "intelligent",
+                    "analytical",
+                    "methodical",
+                    "knowledgeable",
+                ],
                 "backstory_elements": [
                     "vast libraries",
                     "forgotten histories",
@@ -111,11 +126,37 @@ class AICharacterGenerator:
     ) -> str:
         """Generate a detailed character description"""
         templates = {
-            "mystic": f"{name}是一位神秘的{archetype}，拥有{traits[0]}的性格和{traits[1]}的内心。他们的过去充满了{elements[0]}的秘密，现在致力于探索{elements[1]}的奥秘。在无数个维度间游走，寻找着宇宙的终极真理。他们的存在本身就是一个谜题，每一个遇见他们的人都会被其深邃的智慧所震撼。",
-            "warrior": f"{name}是一位经验丰富的{archetype}，以{traits[0]}和{traits[1]}著称。经历过{elements[0]}的洗礼，现在守护着{elements[1]}的秘密。他们的每一个动作都充满力量，每一个决定都彰显着战士的荣耀。在战斗中，他们是不可战胜的存在。",
-            "explorer": f"{name}是一位永不停歇的{archetype}，带着{traits[0]}的精神和{traits[1]}的决心。曾经发现过{elements[0]}，现在正在寻找{elements[1]}。他们的足迹遍布多元宇宙，每一次冒险都是一个传奇故事的开始。",
-            "creator": f"{name}是一位才华横溢的{archetype}，将{traits[0]}和{traits[1]}融入每一件作品。通过{elements[0]}创造奇迹，用{elements[1]}改变现实。他们的创作不仅是艺术，更是改变世界的力量。",
-            "scholar": f"{name}是一位博学的{archetype}，以{traits[0]}的思维和{traits[1]}的方法闻名。掌握着{elements[0]}的知识，研究着{elements[1]}的真相。他们的智慧如同图书馆般浩瀚，是所有寻求知识者的导师。",
+            "mystic": (
+                f"{name}是一位神秘的{archetype}，拥有{traits[0]}的性格和"
+                f"{traits[1]}的内心。他们的过去充满了{elements[0]}的秘密，"
+                f"现在致力于探索{elements[1]}的奥秘。在无数个维度间游走，"
+                f"寻找着宇宙的终极真理。他们的存在本身就是一个谜题，"
+                f"每一个遇见他们的人都会被其深邃的智慧所震撼。"
+            ),
+            "warrior": (
+                f"{name}是一位经验丰富的{archetype}，以{traits[0]}和"
+                f"{traits[1]}著称。经历过{elements[0]}的洗礼，现在守护着"
+                f"{elements[1]}的秘密。他们的每一个动作都充满力量，"
+                f"每一个决定都彰显着战士的荣耀。在战斗中，他们是不可战胜的存在。"
+            ),
+            "explorer": (
+                f"{name}是一位永不停歇的{archetype}，带着{traits[0]}的精神和"
+                f"{traits[1]}的决心。曾经发现过{elements[0]}，现在正在寻找"
+                f"{elements[1]}。他们的足迹遍布多元宇宙，"
+                f"每一次冒险都是一个传奇故事的开始。"
+            ),
+            "creator": (
+                f"{name}是一位才华横溢的{archetype}，将{traits[0]}和"
+                f"{traits[1]}融入每一件作品。通过{elements[0]}创造奇迹，"
+                f"用{elements[1]}改变现实。他们的创作不仅是艺术，"
+                f"更是改变世界的力量。"
+            ),
+            "scholar": (
+                f"{name}是一位博学的{archetype}，以{traits[0]}的思维和"
+                f"{traits[1]}的方法闻名。掌握着{elements[0]}的知识，"
+                f"研究着{elements[1]}的真相。他们的智慧如同图书馆般浩瀚，"
+                f"是所有寻求知识者的导师。"
+            ),
         }
 
         base_description = templates.get(archetype, templates["explorer"])
@@ -131,7 +172,9 @@ class AICharacterGenerator:
         ]
 
         full_description = (
-            base_description + " " + " ".join(random.sample(additional_details, 3))
+            base_description
+            + " "
+            + " ".join(random.sample(additional_details, 3))
         )
 
         return full_description
@@ -171,7 +214,9 @@ class AINovelController:
         logger.info("🌐 Navigating to Novel-Engine...")
         try:
             await self.page.goto(
-                "http://localhost:5173", wait_until="networkidle", timeout=30000
+                "http://localhost:5173",
+                wait_until="networkidle",
+                timeout=30000,
             )
             logger.info("✅ Successfully connected to Novel-Engine frontend")
             return True
@@ -192,14 +237,18 @@ class AINovelController:
     async def create_characters(self, count: int = 3) -> List[Dict[str, str]]:
         """Create multiple characters with AI-generated content"""
         logger.info(f"🎭 Creating {count} unique characters...")
-        self.test_metadata["phases_completed"].append("character_creation_started")
+        self.test_metadata["phases_completed"].append(
+            "character_creation_started"
+        )
 
         for i in range(count):
             character = self.character_generator.generate_character(i + 1)
             logger.info(f"  Creating character {i+1}: {character['name']}")
 
             # Navigate to character creation page
-            create_button = await self.page.query_selector("text=Create Character")
+            create_button = await self.page.query_selector(
+                "text=Create Character"
+            )
             if not create_button:
                 create_button = await self.page.query_selector("text=创建角色")
             if not create_button:
@@ -214,7 +263,8 @@ class AINovelController:
             else:
                 # If no create button, try direct navigation
                 await self.page.goto(
-                    "http://localhost:5173/character-creation", wait_until="networkidle"
+                    "http://localhost:5173/character-creation",
+                    wait_until="networkidle",
                 )
 
             # Fill character creation form
@@ -225,12 +275,16 @@ class AINovelController:
                     f"  ✅ Character '{character['name']}' created successfully"
                 )
             else:
-                logger.error(f"  ❌ Failed to create character '{character['name']}'")
+                logger.error(
+                    f"  ❌ Failed to create character '{character['name']}'"
+                )
 
             # Return to main page or character selection
             await asyncio.sleep(2)
 
-        self.test_metadata["phases_completed"].append("character_creation_completed")
+        self.test_metadata["phases_completed"].append(
+            "character_creation_completed"
+        )
         logger.info(f"✅ Created {len(self.created_characters)} characters")
         return self.created_characters
 
@@ -257,12 +311,14 @@ class AINovelController:
             if desc_textarea:
                 await desc_textarea.fill(character["description"])
                 logger.info(
-                    f"    Filled description ({len(character['description'])} chars)"
+                    f"    Filled description "
+                    f"({len(character['description'])} chars)"
                 )
 
             # Submit form
             submit_button = await self.page.query_selector(
-                "button[type='submit'], button:has-text('Forge'), button:has-text('Create'), button:has-text('创建')"
+                "button[type='submit'], button:has-text('Forge'), "
+                "button:has-text('Create'), button:has-text('创建')"
             )
             if submit_button:
                 await submit_button.click()
@@ -284,7 +340,9 @@ class AINovelController:
     async def select_characters_for_story(self) -> List[str]:
         """Select characters for story generation"""
         logger.info("📝 Selecting characters for story generation...")
-        self.test_metadata["phases_completed"].append("character_selection_started")
+        self.test_metadata["phases_completed"].append(
+            "character_selection_started"
+        )
 
         try:
             # Navigate to character selection
@@ -325,7 +383,8 @@ class AINovelController:
 
             # Confirm selection
             confirm_button = await self.page.query_selector(
-                "button:has-text('Confirm'), button:has-text('Start'), button:has-text('确认')"
+                "button:has-text('Confirm'), button:has-text('Start'), "
+                "button:has-text('确认')"
             )
             if confirm_button:
                 await confirm_button.click()
@@ -334,7 +393,9 @@ class AINovelController:
             self.test_metadata["phases_completed"].append(
                 "character_selection_completed"
             )
-            logger.info(f"✅ Selected {len(self.selected_characters)} characters")
+            logger.info(
+                f"✅ Selected {len(self.selected_characters)} characters"
+            )
             return self.selected_characters
 
         except Exception as e:
@@ -345,12 +406,15 @@ class AINovelController:
     async def generate_story(self, turns: int = 5) -> str:
         """Generate story through multiple dialogue turns"""
         logger.info(f"📖 Generating story with {turns} turns...")
-        self.test_metadata["phases_completed"].append("story_generation_started")
+        self.test_metadata["phases_completed"].append(
+            "story_generation_started"
+        )
 
         try:
             # Look for simulation start button
             start_button = await self.page.query_selector(
-                "button:has-text('Start Simulation'), button:has-text('开始模拟'), button:has-text('START')"
+                "button:has-text('Start Simulation'), "
+                "button:has-text('开始模拟'), button:has-text('START')"
             )
             if start_button:
                 await start_button.click()
@@ -373,7 +437,9 @@ class AINovelController:
                     await asyncio.sleep(1)
 
                     # Try it out
-                    try_button = await self.page.query_selector(".try-out__btn")
+                    try_button = await self.page.query_selector(
+                        ".try-out__btn"
+                    )
                     if try_button:
                         await try_button.click()
                         await asyncio.sleep(1)
@@ -404,14 +470,20 @@ class AINovelController:
                                     ".response-col_description pre"
                                 )
                                 if response_body:
-                                    response_text = await response_body.inner_text()
+                                    response_text = (
+                                        await response_body.inner_text()
+                                    )
                                     try:
-                                        response_data = json.loads(response_text)
-                                        self.generated_story = response_data.get(
-                                            "story", ""
+                                        response_data = json.loads(
+                                            response_text
+                                        )
+                                        self.generated_story = (
+                                            response_data.get("story", "")
                                         )
                                         logger.info(
-                                            f"  Got story from API: {len(self.generated_story)} chars"
+                                            f"  Got story from API: "
+                                            f"{len(self.generated_story)} "
+                                            "chars"
                                         )
                                     except (json.JSONDecodeError, KeyError):
                                         pass
@@ -421,8 +493,12 @@ class AINovelController:
                 logger.info("  Generating simulated story...")
                 self.generated_story = self._generate_simulated_story(turns)
 
-            self.test_metadata["phases_completed"].append("story_generation_completed")
-            logger.info(f"✅ Story generated: {len(self.generated_story)} characters")
+            self.test_metadata["phases_completed"].append(
+                "story_generation_completed"
+            )
+            logger.info(
+                f"✅ Story generated: {len(self.generated_story)} characters"
+            )
             return self.generated_story
 
         except Exception as e:
@@ -460,15 +536,17 @@ class AINovelController:
             descriptions = [
                 "空间开始扭曲，形成了一个螺旋状的能量漩涡。星光在其中闪烁，仿佛无数个世界在同时诞生和毁灭。",
                 "他们站在时间的交叉点上，过去和未来在此刻重叠。每一个决定都会影响无数个平行宇宙的命运。",
-                "量子风暴席卷而来，带着来自其他维度的记忆碎片。每一片都讲述着一个不同的故事。",
-                "虚空中浮现出古老的符文，那是宇宙诞生之初就存在的真理。只有拥有纯净心灵的人才能解读。",
-                "三人的意识开始融合，形成了一个超越个体的集体智慧。在这一刻，他们理解了存在的真谛。",
+                ("量子风暴席卷而来，带着来自其他维度的记忆碎片。" "每一片都讲述着一个不同的故事。"),
+                ("虚空中浮现出古老的符文，那是宇宙诞生之初就存在的真理。" "只有拥有纯净心灵的人才能解读。"),
+                ("三人的意识开始融合，形成了一个超越个体的集体智慧。" "在这一刻，他们理解了存在的真谛。"),
             ]
 
             story_parts.append("\n" + random.choice(descriptions) + "\n")
 
             # Add another character's response
-            other_speaker = random.choice([c for c in characters if c != speaker])
+            other_speaker = random.choice(
+                [c for c in characters if c != speaker]
+            )
             responses = [
                 f"{other_speaker}：「我同意，我们需要立即行动。」",
                 f"{other_speaker}：「这比我想象的更加复杂。」",
@@ -480,15 +558,9 @@ class AINovelController:
             story_parts.append("\n" + random.choice(responses) + "\n")
 
         story_parts.append("\n\n尾声：新的开始\n\n")
-        story_parts.append(
-            "当最后一道量子波动平息，三位英雄站在新世界的黎明前。他们的相遇改变了整个多元宇宙的轨迹。"
-        )
-        story_parts.append(
-            "这不是结束，而是无数新故事的开始。每一个选择都开启了新的可能性，每一次相遇都创造了新的命运。"
-        )
-        story_parts.append(
-            "\n\n「我们还会再见的，」量子诗人微笑着说，「在另一个时空，另一个故事里。」"
-        )
+        story_parts.append("当最后一道量子波动平息，三位英雄站在新世界的黎明前。他们的相遇改变了整个多元宇宙的轨迹。")
+        story_parts.append("这不是结束，而是无数新故事的开始。每一个选择都开启了新的可能性，每一次相遇都创造了新的命运。")
+        story_parts.append("\n\n「我们还会再见的，」量子诗人微笑着说，「在另一个时空，另一个故事里。」")
 
         return "".join(story_parts)
 
@@ -516,7 +588,9 @@ class AINovelController:
                 content["descriptions"].append(line.strip())
 
         logger.info(f"  Extracted {len(content['dialogues'])} dialogue lines")
-        logger.info(f"  Extracted {len(content['descriptions'])} description passages")
+        logger.info(
+            f"  Extracted {len(content['descriptions'])} description passages"
+        )
 
         return content
 
@@ -552,34 +626,35 @@ class AIStoryEvaluator:
         descriptions = story_content.get("descriptions", [])
 
         # Evaluate each dimension
-        self.quality_dimensions["narrative_coherence"]["score"] = (
-            self._evaluate_coherence(full_text)
-        )
-        self.quality_dimensions["character_development"]["score"] = (
-            self._evaluate_character_development(dialogues, full_text)
-        )
-        self.quality_dimensions["dialogue_quality"]["score"] = self._evaluate_dialogue(
-            dialogues
-        )
-        self.quality_dimensions["creative_elements"]["score"] = (
-            self._evaluate_creativity(full_text, descriptions)
-        )
-        self.quality_dimensions["emotional_depth"]["score"] = self._evaluate_emotion(
-            full_text
-        )
-        self.quality_dimensions["world_building"]["score"] = (
-            self._evaluate_world_building(descriptions)
-        )
-        self.quality_dimensions["plot_progression"]["score"] = self._evaluate_plot(
-            full_text
-        )
-        self.quality_dimensions["language_quality"]["score"] = self._evaluate_language(
-            full_text
-        )
+        self.quality_dimensions["narrative_coherence"][
+            "score"
+        ] = self._evaluate_coherence(full_text)
+        self.quality_dimensions["character_development"][
+            "score"
+        ] = self._evaluate_character_development(dialogues, full_text)
+        self.quality_dimensions["dialogue_quality"][
+            "score"
+        ] = self._evaluate_dialogue(dialogues)
+        self.quality_dimensions["creative_elements"][
+            "score"
+        ] = self._evaluate_creativity(full_text, descriptions)
+        self.quality_dimensions["emotional_depth"][
+            "score"
+        ] = self._evaluate_emotion(full_text)
+        self.quality_dimensions["world_building"][
+            "score"
+        ] = self._evaluate_world_building(descriptions)
+        self.quality_dimensions["plot_progression"][
+            "score"
+        ] = self._evaluate_plot(full_text)
+        self.quality_dimensions["language_quality"][
+            "score"
+        ] = self._evaluate_language(full_text)
 
         # Calculate overall score
         overall_score = sum(
-            dim["score"] * dim["weight"] for dim in self.quality_dimensions.values()
+            dim["score"] * dim["weight"]
+            for dim in self.quality_dimensions.values()
         )
 
         evaluation = {
@@ -588,7 +663,7 @@ class AIStoryEvaluator:
                 name: {
                     "score": dim["score"],
                     "weight": dim["weight"],
-                    "weighted_score": dim["score"] * dim["weight"],
+                    "weighted_score": (dim["score"] * dim["weight"]),
                 }
                 for name, dim in self.quality_dimensions.items()
             },
@@ -597,7 +672,9 @@ class AIStoryEvaluator:
             "recommendations": self._generate_recommendations(),
         }
 
-        logger.info(f"✅ Evaluation complete: Overall score {overall_score:.2f}/100")
+        logger.info(
+            f"✅ Evaluation complete: Overall score {overall_score:.2f}/100"
+        )
         return evaluation
 
     def _evaluate_coherence(self, text: str) -> float:
@@ -618,7 +695,9 @@ class AIStoryEvaluator:
             "然后",
             "接着",
         ]
-        connections_found = sum(1 for word in connection_words if word in text.lower())
+        connections_found = sum(
+            1 for word in connection_words if word in text.lower()
+        )
         score += min(connections_found * 2, 10)
 
         # Check for scene transitions
@@ -627,7 +706,9 @@ class AIStoryEvaluator:
 
         return min(score + random.uniform(-5, 10), 100)
 
-    def _evaluate_character_development(self, dialogues: List[str], text: str) -> float:
+    def _evaluate_character_development(
+        self, dialogues: List[str], text: str
+    ) -> float:
         """Evaluate character development"""
         score = 65.0
 
@@ -659,7 +740,9 @@ class AIStoryEvaluator:
         score = 70.0
 
         # Check dialogue variety
-        unique_starters = len(set(d.split()[0] if d else "" for d in dialogues[:10]))
+        unique_starters = len(
+            set(d.split()[0] if d else "" for d in dialogues[:10])
+        )
         score += min(unique_starters * 2, 10)
 
         # Check for natural flow
@@ -668,7 +751,9 @@ class AIStoryEvaluator:
 
         return min(score + random.uniform(-5, 10), 100)
 
-    def _evaluate_creativity(self, text: str, descriptions: List[str]) -> float:
+    def _evaluate_creativity(
+        self, text: str, descriptions: List[str]
+    ) -> float:
         """Evaluate creative elements"""
         score = 60.0
 
@@ -689,7 +774,9 @@ class AIStoryEvaluator:
             "ancient",
             "古老",
         ]
-        creativity_found = sum(1 for word in creative_words if word in text.lower())
+        creativity_found = sum(
+            1 for word in creative_words if word in text.lower()
+        )
         score += min(creativity_found * 3, 20)
 
         # Check for unique descriptions
@@ -720,7 +807,9 @@ class AIStoryEvaluator:
             "feel",
             "感",
         ]
-        emotions_found = sum(1 for word in emotion_words if word in text.lower())
+        emotions_found = sum(
+            1 for word in emotion_words if word in text.lower()
+        )
         score += min(emotions_found * 4, 25)
 
         return min(score + random.uniform(-5, 10), 100)
@@ -749,7 +838,10 @@ class AIStoryEvaluator:
             "地方",
         ]
         world_found = sum(
-            1 for desc in descriptions for word in world_words if word in desc.lower()
+            1
+            for desc in descriptions
+            for word in world_words
+            if word in desc.lower()
         )
         score += min(world_found * 3, 15)
 
@@ -802,13 +894,17 @@ class AIStoryEvaluator:
         for name, dim in self.quality_dimensions.items():
             if dim["score"] >= 80:
                 strengths.append(
-                    f"Excellent {name.replace('_', ' ')}: {dim['score']:.1f}/100"
+                    f"Excellent {name.replace('_', ' ')}: "
+                    f"{dim['score']:.1f}/100"
                 )
             elif dim["score"] >= 70:
                 strengths.append(
-                    f"Good {name.replace('_', ' ')}: {dim['score']:.1f}/100"
+                    f"Good {name.replace('_', ' ')}: "
+                    f"{dim['score']:.1f}/100"
                 )
-        return strengths if strengths else ["Balanced quality across dimensions"]
+        return (
+            strengths if strengths else ["Balanced quality across dimensions"]
+        )
 
     def _identify_weaknesses(self) -> List[str]:
         """Identify areas for improvement"""
@@ -816,9 +912,14 @@ class AIStoryEvaluator:
         for name, dim in self.quality_dimensions.items():
             if dim["score"] < 60:
                 weaknesses.append(
-                    f"Needs improvement in {name.replace('_', ' ')}: {dim['score']:.1f}/100"
+                    f"Needs improvement in {name.replace('_', ' ')}: "
+                    f"{dim['score']:.1f}/100"
                 )
-        return weaknesses if weaknesses else ["No significant weaknesses identified"]
+        return (
+            weaknesses
+            if weaknesses
+            else ["No significant weaknesses identified"]
+        )
 
     def _generate_recommendations(self) -> List[str]:
         """Generate improvement recommendations"""
@@ -827,11 +928,17 @@ class AIStoryEvaluator:
         for name, dim in self.quality_dimensions.items():
             if dim["score"] < 70:
                 if "dialogue" in name:
-                    recommendations.append("Enhance dialogue variety and natural flow")
+                    recommendations.append(
+                        "Enhance dialogue variety and natural flow"
+                    )
                 elif "character" in name:
-                    recommendations.append("Develop deeper character arcs and growth")
+                    recommendations.append(
+                        "Develop deeper character arcs and growth"
+                    )
                 elif "emotion" in name:
-                    recommendations.append("Add more emotional depth and resonance")
+                    recommendations.append(
+                        "Add more emotional depth and resonance"
+                    )
                 elif "world" in name:
                     recommendations.append(
                         "Expand world-building and setting descriptions"
@@ -932,9 +1039,12 @@ async def run_complete_test():
         print()
         print("   Dimensional Scores:")
         for name, dim in evaluation["dimensions"].items():
-            bar = "█" * int(dim["score"] / 10) + "░" * (10 - int(dim["score"] / 10))
+            bar = "█" * int(dim["score"] / 10) + "░" * (
+                10 - int(dim["score"] / 10)
+            )
             print(
-                f"   - {name.replace('_', ' ').title()}: {bar} {dim['score']:.1f}/100"
+                f"   - {name.replace('_', ' ').title()}: "
+                f"{bar} {dim['score']:.1f}/100"
             )
         print()
         print("💪 Strengths:")

@@ -34,7 +34,9 @@ class LLMCoordinator:
     """
 
     def __init__(
-        self, config: LLMCoordinationConfig, logger: Optional[logging.Logger] = None
+        self,
+        config: LLMCoordinationConfig,
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize LLM coordinator."""
         self.config = config
@@ -71,7 +73,9 @@ class LLMCoordinator:
                 )
 
             if self.config.enable_caching:
-                self._cache_cleanup_task = asyncio.create_task(self._cache_cleanup())
+                self._cache_cleanup_task = asyncio.create_task(
+                    self._cache_cleanup()
+                )
 
             self.logger.info("LLM Coordinator initialized successfully")
             return True
@@ -138,7 +142,7 @@ class LLMCoordinator:
             self.metrics.total_requests += 1
 
             self.logger.debug(
-                f"Request {request.request_id} queued with priority {priority.name}"
+                f"Request {request.request_id}queued with priority {priority.name}"
             )
 
             return request.request_id
@@ -208,11 +212,13 @@ class LLMCoordinator:
                     await self._cache_response(cache_key, result)
 
             self.logger.debug(
-                f"Processed batch of {len(requests_to_process)} {priority.name} requests in {processing_time:.3f}s"
+                f"Processed batch of {len(requests_to_process)}{priority.name} requests in {processing_time:.3f}s"
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to process priority batch {priority.name}: {e}")
+            self.logger.error(
+                f"Failed to process priority batch {priority.name}: {e}"
+            )
 
             # Mark requests as failed
             for request in requests_to_process:
@@ -220,7 +226,9 @@ class LLMCoordinator:
                 if request.request_id in self.active_requests:
                     del self.active_requests[request.request_id]
 
-    async def _process_batch(self, requests: List[BatchedRequest]) -> List[Any]:
+    async def _process_batch(
+        self, requests: List[BatchedRequest]
+    ) -> List[Any]:
         """Process a batch of requests using the LLM service."""
         try:
             # Import here to avoid circular dependencies
@@ -252,7 +260,11 @@ class LLMCoordinator:
         """Process a single LLM request."""
         try:
             # Import here to avoid circular dependencies
-            from src.llm_service import LLMRequest, ResponseFormat, get_llm_service
+            from src.llm_service import (
+                LLMRequest,
+                ResponseFormat,
+                get_llm_service,
+            )
 
             llm_service = get_llm_service()
 
@@ -318,9 +330,9 @@ class LLMCoordinator:
         """Cache a response."""
         if len(self.cache) > 10000:  # Limit cache size
             # Remove oldest entries
-            oldest_keys = sorted(self.cache.keys(), key=lambda k: self.cache[k][1])[
-                :1000
-            ]
+            oldest_keys = sorted(
+                self.cache.keys(), key=lambda k: self.cache[k][1]
+            )[:1000]
             for key in oldest_keys:
                 del self.cache[key]
 
@@ -364,7 +376,9 @@ class LLMCoordinator:
     async def get_metrics(self) -> CoordinationMetrics:
         """Get current coordination metrics."""
         # Update cache hit rate
-        total_cache_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
+        total_cache_requests = (
+            self.cache_stats["hits"] + self.cache_stats["misses"]
+        )
         if total_cache_requests > 0:
             self.metrics.cache_hit_rate = (
                 self.cache_stats["hits"] / total_cache_requests

@@ -4,11 +4,16 @@ Skills Value Object
 
 This module implements character skills and proficiencies, representing learned
 abilities, expertise levels, and skill-based modifiers for character actions.
+
+Follows P3 Sprint 3 patterns for type safety and validation.
 """
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union
+
+if TYPE_CHECKING:
+    from ...infrastructure.character_domain_types import ensure_int
 
 
 class SkillCategory(Enum):
@@ -29,6 +34,7 @@ class ProficiencyLevel(Enum):
     """Levels of skill proficiency."""
 
     UNTRAINED = 0
+    TRAINED = 1  # Alias for basic training level
     NOVICE = 1
     APPRENTICE = 2
     JOURNEYMAN = 3
@@ -45,19 +51,48 @@ class Skill:
     name: str
     category: SkillCategory
     proficiency_level: ProficiencyLevel
-    modifier: int  # Additional modifier from equipment, training, etc.
+    base_value: int = 0  # Base skill value (0-20)
+    experience: int = 0  # Experience points in this skill
+    modifier: int = 0  # Additional modifier from equipment, training, etc.
     description: Optional[str] = None
 
     def __post_init__(self):
-        """Validate skill data."""
+        """Validate skill data with type safety."""
         if not self.name or not self.name.strip():
             raise ValueError("Skill name cannot be empty")
 
         if len(self.name.strip()) > 50:
             raise ValueError("Skill name cannot exceed 50 characters")
 
-        if not -10 <= self.modifier <= 20:
-            raise ValueError("Skill modifier must be between -10 and 20")
+        # Validate enum types
+        if not isinstance(self.category, SkillCategory):
+            raise TypeError("category must be a SkillCategory enum value")
+
+        if not isinstance(self.proficiency_level, ProficiencyLevel):
+            raise TypeError(
+                "proficiency_level must be a ProficiencyLevel enum value"
+            )
+
+        # Validate numeric fields with type guards
+        try:
+            from ...infrastructure.character_domain_types import ensure_int
+
+            safe_base_value = ensure_int(self.base_value)
+            safe_experience = ensure_int(self.experience)
+            safe_modifier = ensure_int(self.modifier)
+
+            if not 0 <= safe_base_value <= 20:
+                raise ValueError("Base skill value must be between 0 and 20")
+
+            if safe_experience < 0:
+                raise ValueError("Experience cannot be negative")
+
+            if not -10 <= safe_modifier <= 20:
+                raise ValueError("Skill modifier must be between -10 and 20")
+        except (TypeError, ValueError) as e:
+            raise ValueError(
+                f"Invalid numeric values in skill '{self.name}'"
+            ) from e
 
         if self.description and len(self.description) > 500:
             raise ValueError("Skill description cannot exceed 500 characters")
@@ -133,12 +168,16 @@ class SkillGroup:
         if not self.skills:
             return 0.0
 
-        total = sum(skill.proficiency_level.value for skill in self.skills.values())
+        total = sum(
+            skill.proficiency_level.value for skill in self.skills.values()
+        )
         return total / len(self.skills)
 
     def get_expert_skills(self) -> List[Skill]:
         """Get all expert-level or higher skills in the group."""
-        return [skill for skill in self.skills.values() if skill.is_expert_level()]
+        return [
+            skill for skill in self.skills.values() if skill.is_expert_level()
+        ]
 
     def count_trained_skills(self) -> int:
         """Count the number of trained skills in the group."""
@@ -169,7 +208,9 @@ class Skills:
                 if not language or not language.strip():
                     raise ValueError("Language names cannot be empty")
                 if len(language) > 30:
-                    raise ValueError("Language names cannot exceed 30 characters")
+                    raise ValueError(
+                        "Language names cannot exceed 30 characters"
+                    )
 
         # Validate specializations
         if self.specializations:
@@ -177,7 +218,9 @@ class Skills:
                 if not spec_name or not spec_name.strip():
                     raise ValueError("Specialization names cannot be empty")
                 if not -5 <= bonus <= 15:
-                    raise ValueError("Specialization bonus must be between -5 and 15")
+                    raise ValueError(
+                        "Specialization bonus must be between -5 and 15"
+                    )
 
     def get_skill(
         self, skill_name: str, category: Optional[SkillCategory] = None
@@ -220,7 +263,10 @@ class Skills:
         modifier = skill.get_total_modifier()
 
         # Add specialization bonus
-        if include_specialization and skill_name.lower() in self.specializations:
+        if (
+            include_specialization
+            and skill_name.lower() in self.specializations
+        ):
             modifier += self.specializations[skill_name.lower()]
 
         return modifier
@@ -239,18 +285,23 @@ class Skills:
 
     def get_master_skills(self) -> List[Skill]:
         """Get all master-level or higher skills."""
-        return [skill for skill in self.get_all_skills() if skill.is_master_level()]
+        return [
+            skill for skill in self.get_all_skills() if skill.is_master_level()
+        ]
 
     def get_all_skills(self) -> List[Skill]:
         """Get all skills across all categories."""
-        all_skills = []
+        all_skills: List[Skill] = []
         for group in self.skill_groups.values():
             all_skills.extend(group.skills.values())
         return all_skills
 
     def count_trained_skills(self) -> int:
         """Count total number of trained skills."""
-        return sum(group.count_trained_skills() for group in self.skill_groups.values())
+        return sum(
+            group.count_trained_skills()
+            for group in self.skill_groups.values()
+        )
 
     def speaks_language(self, language: str) -> bool:
         """Check if character speaks a specific language."""
@@ -266,17 +317,21 @@ class Skills:
             for category, group in self.skill_groups.items()
         }
 
-        return max(category_averages.keys(), key=lambda k: category_averages[k])
+        return max(
+            category_averages.keys(), key=lambda k: category_averages[k]
+        )
 
     def is_specialist(
         self, category: SkillCategory, min_expert_skills: int = 3
     ) -> bool:
         """Check if character is a specialist in a skill category."""
         expert_skills = self.get_skills_by_category(category)
-        expert_count = sum(1 for skill in expert_skills if skill.is_expert_level())
+        expert_count = sum(
+            1 for skill in expert_skills if skill.is_expert_level()
+        )
         return expert_count >= min_expert_skills
 
-    def get_skill_summary(self) -> Dict[str, any]:
+    def get_skill_summary(self) -> Dict[str, Any]:
         """Get a comprehensive summary of character skills."""
         all_skills = self.get_all_skills()
         expert_skills = self.get_expert_skills()
@@ -294,7 +349,9 @@ class Skills:
             "top_skills": [
                 skill.name
                 for skill in sorted(
-                    all_skills, key=lambda s: s.get_total_modifier(), reverse=True
+                    all_skills,
+                    key=lambda s: s.get_total_modifier(),
+                    reverse=True,
                 )[:5]
             ],
         }
@@ -315,10 +372,16 @@ class Skills:
             base_modifier=0,
             skills={
                 "melee_combat": Skill(
-                    "Melee Combat", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0
+                    "Melee Combat",
+                    SkillCategory.COMBAT,
+                    ProficiencyLevel.NOVICE,
+                    0,
                 ),
                 "ranged_combat": Skill(
-                    "Ranged Combat", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0
+                    "Ranged Combat",
+                    SkillCategory.COMBAT,
+                    ProficiencyLevel.NOVICE,
+                    0,
                 ),
                 "dodge": Skill(
                     "Dodge", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0
@@ -332,13 +395,22 @@ class Skills:
             base_modifier=0,
             skills={
                 "persuasion": Skill(
-                    "Persuasion", SkillCategory.SOCIAL, ProficiencyLevel.NOVICE, 0
+                    "Persuasion",
+                    SkillCategory.SOCIAL,
+                    ProficiencyLevel.NOVICE,
+                    0,
                 ),
                 "deception": Skill(
-                    "Deception", SkillCategory.SOCIAL, ProficiencyLevel.UNTRAINED, 0
+                    "Deception",
+                    SkillCategory.SOCIAL,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
                 "intimidation": Skill(
-                    "Intimidation", SkillCategory.SOCIAL, ProficiencyLevel.UNTRAINED, 0
+                    "Intimidation",
+                    SkillCategory.SOCIAL,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
             },
         )
@@ -349,13 +421,22 @@ class Skills:
             base_modifier=0,
             skills={
                 "athletics": Skill(
-                    "Athletics", SkillCategory.PHYSICAL, ProficiencyLevel.NOVICE, 0
+                    "Athletics",
+                    SkillCategory.PHYSICAL,
+                    ProficiencyLevel.NOVICE,
+                    0,
                 ),
                 "acrobatics": Skill(
-                    "Acrobatics", SkillCategory.PHYSICAL, ProficiencyLevel.UNTRAINED, 0
+                    "Acrobatics",
+                    SkillCategory.PHYSICAL,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
                 "stealth": Skill(
-                    "Stealth", SkillCategory.PHYSICAL, ProficiencyLevel.NOVICE, 0
+                    "Stealth",
+                    SkillCategory.PHYSICAL,
+                    ProficiencyLevel.NOVICE,
+                    0,
                 ),
             },
         )
@@ -372,10 +453,16 @@ class Skills:
                     0,
                 ),
                 "history": Skill(
-                    "History", SkillCategory.INTELLECTUAL, ProficiencyLevel.UNTRAINED, 0
+                    "History",
+                    SkillCategory.INTELLECTUAL,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
                 "arcana": Skill(
-                    "Arcana", SkillCategory.INTELLECTUAL, ProficiencyLevel.UNTRAINED, 0
+                    "Arcana",
+                    SkillCategory.INTELLECTUAL,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
             },
         )
@@ -386,10 +473,16 @@ class Skills:
             base_modifier=0,
             skills={
                 "spellcasting": Skill(
-                    "Spellcasting", SkillCategory.MAGICAL, ProficiencyLevel.NOVICE, 0
+                    "Spellcasting",
+                    SkillCategory.MAGICAL,
+                    ProficiencyLevel.NOVICE,
+                    0,
                 ),
                 "enchantment": Skill(
-                    "Enchantment", SkillCategory.MAGICAL, ProficiencyLevel.UNTRAINED, 0
+                    "Enchantment",
+                    SkillCategory.MAGICAL,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
                 "magical_theory": Skill(
                     "Magical Theory",
@@ -412,10 +505,16 @@ class Skills:
                     0,
                 ),
                 "tracking": Skill(
-                    "Tracking", SkillCategory.SURVIVAL, ProficiencyLevel.UNTRAINED, 0
+                    "Tracking",
+                    SkillCategory.SURVIVAL,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
                 "foraging": Skill(
-                    "Foraging", SkillCategory.SURVIVAL, ProficiencyLevel.UNTRAINED, 0
+                    "Foraging",
+                    SkillCategory.SURVIVAL,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
             },
         )
@@ -426,13 +525,22 @@ class Skills:
             base_modifier=0,
             skills={
                 "engineering": Skill(
-                    "Engineering", SkillCategory.TECHNICAL, ProficiencyLevel.NOVICE, 0
+                    "Engineering",
+                    SkillCategory.TECHNICAL,
+                    ProficiencyLevel.NOVICE,
+                    0,
                 ),
                 "technology": Skill(
-                    "Technology", SkillCategory.TECHNICAL, ProficiencyLevel.UNTRAINED, 0
+                    "Technology",
+                    SkillCategory.TECHNICAL,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
                 "repair": Skill(
-                    "Repair", SkillCategory.TECHNICAL, ProficiencyLevel.UNTRAINED, 0
+                    "Repair",
+                    SkillCategory.TECHNICAL,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
             },
         )
@@ -443,13 +551,22 @@ class Skills:
             base_modifier=0,
             skills={
                 "performance": Skill(
-                    "Performance", SkillCategory.ARTISTIC, ProficiencyLevel.NOVICE, 0
+                    "Performance",
+                    SkillCategory.ARTISTIC,
+                    ProficiencyLevel.NOVICE,
+                    0,
                 ),
                 "art": Skill(
-                    "Art", SkillCategory.ARTISTIC, ProficiencyLevel.UNTRAINED, 0
+                    "Art",
+                    SkillCategory.ARTISTIC,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
                 "music": Skill(
-                    "Music", SkillCategory.ARTISTIC, ProficiencyLevel.UNTRAINED, 0
+                    "Music",
+                    SkillCategory.ARTISTIC,
+                    ProficiencyLevel.UNTRAINED,
+                    0,
                 ),
             },
         )
@@ -467,4 +584,17 @@ class Skills:
             },
             languages={"Common"},
             specializations={},
+        )
+
+    @classmethod
+    def create_with_validation(
+        cls,
+        skill_groups: Optional[Dict[Union[SkillCategory, str], Any]] = None,
+        **kwargs: Any,
+    ) -> "Skills":
+        """Factory method to create Skills with type validation."""
+        from ...infrastructure.character_domain_types import ValueObjectFactory
+
+        return ValueObjectFactory.create_skills_with_validation(
+            skill_groups=skill_groups, **kwargs
         )

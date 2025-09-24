@@ -19,4 +19,6 @@ Architecture Pattern: Infrastructure as Code with complete deployment automation
 
 __version__ = "1.0.0"
 __author__ = "Novel Engine Development Team"
-__description__ = "Deployment Orchestration Layer for Novel Engine M1 Architecture"
+__description__ = (
+    "Deployment Orchestration Layer for Novel Engine M1 Architecture"
+)

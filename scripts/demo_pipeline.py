@@ -118,7 +118,10 @@ def demo_pipeline_execution():
     try:
         # Import pipeline components
         sys.path.insert(0, "scripts")
-        from run_evaluation_pipeline import EvaluationPipeline, load_pipeline_config
+        from run_evaluation_pipeline import (
+            EvaluationPipeline,
+            load_pipeline_config,
+        )
 
         # Load configuration
         config = load_pipeline_config(Path("evaluation/pipeline_config.yaml"))

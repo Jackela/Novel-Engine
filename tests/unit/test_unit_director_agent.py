@@ -21,7 +21,9 @@ except ImportError:
     DIRECTOR_AGENT_AVAILABLE = False
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgent:
     """导演代理核心测试"""
 
@@ -47,11 +49,15 @@ class TestDirectorAgent:
         """测试导演代理初始化 - 成功情况"""
         event_bus = Mock()
         log_path = "test_log.md"
-        director = DirectorAgent(event_bus=event_bus, campaign_log_path=log_path)
+        director = DirectorAgent(
+            event_bus=event_bus, campaign_log_path=log_path
+        )
 
         assert director.event_bus == event_bus
         assert hasattr(director, "event_bus")
-        assert hasattr(director, "campaign_log_path") or hasattr(director, "log_path")
+        assert hasattr(director, "campaign_log_path") or hasattr(
+            director, "log_path"
+        )
 
     @pytest.mark.unit
     def test_director_initialization_no_event_bus(self):
@@ -116,7 +122,9 @@ class TestDirectorAgent:
             self.director.register_agent(mock_agent)
             # 如果成功，检查没有重复
             if hasattr(self.director, "agents"):
-                agent_count = sum(1 for a in self.director.agents if a == mock_agent)
+                agent_count = sum(
+                    1 for a in self.director.agents if a == mock_agent
+                )
                 assert agent_count <= 2  # 允许重复但应该有限制
         except (ValueError, Exception):
             # 预期的重复注册错误
@@ -212,7 +220,9 @@ class TestDirectorAgent:
                 assert result is not None
         except Exception as e:
             # 检查是否是预期的错误处理
-            assert "action failed" in str(e).lower() or "agent" in str(e).lower()
+            assert (
+                "action failed" in str(e).lower() or "agent" in str(e).lower()
+            )
 
     @pytest.mark.unit
     def test_campaign_logging(self):
@@ -248,7 +258,9 @@ class TestDirectorAgent:
             pytest.skip("Director agent does not have logging configuration")
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentAdvanced:
     """导演代理高级功能测试"""
 
@@ -256,7 +268,8 @@ class TestDirectorAgentAdvanced:
         """每个测试方法的设置"""
         self.mock_event_bus = Mock()
         self.director = DirectorAgent(
-            event_bus=self.mock_event_bus, campaign_log_path="advanced_test_log.md"
+            event_bus=self.mock_event_bus,
+            campaign_log_path="advanced_test_log.md",
         )
 
     def teardown_method(self):
@@ -312,7 +325,9 @@ class TestDirectorAgentAdvanced:
 
             # 检查状态是否改变
             if hasattr(self.director, "agents"):
-                assert len(self.director.agents) > initial_state.get("agents_count", 0)
+                assert len(self.director.agents) > initial_state.get(
+                    "agents_count", 0
+                )
 
         # 运行回合
         if hasattr(self.director, "run_turn"):
@@ -321,7 +336,9 @@ class TestDirectorAgentAdvanced:
 
                 # 检查回合计数是否增加
                 if hasattr(self.director, "turn_count"):
-                    assert self.director.turn_count > initial_state.get("turn_count", 0)
+                    assert self.director.turn_count > initial_state.get(
+                        "turn_count", 0
+                    )
                 elif hasattr(self.director, "current_turn"):
                     assert self.director.current_turn >= initial_state.get(
                         "current_turn", 0
@@ -338,12 +355,15 @@ class TestDirectorAgentAdvanced:
         different_log_path = "different_log.md"
         try:
             different_director = DirectorAgent(
-                event_bus=self.mock_event_bus, campaign_log_path=different_log_path
+                event_bus=self.mock_event_bus,
+                campaign_log_path=different_log_path,
             )
 
             # 检查配置是否正确设置
             if hasattr(different_director, "campaign_log_path"):
-                assert different_director.campaign_log_path == different_log_path
+                assert (
+                    different_director.campaign_log_path == different_log_path
+                )
             elif hasattr(different_director, "log_path"):
                 assert different_director.log_path == different_log_path
 
@@ -357,7 +377,9 @@ class TestDirectorAgentAdvanced:
                 pass
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentPerformance:
     """导演代理性能测试"""
 
@@ -365,7 +387,8 @@ class TestDirectorAgentPerformance:
         """每个测试方法的设置"""
         self.mock_event_bus = Mock()
         self.director = DirectorAgent(
-            event_bus=self.mock_event_bus, campaign_log_path="performance_test_log.md"
+            event_bus=self.mock_event_bus,
+            campaign_log_path="performance_test_log.md",
         )
 
     def teardown_method(self):

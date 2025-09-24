@@ -29,9 +29,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.security.auth_system import AuthenticationManager
-from src.security.ssl_config import (
-    SSLCertificateManager,
-)
+from src.security.ssl_config import SSLCertificateManager
 
 # Sacred logging configuration
 logging.basicConfig(
@@ -51,7 +49,9 @@ class SecureDeploymentManager:
         self.cert_manager = SSLCertificateManager()
         self.deployment_config: Dict[str, Any] = {}
 
-        logger.info(f"Secure deployment manager initialized for {environment.upper()}")
+        logger.info(
+            f"Secure deployment manager initialized for {environment.upper()}"
+        )
 
     def load_security_config(self) -> Dict[str, Any]:
         """Security Configuration Loading"""
@@ -71,7 +71,9 @@ class SecureDeploymentManager:
                 logger.info("Security configuration loaded successfully")
                 return config
             else:
-                logger.warning("Security configuration file not found - using defaults")
+                logger.warning(
+                    "Security configuration file not found - using defaults"
+                )
                 return self._get_default_config()
 
         except Exception as e:
@@ -81,7 +83,11 @@ class SecureDeploymentManager:
     def _deep_merge_config(self, base: Dict, override: Dict):
         """Deep merge configuration dictionaries"""
         for key, value in override.items():
-            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            if (
+                key in base
+                and isinstance(base[key], dict)
+                and isinstance(value, dict)
+            ):
                 self._deep_merge_config(base[key], value)
             else:
                 base[key] = value
@@ -97,7 +103,9 @@ class SecureDeploymentManager:
             "monitoring": {"enabled": True},
         }
 
-    def setup_ssl_certificates(self, config: Dict[str, Any]) -> Optional[tuple]:
+    def setup_ssl_certificates(
+        self, config: Dict[str, Any]
+    ) -> Optional[tuple]:
         """SSL Certificate Setup"""
         ssl_config = config.get("ssl", {})
 
@@ -110,9 +118,14 @@ class SecureDeploymentManager:
                 # Generate self-signed certificates for development
                 dev_config = ssl_config.get("development", {})
                 domain = dev_config.get("domain", "localhost")
-                alt_names = dev_config.get("alt_names", ["localhost", "127.0.0.1"])
+                alt_names = dev_config.get(
+                    "alt_names", ["localhost", "127.0.0.1"]
+                )
 
-                cert_file, key_file = self.cert_manager.generate_self_signed_cert(
+                (
+                    cert_file,
+                    key_file,
+                ) = self.cert_manager.generate_self_signed_cert(
                     domain=domain, alt_names=alt_names
                 )
 
@@ -131,7 +144,9 @@ class SecureDeploymentManager:
                     return None
 
                 # Validate certificates
-                if not self.cert_manager.validate_certificate(cert_file, key_file):
+                if not self.cert_manager.validate_certificate(
+                    cert_file, key_file
+                ):
                     logger.error("SSL certificate validation failed")
                     return None
 
@@ -160,7 +175,9 @@ class SecureDeploymentManager:
 
             # Set up backup directory with secure permissions
             backup_dir = Path(
-                db_config.get("backup", {}).get("secure_location", "data/backups")
+                db_config.get("backup", {}).get(
+                    "secure_location", "data/backups"
+                )
             )
             backup_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
 
@@ -208,7 +225,9 @@ class SecureDeploymentManager:
         # Validate SSL configuration
         ssl_config = config.get("ssl", {})
         if ssl_config.get("enabled") and self.environment == "production":
-            if not ssl_config.get("cert_file") or not ssl_config.get("key_file"):
+            if not ssl_config.get("cert_file") or not ssl_config.get(
+                "key_file"
+            ):
                 validation_errors.append(
                     "SSL enabled but certificate files not specified"
                 )
@@ -243,8 +262,12 @@ class SecureDeploymentManager:
         """Environment Variables Setup"""
         env_vars = {
             "DEBUG": "false" if self.environment == "production" else "true",
-            "ENABLE_DOCS": "false" if self.environment == "production" else "true",
-            "LOG_LEVEL": "WARNING" if self.environment == "production" else "INFO",
+            "ENABLE_DOCS": "false"
+            if self.environment == "production"
+            else "true",
+            "LOG_LEVEL": "WARNING"
+            if self.environment == "production"
+            else "INFO",
             "ENABLE_RATE_LIMITING": str(
                 config.get("rate_limiting", {}).get("enabled", True)
             ).lower(),
@@ -314,14 +337,18 @@ Secure Deployment Complete
     async def deploy(self) -> bool:
         """Deployment Execution"""
         try:
-            logger.info(f"Starting secure deployment for {self.environment.upper()}")
+            logger.info(
+                f"Starting secure deployment for {self.environment.upper()}"
+            )
 
             # Load security configuration
             config = self.load_security_config()
 
             # Validate configuration
             if not self.validate_security_configuration(config):
-                logger.error("Deployment failed - configuration validation errors")
+                logger.error(
+                    "Deployment failed - configuration validation errors"
+                )
                 return False
 
             # Setup environment variables
@@ -384,9 +411,10 @@ def main():
 
     if args.generate_ssl:
         logger.info("Generating SSL certificates")
-        cert_file, key_file = (
-            deployment_manager.cert_manager.generate_self_signed_cert()
-        )
+        (
+            cert_file,
+            key_file,
+        ) = deployment_manager.cert_manager.generate_self_signed_cert()
         logger.info(f"SSL certificates generated: {cert_file}, {key_file}")
         return
 

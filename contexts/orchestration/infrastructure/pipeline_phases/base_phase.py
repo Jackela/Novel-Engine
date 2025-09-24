@@ -99,10 +99,15 @@ class PhaseExecutionContext:
         self.rollback_data[key] = {
             "data": data,
             "timestamp": datetime.now().isoformat(),
-            "context": {"phase": self.phase_type.value, "turn_id": str(self.turn_id)},
+            "context": {
+                "phase": self.phase_type.value,
+                "turn_id": str(self.turn_id),
+            },
         }
 
-    def record_performance_metric(self, metric_name: str, value: float) -> None:
+    def record_performance_metric(
+        self, metric_name: str, value: float
+    ) -> None:
         """Record performance metric for this phase."""
         self.performance_metrics[metric_name] = value
 
@@ -174,13 +179,15 @@ class BasePhaseImplementation(ABC):
 
         # Set up timeout monitoring
         timeout_seconds = (
-            context.configuration.get_phase_timeout(self.phase_type.value) / 1000.0
+            context.configuration.get_phase_timeout(self.phase_type.value)
+            / 1000.0
         )
 
         try:
             # Execute phase with timeout
             result = await asyncio.wait_for(
-                self._execute_phase_implementation(context), timeout=timeout_seconds
+                self._execute_phase_implementation(context),
+                timeout=timeout_seconds,
             )
 
             # Validate and enrich result
@@ -268,7 +275,9 @@ class BasePhaseImplementation(ABC):
         # Validate AI usage if present
         if result.ai_usage:
             required_ai_fields = ["total_cost", "total_tokens", "operations"]
-            if not all(field in result.ai_usage for field in required_ai_fields):
+            if not all(
+                field in result.ai_usage for field in required_ai_fields
+            ):
                 raise ValueError("AI usage data is incomplete")
 
     def _enrich_result_with_context_data(
@@ -283,9 +292,9 @@ class BasePhaseImplementation(ABC):
         """
         # Add execution timing
         result.performance_metrics.update(context.performance_metrics)
-        result.performance_metrics["execution_time_ms"] = (
-            context.get_execution_time_ms()
-        )
+        result.performance_metrics[
+            "execution_time_ms"
+        ] = context.get_execution_time_ms()
 
         # Add cross-context call data
         result.cross_context_calls = context.cross_context_calls.copy()
@@ -387,7 +396,9 @@ class BasePhaseImplementation(ABC):
             }
 
             # Record the call
-            response_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+            response_time_ms = (
+                datetime.now() - start_time
+            ).total_seconds() * 1000
             context.record_cross_context_call(
                 target_context=service_name,
                 operation=operation,
@@ -403,7 +414,9 @@ class BasePhaseImplementation(ABC):
             return response_data
 
         except Exception as e:
-            raise RuntimeError(f"Failed to call {service_name}.{operation}: {e}")
+            raise RuntimeError(
+                f"Failed to call {service_name}.{operation}: {e}"
+            )
 
     async def _call_ai_service(
         self,
@@ -443,9 +456,13 @@ class BasePhaseImplementation(ABC):
             await asyncio.sleep(0.5)  # Simulate AI processing time
 
             # Simulate response
-            tokens_used = min(max_tokens, len(prompt.split()) * 2)  # Rough estimate
+            tokens_used = min(
+                max_tokens, len(prompt.split()) * 2
+            )  # Rough estimate
             cost = Decimal(str(tokens_used * 0.001))  # $0.001 per token
-            response_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+            response_time_ms = (
+                datetime.now() - start_time
+            ).total_seconds() * 1000
 
             response = {
                 "content": f"AI response for {operation}",
@@ -554,3 +571,66 @@ class BasePhaseImplementation(ABC):
                 raise ValueError(
                     f"Required participants not available: {missing_participants}"
                 )
+
+    # Factory methods for API layer compatibility
+
+    @classmethod
+    def create_success_result(
+        cls,
+        events_processed: int = 0,
+        events_generated: Optional[List[UUID]] = None,
+        artifacts_created: Optional[List[str]] = None,
+        performance_metrics: Optional[Dict[str, float]] = None,
+        ai_usage: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> "PhaseResult":
+        """
+        Create a successful phase result (factory method for API layer).
+
+        Args:
+            events_processed: Number of events processed
+            events_generated: List of generated event IDs
+            artifacts_created: List of created artifacts
+            performance_metrics: Performance measurements
+            ai_usage: AI service usage data
+            metadata: Additional metadata
+
+        Returns:
+            PhaseResult indicating success
+        """
+        return PhaseResult(
+            success=True,
+            events_processed=events_processed,
+            events_generated=events_generated or [],
+            artifacts_created=artifacts_created or [],
+            performance_metrics=performance_metrics or {},
+            ai_usage=ai_usage,
+            metadata=metadata or {},
+        )
+
+    @classmethod
+    def create_failure_result(
+        cls,
+        error_message: str,
+        error_details: Optional[Dict[str, Any]] = None,
+        events_processed: int = 0,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> "PhaseResult":
+        """
+        Create a failed phase result (factory method for API layer).
+
+        Args:
+            error_message: Error description
+            error_details: Detailed error information
+            events_processed: Number of events processed before failure
+            metadata: Additional metadata
+
+        Returns:
+            PhaseResult indicating failure
+        """
+        return PhaseResult(
+            success=False,
+            events_processed=events_processed,
+            error_details=error_details or {"error_message": error_message},
+            metadata=metadata or {},
+        )

@@ -41,11 +41,16 @@ class WorldStateManager:
 
     def _load_world_state(self) -> None:
         """Load world state from file or initialize default state."""
-        if self.world_state_file_path and Path(self.world_state_file_path).exists():
+        if (
+            self.world_state_file_path
+            and Path(self.world_state_file_path).exists()
+        ):
             try:
                 with open(self.world_state_file_path, "r") as f:
                     self.world_state_data = json.load(f)
-                logger.info(f"Loaded world state from {self.world_state_file_path}")
+                logger.info(
+                    f"Loaded world state from {self.world_state_file_path}"
+                )
             except (json.JSONDecodeError, IOError) as e:
                 logger.error(f"Failed to load world state: {e}")
                 self._initialize_default_world_state()
@@ -121,18 +126,22 @@ class WorldStateManager:
         """Get faction status updates relevant to agent."""
         return {}
 
-    def _get_environmental_updates_for_agent(self, agent_id: str) -> Dict[str, Any]:
+    def _get_environmental_updates_for_agent(
+        self, agent_id: str
+    ) -> Dict[str, Any]:
         """Get environmental changes affecting agent."""
         return {
-            "weather": self.world_state_data.get("environmental_state", {}).get(
-                "weather", "stable"
-            ),
-            "global_events": self.world_state_data.get("environmental_state", {}).get(
-                "global_events", []
-            ),
+            "weather": self.world_state_data.get(
+                "environmental_state", {}
+            ).get("weather", "stable"),
+            "global_events": self.world_state_data.get(
+                "environmental_state", {}
+            ).get("global_events", []),
         }
 
-    def generate_world_state_feedback(self, agent_id: str) -> Optional[Dict[str, Any]]:
+    def generate_world_state_feedback(
+        self, agent_id: str
+    ) -> Optional[Dict[str, Any]]:
         """
         Generate feedback about world state changes for specific agent.
 
@@ -144,7 +153,9 @@ class WorldStateManager:
         """
         feedback = {
             "discoveries": self._get_agent_discoveries_feedback(agent_id),
-            "environmental_changes": self._get_environmental_changes_feedback(agent_id),
+            "environmental_changes": self._get_environmental_changes_feedback(
+                agent_id
+            ),
             "other_agents_activities": self._get_other_agents_activities_feedback(
                 agent_id
             ),
@@ -163,16 +174,24 @@ class WorldStateManager:
         """Get environmental changes affecting specific agent."""
         return []
 
-    def _get_other_agents_activities_feedback(self, agent_id: str) -> List[str]:
+    def _get_other_agents_activities_feedback(
+        self, agent_id: str
+    ) -> List[str]:
         """Get activities of other agents visible to specific agent."""
         return []
 
     def get_world_state_summary(self) -> Dict[str, Any]:
         """Get comprehensive world state summary."""
         return {
-            "total_entities": len(self.world_state_data.get("entity_registry", {})),
-            "total_locations": len(self.world_state_data.get("location_registry", {})),
-            "total_factions": len(self.world_state_data.get("faction_registry", {})),
+            "total_entities": len(
+                self.world_state_data.get("entity_registry", {})
+            ),
+            "total_locations": len(
+                self.world_state_data.get("location_registry", {})
+            ),
+            "total_factions": len(
+                self.world_state_data.get("faction_registry", {})
+            ),
             "global_threat_level": self.world_state_data.get(
                 "environmental_state", {}
             ).get("threat_level", "unknown"),
@@ -225,7 +244,11 @@ class WorldStateManager:
 
     def validate_world_state_data(self) -> None:
         """Validate world state data consistency."""
-        required_keys = ["world_metadata", "environmental_state", "entity_registry"]
+        required_keys = [
+            "world_metadata",
+            "environmental_state",
+            "entity_registry",
+        ]
 
         for key in required_keys:
             if key not in self.world_state_data:

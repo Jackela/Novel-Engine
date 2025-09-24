@@ -7,10 +7,13 @@ import asyncio
 import sys
 from pathlib import Path
 
+import pytest
+
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent))
 
 
+@pytest.mark.asyncio
 async def test_improvements():
     """Test the Wave Mode improvements"""
     print("=" * 80)
@@ -50,7 +53,9 @@ async def test_improvements():
             print(f"  ❌ FAIL: Phrase repeated {repetition_count} times")
 
         # Check dialogue variety
-        dialogue_events = [e for e in data["events"] if e["event_type"] == "dialogue"]
+        dialogue_events = [
+            e for e in data["events"] if e["event_type"] == "dialogue"
+        ]
         unique_dialogues = set(e["content"] for e in dialogue_events)
         dialogue_variety = len(unique_dialogues) / max(1, len(dialogue_events))
 
@@ -139,11 +144,15 @@ CONCLUSION: Wave Mode improvements {'SUCCESSFULLY APPLIED' if repetition_count <
 
 if __name__ == "__main__":
     print("🌊 Wave Mode Improvement Test Suite")
-    print("Testing the enhanced ai_novel_system.py with Wave Mode improvements\n")
+    print(
+        "Testing the enhanced ai_novel_system.py with Wave Mode improvements\n"
+    )
 
     success = asyncio.run(test_improvements())
 
     if success:
-        print("\n🎉 ALL TESTS PASSED! Wave Mode improvements are working correctly!")
+        print(
+            "\n🎉 ALL TESTS PASSED! Wave Mode improvements are working correctly!"
+        )
     else:
         print("\n⚠️ Some tests failed. Please review the improvements.")

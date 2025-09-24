@@ -11,7 +11,11 @@ from typing import Any, Dict, List, Optional, Set
 from uuid import uuid4
 
 from ...domain.value_objects import PhaseType
-from .base_phase import BasePhaseImplementation, PhaseExecutionContext, PhaseResult
+from .base_phase import (
+    BasePhaseImplementation,
+    PhaseExecutionContext,
+    PhaseResult,
+)
 
 
 class InteractionSession:
@@ -74,8 +78,8 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
 
         try:
             # Step 1: Analyze interaction opportunities
-            interaction_opportunities = await self._analyze_interaction_opportunities(
-                context
+            interaction_opportunities = (
+                await self._analyze_interaction_opportunities(context)
             )
 
             # Step 2: Create interaction sessions
@@ -87,13 +91,17 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
             session_results = {}
             for session in active_sessions:
                 try:
-                    result = await self._execute_interaction_session(context, session)
+                    result = await self._execute_interaction_session(
+                        context, session
+                    )
                     session_results[session.session_id] = result
 
                     if result.get("completed"):
                         interactions_completed += 1
 
-                    negotiations_resolved += result.get("negotiations_resolved", 0)
+                    negotiations_resolved += result.get(
+                        "negotiations_resolved", 0
+                    )
                     actions_proposed += result.get("actions_proposed", 0)
                     conflicts_resolved += result.get("conflicts_resolved", 0)
 
@@ -131,7 +139,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
 
             # Calculate success metrics
             total_opportunities = len(interaction_opportunities)
-            completion_rate = interactions_completed / max(1, total_opportunities)
+            completion_rate = interactions_completed / max(
+                1, total_opportunities
+            )
 
             return PhaseResult(
                 success=completion_rate
@@ -182,7 +192,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         """
         # Check that we have participants for interactions
         if not context.participants:
-            raise ValueError("No participants available for interaction orchestration")
+            raise ValueError(
+                "No participants available for interaction orchestration"
+            )
 
         # Single participant can still have valid interactions (with environment, NPCs, etc.)
         if len(context.participants) == 1:
@@ -217,7 +229,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                 )
 
                 if agent_response.get("success"):
-                    agent_states[participant_id] = agent_response.get("state", {})
+                    agent_states[participant_id] = agent_response.get(
+                        "state", {}
+                    )
 
             except Exception:
                 # Use default state if agent state unavailable
@@ -229,7 +243,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         # Direct agent-to-agent interactions
         if len(context.participants) > 1:
             opportunities.extend(
-                await self._find_agent_interaction_opportunities(context, agent_states)
+                await self._find_agent_interaction_opportunities(
+                    context, agent_states
+                )
             )
 
         # Agent-environment interactions
@@ -241,13 +257,17 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
 
         # Agent-NPC interactions
         opportunities.extend(
-            await self._find_npc_interaction_opportunities(context, agent_states)
+            await self._find_npc_interaction_opportunities(
+                context, agent_states
+            )
         )
 
         # Collaborative opportunities
         if len(context.participants) > 2:
             opportunities.extend(
-                await self._find_collaborative_opportunities(context, agent_states)
+                await self._find_collaborative_opportunities(
+                    context, agent_states
+                )
             )
 
         # Priority sorting - highest priority interactions first
@@ -256,7 +276,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         return opportunities
 
     async def _find_agent_interaction_opportunities(
-        self, context: PhaseExecutionContext, agent_states: Dict[str, Dict[str, Any]]
+        self,
+        context: PhaseExecutionContext,
+        agent_states: Dict[str, Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
         """Find opportunities for direct agent-to-agent interactions."""
         opportunities = []
@@ -267,13 +289,15 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
             for agent_b in participants[i + 1 :]:
                 # Check proximity
                 proximity_score = self._calculate_agent_proximity(
-                    agent_states.get(agent_a, {}), agent_states.get(agent_b, {})
+                    agent_states.get(agent_a, {}),
+                    agent_states.get(agent_b, {}),
                 )
 
                 if proximity_score > 0.3:  # Close enough to interact
                     # Check goal alignment or conflict
                     interaction_type = self._determine_interaction_type(
-                        agent_states.get(agent_a, {}), agent_states.get(agent_b, {})
+                        agent_states.get(agent_a, {}),
+                        agent_states.get(agent_b, {}),
                     )
 
                     priority = self._calculate_interaction_priority(
@@ -297,7 +321,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         return opportunities
 
     async def _find_environment_interaction_opportunities(
-        self, context: PhaseExecutionContext, agent_states: Dict[str, Dict[str, Any]]
+        self,
+        context: PhaseExecutionContext,
+        agent_states: Dict[str, Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
         """Find opportunities for agent-environment interactions."""
         opportunities = []
@@ -322,7 +348,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
             # Check if any agents can interact with this opportunity
             eligible_agents = []
             for agent_id, agent_state in agent_states.items():
-                if self._can_agent_interact_with_environment(agent_state, opportunity):
+                if self._can_agent_interact_with_environment(
+                    agent_state, opportunity
+                ):
                     eligible_agents.append(agent_id)
 
             if eligible_agents:
@@ -342,7 +370,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         return opportunities
 
     async def _find_npc_interaction_opportunities(
-        self, context: PhaseExecutionContext, agent_states: Dict[str, Dict[str, Any]]
+        self,
+        context: PhaseExecutionContext,
+        agent_states: Dict[str, Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
         """Find opportunities for agent-NPC interactions."""
         opportunities = []
@@ -374,7 +404,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                 opportunities.append(
                     {
                         "type": "npc_interaction",
-                        "interaction_subtype": npc.get("interaction_type", "dialogue"),
+                        "interaction_subtype": npc.get(
+                            "interaction_type", "dialogue"
+                        ),
                         "participants": eligible_agents,
                         "npc": npc,
                         "priority": npc.get("importance", 0.2),
@@ -385,7 +417,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         return opportunities
 
     async def _find_collaborative_opportunities(
-        self, context: PhaseExecutionContext, agent_states: Dict[str, Dict[str, Any]]
+        self,
+        context: PhaseExecutionContext,
+        agent_states: Dict[str, Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
         """Find opportunities for multi-agent collaboration."""
         opportunities = []
@@ -409,14 +443,18 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                         "participants": available_participants,
                         "task": task,
                         "priority": task.get("priority", 0.5),
-                        "estimated_duration": task.get("estimated_duration", 10000),
+                        "estimated_duration": task.get(
+                            "estimated_duration", 10000
+                        ),
                     }
                 )
 
         return opportunities
 
     async def _create_interaction_sessions(
-        self, context: PhaseExecutionContext, opportunities: List[Dict[str, Any]]
+        self,
+        context: PhaseExecutionContext,
+        opportunities: List[Dict[str, Any]],
     ) -> List[InteractionSession]:
         """Create interaction sessions from opportunities."""
         sessions = []
@@ -440,7 +478,10 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                 used_participants.update(participants)
 
                 # Limit concurrent sessions based on configuration
-                if len(sessions) >= context.configuration.max_concurrent_operations:
+                if (
+                    len(sessions)
+                    >= context.configuration.max_concurrent_operations
+                ):
                     break
 
         return sessions
@@ -457,18 +498,27 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
 
             # Execute based on interaction type
             if session.interaction_type == "agent_interaction":
-                result = await self._execute_agent_interaction(context, session)
+                result = await self._execute_agent_interaction(
+                    context, session
+                )
             elif session.interaction_type == "environment_interaction":
-                result = await self._execute_environment_interaction(context, session)
+                result = await self._execute_environment_interaction(
+                    context, session
+                )
             elif session.interaction_type == "npc_interaction":
                 result = await self._execute_npc_interaction(context, session)
             elif session.interaction_type == "collaboration":
                 result = await self._execute_collaboration(context, session)
             else:
-                result = {"completed": False, "error": "Unknown interaction type"}
+                result = {
+                    "completed": False,
+                    "error": "Unknown interaction type",
+                }
 
             # Record session completion
-            session_duration = (datetime.now() - session_start).total_seconds() * 1000
+            session_duration = (
+                datetime.now() - session_start
+            ).total_seconds() * 1000
             result["session_duration_ms"] = session_duration
             result["session_id"] = session.session_id
 
@@ -479,7 +529,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                 "completed": False,
                 "error": str(e),
                 "session_id": session.session_id,
-                "session_duration_ms": (datetime.now() - session_start).total_seconds()
+                "session_duration_ms": (
+                    datetime.now() - session_start
+                ).total_seconds()
                 * 1000,
             }
 
@@ -499,13 +551,17 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                 {
                     "agent_id": agent_id,
                     "interaction_type": interaction_subtype,
-                    "other_agents": [a for a in session.participants if a != agent_id],
+                    "other_agents": [
+                        a for a in session.participants if a != agent_id
+                    ],
                     "context": session.context,
                 },
             )
 
             if proposal_response.get("success"):
-                agent_proposals[agent_id] = proposal_response.get("proposal", {})
+                agent_proposals[agent_id] = proposal_response.get(
+                    "proposal", {}
+                )
 
         # Resolve interaction based on proposals
         if interaction_subtype == "negotiation":
@@ -517,7 +573,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                 context, session, agent_proposals
             )
         elif interaction_subtype == "conflict":
-            resolution = await self._resolve_conflict(context, session, agent_proposals)
+            resolution = await self._resolve_conflict(
+                context, session, agent_proposals
+            )
         else:
             resolution = await self._resolve_general_interaction(
                 context, session, agent_proposals
@@ -532,8 +590,12 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
             "participants": session.participants,
             "resolution": resolution,
             "actions_proposed": len(agent_proposals),
-            "negotiations_resolved": 1 if interaction_subtype == "negotiation" else 0,
-            "conflicts_resolved": 1 if interaction_subtype == "conflict" else 0,
+            "negotiations_resolved": 1
+            if interaction_subtype == "negotiation"
+            else 0,
+            "conflicts_resolved": 1
+            if interaction_subtype == "conflict"
+            else 0,
         }
 
     async def _execute_environment_interaction(
@@ -602,8 +664,10 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                 "execute_npc_interaction",
                 {
                     "agent_id": agent_id,
-                    "npc_id": npc.get("id"),
-                    "interaction_type": session.context.get("interaction_subtype"),
+                    "npc_id": npc.get("id") if npc else None,
+                    "interaction_type": session.context.get(
+                        "interaction_subtype"
+                    ),
                     "context": session.context,
                 },
             )
@@ -641,7 +705,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
 
         return {
             "completed": collaboration_success,
-            "interaction_subtype": task.get("task_type"),
+            "interaction_subtype": task.get("task_type") if task else None,
             "participants": session.participants,
             "task": task,
             "collaboration_outcome": coordination_response.get("outcome", {}),
@@ -877,7 +941,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
             )
 
     async def _process_interaction_outcomes(
-        self, context: PhaseExecutionContext, session_results: Dict[str, Dict[str, Any]]
+        self,
+        context: PhaseExecutionContext,
+        session_results: Dict[str, Dict[str, Any]],
     ) -> Dict[str, Any]:
         """Process all interaction outcomes and create summary."""
         total_sessions = len(session_results)
@@ -997,7 +1063,9 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         return None
 
     async def _identify_collaborative_tasks(
-        self, context: PhaseExecutionContext, agent_states: Dict[str, Dict[str, Any]]
+        self,
+        context: PhaseExecutionContext,
+        agent_states: Dict[str, Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
         """Identify tasks that require collaboration."""
         # Get collaborative opportunities from world or quest system
@@ -1020,7 +1088,10 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         agent_capabilities = agent_state.get("capabilities", [])
         required_capability = opportunity.get("required_capability")
 
-        if required_capability and required_capability not in agent_capabilities:
+        if (
+            required_capability
+            and required_capability not in agent_capabilities
+        ):
             return False
 
         # Check proximity

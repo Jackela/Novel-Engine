@@ -189,7 +189,9 @@ def example_event_projections():
     print("\n=== Event Projection Examples ===")
 
     print("\nWorldProjector event handling:")
-    print("• ENTITY_ADDED → Add to all_entities, update type counts, recalc bounds")
+    print(
+        "• ENTITY_ADDED → Add to all_entities, update type counts, recalc bounds"
+    )
     print("• ENTITY_REMOVED → Remove from all_entities, update type counts")
     print("• ENTITY_MOVED → Update coordinates, recalculate spatial bounds")
     print("• ENTITY_UPDATED → Update entity data in denormalized structure")
@@ -257,7 +259,10 @@ def example_architecture_benefits():
             "Read/Write Separation",
             "Queries never impact write performance or consistency",
         ),
-        ("Query Optimization", "Read models designed specifically for query patterns"),
+        (
+            "Query Optimization",
+            "Read models designed specifically for query patterns",
+        ),
         ("Independent Scaling", "Scale read and write sides independently"),
         (
             "Eventual Consistency",
@@ -267,8 +272,14 @@ def example_architecture_benefits():
             "Performance Isolation",
             "Complex analytics don't affect real-time operations",
         ),
-        ("Schema Flexibility", "Denormalized read schemas optimized per use case"),
-        ("Event Sourcing Ready", "Full audit trail and event replay capabilities"),
+        (
+            "Schema Flexibility",
+            "Denormalized read schemas optimized per use case",
+        ),
+        (
+            "Event Sourcing Ready",
+            "Full audit trail and event replay capabilities",
+        ),
     ]
 
     for benefit, description in benefits:

@@ -74,7 +74,9 @@ async def test_performance_engine():
             operations, "io_bound"
         )
         assert len(results) == 10, "Batch operations failed"
-        assert all(r == "success" for r in results), "Batch operation results invalid"
+        assert all(
+            r == "success" for r in results
+        ), "Batch operation results invalid"
 
         # Get performance stats
         stats = await performance_engine.get_comprehensive_stats()
@@ -108,7 +110,9 @@ async def test_api_endpoints(base_url: str = "http://localhost:8000"):
             try:
                 start_time = time.time()
 
-                async with session.request(method, f"{base_url}{endpoint}") as response:
+                async with session.request(
+                    method, f"{base_url}{endpoint}"
+                ) as response:
                     await response.read()  # Ensure complete transfer
                     response_time = time.time() - start_time
 
@@ -231,7 +235,8 @@ async def run_quick_load_test(
         "meets_targets": {
             "response_time": avg_response_time < 0.1,  # <100ms
             "p95_response_time": p95_response_time < 0.1,  # <100ms
-            "throughput": throughput > 100,  # >100 RPS (modest target for quick test)
+            # >100 RPS (modest target for quick test)
+            "throughput": throughput > 100,
             "error_rate": (
                 (total_errors / total_requests * 100) < 1
                 if total_requests > 0
@@ -282,8 +287,13 @@ async def validate_performance():
             ),
         }
     except Exception as e:
-        logger.warning(f"API endpoint tests skipped (server not running?): {e}")
-        validation_results["api_endpoint_tests"] = {"skipped": True, "reason": str(e)}
+        logger.warning(
+            f"API endpoint tests skipped (server not running?): {e}"
+        )
+        validation_results["api_endpoint_tests"] = {
+            "skipped": True,
+            "reason": str(e),
+        }
 
     # Test 3: Quick Load Test (if server is running)
     try:
@@ -291,7 +301,10 @@ async def validate_performance():
         validation_results["load_test_results"] = load_results
     except Exception as e:
         logger.warning(f"Load test skipped (server not running?): {e}")
-        validation_results["load_test_results"] = {"skipped": True, "reason": str(e)}
+        validation_results["load_test_results"] = {
+            "skipped": True,
+            "reason": str(e),
+        }
 
     # Determine overall success
     engine_ok = validation_results["performance_engine_test"]["success"]
@@ -323,7 +336,9 @@ def print_validation_summary(results: Dict[str, Any]):
     # API Endpoint Tests
     api_tests = results.get("api_endpoint_tests", {})
     if api_tests.get("skipped"):
-        print(f"\nAPI Endpoints: SKIPPED ({api_tests.get('reason', 'Unknown reason')})")
+        print(
+            f"\nAPI Endpoints: SKIPPED ({api_tests.get('reason', 'Unknown reason')})"
+        )
     else:
         api_success = api_tests.get("success", False)
         targets_met = api_tests.get("targets_met", False)
@@ -337,7 +352,7 @@ def print_validation_summary(results: Dict[str, Any]):
                         "PASS" if result.get("meets_target", False) else "FAIL"
                     )
                     print(
-                        f"  {target_status} {result['description']}: {result.get('response_time_ms', 0):.1f}ms"
+                        f"  {target_status} {result['description']}: {result.get( 'response_time_ms', 0):.1f}ms"
                     )
                 else:
                     print(f"  FAIL {result['description']}: ERROR")
@@ -345,20 +360,28 @@ def print_validation_summary(results: Dict[str, Any]):
     # Load Test Results
     load_test = results.get("load_test_results", {})
     if load_test.get("skipped"):
-        print(f"\nLoad Test: SKIPPED ({load_test.get('reason', 'Unknown reason')})")
+        print(
+            f"\nLoad Test: SKIPPED ({load_test.get('reason', 'Unknown reason')})"
+        )
     else:
         targets = load_test.get("meets_targets", {})
         load_status = "PASS" if all(targets.values()) else "FAIL"
         print(f"\nLoad Test: {load_status}")
 
         if "avg_response_time_ms" in load_test:
-            print(f"  Average Response Time: {load_test['avg_response_time_ms']:.1f}ms")
-            print(f"  P95 Response Time: {load_test['p95_response_time_ms']:.1f}ms")
+            print(
+                f"  Average Response Time: {load_test['avg_response_time_ms']:.1f}ms"
+            )
+            print(
+                f"  P95 Response Time: {load_test['p95_response_time_ms']:.1f}ms"
+            )
             print(f"  Throughput: {load_test['throughput_rps']:.1f} RPS")
             print(f"  Error Rate: {load_test['error_rate']:.1f}%")
 
     # Overall Result
-    overall_status = "PASS" if results.get("overall_success", False) else "FAIL"
+    overall_status = (
+        "PASS" if results.get("overall_success", False) else "FAIL"
+    )
     print(f"\nOVERALL VALIDATION: {overall_status}")
     print("=" * 60)
 

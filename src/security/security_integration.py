@@ -49,10 +49,7 @@ from .security_dashboard import (
     SecurityDashboard,
     initialize_security_dashboard,
 )
-from .security_middleware import (
-    SecurityConfig,
-    SecurityMiddleware,
-)
+from .security_middleware import SecurityConfig, SecurityMiddleware
 
 # Enhanced logging
 logging.basicConfig(level=logging.INFO)
@@ -73,7 +70,6 @@ class EnterpriseSecuritySuite:
         enable_behavioral_analytics: bool = True,
         security_config: SecurityConfig = None,
     ):
-
         self.database_path = database_path
         self.secret_key = secret_key or secrets.token_urlsafe(32)
         self.redis_url = redis_url
@@ -135,7 +131,9 @@ class EnterpriseSecuritySuite:
             await self._start_security_automation()
 
             self.is_initialized = True
-            init_duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+            init_duration = (
+                datetime.now(timezone.utc) - start_time
+            ).total_seconds()
 
             logger.info("🎉 ENTERPRISE SECURITY SUITE INITIALIZED SUCCESSFULLY")
             logger.info(f"⏱️ Initialization completed in {init_duration:.2f}s")
@@ -143,13 +141,13 @@ class EnterpriseSecuritySuite:
             logger.info("   • JWT Authentication & RBAC")
             logger.info("   • Real-time Threat Detection")
             logger.info(
-                f"   • Behavioral Analytics: {'✅' if self.enable_behavioral_analytics else '❌'}"
+                f" • Behavioral Analytics: {'✅' if self.enable_behavioral_analytics else '❌'}"
             )
             logger.info(
                 f"   • Geo-blocking: {'✅' if self.enable_geo_blocking else '❌'}"
             )
             logger.info(
-                f"   • Compliance Frameworks: {', '.join([f.value.upper() for f in self.compliance_frameworks])}"
+                f" • Compliance Frameworks: {', '.join( [ f.value.upper() for f in self.compliance_frameworks])}"
             )
             logger.info("   • Security Dashboard & Monitoring")
             logger.info("   • Input Validation & Sanitization")
@@ -157,7 +155,9 @@ class EnterpriseSecuritySuite:
             return True
 
         except Exception as e:
-            logger.error(f"❌ FAILED TO INITIALIZE ENTERPRISE SECURITY SUITE: {e}")
+            logger.error(
+                f"❌ FAILED TO INITIALIZE ENTERPRISE SECURITY SUITE: {e}"
+            )
             self.is_initialized = False
             return False
 
@@ -167,7 +167,8 @@ class EnterpriseSecuritySuite:
             # Check if any admin users exist
             async with self.auth_service._SecurityService__conn_manager() as conn:
                 cursor = await conn.execute(
-                    "SELECT COUNT(*) FROM users WHERE role = ?", (UserRole.ADMIN.value,)
+                    "SELECT COUNT(*) FROM users WHERE role = ?",
+                    (UserRole.ADMIN.value,),
                 )
                 admin_count = (await cursor.fetchone())[0]
 
@@ -285,10 +286,12 @@ class EnterpriseSecuritySuite:
                         pass  # Not authenticated, continue with anonymous evaluation
 
                 # Evaluate request security
-                is_allowed, security_actions, threat_level = (
-                    await self.security_manager.evaluate_request_security(
-                        request, user_id
-                    )
+                (
+                    is_allowed,
+                    security_actions,
+                    threat_level,
+                ) = await self.security_manager.evaluate_request_security(
+                    request, user_id
                 )
 
                 if not is_allowed:
@@ -308,7 +311,9 @@ class EnterpriseSecuritySuite:
                 response = await call_next(request)
 
                 # Add security context to response headers
-                response.headers["X-Security-Threat-Level"] = threat_level.value
+                response.headers[
+                    "X-Security-Threat-Level"
+                ] = threat_level.value
                 if security_actions:
                     response.headers["X-Security-Actions"] = ",".join(
                         [a.value for a in security_actions]
@@ -321,7 +326,8 @@ class EnterpriseSecuritySuite:
                 # Fail secure - block on errors for critical paths
                 if request.url.path.startswith("/api/admin/"):
                     return JSONResponse(
-                        status_code=500, content={"error": "Security evaluation failed"}
+                        status_code=500,
+                        content={"error": "Security evaluation failed"},
                     )
                 return await call_next(request)
 
@@ -339,7 +345,9 @@ class EnterpriseSecuritySuite:
 
         # Authentication endpoints
         @app.post("/api/auth/register", response_model=dict)
-        async def register_user(registration: UserRegistration, request: Request):
+        async def register_user(
+            registration: UserRegistration, request: Request
+        ):
             try:
                 client_ip = self.security_manager._extract_client_ip(request)
                 user_agent = request.headers.get("user-agent", "unknown")
@@ -367,11 +375,15 @@ class EnterpriseSecuritySuite:
                 user_agent = request.headers.get("user-agent", "unknown")
 
                 user = await self.auth_service.authenticate_user(
-                    login=login_data, ip_address=client_ip, user_agent=user_agent
+                    login=login_data,
+                    ip_address=client_ip,
+                    user_agent=user_agent,
                 )
 
                 if not user:
-                    raise HTTPException(status_code=401, detail="Invalid credentials")
+                    raise HTTPException(
+                        status_code=401, detail="Invalid credentials"
+                    )
 
                 token_pair = await self.auth_service.create_token_pair(user)
                 return token_pair
@@ -385,9 +397,13 @@ class EnterpriseSecuritySuite:
         @app.post("/api/auth/refresh", response_model=TokenPair)
         async def refresh_token(refresh_token: str):
             try:
-                return await self.auth_service.refresh_access_token(refresh_token)
+                return await self.auth_service.refresh_access_token(
+                    refresh_token
+                )
             except Exception:
-                raise HTTPException(status_code=401, detail="Token refresh failed")
+                raise HTTPException(
+                    status_code=401, detail="Token refresh failed"
+                )
 
         # Security management endpoints (admin only)
         @app.get("/api/security/metrics")
@@ -452,9 +468,15 @@ class EnterpriseSecuritySuite:
         try:
             # Get metrics from all components
             auth_metrics = {"status": "active", "service": "authentication"}
-            security_metrics = await self.security_manager.get_security_metrics()
-            dashboard_overview = await self.security_dashboard.get_dashboard_overview()
-            compliance_summary = await self.security_dashboard.get_compliance_summary()
+            security_metrics = (
+                await self.security_manager.get_security_metrics()
+            )
+            dashboard_overview = (
+                await self.security_dashboard.get_dashboard_overview()
+            )
+            compliance_summary = (
+                await self.security_dashboard.get_compliance_summary()
+            )
 
             return {
                 "status": "active",
@@ -476,7 +498,11 @@ class EnterpriseSecuritySuite:
 
         except Exception as e:
             logger.error(f"Error getting security status: {e}")
-            return {"status": "error", "error": str(e), "components_status": "degraded"}
+            return {
+                "status": "error",
+                "error": str(e),
+                "components_status": "degraded",
+            }
 
     async def cleanup(self):
         """Cleanup security suite resources"""
@@ -524,10 +550,16 @@ def create_secure_app(
     app = FastAPI(
         title=title,
         version=version,
-        docs_url="/docs" if security_config.get("enable_docs", False) else None,
-        redoc_url="/redoc" if security_config.get("enable_docs", False) else None,
+        docs_url="/docs"
+        if security_config.get("enable_docs", False)
+        else None,
+        redoc_url="/redoc"
+        if security_config.get("enable_docs", False)
+        else None,
         openapi_url=(
-            "/openapi.json" if security_config.get("enable_docs", False) else None
+            "/openapi.json"
+            if security_config.get("enable_docs", False)
+            else None
         ),
     )
 

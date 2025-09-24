@@ -45,7 +45,9 @@ class GeminiClient:
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
 
         if not self.api_key:
-            raise ValueError("GEMINI_API_KEY not found in environment variables")
+            raise ValueError(
+                "GEMINI_API_KEY not found in environment variables"
+            )
 
         # Configure the API
         genai.configure(api_key=self.api_key)
@@ -60,7 +62,9 @@ class GeminiClient:
         self.total_tokens_used = 0
         self.total_requests = 0
 
-        logger.info("Gemini client initialized with model: gemini-2.0-flash-exp")
+        logger.info(
+            "Gemini client initialized with model: gemini-2.0-flash-exp"
+        )
 
     def generate_dialogue(
         self,
@@ -98,7 +102,9 @@ Output only the dialogue line, nothing else."""
             # Clean up response
             dialogue = response.strip().strip('"').strip('"').strip('"')
 
-            logger.debug(f"Generated dialogue for {character_name}: {dialogue}")
+            logger.debug(
+                f"Generated dialogue for {character_name}: {dialogue}"
+            )
             return dialogue
 
         except Exception as e:
@@ -240,7 +246,9 @@ Write the narrative prose:"""
         for attempt in range(max_retries):
             try:
                 # Generate response
-                response = self.model.generate_content(prompt, generation_config=config)
+                response = self.model.generate_content(
+                    prompt, generation_config=config
+                )
 
                 # Update usage stats
                 self.total_requests += 1
@@ -252,7 +260,9 @@ Write the narrative prose:"""
                     logger.warning("Empty response from Gemini")
 
             except Exception as e:
-                logger.warning(f"Generation attempt {attempt + 1} failed: {str(e)}")
+                logger.warning(
+                    f"Generation attempt {attempt + 1} failed: {str(e)}"
+                )
                 if attempt < max_retries - 1:
                     time.sleep(retry_delay)
                     retry_delay *= 2
@@ -264,7 +274,9 @@ Write the narrative prose:"""
     def test_connection(self) -> bool:
         """Test if the API connection works"""
         try:
-            response = self._generate("Say 'Hello' in Chinese", temperature=0.1)
+            response = self._generate(
+                "Say 'Hello' in Chinese", temperature=0.1
+            )
             logger.info(f"Connection test successful: {response}")
             return True
         except Exception as e:
@@ -311,7 +323,9 @@ def test_gemini_client():
         story_context={"current_crisis": "维度裂缝扩大"},
         plot_stage="rising_action",
     )
-    print(f"Generated event: {json.dumps(event, ensure_ascii=False, indent=2)}")
+    print(
+        f"Generated event: {json.dumps(event, ensure_ascii=False, indent=2)}"
+    )
 
     # Test narrative generation
     print("\nTesting narrative generation...")

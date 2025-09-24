@@ -78,7 +78,9 @@ class MockDirectorAgent:
     """Mock DirectorAgent for testing performance optimizations."""
 
     def __init__(self, agent_count: int = 10):
-        self.registered_agents = [MockAgent(f"agent_{i}") for i in range(agent_count)]
+        self.registered_agents = [
+            MockAgent(f"agent_{i}") for i in range(agent_count)
+        ]
         self.world_state_tracker = {
             "agent_discoveries": self._generate_mock_world_state(agent_count)
         }
@@ -133,16 +135,23 @@ class MockDirectorAgent:
 
         # THE PERFORMANCE DISASTER - 4-layer nested loop
         # This is the exact pattern from director_agent.py:855-875
-        for turn_num in range(max(1, current_turn - 2), current_turn + 1):  # O(n)
+        for turn_num in range(
+            max(1, current_turn - 2), current_turn + 1
+        ):  # O(n)
             if turn_num in self.world_state_tracker["agent_discoveries"]:
-                turn_discoveries = self.world_state_tracker["agent_discoveries"][
-                    turn_num
-                ]
-                for other_agent_id, discoveries in turn_discoveries.items():  # O(m)
+                turn_discoveries = self.world_state_tracker[
+                    "agent_discoveries"
+                ][turn_num]
+                for (
+                    other_agent_id,
+                    discoveries,
+                ) in turn_discoveries.items():  # O(m)
                     if other_agent_id != requesting_agent_id:
                         for (
                             agent
-                        ) in self.registered_agents:  # O(k) - NESTED AGENT LOOKUP
+                        ) in (
+                            self.registered_agents
+                        ):  # O(k) - NESTED AGENT LOOKUP
                             if (
                                 agent.agent_id == other_agent_id
                             ):  # O(j) - STRING COMPARISON
@@ -215,7 +224,9 @@ class DirectorAgentLoopOptimizationTest:
             test_suite_results["test_results"].append(result2)
 
             # Test 3: Full Director Agent Optimization
-            result3 = await self._test_full_director_optimization(config["agent_count"])
+            result3 = await self._test_full_director_optimization(
+                config["agent_count"]
+            )
             self.test_results.append(result3)
             test_suite_results["test_results"].append(result3)
 
@@ -237,7 +248,9 @@ class DirectorAgentLoopOptimizationTest:
         test_suite_results["failed_tests"] = sum(
             1 for r in self.test_results if not r.success
         )
-        test_suite_results["overall_success"] = test_suite_results["failed_tests"] == 0
+        test_suite_results["overall_success"] = (
+            test_suite_results["failed_tests"] == 0
+        )
 
         # Calculate overall performance improvements
         avg_improvement = sum(
@@ -257,7 +270,9 @@ class DirectorAgentLoopOptimizationTest:
         self, agent_count: int
     ) -> PerformanceTestResult:
         """Test agent registry O(n) → O(1) optimization."""
-        logger.info(f"Testing Agent Registry Optimization with {agent_count} agents")
+        logger.info(
+            f"Testing Agent Registry Optimization with {agent_count} agents"
+        )
 
         try:
             # Setup test data
@@ -291,7 +306,9 @@ class DirectorAgentLoopOptimizationTest:
             memory_after = process.memory_info().rss / 1024 / 1024
 
             # Calculate improvement
-            improvement = ((original_time - optimized_time) / original_time) * 100
+            improvement = (
+                (original_time - optimized_time) / original_time
+            ) * 100
 
             logger.info(
                 f"Agent Registry: {original_time:.4f}s → {optimized_time:.4f}s ({improvement:.1f}% improvement)"
@@ -361,7 +378,9 @@ class DirectorAgentLoopOptimizationTest:
             ].items():
                 for agent_id, discoveries in turn_data.items():
                     for discovery in discoveries:
-                        optimized_tracker.add_discovery(agent_id, turn, discovery)
+                        optimized_tracker.add_discovery(
+                            agent_id, turn, discovery
+                        )
 
             start_time = time.time()
             for _ in range(100):  # Same 100 calls with optimized version
@@ -376,7 +395,9 @@ class DirectorAgentLoopOptimizationTest:
             memory_after = process.memory_info().rss / 1024 / 1024
 
             # Calculate improvement
-            improvement = ((original_time - optimized_time) / original_time) * 100
+            improvement = (
+                (original_time - optimized_time) / original_time
+            ) * 100
 
             # Get performance stats from optimized tracker
             perf_stats = optimized_tracker.get_performance_stats()
@@ -416,7 +437,9 @@ class DirectorAgentLoopOptimizationTest:
         self, agent_count: int
     ) -> PerformanceTestResult:
         """Test full DirectorAgent optimization pipeline."""
-        logger.info(f"Testing Full Director Optimization with {agent_count} agents")
+        logger.info(
+            f"Testing Full Director Optimization with {agent_count} agents"
+        )
 
         try:
             # Create mock director
@@ -437,18 +460,24 @@ class DirectorAgentLoopOptimizationTest:
 
             # Apply full optimization
             optimization_result = (
-                DirectorAgentPerformanceOptimizer.optimize_director_agent(mock_director)
+                DirectorAgentPerformanceOptimizer.optimize_director_agent(
+                    mock_director
+                )
             )
 
             if not optimization_result["success"]:
-                raise Exception(f"Optimization failed: {optimization_result['errors']}")
+                raise Exception(
+                    f"Optimization failed: {optimization_result['errors']}"
+                )
 
             # Test optimized performance
             start_time = time.time()
             for _ in range(50):
                 # Same operations with optimized director
                 agent_id = f"agent_{random.randint(0, agent_count-1)}"
-                mock_director.find_agent(agent_id)  # Now uses optimized registry
+                mock_director.find_agent(
+                    agent_id
+                )  # Now uses optimized registry
                 mock_director.get_world_state_feedback(
                     agent_id, 8
                 )  # Now uses optimized tracker
@@ -460,7 +489,9 @@ class DirectorAgentLoopOptimizationTest:
             memory_after = process.memory_info().rss / 1024 / 1024
 
             # Calculate improvement
-            improvement = ((original_time - optimized_time) / original_time) * 100
+            improvement = (
+                (original_time - optimized_time) / original_time
+            ) * 100
 
             logger.info(
                 f"Full Director Optimization: {original_time:.4f}s → {optimized_time:.4f}s ({improvement:.1f}% improvement)"
@@ -505,7 +536,8 @@ class DirectorAgentLoopOptimizationTest:
 
             # Test synchronous logging (original)
             log_entries = [
-                f"Test event {i} with some descriptive content" for i in range(1000)
+                f"Test event {i} with some descriptive content"
+                for i in range(1000)
             ]
 
             start_time = time.time()
@@ -527,14 +559,18 @@ class DirectorAgentLoopOptimizationTest:
 
             start_time = time.time()
             # Simulate async logging
-            tasks = [async_logger.log_event_async(entry) for entry in log_entries]
+            tasks = [
+                async_logger.log_event_async(entry) for entry in log_entries
+            ]
             await asyncio.gather(*tasks)
             optimized_time = time.time() - start_time
 
             await async_logger.stop()
 
             # Calculate improvement
-            improvement = ((original_time - optimized_time) / original_time) * 100
+            improvement = (
+                (original_time - optimized_time) / original_time
+            ) * 100
 
             logger.info(
                 f"Async Logger: {original_time:.4f}s → {optimized_time:.4f}s ({improvement:.1f}% improvement)"
@@ -574,17 +610,25 @@ class DirectorAgentLoopOptimizationTest:
             memory_before = process.memory_info().rss / 1024 / 1024
 
             # Create optimized world state tracker with memory management
-            optimized_tracker = OptimizedWorldStateTracker(max_history_turns=20)
+            optimized_tracker = OptimizedWorldStateTracker(
+                max_history_turns=20
+            )
 
             # Add lots of data to test memory management
             start_time = time.time()
             for turn in range(1, 100):  # 100 turns
-                for agent_id in [f"agent_{i}" for i in range(50)]:  # 50 agents per turn
+                for agent_id in [
+                    f"agent_{i}" for i in range(50)
+                ]:  # 50 agents per turn
                     for discovery_idx in range(
                         random.randint(1, 5)
                     ):  # 1-5 discoveries per agent
-                        discovery = f"discovery_{turn}_{agent_id}_{discovery_idx}"
-                        optimized_tracker.add_discovery(agent_id, turn, discovery)
+                        discovery = (
+                            f"discovery_{turn}_{agent_id}_{discovery_idx}"
+                        )
+                        optimized_tracker.add_discovery(
+                            agent_id, turn, discovery
+                        )
 
             # Get performance stats
             perf_stats = optimized_tracker.get_performance_stats()
@@ -651,7 +695,9 @@ EXECUTIVE SUMMARY:
             avg_improvement = sum(
                 r.improvement_percentage for r in successful_tests
             ) / len(successful_tests)
-            max_improvement = max(r.improvement_percentage for r in successful_tests)
+            max_improvement = max(
+                r.improvement_percentage for r in successful_tests
+            )
 
             report += f"""
 ✅ Tests Passed: {len(successful_tests)}/{len(self.test_results)}
@@ -666,7 +712,9 @@ DETAILED RESULTS:
                 improvement_emoji = (
                     "🔥"
                     if result.improvement_percentage > 80
-                    else "⚡" if result.improvement_percentage > 50 else "✅"
+                    else "⚡"
+                    if result.improvement_percentage > 50
+                    else "✅"
                 )
 
                 report += f"""
@@ -693,18 +741,18 @@ FAILED TESTS ({len(failed_tests)}):
 
 PERFORMANCE IMPACT ANALYSIS:
 - DirectorAgent Nested Loop Bottleneck: ELIMINATED ✅
-- Agent Registry Linear Search: O(n) → O(1) Hash Lookup ✅  
+- Agent Registry Linear Search: O(n) → O(1) Hash Lookup ✅
 - World State Feedback: O(n³) → O(n) Single Loop ✅
 - Memory Management: Intelligent Caching + Cleanup ✅
 - I/O Operations: Synchronous → Asynchronous Batching ✅
 
 RECOMMENDATION:
-✅ Wave 5.1.2 optimization successfully addresses the critical DirectorAgent 
+✅ Wave 5.1.2 optimization successfully addresses the critical DirectorAgent
    performance bottlenecks identified in the performance analysis report.
-   
+
 🚀 READY FOR PRODUCTION DEPLOYMENT
    Expected real-world performance improvement: 85%+
-   
+
 ═══════════════════════════════════════════════════════════════
 """
 
@@ -713,7 +761,9 @@ RECOMMENDATION:
 
 async def main():
     """Main test execution function."""
-    logger.info("Starting DirectorAgent Loop Optimization Performance Tests...")
+    logger.info(
+        "Starting DirectorAgent Loop Optimization Performance Tests..."
+    )
 
     test_suite = DirectorAgentLoopOptimizationTest()
 

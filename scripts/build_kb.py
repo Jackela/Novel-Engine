@@ -116,7 +116,9 @@ class StartupGuard:
 
             for section in required_sections:
                 if section not in self.config:
-                    self.errors.append(f"Missing configuration section: {section}")
+                    self.errors.append(
+                        f"Missing configuration section: {section}"
+                    )
                     return False
 
             # Validate legal configuration
@@ -128,7 +130,9 @@ class StartupGuard:
 
             # Validate simulation configuration
             simulation_config = self.config.get("simulation", {})
-            if not simulation_config.get("iron_laws", {}).get("enabled", False):
+            if not simulation_config.get("iron_laws", {}).get(
+                "enabled", False
+            ):
                 self.errors.append(
                     "Iron Laws validation must be enabled for safe operation"
                 )
@@ -165,7 +169,8 @@ class StartupGuard:
             # Validate fan mode compliance if enabled
             if (
                 self.config
-                and self.config.get("legal", {}).get("compliance_mode") == "fan"
+                and self.config.get("legal", {}).get("compliance_mode")
+                == "fan"
             ):
                 registry_file = self.config.get("legal", {}).get(
                     "registry_file", "private/registry.yaml"
@@ -189,7 +194,9 @@ class StartupGuard:
                     }
 
                     with open(registry_path, "w", encoding="utf-8") as f:
-                        yaml.dump(template_registry, f, default_flow_style=False)
+                        yaml.dump(
+                            template_registry, f, default_flow_style=False
+                        )
 
                     self.logger.info(
                         f"📝 Created template registry file: {registry_file}"
@@ -223,7 +230,12 @@ class StartupGuard:
                     self.logger.info(f"📁 Created directory: {dir_path}")
 
             # Required files
-            required_files = ["README.md", "LEGAL.md", "NOTICE", "settings.yaml"]
+            required_files = [
+                "README.md",
+                "LEGAL.md",
+                "NOTICE",
+                "settings.yaml",
+            ]
 
             for file_path in required_files:
                 if not Path(file_path).exists():
@@ -235,7 +247,9 @@ class StartupGuard:
             if not private_gitignore.exists():
                 with open(private_gitignore, "w", encoding="utf-8") as f:
                     f.write("# Ignore all private data\n*\n!.gitignore\n")
-                self.logger.info("📝 Created private/.gitignore for data protection")
+                self.logger.info(
+                    "📝 Created private/.gitignore for data protection"
+                )
 
             return True
 
@@ -247,7 +261,13 @@ class StartupGuard:
         """Validate external dependencies and API keys."""
         try:
             # Check Python dependencies
-            required_packages = ["fastapi", "uvicorn", "pydantic", "yaml", "requests"]
+            required_packages = [
+                "fastapi",
+                "uvicorn",
+                "pydantic",
+                "yaml",
+                "requests",
+            ]
 
             missing_packages = []
             for package in required_packages:
@@ -263,7 +283,11 @@ class StartupGuard:
                 return False
 
             # Check API key configuration (optional but recommended)
-            api_keys = ["OPENAI_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"]
+            api_keys = [
+                "OPENAI_API_KEY",
+                "GEMINI_API_KEY",
+                "ANTHROPIC_API_KEY",
+            ]
             available_keys = [key for key in api_keys if os.getenv(key)]
 
             if not available_keys:
@@ -271,7 +295,9 @@ class StartupGuard:
                     "No AI API keys found - system will run in offline mode"
                 )
             else:
-                self.logger.info(f"📡 Available API keys: {len(available_keys)}")
+                self.logger.info(
+                    f"📡 Available API keys: {len(available_keys)}"
+                )
 
             return True
 
@@ -290,7 +316,9 @@ class StartupGuard:
 
             # Get KB configuration
             storage_config = self.config.get("storage", {})
-            kb_path = Path(storage_config.get("kb_path", "private/knowledge_base/"))
+            kb_path = Path(
+                storage_config.get("kb_path", "private/knowledge_base/")
+            )
 
             # Ensure KB directory exists
             kb_path.mkdir(parents=True, exist_ok=True)
@@ -340,7 +368,9 @@ class StartupGuard:
                 if api_config.get("cors_enabled", False):
                     cors_origins = api_config.get("cors_origins", [])
                     if not cors_origins:
-                        self.warnings.append("CORS enabled but no origins specified")
+                        self.warnings.append(
+                            "CORS enabled but no origins specified"
+                        )
 
             return True
 
@@ -355,9 +385,13 @@ class StartupGuard:
         self.logger.info("=" * 60)
 
         if all_passed:
-            self.logger.info("✅ ALL VALIDATIONS PASSED - System ready for startup")
+            self.logger.info(
+                "✅ ALL VALIDATIONS PASSED - System ready for startup"
+            )
         else:
-            self.logger.error("❌ VALIDATION FAILURES DETECTED - System not ready")
+            self.logger.error(
+                "❌ VALIDATION FAILURES DETECTED - System not ready"
+            )
 
         if self.errors:
             self.logger.error(f"🚨 ERRORS ({len(self.errors)}):")
@@ -396,12 +430,17 @@ class KnowledgeBaseBuilder:
             self.logger.info("🔨 Building knowledge base...")
 
             storage_config = self.config.get("storage", {})
-            kb_path = Path(storage_config.get("kb_path", "private/knowledge_base/"))
+            kb_path = Path(
+                storage_config.get("kb_path", "private/knowledge_base/")
+            )
 
             # Create advanced KB structure
             kb_structure = {
                 "characters": {
-                    "templates": ["base_character.yaml", "faction_templates.yaml"],
+                    "templates": [
+                        "base_character.yaml",
+                        "faction_templates.yaml",
+                    ],
                     "instances": [],
                 },
                 "worlds": {"templates": ["base_world.yaml"], "instances": []},
@@ -442,7 +481,9 @@ class KnowledgeBaseBuilder:
                         for template_file in sub_content:
                             template_path = sub_path / template_file
                             if not template_path.exists():
-                                with open(template_path, "w", encoding="utf-8") as f:
+                                with open(
+                                    template_path, "w", encoding="utf-8"
+                                ) as f:
                                     f.write(
                                         f"# {template_file}\n\n# Template content\n"
                                     )
@@ -452,7 +493,9 @@ class KnowledgeBaseBuilder:
                         file_path = item_path / sub_name
                         if not file_path.exists():
                             with open(file_path, "w", encoding="utf-8") as f:
-                                yaml.dump(sub_content, f, default_flow_style=False)
+                                yaml.dump(
+                                    sub_content, f, default_flow_style=False
+                                )
 
     def _create_iron_laws_template(self) -> Dict[str, Any]:
         """Create Iron Laws validation template."""
@@ -537,7 +580,9 @@ class KnowledgeBaseBuilder:
 
 def main():
     """Main execution function."""
-    parser = argparse.ArgumentParser(description="Novel Engine Knowledge Base Builder")
+    parser = argparse.ArgumentParser(
+        description="Novel Engine Knowledge Base Builder"
+    )
     parser.add_argument(
         "--validate-only",
         action="store_true",
@@ -567,7 +612,9 @@ def main():
         sys.exit(0 if validation_passed else 1)
 
     if not validation_passed and not args.force_build:
-        logging.error("🚨 Validation failed. Use --force-build to proceed anyway.")
+        logging.error(
+            "🚨 Validation failed. Use --force-build to proceed anyway."
+        )
         sys.exit(1)
 
     # Build knowledge base if validation passed or forced

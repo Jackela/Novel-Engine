@@ -136,8 +136,12 @@ class ResetOperationRequest(BaseModel):
 class ApplyWorldDeltaRequest(BaseModel):
     """Request model for applying world state changes."""
 
-    world_state_id: str = Field(..., description="ID of the world state to modify")
-    entity_operations: List[EntityOperationRequest] = Field(default_factory=list)
+    world_state_id: str = Field(
+        ..., description="ID of the world state to modify"
+    )
+    entity_operations: List[EntityOperationRequest] = Field(
+        default_factory=list
+    )
     environment_operation: Optional[EnvironmentOperationRequest] = None
     time_operation: Optional[TimeOperationRequest] = None
     snapshot_operation: Optional[SnapshotOperationRequest] = None
@@ -146,9 +150,13 @@ class ApplyWorldDeltaRequest(BaseModel):
     user_id: Optional[str] = None
     source: str = "world_api"
     correlation_id: Optional[str] = None
-    reason: str = Field(..., description="Overall reason for applying this delta")
+    reason: str = Field(
+        ..., description="Overall reason for applying this delta"
+    )
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    priority: str = Field(default="normal", pattern="^(low|normal|high|critical)$")
+    priority: str = Field(
+        default="normal", pattern="^(low|normal|high|critical)$"
+    )
     timeout_seconds: int = Field(default=30, ge=1, le=300)
     idempotency_key: Optional[str] = None
     expected_world_version: Optional[int] = None
@@ -311,7 +319,8 @@ async def apply_world_delta(
         # Validate world_id matches request
         if world_id != request.world_state_id:
             raise HTTPException(
-                status_code=400, detail="URL world_id must match request world_state_id"
+                status_code=400,
+                detail="URL world_id must match request world_state_id",
             )
 
         # Convert request to domain command
@@ -323,7 +332,9 @@ async def apply_world_delta(
 
         execution_time = (datetime.now() - start_time).total_seconds() * 1000
 
-        logger.info(f"World delta applied successfully in {execution_time:.1f}ms")
+        logger.info(
+            f"World delta applied successfully in {execution_time:.1f}ms"
+        )
 
         return WorldDeltaResponse(
             command_id=command.command_id,
@@ -379,10 +390,16 @@ async def get_world_slice(
     entity_types: Optional[List[str]] = Query(
         None, description="Filter by entity types"
     ),
-    include_environment: bool = Query(True, description="Include environment data"),
+    include_environment: bool = Query(
+        True, description="Include environment data"
+    ),
     include_metadata: bool = Query(False, description="Include metadata"),
-    include_world_summary: bool = Query(True, description="Include world summary"),
-    include_spatial_index: bool = Query(False, description="Include spatial bounds"),
+    include_world_summary: bool = Query(
+        True, description="Include world summary"
+    ),
+    include_spatial_index: bool = Query(
+        False, description="Include spatial bounds"
+    ),
     limit: Optional[int] = Query(
         None, ge=1, le=1000, description="Maximum entities to return"
     ),
@@ -434,7 +451,9 @@ async def get_world_slice(
         logger.error(f"Query execution error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-        logger.error(f"Unexpected error in world slice query: {e}", exc_info=True)
+        logger.error(
+            f"Unexpected error in world slice query: {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 
@@ -444,7 +463,9 @@ async def get_world_summary(
     include_entity_details: bool = Query(
         False, description="Include detailed entity type information"
     ),
-    include_spatial_bounds: bool = Query(True, description="Include spatial bounds"),
+    include_spatial_bounds: bool = Query(
+        True, description="Include spatial bounds"
+    ),
 ) -> WorldSummaryResponse:
     """
     Retrieve summary statistics for a world.
@@ -473,7 +494,9 @@ async def get_world_summary(
         logger.error(f"Query execution error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-        logger.error(f"Unexpected error in world summary query: {e}", exc_info=True)
+        logger.error(
+            f"Unexpected error in world summary query: {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 
@@ -490,7 +513,9 @@ async def get_entities_in_area(
         None, ge=1, le=1000, description="Maximum entities to return"
     ),
     offset: int = Query(0, ge=0, description="Number of entities to skip"),
-    include_distance: bool = Query(True, description="Include distance from center"),
+    include_distance: bool = Query(
+        True, description="Include distance from center"
+    ),
 ) -> EntitiesInAreaResponse:
     """
     Retrieve entities within a specific geographic area.
@@ -526,12 +551,15 @@ async def get_entities_in_area(
         logger.error(f"Query execution error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-        logger.error(f"Unexpected error in entities in area query: {e}", exc_info=True)
+        logger.error(
+            f"Unexpected error in entities in area query: {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 
 @router.get(
-    "/{world_id}/entities/type/{entity_type}", response_model=EntitiesByTypeResponse
+    "/{world_id}/entities/type/{entity_type}",
+    response_model=EntitiesByTypeResponse,
 )
 async def get_entities_by_type(
     world_id: str = Path(..., description="ID of the world to query"),
@@ -540,7 +568,9 @@ async def get_entities_by_type(
         None, ge=1, le=1000, description="Maximum entities to return"
     ),
     offset: int = Query(0, ge=0, description="Number of entities to skip"),
-    include_coordinates: bool = Query(True, description="Include entity coordinates"),
+    include_coordinates: bool = Query(
+        True, description="Include entity coordinates"
+    ),
 ) -> EntitiesByTypeResponse:
     """
     Retrieve entities filtered by type.
@@ -548,7 +578,9 @@ async def get_entities_by_type(
     This endpoint provides efficient queries for finding all entities
     of a specific type within a world.
     """
-    logger.info(f"Getting entities by type '{entity_type}' for world {world_id}")
+    logger.info(
+        f"Getting entities by type '{entity_type}' for world {world_id}"
+    )
 
     try:
         query = GetEntitiesByType(
@@ -571,14 +603,18 @@ async def get_entities_by_type(
         logger.error(f"Query execution error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-        logger.error(f"Unexpected error in entities by type query: {e}", exc_info=True)
+        logger.error(
+            f"Unexpected error in entities by type query: {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 
 @router.get("/search", response_model=SearchWorldsResponse)
 async def search_worlds(
     search_term: str = Query(
-        ..., min_length=1, description="Search term for world names/descriptions"
+        ...,
+        min_length=1,
+        description="Search term for world names/descriptions",
     ),
     limit: Optional[int] = Query(
         50, ge=1, le=200, description="Maximum worlds to return"
@@ -587,7 +623,9 @@ async def search_worlds(
     include_entity_counts: bool = Query(
         True, description="Include entity count information"
     ),
-    status_filter: Optional[str] = Query(None, description="Filter by world status"),
+    status_filter: Optional[str] = Query(
+        None, description="Filter by world status"
+    ),
 ) -> SearchWorldsResponse:
     """
     Search worlds by name, description, or content.
@@ -620,14 +658,18 @@ async def search_worlds(
         logger.error(f"Query execution error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-        logger.error(f"Unexpected error in world search query: {e}", exc_info=True)
+        logger.error(
+            f"Unexpected error in world search query: {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 
 # ==================== HELPER FUNCTIONS ====================
 
 
-def _build_world_delta_command(request: ApplyWorldDeltaRequest) -> ApplyWorldDelta:
+def _build_world_delta_command(
+    request: ApplyWorldDeltaRequest,
+) -> ApplyWorldDelta:
     """
     Convert API request to domain command object.
 

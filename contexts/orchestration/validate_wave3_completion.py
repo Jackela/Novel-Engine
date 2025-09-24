@@ -62,11 +62,17 @@ def validate_implementation_features():
             ("NovelEngineTracingConfig", "Tracing configuration class"),
             ("NovelEngineTracer", "Main tracer class"),
             ("IntelligentSampler", "Intelligent sampling strategy"),
-            ("start_turn_span", "Root span for turn execution (M10 requirement)"),
+            (
+                "start_turn_span",
+                "Root span for turn execution (M10 requirement)",
+            ),
             ("start_phase_span", "Phase-level spans"),
             ("record_turn_result", "Turn result recording"),
             ("record_phase_result", "Phase result recording"),
-            ("record_cross_context_call", "Cross-context service call tracking"),
+            (
+                "record_cross_context_call",
+                "Cross-context service call tracking",
+            ),
             ("initialize_tracing", "Global tracer initialization"),
         ]
 
@@ -78,7 +84,9 @@ def validate_implementation_features():
             print(f"   {status} {feature}: {description}")
 
     # Check tracing_middleware.py for middleware features
-    middleware_file = base_path / "infrastructure/monitoring/tracing_middleware.py"
+    middleware_file = (
+        base_path / "infrastructure/monitoring/tracing_middleware.py"
+    )
     if middleware_file.exists():
         content = middleware_file.read_text()
 
@@ -242,7 +250,9 @@ def validate_m10_requirements():
 
 def main():
     """Run complete Wave 3 validation."""
-    print("M10 WAVE 3: OPENTELEMETRY DISTRIBUTED TRACING - COMPLETION VALIDATION")
+    print(
+        "M10 WAVE 3: OPENTELEMETRY DISTRIBUTED TRACING - COMPLETION VALIDATION"
+    )
     print("=" * 80)
 
     # Validate implementation files
@@ -289,16 +299,24 @@ def main():
         )
         print("=" * 80)
         print("✅ ROOT SPAN COVERAGE FOR COMPLETE RUN_TURN ORCHESTRATION FLOW")
-        print("✅ Comprehensive OpenTelemetry distributed tracing infrastructure")
+        print(
+            "✅ Comprehensive OpenTelemetry distributed tracing infrastructure"
+        )
         print("✅ Phase-level spans with parent-child relationships")
-        print("✅ FastAPI middleware for automatic HTTP request instrumentation")
+        print(
+            "✅ FastAPI middleware for automatic HTTP request instrumentation"
+        )
         print("✅ Cross-context service call tracking and correlation")
-        print("✅ Intelligent sampling strategies (error, cost, performance-based)")
+        print(
+            "✅ Intelligent sampling strategies (error, cost, performance-based)"
+        )
         print("✅ User context integration for security tracing")
         print("✅ Integration with existing Prometheus metrics system")
         print("✅ Jaeger and OTLP exporter support for trace visualization")
         print("\n🎯 M10 DISTRIBUTED TRACING REQUIREMENT FULLY SATISFIED")
-        print("🚀 Ready to proceed to Wave 4: Security Framework Implementation")
+        print(
+            "🚀 Ready to proceed to Wave 4: Security Framework Implementation"
+        )
         return True
     else:
         print(f"\n❌ Wave 3 validation failed: {total - passed} issues found")

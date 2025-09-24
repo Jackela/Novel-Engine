@@ -30,7 +30,9 @@ class SimulationCoordinator:
     """
 
     def __init__(
-        self, world_state_file_path: Optional[str] = None, max_turn_history: int = 100
+        self,
+        world_state_file_path: Optional[str] = None,
+        max_turn_history: int = 100,
     ):
         """
         Initialize the Simulation Coordinator.
@@ -73,7 +75,9 @@ class SimulationCoordinator:
             bool: True if registration successful, False if validation failed
         """
         try:
-            logger.info("Attempting to register agent for simulation management")
+            logger.info(
+                "Attempting to register agent for simulation management"
+            )
 
             # Validate the agent instance
             if not isinstance(agent, PersonaAgent):
@@ -86,12 +90,16 @@ class SimulationCoordinator:
             required_methods = ["decision_loop", "get_decision_with_reasoning"]
             for method_name in required_methods:
                 if not hasattr(agent, method_name):
-                    logger.error(f"Agent missing required method: {method_name}")
+                    logger.error(
+                        f"Agent missing required method: {method_name}"
+                    )
                     return False
 
                 method = getattr(agent, method_name)
                 if not callable(method):
-                    logger.error(f"Agent attribute {method_name} is not callable")
+                    logger.error(
+                        f"Agent attribute {method_name} is not callable"
+                    )
                     return False
 
             # Validate agent ID
@@ -112,7 +120,9 @@ class SimulationCoordinator:
 
             # Extract character information for logging
             character_name = agent.character_data.get("name", "Unknown")
-            faction = agent.subjective_worldview.get("primary_faction", "Unknown")
+            faction = agent.subjective_worldview.get(
+                "primary_faction", "Unknown"
+            )
 
             # Log successful registration
             registration_event = (
@@ -126,15 +136,21 @@ class SimulationCoordinator:
             logger.info(
                 f"Agent {agent.agent_id} ({character_name}) registered successfully"
             )
-            logger.info(f"Total registered agents: {len(self.registered_agents)}")
+            logger.info(
+                f"Total registered agents: {len(self.registered_agents)}"
+            )
 
             return True
 
         except AttributeError as e:
-            logger.error(f"Agent validation failed - missing attribute: {str(e)}")
+            logger.error(
+                f"Agent validation failed - missing attribute: {str(e)}"
+            )
             return False
         except Exception as e:
-            logger.error(f"Unexpected error during agent registration: {str(e)}")
+            logger.error(
+                f"Unexpected error during agent registration: {str(e)}"
+            )
             return False
 
     def remove_agent(self, agent_id: str, log_event_callback) -> bool:
@@ -152,9 +168,13 @@ class SimulationCoordinator:
             for i, agent in enumerate(self.registered_agents):
                 if agent.agent_id == agent_id:
                     removed_agent = self.registered_agents.pop(i)
-                    character_name = removed_agent.character_data.get("name", "Unknown")
+                    character_name = removed_agent.character_data.get(
+                        "name", "Unknown"
+                    )
 
-                    logger.info(f"Agent removed: {agent_id} ({character_name})")
+                    logger.info(
+                        f"Agent removed: {agent_id} ({character_name})"
+                    )
 
                     # Log removal event
                     removal_event = (
@@ -189,7 +209,9 @@ class SimulationCoordinator:
         agent_stats = {}
         for agent in self.registered_agents:
             character_name = agent.character_data.get("name", "Unknown")
-            faction = agent.subjective_worldview.get("primary_faction", "Unknown")
+            faction = agent.subjective_worldview.get(
+                "primary_faction", "Unknown"
+            )
             agent_stats[agent.agent_id] = {
                 "name": character_name,
                 "faction": faction,
@@ -212,7 +234,9 @@ class SimulationCoordinator:
             "world_state": {
                 "loaded": bool(self.world_state_data),
                 "file_path": self.world_state_file_path,
-                "last_modified": self.world_state_data.get("last_saved", "Never"),
+                "last_modified": self.world_state_data.get(
+                    "last_saved", "Never"
+                ),
             },
             "performance": {
                 "turns_processed": self.current_turn_number,
@@ -232,7 +256,9 @@ class SimulationCoordinator:
         agent_list = []
         for agent in self.registered_agents:
             character_name = agent.character_data.get("name", "Unknown")
-            faction = agent.subjective_worldview.get("primary_faction", "Unknown")
+            faction = agent.subjective_worldview.get(
+                "primary_faction", "Unknown"
+            )
 
             agent_list.append(
                 {
@@ -260,7 +286,9 @@ class SimulationCoordinator:
         """
         try:
             save_path = (
-                file_path or self.world_state_file_path or "world_state_backup.json"
+                file_path
+                or self.world_state_file_path
+                or "world_state_backup.json"
             )
 
             # Add current timestamp to world state
@@ -272,7 +300,9 @@ class SimulationCoordinator:
             }
 
             with open(save_path, "w", encoding="utf-8") as file:
-                json.dump(self.world_state_data, file, indent=2, ensure_ascii=False)
+                json.dump(
+                    self.world_state_data, file, indent=2, ensure_ascii=False
+                )
 
             logger.info(f"World state saved to: {save_path}")
             if log_event_callback:
@@ -301,7 +331,9 @@ class SimulationCoordinator:
             world_state_path = Path(self.world_state_file_path)
 
             if not world_state_path.exists():
-                logger.info(f"World state file not found: {self.world_state_file_path}")
+                logger.info(
+                    f"World state file not found: {self.world_state_file_path}"
+                )
                 logger.info("Initializing default world state")
                 self._initialize_default_world_state()
                 return
@@ -310,7 +342,9 @@ class SimulationCoordinator:
             with open(world_state_path, "r", encoding="utf-8") as file:
                 self.world_state_data = json.load(file)
 
-            logger.info(f"World state loaded from: {self.world_state_file_path}")
+            logger.info(
+                f"World state loaded from: {self.world_state_file_path}"
+            )
 
             # Validate loaded data
             self._validate_world_state_data()
@@ -391,7 +425,9 @@ class SimulationCoordinator:
 
         # Validate turn history structure
         if not isinstance(self.world_state_data["turn_history"], list):
-            logger.warning("Invalid turn_history format - resetting to empty list")
+            logger.warning(
+                "Invalid turn_history format - resetting to empty list"
+            )
             self.world_state_data["turn_history"] = []
 
         # Trim turn history if it's too long
@@ -399,7 +435,9 @@ class SimulationCoordinator:
             self.world_state_data["turn_history"] = self.world_state_data[
                 "turn_history"
             ][-self.max_turn_history :]
-            logger.info(f"Turn history trimmed to last {self.max_turn_history} entries")
+            logger.info(
+                f"Turn history trimmed to last {self.max_turn_history} entries"
+            )
 
         logger.debug("World state data validation completed")
 

@@ -197,42 +197,53 @@ HTML_TEMPLATE = """
 </head>
 <body>
     <div class="status-indicator" id="status-indicator">🤖 AI Ready</div>
-    
+
     <div class="container">
         <h1>🎭 Novel Engine</h1>
         <p class="subtitle">AI Agent Story Generation Interface</p>
-        
+
         <div class="input-section">
             <label for="story-prompt">Story Generation Prompt:</label>
-            
+
             <div class="preset-prompts">
                 <strong>Quick Presets:</strong><br>
-                <button type="button" class="preset-button" onclick="setPresetPrompt('time_paradox')">Time Paradox</button>
-                <button type="button" class="preset-button" onclick="setPresetPrompt('meta_narrative')">Meta-Narrative</button>
-                <button type="button" class="preset-button" onclick="setPresetPrompt('quantum_consciousness')">Quantum Consciousness</button>
-                <button type="button" class="preset-button" onclick="setPresetPrompt('mystery')">Mystery</button>
-                <button type="button" class="preset-button" onclick="setPresetPrompt('adventure')">Adventure</button>
+                <button type="button" class="preset-button"
+                        onclick="setPresetPrompt('time_paradox')">
+                    Time Paradox
+                </button>
+                <button type="button" class="preset-button"
+                        onclick="setPresetPrompt('meta_narrative')">Meta-Narrative</button>
+                <button type="button" class="preset-button"
+                        onclick="setPresetPrompt('quantum_consciousness')">
+                    Quantum Consciousness
+                </button>
+                <button type="button" class="preset-button"
+                        onclick="setPresetPrompt('mystery')">Mystery</button>
+                <button type="button" class="preset-button"
+                        onclick="setPresetPrompt('adventure')">Adventure</button>
             </div>
-            
-            <textarea 
-                id="story-prompt" 
-                name="prompt" 
-                placeholder="Enter your creative story prompt here... The AI will generate an original story based on your input."
+
+            <textarea
+                id="story-prompt"
+                name="prompt"
+                placeholder="Enter your creative story prompt here...
+The AI will generate an original story based on your input."
                 data-testid="story-prompt-input"
                 required
             ></textarea>
-            
-            <button 
-                type="button" 
-                id="generate-button" 
+
+            <button
+                type="button"
+                id="generate-button"
                 onclick="generateStory()"
                 data-testid="generate-story-button"
             >
                 🚀 Generate Story with AI
             </button>
         </div>
-        
-        <div id="output-section" class="output-section" data-testid="story-output-section">
+
+        <div id="output-section" class="output-section"
+             data-testid="story-output-section">
             <div id="story-output" data-testid="story-output-content"></div>
             <div id="meta-info" class="meta-info"></div>
         </div>
@@ -241,46 +252,79 @@ HTML_TEMPLATE = """
     <script>
         // Preset prompts for easy testing
         const presetPrompts = {
-            time_paradox: "Write a story where the main character travels back in time to prevent a disaster, but realizes their actions might create a worse timeline. Include specific dialogue and internal conflict.",
-            meta_narrative: "Create a story where the protagonist gradually realizes they are a character in a story being written. Show their attempts to communicate with the author and break free from the narrative.",
-            quantum_consciousness: "Write about a character who exists in multiple parallel realities simultaneously. They can perceive all versions of themselves but struggle to make decisions when every choice leads to different outcomes.",
-            mystery: "Create a detective story where the investigator discovers that they themselves are the criminal, but have no memory of committing the crime. Include psychological elements.",
-            adventure: "Write an adventure story where the hero must choose between saving their hometown or pursuing their lifelong dream. Make both choices equally compelling."
+            time_paradox: (
+                "Write a story where the main character travels back in time "
+                + "to prevent a disaster, but realizes their actions might "
+                + "create "
+                + "a worse timeline. Include specific dialogue and internal "
+                + "conflict."
+            ),
+            meta_narrative: (
+                "Create a story where the protagonist gradually realizes they "
+                + "are a character in a story being written. Show their "
+                + "attempts "
+                + "to communicate with the author and break free from the "
+                + "narrative."
+            ),
+            quantum_consciousness: (
+                "Write about a character who exists in multiple parallel "
+                + "realities simultaneously. They can perceive all versions "
+                + "of "
+                + "themselves but struggle to make decisions when every "
+                + "choice "
+                + "leads to different outcomes."
+            ),
+            mystery: (
+                "Create a detective story where the investigator discovers "
+                + "that "
+                + "they themselves are the criminal, but have no memory of "
+                + "committing the crime. Include psychological elements."
+            ),
+            adventure: (
+                "Write an adventure story where the hero must choose between "
+                + "saving their hometown or pursuing their lifelong dream. "
+                + "Make both choices equally compelling."
+            )
         };
-        
+
         function setPresetPrompt(type) {
             const textarea = document.getElementById('story-prompt');
             textarea.value = presetPrompts[type];
             textarea.focus();
         }
-        
+
         async function generateStory() {
             const promptInput = document.getElementById('story-prompt');
             const generateButton = document.getElementById('generate-button');
             const outputSection = document.getElementById('output-section');
             const storyOutput = document.getElementById('story-output');
             const metaInfo = document.getElementById('meta-info');
-            const statusIndicator = document.getElementById('status-indicator');
-            
+            const statusIndicator = document.getElementById(
+                'status-indicator');
+
             const prompt = promptInput.value.trim();
-            
+
             if (!prompt) {
                 alert('Please enter a story prompt first.');
                 promptInput.focus();
                 return;
             }
-            
+
             // Update UI for generation state
             generateButton.disabled = true;
             generateButton.textContent = '⏳ AI is Generating Story...';
             outputSection.style.display = 'block';
-            storyOutput.innerHTML = '<div class="loading">🤖 AI is thinking and creating your story... This may take 10-30 seconds for complex prompts.</div>';
+            storyOutput.innerHTML = (
+                '<div class="loading">🤖 AI is thinking and '
+                + 'creating your story... This may take 10-30 seconds '
+                + 'for complex prompts.</div>'
+            );
             metaInfo.innerHTML = '';
             statusIndicator.textContent = '🔄 Generating...';
             statusIndicator.style.background = '#f39c12';
-            
+
             const startTime = Date.now();
-            
+
             try {
                 const response = await fetch('/api/generate', {
                     method: 'POST',
@@ -289,23 +333,25 @@ HTML_TEMPLATE = """
                     },
                     body: JSON.stringify({ prompt: prompt })
                 });
-                
+
                 const result = await response.json();
                 const endTime = Date.now();
                 const responseTime = endTime - startTime;
-                
+
                 if (result.success) {
                     storyOutput.innerHTML = `
                         <div class="success">
                             <h3>✅ AI Generated Story</h3>
-                            <div style="margin-top: 20px;">${result.content}</div>
+                            <div style="margin-top: 20px;">
+                                ${result.content}
+                            </div>
                         </div>
                     `;
-                    
+
                     metaInfo.innerHTML = `
                         <strong>Generation Statistics:</strong><br>
                         • Response Time: ${responseTime}ms<br>
-                        • Content Length: ${result.content.length} characters<br>
+                        • Content Length: ${result.content.length} chars<br>
                         • Words: ~${result.content.split(' ').length}<br>
                         • AI Provider: ${result.provider || 'Unknown'}<br>
                         • Cached: ${result.cached ? 'Yes' : 'No'}<br>
@@ -313,7 +359,7 @@ HTML_TEMPLATE = """
                         • Tokens Used: ${result.tokens_used || 'N/A'}<br>
                         • Cost Estimate: $${result.cost_estimate || 'N/A'}
                     `;
-                    
+
                     statusIndicator.textContent = '✅ Story Generated';
                     statusIndicator.style.background = '#27ae60';
                 } else {
@@ -321,10 +367,12 @@ HTML_TEMPLATE = """
                         <div class="error">
                             <h3>❌ Story Generation Failed</h3>
                             <p>${result.error || 'Unknown error occurred'}</p>
-                            <p><strong>Error Type:</strong> ${result.error_type || 'Unknown'}</p>
+                            <p><strong>Error Type:</strong>
+                                ${result.error_type || 'Unknown'}
+                            </p>
                         </div>
                     `;
-                    
+
                     metaInfo.innerHTML = `
                         <strong>Error Information:</strong><br>
                         • Response Time: ${responseTime}ms<br>
@@ -332,52 +380,53 @@ HTML_TEMPLATE = """
                         • Provider: ${result.provider || 'Unknown'}<br>
                         • Time: ${new Date().toLocaleTimeString()}
                     `;
-                    
+
                     statusIndicator.textContent = '❌ Generation Failed';
                     statusIndicator.style.background = '#e74c3c';
                 }
-                
+
             } catch (error) {
                 const endTime = Date.now();
                 const responseTime = endTime - startTime;
-                
+
                 storyOutput.innerHTML = `
                     <div class="error">
                         <h3>❌ Request Failed</h3>
                         <p>Network or server error: ${error.message}</p>
                     </div>
                 `;
-                
+
                 metaInfo.innerHTML = `
                     <strong>Request Information:</strong><br>
                     • Response Time: ${responseTime}ms<br>
                     • Error: ${error.message}<br>
                     • Time: ${new Date().toLocaleTimeString()}
                 `;
-                
+
                 statusIndicator.textContent = '🚫 Request Failed';
                 statusIndicator.style.background = '#e74c3c';
             }
-            
+
             // Reset button
             generateButton.disabled = false;
             generateButton.textContent = '🚀 Generate Story with AI';
-            
+
             // Reset status after delay
             setTimeout(() => {
                 statusIndicator.textContent = '🤖 AI Ready';
                 statusIndicator.style.background = '#27ae60';
             }, 3000);
         }
-        
+
         // Add keyboard shortcut
-        document.getElementById('story-prompt').addEventListener('keydown', function(event) {
+        document.getElementById('story-prompt').addEventListener(
+            'keydown', function(event) {
             if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
                 event.preventDefault();
                 generateStory();
             }
         });
-        
+
         // Auto-focus on load
         window.addEventListener('load', function() {
             document.getElementById('story-prompt').focus();
@@ -435,7 +484,9 @@ def generate_story():
                 jsonify(
                     {
                         "success": False,
-                        "error": "LLM service not available - check API keys configuration",
+                        "error": (
+                            "LLM service not available - check API keys config"
+                        ),
                         "error_type": "service_unavailable",
                         "timestamp": datetime.now().isoformat(),
                     }
@@ -451,7 +502,9 @@ def generate_story():
 
         # Create request with optimized settings for story generation
         llm_request = LLMRequest(
-            prompt=f"Create an original, creative story based on this prompt: {prompt}",
+            prompt=(
+                f"Create an original, creative story based on this prompt: {prompt}"
+            ),
             response_format=ResponseFormat.NARRATIVE_FORMAT,
             temperature=0.8,  # High creativity
             max_tokens=2500,  # Allow longer stories
@@ -465,7 +518,8 @@ def generate_story():
 
         if response.content and not response.content.startswith("[LLM Error"):
             print(
-                f"✅ Story generated successfully: {len(response.content)} chars in {generation_time}ms"
+                f"✅ Story generated successfully: {len(response.content)} chars "
+                f"in {generation_time}ms"
             )
 
             return jsonify(
@@ -491,7 +545,9 @@ def generate_story():
                         "success": False,
                         "error": response.content or "AI generation failed",
                         "error_type": "generation_failed",
-                        "provider": response.provider.value if response else "unknown",
+                        "provider": (
+                            response.provider.value if response else "unknown"
+                        ),
                         "response_time_ms": generation_time,
                         "timestamp": datetime.now().isoformat(),
                     }
@@ -540,7 +596,11 @@ def get_test_prompts():
                 {
                     "id": "time_paradox",
                     "name": "Time Paradox Challenge",
-                    "prompt": "Write a story where the main character travels back in time to prevent a disaster, but realizes their actions might create a worse timeline. Include specific dialogue and internal conflict.",
+                    "prompt": (
+                        "Write a story where the main character travels back in time "
+                        "to prevent a disaster, but realizes their actions might create "
+                        "a worse timeline. Include specific dialogue and internal conflict."
+                    ),
                     "complexity": 5,
                     "expected_elements": [
                         "time travel",
@@ -552,7 +612,11 @@ def get_test_prompts():
                 {
                     "id": "meta_narrative",
                     "name": "Meta-Narrative Awareness",
-                    "prompt": "Create a story where the protagonist gradually realizes they are a character in a story being written. Show their attempts to communicate with the author and break free from the narrative.",
+                    "prompt": (
+                        "Create a story where the protagonist gradually realizes they "
+                        "are a character in a story being written. Show their attempts "
+                        "to communicate with the author and break free from the narrative."
+                    ),
                     "complexity": 4,
                     "expected_elements": [
                         "meta-fiction",
@@ -564,7 +628,12 @@ def get_test_prompts():
                 {
                     "id": "quantum_consciousness",
                     "name": "Quantum Consciousness Split",
-                    "prompt": "Write about a character who exists in multiple parallel realities simultaneously. They can perceive all versions of themselves but struggle to make decisions when every choice leads to different outcomes.",
+                    "prompt": (
+                        "Write about a character who exists in multiple parallel "
+                        "realities simultaneously. They can perceive all versions of "
+                        "themselves but struggle to make decisions when every choice "
+                        "leads to different outcomes."
+                    ),
                     "complexity": 5,
                     "expected_elements": [
                         "quantum",

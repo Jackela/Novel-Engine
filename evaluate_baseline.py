@@ -40,19 +40,11 @@ try:
 
     from src.persona_agent import PersonaAgent
     from src.shared_types import (
-        ActionIntensity,
-        ActionParameters,
-        ActionTarget,
-        ActionType,
         CharacterData,
         CharacterResources,
         CharacterStats,
-        EntityType,
-        IronLawsReport,
         Position,
-        ProposedAction,
         ResourceValue,
-        ValidationStatus,
     )
 
     NOVEL_ENGINE_AVAILABLE = True
@@ -162,9 +154,11 @@ class SeedLoader:
 
             # Validate required fields
             required_fields = ["seed_id", "version", "description"]
-            for field in required_fields:
-                if field not in metadata:
-                    raise ValueError(f"Missing required metadata field: {field}")
+            for required_field in required_fields:
+                if required_field not in metadata:
+                    raise ValueError(
+                        f"Missing required metadata field: {required_field}"
+                    )
 
             if not characters:
                 raise ValueError("Seed must define at least one character")
@@ -188,7 +182,9 @@ class SeedLoader:
                 reporting_config=seed_data.get("reporting", {}),
             )
 
-            logger.info(f"✅ Loaded seed: {config.seed_id} - {config.description}")
+            logger.info(
+                f"✅ Loaded seed: {config.seed_id} - {config.description}"
+            )
             return config
 
         except Exception as e:
@@ -213,7 +209,9 @@ class SeedLoader:
 
         # Validate estimated turns
         if config.estimated_turns < 1 or config.estimated_turns > 50:
-            raise ValueError(f"Invalid estimated turns: {config.estimated_turns}")
+            raise ValueError(
+                f"Invalid estimated turns: {config.estimated_turns}"
+            )
 
         # Validate character configurations
         for char in config.characters:
@@ -252,7 +250,9 @@ class NovelEngineRunner:
             True if setup successful, False otherwise
         """
         try:
-            logger.info(f"🏗️ Setting up simulation for seed: {self.config.seed_id}")
+            logger.info(
+                f"🏗️ Setting up simulation for seed: {self.config.seed_id}"
+            )
 
             # Create temporary campaign log
             with tempfile.NamedTemporaryFile(
@@ -312,13 +312,17 @@ class NovelEngineRunner:
             character_data = self._build_character_data(char_config)
 
             # Create temporary character sheet file
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".md", delete=False
+            ) as f:
                 self._write_character_sheet(f, character_data)
                 temp_sheet_path = f.name
 
             # Create PersonaAgent
             agent = PersonaAgent(temp_sheet_path)
-            agent.character_data = character_data  # Override with detailed data
+            agent.character_data = (
+                character_data  # Override with detailed data
+            )
 
             return agent
 
@@ -326,7 +330,9 @@ class NovelEngineRunner:
             logger.error(f"❌ Failed to create agent from config: {e}")
             return None
 
-    def _build_character_data(self, char_config: Dict[str, Any]) -> Dict[str, Any]:
+    def _build_character_data(
+        self, char_config: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Build character data dictionary from configuration."""
 
         # Extract basic info
@@ -361,12 +367,14 @@ class NovelEngineRunner:
             ),
             intelligence=ResourceValue(
                 **stats_config.get(
-                    "intelligence", {"current": 10, "maximum": 15, "minimum": 0}
+                    "intelligence",
+                    {"current": 10, "maximum": 15, "minimum": 0},
                 )
             ),
             constitution=ResourceValue(
                 **stats_config.get(
-                    "constitution", {"current": 10, "maximum": 15, "minimum": 0}
+                    "constitution",
+                    {"current": 10, "maximum": 15, "minimum": 0},
                 )
             ),
             wisdom=ResourceValue(
@@ -403,7 +411,9 @@ class NovelEngineRunner:
 
         # Add equipment and other details
         character_data["equipment"] = char_config.get("equipment", [])
-        character_data["ai_personality"] = char_config.get("ai_personality", {})
+        character_data["ai_personality"] = char_config.get(
+            "ai_personality", {}
+        )
         character_data["background"] = char_config.get("background", {})
 
         return character_data
@@ -435,7 +445,9 @@ class NovelEngineRunner:
         if not self.director or not self.agents:
             raise RuntimeError("Simulation not properly set up")
 
-        logger.info(f"🚀 Starting evaluation execution for seed: {self.config.seed_id}")
+        logger.info(
+            f"🚀 Starting evaluation execution for seed: {self.config.seed_id}"
+        )
 
         start_time = time.time()
         turn_times = []
@@ -460,13 +472,19 @@ class NovelEngineRunner:
 
                 # Collect Iron Laws reports if available
                 if hasattr(self.director, "_last_iron_laws_reports"):
-                    iron_laws_reports.extend(self.director._last_iron_laws_reports)
+                    iron_laws_reports.extend(
+                        self.director._last_iron_laws_reports
+                    )
 
-                logger.info(f"✅ Turn {turn_num} completed in {turn_duration:.2f}s")
+                logger.info(
+                    f"✅ Turn {turn_num} completed in {turn_duration:.2f}s"
+                )
 
                 # Check for early termination conditions
                 if self._should_terminate_early(turn_result):
-                    logger.info(f"🛑 Early termination triggered at turn {turn_num}")
+                    logger.info(
+                        f"🛑 Early termination triggered at turn {turn_num}"
+                    )
                     break
 
             total_time = time.time() - start_time
@@ -521,7 +539,13 @@ class NovelEngineRunner:
         )
 
         # Iron Laws compliance metrics
-        iron_laws_violations = {"E001": 0, "E002": 0, "E003": 0, "E004": 0, "E005": 0}
+        iron_laws_violations = {
+            "E001": 0,
+            "E002": 0,
+            "E003": 0,
+            "E004": 0,
+            "E005": 0,
+        }
         total_violations = 0
         repair_successes = 0
         repair_attempts = 0
@@ -544,7 +568,9 @@ class NovelEngineRunner:
         # Calculate scores (simplified scoring for baseline)
         violation_rate = total_violations / max(total_actions, 1)
         repair_success_rate = (
-            repair_successes / max(repair_attempts, 1) if repair_attempts > 0 else 1.0
+            repair_successes / max(repair_attempts, 1)
+            if repair_attempts > 0
+            else 1.0
         )
 
         # Decision quality scores (placeholder - would need more sophisticated analysis)
@@ -581,7 +607,8 @@ class NovelEngineRunner:
         pass_threshold = self.config.pass_thresholds.get("minimum_score", 0.70)
         evaluation_passed = (
             overall_score >= pass_threshold
-            and total_violations <= self.config.pass_thresholds.get("max_violations", 5)
+            and total_violations
+            <= self.config.pass_thresholds.get("max_violations", 5)
         )
 
         return EvaluationMetrics(
@@ -700,7 +727,9 @@ class EvaluationReporter:
         logger.info(f"📊 Individual report generated: {report_path}")
         return report_path
 
-    def generate_summary_report(self, all_metrics: List[EvaluationMetrics]) -> Path:
+    def generate_summary_report(
+        self, all_metrics: List[EvaluationMetrics]
+    ) -> Path:
         """
         Generate summary report for multiple seed evaluations.
 
@@ -741,7 +770,9 @@ class EvaluationReporter:
                     "mean": mean(overall_scores),
                     "median": median(overall_scores),
                     "std_dev": (
-                        stdev(overall_scores) if len(overall_scores) > 1 else 0.0
+                        stdev(overall_scores)
+                        if len(overall_scores) > 1
+                        else 0.0
                     ),
                     "min": min(overall_scores),
                     "max": max(overall_scores),
@@ -756,7 +787,9 @@ class EvaluationReporter:
             },
             "iron_laws_analysis": {
                 "total_violations_by_law": all_violations,
-                "average_violations_per_evaluation": sum(all_violations.values())
+                "average_violations_per_evaluation": sum(
+                    all_violations.values()
+                )
                 / total_evaluations,
             },
             "individual_results": [
@@ -796,7 +829,9 @@ class BaselineEvaluator:
         self.output_dir = output_dir or Path("evaluation/results")
         self.reporter = EvaluationReporter(self.output_dir)
 
-        logger.info(f"🎯 Baseline Evaluator initialized - Output: {self.output_dir}")
+        logger.info(
+            f"🎯 Baseline Evaluator initialized - Output: {self.output_dir}"
+        )
 
     def evaluate_single_seed(self, seed_path: Path) -> EvaluationMetrics:
         """
@@ -817,16 +852,22 @@ class BaselineEvaluator:
         # Run evaluation
         runner = NovelEngineRunner(config)
         if not runner.setup_simulation():
-            raise RuntimeError(f"Failed to setup simulation for seed: {config.seed_id}")
+            raise RuntimeError(
+                f"Failed to setup simulation for seed: {config.seed_id}"
+            )
 
         metrics = runner.run_evaluation()
 
         # Generate report
-        self.reporter.generate_individual_report(config, metrics, runner.execution_log)
+        self.reporter.generate_individual_report(
+            config, metrics, runner.execution_log
+        )
 
         return metrics
 
-    def evaluate_seed_directory(self, seeds_dir: Path) -> List[EvaluationMetrics]:
+    def evaluate_seed_directory(
+        self, seeds_dir: Path
+    ) -> List[EvaluationMetrics]:
         """
         Evaluate all seeds in a directory.
 
@@ -898,17 +939,27 @@ def main():
     # Evaluation modes
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--seed", type=Path, help="Evaluate single seed file")
-    group.add_argument("--suite", type=Path, help="Evaluate all seeds in directory")
-    group.add_argument("--batch", type=Path, help="Run batch evaluation of single seed")
+    group.add_argument(
+        "--suite", type=Path, help="Evaluate all seeds in directory"
+    )
+    group.add_argument(
+        "--batch", type=Path, help="Run batch evaluation of single seed"
+    )
 
     # Options
     parser.add_argument(
         "--iterations", type=int, default=5, help="Iterations for batch mode"
     )
-    parser.add_argument("--output", type=Path, help="Output directory for reports")
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument(
-        "--save-detailed", action="store_true", help="Save detailed execution logs"
+        "--output", type=Path, help="Output directory for reports"
+    )
+    parser.add_argument(
+        "--verbose", action="store_true", help="Enable verbose logging"
+    )
+    parser.add_argument(
+        "--save-detailed",
+        action="store_true",
+        help="Save detailed execution logs",
     )
 
     args = parser.parse_args()
@@ -927,7 +978,9 @@ def main():
             metrics = evaluator.evaluate_single_seed(args.seed)
             print("\n🎯 Evaluation Result:")
             print(f"   Score: {metrics.overall_score:.3f}")
-            print(f"   Status: {'✅ PASS' if metrics.evaluation_passed else '❌ FAIL'}")
+            print(
+                f"   Status: {'✅ PASS' if metrics.evaluation_passed else '❌ FAIL'}"
+            )
             print(f"   Violations: {metrics.total_violations}")
             print(f"   Execution Time: {metrics.execution_time:.2f}s")
 
@@ -950,11 +1003,15 @@ def main():
 
         elif args.batch:
             logger.info(f"🔄 Batch evaluation: {args.batch} x{args.iterations}")
-            batch_metrics = evaluator.batch_evaluation(args.batch, args.iterations)
+            batch_metrics = evaluator.batch_evaluation(
+                args.batch, args.iterations
+            )
 
             if batch_metrics:
                 scores = [m.overall_score for m in batch_metrics]
-                pass_count = sum(1 for m in batch_metrics if m.evaluation_passed)
+                pass_count = sum(
+                    1 for m in batch_metrics if m.evaluation_passed
+                )
 
                 print("\n🔄 Batch Results:")
                 print(f"   Iterations: {len(batch_metrics)}/{args.iterations}")
@@ -963,7 +1020,9 @@ def main():
                 )
                 print("   Score Statistics:")
                 print(f"     Mean: {mean(scores):.3f}")
-                print(f"     Std Dev: {stdev(scores) if len(scores) > 1 else 0:.3f}")
+                print(
+                    f"     Std Dev: {stdev(scores) if len(scores) > 1 else 0:.3f}"
+                )
                 print(f"     Range: {min(scores):.3f} - {max(scores):.3f}")
 
         logger.info("🎉 Evaluation complete!")

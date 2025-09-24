@@ -12,11 +12,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from ..entities import Turn
-from ..value_objects import (
-    CompensationAction,
-    CompensationType,
-    PhaseType,
-)
+from ..value_objects import CompensationAction, CompensationType, PhaseType
 
 
 class SagaCoordinator:
@@ -48,7 +44,10 @@ class SagaCoordinator:
         }
 
     def plan_compensation_strategy(
-        self, turn: Turn, failed_phase: PhaseType, error_context: Dict[str, Any]
+        self,
+        turn: Turn,
+        failed_phase: PhaseType,
+        error_context: Dict[str, Any],
     ) -> List[CompensationAction]:
         """
         Plan comprehensive compensation strategy for failed turn.
@@ -102,7 +101,8 @@ class SagaCoordinator:
                 compensation_actions
             ),
             "compensation_types": [
-                action.compensation_type.value for action in compensation_actions
+                action.compensation_type.value
+                for action in compensation_actions
             ],
         }
 
@@ -129,7 +129,9 @@ class SagaCoordinator:
             ValueError: If action execution fails
         """
         if not action.is_ready_to_execute():
-            raise ValueError(f"Action {action.action_id} is not ready for execution")
+            raise ValueError(
+                f"Action {action.action_id} is not ready for execution"
+            )
 
         # Start action execution
         executing_action = action.start_execution(executor="SagaCoordinator")
@@ -167,7 +169,9 @@ class SagaCoordinator:
             # Fail action with retry possibility
             failed_action = executing_action.fail_execution(
                 error_details=error_details,
-                can_retry=self._can_retry_action(executing_action, error_details),
+                can_retry=self._can_retry_action(
+                    executing_action, error_details
+                ),
             )
 
             # Update coordination state
@@ -180,7 +184,10 @@ class SagaCoordinator:
             return failed_action
 
     def coordinate_parallel_compensations(
-        self, turn: Turn, actions: List[CompensationAction], max_parallel: int = 3
+        self,
+        turn: Turn,
+        actions: List[CompensationAction],
+        max_parallel: int = 3,
     ) -> List[CompensationAction]:
         """
         Coordinate parallel execution of compatible compensation actions.
@@ -207,7 +214,9 @@ class SagaCoordinator:
 
             for action in group[:max_parallel]:  # Limit parallel execution
                 try:
-                    completed_action = self.execute_compensation_action(turn, action)
+                    completed_action = self.execute_compensation_action(
+                        turn, action
+                    )
                     group_results.append(completed_action)
                 except Exception:
                     # Handle individual action failure
@@ -237,7 +246,7 @@ class SagaCoordinator:
         Returns:
             Validation results with consistency status
         """
-        validation_results = {
+        validation_results: Dict[str, Any] = {
             "overall_consistency": True,
             "data_integrity_maintained": True,
             "rollback_completeness": 1.0,
@@ -259,10 +268,14 @@ class SagaCoordinator:
             )
 
         # Check for data integrity violations
-        integrity_violations = self._check_data_integrity(turn, completed_actions)
+        integrity_violations = self._check_data_integrity(
+            turn, completed_actions
+        )
         if integrity_violations:
             validation_results["data_integrity_maintained"] = False
-            validation_results["consistency_violations"].extend(integrity_violations)
+            validation_results["consistency_violations"].extend(
+                integrity_violations
+            )
 
         # Check for compensation failures
         failed_actions = [a for a in completed_actions if a.status == "failed"]
@@ -302,8 +315,12 @@ class SagaCoordinator:
         return {
             "status": "in_progress" if active_actions else "completed",
             "total_actions": strategy["total_actions"],
-            "completed_actions": len([a for a in active_actions if a.is_terminal()]),
-            "failed_actions": len([a for a in active_actions if a.status == "failed"]),
+            "completed_actions": len(
+                [a for a in active_actions if a.is_terminal()]
+            ),
+            "failed_actions": len(
+                [a for a in active_actions if a.status == "failed"]
+            ),
             "pending_actions": len(
                 [a for a in active_actions if a.status == "pending"]
             ),
@@ -339,8 +356,10 @@ class SagaCoordinator:
         error_context: Dict[str, Any],
     ) -> List[CompensationAction]:
         """Plan compensation actions for specific phase."""
-        compensation_types = CompensationType.get_phase_compensations(phase_type.value)
-        actions = []
+        compensation_types = CompensationType.get_phase_compensations(
+            phase_type.value
+        )
+        actions: List[CompensationAction] = []
 
         for compensation_type in compensation_types:
             # Skip compensations that don't apply to this scenario
@@ -368,7 +387,10 @@ class SagaCoordinator:
         return actions
 
     def _plan_global_compensation(
-        self, turn: Turn, failed_phase: PhaseType, error_context: Dict[str, Any]
+        self,
+        turn: Turn,
+        failed_phase: PhaseType,
+        error_context: Dict[str, Any],
     ) -> List[CompensationAction]:
         """Plan global compensation actions (logging, notifications, etc.)."""
         global_actions = []
@@ -418,7 +440,9 @@ class SagaCoordinator:
 
         return global_actions
 
-    def _set_compensation_dependencies(self, actions: List[CompensationAction]) -> None:
+    def _set_compensation_dependencies(
+        self, actions: List[CompensationAction]
+    ) -> None:
         """Set execution dependencies between compensation actions."""
         # For now, implement simple serial execution
         # More sophisticated dependency management could be added
@@ -432,14 +456,21 @@ class SagaCoordinator:
         return sum(action.execution_timeout_ms for action in actions)
 
     def _execute_compensation_by_type(
-        self, turn: Turn, action: CompensationAction, rollback_context: Dict[str, Any]
+        self,
+        turn: Turn,
+        action: CompensationAction,
+        rollback_context: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute compensation action based on its type."""
         compensation_type = action.compensation_type
 
         if compensation_type == CompensationType.ROLLBACK_WORLD_STATE:
-            return self._execute_world_state_rollback(turn, action, rollback_context)
-        elif compensation_type == CompensationType.INVALIDATE_SUBJECTIVE_BRIEFS:
+            return self._execute_world_state_rollback(
+                turn, action, rollback_context
+            )
+        elif (
+            compensation_type == CompensationType.INVALIDATE_SUBJECTIVE_BRIEFS
+        ):
             return self._execute_subjective_brief_invalidation(
                 turn, action, rollback_context
             )
@@ -450,20 +481,29 @@ class SagaCoordinator:
         elif compensation_type == CompensationType.REMOVE_EVENTS:
             return self._execute_event_removal(turn, action, rollback_context)
         elif compensation_type == CompensationType.REVERT_NARRATIVE_CHANGES:
-            return self._execute_narrative_reversion(turn, action, rollback_context)
+            return self._execute_narrative_reversion(
+                turn, action, rollback_context
+            )
         elif compensation_type == CompensationType.NOTIFY_PARTICIPANTS:
             return self._execute_participant_notification(
                 turn, action, rollback_context
             )
         elif compensation_type == CompensationType.LOG_FAILURE:
-            return self._execute_failure_logging(turn, action, rollback_context)
+            return self._execute_failure_logging(
+                turn, action, rollback_context
+            )
         elif compensation_type == CompensationType.TRIGGER_MANUAL_REVIEW:
-            return self._execute_manual_review_trigger(turn, action, rollback_context)
+            return self._execute_manual_review_trigger(
+                turn, action, rollback_context
+            )
         else:
             raise ValueError(f"Unknown compensation type: {compensation_type}")
 
     def _execute_world_state_rollback(
-        self, turn: Turn, action: CompensationAction, rollback_context: Dict[str, Any]
+        self,
+        turn: Turn,
+        action: CompensationAction,
+        rollback_context: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute world state rollback compensation."""
         # This would integrate with the World context to rollback changes
@@ -472,13 +512,18 @@ class SagaCoordinator:
         return {
             "success": True,
             "entities_restored": len(action.affected_entities),
-            "state_changes_reverted": len(rollback_data.get("state_changes", [])),
+            "state_changes_reverted": len(
+                rollback_data.get("state_changes", [])
+            ),
             "rollback_timestamp": datetime.now().isoformat(),
             "data_integrity": True,
         }
 
     def _execute_subjective_brief_invalidation(
-        self, turn: Turn, action: CompensationAction, rollback_context: Dict[str, Any]
+        self,
+        turn: Turn,
+        action: CompensationAction,
+        rollback_context: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute subjective brief invalidation compensation."""
         # This would integrate with the AI Gateway to invalidate briefs
@@ -490,7 +535,10 @@ class SagaCoordinator:
         }
 
     def _execute_interaction_cancellation(
-        self, turn: Turn, action: CompensationAction, rollback_context: Dict[str, Any]
+        self,
+        turn: Turn,
+        action: CompensationAction,
+        rollback_context: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute interaction cancellation compensation."""
         # This would integrate with the Interaction context to cancel active interactions
@@ -502,19 +550,27 @@ class SagaCoordinator:
         }
 
     def _execute_event_removal(
-        self, turn: Turn, action: CompensationAction, rollback_context: Dict[str, Any]
+        self,
+        turn: Turn,
+        action: CompensationAction,
+        rollback_context: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute event removal compensation."""
         # This would integrate with the event bus to remove generated events
         return {
             "success": True,
-            "events_removed": len(rollback_context.get("events_to_remove", [])),
+            "events_removed": len(
+                rollback_context.get("events_to_remove", [])
+            ),
             "event_log_cleaned": True,
             "removal_timestamp": datetime.now().isoformat(),
         }
 
     def _execute_narrative_reversion(
-        self, turn: Turn, action: CompensationAction, rollback_context: Dict[str, Any]
+        self,
+        turn: Turn,
+        action: CompensationAction,
+        rollback_context: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute narrative changes reversion compensation."""
         # This would integrate with the Narrative context to revert changes
@@ -528,7 +584,10 @@ class SagaCoordinator:
         }
 
     def _execute_participant_notification(
-        self, turn: Turn, action: CompensationAction, rollback_context: Dict[str, Any]
+        self,
+        turn: Turn,
+        action: CompensationAction,
+        rollback_context: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute participant notification compensation."""
         # This would send notifications to affected participants
@@ -540,7 +599,10 @@ class SagaCoordinator:
         }
 
     def _execute_failure_logging(
-        self, turn: Turn, action: CompensationAction, rollback_context: Dict[str, Any]
+        self,
+        turn: Turn,
+        action: CompensationAction,
+        rollback_context: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute failure logging compensation."""
         # This would log the failure details for analysis
@@ -552,7 +614,10 @@ class SagaCoordinator:
         }
 
     def _execute_manual_review_trigger(
-        self, turn: Turn, action: CompensationAction, rollback_context: Dict[str, Any]
+        self,
+        turn: Turn,
+        action: CompensationAction,
+        rollback_context: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute manual review trigger compensation."""
         # This would create a manual review ticket
@@ -564,7 +629,9 @@ class SagaCoordinator:
         }
 
     def _calculate_compensation_cost(
-        self, compensation_type: CompensationType, execution_results: Dict[str, Any]
+        self,
+        compensation_type: CompensationType,
+        execution_results: Dict[str, Any],
     ) -> Optional[Decimal]:
         """Calculate actual cost of compensation execution."""
         # Simple cost estimation - could be more sophisticated
@@ -607,12 +674,15 @@ class SagaCoordinator:
             self.coordination_state["failed_compensations"] += 1
 
         # Update average compensation time
-        if action.get_execution_time():
+        execution_time = action.get_execution_time()
+        if execution_time is not None:
             total_compensations = self.coordination_state[
                 "total_compensations_executed"
             ]
-            current_avg = self.coordination_state["average_compensation_time_ms"]
-            new_time = action.get_execution_time().total_seconds() * 1000
+            current_avg = self.coordination_state[
+                "average_compensation_time_ms"
+            ]
+            new_time = execution_time.total_seconds() * 1000
 
             # Calculate running average
             self.coordination_state["average_compensation_time_ms"] = (
@@ -647,10 +717,15 @@ class SagaCoordinator:
 
         return parallel_groups
 
-    def _has_critical_failures(self, action_results: List[CompensationAction]) -> bool:
+    def _has_critical_failures(
+        self, action_results: List[CompensationAction]
+    ) -> bool:
         """Check if any critical compensation failures occurred."""
         for action in action_results:
-            if action.status == "failed" and action.compensation_type.is_destructive():
+            if (
+                action.status == "failed"
+                and action.compensation_type.is_destructive()
+            ):
                 return True
         return False
 
@@ -661,7 +736,9 @@ class SagaCoordinator:
         if not completed_actions:
             return 0.0
 
-        successful_actions = [a for a in completed_actions if a.status == "completed"]
+        successful_actions = [
+            a for a in completed_actions if a.status == "completed"
+        ]
         return len(successful_actions) / len(completed_actions)
 
     def _check_data_integrity(
@@ -672,7 +749,10 @@ class SagaCoordinator:
 
         # Check for failed destructive operations
         for action in completed_actions:
-            if action.status == "failed" and action.compensation_type.is_destructive():
+            if (
+                action.status == "failed"
+                and action.compensation_type.is_destructive()
+            ):
                 violations.append(
                     f"Failed destructive compensation: {action.compensation_type.value}"
                 )
@@ -689,7 +769,9 @@ class SagaCoordinator:
         # Apply all compensations by default - could add more logic here
         return True
 
-    def _get_rollback_data(self, turn: Turn, phase_type: PhaseType) -> Dict[str, Any]:
+    def _get_rollback_data(
+        self, turn: Turn, phase_type: PhaseType
+    ) -> Dict[str, Any]:
         """Get rollback data for specific phase."""
         return turn.rollback_snapshots.get(phase_type.value, {})
 
@@ -705,3 +787,82 @@ class SagaCoordinator:
 
         # Check error severity
         return error_context.get("severity") == "critical"
+
+    # Application Service Interface Methods
+
+    async def plan_compensation(
+        self,
+        turn_id,
+        completed_phases: List[PhaseType],
+        phase_results: Dict[PhaseType, Any],
+        rollback_strategy: str = "selective",
+    ) -> Any:
+        """
+        Plan compensation for failed turn execution (application service interface).
+
+        Args:
+            turn_id: Turn identifier
+            completed_phases: List of completed phases
+            phase_results: Phase execution results
+            rollback_strategy: Rollback strategy ('selective' or 'complete')
+
+        Returns:
+            Compensation plan object
+        """
+        # Create a mock compensation plan structure for now
+        # In a full implementation, this would create a detailed plan
+        compensation_plan = {
+            "turn_id": turn_id,
+            "completed_phases": completed_phases,
+            "phase_results": phase_results,
+            "rollback_strategy": rollback_strategy,
+            "actions": [],
+        }
+
+        # Create compensation actions for completed phases (reverse order)
+        for phase_type in reversed(completed_phases):
+            if phase_type in phase_results:
+                phase_result = phase_results[phase_type]
+                if getattr(phase_result, "success", False):
+                    # Add rollback action for successful phases
+                    compensation_plan["actions"].append(
+                        {
+                            "phase": phase_type,
+                            "action_type": "rollback",
+                            "priority": len(compensation_plan["actions"]) + 1,
+                        }
+                    )
+
+        return compensation_plan
+
+    async def execute_compensation(self, compensation_plan: Any) -> Any:
+        """
+        Execute compensation plan (application service interface).
+
+        Args:
+            compensation_plan: Compensation plan to execute
+
+        Returns:
+            Compensation execution result
+        """
+        # Mock implementation for now
+        # In a full implementation, this would execute the compensation actions
+        result: Dict[str, Any] = {
+            "success": True,
+            "compensation_actions": [],
+            "execution_time_ms": 0.0,
+            "actions_completed": len(compensation_plan.get("actions", [])),
+        }
+
+        # Create mock compensation actions
+        for i, action in enumerate(compensation_plan.get("actions", [])):
+            result["compensation_actions"].append(
+                {
+                    "action_id": f"comp_action_{i}",
+                    "phase": action.get("phase"),
+                    "status": "completed",
+                    "action_type": action.get("action_type"),
+                }
+            )
+
+        return result

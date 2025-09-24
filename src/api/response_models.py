@@ -47,7 +47,9 @@ class APIError(BaseModel):
     message: str = Field(..., description="Human-readable error message")
     detail: Optional[str] = Field(None, description="Additional error details")
     code: Optional[str] = Field(None, description="Internal error code")
-    field: Optional[str] = Field(None, description="Field that caused validation error")
+    field: Optional[str] = Field(
+        None, description="Field that caused validation error"
+    )
 
 
 class ValidationError(BaseModel):
@@ -64,9 +66,13 @@ class APIMetadata(BaseModel):
     timestamp: datetime = Field(
         default_factory=datetime.now, description="Response timestamp"
     )
-    request_id: Optional[str] = Field(None, description="Unique request identifier")
+    request_id: Optional[str] = Field(
+        None, description="Unique request identifier"
+    )
     api_version: str = Field("1.0.0", description="API version")
-    server_time: float = Field(..., description="Server processing time in seconds")
+    server_time: float = Field(
+        ..., description="Server processing time in seconds"
+    )
     rate_limit_remaining: Optional[int] = Field(
         None, description="Remaining rate limit"
     )
@@ -102,7 +108,9 @@ class APIResponse(BaseModel, Generic[T]):
         None, description="Pagination info for list responses"
     )
 
-    model_config = ConfigDict(json_encoders={datetime: lambda dt: dt.isoformat()})
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda dt: dt.isoformat()}
+    )
 
 
 class SuccessResponse(APIResponse[T]):
@@ -122,7 +130,9 @@ class ListResponse(APIResponse[List[T]]):
     """List API response with pagination."""
 
     data: List[T] = Field(..., description="List of items")
-    pagination: PaginationInfo = Field(..., description="Pagination information")
+    pagination: PaginationInfo = Field(
+        ..., description="Pagination information"
+    )
 
 
 # Common response types for the Novel Engine API
@@ -133,11 +143,19 @@ class HealthCheckData(BaseModel):
 
     service_status: str = Field(..., description="Overall service status")
     database_status: str = Field(..., description="Database connection status")
-    orchestrator_status: str = Field(..., description="System orchestrator status")
-    active_agents: int = Field(..., ge=0, description="Number of active agents")
-    uptime_seconds: float = Field(..., ge=0, description="Service uptime in seconds")
+    orchestrator_status: str = Field(
+        ..., description="System orchestrator status"
+    )
+    active_agents: int = Field(
+        ..., ge=0, description="Number of active agents"
+    )
+    uptime_seconds: float = Field(
+        ..., ge=0, description="Service uptime in seconds"
+    )
     version: str = Field(..., description="Service version")
-    environment: str = Field(..., description="Environment (development/production)")
+    environment: str = Field(
+        ..., description="Environment (development/production)"
+    )
 
 
 class CharacterSummary(BaseModel):
@@ -146,7 +164,9 @@ class CharacterSummary(BaseModel):
     agent_id: str = Field(..., description="Unique character identifier")
     name: str = Field(..., description="Character display name")
     status: str = Field(..., description="Current character status")
-    created_at: datetime = Field(..., description="Character creation timestamp")
+    created_at: datetime = Field(
+        ..., description="Character creation timestamp"
+    )
     last_activity: datetime = Field(..., description="Last activity timestamp")
 
 
@@ -188,11 +208,17 @@ class StoryGenerationSummary(BaseModel):
 class InteractionSummary(BaseModel):
     """Interaction summary."""
 
-    interaction_id: str = Field(..., description="Unique interaction identifier")
-    participants: List[str] = Field(..., description="Interaction participants")
+    interaction_id: str = Field(
+        ..., description="Unique interaction identifier"
+    )
+    participants: List[str] = Field(
+        ..., description="Interaction participants"
+    )
     interaction_type: str = Field(..., description="Type of interaction")
     status: str = Field(..., description="Interaction status")
-    created_at: datetime = Field(..., description="Interaction creation timestamp")
+    created_at: datetime = Field(
+        ..., description="Interaction creation timestamp"
+    )
     topic: Optional[str] = Field(None, description="Interaction topic")
 
 

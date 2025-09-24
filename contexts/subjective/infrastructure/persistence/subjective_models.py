@@ -13,8 +13,6 @@ from sqlalchemy import (
     JSON,
     Column,
     DateTime,
-)
-from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
@@ -41,7 +39,10 @@ except ImportError:
         id = Column(String, primary_key=True)
         created_at = Column(DateTime, default=datetime.now, nullable=False)
         updated_at = Column(
-            DateTime, default=datetime.now, onupdate=datetime.now, nullable=False
+            DateTime,
+            default=datetime.now,
+            onupdate=datetime.now,
+            nullable=False,
         )
 
     class FullAuditModel(BaseModel):
@@ -60,7 +61,9 @@ class TurnBriefORM(FullAuditModel):
     __tablename__ = "subjective_turn_briefs"
 
     # Primary key and identity
-    turn_brief_id = Column(UUID(as_uuid=True), unique=True, nullable=False, index=True)
+    turn_brief_id = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, index=True
+    )
     entity_id = Column(String(255), nullable=False, index=True, unique=True)
 
     # World state tracking
@@ -207,7 +210,9 @@ class KnowledgeItemORM(BaseModel):
             "certainty_level": self.certainty_level,
             "source": self.source,
             "acquired_at": self.acquired_at.isoformat(),
-            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "expires_at": self.expires_at.isoformat()
+            if self.expires_at
+            else None,
             "tags": self.tags,
             "reliability_score": self.reliability_score,
             "context_data": self.context_data,
@@ -254,14 +259,18 @@ class PerceptionRecordORM(BaseModel):
     additional_details = Column(JSON, nullable=True)
 
     # Temporal information
-    perceived_at = Column(DateTime, nullable=False, default=datetime.now, index=True)
+    perceived_at = Column(
+        DateTime, nullable=False, default=datetime.now, index=True
+    )
 
     # Quality indicators
     confidence_score = Column(Float, nullable=True)
     clarity_score = Column(Float, nullable=True)
 
     # Relationship
-    turn_brief = relationship("TurnBriefORM", back_populates="perception_records")
+    turn_brief = relationship(
+        "TurnBriefORM", back_populates="perception_records"
+    )
 
     def __repr__(self):
         return (
@@ -400,14 +409,18 @@ class InformationSharingLogORM(BaseModel):
     __tablename__ = "subjective_information_sharing_log"
 
     # Primary key
-    sharing_log_id = Column(UUID(as_uuid=True), unique=True, nullable=False, index=True)
+    sharing_log_id = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, index=True
+    )
 
     # Source and target information
     source_entity_id = Column(String(255), nullable=False, index=True)
     target_entity_id = Column(String(255), nullable=False, index=True)
 
     # Sharing details
-    knowledge_subjects = Column(JSON, nullable=False)  # List of subjects shared
+    knowledge_subjects = Column(
+        JSON, nullable=False
+    )  # List of subjects shared
     communication_method = Column(String(100), nullable=False)
     reliability_modifier = Column(Float, nullable=False, default=0.9)
 
@@ -417,7 +430,9 @@ class InformationSharingLogORM(BaseModel):
     distance_at_sharing = Column(Float, nullable=True)
 
     # Temporal information
-    shared_at = Column(DateTime, nullable=False, default=datetime.now, index=True)
+    shared_at = Column(
+        DateTime, nullable=False, default=datetime.now, index=True
+    )
 
     # Success metrics
     success_rate = Column(

@@ -172,7 +172,9 @@ class ComplexityAnalyzer(ast.NodeVisitor):
 
         # Count complexity contributors
         for child in ast.walk(node):
-            if isinstance(child, (ast.If, ast.While, ast.For, ast.ExceptHandler)):
+            if isinstance(
+                child, (ast.If, ast.While, ast.For, ast.ExceptHandler)
+            ):
                 self.current_function["complexity"] += 1
             elif isinstance(child, ast.BoolOp):
                 self.current_function["complexity"] += len(child.values) - 1
@@ -285,10 +287,16 @@ class TechnicalDebtCalculator:
             )
 
         # Size debt
-        if quality_report.lines_of_code > self.debt_rules["long_method"]["threshold"]:
+        if (
+            quality_report.lines_of_code
+            > self.debt_rules["long_method"]["threshold"]
+        ):
             total_debt += self.debt_rules["long_method"]["minutes"]
 
-        if quality_report.lines_of_code > self.debt_rules["large_class"]["threshold"]:
+        if (
+            quality_report.lines_of_code
+            > self.debt_rules["large_class"]["threshold"]
+        ):
             total_debt += self.debt_rules["large_class"]["minutes"]
 
         # Duplication debt
@@ -304,9 +312,9 @@ class TechnicalDebtCalculator:
         # Test coverage debt
         if quality_report.test_coverage < 80:
             coverage_deficit = 80 - quality_report.test_coverage
-            total_debt += (coverage_deficit / 100) * self.debt_rules["no_tests"][
-                "minutes"
-            ]
+            total_debt += (coverage_deficit / 100) * self.debt_rules[
+                "no_tests"
+            ]["minutes"]
 
         return int(total_debt)
 
@@ -372,7 +380,9 @@ class QualityMonitor:
                 logger.error(f"Error analyzing {file_path}: {e}")
 
         # Calculate project-level metrics
-        avg_complexity = total_complexity / len(file_reports) if file_reports else 0
+        avg_complexity = (
+            total_complexity / len(file_reports) if file_reports else 0
+        )
         avg_maintainability = (
             sum(r.maintainability_index for r in file_reports.values())
             / len(file_reports)
@@ -380,7 +390,8 @@ class QualityMonitor:
             else 0
         )
         overall_coverage = (
-            sum(r.test_coverage for r in file_reports.values()) / len(file_reports)
+            sum(r.test_coverage for r in file_reports.values())
+            / len(file_reports)
             if file_reports
             else 0
         )
@@ -409,11 +420,15 @@ class QualityMonitor:
             }
         )
 
-        logger.info(f"Project analysis complete: {len(file_reports)} files analyzed")
+        logger.info(
+            f"Project analysis complete: {len(file_reports)} files analyzed"
+        )
 
         return project_report
 
-    async def _analyze_file(self, file_path: Path) -> Optional[FileQualityReport]:
+    async def _analyze_file(
+        self, file_path: Path
+    ) -> Optional[FileQualityReport]:
         """Analyze a single file"""
         try:
             with open(file_path, "r", encoding="utf-8") as f:
@@ -429,7 +444,9 @@ class QualityMonitor:
                 self.complexity_analyzer = ComplexityAnalyzer()
                 self.complexity_analyzer.visit(tree)
             except SyntaxError:
-                logger.warning(f"Syntax error in {file_path}, skipping analysis")
+                logger.warning(
+                    f"Syntax error in {file_path}, skipping analysis"
+                )
                 return None
 
             # Calculate metrics
@@ -480,7 +497,9 @@ class QualityMonitor:
             for issue in report.issues:
                 if not issue.debt_minutes:
                     issue.debt_minutes = (
-                        debt_minutes // len(report.issues) if report.issues else 0
+                        debt_minutes // len(report.issues)
+                        if report.issues
+                        else 0
                     )
 
             return report
@@ -497,7 +516,8 @@ class QualityMonitor:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # Simple heuristic: files with test imports likely have better coverage
+            # Simple heuristic: files with test imports likely have better
+            # coverage
             if "import pytest" in content or "import unittest" in content:
                 return 85.0
             elif "def test_" in content:
@@ -508,7 +528,11 @@ class QualityMonitor:
             return 0.0
 
     async def _detect_issues(
-        self, file_path: Path, content: str, complexity: float, duplication: float
+        self,
+        file_path: Path,
+        content: str,
+        complexity: float,
+        duplication: float,
     ) -> List[QualityIssue]:
         """Detect quality issues in file"""
         issues = []
@@ -583,10 +607,14 @@ class QualityMonitor:
                     )
 
                 current_function_start = i
-                current_function_name = stripped.split("(")[0].replace("def ", "")
+                current_function_name = stripped.split("(")[0].replace(
+                    "def ", ""
+                )
 
             # Magic numbers
-            if re.search(r"\b\d{2,}\b", stripped) and not stripped.startswith("#"):
+            if re.search(r"\b\d{2,}\b", stripped) and not stripped.startswith(
+                "#"
+            ):
                 issues.append(
                     QualityIssue(
                         file_path=str(file_path),
@@ -618,7 +646,9 @@ class QualityMonitor:
         return issues
 
     def generate_report(
-        self, project_report: ProjectQualityReport, output_format: str = "console"
+        self,
+        project_report: ProjectQualityReport,
+        output_format: str = "console",
     ) -> str:
         """Generate quality report in various formats"""
         if output_format == "console":
@@ -636,7 +666,9 @@ class QualityMonitor:
         output.append("=" * 60)
         output.append(f"CODE QUALITY REPORT - {report.project_name}")
         output.append("=" * 60)
-        output.append(f"Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M:%S')}")
+        output.append(
+            f"Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
         output.append("")
 
         # Overview
@@ -647,8 +679,12 @@ class QualityMonitor:
         output.append(
             f"  Average maintainability: {report.average_maintainability:.1f}"
         )
-        output.append(f"  Overall test coverage: {report.overall_coverage:.1f}%")
-        output.append(f"  Technical debt: {report.technical_debt_hours:.1f} hours")
+        output.append(
+            f"  Overall test coverage: {report.overall_coverage:.1f}%"
+        )
+        output.append(
+            f"  Technical debt: {report.technical_debt_hours:.1f} hours"
+        )
         output.append("")
 
         # Quality distribution
@@ -656,9 +692,13 @@ class QualityMonitor:
         distribution = report.quality_distribution
         for grade, count in distribution.items():
             percentage = (
-                (count / report.total_files * 100) if report.total_files > 0 else 0
+                (count / report.total_files * 100)
+                if report.total_files > 0
+                else 0
             )
-            output.append(f"  Grade {grade}: {count} files ({percentage:.1f}%)")
+            output.append(
+                f"  Grade {grade}: {count} files ({percentage:.1f}%)"
+            )
         output.append("")
 
         # Top issues
@@ -666,11 +706,15 @@ class QualityMonitor:
         for file_report in report.file_reports.values():
             all_issues.extend(file_report.issues)
 
-        critical_issues = [i for i in all_issues if i.severity == Severity.CRITICAL]
+        critical_issues = [
+            i for i in all_issues if i.severity == Severity.CRITICAL
+        ]
         if critical_issues:
             output.append("CRITICAL ISSUES:")
             for issue in critical_issues[:10]:  # Show top 10
-                output.append(f"  🔴 {Path(issue.file_path).name}:{issue.line_number}")
+                output.append(
+                    f"  🔴 {Path(issue.file_path).name}:{issue.line_number}"
+                )
                 output.append(f"      {issue.message}")
                 if issue.suggestion:
                     output.append(f"      💡 {issue.suggestion}")

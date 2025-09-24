@@ -4,11 +4,10 @@ Fix Remaining P0 Blockers Script
 Addresses the 11 still-failing tests after initial fixes
 """
 
-import os
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
+# from typing import List, Tuple  # Removed unused imports
 
 # Color codes for terminal output
 GREEN = "\033[92m"
@@ -95,7 +94,9 @@ async def root():
     }'''
 
                 # Replace existing root endpoint
-                pattern = r'@app\.get\("/"\)\s*\nasync def root\(\):[^}]+?\n    \}'
+                pattern = (
+                    r'@app\.get\("/"\)\s*\nasync def root\(\):[^}]+?\n    \}'
+                )
                 content = re.sub(
                     pattern, root_endpoint, content, count=1, flags=re.DOTALL
                 )
@@ -136,7 +137,7 @@ async def get_character_detail(character_id: str):
             character_factory = CharacterFactory(event_bus)
             agent = character_factory.create_character(character_id)
             character = agent.character
-            
+
             # Build narrative context with proper specializations
             narrative_parts = []
             if hasattr(character, 'name'):
@@ -147,7 +148,7 @@ async def get_character_detail(character_id: str):
                 narrative_parts.append("Dr. Maya Patel")
             elif character_id == "engineer":
                 narrative_parts.append("Jordan Kim")
-                
+
             # Add specialization to narrative
             if character_id == "pilot":
                 narrative_parts.append("Elite Starfighter Pilot")
@@ -158,18 +159,18 @@ async def get_character_detail(character_id: str):
             elif character_id == "engineer":
                 narrative_parts.append("Chief Systems Engineer")
                 narrative_parts.append("Engineering Corps")
-            
+
             narrative_context = ". ".join(narrative_parts)
-            
+
             # Default names for generic characters
             default_names = {
                 "pilot": "Alex Chen",
                 "scientist": "Dr. Maya Patel",
                 "engineer": "Jordan Kim"
             }
-            
+
             char_name = getattr(character, 'name', default_names.get(character_id, character_id))
-            
+
             # Set proper specialization
             specialization = "Unknown"
             if character_id == "pilot":
@@ -178,7 +179,7 @@ async def get_character_detail(character_id: str):
                 specialization = "Xenobiologist"
             elif character_id == "engineer":
                 specialization = "Systems Engineer"
-            
+
             return {
                 "character_name": character_id,
                 "narrative_context": narrative_context,
@@ -203,24 +204,24 @@ async def get_character_detail(character_id: str):
             # Fallback to basic character info
             default_names = {
                 "pilot": "Alex Chen",
-                "scientist": "Dr. Maya Patel", 
+                "scientist": "Dr. Maya Patel",
                 "engineer": "Jordan Kim"
             }
-            
+
             default_contexts = {
                 "pilot": "Alex Chen. Elite Starfighter Pilot. Galactic Defense Force",
                 "scientist": "Dr. Maya Patel. Lead Xenobiologist. Xenobiology Research",
                 "engineer": "Jordan Kim. Chief Systems Engineer. Engineering Corps"
             }
-            
+
             specialization = "Unknown"
             if character_id == "pilot":
                 specialization = "Starfighter Pilot"
             elif character_id == "scientist":
-                specialization = "Xenobiologist"  
+                specialization = "Xenobiologist"
             elif character_id == "engineer":
                 specialization = "Systems Engineer"
-            
+
             return {
                 "character_name": character_id,
                 "narrative_context": default_contexts.get(character_id, f"Character {character_id}"),
@@ -254,7 +255,11 @@ async def get_character_detail(character_id: str):
                 # Replace the existing character detail endpoint
                 pattern = r'@app\.get\("/characters/\{character_id\}"\)\s*\nasync def get_character_detail[^@]+?(?=\n@app|\nif __name__|$)'
                 content = re.sub(
-                    pattern, replacement + "\n", content, count=1, flags=re.DOTALL
+                    pattern,
+                    replacement + "\n",
+                    content,
+                    count=1,
+                    flags=re.DOTALL,
                 )
 
                 api_file.write_text(content, encoding="utf-8")
@@ -281,12 +286,18 @@ async def get_character_detail(character_id: str):
                         '@app.get("/characters/{character_id}/enhanced")',
                     )
 
-                    self.fixes_applied.append("Fixed enhanced character endpoint URL")
-                    print_status("Enhanced character endpoint URL fixed", "success")
+                    self.fixes_applied.append(
+                        "Fixed enhanced character endpoint URL"
+                    )
+                    print_status(
+                        "Enhanced character endpoint URL fixed", "success"
+                    )
 
                 api_file.write_text(content, encoding="utf-8")
             except Exception as e:
-                self.errors.append(f"Error fixing enhanced character endpoint: {e}")
+                self.errors.append(
+                    f"Error fixing enhanced character endpoint: {e}"
+                )
 
     def fix_cors_options(self):
         """Add OPTIONS method handler for CORS preflight requests."""
@@ -338,7 +349,9 @@ async def handle_options(path: str):
         """Fix error handler category detection logic."""
         print_status("\nFixing error handler category detection...", "info")
 
-        error_handler_file = self.root_dir / "src" / "core" / "error_handler.py"
+        error_handler_file = (
+            self.root_dir / "src" / "core" / "error_handler.py"
+        )
 
         if error_handler_file.exists():
             try:
@@ -352,14 +365,14 @@ async def handle_options(path: str):
                     content = re.sub(pattern, replacement, content)
 
                     # Fix recovery strategy selection
-                    pattern = r"if error_record\.category == ErrorCategory\.SYSTEM:"
+                    pattern = (
+                        r"if error_record\.category == ErrorCategory\.SYSTEM:"
+                    )
                     replacement = "if error_record.category in [ErrorCategory.NETWORK, ErrorCategory.SYSTEM]:"
                     content = re.sub(pattern, replacement, content)
 
                     # Ensure global metadata is added
-                    pattern = (
-                        r"def handle_global_error\(error: Exception\) -> ErrorRecord:"
-                    )
+                    pattern = r"def handle_global_error\(error: Exception\) -> ErrorRecord:"
                     replacement = '''def handle_global_error(error: Exception) -> ErrorRecord:
     """Handle global errors with metadata."""
     context = ErrorContext(
@@ -391,7 +404,8 @@ async def handle_options(path: str):
 
         if self.fixes_applied:
             print_status(
-                f"\nSuccessfully applied {len(self.fixes_applied)} fixes:", "success"
+                f"\nSuccessfully applied {len(self.fixes_applied)} fixes:",
+                "success",
             )
             for fix in self.fixes_applied:
                 print(f"  ✅ {fix}")
@@ -402,11 +416,14 @@ async def handle_options(path: str):
                 print(f"  ❌ {error}")
 
         if not self.errors:
-            print_status("\n🎉 All remaining P0 blockers have been fixed!", "success")
+            print_status(
+                "\n🎉 All remaining P0 blockers have been fixed!", "success"
+            )
             print_status("Ready for final regression testing", "success")
         else:
             print_status(
-                "\n⚠️  Some fixes failed. Manual intervention required.", "warning"
+                "\n⚠️  Some fixes failed. Manual intervention required.",
+                "warning",
             )
 
 
@@ -417,13 +434,15 @@ def main():
 
     if success:
         print_status(
-            "\n✨ Remaining P0 Blocker Fix Operation Completed Successfully!", "success"
+            "\n✨ Remaining P0 Blocker Fix Operation Completed Successfully!",
+            "success",
         )
         print_status("Next step: Run final regression tests", "info")
         return 0
     else:
         print_status(
-            "\n❌ Remaining P0 Blocker Fix Operation Completed with Errors", "error"
+            "\n❌ Remaining P0 Blocker Fix Operation Completed with Errors",
+            "error",
         )
         return 1
 

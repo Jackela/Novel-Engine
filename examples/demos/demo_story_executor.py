@@ -28,10 +28,7 @@ from typing import Any, Dict, List
 from chronicler_agent import ChroniclerAgent
 
 # Import our enhanced multi-agent system
-from enterprise_multi_agent_orchestrator import (
-    create_enterprise_orchestrator,
-)
-
+from enterprise_multi_agent_orchestrator import create_enterprise_orchestrator
 
 # Import Novel Engine core components
 from src.event_bus import EventBus
@@ -39,7 +36,8 @@ from src.persona_agent import PersonaAgent
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -59,7 +57,8 @@ class DemoCharacter:
 
 class MultiAgentDemoExecutor:
     """
-    Comprehensive demonstration executor showcasing all multi-agent enhancements.
+    Comprehensive demonstration executor showcasing all multi-agent
+    enhancements.
     """
 
     def __init__(self, output_directory: str = "demo_output"):
@@ -98,7 +97,10 @@ class MultiAgentDemoExecutor:
                     "strategic",
                     "diplomatic",
                 ],
-                background="Former military officer turned peace negotiator with 15 years of deep-space command experience",
+                background=(
+                    "Former military officer turned peace negotiator with 15 "
+                    "years of deep-space command experience"
+                ),
                 motivations=[
                     "achieve lasting peace",
                     "protect her crew",
@@ -119,7 +121,10 @@ class MultiAgentDemoExecutor:
                     "cautious",
                     "perfectionist",
                 ],
-                background="Brilliant scientist specializing in alien psychology and interspecies communication",
+                background=(
+                    "Brilliant scientist specializing in alien psychology and "
+                    "interspecies communication"
+                ),
                 motivations=[
                     "understand alien cultures",
                     "advance scientific knowledge",
@@ -134,8 +139,16 @@ class MultiAgentDemoExecutor:
             DemoCharacter(
                 name="Captain Rex Morrison",
                 role="Security Chief & Military Strategist",
-                personality_traits=["protective", "suspicious", "loyal", "aggressive"],
-                background="Veteran space marine with combat experience against hostile alien forces",
+                personality_traits=[
+                    "protective",
+                    "suspicious",
+                    "loyal",
+                    "aggressive",
+                ],
+                background=(
+                    "Veteran space marine with combat experience against "
+                    "hostile alien forces"
+                ),
                 motivations=[
                     "protect the ship",
                     "maintain security",
@@ -146,13 +159,23 @@ class MultiAgentDemoExecutor:
                     "threat assessment",
                     "crew protection",
                 ],
-                relationships={"Commander Zara Chen": 0.7},  # Respects commander
+                relationships={
+                    "Commander Zara Chen": 0.7
+                },  # Respects commander
             ),
             DemoCharacter(
                 name="Envoy Lyralei",
                 role="Alien Cultural Liaison",
-                personality_traits=["wise", "mysterious", "patient", "insightful"],
-                background="Telepathic alien diplomat from the peaceful Ethereal Collective",
+                personality_traits=[
+                    "wise",
+                    "mysterious",
+                    "patient",
+                    "insightful",
+                ],
+                background=(
+                    "Telepathic alien diplomat from the peaceful Ethereal "
+                    "Collective"
+                ),
                 motivations=[
                     "bridge cultural gaps",
                     "promote understanding",
@@ -163,7 +186,9 @@ class MultiAgentDemoExecutor:
                     "cultural mediation",
                     "emotional sensing",
                 ],
-                relationships={"Dr. Kai Thornfield": 0.6},  # Scientific kinship
+                relationships={
+                    "Dr. Kai Thornfield": 0.6
+                },  # Scientific kinship
             ),
             DemoCharacter(
                 name="Engineer Maya Santos",
@@ -174,7 +199,10 @@ class MultiAgentDemoExecutor:
                     "resourceful",
                     "optimistic",
                 ],
-                background="Brilliant engineer known for creative solutions under pressure",
+                background=(
+                    "Brilliant engineer known for creative solutions under "
+                    "pressure"
+                ),
                 motivations=[
                     "keep systems running",
                     "solve technical challenges",
@@ -201,14 +229,16 @@ class MultiAgentDemoExecutor:
             {  # Dr. Kai
                 "Commander Zara Chen": 0.8,  # Respects leadership
                 "Envoy Lyralei": 0.6,  # Fascinated by alien perspective
-                "Captain Rex Morrison": -0.2,  # Tensions over caution vs action
+                "Captain Rex Morrison": -0.2,  # Tensions over
+                # caution vs action
             }
         )
 
         characters[2].relationships.update(
             {  # Captain Rex
                 "Commander Zara Chen": 0.7,  # Military respect
-                "Dr. Kai Thornfield": -0.2,  # Frustration with scientific caution
+                "Dr. Kai Thornfield": -0.2,  # Frustration with
+                # scientific caution
                 "Envoy Lyralei": -0.4,  # Suspicious of alien motives
             }
         )
@@ -250,7 +280,9 @@ class MultiAgentDemoExecutor:
             logger.info("Enterprise monitoring systems started")
 
             # Validate system before demo
-            validation_result = await self.enterprise_orchestrator.validate_system()
+            validation_result = (
+                await self.enterprise_orchestrator.validate_system()
+            )
             logger.info(
                 f"System validation: {validation_result.health_status.value} "
                 f"({validation_result.overall_score:.2f})"
@@ -313,14 +345,24 @@ class MultiAgentDemoExecutor:
         """Execute the complete demo story with enterprise orchestration."""
         try:
             self.demo_start_time = datetime.now()
-            logger.info("=== STARTING DEMO STORY: THE STELLAR CONVERGENCE PROTOCOL ===")
+            logger.info(
+                "=== STARTING DEMO STORY: THE STELLAR CONVERGENCE PROTOCOL ==="
+            )
 
             # Story setup
             story_context = {
                 "title": "The Stellar Convergence Protocol",
-                "setting": "Aboard the diplomatic vessel 'Synthesis' in neutral space",
-                "situation": "Crew must negotiate peace between the militant Hegemony and peaceful Collective",
-                "stakes": "Prevention of galactic war that could destroy millions of civilizations",
+                "setting": (
+                    "Aboard the diplomatic vessel 'Synthesis' in neutral space"
+                ),
+                "situation": (
+                    "Crew must negotiate peace between the militant Hegemony "
+                    "and peaceful Collective"
+                ),
+                "stakes": (
+                    "Prevention of galactic war that could destroy millions "
+                    "of civilizations"
+                ),
                 "initial_tension": 0.7,
             }
 
@@ -338,7 +380,9 @@ class MultiAgentDemoExecutor:
 
             # Execute story turns with full enterprise orchestration
             for turn in range(1, num_turns + 1):
-                logger.info(f"\n=== EXECUTING DEMO TURN {turn}/{num_turns} ===")
+                logger.info(
+                    f"\n=== EXECUTING DEMO TURN {turn}/{num_turns} ==="
+                )
 
                 turn_start = datetime.now()
 
@@ -387,19 +431,25 @@ class MultiAgentDemoExecutor:
                 demo_results["enterprise_dashboards"].append(dashboard)
 
                 # Get narrative intelligence insights
-                if hasattr(self.enterprise_orchestrator, "narrative_orchestrator"):
+                if hasattr(
+                    self.enterprise_orchestrator, "narrative_orchestrator"
+                ):
                     narrative_dashboard = (
                         await self.enterprise_orchestrator.narrative_orchestrator.get_narrative_intelligence_dashboard()
                     )
-                    demo_results["narrative_intelligence"].append(narrative_dashboard)
+                    demo_results["narrative_intelligence"].append(
+                        narrative_dashboard
+                    )
 
                 # Track performance metrics
                 performance_metric = {
                     "turn": turn,
                     "execution_time": turn_duration,
                     "system_health": dashboard.get("system_health"),
-                    "quality_score": turn_result.get("enterprise_metrics", {}).get(
-                        "quality_score", 0.0
+                    "quality_score": (
+                        turn_result.get("enterprise_metrics", {}).get(
+                            "quality_score", 0.0
+                        )
                     ),
                     "coordination_success": turn_result.get("success", False),
                 }
@@ -417,10 +467,13 @@ class MultiAgentDemoExecutor:
             demo_results["execution_time"] = (
                 datetime.now() - self.demo_start_time
             ).total_seconds()
-            demo_results["story_summary"] = self._generate_story_summary(demo_results)
+            demo_results["story_summary"] = self._generate_story_summary(
+                demo_results
+            )
 
             logger.info(
-                f"Demo story completed in {demo_results['execution_time']:.2f}s"
+                f"Demo story completed in "
+                f"{demo_results['execution_time']:.2f}s"
             )
 
             return demo_results
@@ -443,7 +496,10 @@ class MultiAgentDemoExecutor:
         crises = [
             {
                 "title": "First Contact Protocol Breach",
-                "description": "Hegemony warships have violated the neutral zone, approaching rapidly",
+                "description": (
+                    "Hegemony warships have violated the neutral zone, "
+                    "approaching rapidly"
+                ),
                 "type": "diplomatic_crisis",
                 "urgency": "high",
                 "key_decisions": [
@@ -454,7 +510,10 @@ class MultiAgentDemoExecutor:
             },
             {
                 "title": "Cultural Misunderstanding",
-                "description": "Collective representatives seem offended by standard diplomatic protocols",
+                "description": (
+                    "Collective representatives seem offended by standard "
+                    "diplomatic protocols"
+                ),
                 "type": "cultural_crisis",
                 "urgency": "medium",
                 "key_decisions": [
@@ -465,7 +524,10 @@ class MultiAgentDemoExecutor:
             },
             {
                 "title": "Technical Sabotage Suspected",
-                "description": "Critical systems are malfunctioning at crucial negotiation moments",
+                "description": (
+                    "Critical systems are malfunctioning at crucial "
+                    "negotiation moments"
+                ),
                 "type": "technical_crisis",
                 "urgency": "high",
                 "key_decisions": [
@@ -476,7 +538,10 @@ class MultiAgentDemoExecutor:
             },
             {
                 "title": "Telepathic Interference",
-                "description": "Envoy Lyralei reports disturbing psychic disruptions affecting negotiations",
+                "description": (
+                    "Envoy Lyralei reports disturbing psychic disruptions "
+                    "affecting negotiations"
+                ),
                 "type": "supernatural_crisis",
                 "urgency": "medium",
                 "key_decisions": [
@@ -487,7 +552,10 @@ class MultiAgentDemoExecutor:
             },
             {
                 "title": "Final Convergence Decision",
-                "description": "Both factions demand a final choice - which alliance will the crew support?",
+                "description": (
+                    "Both factions demand a final choice - which alliance "
+                    "will the crew support?"
+                ),
                 "type": "climactic_decision",
                 "urgency": "critical",
                 "key_decisions": [
@@ -537,15 +605,33 @@ class MultiAgentDemoExecutor:
 
         return all_options[min(turn - 1, len(all_options) - 1)]
 
-    def _generate_story_summary(self, demo_results: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_story_summary(
+        self, demo_results: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Generate comprehensive story summary."""
         return {
-            "narrative_arc": "The crew of the Synthesis successfully navigated complex diplomatic challenges",
-            "character_development": "All characters showed growth through interpersonal conflicts and resolutions",
-            "plot_resolution": "A creative compromise solution emerged through collaborative storytelling",
-            "emergent_elements": len(demo_results.get("emergent_plot_threads", [])),
-            "relationship_changes": "Multiple character relationships evolved through the story",
-            "technical_achievements": "All 5 waves of multi-agent enhancement demonstrated successfully",
+            "narrative_arc": (
+                "The crew of the Synthesis successfully navigated complex "
+                "diplomatic challenges"
+            ),
+            "character_development": (
+                "All characters showed growth through interpersonal "
+                "conflicts and resolutions"
+            ),
+            "plot_resolution": (
+                "A creative compromise solution emerged through "
+                "collaborative storytelling"
+            ),
+            "emergent_elements": len(
+                demo_results.get("emergent_plot_threads", [])
+            ),
+            "relationship_changes": (
+                "Multiple character relationships evolved through the story"
+            ),
+            "technical_achievements": (
+                "All 5 waves of multi-agent enhancement demonstrated "
+                "successfully"
+            ),
         }
 
     async def generate_demo_report(self, demo_results: Dict[str, Any]) -> str:
@@ -568,22 +654,41 @@ class MultiAgentDemoExecutor:
 
     def _create_demo_report_content(self, demo_results: Dict[str, Any]) -> str:
         """Create the content for the demo report."""
+        # Calculate metrics for display
+        metrics = demo_results.get("performance_metrics", [])
+        avg_time = sum(m.get("execution_time", 0) for m in metrics) / max(
+            len(metrics), 1
+        )
+        success_rate = (
+            sum(1 for m in metrics if m.get("coordination_success", False))
+            / max(len(metrics), 1)
+            * 100
+        )
+        # Calculate agent count
+        events = demo_results.get("story_events", [{}])
+        agent_count = len(events[0].get("world_state", {}).get("agents", []))
+
         return f"""# 🎭 Multi-Agent Emergent Narrative Demo Report
 
-**Demo Story**: {demo_results['story_context']['title']}  
-**Execution Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
-**Total Duration**: {demo_results.get('execution_time', 0):.2f} seconds  
-**Turns Executed**: {demo_results['turns_executed']}  
+**Demo Story**: {demo_results['story_context']['title']}
+**Execution Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Total Duration**: {demo_results.get('execution_time', 0):.2f} seconds
+**Turns Executed**: {demo_results['turns_executed']}
 
 ---
 
 ## 🎯 **Demo Objectives Achieved**
 
-✅ **Wave 1**: AI Intelligence Integration - Successfully integrated existing AI systems  
-✅ **Wave 2**: Enhanced Multi-Agent Bridge - Real-time agent communication demonstrated  
-✅ **Wave 3**: Parallel Agent Coordination - Simultaneous agent processing achieved  
-✅ **Wave 4**: Emergent Narrative Orchestration - Dynamic story evolution observed  
-✅ **Wave 5**: Enterprise Orchestration - Full monitoring and optimization active  
+✅ **Wave 1**: AI Intelligence Integration - Successfully integrated
+    existing AI systems
+✅ **Wave 2**: Enhanced Multi-Agent Bridge - Real-time agent
+    communication demonstrated
+✅ **Wave 3**: Parallel Agent Coordination - Simultaneous agent
+    processing achieved
+✅ **Wave 4**: Emergent Narrative Orchestration - Dynamic story
+    evolution observed
+✅ **Wave 5**: Enterprise Orchestration - Full monitoring and
+    optimization active
 
 ---
 
@@ -593,15 +698,15 @@ class MultiAgentDemoExecutor:
 |------|----------|---------------|---------------|---------|
 {self._generate_performance_table(demo_results.get('performance_metrics', []))}
 
-**Average Turn Time**: {sum(m.get('execution_time', 0) for m in demo_results.get('performance_metrics', [])) / max(len(demo_results.get('performance_metrics', [])), 1):.2f}s  
-**Overall Success Rate**: {sum(1 for m in demo_results.get('performance_metrics', []) if m.get('coordination_success', False)) / max(len(demo_results.get('performance_metrics', [])), 1) * 100:.1f}%
+**Average Turn Time**: {avg_time:.2f}s
+**Overall Success Rate**: {success_rate:.1f}%
 
 ---
 
 ## 🎭 **Story Narrative Summary**
 
-**Setting**: {demo_results['story_context']['setting']}  
-**Central Conflict**: {demo_results['story_context']['situation']}  
+**Setting**: {demo_results['story_context']['setting']}
+**Central Conflict**: {demo_results['story_context']['situation']}
 **Stakes**: {demo_results['story_context']['stakes']}
 
 ### Character Interactions
@@ -616,7 +721,7 @@ class MultiAgentDemoExecutor:
 
 ### System Health Monitoring
 - **Monitoring Active**: All enterprise monitoring systems operational
-- **Health Tracking**: Real-time system health assessment  
+- **Health Tracking**: Real-time system health assessment
 - **Performance Optimization**: Adaptive optimization strategies applied
 - **Validation Framework**: Comprehensive validation executed successfully
 
@@ -632,7 +737,7 @@ class MultiAgentDemoExecutor:
 ## 🎯 **Technical Achievements**
 
 ### Multi-Agent Coordination
-- **Agents Coordinated**: {len(demo_results.get('story_events', [{}])[0].get('world_state', {}).get('agents', []))} simultaneous agents
+- **Agents Coordinated**: {agent_count} simultaneous agents
 - **Decision Points**: Complex multi-option decision-making at each turn
 - **Conflict Resolution**: Successful resolution of competing agent interests
 - **Performance**: Sub-second coordination overhead maintained
@@ -657,47 +762,67 @@ class MultiAgentDemoExecutor:
 
 This demonstration successfully showcased:
 1. **Enterprise-grade multi-agent orchestration**
-2. **Emergent narrative intelligence with dynamic storytelling**  
+2. **Emergent narrative intelligence with dynamic storytelling**
 3. **Advanced parallel agent coordination with conflict resolution**
 4. **Real-time monitoring and optimization systems**
 5. **Production-ready scalability and reliability**
 
-The Novel Engine multi-agent enhancement system is **PRODUCTION READY** with enterprise-grade capabilities.
+The Novel Engine multi-agent enhancement system is **PRODUCTION READY**
+with enterprise-grade capabilities.
 
 ---
 
-**Report Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
-**Demo Status**: SUCCESSFUL  
+**Report Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Demo Status**: SUCCESSFUL
 **System Status**: PRODUCTION READY
 """
 
-    def _generate_performance_table(self, metrics: List[Dict[str, Any]]) -> str:
+    def _generate_performance_table(
+        self, metrics: List[Dict[str, Any]]
+    ) -> str:
         """Generate performance metrics table for report."""
         if not metrics:
             return "| - | - | - | - | - |"
 
         rows = []
         for metric in metrics:
-            row = f"| {metric.get('turn', '-')} | {metric.get('execution_time', 0):.2f}s | {metric.get('system_health', 'unknown')} | {metric.get('quality_score', 0):.2f} | {'✅' if metric.get('coordination_success', False) else '❌'} |"
+            coord_success = metric.get("coordination_success", False)
+            success_icon = "✅" if coord_success else "❌"
+            row = (
+                f"| {metric.get('turn', '-')} | "
+                f"{metric.get('execution_time', 0):.2f}s | "
+                f"{metric.get('system_health', 'unknown')} | "
+                f"{metric.get('quality_score', 0):.2f} | {success_icon} |"
+            )
             rows.append(row)
 
         return "\n".join(rows)
 
     def _generate_character_summary(self, demo_results: Dict[str, Any]) -> str:
         """Generate character interaction summary."""
-        return """- **Commander Zara Chen**: Demonstrated strong leadership and diplomatic skills
-- **Dr. Kai Thornfield**: Provided crucial scientific insights and cultural analysis  
-- **Captain Rex Morrison**: Balanced security concerns with diplomatic objectives
-- **Envoy Lyralei**: Bridged cultural gaps with telepathic and diplomatic expertise
-- **Engineer Maya Santos**: Solved technical challenges that enabled successful negotiations"""
+        return """- **Commander Zara Chen**: Demonstrated strong leadership and
+  diplomatic skills
+- **Dr. Kai Thornfield**: Provided crucial scientific insights and
+  cultural analysis
+- **Captain Rex Morrison**: Balanced security concerns with diplomatic
+  objectives
+- **Envoy Lyralei**: Bridged cultural gaps with telepathic and
+  diplomatic expertise
+- **Engineer Maya Santos**: Solved technical challenges that enabled
+  successful negotiations"""
 
     def _generate_plot_summary(self, demo_results: Dict[str, Any]) -> str:
         """Generate emergent plot elements summary."""
-        return """- **Diplomatic Crisis Resolution**: Multi-layered approach to interspecies conflict
-- **Character Relationship Evolution**: Dynamic relationships influenced story progression
-- **Technical Challenge Integration**: Engineering problems became narrative opportunities
-- **Cultural Understanding Development**: Growing appreciation for alien perspectives
-- **Collaborative Problem Solving**: Crew unity emerged through shared challenges"""
+        return """- **Diplomatic Crisis Resolution**: Multi-layered approach
+  to interspecies conflict
+- **Character Relationship Evolution**: Dynamic relationships influenced
+  story progression
+- **Technical Challenge Integration**: Engineering problems became
+  narrative opportunities
+- **Cultural Understanding Development**: Growing appreciation for alien
+  perspectives
+- **Collaborative Problem Solving**: Crew unity emerged through shared
+  challenges"""
 
 
 # Demo execution function
@@ -717,11 +842,15 @@ async def run_multi_agent_demo():
         # Initialize enterprise system
         enterprise_init = await demo.initialize_enterprise_system()
         if not enterprise_init.get("success", False):
-            print(f"❌ Enterprise system initialization failed: {enterprise_init}")
+            print(
+                f"❌ Enterprise system initialization failed: "
+                f"{enterprise_init}"
+            )
             return
 
         print(
-            f"✅ Enterprise system initialized - Health: {enterprise_init.get('health')}"
+            f"✅ Enterprise system initialized - Health: "
+            f"{enterprise_init.get('health')}"
         )
 
         # Create persona agents
@@ -734,7 +863,8 @@ async def run_multi_agent_demo():
 
         if demo_results.get("success", False):
             print(
-                f"✅ Demo story completed successfully in {demo_results['execution_time']:.2f}s"
+                f"✅ Demo story completed successfully in "
+                f"{demo_results['execution_time']:.2f}s"
             )
             print(f"📊 Executed {demo_results['turns_executed']} turns")
 

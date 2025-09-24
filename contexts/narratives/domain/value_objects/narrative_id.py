@@ -30,7 +30,9 @@ class NarrativeId:
     def __post_init__(self):
         """Validate the UUID value after initialization."""
         if not isinstance(self.value, UUID):
-            raise TypeError(f"NarrativeId value must be a UUID, got {type(self.value)}")
+            raise TypeError(
+                f"NarrativeId value must be a UUID, got {type(self.value)}"
+            )
 
     @classmethod
     def generate(cls) -> "NarrativeId":
@@ -60,7 +62,9 @@ class NarrativeId:
             uuid_value = UUID(id_string)
             return cls(uuid_value)
         except ValueError as e:
-            raise ValueError(f"Invalid UUID format for NarrativeId: {id_string}") from e
+            raise ValueError(
+                f"Invalid UUID format for NarrativeId: {id_string}"
+            ) from e
 
     def to_string(self) -> str:
         """

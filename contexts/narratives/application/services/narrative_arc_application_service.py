@@ -15,7 +15,9 @@ from ...domain.services.narrative_flow_service import NarrativeFlowService
 from ...infrastructure.repositories.narrative_arc_repository import (
     NarrativeArcRepository,
 )
-from ..command_handlers.narrative_arc_command_handlers import NarrativeArcCommandHandler
+from ..command_handlers.narrative_arc_command_handlers import (
+    NarrativeArcCommandHandler,
+)
 from ..commands.narrative_arc_commands import (
     ActivateContextCommand,
     AddCharacterToArcCommand,
@@ -47,7 +49,9 @@ from ..queries.narrative_arc_queries import (
     GetThemesAtSequenceQuery,
     SearchNarrativeArcsQuery,
 )
-from ..query_handlers.narrative_arc_query_handlers import NarrativeArcQueryHandler
+from ..query_handlers.narrative_arc_query_handlers import (
+    NarrativeArcQueryHandler,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +133,9 @@ class NarrativeArcApplicationService:
             arc_type=arc_type,
             description=description,
             target_length=target_length,
-            primary_characters=set(primary_characters) if primary_characters else None,
+            primary_characters=set(primary_characters)
+            if primary_characters
+            else None,
             created_by=created_by,
             tags=set(tags) if tags else None,
             notes=notes,
@@ -139,7 +145,10 @@ class NarrativeArcApplicationService:
         return self.command_handler.handle_create_narrative_arc(command)
 
     def get_narrative_arc(
-        self, arc_id: str, include_details: bool = True, include_events: bool = False
+        self,
+        arc_id: str,
+        include_details: bool = True,
+        include_events: bool = False,
     ) -> Optional[Dict[str, Any]]:
         """
         Get a narrative arc by ID.
@@ -187,13 +196,17 @@ class NarrativeArcApplicationService:
 
     def start_narrative_arc(self, arc_id: str, start_sequence: int) -> None:
         """Start a narrative arc at a specific sequence."""
-        command = StartNarrativeArcCommand(arc_id=arc_id, start_sequence=start_sequence)
+        command = StartNarrativeArcCommand(
+            arc_id=arc_id, start_sequence=start_sequence
+        )
 
         self.command_handler.handle_start_narrative_arc(command)
 
     def complete_narrative_arc(self, arc_id: str, end_sequence: int) -> None:
         """Complete a narrative arc."""
-        command = CompleteNarrativeArcCommand(arc_id=arc_id, end_sequence=end_sequence)
+        command = CompleteNarrativeArcCommand(
+            arc_id=arc_id, end_sequence=end_sequence
+        )
 
         self.command_handler.handle_complete_narrative_arc(command)
 
@@ -242,7 +255,9 @@ class NarrativeArcApplicationService:
             prerequisite_events=(
                 set(prerequisite_events) if prerequisite_events else None
             ),
-            consequence_events=set(consequence_events) if consequence_events else None,
+            consequence_events=set(consequence_events)
+            if consequence_events
+            else None,
             location=location,
             time_context=time_context,
             pov_character=pov_character,
@@ -270,7 +285,9 @@ class NarrativeArcApplicationService:
     ) -> List[Dict[str, Any]]:
         """Get plot points in sequence order."""
         query = GetPlotPointsInSequenceQuery(
-            arc_id=arc_id, start_sequence=start_sequence, end_sequence=end_sequence
+            arc_id=arc_id,
+            start_sequence=start_sequence,
+            end_sequence=end_sequence,
         )
 
         return self.query_handler.handle_get_plot_points_in_sequence(query)
@@ -303,7 +320,9 @@ class NarrativeArcApplicationService:
                 else None
             ),
             dramatic_tension=(
-                Decimal(str(dramatic_tension)) if dramatic_tension is not None else None
+                Decimal(str(dramatic_tension))
+                if dramatic_tension is not None
+                else None
             ),
             story_significance=(
                 Decimal(str(story_significance))
@@ -318,7 +337,9 @@ class NarrativeArcApplicationService:
 
     def remove_plot_point(self, arc_id: str, plot_point_id: str) -> None:
         """Remove a plot point from a narrative arc."""
-        command = RemovePlotPointCommand(arc_id=arc_id, plot_point_id=plot_point_id)
+        command = RemovePlotPointCommand(
+            arc_id=arc_id, plot_point_id=plot_point_id
+        )
 
         self.command_handler.handle_remove_plot_point(command)
 
@@ -358,7 +379,9 @@ class NarrativeArcApplicationService:
             universal_appeal=Decimal(str(universal_appeal)),
             cultural_significance=Decimal(str(cultural_significance)),
             development_potential=Decimal(str(development_potential)),
-            symbolic_elements=set(symbolic_elements) if symbolic_elements else None,
+            symbolic_elements=set(symbolic_elements)
+            if symbolic_elements
+            else None,
             introduction_sequence=introduction_sequence,
             resolution_sequence=resolution_sequence,
             tags=set(tags) if tags else None,
@@ -367,7 +390,9 @@ class NarrativeArcApplicationService:
 
         self.command_handler.handle_add_theme(command)
 
-    def get_theme(self, arc_id: str, theme_id: str) -> Optional[Dict[str, Any]]:
+    def get_theme(
+        self, arc_id: str, theme_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Get a specific theme."""
         query = GetThemeQuery(arc_id=arc_id, theme_id=theme_id)
 
@@ -382,7 +407,11 @@ class NarrativeArcApplicationService:
         return self.query_handler.handle_get_themes_at_sequence(query)
 
     def develop_theme(
-        self, arc_id: str, theme_id: str, sequence: int, development_notes: str = ""
+        self,
+        arc_id: str,
+        theme_id: str,
+        sequence: int,
+        development_notes: str = "",
     ) -> None:
         """Develop a theme at a specific sequence."""
         command = DevelopThemeCommand(
@@ -428,7 +457,9 @@ class NarrativeArcApplicationService:
             end_sequence=end_sequence,
             event_density=Decimal(str(event_density)),
             tension_curve=(
-                [Decimal(str(t)) for t in tension_curve] if tension_curve else None
+                [Decimal(str(t)) for t in tension_curve]
+                if tension_curve
+                else None
             ),
             dialogue_ratio=Decimal(str(dialogue_ratio)),
             action_ratio=Decimal(str(action_ratio)),
@@ -506,14 +537,20 @@ class NarrativeArcApplicationService:
 
     def deactivate_context(self, arc_id: str, context_id: str) -> None:
         """Deactivate a narrative context."""
-        command = DeactivateContextCommand(arc_id=arc_id, context_id=context_id)
+        command = DeactivateContextCommand(
+            arc_id=arc_id, context_id=context_id
+        )
 
         self.command_handler.handle_deactivate_context(command)
 
     # Character Management
 
     def add_character_to_arc(
-        self, arc_id: str, character_id: UUID, role: str, character_arc_notes: str = ""
+        self,
+        arc_id: str,
+        character_id: UUID,
+        role: str,
+        character_arc_notes: str = "",
     ) -> None:
         """Add a character to a narrative arc."""
         command = AddCharacterToArcCommand(

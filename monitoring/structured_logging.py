@@ -113,9 +113,9 @@ class LoggingConfig:
 
     # Centralized logging
     enable_remote_logging: bool = False
-    remote_endpoint: Optional[str] = (
-        None  # e.g., "http://localhost:3100/loki/api/v1/push"
-    )
+    remote_endpoint: Optional[
+        str
+    ] = None  # e.g., "http://localhost:3100/loki/api/v1/push"
     remote_auth: Optional[Dict[str, str]] = None
 
     # Security logging
@@ -158,7 +158,9 @@ class StructuredLogger:
         # Start background flush task
         self._start_flush_task()
 
-        logger.info(f"Structured logger initialized for component: {component}")
+        self.logger.info(
+            f"Structured logger initialized for component: {component}"
+        )
 
     def _setup_handlers(self):
         """Set up logging handlers"""
@@ -232,7 +234,9 @@ class StructuredLogger:
                 backupCount=self.config.backup_count,
             )
             performance_handler.setFormatter(formatter)
-            performance_handler.addFilter(CategoryFilter(LogCategory.PERFORMANCE))
+            performance_handler.addFilter(
+                CategoryFilter(LogCategory.PERFORMANCE)
+            )
             self.logger.addHandler(performance_handler)
 
         # Audit log
@@ -259,12 +263,15 @@ class StructuredLogger:
             # For production, you would use a proper remote handler
             # like one for Loki, Elasticsearch, or other log aggregation systems
             remote_handler = RemoteLogHandler(
-                endpoint=self.config.remote_endpoint, auth=self.config.remote_auth
+                endpoint=self.config.remote_endpoint,
+                auth=self.config.remote_auth,
             )
             self.logger.addHandler(remote_handler)
-            logger.info(f"Remote logging enabled: {self.config.remote_endpoint}")
+            self.logger.info(
+                f"Remote logging enabled: {self.config.remote_endpoint}"
+            )
         except Exception as e:
-            logger.error(f"Failed to setup remote logging: {e}")
+            self.logger.error(f"Failed to setup remote logging: {e}")
 
     def _compress_old_logs(self):
         """Compress old log files"""
@@ -272,13 +279,15 @@ class StructuredLogger:
             log_dir = Path(self.config.log_directory)
             for log_file in log_dir.glob("*.log.*"):
                 if not log_file.name.endswith(".gz"):
-                    compressed_path = log_file.with_suffix(log_file.suffix + ".gz")
+                    compressed_path = log_file.with_suffix(
+                        log_file.suffix + ".gz"
+                    )
                     with open(log_file, "rb") as f_in:
                         with gzip.open(compressed_path, "wb") as f_out:
                             shutil.copyfileobj(f_in, f_out)
                     log_file.unlink()
         except Exception as e:
-            logger.error(f"Error compressing log files: {e}")
+            self.logger.error(f"Error compressing log files: {e}")
 
     def _start_flush_task(self):
         """Start background task to flush log buffer"""
@@ -289,7 +298,7 @@ class StructuredLogger:
                     time.sleep(self.config.flush_interval)
                     self._flush_buffer()
                 except Exception as e:
-                    logger.error(f"Error in log flush loop: {e}")
+                    self.logger.error(f"Error in log flush loop: {e}")
 
         flush_thread = threading.Thread(target=flush_loop, daemon=True)
         flush_thread.start()
@@ -424,11 +433,15 @@ class StructuredLogger:
         """Log warning message"""
         self.log(LogLevel.WARNING, message, **kwargs)
 
-    def error(self, message: str, exception: Optional[Exception] = None, **kwargs):
+    def error(
+        self, message: str, exception: Optional[Exception] = None, **kwargs
+    ):
         """Log error message"""
         self.log(LogLevel.ERROR, message, exception=exception, **kwargs)
 
-    def critical(self, message: str, exception: Optional[Exception] = None, **kwargs):
+    def critical(
+        self, message: str, exception: Optional[Exception] = None, **kwargs
+    ):
         """Log critical message"""
         self.log(LogLevel.CRITICAL, message, exception=exception, **kwargs)
 
@@ -525,7 +538,9 @@ class StructuredLogger:
         """Log audit event"""
         if message is None:
             status = "successful" if success else "failed"
-            message = f"User {user_id or 'unknown'} {status} {action} on {resource}"
+            message = (
+                f"User {user_id or 'unknown'} {status} {action} on {resource}"
+            )
 
         business_context = {
             "action": action,
@@ -550,7 +565,9 @@ class JsonFormatter(logging.Formatter):
         """Format log record as JSON"""
         # Get structured data if available
         if hasattr(record, "structured_data"):
-            return json.dumps(record.structured_data, default=str, ensure_ascii=False)
+            return json.dumps(
+                record.structured_data, default=str, ensure_ascii=False
+            )
 
         # Fallback to basic JSON structure
         log_data = {

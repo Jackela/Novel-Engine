@@ -67,7 +67,9 @@ class ComponentIntegrationManager:
 
         def visit(component):
             if component in temp_visited:
-                raise ValueError(f"Circular dependency detected involving {component}")
+                raise ValueError(
+                    f"Circular dependency detected involving {component}"
+                )
             if component in visited:
                 return
 
@@ -213,13 +215,17 @@ class SystemOrchestrator:
             await self.integration_manager.register_component(
                 "event_bus", self.event_bus
             )
-            await self.integration_manager.register_component("orchestrator", self)
+            await self.integration_manager.register_component(
+                "orchestrator", self
+            )
 
             # Initialize components
             await self.integration_manager.initialize_components()
 
             # Start monitoring
-            self._monitoring_task = asyncio.create_task(self._health_monitoring())
+            self._monitoring_task = asyncio.create_task(
+                self._health_monitoring()
+            )
 
             self.system_state = "running"
             logger.info("SystemOrchestrator initialized successfully")
@@ -258,7 +264,8 @@ class SystemOrchestrator:
         """Coordinate operations across agents."""
         try:
             await self.event_bus.emit(
-                "coordination_start", {"operation": operation, "kwargs": kwargs}
+                "coordination_start",
+                {"operation": operation, "kwargs": kwargs},
             )
 
             results = {}
@@ -271,20 +278,24 @@ class SystemOrchestrator:
                         else:
                             result = method(**kwargs)
                         results[agent_name] = result
-                        logger.debug(f"Agent {agent_name} completed {operation}")
+                        logger.debug(
+                            f"Agent {agent_name} completed {operation}"
+                        )
                 except Exception as e:
                     logger.error(f"Agent {agent_name} failed {operation}: {e}")
                     results[agent_name] = {"error": str(e)}
 
             await self.event_bus.emit(
-                "coordination_complete", {"operation": operation, "results": results}
+                "coordination_complete",
+                {"operation": operation, "results": results},
             )
             return results
 
         except Exception as e:
             logger.error(f"Agent coordination failed for {operation}: {e}")
             await self.event_bus.emit(
-                "coordination_failed", {"operation": operation, "error": str(e)}
+                "coordination_failed",
+                {"operation": operation, "error": str(e)},
             )
             raise
 
@@ -296,7 +307,9 @@ class SystemOrchestrator:
 
                 # Check component health
                 health_status = self.integration_manager.get_component_health()
-                success_rate = self.integration_manager.get_integration_success_rate()
+                success_rate = (
+                    self.integration_manager.get_integration_success_rate()
+                )
 
                 await self.event_bus.emit(
                     "health_check",
@@ -307,7 +320,9 @@ class SystemOrchestrator:
                     },
                 )
 
-                logger.debug(f"Health check: {success_rate:.1f}% integration success")
+                logger.debug(
+                    f"Health check: {success_rate:.1f}% integration success"
+                )
 
             except asyncio.CancelledError:
                 break
@@ -374,8 +389,12 @@ class ComponentTester:
             async def test_callback(data):
                 test_events.append(data)
 
-            await self.orchestrator.event_bus.subscribe("test_event", test_callback)
-            await self.orchestrator.event_bus.emit("test_event", {"test": "data"})
+            await self.orchestrator.event_bus.subscribe(
+                "test_event", test_callback
+            )
+            await self.orchestrator.event_bus.emit(
+                "test_event", {"test": "data"}
+            )
 
             # Wait for async processing
             await asyncio.sleep(0.1)
@@ -383,7 +402,9 @@ class ComponentTester:
             if test_events:
                 results["tests_passed"] += 1
             else:
-                results["errors"].append("Event bus test failed - no events received")
+                results["errors"].append(
+                    "Event bus test failed - no events received"
+                )
 
             # Test 3: Agent registration
             results["tests_run"] += 1
@@ -459,12 +480,12 @@ from typing import Dict, List, Any, Callable
 class EventBus:
     def __init__(self):
         self._subscribers: Dict[str, List[Callable]] = {}
-    
+
     def subscribe(self, event_type: str, callback: Callable):
         if event_type not in self._subscribers:
             self._subscribers[event_type] = []
         self._subscribers[event_type].append(callback)
-    
+
     def emit(self, event_type: str, data: Any = None):
         if event_type in self._subscribers:
             for callback in self._subscribers[event_type]:
@@ -502,7 +523,11 @@ class EventBus:
                 content = f.read()
 
             missing_types = []
-            required_types = ["ProposedAction", "ActionType", "ValidationResult"]
+            required_types = [
+                "ProposedAction",
+                "ActionType",
+                "ValidationResult",
+            ]
 
             for type_name in required_types:
                 if (

@@ -31,7 +31,9 @@ except ImportError as e:
     PERSONA_AGENT_AVAILABLE = False
 
 
-@pytest.mark.skipif(not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available")
+@pytest.mark.skipif(
+    not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available"
+)
 class TestPersonaAgentInitialization:
     """PersonaAgent Initialization and Character Loading Tests"""
 
@@ -96,7 +98,6 @@ class TestPersonaAgentInitialization:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path=self.temp_char_dir,
                 event_bus=self.mock_event_bus,
@@ -133,7 +134,6 @@ class TestPersonaAgentInitialization:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/imperial_guard/marcus",
                 event_bus=self.mock_event_bus,
@@ -159,8 +159,9 @@ class TestPersonaAgentInitialization:
         with patch("os.path.exists", return_value=True), patch(
             "os.path.isdir", return_value=True
         ), patch("os.listdir", return_value=[]):
-
-            with pytest.raises(ValueError, match="No .md or .yaml files found"):
+            with pytest.raises(
+                ValueError, match="No .md or .yaml files found"
+            ):
                 PersonaAgent(
                     character_directory_path=self.temp_char_dir,
                     event_bus=self.mock_event_bus,
@@ -189,7 +190,6 @@ class TestPersonaAgentInitialization:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path=self.temp_char_dir,
                 event_bus=self.mock_event_bus,
@@ -201,7 +201,9 @@ class TestPersonaAgentInitialization:
             )
 
 
-@pytest.mark.skipif(not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available")
+@pytest.mark.skipif(
+    not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available"
+)
 class TestPersonaAgentCharacterLoading:
     """PersonaAgent Character Data Loading and Parsing Tests"""
 
@@ -231,7 +233,6 @@ class TestPersonaAgentCharacterLoading:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             return PersonaAgent(
                 character_directory_path="test_character",
                 event_bus=self.mock_event_bus,
@@ -309,7 +310,8 @@ Just random text"""
             "src.persona_agent.PersonaAgent._read_cached_file",
             return_value="# Test Character",
         ), patch(
-            "src.persona_agent.PersonaAgent._parse_cached_yaml", return_value={}
+            "src.persona_agent.PersonaAgent._parse_cached_yaml",
+            return_value={},
         ), patch.object(
             PersonaAgent, "_extract_core_identity"
         ), patch.object(
@@ -323,16 +325,18 @@ Just random text"""
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
-                character_directory_path="test_character", event_bus=self.mock_event_bus
+                character_directory_path="test_character",
+                event_bus=self.mock_event_bus,
             )
 
             # Should handle multiple files appropriately
             assert agent.character_data is not None
 
 
-@pytest.mark.skipif(not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available")
+@pytest.mark.skipif(
+    not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available"
+)
 class TestPersonaAgentDecisionMaking:
     """PersonaAgent Decision Making and Action Generation Tests"""
 
@@ -376,7 +380,6 @@ class TestPersonaAgentDecisionMaking:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             return PersonaAgent(
                 character_directory_path="test_character",
                 event_bus=self.mock_event_bus,
@@ -426,7 +429,9 @@ class TestPersonaAgentDecisionMaking:
         agent = self.create_test_agent()
 
         # Mock AI integration to avoid external dependencies
-        with patch("src.persona_agent._validate_gemini_api_key", return_value=None):
+        with patch(
+            "src.persona_agent._validate_gemini_api_key", return_value=None
+        ):
             result = agent._make_decision(self.test_world_state)
 
             # Result should be CharacterAction or None
@@ -440,13 +445,17 @@ class TestPersonaAgentDecisionMaking:
         # Test with invalid world state
         invalid_world_state = None
 
-        with patch("src.persona_agent._validate_gemini_api_key", return_value=None):
+        with patch(
+            "src.persona_agent._validate_gemini_api_key", return_value=None
+        ):
             result = agent._make_decision(invalid_world_state)
             # Should handle gracefully
             assert result is None or isinstance(result, CharacterAction)
 
 
-@pytest.mark.skipif(not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available")
+@pytest.mark.skipif(
+    not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available"
+)
 class TestPersonaAgentWorldInterpretation:
     """PersonaAgent World Event Interpretation Tests"""
 
@@ -468,7 +477,7 @@ class TestPersonaAgentWorldInterpretation:
 ## Basic Information
 - **Name**: Veteran Kasrkin
 - **Faction**: Imperial Guard
-## Personality Traits  
+## Personality Traits
 - Battle-hardened veteran
 - Protective of civilians
 - Hates orks with passion
@@ -493,7 +502,6 @@ class TestPersonaAgentWorldInterpretation:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             return PersonaAgent(
                 character_directory_path="test_character",
                 event_bus=self.mock_event_bus,
@@ -547,14 +555,21 @@ class TestPersonaAgentWorldInterpretation:
         # Check if agent can assess threats
         if hasattr(agent, "_assess_threat_level"):
             try:
-                threat_level = agent._assess_threat_level(self.test_world_event)
-                assert isinstance(threat_level, ThreatLevel) or threat_level is None
+                threat_level = agent._assess_threat_level(
+                    self.test_world_event
+                )
+                assert (
+                    isinstance(threat_level, ThreatLevel)
+                    or threat_level is None
+                )
             except Exception:
                 # Method might require additional setup
                 pass
 
 
-@pytest.mark.skipif(not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available")
+@pytest.mark.skipif(
+    not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available"
+)
 class TestPersonaAgentAIIntegration:
     """PersonaAgent AI/LLM Integration Tests"""
 
@@ -585,7 +600,6 @@ class TestPersonaAgentAIIntegration:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             return PersonaAgent(
                 character_directory_path="ai_test_character",
                 event_bus=self.mock_event_bus,
@@ -616,7 +630,9 @@ class TestPersonaAgentAIIntegration:
 
         # Decision making should use fallback logic
         world_state = {"current_turn": 1}
-        with patch("src.persona_agent._validate_gemini_api_key", return_value=None):
+        with patch(
+            "src.persona_agent._validate_gemini_api_key", return_value=None
+        ):
             result = agent._make_decision(world_state)
             # Should return None or basic CharacterAction
             assert result is None or isinstance(result, CharacterAction)
@@ -628,13 +644,17 @@ class TestPersonaAgentAIIntegration:
 
         # Test decision making without actual AI calls
         world_state = {"current_turn": 1, "threats": ["orks"]}
-        with patch("src.persona_agent._validate_gemini_api_key", return_value=None):
+        with patch(
+            "src.persona_agent._validate_gemini_api_key", return_value=None
+        ):
             result = agent._make_decision(world_state)
             # Should process appropriately without AI
             assert result is None or isinstance(result, CharacterAction)
 
 
-@pytest.mark.skipif(not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available")
+@pytest.mark.skipif(
+    not PERSONA_AGENT_AVAILABLE, reason="PersonaAgent not available"
+)
 class TestPersonaAgentMemoryAndEvolution:
     """PersonaAgent Memory System and Character Evolution Tests"""
 
@@ -672,7 +692,6 @@ class TestPersonaAgentMemoryAndEvolution:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             return PersonaAgent(
                 character_directory_path="evolving_character",
                 event_bus=self.mock_event_bus,

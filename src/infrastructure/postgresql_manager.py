@@ -48,7 +48,9 @@ class PostgreSQLConfig:
     command_timeout: float = 60.0
 
     # SSL configuration
-    ssl_mode: str = "prefer"  # disable, allow, prefer, require, verify-ca, verify-full
+    ssl_mode: str = (
+        "prefer"  # disable, allow, prefer, require, verify-ca, verify-full
+    )
     ssl_cert_path: Optional[str] = None
     ssl_key_path: Optional[str] = None
     ssl_ca_path: Optional[str] = None
@@ -71,7 +73,9 @@ class PostgreSQLConfig:
 
     def get_connection_string(self) -> str:
         """Get PostgreSQL connection string."""
-        ssl_param = f"?sslmode={self.ssl_mode}" if self.ssl_mode != "disable" else ""
+        ssl_param = (
+            f"?sslmode={self.ssl_mode}" if self.ssl_mode != "disable" else ""
+        )
         return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}{ssl_param}"
 
 
@@ -145,10 +149,14 @@ class PostgreSQLConnectionPool:
         async with self.pool.acquire() as conn:
             for extension in self.config.enable_extensions:
                 try:
-                    await conn.execute(f'CREATE EXTENSION IF NOT EXISTS "{extension}"')
+                    await conn.execute(
+                        f'CREATE EXTENSION IF NOT EXISTS "{extension}"'
+                    )
                     logger.debug(f"Enabled PostgreSQL extension: {extension}")
                 except Exception as e:
-                    logger.warning(f"Failed to enable extension {extension}: {e}")
+                    logger.warning(
+                        f"Failed to enable extension {extension}: {e}"
+                    )
 
     async def _initialize_schema(self) -> None:
         """Initialize database schema for Novel Engine."""
@@ -290,7 +298,9 @@ class PostgreSQLConnectionPool:
 
                 # Limit metrics history
                 if len(self._metrics["query_times"]) > 1000:
-                    self._metrics["query_times"] = self._metrics["query_times"][-1000:]
+                    self._metrics["query_times"] = self._metrics[
+                        "query_times"
+                    ][-1000:]
 
                 return result
 
@@ -307,7 +317,9 @@ class PostgreSQLConnectionPool:
                     for query, args in queries:
                         await conn.execute(query, *args)
 
-                logger.debug(f"Transaction completed with {len(queries)} queries")
+                logger.debug(
+                    f"Transaction completed with {len(queries)} queries"
+                )
                 return True
 
         except Exception as e:
@@ -348,7 +360,7 @@ class PostgreSQLConnectionPool:
     ) -> List[Dict[str, Any]]:
         """Search characters using full-text search."""
         query = """
-        SELECT id, name, character_data, 
+        SELECT id, name, character_data,
                ts_rank(search_vector, plainto_tsquery('english', $1)) as rank
         FROM characters
         WHERE search_vector @@ plainto_tsquery('english', $1)
@@ -356,7 +368,9 @@ class PostgreSQLConnectionPool:
         LIMIT $2
         """
 
-        results = await self.execute_query(query, search_query, limit, fetch_mode="all")
+        results = await self.execute_query(
+            query, search_query, limit, fetch_mode="all"
+        )
 
         return [
             {
@@ -381,7 +395,9 @@ class PostgreSQLConnectionPool:
         embedding: Optional[List[float]] = None,
     ) -> str:
         """Store memory item with vector embedding support."""
-        search_text = f"{content.get('description', '')} {content.get('context', '')}"
+        search_text = (
+            f"{content.get('description', '')} {content.get('context', '')}"
+        )
 
         query = """
         INSERT INTO memory_items (agent_id, memory_type, content, embedding, search_vector, importance_score)
@@ -454,7 +470,10 @@ class PostgreSQLConnectionPool:
         ]
 
     async def store_interaction(
-        self, session_id: str, participants: List[str], interaction_data: Dict[str, Any]
+        self,
+        session_id: str,
+        participants: List[str],
+        interaction_data: Dict[str, Any],
     ) -> str:
         """Store interaction with full-text search."""
         search_text = f"{interaction_data.get('summary', '')} {interaction_data.get('dialogue', '')}"
@@ -558,7 +577,9 @@ class PostgreSQLManager:
     async def health_check(self) -> Dict[str, Any]:
         """Perform comprehensive health check."""
         try:
-            await self.connection_pool.execute_query("SELECT 1", fetch_mode="one")
+            await self.connection_pool.execute_query(
+                "SELECT 1", fetch_mode="one"
+            )
 
             metrics = self.connection_pool.get_metrics()
 

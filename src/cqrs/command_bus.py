@@ -273,7 +273,9 @@ class IdempotencyManager:
 
         return command.idempotency_key in self._executed_commands
 
-    async def get_existing_result(self, command: Command) -> Optional[CommandResult]:
+    async def get_existing_result(
+        self, command: Command
+    ) -> Optional[CommandResult]:
         """Get result of previously executed command."""
         if command.idempotency_key:
             return self._executed_commands.get(command.idempotency_key)
@@ -355,7 +357,9 @@ class CommandBus:
     - Comprehensive audit logging
     """
 
-    def __init__(self, event_bus: EventBus, config: Optional[CommandBusConfig] = None):
+    def __init__(
+        self, event_bus: EventBus, config: Optional[CommandBusConfig] = None
+    ):
         self.config = config or CommandBusConfig()
         self.event_bus = event_bus
         self._handlers: Dict[str, CommandHandler] = {}
@@ -366,7 +370,9 @@ class CommandBus:
         self.idempotency_manager = (
             IdempotencyManager() if self.config.enable_idempotency else None
         )
-        self.saga_manager = SagaManager() if self.config.enable_saga_support else None
+        self.saga_manager = (
+            SagaManager() if self.config.enable_saga_support else None
+        )
 
         self._command_history: List[Command] = []
         self._metrics = {
@@ -389,7 +395,7 @@ class CommandBus:
             self._handlers[command_type_str] = handler
 
         logger.info(
-            f"Registered handler {handler.handler_id} for command types: {handler.handled_command_types}"
+            f"Registered handler {handler.handler_id}for command types: {handler.handled_command_types}"
         )
 
     def unregister_handler(self, handler: CommandHandler):
@@ -428,7 +434,9 @@ class CommandBus:
                     and await self.idempotency_manager.is_duplicate(command)
                 ):
                     existing_result = (
-                        await self.idempotency_manager.get_existing_result(command)
+                        await self.idempotency_manager.get_existing_result(
+                            command
+                        )
                     )
                     if existing_result:
                         logger.info(
@@ -473,7 +481,9 @@ class CommandBus:
 
                 # Record for idempotency
                 if self.idempotency_manager:
-                    await self.idempotency_manager.record_execution(command, result)
+                    await self.idempotency_manager.record_execution(
+                        command, result
+                    )
 
                 # Generate events if successful
                 if result.success and self.config.enable_event_sourcing:
@@ -487,13 +497,13 @@ class CommandBus:
                 self._update_metrics(result)
 
                 logger.debug(
-                    f"Command {command.command_id} executed successfully in {result.execution_time_ms}ms"
+                    f"Command {command.command_id}executed successfully in {result.execution_time_ms}ms"
                 )
                 return result
 
             except asyncio.TimeoutError:
                 command.status = CommandStatus.FAILED
-                error_msg = f"Command {command.command_id} timed out after {command.timeout_seconds} seconds"
+                error_msg = f"Command {command.command_id}timed out after {command.timeout_seconds} seconds"
                 logger.error(error_msg)
 
                 result = CommandResult(
@@ -509,7 +519,9 @@ class CommandBus:
             except Exception as e:
                 command.status = CommandStatus.FAILED
                 error_msg = f"Command execution failed: {str(e)}"
-                logger.error(f"Command {command.command_id} failed: {error_msg}")
+                logger.error(
+                    f"Command {command.command_id} failed: {error_msg}"
+                )
 
                 result = CommandResult(
                     success=False,
@@ -562,7 +574,9 @@ class CommandBus:
                     await self._compensate_saga(saga_id)
                     break
 
-            logger.info(f"Saga {saga_id} completed with {len(results)} commands")
+            logger.info(
+                f"Saga {saga_id} completed with {len(results)} commands"
+            )
             return results
 
         except Exception as e:
@@ -575,22 +589,28 @@ class CommandBus:
         if not self.saga_manager:
             return
 
-        compensation_commands = await self.saga_manager.get_compensation_commands(
-            saga_id
+        compensation_commands = (
+            await self.saga_manager.get_compensation_commands(saga_id)
         )
 
         for compensation_command in compensation_commands:
             try:
                 await self.execute(compensation_command)
-                logger.info(f"Executed compensation command for saga {saga_id}")
+                logger.info(
+                    f"Executed compensation command for saga {saga_id}"
+                )
             except Exception as e:
-                logger.error(f"Compensation command failed for saga {saga_id}: {e}")
+                logger.error(
+                    f"Compensation command failed for saga {saga_id}: {e}"
+                )
 
-    async def _generate_command_events(self, command: Command, result: CommandResult):
+    async def _generate_command_events(
+        self, command: Command, result: CommandResult
+    ):
         """Generate events based on command execution."""
         # Create command executed event
         event = Event(
-            event_type=f"command.{command.command_type.value if isinstance(command.command_type, CommandType) else command.command_type}.executed",
+            event_type=f"command.{command.command_type.value if isinstance( command.command_type, CommandType) else command.command_type}.executed",
             payload={
                 "command_id": command.command_id,
                 "command_type": (
@@ -617,7 +637,7 @@ class CommandBus:
         delay = min(2**command.retry_count, 60)  # Max 60 seconds
 
         logger.info(
-            f"Scheduling retry for command {command.command_id} in {delay} seconds (attempt {command.retry_count})"
+            f"Scheduling retry for command {command.command_id}in {delay} seconds (attempt {command.retry_count})"
         )
 
         async def retry_after_delay():
@@ -648,13 +668,17 @@ class CommandBus:
             "commands_processed": self._metrics["commands_processed"],
             "commands_failed": self._metrics["commands_failed"],
             "success_rate": (
-                self._metrics["commands_processed"] - self._metrics["commands_failed"]
+                self._metrics["commands_processed"]
+                - self._metrics["commands_failed"]
             )
             / max(self._metrics["commands_processed"], 1),
             "failure_rate": self._metrics["commands_failed"]
             / max(self._metrics["commands_processed"], 1),
-            "average_execution_time_ms": self._metrics["average_execution_time"],
-            "commands_per_second": self._metrics["commands_processed"] / max(uptime, 1),
+            "average_execution_time_ms": self._metrics[
+                "average_execution_time"
+            ],
+            "commands_per_second": self._metrics["commands_processed"]
+            / max(uptime, 1),
             "uptime_seconds": uptime,
             "active_handlers": len(self._handlers),
             "audit_log_size": len(self._command_history),
@@ -677,7 +701,9 @@ class CommandBus:
         # Check event bus health
         try:
             event_bus_health = await self.event_bus.health_check()
-            health["event_bus_healthy"] = event_bus_health.get("status") == "healthy"
+            health["event_bus_healthy"] = (
+                event_bus_health.get("status") == "healthy"
+            )
         except Exception:
             health["status"] = "degraded"
             health["event_bus_healthy"] = False

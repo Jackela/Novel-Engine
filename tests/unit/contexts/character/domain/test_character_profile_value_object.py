@@ -242,7 +242,9 @@ class TestBackground:
             family={"father": "blacksmith", "mother": "healer"},
             education="village school",
             previous_occupations=["farmer", "guard"],
-            significant_events=[{"event": "saved village from bandits", "age": 20}],
+            significant_events=[
+                {"event": "saved village from bandits", "age": 20}
+            ],
             reputation="local hero",
         )
 
@@ -323,11 +325,16 @@ class TestCharacterProfile:
     @pytest.fixture
     def sample_background(self) -> Background:
         """Create sample background for testing."""
-        return Background(backstory="Noble warrior", homeland="Kingdom of Valor")
+        return Background(
+            backstory="Noble warrior", homeland="Kingdom of Valor"
+        )
 
     @pytest.fixture
     def sample_character_profile(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ) -> CharacterProfile:
         """Create a test CharacterProfile instance."""
         return CharacterProfile(
@@ -348,7 +355,10 @@ class TestCharacterProfile:
     # ==================== Creation Tests ====================
 
     def test_character_profile_creation_success(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test successful character profile creation."""
         profile = CharacterProfile(
@@ -371,7 +381,10 @@ class TestCharacterProfile:
         assert profile.level == 3
 
     def test_character_profile_creation_minimal(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile creation with minimal data."""
         profile = CharacterProfile(
@@ -394,7 +407,10 @@ class TestCharacterProfile:
     # ==================== Validation Tests ====================
 
     def test_character_profile_empty_name_fails(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile validation fails with empty name."""
         with pytest.raises(ValueError) as exc_info:
@@ -412,7 +428,10 @@ class TestCharacterProfile:
         assert "Character name cannot be empty" in str(exc_info.value)
 
     def test_character_profile_whitespace_name_fails(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile validation fails with whitespace-only name."""
         with pytest.raises(ValueError) as exc_info:
@@ -430,7 +449,10 @@ class TestCharacterProfile:
         assert "Character name cannot be empty" in str(exc_info.value)
 
     def test_character_profile_name_too_long_fails(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile validation fails with name too long."""
         long_name = "A" * 101  # 101 characters
@@ -446,10 +468,15 @@ class TestCharacterProfile:
                 personality_traits=sample_personality_traits,
                 background=sample_background,
             )
-        assert "Character name cannot exceed 100 characters" in str(exc_info.value)
+        assert "Character name cannot exceed 100 characters" in str(
+            exc_info.value
+        )
 
     def test_character_profile_negative_age_fails(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile validation fails with negative age."""
         with pytest.raises(ValueError) as exc_info:
@@ -467,7 +494,10 @@ class TestCharacterProfile:
         assert "Age must be between 0 and 10000" in str(exc_info.value)
 
     def test_character_profile_age_too_high_fails(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile validation fails with age too high."""
         with pytest.raises(ValueError) as exc_info:
@@ -485,7 +515,10 @@ class TestCharacterProfile:
         assert "Age must be between 0 and 10000" in str(exc_info.value)
 
     def test_character_profile_level_too_low_fails(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile validation fails with level too low."""
         with pytest.raises(ValueError) as exc_info:
@@ -503,7 +536,10 @@ class TestCharacterProfile:
         assert "Level must be between 1 and 100" in str(exc_info.value)
 
     def test_character_profile_level_too_high_fails(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile validation fails with level too high."""
         with pytest.raises(ValueError) as exc_info:
@@ -521,10 +557,15 @@ class TestCharacterProfile:
         assert "Level must be between 1 and 100" in str(exc_info.value)
 
     def test_character_profile_too_many_languages_fails(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile validation fails with too many languages."""
-        too_many_languages = [f"Language{i}" for i in range(21)]  # 21 languages
+        too_many_languages = [
+            f"Language{i}" for i in range(21)
+        ]  # 21 languages
         with pytest.raises(ValueError) as exc_info:
             CharacterProfile(
                 name="Test",
@@ -541,7 +582,10 @@ class TestCharacterProfile:
         assert "Cannot speak more than 20 languages" in str(exc_info.value)
 
     def test_character_profile_empty_language_fails(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile validation fails with empty language name."""
         with pytest.raises(ValueError) as exc_info:
@@ -562,7 +606,10 @@ class TestCharacterProfile:
     # ==================== Age Methods Tests ====================
 
     def test_is_adult_human_adult(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test is_adult returns True for adult human."""
         profile = CharacterProfile(
@@ -580,7 +627,10 @@ class TestCharacterProfile:
         assert profile.is_adult() is True
 
     def test_is_adult_human_child(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test is_adult returns False for child human."""
         profile = CharacterProfile(
@@ -598,7 +648,10 @@ class TestCharacterProfile:
         assert profile.is_adult() is False
 
     def test_is_adult_elf_adult(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test is_adult returns True for adult elf."""
         profile = CharacterProfile(
@@ -616,7 +669,10 @@ class TestCharacterProfile:
         assert profile.is_adult() is True
 
     def test_is_adult_elf_child(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test is_adult returns False for child elf."""
         profile = CharacterProfile(
@@ -634,7 +690,10 @@ class TestCharacterProfile:
         assert profile.is_adult() is False
 
     def test_is_adult_dwarf_adult(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test is_adult returns True for adult dwarf."""
         profile = CharacterProfile(
@@ -652,7 +711,10 @@ class TestCharacterProfile:
         assert profile.is_adult() is True
 
     def test_is_adult_boundary_values(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test is_adult at exact boundary ages."""
         # Human at exactly 18
@@ -677,7 +739,10 @@ class TestCharacterProfile:
         assert sample_character_profile.get_full_title() == "Sir Sir Galahad"
 
     def test_get_full_title_without_title(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test get_full_title without title."""
         profile = CharacterProfile(
@@ -694,7 +759,9 @@ class TestCharacterProfile:
 
         assert profile.get_full_title() == "No Title"
 
-    def test_get_character_summary_with_affiliation(self, sample_character_profile):
+    def test_get_character_summary_with_affiliation(
+        self, sample_character_profile
+    ):
         """Test character summary with affiliation."""
         summary = sample_character_profile.get_character_summary()
 
@@ -705,7 +772,10 @@ class TestCharacterProfile:
         assert "Knights of the Round Table" in summary
 
     def test_get_character_summary_without_affiliation(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character summary without affiliation."""
         profile = CharacterProfile(
@@ -730,7 +800,9 @@ class TestCharacterProfile:
 
     # ==================== Language Methods Tests ====================
 
-    def test_speaks_language_with_languages_list(self, sample_character_profile):
+    def test_speaks_language_with_languages_list(
+        self, sample_character_profile
+    ):
         """Test speaks_language with explicit languages list."""
         assert sample_character_profile.speaks_language("Common") is True
         assert sample_character_profile.speaks_language("Celestial") is True
@@ -742,7 +814,10 @@ class TestCharacterProfile:
         assert sample_character_profile.speaks_language("CELESTIAL") is True
 
     def test_speaks_language_without_languages_list(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test speaks_language defaults to Common when no languages specified."""
         profile = CharacterProfile(
@@ -769,13 +844,20 @@ class TestCharacterProfile:
 
     def test_has_trait_above_threshold_false(self, sample_character_profile):
         """Test has_trait_above returns False when trait is below threshold."""
-        assert sample_character_profile.has_trait_above("intelligence", 0.7) is False
-        assert sample_character_profile.has_trait_above("courage", 0.9) is False
+        assert (
+            sample_character_profile.has_trait_above("intelligence", 0.7)
+            is False
+        )
+        assert (
+            sample_character_profile.has_trait_above("courage", 0.9) is False
+        )
 
     def test_has_trait_above_missing_trait(self, sample_character_profile):
         """Test has_trait_above with missing trait uses default 0.5."""
         assert sample_character_profile.has_trait_above("missing", 0.4) is True
-        assert sample_character_profile.has_trait_above("missing", 0.6) is False
+        assert (
+            sample_character_profile.has_trait_above("missing", 0.6) is False
+        )
 
     def test_get_personality_summary_strong_traits(
         self, sample_physical_traits, sample_background
@@ -895,7 +977,10 @@ class TestCharacterProfile:
     # ==================== Edge Cases and Integration Tests ====================
 
     def test_character_profile_with_all_enum_values(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile creation with various enum values."""
         # Test all genders
@@ -914,7 +999,10 @@ class TestCharacterProfile:
             assert profile.gender == gender
 
     def test_character_profile_racial_age_combinations(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profiles with different racial age combinations."""
         racial_ages = [
@@ -943,7 +1031,10 @@ class TestCharacterProfile:
             assert profile.is_adult() == expected_adult
 
     def test_character_profile_boundary_validations(
-        self, sample_physical_traits, sample_personality_traits, sample_background
+        self,
+        sample_physical_traits,
+        sample_personality_traits,
+        sample_background,
     ):
         """Test character profile at all validation boundaries."""
         # Test boundary ages

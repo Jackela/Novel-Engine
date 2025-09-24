@@ -60,18 +60,34 @@ class PerformanceMetrics:
 
             if success:
                 self._coordination_stats["successful_coordinations"] += 1
-                self._coordination_stats["coordination_quality_sum"] += quality_score
+                self._coordination_stats[
+                    "coordination_quality_sum"
+                ] += quality_score
 
             # Track by type
-            if coordination_type not in self._coordination_stats["coordination_types"]:
-                self._coordination_stats["coordination_types"][coordination_type] = 0
-            self._coordination_stats["coordination_types"][coordination_type] += 1
+            if (
+                coordination_type
+                not in self._coordination_stats["coordination_types"]
+            ):
+                self._coordination_stats["coordination_types"][
+                    coordination_type
+                ] = 0
+            self._coordination_stats["coordination_types"][
+                coordination_type
+            ] += 1
 
             # Track agent interactions
             for participant in participants:
-                if participant not in self._coordination_stats["agent_interactions"]:
-                    self._coordination_stats["agent_interactions"][participant] = 0
-                self._coordination_stats["agent_interactions"][participant] += 1
+                if (
+                    participant
+                    not in self._coordination_stats["agent_interactions"]
+                ):
+                    self._coordination_stats["agent_interactions"][
+                        participant
+                    ] = 0
+                self._coordination_stats["agent_interactions"][
+                    participant
+                ] += 1
 
         except Exception as e:
             self.logger.error(f"Error recording coordination event: {e}")
@@ -207,8 +223,12 @@ class PerformanceMetrics:
             ]
             perf_trend = "stable"
             if len(perf_data) >= 2:
-                recent_avg = sum(p.get("avg_turn_time", 0) for p in perf_data[-3:]) / 3
-                older_avg = sum(p.get("avg_turn_time", 0) for p in perf_data[:3]) / 3
+                recent_avg = (
+                    sum(p.get("avg_turn_time", 0) for p in perf_data[-3:]) / 3
+                )
+                older_avg = (
+                    sum(p.get("avg_turn_time", 0) for p in perf_data[:3]) / 3
+                )
 
                 if recent_avg > older_avg * 1.1:
                     perf_trend = "degrading"
@@ -220,14 +240,18 @@ class PerformanceMetrics:
                 "cost_trend": cost_trend,
                 "performance_trend": perf_trend,
                 "turns_analyzed": len(recent_turns),
-                "overall_trend": self._determine_overall_trend(cost_trend, perf_trend),
+                "overall_trend": self._determine_overall_trend(
+                    cost_trend, perf_trend
+                ),
             }
 
         except Exception as e:
             self.logger.error(f"Error in trend analysis: {e}")
             return {"status": "error"}
 
-    def _determine_overall_trend(self, cost_trend: str, perf_trend: str) -> str:
+    def _determine_overall_trend(
+        self, cost_trend: str, perf_trend: str
+    ) -> str:
         """Determine overall system trend."""
         if cost_trend == "increasing" and perf_trend == "degrading":
             return "concerning"
@@ -278,7 +302,9 @@ class PerformanceMetrics:
             recommendations = []
 
             # Cost recommendations
-            recommendations.extend(self.cost_tracker.get_optimization_recommendations())
+            recommendations.extend(
+                self.cost_tracker.get_optimization_recommendations()
+            )
 
             # Performance recommendations
             recommendations.extend(
@@ -326,9 +352,14 @@ class PerformanceMetrics:
             return {
                 "total_interactions": total_interactions,
                 "unique_agents": len(interactions),
-                "avg_interactions_per_agent": total_interactions / len(interactions),
-                "most_active_agent": max(interactions.items(), key=lambda x: x[1]),
-                "least_active_agent": min(interactions.items(), key=lambda x: x[1]),
+                "avg_interactions_per_agent": total_interactions
+                / len(interactions),
+                "most_active_agent": max(
+                    interactions.items(), key=lambda x: x[1]
+                ),
+                "least_active_agent": min(
+                    interactions.items(), key=lambda x: x[1]
+                ),
                 "interaction_distribution": {
                     agent: (count / total_interactions) * 100
                     for agent, count in interactions.items()

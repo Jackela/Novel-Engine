@@ -15,7 +15,11 @@ from typing import Any, Callable, Dict, List, Optional
 try:
     import aiokafka
     from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
-    from aiokafka.errors import KafkaConnectionError, KafkaError, KafkaTimeoutError
+    from aiokafka.errors import (
+        KafkaConnectionError,
+        KafkaError,
+        KafkaTimeoutError,
+    )
     from aiokafka.helpers import create_ssl_context
 
     KAFKA_AVAILABLE = True
@@ -117,10 +121,14 @@ class KafkaClient:
         self._connection_lock = asyncio.Lock()
 
         # Connection settings
-        self.bootstrap_servers = self.config.get("bootstrap_servers", "localhost:9092")
+        self.bootstrap_servers = self.config.get(
+            "bootstrap_servers", "localhost:9092"
+        )
         self.security_config = self._build_security_config()
 
-        logger.info(f"Initialized Kafka client with servers: {self.bootstrap_servers}")
+        logger.info(
+            f"Initialized Kafka client with servers: {self.bootstrap_servers}"
+        )
 
     async def connect(self) -> None:
         """Establish connection to Kafka cluster."""
@@ -142,7 +150,9 @@ class KafkaClient:
             except Exception as e:
                 self._metrics.record_connection_failed()
                 logger.error(f"Failed to connect to Kafka: {e}")
-                raise KafkaConnectionException(f"Failed to connect to Kafka: {e}")
+                raise KafkaConnectionException(
+                    f"Failed to connect to Kafka: {e}"
+                )
 
     async def disconnect(self) -> None:
         """Disconnect from Kafka cluster and cleanup resources."""
@@ -156,7 +166,9 @@ class KafkaClient:
                 # Stop all consumers
                 for consumer_group, consumer in self._consumers.items():
                     await consumer.stop()
-                    logger.debug(f"Stopped consumer for group: {consumer_group}")
+                    logger.debug(
+                        f"Stopped consumer for group: {consumer_group}"
+                    )
 
                 self._consumers.clear()
 
@@ -268,7 +280,9 @@ class KafkaClient:
             await asyncio.gather(*futures)
 
             self._metrics.record_batch_published(topic, batch_size)
-            logger.debug(f"Published batch of {batch_size} messages to topic {topic}")
+            logger.debug(
+                f"Published batch of {batch_size} messages to topic {topic}"
+            )
 
         except Exception as e:
             self._metrics.record_batch_publish_failed(topic)
@@ -320,13 +334,17 @@ class KafkaClient:
 
             # Start consuming in background task
             asyncio.create_task(
-                self._consume_messages(consumer, message_handler, consumer_group)
+                self._consume_messages(
+                    consumer, message_handler, consumer_group
+                )
             )
 
             logger.info(f"Started consumer for group {consumer_group}")
 
         except Exception as e:
-            logger.error(f"Failed to create consumer for group {consumer_group}: {e}")
+            logger.error(
+                f"Failed to create consumer for group {consumer_group}: {e}"
+            )
             raise KafkaConsumeException(f"Failed to create consumer: {e}")
 
     async def unsubscribe(self, consumer_group: str) -> None:
@@ -343,7 +361,9 @@ class KafkaClient:
             logger.info(f"Stopped consumer for group {consumer_group}")
 
         except Exception as e:
-            logger.error(f"Failed to stop consumer for group {consumer_group}: {e}")
+            logger.error(
+                f"Failed to stop consumer for group {consumer_group}: {e}"
+            )
             raise
 
     async def health_check(self) -> Dict[str, Any]:
@@ -372,7 +392,9 @@ class KafkaClient:
                 }
         except Exception as e:
             health_status["status"] = "degraded"
-            health_status["errors"].append(f"Producer health check failed: {str(e)}")
+            health_status["errors"].append(
+                f"Producer health check failed: {str(e)}"
+            )
 
         # Test consumers
         unhealthy_consumers = []
@@ -419,7 +441,10 @@ class KafkaClient:
             raise
 
     async def _consume_messages(
-        self, consumer: AIOKafkaConsumer, message_handler: Callable, consumer_group: str
+        self,
+        consumer: AIOKafkaConsumer,
+        message_handler: Callable,
+        consumer_group: str,
     ) -> None:
         """Background task to consume messages."""
         logger.info(f"Starting message consumption for group {consumer_group}")
@@ -438,8 +463,12 @@ class KafkaClient:
                         "partition": message.partition,
                         "offset": message.offset,
                         "timestamp": message.timestamp,
-                        "key": message.key.decode("utf-8") if message.key else None,
-                        "headers": dict(message.headers) if message.headers else {},
+                        "key": message.key.decode("utf-8")
+                        if message.key
+                        else None,
+                        "headers": dict(message.headers)
+                        if message.headers
+                        else {},
                     }
 
                     # Call message handler
@@ -451,8 +480,12 @@ class KafkaClient:
                     self._metrics.record_message_processed(message.topic)
 
                 except Exception as e:
-                    self._metrics.record_message_processing_failed(message.topic)
-                    logger.error(f"Failed to process message from {message.topic}: {e}")
+                    self._metrics.record_message_processing_failed(
+                        message.topic
+                    )
+                    logger.error(
+                        f"Failed to process message from {message.topic}: {e}"
+                    )
                     # Continue processing other messages
 
         except Exception as e:
@@ -481,8 +514,12 @@ class KafkaClient:
             security_config["sasl_mechanism"] = self.config.get(
                 "sasl_mechanism", "PLAIN"
             )
-            security_config["sasl_plain_username"] = self.config.get("sasl_username")
-            security_config["sasl_plain_password"] = self.config.get("sasl_password")
+            security_config["sasl_plain_username"] = self.config.get(
+                "sasl_username"
+            )
+            security_config["sasl_plain_password"] = self.config.get(
+                "sasl_password"
+            )
 
         return security_config
 
@@ -515,7 +552,9 @@ class KafkaClient:
             return None
         return key_bytes.decode("utf-8")
 
-    def _prepare_headers(self, headers: Optional[Dict[str, str]]) -> List[tuple]:
+    def _prepare_headers(
+        self, headers: Optional[Dict[str, str]]
+    ) -> List[tuple]:
         """Prepare headers for Kafka message."""
         if headers is None:
             headers = {}
@@ -525,7 +564,9 @@ class KafkaClient:
         headers.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
 
         # Convert to Kafka format
-        return [(k.encode("utf-8"), v.encode("utf-8")) for k, v in headers.items()]
+        return [
+            (k.encode("utf-8"), v.encode("utf-8")) for k, v in headers.items()
+        ]
 
 
 # Global Kafka client instance

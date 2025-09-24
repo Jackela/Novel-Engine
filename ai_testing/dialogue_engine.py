@@ -38,7 +38,9 @@ class DialogueMemory:
 
         if topic:
             self.recent_topics.append(topic)
-            self.topic_exhaustion[topic] = self.topic_exhaustion.get(topic, 0) + 1
+            self.topic_exhaustion[topic] = (
+                self.topic_exhaustion.get(topic, 0) + 1
+            )
 
     def get_unexplored_topic(self, available_topics: List[str]) -> str:
         """Get a topic that hasn't been overused"""
@@ -179,7 +181,9 @@ class CharacterVoice:
             },
         }
 
-    def generate_dialogue(self, topic: str, emotion: str, context: Dict) -> str:
+    def generate_dialogue(
+        self, topic: str, emotion: str, context: Dict
+    ) -> str:
         """Generate character-specific dialogue"""
         # Select appropriate vocabulary
         vocab_choice = random.choice(list(self.vocabulary.keys()))
@@ -211,7 +215,9 @@ class CharacterVoice:
 
         return dialogue
 
-    def _construct_from_topic(self, topic: str, words: List[str], context: Dict) -> str:
+    def _construct_from_topic(
+        self, topic: str, words: List[str], context: Dict
+    ) -> str:
         """Construct dialogue from topic and vocabulary"""
         templates = {
             "discovery": [
@@ -268,9 +274,13 @@ class ContextAwareDialogueEngine:
         self.plot_progress = 0.0
         self.current_tension = 0.0
 
-    def register_character(self, name: str, personality: List[str], speech_style: str):
+    def register_character(
+        self, name: str, personality: List[str], speech_style: str
+    ):
         """Register a character with unique voice"""
-        self.character_voices[name] = CharacterVoice(name, personality, speech_style)
+        self.character_voices[name] = CharacterVoice(
+            name, personality, speech_style
+        )
 
     def generate_contextual_dialogue(
         self, character_name: str, plot_context: Dict, emotion: str = None
@@ -292,9 +302,13 @@ class ContextAwareDialogueEngine:
             if tension > 0.7:
                 emotion = random.choice(["tense", "determined", "worried"])
             elif tension > 0.4:
-                emotion = random.choice(["curious", "contemplative", "focused"])
+                emotion = random.choice(
+                    ["curious", "contemplative", "focused"]
+                )
             else:
-                emotion = random.choice(["contemplative", "hopeful", "peaceful"])
+                emotion = random.choice(
+                    ["contemplative", "hopeful", "peaceful"]
+                )
 
         # Generate dialogue
         max_attempts = 5

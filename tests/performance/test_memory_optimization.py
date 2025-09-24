@@ -53,7 +53,8 @@ class MockPersonaAgent:
             decision = {
                 "turn": i,
                 "action": f"action_{i}",
-                "reasoning": f"Complex reasoning for decision {i} " * 50,  # Heavy text
+                "reasoning": f"Complex reasoning for decision {i} "
+                * 50,  # Heavy text
                 "world_state": {
                     "agents": list(range(20)),
                     "discoveries": list(range(30)),
@@ -63,7 +64,8 @@ class MockPersonaAgent:
                     "energy": 100 - i,
                     "memory": list(range(10)),
                 },
-                "llm_response": f"Generated response {i} with extensive detail " * 25,
+                "llm_response": f"Generated response {i} with extensive detail "
+                * 25,
             }
             self.decision_history.append(decision)
 
@@ -79,7 +81,9 @@ class MockPersonaAgent:
 
         # Create LLM cache
         for i in range(50):
-            self.llm_response_cache[f"prompt_{i}"] = f"Cached LLM response {i} " * 30
+            self.llm_response_cache[f"prompt_{i}"] = (
+                f"Cached LLM response {i} " * 30
+            )
 
 
 class MockDirectorAgent:
@@ -101,10 +105,14 @@ class MockDirectorAgent:
                     for i in range(agents)
                 },
                 "discoveries": {
-                    f"discovery_{j}": {"type": "clue", "value": j} for j in range(10)
+                    f"discovery_{j}": {"type": "clue", "value": j}
+                    for j in range(10)
                 },
                 "interactions": [
-                    {"agents": [f"agent_{k}", f"agent_{k+1}"], "type": "dialogue"}
+                    {
+                        "agents": [f"agent_{k}", f"agent_{k+1}"],
+                        "type": "dialogue",
+                    }
                     for k in range(5)
                 ],
                 "world_events": [f"event_{turn}_{m}" for m in range(8)],
@@ -178,7 +186,9 @@ class MemoryOptimizationTest:
 
         # Compile results
         test_results["total_tests"] = len(self.test_results)
-        test_results["passed_tests"] = sum(1 for r in self.test_results if r["success"])
+        test_results["passed_tests"] = sum(
+            1 for r in self.test_results if r["success"]
+        )
         test_results["failed_tests"] = sum(
             1 for r in self.test_results if not r["success"]
         )
@@ -320,7 +330,9 @@ class MemoryOptimizationTest:
             logger.info(
                 f"Object pool: {no_pool_time:.4f}s without pool vs {pooled_time:.4f}s with pool"
             )
-            logger.info(f"Pool reuse rate: {pool_stats['reuse_rate_percent']:.1f}%")
+            logger.info(
+                f"Pool reuse rate: {pool_stats['reuse_rate_percent']:.1f}%"
+            )
 
             # Verify effectiveness
             success = (
@@ -397,7 +409,8 @@ class MemoryOptimizationTest:
             # Verify weak reference management
             success = (
                 cleaned_refs >= 5  # Should have cleaned some references
-                and final_stats["alive_references"] <= initial_stats["alive_references"]
+                and final_stats["alive_references"]
+                <= initial_stats["alive_references"]
                 and len(cleanup_calls)
                 >= 5  # Some cleanup callbacks should have been called
             )
@@ -405,7 +418,9 @@ class MemoryOptimizationTest:
             logger.info(
                 f"Weak refs: {initial_stats['alive_references']} -> {final_stats['alive_references']}"
             )
-            logger.info(f"Cleaned: {cleaned_refs} refs, {len(cleanup_calls)} callbacks")
+            logger.info(
+                f"Cleaned: {cleaned_refs} refs, {len(cleanup_calls)} callbacks"
+            )
 
             return {
                 "test_name": "Weak Reference Management",
@@ -445,7 +460,9 @@ class MemoryOptimizationTest:
             contexts_before = len(agent.context_history)
 
             # Apply optimization
-            optimization_result = persona_optimizer.optimize_persona_agent(agent)
+            optimization_result = persona_optimizer.optimize_persona_agent(
+                agent
+            )
 
             # Force garbage collection
             gc.collect()
@@ -458,7 +475,9 @@ class MemoryOptimizationTest:
             # Calculate improvements
             memory_improvement = memory_before - memory_after
             memory_improvement_percent = (
-                (memory_improvement / memory_before) * 100 if memory_before > 0 else 0
+                (memory_improvement / memory_before) * 100
+                if memory_before > 0
+                else 0
             )
 
             decisions_reduced = decisions_before - decisions_after
@@ -492,8 +511,12 @@ class MemoryOptimizationTest:
                 "contexts_reduced": contexts_reduced,
                 "memory_before_mb": memory_before,
                 "memory_after_mb": memory_after,
-                "memory_improvement_percent": max(0, memory_improvement_percent),
-                "optimizations_applied": optimization_result["optimizations_applied"],
+                "memory_improvement_percent": max(
+                    0, memory_improvement_percent
+                ),
+                "optimizations_applied": optimization_result[
+                    "optimizations_applied"
+                ],
                 "estimated_memory_saved": optimization_result.get(
                     "memory_saved_estimate", 0
                 ),
@@ -526,7 +549,9 @@ class MemoryOptimizationTest:
             coordination_before = len(director.coordination_cache)
 
             # Apply optimization
-            optimization_result = director_optimizer.optimize_director_agent(director)
+            optimization_result = director_optimizer.optimize_director_agent(
+                director
+            )
 
             # Force garbage collection
             gc.collect()
@@ -539,7 +564,9 @@ class MemoryOptimizationTest:
             # Calculate improvements
             memory_improvement = memory_before - memory_after
             memory_improvement_percent = (
-                (memory_improvement / memory_before) * 100 if memory_before > 0 else 0
+                (memory_improvement / memory_before) * 100
+                if memory_before > 0
+                else 0
             )
 
             world_states_reduced = world_states_before - world_states_after
@@ -573,8 +600,12 @@ class MemoryOptimizationTest:
                 "coordination_reduced": coordination_reduced,
                 "memory_before_mb": memory_before,
                 "memory_after_mb": memory_after,
-                "memory_improvement_percent": max(0, memory_improvement_percent),
-                "optimizations_applied": optimization_result["optimizations_applied"],
+                "memory_improvement_percent": max(
+                    0, memory_improvement_percent
+                ),
+                "optimizations_applied": optimization_result[
+                    "optimizations_applied"
+                ],
                 "estimated_memory_saved": optimization_result.get(
                     "memory_saved_estimate", 0
                 ),
@@ -650,8 +681,12 @@ class MemoryOptimizationTest:
                     final_report = optimizer.get_memory_report()
 
                 # Analyze pressure response
-                initial_pressure = initial_report.get("memory_pressure", "unknown")
-                pressure_detected = pressure_report.get("memory_pressure", "unknown")
+                initial_pressure = initial_report.get(
+                    "memory_pressure", "unknown"
+                )
+                pressure_detected = pressure_report.get(
+                    "memory_pressure", "unknown"
+                )
                 final_pressure = final_report.get("memory_pressure", "unknown")
 
                 # Check if optimization stats increased
@@ -675,7 +710,8 @@ class MemoryOptimizationTest:
                     isinstance(force_result, dict)
                     and "optimization_performed" in force_result
                     and (
-                        pressure_detected != initial_pressure or optimization_increase
+                        pressure_detected != initial_pressure
+                        or optimization_increase
                     )  # Should detect change or optimize
                 )
 
@@ -690,7 +726,9 @@ class MemoryOptimizationTest:
                     ),
                     "optimization_stats_increased": optimization_increase,
                     "memory_improvement_percent": (
-                        15.0 if force_result.get("optimization_performed") else 0
+                        15.0
+                        if force_result.get("optimization_performed")
+                        else 0
                     ),
                     "force_optimization_result": force_result,
                 }
@@ -826,7 +864,7 @@ RECOMMENDATION:
 🧠 MEMORY OPTIMIZATION: PRODUCTION READY
    Expected memory reduction: 25%+
    GC pressure reduction: 40%+
-   
+
 ═══════════════════════════════════════════════════════════════
 """
 

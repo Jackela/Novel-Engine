@@ -58,9 +58,9 @@ server {{
     listen 80;
     listen 443 ssl http2;
     server_name novel-engine.local;
-    
+
     # SSL configuration will be added here
-    
+
     location / {{
         proxy_pass http://novel_engine;
         proxy_set_header Host $host;

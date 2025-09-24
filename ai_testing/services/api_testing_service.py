@@ -11,6 +11,7 @@ import logging
 import statistics
 import time
 import uuid
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -253,7 +254,9 @@ class APITestExecutor:
                 if hasattr(request.test_type, "value")
                 else str(request.test_type)
             )
-            logger.info(f"Starting API test suite: {request.test_id} ({test_type_str})")
+            logger.info(
+                f"Starting API test suite: {request.test_id} ({test_type_str})"
+            )
 
             # Parse endpoints with proper type conversion
             endpoints = []
@@ -265,7 +268,9 @@ class APITestExecutor:
 
             # Execute tests based on type
             if request.test_type == APITestType.LOAD:
-                results = await self._execute_load_tests(request, endpoints, context)
+                results = await self._execute_load_tests(
+                    request, endpoints, context
+                )
             else:
                 results = await self._execute_functional_tests(
                     request, endpoints, context
@@ -278,13 +283,17 @@ class APITestExecutor:
             ]
 
             overall_passed = len(successful_results) == len(results)
-            overall_score = len(successful_results) / len(results) if results else 0.0
+            overall_score = (
+                len(successful_results) / len(results) if results else 0.0
+            )
 
             # Performance analysis
             performance_analysis = self._generate_performance_analysis(
                 response_times, request
             )
-            security_analysis = self._generate_security_analysis(results, request)
+            security_analysis = self._generate_security_analysis(
+                results, request
+            )
             recommendations = self._generate_recommendations(results, request)
 
             # Create comprehensive result
@@ -301,8 +310,12 @@ class APITestExecutor:
                 avg_response_time_ms=(
                     statistics.mean(response_times) if response_times else 0.0
                 ),
-                max_response_time_ms=max(response_times) if response_times else 0.0,
-                min_response_time_ms=min(response_times) if response_times else 0.0,
+                max_response_time_ms=max(response_times)
+                if response_times
+                else 0.0,
+                min_response_time_ms=min(response_times)
+                if response_times
+                else 0.0,
                 p95_response_time_ms=(
                     self._calculate_percentile(response_times, 95)
                     if response_times
@@ -424,14 +437,20 @@ class APITestExecutor:
 
         # Execute load test
         time.time()
-        load_results = await asyncio.gather(*load_test_tasks, return_exceptions=True)
+        load_results = await asyncio.gather(
+            *load_test_tasks, return_exceptions=True
+        )
 
         # Process load test results
         successful_results = [
-            r for r in load_results if isinstance(r, APITestResult) and not r.errors
+            r
+            for r in load_results
+            if isinstance(r, APITestResult) and not r.errors
         ]
         failed_results = [
-            r for r in load_results if not isinstance(r, APITestResult) or r.errors
+            r
+            for r in load_results
+            if not isinstance(r, APITestResult) or r.errors
         ]
 
         # Aggregate results by endpoint
@@ -448,7 +467,9 @@ class APITestExecutor:
                 avg_response_time = statistics.mean(
                     [r.response_time_ms for r in endpoint_results]
                 )
-                max_response_time = max([r.response_time_ms for r in endpoint_results])
+                max_response_time = max(
+                    [r.response_time_ms for r in endpoint_results]
+                )
                 success_rate = len(
                     [r for r in endpoint_results if r.status_validation]
                 ) / len(endpoint_results)
@@ -461,7 +482,8 @@ class APITestExecutor:
                     "max_response_time_ms": max_response_time,
                     "success_rate": success_rate,
                     "requests_count": len(endpoint_results),
-                    "requests_per_second": len(endpoint_results) / total_duration,
+                    "requests_per_second": len(endpoint_results)
+                    / total_duration,
                 }
 
                 summary_results.append(representative)
@@ -532,7 +554,9 @@ class APITestExecutor:
             validation_results = self._validate_response(response, endpoint)
 
             # Check performance
-            performance_passed = response_time_ms <= endpoint.max_response_time_ms
+            performance_passed = (
+                response_time_ms <= endpoint.max_response_time_ms
+            )
 
             return APITestResult(
                 endpoint_path=endpoint.path,
@@ -623,7 +647,9 @@ class APITestExecutor:
             base_url, endpoint, auth_headers, context
         )
 
-    def _setup_authentication(self, auth_config: Dict[str, Any]) -> Dict[str, str]:
+    def _setup_authentication(
+        self, auth_config: Dict[str, Any]
+    ) -> Dict[str, str]:
         """Setup authentication headers"""
 
         headers = {}
@@ -676,7 +702,10 @@ class APITestExecutor:
             )
 
         # Headers validation
-        for expected_header, expected_value in endpoint.expected_headers.items():
+        for (
+            expected_header,
+            expected_value,
+        ) in endpoint.expected_headers.items():
             actual_value = response.headers.get(expected_header)
             if actual_value != expected_value:
                 validation_result["headers"] = False
@@ -688,7 +717,9 @@ class APITestExecutor:
         if endpoint.response_schema and response.status_code < 400:
             try:
                 response_json = response.json()
-                validate(instance=response_json, schema=endpoint.response_schema)
+                validate(
+                    instance=response_json, schema=endpoint.response_schema
+                )
             except ValidationError as e:
                 validation_result["schema"] = False
                 validation_result["errors"].append(
@@ -696,7 +727,9 @@ class APITestExecutor:
                 )
             except json.JSONDecodeError:
                 validation_result["schema"] = False
-                validation_result["errors"].append("Response is not valid JSON")
+                validation_result["errors"].append(
+                    "Response is not valid JSON"
+                )
 
         # Content validation
         if response.status_code >= 400:
@@ -707,7 +740,9 @@ class APITestExecutor:
 
         return validation_result
 
-    def _calculate_percentile(self, values: List[float], percentile: int) -> float:
+    def _calculate_percentile(
+        self, values: List[float], percentile: int
+    ) -> float:
         """Calculate percentile value"""
         if not values:
             return 0.0
@@ -750,7 +785,9 @@ class APITestExecutor:
         ]
 
         if avg_time > max_threshold:
-            analysis_parts.append(f"Performance below threshold ({max_threshold}ms)")
+            analysis_parts.append(
+                f"Performance below threshold ({max_threshold}ms)"
+            )
         else:
             analysis_parts.append("Performance within acceptable range")
 
@@ -776,7 +813,9 @@ class APITestExecutor:
                 "strict-transport-security",
             ]
 
-            missing_headers = [h for h in security_headers if h not in response_headers]
+            missing_headers = [
+                h for h in security_headers if h not in response_headers
+            ]
             if missing_headers:
                 security_issues.append(
                     f"{result.endpoint_path}: Missing security headers: {', '.join(missing_headers)}"
@@ -813,7 +852,9 @@ class APITestExecutor:
                     "Optimize API performance to reduce response times"
                 )
 
-            slow_endpoints = [r for r in results if r.response_time_ms > max_threshold]
+            slow_endpoints = [
+                r for r in results if r.response_time_ms > max_threshold
+            ]
             if slow_endpoints:
                 slow_paths = [r.endpoint_path for r in slow_endpoints]
                 recommendations.append(
@@ -823,7 +864,9 @@ class APITestExecutor:
         # Error recommendations
         failed_results = [r for r in results if r.errors]
         if failed_results:
-            recommendations.append("Address API errors and improve error handling")
+            recommendations.append(
+                "Address API errors and improve error handling"
+            )
 
         # Schema recommendations
         schema_failures = [r for r in results if not r.schema_validation]
@@ -941,22 +984,32 @@ class APITestingService(IAPITesting):
 
             # Special handling for health endpoint validation
             if "health" in api_spec.endpoint.lower():
-                overall_passed = True  # Health checks should pass if endpoint responds
+                overall_passed = (
+                    True  # Health checks should pass if endpoint responds
+                )
 
             return TestResult(
                 execution_id=test_id,
                 scenario_id=context.session_id,
-                status=TestStatus.COMPLETED if overall_passed else TestStatus.FAILED,
+                status=TestStatus.COMPLETED
+                if overall_passed
+                else TestStatus.FAILED,
                 passed=overall_passed,
                 score=suite_result.overall_score,
                 duration_ms=duration_ms,
-                api_results=endpoint_result.model_dump() if endpoint_result else {},
+                api_results=endpoint_result.model_dump()
+                if endpoint_result
+                else {},
                 performance_metrics={
                     "response_time_ms": (
-                        endpoint_result.response_time_ms if endpoint_result else 0.0
+                        endpoint_result.response_time_ms
+                        if endpoint_result
+                        else 0.0
                     ),
                     "response_size_bytes": (
-                        endpoint_result.response_size_bytes if endpoint_result else 0
+                        endpoint_result.response_size_bytes
+                        if endpoint_result
+                        else 0
                     ),
                 },
                 recommendations=suite_result.recommendations,
@@ -1040,7 +1093,9 @@ class APITestingService(IAPITesting):
                 endpoint_config = {
                     "path": endpoint_path,
                     "method": endpoint_spec.get("method", "GET"),
-                    "expected_status": endpoint_spec.get("expected_status", 200),
+                    "expected_status": endpoint_spec.get(
+                        "expected_status", 200
+                    ),
                     "response_schema": endpoint_spec.get("response_schema"),
                 }
 
@@ -1058,7 +1113,9 @@ class APITestingService(IAPITesting):
                 validation_results[endpoint_path] = suite_result.overall_passed
 
             except Exception as e:
-                logger.error(f"Contract validation failed for {endpoint_path}: {e}")
+                logger.error(
+                    f"Contract validation failed for {endpoint_path}: {e}"
+                )
                 validation_results[endpoint_path] = False
 
         return validation_results
@@ -1078,7 +1135,10 @@ class APITestingService(IAPITesting):
             return False
 
     async def run_load_test(
-        self, test_spec: APITestSpec, concurrent_users: int, duration_seconds: int
+        self,
+        test_spec: APITestSpec,
+        concurrent_users: int,
+        duration_seconds: int,
     ) -> Dict[str, Any]:
         """Run API load testing"""
 
@@ -1110,7 +1170,8 @@ class APITestingService(IAPITesting):
                                 headers=test_spec.headers,
                                 params=test_spec.query_params,
                                 json=test_spec.request_body,
-                                timeout=test_spec.response_time_threshold_ms / 1000,
+                                timeout=test_spec.response_time_threshold_ms
+                                / 1000,
                             )
 
                             request_time = (time.time() - request_start) * 1000
@@ -1158,7 +1219,9 @@ class APITestingService(IAPITesting):
                 )
 
                 response_times = [r["response_time"] for r in all_requests]
-                results["average_response_time"] = statistics.mean(response_times)
+                results["average_response_time"] = statistics.mean(
+                    response_times
+                )
                 results["min_response_time"] = min(response_times)
                 results["max_response_time"] = max(response_times)
 
@@ -1170,7 +1233,9 @@ class APITestingService(IAPITesting):
                 )
 
                 # Collect error details
-                errors = [r.get("error") for r in all_requests if r.get("error")]
+                errors = [
+                    r.get("error") for r in all_requests if r.get("error")
+                ]
                 results["errors"] = list(set(errors))[
                     :10
                 ]  # Limit to first 10 unique errors
@@ -1184,8 +1249,6 @@ class APITestingService(IAPITesting):
 
 
 # === FastAPI Application ===
-
-from contextlib import asynccontextmanager
 
 
 @asynccontextmanager
@@ -1260,7 +1323,9 @@ async def run_api_test(request: APITestRequest):
     service: APITestingService = app.state.api_testing_service
 
     context = create_test_context(request.test_id)
-    result = await service.test_executor.execute_api_test_suite(request, context)
+    result = await service.test_executor.execute_api_test_suite(
+        request, context
+    )
 
     # Store result
     service.completed_tests[request.test_id] = result
@@ -1277,7 +1342,6 @@ async def test_single_endpoint(
 ):
     """Test a single API endpoint"""
     try:
-
         # For validation testing, create a simple direct test
         import httpx
 
@@ -1285,14 +1349,20 @@ async def test_single_endpoint(
             start_time = time.time()
 
             # Make the actual request
-            headers = {"Authorization": f"Bearer {auth_token}"} if auth_token else {}
+            headers = (
+                {"Authorization": f"Bearer {auth_token}"} if auth_token else {}
+            )
 
             if method.upper() == "GET":
                 response = await client.get(endpoint_url, headers=headers)
             elif method.upper() == "POST":
-                response = await client.post(endpoint_url, headers=headers, json={})
+                response = await client.post(
+                    endpoint_url, headers=headers, json={}
+                )
             else:
-                response = await client.request(method, endpoint_url, headers=headers)
+                response = await client.request(
+                    method, endpoint_url, headers=headers
+                )
 
             duration_ms = int((time.time() - start_time) * 1000)
 
@@ -1300,7 +1370,10 @@ async def test_single_endpoint(
             passed = response.status_code == expected_status
 
             # Special case: health endpoints should always pass if they respond
-            if "health" in endpoint_url.lower() and response.status_code == 200:
+            if (
+                "health" in endpoint_url.lower()
+                and response.status_code == 200
+            ):
                 passed = True
 
             # Create TestResult with correct structure

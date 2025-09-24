@@ -46,13 +46,21 @@ class TestContextScopeEnum:
             ContextScope.MOMENT: 1,
         }
 
-        assert scope_hierarchy[ContextScope.GLOBAL] > scope_hierarchy[ContextScope.ARC]
-        assert scope_hierarchy[ContextScope.ARC] > scope_hierarchy[ContextScope.CHAPTER]
         assert (
-            scope_hierarchy[ContextScope.CHAPTER] > scope_hierarchy[ContextScope.SCENE]
+            scope_hierarchy[ContextScope.GLOBAL]
+            > scope_hierarchy[ContextScope.ARC]
         )
         assert (
-            scope_hierarchy[ContextScope.SCENE] > scope_hierarchy[ContextScope.MOMENT]
+            scope_hierarchy[ContextScope.ARC]
+            > scope_hierarchy[ContextScope.CHAPTER]
+        )
+        assert (
+            scope_hierarchy[ContextScope.CHAPTER]
+            > scope_hierarchy[ContextScope.SCENE]
+        )
+        assert (
+            scope_hierarchy[ContextScope.SCENE]
+            > scope_hierarchy[ContextScope.MOMENT]
         )
 
     def test_scope_uniqueness(self):
@@ -208,7 +216,10 @@ class TestNarrativeContextCreation:
                 "action_frequency": Decimal("4.0"),
             },
             prerequisite_contexts={"peaceful_kingdom", "economic_prosperity"},
-            conflicting_contexts={"time_of_peace", "royal_wedding_celebration"},
+            conflicting_contexts={
+                "time_of_peace",
+                "royal_wedding_celebration",
+            },
             reinforcing_contexts={"economic_hardship", "foreign_threat"},
             narrative_importance=Decimal("9.0"),
             visibility_level=Decimal("8.5"),
@@ -237,11 +248,17 @@ class TestNarrativeContextCreation:
             "northern_provinces",
             "border_towns",
         }
-        assert context.affected_regions == {"north", "central", "eastern_march"}
+        assert context.affected_regions == {
+            "north",
+            "central",
+            "eastern_march",
+        }
         assert context.geographical_scope == "kingdom_wide"
         assert context.affected_characters == {char_id1, char_id2, char_id3}
         assert context.character_knowledge_required == {char_id1, char_id2}
-        assert context.character_reactions[char_id1] == "suspicious_and_cautious"
+        assert (
+            context.character_reactions[char_id1] == "suspicious_and_cautious"
+        )
         assert len(context.key_facts) == 3
         assert len(context.implicit_knowledge) == 2
         assert len(context.hidden_information) == 2
@@ -259,7 +276,10 @@ class TestNarrativeContextCreation:
             "time_of_peace",
             "royal_wedding_celebration",
         }
-        assert context.reinforcing_contexts == {"economic_hardship", "foreign_threat"}
+        assert context.reinforcing_contexts == {
+            "economic_hardship",
+            "foreign_threat",
+        }
         assert context.narrative_importance == Decimal("9.0")
         assert context.visibility_level == Decimal("8.5")
         assert context.complexity_level == Decimal("7.5")
@@ -268,7 +288,8 @@ class TestNarrativeContextCreation:
         assert context.tags == {"major_arc", "political", "conflict"}
         assert context.source_material == "Historical research on civil wars"
         assert (
-            context.research_notes == "Based on War of the Roses and similar conflicts"
+            context.research_notes
+            == "Based on War of the Roses and similar conflicts"
         )
         assert context.creation_timestamp == creation_time
         assert context.metadata["inspiration"] == "Real historical events"
@@ -391,7 +412,9 @@ class TestNarrativeContextValidation:
 
     def test_empty_description_validation(self):
         """Test validation fails with empty description."""
-        with pytest.raises(ValueError, match="Context description cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Context description cannot be empty"
+        ):
             NarrativeContext(
                 context_id="valid-id",
                 context_type=ContextType.SOCIAL,
@@ -402,7 +425,9 @@ class TestNarrativeContextValidation:
 
     def test_whitespace_only_description_validation(self):
         """Test validation fails with whitespace-only description."""
-        with pytest.raises(ValueError, match="Context description cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Context description cannot be empty"
+        ):
             NarrativeContext(
                 context_id="valid-id",
                 context_type=ContextType.SOCIAL,
@@ -414,7 +439,8 @@ class TestNarrativeContextValidation:
     def test_invalid_sequence_range_validation(self):
         """Test validation fails when from sequence is after to sequence."""
         with pytest.raises(
-            ValueError, match="From sequence must be before or equal to to sequence"
+            ValueError,
+            match="From sequence must be before or equal to to sequence",
         ):
             NarrativeContext(
                 context_id="invalid-range-test",
@@ -555,7 +581,9 @@ class TestNarrativeContextValidation:
 
     def test_evolution_rate_below_minimum_validation(self):
         """Test validation fails with evolution rate below 0."""
-        with pytest.raises(ValueError, match="evolution_rate must be between 0 and 1"):
+        with pytest.raises(
+            ValueError, match="evolution_rate must be between 0 and 1"
+        ):
             NarrativeContext(
                 context_id="low-evolution-test",
                 context_type=ContextType.CULTURAL,
@@ -567,7 +595,9 @@ class TestNarrativeContextValidation:
 
     def test_evolution_rate_above_maximum_validation(self):
         """Test validation fails with evolution rate above 1."""
-        with pytest.raises(ValueError, match="evolution_rate must be between 0 and 1"):
+        with pytest.raises(
+            ValueError, match="evolution_rate must be between 0 and 1"
+        ):
             NarrativeContext(
                 context_id="high-evolution-test",
                 context_type=ContextType.CULTURAL,
@@ -579,7 +609,9 @@ class TestNarrativeContextValidation:
 
     def test_stability_boundary_validation(self):
         """Test stability boundary validation."""
-        with pytest.raises(ValueError, match="stability must be between 0 and 1"):
+        with pytest.raises(
+            ValueError, match="stability must be between 0 and 1"
+        ):
             NarrativeContext(
                 context_id="low-stability-test",
                 context_type=ContextType.SOCIAL,
@@ -589,7 +621,9 @@ class TestNarrativeContextValidation:
                 stability=Decimal("-0.2"),
             )
 
-        with pytest.raises(ValueError, match="stability must be between 0 and 1"):
+        with pytest.raises(
+            ValueError, match="stability must be between 0 and 1"
+        ):
             NarrativeContext(
                 context_id="high-stability-test",
                 context_type=ContextType.SOCIAL,
@@ -664,7 +698,10 @@ class TestNarrativeContextValidation:
             scope=ContextScope.GLOBAL,
             name="Boundary Influences",
             description="Testing influence boundaries",
-            mood_influences={"wonder": Decimal("10.0"), "fear": Decimal("-10.0")},
+            mood_influences={
+                "wonder": Decimal("10.0"),
+                "fear": Decimal("-10.0"),
+            },
             tension_modifiers={"magical": Decimal("5.0")},
             pacing_effects={"acceleration": Decimal("-8.5")},
         )
@@ -702,7 +739,8 @@ class TestNarrativeContextValidation:
 
         # Description too long
         with pytest.raises(
-            ValueError, match="Context description too long \\(max 2000 characters\\)"
+            ValueError,
+            match="Context description too long \\(max 2000 characters\\)",
         ):
             NarrativeContext(
                 context_id="valid-id",
@@ -916,7 +954,10 @@ class TestNarrativeContextProperties:
             scope=ContextScope.SCENE,
             name="Mood Influence Test",
             description="Testing mood influence",
-            mood_influences={"melancholy": Decimal("6.0"), "hope": Decimal("-3.0")},
+            mood_influences={
+                "melancholy": Decimal("6.0"),
+                "hope": Decimal("-3.0"),
+            },
         )
 
         assert context.influences_mood is True
@@ -941,7 +982,10 @@ class TestNarrativeContextProperties:
             scope=ContextScope.ARC,
             name="Pacing Influence Test",
             description="Testing pacing influence",
-            pacing_effects={"urgency": Decimal("4.5"), "contemplation": Decimal("2.0")},
+            pacing_effects={
+                "urgency": Decimal("4.5"),
+                "contemplation": Decimal("2.0"),
+            },
         )
 
         assert context.influences_pacing is True
@@ -1037,9 +1081,15 @@ class TestOverallInfluenceStrength:
             description="Testing influence strength with influences",
             narrative_importance=Decimal("8.0"),
             visibility_level=Decimal("7.0"),
-            mood_influences={"tension": Decimal("5.0"), "fear": Decimal("3.0")},
+            mood_influences={
+                "tension": Decimal("5.0"),
+                "fear": Decimal("3.0"),
+            },
             tension_modifiers={"political": Decimal("6.0")},
-            pacing_effects={"urgency": Decimal("4.0"), "deliberation": Decimal("-2.0")},
+            pacing_effects={
+                "urgency": Decimal("4.0"),
+                "deliberation": Decimal("-2.0"),
+            },
             behavioral_influences=["increased_caution", "group_solidarity"],
             narrative_constraints=[
                 "limited_travel",
@@ -1065,7 +1115,9 @@ class TestOverallInfluenceStrength:
             narrative_importance=Decimal("10.0"),
             visibility_level=Decimal("10.0"),
             mood_influences={f"mood_{i}": Decimal("5.0") for i in range(10)},
-            tension_modifiers={f"tension_{i}": Decimal("3.0") for i in range(10)},
+            tension_modifiers={
+                f"tension_{i}": Decimal("3.0") for i in range(10)
+            },
             pacing_effects={f"pacing_{i}": Decimal("2.0") for i in range(10)},
             behavioral_influences=[f"behavior_{i}" for i in range(20)],
             narrative_constraints=[f"constraint_{i}" for i in range(20)],
@@ -1167,7 +1219,12 @@ class TestContextualComplexityScore:
             conflicting_contexts={"conflict1", "conflict2", "conflict3"},
             reinforcing_contexts={"reinforce1"},
             key_facts=["fact1", "fact2", "fact3"],
-            implicit_knowledge=["implicit1", "implicit2", "implicit3", "implicit4"],
+            implicit_knowledge=[
+                "implicit1",
+                "implicit2",
+                "implicit3",
+                "implicit4",
+            ],
             hidden_information=["hidden1", "hidden2"],
         )
 
@@ -1357,8 +1414,12 @@ class TestNarrativeContextInstanceMethods:
             },
         )
 
-        assert context.get_character_reaction(char_id1) == "excited_and_hopeful"
-        assert context.get_character_reaction(char_id2) == "worried_and_cautious"
+        assert (
+            context.get_character_reaction(char_id1) == "excited_and_hopeful"
+        )
+        assert (
+            context.get_character_reaction(char_id2) == "worried_and_cautious"
+        )
         assert context.get_character_reaction(char_id3) is None
 
     def test_conflicts_with_context_true(self):
@@ -1509,8 +1570,14 @@ class TestNarrativeContextInstanceMethods:
             applies_to_sequence=95,
             affected_characters={char_id},
             locations={"magic_academy", "enchanted_forest"},
-            hidden_information=["Secret about magic origins", "Origins are forgotten"],
-            narrative_constraints=["Magic requires sacrifice", "Limited spell uses"],
+            hidden_information=[
+                "Secret about magic origins",
+                "Origins are forgotten",
+            ],
+            narrative_constraints=[
+                "Magic requires sacrifice",
+                "Limited spell uses",
+            ],
             mood_influences={"wonder": Decimal("7.0")},
             pacing_effects={"mystery": Decimal("5.0")},
             prerequisite_contexts={"magic_discovery"},
@@ -1636,8 +1703,12 @@ class TestNarrativeContextEdgeCasesAndBoundaryConditions:
         many_behaviors = [f"behavior_{i}" for i in range(45)]
         many_implications = [f"implication_{i}" for i in range(25)]
         many_moods = {f"mood_{i}": Decimal(str(i % 10)) for i in range(15)}
-        many_tensions = {f"tension_{i}": Decimal(str((i % 20) - 10)) for i in range(12)}
-        many_pacing = {f"pacing_{i}": Decimal(str((i % 15) - 5)) for i in range(18)}
+        many_tensions = {
+            f"tension_{i}": Decimal(str((i % 20) - 10)) for i in range(12)
+        }
+        many_pacing = {
+            f"pacing_{i}": Decimal(str((i % 15) - 5)) for i in range(18)
+        }
         many_prerequisites = {f"prereq_{i}" for i in range(8)}
         many_conflicts = {f"conflict_{i}" for i in range(10)}
         many_reinforces = {f"reinforce_{i}" for i in range(12)}
@@ -1719,9 +1790,15 @@ class TestNarrativeContextEdgeCasesAndBoundaryConditions:
         assert context.complexity_level == Decimal("6.555555555")
         assert context.evolution_rate == Decimal("0.123456789")
         assert context.stability == Decimal("0.987654321")
-        assert context.mood_influences["precise_mood"] == Decimal("5.123456789")
-        assert context.tension_modifiers["precise_tension"] == Decimal("-3.987654321")
-        assert context.pacing_effects["precise_pacing"] == Decimal("2.555555555")
+        assert context.mood_influences["precise_mood"] == Decimal(
+            "5.123456789"
+        )
+        assert context.tension_modifiers["precise_tension"] == Decimal(
+            "-3.987654321"
+        )
+        assert context.pacing_effects["precise_pacing"] == Decimal(
+            "2.555555555"
+        )
 
         # Scores should use precise calculation
         influence_score = context.overall_influence_strength
@@ -1799,11 +1876,14 @@ class TestNarrativeContextEdgeCasesAndBoundaryConditions:
             "Sanderson",
         ]
         assert (
-            context.metadata["unicode_research_🔬"]["multilingual_sources"]["中文"]
+            context.metadata["unicode_research_🔬"]["multilingual_sources"][
+                "中文"
+            ]
             == "Chinese historical records"
         )
         assert (
-            "العربية" in context.metadata["unicode_research_🔬"]["multilingual_sources"]
+            "العربية"
+            in context.metadata["unicode_research_🔬"]["multilingual_sources"]
         )
 
 
@@ -1973,7 +2053,9 @@ class TestNarrativeContextCollectionsAndComparison:
         context_set = {context1, context2, context1_duplicate}
 
         # Set should deduplicate identical objects
-        assert len(context_set) == 2  # context1 and context1_duplicate are the same
+        assert (
+            len(context_set) == 2
+        )  # context1 and context1_duplicate are the same
         assert context1 in context_set
         assert context2 in context_set
         assert context1_duplicate in context_set  # Should find context1

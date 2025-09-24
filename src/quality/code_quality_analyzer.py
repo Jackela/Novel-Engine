@@ -3,8 +3,8 @@ Code Quality Analyzer and Technical Debt Assessment
 ==================================================
 
 Advanced code quality analysis system for Novel Engine that identifies
-technical debt, maintainability issues, and provides actionable improvement recommendations.
-
+technical debt, maintainability issues, and provides actionable
+improvement recommendations.
 Wave 6.1 - Code Quality Analysis & Technical Debt Assessment
 """
 
@@ -157,7 +157,13 @@ class CodeQualityAnalyzer:
     ) -> Dict[str, Any]:
         """Analyze project for code quality issues with optimizations."""
         if exclude_patterns is None:
-            exclude_patterns = ["test_*", "*_test.py", "tests/*", "__pycache__", ".git"]
+            exclude_patterns = [
+                "test_*",
+                "*_test.py",
+                "tests/*",
+                "__pycache__",
+                ".git",
+            ]
 
         logger.info("Starting optimized code quality analysis")
 
@@ -166,7 +172,9 @@ class CodeQualityAnalyzer:
 
         # Limit analysis to prevent timeouts
         if len(python_files) > max_files:
-            logger.info(f"Limiting analysis to {max_files} files for performance")
+            logger.info(
+                f"Limiting analysis to {max_files} files for performance"
+            )
             # Prioritize key files by size and name patterns
             priority_files = []
             regular_files = []
@@ -189,12 +197,14 @@ class CodeQualityAnalyzer:
                     regular_files.append(file_path)
 
             # Analyze all priority files + subset of regular files
-            selected_files = (
-                priority_files + regular_files[: max_files - len(priority_files)]
-            )
+            remaining_slots = max_files - len(priority_files)
+            selected_files = priority_files + regular_files[:remaining_slots]
             python_files = selected_files
+            total_selected = len(python_files)
+            priority_count = len(priority_files)
             logger.info(
-                f"Selected {len(python_files)} files for analysis ({len(priority_files)} priority)"
+                f"Selected {total_selected} files for analysis "
+                f"({priority_count} priority)"
             )
 
         # Analyze each file with timeout protection
@@ -206,8 +216,9 @@ class CodeQualityAnalyzer:
 
                 # Progress reporting every 10 files
                 if analyzed_count % 10 == 0:
+                    total_files = len(python_files)
                     logger.info(
-                        f"Analyzed {analyzed_count}/{len(python_files)} files..."
+                        f"Analyzed {analyzed_count}/{total_files} files..."
                     )
 
             except Exception as e:
@@ -217,13 +228,16 @@ class CodeQualityAnalyzer:
         # Generate overall report
         report = self._generate_quality_report()
 
+        total_issues = len(self.quality_issues)
         logger.info(
-            f"Analysis complete: {analyzed_count} files analyzed, {len(self.quality_issues)} issues found"
+            f"Analysis complete: {analyzed_count} files analyzed, "
+            f"{total_issues} issues found"
         )
         return report
 
     def _find_python_files(self, exclude_patterns: List[str]) -> List[Path]:
-        """Find all Python files in project, excluding test files and patterns."""
+        """Find all Python files in project, excluding test files and
+        patterns."""
         python_files = []
 
         for py_file in self.project_root.rglob("*.py"):
@@ -260,9 +274,11 @@ class CodeQualityAnalyzer:
 
             # Calculate complexity metrics
             complexity_results = radon_cc.cc_visit(content)
-            avg_complexity = sum(item.complexity for item in complexity_results) / max(
-                1, len(complexity_results)
+            total_complexity = sum(
+                item.complexity for item in complexity_results
             )
+            result_count = max(1, len(complexity_results))
+            avg_complexity = total_complexity / result_count
 
             # Calculate maintainability index
             try:
@@ -272,12 +288,19 @@ class CodeQualityAnalyzer:
                 maintainability_index = 50.0  # Default if calculation fails
 
             # Count functions and classes
-            function_count = len(
-                [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
-            )
-            class_count = len(
-                [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
-            )
+            function_nodes = [
+                node
+                for node in ast.walk(tree)
+                if isinstance(node, ast.FunctionDef)
+            ]
+            function_count = len(function_nodes)
+
+            class_nodes = [
+                node
+                for node in ast.walk(tree)
+                if isinstance(node, ast.ClassDef)
+            ]
+            class_count = len(class_nodes)
 
             # Calculate documentation metrics
             comment_ratio = self._calculate_comment_ratio(lines)
@@ -301,7 +324,9 @@ class CodeQualityAnalyzer:
             self._analyze_complexity_issues(file_path, tree, content, metrics)
             self._analyze_design_issues(file_path, tree, content, metrics)
             self._analyze_error_handling(file_path, tree, content, metrics)
-            self._analyze_documentation_issues(file_path, tree, content, metrics)
+            self._analyze_documentation_issues(
+                file_path, tree, content, metrics
+            )
 
             self.file_metrics[str(file_path)] = metrics
             return metrics
@@ -323,9 +348,11 @@ class CodeQualityAnalyzer:
 
     def _calculate_comment_ratio(self, lines: List[str]) -> float:
         """Calculate ratio of comment lines to total lines."""
-        comment_lines = len([line for line in lines if line.strip().startswith("#")])
-        total_lines = len([line for line in lines if line.strip()])
-        return comment_lines / max(1, total_lines)
+        comment_lines = [
+            line for line in lines if line.strip().startswith("#")
+        ]
+        non_empty_lines = [line for line in lines if line.strip()]
+        return len(comment_lines) / max(1, len(non_empty_lines))
 
     def _calculate_docstring_coverage(self, tree: ast.AST) -> float:
         """Calculate percentage of functions/classes with docstrings."""
@@ -364,7 +391,11 @@ class CodeQualityAnalyzer:
         return typed_functions / max(1, total_functions)
 
     def _analyze_complexity_issues(
-        self, file_path: Path, tree: ast.AST, content: str, metrics: FileQualityMetrics
+        self,
+        file_path: Path,
+        tree: ast.AST,
+        content: str,
+        metrics: FileQualityMetrics,
     ):
         """Analyze complexity-related issues."""
         content.split("\n")
@@ -379,7 +410,9 @@ class CodeQualityAnalyzer:
                 )
                 if func_lines > self.function_length_threshold:
                     issue = QualityIssue(
-                        file_path=str(file_path.relative_to(self.project_root)),
+                        file_path=str(
+                            file_path.relative_to(self.project_root)
+                        ),
                         line_number=node.lineno,
                         issue_type="long_function",
                         category=IssueCategory.COMPLEXITY,
@@ -388,8 +421,15 @@ class CodeQualityAnalyzer:
                             if func_lines > 100
                             else SeverityLevel.MEDIUM
                         ),
-                        description=f"Function '{node.name}' is too long ({func_lines} lines)",
-                        recommendation=f"Break down function '{node.name}' into smaller, more focused functions",
+                        description=(
+                            f"Function '{node.name}' is too long "
+                            f"({func_lines} lines)"
+                        ),
+                        recommendation=(
+                            f"Break down function '{node.name}' into "
+                            f"smaller, "
+                            f"more focused functions"
+                        ),
                         impact_score=min(10.0, func_lines / 10),
                         estimated_fix_time=func_lines
                         * 2,  # 2 minutes per line to refactor
@@ -401,7 +441,9 @@ class CodeQualityAnalyzer:
                 func_complexity = self._calculate_function_complexity(node)
                 if func_complexity > self.complexity_threshold:
                     issue = QualityIssue(
-                        file_path=str(file_path.relative_to(self.project_root)),
+                        file_path=str(
+                            file_path.relative_to(self.project_root)
+                        ),
                         line_number=node.lineno,
                         issue_type="high_complexity",
                         category=IssueCategory.COMPLEXITY,
@@ -410,8 +452,14 @@ class CodeQualityAnalyzer:
                             if func_complexity > 15
                             else SeverityLevel.MEDIUM
                         ),
-                        description=f"Function '{node.name}' has high cyclomatic complexity ({func_complexity})",
-                        recommendation=f"Reduce complexity in '{node.name}' by extracting methods or simplifying logic",
+                        description=(
+                            f"Function '{node.name}' has high cyclomatic "
+                            f"complexity ({func_complexity})"
+                        ),
+                        recommendation=(
+                            f"Reduce complexity in '{node.name}' by "
+                            f"extracting methods or simplifying logic"
+                        ),
                         impact_score=func_complexity,
                         estimated_fix_time=func_complexity
                         * 15,  # 15 minutes per complexity point
@@ -428,7 +476,9 @@ class CodeQualityAnalyzer:
                 )
                 if class_lines > self.class_length_threshold:
                     issue = QualityIssue(
-                        file_path=str(file_path.relative_to(self.project_root)),
+                        file_path=str(
+                            file_path.relative_to(self.project_root)
+                        ),
                         line_number=node.lineno,
                         issue_type="large_class",
                         category=IssueCategory.DESIGN_PATTERNS,
@@ -437,8 +487,14 @@ class CodeQualityAnalyzer:
                             if class_lines > 500
                             else SeverityLevel.MEDIUM
                         ),
-                        description=f"Class '{node.name}' is too large ({class_lines} lines)",
-                        recommendation=f"Break down class '{node.name}' into smaller, more cohesive classes",
+                        description=(
+                            f"Class '{node.name}' is too large "
+                            f"({class_lines} lines)"
+                        ),
+                        recommendation=(
+                            f"Break down class '{node.name}' into smaller, "
+                            f"more cohesive classes"
+                        ),
                         impact_score=min(10.0, class_lines / 50),
                         estimated_fix_time=class_lines
                         * 3,  # 3 minutes per line to refactor
@@ -446,7 +502,9 @@ class CodeQualityAnalyzer:
                     metrics.issues.append(issue)
                     self.quality_issues.append(issue)
 
-    def _calculate_function_complexity(self, func_node: ast.FunctionDef) -> int:
+    def _calculate_function_complexity(
+        self, func_node: ast.FunctionDef
+    ) -> int:
         """Calculate cyclomatic complexity for a single function."""
         complexity = 1  # Base complexity
 
@@ -461,7 +519,11 @@ class CodeQualityAnalyzer:
         return complexity
 
     def _analyze_design_issues(
-        self, file_path: Path, tree: ast.AST, content: str, metrics: FileQualityMetrics
+        self,
+        file_path: Path,
+        tree: ast.AST,
+        content: str,
+        metrics: FileQualityMetrics,
     ):
         """Analyze design pattern and architecture issues."""
         lines = content.split("\n")
@@ -474,7 +536,9 @@ class CodeQualityAnalyzer:
                 )
                 if method_count > 20:
                     issue = QualityIssue(
-                        file_path=str(file_path.relative_to(self.project_root)),
+                        file_path=str(
+                            file_path.relative_to(self.project_root)
+                        ),
                         line_number=node.lineno,
                         issue_type="god_class",
                         category=IssueCategory.DESIGN_PATTERNS,
@@ -483,8 +547,15 @@ class CodeQualityAnalyzer:
                             if method_count > 30
                             else SeverityLevel.MEDIUM
                         ),
-                        description=f"Class '{node.name}' has too many methods ({method_count})",
-                        recommendation=f"Apply Single Responsibility Principle to '{node.name}' - extract related methods into separate classes",
+                        description=(
+                            f"Class '{node.name}' has too many methods "
+                            f"({method_count})"
+                        ),
+                        recommendation=(
+                            f"Apply Single Responsibility Principle to "
+                            f"'{node.name}' - extract related methods into "
+                            f"separate classes"
+                        ),
                         impact_score=method_count / 5,
                         estimated_fix_time=method_count
                         * 30,  # 30 minutes per method to reorganize
@@ -495,7 +566,9 @@ class CodeQualityAnalyzer:
         # Check for hard-coded values (magic numbers/strings)
         magic_number_pattern = re.compile(r"\b(?!0|1|2|10|100|1000)\d{2,}\b")
         for i, line in enumerate(lines, 1):
-            if magic_number_pattern.search(line) and not line.strip().startswith("#"):
+            if magic_number_pattern.search(
+                line
+            ) and not line.strip().startswith("#"):
                 issue = QualityIssue(
                     file_path=str(file_path.relative_to(self.project_root)),
                     line_number=i,
@@ -512,7 +585,11 @@ class CodeQualityAnalyzer:
                 self.quality_issues.append(issue)
 
     def _analyze_error_handling(
-        self, file_path: Path, tree: ast.AST, content: str, metrics: FileQualityMetrics
+        self,
+        file_path: Path,
+        tree: ast.AST,
+        content: str,
+        metrics: FileQualityMetrics,
     ):
         """Analyze error handling patterns."""
         for node in ast.walk(tree):
@@ -520,37 +597,57 @@ class CodeQualityAnalyzer:
                 # Check for bare except clauses
                 if node.type is None:
                     issue = QualityIssue(
-                        file_path=str(file_path.relative_to(self.project_root)),
+                        file_path=str(
+                            file_path.relative_to(self.project_root)
+                        ),
                         line_number=node.lineno,
                         issue_type="bare_except",
                         category=IssueCategory.ERROR_HANDLING,
                         severity=SeverityLevel.HIGH,
-                        description="Bare except clause catches all exceptions",
-                        recommendation="Use specific exception types instead of bare except",
+                        description=(
+                            "Bare except clause catches all exceptions"
+                        ),
+                        recommendation=(
+                            "Use specific exception types instead of "
+                            "bare except"
+                        ),
                         impact_score=5.0,
-                        estimated_fix_time=20,  # 20 minutes to identify proper exceptions
+                        estimated_fix_time=20,  # 20 min to identify
+                        # proper exceptions
                     )
                     metrics.issues.append(issue)
                     self.quality_issues.append(issue)
 
                 # Check for overly broad exception handling
-                elif isinstance(node.type, ast.Name) and node.type.id == "Exception":
+                elif (
+                    isinstance(node.type, ast.Name)
+                    and node.type.id == "Exception"
+                ):
                     issue = QualityIssue(
-                        file_path=str(file_path.relative_to(self.project_root)),
+                        file_path=str(
+                            file_path.relative_to(self.project_root)
+                        ),
                         line_number=node.lineno,
                         issue_type="broad_exception",
                         category=IssueCategory.ERROR_HANDLING,
                         severity=SeverityLevel.MEDIUM,
                         description="Overly broad Exception catch",
-                        recommendation="Use more specific exception types when possible",
+                        recommendation=(
+                            "Use more specific exception types when possible"
+                        ),
                         impact_score=3.0,
-                        estimated_fix_time=15,  # 15 minutes to refine exception handling
+                        estimated_fix_time=15,  # 15 min to refine
+                        # exception handling
                     )
                     metrics.issues.append(issue)
                     self.quality_issues.append(issue)
 
     def _analyze_documentation_issues(
-        self, file_path: Path, tree: ast.AST, content: str, metrics: FileQualityMetrics
+        self,
+        file_path: Path,
+        tree: ast.AST,
+        content: str,
+        metrics: FileQualityMetrics,
     ):
         """Analyze documentation and type hint issues."""
         for node in ast.walk(tree):
@@ -562,44 +659,56 @@ class CodeQualityAnalyzer:
                     and isinstance(node.body[0].value, ast.Constant)
                     and isinstance(node.body[0].value.value, str)
                 ):
-
                     # Skip very simple functions (less than 3 lines)
                     func_lines = (
                         node.end_lineno - node.lineno + 1
                         if hasattr(node, "end_lineno")
                         else 0
                     )
-                    if func_lines > 3 and not node.name.startswith(
-                        "_"
-                    ):  # Skip private methods for now
+                    if func_lines > 3 and not node.name.startswith("_"):
                         issue = QualityIssue(
-                            file_path=str(file_path.relative_to(self.project_root)),
+                            file_path=str(
+                                file_path.relative_to(self.project_root)
+                            ),
                             line_number=node.lineno,
                             issue_type="missing_docstring",
                             category=IssueCategory.DOCUMENTATION,
                             severity=SeverityLevel.MEDIUM,
-                            description=f"Function '{node.name}' missing docstring",
-                            recommendation=f"Add comprehensive docstring to '{node.name}' explaining purpose, parameters, and return value",
+                            description=(
+                                f"Function '{node.name}' missing docstring"
+                            ),
+                            recommendation=(
+                                f"Add comprehensive docstring to "
+                                f"'{node.name}' explaining purpose, "
+                                f"parameters, and return value"
+                            ),
                             impact_score=2.0,
-                            estimated_fix_time=15,  # 15 minutes to write good docstring
+                            estimated_fix_time=15,  # 15 min to write
+                            # good docstring
                         )
                         metrics.issues.append(issue)
                         self.quality_issues.append(issue)
 
                 # Check for missing type hints
-                if (
-                    not node.returns and len(node.args.args) > 1
-                ):  # Skip simple functions
+                if not node.returns and len(node.args.args) > 1:
                     issue = QualityIssue(
-                        file_path=str(file_path.relative_to(self.project_root)),
+                        file_path=str(
+                            file_path.relative_to(self.project_root)
+                        ),
                         line_number=node.lineno,
                         issue_type="missing_type_hints",
                         category=IssueCategory.DOCUMENTATION,
                         severity=SeverityLevel.LOW,
-                        description=f"Function '{node.name}' missing type hints",
-                        recommendation=f"Add type hints to '{node.name}' for better code clarity and IDE support",
+                        description=(
+                            f"Function '{node.name}' missing type hints"
+                        ),
+                        recommendation=(
+                            f"Add type hints to '{node.name}' for better "
+                            f"code clarity and IDE support"
+                        ),
                         impact_score=1.0,
-                        estimated_fix_time=10,  # 10 minutes to add type hints
+                        estimated_fix_time=10,  # 10 min to add
+                        # type hints
                     )
                     metrics.issues.append(issue)
                     self.quality_issues.append(issue)
@@ -623,22 +732,33 @@ class CodeQualityAnalyzer:
         for metrics in self.file_metrics.values():
             quality_scores.append(metrics.calculate_quality_score())
 
-        overall_quality_score = sum(quality_scores) / max(1, len(quality_scores))
+        total_score = sum(quality_scores)
+        score_count = max(1, len(quality_scores))
+        overall_quality_score = total_score / score_count
 
         # Calculate technical debt metrics
-        total_fix_time = sum(issue.estimated_fix_time for issue in self.quality_issues)
+        total_fix_time = sum(
+            issue.estimated_fix_time for issue in self.quality_issues
+        )
         technical_debt_hours = total_fix_time / 60
 
         # Find most problematic files
-        worst_files = sorted(
-            self.file_metrics.values(),
-            key=lambda m: len(
+        def count_critical_high_issues(metrics):
+            critical_high_severities = [
+                SeverityLevel.CRITICAL,
+                SeverityLevel.HIGH,
+            ]
+            return len(
                 [
                     i
-                    for i in m.issues
-                    if i.severity in [SeverityLevel.CRITICAL, SeverityLevel.HIGH]
+                    for i in metrics.issues
+                    if i.severity in critical_high_severities
                 ]
-            ),
+            )
+
+        worst_files = sorted(
+            self.file_metrics.values(),
+            key=count_critical_high_issues,
             reverse=True,
         )[:10]
 
@@ -655,26 +775,38 @@ class CodeQualityAnalyzer:
                 ),
             },
             "issues_by_severity": {
-                severity: len(issues) for severity, issues in issues_by_severity.items()
+                severity: len(issues)
+                for severity, issues in issues_by_severity.items()
             },
             "issues_by_category": {
-                category: len(issues) for category, issues in issues_by_category.items()
+                category: len(issues)
+                for category, issues in issues_by_category.items()
             },
             "most_problematic_files": [
                 {
                     "file": f.file_path,
                     "quality_score": f.calculate_quality_score(),
                     "critical_issues": len(
-                        [i for i in f.issues if i.severity == SeverityLevel.CRITICAL]
+                        [
+                            i
+                            for i in f.issues
+                            if i.severity == SeverityLevel.CRITICAL
+                        ]
                     ),
                     "high_issues": len(
-                        [i for i in f.issues if i.severity == SeverityLevel.HIGH]
+                        [
+                            i
+                            for i in f.issues
+                            if i.severity == SeverityLevel.HIGH
+                        ]
                     ),
                     "total_issues": len(f.issues),
                 }
                 for f in worst_files
             ],
-            "detailed_issues": [issue.to_dict() for issue in self.quality_issues],
+            "detailed_issues": [
+                issue.to_dict() for issue in self.quality_issues
+            ],
             "recommendations": self._generate_recommendations(),
         }
 
@@ -699,19 +831,26 @@ class CodeQualityAnalyzer:
 
         # Critical issues first
         critical_issues = [
-            i for i in self.quality_issues if i.severity == SeverityLevel.CRITICAL
+            i
+            for i in self.quality_issues
+            if i.severity == SeverityLevel.CRITICAL
         ]
         if critical_issues:
             recommendations.append(
                 {
                     "priority": 1,
                     "title": "Address Critical Technical Debt",
-                    "description": f"Fix {len(critical_issues)} critical issues that severely impact maintainability",
+                    "description": (
+                        f"Fix {len(critical_issues)} critical issues that "
+                        f"severely impact maintainability"
+                    ),
                     "estimated_hours": sum(
                         i.estimated_fix_time for i in critical_issues
                     )
                     / 60,
-                    "files_affected": len(set(i.file_path for i in critical_issues)),
+                    "files_affected": len(
+                        set(i.file_path for i in critical_issues)
+                    ),
                 }
             )
 
@@ -724,26 +863,40 @@ class CodeQualityAnalyzer:
                 {
                     "priority": 2,
                     "title": "Resolve High-Priority Issues",
-                    "description": f"Address {len(high_issues)} high-priority maintainability issues",
-                    "estimated_hours": sum(i.estimated_fix_time for i in high_issues)
-                    / 60,
-                    "files_affected": len(set(i.file_path for i in high_issues)),
+                    "description": (
+                        f"Address {len(high_issues)} high-priority "
+                        f"maintainability issues"
+                    ),
+                    "estimated_hours": (
+                        sum(i.estimated_fix_time for i in high_issues) / 60
+                    ),
+                    "files_affected": len(
+                        set(i.file_path for i in high_issues)
+                    ),
                 }
             )
 
         # Documentation improvements
         doc_issues = [
-            i for i in self.quality_issues if i.category == IssueCategory.DOCUMENTATION
+            i
+            for i in self.quality_issues
+            if i.category == IssueCategory.DOCUMENTATION
         ]
         if doc_issues:
             recommendations.append(
                 {
                     "priority": 3,
                     "title": "Improve Documentation Coverage",
-                    "description": "Add docstrings and type hints to improve code clarity",
-                    "estimated_hours": sum(i.estimated_fix_time for i in doc_issues)
-                    / 60,
-                    "files_affected": len(set(i.file_path for i in doc_issues)),
+                    "description": (
+                        "Add docstrings and type hints to improve "
+                        "code clarity"
+                    ),
+                    "estimated_hours": (
+                        sum(i.estimated_fix_time for i in doc_issues) / 60
+                    ),
+                    "files_affected": len(
+                        set(i.file_path for i in doc_issues)
+                    ),
                 }
             )
 
@@ -755,19 +908,29 @@ class CodeQualityAnalyzer:
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(
-                f"# Code Quality Report - {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+                f"# Code Quality Report - "
+                f"{datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
             )
             f.write("## Summary\n")
-            f.write(f"- **Files Analyzed**: {report['summary']['total_files']}\n")
-            f.write(f"- **Total Issues**: {report['summary']['total_issues']}\n")
             f.write(
-                f"- **Quality Score**: {report['summary']['overall_quality_score']:.1f}/100\n"
+                f"- **Files Analyzed**: "
+                f"{report['summary']['total_files']}\n"
             )
             f.write(
-                f"- **Maintainability Grade**: {report['summary']['maintainability_grade']}\n"
+                f"- **Total Issues**: "
+                f"{report['summary']['total_issues']}\n"
             )
             f.write(
-                f"- **Technical Debt**: {report['summary']['technical_debt_hours']:.1f} hours\n\n"
+                f"- **Quality Score**: "
+                f"{report['summary']['overall_quality_score']:.1f}/100\n"
+            )
+            f.write(
+                f"- **Maintainability Grade**: "
+                f"{report['summary']['maintainability_grade']}\n"
+            )
+            f.write(
+                f"- **Technical Debt**: "
+                f"{report['summary']['technical_debt_hours']:.1f} hours\n\n"
             )
 
             f.write("## Issues by Severity\n")
@@ -777,13 +940,17 @@ class CodeQualityAnalyzer:
             f.write("\n## Most Problematic Files\n")
             for file_info in report["most_problematic_files"][:5]:
                 f.write(
-                    f"- `{file_info['file']}` (Score: {file_info['quality_score']:.1f}, Issues: {file_info['total_issues']})\n"
+                    f"- `{file_info['file']}` "
+                    f"(Score: {file_info['quality_score']:.1f}, "
+                    f"Issues: {file_info['total_issues']})\n"
                 )
 
             f.write("\n## Priority Recommendations\n")
             for rec in report["recommendations"]:
                 f.write(
-                    f"{rec['priority']}. **{rec['title']}** ({rec['estimated_hours']:.1f}h, {rec['files_affected']} files)\n"
+                    f"{rec['priority']}. **{rec['title']}** "
+                    f"({rec['estimated_hours']:.1f}h, "
+                    f"{rec['files_affected']} files)\n"
                 )
                 f.write(f"   {rec['description']}\n\n")
 

@@ -73,7 +73,9 @@ class TestMetrics:
     def add_quality_score(self, metric: QualityMetric, score: float):
         """Add quality assessment score"""
         if not 0.0 <= score <= 1.0:
-            raise ValueError(f"Quality score must be between 0.0 and 1.0, got {score}")
+            raise ValueError(
+                f"Quality score must be between 0.0 and 1.0, got {score}"
+            )
         self.quality_scores[metric] = score
 
     def add_assertion_result(
@@ -91,7 +93,11 @@ class TestMetrics:
 
     def get_average_response_time(self) -> float:
         """Get average response time in milliseconds"""
-        return statistics.mean(self.response_times) if self.response_times else 0.0
+        return (
+            statistics.mean(self.response_times)
+            if self.response_times
+            else 0.0
+        )
 
     def get_overall_quality_score(self) -> float:
         """Get weighted overall quality score"""
@@ -123,7 +129,9 @@ class TestMetrics:
         if not self.assertion_results:
             return 1.0
 
-        passed_count = sum(1 for result in self.assertion_results if result["passed"])
+        passed_count = sum(
+            1 for result in self.assertion_results if result["passed"]
+        )
         return passed_count / len(self.assertion_results)
 
 
@@ -156,7 +164,9 @@ class AITestingFramework:
             "performance_threshold_ms", 2000
         )
 
-        logger.info(f"AI Testing Framework initialized with session {self.session_id}")
+        logger.info(
+            f"AI Testing Framework initialized with session {self.session_id}"
+        )
 
     async def initialize(self):
         """Initialize testing framework resources"""
@@ -199,7 +209,9 @@ class AITestingFramework:
             )
 
             # Execute test based on type
-            result = await self._execute_test_by_type(scenario, context, metrics)
+            result = await self._execute_test_by_type(
+                scenario, context, metrics
+            )
 
             # Finalize metrics
             metrics.finish()
@@ -208,7 +220,9 @@ class AITestingFramework:
             test_result = TestResult(
                 execution_id=test_id,
                 scenario_id=scenario.id,
-                status=TestStatus.COMPLETED if result["passed"] else TestStatus.FAILED,
+                status=TestStatus.COMPLETED
+                if result["passed"]
+                else TestStatus.FAILED,
                 passed=result["passed"],
                 score=metrics.get_overall_quality_score(),
                 duration_ms=int(metrics.duration_ms),
@@ -272,7 +286,10 @@ class AITestingFramework:
             self.active_tests.pop(test_id, None)
 
     async def _execute_test_by_type(
-        self, scenario: TestScenario, context: TestContext, metrics: TestMetrics
+        self,
+        scenario: TestScenario,
+        context: TestContext,
+        metrics: TestMetrics,
     ) -> Dict[str, Any]:
         """Execute test based on scenario type"""
 
@@ -281,16 +298,25 @@ class AITestingFramework:
         elif scenario.test_type == TestType.UI:
             return await self._execute_ui_test(scenario, context, metrics)
         elif scenario.test_type == TestType.AI_QUALITY:
-            return await self._execute_ai_quality_test(scenario, context, metrics)
+            return await self._execute_ai_quality_test(
+                scenario, context, metrics
+            )
         elif scenario.test_type == TestType.INTEGRATION:
-            return await self._execute_integration_test(scenario, context, metrics)
+            return await self._execute_integration_test(
+                scenario, context, metrics
+            )
         elif scenario.test_type == TestType.PERFORMANCE:
-            return await self._execute_performance_test(scenario, context, metrics)
+            return await self._execute_performance_test(
+                scenario, context, metrics
+            )
         else:
             raise ValueError(f"Unsupported test type: {scenario.test_type}")
 
     async def _execute_api_test(
-        self, scenario: TestScenario, context: TestContext, metrics: TestMetrics
+        self,
+        scenario: TestScenario,
+        context: TestContext,
+        metrics: TestMetrics,
     ) -> Dict[str, Any]:
         """Execute API test scenario"""
         api_spec = scenario.config.get("api_spec", {})
@@ -304,7 +330,9 @@ class AITestingFramework:
 
         # Add authentication if configured
         if context.metadata.get("auth_token"):
-            headers["Authorization"] = f"Bearer {context.metadata['auth_token']}"
+            headers[
+                "Authorization"
+            ] = f"Bearer {context.metadata['auth_token']}"
 
         start_time = time.time()
 
@@ -339,7 +367,10 @@ class AITestingFramework:
             metrics.add_assertion_result(
                 "response_time",
                 response_time_passed,
-                {"threshold_ms": max_response_time, "actual_ms": response_time},
+                {
+                    "threshold_ms": max_response_time,
+                    "actual_ms": response_time,
+                },
             )
 
             # Validate response content
@@ -358,7 +389,9 @@ class AITestingFramework:
             metrics.add_assertion_result("response_content", content_passed)
 
             # Overall API test result
-            overall_passed = status_passed and response_time_passed and content_passed
+            overall_passed = (
+                status_passed and response_time_passed and content_passed
+            )
 
             return {
                 "passed": overall_passed,
@@ -377,11 +410,15 @@ class AITestingFramework:
 
         except httpx.TimeoutException:
             metrics.add_assertion_result(
-                "api_timeout", False, {"timeout_seconds": scenario.timeout_seconds}
+                "api_timeout",
+                False,
+                {"timeout_seconds": scenario.timeout_seconds},
             )
             return {
                 "passed": False,
-                "recommendations": ["Increase timeout or optimize API performance"],
+                "recommendations": [
+                    "Increase timeout or optimize API performance"
+                ],
             }
         except Exception as e:
             metrics.errors.append(f"API test error: {e}")
@@ -394,7 +431,10 @@ class AITestingFramework:
             }
 
     async def _execute_ui_test(
-        self, scenario: TestScenario, context: TestContext, metrics: TestMetrics
+        self,
+        scenario: TestScenario,
+        context: TestContext,
+        metrics: TestMetrics,
     ) -> Dict[str, Any]:
         """Execute UI test scenario (delegated to Browser Automation Service)"""
         # This would be implemented when integrating with Playwright service
@@ -417,7 +457,10 @@ class AITestingFramework:
         }
 
     async def _execute_ai_quality_test(
-        self, scenario: TestScenario, context: TestContext, metrics: TestMetrics
+        self,
+        scenario: TestScenario,
+        context: TestContext,
+        metrics: TestMetrics,
     ) -> Dict[str, Any]:
         """Execute AI quality assessment test"""
         ai_spec = scenario.config.get("ai_spec", {})
@@ -447,7 +490,10 @@ class AITestingFramework:
         metrics.add_assertion_result(
             "ai_quality_threshold",
             quality_passed,
-            {"threshold": self.quality_threshold, "actual_score": overall_score},
+            {
+                "threshold": self.quality_threshold,
+                "actual_score": overall_score,
+            },
         )
 
         return {
@@ -469,7 +515,10 @@ class AITestingFramework:
         }
 
     async def _execute_integration_test(
-        self, scenario: TestScenario, context: TestContext, metrics: TestMetrics
+        self,
+        scenario: TestScenario,
+        context: TestContext,
+        metrics: TestMetrics,
     ) -> Dict[str, Any]:
         """Execute integration test scenario"""
         # Integration test combines multiple test types
@@ -498,7 +547,10 @@ class AITestingFramework:
         }
 
     async def _execute_performance_test(
-        self, scenario: TestScenario, context: TestContext, metrics: TestMetrics
+        self,
+        scenario: TestScenario,
+        context: TestContext,
+        metrics: TestMetrics,
     ) -> Dict[str, Any]:
         """Execute performance test scenario"""
         perf_spec = scenario.config.get("performance_spec", {})
@@ -510,7 +562,9 @@ class AITestingFramework:
         metrics.add_response_time(load_time)
 
         # Check performance thresholds
-        max_load_time = perf_spec.get("max_load_time_ms", self.performance_threshold_ms)
+        max_load_time = perf_spec.get(
+            "max_load_time_ms", self.performance_threshold_ms
+        )
         load_time_passed = load_time <= max_load_time
 
         metrics.add_assertion_result(
@@ -548,7 +602,9 @@ class AITestingFramework:
                     return False
                 elif expected_type == "string" and not isinstance(data, str):
                     return False
-                elif expected_type == "number" and not isinstance(data, (int, float)):
+                elif expected_type == "number" and not isinstance(
+                    data, (int, float)
+                ):
                     return False
 
             if "required" in schema and isinstance(data, dict):
@@ -578,7 +634,9 @@ class AITestingFramework:
                 f"Response time ({response_time:.1f}ms) exceeds threshold ({threshold}ms)"
             )
             if response_time > threshold * 2:
-                recommendations.append("Consider caching or performance optimization")
+                recommendations.append(
+                    "Consider caching or performance optimization"
+                )
 
         if response_time < threshold * 0.5:
             recommendations.append("Excellent response time performance")
@@ -593,14 +651,18 @@ class AITestingFramework:
 
         for metric, score in quality_scores.items():
             if score < 0.7:
-                recommendations.append(f"Improve {metric.value} (current: {score:.2f})")
+                recommendations.append(
+                    f"Improve {metric.value} (current: {score:.2f})"
+                )
             elif score > 0.9:
                 recommendations.append(f"Excellent {metric.value} performance")
 
         # Overall recommendations
         avg_score = sum(quality_scores.values()) / len(quality_scores)
         if avg_score < 0.8:
-            recommendations.append("Consider prompt engineering or model fine-tuning")
+            recommendations.append(
+                "Consider prompt engineering or model fine-tuning"
+            )
 
         return recommendations
 
@@ -631,9 +693,12 @@ class AITestingFramework:
         if total_tests == 0:
             return {"message": "No tests completed in this session"}
 
-        avg_score = sum(test.score for test in self.completed_tests) / total_tests
+        avg_score = (
+            sum(test.score for test in self.completed_tests) / total_tests
+        )
         avg_duration = (
-            sum(test.duration_ms for test in self.completed_tests) / total_tests
+            sum(test.duration_ms for test in self.completed_tests)
+            / total_tests
         )
 
         return {
@@ -643,7 +708,9 @@ class AITestingFramework:
             "pass_rate": passed_tests / total_tests,
             "average_score": avg_score,
             "average_duration_ms": avg_duration,
-            "test_types": list(set(test.status for test in self.completed_tests)),
+            "test_types": list(
+                set(test.status for test in self.completed_tests)
+            ),
             "quality_trends": self._calculate_quality_trends(),
         }
 

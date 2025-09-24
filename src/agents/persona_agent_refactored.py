@@ -21,13 +21,13 @@ from typing import Any, Dict, List, Optional
 
 from src.agents.context_manager import CharacterContextManager
 from src.agents.decision_engine import DecisionEngine
-from src.events.event_bus import EventBus
 
 # Import decomposed components
 from src.agents.persona_core import PersonaCore
 
 # Import shared types
 from src.core.types.shared_types import CharacterAction
+from src.events.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +176,9 @@ class PersonaAgent:
             "context": context_summary,
             "decision_engine": {
                 "action_threshold": self.decision_engine.action_threshold,
-                "decision_weights_loaded": bool(self.decision_engine.decision_weights),
+                "decision_weights_loaded": bool(
+                    self.decision_engine.decision_weights
+                ),
             },
             "legacy_compatibility": True,
         }
@@ -238,7 +240,9 @@ class PersonaAgent:
             "timestamp": self.core.state.last_action_timestamp,
         }
 
-        logger.debug(f"Agent {self.agent_id} processed communication from {sender_id}")
+        logger.debug(
+            f"Agent {self.agent_id} processed communication from {sender_id}"
+        )
         return response
 
     # Memory and experience methods (simplified)
@@ -262,11 +266,13 @@ class PersonaAgent:
 
         # Keep only recent events (memory limit)
         if len(self.subjective_worldview["recent_events"]) > 50:
-            self.subjective_worldview["recent_events"] = self.subjective_worldview[
+            self.subjective_worldview[
                 "recent_events"
-            ][-25:]
+            ] = self.subjective_worldview["recent_events"][-25:]
 
-        logger.debug(f"Agent {self.agent_id} updated memory with new experience")
+        logger.debug(
+            f"Agent {self.agent_id} updated memory with new experience"
+        )
 
     def update_memory(self, event_string: str) -> None:
         """
@@ -305,7 +311,13 @@ class PersonaAgent:
         identity = self.core.character_data.get("identity", {})
 
         # Look for combat-related fields
-        combat_indicators = ["warrior", "soldier", "fighter", "combat", "weapon"]
+        combat_indicators = [
+            "warrior",
+            "soldier",
+            "fighter",
+            "combat",
+            "weapon",
+        ]
 
         profession = identity.get("profession", "").lower()
         if any(indicator in profession for indicator in combat_indicators):
@@ -313,7 +325,9 @@ class PersonaAgent:
 
         # Check capabilities section
         for key, value in capabilities.items():
-            if any(indicator in key.lower() for indicator in combat_indicators):
+            if any(
+                indicator in key.lower() for indicator in combat_indicators
+            ):
                 return True
 
         return False
@@ -335,7 +349,9 @@ class PersonaAgent:
 
 # Factory function for backward compatibility
 def create_persona_agent(
-    character_directory_path: str, event_bus: "EventBus", agent_id: Optional[str] = None
+    character_directory_path: str,
+    event_bus: "EventBus",
+    agent_id: Optional[str] = None,
 ) -> PersonaAgent:
     """
     Factory function to create PersonaAgent instance.

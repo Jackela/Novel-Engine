@@ -192,16 +192,22 @@ async def main():
 
         # Stop services
         if sys.platform == "win32":
-            run_command("taskkill /F /IM python.exe", "Stopping Python processes")
+            run_command(
+                "taskkill /F /IM python.exe", "Stopping Python processes"
+            )
         else:
-            run_command("pkill -f 'python.*ai_testing'", "Stopping AI testing services")
+            run_command(
+                "pkill -f 'python.*ai_testing'", "Stopping AI testing services"
+            )
 
         time.sleep(3)
 
         # Start services
         print("Starting services...")
         start_script = Path(__file__).parent / (
-            "start_services.bat" if sys.platform == "win32" else "start_services.sh"
+            "start_services.bat"
+            if sys.platform == "win32"
+            else "start_services.sh"
         )
 
         if start_script.exists():
@@ -209,7 +215,9 @@ async def main():
             print("Waiting for services to start...")
             time.sleep(15)
         else:
-            print("⚠️ Start script not found. Please restart services manually.")
+            print(
+                "⚠️ Start script not found. Please restart services manually."
+            )
             return False
 
         # Verify services are running

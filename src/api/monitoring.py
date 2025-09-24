@@ -158,7 +158,10 @@ class MetricsCollector:
                     self.timers[name] = self.timers[name][-1000:]
 
     def increment_counter(
-        self, name: str, value: float = 1.0, labels: Optional[Dict[str, str]] = None
+        self,
+        name: str,
+        value: float = 1.0,
+        labels: Optional[Dict[str, str]] = None,
     ):
         """Increment a counter metric."""
         self.record_metric(name, value, MetricType.COUNTER, labels)
@@ -176,7 +179,10 @@ class MetricsCollector:
         self.record_metric(name, value, MetricType.HISTOGRAM, labels)
 
     def record_timer(
-        self, name: str, duration_ms: float, labels: Optional[Dict[str, str]] = None
+        self,
+        name: str,
+        duration_ms: float,
+        labels: Optional[Dict[str, str]] = None,
     ):
         """Record a timer value."""
         self.record_metric(name, duration_ms, MetricType.TIMER, labels)
@@ -186,7 +192,9 @@ class MetricsCollector:
         with self._lock:
             self.active_requests[request_id] = time.time()
 
-    def end_request_timer(self, request_id: str, request_metrics: RequestMetrics):
+    def end_request_timer(
+        self, request_id: str, request_metrics: RequestMetrics
+    ):
         """End timing a request and record metrics."""
         with self._lock:
             if request_id in self.active_requests:
@@ -201,8 +209,12 @@ class MetricsCollector:
             stats["count"] += 1
             stats["total_time"] += request_metrics.duration_ms
             stats["avg_time"] = stats["total_time"] / stats["count"]
-            stats["min_time"] = min(stats["min_time"], request_metrics.duration_ms)
-            stats["max_time"] = max(stats["max_time"], request_metrics.duration_ms)
+            stats["min_time"] = min(
+                stats["min_time"], request_metrics.duration_ms
+            )
+            stats["max_time"] = max(
+                stats["max_time"], request_metrics.duration_ms
+            )
 
             if request_metrics.status_code >= 400:
                 stats["error_count"] += 1
@@ -236,7 +248,8 @@ class MetricsCollector:
             recent_requests = [
                 r
                 for r in self.requests
-                if (current_time - r.timestamp).total_seconds() < 300  # Last 5 minutes
+                # Last 5 minutes
+                if (current_time - r.timestamp).total_seconds() < 300
             ]
 
             return {
@@ -273,7 +286,13 @@ class MetricsCollector:
                     ),
                     "error_rate": (
                         (
-                            len([r for r in recent_requests if r.status_code >= 400])
+                            len(
+                                [
+                                    r
+                                    for r in recent_requests
+                                    if r.status_code >= 400
+                                ]
+                            )
                             / len(recent_requests)
                             * 100
                         )
@@ -424,13 +443,17 @@ class AlertManager:
         if rule.metric_name == "error_rate":
             if not recent_requests:
                 return 0.0
-            error_count = len([r for r in recent_requests if r.status_code >= 400])
+            error_count = len(
+                [r for r in recent_requests if r.status_code >= 400]
+            )
             return (error_count / len(recent_requests)) * 100
 
         elif rule.metric_name == "avg_response_time":
             if not recent_requests:
                 return 0.0
-            return sum(r.duration_ms for r in recent_requests) / len(recent_requests)
+            return sum(r.duration_ms for r in recent_requests) / len(
+                recent_requests
+            )
 
         elif rule.metric_name in summary.get("gauges", {}):
             return summary["gauges"][rule.metric_name]
@@ -497,7 +520,9 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
             )
 
             # Record metrics
-            self.metrics_collector.end_request_timer(request_id, request_metrics)
+            self.metrics_collector.end_request_timer(
+                request_id, request_metrics
+            )
 
             # Add monitoring headers
             response.headers["X-Request-ID"] = request_id
@@ -522,7 +547,9 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
                 error_type=type(e).__name__,
             )
 
-            self.metrics_collector.end_request_timer(request_id, request_metrics)
+            self.metrics_collector.end_request_timer(
+                request_id, request_metrics
+            )
             raise
 
 
@@ -534,7 +561,9 @@ def setup_monitoring(app, enable_alerts: bool = True):
     alert_manager = AlertManager(metrics_collector) if enable_alerts else None
 
     # Add monitoring middleware
-    app.add_middleware(MonitoringMiddleware, metrics_collector=metrics_collector)
+    app.add_middleware(
+        MonitoringMiddleware, metrics_collector=metrics_collector
+    )
 
     # Add metrics endpoint
     @app.get("/api/v1/metrics", tags=["Monitoring"])
@@ -569,7 +598,10 @@ def setup_monitoring(app, enable_alerts: bool = True):
 
     logger.info("Monitoring system initialized")
 
-    return {"metrics_collector": metrics_collector, "alert_manager": alert_manager}
+    return {
+        "metrics_collector": metrics_collector,
+        "alert_manager": alert_manager,
+    }
 
 
 __all__ = [

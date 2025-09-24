@@ -24,16 +24,16 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.core.data_models import (
-    ErrorInfo,
-    MemoryItem,
-    StandardResponse,
-)
+from src.core.data_models import ErrorInfo, MemoryItem, StandardResponse
 
 # Import enhanced memory and data systems
 from src.memory.layered_memory import LayeredMemorySystem
 
-from .context_renderer import ContextRenderer, RenderFormat, RenderingConstraints
+from .context_renderer import (
+    ContextRenderer,
+    RenderFormat,
+    RenderingConstraints,
+)
 
 # Import enhanced template systems
 from .dynamic_template_engine import (
@@ -130,7 +130,9 @@ class CharacterContextProfile:
     context_emphasis: Dict[str, float] = field(
         default_factory=dict
     )  # memory, emotion, relationship, etc.
-    situational_adaptations: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    situational_adaptations: Dict[str, Dict[str, Any]] = field(
+        default_factory=dict
+    )
     interaction_patterns: Dict[str, List[str]] = field(default_factory=dict)
     learning_history: List[Dict[str, Any]] = field(default_factory=list)
     optimization_suggestions: List[str] = field(default_factory=list)
@@ -172,9 +174,9 @@ class CharacterTemplateManager:
 
         # Sacred character management
         self._personas: Dict[str, CharacterPersona] = {}
-        self._character_templates: Dict[str, Dict[str, CharacterTemplate]] = (
-            {}
-        )  # persona_id -> template_id -> template
+        self._character_templates: Dict[
+            str, Dict[str, CharacterTemplate]
+        ] = {}  # persona_id -> template_id -> template
         self._context_profiles: Dict[str, CharacterContextProfile] = {}
         self._active_personas: Dict[str, str] = {}  # agent_id -> persona_id
 
@@ -196,7 +198,7 @@ class CharacterTemplateManager:
         self._discover_personas()
 
         logger.info(
-            f"CHARACTER TEMPLATE MANAGER INITIALIZED: {len(self._personas)} personas loaded"
+            f"CHARACTER TEMPLATE MANAGER INITIALIZED: {len( self._personas)} personas loaded"
         )
 
     async def create_persona(
@@ -237,7 +239,9 @@ class CharacterTemplateManager:
 
             # Generate enhanced default templates
             if generate_templates:
-                template_result = await self._generate_archetype_templates(persona_data)
+                template_result = await self._generate_archetype_templates(
+                    persona_data
+                )
                 if not template_result.success:
                     logger.warning(
                         f"TEMPLATE GENERATION FAILED FOR {persona_id}: {template_result.error.message}"
@@ -264,11 +268,16 @@ class CharacterTemplateManager:
             logger.error(f"PERSONA CREATION FAILED: {e}")
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="PERSONA_CREATION_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="PERSONA_CREATION_FAILED", message=str(e)
+                ),
             )
 
     async def switch_persona(
-        self, agent_id: str, persona_id: str, context: Optional[TemplateContext] = None
+        self,
+        agent_id: str,
+        persona_id: str,
+        context: Optional[TemplateContext] = None,
     ) -> StandardResponse:
         """
         STANDARD PERSONA SWITCHING RITUAL ENHANCED BY IDENTITY TRANSFORMATION
@@ -381,7 +390,8 @@ class CharacterTemplateManager:
                     selected_template.template_id, enhanced_context
                 )
             else:
-                # Use enhanced default context rendering with persona adaptation
+                # Use enhanced default context rendering with persona
+                # adaptation
                 render_result = await self.context_renderer.render_context(
                     enhanced_context, selected_format, persona_constraints
                 )
@@ -411,10 +421,14 @@ class CharacterTemplateManager:
                         "persona_id": persona_id,
                         "archetype": persona.archetype.value,
                         "format_used": (
-                            selected_format.value if selected_format else "template"
+                            selected_format.value
+                            if selected_format
+                            else "template"
                         ),
                         "template_used": (
-                            selected_template.template_id if selected_template else None
+                            selected_template.template_id
+                            if selected_template
+                            else None
                         ),
                     },
                     metadata={"blessing": "character_context_rendered"},
@@ -426,7 +440,9 @@ class CharacterTemplateManager:
             logger.error(f"CHARACTER CONTEXT RENDERING FAILED: {e}")
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="CHARACTER_CONTEXT_RENDER_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="CHARACTER_CONTEXT_RENDER_FAILED", message=str(e)
+                ),
             )
 
     async def generate_character_template(
@@ -461,8 +477,10 @@ class CharacterTemplateManager:
             if base_content:
                 template_content = base_content
             else:
-                template_content = await self._generate_archetype_template_content(
-                    persona.archetype, template_type
+                template_content = (
+                    await self._generate_archetype_template_content(
+                        persona.archetype, template_type
+                    )
                 )
 
             # Apply enhanced persona adaptations
@@ -479,17 +497,24 @@ class CharacterTemplateManager:
                 context_requirements=self._determine_template_requirements(
                     template_type, persona
                 ),
-                dynamic_elements=self._identify_dynamic_elements(adapted_content),
+                dynamic_elements=self._identify_dynamic_elements(
+                    adapted_content
+                ),
             )
 
             # Register enhanced template
             if persona_id not in self._character_templates:
                 self._character_templates[persona_id] = {}
-            self._character_templates[persona_id][template_id] = character_template
+            self._character_templates[persona_id][
+                template_id
+            ] = character_template
 
             # Create enhanced template in engine
             engine_result = await self.template_engine.create_template(
-                template_id, adapted_content, template_type, character_template.metadata
+                template_id,
+                adapted_content,
+                template_type,
+                character_template.metadata,
             )
 
             if engine_result.success:
@@ -595,13 +620,15 @@ class CharacterTemplateManager:
                 )
 
                 if template_result.success:
-                    migrated_templates.append(template_result.data["template_id"])
+                    migrated_templates.append(
+                        template_result.data["template_id"]
+                    )
                     logger.info(
                         f"MIGRATED TEMPLATE: {template_name} -> {persona_id} ({template_type.value})"
                     )
 
             logger.info(
-                f"MIGRATION COMPLETE: {len(migrated_personas)} personas, {len(migrated_templates)} templates"
+                f"MIGRATION COMPLETE: {len(migrated_personas)}personas, {len(migrated_templates)} templates"
             )
 
             return StandardResponse(
@@ -619,7 +646,9 @@ class CharacterTemplateManager:
             logger.error(f"LEGACY MIGRATION FAILED: {e}")
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="LEGACY_MIGRATION_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="LEGACY_MIGRATION_FAILED", message=str(e)
+                ),
             )
 
     async def _enhance_context_for_persona(
@@ -649,7 +678,10 @@ class CharacterTemplateManager:
                 priority_boost = 0.0
 
                 # Apply enhanced archetype-specific memory priorities
-                for priority_type, boost_value in persona.memory_priorities.items():
+                for (
+                    priority_type,
+                    boost_value,
+                ) in persona.memory_priorities.items():
                     if priority_type.lower() in memory.content.lower():
                         priority_boost += boost_value
 
@@ -660,13 +692,20 @@ class CharacterTemplateManager:
                 prioritized_memories.append(memory)
 
             # Sort enhanced memories by enhanced relevance
-            prioritized_memories.sort(key=lambda m: m.relevance_score, reverse=True)
+            prioritized_memories.sort(
+                key=lambda m: m.relevance_score, reverse=True
+            )
             enhanced_context.memory_context = prioritized_memories
 
         # Apply enhanced behavioral preferences
-        for behavior_key, behavior_value in persona.behavioral_preferences.items():
+        for (
+            behavior_key,
+            behavior_value,
+        ) in persona.behavioral_preferences.items():
             if behavior_key not in enhanced_context.custom_variables:
-                enhanced_context.custom_variables[behavior_key] = behavior_value
+                enhanced_context.custom_variables[
+                    behavior_key
+                ] = behavior_value
 
         return enhanced_context
 
@@ -716,7 +755,9 @@ class CharacterTemplateManager:
                     requirements_met += 1
 
             if template.context_requirements:
-                score += (requirements_met / len(template.context_requirements)) * 0.3
+                score += (
+                    requirements_met / len(template.context_requirements)
+                ) * 0.3
 
             if score > best_score:
                 best_score = score
@@ -771,7 +812,9 @@ class CharacterTemplateManager:
         }
 
         if persona.archetype in archetype_format_preferences:
-            for fmt, bonus in archetype_format_preferences[persona.archetype].items():
+            for fmt, bonus in archetype_format_preferences[
+                persona.archetype
+            ].items():
                 format_scores[fmt] = format_scores.get(fmt, 0.5) + bonus
 
         # Select enhanced highest scoring format
@@ -786,7 +829,10 @@ class CharacterTemplateManager:
 
         # Apply enhanced archetype-specific constraints
         archetype_constraints = {
-            CharacterArchetype.WARRIOR: {"max_memories": 6, "emotional_threshold": 2.0},
+            CharacterArchetype.WARRIOR: {
+                "max_memories": 6,
+                "emotional_threshold": 2.0,
+            },
             CharacterArchetype.SCHOLAR: {
                 "max_memories": 12,
                 "relevance_threshold": 0.6,
@@ -811,7 +857,10 @@ class CharacterTemplateManager:
                 "max_memories": 8,
                 "emotional_threshold": 2.5,
             },
-            CharacterArchetype.SURVIVOR: {"max_memories": 5, "time_window_hours": 12},
+            CharacterArchetype.SURVIVOR: {
+                "max_memories": 5,
+                "time_window_hours": 12,
+            },
         }
 
         if persona.archetype in archetype_constraints:
@@ -823,7 +872,10 @@ class CharacterTemplateManager:
         return constraints
 
     async def _apply_persona_post_processing(
-        self, render_result: Any, persona: CharacterPersona, context: TemplateContext
+        self,
+        render_result: Any,
+        persona: CharacterPersona,
+        context: TemplateContext,
     ) -> Any:
         """Apply enhanced persona-specific post-processing to render result"""
         if not hasattr(render_result, "rendered_content"):
@@ -833,13 +885,18 @@ class CharacterTemplateManager:
 
         # Apply enhanced speech pattern adaptations
         if persona.speech_patterns:
-            for pattern_type, pattern_config in persona.speech_patterns.items():
+            for (
+                pattern_type,
+                pattern_config,
+            ) in persona.speech_patterns.items():
                 if pattern_type == "formality_level":
                     content = self._adjust_formality(content, pattern_config)
                 elif pattern_type == "vocabulary_preference":
                     content = self._adjust_vocabulary(content, pattern_config)
                 elif pattern_type == "sentence_structure":
-                    content = self._adjust_sentence_structure(content, pattern_config)
+                    content = self._adjust_sentence_structure(
+                        content, pattern_config
+                    )
 
         # Apply enhanced archetype-specific formatting
         content = self._apply_archetype_formatting(content, persona.archetype)
@@ -887,7 +944,9 @@ class CharacterTemplateManager:
 
         return content
 
-    def _adjust_sentence_structure(self, content: str, structure_config: Any) -> str:
+    def _adjust_sentence_structure(
+        self, content: str, structure_config: Any
+    ) -> str:
         """Apply enhanced sentence structure adjustments"""
         # This is a simplified implementation - could be enhanced with NLP
         if isinstance(structure_config, str):
@@ -898,7 +957,9 @@ class CharacterTemplateManager:
                 for sentence in sentences:
                     if len(sentence) > 100:  # Arbitrary threshold
                         # Try to split on conjunctions
-                        parts = sentence.replace(" and ", ". ").replace(" but ", ". ")
+                        parts = sentence.replace(" and ", ". ").replace(
+                            " but ", ". "
+                        )
                         short_sentences.append(parts)
                     else:
                         short_sentences.append(sentence)
@@ -969,7 +1030,7 @@ Location: {{current_location}}
 {% if equipment_states %}
 Equipment Status:
 {% for item, status in equipment_states.items() %}
-- {{item}}: {{status.condition if status.condition else status}} 
+- {{item}}: {{status.condition if status.condition else status}}
 {% endfor %}
 {% endif %}
 
@@ -996,9 +1057,15 @@ The warrior's determination is unwavering, a beacon of Imperial strength in dark
             CharacterArchetype.SCHOLAR: {"memory": 0.3, "environment": -0.1},
             CharacterArchetype.LEADER: {"relationship": 0.3, "memory": 0.1},
             CharacterArchetype.MYSTIC: {"emotion": 0.3, "equipment": -0.1},
-            CharacterArchetype.ENGINEER: {"equipment": 0.3, "environment": 0.1},
+            CharacterArchetype.ENGINEER: {
+                "equipment": 0.3,
+                "environment": 0.1,
+            },
             CharacterArchetype.DIPLOMAT: {"relationship": 0.4, "emotion": 0.1},
-            CharacterArchetype.GUARDIAN: {"relationship": 0.2, "equipment": 0.1},
+            CharacterArchetype.GUARDIAN: {
+                "relationship": 0.2,
+                "equipment": 0.1,
+            },
             CharacterArchetype.SURVIVOR: {"environment": 0.2, "memory": 0.1},
         }
 
@@ -1006,7 +1073,9 @@ The warrior's determination is unwavering, a beacon of Imperial strength in dark
             modifiers = archetype_modifiers[archetype]
             for key, modifier in modifiers.items():
                 if key in base_emphasis:
-                    base_emphasis[key] = max(0.0, base_emphasis[key] + modifier)
+                    base_emphasis[key] = max(
+                        0.0, base_emphasis[key] + modifier
+                    )
 
         return base_emphasis
 
@@ -1071,7 +1140,9 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         # Apply enhanced personality trait integration
         if persona.personality_traits:
             traits_section = (
-                "\nPersonality Traits: " + ", ".join(persona.personality_traits) + "\n"
+                "\nPersonality Traits: "
+                + ", ".join(persona.personality_traits)
+                + "\n"
             )
             adapted_content = adapted_content.replace(
                 "{{persona_name}}", f"{{{{persona_name}}}}{traits_section}"
@@ -1089,7 +1160,9 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         # Apply enhanced faction data
         if persona.faction_data:
             faction_section = (
-                "\nFaction Allegiance: " + ", ".join(persona.faction_data) + "\n"
+                "\nFaction Allegiance: "
+                + ", ".join(persona.faction_data)
+                + "\n"
             )
             adapted_content += faction_section
 
@@ -1106,7 +1179,10 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
                 "current_situation",
             ],
             TemplateType.DIALOGUE: ["dialogue_content"],
-            TemplateType.NARRATIVE_SCENE: ["character_state", "current_location"],
+            TemplateType.NARRATIVE_SCENE: [
+                "character_state",
+                "current_location",
+            ],
             TemplateType.CONTEXT_SUMMARY: ["memory_context"],
             TemplateType.EQUIPMENT_STATUS: ["equipment_states"],
         }
@@ -1254,7 +1330,9 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         ]
 
         content_lower = template_content.lower()
-        found_traits = [trait for trait in trait_keywords if trait in content_lower]
+        found_traits = [
+            trait for trait in trait_keywords if trait in content_lower
+        ]
 
         return found_traits[:5]  # Limit to 5 traits
 
@@ -1265,22 +1343,33 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         name_lower = template_name.lower()
         template_content.lower()
 
-        if any(keyword in name_lower for keyword in ["prompt", "character", "persona"]):
+        if any(
+            keyword in name_lower
+            for keyword in ["prompt", "character", "persona"]
+        ):
             return TemplateType.CHARACTER_PROMPT
         elif any(
-            keyword in name_lower for keyword in ["dialogue", "conversation", "speak"]
+            keyword in name_lower
+            for keyword in ["dialogue", "conversation", "speak"]
         ):
             return TemplateType.DIALOGUE
-        elif any(keyword in name_lower for keyword in ["scene", "narrative", "story"]):
+        elif any(
+            keyword in name_lower
+            for keyword in ["scene", "narrative", "story"]
+        ):
             return TemplateType.NARRATIVE_SCENE
         elif any(keyword in name_lower for keyword in ["summary", "context"]):
             return TemplateType.CONTEXT_SUMMARY
-        elif any(keyword in name_lower for keyword in ["equipment", "gear", "status"]):
+        elif any(
+            keyword in name_lower
+            for keyword in ["equipment", "gear", "status"]
+        ):
             return TemplateType.EQUIPMENT_STATUS
         elif any(keyword in name_lower for keyword in ["interaction", "log"]):
             return TemplateType.INTERACTION_LOG
         elif any(
-            keyword in name_lower for keyword in ["world", "state", "environment"]
+            keyword in name_lower
+            for keyword in ["world", "state", "environment"]
         ):
             return TemplateType.WORLD_STATE
         elif any(keyword in name_lower for keyword in ["memory", "excerpt"]):
@@ -1301,16 +1390,24 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
                     name=persona_data["name"],
                     archetype=CharacterArchetype(persona_data["archetype"]),
                     description=persona_data.get("description", ""),
-                    personality_traits=persona_data.get("personality_traits", []),
+                    personality_traits=persona_data.get(
+                        "personality_traits", []
+                    ),
                     speech_patterns=persona_data.get("speech_patterns", {}),
                     behavioral_preferences=persona_data.get(
                         "behavioral_preferences", {}
                     ),
-                    memory_priorities=persona_data.get("memory_priorities", {}),
-                    emotional_tendencies=persona_data.get("emotional_tendencies", {}),
+                    memory_priorities=persona_data.get(
+                        "memory_priorities", {}
+                    ),
+                    emotional_tendencies=persona_data.get(
+                        "emotional_tendencies", {}
+                    ),
                     faction_data=persona_data.get("faction_data", []),
                     core_beliefs=persona_data.get("core_beliefs", []),
-                    template_preferences=persona_data.get("template_preferences", {}),
+                    template_preferences=persona_data.get(
+                        "template_preferences", {}
+                    ),
                     usage_statistics=persona_data.get("usage_statistics", {}),
                 )
 
@@ -1328,11 +1425,13 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
                 self._context_profiles[persona.persona_id] = context_profile
 
                 logger.info(
-                    f"DISCOVERED PERSONA: {persona.persona_id} ({persona.archetype.value})"
+                    f"DISCOVERED PERSONA: {persona.persona_id}({persona.archetype.value})"
                 )
 
             except Exception as e:
-                logger.error(f"FAILED TO LOAD PERSONA FROM {persona_file}: {e}")
+                logger.error(
+                    f"FAILED TO LOAD PERSONA FROM {persona_file}: {e}"
+                )
 
     async def _save_persona_to_file(self, persona: CharacterPersona):
         """Save enhanced persona to file"""
@@ -1359,7 +1458,9 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         with open(persona_file, "w", encoding="utf-8") as f:
             json.dump(persona_data, f, indent=2, ensure_ascii=False)
 
-    async def _learn_from_context(self, persona_id: str, context: TemplateContext):
+    async def _learn_from_context(
+        self, persona_id: str, context: TemplateContext
+    ):
         """Learn enhanced patterns from context usage"""
         if not self.enable_learning:
             return
@@ -1395,7 +1496,9 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         self, persona_id: str, render_result: Any, context: TemplateContext
     ):
         """Learn enhanced patterns from rendering performance"""
-        if not self.enable_learning or not hasattr(render_result, "render_time_ms"):
+        if not self.enable_learning or not hasattr(
+            render_result, "render_time_ms"
+        ):
             return
 
         profile = self._context_profiles.get(persona_id)
@@ -1426,7 +1529,9 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
                 "name": persona.name,
                 "archetype": persona.archetype.value,
                 "description": persona.description,
-                "template_count": len(self._character_templates.get(persona_id, {})),
+                "template_count": len(
+                    self._character_templates.get(persona_id, {})
+                ),
                 "usage_count": persona.usage_statistics.get("activations", 0),
                 "last_updated": persona.last_updated.isoformat(),
             }
@@ -1480,10 +1585,14 @@ async def test_standard_character_template_manager():
 
     try:
         # Initialize enhanced components
-        template_engine = DynamicTemplateEngine(template_directory=str(template_dir))
+        template_engine = DynamicTemplateEngine(
+            template_directory=str(template_dir)
+        )
         context_renderer = ContextRenderer(template_engine)
         manager = CharacterTemplateManager(
-            template_engine, context_renderer, personas_directory=str(personas_dir)
+            template_engine,
+            context_renderer,
+            personas_directory=str(personas_dir),
         )
 
         # Create enhanced test persona
@@ -1493,11 +1602,18 @@ async def test_standard_character_template_manager():
             archetype=CharacterArchetype.WARRIOR,
             description="A enhanced Space Marine warrior",
             personality_traits=["Brave", "Loyal", "Determined", "Disciplined"],
-            core_beliefs=["The Emperor Protects", "Honor in Battle", "Duty Above All"],
+            core_beliefs=[
+                "The Emperor Protects",
+                "Honor in Battle",
+                "Duty Above All",
+            ],
             faction_data=["Imperial Fists", "Space Marines", "Imperium"],
             speech_patterns={
                 "formality_level": "high",
-                "vocabulary_preference": {"enemy": "heretic", "fight": "purge"},
+                "vocabulary_preference": {
+                    "enemy": "heretic",
+                    "fight": "purge",
+                },
             },
             behavioral_preferences={
                 "combat_readiness": "always",
@@ -1510,7 +1626,7 @@ async def test_standard_character_template_manager():
         print(f"PERSONA CREATION: {creation_result.success}")
         if creation_result.success:
             print(
-                f"Created persona: {creation_result.data['persona_id']} ({creation_result.data['archetype']})"
+                f"Created persona: {creation_result.data['persona_id']}({creation_result.data['archetype']})"
             )
 
         # Test enhanced persona switching
@@ -1549,7 +1665,7 @@ async def test_standard_character_template_manager():
             result_data = render_result.data["render_result"]
             print(f"Rendered {len(result_data.rendered_content)} characters")
             print(
-                f"Used persona: {render_result.data['persona_id']} ({render_result.data['archetype']})"
+                f"Used persona: {render_result.data['persona_id']}({render_result.data['archetype']})"
             )
             print("Content preview:")
             print(result_data.rendered_content[:300] + "...")
@@ -1565,7 +1681,7 @@ async def test_standard_character_template_manager():
         # Display enhanced statistics
         stats = manager.get_manager_statistics()
         print(
-            f"MANAGER STATISTICS: {stats['total_personas']} personas, {stats['total_templates']} templates"
+            f"MANAGER STATISTICS: {stats['total_personas']}personas, {stats['total_templates']} templates"
         )
 
         # Get enhanced persona list
@@ -1589,4 +1705,6 @@ if __name__ == "__main__":
     # Run enhanced async testing
     asyncio.run(test_standard_character_template_manager())
 
-    print("ALL STANDARD CHARACTER TEMPLATE MANAGER OPERATIONS ENHANCED AND FUNCTIONAL")
+    print(
+        "ALL STANDARD CHARACTER TEMPLATE MANAGER OPERATIONS ENHANCED AND FUNCTIONAL"
+    )

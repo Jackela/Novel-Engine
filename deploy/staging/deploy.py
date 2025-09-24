@@ -54,8 +54,12 @@ class StagingDeployment:
     def __init__(self):
         self.project_root = project_root
         self.staging_dir = project_root / "staging"
-        self.deployment_id = f"staging-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-        self.backup_dir = project_root / "staging" / "backups" / self.deployment_id
+        self.deployment_id = (
+            f"staging-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        )
+        self.backup_dir = (
+            project_root / "staging" / "backups" / self.deployment_id
+        )
         self.health_check_url = "http://localhost:8000/health"
 
         # Create necessary directories
@@ -124,13 +128,17 @@ except ImportError as e:
             logger.info("Validating staging configuration...")
             staging_config = self.staging_dir / "settings_staging.yaml"
             if not staging_config.exists():
-                logger.error(f"❌ Staging configuration not found: {staging_config}")
+                logger.error(
+                    f"❌ Staging configuration not found: {staging_config}"
+                )
                 return False
 
             with open(staging_config) as f:
                 config = yaml.safe_load(f)
                 if config.get("system", {}).get("environment") != "staging":
-                    logger.error("❌ Configuration not set to staging environment")
+                    logger.error(
+                        "❌ Configuration not set to staging environment"
+                    )
                     return False
 
             logger.info("✅ Configuration validated")
@@ -146,7 +154,9 @@ except ImportError as e:
                 )
 
                 if result.returncode != 0:
-                    logger.warning(f"⚠️  Dependency issues detected: {result.stderr}")
+                    logger.warning(
+                        f"⚠️  Dependency issues detected: {result.stderr}"
+                    )
 
             logger.info("✅ Dependencies checked")
 
@@ -232,7 +242,9 @@ except ImportError as e:
         try:
             # Copy staging settings to active configuration
             staging_settings = self.staging_dir / "settings_staging.yaml"
-            active_settings = self.project_root / "configs/environments/settings.yaml"
+            active_settings = (
+                self.project_root / "configs/environments/settings.yaml"
+            )
 
             # Backup current settings
             if active_settings.exists():
@@ -326,9 +338,13 @@ except ImportError as e:
                     f"⚠️ Health check attempt {attempt + 1} - Connection refused"
                 )
             except requests.exceptions.Timeout:
-                logger.warning(f"⚠️ Health check attempt {attempt + 1} - Timeout")
+                logger.warning(
+                    f"⚠️ Health check attempt {attempt + 1} - Timeout"
+                )
             except Exception as e:
-                logger.warning(f"⚠️ Health check attempt {attempt + 1} failed: {e}")
+                logger.warning(
+                    f"⚠️ Health check attempt {attempt + 1} failed: {e}"
+                )
 
             attempt += 1
             if attempt < max_attempts:
@@ -343,7 +359,12 @@ except ImportError as e:
 
         try:
             # Test endpoints
-            endpoints = ["/", "/characters", "/campaigns", "/meta/system-status"]
+            endpoints = [
+                "/",
+                "/characters",
+                "/campaigns",
+                "/meta/system-status",
+            ]
 
             base_url = "http://localhost:8000"
 
@@ -361,7 +382,9 @@ except ImportError as e:
 
             # Test system status endpoint specifically
             try:
-                response = requests.get(f"{base_url}/meta/system-status", timeout=10)
+                response = requests.get(
+                    f"{base_url}/meta/system-status", timeout=10
+                )
                 if response.status_code == 200:
                     status_data = response.json()
                     logger.info(f"✅ System status: {status_data}")
@@ -398,42 +421,43 @@ import subprocess
 from pathlib import Path
 
 def rollback():
+    deployment_id = "{self.deployment_id}"
     project_root = Path(__file__).parent.parent
-    backup_dir = project_root / "staging" / "backups" / "{self.deployment_id}"
-    
-    print(f"🔄 Rolling back deployment: {self.deployment_id}")
-    
+    backup_dir = project_root / "staging" / "backups" / deployment_id
+
+    print(f"🔄 Rolling back deployment: {{deployment_id}}")
+
     # Stop services
     print("⏹️  Stopping services...")
     try:
         subprocess.run(["pkill", "-f", "api_server.py"], check=False)
     except (FileNotFoundError, OSError, shutil.Error) as e:
-        logger.warning(f"Failed to stop services: {e}")
-    
+        print(f"⚠️ Warning: Failed to stop services: {{e}}")
+
     # Restore configuration files
     config_files = ["configs/environments/development.yaml", "configs/environments/settings.yaml", "requirements.txt"]
-    
+
     for config_file in config_files:
         backup_file = backup_dir / config_file
         target_file = project_root / config_file
-        
+
         if backup_file.exists():
             shutil.copy2(backup_file, target_file)
             print(f"📦 Restored: {{config_file}}")
-    
-    # Restore directories  
+
+    # Restore directories
     critical_dirs = ["private", "logs"]
-    
+
     for dir_name in critical_dirs:
         backup_dir_path = backup_dir / dir_name
         target_dir_path = project_root / dir_name
-        
+
         if backup_dir_path.exists():
             if target_dir_path.exists():
                 shutil.rmtree(target_dir_path)
             shutil.copytree(backup_dir_path, target_dir_path)
             print(f"📦 Restored directory: {{dir_name}}")
-    
+
     print("✅ Rollback completed")
     print("💡 Restart services manually if needed")
 
@@ -477,11 +501,15 @@ if __name__ == "__main__":
 
         # Step 3: Create rollback script
         if not self.create_rollback_script():
-            logger.warning("⚠️ Rollback script creation failed - continuing anyway")
+            logger.warning(
+                "⚠️ Rollback script creation failed - continuing anyway"
+            )
 
         # Step 4: Deploy configuration
         if not self.deploy_configuration():
-            logger.error("❌ Configuration deployment failed - deployment aborted")
+            logger.error(
+                "❌ Configuration deployment failed - deployment aborted"
+            )
             return False
 
         # Step 5: Start services
@@ -534,12 +562,18 @@ if __name__ == "__main__":
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Novel Engine Staging Deployment")
-    parser.add_argument(
-        "--validate-only", action="store_true", help="Only run validation, don't deploy"
+    parser = argparse.ArgumentParser(
+        description="Novel Engine Staging Deployment"
     )
     parser.add_argument(
-        "--rollback", action="store_true", help="Rollback the most recent deployment"
+        "--validate-only",
+        action="store_true",
+        help="Only run validation, don't deploy",
+    )
+    parser.add_argument(
+        "--rollback",
+        action="store_true",
+        help="Rollback the most recent deployment",
     )
 
     args = parser.parse_args()

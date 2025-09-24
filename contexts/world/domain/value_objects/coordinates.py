@@ -57,12 +57,18 @@ class Coordinates:
 
         # Check for valid numeric values first
         coords_are_numeric = True
-        for coord_name, coord_value in [("x", self.x), ("y", self.y), ("z", self.z)]:
+        for coord_name, coord_value in [
+            ("x", self.x),
+            ("y", self.y),
+            ("z", self.z),
+        ]:
             if not isinstance(coord_value, (int, float)):
                 errors.append(f"{coord_name} coordinate must be numeric")
                 coords_are_numeric = False
             elif math.isnan(coord_value) or math.isinf(coord_value):
-                errors.append(f"{coord_name} coordinate must be a finite number")
+                errors.append(
+                    f"{coord_name} coordinate must be a finite number"
+                )
                 coords_are_numeric = False
 
         # Check precision
@@ -100,7 +106,9 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            raise TypeError("Can only calculate distance to another Coordinates object")
+            raise TypeError(
+                "Can only calculate distance to another Coordinates object"
+            )
 
         dx = self.x - other.x
         dy = self.y - other.y
@@ -122,7 +130,9 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            raise TypeError("Can only calculate distance to another Coordinates object")
+            raise TypeError(
+                "Can only calculate distance to another Coordinates object"
+            )
 
         dx = self.x - other.x
         dy = self.y - other.y
@@ -143,11 +153,19 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            raise TypeError("Can only calculate distance to another Coordinates object")
+            raise TypeError(
+                "Can only calculate distance to another Coordinates object"
+            )
 
-        return abs(self.x - other.x) + abs(self.y - other.y) + abs(self.z - other.z)
+        return (
+            abs(self.x - other.x)
+            + abs(self.y - other.y)
+            + abs(self.z - other.z)
+        )
 
-    def is_within_range(self, other: "Coordinates", max_distance: float) -> bool:
+    def is_within_range(
+        self, other: "Coordinates", max_distance: float
+    ) -> bool:
         """
         Check if another coordinate is within a specified range.
 
@@ -167,7 +185,9 @@ class Coordinates:
 
         return self.distance_to(other) <= max_distance
 
-    def translate(self, dx: float, dy: float, dz: float = 0.0) -> "Coordinates":
+    def translate(
+        self, dx: float, dy: float, dz: float = 0.0
+    ) -> "Coordinates":
         """
         Create a new Coordinates object translated by the given offsets.
 
@@ -180,7 +200,10 @@ class Coordinates:
             New Coordinates object with translated position
         """
         return Coordinates(
-            x=self.x + dx, y=self.y + dy, z=self.z + dz, precision=self.precision
+            x=self.x + dx,
+            y=self.y + dy,
+            z=self.z + dz,
+            precision=self.precision,
         )
 
     def midpoint(self, other: "Coordinates") -> "Coordinates":
@@ -233,7 +256,12 @@ class Coordinates:
         Returns:
             Dictionary representation of the coordinates
         """
-        return {"x": self.x, "y": self.y, "z": self.z, "precision": self.precision}
+        return {
+            "x": self.x,
+            "y": self.y,
+            "z": self.z,
+            "precision": self.precision,
+        }
 
     @classmethod
     def from_tuple(
@@ -257,7 +285,9 @@ class Coordinates:
         if len(coords) == 2:
             return cls(x=coords[0], y=coords[1], z=0.0, precision=precision)
         elif len(coords) == 3:
-            return cls(x=coords[0], y=coords[1], z=coords[2], precision=precision)
+            return cls(
+                x=coords[0], y=coords[1], z=coords[2], precision=precision
+            )
         else:
             raise ValueError("Coordinate tuple must have 2 or 3 elements")
 

@@ -94,7 +94,9 @@ class CampaignLoggingService:
         self._log_statistics = {
             "total_entries": 0,
             "entries_by_level": {level.value: 0 for level in LogLevel},
-            "entries_by_category": {category.value: 0 for category in EventCategory},
+            "entries_by_category": {
+                category.value: 0 for category in EventCategory
+            },
             "errors_last_hour": 0,
             "session_start": datetime.now(),
         }
@@ -131,7 +133,9 @@ class CampaignLoggingService:
             return True
 
         except Exception as e:
-            self.logger.error(f"Campaign logging service initialization failed: {e}")
+            self.logger.error(
+                f"Campaign logging service initialization failed: {e}"
+            )
             return False
 
     async def log_event(self, event: Dict[str, Any]) -> None:
@@ -185,7 +189,9 @@ class CampaignLoggingService:
                     "metadata": {
                         "turn_number": turn_number,
                         "success": summary.get("success", False),
-                        "duration": summary.get("metrics", {}).get("total_duration", 0),
+                        "duration": summary.get("metrics", {}).get(
+                            "total_duration", 0
+                        ),
                         "agent_count": summary.get("metrics", {}).get(
                             "total_agents", 0
                         ),
@@ -195,7 +201,9 @@ class CampaignLoggingService:
                         "world_state_changes": len(
                             summary.get("world_state_changes", {})
                         ),
-                        "narrative_events": len(summary.get("narrative_events", [])),
+                        "narrative_events": len(
+                            summary.get("narrative_events", [])
+                        ),
                         "conflicts_resolved": summary.get("metrics", {}).get(
                             "conflicts_resolved", 0
                         ),
@@ -232,7 +240,9 @@ class CampaignLoggingService:
                         "metadata": {
                             "turn_number": turn_number,
                             "error_details": summary.get("error"),
-                            "partial_results": summary.get("agent_results", {}),
+                            "partial_results": summary.get(
+                                "agent_results", {}
+                            ),
                         },
                         "turn_number": turn_number,
                     }
@@ -252,7 +262,9 @@ class CampaignLoggingService:
             List of log entries as dictionaries
         """
         try:
-            recent_entries = self._log_entries[-limit:] if self._log_entries else []
+            recent_entries = (
+                self._log_entries[-limit:] if self._log_entries else []
+            )
 
             return [
                 {
@@ -345,14 +357,20 @@ class CampaignLoggingService:
             )
 
             # Calculate performance metrics
-            recent_entries = self._log_entries[-100:] if self._log_entries else []
-            avg_entries_per_minute = len(recent_entries) / max(1, session_duration / 60)
+            recent_entries = (
+                self._log_entries[-100:] if self._log_entries else []
+            )
+            avg_entries_per_minute = len(recent_entries) / max(
+                1, session_duration / 60
+            )
 
             return {
                 "session_id": self.session_id,
                 "session_duration": session_duration,
                 "total_entries": self._log_statistics["total_entries"],
-                "entries_by_level": self._log_statistics["entries_by_level"].copy(),
+                "entries_by_level": self._log_statistics[
+                    "entries_by_level"
+                ].copy(),
                 "entries_by_category": self._log_statistics[
                     "entries_by_category"
                 ].copy(),
@@ -406,7 +424,9 @@ class CampaignLoggingService:
         try:
             # Determine file name based on category and date
             date_str = entry.timestamp.strftime("%Y%m%d")
-            filename = f"{self.session_id}_{entry.category.value}_{date_str}.jsonl"
+            filename = (
+                f"{self.session_id}_{entry.category.value}_{date_str}.jsonl"
+            )
             file_path = self.log_dir / filename
 
             # Create JSON line format
@@ -467,7 +487,9 @@ class CampaignLoggingService:
                     }
 
                 self._error_patterns[error_signature]["count"] += 1
-                self._error_patterns[error_signature]["last_seen"] = entry.timestamp
+                self._error_patterns[error_signature][
+                    "last_seen"
+                ] = entry.timestamp
 
             # Performance metric tracking
             if entry.category == EventCategory.PERFORMANCE:
@@ -496,11 +518,15 @@ class CampaignLoggingService:
         """Manage in-memory log entries."""
         if len(self._log_entries) > self._max_memory_entries:
             # Archive older entries to compressed files
-            entries_to_archive = self._log_entries[: -self._max_memory_entries // 2]
+            entries_to_archive = self._log_entries[
+                : -self._max_memory_entries // 2
+            ]
             await self._archive_entries(entries_to_archive)
 
             # Keep recent entries in memory
-            self._log_entries = self._log_entries[-self._max_memory_entries // 2 :]
+            self._log_entries = self._log_entries[
+                -self._max_memory_entries // 2 :
+            ]
 
     async def _archive_entries(self, entries: List[LogEntry]) -> None:
         """Archive entries to compressed file."""
@@ -519,7 +545,8 @@ class CampaignLoggingService:
             # Write to compressed archive files
             for date_key, date_entries in entries_by_date.items():
                 archive_file = (
-                    self.log_dir / f"{self.session_id}_archive_{date_key}.jsonl.gz"
+                    self.log_dir
+                    / f"{self.session_id}_archive_{date_key}.jsonl.gz"
                 )
 
                 with gzip.open(archive_file, "at", encoding="utf-8") as f:
@@ -535,7 +562,9 @@ class CampaignLoggingService:
                             "turn_number": entry.turn_number,
                             "session_id": entry.session_id,
                         }
-                        f.write(json.dumps(log_line, ensure_ascii=False) + "\n")
+                        f.write(
+                            json.dumps(log_line, ensure_ascii=False) + "\n"
+                        )
 
                 self.logger.debug(
                     f"Archived {len(date_entries)} entries to {archive_file}"
@@ -553,7 +582,9 @@ class CampaignLoggingService:
             ):
                 # Rotate the file
                 timestamp = datetime.now().strftime("%H%M%S")
-                rotated_name = f"{file_path.stem}_{timestamp}{file_path.suffix}"
+                rotated_name = (
+                    f"{file_path.stem}_{timestamp}{file_path.suffix}"
+                )
                 rotated_path = file_path.parent / rotated_name
 
                 file_path.rename(rotated_path)
@@ -568,7 +599,9 @@ class CampaignLoggingService:
                             f_out.writelines(f_in)
                     rotated_path.unlink()
 
-                self.logger.debug(f"Rotated log file: {file_path} -> {rotated_name}")
+                self.logger.debug(
+                    f"Rotated log file: {file_path} -> {rotated_name}"
+                )
 
         except Exception as e:
             self.logger.error(f"Log rotation failed: {e}")
@@ -604,7 +637,9 @@ class CampaignLoggingService:
     def _get_top_error_patterns(self, limit: int = 5) -> List[Dict[str, Any]]:
         """Get top error patterns by frequency."""
         sorted_patterns = sorted(
-            self._error_patterns.items(), key=lambda x: x[1]["count"], reverse=True
+            self._error_patterns.items(),
+            key=lambda x: x[1]["count"],
+            reverse=True,
         )
 
         return [
@@ -700,7 +735,8 @@ class CampaignLoggingService:
                     "metadata": {
                         "total_entries": self._log_statistics["total_entries"],
                         "session_duration": (
-                            datetime.now() - self._log_statistics["session_start"]
+                            datetime.now()
+                            - self._log_statistics["session_start"]
                         ).total_seconds(),
                     },
                 }

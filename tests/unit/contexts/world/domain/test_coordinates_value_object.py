@@ -50,7 +50,9 @@ class TestCoordinatesValueObject:
 
     def test_coordinates_precision_rounding(self):
         """Test that coordinates are rounded to specified precision."""
-        coords = Coordinates(x=10.123456789, y=20.987654321, z=5.555555555, precision=3)
+        coords = Coordinates(
+            x=10.123456789, y=20.987654321, z=5.555555555, precision=3
+        )
 
         assert coords.x == 10.123
         assert coords.y == 20.988
@@ -100,17 +102,23 @@ class TestCoordinatesValueObject:
         """Test validation fails for invalid precision type."""
         with pytest.raises(ValueError) as exc_info:
             Coordinates(x=10.0, y=20.0, z=5.0, precision="invalid")
-        assert "Precision must be an integer between 0 and 15" in str(exc_info.value)
+        assert "Precision must be an integer between 0 and 15" in str(
+            exc_info.value
+        )
 
     def test_coordinates_validation_precision_out_of_range(self):
         """Test validation fails for precision out of valid range."""
         with pytest.raises(ValueError) as exc_info:
             Coordinates(x=10.0, y=20.0, z=5.0, precision=-1)
-        assert "Precision must be an integer between 0 and 15" in str(exc_info.value)
+        assert "Precision must be an integer between 0 and 15" in str(
+            exc_info.value
+        )
 
         with pytest.raises(ValueError) as exc_info:
             Coordinates(x=10.0, y=20.0, z=5.0, precision=16)
-        assert "Precision must be an integer between 0 and 15" in str(exc_info.value)
+        assert "Precision must be an integer between 0 and 15" in str(
+            exc_info.value
+        )
 
     def test_coordinates_validation_extreme_values(self):
         """Test validation fails for extremely large coordinate values."""
@@ -140,7 +148,9 @@ class TestCoordinatesValueObject:
         coords2 = Coordinates(x=4.0, y=6.0, z=15.0)
 
         distance = coords1.distance_to(coords2)
-        expected_distance = math.sqrt((4 - 1) ** 2 + (6 - 2) ** 2 + (15 - 3) ** 2)
+        expected_distance = math.sqrt(
+            (4 - 1) ** 2 + (6 - 2) ** 2 + (15 - 3) ** 2
+        )
 
         assert distance == pytest.approx(expected_distance)
 
@@ -158,8 +168,9 @@ class TestCoordinatesValueObject:
 
         with pytest.raises(TypeError) as exc_info:
             coords.distance_to("invalid")
-        assert "Can only calculate distance to another Coordinates object" in str(
-            exc_info.value
+        assert (
+            "Can only calculate distance to another Coordinates object"
+            in str(exc_info.value)
         )
 
     def test_distance_to_2d(self):
@@ -168,7 +179,9 @@ class TestCoordinatesValueObject:
         coords2 = Coordinates(x=3.0, y=4.0, z=200.0)  # Different high z value
 
         distance = coords1.distance_to_2d(coords2)
-        expected_distance = math.sqrt(3 * 3 + 4 * 4)  # Should ignore z difference
+        expected_distance = math.sqrt(
+            3 * 3 + 4 * 4
+        )  # Should ignore z difference
 
         assert distance == pytest.approx(expected_distance)
 
@@ -186,8 +199,9 @@ class TestCoordinatesValueObject:
 
         with pytest.raises(TypeError) as exc_info:
             coords.distance_to_2d("invalid")
-        assert "Can only calculate distance to another Coordinates object" in str(
-            exc_info.value
+        assert (
+            "Can only calculate distance to another Coordinates object"
+            in str(exc_info.value)
         )
 
     def test_manhattan_distance_to(self):
@@ -196,7 +210,9 @@ class TestCoordinatesValueObject:
         coords2 = Coordinates(x=4.0, y=6.0, z=15.0)
 
         distance = coords1.manhattan_distance_to(coords2)
-        expected_distance = abs(4 - 1) + abs(6 - 2) + abs(15 - 3)  # 3 + 4 + 12 = 19
+        expected_distance = (
+            abs(4 - 1) + abs(6 - 2) + abs(15 - 3)
+        )  # 3 + 4 + 12 = 19
 
         assert distance == expected_distance
 
@@ -214,8 +230,9 @@ class TestCoordinatesValueObject:
 
         with pytest.raises(TypeError) as exc_info:
             coords.manhattan_distance_to("invalid")
-        assert "Can only calculate distance to another Coordinates object" in str(
-            exc_info.value
+        assert (
+            "Can only calculate distance to another Coordinates object"
+            in str(exc_info.value)
         )
 
     # ==================== Range Check Tests ====================
@@ -305,8 +322,9 @@ class TestCoordinatesValueObject:
 
         with pytest.raises(TypeError) as exc_info:
             coords.midpoint("invalid")
-        assert "Can only calculate midpoint with another Coordinates object" in str(
-            exc_info.value
+        assert (
+            "Can only calculate midpoint with another Coordinates object"
+            in str(exc_info.value)
         )
 
     # ==================== Conversion Tests ====================
@@ -363,11 +381,15 @@ class TestCoordinatesValueObject:
         """Test creation from tuple with invalid length."""
         with pytest.raises(ValueError) as exc_info:
             Coordinates.from_tuple((10.0,))  # Only one element
-        assert "Coordinate tuple must have 2 or 3 elements" in str(exc_info.value)
+        assert "Coordinate tuple must have 2 or 3 elements" in str(
+            exc_info.value
+        )
 
         with pytest.raises(ValueError) as exc_info:
             Coordinates.from_tuple((10.0, 20.0, 5.0, 15.0))  # Four elements
-        assert "Coordinate tuple must have 2 or 3 elements" in str(exc_info.value)
+        assert "Coordinate tuple must have 2 or 3 elements" in str(
+            exc_info.value
+        )
 
     def test_from_dict_complete(self):
         """Test creation from complete dictionary."""
@@ -457,7 +479,9 @@ class TestCoordinatesValueObject:
 
         with pytest.raises(TypeError) as exc_info:
             coords - "invalid"
-        assert "Can only subtract Coordinates from Coordinates" in str(exc_info.value)
+        assert "Can only subtract Coordinates from Coordinates" in str(
+            exc_info.value
+        )
 
     def test_multiplication_by_scalar(self):
         """Test scalar multiplication."""
@@ -486,7 +510,9 @@ class TestCoordinatesValueObject:
 
         with pytest.raises(TypeError) as exc_info:
             coords * "invalid"
-        assert "Can only multiply Coordinates by numeric values" in str(exc_info.value)
+        assert "Can only multiply Coordinates by numeric values" in str(
+            exc_info.value
+        )
 
     def test_right_multiplication(self):
         """Test right multiplication (scalar * coordinates)."""

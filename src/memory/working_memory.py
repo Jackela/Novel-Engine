@@ -64,7 +64,12 @@ class WorkingMemoryItem:
         attention_bonus = self.attention_weight * 0.3
         activation_bonus = (self.activation_level - 1.0) * 0.2
         frequency_bonus = min(0.2, self.access_frequency * 0.05)
-        return base_priority + attention_bonus + activation_bonus + frequency_bonus
+        return (
+            base_priority
+            + attention_bonus
+            + activation_bonus
+            + frequency_bonus
+        )
 
 
 class WorkingMemory:
@@ -137,20 +142,26 @@ class WorkingMemory:
             self.total_activations += 1
 
             logger.info(
-                f"Added to working memory: {memory.memory_id} (size: {len(self._items)})"
+                f"Added to working memory: {memory.memory_id}(size: {len( self._items)})"
             )
 
             return StandardResponse(
-                success=True, data={"added": True, "current_size": len(self._items)}
+                success=True,
+                data={"added": True, "current_size": len(self._items)},
             )
 
         except Exception as e:
-            logger.error(f"Failed to add to working memory: {e}", exc_info=True)
+            logger.error(
+                f"Failed to add to working memory: {e}", exc_info=True
+            )
             return StandardResponse(
-                success=False, error=ErrorInfo(code="ADD_FAILED", message=str(e))
+                success=False,
+                error=ErrorInfo(code="ADD_FAILED", message=str(e)),
             )
 
-    def get_active_memories(self, limit: Optional[int] = None) -> List[MemoryItem]:
+    def get_active_memories(
+        self, limit: Optional[int] = None
+    ) -> List[MemoryItem]:
         """
         Retrieves currently active memories, sorted by priority and attention.
         """
@@ -179,7 +190,8 @@ class WorkingMemory:
                 return StandardResponse(
                     success=False,
                     error=ErrorInfo(
-                        code="NOT_FOUND", message="Memory not in working memory"
+                        code="NOT_FOUND",
+                        message="Memory not in working memory",
                     ),
                 )
 
@@ -192,13 +204,17 @@ class WorkingMemory:
             logger.info(f"Focused attention on memory: {memory_id}")
             return StandardResponse(
                 success=True,
-                data={"focused": True, "new_priority": working_item.effective_priority},
+                data={
+                    "focused": True,
+                    "new_priority": working_item.effective_priority,
+                },
             )
 
         except Exception as e:
             logger.error(f"Failed to focus on memory: {e}", exc_info=True)
             return StandardResponse(
-                success=False, error=ErrorInfo(code="FOCUS_FAILED", message=str(e))
+                success=False,
+                error=ErrorInfo(code="FOCUS_FAILED", message=str(e)),
             )
 
     def perform_maintenance(self) -> StandardResponse:
@@ -226,9 +242,13 @@ class WorkingMemory:
             self._rebalance_priorities()
 
             self.last_maintenance = maintenance_start
-            duration_ms = (datetime.now() - maintenance_start).total_seconds() * 1000
+            duration_ms = (
+                datetime.now() - maintenance_start
+            ).total_seconds() * 1000
 
-            logger.info(f"Working memory maintenance complete in {duration_ms:.2f}ms")
+            logger.info(
+                f"Working memory maintenance complete in {duration_ms:.2f}ms"
+            )
 
             return StandardResponse(
                 success=True,
@@ -239,7 +259,9 @@ class WorkingMemory:
             )
 
         except Exception as e:
-            logger.error(f"Working memory maintenance failed: {e}", exc_info=True)
+            logger.error(
+                f"Working memory maintenance failed: {e}", exc_info=True
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="MAINTENANCE_FAILED", message=str(e)),
@@ -248,7 +270,11 @@ class WorkingMemory:
     def get_memory_statistics(self) -> Dict[str, Any]:
         """Returns statistics about the state of the working memory."""
         if not self._items:
-            return {"capacity_usage": 0.0, "average_activation": 0.0, "total_items": 0}
+            return {
+                "capacity_usage": 0.0,
+                "average_activation": 0.0,
+                "total_items": 0,
+            }
 
         total_activation = sum(item.activation_level for item in self._items)
 
@@ -321,7 +347,9 @@ if __name__ == "__main__":
     assert len(active_memories) == 5
 
     if active_memories:
-        focus_result = working_memory.focus_on_memory(active_memories[0].memory_id)
+        focus_result = working_memory.focus_on_memory(
+            active_memories[0].memory_id
+        )
         print(f"Focusing on memory: {focus_result.success}")
 
     maintenance_result = working_memory.perform_maintenance()

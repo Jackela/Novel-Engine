@@ -83,7 +83,9 @@ class PerformanceBenchmark:
         """Calculate performance regression percentage"""
         if self.baseline_time == 0:
             return 0.0
-        return ((self.current_time - self.baseline_time) / self.baseline_time) * 100
+        return (
+            (self.current_time - self.baseline_time) / self.baseline_time
+        ) * 100
 
     @property
     def is_regression(self) -> bool:
@@ -141,12 +143,16 @@ class TestFramework:
         self._load_baseline_benchmarks()
 
     async def run_comprehensive_tests(
-        self, categories: Optional[List[TestCategory]] = None, parallel: bool = True
+        self,
+        categories: Optional[List[TestCategory]] = None,
+        parallel: bool = True,
     ) -> Dict[str, TestSuite]:
         """Run comprehensive test suite"""
         categories = categories or list(TestCategory)
 
-        logger.info(f"Starting comprehensive testing with categories: {categories}")
+        logger.info(
+            f"Starting comprehensive testing with categories: {categories}"
+        )
 
         # Create test suite
         suite = TestSuite(name="comprehensive", started_at=datetime.now())
@@ -188,7 +194,9 @@ class TestFramework:
 
         return {"comprehensive": suite}
 
-    async def _run_category_tests(self, category: TestCategory) -> List[TestResult]:
+    async def _run_category_tests(
+        self, category: TestCategory
+    ) -> List[TestResult]:
         """Run tests for a specific category"""
         logger.info(f"Running {category.value} tests")
 
@@ -312,7 +320,10 @@ class TestFramework:
 
         # Performance test cases
         perf_tests = [
-            ("character_creation_performance", self._test_character_creation_perf),
+            (
+                "character_creation_performance",
+                self._test_character_creation_perf,
+            ),
             ("api_response_time", self._test_api_response_time),
             ("memory_usage_optimization", self._test_memory_usage),
             ("concurrent_requests", self._test_concurrent_requests),
@@ -384,7 +395,14 @@ class TestFramework:
 
         try:
             # Use mutmut for mutation testing if available
-            cmd = ["python", "-m", "mutmut", "run", "--paths-to-mutate", "src/"]
+            cmd = [
+                "python",
+                "-m",
+                "mutmut",
+                "run",
+                "--paths-to-mutate",
+                "src/",
+            ]
 
             start_time = time.time()
             process = await asyncio.create_subprocess_exec(
@@ -403,7 +421,9 @@ class TestFramework:
                 message = "Mutation testing completed successfully"
             else:
                 status = TestStatus.FAILED
-                message = stderr.decode() if stderr else "Mutation testing failed"
+                message = (
+                    stderr.decode() if stderr else "Mutation testing failed"
+                )
 
             result = TestResult(
                 test_name="mutation_testing",
@@ -488,7 +508,9 @@ class TestFramework:
                 with open(coverage_file, "r") as f:
                     coverage_data = json.load(f)
 
-                return coverage_data.get("totals", {}).get("percent_covered", 0.0)
+                return coverage_data.get("totals", {}).get(
+                    "percent_covered", 0.0
+                )
 
         except Exception as e:
             logger.error(f"Coverage analysis error: {e}")
@@ -510,10 +532,14 @@ class TestFramework:
         for name, benchmark_func in benchmark_tests.items():
             try:
                 current_time = await benchmark_func()
-                baseline_time = self.baseline_benchmarks.get(name, current_time)
+                baseline_time = self.baseline_benchmarks.get(
+                    name, current_time
+                )
 
                 benchmark = PerformanceBenchmark(
-                    name=name, baseline_time=baseline_time, current_time=current_time
+                    name=name,
+                    baseline_time=baseline_time,
+                    current_time=current_time,
                 )
                 benchmarks.append(benchmark)
 
@@ -713,7 +739,9 @@ class QualityGates:
         )
 
         # Performance regression gate
-        performance_regressions = [b for b in test_suite.benchmarks if b.is_regression]
+        performance_regressions = [
+            b for b in test_suite.benchmarks if b.is_regression
+        ]
         results["performance_gate"] = len(performance_regressions) == 0
 
         # Overall quality gate
@@ -767,7 +795,9 @@ async def main():
                 )
 
         # Display failed tests
-        failed_tests = [t for t in suite.tests if t.status == TestStatus.FAILED]
+        failed_tests = [
+            t for t in suite.tests if t.status == TestStatus.FAILED
+        ]
         if failed_tests:
             logger.info("\nFailed Tests:")
             for test in failed_tests[:5]:  # Show first 5 failures

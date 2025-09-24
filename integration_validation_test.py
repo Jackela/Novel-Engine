@@ -31,7 +31,8 @@ def test_director_agent_lifecycle():
 
         # Create director with correct parameter order
         director = DirectorAgent(
-            event_bus=event_bus, campaign_log_path="test_integration_campaign.md"
+            event_bus=event_bus,
+            campaign_log_path="test_integration_campaign.md",
         )
 
         # Create a test character file
@@ -41,7 +42,7 @@ def test_director_agent_lifecycle():
 - Class: Investigator
 - Level: 1
 - HP: 10/10
-- Resources: 
+- Resources:
   - Credits: 100
   - Equipment: Scanner, Datapad
         """
@@ -65,8 +66,12 @@ def test_director_agent_lifecycle():
 
             # Test simulation status
             status = director.get_simulation_status()
-            assert isinstance(status, dict), "Simulation status should be a dict"
-            assert "registered_agents" in status, "Status should include agent count"
+            assert isinstance(
+                status, dict
+            ), "Simulation status should be a dict"
+            assert (
+                "registered_agents" in status
+            ), "Status should include agent count"
             logger.info("✅ Simulation status successful")
 
             # Test world state saving
@@ -116,13 +121,15 @@ def test_event_bus_coordination():
             # Try sync version first
             if hasattr(event_bus, "publish_sync"):
                 event_bus.publish_sync(
-                    "TEST_COORDINATION", {"source": "test", "data": "coordination"}
+                    "TEST_COORDINATION",
+                    {"source": "test", "data": "coordination"},
                 )
             else:
                 # Handle async
                 async def async_coordination_test():
                     await event_bus.publish(
-                        "TEST_COORDINATION", {"source": "test", "data": "coordination"}
+                        "TEST_COORDINATION",
+                        {"source": "test", "data": "coordination"},
                     )
 
                 loop = asyncio.new_event_loop()
@@ -204,7 +211,9 @@ def test_configuration_integration():
         event_bus = EventBus()
 
         # Test director with config
-        DirectorAgent(event_bus=event_bus, campaign_log_path="test_config_campaign.md")
+        DirectorAgent(
+            event_bus=event_bus, campaign_log_path="test_config_campaign.md"
+        )
         logger.info("✅ DirectorAgent with configuration successful")
 
         # Clean up
@@ -257,7 +266,9 @@ def run_integration_tests():
             passed += 1
 
     logger.info("-" * 60)
-    logger.info(f"Overall: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
+    logger.info(
+        f"Overall: {passed}/{total} tests passed ({passed/total*100:.1f}%)"
+    )
 
     if passed == total:
         logger.info("🎉 Integration Testing: SUCCESS")

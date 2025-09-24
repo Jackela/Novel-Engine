@@ -29,7 +29,9 @@ class TestSubjectiveIdCreation:
         subjective_id = SubjectiveId(specific_uuid)
 
         assert subjective_id.value == specific_uuid
-        assert str(subjective_id.value) == "12345678-1234-5678-9abc-123456789abc"
+        assert (
+            str(subjective_id.value) == "12345678-1234-5678-9abc-123456789abc"
+        )
 
     def test_frozen_dataclass_immutability(self):
         """Test that SubjectiveId is immutable (frozen dataclass)."""
@@ -46,27 +48,37 @@ class TestSubjectiveIdValidation:
 
     def test_invalid_uuid_type_string(self):
         """Test validation fails with string instead of UUID."""
-        with pytest.raises(ValueError, match="SubjectiveId must be a UUID, got"):
+        with pytest.raises(
+            ValueError, match="SubjectiveId must be a UUID, got"
+        ):
             SubjectiveId("not-a-uuid-object")
 
     def test_invalid_uuid_type_integer(self):
         """Test validation fails with integer instead of UUID."""
-        with pytest.raises(ValueError, match="SubjectiveId must be a UUID, got"):
+        with pytest.raises(
+            ValueError, match="SubjectiveId must be a UUID, got"
+        ):
             SubjectiveId(12345)
 
     def test_invalid_uuid_type_none(self):
         """Test validation fails with None instead of UUID."""
-        with pytest.raises(ValueError, match="SubjectiveId must be a UUID, got"):
+        with pytest.raises(
+            ValueError, match="SubjectiveId must be a UUID, got"
+        ):
             SubjectiveId(None)
 
     def test_invalid_uuid_type_dict(self):
         """Test validation fails with dict instead of UUID."""
-        with pytest.raises(ValueError, match="SubjectiveId must be a UUID, got"):
+        with pytest.raises(
+            ValueError, match="SubjectiveId must be a UUID, got"
+        ):
             SubjectiveId({"uuid": "12345678-1234-5678-9abc-123456789abc"})
 
     def test_invalid_uuid_type_list(self):
         """Test validation fails with list instead of UUID."""
-        with pytest.raises(ValueError, match="SubjectiveId must be a UUID, got"):
+        with pytest.raises(
+            ValueError, match="SubjectiveId must be a UUID, got"
+        ):
             SubjectiveId([1, 2, 3, 4])
 
 
@@ -119,7 +131,9 @@ class TestSubjectiveIdFactoryMethods:
 
         assert isinstance(subjective_id, SubjectiveId)
         # UUID constructor should handle this and add dashes
-        assert len(str(subjective_id.value)) == 36  # Standard UUID format with dashes
+        assert (
+            len(str(subjective_id.value)) == 36
+        )  # Standard UUID format with dashes
 
     def test_from_string_invalid_format(self):
         """Test from_string fails with invalid UUID format."""
@@ -297,7 +311,9 @@ class TestSubjectiveIdHashing:
         # Test with equivalent ID
         uuid_value = id1.value
         equivalent_id = SubjectiveId(uuid_value)
-        assert test_dict[equivalent_id] == "value1"  # Should find the same entry
+        assert (
+            test_dict[equivalent_id] == "value1"
+        )  # Should find the same entry
 
     def test_usable_in_set(self):
         """Test that SubjectiveId can be used in sets."""
@@ -495,7 +511,9 @@ class TestSubjectiveIdCollections:
         # Test update with equivalent key
         id_dict[equivalent_id1] = "updated_data1"
         assert len(id_dict) == 2  # Should still have 2 keys
-        assert id_dict[id1] == "updated_data1"  # Original key should have updated value
+        assert (
+            id_dict[id1] == "updated_data1"
+        )  # Original key should have updated value
 
     def test_sorting(self):
         """Test that SubjectiveIds can be sorted (by UUID string representation)."""

@@ -44,14 +44,19 @@ class AgentCoordinator:
             True if registration successful, False otherwise
         """
         if not isinstance(agent, PersonaAgent):
-            logger.error(f"Invalid agent type: {type(agent)}. Expected PersonaAgent")
+            logger.error(
+                f"Invalid agent type: {type(agent)}. Expected PersonaAgent"
+            )
             return False
 
         # Check for duplicate agent IDs
         if any(
-            existing.agent_id == agent.agent_id for existing in self.registered_agents
+            existing.agent_id == agent.agent_id
+            for existing in self.registered_agents
         ):
-            logger.error(f"Agent with ID {agent.agent_id} is already registered")
+            logger.error(
+                f"Agent with ID {agent.agent_id} is already registered"
+            )
             return False
 
         # Validate agent has required attributes
@@ -87,8 +92,12 @@ class AgentCoordinator:
         for i, agent in enumerate(self.registered_agents):
             if agent.agent_id == agent_id:
                 removed_agent = self.registered_agents.pop(i)
-                character_name = removed_agent.character_data.get("name", "Unknown")
-                logger.info(f"Removed agent: {character_name} (ID: {agent_id})")
+                character_name = removed_agent.character_data.get(
+                    "name", "Unknown"
+                )
+                logger.info(
+                    f"Removed agent: {character_name} (ID: {agent_id})"
+                )
                 return True
 
         logger.warning(f"Agent with ID {agent_id} not found for removal")
@@ -129,7 +138,7 @@ class AgentCoordinator:
         turn_start_time = datetime.now()
 
         logger.info(
-            f"🎯 Starting Turn {self.current_turn_number} with {len(self.registered_agents)} agents"
+            f"🎯 Starting Turn {self.current_turn_number}with {len( self.registered_agents)} agents"
         )
 
         turn_summary = {
@@ -168,11 +177,15 @@ class AgentCoordinator:
                     turn_summary["agents_waiting"] += 1
 
             except Exception as e:
-                logger.error(f"Error processing turn for agent {agent.agent_id}: {e}")
+                logger.error(
+                    f"Error processing turn for agent {agent.agent_id}: {e}"
+                )
                 # Record the error in turn summary
                 error_summary = {
                     "agent_id": agent.agent_id,
-                    "character_name": agent.character_data.get("name", "Unknown"),
+                    "character_name": agent.character_data.get(
+                        "name", "Unknown"
+                    ),
                     "action_type": "ERROR",
                     "error": str(e),
                     "timestamp": datetime.now().isoformat(),
@@ -246,13 +259,18 @@ class AgentCoordinator:
             if not hasattr(agent, "agent_id") or not agent.agent_id:
                 issues.append(f"Agent missing agent_id: {agent}")
 
-            if not hasattr(agent, "character_data") or not agent.character_data:
+            if (
+                not hasattr(agent, "character_data")
+                or not agent.character_data
+            ):
                 issues.append(
-                    f"Agent {getattr(agent, 'agent_id', 'unknown')} missing character_data"
+                    f"Agent {getattr( agent, 'agent_id', 'unknown')} missing character_data"
                 )
 
             if not hasattr(agent, "process_turn"):
-                issues.append(f"Agent {agent.agent_id} missing process_turn method")
+                issues.append(
+                    f"Agent {agent.agent_id} missing process_turn method"
+                )
 
             # Check for duplicate IDs
             agent_ids = [a.agent_id for a in self.registered_agents]

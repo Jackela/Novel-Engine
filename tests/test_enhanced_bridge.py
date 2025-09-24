@@ -14,27 +14,35 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+# Add src to path before importing local modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from enhanced_multi_agent_bridge import EnhancedMultiAgentBridge
 
-from src.bridge.types import RequestPriority
+from src.bridges.multi_agent_bridge import (
+    EnhancedMultiAgentBridge as BridgeClass,
+)
+from src.bridges.multi_agent_bridge import (
+    LLMCoordinationConfig,
+    RequestPriority,
+)
 
 
 class TestBridgeConfiguration:
-    """Test BridgeConfiguration functionality."""
+    """Test LLMCoordinationConfig functionality."""
 
     def test_default_configuration(self):
         """Test default bridge configuration."""
-        config = BridgeConfiguration()
+        config = LLMCoordinationConfig()
 
-        assert config.enable_advanced_coordination is True
         assert config.enable_smart_batching is True
-        assert config.enable_dialogue_system is True
+        assert config.max_batch_size == 5
+        assert config.batch_timeout_ms == 150
+        assert config.max_cost_per_turn == 0.10
+        assert config.enable_dialogue_intelligence is True
+        assert config.fast_mode_threshold == 3.0
+        assert config.cost_optimization_level == "balanced"
         assert config.enable_performance_monitoring is True
-        assert config.max_concurrent_agents == 20
-        assert config.turn_timeout_seconds == 30
-        assert config.llm_coordination is not None
 
     def test_custom_configuration(self):
         """Test custom bridge configuration."""
@@ -63,7 +71,9 @@ class TestEnhancedMultiAgentBridge:
     @pytest.fixture
     def bridge_config(self):
         """Create test bridge configuration."""
-        return BridgeConfiguration(max_concurrent_agents=5, turn_timeout_seconds=10)
+        return BridgeConfiguration(
+            max_concurrent_agents=5, turn_timeout_seconds=10
+        )
 
     @pytest.fixture
     def enhanced_bridge(self, mock_director_agent, bridge_config):
@@ -83,7 +93,9 @@ class TestEnhancedMultiAgentBridge:
     async def test_bridge_component_initialization(self, enhanced_bridge):
         """Test bridge component initialization."""
         with patch("enhanced_multi_agent_bridge_refactored.DialogueManager"):
-            with patch("enhanced_multi_agent_bridge_refactored.LLMCoordinator"):
+            with patch(
+                "enhanced_multi_agent_bridge_refactored.LLMCoordinator"
+            ):
                 success = await enhanced_bridge.initialize()
 
                 assert success is True
@@ -94,7 +106,9 @@ class TestEnhancedMultiAgentBridge:
         """Test enhanced turn with no agents."""
         # Initialize bridge first
         with patch("enhanced_multi_agent_bridge_refactored.DialogueManager"):
-            with patch("enhanced_multi_agent_bridge_refactored.LLMCoordinator"):
+            with patch(
+                "enhanced_multi_agent_bridge_refactored.LLMCoordinator"
+            ):
                 await enhanced_bridge.initialize()
 
         # Execute turn with no agents
@@ -120,7 +134,9 @@ class TestEnhancedMultiAgentBridge:
 
         # Mock component initialization
         with patch("enhanced_multi_agent_bridge_refactored.DialogueManager"):
-            with patch("enhanced_multi_agent_bridge_refactored.LLMCoordinator"):
+            with patch(
+                "enhanced_multi_agent_bridge_refactored.LLMCoordinator"
+            ):
                 with patch(
                     "enhanced_multi_agent_bridge_refactored.AIIntelligenceOrchestrator"
                 ):
@@ -142,7 +158,9 @@ class TestEnhancedMultiAgentBridge:
         mock_agent = Mock()
         context = {"active_dialogues": 0}
 
-        priority = enhanced_bridge._determine_request_priority(mock_agent, context)
+        priority = enhanced_bridge._determine_request_priority(
+            mock_agent, context
+        )
         assert priority == RequestPriority.NORMAL
 
         # Agent with active dialogues should get high priority
@@ -216,7 +234,9 @@ class TestEnhancedMultiAgentBridge:
         enhanced_bridge.coordination_engine.shutdown.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_context_building(self, enhanced_bridge, mock_director_agent):
+    async def test_context_building(
+        self, enhanced_bridge, mock_director_agent
+    ):
         """Test enhanced context building."""
         mock_agent = Mock()
         mock_agent.agent_id = "test_agent"
@@ -250,7 +270,9 @@ class TestBridgeFactory:
         config = BridgeConfiguration()
 
         with patch("enhanced_multi_agent_bridge_refactored.DialogueManager"):
-            with patch("enhanced_multi_agent_bridge_refactored.LLMCoordinator"):
+            with patch(
+                "enhanced_multi_agent_bridge_refactored.LLMCoordinator"
+            ):
                 bridge = await create_enhanced_bridge(mock_director, config)
 
                 assert isinstance(bridge, EnhancedMultiAgentBridge)
@@ -293,7 +315,9 @@ class TestBridgeIntegration:
             "enhanced_multi_agent_bridge_refactored.DialogueManager"
         ) as MockDialogueManager:
             mock_dialogue = Mock()
-            mock_dialogue.get_dialogue_status = AsyncMock(return_value={"active": 0})
+            mock_dialogue.get_dialogue_status = AsyncMock(
+                return_value={"active": 0}
+            )
             mock_dialogue.cleanup_expired_dialogues = AsyncMock(return_value=0)
             MockDialogueManager.return_value = mock_dialogue
 

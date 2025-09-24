@@ -35,7 +35,9 @@ __all__ = [
 ]
 
 
-def instrument_application(app, service_name: str = "novel-engine") -> Dict[str, Any]:
+def instrument_application(
+    app, service_name: str = "novel-engine"
+) -> Dict[str, Any]:
     """
     Instrument application with observability tools.
 
@@ -85,7 +87,9 @@ def create_span(operation_name: str, tags: Optional[Dict[str, Any]] = None):
         span_data["duration_ms"] = 0
 
 
-def track_metric(metric_name: str, value: float, tags: Optional[Dict[str, str]] = None):
+def track_metric(
+    metric_name: str, value: float, tags: Optional[Dict[str, str]] = None
+):
     """
     Track a custom metric.
 

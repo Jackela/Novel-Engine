@@ -7,7 +7,6 @@ Fix backend test failures by addressing specific issues:
 4. CORS headers configuration
 """
 
-import os
 import re
 from pathlib import Path
 
@@ -112,14 +111,19 @@ def fix_datetime_utcnow_deprecation():
         original = content
 
         # Add import if needed
-        if "from datetime import datetime" in content and "timezone" not in content:
+        if (
+            "from datetime import datetime" in content
+            and "timezone" not in content
+        ):
             content = content.replace(
                 "from datetime import datetime",
                 "from datetime import datetime, timezone",
             )
 
         # Replace datetime.utcnow() with datetime.now(timezone.utc)
-        content = content.replace("datetime.utcnow()", "datetime.now(timezone.utc)")
+        content = content.replace(
+            "datetime.utcnow()", "datetime.now(timezone.utc)"
+        )
 
         if content != original:
             file_path.write_text(content, encoding="utf-8")
@@ -154,11 +158,6 @@ async def root():
     content = content.replace(old_root, new_root)
 
     # Fix health endpoint to include more fields
-    old_health = '''@app.get("/health", response_model=Dict[str, Any])
-async def health() -> Dict[str, Any]:
-    """Health check endpoint for monitoring system status."""
-    return {"status": "healthy", "message": "System operational"}'''
-
     new_health = '''@app.get("/health")
 async def health():
     """Health check endpoint for monitoring system status."""
@@ -191,7 +190,7 @@ async def system_status():
     """Get comprehensive system status information."""
     import time
     import psutil
-    
+
     return {
         "status": "operational",
         "components": {
@@ -230,7 +229,9 @@ async def policy():
 
     # Ensure psutil import is added
     if "import psutil" not in content:
-        content = content.replace("import uvicorn", "import psutil\nimport uvicorn")
+        content = content.replace(
+            "import uvicorn", "import psutil\nimport uvicorn"
+        )
 
     # Save the fixed content
     file_path.write_text(content, encoding="utf-8")
@@ -287,17 +288,17 @@ async def get_enhanced_character(character_id: str):
     try:
         characters_path = _get_characters_directory_path()
         character_path = os.path.join(characters_path, character_id)
-        
+
         if not os.path.isdir(character_path):
             raise HTTPException(
                 status_code=404, detail=f"Character '{character_id}' not found"
             )
-        
+
         # Load character data
         event_bus = EventBus()
         character_factory = CharacterFactory(event_bus)
         character = character_factory.create_character(character_id)
-        
+
         return {
             "id": character_id,
             "name": character.character.name,

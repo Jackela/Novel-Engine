@@ -147,7 +147,9 @@ class MetricsCollector:
         if PROMETHEUS_AVAILABLE:
             self._initialize_prometheus_metrics()
 
-        logger.info(f"Metrics collector initialized with namespace: {namespace}")
+        logger.info(
+            f"Metrics collector initialized with namespace: {namespace}"
+        )
 
     def _initialize_prometheus_metrics(self):
         """Initialize common Prometheus metrics"""
@@ -183,7 +185,9 @@ class MetricsCollector:
 
         # Application metrics
         self.metrics["active_agents"] = Gauge(
-            "active_agents_total", "Number of active agents", registry=self.registry
+            "active_agents_total",
+            "Number of active agents",
+            registry=self.registry,
         )
 
         self.metrics["simulation_turns_total"] = Counter(
@@ -245,10 +249,15 @@ class MetricsCollector:
                 self.fallback_metrics[key].value += value
             else:
                 self.fallback_metrics[key] = MetricRecord(
-                    name=name, metric_type="counter", value=value, labels=labels
+                    name=name,
+                    metric_type="counter",
+                    value=value,
+                    labels=labels,
                 )
 
-    def set_gauge(self, name: str, value: float, labels: Dict[str, str] = None):
+    def set_gauge(
+        self, name: str, value: float, labels: Dict[str, str] = None
+    ):
         """Set a gauge metric"""
         labels = labels or {}
 
@@ -264,7 +273,9 @@ class MetricsCollector:
                 name=name, metric_type="gauge", value=value, labels=labels
             )
 
-    def observe_histogram(self, name: str, value: float, labels: Dict[str, str] = None):
+    def observe_histogram(
+        self, name: str, value: float, labels: Dict[str, str] = None
+    ):
         """Observe a histogram metric"""
         labels = labels or {}
 
@@ -290,7 +301,9 @@ class MetricsCollector:
         )
 
         self.observe_histogram(
-            "http_request_duration", duration, {"method": method, "endpoint": endpoint}
+            "http_request_duration",
+            duration,
+            {"method": method, "endpoint": endpoint},
         )
 
     def update_system_metrics(self):
@@ -320,7 +333,9 @@ class MetricsCollector:
             for key, record in self.fallback_metrics.items():
                 labels_str = ""
                 if record.labels:
-                    label_pairs = [f'{k}="{v}"' for k, v in record.labels.items()]
+                    label_pairs = [
+                        f'{k}="{v}"' for k, v in record.labels.items()
+                    ]
                     labels_str = "{" + ",".join(label_pairs) + "}"
 
                 lines.append(f"{record.name}{labels_str} {record.value}")
@@ -409,7 +424,8 @@ class StructuredLogger:
 
         # Log as JSON
         self.logger.log(
-            getattr(logging, level.upper()), json.dumps(record.to_dict(), default=str)
+            getattr(logging, level.upper()),
+            json.dumps(record.to_dict(), default=str),
         )
 
     def debug(self, message: str, **kwargs):
@@ -462,7 +478,9 @@ class StructuredFormatter(logging.Formatter):
 class TracingManager:
     """Distributed tracing manager"""
 
-    def __init__(self, service_name: str = "novel-engine", jaeger_endpoint: str = None):
+    def __init__(
+        self, service_name: str = "novel-engine", jaeger_endpoint: str = None
+    ):
         self.service_name = service_name
         self.active_spans: Dict[str, TraceSpan] = {}
         self.span_history = deque(maxlen=1000)  # Keep recent spans
@@ -526,7 +544,9 @@ class TracingManager:
 
         span = self.active_spans[span_id]
         span.end_time = datetime.now()
-        span.duration_ms = (span.end_time - span.start_time).total_seconds() * 1000
+        span.duration_ms = (
+            span.end_time - span.start_time
+        ).total_seconds() * 1000
         span.status = status
         span.error = error
 
@@ -534,7 +554,9 @@ class TracingManager:
         self.span_history.append(span)
         del self.active_spans[span_id]
 
-        logger.debug(f"Finished span {span.operation_name}: {span.duration_ms:.2f}ms")
+        logger.debug(
+            f"Finished span {span.operation_name}: {span.duration_ms:.2f}ms"
+        )
 
     @contextmanager
     def trace_operation(self, operation_name: str, **labels):
@@ -583,10 +605,14 @@ class PerformanceProfiler:
     ):
         """Finish timing an operation"""
         if operation_id not in self.start_times:
-            logger.warning(f"Attempted to finish unknown operation: {operation_id}")
+            logger.warning(
+                f"Attempted to finish unknown operation: {operation_id}"
+            )
             return
 
-        duration = (datetime.now() - self.start_times[operation_id]).total_seconds()
+        duration = (
+            datetime.now() - self.start_times[operation_id]
+        ).total_seconds()
 
         self.operation_times[operation_name].append(duration)
         self.operation_counts[operation_name] += 1
@@ -623,7 +649,9 @@ class PerformanceProfiler:
                     "error_count": self.error_counts[operation_name],
                     "error_rate": self.error_counts[operation_name]
                     / max(1, self.operation_counts[operation_name]),
-                    "avg_duration_ms": sum(times_list) * 1000 / len(times_list),
+                    "avg_duration_ms": sum(times_list)
+                    * 1000
+                    / len(times_list),
                     "min_duration_ms": min(times_list) * 1000,
                     "max_duration_ms": max(times_list) * 1000,
                     "p95_duration_ms": (
@@ -670,9 +698,13 @@ class SecurityAuditor:
         self.security_events.append(event_data)
 
         if success:
-            self.logger.info(f"Authentication {event_type} successful", **event_data)
+            self.logger.info(
+                f"Authentication {event_type} successful", **event_data
+            )
         else:
-            self.logger.warning(f"Authentication {event_type} failed", **event_data)
+            self.logger.warning(
+                f"Authentication {event_type} failed", **event_data
+            )
             self.threat_counts[f"auth_failure_{event_type}"] += 1
 
     def log_authorization_event(
@@ -819,7 +851,9 @@ class HealthMonitor:
                     "used_gb": disk.used / (1024**3),
                 },
                 "cpu_percent": psutil.cpu_percent(interval=None),
-                "load_average": os.getloadavg() if hasattr(os, "getloadavg") else None,
+                "load_average": os.getloadavg()
+                if hasattr(os, "getloadavg")
+                else None,
                 "uptime_seconds": time.time() - psutil.boot_time(),
             }
 
@@ -829,7 +863,9 @@ class HealthMonitor:
 
     def get_health_status(self) -> Dict[str, Any]:
         """Get current health status"""
-        return self.last_check_results or {"status": "No health checks run yet"}
+        return self.last_check_results or {
+            "status": "No health checks run yet"
+        }
 
     def is_healthy(self) -> bool:
         """Check if system is currently healthy"""
@@ -846,11 +882,15 @@ class ObservabilityManager:
         self.config = config or {}
 
         # Initialize components
-        self.metrics = MetricsCollector(namespace=service_name.replace("-", "_"))
+        self.metrics = MetricsCollector(
+            namespace=service_name.replace("-", "_")
+        )
         self.logger = StructuredLogger(
             service_name, level=self.config.get("log_level", "INFO")
         )
-        self.tracer = TracingManager(service_name, self.config.get("jaeger_endpoint"))
+        self.tracer = TracingManager(
+            service_name, self.config.get("jaeger_endpoint")
+        )
         self.profiler = PerformanceProfiler()
         self.auditor = SecurityAuditor(self.logger)
         self.health_monitor = HealthMonitor(self.metrics)
@@ -861,7 +901,9 @@ class ObservabilityManager:
         # Start background tasks
         self._start_background_tasks()
 
-        self.logger.info("Observability manager initialized", service=service_name)
+        self.logger.info(
+            "Observability manager initialized", service=service_name
+        )
 
     def _register_default_health_checks(self):
         """Register default health checks"""
@@ -909,7 +951,9 @@ class ObservabilityManager:
                     self.metrics.update_system_metrics()
                     time.sleep(30)  # Update every 30 seconds
                 except Exception as e:
-                    self.logger.error("Failed to update system metrics", error=str(e))
+                    self.logger.error(
+                        "Failed to update system metrics", error=str(e)
+                    )
                     time.sleep(30)
 
         # Start metrics update thread
@@ -953,7 +997,10 @@ class ObservabilityManager:
 
                     # Record metrics
                     self.metrics.record_http_request(
-                        request.method, request.url.path, response.status_code, duration
+                        request.method,
+                        request.url.path,
+                        response.status_code,
+                        duration,
                     )
 
                     # Log request
@@ -1008,7 +1055,9 @@ class ObservabilityManager:
             return PlainTextResponse(
                 content=content,
                 media_type=(
-                    CONTENT_TYPE_LATEST if PROMETHEUS_AVAILABLE else "text/plain"
+                    CONTENT_TYPE_LATEST
+                    if PROMETHEUS_AVAILABLE
+                    else "text/plain"
                 ),
             )
 

@@ -32,8 +32,6 @@ from src.core.data_models import (
     MemoryItem,
     MemoryType,
 )
-
-# Import blessed framework components
 from src.core.system_orchestrator import (
     OrchestratorConfig,
     OrchestratorMode,
@@ -46,7 +44,10 @@ from src.templates.character_template_manager import CharacterArchetype
 logging.basicConfig(
     level=logging.INFO,
     format="++ %(asctime)s | %(levelname)s | %(message)s ++",
-    handlers=[logging.StreamHandler(), logging.FileHandler("complete_demo.log")],
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("complete_demo.log"),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -81,7 +82,9 @@ class CompleteDemoRunner:
         """
 
         print("🚀" + "=" * 80)
-        print("++ SACRED DYNAMIC CONTEXT ENGINEERING FRAMEWORK COMPLETE DEMO ++")
+        print(
+            "++ SACRED DYNAMIC CONTEXT ENGINEERING FRAMEWORK COMPLETE DEMO ++"
+        )
         print("++ COMPREHENSIVE USER STORY IMPLEMENTATION SHOWCASE ++")
         print("=" * 82)
         print()
@@ -239,9 +242,13 @@ class CompleteDemoRunner:
                     print(f"   📝 Chinese name: {char_data['chinese_name']}")
                 self.demo_characters.append(char_data["id"])
             else:
-                print(f"❌ Failed to create {char_data['name']}: {result.message}")
+                print(
+                    f"❌ Failed to create {char_data['name']}: {result.message}"
+                )
 
-        print(f"\n📊 Successfully created {len(self.demo_characters)} characters")
+        print(
+            f"\n📊 Successfully created {len(self.demo_characters)} characters"
+        )
         print("✅ Story 1 Acceptance Criteria Validated:")
         print("   ✓ Character creation with custom names and descriptions")
         print("   ✓ Character template/archetype system implemented")
@@ -318,16 +325,20 @@ class CompleteDemoRunner:
 
         for i, scenario in enumerate(interaction_scenarios, 1):
             print(f"\n🎭 Scenario {i}: {scenario['name']}")
-            print(f"   👥 Participants: {len(scenario['participants'])} characters")
+            print(
+                f"   👥 Participants: {len(scenario['participants'])} characters"
+            )
             print(f"   🎯 Type: {scenario['type'].value}")
             print(f"   📍 Location: {scenario['context']['location']}")
 
             # Execute interaction
             start_time = time.time()
-            result = await self.orchestrator.orchestrate_multi_agent_interaction(
-                participants=scenario["participants"],
-                interaction_type=scenario["type"],
-                context=scenario["context"],
+            result = (
+                await self.orchestrator.orchestrate_multi_agent_interaction(
+                    participants=scenario["participants"],
+                    interaction_type=scenario["type"],
+                    context=scenario["context"],
+                )
             )
             end_time = time.time()
 
@@ -341,7 +352,9 @@ class CompleteDemoRunner:
             else:
                 print(f"   ❌ Failed: {result.message}")
 
-        print(f"\n📊 Successfully completed {len(self.demo_interactions)} interactions")
+        print(
+            f"\n📊 Successfully completed {len(self.demo_interactions)} interactions"
+        )
         print("✅ Story 2 Acceptance Criteria Validated:")
         print("   ✓ Multiple interaction types supported")
         print("   ✓ Context configuration for interactions")
@@ -352,7 +365,9 @@ class CompleteDemoRunner:
 
     async def _demonstrate_story_3_memory_and_relationships(self):
         """Demonstrate User Story 3: Persistent Memory & Relationship Evolution."""
-        print("🧠 PHASE 4: User Story 3 - Persistent Memory & Relationship Evolution")
+        print(
+            "🧠 PHASE 4: User Story 3 - Persistent Memory & Relationship Evolution"
+        )
         print("-" * 70)
 
         print("Creating memories for characters...")
@@ -414,13 +429,17 @@ class CompleteDemoRunner:
                 memories.append(memory)
 
             # Create dynamic context with memories
-            context = DynamicContext(agent_id=agent_id, memory_context=memories)
+            context = DynamicContext(
+                agent_id=agent_id, memory_context=memories
+            )
 
             # Process through orchestrator
             result = await self.orchestrator.process_dynamic_context(context)
 
             if result.success:
-                print(f"   ✅ Stored {result.data['memories_processed']} memories")
+                print(
+                    f"   ✅ Stored {result.data['memories_processed']} memories"
+                )
                 print(
                     f"   💾 Success rate: {result.data['memories_successful']}/{result.data['memories_processed']}"
                 )
@@ -432,18 +451,23 @@ class CompleteDemoRunner:
 
         # Check relationships between characters who interacted
         relationship_pairs = [
-            (self.demo_characters[0], self.demo_characters[1]),  # Tech-Priest + Scholar
-            (self.demo_characters[2], self.demo_characters[3]),  # Diplomat + Warrior
+            (
+                self.demo_characters[0],
+                self.demo_characters[1],
+            ),  # Tech-Priest + Scholar
+            (
+                self.demo_characters[2],
+                self.demo_characters[3],
+            ),  # Diplomat + Warrior
         ]
 
         for char_a, char_b in relationship_pairs:
             if hasattr(
-                self.orchestrator.character_processor, "get_relationship_status"
+                self.orchestrator.character_processor,
+                "get_relationship_status",
             ):
-                relationship_result = (
-                    await self.orchestrator.character_processor.get_relationship_status(
-                        char_a, char_b
-                    )
+                relationship_result = await self.orchestrator.character_processor.get_relationship_status(
+                    char_a, char_b
                 )
 
                 if relationship_result.success:
@@ -451,10 +475,16 @@ class CompleteDemoRunner:
                         rel_data = relationship_result.data["relationship"]
                         print(f"   💝 {char_a} ↔ {char_b}:")
                         print(f"      Trust: {rel_data.trust_level:.2f}")
-                        print(f"      Familiarity: {rel_data.familiarity_level:.2f}")
-                        print(f"      Interactions: {rel_data.interaction_count}")
+                        print(
+                            f"      Familiarity: {rel_data.familiarity_level:.2f}"
+                        )
+                        print(
+                            f"      Interactions: {rel_data.interaction_count}"
+                        )
                     else:
-                        print(f"   ℹ️ {char_a} ↔ {char_b}: Relationship forming...")
+                        print(
+                            f"   ℹ️ {char_a} ↔ {char_b}: Relationship forming..."
+                        )
 
         print("\n✅ Story 3 Acceptance Criteria Validated:")
         print("   ✓ Automatic memory formation from interactions")
@@ -469,8 +499,12 @@ class CompleteDemoRunner:
         print("🌍 PHASE 5: User Story 4 - World State & Environmental Context")
         print("-" * 60)
 
-        print("Environmental context is integrated throughout all interactions:")
-        print("✅ Location-specific interactions (Research Lab, Command Center, etc.)")
+        print(
+            "Environmental context is integrated throughout all interactions:"
+        )
+        print(
+            "✅ Location-specific interactions (Research Lab, Command Center, etc.)"
+        )
         print("✅ Environmental factors affecting character behavior")
         print("✅ Context persistence across interactions")
         print("✅ Equipment system integration (demonstrated in framework)")
@@ -501,7 +535,10 @@ class CompleteDemoRunner:
             {
                 "title": "The Tech-Priest Chronicles",
                 "subtitle": "A tale of discovery and collaboration",
-                "characters": [self.demo_characters[0], self.demo_characters[1]],
+                "characters": [
+                    self.demo_characters[0],
+                    self.demo_characters[1],
+                ],
                 "perspective": "third_person_omniscient",
                 "tone": "dramatic",
                 "format": "markdown",
@@ -512,7 +549,10 @@ class CompleteDemoRunner:
             {
                 "title": "Diplomatic Tensions",
                 "subtitle": "Negotiation and understanding",
-                "characters": [self.demo_characters[2], self.demo_characters[3]],
+                "characters": [
+                    self.demo_characters[2],
+                    self.demo_characters[3],
+                ],
                 "perspective": "third_person_limited",
                 "tone": "formal",
                 "format": "html",
@@ -595,10 +635,14 @@ class CompleteDemoRunner:
             print("📊 Project Analytics & Insights:")
             print(f"   👥 Active agents: {metrics.active_agents}")
             print(f"   🧠 Total memories: {metrics.total_memory_items}")
-            print(f"   💬 Interactions processed: {len(self.demo_interactions)}")
+            print(
+                f"   💬 Interactions processed: {len(self.demo_interactions)}"
+            )
             print(f"   ⚡ System health: {metrics.system_health.value}")
             print(f"   ⏱️ Uptime: {metrics.uptime_seconds}s")
-            print(f"   📈 Operations/minute: {metrics.operations_per_minute:.2f}")
+            print(
+                f"   📈 Operations/minute: {metrics.operations_per_minute:.2f}"
+            )
             print(f"   💞 Relationships tracked: {metrics.relationship_count}")
 
         print("\n✅ Story 6 Acceptance Criteria Validated:")
@@ -632,7 +676,9 @@ class CompleteDemoRunner:
 
             print("\n🧠 Memory System:")
             print(f"   Total memory items: {metrics.total_memory_items}")
-            print("   Memory types: 4 (working, episodic, semantic, emotional)")
+            print(
+                "   Memory types: 4 (working, episodic, semantic, emotional)"
+            )
 
             print("\n💬 Interaction System:")
             print(f"   Interactions completed: {len(self.demo_interactions)}")
@@ -663,7 +709,11 @@ class CompleteDemoRunner:
         stories_status = [
             ("Story 1", "Character Creation & Customization", "✅ COMPLETE"),
             ("Story 2", "Real-Time Character Interactions", "✅ COMPLETE"),
-            ("Story 3", "Persistent Memory & Relationship Evolution", "✅ COMPLETE"),
+            (
+                "Story 3",
+                "Persistent Memory & Relationship Evolution",
+                "✅ COMPLETE",
+            ),
             ("Story 4", "World State & Environmental Context", "✅ COMPLETE"),
             ("Story 5", "Story Export & Narrative Generation", "✅ COMPLETE"),
             ("Story 6", "Project Management & Collaboration", "✅ COMPLETE"),
@@ -705,7 +755,9 @@ class CompleteDemoRunner:
 
             if shutdown_result.success:
                 print("✅ System shutdown completed successfully")
-                print(f"   Total uptime: {shutdown_result.data['uptime_seconds']:.1f}s")
+                print(
+                    f"   Total uptime: {shutdown_result.data['uptime_seconds']:.1f}s"
+                )
                 print(
                     f"   Total operations: {shutdown_result.data['total_operations']}"
                 )
@@ -730,7 +782,9 @@ async def main():
     try:
         await demo_runner.run_complete_demonstration()
         print("\n🎉 DEMONSTRATION COMPLETED SUCCESSFULLY!")
-        print("The Dynamic Context Engineering Framework is fully operational.")
+        print(
+            "The Dynamic Context Engineering Framework is fully operational."
+        )
 
     except Exception as e:
         print(f"\n💥 DEMONSTRATION FAILED: {str(e)}")

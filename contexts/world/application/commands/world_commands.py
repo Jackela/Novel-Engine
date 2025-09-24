@@ -53,7 +53,12 @@ class EntityOperation:
         """Validate entity operation data."""
         if self.operation_type == WorldOperationType.ADD_ENTITY:
             if not all(
-                [self.entity_id, self.entity_type, self.entity_name, self.coordinates]
+                [
+                    self.entity_id,
+                    self.entity_type,
+                    self.entity_name,
+                    self.coordinates,
+                ]
             ):
                 raise ValueError(
                     "ADD_ENTITY requires entity_id, entity_type, entity_name, and coordinates"
@@ -73,7 +78,9 @@ class EntityOperation:
 
         elif self.operation_type == WorldOperationType.MOVE_ENTITY:
             if not all([self.entity_id, self.new_coordinates]):
-                raise ValueError("MOVE_ENTITY requires entity_id and new_coordinates")
+                raise ValueError(
+                    "MOVE_ENTITY requires entity_id and new_coordinates"
+                )
 
 
 @dataclass
@@ -92,7 +99,9 @@ class EnvironmentOperation:
     def __post_init__(self):
         """Validate environment operation data."""
         if not self.environment_changes:
-            raise ValueError("Environment operation requires environment_changes")
+            raise ValueError(
+                "Environment operation requires environment_changes"
+            )
 
 
 @dataclass
@@ -274,14 +283,18 @@ class ApplyWorldDelta:
 
         # Validate priority
         if self.priority not in ["low", "normal", "high", "critical"]:
-            errors.append("priority must be one of: low, normal, high, critical")
+            errors.append(
+                "priority must be one of: low, normal, high, critical"
+            )
 
         # Validate timeout
         if self.timeout_seconds <= 0:
             errors.append("timeout_seconds must be positive")
 
         if errors:
-            raise ValueError(f"ApplyWorldDelta validation failed: {'; '.join(errors)}")
+            raise ValueError(
+                f"ApplyWorldDelta validation failed: {'; '.join(errors)}"
+            )
 
     def add_entity_operation(self, operation: EntityOperation) -> None:
         """
@@ -306,7 +319,10 @@ class ApplyWorldDelta:
 
     def has_administrative_operations(self) -> bool:
         """Check if this command has administrative operations (snapshot/reset)."""
-        return self.snapshot_operation is not None or self.reset_operation is not None
+        return (
+            self.snapshot_operation is not None
+            or self.reset_operation is not None
+        )
 
     def get_operation_count(self) -> int:
         """Get the total number of operations in this command."""
@@ -367,11 +383,17 @@ class ApplyWorldDelta:
                 {
                     "operation_type": op.operation_type.value,
                     "entity_id": op.entity_id,
-                    "entity_type": op.entity_type.value if op.entity_type else None,
+                    "entity_type": op.entity_type.value
+                    if op.entity_type
+                    else None,
                     "entity_name": op.entity_name,
-                    "coordinates": op.coordinates.to_dict() if op.coordinates else None,
+                    "coordinates": op.coordinates.to_dict()
+                    if op.coordinates
+                    else None,
                     "new_coordinates": (
-                        op.new_coordinates.to_dict() if op.new_coordinates else None
+                        op.new_coordinates.to_dict()
+                        if op.new_coordinates
+                        else None
                     ),
                     "properties": op.properties,
                     "metadata": op.metadata,

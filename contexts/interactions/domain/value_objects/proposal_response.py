@@ -99,7 +99,9 @@ class TermResponse:
             self.suggested_modification is not None
             and not self.suggested_modification.strip()
         ):
-            raise ValueError("suggested_modification cannot be empty if provided")
+            raise ValueError(
+                "suggested_modification cannot be empty if provided"
+            )
 
     def is_acceptance(self) -> bool:
         """Check if this is an acceptance response."""
@@ -190,19 +192,28 @@ class ProposalResponse:
             raise ValueError("Conditional acceptance must include conditions")
 
         # Validate string fields
-        if self.overall_comments is not None and not self.overall_comments.strip():
+        if (
+            self.overall_comments is not None
+            and not self.overall_comments.strip()
+        ):
             raise ValueError("overall_comments cannot be empty if provided")
 
         # Validate conditions
         if self.conditions:
             for condition in self.conditions:
                 if not isinstance(condition, str) or not condition.strip():
-                    raise ValueError("All conditions must be non-empty strings")
+                    raise ValueError(
+                        "All conditions must be non-empty strings"
+                    )
 
     def _validate_response_consistency(self):
         """Validate consistency between overall response and term responses."""
-        acceptance_count = sum(1 for tr in self.term_responses if tr.is_acceptance())
-        rejection_count = sum(1 for tr in self.term_responses if tr.is_rejection())
+        acceptance_count = sum(
+            1 for tr in self.term_responses if tr.is_acceptance()
+        )
+        rejection_count = sum(
+            1 for tr in self.term_responses if tr.is_rejection()
+        )
         total_terms = len(self.term_responses)
 
         if self.overall_response == ResponseType.ACCEPT:
@@ -260,7 +271,9 @@ class ProposalResponse:
 
     def get_term_response(self, term_id: str) -> Optional[TermResponse]:
         """Get response for specific term."""
-        return next((tr for tr in self.term_responses if tr.term_id == term_id), None)
+        return next(
+            (tr for tr in self.term_responses if tr.term_id == term_id), None
+        )
 
     def get_accepted_terms(self) -> List[TermResponse]:
         """Get all accepted term responses."""
@@ -277,7 +290,9 @@ class ProposalResponse:
     def get_terms_with_modifications(self) -> List[TermResponse]:
         """Get all term responses with suggested modifications."""
         return [
-            tr for tr in self.term_responses if tr.suggested_modification is not None
+            tr
+            for tr in self.term_responses
+            if tr.suggested_modification is not None
         ]
 
     def is_complete_acceptance(self) -> bool:
@@ -309,9 +324,12 @@ class ProposalResponse:
 
     def requires_clarification(self) -> bool:
         """Check if response requires clarification."""
-        return self.overall_response == ResponseType.REQUEST_CLARIFICATION or any(
-            tr.response_type == ResponseType.REQUEST_CLARIFICATION
-            for tr in self.term_responses
+        return (
+            self.overall_response == ResponseType.REQUEST_CLARIFICATION
+            or any(
+                tr.response_type == ResponseType.REQUEST_CLARIFICATION
+                for tr in self.term_responses
+            )
         )
 
     def has_conditions(self) -> bool:
@@ -359,10 +377,13 @@ class ProposalResponse:
     ) -> "ProposalResponse":
         """Create new response with updated term response."""
         if term_response.term_id != term_id:
-            raise ValueError("Updated term response ID must match target term ID")
+            raise ValueError(
+                "Updated term response ID must match target term ID"
+            )
 
         updated_term_responses = [
-            term_response if tr.term_id == term_id else tr for tr in self.term_responses
+            term_response if tr.term_id == term_id else tr
+            for tr in self.term_responses
         ]
 
         return ProposalResponse(

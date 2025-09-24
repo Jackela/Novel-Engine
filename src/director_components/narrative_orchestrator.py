@@ -105,10 +105,14 @@ class NarrativeOrchestrator:
             return True
 
         except Exception as e:
-            self.logger.error(f"Narrative orchestrator initialization failed: {e}")
+            self.logger.error(
+                f"Narrative orchestrator initialization failed: {e}"
+            )
             return False
 
-    async def generate_narrative_context(self, agent_id: str) -> Dict[str, Any]:
+    async def generate_narrative_context(
+        self, agent_id: str
+    ) -> Dict[str, Any]:
         """
         Generate narrative context for a specific agent.
 
@@ -123,7 +127,9 @@ class NarrativeOrchestrator:
             relevant_events = await self._get_relevant_events(agent_id)
 
             # Get current story context
-            story_context = self._character_contexts.get(agent_id, StoryContext())
+            story_context = self._character_contexts.get(
+                agent_id, StoryContext()
+            )
 
             # Generate context
             context = {
@@ -149,7 +155,9 @@ class NarrativeOrchestrator:
                 "world_context": await self._get_world_narrative_context(),
             }
 
-            self.logger.debug(f"Generated narrative context for agent {agent_id}")
+            self.logger.debug(
+                f"Generated narrative context for agent {agent_id}"
+            )
             return context
 
         except Exception as e:
@@ -177,7 +185,9 @@ class NarrativeOrchestrator:
             for event_data in events:
                 try:
                     # Create narrative event
-                    narrative_event = await self._create_narrative_event(event_data)
+                    narrative_event = await self._create_narrative_event(
+                        event_data
+                    )
 
                     if narrative_event:
                         # Process the event
@@ -188,7 +198,10 @@ class NarrativeOrchestrator:
                         self._update_event_statistics(narrative_event)
                     else:
                         failed_events.append(
-                            {"data": event_data, "error": "Failed to create event"}
+                            {
+                                "data": event_data,
+                                "error": "Failed to create event",
+                            }
                         )
 
                 except Exception as e:
@@ -206,11 +219,13 @@ class NarrativeOrchestrator:
                 "failed_count": len(failed_events),
                 "processed_events": processed_events,
                 "failed_events": failed_events,
-                "story_progression": self._story_statistics["story_progression"],
+                "story_progression": self._story_statistics[
+                    "story_progression"
+                ],
             }
 
             self.logger.info(
-                f"Processed {len(processed_events)} narrative events, {len(failed_events)} failed"
+                f"Processed {len(processed_events)}narrative events, {len(failed_events)} failed"
             )
             return result
 
@@ -245,7 +260,9 @@ class NarrativeOrchestrator:
             if "characters" in updates:
                 await self._update_character_contexts(updates["characters"])
 
-            self.logger.debug(f"Story state updated with {len(updates)} changes")
+            self.logger.debug(
+                f"Story state updated with {len(updates)} changes"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to update story state: {e}")
@@ -287,7 +304,8 @@ class NarrativeOrchestrator:
         """Get events relevant to specific agent."""
         relevant_events = []
 
-        for event in reversed(self._narrative_events[-50:]):  # Check last 50 events
+        # Check last 50 events
+        for event in reversed(self._narrative_events[-50:]):
             if agent_id in event.participants or event.event_type in [
                 EventType.WORLD_CHANGE,
                 EventType.TRANSITION,
@@ -360,7 +378,11 @@ class NarrativeOrchestrator:
             "time_of_day": self._story_state.get("time", "unknown"),
             "weather": self._story_state.get("weather", "clear"),
             "major_events_today": len(
-                [e for e in self._narrative_events[-50:] if e.impact_score > 0.7]
+                [
+                    e
+                    for e in self._narrative_events[-50:]
+                    if e.impact_score > 0.7
+                ]
             ),
             "story_phase": self._determine_story_phase(),
         }
@@ -375,7 +397,8 @@ class NarrativeOrchestrator:
 
             event = NarrativeEvent(
                 event_id=event_data.get(
-                    "id", f"event_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+                    "id",
+                    f"event_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}",
                 ),
                 event_type=event_type,
                 timestamp=datetime.now(),
@@ -436,7 +459,9 @@ class NarrativeOrchestrator:
         # Add to recent events
         context.recent_events.append(event.event_id)
         if len(context.recent_events) > self._context_window_size:
-            context.recent_events = context.recent_events[-self._context_window_size :]
+            context.recent_events = context.recent_events[
+                -self._context_window_size :
+            ]
 
     async def _update_narrative_threads(self, event: NarrativeEvent) -> None:
         """Update narrative threads based on event."""
@@ -466,7 +491,9 @@ class NarrativeOrchestrator:
 
                 for thread_id in threads_to_close:
                     self._active_threads[thread_id]["status"] = "resolved"
-                    self._active_threads[thread_id]["resolved_by"] = event.event_id
+                    self._active_threads[thread_id][
+                        "resolved_by"
+                    ] = event.event_id
 
     def _update_event_statistics(self, event: NarrativeEvent) -> None:
         """Update event statistics."""
@@ -479,18 +506,24 @@ class NarrativeOrchestrator:
             return
 
         # Simple progression based on event impact
-        total_impact = sum(event.impact_score for event in self._narrative_events[-50:])
+        total_impact = sum(
+            event.impact_score for event in self._narrative_events[-50:]
+        )
         event_count = len(self._narrative_events[-50:])
 
         if event_count > 0:
             avg_impact = total_impact / event_count
-            self._story_statistics["story_progression"] = min(1.0, avg_impact * 0.8)
+            self._story_statistics["story_progression"] = min(
+                1.0, avg_impact * 0.8
+            )
 
     async def _manage_event_history(self) -> None:
         """Manage event history size."""
         if len(self._narrative_events) > self._max_events_history:
             # Keep most recent events
-            self._narrative_events = self._narrative_events[-self._max_events_history :]
+            self._narrative_events = self._narrative_events[
+                -self._max_events_history :
+            ]
             self.logger.debug("Trimmed narrative event history")
 
         # Clean up resolved threads
@@ -509,7 +542,9 @@ class NarrativeOrchestrator:
                         key=lambda x: x[1].get("created_at", ""),
                     )
 
-                    threads_to_remove = len(self._active_threads) - self._max_threads
+                    threads_to_remove = (
+                        len(self._active_threads) - self._max_threads
+                    )
                     for thread_id, _ in sorted_resolved[:threads_to_remove]:
                         del self._active_threads[thread_id]
 
@@ -536,8 +571,12 @@ class NarrativeOrchestrator:
         recent_events = self._narrative_events[-20:]
 
         # Calculate various health metrics
-        event_diversity = len(set(e.event_type for e in recent_events)) / len(EventType)
-        avg_impact = sum(e.impact_score for e in recent_events) / len(recent_events)
+        event_diversity = len(set(e.event_type for e in recent_events)) / len(
+            EventType
+        )
+        avg_impact = sum(e.impact_score for e in recent_events) / len(
+            recent_events
+        )
         participant_diversity = len(
             set(p for e in recent_events for p in e.participants)
         )
@@ -552,7 +591,9 @@ class NarrativeOrchestrator:
             "status": (
                 "healthy"
                 if health_score > 0.6
-                else "degraded" if health_score > 0.3 else "poor"
+                else "degraded"
+                if health_score > 0.3
+                else "poor"
             ),
             "score": health_score,
             "event_diversity": event_diversity,

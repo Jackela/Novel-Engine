@@ -35,7 +35,9 @@ __all__ = [
 ]
 
 
-def run_security_scan(version: str, scan_type: str = "comprehensive") -> Dict[str, Any]:
+def run_security_scan(
+    version: str, scan_type: str = "comprehensive"
+) -> Dict[str, Any]:
     """
     Run security scan on application version before deployment.
 
@@ -46,7 +48,9 @@ def run_security_scan(version: str, scan_type: str = "comprehensive") -> Dict[st
     Returns:
         Dict containing security scan results
     """
-    scan_id = f"security-scan-{version}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    scan_id = (
+        f"security-scan-{version}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    )
 
     return {
         "scan_id": scan_id,
@@ -80,7 +84,11 @@ def validate_compliance(environment: str) -> Dict[str, Any]:
         "compliance_status": "compliant",
         "timestamp": datetime.now().isoformat(),
         "standards": {
-            "owasp_asvs": {"status": "compliant", "level": "L2", "score": 98.2},
+            "owasp_asvs": {
+                "status": "compliant",
+                "level": "L2",
+                "score": 98.2,
+            },
             "nist_csf": {
                 "status": "compliant",
                 "maturity_level": "defined",
@@ -181,7 +189,9 @@ def rotate_certificates(certificate_type: str = "all") -> Dict[str, Any]:
         "certificate_type": certificate_type,
         "rotation_timestamp": datetime.now().isoformat(),
         "certificates_rotated": {
-            "api_gateway": True if certificate_type in ["all", "api"] else False,
+            "api_gateway": True
+            if certificate_type in ["all", "api"]
+            else False,
             "ingress_controller": (
                 True if certificate_type in ["all", "ingress"] else False
             ),

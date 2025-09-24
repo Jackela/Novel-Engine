@@ -19,9 +19,6 @@ from typing import Any, Dict, List, Optional, Set
 
 import httpx
 import redis.asyncio as redis
-
-# Import AI testing framework contracts
-from ai_testing.orchestration.master_orchestrator import ServiceEndpoint
 from ai_testing.interfaces.service_contracts import (
     BatchTestResponse,
     ITestOrchestrator,
@@ -34,6 +31,9 @@ from ai_testing.interfaces.service_contracts import (
     TestType,
     validate_test_scenario,
 )
+
+# Import AI testing framework contracts
+from ai_testing.orchestration.master_orchestrator import ServiceEndpoint
 
 # Import Novel-Engine patterns
 from config_loader import get_config
@@ -62,7 +62,9 @@ class TestPlan(BaseModel):
     # Execution strategy
     execution_order: List[str]  # scenario IDs in execution order
     parallel_groups: List[List[str]]  # scenarios that can run in parallel
-    dependencies: Dict[str, List[str]]  # scenario_id -> [dependency_scenario_ids]
+    dependencies: Dict[
+        str, List[str]
+    ]  # scenario_id -> [dependency_scenario_ids]
 
     # Resource planning
     estimated_duration_minutes: int
@@ -113,10 +115,14 @@ class AITestOrchestrator(ITestOrchestrator):
 
         # Environment-aware service endpoints
         self.service_endpoints = {
-            "browser_automation": self._get_service_url("browser-automation", 8001),
+            "browser_automation": self._get_service_url(
+                "browser-automation", 8001
+            ),
             "api_testing": self._get_service_url("api-testing", 8002),
             "ai_quality": self._get_service_url("ai-quality", 8003),
-            "results_aggregation": self._get_service_url("results-aggregation", 8004),
+            "results_aggregation": self._get_service_url(
+                "results-aggregation", 8004
+            ),
             "notification": self._get_service_url("notification", 8005),
         }
 
@@ -127,17 +133,20 @@ class AITestOrchestrator(ITestOrchestrator):
                 base_url=self.service_endpoints["browser_automation"],
             ),
             "api-testing": ServiceEndpoint(
-                name="api-testing", base_url=self.service_endpoints["api_testing"]
+                name="api-testing",
+                base_url=self.service_endpoints["api_testing"],
             ),
             "ai-quality": ServiceEndpoint(
-                name="ai-quality", base_url=self.service_endpoints["ai_quality"]
+                name="ai-quality",
+                base_url=self.service_endpoints["ai_quality"],
             ),
             "results-aggregation": ServiceEndpoint(
                 name="results-aggregation",
                 base_url=self.service_endpoints["results_aggregation"],
             ),
             "notification": ServiceEndpoint(
-                name="notification", base_url=self.service_endpoints["notification"]
+                name="notification",
+                base_url=self.service_endpoints["notification"],
             ),
         }
 
@@ -196,7 +205,9 @@ class AITestOrchestrator(ITestOrchestrator):
                 )
 
             if validation_errors:
-                raise ValueError(f"Scenario validation failed: {validation_errors}")
+                raise ValueError(
+                    f"Scenario validation failed: {validation_errors}"
+                )
 
             # Create base plan
             plan = TestPlan(
@@ -207,10 +218,14 @@ class AITestOrchestrator(ITestOrchestrator):
                 execution_order=[s.id for s in scenarios],
                 parallel_groups=[],
                 dependencies={},
-                estimated_duration_minutes=sum(s.timeout_seconds for s in scenarios)
+                estimated_duration_minutes=sum(
+                    s.timeout_seconds for s in scenarios
+                )
                 // 60,
                 required_services=self._determine_required_services(scenarios),
-                resource_requirements=self._estimate_resource_requirements(scenarios),
+                resource_requirements=self._estimate_resource_requirements(
+                    scenarios
+                ),
                 risk_assessment={},
                 optimization_suggestions=[],
             )
@@ -236,7 +251,9 @@ class AITestOrchestrator(ITestOrchestrator):
                 },
             )
 
-            logger.info(f"Test plan created: {plan.id} with {len(scenarios)} scenarios")
+            logger.info(
+                f"Test plan created: {plan.id} with {len(scenarios)} scenarios"
+            )
             return plan.id
 
         except Exception as e:
@@ -256,7 +273,8 @@ class AITestOrchestrator(ITestOrchestrator):
 
             if plan.status != TestStatus.PENDING:
                 raise HTTPException(
-                    status_code=400, detail=f"Plan {plan_id} is not in pending status"
+                    status_code=400,
+                    detail=f"Plan {plan_id} is not in pending status",
                 )
 
             # Update plan status
@@ -294,7 +312,8 @@ class AITestOrchestrator(ITestOrchestrator):
             execution = await self._load_execution_from_redis(execution_id)
             if not execution:
                 raise HTTPException(
-                    status_code=404, detail=f"Execution {execution_id} not found"
+                    status_code=404,
+                    detail=f"Execution {execution_id} not found",
                 )
 
         return execution
@@ -304,7 +323,10 @@ class AITestOrchestrator(ITestOrchestrator):
         try:
             execution = await self.get_execution_status(execution_id)
 
-            if execution.status not in [TestStatus.PENDING, TestStatus.RUNNING]:
+            if execution.status not in [
+                TestStatus.PENDING,
+                TestStatus.RUNNING,
+            ]:
                 return False
 
             # Update execution status
@@ -362,24 +384,24 @@ class AITestOrchestrator(ITestOrchestrator):
 
         prompt = f"""
         As an AI test orchestration expert, optimize this test execution plan:
-        
+
         Test Scenarios: {scenario_info}
         Available Services: {list(self.service_endpoints.keys())}
         Service Health: {self.service_health}
-        
+
         Please provide optimization recommendations for:
         1. Execution order based on dependencies and priorities
         2. Parallel execution groups to minimize total time
         3. Risk assessment for each scenario (0.0-1.0)
         4. Resource allocation strategy
         5. Potential optimization suggestions
-        
+
         Consider these factors:
         - Higher priority tests should run earlier
         - Tests with dependencies must run after their prerequisites
         - Parallel execution should balance load across services
         - Risk assessment should consider test complexity and failure probability
-        
+
         Return response as JSON with this structure:
         {{
             "execution_order": ["scenario_id1", "scenario_id2", ...],
@@ -398,7 +420,9 @@ class AITestOrchestrator(ITestOrchestrator):
         return {
             "execution_order": [
                 s.id
-                for s in self.active_plans[list(self.active_plans.keys())[0]].scenarios
+                for s in self.active_plans[
+                    list(self.active_plans.keys())[0]
+                ].scenarios
             ],
             "parallel_groups": [],
             "risk_assessment": {},
@@ -412,10 +436,14 @@ class AITestOrchestrator(ITestOrchestrator):
         self, plan: TestPlan, optimization: Dict[str, Any]
     ) -> TestPlan:
         """Apply AI optimization recommendations to test plan"""
-        plan.execution_order = optimization.get("execution_order", plan.execution_order)
+        plan.execution_order = optimization.get(
+            "execution_order", plan.execution_order
+        )
         plan.parallel_groups = optimization.get("parallel_groups", [])
         plan.risk_assessment = optimization.get("risk_assessment", {})
-        plan.optimization_suggestions = optimization.get("optimization_suggestions", [])
+        plan.optimization_suggestions = optimization.get(
+            "optimization_suggestions", []
+        )
 
         return plan
 
@@ -490,7 +518,9 @@ class AITestOrchestrator(ITestOrchestrator):
             for scenario_id in group:
                 if scenario_id in execution_map:
                     execution = execution_map[scenario_id]
-                    task = asyncio.create_task(self._execute_single_scenario(execution))
+                    task = asyncio.create_task(
+                        self._execute_single_scenario(execution)
+                    )
                     group_tasks.append(task)
 
             # Wait for group completion
@@ -543,7 +573,8 @@ class AITestOrchestrator(ITestOrchestrator):
             )
             execution.completed_at = datetime.now(timezone.utc)
             execution.duration_ms = int(
-                (execution.completed_at - execution.started_at).total_seconds() * 1000
+                (execution.completed_at - execution.started_at).total_seconds()
+                * 1000
             )
             execution.passed = result.passed
             execution.score = result.score
@@ -553,10 +584,14 @@ class AITestOrchestrator(ITestOrchestrator):
             # Store result
             await self._store_test_result(result)
 
-            logger.info(f"Scenario execution completed: {execution.scenario_id}")
+            logger.info(
+                f"Scenario execution completed: {execution.scenario_id}"
+            )
 
         except Exception as e:
-            logger.error(f"Scenario execution failed: {execution.scenario_id}: {e}")
+            logger.error(
+                f"Scenario execution failed: {execution.scenario_id}: {e}"
+            )
             execution.status = TestStatus.FAILED
             execution.completed_at = datetime.now(timezone.utc)
             execution.error_message = str(e)
@@ -588,7 +623,9 @@ class AITestOrchestrator(ITestOrchestrator):
 
         # Call service
         async with self.http_client as client:
-            response = await client.post(f"{service_url}/execute", json=payload)
+            response = await client.post(
+                f"{service_url}/execute", json=payload
+            )
             response.raise_for_status()
 
             result_data = response.json()
@@ -596,7 +633,9 @@ class AITestOrchestrator(ITestOrchestrator):
 
     # === Utility Methods ===
 
-    def _determine_required_services(self, scenarios: List[TestScenario]) -> Set[str]:
+    def _determine_required_services(
+        self, scenarios: List[TestScenario]
+    ) -> Set[str]:
         """Determine which services are required for scenarios"""
         services = set()
         for scenario in scenarios:
@@ -633,8 +672,12 @@ class AITestOrchestrator(ITestOrchestrator):
         for service_name, endpoint in self.service_endpoints.items():
             try:
                 async with self.http_client as client:
-                    response = await client.get(f"{endpoint}/health", timeout=5.0)
-                    self.service_health[service_name] = response.status_code == 200
+                    response = await client.get(
+                        f"{endpoint}/health", timeout=5.0
+                    )
+                    self.service_health[service_name] = (
+                        response.status_code == 200
+                    )
             except Exception:
                 self.service_health[service_name] = False
 
@@ -679,12 +722,16 @@ class AITestOrchestrator(ITestOrchestrator):
     ) -> Optional[TestExecution]:
         """Load execution from Redis"""
         if self.redis_client:
-            execution_data = await self.redis_client.get(f"execution:{execution_id}")
+            execution_data = await self.redis_client.get(
+                f"execution:{execution_id}"
+            )
             if execution_data:
                 return TestExecution.model_validate_json(execution_data)
         return None
 
-    async def _get_scenario_by_id(self, scenario_id: str) -> Optional[TestScenario]:
+    async def _get_scenario_by_id(
+        self, scenario_id: str
+    ) -> Optional[TestScenario]:
         """Get scenario by ID from active plans"""
         for plan in self.active_plans.values():
             for scenario in plan.scenarios:
@@ -697,7 +744,9 @@ class AITestOrchestrator(ITestOrchestrator):
         try:
             service_url = self.service_endpoints["results_aggregation"]
             async with self.http_client as client:
-                await client.post(f"{service_url}/results", json=result.model_dump())
+                await client.post(
+                    f"{service_url}/results", json=result.model_dump()
+                )
         except Exception as e:
             logger.error(f"Failed to store test result: {e}")
 
@@ -733,7 +782,9 @@ async def lifespan(app: FastAPI):
     orchestrator_config = {
         "redis_url": config.get("redis_url", "redis://localhost:6379"),
         "gemini_api_key": config.get("gemini_api_key"),
-        "use_ai_planning": config.get("ai_testing", {}).get("use_ai_planning", True),
+        "use_ai_planning": config.get("ai_testing", {}).get(
+            "use_ai_planning", True
+        ),
         **config.get("ai_testing", {}).get("orchestrator", {}),
     }
 
@@ -790,7 +841,9 @@ async def health_check():
         service_name="ai-test-orchestrator",
         status=status,
         version="1.0.0",
-        database_status="connected" if orchestrator.redis_client else "disconnected",
+        database_status="connected"
+        if orchestrator.redis_client
+        else "disconnected",
         message_queue_status="connected",
         external_dependencies=orchestrator.service_health,
         response_time_ms=50.0,
@@ -803,7 +856,9 @@ async def health_check():
 
 
 @app.post("/plans", response_model=Dict[str, str])
-async def create_test_plan(scenarios: List[TestScenario], context: TestContext):
+async def create_test_plan(
+    scenarios: List[TestScenario], context: TestContext
+):
     """Create an intelligent test execution plan"""
     orchestrator: AITestOrchestrator = app.state.orchestrator
     plan_id = await orchestrator.create_test_plan(scenarios, context)

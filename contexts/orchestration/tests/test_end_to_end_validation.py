@@ -16,17 +16,15 @@ from pathlib import Path
 from typing import Any, Dict, List
 from uuid import uuid4
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from application.services import TurnOrchestrator
-from domain.value_objects import TurnConfiguration
-from domain.value_objects.phase_status import PhaseType
-
-# Test client for API testing
 from fastapi.testclient import TestClient
 
-from api.turn_api import app
+# Add root directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from contexts.orchestration.api.turn_api import app
+from contexts.orchestration.application.services import TurnOrchestrator
+from contexts.orchestration.domain.value_objects import TurnConfiguration
+from contexts.orchestration.domain.value_objects.phase_status import PhaseType
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +68,7 @@ class E2EValidationSuite:
             ("Resource Management Tests", self._test_resource_management),
         ]
 
-        validation_summary = {
+        validation_summary: Dict[str, Any] = {
             "test_categories": [],
             "total_tests": 0,
             "passed_tests": 0,
@@ -86,12 +84,16 @@ class E2EValidationSuite:
             try:
                 category_start = datetime.now()
                 category_results = await test_method()
-                category_time = (datetime.now() - category_start).total_seconds() * 1000
+                category_time = (
+                    datetime.now() - category_start
+                ).total_seconds() * 1000
 
                 category_summary = {
                     "category": category_name,
                     "tests_run": len(category_results),
-                    "tests_passed": len([r for r in category_results if r["passed"]]),
+                    "tests_passed": len(
+                        [r for r in category_results if r["passed"]]
+                    ),
                     "tests_failed": len(
                         [r for r in category_results if not r["passed"]]
                     ),
@@ -100,9 +102,15 @@ class E2EValidationSuite:
                 }
 
                 validation_summary["test_categories"].append(category_summary)
-                validation_summary["total_tests"] += category_summary["tests_run"]
-                validation_summary["passed_tests"] += category_summary["tests_passed"]
-                validation_summary["failed_tests"] += category_summary["tests_failed"]
+                validation_summary["total_tests"] += category_summary[
+                    "tests_run"
+                ]
+                validation_summary["passed_tests"] += category_summary[
+                    "tests_passed"
+                ]
+                validation_summary["failed_tests"] += category_summary[
+                    "tests_failed"
+                ]
 
                 logger.info(
                     f"{category_name} completed: "
@@ -127,7 +135,9 @@ class E2EValidationSuite:
             datetime.now() - self.validation_start_time
         ).total_seconds() * 1000
         validation_summary["execution_time_ms"] = total_execution_time
-        validation_summary["overall_success"] = validation_summary["failed_tests"] == 0
+        validation_summary["overall_success"] = (
+            validation_summary["failed_tests"] == 0
+        )
         validation_summary["detailed_results"] = self.test_results
 
         # Generate validation report
@@ -169,14 +179,19 @@ class E2EValidationSuite:
             participants = ["test_agent_1", "test_agent_2"]
 
             # Execute turn with default configuration
-            result = await self.orchestrator.execute_turn(participants=participants)
+            result = await self.orchestrator.execute_turn(
+                participants=participants
+            )
 
             # Validate results
             validation_checks = [
                 ("Turn completed", result.success),
                 ("All phases executed", len(result.phases_completed) == 5),
                 ("No critical errors", result.error_details is None),
-                ("Performance metrics recorded", len(result.performance_metrics) > 0),
+                (
+                    "Performance metrics recorded",
+                    len(result.performance_metrics) > 0,
+                ),
                 (
                     "Execution time reasonable",
                     result.execution_time_ms < 60000,
@@ -223,8 +238,6 @@ class E2EValidationSuite:
                 max_ai_cost=Decimal("5.00"),
                 ai_temperature=0.7,
                 max_execution_time_ms=45000,
-                fail_fast_on_phase_failure=False,
-                max_participants=5,
                 max_concurrent_operations=3,
                 allow_time_manipulation=True,
                 negotiation_timeout_seconds=10,
@@ -240,14 +253,21 @@ class E2EValidationSuite:
                 ("All phases completed", len(result.phases_completed) == 5),
                 (
                     "AI integration worked",
-                    any("ai_cost" in str(pr) for pr in result.phase_results.values()),
+                    any(
+                        "ai_cost" in str(pr)
+                        for pr in result.phase_results.values()
+                    ),
                 ),
                 ("Multiple participants handled", len(participants) == 3),
                 (
                     "Configuration respected",
-                    result.execution_time_ms < configuration.max_execution_time_ms,
+                    result.execution_time_ms
+                    < configuration.max_execution_time_ms,
                 ),
-                ("Detailed metrics collected", len(result.performance_metrics) > 5),
+                (
+                    "Detailed metrics collected",
+                    len(result.performance_metrics) > 5,
+                ),
             ]
 
             all_passed = all(check[1] for check in validation_checks)
@@ -273,7 +293,9 @@ class E2EValidationSuite:
 
         try:
             participants = ["solo_agent"]
-            result = await self.orchestrator.execute_turn(participants=participants)
+            result = await self.orchestrator.execute_turn(
+                participants=participants
+            )
 
             # Single participant should still work for most phases
             validation_checks = [
@@ -289,7 +311,8 @@ class E2EValidationSuite:
                 # Interaction phase might have limited activity but should still complete
                 (
                     "Interaction phase handled",
-                    PhaseType.INTERACTION_ORCHESTRATION in result.phases_completed,
+                    PhaseType.INTERACTION_ORCHESTRATION
+                    in result.phases_completed,
                 ),
                 (
                     "Event integration completed",
@@ -318,20 +341,30 @@ class E2EValidationSuite:
         test_name = "Multi-Participant Pipeline"
 
         try:
-            participants = ["agent_1", "agent_2", "agent_3", "agent_4", "agent_5"]
-            result = await self.orchestrator.execute_turn(participants=participants)
+            participants = [
+                "agent_1",
+                "agent_2",
+                "agent_3",
+                "agent_4",
+                "agent_5",
+            ]
+            result = await self.orchestrator.execute_turn(
+                participants=participants
+            )
 
             validation_checks = [
                 ("Turn completed", result.success),
                 ("All participants processed", len(participants) == 5),
                 (
                     "Interaction phase had opportunities",
-                    PhaseType.INTERACTION_ORCHESTRATION in result.phases_completed,
+                    PhaseType.INTERACTION_ORCHESTRATION
+                    in result.phases_completed,
                 ),
                 (
                     "Multiple events generated",
                     sum(
-                        len(pr.events_generated) for pr in result.phase_results.values()
+                        len(pr.events_generated)
+                        for pr in result.phase_results.values()
                     )
                     > 0,
                 ),
@@ -350,7 +383,8 @@ class E2EValidationSuite:
                 "result_summary": {
                     "participants": len(participants),
                     "total_events_generated": sum(
-                        len(pr.events_generated) for pr in result.phase_results.values()
+                        len(pr.events_generated)
+                        for pr in result.phase_results.values()
                     ),
                 },
             }
@@ -425,7 +459,7 @@ class E2EValidationSuite:
 
             participants = ["test_agent"]
             configuration = TurnConfiguration(
-                fail_fast_on_phase_failure=False  # Allow compensation to execute
+                # Allow compensation to execute
             )
 
             await self.orchestrator.execute_turn(
@@ -506,8 +540,12 @@ class E2EValidationSuite:
 
         try:
             # Test empty participants
-            is_valid, errors = await self.orchestrator.validate_turn_preconditions(
-                participants=[], configuration=TurnConfiguration.create_default()
+            (
+                is_valid,
+                errors,
+            ) = await self.orchestrator.validate_turn_preconditions(
+                participants=[],
+                configuration=TurnConfiguration.create_default(),
             )
 
             validation_checks = [
@@ -516,10 +554,12 @@ class E2EValidationSuite:
             ]
 
             # Test invalid time advance
-            config = TurnConfiguration.create_default()
-            config.world_time_advance = -1
+            config = TurnConfiguration(world_time_advance=-1)
 
-            is_valid2, errors2 = await self.orchestrator.validate_turn_preconditions(
+            (
+                is_valid2,
+                errors2,
+            ) = await self.orchestrator.validate_turn_preconditions(
                 participants=["test_agent"], configuration=config
             )
 
@@ -618,17 +658,24 @@ class E2EValidationSuite:
 
             # Run multiple turns and measure consistency
             for i in range(3):  # Small sample for demo
-                result = await self.orchestrator.execute_turn(participants=participants)
+                result = await self.orchestrator.execute_turn(
+                    participants=participants
+                )
                 if result.success:
                     execution_times.append(result.execution_time_ms)
 
             if len(execution_times) >= 2:
                 avg_time = sum(execution_times) / len(execution_times)
                 max_deviation = max(abs(t - avg_time) for t in execution_times)
-                consistency_ratio = max_deviation / avg_time if avg_time > 0 else 0
+                consistency_ratio = (
+                    max_deviation / avg_time if avg_time > 0 else 0
+                )
 
                 validation_checks = [
-                    ("Multiple executions successful", len(execution_times) >= 2),
+                    (
+                        "Multiple executions successful",
+                        len(execution_times) >= 2,
+                    ),
                     (
                         "Execution times reasonable",
                         avg_time < 60000,
@@ -650,7 +697,9 @@ class E2EValidationSuite:
                 "metrics": {
                     "execution_times_ms": execution_times,
                     "average_time_ms": avg_time if execution_times else 0,
-                    "consistency_ratio": consistency_ratio if execution_times else 0,
+                    "consistency_ratio": consistency_ratio
+                    if execution_times
+                    else 0,
                 },
             }
 
@@ -723,7 +772,10 @@ class E2EValidationSuite:
                             "Turn executed successfully",
                             response_data.get("success", False),
                         ),
-                        ("Phase results included", "phase_results" in response_data),
+                        (
+                            "Phase results included",
+                            "phase_results" in response_data,
+                        ),
                         (
                             "Performance metrics included",
                             "performance_metrics" in response_data,
@@ -828,14 +880,20 @@ class E2EValidationSuite:
             tasks = []
             for i in range(2):  # Small number for demo
                 participants = [f"concurrent_agent_{i}"]
-                task = self.orchestrator.execute_turn(participants=participants)
+                task = self.orchestrator.execute_turn(
+                    participants=participants
+                )
                 tasks.append(task)
 
             # Execute concurrently
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             successful_results = [
-                r for r in results if not isinstance(r, Exception) and r.success
+                r
+                for r in results
+                if not isinstance(r, Exception)
+                and hasattr(r, "success")
+                and r.success
             ]
 
             validation_checks = [
@@ -856,7 +914,9 @@ class E2EValidationSuite:
                 "concurrency_results": {
                     "total_executions": len(results),
                     "successful_executions": len(successful_results),
-                    "exceptions": len([r for r in results if isinstance(r, Exception)]),
+                    "exceptions": len(
+                        [r for r in results if isinstance(r, Exception)]
+                    ),
                 },
             }
 
@@ -887,7 +947,10 @@ class E2EValidationSuite:
                     "Phase implementations reported",
                     "phase_implementations" in health_info,
                 ),
-                ("Configuration flags reported", "saga_enabled" in health_info),
+                (
+                    "Configuration flags reported",
+                    "saga_enabled" in health_info,
+                ),
             ]
 
             all_passed = all(check[1] for check in validation_checks)
@@ -933,7 +996,9 @@ class E2EValidationSuite:
         print(
             f"Success Rate: {validation_summary['passed_tests']/max(1, validation_summary['total_tests']):.1%}"
         )
-        print(f"Execution Time: {validation_summary['execution_time_ms']:.0f}ms")
+        print(
+            f"Execution Time: {validation_summary['execution_time_ms']:.0f}ms"
+        )
         print(
             f"Overall Success: {'✅ PASS' if validation_summary['overall_success'] else '❌ FAIL'}"
         )

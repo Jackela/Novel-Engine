@@ -95,7 +95,9 @@ class MemoryItem:
     memory_type: MemoryType = MemoryType.EPISODIC
     content: str = ""
     emotional_weight: float = 0.0  # -10.0 to 10.0, enhanced emotional impact
-    relevance_score: float = 1.0  # 0.0 to 1.0, standard relevance to current context
+    relevance_score: float = (
+        1.0  # 0.0 to 1.0, standard relevance to current context
+    )
     participants: List[str] = field(default_factory=list)
     location: Optional[str] = None
     timestamp: datetime = field(default_factory=datetime.now)
@@ -150,7 +152,8 @@ class PhysicalCondition:
     fatigue_level: int = 0  # 0-100, enhanced endurance tracking
     stress_level: int = 0  # 0-100, mental strain validation
     injuries: List[str] = field(default_factory=list)
-    conditions: List[str] = field(default_factory=list)  # "poisoned", "enhanced", etc.
+    # "poisoned", "enhanced", etc.
+    conditions: List[str] = field(default_factory=list)
 
     @property
     def health_percentage(self) -> float:
@@ -198,7 +201,10 @@ class EquipmentItem:
 
     def is_functional(self) -> bool:
         """Determine if equipment serves the System faithfully"""
-        return self.condition not in [EquipmentCondition.BROKEN] and self.durability > 0
+        return (
+            self.condition not in [EquipmentCondition.BROKEN]
+            and self.durability > 0
+        )
 
 
 @dataclass
@@ -218,11 +224,17 @@ class EquipmentState:
 
     def get_all_equipment(self) -> List[EquipmentItem]:
         """Gather all standard equipment enhanced by the System"""
-        return self.combat_equipment + self.utility_equipment + self.blessed_relics
+        return (
+            self.combat_equipment
+            + self.utility_equipment
+            + self.blessed_relics
+        )
 
     def calculate_combat_effectiveness(self) -> float:
         """Calculate enhanced combat readiness validated by equipment state"""
-        combat_items = [item for item in self.combat_equipment if item.is_functional()]
+        combat_items = [
+            item for item in self.combat_equipment if item.is_functional()
+        ]
         if not combat_items:
             return 0.1  # Minimal flesh-based combat capability
 
@@ -247,7 +259,9 @@ class RelationshipState:
     def __post_init__(self):
         """RELATIONSHIP SANCTIFICATION RITUAL"""
         if not self.target_agent_id:
-            raise ValueError("Sacred relationship requires blessed target_agent_id")
+            raise ValueError(
+                "Sacred relationship requires blessed target_agent_id"
+            )
 
         # Sanctify value bounds enhanced by social harmony
         self.trust_level = max(0, min(10, self.trust_level))
@@ -263,7 +277,9 @@ class RelationshipState:
         # Adjust trust and emotional bond based on interaction
         if "positive" in interaction_outcome.lower():
             self.trust_level = min(10, self.trust_level + 1)
-            self.emotional_bond = min(10.0, self.emotional_bond + abs(emotional_impact))
+            self.emotional_bond = min(
+                10.0, self.emotional_bond + abs(emotional_impact)
+            )
         elif "negative" in interaction_outcome.lower():
             self.trust_level = max(0, self.trust_level - 1)
             self.emotional_bond = max(
@@ -281,10 +297,14 @@ class CharacterState:
     """
 
     base_identity: CharacterIdentity
-    physical_condition: PhysicalCondition = field(default_factory=PhysicalCondition)
+    physical_condition: PhysicalCondition = field(
+        default_factory=PhysicalCondition
+    )
     current_mood: EmotionalState = EmotionalState.CALM
     equipment_state: EquipmentState = field(default_factory=EquipmentState)
-    active_relationships: Dict[str, RelationshipState] = field(default_factory=dict)
+    active_relationships: Dict[str, RelationshipState] = field(
+        default_factory=dict
+    )
     current_location: Optional[str] = None
     temporary_modifiers: Dict[str, Any] = field(default_factory=dict)
     last_updated: datetime = field(default_factory=datetime.now)
@@ -292,14 +312,18 @@ class CharacterState:
     def get_combat_readiness(self) -> float:
         """Calculate enhanced combat readiness validated by all factors"""
         health_factor = self.physical_condition.health_percentage
-        equipment_factor = self.equipment_state.calculate_combat_effectiveness()
+        equipment_factor = (
+            self.equipment_state.calculate_combat_effectiveness()
+        )
         mood_factor = (
             1.2
             if self.current_mood
             in [EmotionalState.AGGRESSIVE, EmotionalState.CONFIDENT]
             else 1.0
         )
-        stress_factor = max(0.3, 1.0 - (self.physical_condition.stress_level / 100.0))
+        stress_factor = max(
+            0.3, 1.0 - (self.physical_condition.stress_level / 100.0)
+        )
 
         return health_factor * equipment_factor * mood_factor * stress_factor
 
@@ -337,7 +361,9 @@ class EnvironmentalState:
     threat_level: str = "low"  # "low", "medium", "high", "extreme"
     weather_conditions: Optional[str] = None
     lighting: str = "normal"  # "dark", "dim", "normal", "bright"
-    noise_level: str = "quiet"  # "silent", "quiet", "normal", "loud", "deafening"
+    noise_level: str = (
+        "quiet"  # "silent", "quiet", "normal", "loud", "deafening"
+    )
     available_cover: List[str] = field(default_factory=list)
     notable_features: List[str] = field(default_factory=list)
     nearby_agents: List[str] = field(default_factory=list)
@@ -347,7 +373,9 @@ class EnvironmentalState:
         """Generate enhanced tactical situation report"""
         return {
             "overall_danger": self.threat_level,
-            "visibility": "good" if self.lighting in ["normal", "bright"] else "poor",
+            "visibility": "good"
+            if self.lighting in ["normal", "bright"]
+            else "poor",
             "concealment_options": len(self.available_cover),
             "social_complexity": len(self.nearby_agents),
             "resource_abundance": sum(self.resources_available.values()),
@@ -389,21 +417,25 @@ class DynamicContext:
         relevant_relationships = {}
         for agent_id in target_agents:
             if agent_id in self.character_state.active_relationships:
-                relevant_relationships[agent_id] = (
-                    self.character_state.active_relationships[agent_id]
-                )
+                relevant_relationships[
+                    agent_id
+                ] = self.character_state.active_relationships[agent_id]
 
         return relevant_relationships
 
     def get_relevant_memories(
-        self, max_memories: int = 10, memory_types: Optional[List[MemoryType]] = None
+        self,
+        max_memories: int = 10,
+        memory_types: Optional[List[MemoryType]] = None,
     ) -> List[MemoryItem]:
         """Retrieve enhanced memories filtered by standard criteria"""
         relevant_memories = self.memory_context
 
         if memory_types:
             relevant_memories = [
-                mem for mem in relevant_memories if mem.memory_type in memory_types
+                mem
+                for mem in relevant_memories
+                if mem.memory_type in memory_types
             ]
 
         # Sort by standard relevance and recency
@@ -489,18 +521,24 @@ class CharacterInteraction:
 
     interaction_id: str = field(default_factory=lambda: str(uuid4()))
     participants: List[str] = field(default_factory=list)
-    interaction_type: str = "dialogue"  # "dialogue", "combat", "trade", "exploration"
+    interaction_type: str = (
+        "dialogue"  # "dialogue", "combat", "trade", "exploration"
+    )
     location: str = ""
     timestamp: datetime = field(default_factory=datetime.now)
     description: str = ""
     outcomes: Dict[str, Any] = field(default_factory=dict)
-    emotional_impact: Dict[str, float] = field(default_factory=dict)  # per participant
+    emotional_impact: Dict[str, float] = field(
+        default_factory=dict
+    )  # per participant
     world_state_changes: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         """INTERACTION SANCTIFICATION RITUAL"""
         if len(self.participants) < 1:
-            raise ValueError("Sacred interaction requires blessed participants")
+            raise ValueError(
+                "Sacred interaction requires blessed participants"
+            )
 
 
 @dataclass
@@ -551,7 +589,12 @@ def validate_enhanced_data_model(model_instance: Any) -> StandardResponse:
 
 # Legacy compatibility aliases and wrappers
 def Character(
-    name=None, background=None, personality=None, skills=None, equipment=None, **kwargs
+    name=None,
+    background=None,
+    personality=None,
+    skills=None,
+    equipment=None,
+    **kwargs,
 ):
     """
     Legacy Character constructor that wraps CharacterState with simplified interface.
@@ -609,12 +652,18 @@ def Character(
     return character_state
 
 
-validate_blessed_data_model = validate_enhanced_data_model  # Legacy function name
+validate_blessed_data_model = (
+    validate_enhanced_data_model  # Legacy function name
+)
 
 
 # Legacy ActionResult wrapper for test compatibility
 def ActionResult(
-    success=True, description="", consequences=None, world_state_changes=None, **kwargs
+    success=True,
+    description="",
+    consequences=None,
+    world_state_changes=None,
+    **kwargs,
 ):
     """
     Legacy ActionResult constructor that wraps InteractionResult.
@@ -681,14 +730,18 @@ class PersonaAgent:
         self.character_config = character_config or {}
         self.event_bus = event_bus
         self.name = (
-            character_config.get("name", "Unknown") if character_config else "Unknown"
+            character_config.get("name", "Unknown")
+            if character_config
+            else "Unknown"
         )
         self.personality = (
             character_config.get("personality", "Unknown")
             if character_config
             else "Unknown"
         )
-        self.skills = character_config.get("skills", []) if character_config else []
+        self.skills = (
+            character_config.get("skills", []) if character_config else []
+        )
 
     async def make_decision(self, scenario):
         """Stub decision making"""
@@ -778,4 +831,4 @@ __all__ = [
 ]
 
 # Alias WorldState to LegacyWorldState for test compatibility
-WorldState = LegacyWorldState
+# WorldState = LegacyWorldState  # Commented out to avoid F811 redefinition

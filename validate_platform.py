@@ -23,6 +23,7 @@ Requirements:
 """
 
 import asyncio
+import importlib.util
 import logging
 import sys
 from pathlib import Path
@@ -30,9 +31,6 @@ from pathlib import Path
 # Add project root to Python path and handle platform name conflict
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
-
-# Import with explicit path to avoid standard library platform module conflict
-import importlib.util
 
 spec = importlib.util.spec_from_file_location(
     "platform_validation",

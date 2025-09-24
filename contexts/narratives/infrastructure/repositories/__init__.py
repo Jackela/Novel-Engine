@@ -6,7 +6,10 @@ This package contains repository implementations for the Narrative bounded conte
 providing concrete data persistence using SQLAlchemy ORM.
 """
 
-from .narrative_arc_repository import INarrativeArcRepository, NarrativeArcRepository
+from .narrative_arc_repository import (
+    INarrativeArcRepository,
+    NarrativeArcRepository,
+)
 
 __all__ = ["NarrativeArcRepository", "INarrativeArcRepository"]
 

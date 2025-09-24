@@ -91,7 +91,9 @@ class AsyncProcessingTest:
 
         # Compile results
         test_results["total_tests"] = len(self.test_results)
-        test_results["passed_tests"] = sum(1 for r in self.test_results if r["success"])
+        test_results["passed_tests"] = sum(
+            1 for r in self.test_results if r["success"]
+        )
         test_results["failed_tests"] = sum(
             1 for r in self.test_results if not r["success"]
         )
@@ -107,9 +109,9 @@ class AsyncProcessingTest:
             avg_performance_improvement = sum(
                 r["performance_improvement_percent"] for r in successful_tests
             ) / len(successful_tests)
-            test_results["average_performance_improvement"] = (
-                avg_performance_improvement
-            )
+            test_results[
+                "average_performance_improvement"
+            ] = avg_performance_improvement
 
         logger.info("=== Async Processing Tests Completed ===")
         logger.info(
@@ -128,7 +130,9 @@ class AsyncProcessingTest:
 
         try:
             # Create task scheduler
-            scheduler = AsyncTaskScheduler(max_concurrent_tasks=10, max_queue_size=200)
+            scheduler = AsyncTaskScheduler(
+                max_concurrent_tasks=10, max_queue_size=200
+            )
             await scheduler.start()
 
             # Measure baseline (sequential processing)
@@ -159,7 +163,9 @@ class AsyncProcessingTest:
             async_results = []
             for task_id in tasks:
                 try:
-                    result = await scheduler.get_task_result(task_id, timeout=10.0)
+                    result = await scheduler.get_task_result(
+                        task_id, timeout=10.0
+                    )
                     async_results.append(result)
                 except Exception as e:
                     logger.warning(f"Task {task_id} failed: {e}")
@@ -180,13 +186,16 @@ class AsyncProcessingTest:
             logger.info(
                 f"Task Scheduler: {sequential_time:.3f}s sequential vs {async_time:.3f}s async"
             )
-            logger.info(f"Concurrent peak: {status['metrics']['concurrent_peak']}")
+            logger.info(
+                f"Concurrent peak: {status['metrics']['concurrent_peak']}"
+            )
 
             # Verify effectiveness
             success = (
                 len(async_results) >= 40  # Most tasks should complete
                 and status["metrics"]["completed_tasks"] >= 40
-                and status["metrics"]["concurrent_peak"] > 1  # Should use concurrency
+                and status["metrics"]["concurrent_peak"]
+                > 1  # Should use concurrency
                 and performance_improvement > 0  # Should be faster
             )
 
@@ -198,7 +207,9 @@ class AsyncProcessingTest:
                 "performance_improvement_percent": performance_improvement,
                 "tasks_completed": len(async_results),
                 "concurrent_peak": status["metrics"]["concurrent_peak"],
-                "success_rate_percent": status["metrics"]["success_rate_percent"],
+                "success_rate_percent": status["metrics"][
+                    "success_rate_percent"
+                ],
                 "scheduler_metrics": status["metrics"],
             }
 
@@ -260,7 +271,9 @@ class AsyncProcessingTest:
                     await temp_client.close()
                 sequential_time = time.time() - start_time
             except Exception:
-                sequential_time = 5.0  # Fallback if external service unavailable
+                sequential_time = (
+                    5.0  # Fallback if external service unavailable
+                )
                 sequential_responses = 3
 
             # Measure concurrent requests with connection pooling
@@ -311,7 +324,8 @@ class AsyncProcessingTest:
             # Verify effectiveness (allow for network failures)
             success = (
                 concurrent_time
-                < sequential_time + 2.0  # Should be at least as fast (with buffer)
+                < sequential_time
+                + 2.0  # Should be at least as fast (with buffer)
                 and stats["active"] is False  # Should be properly closed
                 and "total_requests" in stats
             )
@@ -386,14 +400,22 @@ class AsyncProcessingTest:
                 filename = f"async_test_{i}.json"
                 write_operations.append((filename, test_data))
 
-            write_results = await AsyncFileOperations.batch_write_json(write_operations)
-            successful_writes = sum(1 for result in write_results if result is True)
+            write_results = await AsyncFileOperations.batch_write_json(
+                write_operations
+            )
+            successful_writes = sum(
+                1 for result in write_results if result is True
+            )
 
             # Async batch read
             read_files = [f"async_test_{i}.json" for i in range(10)]
-            read_results = await AsyncFileOperations.batch_read_json(read_files)
+            read_results = await AsyncFileOperations.batch_read_json(
+                read_files
+            )
             successful_reads = sum(
-                1 for result in read_results if not isinstance(result, Exception)
+                1
+                for result in read_results
+                if not isinstance(result, Exception)
             )
 
             async_time = time.time() - start_time
@@ -407,13 +429,17 @@ class AsyncProcessingTest:
 
             # Calculate performance improvement
             performance_improvement = (
-                ((sync_time - async_time) / sync_time) * 100 if sync_time > 0 else 0
+                ((sync_time - async_time) / sync_time) * 100
+                if sync_time > 0
+                else 0
             )
 
             logger.info(
                 f"File Operations: {sync_time:.3f}s sync vs {async_time:.3f}s async"
             )
-            logger.info(f"Writes: {successful_writes}/10, Reads: {successful_reads}/10")
+            logger.info(
+                f"Writes: {successful_writes}/10, Reads: {successful_reads}/10"
+            )
 
             # Verify effectiveness
             success = (
@@ -460,7 +486,10 @@ class AsyncProcessingTest:
                         "world_state_update",
                         "interaction_processing",
                     ][i % 3],
-                    "data": {"prompt": f"Process task {i}", "context": {"turn": i}},
+                    "data": {
+                        "prompt": f"Process task {i}",
+                        "context": {"turn": i},
+                    },
                 }
                 agent_tasks.append(task)
 
@@ -494,7 +523,10 @@ class AsyncProcessingTest:
 
             # Calculate performance improvement
             performance_improvement = (
-                ((sequential_time_scaled - concurrent_time) / sequential_time_scaled)
+                (
+                    (sequential_time_scaled - concurrent_time)
+                    / sequential_time_scaled
+                )
                 * 100
                 if sequential_time_scaled > 0
                 else 0
@@ -515,7 +547,8 @@ class AsyncProcessingTest:
             success = (
                 successful_concurrent >= 40  # Most agents should succeed
                 and stats["concurrent_peak"] > 5  # Should use concurrency
-                and concurrent_time < sequential_time_scaled  # Should be faster
+                and concurrent_time
+                < sequential_time_scaled  # Should be faster
                 and stats["success_rate_percent"] > 80  # High success rate
             )
 
@@ -592,7 +625,9 @@ class AsyncProcessingTest:
                 and memory_change < 100  # Memory growth controlled (< 100MB)
             )
 
-            logger.info(f"Resource management: {completed_tasks}/20 tasks completed")
+            logger.info(
+                f"Resource management: {completed_tasks}/20 tasks completed"
+            )
             logger.info(f"Memory change: {memory_change:.1f}MB")
 
             return {
@@ -640,7 +675,9 @@ class AsyncProcessingTest:
                 task = AsyncTask(
                     task_id=f"pipeline_{i}",
                     coroutine=self._pipeline_stage_work(i),
-                    priority=TaskPriority.HIGH if i < 5 else TaskPriority.NORMAL,
+                    priority=TaskPriority.HIGH
+                    if i < 5
+                    else TaskPriority.NORMAL,
                 )
                 task_id = await scheduler.submit_task(task)
                 pipeline_tasks.append(task_id)
@@ -671,7 +708,9 @@ class AsyncProcessingTest:
             task_results = []
             for task_id in pipeline_tasks[:10]:  # Limit for performance
                 try:
-                    result = await scheduler.get_task_result(task_id, timeout=3.0)
+                    result = await scheduler.get_task_result(
+                        task_id, timeout=3.0
+                    )
                     task_results.append(result)
                 except Exception as e:
                     logger.debug(f"Pipeline task {task_id} failed: {e}")
@@ -691,14 +730,18 @@ class AsyncProcessingTest:
             # Calculate pipeline metrics
             successful_tasks = len(task_results)
             successful_files = sum(1 for r in file_results if r is True)
-            successful_agents = sum(1 for r in agent_results if r.get("success", False))
+            successful_agents = sum(
+                1 for r in agent_results if r.get("success", False)
+            )
 
             # Overall pipeline success rate
             total_operations = 20 + 2 + 10  # tasks + files + agents
             successful_operations = (
                 successful_tasks + successful_files + successful_agents
             )
-            pipeline_success_rate = (successful_operations / total_operations) * 100
+            pipeline_success_rate = (
+                successful_operations / total_operations
+            ) * 100
 
             logger.info(f"Pipeline completed in {pipeline_time:.3f}s")
             logger.info(
@@ -793,7 +836,7 @@ ASYNC PROCESSING VALIDATION:
 """
                 elif "HTTP Client" in result["test_name"]:
                     report += f"""
-🌐 Async HTTP Client with Connection Pooling  
+🌐 Async HTTP Client with Connection Pooling
    ✅ Performance Improvement: {result.get('performance_improvement_percent', 0):.1f}%
    ✅ Successful Requests: {result.get('successful_responses', 0)}/{result.get('total_requests', 0)}
    ✅ Connection Pool: {result.get('connection_pool_size', 0)} connections
@@ -846,7 +889,7 @@ FAILED TESTS ({len(failed_tests)}):
 
 ASYNC PROCESSING ANALYSIS:
 - Task Scheduling: Priority Queues + Resource Management ✅
-- HTTP Operations: Connection Pooling + Intelligent Retry ✅  
+- HTTP Operations: Connection Pooling + Intelligent Retry ✅
 - File Operations: Non-blocking I/O + Batch Processing ✅
 - Agent Processing: Concurrent Execution + Load Balancing ✅
 - Resource Control: Memory Management + Concurrency Limits ✅
@@ -865,7 +908,7 @@ RECOMMENDATION:
 ⚡ ASYNC PROCESSING: PRODUCTION READY
    Expected throughput improvement: 60%+
    Response time improvement: 40%+
-   
+
 ═══════════════════════════════════════════════════════════════
 """
 

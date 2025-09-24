@@ -148,7 +148,6 @@ class OpenAIProvider(ILLMProvider):
                 headers=self._get_headers(),
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
-
                 response_data = await response.json()
 
                 if response.status == 200:
@@ -204,7 +203,6 @@ class OpenAIProvider(ILLMProvider):
                 headers=self._get_headers(),
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
-
                 if response.status != 200:
                     yield f"Error: HTTP {response.status}"
                     return
@@ -249,9 +247,7 @@ class OpenAIProvider(ILLMProvider):
 
         # Adjust for different content types
         if re.search(r"[^\x00-\x7F]", text):  # Non-ASCII characters
-            token_ratio = (
-                0.6  # Non-English text typically has fewer tokens per character
-            )
+            token_ratio = 0.6  # Non-English text typically has fewer tokens per character
         else:
             token_ratio = 0.25  # English text: ~4 chars per token
 
@@ -328,7 +324,6 @@ class OpenAIProvider(ILLMProvider):
                 headers=self._get_headers(),
                 timeout=aiohttp.ClientTimeout(total=10),
             ) as response:
-
                 is_healthy = response.status == 200
 
                 return {
@@ -446,7 +441,9 @@ class OpenAIProvider(ILLMProvider):
         messages = []
 
         if request.system_prompt:
-            messages.append({"role": "system", "content": request.system_prompt})
+            messages.append(
+                {"role": "system", "content": request.system_prompt}
+            )
 
         # Extract messages from metadata if available (from chat requests)
         if request.metadata and "messages" in request.metadata:
@@ -537,7 +534,10 @@ class OpenAIProvider(ILLMProvider):
         )
 
     def _parse_error_response(
-        self, request: LLMRequest, status_code: int, response_data: Dict[str, Any]
+        self,
+        request: LLMRequest,
+        status_code: int,
+        response_data: Dict[str, Any],
     ) -> LLMResponse:
         """
         Parse error response from OpenAI API.

@@ -49,7 +49,9 @@ class CacheKey:
             "presence_penalty": request.presence_penalty,
             "frequency_penalty": request.frequency_penalty,
             "stop_sequences": (
-                tuple(request.stop_sequences) if request.stop_sequences else None
+                tuple(request.stop_sequences)
+                if request.stop_sequences
+                else None
             ),
         }
 
@@ -124,7 +126,10 @@ class ICacheService(ABC):
 
     @abstractmethod
     async def put_async(
-        self, request: LLMRequest, response: LLMResponse, ttl_seconds: int = 3600
+        self,
+        request: LLMRequest,
+        response: LLMResponse,
+        ttl_seconds: int = 3600,
     ) -> None:
         """
         Cache response for request.
@@ -219,7 +224,10 @@ class InMemoryCacheService(ICacheService):
             return entry.response
 
     async def put_async(
-        self, request: LLMRequest, response: LLMResponse, ttl_seconds: int = 3600
+        self,
+        request: LLMRequest,
+        response: LLMResponse,
+        ttl_seconds: int = 3600,
     ) -> None:
         """Cache response with eviction policy."""
         cache_key = CacheKey.from_request(request)
@@ -227,12 +235,17 @@ class InMemoryCacheService(ICacheService):
 
         async with self._lock:
             # Check if we need to evict entries
-            if len(self._cache) >= self._max_entries and key_str not in self._cache:
+            if (
+                len(self._cache) >= self._max_entries
+                and key_str not in self._cache
+            ):
                 await self._evict_lru()
 
             # Create and store cache entry
             entry = CacheEntry(
-                response=response, created_at=datetime.now(), ttl_seconds=ttl_seconds
+                response=response,
+                created_at=datetime.now(),
+                ttl_seconds=ttl_seconds,
             )
 
             self._cache[key_str] = entry
@@ -265,7 +278,9 @@ class InMemoryCacheService(ICacheService):
         """Get comprehensive cache statistics."""
         async with self._lock:
             total_requests = self._hits + self._misses
-            hit_rate = (self._hits / total_requests) if total_requests > 0 else 0.0
+            hit_rate = (
+                (self._hits / total_requests) if total_requests > 0 else 0.0
+            )
 
             # Calculate cache health metrics
             active_entries = len(self._cache)
@@ -283,7 +298,9 @@ class InMemoryCacheService(ICacheService):
                 "expired_entries": expired_entries,
                 "max_entries": self._max_entries,
                 "utilization": (
-                    active_entries / self._max_entries if self._max_entries > 0 else 0.0
+                    active_entries / self._max_entries
+                    if self._max_entries > 0
+                    else 0.0
                 ),
             }
 
@@ -295,7 +312,8 @@ class InMemoryCacheService(ICacheService):
         # Find LRU entry (never accessed or oldest last_accessed)
         lru_key = min(
             self._cache.keys(),
-            key=lambda k: self._cache[k].last_accessed or self._cache[k].created_at,
+            key=lambda k: self._cache[k].last_accessed
+            or self._cache[k].created_at,
         )
 
         del self._cache[lru_key]

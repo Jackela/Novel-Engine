@@ -53,7 +53,9 @@ def test_director_agent_import_and_instantiation():
             assert hasattr(
                 director, "register_agent"
             ), "DirectorAgent missing register_agent method"
-            logger.info("✅ DirectorAgent basic interface validation successful")
+            logger.info(
+                "✅ DirectorAgent basic interface validation successful"
+            )
 
         except Exception as e:
             logger.warning(f"⚠️ DirectorAgent instantiation failed: {e}")
@@ -101,7 +103,9 @@ def test_persona_agent_import_and_instantiation():
             assert hasattr(
                 agent, "update_memory"
             ), "PersonaAgent missing update_memory method"
-            assert hasattr(agent, "agent_id"), "PersonaAgent missing agent_id property"
+            assert hasattr(
+                agent, "agent_id"
+            ), "PersonaAgent missing agent_id property"
             logger.info("✅ PersonaAgent basic interface validation successful")
 
         except Exception as e:
@@ -161,12 +165,18 @@ def test_event_bus_integration():
 
                 loop.run_until_complete(async_test())
 
-            assert len(test_events) == 1, "EventBus publish/subscribe not working"
-            assert test_events[0]["test"] == "data", "EventBus data transmission failed"
+            assert (
+                len(test_events) == 1
+            ), "EventBus publish/subscribe not working"
+            assert (
+                test_events[0]["test"] == "data"
+            ), "EventBus data transmission failed"
 
         except Exception as e:
             logger.info(f"ℹ️ EventBus async handling: {e}")
-            logger.info("EventBus basic structure validated, async behavior expected")
+            logger.info(
+                "EventBus basic structure validated, async behavior expected"
+            )
 
         logger.info("✅ EventBus integration validation successful")
         return True
@@ -255,7 +265,9 @@ def test_modular_components_availability():
             except Exception as e:
                 logger.info(f"ℹ️ {class_name} not available: {e}")
 
-        logger.info(f"✅ {len(available_components)} modular components validated")
+        logger.info(
+            f"✅ {len(available_components)} modular components validated"
+        )
         return True
 
     except Exception as e:
@@ -281,7 +293,10 @@ def run_all_validation_tests():
         ("EventBus Integration", test_event_bus_integration),
         ("Configuration Loading", test_config_loading),
         ("ChroniclerAgent Compatibility", test_chronicler_agent_compatibility),
-        ("Modular Components Availability", test_modular_components_availability),
+        (
+            "Modular Components Availability",
+            test_modular_components_availability,
+        ),
     ]
 
     results = []
@@ -310,7 +325,9 @@ def run_all_validation_tests():
             passed += 1
 
     logger.info("-" * 60)
-    logger.info(f"Overall: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
+    logger.info(
+        f"Overall: {passed}/{total} tests passed ({passed/total*100:.1f}%)"
+    )
 
     if passed == total:
         logger.info("🎉 Phase 1 Refactoring Validation: SUCCESS")

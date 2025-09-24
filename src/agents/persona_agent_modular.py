@@ -102,7 +102,8 @@ class PersonaAgent:
             )
 
             self.agent_state_manager = AgentStateManager(
-                agent_id=self.character_id, logger=self.logger.getChild("state")
+                agent_id=self.character_id,
+                logger=self.logger.getChild("state"),
             )
 
             # Decision engine components
@@ -110,19 +111,24 @@ class PersonaAgent:
                 logger=self.logger.getChild("decision")
             )
 
-            self.threat_assessor = ThreatAssessor(logger=self.logger.getChild("threat"))
+            self.threat_assessor = ThreatAssessor(
+                logger=self.logger.getChild("threat")
+            )
 
             self.goal_manager = GoalManager(
-                character_id=self.character_id, logger=self.logger.getChild("goals")
+                character_id=self.character_id,
+                logger=self.logger.getChild("goals"),
             )
 
             # World interpretation components
             self.world_interpreter = WorldInterpreter(
-                character_id=self.character_id, logger=self.logger.getChild("world")
+                character_id=self.character_id,
+                logger=self.logger.getChild("world"),
             )
 
             self.memory_manager = MemoryManager(
-                character_id=self.character_id, logger=self.logger.getChild("memory")
+                character_id=self.character_id,
+                logger=self.logger.getChild("memory"),
             )
 
             # LLM integration components
@@ -182,8 +188,10 @@ class PersonaAgent:
 
             # Validate character data
             if self._character_data:
-                validation_result = await self.validator.validate_character_data(
-                    self._character_data
+                validation_result = (
+                    await self.validator.validate_character_data(
+                        self._character_data
+                    )
                 )
                 if not validation_result.is_valid:
                     self.logger.warning(
@@ -195,12 +203,15 @@ class PersonaAgent:
 
             # Initialize state manager
             if hasattr(self.agent_state_manager, "initialize"):
-                initialization_tasks.append(self.agent_state_manager.initialize())
+                initialization_tasks.append(
+                    self.agent_state_manager.initialize()
+                )
 
             # Initialize goal manager with character goals
             goals = self._character_data.get("goals", [])
             if goals:
-                # GoalManager doesn't have load_goals, we'll add goals through other methods
+                # GoalManager doesn't have load_goals, we'll add goals through
+                # other methods
                 pass
 
             # Initialize memory manager
@@ -209,11 +220,15 @@ class PersonaAgent:
 
             # Initialize LLM client
             if hasattr(self.llm_client, "validate_api_connection"):
-                initialization_tasks.append(self.llm_client.validate_api_connection())
+                initialization_tasks.append(
+                    self.llm_client.validate_api_connection()
+                )
 
             # Run all initializations concurrently
             if initialization_tasks:
-                await asyncio.gather(*initialization_tasks, return_exceptions=True)
+                await asyncio.gather(
+                    *initialization_tasks, return_exceptions=True
+                )
 
             self._is_initialized = True
             self._integration_stats["initialization_time"] = (
@@ -229,7 +244,9 @@ class PersonaAgent:
             self.logger.error(f"PersonaAgent initialization failed: {e}")
             return False
 
-    async def make_decision(self, world_state: Dict[str, Any]) -> CharacterAction:
+    async def make_decision(
+        self, world_state: Dict[str, Any]
+    ) -> CharacterAction:
         """
         Make a character decision based on world state.
 
@@ -274,7 +291,9 @@ class PersonaAgent:
                             event_id=event_data.get("event_id", "unknown"),
                             event_type=event_data.get("event_type", "unknown"),
                             source=event_data.get("source", "unknown"),
-                            affected_entities=event_data.get("affected_entities", []),
+                            affected_entities=event_data.get(
+                                "affected_entities", []
+                            ),
                             location=event_data.get("location"),
                             description=event_data.get("description", ""),
                             data=event_data.get("data", {}),
@@ -283,10 +302,14 @@ class PersonaAgent:
                     else:
                         event = event_data
 
-                    interpretation = await self.world_interpreter.interpret_event(
-                        event, character_context
+                    interpretation = (
+                        await self.world_interpreter.interpret_event(
+                            event, character_context
+                        )
                     )
-                    interpreted_state[f"interpreted_{event.event_id}"] = interpretation
+                    interpreted_state[
+                        f"interpreted_{event.event_id}"
+                    ] = interpretation
 
             # Assess threats (using the actual method name)
             threat_level = "low"  # Default threat level
@@ -301,7 +324,9 @@ class PersonaAgent:
                             event_id=event_data.get("event_id", "unknown"),
                             event_type=event_data.get("event_type", "unknown"),
                             source=event_data.get("source", "unknown"),
-                            affected_entities=event_data.get("affected_entities", []),
+                            affected_entities=event_data.get(
+                                "affected_entities", []
+                            ),
                             location=event_data.get("location"),
                             description=event_data.get("description", ""),
                             data=event_data.get("data", {}),
@@ -310,8 +335,10 @@ class PersonaAgent:
                     else:
                         event = event_data
 
-                    threat_assessment = await self.threat_assessor.assess_threat(
-                        event, character_context
+                    threat_assessment = (
+                        await self.threat_assessor.assess_threat(
+                            event, character_context
+                        )
                     )
                     threat_level = threat_assessment.get("threat_level", "low")
                 except Exception:
@@ -330,9 +357,9 @@ class PersonaAgent:
             # Ensure decision has required fields
             if isinstance(decision, dict):
                 if "description" not in decision:
-                    decision["description"] = (
-                        f"Character action: {decision.get('action_type', 'unknown')}"
-                    )
+                    decision[
+                        "description"
+                    ] = f"Character action: {decision.get('action_type', 'unknown')}"
                 if "priority" not in decision:
                     decision["priority"] = "medium"
                 if "parameters" not in decision:
@@ -345,9 +372,9 @@ class PersonaAgent:
                     else {"action_type": "wait"}
                 )
                 if "description" not in decision_dict:
-                    decision_dict["description"] = (
-                        f"Character action: {decision_dict.get('action_type', 'wait')}"
-                    )
+                    decision_dict[
+                        "description"
+                    ] = f"Character action: {decision_dict.get('action_type', 'wait')}"
                 if "priority" not in decision_dict:
                     decision_dict["priority"] = "medium"
                 if "parameters" not in decision_dict:
@@ -371,8 +398,10 @@ class PersonaAgent:
 
                 # Generate fallback decision if validation fails critically
                 if validation_result.has_critical_issues():
-                    fallback_response = await self.response_generator.generate_response(
-                        {**character_context, **interpreted_state}
+                    fallback_response = (
+                        await self.response_generator.generate_response(
+                            {**character_context, **interpreted_state}
+                        )
                     )
                     decision = {
                         "action_type": "wait",
@@ -439,26 +468,37 @@ class PersonaAgent:
 
             # Try LLM generation first
             try:
-                llm_response = await self.llm_client.generate_character_response(
-                    prompt, character_context
+                llm_response = (
+                    await self.llm_client.generate_character_response(
+                        prompt, character_context
+                    )
                 )
 
                 # Process and validate the response
-                processing_result = await self.response_processor.process_response(
-                    llm_response, character_context
+                processing_result = (
+                    await self.response_processor.process_response(
+                        llm_response, character_context
+                    )
                 )
 
-                if processing_result.success and processing_result.confidence > 0.5:
+                if (
+                    processing_result.success
+                    and processing_result.confidence > 0.5
+                ):
                     return processing_result.processed_content
                 else:
-                    self.logger.warning("LLM response quality low, using fallback")
+                    self.logger.warning(
+                        "LLM response quality low, using fallback"
+                    )
 
             except Exception as llm_error:
                 self.logger.warning(f"LLM generation failed: {llm_error}")
 
             # Fallback to rule-based generation
-            fallback_response = await self.response_generator.generate_response(
-                character_context
+            fallback_response = (
+                await self.response_generator.generate_response(
+                    character_context
+                )
             )
             return fallback_response
 
@@ -491,7 +531,9 @@ class PersonaAgent:
                         event_id=event_data.get("event_id", "unknown"),
                         event_type=event_data.get("event_type", "unknown"),
                         source=event_data.get("source", "unknown"),
-                        affected_entities=event_data.get("affected_entities", []),
+                        affected_entities=event_data.get(
+                            "affected_entities", []
+                        ),
                         location=event_data.get("location"),
                         description=event_data.get("description", ""),
                         data=event_data.get("data", {}),
@@ -506,7 +548,8 @@ class PersonaAgent:
                 )
 
                 # Store in memory if significant
-                # SubjectiveInterpretation is a dataclass, use getattr with default
+                # SubjectiveInterpretation is a dataclass, use getattr with
+                # default
                 significance = getattr(interpretation, "memory_priority", 0.5)
                 if significance > 0.3:
                     await self.memory_manager.store_memory(
@@ -521,8 +564,10 @@ class PersonaAgent:
 
                 # Assess threat if applicable
                 if event.event_type in ["combat", "conflict", "danger"]:
-                    threat_assessment = await self.threat_assessor.assess_threat(
-                        event, character_context
+                    threat_assessment = (
+                        await self.threat_assessor.assess_threat(
+                            event, character_context
+                        )
                     )
                     interpretation["threat_assessment"] = threat_assessment
 
@@ -577,13 +622,16 @@ class PersonaAgent:
             # Use the actual method available in GoalManager
             goals = await self.goal_manager.get_goals_by_priority("high")
             return [
-                asdict(goal) if hasattr(goal, "__dict__") else goal for goal in goals
+                asdict(goal) if hasattr(goal, "__dict__") else goal
+                for goal in goals
             ]
         except Exception as e:
             self.logger.error(f"Failed to get active goals: {e}")
             return []
 
-    async def get_recent_memories(self, limit: int = 10) -> List[Dict[str, Any]]:
+    async def get_recent_memories(
+        self, limit: int = 10
+    ) -> List[Dict[str, Any]]:
         """Get recent memories."""
         try:
             return await self.memory_manager.retrieve_memories(
@@ -606,9 +654,9 @@ class PersonaAgent:
                 component = getattr(self, component_name, None)
                 if component and hasattr(component, "get_statistics"):
                     try:
-                        component_stats[component_name] = (
-                            await component.get_statistics()
-                        )
+                        component_stats[
+                            component_name
+                        ] = await component.get_statistics()
                     except Exception:
                         component_stats[component_name] = {"status": status}
                 else:
@@ -618,15 +666,15 @@ class PersonaAgent:
 
             # Add validation statistics
             if hasattr(self.validator, "get_validation_statistics"):
-                stats["validation_statistics"] = (
-                    await self.validator.get_validation_statistics()
-                )
+                stats[
+                    "validation_statistics"
+                ] = await self.validator.get_validation_statistics()
 
             # Add LLM usage statistics
             if hasattr(self.llm_client, "get_usage_statistics"):
-                stats["llm_usage_statistics"] = (
-                    await self.llm_client.get_usage_statistics()
-                )
+                stats[
+                    "llm_usage_statistics"
+                ] = await self.llm_client.get_usage_statistics()
 
             return stats
 
@@ -643,14 +691,18 @@ class PersonaAgent:
 
             # Add current state
             try:
-                current_state = await self.agent_state_manager.get_current_state()
+                current_state = (
+                    await self.agent_state_manager.get_current_state()
+                )
                 context["state"] = current_state
             except Exception:
                 context["state"] = {}
 
             # Add active goals
             try:
-                active_goals = await self.goal_manager.get_goals_by_priority("high")
+                active_goals = await self.goal_manager.get_goals_by_priority(
+                    "high"
+                )
                 context["active_goals"] = active_goals
             except Exception:
                 context["active_goals"] = []
@@ -684,10 +736,14 @@ class PersonaAgent:
         }
 
         if name in legacy_mappings:
-            self.logger.debug(f"Legacy method call: {name} -> {legacy_mappings[name]}")
+            self.logger.debug(
+                f"Legacy method call: {name} -> {legacy_mappings[name]}"
+            )
             # Return the mapped method or component method
             if "." in legacy_mappings[name]:
-                component_name, method_name = legacy_mappings[name].split(".", 1)
+                component_name, method_name = legacy_mappings[name].split(
+                    ".", 1
+                )
                 component = getattr(self, component_name)
                 return getattr(component, method_name)
             else:

@@ -9,7 +9,9 @@ and identity management in the Interaction Context domain layer.
 from uuid import UUID, uuid4
 
 import pytest
-from contexts.interactions.domain.value_objects.interaction_id import InteractionId
+from contexts.interactions.domain.value_objects.interaction_id import (
+    InteractionId,
+)
 
 
 class TestInteractionIdCreation:
@@ -29,7 +31,9 @@ class TestInteractionIdCreation:
         interaction_id = InteractionId(specific_uuid)
 
         assert interaction_id.value == specific_uuid
-        assert str(interaction_id.value) == "12345678-1234-5678-9abc-123456789abc"
+        assert (
+            str(interaction_id.value) == "12345678-1234-5678-9abc-123456789abc"
+        )
 
     def test_frozen_dataclass_immutability(self):
         """Test that InteractionId is immutable (frozen dataclass)."""
@@ -46,27 +50,37 @@ class TestInteractionIdValidation:
 
     def test_invalid_uuid_type_string(self):
         """Test validation fails with string instead of UUID."""
-        with pytest.raises(ValueError, match="InteractionId must be a UUID, got"):
+        with pytest.raises(
+            ValueError, match="InteractionId must be a UUID, got"
+        ):
             InteractionId("not-a-uuid-object")
 
     def test_invalid_uuid_type_integer(self):
         """Test validation fails with integer instead of UUID."""
-        with pytest.raises(ValueError, match="InteractionId must be a UUID, got"):
+        with pytest.raises(
+            ValueError, match="InteractionId must be a UUID, got"
+        ):
             InteractionId(12345)
 
     def test_invalid_uuid_type_none(self):
         """Test validation fails with None instead of UUID."""
-        with pytest.raises(ValueError, match="InteractionId must be a UUID, got"):
+        with pytest.raises(
+            ValueError, match="InteractionId must be a UUID, got"
+        ):
             InteractionId(None)
 
     def test_invalid_uuid_type_dict(self):
         """Test validation fails with dict instead of UUID."""
-        with pytest.raises(ValueError, match="InteractionId must be a UUID, got"):
+        with pytest.raises(
+            ValueError, match="InteractionId must be a UUID, got"
+        ):
             InteractionId({"uuid": "12345678-1234-5678-9abc-123456789abc"})
 
     def test_invalid_uuid_type_list(self):
         """Test validation fails with list instead of UUID."""
-        with pytest.raises(ValueError, match="InteractionId must be a UUID, got"):
+        with pytest.raises(
+            ValueError, match="InteractionId must be a UUID, got"
+        ):
             InteractionId([1, 2, 3, 4])
 
 
@@ -119,7 +133,9 @@ class TestInteractionIdFactoryMethods:
 
         assert isinstance(interaction_id, InteractionId)
         # UUID constructor should handle this and add dashes
-        assert len(str(interaction_id.value)) == 36  # Standard UUID format with dashes
+        assert (
+            len(str(interaction_id.value)) == 36
+        )  # Standard UUID format with dashes
 
     def test_from_string_invalid_format(self):
         """Test from_string fails with invalid UUID format."""
@@ -297,7 +313,9 @@ class TestInteractionIdHashing:
         # Test with equivalent ID
         uuid_value = id1.value
         equivalent_id = InteractionId(uuid_value)
-        assert test_dict[equivalent_id] == "value1"  # Should find the same entry
+        assert (
+            test_dict[equivalent_id] == "value1"
+        )  # Should find the same entry
 
     def test_usable_in_set(self):
         """Test that InteractionId can be used in sets."""
@@ -495,7 +513,9 @@ class TestInteractionIdCollections:
         # Test update with equivalent key
         id_dict[equivalent_id1] = "updated_data1"
         assert len(id_dict) == 2  # Should still have 2 keys
-        assert id_dict[id1] == "updated_data1"  # Original key should have updated value
+        assert (
+            id_dict[id1] == "updated_data1"
+        )  # Original key should have updated value
 
     def test_sorting(self):
         """Test that InteractionIds can be sorted (by UUID string representation)."""

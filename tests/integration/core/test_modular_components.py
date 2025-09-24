@@ -30,7 +30,9 @@ try:
         CharacterDataManager,
     )
     from src.agents.persona_agent.llm_integration.llm_client import LLMClient
-    from src.agents.persona_agent.memory.memory_manager import PersonaMemoryManager
+    from src.agents.persona_agent.memory.memory_manager import (
+        PersonaMemoryManager,
+    )
     from src.agents.persona_agent.persona_agent_modular import PersonaAgent
     from src.bridges.multi_agent_bridge.coordination.dialogue_manager import (
         DialogueManager,
@@ -47,7 +49,9 @@ try:
     from src.bridges.multi_agent_bridge.llm_processing.llm_batch_processor import (
         LLMBatchProcessor,
     )
-    from src.bridges.multi_agent_bridge.performance.cost_tracker import CostTracker
+    from src.bridges.multi_agent_bridge.performance.cost_tracker import (
+        CostTracker,
+    )
 
     # Interaction Engine Modular Components
     from src.interactions.interaction_engine_system import (
@@ -57,7 +61,9 @@ try:
         InteractionPriority,
         InteractionType,
     )
-    from src.interactions.interaction_engine_system.core.types import InteractionOutcome
+    from src.interactions.interaction_engine_system.core.types import (
+        InteractionOutcome,
+    )
     from src.interactions.interaction_engine_system.queue_management.queue_manager import (
         QueueManager,
         QueueStatus,
@@ -180,7 +186,9 @@ class TestPersonaAgentModularComponents:
         assert isinstance(character_data, (CharacterData, dict))
 
         # Test data validation
-        validation_result = data_manager.validate_character_data(character_data)
+        validation_result = data_manager.validate_character_data(
+            character_data
+        )
         assert hasattr(validation_result, "is_valid")
 
     def test_persona_memory_manager_component(self):
@@ -259,7 +267,9 @@ class TestInteractionEngineModularComponents:
             priority=InteractionPriority.NORMAL,
         )
 
-        validation_result = await validator.validate_interaction_context(context)
+        validation_result = await validator.validate_interaction_context(
+            context
+        )
 
         assert hasattr(validation_result, "success")
         assert validation_result.success is True
@@ -292,6 +302,9 @@ class TestInteractionEngineModularComponents:
     @pytest.mark.asyncio
     async def test_interaction_processing_pipeline(self):
         """Test complete interaction processing pipeline."""
+        if not REAL_COMPONENTS:
+            pytest.skip("Real components not available")
+
         config = InteractionEngineConfig(
             enable_parallel_processing=True, performance_monitoring=True
         )
@@ -410,6 +423,9 @@ class TestModularComponentIntegration:
     @pytest.mark.asyncio
     async def test_persona_agent_with_interaction_engine(self):
         """Test PersonaAgent integration with InteractionEngine."""
+        if not REAL_COMPONENTS:
+            pytest.skip("Real components not available")
+
         # Create persona agent
         persona_config = PersonaAgentConfig(agent_id="integration_test_001")
         PersonaAgent(
@@ -444,8 +460,12 @@ class TestModularComponentIntegration:
         bridge = EnhancedMultiAgentBridge(event_bus=mock_event_bus)
 
         # Create agents
-        agent1 = PersonaAgent(agent_id="coord_test_001", character_directory=None)
-        agent2 = PersonaAgent(agent_id="coord_test_002", character_directory=None)
+        agent1 = PersonaAgent(
+            agent_id="coord_test_001", character_directory=None
+        )
+        agent2 = PersonaAgent(
+            agent_id="coord_test_002", character_directory=None
+        )
 
         # Register agents
         bridge.register_agent("coord_test_001", agent1)
@@ -463,6 +483,9 @@ class TestModularComponentPerformance:
     @pytest.mark.asyncio
     async def test_persona_agent_decision_performance(self):
         """Test PersonaAgent decision-making performance."""
+        if not REAL_COMPONENTS:
+            pytest.skip("Real components not available")
+
         config = PersonaAgentConfig(agent_id="perf_test_001")
         agent = PersonaAgent(
             agent_id="perf_test_001", character_directory=None, config=config
@@ -492,6 +515,9 @@ class TestModularComponentPerformance:
     @pytest.mark.asyncio
     async def test_interaction_engine_throughput(self):
         """Test InteractionEngine processing throughput."""
+        if not REAL_COMPONENTS:
+            pytest.skip("Real components not available")
+
         config = InteractionEngineConfig(
             max_concurrent_interactions=5, enable_parallel_processing=True
         )
@@ -531,7 +557,9 @@ def run_modular_component_tests():
     print("🧪 MODULAR COMPONENT COMPREHENSIVE TESTING")
     print("=" * 80)
     print(f"📅 Started: {datetime.now().isoformat()}")
-    print(f"🔧 Real Components: {'Available' if REAL_COMPONENTS else 'Mock Fallbacks'}")
+    print(
+        f"🔧 Real Components: {'Available' if REAL_COMPONENTS else 'Mock Fallbacks'}"
+    )
     print()
 
     # Run pytest with detailed output

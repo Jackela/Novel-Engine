@@ -140,7 +140,9 @@ class TurnConfiguration:
 
         # Validate excluded and required agents don't overlap
         if self.excluded_agents.intersection(self.required_agents):
-            raise ValueError("excluded_agents and required_agents cannot overlap")
+            raise ValueError(
+                "excluded_agents and required_agents cannot overlap"
+            )
 
         # Validate phase timeouts
         for phase, timeout in self.phase_timeouts.items():
@@ -168,7 +170,9 @@ class TurnConfiguration:
         # Set default performance targets if not provided
         if not self.performance_targets:
             object.__setattr__(
-                self, "performance_targets", self.DEFAULT_PERFORMANCE_TARGETS.copy()
+                self,
+                "performance_targets",
+                self.DEFAULT_PERFORMANCE_TARGETS.copy(),
             )
 
     @classmethod
@@ -182,7 +186,9 @@ class TurnConfiguration:
         return cls()
 
     @classmethod
-    def create_fast_turn(cls, participants: List[str] = None) -> "TurnConfiguration":
+    def create_fast_turn(
+        cls, participants: Optional[List[str]] = None
+    ) -> "TurnConfiguration":
         """
         Create configuration optimized for fast execution.
 
@@ -209,7 +215,9 @@ class TurnConfiguration:
 
     @classmethod
     def create_detailed_turn(
-        cls, participants: List[str] = None, max_ai_cost: Optional[Decimal] = None
+        cls,
+        participants: Optional[List[str]] = None,
+        max_ai_cost: Optional[Decimal] = None,
     ) -> "TurnConfiguration":
         """
         Create configuration for detailed, comprehensive turns.
@@ -240,7 +248,9 @@ class TurnConfiguration:
         )
 
     @classmethod
-    def create_ai_disabled(cls, participants: List[str] = None) -> "TurnConfiguration":
+    def create_ai_disabled(
+        cls, participants: Optional[List[str]] = None
+    ) -> "TurnConfiguration":
         """
         Create configuration without AI integration.
 
@@ -265,7 +275,9 @@ class TurnConfiguration:
             },
         )
 
-    def with_participants(self, participants: List[str]) -> "TurnConfiguration":
+    def with_participants(
+        self, participants: List[str]
+    ) -> "TurnConfiguration":
         """
         Create new configuration with different participants.
 
@@ -275,7 +287,9 @@ class TurnConfiguration:
         Returns:
             New TurnConfiguration with updated participants
         """
-        return TurnConfiguration(**{**self.__dict__, "participants": participants})
+        return TurnConfiguration(
+            **{**self.__dict__, "participants": participants}
+        )
 
     def with_ai_cost_limit(self, max_cost: Decimal) -> "TurnConfiguration":
         """
@@ -316,7 +330,9 @@ class TurnConfiguration:
         if depth not in self.VALID_ANALYSIS_DEPTHS:
             raise ValueError(f"Invalid depth: {depth}")
 
-        return TurnConfiguration(**{**self.__dict__, "narrative_analysis_depth": depth})
+        return TurnConfiguration(
+            **{**self.__dict__, "narrative_analysis_depth": depth}
+        )
 
     def get_phase_timeout(self, phase_name: str) -> int:
         """
@@ -382,7 +398,9 @@ class TurnConfiguration:
             base_cost *= Decimal("1.5")
 
         # Scale by number of participants
-        participant_multiplier = max(1, len(self.participants)) * Decimal("0.2")
+        participant_multiplier = max(1, len(self.participants)) * Decimal(
+            "0.2"
+        )
 
         return base_cost + participant_multiplier
 
@@ -397,6 +415,77 @@ class TurnConfiguration:
             self.get_phase_timeout(phase)
             for phase in self.DEFAULT_PHASE_TIMEOUTS.keys()
         )
+
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "TurnConfiguration":
+        """
+        Create TurnConfiguration from dictionary.
+
+        Args:
+            config_dict: Dictionary containing configuration values
+
+        Returns:
+            TurnConfiguration instance
+        """
+        # Extract known fields and convert types as needed
+        kwargs = {}
+
+        # Handle primitive fields
+        for field_name in [
+            "world_time_advance",
+            "ai_integration_enabled",
+            "narrative_analysis_depth",
+            "max_execution_time_ms",
+            "rollback_enabled",
+            "max_memory_usage_mb",
+            "max_concurrent_operations",
+            "ai_temperature",
+            "ai_max_tokens",
+            "allow_entity_creation",
+            "allow_entity_deletion",
+            "allow_time_manipulation",
+            "negotiation_timeout_seconds",
+            "allow_multi_party_negotiations",
+            "require_consensus",
+            "maintain_narrative_consistency",
+            "generate_plot_summaries",
+        ]:
+            if field_name in config_dict:
+                kwargs[field_name] = config_dict[field_name]
+
+        # Handle special fields with type conversion
+        if (
+            "max_ai_cost" in config_dict
+            and config_dict["max_ai_cost"] is not None
+        ):
+            kwargs["max_ai_cost"] = Decimal(str(config_dict["max_ai_cost"]))
+
+        # Handle list and set fields
+        if "participants" in config_dict:
+            kwargs["participants"] = list(config_dict["participants"])
+        if "excluded_agents" in config_dict:
+            kwargs["excluded_agents"] = set(config_dict["excluded_agents"])
+        if "required_agents" in config_dict:
+            kwargs["required_agents"] = set(config_dict["required_agents"])
+        if "narrative_themes" in config_dict:
+            kwargs["narrative_themes"] = list(config_dict["narrative_themes"])
+
+        # Handle dict fields
+        for dict_field in [
+            "phase_timeouts",
+            "phase_enabled",
+            "ai_prompt_templates",
+            "ai_model_preferences",
+            "world_constraints",
+            "interaction_rules",
+            "performance_targets",
+            "quality_thresholds",
+            "metadata",
+        ]:
+            if dict_field in config_dict:
+                kwargs[dict_field] = dict(config_dict[dict_field])
+
+        return cls(**kwargs)
 
     def validate_constraints(self) -> List[str]:
         """

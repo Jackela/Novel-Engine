@@ -100,10 +100,14 @@ class NarrativeActionResolver:
                     ): f"You uncover information about {target}."
                 },
                 environmental_change=f"The area around {target} shows signs of recent examination.",
-                story_advancement=self._check_story_advancement("investigation"),
+                story_advancement=self._check_story_advancement(
+                    "investigation"
+                ),
                 relationship_changes={},
                 discovered_information=discovered_info,
-                narrative_consequences=[f"Knowledge of {target} may be useful later."],
+                narrative_consequences=[
+                    f"Knowledge of {target} may be useful later."
+                ],
             )
         else:
             outcome = NarrativeOutcome(
@@ -118,7 +122,9 @@ class NarrativeActionResolver:
                 story_advancement=[],
                 relationship_changes={},
                 discovered_information=[],
-                narrative_consequences=["A more thorough search may be required."],
+                narrative_consequences=[
+                    "A more thorough search may be required."
+                ],
             )
 
         self.logger.info(
@@ -150,7 +156,9 @@ class NarrativeActionResolver:
         }
         self.dialogue_history.append(dialogue_entry)
 
-        success_chance = self._calculate_dialogue_success(character_data, target)
+        success_chance = self._calculate_dialogue_success(
+            character_data, target
+        )
         success = random.random() < success_chance
 
         if success:
@@ -165,7 +173,9 @@ class NarrativeActionResolver:
                 environmental_change="",
                 story_advancement=self._check_story_advancement("dialogue"),
                 relationship_changes={target: 0.1},
-                discovered_information=self._generate_dialogue_information(target),
+                discovered_information=self._generate_dialogue_information(
+                    target
+                ),
                 narrative_consequences=[
                     f"Future interactions with {target} may be more fruitful."
                 ],
@@ -201,7 +211,9 @@ class NarrativeActionResolver:
             base_chance += 0.2
         return min(base_chance, 0.95)
 
-    def _calculate_dialogue_success(self, character_data: Dict, target: str) -> float:
+    def _calculate_dialogue_success(
+        self, character_data: Dict, target: str
+    ) -> float:
         """Calculates the success probability for dialogue actions."""
         base_chance = 0.5
         personality_traits = character_data.get("personality_traits", {})
@@ -223,7 +235,10 @@ class NarrativeActionResolver:
         """Checks if this action triggers story progression markers."""
         advancement = []
         if self.campaign_brief:
-            if action_type == "investigation" and self.investigation_counter >= 3:
+            if (
+                action_type == "investigation"
+                and self.investigation_counter >= 3
+            ):
                 advancement.append("Investigation milestone reached")
             if action_type == "dialogue" and len(self.dialogue_history) >= 2:
                 advancement.append("Dialogue milestone reached")

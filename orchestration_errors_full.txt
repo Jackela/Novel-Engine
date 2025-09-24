@@ -1,0 +1,201 @@
+contexts\orchestration\domain\__init__.py:14: error: Need type annotation for "__all__" (hint: "__all__: List[<type>] = ...")  [var-annotated]
+contexts\orchestration\__init__.py:35: error: Need type annotation for "__all__" (hint: "__all__: List[<type>] = ...")  [var-annotated]
+contexts\orchestration\infrastructure\orchestration_domain_types.py:59: error: "type[T]" has no attribute "__members__"  [attr-defined]
+contexts\orchestration\infrastructure\orchestration_domain_types.py:63: error: Value of type "type[T]" is not indexable  [index]
+contexts\orchestration\infrastructure\orchestration_domain_types.py:340: error: Variable "target_type" is not valid as a type  [valid-type]
+contexts\orchestration\infrastructure\orchestration_domain_types.py:340: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+contexts\orchestration\domain\value_objects\phase_status.py:47: error: No overload variant of "get" of "dict" matches argument types "PhaseType", "str"  [call-overload]
+contexts\orchestration\domain\value_objects\phase_status.py:47: note: Possible overload variants:
+contexts\orchestration\domain\value_objects\phase_status.py:47: note:     def get(self, str, /) -> str | None
+contexts\orchestration\domain\value_objects\phase_status.py:47: note:     def get(self, str, str, /) -> str
+contexts\orchestration\domain\value_objects\phase_status.py:47: note:     def [_T] get(self, str, _T, /) -> str | _T
+contexts\orchestration\domain\value_objects\phase_status.py:58: error: No overload variant of "get" of "dict" matches argument types "PhaseType", "int"  [call-overload]
+contexts\orchestration\domain\value_objects\phase_status.py:58: note: Possible overload variants:
+contexts\orchestration\domain\value_objects\phase_status.py:58: note:     def get(self, str, /) -> int | None
+contexts\orchestration\domain\value_objects\phase_status.py:58: note:     def get(self, str, int, /) -> int
+contexts\orchestration\domain\value_objects\phase_status.py:58: note:     def [_T] get(self, str, _T, /) -> int | _T
+contexts\orchestration\domain\value_objects\phase_status.py:72: error: Incompatible return value type (got "str | PhaseType | None", expected "PhaseType | None")  [return-value]
+contexts\orchestration\domain\value_objects\phase_status.py:86: error: Incompatible return value type (got "str | PhaseType | None", expected "PhaseType | None")  [return-value]
+contexts\orchestration\domain\value_objects\phase_status.py:121: error: Non-overlapping container check (element type: "PhaseStatusEnum", container item type: "str")  [comparison-overlap]
+contexts\orchestration\domain\value_objects\phase_status.py:129: error: Non-overlapping equality check (left operand type: "PhaseStatusEnum", right operand type: "Literal['completed']")  [comparison-overlap]
+contexts\orchestration\domain\value_objects\phase_status.py:146: error: No overload variant of "get" of "dict" matches argument types "PhaseStatusEnum", "set[Never]"  [call-overload]
+contexts\orchestration\domain\value_objects\phase_status.py:146: note: Possible overload variants:
+contexts\orchestration\domain\value_objects\phase_status.py:146: note:     def get(self, str, /) -> object
+contexts\orchestration\domain\value_objects\phase_status.py:146: note:     def get(self, str, object, /) -> object
+contexts\orchestration\domain\value_objects\phase_status.py:146: note:     def [_T] get(self, str, _T, /) -> object
+contexts\orchestration\domain\value_objects\phase_status.py:409: error: Unpacked dict entry 1 has incompatible type "object"; expected "SupportsKeysAndGetItem[str, Any]"  [dict-item]
+contexts\orchestration\domain\value_objects\pipeline_result.py:84: error: Incompatible default for argument "events_generated" (default has type "None", argument has type "list[UUID]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:84: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:84: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:85: error: Incompatible default for argument "events_consumed" (default has type "None", argument has type "list[UUID]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:85: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:85: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:86: error: Incompatible default for argument "artifacts_created" (default has type "None", argument has type "list[str]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:86: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:86: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:87: error: Incompatible default for argument "performance_metrics" (default has type "None", argument has type "dict[str, float]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:87: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:87: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:89: error: Incompatible default for argument "metadata" (default has type "None", argument has type "dict[str, Any]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:89: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:89: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:124: error: Incompatible default for argument "events_consumed" (default has type "None", argument has type "list[UUID]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:124: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:124: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:125: error: Incompatible default for argument "performance_metrics" (default has type "None", argument has type "dict[str, float]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:125: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:125: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:126: error: Incompatible default for argument "compensation_applied" (default has type "None", argument has type "list[str]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:126: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:126: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:127: error: Incompatible default for argument "metadata" (default has type "None", argument has type "dict[str, Any]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:127: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:127: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:274: error: Incompatible default for argument "metadata" (default has type "None", argument has type "dict[str, Any]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:274: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:274: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:314: error: Argument "total_ai_cost" to "PipelineResult" has incompatible type "Decimal | Literal[0]"; expected "Decimal"  [arg-type]
+contexts\orchestration\domain\value_objects\pipeline_result.py:326: error: Incompatible default for argument "saga_actions_taken" (default has type "None", argument has type "list[str]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:326: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:326: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:327: error: Incompatible default for argument "metadata" (default has type "None", argument has type "dict[str, Any]")  [assignment]
+contexts\orchestration\domain\value_objects\pipeline_result.py:327: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\value_objects\pipeline_result.py:327: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\value_objects\pipeline_result.py:364: error: Argument "total_ai_cost" to "PipelineResult" has incompatible type "Decimal | Literal[0]"; expected "Decimal"  [arg-type]
+contexts\orchestration\domain\value_objects\compensation_action.py:54: error: No overload variant of "get" of "dict" matches argument types "CompensationType", "str"  [call-overload]
+contexts\orchestration\domain\value_objects\compensation_action.py:54: note: Possible overload variants:
+contexts\orchestration\domain\value_objects\compensation_action.py:54: note:     def get(self, str, /) -> str | None
+contexts\orchestration\domain\value_objects\compensation_action.py:54: note:     def get(self, str, str, /) -> str
+contexts\orchestration\domain\value_objects\compensation_action.py:54: note:     def [_T] get(self, str, _T, /) -> str | _T
+contexts\orchestration\domain\value_objects\compensation_action.py:68: error: No overload variant of "get" of "dict" matches argument types "CompensationType", "str"  [call-overload]
+contexts\orchestration\domain\value_objects\compensation_action.py:68: note: Possible overload variants:
+contexts\orchestration\domain\value_objects\compensation_action.py:68: note:     def get(self, str, /) -> str | None
+contexts\orchestration\domain\value_objects\compensation_action.py:68: note:     def get(self, str, str, /) -> str
+contexts\orchestration\domain\value_objects\compensation_action.py:68: note:     def [_T] get(self, str, _T, /) -> str | _T
+contexts\orchestration\domain\value_objects\compensation_action.py:77: error: Non-overlapping container check (element type: "CompensationType", container item type: "str")  [comparison-overlap]
+contexts\orchestration\domain\value_objects\compensation_action.py:86: error: Non-overlapping container check (element type: "CompensationType", container item type: "str")  [comparison-overlap]
+contexts\orchestration\domain\entities\turn.py:50: error: Non-overlapping container check (element type: "TurnState", container item type: "str")  [comparison-overlap]
+contexts\orchestration\domain\entities\turn.py:54: error: Non-overlapping container check (element type: "TurnState", container item type: "str")  [comparison-overlap]
+contexts\orchestration\domain\entities\turn.py:67: error: No overload variant of "get" of "dict" matches argument types "TurnState", "set[Never]"  [call-overload]
+contexts\orchestration\domain\entities\turn.py:67: note: Possible overload variants:
+contexts\orchestration\domain\entities\turn.py:67: note:     def get(self, str, /) -> object
+contexts\orchestration\domain\entities\turn.py:67: note:     def get(self, str, object, /) -> object
+contexts\orchestration\domain\entities\turn.py:67: note:     def [_T] get(self, str, _T, /) -> object
+contexts\orchestration\domain\entities\turn.py:210: error: Dict entry 3 has incompatible type "str": "list[Never]"; expected "str": "dict[str, Any]"  [dict-item]
+contexts\orchestration\domain\entities\turn.py:290: error: Incompatible default for argument "events_generated" (default has type "None", argument has type "list[UUID]")  [assignment]
+contexts\orchestration\domain\entities\turn.py:290: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\entities\turn.py:290: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\entities\turn.py:291: error: Incompatible default for argument "artifacts_created" (default has type "None", argument has type "list[str]")  [assignment]
+contexts\orchestration\domain\entities\turn.py:291: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\entities\turn.py:291: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\entities\turn.py:570: error: Item "None" of "timedelta | None" has no attribute "total_seconds"  [union-attr]
+contexts\orchestration\domain\entities\turn.py:647: error: No overload variant of "__sub__" of "datetime" matches argument type "None"  [operator]
+contexts\orchestration\domain\entities\turn.py:647: note: Possible overload variants:
+contexts\orchestration\domain\entities\turn.py:647: note:     def __sub__(self, timedelta, /) -> datetime
+contexts\orchestration\domain\entities\turn.py:647: note:     def __sub__(self, datetime, /) -> timedelta
+contexts\orchestration\domain\entities\turn.py:647: note: Right operand is of type "datetime | None"
+contexts\orchestration\domain\entities\turn.py:848: error: No overload variant of "__sub__" of "datetime" matches argument type "None"  [operator]
+contexts\orchestration\domain\entities\turn.py:848: note: Possible overload variants:
+contexts\orchestration\domain\entities\turn.py:848: note:     def __sub__(self, timedelta, /) -> datetime
+contexts\orchestration\domain\entities\turn.py:848: note:     def __sub__(self, datetime, /) -> timedelta
+contexts\orchestration\domain\entities\turn.py:848: error: Unsupported left operand type for - ("None")  [operator]
+contexts\orchestration\domain\entities\turn.py:848: note: Both left and right operands are unions
+contexts\orchestration\domain\services\saga_coordinator.py:253: error: "object" has no attribute "append"  [attr-defined]
+contexts\orchestration\domain\services\saga_coordinator.py:261: error: "object" has no attribute "extend"  [attr-defined]
+contexts\orchestration\domain\services\saga_coordinator.py:270: error: "object" has no attribute "append"  [attr-defined]
+contexts\orchestration\domain\services\saga_coordinator.py:339: error: Need type annotation for "actions" (hint: "actions: List[<type>] = ...")  [var-annotated]
+contexts\orchestration\domain\services\saga_coordinator.py:611: error: Item "None" of "timedelta | None" has no attribute "total_seconds"  [union-attr]
+contexts\orchestration\domain\services\pipeline_orchestrator.py:308: error: "Turn" has no attribute "TurnState"  [attr-defined]
+contexts\orchestration\domain\services\pipeline_orchestrator.py:415: error: Statement is unreachable  [unreachable]
+contexts\orchestration\domain\services\performance_tracker.py:232: error: Item "None" of "timedelta | None" has no attribute "total_seconds"  [union-attr]
+contexts\orchestration\domain\services\performance_tracker.py:232: error: List comprehension has incompatible type List[float | Any]; expected List[bool]  [misc]
+contexts\orchestration\domain\services\performance_tracker.py:443: error: Item "None" of "timedelta | None" has no attribute "total_seconds"  [union-attr]
+contexts\orchestration\domain\services\performance_tracker.py:754: error: Need type annotation for "recommendations" (hint: "recommendations: List[<type>] = ...")  [var-annotated]
+contexts\orchestration\infrastructure\monitoring\prometheus_collector.py:527: error: Incompatible return value type (got "bytes", expected "str")  [return-value]
+contexts\orchestration\run_validation.py:82: error: "object" has no attribute "append"  [attr-defined]
+contexts\orchestration\run_validation.py:83: error: Unsupported left operand type for + ("object")  [operator]
+contexts\orchestration\run_validation.py:84: error: Unsupported left operand type for + ("object")  [operator]
+contexts\orchestration\run_validation.py:85: error: Unsupported left operand type for + ("object")  [operator]
+contexts\orchestration\run_validation.py:94: error: "object" has no attribute "append"  [attr-defined]
+contexts\orchestration\run_validation.py:103: error: Unsupported operand types for + ("object" and "int")  [operator]
+contexts\orchestration\infrastructure\pipeline_phases\world_update_phase.py:500: error: Incompatible types in assignment (expression has type "list[Any]", target has type "bool")  [assignment]
+contexts\orchestration\infrastructure\pipeline_phases\world_update_phase.py:517: error: Incompatible types in assignment (expression has type "dict[Any, Any]", target has type "bool")  [assignment]
+contexts\orchestration\infrastructure\pipeline_phases\narrative_integration_phase.py:631: error: Need type annotation for "event_categories"  [var-annotated]
+contexts\orchestration\infrastructure\pipeline_phases\interaction_orchestration_phase.py:605: error: Item "None" of "Any | None" has no attribute "get"  [union-attr]
+contexts\orchestration\infrastructure\pipeline_phases\interaction_orchestration_phase.py:644: error: Item "None" of "Any | None" has no attribute "get"  [union-attr]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:466: error: Need type annotation for "event_groups" (hint: "event_groups: Dict[<type>, <type>] = ...")  [var-annotated]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:702: error: Incompatible types in assignment (expression has type "Any | None", target has type "str")  [assignment]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:710: error: Incompatible types in assignment (expression has type "Any | int", target has type "str")  [assignment]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:710: error: Unsupported operand types for + ("str" and "int")  [operator]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:710: note: Left operand is of type "str | int"
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:712: error: Unsupported operand types for - ("str" and "int")  [operator]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:712: note: Left operand is of type "str | int"
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:712: error: Incompatible types in assignment (expression has type "int", target has type "str")  [assignment]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:717: error: Incompatible types in assignment (expression has type "Any | int", target has type "str")  [assignment]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:717: error: Unsupported operand types for + ("str" and "int")  [operator]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:717: note: Left operand is of type "str | int"
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:723: error: Incompatible types in assignment (expression has type "Any | None", target has type "str")  [assignment]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:725: error: Incompatible types in assignment (expression has type "Any | int", target has type "str")  [assignment]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:725: error: Unsupported operand types for + ("str" and "int")  [operator]
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:725: note: Left operand is of type "str | int"
+contexts\orchestration\infrastructure\pipeline_phases\event_integration_phase.py:754: error: Item "None" of "Any | None" has no attribute "replace"  [union-attr]
+contexts\orchestration\infrastructure\monitoring\tracing.py:96: error: Incompatible default for argument "kind" (default has type "None", argument has type "SpanKind")  [assignment]
+contexts\orchestration\infrastructure\monitoring\tracing.py:96: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\infrastructure\monitoring\tracing.py:96: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\infrastructure\monitoring\tracing.py:184: error: Argument "root" to "ParentBased" has incompatible type "IntelligentSampler"; expected "Sampler"  [arg-type]
+contexts\orchestration\infrastructure\monitoring\tracing.py:186: error: Incompatible types in assignment (expression has type "TracerProvider", variable has type "None")  [assignment]
+contexts\orchestration\infrastructure\monitoring\tracing.py:192: error: "None" has no attribute "add_span_processor"  [attr-defined]
+contexts\orchestration\infrastructure\monitoring\tracing.py:197: error: "None" has no attribute "add_span_processor"  [attr-defined]
+contexts\orchestration\infrastructure\monitoring\tracing.py:204: error: "None" has no attribute "add_span_processor"  [attr-defined]
+contexts\orchestration\infrastructure\monitoring\tracing.py:210: error: Argument 1 to "set_tracer_provider" has incompatible type "None"; expected "TracerProvider"  [arg-type]
+contexts\orchestration\infrastructure\monitoring\tracing.py:213: error: Incompatible types in assignment (expression has type "Tracer", variable has type "None")  [assignment]
+contexts\orchestration\infrastructure\monitoring\tracing.py:236: error: "None" has no attribute "start_span"  [attr-defined]
+contexts\orchestration\infrastructure\monitoring\tracing.py:293: error: "None" has no attribute "start_span"  [attr-defined]
+contexts\orchestration\infrastructure\monitoring\tracing.py:297: error: "None" has no attribute "start_span"  [attr-defined]
+contexts\orchestration\infrastructure\monitoring\tracing.py:425: error: Need type annotation for "carrier" (hint: "carrier: Dict[<type>, <type>] = ...")  [var-annotated]
+contexts\orchestration\infrastructure\monitoring\tracing.py:493: error: Incompatible types in "yield" (actual type "opentelemetry.trace.span.Span", expected type "opentelemetry.sdk.trace.Span")  [misc]
+contexts\orchestration\infrastructure\monitoring\metrics_middleware.py:370: error: Need type annotation for "_collectors" (hint: "_collectors: Dict[<type>, <type>] = ...")  [var-annotated]
+contexts\orchestration\infrastructure\monitoring\tracing_middleware.py:103: error: Item "None" of "Tracer | None" has no attribute "start_as_current_span"  [union-attr]
+contexts\orchestration\infrastructure\monitoring\tracing_middleware.py:130: error: Need type annotation for "response_carrier" (hint: "response_carrier: Dict[<type>, <type>] = ...")  [var-annotated]
+contexts\orchestration\infrastructure\monitoring\tracing_middleware.py:342: error: Missing positional argument "instrumentation" in call to "get_excluded_urls"  [call-arg]
+contexts\orchestration\infrastructure\monitoring\tracing_middleware.py:342: error: Argument "excluded_urls" to "instrument_app" of "FastAPIInstrumentor" has incompatible type "ExcludeList | list[Any]"; expected "str | None"  [arg-type]
+contexts\orchestration\domain\services\enhanced_performance_tracker.py:158: error: Item "None" of "timedelta | None" has no attribute "total_seconds"  [union-attr]
+contexts\orchestration\domain\services\enhanced_performance_tracker.py:196: error: Argument "success" to "record_phase_execution" of "PrometheusMetricsCollector" has incompatible type "float | Any"; expected "bool"  [arg-type]
+contexts\orchestration\domain\services\enhanced_performance_tracker.py:198: error: Argument "events_processed" to "record_phase_execution" of "PrometheusMetricsCollector" has incompatible type "float | Any"; expected "int"  [arg-type]
+contexts\orchestration\domain\services\enhanced_performance_tracker.py:199: error: Argument "events_generated" to "record_phase_execution" of "PrometheusMetricsCollector" has incompatible type "float | Any"; expected "int"  [arg-type]
+contexts\orchestration\domain\services\enhanced_performance_tracker.py:419: error: Incompatible default for argument "time_window" (default has type "None", argument has type "timedelta")  [assignment]
+contexts\orchestration\domain\services\enhanced_performance_tracker.py:419: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+contexts\orchestration\domain\services\enhanced_performance_tracker.py:419: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+contexts\orchestration\domain\services\enhanced_performance_tracker.py:430: error: Statement is unreachable  [unreachable]
+contexts\orchestration\domain\services\enhanced_performance_tracker.py:531: error: "get_orchestrator_health" undefined in superclass  [misc]
+contexts\orchestration\application\services\turn_orchestrator.py:159: error: "type[Turn]" has no attribute "create"  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:186: error: "EnhancedPerformanceTracker" has no attribute "start_turn_monitoring"  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:397: error: "EnhancedPerformanceTracker" has no attribute "stop_turn_monitoring"  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:436: error: "Turn" has no attribute "participants"  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:541: error: "SagaCoordinator" has no attribute "plan_compensation"; maybe "_plan_phase_compensation", "_plan_global_compensation", or "plan_compensation_strategy"?  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:549: error: "SagaCoordinator" has no attribute "execute_compensation"; maybe "execute_compensation_action", "_execute_compensation_by_type", or "active_compensations"?  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:555: error: "Turn" has no attribute "add_compensation_action"; maybe "compensation_actions" or "complete_compensation_action"?  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:636: error: "EnhancedPerformanceTracker" has no attribute "get_turn_metrics"  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:675: error: "EnhancedPerformanceTracker" has no attribute "record_phase_metrics"  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:703: error: "Turn" has no attribute "participants"  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:724: error: "Turn" has no attribute "participants"  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:785: error: "EnhancedPerformanceTracker" has no attribute "get_turn_status"  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:799: error: "EnhancedPerformanceTracker" has no attribute "cleanup_turn_data"  [attr-defined]
+contexts\orchestration\application\services\turn_orchestrator.py:817: error: "EnhancedPerformanceTracker" has no attribute "get_active_turn_count"  [attr-defined]
+contexts\orchestration\api\turn_api.py:188: error: "type[TurnId]" has no attribute "parse"  [attr-defined]
+contexts\orchestration\api\turn_api.py:227: error: "type[TurnId]" has no attribute "parse"  [attr-defined]
+contexts\orchestration\api\turn_api.py:235: error: "type[TurnConfiguration]" has no attribute "from_dict"  [attr-defined]
+contexts\orchestration\api\turn_api.py:323: error: "type[TurnId]" has no attribute "parse"  [attr-defined]
+contexts\orchestration\api\turn_api.py:437: error: "type[TurnId]" has no attribute "parse"  [attr-defined]
+contexts\orchestration\tests\test_end_to_end_validation.py:101: error: "object" has no attribute "append"  [attr-defined]
+contexts\orchestration\tests\test_end_to_end_validation.py:102: error: Unsupported left operand type for + ("object")  [operator]
+contexts\orchestration\tests\test_end_to_end_validation.py:103: error: Unsupported left operand type for + ("object")  [operator]
+contexts\orchestration\tests\test_end_to_end_validation.py:104: error: Unsupported left operand type for + ("object")  [operator]
+contexts\orchestration\tests\test_end_to_end_validation.py:113: error: "object" has no attribute "append"  [attr-defined]
+contexts\orchestration\tests\test_end_to_end_validation.py:122: error: Unsupported operand types for + ("object" and "int")  [operator]
+contexts\orchestration\tests\test_end_to_end_validation.py:218: error: Unexpected keyword argument "fail_fast_on_phase_failure" for "TurnConfiguration"  [call-arg]
+contexts\orchestration\tests\test_end_to_end_validation.py:218: error: Unexpected keyword argument "max_participants" for "TurnConfiguration"; did you mean "participants"?  [call-arg]
+contexts\orchestration\tests\test_end_to_end_validation.py:426: error: Unexpected keyword argument "fail_fast_on_phase_failure" for "TurnConfiguration"  [call-arg]
+contexts\orchestration\tests\test_end_to_end_validation.py:519: error: Property "world_time_advance" defined in "TurnConfiguration" is read-only  [misc]
+contexts\orchestration\tests\test_end_to_end_validation.py:837: error: Item "BaseException" of "TurnExecutionResult | BaseException" has no attribute "success"  [union-attr]
+Found 131 errors in 23 files (checked 48 source files)

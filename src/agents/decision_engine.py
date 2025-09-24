@@ -13,14 +13,14 @@ import logging
 import random
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 # Import shared types
 from src.core.types.shared_types import ActionPriority, CharacterAction
 
 if TYPE_CHECKING:
-    from src.agents.persona_core import PersonaCore
     from src.agents.context_manager import CharacterContextManager
+    from src.agents.persona_core import PersonaCore
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,9 @@ class DecisionEngine:
     - Reasoning generation
     """
 
-    def __init__(self, core: "PersonaCore", context_manager: "CharacterContextManager"):
+    def __init__(
+        self, core: "PersonaCore", context_manager: "CharacterContextManager"
+    ):
         """
         Initialize decision engine.
 
@@ -99,7 +101,9 @@ class DecisionEngine:
             Optional[CharacterAction]: Selected action or None if no suitable action
         """
         try:
-            self.logger.debug(f"Making decision for agent {self.core.agent_id}")
+            self.logger.debug(
+                f"Making decision for agent {self.core.agent_id}"
+            )
 
             # Update decision weights from character data
             self._update_decision_weights()
@@ -159,16 +163,22 @@ class DecisionEngine:
         threat_level = self._assess_threat_level(world_state_update)
 
         # Assess available resources
-        available_resources = self._assess_available_resources(world_state_update)
+        available_resources = self._assess_available_resources(
+            world_state_update
+        )
 
         # Get current goals
         active_goals = self._get_current_goals()
 
         # Assess social obligations
-        social_obligations = self._assess_social_obligations(world_state_update)
+        social_obligations = self._assess_social_obligations(
+            world_state_update
+        )
 
         # Environmental factors
-        environmental_factors = self._assess_environmental_factors(world_state_update)
+        environmental_factors = self._assess_environmental_factors(
+            world_state_update
+        )
 
         # Mission status
         mission_status = self._assess_mission_status(world_state_update)
@@ -216,7 +226,9 @@ class DecisionEngine:
 
         # Location-based actions
         if situation.current_location:
-            location_actions = self._get_location_actions(situation.current_location)
+            location_actions = self._get_location_actions(
+                situation.current_location
+            )
             available_actions.extend(location_actions)
 
         # Goal-based actions
@@ -266,7 +278,9 @@ class DecisionEngine:
         )
 
         # Generate reasoning
-        reasoning = self._generate_action_reasoning(action, base_score, modified_score)
+        reasoning = self._generate_action_reasoning(
+            action, base_score, modified_score
+        )
 
         # Determine priority
         priority = self._determine_action_priority(action, modified_score)
@@ -327,14 +341,20 @@ class DecisionEngine:
         }
 
         for trait, strength in personality.items():
-            if trait in trait_modifiers and action_type in trait_modifiers[trait]:
+            if (
+                trait in trait_modifiers
+                and action_type in trait_modifiers[trait]
+            ):
                 modifier = trait_modifiers[trait][action_type] * strength
                 modified_score += modifier
 
         return min(1.0, max(0.0, modified_score))
 
     def _apply_situational_modifiers(
-        self, base_score: float, action: Dict[str, Any], situation: SituationAssessment
+        self,
+        base_score: float,
+        action: Dict[str, Any],
+        situation: SituationAssessment,
     ) -> float:
         """Apply situation-specific modifiers."""
         modified_score = base_score
@@ -390,7 +410,9 @@ class DecisionEngine:
 
         return selected
 
-    def _create_character_action(self, evaluation: ActionEvaluation) -> CharacterAction:
+    def _create_character_action(
+        self, evaluation: ActionEvaluation
+    ) -> CharacterAction:
         """Create CharacterAction from evaluation."""
         return CharacterAction(
             action_type=evaluation.action["type"],
@@ -426,7 +448,10 @@ class DecisionEngine:
                 {"type": "investigate", "description": "Investigate something"}
             ],
             "social": [
-                {"type": "communicate", "description": "Communicate with others"}
+                {
+                    "type": "communicate",
+                    "description": "Communicate with others",
+                }
             ],
         }
 
@@ -434,12 +459,20 @@ class DecisionEngine:
 
     def _get_profession_actions(self) -> List[Dict[str, Any]]:
         """Get profession-specific actions."""
-        profession = self.core.character_data.get("identity", {}).get("profession", "")
+        profession = self.core.character_data.get("identity", {}).get(
+            "profession", ""
+        )
 
         profession_actions = {
-            "warrior": [{"type": "combat", "description": "Use combat skills"}],
-            "scholar": [{"type": "research", "description": "Research information"}],
-            "diplomat": [{"type": "negotiate", "description": "Negotiate agreements"}],
+            "warrior": [
+                {"type": "combat", "description": "Use combat skills"}
+            ],
+            "scholar": [
+                {"type": "research", "description": "Research information"}
+            ],
+            "diplomat": [
+                {"type": "negotiate", "description": "Negotiate agreements"}
+            ],
         }
 
         return profession_actions.get(profession.lower(), [])
@@ -507,11 +540,15 @@ class DecisionEngine:
         """Assess environmental factors."""
         return world_state.get("environmental_factors", {})
 
-    def _assess_mission_status(self, world_state: Dict[str, Any]) -> Dict[str, Any]:
+    def _assess_mission_status(
+        self, world_state: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Assess mission status."""
         return world_state.get("mission_status", {})
 
-    def _get_location_modifiers(self, location: str, action_type: str) -> float:
+    def _get_location_modifiers(
+        self, location: str, action_type: str
+    ) -> float:
         """Get location-based action modifiers."""
         return 0.0  # Would be enhanced with location data
 

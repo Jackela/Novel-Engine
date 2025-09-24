@@ -31,7 +31,9 @@ class ICharacterRepository(ABC):
     # ==================== Basic CRUD Operations ====================
 
     @abstractmethod
-    async def get_by_id(self, character_id: CharacterID) -> Optional[Character]:
+    async def get_by_id(
+        self, character_id: CharacterID
+    ) -> Optional[Character]:
         """
         Retrieve a character by their unique identifier.
 
@@ -115,7 +117,9 @@ class ICharacterRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_class(self, character_class: CharacterClass) -> List[Character]:
+    async def find_by_class(
+        self, character_class: CharacterClass
+    ) -> List[Character]:
         """
         Find all characters of a specific class.
 
@@ -201,7 +205,10 @@ class ICharacterRepository(ABC):
 
     @abstractmethod
     async def find_by_criteria(
-        self, criteria: Dict[str, Any], limit: Optional[int] = None, offset: int = 0
+        self,
+        criteria: Dict[str, Any],
+        limit: Optional[int] = None,
+        offset: int = 0,
     ) -> List[Character]:
         """
         Find characters matching multiple criteria.
@@ -334,7 +341,9 @@ class RepositoryException(Exception):
 class ConcurrencyException(RepositoryException):
     """Exception raised when optimistic concurrency control fails."""
 
-    def __init__(self, message: str, expected_version: int, actual_version: int):
+    def __init__(
+        self, message: str, expected_version: int, actual_version: int
+    ):
         super().__init__(message)
         self.expected_version = expected_version
         self.actual_version = actual_version

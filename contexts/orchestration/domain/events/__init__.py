@@ -9,7 +9,10 @@ Domain events for turn orchestration lifecycle including:
 - Performance and audit events
 """
 
-from .compensation_events import CompensationActionCompleted, CompensationInitiated
+from .compensation_events import (
+    CompensationActionCompleted,
+    CompensationInitiated,
+)
 from .phase_events import PhaseCompleted, PhaseFailed, PhaseStarted
 from .turn_events import (
     TurnCompensationCompleted,

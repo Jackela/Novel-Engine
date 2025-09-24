@@ -20,7 +20,6 @@ import logging
 
 from character_factory import CharacterFactory
 
-
 # Configure logging to show LLM integration details
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -49,10 +48,16 @@ def demo_llm_enhanced_decision_making():
             "name": "High Threat Combat Scenario",
             "world_state": {
                 "location_updates": {
-                    "sector_7": {"threat_level": "high", "enemy_presence": "confirmed"}
+                    "sector_7": {
+                        "threat_level": "high",
+                        "enemy_presence": "confirmed",
+                    }
                 },
                 "entity_updates": {
-                    "ork_warband": {"status": "hostile", "strength": "significant"}
+                    "ork_warband": {
+                        "status": "hostile",
+                        "strength": "significant",
+                    }
                 },
                 "faction_updates": {"imperium": {"alert_level": "elevated"}},
                 "recent_events": [
@@ -76,7 +81,10 @@ def demo_llm_enhanced_decision_making():
                     }
                 },
                 "entity_updates": {
-                    "tau_diplomat": {"status": "neutral", "intent": "negotiate"}
+                    "tau_diplomat": {
+                        "status": "neutral",
+                        "intent": "negotiate",
+                    }
                 },
                 "faction_updates": {"tau": {"diplomatic_stance": "open"}},
                 "recent_events": [
@@ -204,7 +212,9 @@ def demo_character_specific_prompts():
 
     print("\n1. Analyzing Character Profile...")
     print(f"   Name: {agent.character_data.get('name', 'Unknown')}")
-    print(f"   Faction: {agent.subjective_worldview.get('primary_faction', 'Unknown')}")
+    print(
+        f"   Faction: {agent.subjective_worldview.get('primary_faction', 'Unknown')}"
+    )
     print(f"   Personality Traits: {list(agent.personality_traits.keys())}")
     print(f"   Decision Weights: {list(agent.decision_weights.keys())}")
 
@@ -232,7 +242,9 @@ def demo_character_specific_prompts():
         )
 
         print(f"   ✓ Prompt Length: {len(prompt)} characters")
-        print("   ✓ Prompt includes character identity, personality, and context")
+        print(
+            "   ✓ Prompt includes character identity, personality, and context"
+        )
         print("   ✓ Sample from constructed prompt:")
         print("   " + "-" * 50)
 

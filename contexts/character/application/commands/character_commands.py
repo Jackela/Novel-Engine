@@ -260,7 +260,9 @@ class UpdateCharacterSkillCommand:
 
     skill_name: str = ""
     skill_category: str = ""  # Will be converted to SkillCategory enum
-    new_proficiency_level: str = ""  # Will be converted to ProficiencyLevel enum
+    new_proficiency_level: str = (
+        ""  # Will be converted to ProficiencyLevel enum
+    )
     modifier: int = 0
     description: Optional[str] = None
 
@@ -303,7 +305,9 @@ class UpdateCharacterSkillCommand:
         try:
             ProficiencyLevel(int(self.new_proficiency_level))
         except ValueError:
-            errors.append(f"Invalid proficiency level: {self.new_proficiency_level}")
+            errors.append(
+                f"Invalid proficiency level: {self.new_proficiency_level}"
+            )
 
         # Validate modifier
         if not -10 <= self.modifier <= 20:
@@ -376,7 +380,7 @@ class LevelUpCharacterCommand:
         # Validate skill improvements
         for skill_data in self.skill_improvements:
             if not isinstance(skill_data, dict):
-                errors.append("Skill improvements must be dictionaries")
+                errors.append("Skill improvements must be dictionaries")  # type: ignore[unreachable]
                 continue
 
             if "skill_name" not in skill_data or not skill_data["skill_name"]:

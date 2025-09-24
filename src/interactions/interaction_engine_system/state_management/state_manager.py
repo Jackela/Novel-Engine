@@ -193,9 +193,9 @@ class StateManager:
             character_updates = await self._update_character_states(
                 context, interaction_data
             )
-            update_results["character_states"] = character_updates.get("data", {}).get(
-                "state_updates", []
-            )
+            update_results["character_states"] = character_updates.get(
+                "data", {}
+            ).get("state_updates", [])
 
             # Generate and store memories
             if (
@@ -205,9 +205,9 @@ class StateManager:
                 memory_updates = await self._generate_interaction_memories(
                     context, interaction_data
                 )
-                update_results["memory_updates"] = memory_updates.get("data", {}).get(
-                    "memory_updates", []
-                )
+                update_results["memory_updates"] = memory_updates.get(
+                    "data", {}
+                ).get("memory_updates", [])
 
             # Update relationships
             relationship_updates = await self._update_relationships(
@@ -221,9 +221,9 @@ class StateManager:
             emotional_updates = await self._process_emotional_changes(
                 context, interaction_data
             )
-            update_results["emotional_changes"] = emotional_updates.get("data", {}).get(
-                "emotional_changes", []
-            )
+            update_results["emotional_changes"] = emotional_updates.get(
+                "data", {}
+            ).get("emotional_changes", [])
 
             # Apply all updates
             application_result = await self._apply_pending_updates(
@@ -290,7 +290,9 @@ class StateManager:
 
             # Generate semantic memories for significant interactions
             if (
-                self._calculate_interaction_significance(context, interaction_data)
+                self._calculate_interaction_significance(
+                    context, interaction_data
+                )
                 > self.state_thresholds["memory_significance_threshold"]
             ):
                 semantic_memory = await self._create_semantic_memory(
@@ -364,16 +366,20 @@ class StateManager:
                 for participant_b in participants[i + 1 :]:
                     if participant_a != participant_b:
                         # Calculate specific relationship change
-                        change_amount = self._calculate_specific_relationship_change(
-                            participant_a,
-                            participant_b,
-                            base_change,
-                            interaction_outcome,
+                        change_amount = (
+                            self._calculate_specific_relationship_change(
+                                participant_a,
+                                participant_b,
+                                base_change,
+                                interaction_outcome,
+                            )
                         )
 
                         if (
                             abs(change_amount)
-                            >= self.state_thresholds["relationship_change_threshold"]
+                            >= self.state_thresholds[
+                                "relationship_change_threshold"
+                            ]
                         ):
                             update = {
                                 "participant_a": participant_a,
@@ -411,7 +417,9 @@ class StateManager:
                 ),
             )
 
-    def get_pending_updates(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_pending_updates(
+        self, agent_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Get pending state updates.
 
@@ -424,7 +432,9 @@ class StateManager:
         if agent_id:
             return {
                 "state_updates": self.pending_state_updates.get(agent_id, []),
-                "memory_updates": self.pending_memory_updates.get(agent_id, []),
+                "memory_updates": self.pending_memory_updates.get(
+                    agent_id, []
+                ),
             }
 
         return {
@@ -441,7 +451,8 @@ class StateManager:
                 len(updates) for updates in self.pending_state_updates.values()
             ),
             "pending_memory_updates": sum(
-                len(updates) for updates in self.pending_memory_updates.values()
+                len(updates)
+                for updates in self.pending_memory_updates.values()
             ),
             "pending_relationship_changes": len(self.relationship_changes),
         }
@@ -477,7 +488,9 @@ class StateManager:
                 )
 
                 for state_type, change_data in changes.items():
-                    if abs(change_data["change"]) > 0.01:  # Minimum change threshold
+                    if (
+                        abs(change_data["change"]) > 0.01
+                    ):  # Minimum change threshold
                         update = StateUpdate(
                             agent_id=participant,
                             state_type=state_type,
@@ -485,7 +498,9 @@ class StateManager:
                             new_value=change_data.get("new_value", 0),
                             change_amount=change_data["change"],
                             change_reason=f"Interaction: {context.interaction_type.value}",
-                            metadata={"interaction_id": context.interaction_id},
+                            metadata={
+                                "interaction_id": context.interaction_id
+                            },
                         )
 
                         state_updates.append(update)
@@ -581,7 +596,9 @@ class StateManager:
         """Update relationships between participants."""
         try:
             return await self.update_relationship_weights(
-                context.participants, context.interaction_type, interaction_data
+                context.participants,
+                context.interaction_type,
+                interaction_data,
             )
         except Exception as e:
             return StandardResponse(
@@ -601,9 +618,9 @@ class StateManager:
             emotional_changes = []
 
             for participant in context.participants:
-                emotional_impact = interaction_data.get("emotional_impacts", {}).get(
-                    participant, {}
-                )
+                emotional_impact = interaction_data.get(
+                    "emotional_impacts", {}
+                ).get(participant, {})
 
                 if (
                     emotional_impact
@@ -614,7 +631,9 @@ class StateManager:
                         "agent_id": participant,
                         "emotion_type": "mood",
                         "change_amount": emotional_impact["mood_change"],
-                        "new_state": emotional_impact.get("emotional_state", "content"),
+                        "new_state": emotional_impact.get(
+                            "emotional_state", "content"
+                        ),
                         "interaction_id": context.interaction_id,
                     }
                     emotional_changes.append(change)
@@ -635,7 +654,9 @@ class StateManager:
                 ),
             )
 
-    async def _apply_pending_updates(self, interaction_id: str) -> StandardResponse:
+    async def _apply_pending_updates(
+        self, interaction_id: str
+    ) -> StandardResponse:
         """Apply all pending updates to the system."""
         try:
             applied_updates = {
@@ -651,9 +672,12 @@ class StateManager:
                 len(updates) for updates in self.pending_state_updates.values()
             )
             applied_updates["memory_updates"] = sum(
-                len(updates) for updates in self.pending_memory_updates.values()
+                len(updates)
+                for updates in self.pending_memory_updates.values()
             )
-            applied_updates["relationship_updates"] = len(self.relationship_changes)
+            applied_updates["relationship_updates"] = len(
+                self.relationship_changes
+            )
 
             # Clear applied updates
             self.pending_state_updates.clear()
@@ -689,14 +713,34 @@ class StateManager:
 
         # Basic state changes based on interaction type
         if context.interaction_type == InteractionType.COMBAT:
-            changes["stamina"] = {"change": -10, "old_value": 100, "new_value": 90}
-            changes["adrenaline"] = {"change": 5, "old_value": 0, "new_value": 5}
+            changes["stamina"] = {
+                "change": -10,
+                "old_value": 100,
+                "new_value": 90,
+            }
+            changes["adrenaline"] = {
+                "change": 5,
+                "old_value": 0,
+                "new_value": 5,
+            }
         elif context.interaction_type == InteractionType.DIALOGUE:
-            changes["social_energy"] = {"change": -2, "old_value": 100, "new_value": 98}
+            changes["social_energy"] = {
+                "change": -2,
+                "old_value": 100,
+                "new_value": 98,
+            }
             changes["mood"] = {"change": 1, "old_value": 50, "new_value": 51}
         elif context.interaction_type == InteractionType.COOPERATION:
-            changes["teamwork_skill"] = {"change": 2, "old_value": 50, "new_value": 52}
-            changes["satisfaction"] = {"change": 5, "old_value": 50, "new_value": 55}
+            changes["teamwork_skill"] = {
+                "change": 2,
+                "old_value": 50,
+                "new_value": 52,
+            }
+            changes["satisfaction"] = {
+                "change": 5,
+                "old_value": 50,
+                "new_value": 55,
+            }
 
         return changes
 
@@ -790,7 +834,9 @@ class StateManager:
         interaction_data: Dict[str, Any],
     ) -> float:
         """Calculate memory significance for specific agent."""
-        return self._calculate_interaction_significance(context, interaction_data)
+        return self._calculate_interaction_significance(
+            context, interaction_data
+        )
 
     async def _create_episodic_memory(
         self,

@@ -166,7 +166,9 @@ class CompensationActionCompleted:
                 duration_ms, compensation_type
             ),
             "entities_restored": len(entities_affected or []),
-            "data_integrity_maintained": execution_results.get("data_integrity", True),
+            "data_integrity_maintained": execution_results.get(
+                "data_integrity", True
+            ),
         }
 
         return cls(
@@ -190,14 +192,18 @@ class CompensationActionCompleted:
         )
 
     @staticmethod
-    def _calculate_rollback_completeness(rollback_data: Dict[str, Any]) -> float:
+    def _calculate_rollback_completeness(
+        rollback_data: Dict[str, Any]
+    ) -> float:
         """Calculate rollback completeness score (0.0-1.0)."""
         if not rollback_data:
             return 0.0
 
         # Check key rollback indicators
         completeness_indicators = {
-            "world_state_restored": rollback_data.get("world_state_restored", False),
+            "world_state_restored": rollback_data.get(
+                "world_state_restored", False
+            ),
             "events_removed": rollback_data.get("events_removed", False),
             "entities_restored": rollback_data.get("entities_restored", False),
             "relationships_maintained": rollback_data.get(
@@ -210,7 +216,9 @@ class CompensationActionCompleted:
         )
         total_indicators = len(completeness_indicators)
 
-        return completed_count / total_indicators if total_indicators > 0 else 0.0
+        return (
+            completed_count / total_indicators if total_indicators > 0 else 0.0
+        )
 
     @staticmethod
     def _calculate_performance_score(
@@ -234,7 +242,10 @@ class CompensationActionCompleted:
         # Score based on how close to expected duration
         if duration_ms <= expected_duration:
             # Bonus for faster execution
-            return 1.0 + (expected_duration - duration_ms) / expected_duration * 0.2
+            return (
+                1.0
+                + (expected_duration - duration_ms) / expected_duration * 0.2
+            )
         else:
             # Penalty for slower execution
             return max(0.1, expected_duration / duration_ms)
@@ -324,7 +335,9 @@ class CompensationActionFailed:
                 compensation_type, error_details
             ),
             "partial_rollback_possible": bool(partial_completion),
-            "data_consistency_at_risk": cls._data_consistency_at_risk(error_details),
+            "data_consistency_at_risk": cls._data_consistency_at_risk(
+                error_details
+            ),
             "estimated_manual_effort_hours": cls._estimate_manual_effort(
                 compensation_type, error_details
             ),
@@ -415,7 +428,8 @@ class CompensationActionFailed:
         }
 
         return any(
-            error in error_details.get("error_type", "") for error in system_wide_errors
+            error in error_details.get("error_type", "")
+            for error in system_wide_errors
         )
 
     @staticmethod
@@ -429,7 +443,8 @@ class CompensationActionFailed:
         }
 
         return any(
-            risk in error_details.get("error_type", "") for risk in consistency_risks
+            risk in error_details.get("error_type", "")
+            for risk in consistency_risks
         )
 
     @staticmethod

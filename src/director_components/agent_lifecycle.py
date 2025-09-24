@@ -48,10 +48,14 @@ class AgentLifecycleManager:
     async def initialize(self) -> bool:
         """Initialize agent lifecycle manager."""
         try:
-            self.logger.info("Agent lifecycle manager initialized successfully")
+            self.logger.info(
+                "Agent lifecycle manager initialized successfully"
+            )
             return True
         except Exception as e:
-            self.logger.error(f"Agent lifecycle manager initialization failed: {e}")
+            self.logger.error(
+                f"Agent lifecycle manager initialization failed: {e}"
+            )
             return False
 
     async def register_agent(self, agent: Any) -> bool:
@@ -68,7 +72,9 @@ class AgentLifecycleManager:
             async with self._agent_lock:
                 # Check if agent has required attributes
                 if not hasattr(agent, "agent_id"):
-                    self.logger.error("Agent missing required 'agent_id' attribute")
+                    self.logger.error(
+                        "Agent missing required 'agent_id' attribute"
+                    )
                     return False
 
                 agent_id = agent.agent_id
@@ -80,7 +86,9 @@ class AgentLifecycleManager:
 
                 # Check agent limit
                 if len(self._agents) >= self._max_agents:
-                    self.logger.error(f"Agent limit reached ({self._max_agents})")
+                    self.logger.error(
+                        f"Agent limit reached ({self._max_agents})"
+                    )
                     return False
 
                 # Validate agent interface
@@ -119,7 +127,9 @@ class AgentLifecycleManager:
         try:
             async with self._agent_lock:
                 if agent_id not in self._agents:
-                    self.logger.warning(f"Agent {agent_id} not found for removal")
+                    self.logger.warning(
+                        f"Agent {agent_id} not found for removal"
+                    )
                     return False
 
                 # Cleanup agent resources
@@ -128,7 +138,9 @@ class AgentLifecycleManager:
                     try:
                         await agent.cleanup()
                     except Exception as e:
-                        self.logger.warning(f"Agent {agent_id} cleanup failed: {e}")
+                        self.logger.warning(
+                            f"Agent {agent_id} cleanup failed: {e}"
+                        )
 
                 # Remove from tracking
                 del self._agents[agent_id]
@@ -172,13 +184,18 @@ class AgentLifecycleManager:
 
         try:
             for agent_id, agent in self._agents.items():
-                agent_validation = await self._validate_single_agent(agent_id, agent)
+                agent_validation = await self._validate_single_agent(
+                    agent_id, agent
+                )
 
                 if agent_validation["valid"]:
                     validation_results["valid_agents"].append(agent_id)
                 else:
                     validation_results["invalid_agents"].append(
-                        {"agent_id": agent_id, "errors": agent_validation["errors"]}
+                        {
+                            "agent_id": agent_id,
+                            "errors": agent_validation["errors"],
+                        }
                     )
 
                 # Update health status
@@ -204,7 +221,9 @@ class AgentLifecycleManager:
 
         return validation_results
 
-    async def get_agent_metrics(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+    async def get_agent_metrics(
+        self, agent_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Get performance metrics for specific agent or all agents."""
         if agent_id:
             metrics = self._agent_metrics.get(agent_id)
@@ -234,7 +253,9 @@ class AgentLifecycleManager:
             for agent_id, metrics in self._agent_metrics.items()
         }
 
-    async def update_agent_activity(self, agent_id: str, response_time: float = 0.0):
+    async def update_agent_activity(
+        self, agent_id: str, response_time: float = 0.0
+    ):
         """Update agent activity metrics."""
         metrics = self._agent_metrics.get(agent_id)
         if metrics:
@@ -257,7 +278,9 @@ class AgentLifecycleManager:
 
         # Check required methods
         for method in required_methods:
-            if not hasattr(agent, method) or not callable(getattr(agent, method)):
+            if not hasattr(agent, method) or not callable(
+                getattr(agent, method)
+            ):
                 validation_result["valid"] = False
                 validation_result["errors"].append(
                     f"Missing or invalid method: {method}"
@@ -267,29 +290,47 @@ class AgentLifecycleManager:
         for attr in required_attributes:
             if not hasattr(agent, attr):
                 validation_result["valid"] = False
-                validation_result["errors"].append(f"Missing attribute: {attr}")
+                validation_result["errors"].append(
+                    f"Missing attribute: {attr}"
+                )
 
         return validation_result
 
-    async def _validate_single_agent(self, agent_id: str, agent: Any) -> Dict[str, Any]:
+    async def _validate_single_agent(
+        self, agent_id: str, agent: Any
+    ) -> Dict[str, Any]:
         """Validate a single agent's current state."""
         try:
             # Check if agent is still responsive
             if hasattr(agent, "get_status"):
                 try:
-                    status = await asyncio.wait_for(agent.get_status(), timeout=5.0)
+                    status = await asyncio.wait_for(
+                        agent.get_status(), timeout=5.0
+                    )
                     if not status:
-                        return {"valid": False, "errors": ["Agent status check failed"]}
+                        return {
+                            "valid": False,
+                            "errors": ["Agent status check failed"],
+                        }
                 except asyncio.TimeoutError:
-                    return {"valid": False, "errors": ["Agent status check timeout"]}
+                    return {
+                        "valid": False,
+                        "errors": ["Agent status check timeout"],
+                    }
                 except Exception as e:
-                    return {"valid": False, "errors": [f"Agent status error: {str(e)}"]}
+                    return {
+                        "valid": False,
+                        "errors": [f"Agent status error: {str(e)}"],
+                    }
 
             # Basic interface validation
             return await self._validate_agent_interface(agent)
 
         except Exception as e:
-            return {"valid": False, "errors": [f"Validation exception: {str(e)}"]}
+            return {
+                "valid": False,
+                "errors": [f"Validation exception: {str(e)}"],
+            }
 
     async def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status."""
@@ -316,8 +357,12 @@ class AgentLifecycleManager:
                 m.avg_response_time for m in self._agent_metrics.values()
             )
             / max(1, len(self._agent_metrics)),
-            "total_turns": sum(m.turn_count for m in self._agent_metrics.values()),
-            "total_errors": sum(m.error_count for m in self._agent_metrics.values()),
+            "total_turns": sum(
+                m.turn_count for m in self._agent_metrics.values()
+            ),
+            "total_errors": sum(
+                m.error_count for m in self._agent_metrics.values()
+            ),
         }
 
     async def cleanup(self) -> None:

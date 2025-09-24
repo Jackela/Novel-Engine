@@ -136,7 +136,10 @@ class EventRegistry:
                         "type": "string",
                         "description": "Character archetype",
                     },
-                    "traits": {"type": "object", "description": "Character traits"},
+                    "traits": {
+                        "type": "object",
+                        "description": "Character traits",
+                    },
                     "metadata": {
                         "type": "object",
                         "description": "Additional character metadata",
@@ -184,8 +187,17 @@ class EventRegistry:
                 event_type=EventType.MEMORY_STORED,
                 version="1.0",
                 description="Fired when a memory is stored",
-                required_fields={"memory_id", "agent_id", "memory_type", "content"},
-                optional_fields={"emotional_weight", "relevance_score", "tags"},
+                required_fields={
+                    "memory_id",
+                    "agent_id",
+                    "memory_type",
+                    "content",
+                },
+                optional_fields={
+                    "emotional_weight",
+                    "relevance_score",
+                    "tags",
+                },
                 payload_schema={
                     "memory_id": {"type": "string"},
                     "agent_id": {"type": "string"},
@@ -205,7 +217,11 @@ class EventRegistry:
                         "minimum": -10,
                         "maximum": 10,
                     },
-                    "relevance_score": {"type": "number", "minimum": 0, "maximum": 1},
+                    "relevance_score": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                    },
                     "tags": {"type": "array", "items": {"type": "string"}},
                 },
                 examples=[
@@ -228,7 +244,11 @@ class EventRegistry:
                 event_type=EventType.INTERACTION_STARTED,
                 version="1.0",
                 description="Fired when an interaction begins",
-                required_fields={"interaction_id", "interaction_type", "participants"},
+                required_fields={
+                    "interaction_id",
+                    "interaction_type",
+                    "participants",
+                },
                 optional_fields={"context", "metadata"},
                 payload_schema={
                     "interaction_id": {"type": "string"},
@@ -236,7 +256,10 @@ class EventRegistry:
                         "type": "string",
                         "enum": ["dialogue", "combat", "trade", "exploration"],
                     },
-                    "participants": {"type": "array", "items": {"type": "string"}},
+                    "participants": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
                     "context": {"type": "object"},
                     "metadata": {"type": "object"},
                 },
@@ -263,7 +286,10 @@ class EventRegistry:
                     "startup_time": {"type": "string", "format": "date-time"},
                     "version": {"type": "string"},
                     "configuration": {"type": "object"},
-                    "components": {"type": "array", "items": {"type": "string"}},
+                    "components": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
                 },
                 examples=[
                     {
@@ -384,6 +410,8 @@ class EventRegistry:
         }
 
         for event_type in EventType:
-            docs["events"][event_type.value] = self.get_schema_documentation(event_type)
+            docs["events"][event_type.value] = self.get_schema_documentation(
+                event_type
+            )
 
         return docs

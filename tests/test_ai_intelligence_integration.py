@@ -59,7 +59,9 @@ class TestAIIntelligenceIntegration:
                     time.sleep(0.1)  # Wait 100ms before retry
                 else:
                     # Log the issue but don't fail the test
-                    print(f"Warning: Could not delete temporary database {db_path}")
+                    print(
+                        f"Warning: Could not delete temporary database {db_path}"
+                    )
 
     @pytest.fixture
     def integration_config(self):
@@ -117,7 +119,10 @@ class TestAIIntelligenceIntegration:
 
         assert result.success
         assert integration_orchestrator.integration_active
-        assert result.data["integration_mode"] == IntegrationMode.AI_ENHANCED.value
+        assert (
+            result.data["integration_mode"]
+            == IntegrationMode.AI_ENHANCED.value
+        )
         assert result.data["traditional_available"]
         assert "ai_available" in result.data
         assert "startup_time" in result.data
@@ -127,7 +132,9 @@ class TestAIIntelligenceIntegration:
         self, temp_database, orchestrator_config
     ):
         """Test startup in traditional-only mode."""
-        config = IntegrationConfig(integration_mode=IntegrationMode.TRADITIONAL_ONLY)
+        config = IntegrationConfig(
+            integration_mode=IntegrationMode.TRADITIONAL_ONLY
+        )
         orchestrator = IntegrationOrchestrator(
             database_path=temp_database,
             orchestrator_config=orchestrator_config,
@@ -137,7 +144,10 @@ class TestAIIntelligenceIntegration:
         result = await orchestrator.startup()
 
         assert result.success
-        assert result.data["integration_mode"] == IntegrationMode.TRADITIONAL_ONLY.value
+        assert (
+            result.data["integration_mode"]
+            == IntegrationMode.TRADITIONAL_ONLY.value
+        )
 
         await orchestrator.shutdown()
 
@@ -167,7 +177,9 @@ class TestAIIntelligenceIntegration:
         await orchestrator.startup()
 
         result = await orchestrator.process_character_action(
-            agent_id="test_agent", action="speak", context={"message": "Hello world"}
+            agent_id="test_agent",
+            action="speak",
+            context={"message": "Hello world"},
         )
 
         assert result.success
@@ -187,7 +199,8 @@ class TestAIIntelligenceIntegration:
             new_callable=AsyncMock,
         ) as mock_coordinate:
             mock_coordinate.return_value = StandardResponse(
-                success=True, data={"coordination_result": "success", "enhanced": True}
+                success=True,
+                data={"coordination_result": "success", "enhanced": True},
             )
 
             result = await integration_orchestrator.process_character_action(
@@ -200,7 +213,9 @@ class TestAIIntelligenceIntegration:
             assert mock_coordinate.called
 
     @pytest.mark.asyncio
-    async def test_character_action_fallback_mechanism(self, integration_orchestrator):
+    async def test_character_action_fallback_mechanism(
+        self, integration_orchestrator
+    ):
         """Test fallback to traditional system when AI fails."""
         await integration_orchestrator.startup()
 
@@ -212,7 +227,9 @@ class TestAIIntelligenceIntegration:
         ) as mock_coordinate:
             mock_coordinate.return_value = StandardResponse(
                 success=False,
-                error=ErrorInfo(code="AI_FAILURE", message="AI processing failed"),
+                error=ErrorInfo(
+                    code="AI_FAILURE", message="AI processing failed"
+                ),
             )
 
             result = await integration_orchestrator.process_character_action(
@@ -226,7 +243,9 @@ class TestAIIntelligenceIntegration:
             assert mock_coordinate.called
 
     @pytest.mark.asyncio
-    async def test_story_generation_traditional(self, integration_orchestrator):
+    async def test_story_generation_traditional(
+        self, integration_orchestrator
+    ):
         """Test story generation using traditional systems."""
         orchestrator = integration_orchestrator
         orchestrator.config.integration_mode = IntegrationMode.TRADITIONAL_ONLY
@@ -242,7 +261,9 @@ class TestAIIntelligenceIntegration:
         assert result.data["generation_method"] == "traditional"
 
     @pytest.mark.asyncio
-    async def test_story_generation_ai_enhanced(self, integration_orchestrator):
+    async def test_story_generation_ai_enhanced(
+        self, integration_orchestrator
+    ):
         """Test story generation with AI enhancements."""
         await integration_orchestrator.startup()
 
@@ -254,7 +275,10 @@ class TestAIIntelligenceIntegration:
         ) as mock_quality:
             mock_quality.return_value = StandardResponse(
                 success=True,
-                data={"overall_score": 0.8, "quality_level": QualityLevel.GOOD},
+                data={
+                    "overall_score": 0.8,
+                    "quality_level": QualityLevel.GOOD,
+                },
             )
 
             with patch.object(
@@ -262,7 +286,6 @@ class TestAIIntelligenceIntegration:
                 "track_event",
                 new_callable=AsyncMock,
             ) as mock_analytics:
-
                 result = await integration_orchestrator.generate_story_content(
                     prompt="Generate an AI-enhanced story",
                     user_id="test_user",
@@ -297,7 +320,9 @@ class TestAIIntelligenceIntegration:
         # Perform several operations
         for i in range(5):
             await integration_orchestrator.process_character_action(
-                agent_id=f"agent_{i}", action="test_action", context={"test": True}
+                agent_id=f"agent_{i}",
+                action="test_action",
+                context={"test": True},
             )
 
         # Check performance tracking
@@ -305,7 +330,9 @@ class TestAIIntelligenceIntegration:
         assert integration_orchestrator.operation_count >= 5
 
         # Get metrics
-        metrics = await integration_orchestrator._generate_integration_metrics()
+        metrics = (
+            await integration_orchestrator._generate_integration_metrics()
+        )
         assert metrics.average_response_time >= 0
         assert metrics.system_health_score > 0
 
@@ -329,7 +356,9 @@ class TestAIIntelligenceIntegration:
             assert result.error.code == "CHARACTER_ACTION_ERROR"
 
     @pytest.mark.asyncio
-    async def test_feature_gate_functionality(self, temp_database, orchestrator_config):
+    async def test_feature_gate_functionality(
+        self, temp_database, orchestrator_config
+    ):
         """Test AI feature gate functionality."""
         # Create config with some features disabled
         config = IntegrationConfig(
@@ -359,7 +388,9 @@ class TestAIIntelligenceIntegration:
         await orchestrator.shutdown()
 
     @pytest.mark.asyncio
-    async def test_cross_system_event_coordination(self, integration_orchestrator):
+    async def test_cross_system_event_coordination(
+        self, integration_orchestrator
+    ):
         """Test event coordination between traditional and AI systems."""
         await integration_orchestrator.startup()
 
@@ -379,7 +410,9 @@ class TestAIIntelligenceIntegration:
         assert True  # Placeholder for actual event verification
 
     @pytest.mark.asyncio
-    async def test_integration_mode_switching(self, temp_database, orchestrator_config):
+    async def test_integration_mode_switching(
+        self, temp_database, orchestrator_config
+    ):
         """Test different integration modes."""
         modes_to_test = [
             IntegrationMode.TRADITIONAL_ONLY,
@@ -439,7 +472,6 @@ class TestAIIntelligenceIntegration:
             "track_event",
             new_callable=AsyncMock,
         ) as mock_track:
-
             await integration_orchestrator.generate_story_content(
                 prompt="Test story for analytics",
                 user_id="analytics_test_user",
@@ -541,7 +573,8 @@ class TestPerformanceValidation:
         # Run operations for 5 seconds
         while (datetime.now() - start_time).total_seconds() < 5:
             await orchestrator.process_character_action(
-                agent_id=f"throughput_agent_{operation_count}", action="throughput_test"
+                agent_id=f"throughput_agent_{operation_count}",
+                action="throughput_test",
             )
             operation_count += 1
 

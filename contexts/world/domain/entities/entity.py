@@ -39,7 +39,9 @@ class Entity(ABC):
     version: int = field(default=1)
 
     # Private field to store domain events
-    _domain_events: List[Event] = field(default_factory=list, init=False, repr=False)
+    _domain_events: List[Event] = field(
+        default_factory=list, init=False, repr=False
+    )
 
     def __post_init__(self) -> None:
         """
@@ -68,7 +70,9 @@ class Entity(ABC):
             errors.append("Created timestamp cannot be in the future")
 
         if self.updated_at < self.created_at:
-            errors.append("Updated timestamp cannot be before created timestamp")
+            errors.append(
+                "Updated timestamp cannot be before created timestamp"
+            )
 
         # Allow subclasses to add their own validation
         errors.extend(self._validate_business_rules())

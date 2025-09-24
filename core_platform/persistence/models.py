@@ -6,7 +6,7 @@ Base model classes, mixins, and common database patterns for Novel Engine platfo
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, TypeVar
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, String, Text, event
@@ -85,7 +85,9 @@ class BaseModel(Base, TimestampMixin):
     )
 
     def to_dict(
-        self, exclude: Optional[List[str]] = None, include_relationships: bool = False
+        self,
+        exclude: Optional[List[str]] = None,
+        include_relationships: bool = False,
     ) -> Dict[str, Any]:
         """Convert model instance to dictionary."""
         exclude = exclude or []

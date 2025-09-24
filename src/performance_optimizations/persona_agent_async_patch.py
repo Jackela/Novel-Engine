@@ -145,7 +145,7 @@ class PersonaAgentAsyncPatch:
                     return None
 
                 # Check if this is a repeat situation (cache at agent level)
-                situation_key = f"{len(available_actions)}_{situation_assessment.get('threat_level', 'unknown')}"
+                situation_key = f"{len(available_actions)}_{situation_assessment.get( 'threat_level', 'unknown')}"
 
                 # Add simple memoization at agent level
                 if not hasattr(persona_agent_instance, "_decision_cache"):
@@ -160,7 +160,8 @@ class PersonaAgentAsyncPatch:
                     ]
                     # Validate cached decision is still applicable
                     if any(
-                        action.get("action_type") == cached_decision.action_type
+                        action.get("action_type")
+                        == cached_decision.action_type
                         for action in available_actions
                     ):
                         return cached_decision
@@ -179,14 +180,17 @@ class PersonaAgentAsyncPatch:
                 if start_time > 0:
                     duration = asyncio.get_event_loop().time() - start_time
                     logger.debug(
-                        f"Agent {persona_agent_instance.agent_id} decision making took {duration:.3f}s"
+                        f"Agent {persona_agent_instance.agent_id}decision making took {duration:.3f}s"
                     )
 
                 # Cache successful decisions
                 if (
-                    result and len(persona_agent_instance._decision_cache) < 100
+                    result
+                    and len(persona_agent_instance._decision_cache) < 100
                 ):  # Limit cache size
-                    persona_agent_instance._decision_cache[situation_key] = result
+                    persona_agent_instance._decision_cache[
+                        situation_key
+                    ] = result
 
                 return result
 
@@ -235,7 +239,11 @@ class PersonaAgentAsyncPatch:
                 )
             return stats
 
-        setattr(persona_agent_instance, "get_performance_stats", get_performance_stats)
+        setattr(
+            persona_agent_instance,
+            "get_performance_stats",
+            get_performance_stats,
+        )
 
         logger.debug(
             f"Agent {persona_agent_instance.agent_id} performance monitoring added"
@@ -264,7 +272,9 @@ class PersonaAgentAsyncPatch:
 
         try:
             # Apply async LLM patch
-            PersonaAgentAsyncPatch.patch_persona_agent_llm_calls(persona_agent_instance)
+            PersonaAgentAsyncPatch.patch_persona_agent_llm_calls(
+                persona_agent_instance
+            )
             results["patches_applied"].append("async_llm_calls")
 
             # Apply enhanced decision making optimization
@@ -274,7 +284,9 @@ class PersonaAgentAsyncPatch:
             results["patches_applied"].append("enhanced_decision_making")
 
             # Add performance monitoring
-            PersonaAgentAsyncPatch.add_performance_monitoring(persona_agent_instance)
+            PersonaAgentAsyncPatch.add_performance_monitoring(
+                persona_agent_instance
+            )
             results["patches_applied"].append("performance_monitoring")
 
             logger.info(
@@ -332,7 +344,10 @@ def apply_async_optimization_to_agent_collection(
         except Exception as e:
             logger.error(f"Failed to patch agent {agent_id}: {e}")
             results["failed_patches"] += 1
-            results["patch_results"][agent_id] = {"success": False, "errors": [str(e)]}
+            results["patch_results"][agent_id] = {
+                "success": False,
+                "errors": [str(e)],
+            }
 
     success_rate = (
         results["successfully_patched"] / max(1, results["total_agents"])
@@ -356,7 +371,9 @@ def quick_patch_persona_agent(agent_instance) -> bool:
         bool: True if patch applied successfully
     """
     try:
-        result = PersonaAgentAsyncPatch.apply_full_performance_patch(agent_instance)
+        result = PersonaAgentAsyncPatch.apply_full_performance_patch(
+            agent_instance
+        )
         return result["success"]
     except Exception as e:
         logger.error(f"Quick patch failed: {e}")

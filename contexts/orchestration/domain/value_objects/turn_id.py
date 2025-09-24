@@ -12,6 +12,13 @@ from datetime import datetime
 from typing import ClassVar, Optional
 from uuid import UUID, uuid4
 
+# Import orchestration domain type safety patterns
+from ...infrastructure.orchestration_domain_types import (
+    OrchestrationDomainTyping,
+    ValueObjectFactory,
+    ensure_uuid,
+)
+
 
 @dataclass(frozen=True)
 class TurnId:
@@ -39,11 +46,18 @@ class TurnId:
     sequence_number: Optional[int] = None
     campaign_id: Optional[UUID] = None
     custom_name: Optional[str] = None
-    created_at: datetime = None
+    created_at: Optional[datetime] = None
 
     # Class-level validation patterns
     _CUSTOM_NAME_PATTERN: ClassVar[str] = r"^[a-zA-Z0-9_-]{1,50}$"
-    _RESERVED_NAMES: ClassVar[set] = {"test", "debug", "system", "admin", "root", "api"}
+    _RESERVED_NAMES: ClassVar[set] = {
+        "test",
+        "debug",
+        "system",
+        "admin",
+        "root",
+        "api",
+    }
 
     def __post_init__(self):
         """Validate turn ID structure and business rules."""
@@ -57,7 +71,10 @@ class TurnId:
 
         # Validate sequence number
         if self.sequence_number is not None:
-            if not isinstance(self.sequence_number, int) or self.sequence_number < 1:
+            if (
+                not isinstance(self.sequence_number, int)
+                or self.sequence_number < 1
+            ):
                 raise ValueError("sequence_number must be a positive integer")
 
         # Validate campaign ID
@@ -133,8 +150,12 @@ class TurnId:
             parts = turn_string.split("|")
 
             turn_uuid = UUID(parts[0])
-            sequence_number = int(parts[1]) if len(parts) > 1 and parts[1] else None
-            campaign_id = UUID(parts[2]) if len(parts) > 2 and parts[2] else None
+            sequence_number = (
+                int(parts[1]) if len(parts) > 1 and parts[1] else None
+            )
+            campaign_id = (
+                UUID(parts[2]) if len(parts) > 2 and parts[2] else None
+            )
             custom_name = parts[3] if len(parts) > 3 and parts[3] else None
 
             return cls(
@@ -145,7 +166,9 @@ class TurnId:
             )
 
         except (ValueError, IndexError) as e:
-            raise ValueError(f"Invalid turn string format: {turn_string}") from e
+            raise ValueError(
+                f"Invalid turn string format: {turn_string}"
+            ) from e
 
     @classmethod
     def create_sequenced(
@@ -161,7 +184,9 @@ class TurnId:
         Returns:
             TurnId with sequence tracking
         """
-        return cls.generate(sequence_number=sequence_number, campaign_id=campaign_id)
+        return cls.generate(
+            sequence_number=sequence_number, campaign_id=campaign_id
+        )
 
     @classmethod
     def create_named(

@@ -110,7 +110,9 @@ class PlotPoint:
             object.__setattr__(self, "tags", set())
 
         if self.creation_timestamp is None:
-            object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
+            object.__setattr__(
+                self, "creation_timestamp", datetime.now(timezone.utc)
+            )
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -129,8 +131,13 @@ class PlotPoint:
         if self.sequence_order < 0:
             raise ValueError("Sequence order must be non-negative")
 
-        if self.estimated_duration is not None and self.estimated_duration <= 0:
-            raise ValueError("Estimated duration must be positive if specified")
+        if (
+            self.estimated_duration is not None
+            and self.estimated_duration <= 0
+        ):
+            raise ValueError(
+                "Estimated duration must be positive if specified"
+            )
 
         # Validate intensity values (0-10 scale)
         for intensity_name, intensity_value in [
@@ -148,7 +155,9 @@ class PlotPoint:
             raise ValueError("Plot point title too long (max 200 characters)")
 
         if len(self.description) > 2000:
-            raise ValueError("Plot point description too long (max 2000 characters)")
+            raise ValueError(
+                "Plot point description too long (max 2000 characters)"
+            )
 
     @property
     def is_major_plot_point(self) -> bool:
@@ -278,7 +287,8 @@ class PlotPoint:
             involved_characters=self.involved_characters.copy(),
             affected_themes=self.affected_themes.copy(),
             location_context=self.location_context,
-            emotional_intensity=emotional_intensity or self.emotional_intensity,
+            emotional_intensity=emotional_intensity
+            or self.emotional_intensity,
             dramatic_tension=dramatic_tension or self.dramatic_tension,
             story_significance=story_significance or self.story_significance,
             prerequisite_events=self.prerequisite_events.copy(),
@@ -293,7 +303,9 @@ class PlotPoint:
             metadata=self.metadata.copy(),
         )
 
-    def with_additional_characters(self, character_ids: Set[UUID]) -> "PlotPoint":
+    def with_additional_characters(
+        self, character_ids: Set[UUID]
+    ) -> "PlotPoint":
         """
         Create a new PlotPoint with additional involved characters.
 

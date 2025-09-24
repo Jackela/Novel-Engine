@@ -81,13 +81,17 @@ class TestPersonaCore:
     @pytest.fixture
     def persona_core(self, mock_event_bus, temp_character_dir):
         """Create PersonaCore instance for testing."""
-        return PersonaCore(temp_character_dir, mock_event_bus, "test_agent_001")
+        return PersonaCore(
+            temp_character_dir, mock_event_bus, "test_agent_001"
+        )
 
     def test_persona_core_initialization(self, persona_core):
         """Test PersonaCore initialization."""
         assert persona_core.identity.agent_id == "test_agent_001"
         assert (
-            persona_core.identity.character_directory.endswith("test_agent_001")
+            persona_core.identity.character_directory.endswith(
+                "test_agent_001"
+            )
             is False
         )  # Uses provided path
         assert persona_core.is_active is False
@@ -157,11 +161,15 @@ class TestPersonaCoreIntegration:
             character_sheet = Path(temp_dir) / "character_sheet.md"
             character_sheet.write_text("# Test Character")
 
-            persona_core = PersonaCore(temp_dir, mock_event_bus, "integration_test")
+            persona_core = PersonaCore(
+                temp_dir, mock_event_bus, "integration_test"
+            )
             await persona_core.activate()
 
             # Verify event bus interactions
-            assert mock_event_bus.subscribe.call_count >= 0  # May or may not subscribe
+            assert (
+                mock_event_bus.subscribe.call_count >= 0
+            )  # May or may not subscribe
 
             await persona_core.deactivate()
 

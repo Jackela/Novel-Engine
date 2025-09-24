@@ -8,8 +8,6 @@ import asyncio
 import json
 import logging
 import random
-
-# Import our new modules
 import sys
 import time
 from dataclasses import asdict, dataclass
@@ -132,7 +130,9 @@ class EnhancedNovelGenerator:
         self.characters = characters
         return characters
 
-    def generate_story_blueprint(self, target_length: int = 60) -> StoryBlueprint:
+    def generate_story_blueprint(
+        self, target_length: int = 60
+    ) -> StoryBlueprint:
         """Generate the story structure blueprint"""
         blueprint = self.story_architect.design_story_structure(
             self.characters, target_length
@@ -170,20 +170,29 @@ class EnhancedNovelGenerator:
             )
 
             # Convert to StoryEvent
-            story_event = self._convert_orchestrated_event(orchestrated_event, i)
+            story_event = self._convert_orchestrated_event(
+                orchestrated_event, i
+            )
             events.append(story_event)
 
             # Scene changes at major plot points
             if i > 0 and i % (self.story_blueprint.target_length // 4) == 0:
-                new_location = self._select_appropriate_location(story_event.plot_stage)
+                new_location = self._select_appropriate_location(
+                    story_event.plot_stage
+                )
                 if new_location != current_location:
                     events.append(
-                        self._create_scene_transition(current_location, new_location)
+                        self._create_scene_transition(
+                            current_location, new_location
+                        )
                     )
                     current_location = new_location
 
             # Add reactions and thoughts for depth
-            if story_event.event_type == ActionType.DIALOGUE and random.random() < 0.4:
+            if (
+                story_event.event_type == ActionType.DIALOGUE
+                and random.random() < 0.4
+            ):
                 reaction_event = self._generate_reaction(story_event)
                 if reaction_event:
                     events.append(reaction_event)
@@ -224,7 +233,9 @@ class EnhancedNovelGenerator:
             tags=["ending"],
         )
 
-    def _convert_orchestrated_event(self, orchestrated: Dict, index: int) -> StoryEvent:
+    def _convert_orchestrated_event(
+        self, orchestrated: Dict, index: int
+    ) -> StoryEvent:
         """Convert orchestrated event to StoryEvent"""
         progress = index / self.story_blueprint.target_length
         plot_stage = self._get_current_plot_stage(progress)
@@ -239,7 +250,9 @@ class EnhancedNovelGenerator:
             "crisis": ActionType.CRISIS,
         }
 
-        event_type = event_type_map.get(orchestrated["type"], ActionType.DIALOGUE)
+        event_type = event_type_map.get(
+            orchestrated["type"], ActionType.DIALOGUE
+        )
 
         # Extract content based on type
         content = ""
@@ -326,7 +339,9 @@ class EnhancedNovelGenerator:
             tags=["transition"],
         )
 
-    def _generate_reaction(self, dialogue_event: StoryEvent) -> Optional[StoryEvent]:
+    def _generate_reaction(
+        self, dialogue_event: StoryEvent
+    ) -> Optional[StoryEvent]:
         """Generate reaction to dialogue"""
         if not self.characters or dialogue_event.character == "Narrator":
             return None
@@ -347,7 +362,10 @@ class EnhancedNovelGenerator:
         }
 
         reaction = self.dialogue_engine.generate_reaction(
-            reactor.name, dialogue_event.character, dialogue_event.content, plot_context
+            reactor.name,
+            dialogue_event.character,
+            dialogue_event.content,
+            plot_context,
         )
 
         return StoryEvent(
@@ -361,7 +379,9 @@ class EnhancedNovelGenerator:
             tags=["reaction"],
         )
 
-    def _generate_thought(self, context_event: StoryEvent) -> Optional[StoryEvent]:
+    def _generate_thought(
+        self, context_event: StoryEvent
+    ) -> Optional[StoryEvent]:
         """Generate internal thought based on context"""
         if not self.characters:
             return None
@@ -451,9 +471,7 @@ class ImprovedLiteraryWriter:
     ) -> str:
         """Generate thematic prologue"""
         prologue = "序章：命运的编织\n\n"
-        prologue += (
-            f"在所有可能性的交汇点上，一个关于{blueprint.theme}的故事即将展开。\n\n"
-        )
+        prologue += f"在所有可能性的交汇点上，一个关于{blueprint.theme}的故事即将展开。\n\n"
         prologue += f"{blueprint.central_conflict}\n\n"
 
         for char in characters:
@@ -518,19 +536,26 @@ class ImprovedLiteraryWriter:
         chapter = f"第{chapter_num}章：{title}\n\n"
 
         # Add thematic introduction for chapter
-        plot_point = next((p for p in blueprint.plot_points if p.stage == stage), None)
+        plot_point = next(
+            (p for p in blueprint.plot_points if p.stage == stage), None
+        )
         if plot_point:
             chapter += f"【{plot_point.description}】\n\n"
 
         # Process events into narrative
         paragraph = []
         for event in events:
-            narrative_text = self._convert_event_to_narrative(event, characters)
+            narrative_text = self._convert_event_to_narrative(
+                event, characters
+            )
             if narrative_text:
                 paragraph.append(narrative_text)
 
                 # Create paragraphs at natural breaks
-                if len(paragraph) >= 3 or event.event_type == ActionType.SCENE_CHANGE:
+                if (
+                    len(paragraph) >= 3
+                    or event.event_type == ActionType.SCENE_CHANGE
+                ):
                     chapter += " ".join(paragraph) + "\n\n"
                     paragraph = []
 
@@ -648,11 +673,14 @@ async def generate_enhanced_novel():
         "events": [e.to_dict() for e in events],
         "statistics": {
             "total_events": len(events),
-            "unique_dialogues": len(generator.dialogue_engine.memory.said_phrases),
+            "unique_dialogues": len(
+                generator.dialogue_engine.memory.said_phrases
+            ),
             "plot_stages_covered": len(
                 set(e.plot_stage for e in events if e.plot_stage)
             ),
-            "average_tension": sum(e.tension_level for e in events) / len(events),
+            "average_tension": sum(e.tension_level for e in events)
+            / len(events),
         },
     }
 
@@ -665,7 +693,9 @@ async def generate_enhanced_novel():
     print("📊 GENERATION COMPLETE")
     print("=" * 80)
     print(f"📖 Novel Length: {len(novel)} characters")
-    print(f"📝 Unique Dialogues: {len(generator.dialogue_engine.memory.said_phrases)}")
+    print(
+        f"📝 Unique Dialogues: {len(generator.dialogue_engine.memory.said_phrases)}"
+    )
     print(
         f"🎭 Character Arcs Completed: {len([c for c in characters if c.arc_description])}"
     )

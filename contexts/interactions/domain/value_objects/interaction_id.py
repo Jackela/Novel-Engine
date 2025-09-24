@@ -26,7 +26,9 @@ class InteractionId:
     def __post_init__(self):
         """Validate the UUID value."""
         if not isinstance(self.value, UUID):
-            raise ValueError(f"InteractionId must be a UUID, got {type(self.value)}")
+            raise ValueError(
+                f"InteractionId must be a UUID, got {type(self.value)}"
+            )
 
     @classmethod
     def generate(cls) -> "InteractionId":

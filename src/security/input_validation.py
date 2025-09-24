@@ -77,7 +77,9 @@ class SanitizationRule:
 class ValidationError(Exception):
     """ENHANCED VALIDATION EXCEPTION"""
 
-    def __init__(self, message: str, severity: ValidationSeverity, rule_name: str):
+    def __init__(
+        self, message: str, severity: ValidationSeverity, rule_name: str
+    ):
         self.message = message
         self.severity = severity
         self.rule_name = rule_name
@@ -126,7 +128,11 @@ class InputValidator:
                     pattern=re.compile(pattern, re.IGNORECASE | re.MULTILINE),
                     severity=ValidationSeverity.CRITICAL,
                     message="Potential SQL injection detected",
-                    input_types=[InputType.TEXT, InputType.SQL_LIKE, InputType.JSON],
+                    input_types=[
+                        InputType.TEXT,
+                        InputType.SQL_LIKE,
+                        InputType.JSON,
+                    ],
                 )
             )
 
@@ -155,7 +161,11 @@ class InputValidator:
                     pattern=re.compile(pattern, re.IGNORECASE | re.DOTALL),
                     severity=ValidationSeverity.HIGH,
                     message="Potential XSS attack detected",
-                    input_types=[InputType.TEXT, InputType.HTML, InputType.JSON],
+                    input_types=[
+                        InputType.TEXT,
+                        InputType.HTML,
+                        InputType.JSON,
+                    ],
                 )
             )
 
@@ -184,7 +194,11 @@ class InputValidator:
                     pattern=re.compile(pattern, re.IGNORECASE),
                     severity=ValidationSeverity.HIGH,
                     message="Potential command injection detected",
-                    input_types=[InputType.TEXT, InputType.FILENAME, InputType.JSON],
+                    input_types=[
+                        InputType.TEXT,
+                        InputType.FILENAME,
+                        InputType.JSON,
+                    ],
                 )
             )
 
@@ -195,7 +209,11 @@ class InputValidator:
                 pattern=re.compile(r"\.\.[\\/]", re.IGNORECASE),
                 severity=ValidationSeverity.HIGH,
                 message="Path traversal attempt detected",
-                input_types=[InputType.FILENAME, InputType.URL, InputType.TEXT],
+                input_types=[
+                    InputType.FILENAME,
+                    InputType.URL,
+                    InputType.TEXT,
+                ],
             )
         )
 
@@ -258,7 +276,11 @@ class InputValidator:
                 pattern=re.compile(r"\x00"),
                 severity=ValidationSeverity.HIGH,
                 message="Null byte injection detected",
-                input_types=[InputType.TEXT, InputType.FILENAME, InputType.URL],
+                input_types=[
+                    InputType.TEXT,
+                    InputType.FILENAME,
+                    InputType.URL,
+                ],
             )
         )
 
@@ -269,7 +291,11 @@ class InputValidator:
                 pattern=re.compile(r"[\u0000-\u001F\u007F-\u009F]"),
                 severity=ValidationSeverity.MEDIUM,
                 message="Dangerous unicode control characters detected",
-                input_types=[InputType.TEXT, InputType.USERNAME, InputType.EMAIL],
+                input_types=[
+                    InputType.TEXT,
+                    InputType.USERNAME,
+                    InputType.EMAIL,
+                ],
             )
         )
 
@@ -283,11 +309,17 @@ class InputValidator:
             SanitizationRule(
                 name="strip_whitespace",
                 sanitizer=lambda x: x.strip(),
-                input_types=[InputType.TEXT, InputType.USERNAME, InputType.EMAIL],
+                input_types=[
+                    InputType.TEXT,
+                    InputType.USERNAME,
+                    InputType.EMAIL,
+                ],
             ),
             SanitizationRule(
                 name="normalize_unicode",
-                sanitizer=lambda x: x.encode("ascii", "ignore").decode("ascii"),
+                sanitizer=lambda x: x.encode("ascii", "ignore").decode(
+                    "ascii"
+                ),
                 input_types=[InputType.USERNAME],
             ),
             SanitizationRule(
@@ -343,7 +375,9 @@ class InputValidator:
                         ValidationSeverity.HIGH,
                         ValidationSeverity.CRITICAL,
                     ]:
-                        raise ValidationError(rule.message, rule.severity, rule.name)
+                        raise ValidationError(
+                            rule.message, rule.severity, rule.name
+                        )
 
         # Apply sanitization rules
         for rule in self.sanitization_rules:
@@ -351,7 +385,9 @@ class InputValidator:
                 try:
                     value = rule.sanitizer(value)
                 except Exception as e:
-                    logger.error(f"SANITIZATION ERROR: {rule.name} | Error: {e}")
+                    logger.error(
+                        f"SANITIZATION ERROR: {rule.name} | Error: {e}"
+                    )
 
         # Log sanitization if value changed
         if value != original_value:
@@ -388,7 +424,8 @@ class InputValidator:
         """STANDARD RECURSIVE JSON VALIDATION"""
         if isinstance(obj, dict):
             return {
-                key: self._validate_json_recursive(value) for key, value in obj.items()
+                key: self._validate_json_recursive(value)
+                for key, value in obj.items()
             }
         elif isinstance(obj, list):
             return [self._validate_json_recursive(item) for item in obj]
@@ -474,15 +511,18 @@ class ValidationMiddleware(BaseHTTPMiddleware):
                     if body:
                         try:
                             json_data = json.loads(body.decode("utf-8"))
-                            validated_data = self.validator.validate_request_data(
-                                json_data
+                            validated_data = (
+                                self.validator.validate_request_data(json_data)
                             )
 
                             # Replace request body with validated data
-                            request._body = json.dumps(validated_data).encode("utf-8")
+                            request._body = json.dumps(validated_data).encode(
+                                "utf-8"
+                            )
                         except json.JSONDecodeError:
                             raise HTTPException(
-                                status_code=400, detail="Invalid JSON in request body"
+                                status_code=400,
+                                detail="Invalid JSON in request body",
                             )
 
             # Validate headers
@@ -511,11 +551,14 @@ class ValidationMiddleware(BaseHTTPMiddleware):
                 status_code = 400
 
             raise HTTPException(
-                status_code=status_code, detail=f"Input validation failed: {e.message}"
+                status_code=status_code,
+                detail=f"Input validation failed: {e.message}",
             )
         except Exception as e:
             logger.error(f"VALIDATION MIDDLEWARE ERROR: {e}")
-            raise HTTPException(status_code=500, detail="Internal validation error")
+            raise HTTPException(
+                status_code=500, detail="Internal validation error"
+            )
 
 
 # STANDARD GLOBAL VALIDATOR INSTANCE

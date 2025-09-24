@@ -9,6 +9,7 @@ import asyncio
 import logging
 import time
 import uuid
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
@@ -144,7 +145,9 @@ class NotificationRule:
     max_notifications_per_hour: int = 10
 
     # Schedule
-    active_hours: Optional[Dict[str, Any]] = None  # {"start": "09:00", "end": "17:00"}
+    active_hours: Optional[
+        Dict[str, Any]
+    ] = None  # {"start": "09:00", "end": "17:00"}
     active_days: List[str] = field(
         default_factory=lambda: ["mon", "tue", "wed", "thu", "fri"]
     )
@@ -301,7 +304,9 @@ class EmailHandler(ChannelHandler):
 
             # Add HTML if available
             if notification.formatted_content.get("html"):
-                html_body = MimeText(notification.formatted_content["html"], "html")
+                html_body = MimeText(
+                    notification.formatted_content["html"], "html"
+                )
                 msg.attach(html_body)
 
             # Send email
@@ -320,7 +325,9 @@ class EmailHandler(ChannelHandler):
             return True
 
         except Exception as e:
-            logger.error(f"Failed to send email to {notification.recipient}: {e}")
+            logger.error(
+                f"Failed to send email to {notification.recipient}: {e}"
+            )
             return False
 
     async def validate_config(self) -> bool:
@@ -359,7 +366,9 @@ class SlackHandler(ChannelHandler):
                 "text": notification.subject,
                 "attachments": [
                     {
-                        "color": self._get_color_for_priority(notification.priority),
+                        "color": self._get_color_for_priority(
+                            notification.priority
+                        ),
                         "fields": [
                             {
                                 "title": "Message",
@@ -378,7 +387,11 @@ class SlackHandler(ChannelHandler):
                 for key, value in notification.formatted_content.items():
                     if key != "html":
                         slack_payload["attachments"][0]["fields"].append(
-                            {"title": key.title(), "value": str(value), "short": True}
+                            {
+                                "title": key.title(),
+                                "value": str(value),
+                                "short": True,
+                            }
                         )
 
             # Send to Slack
@@ -388,7 +401,9 @@ class SlackHandler(ChannelHandler):
                 )
 
                 if response.status_code == 200:
-                    logger.info(f"Slack notification sent to {notification.recipient}")
+                    logger.info(
+                        f"Slack notification sent to {notification.recipient}"
+                    )
                     return True
                 else:
                     logger.error(
@@ -453,10 +468,14 @@ class WebhookHandler(ChannelHandler):
                 )
 
                 if 200 <= response.status_code < 300:
-                    logger.info(f"Webhook notification sent to {self.webhook_url}")
+                    logger.info(
+                        f"Webhook notification sent to {self.webhook_url}"
+                    )
                     return True
                 else:
-                    logger.error(f"Webhook notification failed: {response.status_code}")
+                    logger.error(
+                        f"Webhook notification failed: {response.status_code}"
+                    )
                     return False
 
         except Exception as e:
@@ -552,7 +571,9 @@ class AlertDetector:
         self.rules = [r for r in self.rules if r.rule_id != rule_id]
         return len(self.rules) < initial_count
 
-    async def analyze_test_result(self, test_result: TestResult) -> List[Alert]:
+    async def analyze_test_result(
+        self, test_result: TestResult
+    ) -> List[Alert]:
         """Analyze test result and generate alerts"""
 
         alerts = []
@@ -679,7 +700,10 @@ class AlertDetector:
         if not test_result.passed:
             alert_type = AlertType.TEST_FAILURE
             priority = NotificationPriority.HIGH
-        elif rule.min_quality_score and test_result.score < rule.min_quality_score:
+        elif (
+            rule.min_quality_score
+            and test_result.score < rule.min_quality_score
+        ):
             alert_type = AlertType.QUALITY_REGRESSION
             priority = NotificationPriority.MEDIUM
 
@@ -731,7 +755,8 @@ class AlertDetector:
         recent_triggers = [
             a
             for a in self.recent_alerts
-            if a.created_at >= one_hour_ago and a.context.get("rule_id") == rule.rule_id
+            if a.created_at >= one_hour_ago
+            and a.context.get("rule_id") == rule.rule_id
         ]
 
         if len(recent_triggers) >= rule.max_notifications_per_hour:
@@ -751,7 +776,10 @@ class AlertDetector:
                 alert_types=[AlertType.TEST_FAILURE],
                 priority_threshold=NotificationPriority.HIGH,
                 recipients=["admin@novel-engine.com"],
-                channels=[NotificationChannel.EMAIL, NotificationChannel.SLACK],
+                channels=[
+                    NotificationChannel.EMAIL,
+                    NotificationChannel.SLACK,
+                ],
                 cooldown_minutes=5,
                 max_notifications_per_hour=20,
             )
@@ -846,18 +874,25 @@ class NotificationService(INotificationService):
         # Webhook handler
         webhook_config = self.config.get("webhook", {})
         if webhook_config.get("enabled", False):
-            self.channel_handlers[NotificationChannel.WEBHOOK] = WebhookHandler(
-                webhook_config
-            )
+            self.channel_handlers[
+                NotificationChannel.WEBHOOK
+            ] = WebhookHandler(webhook_config)
 
         # Always enable webhook channel as fallback
         if len(self.channel_handlers) == 0:
             # Use webhook handler as default
-            self.channel_handlers[NotificationChannel.WEBHOOK] = WebhookHandler(
-                {"enabled": True, "webhook_url": "http://localhost:8005/internal"}
+            self.channel_handlers[
+                NotificationChannel.WEBHOOK
+            ] = WebhookHandler(
+                {
+                    "enabled": True,
+                    "webhook_url": "http://localhost:8005/internal",
+                }
             )
 
-        logger.info(f"Initialized {len(self.channel_handlers)} notification channels")
+        logger.info(
+            f"Initialized {len(self.channel_handlers)} notification channels"
+        )
 
     async def initialize(self):
         """Initialize service resources"""
@@ -866,7 +901,9 @@ class NotificationService(INotificationService):
         for channel, handler in self.channel_handlers.items():
             is_valid = await handler.validate_config()
             if not is_valid:
-                logger.warning(f"Channel {channel.value} configuration is invalid")
+                logger.warning(
+                    f"Channel {channel.value} configuration is invalid"
+                )
 
         # Start background tasks
         self.delivery_task = asyncio.create_task(self._delivery_worker())
@@ -965,7 +1002,9 @@ class NotificationService(INotificationService):
 
     # === Core Processing Methods ===
 
-    async def _process_alert(self, alert: Alert, custom_recipients: List[str] = None):
+    async def _process_alert(
+        self, alert: Alert, custom_recipients: List[str] = None
+    ):
         """Process alert and generate notifications"""
 
         # Store alert
@@ -1068,7 +1107,9 @@ This is an automated notification from Novel-Engine AI Testing System.
             """
         else:
             subject = "{title}"
-            body = "{message}\n\nPriority: {priority} | Source: {source_service}"
+            body = (
+                "{message}\n\nPriority: {priority} | Source: {source_service}"
+            )
 
         return NotificationTemplate(
             name=f"Default {alert_type.value} {channel.value}",
@@ -1116,7 +1157,9 @@ This is an automated notification from Novel-Engine AI Testing System.
         }
 
         if template.html_template:
-            formatted_content["html"] = template.html_template.format(**variables)
+            formatted_content["html"] = template.html_template.format(
+                **variables
+            )
 
         return subject, content, formatted_content
 
@@ -1156,8 +1199,12 @@ This is an automated notification from Novel-Engine AI Testing System.
         # Check active hours
         if rule.active_hours:
             current_time = now.time()
-            start_time = datetime.strptime(rule.active_hours["start"], "%H:%M").time()
-            end_time = datetime.strptime(rule.active_hours["end"], "%H:%M").time()
+            start_time = datetime.strptime(
+                rule.active_hours["start"], "%H:%M"
+            ).time()
+            end_time = datetime.strptime(
+                rule.active_hours["end"], "%H:%M"
+            ).time()
 
             if not (start_time <= current_time <= end_time):
                 return False
@@ -1173,8 +1220,12 @@ This is an automated notification from Novel-Engine AI Testing System.
             try:
                 if self.pending_notifications:
                     # Process notifications in batches
-                    batch = self.pending_notifications[:10]  # Process 10 at a time
-                    self.pending_notifications = self.pending_notifications[10:]
+                    batch = self.pending_notifications[
+                        :10
+                    ]  # Process 10 at a time
+                    self.pending_notifications = self.pending_notifications[
+                        10:
+                    ]
 
                     # Deliver notifications in parallel
                     delivery_tasks = [
@@ -1182,7 +1233,9 @@ This is an automated notification from Novel-Engine AI Testing System.
                         for notification in batch
                     ]
 
-                    await asyncio.gather(*delivery_tasks, return_exceptions=True)
+                    await asyncio.gather(
+                        *delivery_tasks, return_exceptions=True
+                    )
 
                 # Wait before next batch
                 await asyncio.sleep(5)
@@ -1213,7 +1266,9 @@ This is an automated notification from Novel-Engine AI Testing System.
             if success:
                 notification.status = NotificationStatus.DELIVERED
                 notification.delivered_at = datetime.now(timezone.utc)
-                logger.info(f"Notification delivered: {notification.notification_id}")
+                logger.info(
+                    f"Notification delivered: {notification.notification_id}"
+                )
             else:
                 notification.status = NotificationStatus.FAILED
                 notification.failed_at = datetime.now(timezone.utc)
@@ -1259,10 +1314,14 @@ This is an automated notification from Novel-Engine AI Testing System.
 
                 # Remove old notifications
                 self.sent_notifications = [
-                    n for n in self.sent_notifications if n.created_at >= cutoff_time
+                    n
+                    for n in self.sent_notifications
+                    if n.created_at >= cutoff_time
                 ]
 
-                logger.info(f"Cleanup: removed {len(old_alert_ids)} old alerts")
+                logger.info(
+                    f"Cleanup: removed {len(old_alert_ids)} old alerts"
+                )
 
                 # Wait 1 hour before next cleanup
                 await asyncio.sleep(3600)
@@ -1375,8 +1434,6 @@ This is an automated notification from Novel-Engine AI Testing System.
 
 # === FastAPI Application ===
 
-from contextlib import asynccontextmanager
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -1421,7 +1478,9 @@ async def health_check():
     """Service health check"""
     service: NotificationService = app.state.notification_service
 
-    channels_status = "connected" if service.channel_handlers else "disconnected"
+    channels_status = (
+        "connected" if service.channel_handlers else "disconnected"
+    )
     active_alerts = len(service.active_alerts)
     len(service.pending_notifications)
 
@@ -1453,7 +1512,9 @@ async def send_custom_alert(
     """Send custom alert"""
     service: NotificationService = app.state.notification_service
 
-    alert_id = await service.send_alert(alert_type, message, priority, recipients)
+    alert_id = await service.send_alert(
+        alert_type, message, priority, recipients
+    )
     return {"alert_id": alert_id}
 
 
@@ -1521,7 +1582,8 @@ async def get_notification_status():
             [
                 n
                 for n in service.sent_notifications
-                if n.sent_at and n.sent_at.date() == datetime.now(timezone.utc).date()
+                if n.sent_at
+                and n.sent_at.date() == datetime.now(timezone.utc).date()
             ]
         ),
         "available_channels": list(service.channel_handlers.keys()),

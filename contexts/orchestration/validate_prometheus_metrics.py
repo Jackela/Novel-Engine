@@ -102,8 +102,10 @@ def test_prometheus_metrics_collector():
             "turn_duration_seconds": "novel_engine_turn_duration_seconds"
             in metrics_data,
             "turns_total": "novel_engine_turns_total" in metrics_data,
-            "phase_duration": "novel_engine_phase_duration_seconds" in metrics_data,
-            "ai_cost_total": "novel_engine_ai_cost_total_dollars" in metrics_data,
+            "phase_duration": "novel_engine_phase_duration_seconds"
+            in metrics_data,
+            "ai_cost_total": "novel_engine_ai_cost_total_dollars"
+            in metrics_data,
         }
 
         # Verify specific values are recorded
@@ -129,14 +131,17 @@ def test_prometheus_metrics_collector():
         )
 
         collector.record_compensation_execution(
-            compensation_type="test_rollback", success=True, execution_time_seconds=0.5
+            compensation_type="test_rollback",
+            success=True,
+            execution_time_seconds=0.5,
         )
 
         final_metrics = collector.get_metrics_data()
 
         additional_metrics = {
             "errors_tracked": "novel_engine_errors_total" in final_metrics,
-            "compensation_tracked": "novel_engine_compensations_total" in final_metrics,
+            "compensation_tracked": "novel_engine_compensations_total"
+            in final_metrics,
         }
 
         print(f"✅ Additional metrics: {additional_metrics}")
@@ -192,7 +197,9 @@ def test_enhanced_performance_tracker():
 
         # Test Prometheus integration
         prometheus_methods = {
-            "get_prometheus_metrics": hasattr(tracker, "get_prometheus_metrics"),
+            "get_prometheus_metrics": hasattr(
+                tracker, "get_prometheus_metrics"
+            ),
             "get_prometheus_content_type": hasattr(
                 tracker, "get_prometheus_content_type"
             ),
@@ -206,12 +213,12 @@ def test_enhanced_performance_tracker():
 
         health_checks = {
             "has_enhanced_features": "enhanced_features" in health_status,
-            "prometheus_integration": health_status.get("enhanced_features", {}).get(
-                "prometheus_metrics", False
-            ),
-            "business_kpi_tracking": health_status.get("enhanced_features", {}).get(
-                "business_kpi_tracking", False
-            ),
+            "prometheus_integration": health_status.get(
+                "enhanced_features", {}
+            ).get("prometheus_metrics", False),
+            "business_kpi_tracking": health_status.get(
+                "enhanced_features", {}
+            ).get("business_kpi_tracking", False),
         }
 
         print(f"✅ Health status: {health_checks}")
@@ -267,7 +274,10 @@ def test_fastapi_integration():
 
         print(f"✅ App info: {app_info}")
 
-        if app_info["version"] == "2.0.0" and app_info["description_contains_m10"]:
+        if (
+            app_info["version"] == "2.0.0"
+            and app_info["description_contains_m10"]
+        ):
             print("✅ FastAPI Integration: ALL TESTS PASSED")
             return True
         else:
@@ -324,7 +334,9 @@ def main():
         print("✅ Extended metrics suite fully functional")
         print("✅ FastAPI integration with middleware working")
         print("✅ Enhanced performance tracking operational")
-        print("\n🚀 Ready to proceed to Wave 3: OpenTelemetry Distributed Tracing")
+        print(
+            "\n🚀 Ready to proceed to Wave 3: OpenTelemetry Distributed Tracing"
+        )
         return 0
     else:
         print(f"\n❌ M10 WAVE 2: {total_tests - passed_tests} tests failed")

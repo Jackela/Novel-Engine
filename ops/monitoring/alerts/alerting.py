@@ -75,7 +75,9 @@ class AlertRule:
     for_duration: float = 300.0  # seconds (5 minutes)
 
     # Notification configuration
-    notification_channels: List[NotificationChannel] = field(default_factory=list)
+    notification_channels: List[NotificationChannel] = field(
+        default_factory=list
+    )
     escalation_rules: List["EscalationRule"] = field(default_factory=list)
 
     # Filtering
@@ -201,7 +203,9 @@ class MetricBuffer:
 class AlertManager:
     """Manages alerts and notifications"""
 
-    def __init__(self, config: NotificationConfig, db_path: str = "data/alerts.db"):
+    def __init__(
+        self, config: NotificationConfig, db_path: str = "data/alerts.db"
+    ):
         self.config = config
         self.db_path = db_path
 
@@ -211,7 +215,9 @@ class AlertManager:
         self.alert_history: List[Alert] = []
 
         # Metric buffers for anomaly detection
-        self.metric_buffers: Dict[str, MetricBuffer] = defaultdict(MetricBuffer)
+        self.metric_buffers: Dict[str, MetricBuffer] = defaultdict(
+            MetricBuffer
+        )
 
         # Notification tracking
         self.notification_queue: deque = deque()
@@ -361,7 +367,9 @@ class AlertManager:
             if should_fire:
                 if alert_id not in self.active_alerts:
                     # New alert
-                    await self._fire_alert(rule, current_value, anomaly_detected)
+                    await self._fire_alert(
+                        rule, current_value, anomaly_detected
+                    )
                 else:
                     # Existing alert - update value
                     self.active_alerts[alert_id].current_value = current_value
@@ -373,7 +381,9 @@ class AlertManager:
         except Exception as e:
             logger.error(f"Error evaluating rule {rule.name}: {e}")
 
-    def _check_threshold(self, value: float, condition: str, threshold: float) -> bool:
+    def _check_threshold(
+        self, value: float, condition: str, threshold: float
+    ) -> bool:
         """Check if value violates threshold condition"""
         condition = condition.strip()
 
@@ -386,7 +396,9 @@ class AlertManager:
         elif condition.startswith("<"):
             return value < threshold
         elif condition.startswith("=="):
-            return abs(value - threshold) < 0.001  # Handle floating point comparison
+            return (
+                abs(value - threshold) < 0.001
+            )  # Handle floating point comparison
         elif condition.startswith("!="):
             return abs(value - threshold) >= 0.001
         else:
@@ -465,7 +477,8 @@ class AlertManager:
                     "alert": alert,
                     "channel": channel,
                     "attempt": 0,
-                    "scheduled_at": time.time() + (escalation.delay_minutes * 60),
+                    "scheduled_at": time.time()
+                    + (escalation.delay_minutes * 60),
                     "escalation": True,
                     "escalation_template": escalation.message_template,
                 }
@@ -519,15 +532,25 @@ class AlertManager:
             success = False
 
             if channel == NotificationChannel.EMAIL:
-                success = await self._send_email_notification(alert, notification)
+                success = await self._send_email_notification(
+                    alert, notification
+                )
             elif channel == NotificationChannel.SLACK:
-                success = await self._send_slack_notification(alert, notification)
+                success = await self._send_slack_notification(
+                    alert, notification
+                )
             elif channel == NotificationChannel.WEBHOOK:
-                success = await self._send_webhook_notification(alert, notification)
+                success = await self._send_webhook_notification(
+                    alert, notification
+                )
             elif channel == NotificationChannel.PAGERDUTY:
-                success = await self._send_pagerduty_notification(alert, notification)
+                success = await self._send_pagerduty_notification(
+                    alert, notification
+                )
             elif channel == NotificationChannel.SMS:
-                success = await self._send_sms_notification(alert, notification)
+                success = await self._send_sms_notification(
+                    alert, notification
+                )
 
             if success:
                 # Update rate limit
@@ -537,7 +560,9 @@ class AlertManager:
                 alert.notification_count += 1
                 alert.last_notification = datetime.now(timezone.utc)
 
-                logger.info(f"Notification sent: {channel.value} for alert {alert.id}")
+                logger.info(
+                    f"Notification sent: {channel.value} for alert {alert.id}"
+                )
             else:
                 # Retry logic
                 notification["attempt"] += 1
@@ -570,7 +595,7 @@ class AlertManager:
             - Current Value: {alert.current_value}
             - Threshold: {alert.threshold_value}
             - Fired At: {alert.fired_at.isoformat()}
-            
+
             Labels: {json.dumps(alert.labels, indent=2)}
             """
 
@@ -582,12 +607,16 @@ class AlertManager:
             msg.attach(MIMEText(body, "plain"))
 
             # Send email
-            with smtplib.SMTP(self.config.smtp_host, self.config.smtp_port) as server:
+            with smtplib.SMTP(
+                self.config.smtp_host, self.config.smtp_port
+            ) as server:
                 if self.config.smtp_use_tls:
                     server.starttls()
 
                 if self.config.smtp_username and self.config.smtp_password:
-                    server.login(self.config.smtp_username, self.config.smtp_password)
+                    server.login(
+                        self.config.smtp_username, self.config.smtp_password
+                    )
 
                 server.send_message(msg)
 
@@ -703,7 +732,9 @@ class AlertManager:
                             if response.status < 400:
                                 success_count += 1
                     except Exception as e:
-                        logger.warning(f"Webhook notification failed for {url}: {e}")
+                        logger.warning(
+                            f"Webhook notification failed for {url}: {e}"
+                        )
 
             return success_count > 0
 
@@ -757,14 +788,22 @@ class AlertManager:
     ) -> bool:
         """Send SMS notification"""
         try:
-            if not self.config.sms_webhook_url or not self.config.sms_recipients:
+            if (
+                not self.config.sms_webhook_url
+                or not self.config.sms_recipients
+            ):
                 return False
 
             # Create SMS message
-            message = f"Novel Engine Alert: {alert.rule_name} - {alert.message}"
+            message = (
+                f"Novel Engine Alert: {alert.rule_name} - {alert.message}"
+            )
 
             # Send SMS via webhook
-            payload = {"recipients": self.config.sms_recipients, "message": message}
+            payload = {
+                "recipients": self.config.sms_recipients,
+                "message": message,
+            }
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(
@@ -804,7 +843,9 @@ class AlertManager:
                             if alert.acknowledged_at
                             else None
                         ),
-                        alert.resolved_at.timestamp() if alert.resolved_at else None,
+                        alert.resolved_at.timestamp()
+                        if alert.resolved_at
+                        else None,
                         alert.current_value,
                         alert.threshold_value,
                         json.dumps(alert.labels),
@@ -822,7 +863,9 @@ class AlertManager:
         except Exception as e:
             logger.error(f"Error persisting alert: {e}")
 
-    async def acknowledge_alert(self, alert_id: str, user: str = "system") -> bool:
+    async def acknowledge_alert(
+        self, alert_id: str, user: str = "system"
+    ) -> bool:
         """Acknowledge an alert"""
         if alert_id in self.active_alerts:
             alert = self.active_alerts[alert_id]
@@ -843,7 +886,11 @@ class AlertManager:
     def get_alert_history(self, hours: int = 24) -> List[Alert]:
         """Get alert history for specified time period"""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
-        return [alert for alert in self.alert_history if alert.fired_at >= cutoff_time]
+        return [
+            alert
+            for alert in self.alert_history
+            if alert.fired_at >= cutoff_time
+        ]
 
     def get_alert_statistics(self) -> Dict[str, Any]:
         """Get alert statistics"""

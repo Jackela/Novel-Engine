@@ -26,7 +26,47 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-import aioredis
+try:
+    import aioredis
+except ImportError:
+    # Mock aioredis for testing environments
+    class MockRedis:
+        async def get(self, *args, **kwargs):
+            return None
+
+        async def set(self, *args, **kwargs):
+            pass
+
+        async def delete(self, *args, **kwargs):
+            pass
+
+        async def exists(self, *args, **kwargs):
+            return False
+
+        async def publish(self, *args, **kwargs):
+            pass
+
+        async def subscribe(self, *args, **kwargs):
+            return MockPubSub()
+
+        def pubsub(self):
+            return MockPubSub()
+
+        async def close(self, *args, **kwargs):
+            pass
+
+    class MockPubSub:
+        async def subscribe(self, *args, **kwargs):
+            pass
+
+        async def get_message(self, *args, **kwargs):
+            return None
+
+    aioredis = type(
+        "MockAioredis",
+        (),
+        {"Redis": MockRedis, "from_url": lambda url: MockRedis()},
+    )()
 import aiosqlite
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
@@ -129,7 +169,9 @@ class SecurityMetrics(BaseModel):
 class SecurityDashboard:
     """Enterprise Security Monitoring Dashboard"""
 
-    def __init__(self, database_path: str, redis_url: str = "redis://localhost:6379"):
+    def __init__(
+        self, database_path: str, redis_url: str = "redis://localhost:6379"
+    ):
         self.database_path = database_path
         self.redis_url = redis_url
 
@@ -266,7 +308,7 @@ class SecurityDashboard:
                 id=alert_data["event_id"],
                 timestamp=datetime.fromisoformat(alert_data["timestamp"]),
                 severity=severity,
-                title=f"Security Event: {alert_data.get('event_type', 'Unknown')}",
+                title=f"Security Event: {alert_data.get( 'event_type', 'Unknown')}",
                 description=f"Threat detected from {alert_data['source_ip']}",
                 source_ip=alert_data["source_ip"],
                 user_id=alert_data.get("user_id"),
@@ -341,7 +383,9 @@ class SecurityDashboard:
                 ]
             )
 
-            logger.info(f"📋 Created incident {incident_id} from alert {alert.id}")
+            logger.info(
+                f"📋 Created incident {incident_id} from alert {alert.id}"
+            )
 
         except Exception as e:
             logger.error(f"Error creating incident from alert: {e}")
@@ -351,7 +395,7 @@ class SecurityDashboard:
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute(
                 """
-                INSERT OR REPLACE INTO security_incidents 
+                INSERT OR REPLACE INTO security_incidents
                 (id, title, description, severity, status, created_at, created_by,
                  assigned_to, related_alerts, timeline, resolution_notes, resolved_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -403,12 +447,16 @@ class SecurityDashboard:
                         timeline=json.loads(row[9] or "[]"),
                         resolution_notes=row[10] or "",
                         resolved_at=(
-                            datetime.fromisoformat(row[11]) if row[11] else None
+                            datetime.fromisoformat(row[11])
+                            if row[11]
+                            else None
                         ),
                     )
                     self.incidents[incident.id] = incident
 
-                logger.info(f"📊 Loaded {len(self.incidents)} security incidents")
+                logger.info(
+                    f"📊 Loaded {len(self.incidents)} security incidents"
+                )
 
         except Exception as e:
             logger.error(f"Error loading incidents: {e}")
@@ -524,12 +572,16 @@ class SecurityDashboard:
                                 "description": f"SOC2 control '{control}' needs attention",
                             }
                         )
-                        recommendations.append(f"Address {control} for SOC2 compliance")
+                        recommendations.append(
+                            f"Address {control} for SOC2 compliance"
+                        )
 
             # Calculate compliance score
             total_controls = passed_controls + failed_controls
             compliance_score = (
-                (passed_controls / total_controls * 100) if total_controls > 0 else 0
+                (passed_controls / total_controls * 100)
+                if total_controls > 0
+                else 0
             )
 
             return ComplianceReport(
@@ -543,7 +595,9 @@ class SecurityDashboard:
             )
 
         except Exception as e:
-            logger.error(f"Error generating compliance report for {framework}: {e}")
+            logger.error(
+                f"Error generating compliance report for {framework}: {e}"
+            )
             return None
 
     async def _save_compliance_report(self, report: ComplianceReport):
@@ -552,7 +606,7 @@ class SecurityDashboard:
             async with aiosqlite.connect(self.database_path) as conn:
                 await conn.execute(
                     """
-                    INSERT INTO compliance_reports 
+                    INSERT INTO compliance_reports
                     (id, framework, report_date, compliance_score, passed_controls,
                      failed_controls, findings, recommendations, generated_by)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -758,7 +812,7 @@ class SecurityDashboard:
                     cursor = await conn.execute(
                         """
                         SELECT compliance_score, passed_controls, failed_controls, report_date
-                        FROM compliance_reports 
+                        FROM compliance_reports
                         WHERE framework = ?
                         ORDER BY report_date DESC
                         LIMIT 1

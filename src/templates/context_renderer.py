@@ -34,10 +34,7 @@ from src.core.data_models import (
 from src.memory.layered_memory import LayeredMemorySystem
 
 # Import enhanced template engine and memory systems
-from .dynamic_template_engine import (
-    DynamicTemplateEngine,
-    TemplateContext,
-)
+from .dynamic_template_engine import DynamicTemplateEngine, TemplateContext
 
 # Comprehensive logging enhanced by diagnostic clarity
 logger = logging.getLogger(__name__)
@@ -98,7 +95,9 @@ class ContextSection:
     priority: ContextPriority
     section_type: str  # "memory", "character", "environment", "temporal", etc.
     metadata: Dict[str, Any] = field(default_factory=dict)
-    dependencies: List[str] = field(default_factory=list)  # Required other sections
+    dependencies: List[str] = field(
+        default_factory=list
+    )  # Required other sections
     character_count: int = 0
     relevance_score: float = 0.0
 
@@ -152,7 +151,9 @@ class ContextRenderer:
         """
         self.template_engine = template_engine
         self.memory_system = memory_system
-        self.default_constraints = default_constraints or RenderingConstraints()
+        self.default_constraints = (
+            default_constraints or RenderingConstraints()
+        )
 
         # Sacred rendering templates for different formats
         self._format_templates = {
@@ -220,10 +221,15 @@ class ContextRenderer:
 
             # Render enhanced final context
             rendered_result = await self._render_final_context(
-                optimized_sections, render_format, context, effective_constraints
+                optimized_sections,
+                render_format,
+                context,
+                effective_constraints,
             )
 
-            render_duration = (datetime.now() - render_start).total_seconds() * 1000
+            render_duration = (
+                datetime.now() - render_start
+            ).total_seconds() * 1000
 
             # Create enhanced render result
             result = RenderResult(
@@ -238,10 +244,12 @@ class ContextRenderer:
             )
 
             # Update enhanced statistics
-            self._update_rendering_statistics(render_format, render_duration, result)
+            self._update_rendering_statistics(
+                render_format, render_duration, result
+            )
 
             logger.info(
-                f"CONTEXT RENDERED: {render_format.value} format ({render_duration:.2f}ms)"
+                f"CONTEXT RENDERED: {render_format.value}format ({render_duration:.2f}ms)"
             )
 
             return StandardResponse(
@@ -320,7 +328,10 @@ class ContextRenderer:
 
                 return StandardResponse(
                     success=True,
-                    data={"render_result": result_data, "adaptive_optimization": True},
+                    data={
+                        "render_result": result_data,
+                        "adaptive_optimization": True,
+                    },
                     metadata={"blessing": "adaptive_prompt_optimized"},
                 )
             else:
@@ -429,18 +440,30 @@ class ContextRenderer:
         for section in sections:
             # Check enhanced length constraints
             if constraints.max_length:
-                if total_characters + section.character_count > constraints.max_length:
-                    if constraints.adaptive_truncation and section.priority in [
-                        ContextPriority.CRITICAL,
-                        ContextPriority.HIGH,
-                    ]:
+                if (
+                    total_characters + section.character_count
+                    > constraints.max_length
+                ):
+                    if (
+                        constraints.adaptive_truncation
+                        and section.priority
+                        in [
+                            ContextPriority.CRITICAL,
+                            ContextPriority.HIGH,
+                        ]
+                    ):
                         # Apply enhanced intelligent truncation
-                        truncated_section = self._truncate_section_intelligently(
-                            section, constraints.max_length - total_characters
+                        truncated_section = (
+                            self._truncate_section_intelligently(
+                                section,
+                                constraints.max_length - total_characters,
+                            )
                         )
                         if truncated_section:
                             included_sections.append(truncated_section)
-                            total_characters += truncated_section.character_count
+                            total_characters += (
+                                truncated_section.character_count
+                            )
                             decisions.append(
                                 f"Truncated {section.section_id} to fit constraints"
                             )
@@ -479,7 +502,9 @@ class ContextRenderer:
         included_sections = optimized_sections["included"]
 
         # Select enhanced template based on format
-        template_name = self._format_templates.get(render_format, "narrative_context")
+        template_name = self._format_templates.get(
+            render_format, "narrative_context"
+        )
 
         # Prepare enhanced template context
         template_context = context
@@ -590,7 +615,9 @@ class ContextRenderer:
         for memory in memories:
             # Apply enhanced time window
             if constraints.time_window_hours:
-                memory_age = (datetime.now() - memory.timestamp).total_seconds() / 3600
+                memory_age = (
+                    datetime.now() - memory.timestamp
+                ).total_seconds() / 3600
                 if memory_age > constraints.time_window_hours:
                     continue
 
@@ -607,7 +634,11 @@ class ContextRenderer:
         # Sort enhanced memories by importance
         sorted_memories = sorted(
             filtered_memories,
-            key=lambda m: (m.relevance_score, abs(m.emotional_weight), m.timestamp),
+            key=lambda m: (
+                m.relevance_score,
+                abs(m.emotional_weight),
+                m.timestamp,
+            ),
             reverse=True,
         )
 
@@ -631,7 +662,9 @@ class ContextRenderer:
 
                 memory_line = f"[{timestamp_str}] {memory.content[:100]}..."
                 if memory.participants:
-                    memory_line += f" (with {', '.join(memory.participants[:2])})"
+                    memory_line += (
+                        f" (with {', '.join(memory.participants[:2])})"
+                    )
                 if emotion_str != "Neutral":
                     memory_line += f" [{emotion_str}]"
 
@@ -646,7 +679,10 @@ class ContextRenderer:
                 content=content,
                 priority=priority,
                 section_type="memory",
-                metadata={"memory_type": mem_type, "memory_count": len(mem_list)},
+                metadata={
+                    "memory_type": mem_type,
+                    "memory_count": len(mem_list),
+                },
                 relevance_score=sum(m.relevance_score for m in mem_list)
                 / len(mem_list),
             )
@@ -665,7 +701,9 @@ class ContextRenderer:
 
         for key, value in env_context.items():
             if isinstance(value, (str, int, float, bool)):
-                content_parts.append(f"{key.replace('_', ' ').title()}: {value}")
+                content_parts.append(
+                    f"{key.replace('_', ' ').title()}: {value}"
+                )
             elif isinstance(value, list):
                 content_parts.append(
                     f"{key.replace('_', ' ').title()}: {', '.join(str(v) for v in value[:3])}"
@@ -700,7 +738,9 @@ class ContextRenderer:
 
         if temporal_context:
             for key, value in temporal_context.items():
-                content_parts.append(f"{key.replace('_', ' ').title()}: {value}")
+                content_parts.append(
+                    f"{key.replace('_', ' ').title()}: {value}"
+                )
 
         content = "\n".join(content_parts)
 
@@ -758,7 +798,9 @@ class ContextRenderer:
             if isinstance(equipment_data, dict):
                 condition = equipment_data.get("condition", "Unknown")
                 status = equipment_data.get("status", "Unknown")
-                content_parts.append(f"{equipment_name}: {condition} ({status})")
+                content_parts.append(
+                    f"{equipment_name}: {condition} ({status})"
+                )
             else:
                 content_parts.append(f"{equipment_name}: {equipment_data}")
 
@@ -795,7 +837,10 @@ class ContextRenderer:
             # Prefer moderate length content
             optimal_length = 200
             length_factor = max(
-                0, 1 - abs(section.character_count - optimal_length) / optimal_length
+                0,
+                1
+                - abs(section.character_count - optimal_length)
+                / optimal_length,
             )
             base_relevance += length_factor * 0.1
 
@@ -866,9 +911,10 @@ class ContextRenderer:
                     or focus_area.lower() in section.content.lower()
                     or focus_area.lower() in section.section_type.lower()
                 ):
-
                     # Boost enhanced relevance and priority
-                    section.relevance_score = min(1.0, section.relevance_score + 0.2)
+                    section.relevance_score = min(
+                        1.0, section.relevance_score + 0.2
+                    )
 
                     if section.priority == ContextPriority.LOW:
                         section.priority = ContextPriority.MEDIUM
@@ -878,7 +924,10 @@ class ContextRenderer:
         return sections
 
     async def _optimize_for_length(
-        self, render_result: RenderResult, target_length: int, context: TemplateContext
+        self,
+        render_result: RenderResult,
+        target_length: int,
+        context: TemplateContext,
     ) -> Optional[RenderResult]:
         """Apply enhanced length optimization to render result"""
         if render_result.total_character_count <= target_length:
@@ -908,7 +957,10 @@ class ContextRenderer:
                 if new_length <= target_length:
                     break
 
-            if sum(s.character_count for s in included_sections) <= target_length:
+            if (
+                sum(s.character_count for s in included_sections)
+                <= target_length
+            ):
                 break
 
         # Re-render enhanced with reduced sections
@@ -916,7 +968,9 @@ class ContextRenderer:
             "included": included_sections,
             "excluded": render_result.sections_excluded + removed_sections,
             "decisions": render_result.adaptive_decisions
-            + [f"Removed {len(removed_sections)} sections for length optimization"],
+            + [
+                f"Removed {len(removed_sections)} sections for length optimization"
+            ],
         }
 
         new_content = await self._render_final_context(
@@ -954,8 +1008,12 @@ class ContextRenderer:
         self, memory_type: str, memories: List[MemoryItem]
     ) -> ContextPriority:
         """Determine enhanced priority for memory section"""
-        avg_relevance = sum(m.relevance_score for m in memories) / len(memories)
-        avg_emotion = sum(abs(m.emotional_weight) for m in memories) / len(memories)
+        avg_relevance = sum(m.relevance_score for m in memories) / len(
+            memories
+        )
+        avg_emotion = sum(abs(m.emotional_weight) for m in memories) / len(
+            memories
+        )
 
         if memory_type == "working" or avg_relevance > 0.8:
             return ContextPriority.HIGH
@@ -1036,7 +1094,10 @@ Content: {{section.content}}
 """
 
     def _update_rendering_statistics(
-        self, render_format: RenderFormat, render_time: float, result: RenderResult
+        self,
+        render_format: RenderFormat,
+        render_time: float,
+        result: RenderResult,
     ):
         """Update enhanced rendering statistics"""
         self.rendering_stats["total_renders"] += 1
@@ -1052,7 +1113,9 @@ Content: {{section.content}}
         self.rendering_stats["adaptive_decisions_made"] += len(
             result.adaptive_decisions
         )
-        self.rendering_stats["sections_rendered"] += len(result.sections_included)
+        self.rendering_stats["sections_rendered"] += len(
+            result.sections_included
+        )
 
     def get_rendering_statistics(self) -> Dict[str, Any]:
         """Get enhanced rendering statistics"""
@@ -1077,7 +1140,9 @@ async def test_standard_context_renderer():
     test_template_dir = Path("test_renderer_templates")
     test_template_dir.mkdir(exist_ok=True)
 
-    template_engine = DynamicTemplateEngine(template_directory=str(test_template_dir))
+    template_engine = DynamicTemplateEngine(
+        template_directory=str(test_template_dir)
+    )
     context_renderer = ContextRenderer(template_engine)
 
     # Create enhanced test context
@@ -1124,7 +1189,10 @@ async def test_standard_context_renderer():
             "power_armor": {"condition": "Good", "status": "Active"},
         },
         relationship_context={
-            "Brother Marcus": {"trust_level": 9, "relationship_type": "Battle Brother"},
+            "Brother Marcus": {
+                "trust_level": 9,
+                "relationship_type": "Battle Brother",
+            },
             "Sister Elena": {"trust_level": 8, "relationship_type": "Ally"},
         },
     )
@@ -1136,7 +1204,7 @@ async def test_standard_context_renderer():
     if narrative_result.success:
         result_data = narrative_result.data["render_result"]
         print(
-            f"NARRATIVE RENDERED: {result_data.total_character_count} chars, {len(result_data.sections_included)} sections"
+            f"NARRATIVE RENDERED: {result_data.total_character_count}chars, {len( result_data.sections_included)} sections"
         )
         print("Content preview:")
         print(result_data.rendered_content[:300] + "...")
@@ -1147,7 +1215,9 @@ async def test_standard_context_renderer():
     )
     if conversational_result.success:
         result_data = conversational_result.data["render_result"]
-        print(f"CONVERSATIONAL RENDERED: {result_data.total_character_count} chars")
+        print(
+            f"CONVERSATIONAL RENDERED: {result_data.total_character_count} chars"
+        )
 
     # Test enhanced adaptive prompt rendering
     adaptive_result = await context_renderer.render_adaptive_prompt(
@@ -1176,13 +1246,15 @@ async def test_standard_context_renderer():
     )
     if constrained_result.success:
         result_data = constrained_result.data["render_result"]
-        print(f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars")
+        print(
+            f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars"
+        )
         print(f"Excluded sections: {len(result_data.sections_excluded)}")
 
     # Display enhanced statistics
     stats = context_renderer.get_rendering_statistics()
     print(
-        f"RENDERER STATISTICS: {stats['total_renders']} renders, avg {stats['average_render_time']:.2f}ms"
+        f"RENDERER STATISTICS: {stats['total_renders']}renders, avg {stats['average_render_time']:.2f}ms"
     )
 
     # Cleanup enhanced test files

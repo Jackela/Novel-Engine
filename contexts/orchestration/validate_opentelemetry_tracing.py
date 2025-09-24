@@ -61,7 +61,9 @@ def test_tracing_infrastructure():
         print("✅ IntelligentSampler created:")
         print(f"   Default rate: {sampler.default_rate}")
         print(f"   Error sampler: {type(sampler.error_sampler).__name__}")
-        print(f"   High-cost sampler: {type(sampler.high_cost_sampler).__name__}")
+        print(
+            f"   High-cost sampler: {type(sampler.high_cost_sampler).__name__}"
+        )
 
         return True
 
@@ -196,7 +198,9 @@ def test_middleware_integration():
         )
 
         print("✅ Middleware components imported:")
-        print(f"   OpenTelemetryMiddleware: {OpenTelemetryMiddleware.__name__}")
+        print(
+            f"   OpenTelemetryMiddleware: {OpenTelemetryMiddleware.__name__}"
+        )
         print(f"   TracingDependency: {TracingDependency.__name__}")
         print("   Helper functions: get_trace_context, add_trace_attributes")
         print("   Setup function: setup_fastapi_tracing")
@@ -432,13 +436,19 @@ def main():
     test_results = []
 
     # Run all tests
-    test_results.append(("Tracing Infrastructure", test_tracing_infrastructure()))
+    test_results.append(
+        ("Tracing Infrastructure", test_tracing_infrastructure())
+    )
     test_results.append(("Span Creation & Management", test_span_creation()))
     test_results.append(
         ("FastAPI Middleware Integration", test_middleware_integration())
     )
-    test_results.append(("Cross-Context Service Calls", test_cross_context_tracing()))
-    test_results.append(("M10 Requirements Compliance", test_requirements_compliance()))
+    test_results.append(
+        ("Cross-Context Service Calls", test_cross_context_tracing())
+    )
+    test_results.append(
+        ("M10 Requirements Compliance", test_requirements_compliance())
+    )
 
     # Print results summary
     print("\n" + "=" * 80)
@@ -465,13 +475,17 @@ def main():
         print(
             "✅ Root span coverage for complete run_turn orchestration flow implemented"
         )
-        print("✅ Phase-level distributed tracing with parent-child relationships")
+        print(
+            "✅ Phase-level distributed tracing with parent-child relationships"
+        )
         print("✅ Cross-context service call instrumentation")
         print("✅ FastAPI middleware for HTTP request tracing")
         print("✅ Intelligent sampling with error and cost-based strategies")
         print("✅ User context integration for security tracing")
         print("✅ All M10 distributed tracing requirements satisfied")
-        print("\n🚀 Ready to proceed to Wave 4: Security Framework Implementation")
+        print(
+            "\n🚀 Ready to proceed to Wave 4: Security Framework Implementation"
+        )
         return 0
     else:
         print(f"\n❌ M10 WAVE 3: {total_tests - passed_tests} tests failed")

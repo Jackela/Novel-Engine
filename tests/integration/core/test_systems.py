@@ -10,6 +10,7 @@ Wave 6.3: Error Handling and Logging System Enhancement
 import asyncio
 import sys
 from pathlib import Path
+
 import pytest
 
 # Add src directory to path
@@ -23,11 +24,7 @@ from src.core.error_handler import (
     get_error_handler,
     handle_error,
 )
-from src.core.logging_system import (
-    LogContext,
-    get_logger,
-    with_context,
-)
+from src.core.logging_system import LogContext, get_logger, with_context
 
 
 @pytest.mark.asyncio
@@ -52,7 +49,9 @@ async def test_logging_system():
             session_id="test_session_123",
         )
 
-        with with_context(logger, component="test_component", operation="context_test"):
+        with with_context(
+            logger, component="test_component", operation="context_test"
+        ):
             logger.info("Testing logging with context")
             logger.performance("Performance test", duration_ms=42.5)
 
@@ -112,7 +111,9 @@ async def test_error_handling_system():
         # Test network error (auto-retry)
         network_error = ConnectionError("Network connection failed")
         error_record2 = await handle_error(
-            error=network_error, component="network_service", operation="api_call"
+            error=network_error,
+            component="network_service",
+            operation="api_call",
         )
 
         print(f"✅ Network error handled: {error_record2.error_id}")

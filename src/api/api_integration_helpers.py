@@ -56,7 +56,11 @@ class Context7EnhancedRoute(APIRoute):
             for method in self.methods:
                 example = await self.context7_api._call_context7(
                     "generate_code_example",
-                    {"endpoint_path": self.path, "method": method, "format": "python"},
+                    {
+                        "endpoint_path": self.path,
+                        "method": method,
+                        "format": "python",
+                    },
                 )
                 if example.get("success"):
                     examples.append(example["example"])
@@ -70,7 +74,9 @@ class Context7EnhancedRoute(APIRoute):
             return examples
 
         except Exception as e:
-            logger.warning(f"Failed to get Context7 examples for {self.path}: {e}")
+            logger.warning(
+                f"Failed to get Context7 examples for {self.path}: {e}"
+            )
             return []
 
 
@@ -98,19 +104,25 @@ class APIDocumentationEnhancer:
                 enhanced_docs["examples"] = examples
 
             # Add best practice recommendations
-            best_practices = await self._get_best_practices(endpoint_path, method)
+            best_practices = await self._get_best_practices(
+                endpoint_path, method
+            )
             if best_practices:
                 enhanced_docs["best_practices"] = best_practices
 
             # Add framework patterns
-            patterns = await self._get_framework_patterns(endpoint_path, method)
+            patterns = await self._get_framework_patterns(
+                endpoint_path, method
+            )
             if patterns:
                 enhanced_docs["framework_patterns"] = patterns
 
             return enhanced_docs
 
         except Exception as e:
-            logger.error(f"Failed to enhance documentation for {endpoint_path}: {e}")
+            logger.error(
+                f"Failed to enhance documentation for {endpoint_path}: {e}"
+            )
             return existing_docs
 
     async def _get_endpoint_examples(
@@ -137,7 +149,9 @@ class APIDocumentationEnhancer:
             logger.warning(f"Failed to get examples for {endpoint_path}: {e}")
             return []
 
-    async def _get_best_practices(self, endpoint_path: str, method: str) -> List[str]:
+    async def _get_best_practices(
+        self, endpoint_path: str, method: str
+    ) -> List[str]:
         """Get relevant best practices for the endpoint."""
         try:
             response = await self.context7_api._call_context7(
@@ -154,7 +168,9 @@ class APIDocumentationEnhancer:
             return []
 
         except Exception as e:
-            logger.warning(f"Failed to get best practices for {endpoint_path}: {e}")
+            logger.warning(
+                f"Failed to get best practices for {endpoint_path}: {e}"
+            )
             return []
 
     async def _get_framework_patterns(
@@ -193,7 +209,10 @@ class APIValidationEnhancer:
     ) -> Dict[str, Any]:
         """Validate API implementation using Context7 patterns."""
         if not self.context7_api:
-            return {"valid": True, "message": "Context7 validation not available"}
+            return {
+                "valid": True,
+                "message": "Context7 validation not available",
+            }
 
         try:
             response = await self.context7_api._call_context7(
@@ -220,7 +239,9 @@ class APIValidationEnhancer:
             return {"valid": False, "message": f"Validation error: {str(e)}"}
 
 
-def enhance_api_with_context7(context7_api=None, config: APIEnhancementConfig = None):
+def enhance_api_with_context7(
+    context7_api=None, config: APIEnhancementConfig = None
+):
     """Decorator to enhance API endpoints with Context7 integration."""
     if config is None:
         config = APIEnhancementConfig()
@@ -239,9 +260,9 @@ def enhance_api_with_context7(context7_api=None, config: APIEnhancementConfig = 
                         result.metadata, "__dict__"
                     ):
                         result.metadata.__dict__["context7_enhanced"] = True
-                        result.metadata.__dict__["enhanced_at"] = (
-                            datetime.now().isoformat()
-                        )
+                        result.metadata.__dict__[
+                            "enhanced_at"
+                        ] = datetime.now().isoformat()
                 except Exception as e:
                     logger.debug(f"Failed to add Context7 metadata: {e}")
 
@@ -256,7 +277,10 @@ class APIIntegrationManager:
     """Manages integration between existing APIs and Context7 enhancements."""
 
     def __init__(
-        self, app: FastAPI, context7_api=None, config: APIEnhancementConfig = None
+        self,
+        app: FastAPI,
+        context7_api=None,
+        config: APIEnhancementConfig = None,
     ):
         self.app = app
         self.context7_api = context7_api
@@ -267,7 +291,9 @@ class APIIntegrationManager:
     def setup_integrations(self):
         """Setup Context7 integrations across all registered endpoints."""
         if not self.context7_api:
-            logger.warning("Context7 API not available - skipping integrations")
+            logger.warning(
+                "Context7 API not available - skipping integrations"
+            )
             return
 
         # Enhance existing routes
@@ -304,8 +330,10 @@ class APIIntegrationManager:
         async def get_endpoint_examples(endpoint_path: str):
             """Get Context7 examples for a specific endpoint."""
             try:
-                examples = await self.documentation_enhancer._get_endpoint_examples(
-                    f"/{endpoint_path}", "GET"
+                examples = (
+                    await self.documentation_enhancer._get_endpoint_examples(
+                        f"/{endpoint_path}", "GET"
+                    )
                 )
                 return {"success": True, "examples": examples}
             except Exception as e:
@@ -423,7 +451,9 @@ async def get_context7_enhanced_response(
     return original_response
 
 
-def get_framework_recommendations(endpoint_path: str, method: str) -> List[str]:
+def get_framework_recommendations(
+    endpoint_path: str, method: str
+) -> List[str]:
     """Get framework-specific recommendations for an endpoint."""
     recommendations = []
 
@@ -432,12 +462,18 @@ def get_framework_recommendations(endpoint_path: str, method: str) -> List[str]:
         recommendations.append("Use path parameter validation with Pydantic")
 
     if method.upper() in ["POST", "PUT", "PATCH"]:
-        recommendations.append("Implement comprehensive request body validation")
-        recommendations.append("Use appropriate HTTP status codes for responses")
+        recommendations.append(
+            "Implement comprehensive request body validation"
+        )
+        recommendations.append(
+            "Use appropriate HTTP status codes for responses"
+        )
 
     if method.upper() == "GET":
         recommendations.append("Consider implementing response caching")
-        recommendations.append("Use query parameters for filtering and pagination")
+        recommendations.append(
+            "Use query parameters for filtering and pagination"
+        )
 
     if "/api/v" in endpoint_path:
         recommendations.append("Maintain API versioning consistency")

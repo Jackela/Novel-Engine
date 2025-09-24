@@ -25,13 +25,10 @@ import pytest
 import pytest_asyncio
 
 # Character context imports
-from contexts.character import (
-    Character,
-    CharacterClass,
-    CharacterRace,
-    Gender,
+from contexts.character import Character, CharacterClass, CharacterRace, Gender
+from contexts.character.domain.value_objects.character_stats import (
+    CoreAbilities,
 )
-from contexts.character.domain.value_objects.character_stats import CoreAbilities
 
 # Core platform imports
 
@@ -54,8 +51,12 @@ except ImportError as e:
             return cls(
                 character_id=str(entity.character_id),
                 name=entity.profile.name,
-                gender=entity.profile.gender.value if entity.profile.gender else "male",
-                race=entity.profile.race.value if entity.profile.race else "human",
+                gender=entity.profile.gender.value
+                if entity.profile.gender
+                else "male",
+                race=entity.profile.race.value
+                if entity.profile.race
+                else "human",
                 character_class=(
                     entity.profile.character_class.value
                     if entity.profile.character_class
@@ -69,7 +70,9 @@ except ImportError as e:
 # World context imports (with extensive fallback for import issues)
 try:
     from contexts.world.domain.aggregates.world_state import WorldState
-    from contexts.world.infrastructure.persistence.models import WorldStateModel
+    from contexts.world.infrastructure.persistence.models import (
+        WorldStateModel,
+    )
 except ImportError as e:
     # Create mock classes if not available
     print(f"Warning: World context not available, using mocks: {e}")
@@ -314,8 +317,12 @@ class TestTurnOrchestrationE2E:
         world_data = data_factory.create_test_world_data()
 
         # Create character data
-        warrior_data = data_factory.create_test_character_data("E2E_Warrior", "fighter")
-        mage_data = data_factory.create_test_character_data("E2E_Mage", "wizard")
+        warrior_data = data_factory.create_test_character_data(
+            "E2E_Warrior", "fighter"
+        )
+        mage_data = data_factory.create_test_character_data(
+            "E2E_Mage", "wizard"
+        )
 
         # Create narrative arc data
         narrative_data = data_factory.create_test_narrative_arc_data()
@@ -334,7 +341,9 @@ class TestTurnOrchestrationE2E:
                 name=warrior_data["name"],
                 gender=Gender(warrior_data["gender"]),
                 race=CharacterRace(warrior_data["race"]),
-                character_class=CharacterClass(warrior_data["character_class"]),
+                character_class=CharacterClass(
+                    warrior_data["character_class"]
+                ),
                 age=warrior_data["age"],
                 core_abilities=warrior_data["core_abilities"],
             )
@@ -424,8 +433,12 @@ class TestTurnOrchestrationE2E:
         # Validate response structure
         assert "turn_id" in response_data, "Response missing turn_id"
         assert "success" in response_data, "Response missing success field"
-        assert "phases_completed" in response_data, "Response missing phases_completed"
-        assert "phase_results" in response_data, "Response missing phase_results"
+        assert (
+            "phases_completed" in response_data
+        ), "Response missing phases_completed"
+        assert (
+            "phase_results" in response_data
+        ), "Response missing phase_results"
         assert (
             "performance_metrics" in response_data
         ), "Response missing performance_metrics"
@@ -445,7 +458,9 @@ class TestTurnOrchestrationE2E:
         final_state = await self._capture_database_state(database_fixtures)
 
         # Step 6: Validate database state changes
-        await self._validate_database_changes(initial_state, final_state, response_data)
+        await self._validate_database_changes(
+            initial_state, final_state, response_data
+        )
 
     async def test_turn_orchestration_with_validation_errors(
         self, database_fixtures, api_server_url
@@ -515,9 +530,13 @@ class TestTurnOrchestrationE2E:
             )
             if status_response.status_code == 200:
                 status_data = status_response.json()
-                assert "status" in status_data, "Status response missing status field"
+                assert (
+                    "status" in status_data
+                ), "Status response missing status field"
 
-    async def _capture_database_state(self, database_fixtures) -> Dict[str, Any]:
+    async def _capture_database_state(
+        self, database_fixtures
+    ) -> Dict[str, Any]:
         """Capture current database state for comparison."""
         state = {
             "world_state": {},
@@ -533,7 +552,9 @@ class TestTurnOrchestrationE2E:
                 world_states = await session.execute(
                     "SELECT * FROM world_states ORDER BY created_at"
                 )
-                state["world_state"] = [dict(row) for row in world_states.fetchall()]
+                state["world_state"] = [
+                    dict(row) for row in world_states.fetchall()
+                ]
             except Exception:
                 state["world_state"] = []  # Table might not exist
 
@@ -542,7 +563,9 @@ class TestTurnOrchestrationE2E:
                 characters = await session.execute(
                     "SELECT * FROM characters ORDER BY created_at"
                 )
-                state["characters"] = [dict(row) for row in characters.fetchall()]
+                state["characters"] = [
+                    dict(row) for row in characters.fetchall()
+                ]
             except Exception:
                 state["characters"] = []
 
@@ -551,7 +574,9 @@ class TestTurnOrchestrationE2E:
                 events = await session.execute(
                     "SELECT * FROM character_events ORDER BY timestamp"
                 )
-                state["character_events"] = [dict(row) for row in events.fetchall()]
+                state["character_events"] = [
+                    dict(row) for row in events.fetchall()
+                ]
             except Exception:
                 state["character_events"] = []
 
@@ -560,7 +585,9 @@ class TestTurnOrchestrationE2E:
                 narratives = await session.execute(
                     "SELECT * FROM narrative_arcs ORDER BY created_at"
                 )
-                state["narrative_arcs"] = [dict(row) for row in narratives.fetchall()]
+                state["narrative_arcs"] = [
+                    dict(row) for row in narratives.fetchall()
+                ]
             except Exception:
                 state["narrative_arcs"] = []
 
@@ -606,7 +633,9 @@ class TestTurnOrchestrationE2E:
         initial_events = len(initial_state["character_events"])
         final_events = len(final_state["character_events"])
 
-        if len(phases_completed) >= 3:  # Interaction phase should generate events
+        if (
+            len(phases_completed) >= 3
+        ):  # Interaction phase should generate events
             assert (
                 final_events > initial_events
             ), f"Expected events after {len(phases_completed)} phases: {initial_events} -> {final_events}"
@@ -659,7 +688,9 @@ class TestTurnOrchestrationE2E:
             ), f"AI-disabled execution too slow: {execution_time}ms (expected < 30s)"
 
         # Validate performance metrics exist
-        assert isinstance(metrics, dict), "Performance metrics should be a dictionary"
+        assert isinstance(
+            metrics, dict
+        ), "Performance metrics should be a dictionary"
 
         # Expected performance metrics (may vary based on implementation)
         expected_metric_keys = [
@@ -688,7 +719,9 @@ class TestTurnOrchestrationE2E:
             # Health values should be reasonable
             if "current_health" in character_data:
                 health = character_data["current_health"]
-                assert health >= 0, f"Character health cannot be negative: {health}"
+                assert (
+                    health >= 0
+                ), f"Character health cannot be negative: {health}"
 
                 if "max_health" in character_data:
                     max_health = character_data["max_health"]
@@ -711,7 +744,9 @@ class TestTurnOrchestrationE2E:
 
             # Events should have timestamps
             if "timestamp" in event_data or "created_at" in event_data:
-                timestamp = event_data.get("timestamp") or event_data.get("created_at")
+                timestamp = event_data.get("timestamp") or event_data.get(
+                    "created_at"
+                )
                 assert timestamp is not None, "Event missing timestamp"
 
         # === PHASE 5: Turn-Specific Validation ===
@@ -738,10 +773,14 @@ class TestTurnOrchestrationE2E:
         # World time should advance if configured
         if initial_state["world_state"] and final_state["world_state"]:
             initial_world = (
-                initial_state["world_state"][-1] if initial_state["world_state"] else {}
+                initial_state["world_state"][-1]
+                if initial_state["world_state"]
+                else {}
             )
             final_world = (
-                final_state["world_state"][-1] if final_state["world_state"] else {}
+                final_state["world_state"][-1]
+                if final_state["world_state"]
+                else {}
             )
 
             initial_time = initial_world.get("current_time", 0)
@@ -754,7 +793,10 @@ class TestTurnOrchestrationE2E:
 
         # Narrative arcs should reference valid characters
         for narrative_data in final_state["narrative_arcs"]:
-            if "participants" in narrative_data and narrative_data["participants"]:
+            if (
+                "participants" in narrative_data
+                and narrative_data["participants"]
+            ):
                 for participant_id in narrative_data["participants"]:
                     # Participant should exist in character data
                     character_ids = [
@@ -841,7 +883,9 @@ class TestTurnOrchestrationE2E:
                 if isinstance(value, (int, float)):
                     print(f"  • {key.replace('_', ' ').title()}: {value}")
                 elif isinstance(value, dict):
-                    print(f"  • {key.replace('_', ' ').title()}: {len(value)} items")
+                    print(
+                        f"  • {key.replace('_', ' ').title()}: {len(value)} items"
+                    )
                 else:
                     print(
                         f"  • {key.replace('_', ' ').title()}: {type(value).__name__}"
@@ -854,13 +898,20 @@ class TestTurnOrchestrationE2E:
         )
         print(f"  • Overall Quality Score: {quality_score:.1f}/100")
         print(f"  • Phase Completion: {len(phases_completed)*20:.0f}/100")
-        print(f"  • Performance Rating: {self._rate_performance(execution_time)}")
-        print(f"  • Data Integrity: {'PASS' if total_changes > 0 else 'CONCERN'}")
+        print(
+            f"  • Performance Rating: {self._rate_performance(execution_time)}"
+        )
+        print(
+            f"  • Data Integrity: {'PASS' if total_changes > 0 else 'CONCERN'}"
+        )
 
         print(f"{'='*60}\n")
 
     def _calculate_quality_score(
-        self, phases_completed: List[str], execution_time: float, total_changes: int
+        self,
+        phases_completed: List[str],
+        execution_time: float,
+        total_changes: int,
     ) -> float:
         """Calculate overall quality score for the turn execution."""
 
@@ -883,7 +934,9 @@ class TestTurnOrchestrationE2E:
 
         # Data integrity score (30 points max)
         if total_changes > 0:
-            data_score = min(30, total_changes * 10)  # 10 points per change, max 30
+            data_score = min(
+                30, total_changes * 10
+            )  # 10 points per change, max 30
         else:
             data_score = 0
         score += data_score

@@ -114,7 +114,10 @@ class TestCharacterAggregate:
             age=25,
             level=1,
             physical_traits=PhysicalTraits(
-                height_cm=180, weight_kg=75, hair_color="brown", eye_color="blue"
+                height_cm=180,
+                weight_kg=75,
+                hair_color="brown",
+                eye_color="blue",
             ),
             personality_traits=PersonalityTraits(
                 traits={
@@ -299,7 +302,9 @@ class TestCharacterAggregate:
         # Create skills without required categories for fighter
         invalid_skills = Mock()
         invalid_skills.skill_groups = {
-            SkillCategory.MAGICAL: [Mock()]  # Fighter needs combat and physical
+            SkillCategory.MAGICAL: [
+                Mock()
+            ]  # Fighter needs combat and physical
         }
         invalid_skills.get_skills_by_category = Mock(
             side_effect=lambda cat: invalid_skills.skill_groups.get(cat, [])
@@ -367,9 +372,14 @@ class TestCharacterAggregate:
         assert sample_character.profile.name == "Updated Warrior"
         assert sample_character.version == initial_version + 1
         assert len(sample_character._events) == initial_events + 1
-        assert sample_character._events[-1].__class__.__name__ == "CharacterUpdated"
+        assert (
+            sample_character._events[-1].__class__.__name__
+            == "CharacterUpdated"
+        )
 
-    def test_update_profile_validation_failure_rollback(self, sample_character):
+    def test_update_profile_validation_failure_rollback(
+        self, sample_character
+    ):
         """Test profile update rollback on validation failure."""
         initial_profile = sample_character.profile
         initial_version = sample_character.version
@@ -424,7 +434,10 @@ class TestCharacterAggregate:
 
         sample_character.update_stats(new_stats)
 
-        assert sample_character.stats.vital_stats.current_health == initial_health - 5
+        assert (
+            sample_character.stats.vital_stats.current_health
+            == initial_health - 5
+        )
         assert sample_character.version == initial_version + 1
 
     def test_update_stats_excessive_health_loss_fails(self, sample_character):
@@ -485,9 +498,13 @@ class TestCharacterAggregate:
         with pytest.raises(ValueError) as exc_info:
             sample_character.update_stats(new_stats)
         # Now the Character's validation should catch it
-        assert "Current values cannot exceed maximum values" in str(exc_info.value)
+        assert "Current values cannot exceed maximum values" in str(
+            exc_info.value
+        )
 
-    def test_update_stats_rollback_on_validation_failure(self, sample_character):
+    def test_update_stats_rollback_on_validation_failure(
+        self, sample_character
+    ):
         """Test stats update rollback on validation failure."""
         initial_stats = sample_character.stats
         initial_version = sample_character.version
@@ -534,11 +551,15 @@ class TestCharacterAggregate:
         assert sample_character.profile.level == initial_level + 1
         assert (
             sample_character.stats.vital_stats.max_health
-            == initial_health + 10 + sample_character.stats.core_abilities.constitution
+            == initial_health
+            + 10
+            + sample_character.stats.core_abilities.constitution
         )
         assert (
             sample_character.stats.vital_stats.max_mana
-            == initial_mana + 5 + sample_character.stats.core_abilities.intelligence
+            == initial_mana
+            + 5
+            + sample_character.stats.core_abilities.intelligence
         )
         assert sample_character.stats.skill_points == initial_skill_points + 5
         assert sample_character.version == initial_version + 1
@@ -551,7 +572,8 @@ class TestCharacterAggregate:
             gender=sample_character.profile.gender,
             race=sample_character.profile.race,
             character_class=sample_character.profile.character_class,
-            age=sample_character.profile.age + 50,  # Appropriate age for level 100
+            age=sample_character.profile.age
+            + 50,  # Appropriate age for level 100
             level=100,  # Maximum level
             physical_traits=sample_character.profile.physical_traits,
             personality_traits=sample_character.profile.personality_traits,
@@ -575,7 +597,10 @@ class TestCharacterAggregate:
         # Heal the character
         sample_character.heal(5)
 
-        assert sample_character.stats.vital_stats.current_health == damaged_health + 5
+        assert (
+            sample_character.stats.vital_stats.current_health
+            == damaged_health + 5
+        )
         assert sample_character.stats.vital_stats.current_health <= max_health
         assert sample_character.version == initial_version + 1
 
@@ -608,7 +633,9 @@ class TestCharacterAggregate:
         sample_character.heal(10)
 
         # Should not change health or version if already at full health
-        assert sample_character.stats.vital_stats.current_health == initial_health
+        assert (
+            sample_character.stats.vital_stats.current_health == initial_health
+        )
         assert sample_character.version == initial_version
 
     def test_take_damage_success(self, sample_character):
@@ -654,7 +681,10 @@ class TestCharacterAggregate:
         # Apply damage that would be reduced
         sample_character.take_damage(8)  # Should be reduced to 3
 
-        assert sample_character.stats.vital_stats.current_health == initial_health - 3
+        assert (
+            sample_character.stats.vital_stats.current_health
+            == initial_health - 3
+        )
 
     def test_take_damage_minimum_one(self, sample_character):
         """Test damage always deals at least 1 point."""
@@ -681,7 +711,10 @@ class TestCharacterAggregate:
 
         sample_character.take_damage(5)
 
-        assert sample_character.stats.vital_stats.current_health == initial_health - 1
+        assert (
+            sample_character.stats.vital_stats.current_health
+            == initial_health - 1
+        )
 
     def test_take_damage_zero_amount_fails(self, sample_character):
         """Test taking zero or negative damage fails."""
@@ -771,7 +804,9 @@ class TestCharacterAggregate:
         assert "version" in summary
 
         assert summary["level"] == sample_character.profile.level
-        assert summary["class"] == sample_character.profile.character_class.value
+        assert (
+            summary["class"] == sample_character.profile.character_class.value
+        )
         assert summary["race"] == sample_character.profile.race.value
         assert summary["is_alive"] == sample_character.is_alive()
 
@@ -927,7 +962,9 @@ class TestCharacterAggregate:
         # Create invalid skills (missing required categories for fighter)
         invalid_skills = Mock()
         invalid_skills.skill_groups = {
-            SkillCategory.MAGICAL: [Mock()]  # Fighter needs combat and physical
+            SkillCategory.MAGICAL: [
+                Mock()
+            ]  # Fighter needs combat and physical
         }
         invalid_skills.get_skills_by_category = Mock(
             side_effect=lambda cat: invalid_skills.skill_groups.get(cat, [])
@@ -996,14 +1033,19 @@ class TestCharacterAggregate:
     def test_character_business_rules_consistency(self, sample_character):
         """Test business rules are maintained across operations."""
         # Level up should maintain health-constitution relationship
-        original_constitution = sample_character.stats.core_abilities.constitution
+        original_constitution = (
+            sample_character.stats.core_abilities.constitution
+        )
         sample_character.level_up()
 
         # Health should still be appropriate for constitution and level
         min_expected_health = max(
             1, original_constitution + sample_character.profile.level
         )
-        assert sample_character.stats.vital_stats.max_health >= min_expected_health
+        assert (
+            sample_character.stats.vital_stats.max_health
+            >= min_expected_health
+        )
 
         # Character should still pass validation
         sample_character._validate_character_consistency()  # Should not raise exception

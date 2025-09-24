@@ -15,7 +15,11 @@ from fastapi import Depends, FastAPI, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
 from src.core.data_models import StandardResponse
-from src.security.auth_system import Permission, get_current_user, require_permission
+from src.security.auth_system import (
+    Permission,
+    get_current_user,
+    require_permission,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +28,9 @@ logger = logging.getLogger(__name__)
 class EmergentNarrativeRequest(BaseModel):
     """Request for emergent narrative generation"""
 
-    agents: List[str] = Field(..., min_length=1, description="Participating agent IDs")
+    agents: List[str] = Field(
+        ..., min_length=1, description="Participating agent IDs"
+    )
     time_range: Optional[Tuple[datetime, datetime]] = Field(
         None, description="Time range for narrative"
     )
@@ -41,9 +47,12 @@ class EmergentNarrativeRequest(BaseModel):
     coherence_threshold: float = Field(
         0.7, ge=0.0, le=1.0, description="Minimum coherence required"
     )
-    max_events: int = Field(50, ge=5, le=200, description="Maximum events to include")
+    max_events: int = Field(
+        50, ge=5, le=200, description="Maximum events to include"
+    )
     narrative_style: str = Field(
-        "dramatic", description="Narrative style (dramatic, documentary, poetic)"
+        "dramatic",
+        description="Narrative style (dramatic, documentary, poetic)",
     )
 
 
@@ -54,8 +63,12 @@ class CausalLinkResponse(BaseModel):
     target_event: str = Field(..., description="Target event ID")
     relation_type: str = Field(..., description="Type of causal relation")
     strength: float = Field(..., ge=0.0, le=1.0, description="Causal strength")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence in relation")
-    narrative_significance: float = Field(..., description="Significance to narrative")
+    confidence: float = Field(
+        ..., ge=0.0, le=1.0, description="Confidence in relation"
+    )
+    narrative_significance: float = Field(
+        ..., description="Significance to narrative"
+    )
 
 
 class NarrativeEventResponse(BaseModel):
@@ -64,7 +77,9 @@ class NarrativeEventResponse(BaseModel):
     event_id: str = Field(..., description="Unique event identifier")
     agent_id: Optional[str] = Field(None, description="Primary agent involved")
     event_type: str = Field(..., description="Type of event")
-    narrative_text: str = Field(..., description="Narrative description of event")
+    narrative_text: str = Field(
+        ..., description="Narrative description of event"
+    )
     timestamp: datetime = Field(..., description="Event timestamp")
     location: Optional[str] = Field(None, description="Event location")
     participants: List[str] = Field(
@@ -73,8 +88,12 @@ class NarrativeEventResponse(BaseModel):
     causal_links: List[CausalLinkResponse] = Field(
         default_factory=list, description="Causal relationships"
     )
-    narrative_weight: float = Field(..., description="Importance to overall narrative")
-    coherence_score: float = Field(..., description="Coherence with surrounding events")
+    narrative_weight: float = Field(
+        ..., description="Importance to overall narrative"
+    )
+    coherence_score: float = Field(
+        ..., description="Coherence with surrounding events"
+    )
 
 
 class EmergentNarrativeData(BaseModel):
@@ -108,7 +127,8 @@ class EmergentNarrativeData(BaseModel):
         ..., description="Generation process metadata"
     )
     created_at: datetime = Field(
-        default_factory=datetime.now, description="Narrative creation timestamp"
+        default_factory=datetime.now,
+        description="Narrative creation timestamp",
     )
 
 
@@ -122,12 +142,18 @@ class NarrativeBuildRequest(BaseModel):
         "chronological",
         description="Build strategy (chronological, thematic, character_focused)",
     )
-    coherence_enforcement: bool = Field(True, description="Enforce narrative coherence")
-    auto_fill_gaps: bool = Field(True, description="Automatically fill narrative gaps")
+    coherence_enforcement: bool = Field(
+        True, description="Enforce narrative coherence"
+    )
+    auto_fill_gaps: bool = Field(
+        True, description="Automatically fill narrative gaps"
+    )
     target_length: Optional[int] = Field(
         None, description="Target narrative length in events"
     )
-    themes: List[str] = Field(default_factory=list, description="Thematic focuses")
+    themes: List[str] = Field(
+        default_factory=list, description="Thematic focuses"
+    )
 
 
 class CausalGraphRequest(BaseModel):
@@ -136,23 +162,31 @@ class CausalGraphRequest(BaseModel):
     time_window: Optional[Tuple[datetime, datetime]] = Field(
         None, description="Time window filter"
     )
-    agent_filter: Optional[List[str]] = Field(None, description="Filter by agents")
+    agent_filter: Optional[List[str]] = Field(
+        None, description="Filter by agents"
+    )
     include_predictions: bool = Field(
         False, description="Include predicted relationships"
     )
-    min_confidence: float = Field(0.3, description="Minimum relationship confidence")
+    min_confidence: float = Field(
+        0.3, description="Minimum relationship confidence"
+    )
     max_depth: int = Field(5, description="Maximum relationship depth")
 
 
 class CausalGraphData(BaseModel):
     """Causal graph data"""
 
-    nodes: List[Dict[str, Any]] = Field(..., description="Graph nodes (events)")
+    nodes: List[Dict[str, Any]] = Field(
+        ..., description="Graph nodes (events)"
+    )
     edges: List[CausalLinkResponse] = Field(
         ..., description="Graph edges (causal relationships)"
     )
     statistics: Dict[str, Any] = Field(..., description="Graph statistics")
-    influential_events: List[str] = Field(..., description="Most influential event IDs")
+    influential_events: List[str] = Field(
+        ..., description="Most influential event IDs"
+    )
     narrative_patterns: Dict[str, List[str]] = Field(
         ..., description="Detected narrative patterns"
     )
@@ -169,19 +203,29 @@ class NegotiationRequest(BaseModel):
         ..., min_length=1, description="Target agents for negotiation"
     )
     topic: str = Field(..., min_length=3, description="Negotiation topic")
-    initial_proposal: Dict[str, Any] = Field(..., description="Initial proposal data")
-    timeout_minutes: int = Field(30, ge=5, le=120, description="Negotiation timeout")
+    initial_proposal: Dict[str, Any] = Field(
+        ..., description="Initial proposal data"
+    )
+    timeout_minutes: int = Field(
+        30, ge=5, le=120, description="Negotiation timeout"
+    )
 
 
 class NegotiationResponse(BaseModel):
     """Multi-agent negotiation data"""
 
-    negotiation_id: str = Field(..., description="Unique negotiation identifier")
+    negotiation_id: str = Field(
+        ..., description="Unique negotiation identifier"
+    )
     participants: List[str] = Field(..., description="Negotiating agents")
     topic: str = Field(..., description="Negotiation topic")
     status: str = Field(..., description="Current negotiation status")
-    proposals: List[Dict[str, Any]] = Field(..., description="All proposals made")
-    responses: List[Dict[str, Any]] = Field(..., description="All responses received")
+    proposals: List[Dict[str, Any]] = Field(
+        ..., description="All proposals made"
+    )
+    responses: List[Dict[str, Any]] = Field(
+        ..., description="All responses received"
+    )
     resolution: Optional[Dict[str, Any]] = Field(
         None, description="Final resolution if completed"
     )
@@ -242,17 +286,26 @@ class EmergentNarrativeAPI:
                 # Transform to response format
                 narrative_data = EmergentNarrativeData(
                     narrative_id=narrative_result.get(
-                        "narrative_id", f"narrative_{int(datetime.now().timestamp())}"
+                        "narrative_id",
+                        f"narrative_{int( datetime.now().timestamp())}",
                     ),
                     title=narrative_result.get("title", "Generated Narrative"),
                     summary=narrative_result.get("summary", ""),
                     events=narrative_result.get("events", []),
                     character_arcs=narrative_result.get("character_arcs", {}),
                     plot_threads=narrative_result.get("plot_threads", {}),
-                    causal_graph_stats=narrative_result.get("causal_graph_stats", {}),
-                    coherence_report=narrative_result.get("coherence_report", {}),
-                    narrative_patterns=narrative_result.get("narrative_patterns", {}),
-                    predicted_events=narrative_result.get("predicted_events", []),
+                    causal_graph_stats=narrative_result.get(
+                        "causal_graph_stats", {}
+                    ),
+                    coherence_report=narrative_result.get(
+                        "coherence_report", {}
+                    ),
+                    narrative_patterns=narrative_result.get(
+                        "narrative_patterns", {}
+                    ),
+                    predicted_events=narrative_result.get(
+                        "predicted_events", []
+                    ),
                     generation_metadata=narrative_result.get("metadata", {}),
                 )
 
@@ -262,7 +315,9 @@ class EmergentNarrativeAPI:
                 raise
             except Exception as e:
                 logger.error(f"Error generating emergent narrative: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
         @app.post(
             "/api/v1/narratives/build",
@@ -313,11 +368,21 @@ class EmergentNarrativeAPI:
                     events=built_narrative.get("events", []),
                     character_arcs=built_narrative.get("character_arcs", {}),
                     plot_threads=built_narrative.get("plot_threads", {}),
-                    causal_graph_stats=built_narrative.get("causal_graph_stats", {}),
-                    coherence_report=built_narrative.get("coherence_report", {}),
-                    narrative_patterns=built_narrative.get("narrative_patterns", {}),
-                    predicted_events=built_narrative.get("predicted_events", []),
-                    generation_metadata=narrative_result.get("build_statistics", {}),
+                    causal_graph_stats=built_narrative.get(
+                        "causal_graph_stats", {}
+                    ),
+                    coherence_report=built_narrative.get(
+                        "coherence_report", {}
+                    ),
+                    narrative_patterns=built_narrative.get(
+                        "narrative_patterns", {}
+                    ),
+                    predicted_events=built_narrative.get(
+                        "predicted_events", []
+                    ),
+                    generation_metadata=narrative_result.get(
+                        "build_statistics", {}
+                    ),
                 )
 
                 return StandardResponse(success=True, data=narrative_data)
@@ -326,7 +391,9 @@ class EmergentNarrativeAPI:
                 raise
             except Exception as e:
                 logger.error(f"Error building narrative: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
         @app.get(
             "/api/v1/causality/graph",
@@ -340,22 +407,30 @@ class EmergentNarrativeAPI:
             current_user: Dict = Depends(get_current_user),
         ):
             try:
-                if not self.orchestrator or not hasattr(self.orchestrator, "director"):
+                if not self.orchestrator or not hasattr(
+                    self.orchestrator, "director"
+                ):
                     raise HTTPException(
-                        status_code=503, detail="Turn execution engine not available"
+                        status_code=503,
+                        detail="Turn execution engine not available",
                     )
 
-                turn_engine = getattr(self.orchestrator.director, "turn_engine", None)
+                turn_engine = getattr(
+                    self.orchestrator.director, "turn_engine", None
+                )
                 if not turn_engine:
                     raise HTTPException(
-                        status_code=503, detail="Turn execution engine not initialized"
+                        status_code=503,
+                        detail="Turn execution engine not initialized",
                     )
 
                 # Get causal graph data
                 graph_result = await turn_engine.get_causal_graph_data()
 
                 if not graph_result.get("success", False):
-                    error_msg = graph_result.get("error", "Failed to get causal graph")
+                    error_msg = graph_result.get(
+                        "error", "Failed to get causal graph"
+                    )
                     raise HTTPException(status_code=500, detail=error_msg)
 
                 # Transform to response format
@@ -363,8 +438,12 @@ class EmergentNarrativeAPI:
                     nodes=graph_result.get("nodes", []),
                     edges=graph_result.get("edges", []),
                     statistics=graph_result.get("statistics", {}),
-                    influential_events=graph_result.get("influential_events", []),
-                    narrative_patterns=graph_result.get("narrative_patterns", {}),
+                    influential_events=graph_result.get(
+                        "influential_events", []
+                    ),
+                    narrative_patterns=graph_result.get(
+                        "narrative_patterns", {}
+                    ),
                     predictions=graph_result.get("predictions", []),
                 )
 
@@ -374,7 +453,9 @@ class EmergentNarrativeAPI:
                 raise
             except Exception as e:
                 logger.error(f"Error getting causal graph: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
         @app.get(
             "/api/v1/narratives/emergent/{narrative_id}",
@@ -392,7 +473,8 @@ class EmergentNarrativeAPI:
                 False, description="Include causal relationship data"
             ),
             format: str = Query(
-                "structured", description="Response format (structured, text, timeline)"
+                "structured",
+                description="Response format (structured, text, timeline)",
             ),
             current_user: Dict = Depends(get_current_user),
         ):
@@ -416,7 +498,8 @@ class EmergentNarrativeAPI:
 
                 if not narrative_result.get("success", False):
                     raise HTTPException(
-                        status_code=404, detail=f"Narrative {narrative_id} not found"
+                        status_code=404,
+                        detail=f"Narrative {narrative_id} not found",
                     )
 
                 # Transform to response format
@@ -425,7 +508,9 @@ class EmergentNarrativeAPI:
                     narrative_id=narrative_id,
                     title=narrative.get("title", "Retrieved Narrative"),
                     summary=narrative.get("summary", ""),
-                    events=narrative.get("events", []) if include_events else [],
+                    events=narrative.get("events", [])
+                    if include_events
+                    else [],
                     character_arcs=narrative.get("character_arcs", {}),
                     plot_threads=narrative.get("plot_threads", {}),
                     causal_graph_stats=narrative.get("causal_graph_stats", {}),
@@ -442,7 +527,9 @@ class EmergentNarrativeAPI:
                 raise
             except Exception as e:
                 logger.error(f"Error getting narrative {narrative_id}: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
 
 def create_emergent_narrative_api(orchestrator=None) -> EmergentNarrativeAPI:

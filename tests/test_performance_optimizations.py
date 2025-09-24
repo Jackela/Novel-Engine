@@ -98,7 +98,9 @@ class TestWebSocketOptimizations:
             api.connection_pool.add_connection(generation_id, ws)
 
         # Update progress (should broadcast to all)
-        await api._update_progress(generation_id, 75, "testing", "Broadcast test")
+        await api._update_progress(
+            generation_id, 75, "testing", "Broadcast test"
+        )
 
         # Verify all connections received update
         for ws in mock_connections:
@@ -151,12 +153,16 @@ class TestPerformanceCache:
         cache = PerformanceCache(memory_cache_size=3, memory_limit_mb=1)
 
         # Fill cache with different priority levels
-        await cache.memory_cache.set("critical", "data1", level=CacheLevel.CRITICAL)
+        await cache.memory_cache.set(
+            "critical", "data1", level=CacheLevel.CRITICAL
+        )
         await cache.memory_cache.set("high", "data2", level=CacheLevel.HIGH)
         await cache.memory_cache.set("low", "data3", level=CacheLevel.LOW)
 
         # Add one more item (should evict LOW priority first)
-        await cache.memory_cache.set("medium", "data4", level=CacheLevel.MEDIUM)
+        await cache.memory_cache.set(
+            "medium", "data4", level=CacheLevel.MEDIUM
+        )
 
         # Critical and high should still be there
         assert await cache.memory_cache.get("critical") == "data1"
@@ -236,7 +242,9 @@ class TestIntegratedPerformance:
                     "progress": 0,
                     "stage": "initializing",
                 }
-                task = asyncio.create_task(api._generate_story_async(generation_id))
+                task = asyncio.create_task(
+                    api._generate_story_async(generation_id)
+                )
                 generation_tasks.append(task)
 
             # Wait for all to complete
@@ -245,12 +253,17 @@ class TestIntegratedPerformance:
             duration = time.time() - start_time
 
             # Should complete reasonably quickly with optimizations
-            assert duration < 10  # Should be much faster than original 15+ seconds
+            assert (
+                duration < 10
+            )  # Should be much faster than original 15+ seconds
 
             # All generations should be completed
             for i in range(3):
                 generation_id = f"concurrent_test_{i}"
-                assert api.active_generations[generation_id]["status"] == "completed"
+                assert (
+                    api.active_generations[generation_id]["status"]
+                    == "completed"
+                )
 
         finally:
             await api.stop_background_tasks()
@@ -297,10 +310,14 @@ class TestIntegratedPerformance:
 
         # Simulate some connection failures
         for i in range(0, 50, 5):  # Every 5th connection fails
-            connections[i].send_text.side_effect = Exception("Connection failed")
+            connections[i].send_text.side_effect = Exception(
+                "Connection failed"
+            )
 
         # Update progress should handle failures gracefully
-        await api._update_progress(generation_id, 75, "testing", "Resilience test")
+        await api._update_progress(
+            generation_id, 75, "testing", "Resilience test"
+        )
 
         # Failed connections should be removed from pool
         remaining_connections = api.connection_pool.connections.get(
@@ -312,7 +329,9 @@ class TestIntegratedPerformance:
         )  # At least 40 connections should remain or process
 
         # Working connections should have received update
-        working_connections = [ws for i, ws in enumerate(connections) if i % 5 != 0]
+        working_connections = [
+            ws for i, ws in enumerate(connections) if i % 5 != 0
+        ]
         for ws in working_connections:
             ws.send_text.assert_called_once()
 
@@ -351,7 +370,9 @@ if __name__ == "__main__":
 
         print("✅ Cache Performance:")
         print(f"   - 1000 operations completed in {cache_duration:.2f}s")
-        print(f"   - Memory usage: {stats['memory_cache']['memory_usage_mb']:.1f}MB")
+        print(
+            f"   - Memory usage: {stats['memory_cache']['memory_usage_mb']:.1f}MB"
+        )
         print(f"   - Hit rate: {stats['memory_cache']['hit_rate']:.1%}")
 
         # Test WebSocket connection pool

@@ -60,7 +60,9 @@ def analyze_campaign_log_quality(log_path: str) -> dict:
         # Count different types of content
         total_lines = len(content.split("\n"))
         llm_guided_decisions = content.count("[LLM-Guided]")
-        character_actions = content.count("decided to") + content.count("chose to")
+        character_actions = content.count("decided to") + content.count(
+            "chose to"
+        )
         faction_registrations = content.count("Faction:")
         reasoning_statements = content.count("My ") + content.count("As a")
 
@@ -69,17 +71,22 @@ def analyze_campaign_log_quality(log_path: str) -> dict:
 
         character_pattern = r"(\w+(?:\s+\w+)*)\s*\(([^)]+)\)"
         character_matches = re.findall(character_pattern, content)
-        unique_characters = list(set([match[0] for match in character_matches]))
+        unique_characters = list(
+            set([match[0] for match in character_matches])
+        )
 
         faction_pattern = r"\*\*Faction:\*\*\s*([^\\]+)"
         faction_matches = re.findall(faction_pattern, content)
-        unique_factions = list(set([faction.strip() for faction in faction_matches]))
+        unique_factions = list(
+            set([faction.strip() for faction in faction_matches])
+        )
 
         # Analyze reasoning complexity
         reasoning_pattern = r"\[LLM-Guided\]\s*([^.]+\.?)"
         reasoning_matches = re.findall(reasoning_pattern, content)
         avg_reasoning_length = (
-            sum(len(reason) for reason in reasoning_matches) / len(reasoning_matches)
+            sum(len(reason) for reason in reasoning_matches)
+            / len(reasoning_matches)
             if reasoning_matches
             else 0
         )
@@ -114,7 +121,9 @@ def analyze_campaign_log_quality(log_path: str) -> dict:
         print("📊 FILE STATISTICS:")
         print(f"   • Total lines: {analysis['file_stats']['total_lines']}")
         print(f"   • File size: {analysis['file_stats']['file_size_kb']} KB")
-        print(f"   • Total characters: {analysis['file_stats']['total_characters']:,}")
+        print(
+            f"   • Total characters: {analysis['file_stats']['total_characters']:,}"
+        )
 
         print("\n🤖 AI INTEGRATION METRICS:")
         print(
@@ -147,7 +156,9 @@ def analyze_campaign_log_quality(log_path: str) -> dict:
         print("\n✅ QUALITY INDICATORS:")
         for indicator, status in analysis["quality_indicators"].items():
             status_icon = "✅" if status else "❌"
-            print(f"   {status_icon} {indicator.replace('_', ' ').title()}: {status}")
+            print(
+                f"   {status_icon} {indicator.replace('_', ' ').title()}: {status}"
+            )
 
         return analysis
 
@@ -189,8 +200,12 @@ def demonstrate_ai_enhanced_transcription():
     if not log_analysis.get("quality_indicators", {}).get(
         "has_real_ai_decisions", False
     ):
-        print("\n⚠️  WARNING: Campaign log appears to lack real AI-generated decisions")
-        print("Expected to find [LLM-Guided] markers indicating Gemini API integration")
+        print(
+            "\n⚠️  WARNING: Campaign log appears to lack real AI-generated decisions"
+        )
+        print(
+            "Expected to find [LLM-Guided] markers indicating Gemini API integration"
+        )
     else:
         print("\n✅ CONFIRMED: Real AI integration detected!")
         print(
@@ -214,10 +229,18 @@ def demonstrate_ai_enhanced_transcription():
         # Get and display chronicler status
         status = chronicler.get_chronicler_status()
         print(f"   • Version: {status['chronicler_info']['version']}")
-        print(f"   • Narrative style: {status['chronicler_info']['narrative_style']}")
-        print(f"   • Output directory: {status['chronicler_info']['output_directory']}")
-        print(f"   • Templates loaded: {status['system_health']['templates_loaded']}")
-        print(f"   • System status: {status['system_health']['status'].upper()}")
+        print(
+            f"   • Narrative style: {status['chronicler_info']['narrative_style']}"
+        )
+        print(
+            f"   • Output directory: {status['chronicler_info']['output_directory']}"
+        )
+        print(
+            f"   • Templates loaded: {status['system_health']['templates_loaded']}"
+        )
+        print(
+            f"   • System status: {status['system_health']['status'].upper()}"
+        )
 
     except Exception as e:
         print(f"❌ Failed to initialize ChroniclerAgent: {str(e)}")
@@ -344,7 +367,9 @@ def demonstrate_ai_enhanced_transcription():
 
     # Check for AI reasoning integration
     if (
-        log_analysis.get("ai_integration_metrics", {}).get("llm_guided_decisions", 0)
+        log_analysis.get("ai_integration_metrics", {}).get(
+            "llm_guided_decisions", 0
+        )
         > 0
     ):
         print("   ✅ AI reasoning integration: Real LLM decisions transcribed")
@@ -379,7 +404,9 @@ def demonstrate_ai_enhanced_transcription():
 
     # List generated narrative files
     narrative_files = [
-        f for f in os.listdir(output_directory) if f.endswith("_narrative_*.md")
+        f
+        for f in os.listdir(output_directory)
+        if f.endswith("_narrative_*.md")
     ]
     if narrative_files:
         latest_file = max(
@@ -392,9 +419,15 @@ def demonstrate_ai_enhanced_transcription():
         )
 
     print("\n🚀 END-TO-END AI-POWERED WORKFLOW COMPLETE!")
-    print("The Warhammer 40k Multi-Agent Simulator has successfully demonstrated")
-    print("the full production capability from real Gemini API character decisions")
-    print("through structured campaign logging to final dramatic narrative stories.")
+    print(
+        "The Warhammer 40k Multi-Agent Simulator has successfully demonstrated"
+    )
+    print(
+        "the full production capability from real Gemini API character decisions"
+    )
+    print(
+        "through structured campaign logging to final dramatic narrative stories."
+    )
 
     return complete_narrative
 
@@ -437,7 +470,9 @@ def show_ai_enhancement_comparison():
         "     'My duty is to the Emperor... I will press forward through any moderate threat'"
     )
     print("   • Authentic lore-based reasoning:")
-    print("     'Da WAAAGH! demands action, and a loud, direct attack is da best way'")
+    print(
+        "     'Da WAAAGH! demands action, and a loud, direct attack is da best way'"
+    )
     print()
 
     print("🎯 NARRATIVE QUALITY IMPROVEMENTS:")
@@ -463,13 +498,21 @@ if __name__ == "__main__":
         print(f"\n{'='*60}")
         print("🎉 DEMONSTRATION COMPLETED SUCCESSFULLY!")
         print(f"{'='*60}")
-        print("The ChroniclerAgent has successfully processed real AI-enhanced")
-        print("campaign data and generated a complete dramatic narrative story.")
+        print(
+            "The ChroniclerAgent has successfully processed real AI-enhanced"
+        )
+        print(
+            "campaign data and generated a complete dramatic narrative story."
+        )
         print("This demonstrates the full production-ready capability of the")
-        print("Warhammer 40k Multi-Agent Simulator with genuine AI integration!")
+        print(
+            "Warhammer 40k Multi-Agent Simulator with genuine AI integration!"
+        )
     else:
         print(f"\n{'='*60}")
         print("❌ DEMONSTRATION ENCOUNTERED ISSUES")
         print(f"{'='*60}")
         print("Please check the error messages above and ensure all")
-        print("requirements are met for the demonstration to run successfully.")
+        print(
+            "requirements are met for the demonstration to run successfully."
+        )

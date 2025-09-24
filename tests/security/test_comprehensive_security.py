@@ -25,12 +25,21 @@ from pathlib import Path
 import httpx
 import jwt
 import pytest
+import pytest_asyncio
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.api.main_api_server import create_app
-from src.security.auth_system import AuthenticationManager, Permission, UserRole
-from src.security.input_validation import InputType, InputValidator, ValidationError
+from src.security.auth_system import (
+    AuthenticationManager,
+    Permission,
+    UserRole,
+)
+from src.security.input_validation import (
+    InputType,
+    InputValidator,
+    ValidationError,
+)
 from src.security.rate_limiting import (
     InMemoryRateLimitBackend,
     RateLimitMiddleware,
@@ -70,13 +79,20 @@ class SecurityTestSuite:
         await self._create_test_users()
 
         # Setup HTTP client
-        self.client = httpx.AsyncClient(app=self.app, base_url="http://testserver")
+        self.client = httpx.AsyncClient(
+            app=self.app, base_url="http://testserver"
+        )
 
     async def _create_test_users(self):
         """Create test users for different roles"""
         test_users = [
             ("admin_user", "admin@test.com", "SecurePass123!", UserRole.ADMIN),
-            ("moderator_user", "mod@test.com", "SecurePass123!", UserRole.MODERATOR),
+            (
+                "moderator_user",
+                "mod@test.com",
+                "SecurePass123!",
+                UserRole.MODERATOR,
+            ),
             (
                 "creator_user",
                 "creator@test.com",
@@ -84,13 +100,21 @@ class SecurityTestSuite:
                 UserRole.CONTENT_CREATOR,
             ),
             ("api_user", "api@test.com", "SecurePass123!", UserRole.API_USER),
-            ("reader_user", "reader@test.com", "SecurePass123!", UserRole.READER),
+            (
+                "reader_user",
+                "reader@test.com",
+                "SecurePass123!",
+                UserRole.READER,
+            ),
         ]
 
         for username, email, password, role in test_users:
             try:
                 user_result = await self.auth_manager.create_user(
-                    username=username, email=email, password=password, role=role
+                    username=username,
+                    email=email,
+                    password=password,
+                    role=role,
                 )
                 if user_result.success:
                     self.test_users[username] = {
@@ -114,7 +138,7 @@ class SecurityTestSuite:
 class TestAuthentication:
     """++ SACRED AUTHENTICATION SECURITY TESTS ++"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_suite(self):
         suite = SecurityTestSuite()
         await suite.setup()
@@ -192,7 +216,8 @@ class TestAuthentication:
         expired_token = jwt.encode(
             {
                 "user_id": user_id,
-                "exp": datetime.now(timezone.utc) - timedelta(minutes=1),  # Expired
+                "exp": datetime.now(timezone.utc)
+                - timedelta(minutes=1),  # Expired
             },
             TEST_JWT_SECRET,
             algorithm="HS256",
@@ -208,7 +233,7 @@ class TestAuthentication:
 class TestAuthorization:
     """++ SACRED AUTHORIZATION SECURITY TESTS ++"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_suite(self):
         suite = SecurityTestSuite()
         await suite.setup()
@@ -221,8 +246,12 @@ class TestAuthorization:
 
         # Test admin permissions
         admin_user = security_suite.test_users["admin_user"]
-        assert auth_manager.has_permission(admin_user["role"], Permission.SYSTEM_ADMIN)
-        assert auth_manager.has_permission(admin_user["role"], Permission.USER_DELETE)
+        assert auth_manager.has_permission(
+            admin_user["role"], Permission.SYSTEM_ADMIN
+        )
+        assert auth_manager.has_permission(
+            admin_user["role"], Permission.USER_DELETE
+        )
 
         # Test reader permissions
         reader_user = security_suite.test_users["reader_user"]
@@ -232,7 +261,9 @@ class TestAuthorization:
         assert not auth_manager.has_permission(
             reader_user["role"], Permission.USER_DELETE
         )
-        assert auth_manager.has_permission(reader_user["role"], Permission.STORY_READ)
+        assert auth_manager.has_permission(
+            reader_user["role"], Permission.STORY_READ
+        )
 
     async def test_permission_escalation_prevention(self, security_suite):
         """Test prevention of privilege escalation"""
@@ -315,7 +346,9 @@ class TestInputValidation:
 
         for command_payload in command_payloads:
             with pytest.raises(ValidationError) as exc_info:
-                input_validator.validate_input(command_payload, InputType.FILENAME)
+                input_validator.validate_input(
+                    command_payload, InputType.FILENAME
+                )
 
             assert exc_info.value.severity.value in ["medium", "high"]
 
@@ -324,7 +357,9 @@ class TestInputValidation:
         # Test HTML escaping
         html_input = "<script>alert('test')</script>"
         try:
-            sanitized = input_validator.validate_input(html_input, InputType.TEXT)
+            sanitized = input_validator.validate_input(
+                html_input, InputType.TEXT
+            )
             # Should either be sanitized or raise an exception
             assert "&lt;" in sanitized or "&gt;" in sanitized
         except ValidationError:
@@ -333,7 +368,9 @@ class TestInputValidation:
 
         # Test whitespace stripping
         whitespace_input = "  normal text  "
-        sanitized = input_validator.validate_input(whitespace_input, InputType.USERNAME)
+        sanitized = input_validator.validate_input(
+            whitespace_input, InputType.USERNAME
+        )
         assert sanitized == "normal text"
 
 
@@ -341,7 +378,7 @@ class TestInputValidation:
 class TestRateLimiting:
     """++ SACRED RATE LIMITING SECURITY TESTS ++"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def rate_limiter(self):
         backend = InMemoryRateLimitBackend()
         strategy = RateLimitStrategy()
@@ -379,7 +416,10 @@ class TestRateLimiting:
                     "192.168.1.100"
                 )
                 if not is_allowed:
-                    assert "attack" in reason.lower() or "blocked" in reason.lower()
+                    assert (
+                        "attack" in reason.lower()
+                        or "blocked" in reason.lower()
+                    )
                     break
             else:
                 pytest.fail("DDoS detection did not trigger")
@@ -428,7 +468,7 @@ class TestSecurityHeaders:
 class TestVulnerabilityAssessment:
     """++ SACRED VULNERABILITY ASSESSMENT TESTS ++"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_suite(self):
         suite = SecurityTestSuite()
         await suite.setup()
@@ -578,7 +618,7 @@ class TestSecurityPerformance:
 class TestSecurityIntegration:
     """++ SACRED SECURITY INTEGRATION TESTS ++"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_suite(self):
         suite = SecurityTestSuite()
         await suite.setup()
@@ -604,7 +644,10 @@ class TestSecurityIntegration:
         )
 
         # Should succeed with proper authentication
-        assert response.status_code in [200, 404]  # 404 is ok if no characters exist
+        assert response.status_code in [
+            200,
+            404,
+        ]  # 404 is ok if no characters exist
 
         # 3. Test unauthorized access
         response = await security_suite.client.get("/api/v1/characters")

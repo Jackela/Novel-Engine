@@ -10,7 +10,7 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 from uuid import UUID
 
 from sqlalchemy import (
@@ -46,6 +46,14 @@ from ...domain.value_objects.story_pacing import (
     PacingType,
     StoryPacing,
 )
+from .narrative_domain_types import (
+    NarrativeDomainTyping,
+    RepositoryHelpers,
+    ValueObjectFactory,
+    ensure_decimal,
+    ensure_not_none,
+    ensure_uuid,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -61,22 +69,36 @@ class Base(DeclarativeBase):
 narrative_primary_characters = Table(
     "narrative_primary_characters",
     Base.metadata,
-    Column("narrative_arc_id", PG_UUID(as_uuid=True), ForeignKey("narrative_arcs.id")),
+    Column(
+        "narrative_arc_id",
+        PG_UUID(as_uuid=True),
+        ForeignKey("narrative_arcs.id"),
+    ),
     Column("character_id", PG_UUID(as_uuid=True)),
 )
 
 narrative_supporting_characters = Table(
     "narrative_supporting_characters",
     Base.metadata,
-    Column("narrative_arc_id", PG_UUID(as_uuid=True), ForeignKey("narrative_arcs.id")),
+    Column(
+        "narrative_arc_id",
+        PG_UUID(as_uuid=True),
+        ForeignKey("narrative_arcs.id"),
+    ),
     Column("character_id", PG_UUID(as_uuid=True)),
 )
 
 narrative_active_contexts = Table(
     "narrative_active_contexts",
     Base.metadata,
-    Column("narrative_arc_id", PG_UUID(as_uuid=True), ForeignKey("narrative_arcs.id")),
-    Column("narrative_context_id", String, ForeignKey("narrative_contexts.id")),
+    Column(
+        "narrative_arc_id",
+        PG_UUID(as_uuid=True),
+        ForeignKey("narrative_arcs.id"),
+    ),
+    Column(
+        "narrative_context_id", String, ForeignKey("narrative_contexts.id")
+    ),
 )
 
 
@@ -91,13 +113,19 @@ class NarrativeArcEntity(Base):
     description = Column(Text, default="")
 
     # Arc structure
-    plot_sequence = Column(JSON, default=list)  # List of plot point IDs in order
+    plot_sequence = Column(
+        JSON, default=list
+    )  # List of plot point IDs in order
 
     # Thematic elements
-    theme_development = Column(JSON, default=dict)  # Theme ID -> list of sequences
+    theme_development = Column(
+        JSON, default=dict
+    )  # Theme ID -> list of sequences
 
     # Pacing and flow
-    pacing_sequence = Column(JSON, default=list)  # List of pacing segment IDs in order
+    pacing_sequence = Column(
+        JSON, default=list
+    )  # List of pacing segment IDs in order
 
     # Character involvement
     character_arcs = Column(JSON, default=dict)  # Character ID -> arc notes
@@ -124,7 +152,9 @@ class NarrativeArcEntity(Base):
     related_threads = Column(JSON, default=list)  # List of related thread IDs
 
     # Metadata
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, index=True
+    )
     updated_at = Column(
         DateTime,
         nullable=False,
@@ -142,7 +172,9 @@ class NarrativeArcEntity(Base):
 
     # Relationships
     plot_points = relationship(
-        "PlotPointEntity", back_populates="narrative_arc", cascade="all, delete-orphan"
+        "PlotPointEntity",
+        back_populates="narrative_arc",
+        cascade="all, delete-orphan",
     )
     themes = relationship(
         "NarrativeThemeEntity",
@@ -168,7 +200,9 @@ class NarrativeArcEntity(Base):
         "Character", secondary=narrative_supporting_characters, lazy="select"
     )
     active_contexts = relationship(
-        "NarrativeContextEntity", secondary=narrative_active_contexts, lazy="select"
+        "NarrativeContextEntity",
+        secondary=narrative_active_contexts,
+        lazy="select",
     )
 
 
@@ -213,7 +247,9 @@ class PlotPointEntity(Base):
     notes = Column(Text, default="")
 
     # Relationships
-    narrative_arc = relationship("NarrativeArcEntity", back_populates="plot_points")
+    narrative_arc = relationship(
+        "NarrativeArcEntity", back_populates="plot_points"
+    )
 
 
 class NarrativeThemeEntity(Base):
@@ -284,7 +320,9 @@ class StoryPacingEntity(Base):
     notes = Column(Text, default="")
 
     # Relationships
-    narrative_arc = relationship("NarrativeArcEntity", back_populates="pacing_segments")
+    narrative_arc = relationship(
+        "NarrativeArcEntity", back_populates="pacing_segments"
+    )
 
 
 class NarrativeContextEntity(Base):
@@ -520,7 +558,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
     ) -> List[NarrativeArc]:
         """Get narrative arcs by type."""
         try:
-            query = self.session.query(NarrativeArcEntity).filter_by(arc_type=arc_type)
+            query = self.session.query(NarrativeArcEntity).filter_by(
+                arc_type=arc_type
+            )
 
             if status:
                 query = query.filter_by(status=status)
@@ -533,10 +573,14 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 query = query.limit(limit)
 
             arc_entities = query.all()
-            return [self._entity_to_aggregate(entity) for entity in arc_entities]
+            return [
+                self._entity_to_aggregate(entity) for entity in arc_entities
+            ]
 
         except Exception as e:
-            logger.error(f"Failed to get narrative arcs by type {arc_type}: {str(e)}")
+            logger.error(
+                f"Failed to get narrative arcs by type {arc_type}: {str(e)}"
+            )
             raise
 
     def search(
@@ -571,7 +615,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 )
 
             if arc_types:
-                query = query.filter(NarrativeArcEntity.arc_type.in_(arc_types))
+                query = query.filter(
+                    NarrativeArcEntity.arc_type.in_(arc_types)
+                )
 
             if statuses:
                 query = query.filter(NarrativeArcEntity.status.in_(statuses))
@@ -628,7 +674,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 query = query.limit(limit)
 
             arc_entities = query.all()
-            arcs = [self._entity_to_aggregate(entity) for entity in arc_entities]
+            arcs = [
+                self._entity_to_aggregate(entity) for entity in arc_entities
+            ]
 
             return arcs, total_count
 
@@ -669,10 +717,14 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 > 0
             )
         except Exception as e:
-            logger.error(f"Failed to check if narrative arc exists {arc_id}: {str(e)}")
+            logger.error(
+                f"Failed to check if narrative arc exists {arc_id}: {str(e)}"
+            )
             raise
 
-    def _create_arc_entity(self, narrative_arc: NarrativeArc) -> NarrativeArcEntity:
+    def _create_arc_entity(
+        self, narrative_arc: NarrativeArc
+    ) -> NarrativeArcEntity:
         """Create SQLAlchemy entity from domain aggregate."""
         arc_entity = NarrativeArcEntity(
             id=narrative_arc.arc_id.value,
@@ -684,7 +736,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 k: v for k, v in narrative_arc.theme_development.items()
             },
             pacing_sequence=narrative_arc.pacing_sequence,
-            character_arcs={str(k): v for k, v in narrative_arc.character_arcs.items()},
+            character_arcs={
+                str(k): v for k, v in narrative_arc.character_arcs.items()
+            },
             target_length=narrative_arc.target_length,
             current_length=narrative_arc.current_length,
             completion_percentage=narrative_arc.completion_percentage,
@@ -700,8 +754,12 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 if narrative_arc.parent_arc_id
                 else None
             ),
-            child_arc_ids=[str(cid.value) for cid in narrative_arc.child_arc_ids],
-            related_threads=[str(tid.value) for tid in narrative_arc.related_threads],
+            child_arc_ids=[
+                str(cid.value) for cid in narrative_arc.child_arc_ids
+            ],
+            related_threads=[
+                str(tid.value) for tid in narrative_arc.related_threads
+            ],
             created_at=narrative_arc.created_at,
             updated_at=narrative_arc.updated_at,
             created_by=narrative_arc.created_by,
@@ -713,7 +771,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
 
         # Add plot points
         for plot_point in narrative_arc.plot_points.values():
-            plot_entity = self._create_plot_point_entity(plot_point, arc_entity.id)
+            plot_entity = self._create_plot_point_entity(
+                plot_point, arc_entity.id
+            )
             arc_entity.plot_points.append(plot_entity)
 
         # Add themes
@@ -728,7 +788,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
 
         # Add narrative contexts
         for context in narrative_arc.narrative_contexts.values():
-            context_entity = self._create_context_entity(context, arc_entity.id)
+            context_entity = self._create_context_entity(
+                context, arc_entity.id
+            )
             arc_entity.narrative_contexts.append(context_entity)
 
         return arc_entity
@@ -785,7 +847,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
 
         # Add updated collections
         for plot_point in narrative_arc.plot_points.values():
-            plot_entity = self._create_plot_point_entity(plot_point, arc_entity.id)
+            plot_entity = self._create_plot_point_entity(
+                plot_point, arc_entity.id
+            )
             arc_entity.plot_points.append(plot_entity)
 
         for theme in narrative_arc.themes.values():
@@ -797,7 +861,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
             arc_entity.pacing_segments.append(pacing_entity)
 
         for context in narrative_arc.narrative_contexts.values():
-            context_entity = self._create_context_entity(context, arc_entity.id)
+            context_entity = self._create_context_entity(
+                context, arc_entity.id
+            )
             arc_entity.narrative_contexts.append(context_entity)
 
     def _create_plot_point_entity(
@@ -807,15 +873,17 @@ class NarrativeArcRepository(INarrativeArcRepository):
         return PlotPointEntity(
             id=plot_point.plot_point_id,
             narrative_arc_id=arc_id,
-            plot_point_type=plot_point.plot_point_type.value,
-            importance=plot_point.importance.value,
+            plot_point_type=cast(str, plot_point.plot_point_type.value),
+            importance=cast(str, plot_point.importance.value),
             title=plot_point.title,
             description=plot_point.description,
             sequence_order=plot_point.sequence_order,
-            emotional_intensity=plot_point.emotional_intensity,
-            dramatic_tension=plot_point.dramatic_tension,
-            story_significance=plot_point.story_significance,
-            involved_characters=[str(cid) for cid in plot_point.involved_characters],
+            emotional_intensity=cast(Decimal, plot_point.emotional_intensity),
+            dramatic_tension=cast(Decimal, plot_point.dramatic_tension),
+            story_significance=cast(Decimal, plot_point.story_significance),
+            involved_characters=[
+                str(cid) for cid in plot_point.involved_characters
+            ],
             prerequisite_events=list(plot_point.prerequisite_events),
             consequence_events=list(plot_point.consequence_events),
             location=plot_point.location,
@@ -827,7 +895,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 k: float(v) for k, v in plot_point.thematic_relevance.items()
             },
             tags=list(plot_point.tags),
-            notes=plot_point.notes,
+            notes=plot_point.notes or "",
         )
 
     def _create_theme_entity(
@@ -837,113 +905,168 @@ class NarrativeArcRepository(INarrativeArcRepository):
         return NarrativeThemeEntity(
             id=theme.theme_id,
             narrative_arc_id=arc_id,
-            theme_type=theme.theme_type.value,
-            intensity=theme.intensity.value,
+            theme_type=cast(str, theme.theme_type.value),
+            intensity=cast(str, theme.intensity.value),
             name=theme.name,
             description=theme.description,
-            moral_complexity=theme.moral_complexity,
-            emotional_resonance=theme.emotional_resonance,
-            universal_appeal=theme.universal_appeal,
-            cultural_significance=theme.cultural_significance,
-            development_potential=theme.development_potential,
+            moral_complexity=cast(Decimal, theme.moral_complexity),
+            emotional_resonance=cast(Decimal, theme.emotional_resonance),
+            universal_appeal=cast(Decimal, theme.universal_appeal),
+            cultural_significance=cast(Decimal, theme.cultural_significance),
+            development_potential=cast(Decimal, theme.development_potential),
             symbolic_elements=list(theme.symbolic_elements),
             introduction_sequence=theme.introduction_sequence,
             resolution_sequence=theme.resolution_sequence,
             tags=list(theme.tags),
-            notes=theme.notes,
+            notes=theme.notes or "",
         )
 
     def _create_pacing_entity(
         self, pacing: StoryPacing, arc_id: UUID
     ) -> StoryPacingEntity:
         """Create StoryPacing entity from domain value object."""
+        # Handle StoryPacing fields with proper type safety
+        tension_curve = getattr(pacing, "tension_curve", [])
+        if tension_curve is None:
+            tension_curve = []
+
+        # Map StoryPacing fields to entity fields with backwards compatibility
+        description_density = getattr(
+            pacing, "vocabulary_density", Decimal("5.0")
+        )
+        character_focus = getattr(
+            pacing, "character_focus", set()
+        )  # This might not exist in StoryPacing
+        narrative_techniques = getattr(
+            pacing, "narrative_techniques", set()
+        )  # This might not exist in StoryPacing
+        reader_engagement_target = getattr(
+            pacing,
+            "reader_engagement_target",
+            getattr(pacing, "emotional_target", ""),
+        )
+
         return StoryPacingEntity(
             id=pacing.pacing_id,
             narrative_arc_id=arc_id,
-            pacing_type=pacing.pacing_type.value,
-            base_intensity=pacing.base_intensity.value,
+            pacing_type=cast(str, pacing.pacing_type.value),
+            base_intensity=cast(str, pacing.base_intensity.value),
             start_sequence=pacing.start_sequence,
             end_sequence=pacing.end_sequence,
-            event_density=pacing.event_density,
-            tension_curve=[float(t) for t in pacing.tension_curve],
-            dialogue_ratio=pacing.dialogue_ratio,
-            action_ratio=pacing.action_ratio,
-            reflection_ratio=pacing.reflection_ratio,
-            description_density=pacing.description_density,
-            character_focus=[str(cid) for cid in pacing.character_focus],
-            narrative_techniques=list(pacing.narrative_techniques),
-            reader_engagement_target=pacing.reader_engagement_target,
-            tags=list(pacing.tags),
-            notes=pacing.notes,
+            event_density=cast(Decimal, pacing.event_density),
+            tension_curve=[float(t) for t in tension_curve],
+            dialogue_ratio=cast(Decimal, pacing.dialogue_ratio),
+            action_ratio=cast(Decimal, pacing.action_ratio),
+            reflection_ratio=cast(Decimal, pacing.reflection_ratio),
+            description_density=cast(Decimal, description_density),
+            character_focus=[str(cid) for cid in character_focus]
+            if character_focus
+            else [],
+            narrative_techniques=list(narrative_techniques)
+            if narrative_techniques
+            else [],
+            reader_engagement_target=reader_engagement_target or "",
+            tags=list(getattr(pacing, "tags", set())),
+            notes=getattr(
+                pacing, "notes", getattr(pacing, "pacing_notes", "")
+            ),
         )
 
     def _create_context_entity(
         self, context: NarrativeContext, arc_id: UUID
     ) -> NarrativeContextEntity:
         """Create NarrativeContext entity from domain value object."""
+        # Handle field mapping with type safety
+        affected_characters = getattr(context, "affected_characters", set())
+        related_themes = getattr(context, "related_themes", set())
+        locations = getattr(context, "locations", set())
+
+        # Map context fields to entity fields
+        start_sequence = getattr(
+            context,
+            "applies_from_sequence",
+            getattr(context, "start_sequence", None),
+        )
+        end_sequence = getattr(
+            context,
+            "applies_to_sequence",
+            getattr(context, "end_sequence", None),
+        )
+        importance = getattr(
+            context,
+            "narrative_importance",
+            getattr(context, "importance", Decimal("5.0")),
+        )
+
         return NarrativeContextEntity(
             id=context.context_id,
             narrative_arc_id=arc_id,
-            context_type=context.context_type,
+            context_type=cast(
+                str,
+                context.context_type.value
+                if hasattr(context.context_type, "value")
+                else str(context.context_type),
+            ),
             name=context.name,
             description=context.description,
-            importance=context.importance,
-            is_persistent=context.is_persistent,
-            start_sequence=context.start_sequence,
-            end_sequence=context.end_sequence,
-            location=context.location,
-            time_period=context.time_period,
-            mood=context.mood,
-            atmosphere=context.atmosphere,
-            social_context=context.social_context,
-            cultural_context=context.cultural_context,
-            affected_characters=[str(cid) for cid in context.affected_characters],
-            related_themes=list(context.related_themes),
-            tags=list(context.tags),
-            notes=context.notes,
+            importance=cast(Decimal, importance),
+            is_persistent=getattr(context, "is_persistent", True),
+            start_sequence=start_sequence,
+            end_sequence=end_sequence,
+            location=list(locations)[0]
+            if locations
+            else getattr(context, "location", None),
+            time_period=getattr(context, "time_period", None),
+            mood=getattr(context, "mood", None),
+            atmosphere=getattr(context, "atmosphere", None),
+            social_context=getattr(context, "social_context", None),
+            cultural_context=getattr(context, "cultural_context", None),
+            affected_characters=[str(cid) for cid in affected_characters]
+            if affected_characters
+            else [],
+            related_themes=list(related_themes) if related_themes else [],
+            tags=list(getattr(context, "tags", set())),
+            notes=getattr(context, "notes", ""),
         )
 
-    def _entity_to_aggregate(self, arc_entity: NarrativeArcEntity) -> NarrativeArc:
+    def _entity_to_aggregate(
+        self, arc_entity: NarrativeArcEntity
+    ) -> NarrativeArc:
         """Convert SQLAlchemy entity to domain aggregate."""
-        # Convert plot points
+        # Convert plot points with type safety
         plot_points = {}
         for plot_entity in arc_entity.plot_points:
-            plot_point = PlotPoint(
+            plot_point = ValueObjectFactory.create_plot_point_with_validation(
                 plot_point_id=plot_entity.id,
-                plot_point_type=PlotPointType(plot_entity.plot_point_type),
-                importance=PlotPointImportance(plot_entity.importance),
+                plot_point_type=plot_entity.plot_point_type,
+                importance=plot_entity.importance,
                 title=plot_entity.title,
                 description=plot_entity.description,
                 sequence_order=plot_entity.sequence_order,
                 emotional_intensity=plot_entity.emotional_intensity,
                 dramatic_tension=plot_entity.dramatic_tension,
                 story_significance=plot_entity.story_significance,
-                involved_characters=set(
-                    UUID(cid) for cid in plot_entity.involved_characters
-                ),
-                prerequisite_events=set(plot_entity.prerequisite_events),
-                consequence_events=set(plot_entity.consequence_events),
+                involved_characters=plot_entity.involved_characters or [],
+                prerequisite_events=plot_entity.prerequisite_events or [],
+                consequence_events=plot_entity.consequence_events or [],
                 location=plot_entity.location,
                 time_context=plot_entity.time_context,
                 pov_character=plot_entity.pov_character,
                 outcome=plot_entity.outcome,
                 conflict_type=plot_entity.conflict_type,
-                thematic_relevance={
-                    k: Decimal(str(v))
-                    for k, v in plot_entity.thematic_relevance.items()
-                },
-                tags=set(plot_entity.tags),
-                notes=plot_entity.notes,
+                thematic_relevance=plot_entity.thematic_relevance or {},
+                tags=plot_entity.tags or [],
+                notes=plot_entity.notes or "",
             )
             plot_points[plot_point.plot_point_id] = plot_point
 
-        # Convert themes
+        # Convert themes with type safety
         themes = {}
         for theme_entity in arc_entity.themes:
-            theme = NarrativeTheme(
+            theme = ValueObjectFactory.create_narrative_theme_with_validation(
                 theme_id=theme_entity.id,
-                theme_type=ThemeType(theme_entity.theme_type),
-                intensity=ThemeIntensity(theme_entity.intensity),
+                theme_type=theme_entity.theme_type,
+                intensity=theme_entity.intensity,
                 name=theme_entity.name,
                 description=theme_entity.description,
                 moral_complexity=theme_entity.moral_complexity,
@@ -951,61 +1074,62 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 universal_appeal=theme_entity.universal_appeal,
                 cultural_significance=theme_entity.cultural_significance,
                 development_potential=theme_entity.development_potential,
-                symbolic_elements=set(theme_entity.symbolic_elements),
+                symbolic_elements=theme_entity.symbolic_elements or [],
                 introduction_sequence=theme_entity.introduction_sequence,
                 resolution_sequence=theme_entity.resolution_sequence,
-                tags=set(theme_entity.tags),
-                notes=theme_entity.notes,
+                tags=theme_entity.tags or [],
+                notes=theme_entity.notes or "",
             )
             themes[theme.theme_id] = theme
 
-        # Convert pacing segments
+        # Convert pacing segments with type safety
         pacing_segments = {}
         for pacing_entity in arc_entity.pacing_segments:
-            pacing = StoryPacing(
+            pacing = ValueObjectFactory.create_story_pacing_with_validation(
                 pacing_id=pacing_entity.id,
-                pacing_type=PacingType(pacing_entity.pacing_type),
-                base_intensity=PacingIntensity(pacing_entity.base_intensity),
+                pacing_type=pacing_entity.pacing_type,
+                base_intensity=pacing_entity.base_intensity,
                 start_sequence=pacing_entity.start_sequence,
                 end_sequence=pacing_entity.end_sequence,
                 event_density=pacing_entity.event_density,
-                tension_curve=[Decimal(str(t)) for t in pacing_entity.tension_curve],
+                tension_curve=pacing_entity.tension_curve or [],
                 dialogue_ratio=pacing_entity.dialogue_ratio,
                 action_ratio=pacing_entity.action_ratio,
                 reflection_ratio=pacing_entity.reflection_ratio,
                 description_density=pacing_entity.description_density,
-                character_focus=set(UUID(cid) for cid in pacing_entity.character_focus),
-                narrative_techniques=set(pacing_entity.narrative_techniques),
+                character_focus=pacing_entity.character_focus or [],
+                narrative_techniques=pacing_entity.narrative_techniques or [],
                 reader_engagement_target=pacing_entity.reader_engagement_target,
-                tags=set(pacing_entity.tags),
-                notes=pacing_entity.notes,
+                tags=pacing_entity.tags or [],
+                notes=pacing_entity.notes or "",
             )
             pacing_segments[pacing.pacing_id] = pacing
 
-        # Convert narrative contexts
+        # Convert narrative contexts with type safety
         narrative_contexts = {}
         for context_entity in arc_entity.narrative_contexts:
-            context = NarrativeContext(
-                context_id=context_entity.id,
-                context_type=context_entity.context_type,
-                name=context_entity.name,
-                description=context_entity.description,
-                importance=context_entity.importance,
-                is_persistent=context_entity.is_persistent,
-                start_sequence=context_entity.start_sequence,
-                end_sequence=context_entity.end_sequence,
-                location=context_entity.location,
-                time_period=context_entity.time_period,
-                mood=context_entity.mood,
-                atmosphere=context_entity.atmosphere,
-                social_context=context_entity.social_context,
-                cultural_context=context_entity.cultural_context,
-                affected_characters=set(
-                    UUID(cid) for cid in context_entity.affected_characters
-                ),
-                related_themes=set(context_entity.related_themes),
-                tags=set(context_entity.tags),
-                notes=context_entity.notes,
+            context = (
+                ValueObjectFactory.create_narrative_context_with_validation(
+                    context_id=context_entity.id,
+                    context_type=context_entity.context_type,
+                    name=context_entity.name,
+                    description=context_entity.description,
+                    importance=context_entity.importance,
+                    is_persistent=context_entity.is_persistent,
+                    start_sequence=context_entity.start_sequence,
+                    end_sequence=context_entity.end_sequence,
+                    location=context_entity.location,
+                    time_period=context_entity.time_period,
+                    mood=context_entity.mood,
+                    atmosphere=context_entity.atmosphere,
+                    social_context=context_entity.social_context,
+                    cultural_context=context_entity.cultural_context,
+                    affected_characters=context_entity.affected_characters
+                    or [],
+                    related_themes=context_entity.related_themes or [],
+                    tags=context_entity.tags or [],
+                    notes=context_entity.notes or "",
+                )
             )
             narrative_contexts[context.context_id] = context
 
@@ -1037,7 +1161,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 if hasattr(arc_entity, "supporting_characters")
                 else set()
             ),
-            character_arcs={UUID(k): v for k, v in arc_entity.character_arcs.items()},
+            character_arcs={
+                UUID(k): v for k, v in arc_entity.character_arcs.items()
+            },
             target_length=arc_entity.target_length,
             current_length=arc_entity.current_length,
             completion_percentage=arc_entity.completion_percentage,

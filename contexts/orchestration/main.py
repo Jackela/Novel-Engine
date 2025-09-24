@@ -18,11 +18,11 @@ import os
 import sys
 from pathlib import Path
 
+import uvicorn
+
 # Add the contexts/orchestration directory to Python path
 current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir))
-
-import uvicorn
 
 from api.turn_api import app
 

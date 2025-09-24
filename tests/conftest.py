@@ -219,6 +219,6 @@ def pytest_collection_modifyitems(config, items):
 
 
 # 测试报告钩子
-def pytest_html_report_title(report):
-    """自定义HTML报告标题"""
-    report.title = "StoryForge AI 测试报告"
+# def pytest_html_report_title(report):
+#     """自定义HTML报告标题"""
+#     report.title = "StoryForge AI 测试报告"

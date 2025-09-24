@@ -39,7 +39,9 @@ class EnhancedPerformanceTracker(PerformanceTracker):
     while adding comprehensive observability capabilities.
     """
 
-    def __init__(self, metrics_collector: Optional[PrometheusMetricsCollector] = None):
+    def __init__(
+        self, metrics_collector: Optional[PrometheusMetricsCollector] = None
+    ):
         """
         Initialize enhanced performance tracker.
 
@@ -50,7 +52,9 @@ class EnhancedPerformanceTracker(PerformanceTracker):
         super().__init__()
 
         # Initialize Prometheus integration
-        self.prometheus_collector = metrics_collector or PrometheusMetricsCollector()
+        self.prometheus_collector = (
+            metrics_collector or PrometheusMetricsCollector()
+        )
 
         # Enhanced tracking state
         self.active_turns_tracking: Dict[str, Dict[str, Any]] = {}
@@ -160,9 +164,10 @@ class EnhancedPerformanceTracker(PerformanceTracker):
                         else False
                     ),
                     "execution_time_ms": (
-                        phase_result.get_execution_time().total_seconds() * 1000
+                        exec_time.total_seconds() * 1000
                         if hasattr(phase_result, "get_execution_time")
-                        and phase_result.get_execution_time()
+                        and (exec_time := phase_result.get_execution_time())
+                        is not None
                         else 0
                     ),
                     "events_processed": (
@@ -198,10 +203,10 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             self.prometheus_collector.record_phase_execution(
                 phase_name=phase_name,
                 participants_count=participants_count,
-                success=phase_data["success"],
+                success=bool(phase_data["success"]),
                 execution_time_seconds=phase_data["execution_time_ms"] / 1000,
-                events_processed=phase_data["events_processed"],
-                events_generated=phase_data["events_generated"],
+                events_processed=int(phase_data["events_processed"]),
+                events_generated=int(phase_data["events_generated"]),
                 ai_cost=Decimal(str(phase_data["ai_cost"])),
             )
 
@@ -269,7 +274,9 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             execution_context: Phase execution context
         """
         # Call parent implementation
-        super().track_phase_execution(turn, phase_type, phase_result, execution_context)
+        super().track_phase_execution(
+            turn, phase_type, phase_result, execution_context
+        )
 
         # Enhanced Prometheus metrics
         turn_id = str(turn.turn_id.turn_uuid)
@@ -287,7 +294,9 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             if hasattr(phase_result, "get_execution_time")
             else timedelta(0)
         )
-        execution_time_seconds = execution_time.total_seconds() if execution_time else 0
+        execution_time_seconds = (
+            execution_time.total_seconds() if execution_time else 0
+        )
 
         events_processed = (
             len(phase_result.events_consumed)
@@ -326,7 +335,9 @@ class EnhancedPerformanceTracker(PerformanceTracker):
                     duration_seconds=call_data.get("duration_seconds", 0),
                 )
 
-        logger.debug(f"Enhanced phase tracking: {phase_type.value} for turn {turn_id}")
+        logger.debug(
+            f"Enhanced phase tracking: {phase_type.value} for turn {turn_id}"
+        )
 
     def track_compensation_execution(
         self,
@@ -355,7 +366,9 @@ class EnhancedPerformanceTracker(PerformanceTracker):
                 else "unknown"
             )
             success = (
-                action.status == "completed" if hasattr(action, "status") else False
+                action.status == "completed"
+                if hasattr(action, "status")
+                else False
             )
             execution_time = (
                 action.get_execution_time()
@@ -392,7 +405,9 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             cpu_percent: CPU usage percentage
         """
         self.prometheus_collector.record_resource_usage(
-            component=component, memory_bytes=memory_bytes, cpu_percent=cpu_percent
+            component=component,
+            memory_bytes=memory_bytes,
+            cpu_percent=cpu_percent,
         )
 
     def record_error_with_recovery(
@@ -421,7 +436,9 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             recovery_success=recovery_success,
         )
 
-    def get_business_kpi_summary(self, time_window: timedelta = None) -> Dict[str, Any]:
+    def get_business_kpi_summary(
+        self, time_window: Optional[timedelta] = None
+    ) -> Dict[str, Any]:
         """
         Get business KPI summary including core M10 metrics.
 
@@ -456,10 +473,13 @@ class EnhancedPerformanceTracker(PerformanceTracker):
 
         # Calculate KPIs
         total_turns = len(recent_data)
-        successful_turns = len([entry for entry in recent_data if entry["success"]])
+        successful_turns = len(
+            [entry for entry in recent_data if entry["success"]]
+        )
 
         avg_duration = (
-            sum(entry["execution_time_seconds"] for entry in recent_data) / total_turns
+            sum(entry["execution_time_seconds"] for entry in recent_data)
+            / total_turns
         )
         durations_sorted = sorted(
             [entry["execution_time_seconds"] for entry in recent_data]
@@ -470,7 +490,9 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             else 0
         )
 
-        avg_cost = sum(entry["total_ai_cost"] for entry in recent_data) / total_turns
+        avg_cost = (
+            sum(entry["total_ai_cost"] for entry in recent_data) / total_turns
+        )
         total_cost = sum(entry["total_ai_cost"] for entry in recent_data)
 
         success_rate = successful_turns / total_turns if total_turns > 0 else 0
@@ -521,9 +543,13 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             ]
 
             if recent_data:
-                successful = len([entry for entry in recent_data if entry["success"]])
+                successful = len(
+                    [entry for entry in recent_data if entry["success"]]
+                )
                 success_rate = successful / len(recent_data)
-                self.prometheus_collector.update_success_rate(window_name, success_rate)
+                self.prometheus_collector.update_success_rate(
+                    window_name, success_rate
+                )
 
     def get_health_status(self) -> Dict[str, Any]:
         """
@@ -532,18 +558,16 @@ class EnhancedPerformanceTracker(PerformanceTracker):
         Returns:
             Comprehensive health status
         """
-        base_health = (
-            super().get_orchestrator_health()
-            if hasattr(super(), "get_orchestrator_health")
-            else {}
-        )
+        # Get base health status if available (method may not exist in parent)
+        base_health: Dict[str, Any] = {}
 
         # Add Prometheus integration health
         prometheus_health = {
             "prometheus_integration": "healthy",
             "active_turns_tracking": len(self.active_turns_tracking),
             "recent_performance_entries": len(self.recent_performance_data),
-            "metrics_collector_initialized": self.prometheus_collector is not None,
+            "metrics_collector_initialized": self.prometheus_collector
+            is not None,
         }
 
         return {
@@ -556,3 +580,168 @@ class EnhancedPerformanceTracker(PerformanceTracker):
                 "error_tracking": True,
             },
         }
+
+    # Application Service Interface Methods
+
+    def start_turn_monitoring(self, turn_id) -> None:
+        """
+        Start monitoring turn execution (application service interface).
+
+        Args:
+            turn_id: Turn identifier to start monitoring
+        """
+        logger.debug(f"Starting turn monitoring for {turn_id}")
+        # Store start time for turn monitoring
+        turn_id_str = (
+            str(turn_id) if hasattr(turn_id, "__str__") else str(turn_id)
+        )
+        self.active_turns_tracking[turn_id_str] = {
+            "start_time": datetime.now(),
+            "monitoring_active": True,
+        }
+
+    def stop_turn_monitoring(self, turn_id) -> None:
+        """
+        Stop monitoring turn execution (application service interface).
+
+        Args:
+            turn_id: Turn identifier to stop monitoring
+        """
+        logger.debug(f"Stopping turn monitoring for {turn_id}")
+        turn_id_str = (
+            str(turn_id) if hasattr(turn_id, "__str__") else str(turn_id)
+        )
+        if turn_id_str in self.active_turns_tracking:
+            self.active_turns_tracking[turn_id_str][
+                "monitoring_active"
+            ] = False
+
+    def get_turn_metrics(self, turn_id) -> Dict[str, float]:
+        """
+        Get metrics for specific turn (application service interface).
+
+        Args:
+            turn_id: Turn identifier
+
+        Returns:
+            Dictionary of turn metrics
+        """
+        turn_id_str = (
+            str(turn_id) if hasattr(turn_id, "__str__") else str(turn_id)
+        )
+
+        # Return basic metrics for now
+        if turn_id_str in self.active_turns_tracking:
+            tracking_data = self.active_turns_tracking[turn_id_str]
+            start_time = tracking_data.get("start_time", datetime.now())
+            elapsed_time = (datetime.now() - start_time).total_seconds()
+
+            return {
+                "elapsed_time_seconds": elapsed_time,
+                "monitoring_active": tracking_data.get(
+                    "monitoring_active", False
+                ),
+                "memory_usage_mb": 0.0,  # Placeholder
+                "cpu_usage_percent": 0.0,  # Placeholder
+            }
+
+        return {}
+
+    def record_phase_metrics(
+        self,
+        turn_id,
+        phase_type,
+        execution_time_ms: float,
+        success: bool,
+        events_processed: int,
+        events_generated: int,
+        ai_cost: float = 0.0,
+    ) -> None:
+        """
+        Record metrics for phase execution (application service interface).
+
+        Args:
+            turn_id: Turn identifier
+            phase_type: Phase type that was executed
+            execution_time_ms: Phase execution time in milliseconds
+            success: Whether phase was successful
+            events_processed: Number of events processed
+            events_generated: Number of events generated
+            ai_cost: AI service cost for the phase
+        """
+        logger.debug(
+            f"Recording phase metrics for {turn_id}, phase {phase_type}"
+        )
+
+        # Record in Prometheus if available
+        if self.prometheus_collector:
+            participants_count = 1  # Default value
+            self.prometheus_collector.record_phase_execution(
+                phase_name=str(phase_type),
+                participants_count=participants_count,
+                success=success,
+                execution_time_seconds=execution_time_ms / 1000.0,
+                events_processed=events_processed,
+                events_generated=events_generated,
+                ai_cost=Decimal(str(ai_cost)),
+            )
+
+    def get_turn_status(self, turn_id) -> Optional[Dict[str, Any]]:
+        """
+        Get current status of turn execution (application service interface).
+
+        Args:
+            turn_id: Turn identifier
+
+        Returns:
+            Turn status information or None
+        """
+        turn_id_str = (
+            str(turn_id) if hasattr(turn_id, "__str__") else str(turn_id)
+        )
+
+        if turn_id_str in self.active_turns_tracking:
+            tracking_data = self.active_turns_tracking[turn_id_str]
+            start_time = tracking_data.get("start_time", datetime.now())
+            elapsed_time = (datetime.now() - start_time).total_seconds()
+
+            return {
+                "turn_id": turn_id_str,
+                "status": "active"
+                if tracking_data.get("monitoring_active", False)
+                else "inactive",
+                "elapsed_time_seconds": elapsed_time,
+                "start_time": start_time.isoformat(),
+            }
+
+        return None
+
+    def cleanup_turn_data(self, turn_id) -> None:
+        """
+        Clean up data for completed turn (application service interface).
+
+        Args:
+            turn_id: Turn identifier to clean up
+        """
+        turn_id_str = (
+            str(turn_id) if hasattr(turn_id, "__str__") else str(turn_id)
+        )
+
+        if turn_id_str in self.active_turns_tracking:
+            del self.active_turns_tracking[turn_id_str]
+
+        logger.debug(f"Cleaned up turn data for {turn_id}")
+
+    def get_active_turn_count(self) -> int:
+        """
+        Get count of active turns being monitored (application service interface).
+
+        Returns:
+            Number of active turns
+        """
+        active_count = sum(
+            1
+            for data in self.active_turns_tracking.values()
+            if data.get("monitoring_active", False)
+        )
+        return active_count

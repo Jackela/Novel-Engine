@@ -176,7 +176,9 @@ class PhaseCompleted:
 
     @staticmethod
     def _calculate_performance_score(
-        duration_ms: int, events_processed: int, performance_metrics: Dict[str, float]
+        duration_ms: int,
+        events_processed: int,
+        performance_metrics: Dict[str, float],
     ) -> float:
         """Calculate phase performance score (0.0-1.0)."""
         # Base score on events per second
@@ -293,14 +295,17 @@ class PhaseFailed:
             "severity": cls._determine_failure_severity(
                 phase_type, error_details or {}
             ),
-            "affects_downstream_phases": cls._affects_downstream_phases(phase_type),
+            "affects_downstream_phases": cls._affects_downstream_phases(
+                phase_type
+            ),
             "requires_human_intervention": cls._requires_human_intervention(
                 error_details or {}
             ),
             "estimated_recovery_time_ms": cls._estimate_recovery_time(
                 phase_type, compensation_priority
             ),
-            "partial_progress_salvageable": events_processed_before_failure > 0,
+            "partial_progress_salvageable": events_processed_before_failure
+            > 0,
         }
 
         return cls(
@@ -327,7 +332,9 @@ class PhaseFailed:
 
     @staticmethod
     def _calculate_compensation_priority(
-        phase_type: PhaseType, error_details: Dict[str, Any], events_processed: int
+        phase_type: PhaseType,
+        error_details: Dict[str, Any],
+        events_processed: int,
     ) -> int:
         """Calculate compensation priority (1-10, higher is more urgent)."""
         # Base priority on phase criticality
@@ -410,6 +417,8 @@ class PhaseFailed:
         base_time = base_times.get(phase_type, 5000)
 
         # Adjust based on compensation priority (higher priority = faster recovery)
-        priority_multiplier = 1.5 - (compensation_priority / 20.0)  # 0.5x to 1.0x
+        priority_multiplier = 1.5 - (
+            compensation_priority / 20.0
+        )  # 0.5x to 1.0x
 
         return int(base_time * priority_multiplier)

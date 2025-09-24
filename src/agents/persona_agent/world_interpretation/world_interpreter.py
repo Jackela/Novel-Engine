@@ -13,11 +13,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from ..protocols import (
-    SubjectiveInterpretation,
-    ThreatLevel,
-    WorldEvent,
-)
+from ..protocols import SubjectiveInterpretation, ThreatLevel, WorldEvent
 
 
 class InterpretationBias(Enum):
@@ -75,7 +71,9 @@ class WorldInterpreter:
     - Manage relevant memory retrieval and storage
     """
 
-    def __init__(self, character_id: str, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, character_id: str, logger: Optional[logging.Logger] = None
+    ):
         self.character_id = character_id
         self.logger = logger or logging.getLogger(__name__)
 
@@ -85,13 +83,14 @@ class WorldInterpreter:
         self._semantic_knowledge: Dict[str, Any] = {}
 
         # Worldview and beliefs
-        self._worldview: Dict[str, float] = {}  # belief_key -> strength (-1.0 to 1.0)
-        self._faction_perceptions: Dict[str, Dict[str, float]] = (
-            {}
-        )  # faction -> attributes
-        self._entity_relationships: Dict[str, float] = (
-            {}
-        )  # entity_id -> relationship score
+        # belief_key -> strength (-1.0 to 1.0)
+        self._worldview: Dict[str, float] = {}
+        self._faction_perceptions: Dict[
+            str, Dict[str, float]
+        ] = {}  # faction -> attributes
+        self._entity_relationships: Dict[
+            str, float
+        ] = {}  # entity_id -> relationship score
 
         # Interpretation patterns learned over time
         self._interpretation_patterns: Dict[str, Dict[str, Any]] = {}
@@ -124,16 +123,23 @@ class WorldInterpreter:
             )
 
             # Build interpretation context
-            context = await self._build_interpretation_context(character_context)
+            context = await self._build_interpretation_context(
+                character_context
+            )
 
             # Retrieve relevant memories
             await self.get_relevant_memories(
-                {"event_type": event.event_type, "entities": event.affected_entities},
+                {
+                    "event_type": event.event_type,
+                    "entities": event.affected_entities,
+                },
                 limit=5,
             )
 
             # Generate base understanding
-            base_understanding = await self._generate_base_understanding(event, context)
+            base_understanding = await self._generate_base_understanding(
+                event, context
+            )
 
             # Apply interpretation biases
             biased_understanding = await self._apply_interpretation_biases(
@@ -151,7 +157,9 @@ class WorldInterpreter:
             )
 
             # Assess threat level from character's perspective
-            threat_assessment = await self._assess_subjective_threat(event, context)
+            threat_assessment = await self._assess_subjective_threat(
+                event, context
+            )
 
             # Calculate relationship changes
             relationship_changes = await self._calculate_relationship_changes(
@@ -176,7 +184,9 @@ class WorldInterpreter:
 
             # Store as memory if significant enough
             if memory_priority > 0.3:
-                await self._store_interpretation_as_memory(interpretation, event)
+                await self._store_interpretation_as_memory(
+                    interpretation, event
+                )
 
             self.logger.debug(
                 f"Event interpretation completed with threat level: {threat_assessment}"
@@ -193,7 +203,9 @@ class WorldInterpreter:
                 threat_assessment=ThreatLevel.MODERATE,
             )
 
-    async def update_worldview(self, interpretation: SubjectiveInterpretation) -> None:
+    async def update_worldview(
+        self, interpretation: SubjectiveInterpretation
+    ) -> None:
         """
         Update character's worldview based on event interpretation.
 
@@ -210,15 +222,22 @@ class WorldInterpreter:
                 self._worldview[belief] = max(-1.0, min(1.0, new_strength))
 
             # Update relationship scores
-            for entity_id, change in interpretation.relationship_changes.items():
+            for (
+                entity_id,
+                change,
+            ) in interpretation.relationship_changes.items():
                 current_score = self._entity_relationships.get(entity_id, 0.0)
                 new_score = current_score + (
                     change * 0.05
                 )  # Gradual relationship change
-                self._entity_relationships[entity_id] = max(-1.0, min(1.0, new_score))
+                self._entity_relationships[entity_id] = max(
+                    -1.0, min(1.0, new_score)
+                )
 
             # Update emotional state
-            await self._update_emotional_state(interpretation.emotional_response)
+            await self._update_emotional_state(
+                interpretation.emotional_response
+            )
 
             # Learn from interpretation patterns
             await self._learn_interpretation_pattern(interpretation)
@@ -261,7 +280,9 @@ class WorldInterpreter:
                         relevant_memories.append(memory)
 
             # Remove duplicates
-            unique_memories = {memory.memory_id: memory for memory in relevant_memories}
+            unique_memories = {
+                memory.memory_id: memory for memory in relevant_memories
+            }
             relevant_memories = list(unique_memories.values())
 
             # Sort by relevance (emotional weight * decay factor * recency)
@@ -269,7 +290,8 @@ class WorldInterpreter:
 
             def memory_relevance_score(memory):
                 recency = max(
-                    0.1, 1.0 - (current_time - memory.timestamp) / (30 * 24 * 3600)
+                    0.1,
+                    1.0 - (current_time - memory.timestamp) / (30 * 24 * 3600),
                 )  # 30 days
                 return memory.emotional_weight * memory.decay_factor * recency
 
@@ -289,7 +311,9 @@ class WorldInterpreter:
                     }
                 )
 
-            self.logger.debug(f"Retrieved {len(memory_data)} relevant memories")
+            self.logger.debug(
+                f"Retrieved {len(memory_data)} relevant memories"
+            )
             return memory_data
 
         except Exception as e:
@@ -310,7 +334,7 @@ class WorldInterpreter:
             bool: True if storage successful
         """
         try:
-            memory_id = f"{self.character_id}_memory_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(self._memory_fragments)}"
+            memory_id = f"{self.character_id}_memory_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len( self._memory_fragments)}"
 
             memory_fragment = MemoryFragment(
                 memory_id=memory_id,
@@ -343,14 +367,20 @@ class WorldInterpreter:
         """Get summary of character's current worldview."""
         try:
             # Categorize beliefs
-            strong_beliefs = {k: v for k, v in self._worldview.items() if abs(v) > 0.7}
+            strong_beliefs = {
+                k: v for k, v in self._worldview.items() if abs(v) > 0.7
+            }
             moderate_beliefs = {
                 k: v for k, v in self._worldview.items() if 0.3 < abs(v) <= 0.7
             }
 
             # Relationship summary
-            allies = {k: v for k, v in self._entity_relationships.items() if v > 0.5}
-            enemies = {k: v for k, v in self._entity_relationships.items() if v < -0.5}
+            allies = {
+                k: v for k, v in self._entity_relationships.items() if v > 0.5
+            }
+            enemies = {
+                k: v for k, v in self._entity_relationships.items() if v < -0.5
+            }
 
             # Bias summary
             dominant_biases = [
@@ -402,7 +432,9 @@ class WorldInterpreter:
             return InterpretationContext(
                 character_personality=personality,
                 recent_memories=recent_memories,
-                current_emotional_state=current_state.get("emotional_state", "neutral"),
+                current_emotional_state=current_state.get(
+                    "emotional_state", "neutral"
+                ),
                 factional_beliefs=faction_info.get("beliefs", {}),
                 knowledge_base=self._semantic_knowledge,
                 relationship_context=self._entity_relationships,
@@ -420,14 +452,14 @@ class WorldInterpreter:
         """Generate base understanding of event before applying biases."""
         try:
             # Start with objective description
-            base_description = event.description or f"A {event.event_type} occurred"
+            base_description = (
+                event.description or f"A {event.event_type} occurred"
+            )
 
             # Add context based on character's knowledge
             if event.source in context.knowledge_base:
                 source_info = context.knowledge_base[event.source]
-                base_description += (
-                    f" involving {source_info.get('description', event.source)}"
-                )
+                base_description += f" involving {source_info.get( 'description', event.source)}"
 
             # Add location context if relevant
             if event.location and event.location in context.knowledge_base:
@@ -456,7 +488,10 @@ class WorldInterpreter:
             return event.description or "Something happened"
 
     async def _apply_interpretation_biases(
-        self, base_understanding: str, event: WorldEvent, context: InterpretationContext
+        self,
+        base_understanding: str,
+        event: WorldEvent,
+        context: InterpretationContext,
     ) -> str:
         """Apply character's interpretation biases to base understanding."""
         try:
@@ -465,13 +500,23 @@ class WorldInterpreter:
             for bias in context.current_biases:
                 if bias == InterpretationBias.OPTIMISTIC:
                     # Look for positive aspects
-                    if "victory" in event.event_type or "success" in event.event_type:
-                        biased_understanding += ". This could lead to good outcomes."
+                    if (
+                        "victory" in event.event_type
+                        or "success" in event.event_type
+                    ):
+                        biased_understanding += (
+                            ". This could lead to good outcomes."
+                        )
 
                 elif bias == InterpretationBias.PESSIMISTIC:
                     # Focus on negative implications
-                    if "battle" in event.event_type or "conflict" in event.event_type:
-                        biased_understanding += ". This will likely lead to suffering."
+                    if (
+                        "battle" in event.event_type
+                        or "conflict" in event.event_type
+                    ):
+                        biased_understanding += (
+                            ". This will likely lead to suffering."
+                        )
 
                 elif bias == InterpretationBias.PARANOID:
                     # See hidden threats
@@ -485,9 +530,7 @@ class WorldInterpreter:
 
                 elif bias == InterpretationBias.CYNICAL:
                     # Distrust motives
-                    biased_understanding += (
-                        ". Someone is probably benefiting from this at others' expense."
-                    )
+                    biased_understanding += ". Someone is probably benefiting from this at others' expense."
 
                 elif bias == InterpretationBias.NAIVE:
                     # Miss subtle implications
@@ -500,9 +543,7 @@ class WorldInterpreter:
                         "justice" in faction_beliefs
                         and faction_beliefs["justice"] > 0.5
                     ):
-                        biased_understanding += (
-                            ". This is either just or unjust, no middle ground."
-                        )
+                        biased_understanding += ". This is either just or unjust, no middle ground."
 
             return biased_understanding
 
@@ -511,7 +552,10 @@ class WorldInterpreter:
             return base_understanding
 
     async def _generate_emotional_response(
-        self, event: WorldEvent, understanding: str, context: InterpretationContext
+        self,
+        event: WorldEvent,
+        understanding: str,
+        context: InterpretationContext,
     ) -> str:
         """Generate character's emotional response to the event."""
         try:
@@ -534,10 +578,18 @@ class WorldInterpreter:
                 relationship_score = context.relationship_context[event.source]
                 if relationship_score > 0.5:  # Ally
                     if "battle" in event.event_type:
-                        possible_emotions = ["concerned", "supportive", "worried"]
+                        possible_emotions = [
+                            "concerned",
+                            "supportive",
+                            "worried",
+                        ]
                 elif relationship_score < -0.5:  # Enemy
                     if "victory" in understanding.lower():
-                        possible_emotions = ["satisfied", "vindicated", "pleased"]
+                        possible_emotions = [
+                            "satisfied",
+                            "vindicated",
+                            "pleased",
+                        ]
 
             # Consider personality traits
             personality = context.character_personality
@@ -554,7 +606,11 @@ class WorldInterpreter:
                     for entity in context.relationship_context
                     if context.relationship_context[entity] > 0.5
                 ):
-                    possible_emotions = ["protective", "concerned", "determined"]
+                    possible_emotions = [
+                        "protective",
+                        "concerned",
+                        "determined",
+                    ]
 
             # Select primary emotion based on stress level
             if context.stress_level > 0.7:
@@ -573,7 +629,10 @@ class WorldInterpreter:
             return "confused"
 
     async def _calculate_belief_impacts(
-        self, event: WorldEvent, understanding: str, context: InterpretationContext
+        self,
+        event: WorldEvent,
+        understanding: str,
+        context: InterpretationContext,
     ) -> Dict[str, float]:
         """Calculate how the event impacts character's beliefs."""
         try:
@@ -619,7 +678,10 @@ class WorldInterpreter:
 
             # Direct threats
             if self.character_id in event.affected_entities:
-                if "attack" in event.event_type or "battle" in event.event_type:
+                if (
+                    "attack" in event.event_type
+                    or "battle" in event.event_type
+                ):
                     base_threat = ThreatLevel.HIGH
                 elif "injury" in event.event_type:
                     base_threat = ThreatLevel.MODERATE
@@ -673,7 +735,10 @@ class WorldInterpreter:
             return ThreatLevel.MODERATE
 
     async def _calculate_relationship_changes(
-        self, event: WorldEvent, understanding: str, context: InterpretationContext
+        self,
+        event: WorldEvent,
+        understanding: str,
+        context: InterpretationContext,
     ) -> Dict[str, float]:
         """Calculate how the event affects relationships."""
         try:
@@ -710,13 +775,13 @@ class WorldInterpreter:
                 for entity in event.affected_entities:
                     if entity != self.character_id:
                         if "victory" in event.event_type:
-                            relationship_changes[entity] = (
-                                0.1  # Bonding through shared victory
-                            )
+                            relationship_changes[
+                                entity
+                            ] = 0.1  # Bonding through shared victory
                         elif "defeat" in event.event_type:
-                            relationship_changes[entity] = (
-                                0.05  # Small bonding through shared hardship
-                            )
+                            relationship_changes[
+                                entity
+                            ] = 0.05  # Small bonding through shared hardship
 
             return relationship_changes
 
@@ -725,7 +790,10 @@ class WorldInterpreter:
             return {}
 
     async def _calculate_memory_priority(
-        self, event: WorldEvent, emotional_response: str, threat_level: ThreatLevel
+        self,
+        event: WorldEvent,
+        emotional_response: str,
+        threat_level: ThreatLevel,
     ) -> float:
         """Calculate how likely this event is to be remembered."""
         try:
@@ -881,11 +949,15 @@ class WorldInterpreter:
                         0.1, 1.0 - (age_days / 365)
                     )  # Decay over a year
                     return (
-                        memory.emotional_weight * memory.decay_factor * recency_factor
+                        memory.emotional_weight
+                        * memory.decay_factor
+                        * recency_factor
                     )
 
                 # Keep the most important memories
-                self._memory_fragments.sort(key=memory_importance, reverse=True)
+                self._memory_fragments.sort(
+                    key=memory_importance, reverse=True
+                )
                 removed_count = len(self._memory_fragments) - max_memories
                 self._memory_fragments = self._memory_fragments[:max_memories]
 

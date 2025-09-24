@@ -7,8 +7,10 @@ import asyncio
 from datetime import datetime
 
 import httpx
+import pytest
 
 
+@pytest.mark.asyncio
 async def test_fixes():
     """Test the deployment fixes"""
 
@@ -20,7 +22,6 @@ async def test_fixes():
     results = []
 
     async with httpx.AsyncClient(timeout=30.0) as client:
-
         # Test 1: Master Orchestrator Health (should not return 500)
         print("\n1. Testing Master Orchestrator Health...")
         try:
@@ -32,16 +33,28 @@ async def test_fixes():
                     print(
                         f"   ✅ Orchestrator health: {status} (HTTP {response.status_code})"
                     )
-                    results.append(("Orchestrator Health", True, f"Status: {status}"))
-                else:
-                    print(f"   ❌ Orchestrator health: {status} (unexpected status)")
                     results.append(
-                        ("Orchestrator Health", False, f"Unexpected status: {status}")
+                        ("Orchestrator Health", True, f"Status: {status}")
+                    )
+                else:
+                    print(
+                        f"   ❌ Orchestrator health: {status} (unexpected status)"
+                    )
+                    results.append(
+                        (
+                            "Orchestrator Health",
+                            False,
+                            f"Unexpected status: {status}",
+                        )
                     )
             else:
                 print(f"   ❌ Orchestrator health: HTTP {response.status_code}")
                 results.append(
-                    ("Orchestrator Health", False, f"HTTP {response.status_code}")
+                    (
+                        "Orchestrator Health",
+                        False,
+                        f"HTTP {response.status_code}",
+                    )
                 )
         except Exception as e:
             print(f"   ❌ Orchestrator health: {e}")
@@ -58,7 +71,9 @@ async def test_fixes():
                 channels = deps.get("notification_channels", "disconnected")
 
                 if status in ["healthy", "degraded"]:
-                    print(f"   ✅ Notification service: {status}, channels: {channels}")
+                    print(
+                        f"   ✅ Notification service: {status}, channels: {channels}"
+                    )
                     results.append(
                         (
                             "Notification Service",
@@ -68,11 +83,19 @@ async def test_fixes():
                     )
                 else:
                     print(f"   ❌ Notification service: {status}")
-                    results.append(("Notification Service", False, f"Status: {status}"))
+                    results.append(
+                        ("Notification Service", False, f"Status: {status}")
+                    )
             else:
-                print(f"   ❌ Notification service: HTTP {response.status_code}")
+                print(
+                    f"   ❌ Notification service: HTTP {response.status_code}"
+                )
                 results.append(
-                    ("Notification Service", False, f"HTTP {response.status_code}")
+                    (
+                        "Notification Service",
+                        False,
+                        f"HTTP {response.status_code}",
+                    )
                 )
         except Exception as e:
             print(f"   ❌ Notification service: {e}")
@@ -95,12 +118,20 @@ async def test_fixes():
                 result_data = response.json()
                 test_passed = result_data.get("passed", False)
                 if test_passed:
-                    print("   ✅ API Testing service: Test execution successful")
+                    print(
+                        "   ✅ API Testing service: Test execution successful"
+                    )
                     results.append(
-                        ("API Testing Functionality", True, "Test execution successful")
+                        (
+                            "API Testing Functionality",
+                            True,
+                            "Test execution successful",
+                        )
                     )
                 else:
-                    print("   ⚠️  API Testing service: Test failed but service working")
+                    print(
+                        "   ⚠️  API Testing service: Test failed but service working"
+                    )
                     results.append(
                         (
                             "API Testing Functionality",
@@ -111,7 +142,11 @@ async def test_fixes():
             else:
                 print(f"   ❌ API Testing service: HTTP {response.status_code}")
                 results.append(
-                    ("API Testing Functionality", False, f"HTTP {response.status_code}")
+                    (
+                        "API Testing Functionality",
+                        False,
+                        f"HTTP {response.status_code}",
+                    )
                 )
         except Exception as e:
             print(f"   ❌ API Testing service: {e}")
@@ -138,14 +173,22 @@ async def test_fixes():
                     f"   ✅ Concurrent handling: {success_rate:.0%} success ({successful}/5)"
                 )
                 results.append(
-                    ("Concurrent Handling", True, f"{success_rate:.0%} success")
+                    (
+                        "Concurrent Handling",
+                        True,
+                        f"{success_rate:.0%} success",
+                    )
                 )
             else:
                 print(
                     f"   ❌ Concurrent handling: {success_rate:.0%} success ({successful}/5)"
                 )
                 results.append(
-                    ("Concurrent Handling", False, f"{success_rate:.0%} success")
+                    (
+                        "Concurrent Handling",
+                        False,
+                        f"{success_rate:.0%} success",
+                    )
                 )
         except Exception as e:
             print(f"   ❌ Concurrent handling: {e}")
@@ -183,7 +226,9 @@ async def test_fixes():
                 overall_score = result_data.get("overall_score", 0.0)
 
                 if overall_passed or overall_score > 0:
-                    print(f"   ✅ E2E Workflow: Success (Score: {overall_score:.2f})")
+                    print(
+                        f"   ✅ E2E Workflow: Success (Score: {overall_score:.2f})"
+                    )
                     results.append(
                         ("E2E Workflow", True, f"Score: {overall_score:.2f}")
                     )
@@ -196,7 +241,9 @@ async def test_fixes():
                     )
             else:
                 print(f"   ❌ E2E Workflow: HTTP {response.status_code}")
-                results.append(("E2E Workflow", False, f"HTTP {response.status_code}"))
+                results.append(
+                    ("E2E Workflow", False, f"HTTP {response.status_code}")
+                )
         except Exception as e:
             print(f"   ❌ E2E Workflow: {e}")
             results.append(("E2E Workflow", False, str(e)))

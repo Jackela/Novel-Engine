@@ -96,7 +96,9 @@ class BasicVisibilityCalculator(IVisibilityCalculator):
             perception_range,
         ) in perception_capabilities.perception_ranges.items():
             # Apply awareness bonus to effective range
-            effective_range = perception_range.effective_range * (1.0 + awareness_bonus)
+            effective_range = perception_range.effective_range * (
+                1.0 + awareness_bonus
+            )
 
             # Apply environmental modifiers
             env_modifier = self._get_environmental_modifier(
@@ -117,13 +119,17 @@ class BasicVisibilityCalculator(IVisibilityCalculator):
             )
 
             # Calculate visibility
-            visibility = modified_range.calculate_visibility_at_distance(distance)
+            visibility = modified_range.calculate_visibility_at_distance(
+                distance
+            )
             visibility_results[perception_type] = visibility
 
         return visibility_results
 
     def _get_environmental_modifier(
-        self, perception_type: PerceptionType, environmental_conditions: Dict[str, Any]
+        self,
+        perception_type: PerceptionType,
+        environmental_conditions: Dict[str, Any],
     ) -> float:
         """Get environmental modifier for a specific perception type."""
 
@@ -142,7 +148,12 @@ class BasicVisibilityCalculator(IVisibilityCalculator):
 
         # Light level effects (primarily affects visual)
         if perception_type == PerceptionType.VISUAL:
-            light_modifiers = {"bright": 1.2, "normal": 1.0, "dim": 0.7, "dark": 0.3}
+            light_modifiers = {
+                "bright": 1.2,
+                "normal": 1.0,
+                "dim": 0.7,
+                "dark": 0.3,
+            }
             modifier *= light_modifiers.get(light_level, 1.0)
 
         # Weather effects
@@ -207,7 +218,9 @@ class FogOfWarService:
     degrades over time.
     """
 
-    def __init__(self, visibility_calculator: Optional[IVisibilityCalculator] = None):
+    def __init__(
+        self, visibility_calculator: Optional[IVisibilityCalculator] = None
+    ):
         """
         Initialize the FogOfWarService.
 
@@ -282,7 +295,10 @@ class FogOfWarService:
                 continue  # Skip self
 
             visibility_results = self.calculate_visibility_between_positions(
-                turn_brief, observer_position, position, environmental_conditions
+                turn_brief,
+                observer_position,
+                position,
+                environmental_conditions,
             )
 
             # Get the best visibility level
@@ -296,9 +312,9 @@ class FogOfWarService:
                         VisibilityLevel.HIDDEN,
                         VisibilityLevel.INVISIBLE,
                     ]
-                    if visibility_order.index(visibility) < visibility_order.index(
-                        best_visibility
-                    ):
+                    if visibility_order.index(
+                        visibility
+                    ) < visibility_order.index(best_visibility):
                         best_visibility = visibility
 
             # Track changes
@@ -385,7 +401,10 @@ class FogOfWarService:
         propagatable_knowledge = []
         filter_types = set(knowledge_types) if knowledge_types else None
 
-        for subject, items in source_turn_brief.knowledge_base.knowledge_items.items():
+        for (
+            subject,
+            items,
+        ) in source_turn_brief.knowledge_base.knowledge_items.items():
             for item in items:
                 # Filter by knowledge type if specified
                 if filter_types and item.knowledge_type not in filter_types:
@@ -395,7 +414,6 @@ class FogOfWarService:
                 if (
                     item.is_current() and item.get_reliability_score() >= 0.5
                 ):  # Minimum for sharing
-
                     # Create new knowledge item with reduced reliability
                     propagated_item = KnowledgeItem(
                         subject=item.subject,
@@ -447,7 +465,9 @@ class FogOfWarService:
 
         reverse_mapping = {v: k for k, v in certainty_values.items()}
 
-        current_certainty_value = certainty_values[knowledge_item.certainty_level]
+        current_certainty_value = certainty_values[
+            knowledge_item.certainty_level
+        ]
         new_certainty_value = max(0.0, current_certainty_value - decay_amount)
 
         # Find the closest certainty level
@@ -464,7 +484,9 @@ class FogOfWarService:
         return knowledge_item
 
     def get_stale_knowledge_subjects(
-        self, turn_brief: TurnBrief, staleness_threshold: timedelta = timedelta(hours=1)
+        self,
+        turn_brief: TurnBrief,
+        staleness_threshold: timedelta = timedelta(hours=1),
     ) -> List[str]:
         """
         Get subjects with stale knowledge that needs updating.
@@ -481,10 +503,14 @@ class FogOfWarService:
 
         stale_subjects = []
 
-        for subject, items in turn_brief.knowledge_base.knowledge_items.items():
+        for (
+            subject,
+            items,
+        ) in turn_brief.knowledge_base.knowledge_items.items():
             # Check if all knowledge about this subject is stale
             has_current_knowledge = any(
-                item.is_current(current_time) and item.acquired_at > cutoff_time
+                item.is_current(current_time)
+                and item.acquired_at > cutoff_time
                 for item in items
             )
 
@@ -512,7 +538,9 @@ class FogOfWarService:
             "low", "medium", "high", or "critical"
         """
         # Get knowledge about the threat
-        threat_knowledge = turn_brief.knowledge_base.get_knowledge_about(threat_subject)
+        threat_knowledge = turn_brief.knowledge_base.get_knowledge_about(
+            threat_subject
+        )
 
         if not threat_knowledge:
             return "unknown", 0.0
@@ -535,7 +563,8 @@ class FogOfWarService:
             ):
                 threat_indicators += 2 * reliability
             elif any(
-                word in info_lower for word in ["suspicious", "unknown", "moving"]
+                word in info_lower
+                for word in ["suspicious", "unknown", "moving"]
             ):
                 threat_indicators += 1 * reliability
 

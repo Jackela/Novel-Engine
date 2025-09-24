@@ -21,7 +21,12 @@ class QualityValidator:
             "overall_status": "unknown",
             "validations": {},
             "recommendations": [],
-            "summary": {"total_checks": 0, "passed": 0, "failed": 0, "warnings": 0},
+            "summary": {
+                "total_checks": 0,
+                "passed": 0,
+                "failed": 0,
+                "warnings": 0,
+            },
         }
 
     def log(self, message: str, level: str = "INFO"):
@@ -81,7 +86,10 @@ class QualityValidator:
         scripts = [
             ("scripts/quality_gates.py", "Quality gates script"),
             ("scripts/run_tests.py", "Test runner script"),
-            ("scripts/validate_quality_implementation.py", "This validation script"),
+            (
+                "scripts/validate_quality_implementation.py",
+                "This validation script",
+            ),
         ]
 
         results = {}
@@ -90,12 +98,13 @@ class QualityValidator:
             if exists:
                 # Check if script is executable
                 full_path = self.root_path / script_path
-                executable = os.access(full_path, os.X_OK) or script_path.endswith(
-                    ".py"
-                )
+                executable = os.access(
+                    full_path, os.X_OK
+                ) or script_path.endswith(".py")
                 if not executable:
                     self.log(
-                        f"  Warning: {script_path} may not be executable", "WARNING"
+                        f"  Warning: {script_path} may not be executable",
+                        "WARNING",
                     )
 
             results[script_path] = exists
@@ -117,7 +126,9 @@ class QualityValidator:
 
         # Check for test discovery
         if (self.root_path / "tests").exists():
-            test_count = len(list((self.root_path / "tests").glob("test_*.py")))
+            test_count = len(
+                list((self.root_path / "tests").glob("test_*.py"))
+            )
             self.log(f"Test files discovered: {test_count}")
             results["test_file_count"] = test_count
 
@@ -144,7 +155,10 @@ class QualityValidator:
         self.log("🚀 Validating CI/CD Pipeline")
 
         pipeline_files = [
-            (".github/workflows/quality_assurance.yml", "Quality assurance workflow"),
+            (
+                ".github/workflows/quality_assurance.yml",
+                "Quality assurance workflow",
+            ),
         ]
 
         results = {}
@@ -197,7 +211,9 @@ class QualityValidator:
                 content = f.read()
                 has_coverage = "--cov=" in content
                 has_threshold = "--cov-fail-under=" in content
-                results["pytest_coverage_configured"] = has_coverage and has_threshold
+                results["pytest_coverage_configured"] = (
+                    has_coverage and has_threshold
+                )
                 self.log(
                     f"Pytest coverage configuration: {'✅ CONFIGURED' if has_coverage and has_threshold else '⚠️ INCOMPLETE'}"
                 )
@@ -212,7 +228,9 @@ class QualityValidator:
                 has_black = "[tool.black]" in content
                 has_isort = "[tool.isort]" in content
                 has_mypy = "[tool.mypy]" in content
-                results["tool_configurations"] = has_black and has_isort and has_mypy
+                results["tool_configurations"] = (
+                    has_black and has_isort and has_mypy
+                )
                 self.log(
                     f"Tool configurations: {'✅ COMPLETE' if has_black and has_isort and has_mypy else '⚠️ INCOMPLETE'}"
                 )
@@ -228,34 +246,48 @@ class QualityValidator:
         # Check validation results for missing components
         all_validations = self.results["validations"]
 
-        if not all_validations.get("configuration_files", {}).get("pytest.ini", False):
-            recommendations.append("Configure pytest.ini with coverage requirements")
+        if not all_validations.get("configuration_files", {}).get(
+            "pytest.ini", False
+        ):
+            recommendations.append(
+                "Configure pytest.ini with coverage requirements"
+            )
 
         if not all_validations.get("configuration_files", {}).get(
             "pyproject.toml", False
         ):
-            recommendations.append("Create pyproject.toml with tool configurations")
+            recommendations.append(
+                "Create pyproject.toml with tool configurations"
+            )
 
         if not all_validations.get("quality_scripts", {}).get(
             "scripts/quality_gates.py", False
         ):
-            recommendations.append("Implement comprehensive quality gates script")
+            recommendations.append(
+                "Implement comprehensive quality gates script"
+            )
 
         if not all_validations.get("ci_cd_pipeline", {}).get(
             ".github/workflows/quality_assurance.yml", False
         ):
-            recommendations.append("Set up GitHub Actions quality assurance workflow")
+            recommendations.append(
+                "Set up GitHub Actions quality assurance workflow"
+            )
 
         # Check dependency availability
         dependencies = all_validations.get("dependencies", {})
-        missing_deps = [pkg for pkg, available in dependencies.items() if not available]
+        missing_deps = [
+            pkg for pkg, available in dependencies.items() if not available
+        ]
         if missing_deps:
             recommendations.append(
                 f"Install missing dependencies: {', '.join(missing_deps)}"
             )
 
         # Check test coverage
-        test_count = all_validations.get("test_framework", {}).get("test_file_count", 0)
+        test_count = all_validations.get("test_framework", {}).get(
+            "test_file_count", 0
+        )
         if test_count < 5:
             recommendations.append(
                 "Increase test coverage with more comprehensive test files"
@@ -293,7 +325,9 @@ class QualityValidator:
                             self.results["summary"]["failed"] += 1
 
             except Exception as e:
-                self.log(f"Validation failed for {category}: {str(e)}", "ERROR")
+                self.log(
+                    f"Validation failed for {category}: {str(e)}", "ERROR"
+                )
                 self.results["validations"][category] = {"error": str(e)}
                 self.results["summary"]["failed"] += 1
 
@@ -342,7 +376,9 @@ class QualityValidator:
         print(f"Overall Status: {status_symbols.get(status, status.upper())}")
 
         if self.results["recommendations"]:
-            print(f"\n📋 Recommendations ({len(self.results['recommendations'])}):")
+            print(
+                f"\n📋 Recommendations ({len(self.results['recommendations'])}):"
+            )
             for i, rec in enumerate(self.results["recommendations"], 1):
                 print(f"  {i}. {rec}")
 
@@ -359,7 +395,9 @@ def main():
     """Main entry point."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Validate quality implementation")
+    parser = argparse.ArgumentParser(
+        description="Validate quality implementation"
+    )
     parser.add_argument(
         "--report",
         default="quality_validation_report.json",

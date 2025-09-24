@@ -46,7 +46,9 @@ def deploy_application(version: str, **kwargs) -> str:
     Returns:
         str: Deployment ID for tracking
     """
-    deployment_id = f"staging-{version}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    deployment_id = (
+        f"staging-{version}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    )
 
     # Placeholder for actual deployment logic
     # Will be implemented during migration
@@ -109,7 +111,9 @@ def rollback_deployment(
     Returns:
         str: Rollback deployment ID
     """
-    rollback_id = f"staging-rollback-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    rollback_id = (
+        f"staging-rollback-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    )
     return rollback_id
 
 
@@ -141,5 +145,9 @@ def get_staging_config() -> Dict[str, Any]:
             "host": os.getenv("STAGING_REDIS_HOST", "staging-redis"),
             "port": int(os.getenv("STAGING_REDIS_PORT", "6379")),
         },
-        "monitoring": {"enabled": True, "alerts_enabled": False, "log_level": "DEBUG"},
+        "monitoring": {
+            "enabled": True,
+            "alerts_enabled": False,
+            "log_level": "DEBUG",
+        },
     }

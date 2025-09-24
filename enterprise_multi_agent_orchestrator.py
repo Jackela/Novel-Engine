@@ -33,7 +33,6 @@ from emergent_narrative_orchestrator import EmergentNarrativeOrchestrator
 from enhanced_multi_agent_bridge import EnhancedMultiAgentBridge
 from parallel_agent_coordinator import ParallelAgentCoordinator
 
-
 # Import AI intelligence systems
 from src.ai_intelligence.ai_orchestrator import (
     AIIntelligenceOrchestrator,
@@ -294,7 +293,9 @@ class EnterpriseMultiAgentOrchestrator:
                 self.narrative_orchestrator = narrative_orchestrator
             else:
                 self.narrative_orchestrator = EmergentNarrativeOrchestrator(
-                    self.event_bus, self.enhanced_bridge, self.parallel_coordinator
+                    self.event_bus,
+                    self.enhanced_bridge,
+                    self.parallel_coordinator,
                 )
 
             logger.info("All enterprise components initialized successfully")
@@ -324,9 +325,7 @@ class EnterpriseMultiAgentOrchestrator:
         """
         try:
             execution_start = datetime.now()
-            turn_id = (
-                f"enterprise_turn_{turn_number}_{execution_start.strftime('%H%M%S')}"
-            )
+            turn_id = f"enterprise_turn_{turn_number}_{execution_start.strftime('%H%M%S')}"
 
             logger.info(f"=== ENTERPRISE TURN {turn_number} START ===")
 
@@ -336,10 +335,14 @@ class EnterpriseMultiAgentOrchestrator:
             )
 
             if not pre_turn_validation["passed"]:
-                return self._handle_validation_failure(turn_number, pre_turn_validation)
+                return self._handle_validation_failure(
+                    turn_number, pre_turn_validation
+                )
 
             # Phase 2: Initialize performance monitoring
-            performance_monitor = await self._start_performance_monitoring(turn_id)
+            performance_monitor = await self._start_performance_monitoring(
+                turn_id
+            )
 
             # Phase 3: Execute AI Intelligence coordination
             ai_coordination_result = (
@@ -359,10 +362,15 @@ class EnterpriseMultiAgentOrchestrator:
             )
 
             # Phase 5: Execute parallel agent coordination
-            parallel_result = await self.parallel_coordinator.coordinate_parallel_turn(
-                agents,
-                world_state,
-                {"turn_number": turn_number, "bridge_result": bridge_result},
+            parallel_result = (
+                await self.parallel_coordinator.coordinate_parallel_turn(
+                    agents,
+                    world_state,
+                    {
+                        "turn_number": turn_number,
+                        "bridge_result": bridge_result,
+                    },
+                )
             )
 
             # Phase 6: Execute emergent narrative orchestration
@@ -488,7 +496,10 @@ class EnterpriseMultiAgentOrchestrator:
             self.validation_results[validation_id] = validation_result
 
             # Update system health
-            if validation_result.health_status.value != self.system_health.value:
+            if (
+                validation_result.health_status.value
+                != self.system_health.value
+            ):
                 self.system_health = validation_result.health_status
                 self.event_bus.emit(
                     "SYSTEM_HEALTH_CHANGE",
@@ -531,9 +542,7 @@ class EnterpriseMultiAgentOrchestrator:
         """
         try:
             optimization_start = datetime.now()
-            optimization_id = (
-                f"optimization_{strategy.value}_{optimization_start.strftime('%H%M%S')}"
-            )
+            optimization_id = f"optimization_{strategy.value}_{optimization_start.strftime('%H%M%S')}"
 
             logger.info(
                 f"Starting {strategy.value} system optimization: {optimization_id}"
@@ -554,7 +563,9 @@ class EnterpriseMultiAgentOrchestrator:
                     optimization_result, target_metrics
                 )
             elif strategy == OptimizationStrategy.QUALITY:
-                await self._optimize_for_quality(optimization_result, target_metrics)
+                await self._optimize_for_quality(
+                    optimization_result, target_metrics
+                )
             elif strategy == OptimizationStrategy.SCALABILITY:
                 await self._optimize_for_scalability(
                     optimization_result, target_metrics
@@ -564,7 +575,9 @@ class EnterpriseMultiAgentOrchestrator:
                     optimization_result, target_metrics
                 )
             elif strategy == OptimizationStrategy.ADAPTIVE:
-                await self._optimize_adaptively(optimization_result, target_metrics)
+                await self._optimize_adaptively(
+                    optimization_result, target_metrics
+                )
 
             # Capture post-optimization metrics
             post_metrics = await self._capture_baseline_metrics()
@@ -572,13 +585,15 @@ class EnterpriseMultiAgentOrchestrator:
 
             # Calculate improvements
             optimization_result.improvement_percentage = (
-                self._calculate_improvement_percentage(baseline_metrics, post_metrics)
+                self._calculate_improvement_percentage(
+                    baseline_metrics, post_metrics
+                )
             )
             optimization_result.success = (
                 optimization_result.improvement_percentage > 0.0
             )
-            optimization_result.estimated_benefit = self._estimate_optimization_benefit(
-                optimization_result
+            optimization_result.estimated_benefit = (
+                self._estimate_optimization_benefit(optimization_result)
             )
 
             # Store results
@@ -604,7 +619,9 @@ class EnterpriseMultiAgentOrchestrator:
             dashboard = {
                 "timestamp": datetime.now(),
                 "system_health": self.system_health.value,
-                "uptime_hours": (datetime.now() - self.start_time).total_seconds()
+                "uptime_hours": (
+                    datetime.now() - self.start_time
+                ).total_seconds()
                 / 3600,
                 # Current metrics
                 "current_metrics": {
@@ -734,7 +751,10 @@ class EnterpriseMultiAgentOrchestrator:
         pass
 
     async def _execute_pre_turn_validation(
-        self, turn_number: int, agents: List[PersonaAgent], world_state: Dict[str, Any]
+        self,
+        turn_number: int,
+        agents: List[PersonaAgent],
+        world_state: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute pre-turn validation checks."""
         return {
@@ -754,7 +774,9 @@ class EnterpriseMultiAgentOrchestrator:
             "validation_result": validation_result,
         }
 
-    async def _start_performance_monitoring(self, turn_id: str) -> Dict[str, Any]:
+    async def _start_performance_monitoring(
+        self, turn_id: str
+    ) -> Dict[str, Any]:
         """Start performance monitoring for a turn."""
         return {"monitor_id": turn_id, "start_time": datetime.now()}
 
@@ -780,11 +802,16 @@ class EnterpriseMultiAgentOrchestrator:
         }
 
     async def _update_system_metrics(
-        self, turn_number: int, performance: Dict[str, Any], validation: Dict[str, Any]
+        self,
+        turn_number: int,
+        performance: Dict[str, Any],
+        validation: Dict[str, Any],
     ):
         """Update system metrics based on turn results."""
         self.current_metrics.total_turns_processed += 1
-        self.current_metrics.average_turn_time = performance.get("execution_time", 0.0)
+        self.current_metrics.average_turn_time = performance.get(
+            "execution_time", 0.0
+        )
         self.current_metrics.overall_quality_score = validation.get(
             "quality_score", 0.0
         )
@@ -860,7 +887,10 @@ class EnterpriseMultiAgentOrchestrator:
         self, result: ValidationResult, filter_list: Optional[List[str]]
     ):
         """Execute comprehensive validation."""
-        result.component_results["comprehensive"] = {"passed": True, "score": 0.9}
+        result.component_results["comprehensive"] = {
+            "passed": True,
+            "score": 0.9,
+        }
         result.tests_run = 50
         result.tests_passed = 48
         result.tests_failed = 2
@@ -869,7 +899,10 @@ class EnterpriseMultiAgentOrchestrator:
         self, result: ValidationResult, filter_list: Optional[List[str]]
     ):
         """Execute enterprise validation."""
-        result.component_results["enterprise"] = {"passed": True, "score": 0.92}
+        result.component_results["enterprise"] = {
+            "passed": True,
+            "score": 0.92,
+        }
         result.tests_run = 100
         result.tests_passed = 95
         result.tests_failed = 5
@@ -878,17 +911,25 @@ class EnterpriseMultiAgentOrchestrator:
         self, result: ValidationResult, filter_list: Optional[List[str]]
     ):
         """Execute certification validation."""
-        result.component_results["certification"] = {"passed": True, "score": 0.95}
+        result.component_results["certification"] = {
+            "passed": True,
+            "score": 0.95,
+        }
         result.tests_run = 200
         result.tests_passed = 190
         result.tests_failed = 10
 
     def _calculate_validation_score(self, result: ValidationResult) -> float:
         """Calculate overall validation score."""
-        scores = [comp.get("score", 0.0) for comp in result.component_results.values()]
+        scores = [
+            comp.get("score", 0.0)
+            for comp in result.component_results.values()
+        ]
         return sum(scores) / len(scores) if scores else 0.0
 
-    def _determine_health_status(self, result: ValidationResult) -> SystemHealth:
+    def _determine_health_status(
+        self, result: ValidationResult
+    ) -> SystemHealth:
         """Determine system health based on validation."""
         if result.overall_score >= 0.95:
             return SystemHealth.OPTIMAL
@@ -923,7 +964,9 @@ class EnterpriseMultiAgentOrchestrator:
     ):
         """Optimize system for quality."""
         result.optimizations_applied.append("narrative_coherence_enhancement")
-        result.optimizations_applied.append("character_consistency_improvement")
+        result.optimizations_applied.append(
+            "character_consistency_improvement"
+        )
 
     async def _optimize_for_scalability(
         self, result: OptimizationResult, targets: Optional[Dict[str, float]]
@@ -957,7 +1000,9 @@ class EnterpriseMultiAgentOrchestrator:
                 improvements.append(improvement)
         return sum(improvements) / len(improvements) if improvements else 0.0
 
-    def _estimate_optimization_benefit(self, result: OptimizationResult) -> str:
+    def _estimate_optimization_benefit(
+        self, result: OptimizationResult
+    ) -> str:
         """Estimate optimization benefit."""
         if result.improvement_percentage > 20:
             return "Significant performance improvement"
@@ -971,7 +1016,11 @@ class EnterpriseMultiAgentOrchestrator:
     # Monitoring method stubs
     async def _get_component_status(self, component: str) -> Dict[str, Any]:
         """Get status of a specific component."""
-        return {"status": "healthy", "uptime": "99.9%", "last_check": datetime.now()}
+        return {
+            "status": "healthy",
+            "uptime": "99.9%",
+            "last_check": datetime.now(),
+        }
 
     async def _calculate_performance_trends(self) -> Dict[str, Any]:
         """Calculate performance trends."""
@@ -984,7 +1033,9 @@ class EnterpriseMultiAgentOrchestrator:
     async def _continuous_health_monitoring(self):
         """Continuous health monitoring task."""
         while self.monitoring_active:
-            await asyncio.sleep(self.configuration["health_check_interval_seconds"])
+            await asyncio.sleep(
+                self.configuration["health_check_interval_seconds"]
+            )
             # Health check logic here
 
     async def _continuous_metrics_collection(self):
@@ -998,7 +1049,9 @@ class EnterpriseMultiAgentOrchestrator:
     async def _periodic_validation(self):
         """Periodic system validation task."""
         while self.monitoring_active:
-            await asyncio.sleep(self.configuration["validation_interval_minutes"] * 60)
+            await asyncio.sleep(
+                self.configuration["validation_interval_minutes"] * 60
+            )
             await self.validate_system(ValidationLevel.STANDARD)
 
     async def _periodic_optimization(self):

@@ -65,9 +65,7 @@ class DomainEvent:
 
         if not self.event_type:
             # Auto-generate event type from class name
-            self.event_type = (
-                f"{self.aggregate_type.lower()}.{self.__class__.__name__.lower()}"
-            )
+            self.event_type = f"{self.aggregate_type.lower()}.{self.__class__.__name__.lower()}"
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert event to dictionary representation."""
@@ -85,7 +83,9 @@ class DomainEvent:
 class EventHandler:
     """Base class for event handlers."""
 
-    def __init__(self, handler_func: Callable, event_type: str, handler_id: str = None):
+    def __init__(
+        self, handler_func: Callable, event_type: str, handler_id: str = None
+    ):
         self.handler_func = handler_func
         self.event_type = event_type
         self.handler_id = (
@@ -93,7 +93,9 @@ class EventHandler:
         )
         self.is_async = asyncio.iscoroutinefunction(handler_func)
 
-    async def handle(self, event: DomainEvent, context: Dict[str, Any]) -> None:
+    async def handle(
+        self, event: DomainEvent, context: Dict[str, Any]
+    ) -> None:
         """Handle the event."""
         try:
             if self.is_async:
@@ -197,7 +199,9 @@ class EventBus:
             )
 
             self._metrics.record_event_published(event.event_type, topic)
-            logger.debug(f"Published event {event.event_type} to topic {topic}")
+            logger.debug(
+                f"Published event {event.event_type} to topic {topic}"
+            )
 
         except Exception as e:
             self._metrics.record_event_publish_failed(event.event_type)
@@ -274,7 +278,9 @@ class EventBus:
             Handler ID for unsubscription
         """
         # Create handler wrapper
-        handler_id = f"{handler.__module__}.{handler.__name__}_{uuid4().hex[:8]}"
+        handler_id = (
+            f"{handler.__module__}.{handler.__name__}_{uuid4().hex[:8]}"
+        )
         event_handler = EventHandler(handler, event_type, handler_id)
 
         # Register handler
@@ -285,9 +291,13 @@ class EventBus:
 
         # Start consumer if needed
         if consumer_group:
-            asyncio.create_task(self._start_consumer(consumer_group, event_type))
+            asyncio.create_task(
+                self._start_consumer(consumer_group, event_type)
+            )
 
-        logger.info(f"Subscribed handler {handler_id} to event type {event_type}")
+        logger.info(
+            f"Subscribed handler {handler_id} to event type {event_type}"
+        )
         return handler_id
 
     def unsubscribe(self, handler_id: str) -> None:
@@ -299,7 +309,9 @@ class EventBus:
 
         logger.info(f"Unsubscribed handler {handler_id}")
 
-    async def _start_consumer(self, consumer_group: str, event_type: str) -> None:
+    async def _start_consumer(
+        self, consumer_group: str, event_type: str
+    ) -> None:
         """Start a consumer for the given event type."""
         if consumer_group in self._consumer_groups:
             return
@@ -327,7 +339,9 @@ class EventBus:
             )
 
         except Exception as e:
-            logger.error(f"Failed to start consumer for group {consumer_group}: {e}")
+            logger.error(
+                f"Failed to start consumer for group {consumer_group}: {e}"
+            )
             raise
 
     async def _handle_message(
@@ -346,7 +360,9 @@ class EventBus:
             # Find handlers for this event type
             handlers = self._handlers.get(event_type, [])
             if not handlers:
-                logger.debug(f"No handlers registered for event type {event_type}")
+                logger.debug(
+                    f"No handlers registered for event type {event_type}"
+                )
                 return
 
             # Create domain event object
@@ -375,7 +391,9 @@ class EventBus:
             event_version=data.get("event_version", "1.0.0"),
             aggregate_id=data.get("aggregate_id", ""),
             aggregate_type=data.get("aggregate_type", ""),
-            timestamp=data.get("timestamp", datetime.now(timezone.utc).isoformat()),
+            timestamp=data.get(
+                "timestamp", datetime.now(timezone.utc).isoformat()
+            ),
             correlation_id=data.get("correlation_id"),
             causation_id=data.get("causation_id"),
             user_id=data.get("user_id"),
@@ -419,7 +437,9 @@ class EventBus:
 
         except Exception as e:
             health_status["status"] = "unhealthy"
-            health_status["errors"].append(f"Kafka health check failed: {str(e)}")
+            health_status["errors"].append(
+                f"Kafka health check failed: {str(e)}"
+            )
 
         return health_status
 

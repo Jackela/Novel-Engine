@@ -9,12 +9,17 @@ domain objects and database entities.
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
+from uuid import UUID
 
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
+from ....core_platform.persistence.sqlalchemy_types import (
+    RepositoryHelpers,
+    ensure_not_none,
+)
 from ...domain.aggregates.character import Character
 from ...domain.repositories.character_repository import (
     ConcurrencyException,
@@ -52,6 +57,12 @@ from ..persistence.character_models import (
     CharacterStatsORM,
 )
 
+# Import type safety infrastructure
+from ..sqlalchemy_types import (
+    CharacterModelUpdatePattern,
+    CharacterRepositoryHelpers,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -75,13 +86,17 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
     # ==================== Basic CRUD Operations ====================
 
-    async def get_by_id(self, character_id: CharacterID) -> Optional[Character]:
+    async def get_by_id(
+        self, character_id: CharacterID
+    ) -> Optional[Character]:
         """Retrieve a character by their unique identifier."""
         try:
             with self.session_factory() as session:
+                # Convert string UUID to UUID object for database query
+                uuid_value = UUID(character_id.value)
                 character_orm = (
                     session.query(CharacterORM)
-                    .filter(CharacterORM.character_id == character_id.value)
+                    .filter(CharacterORM.character_id == uuid_value)
                     .first()
                 )
 
@@ -91,7 +106,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 return self._map_orm_to_domain(character_orm)
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Error retrieving character {character_id}: {e}")
+            self.logger.error(
+                f"Error retrieving character {character_id}: {e}"
+            )
             raise RepositoryException(f"Failed to retrieve character: {e}")
 
     async def save(self, character: Character) -> None:
@@ -101,20 +118,29 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 # Check if character exists
                 existing_orm = (
                     session.query(CharacterORM)
-                    .filter(CharacterORM.character_id == character.character_id.value)
+                    .filter(
+                        CharacterORM.character_id
+                        == UUID(character.character_id.value)
+                    )
                     .first()
                 )
 
                 if existing_orm:
-                    # Update existing character
-                    if existing_orm.version != character.version - 1:
+                    # Update existing character with type safety using P3 patterns
+                    current_version = existing_orm.version
+                    expected_version = character.version - 1
+
+                    if current_version != expected_version:
                         raise ConcurrencyException(
                             f"Version conflict for character {character.character_id}",
-                            character.version - 1,
-                            existing_orm.version,
+                            expected_version,
+                            current_version,
                         )
 
-                    self._update_orm_from_domain(existing_orm, character, session)
+                    # Use the P3 Sprint 3 update pattern
+                    CharacterModelUpdatePattern.update_character_model_from_aggregate(
+                        existing_orm, character
+                    )
                     existing_orm.version = character.version
                     existing_orm.updated_at = datetime.now(timezone.utc)
                 else:
@@ -122,27 +148,38 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                     character_orm = self._map_domain_to_orm(character)
                     session.add(character_orm)
 
-                # Save any pending domain events
+                # Save any pending domain events with type safety
                 if character.get_events():
                     for event in character.get_events():
                         event_orm = CharacterEventORM(
-                            character_id=character.character_id.value,
+                            character_id=str(character.character_id.value),
                             event_type=event.__class__.__name__,
                             event_version=1,
-                            event_data=event.to_dict(),
+                            event_data=event.to_dict()
+                            if hasattr(event, "to_dict")
+                            else {},
                             aggregate_version=character.version,
-                            correlation_id=getattr(event, "correlation_id", None),
-                            occurred_at=event.occurred_at,
+                            correlation_id=getattr(
+                                event, "correlation_id", None
+                            ),
+                            occurred_at=getattr(
+                                event,
+                                "occurred_at",
+                                datetime.now(timezone.utc),
+                            ),
                         )
                         session.add(event_orm)
 
+                # Commit session changes
                 session.commit()
                 character.clear_events()
 
         except ConcurrencyException:
             raise
         except SQLAlchemyError as e:
-            self.logger.error(f"Error saving character {character.character_id}: {e}")
+            self.logger.error(
+                f"Error saving character {character.character_id}: {e}"
+            )
             raise RepositoryException(f"Failed to save character: {e}")
 
     async def delete(self, character_id: CharacterID) -> bool:
@@ -151,7 +188,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             with self.session_factory() as session:
                 character_orm = (
                     session.query(CharacterORM)
-                    .filter(CharacterORM.character_id == character_id.value)
+                    .filter(
+                        CharacterORM.character_id == UUID(character_id.value)
+                    )
                     .first()
                 )
 
@@ -159,6 +198,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                     return False
 
                 session.delete(character_orm)
+                # Commit session changes
                 session.commit()
                 return True
 
@@ -172,15 +212,21 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             with self.session_factory() as session:
                 exists = session.query(
                     session.query(CharacterORM)
-                    .filter(CharacterORM.character_id == character_id.value)
+                    .filter(
+                        CharacterORM.character_id == UUID(character_id.value)
+                    )
                     .exists()
                 ).scalar()
 
                 return exists
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Error checking character existence {character_id}: {e}")
-            raise RepositoryException(f"Failed to check character existence: {e}")
+            self.logger.error(
+                f"Error checking character existence {character_id}: {e}"
+            )
+            raise RepositoryException(
+                f"Failed to check character existence: {e}"
+            )
 
     # ==================== Query Operations ====================
 
@@ -190,23 +236,31 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             with self.session_factory() as session:
                 character_orms = (
                     session.query(CharacterORM)
-                    .filter(CharacterORM.name.ilike(f"%{name}%"))
+                    .filter(CharacterORM.name.like(f"%{name}%"))
                     .all()
                 )
 
                 return [self._map_orm_to_domain(orm) for orm in character_orms]
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Error finding characters by name '{name}': {e}")
-            raise RepositoryException(f"Failed to find characters by name: {e}")
+            self.logger.error(
+                f"Error finding characters by name '{name}': {e}"
+            )
+            raise RepositoryException(
+                f"Failed to find characters by name: {e}"
+            )
 
-    async def find_by_class(self, character_class: CharacterClass) -> List[Character]:
+    async def find_by_class(
+        self, character_class: CharacterClass
+    ) -> List[Character]:
         """Find all characters of a specific class."""
         try:
             with self.session_factory() as session:
                 character_orms = (
                     session.query(CharacterORM)
-                    .filter(CharacterORM.character_class == character_class.value)
+                    .filter(
+                        CharacterORM.character_class == character_class.value
+                    )
                     .all()
                 )
 
@@ -216,7 +270,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             self.logger.error(
                 f"Error finding characters by class {character_class}: {e}"
             )
-            raise RepositoryException(f"Failed to find characters by class: {e}")
+            raise RepositoryException(
+                f"Failed to find characters by class: {e}"
+            )
 
     async def find_by_race(self, race: CharacterRace) -> List[Character]:
         """Find all characters of a specific race."""
@@ -232,7 +288,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
         except SQLAlchemyError as e:
             self.logger.error(f"Error finding characters by race {race}: {e}")
-            raise RepositoryException(f"Failed to find characters by race: {e}")
+            raise RepositoryException(
+                f"Failed to find characters by race: {e}"
+            )
 
     async def find_by_level_range(
         self, min_level: int, max_level: int
@@ -242,12 +300,8 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             with self.session_factory() as session:
                 character_orms = (
                     session.query(CharacterORM)
-                    .filter(
-                        and_(
-                            CharacterORM.level >= min_level,
-                            CharacterORM.level <= max_level,
-                        )
-                    )
+                    .filter(CharacterORM.level >= min_level)
+                    .filter(CharacterORM.level <= max_level)
                     .all()
                 )
 
@@ -257,7 +311,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             self.logger.error(
                 f"Error finding characters by level range {min_level}-{max_level}: {e}"
             )
-            raise RepositoryException(f"Failed to find characters by level range: {e}")
+            raise RepositoryException(
+                f"Failed to find characters by level range: {e}"
+            )
 
     async def find_alive_characters(self) -> List[Character]:
         """Find all characters that are currently alive."""
@@ -265,7 +321,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             with self.session_factory() as session:
                 character_orms = (
                     session.query(CharacterORM)
-                    .filter(CharacterORM.is_alive is True)
+                    .filter(CharacterORM.is_alive == True)  # type: ignore[comparison-overlap]
                     .all()
                 )
 
@@ -283,12 +339,8 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             with self.session_factory() as session:
                 character_orms = (
                     session.query(CharacterORM)
-                    .filter(
-                        and_(
-                            CharacterORM.created_at >= start_date,
-                            CharacterORM.created_at <= end_date,
-                        )
-                    )
+                    .filter(CharacterORM.created_at >= start_date)
+                    .filter(CharacterORM.created_at <= end_date)
                     .all()
                 )
 
@@ -296,27 +348,38 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
         except SQLAlchemyError as e:
             self.logger.error(f"Error finding characters by date range: {e}")
-            raise RepositoryException(f"Failed to find characters by date range: {e}")
+            raise RepositoryException(
+                f"Failed to find characters by date range: {e}"
+            )
 
     # ==================== Advanced Query Operations ====================
 
     async def find_by_criteria(
-        self, criteria: Dict[str, Any], limit: Optional[int] = None, offset: int = 0
+        self,
+        criteria: Dict[str, Any],
+        limit: Optional[int] = None,
+        offset: int = 0,
     ) -> List[Character]:
         """Find characters matching multiple criteria."""
         try:
             with self.session_factory() as session:
                 query = session.query(CharacterORM)
 
-                # Apply criteria filters
-                for field, value in criteria.items():
-                    if hasattr(CharacterORM, field):
-                        if isinstance(value, list):
-                            query = query.filter(
-                                getattr(CharacterORM, field).in_(value)
-                            )
-                        else:
-                            query = query.filter(getattr(CharacterORM, field) == value)
+                # Apply criteria filters using P3 pattern helpers
+                filters = {
+                    field: value
+                    for field, value in criteria.items()
+                    if hasattr(CharacterORM, field)
+                }
+                for field, value in filters.items():
+                    if isinstance(value, list):
+                        query = query.filter(
+                            getattr(CharacterORM, field).in_(value)
+                        )
+                    else:
+                        query = query.filter(
+                            getattr(CharacterORM, field) == value
+                        )
 
                 # Apply pagination
                 if offset > 0:
@@ -329,7 +392,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
         except SQLAlchemyError as e:
             self.logger.error(f"Error finding characters by criteria: {e}")
-            raise RepositoryException(f"Failed to find characters by criteria: {e}")
+            raise RepositoryException(
+                f"Failed to find characters by criteria: {e}"
+            )
 
     async def count_by_criteria(self, criteria: Dict[str, Any]) -> int:
         """Count characters matching specific criteria."""
@@ -337,34 +402,43 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             with self.session_factory() as session:
                 query = session.query(CharacterORM)
 
-                # Apply criteria filters
-                for field, value in criteria.items():
-                    if hasattr(CharacterORM, field):
-                        if isinstance(value, list):
-                            query = query.filter(
-                                getattr(CharacterORM, field).in_(value)
-                            )
-                        else:
-                            query = query.filter(getattr(CharacterORM, field) == value)
+                # Apply criteria filters using P3 pattern helpers
+                filters = {
+                    field: value
+                    for field, value in criteria.items()
+                    if hasattr(CharacterORM, field)
+                }
+                for field, value in filters.items():
+                    if isinstance(value, list):
+                        query = query.filter(
+                            getattr(CharacterORM, field).in_(value)
+                        )
+                    else:
+                        query = query.filter(
+                            getattr(CharacterORM, field) == value
+                        )
 
-                return query.count()
+                count_result = query.count()
+                return int(count_result) if count_result is not None else 0
 
         except SQLAlchemyError as e:
             self.logger.error(f"Error counting characters by criteria: {e}")
-            raise RepositoryException(f"Failed to count characters by criteria: {e}")
+            raise RepositoryException(
+                f"Failed to count characters by criteria: {e}"
+            )
 
     async def get_statistics(self) -> Dict[str, Any]:
         """Get statistical information about characters in the repository."""
         try:
             with self.session_factory() as session:
-                # Total characters
+                # Total characters with type safety
                 total_characters = session.query(CharacterORM).count()
 
                 # Characters by class
                 class_stats = (
                     session.query(
                         CharacterORM.character_class,
-                        func.count(CharacterORM.character_id),
+                        func.count("*"),
                     )
                     .group_by(CharacterORM.character_class)
                     .all()
@@ -372,27 +446,28 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
                 # Characters by race
                 race_stats = (
-                    session.query(
-                        CharacterORM.race, func.count(CharacterORM.character_id)
-                    )
+                    session.query(CharacterORM.race, func.count("*"))
                     .group_by(CharacterORM.race)
                     .all()
                 )
 
-                # Level statistics
-                avg_level = session.query(func.avg(CharacterORM.level)).scalar() or 0
+                # Level statistics with type safety
+                avg_level_result = session.query(
+                    func.avg(CharacterORM.level)
+                ).scalar()
+                avg_level = float(
+                    avg_level_result if avg_level_result is not None else 0.0
+                )
                 level_distribution = (
-                    session.query(
-                        CharacterORM.level, func.count(CharacterORM.character_id)
-                    )
+                    session.query(CharacterORM.level, func.count("*"))
                     .group_by(CharacterORM.level)
                     .all()
                 )
 
-                # Alive characters
+                # Alive characters with type safety
                 alive_characters = (
                     session.query(CharacterORM)
-                    .filter(CharacterORM.is_alive is True)
+                    .filter(CharacterORM.is_alive == True)  # type: ignore[comparison-overlap]
                     .count()
                 )
 
@@ -400,14 +475,16 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                     "total_characters": total_characters,
                     "characters_by_class": dict(class_stats),
                     "characters_by_race": dict(race_stats),
-                    "average_level": float(avg_level),
+                    "average_level": avg_level,
                     "level_distribution": dict(level_distribution),
                     "alive_characters": alive_characters,
                 }
 
         except SQLAlchemyError as e:
             self.logger.error(f"Error getting character statistics: {e}")
-            raise RepositoryException(f"Failed to get character statistics: {e}")
+            raise RepositoryException(
+                f"Failed to get character statistics: {e}"
+            )
 
     # ==================== Bulk Operations ====================
 
@@ -420,7 +497,8 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                     existing_orm = (
                         session.query(CharacterORM)
                         .filter(
-                            CharacterORM.character_id == character.character_id.value
+                            CharacterORM.character_id
+                            == UUID(character.character_id.value)
                         )
                         .first()
                     )
@@ -432,7 +510,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                                 character.version - 1,
                                 existing_orm.version,
                             )
-                        self._update_orm_from_domain(existing_orm, character, session)
+                        self._update_orm_from_domain(
+                            existing_orm, character, session
+                        )
                         existing_orm.version = character.version
                         existing_orm.updated_at = datetime.now(timezone.utc)
                     else:
@@ -449,13 +529,15 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             raise
         except SQLAlchemyError as e:
             self.logger.error(f"Error saving multiple characters: {e}")
-            raise RepositoryException(f"Failed to save multiple characters: {e}")
+            raise RepositoryException(
+                f"Failed to save multiple characters: {e}"
+            )
 
     async def delete_multiple(self, character_ids: List[CharacterID]) -> int:
         """Delete multiple characters in a single transaction."""
         try:
             with self.session_factory() as session:
-                id_values = [char_id.value for char_id in character_ids]
+                id_values = [UUID(char_id.value) for char_id in character_ids]
 
                 deleted_count = (
                     session.query(CharacterORM)
@@ -472,7 +554,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
         except SQLAlchemyError as e:
             self.logger.error(f"Error deleting multiple characters: {e}")
-            raise RepositoryException(f"Failed to delete multiple characters: {e}")
+            raise RepositoryException(
+                f"Failed to delete multiple characters: {e}"
+            )
 
     # ==================== Version Control Operations ====================
 
@@ -482,14 +566,18 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             with self.session_factory() as session:
                 version = (
                     session.query(CharacterORM.version)
-                    .filter(CharacterORM.character_id == character_id.value)
+                    .filter(
+                        CharacterORM.character_id == UUID(character_id.value)
+                    )
                     .scalar()
                 )
 
                 return version
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Error getting character version {character_id}: {e}")
+            self.logger.error(
+                f"Error getting character version {character_id}: {e}"
+            )
             raise RepositoryException(f"Failed to get character version: {e}")
 
     async def get_character_history(
@@ -498,9 +586,16 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         """Get the change history for a character."""
         try:
             with self.session_factory() as session:
+                # Convert CharacterID to UUID
+                character_uuid = (
+                    UUID(character_id.value)
+                    if isinstance(character_id.value, str)
+                    else character_id.value
+                )
+
                 query = (
                     session.query(CharacterEventORM)
-                    .filter(CharacterEventORM.character_id == character_id.value)
+                    .filter(CharacterEventORM.character_id == character_uuid)
                     .order_by(CharacterEventORM.occurred_at.desc())
                 )
 
@@ -522,7 +617,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 ]
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Error getting character history {character_id}: {e}")
+            self.logger.error(
+                f"Error getting character history {character_id}: {e}"
+            )
             raise RepositoryException(f"Failed to get character history: {e}")
 
     # ==================== Private Mapping Methods ====================
@@ -530,7 +627,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
     def _map_domain_to_orm(self, character: Character) -> CharacterORM:
         """Map a domain Character to ORM model."""
         character_orm = CharacterORM(
-            character_id=character.character_id.value,
+            character_id=UUID(character.character_id.value),
             name=character.profile.name,
             gender=character.profile.gender.value,
             race=character.profile.race.value,
@@ -545,7 +642,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
         # Create profile ORM
         profile_orm = CharacterProfileORM(
-            character_id=character.character_id.value,
+            character_id=UUID(character.character_id.value),
             title=character.profile.title,
             affiliation=character.profile.affiliation,
             languages=character.profile.languages,
@@ -563,7 +660,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
         # Create stats ORM
         stats_orm = CharacterStatsORM(
-            character_id=character.character_id.value,
+            character_id=UUID(character.character_id.value),
             strength=character.stats.core_abilities.strength,
             dexterity=character.stats.core_abilities.dexterity,
             constitution=character.stats.core_abilities.constitution,
@@ -601,7 +698,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             }
 
         skills_orm = CharacterSkillsORM(
-            character_id=character.character_id.value,
+            character_id=UUID(character.character_id.value),
             skill_groups=skill_groups_data,
             languages=character.skills.languages,
             specializations=character.skills.specializations,
@@ -615,21 +712,26 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         return character_orm
 
     def _update_orm_from_domain(
-        self, character_orm: CharacterORM, character: Character, session: Session
+        self,
+        character_orm: CharacterORM,
+        character: Character,
+        session: Session,
     ) -> None:
         """Update existing ORM model from domain object."""
-        # Update main character fields
-        character_orm.name = character.profile.name
-        character_orm.gender = character.profile.gender.value
-        character_orm.race = character.profile.race.value
-        character_orm.character_class = character.profile.character_class.value
-        character_orm.age = character.profile.age
-        character_orm.level = character.profile.level
-        character_orm.is_alive = character.is_alive()
+        # Update main character fields with type safety
+        character_orm.name = character.profile.name  # type: ignore[assignment]
+        character_orm.gender = character.profile.gender.value  # type: ignore[assignment]
+        character_orm.race = character.profile.race.value  # type: ignore[assignment]
+        character_orm.character_class = character.profile.character_class.value  # type: ignore[assignment]
+        character_orm.age = character.profile.age  # type: ignore[assignment]
+        character_orm.level = character.profile.level  # type: ignore[assignment]
+        character_orm.is_alive = character.is_alive()  # type: ignore[assignment]
 
         # Update profile if exists, create if not
         if not character_orm.profile:
-            profile_orm = CharacterProfileORM(character_id=character.character_id.value)
+            profile_orm = CharacterProfileORM(
+                character_id=UUID(character.character_id.value)
+            )
             character_orm.profile = profile_orm
 
         profile = character_orm.profile
@@ -644,14 +746,18 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         profile.physical_description = (
             character.profile.physical_traits.physical_description
         )
-        profile.personality_traits = character.profile.personality_traits.traits
+        profile.personality_traits = (
+            character.profile.personality_traits.traits
+        )
         profile.backstory = character.profile.background.backstory
         profile.homeland = character.profile.background.homeland
         profile.education = character.profile.background.education
 
         # Update stats if exists, create if not
         if not character_orm.stats:
-            stats_orm = CharacterStatsORM(character_id=character.character_id.value)
+            stats_orm = CharacterStatsORM(
+                character_id=UUID(character.character_id.value)
+            )
             character_orm.stats = stats_orm
 
         stats = character_orm.stats
@@ -669,11 +775,17 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         stats.current_stamina = character.stats.vital_stats.current_stamina
         stats.armor_class = character.stats.vital_stats.armor_class
         stats.speed = character.stats.vital_stats.speed
-        stats.base_attack_bonus = character.stats.combat_stats.base_attack_bonus
-        stats.initiative_modifier = character.stats.combat_stats.initiative_modifier
+        stats.base_attack_bonus = (
+            character.stats.combat_stats.base_attack_bonus
+        )
+        stats.initiative_modifier = (
+            character.stats.combat_stats.initiative_modifier
+        )
         stats.damage_reduction = character.stats.combat_stats.damage_reduction
         stats.spell_resistance = character.stats.combat_stats.spell_resistance
-        stats.critical_hit_chance = character.stats.combat_stats.critical_hit_chance
+        stats.critical_hit_chance = (
+            character.stats.combat_stats.critical_hit_chance
+        )
         stats.critical_damage_multiplier = (
             character.stats.combat_stats.critical_damage_multiplier
         )
@@ -682,7 +794,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
         # Update skills if exists, create if not
         if not character_orm.skills:
-            skills_orm = CharacterSkillsORM(character_id=character.character_id.value)
+            skills_orm = CharacterSkillsORM(
+                character_id=UUID(character.character_id.value)
+            )
             character_orm.skills = skills_orm
 
         skill_groups_data = {}
@@ -724,12 +838,12 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         )
 
         profile = CharacterProfile(
-            name=character_orm.name,
+            name=character_orm.name,  # type: ignore[arg-type]
             gender=Gender(character_orm.gender),
             race=CharacterRace(character_orm.race),
             character_class=CharacterClass(character_orm.character_class),
-            age=character_orm.age,
-            level=character_orm.level,
+            age=character_orm.age,  # type: ignore[arg-type]
+            level=character_orm.level,  # type: ignore[arg-type]
             physical_traits=physical_traits,
             personality_traits=personality_traits,
             background=background,
@@ -779,7 +893,10 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         # Map skills
         skill_groups = {}
         if character_orm.skills.skill_groups:
-            for category_name, skills_data in character_orm.skills.skill_groups.items():
+            for (
+                category_name,
+                skills_data,
+            ) in character_orm.skills.skill_groups.items():
                 category = SkillCategory(category_name)
                 skills_dict = {}
 
@@ -805,19 +922,19 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
         skills = Skills(
             skill_groups=skill_groups,
-            languages=character_orm.skills.languages or [],
-            specializations=character_orm.skills.specializations or [],
+            languages=set(character_orm.skills.languages or []),
+            specializations=dict(character_orm.skills.specializations or {}),
         )
 
         # Create the character
         character = Character(
-            character_id=CharacterID(character_orm.character_id),
+            character_id=CharacterID(str(character_orm.character_id)),
             profile=profile,
             stats=stats,
             skills=skills,
-            version=character_orm.version,
-            created_at=character_orm.created_at,
-            updated_at=character_orm.updated_at,
+            version=character_orm.version,  # type: ignore[arg-type]
+            created_at=character_orm.created_at,  # type: ignore[arg-type]
+            updated_at=character_orm.updated_at,  # type: ignore[arg-type]
         )
 
         return character

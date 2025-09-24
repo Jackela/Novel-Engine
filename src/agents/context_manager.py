@@ -12,7 +12,7 @@ Part of Wave 6.2 PersonaAgent Decomposition Strategy.
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
     from src.agents.persona_core import PersonaCore
@@ -52,7 +52,9 @@ class CharacterContextManager:
             character_sheet_path = self.core.identity.character_sheet_path
 
             if not Path(character_sheet_path).exists():
-                self.logger.error(f"Character sheet not found: {character_sheet_path}")
+                self.logger.error(
+                    f"Character sheet not found: {character_sheet_path}"
+                )
                 return
 
             # Read character sheet content
@@ -104,10 +106,14 @@ class CharacterContextManager:
         # Parse each section
         for section_name, section_content in sections.items():
             if section_content:
-                parser_method = getattr(self, f"_parse_{section_name}_section", None)
+                parser_method = getattr(
+                    self, f"_parse_{section_name}_section", None
+                )
                 if parser_method:
                     try:
-                        parsed_data[section_name] = parser_method(section_content)
+                        parsed_data[section_name] = parser_method(
+                            section_content
+                        )
                     except Exception as e:
                         self.logger.warning(
                             f"Failed to parse {section_name} section: {e}"
@@ -115,13 +121,15 @@ class CharacterContextManager:
                         parsed_data[section_name] = {}
                 else:
                     # Fallback to simple parsing
-                    parsed_data[section_name] = self._parse_simple_field_format(
-                        section_content
-                    )
+                    parsed_data[
+                        section_name
+                    ] = self._parse_simple_field_format(section_content)
 
         return parsed_data
 
-    def _extract_section(self, content: str, section_name: str) -> Optional[str]:
+    def _extract_section(
+        self, content: str, section_name: str
+    ) -> Optional[str]:
         """
         Extract a section from character sheet content.
 
@@ -134,7 +142,7 @@ class CharacterContextManager:
         """
         # Try various section header patterns
         patterns = [
-            rf"#{1,3}\s*{section_name}.*?\n(.*?)(?=\n#{1,3}\s*\w+|\Z)",
+            rf"#{1, 3}\s*{section_name}.*?\n(.*?)(?=\n#{1, 3}\s*\w+|\Z)",
             rf"## {section_name}.*?\n(.*?)(?=\n## \w+|\Z)",
             rf"# {section_name}.*?\n(.*?)(?=\n# \w+|\Z)",
         ]
@@ -151,11 +159,21 @@ class CharacterContextManager:
         identity_data = {}
 
         # Extract basic identity fields
-        fields = ["name", "faction", "rank", "age", "gender", "homeworld", "profession"]
+        fields = [
+            "name",
+            "faction",
+            "rank",
+            "age",
+            "gender",
+            "homeworld",
+            "profession",
+        ]
 
         for field in fields:
             pattern = rf"(?:^|\n)\s*\*?\s*{field}:?\s*(.+?)(?=\n|$)"
-            match = re.search(pattern, section_content, re.IGNORECASE | re.MULTILINE)
+            match = re.search(
+                pattern, section_content, re.IGNORECASE | re.MULTILINE
+            )
             if match:
                 identity_data[field] = match.group(1).strip()
 
@@ -171,7 +189,9 @@ class CharacterContextManager:
 
         return identity_data
 
-    def _parse_psychological_section(self, section_content: str) -> Dict[str, Any]:
+    def _parse_psychological_section(
+        self, section_content: str
+    ) -> Dict[str, Any]:
         """Parse psychological profile section."""
         psychological_data = {}
 
@@ -185,7 +205,9 @@ class CharacterContextManager:
 
         return psychological_data
 
-    def _parse_behavioral_section(self, section_content: str) -> Dict[str, Any]:
+    def _parse_behavioral_section(
+        self, section_content: str
+    ) -> Dict[str, Any]:
         """Parse behavioral patterns section."""
         behavioral_data = {}
 
@@ -247,7 +269,9 @@ class CharacterContextManager:
         ]
 
         for pattern in patterns:
-            matches = re.findall(pattern, content, re.MULTILINE | re.IGNORECASE)
+            matches = re.findall(
+                pattern, content, re.MULTILINE | re.IGNORECASE
+            )
             for trait, value_str in matches:
                 trait_clean = trait.strip().lower().replace(" ", "_")
                 try:
@@ -297,7 +321,7 @@ class CharacterContextManager:
                 self.core.identity.backstory = identity_data["backstory"]
 
             self.logger.debug(
-                f"Core identity extracted: {self.core.identity.character_name} ({self.core.identity.primary_faction})"
+                f"Core identity extracted: {self.core.identity.character_name}({self.core.identity.primary_faction})"
             )
 
         except Exception as e:
@@ -313,6 +337,7 @@ class CharacterContextManager:
                 len(section) if isinstance(section, dict) else 1
                 for section in self.core.character_data.values()
             ),
-            "has_personality_traits": "psychological" in self.core.character_data,
+            "has_personality_traits": "psychological"
+            in self.core.character_data,
             "has_decision_weights": "behavioral" in self.core.character_data,
         }

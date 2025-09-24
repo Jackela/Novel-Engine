@@ -110,7 +110,9 @@ class ServiceRegistry:
                 self._services[service.service_name] = []
 
             # Check if instance already registered
-            existing = self._find_instance(service.service_name, service.instance_id)
+            existing = self._find_instance(
+                service.service_name, service.instance_id
+            )
             if existing:
                 # Update existing instance
                 existing.host = service.host
@@ -128,11 +130,15 @@ class ServiceRegistry:
 
             # Start health checking if not already running
             if not self._health_check_task:
-                self._health_check_task = asyncio.create_task(self._health_check_loop())
+                self._health_check_task = asyncio.create_task(
+                    self._health_check_loop()
+                )
 
             return True
 
-    async def deregister_service(self, service_name: str, instance_id: str) -> bool:
+    async def deregister_service(
+        self, service_name: str, instance_id: str
+    ) -> bool:
         """Deregister a service instance"""
         async with self._lock:
             if service_name in self._services:
@@ -151,7 +157,9 @@ class ServiceRegistry:
                 return True
         return False
 
-    def get_service_instances(self, service_name: str) -> List[ServiceInstance]:
+    def get_service_instances(
+        self, service_name: str
+    ) -> List[ServiceInstance]:
         """Get all healthy instances of a service"""
         if service_name not in self._services:
             return []
@@ -210,7 +218,9 @@ class ServiceRegistry:
         async with self._lock:
             for service_name, instances in self._services.items():
                 for instance in instances:
-                    task = asyncio.create_task(self._check_instance_health(instance))
+                    task = asyncio.create_task(
+                        self._check_instance_health(instance)
+                    )
                     tasks.append(task)
 
         if tasks:
@@ -370,7 +380,9 @@ class EventBus:
                     tasks.append(asyncio.create_task(handler(event)))
                 else:
                     # Run sync handlers in thread pool
-                    tasks.append(asyncio.create_task(asyncio.to_thread(handler, event)))
+                    tasks.append(
+                        asyncio.create_task(asyncio.to_thread(handler, event))
+                    )
 
             if tasks:
                 # Execute all handlers concurrently
@@ -379,7 +391,9 @@ class EventBus:
                 # Log any errors
                 for i, result in enumerate(results):
                     if isinstance(result, Exception):
-                        logger.error(f"Event handler error for {event_type}: {result}")
+                        logger.error(
+                            f"Event handler error for {event_type}: {result}"
+                        )
 
         logger.debug(f"Published event: {event_type}")
         return event["event_id"]
@@ -470,7 +484,10 @@ class APIGateway:
                 if response.content_type == "application/json":
                     return await response.json()
                 else:
-                    return {"status": response.status, "text": await response.text()}
+                    return {
+                        "status": response.status,
+                        "text": await response.text(),
+                    }
 
 
 # Novel Engine Service Implementations
@@ -516,7 +533,9 @@ class StoryService:
         self.event_bus = event_bus
         self.stories = {}
 
-    async def generate_story(self, characters: List[str], scenario: str) -> Dict:
+    async def generate_story(
+        self, characters: List[str], scenario: str
+    ) -> Dict:
         """Generate a new story"""
         story_id = f"story_{len(self.stories) + 1}"
         story = {
@@ -532,7 +551,11 @@ class StoryService:
         # Publish event
         await self.event_bus.publish(
             "story.generation_started",
-            {"story_id": story_id, "characters": characters, "scenario": scenario},
+            {
+                "story_id": story_id,
+                "characters": characters,
+                "scenario": scenario,
+            },
         )
 
         return story
@@ -581,7 +604,11 @@ async def main():
     # Demo operations
     logger.info("Creating character...")
     character = await character_service.create_character(
-        {"name": "Marcus the Brave", "faction": "Imperial Guard", "role": "Sergeant"}
+        {
+            "name": "Marcus the Brave",
+            "faction": "Imperial Guard",
+            "role": "Sergeant",
+        }
     )
 
     logger.info("Generating story...")

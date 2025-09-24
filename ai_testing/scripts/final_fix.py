@@ -61,7 +61,9 @@ def fix_orchestrator_health():
     # The fix was already applied but let's make it even more lenient
     if "health_percentage >= 80" in content:
         # Change to 60% threshold
-        content = content.replace("health_percentage >= 80", "health_percentage >= 60")
+        content = content.replace(
+            "health_percentage >= 80", "health_percentage >= 60"
+        )
         orchestrator_file.write_text(content)
         print("  ✅ Adjusted health threshold to 60%")
 
@@ -82,8 +84,16 @@ def restart_all_services():
 
     # Start services in order
     services = [
-        ("ai_testing.orchestration.master_orchestrator", 8000, "Master Orchestrator"),
-        ("ai_testing.services.browser_automation_service", 8001, "Browser Automation"),
+        (
+            "ai_testing.orchestration.master_orchestrator",
+            8000,
+            "Master Orchestrator",
+        ),
+        (
+            "ai_testing.services.browser_automation_service",
+            8001,
+            "Browser Automation",
+        ),
         ("ai_testing.services.api_testing_service", 8002, "API Testing"),
         ("ai_testing.services.ai_quality_service", 8003, "AI Quality"),
         (
@@ -115,7 +125,9 @@ def restart_all_services():
     all_healthy = True
     for _, port, name in services:
         try:
-            response = requests.get(f"http://localhost:{port}/health", timeout=2)
+            response = requests.get(
+                f"http://localhost:{port}/health", timeout=2
+            )
             if response.status_code == 200:
                 print(f"  ✅ {name}: Running")
             else:

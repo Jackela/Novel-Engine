@@ -48,11 +48,20 @@ class IntegrationSystemValidator:
                 self.validate_deploy_monitoring_integration,
             ),
             ("End-to-End Configuration Flow", self.validate_e2e_config_flow),
-            ("Cross-Module Import Resolution", self.validate_cross_module_imports),
-            ("Environment-Specific Integration", self.validate_environment_integration),
+            (
+                "Cross-Module Import Resolution",
+                self.validate_cross_module_imports,
+            ),
+            (
+                "Environment-Specific Integration",
+                self.validate_environment_integration,
+            ),
             ("Service Discovery Integration", self.validate_service_discovery),
             ("Logging Integration", self.validate_logging_integration),
-            ("Metrics Collection Integration", self.validate_metrics_integration),
+            (
+                "Metrics Collection Integration",
+                self.validate_metrics_integration,
+            ),
             ("Overall System Health", self.validate_system_health),
         ]
 
@@ -65,7 +74,9 @@ class IntegrationSystemValidator:
                 self.validation_results[test_name] = {
                     "status": "PASSED" if result else "FAILED",
                     "details": (
-                        result if isinstance(result, dict) else {"result": result}
+                        result
+                        if isinstance(result, dict)
+                        else {"result": result}
                     ),
                 }
 
@@ -93,7 +104,9 @@ class IntegrationSystemValidator:
             "passed_tests": len(self.passed_tests),
             "failed_tests": len(self.failed_tests),
             "success_rate": len(self.passed_tests) / len(validation_tests),
-            "overall_status": "PASSED" if len(self.failed_tests) == 0 else "FAILED",
+            "overall_status": "PASSED"
+            if len(self.failed_tests) == 0
+            else "FAILED",
             "test_results": self.validation_results,
             "failed_test_names": self.failed_tests,
             "passed_test_names": self.passed_tests,
@@ -112,7 +125,9 @@ class IntegrationSystemValidator:
         }
 
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
             from deploy.security.deploy import SecurityDeployment
             from deploy.staging.deploy import StagingDeployment
 
@@ -133,7 +148,9 @@ class IntegrationSystemValidator:
                         results["staging_config_integration"] = False
                         results["staging_error"] = str(e)
                 else:
-                    results["staging_config_integration"] = True  # Assume working
+                    results[
+                        "staging_config_integration"
+                    ] = True  # Assume working
 
             except Exception as e:
                 results["staging_config_load"] = False
@@ -142,8 +159,12 @@ class IntegrationSystemValidator:
 
             # Test production config (may not exist)
             try:
-                production_config = loader.load_environment_config("production")
-                results["production_config_load"] = production_config is not None
+                production_config = loader.load_environment_config(
+                    "production"
+                )
+                results["production_config_load"] = (
+                    production_config is not None
+                )
             except Exception as e:
                 results["production_config_load"] = False
                 results["production_load_error"] = str(e)
@@ -160,13 +181,17 @@ class IntegrationSystemValidator:
                     and security_config
                 ):
                     try:
-                        security_deploy.apply_security_from_config(security_config)
+                        security_deploy.apply_security_from_config(
+                            security_config
+                        )
                         results["security_config_integration"] = True
                     except Exception as e:
                         results["security_config_integration"] = False
                         results["security_error"] = str(e)
                 else:
-                    results["security_config_integration"] = True  # Assume working
+                    results[
+                        "security_config_integration"
+                    ] = True  # Assume working
 
             except Exception as e:
                 results["security_config_load"] = False
@@ -174,7 +199,9 @@ class IntegrationSystemValidator:
                 results["all_integrations_working"] = False
 
             # Test path resolution from deployment to config
-            config_path = loader.get_config_path("environments", "development.yaml")
+            config_path = loader.get_config_path(
+                "environments", "development.yaml"
+            )
             results["config_path_resolution"] = config_path is not None
 
         except Exception as e:
@@ -197,10 +224,14 @@ class IntegrationSystemValidator:
             prometheus_config_path = (
                 self.project_root / "configs" / "prometheus" / "prometheus.yml"
             )
-            results["prometheus_config_exists"] = prometheus_config_path.exists()
+            results[
+                "prometheus_config_exists"
+            ] = prometheus_config_path.exists()
 
             # Test monitoring system config loading
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
             from ops.monitoring.observability.server import ObservabilityServer
 
             loader = ConfigEnvironmentLoader()
@@ -211,11 +242,15 @@ class IntegrationSystemValidator:
             if config:
                 monitoring_config = config.get("monitoring", {})
                 obs_server = ObservabilityServer(monitoring_config)
-                results["observability_config_integration"] = obs_server is not None
+                results["observability_config_integration"] = (
+                    obs_server is not None
+                )
             else:
                 # Test with empty config
                 obs_server = ObservabilityServer({})
-                results["observability_config_integration"] = obs_server is not None
+                results["observability_config_integration"] = (
+                    obs_server is not None
+                )
 
             # Test if observability server can read prometheus config
             if prometheus_config_path.exists():
@@ -223,7 +258,9 @@ class IntegrationSystemValidator:
                     import yaml
 
                     prom_config = yaml.safe_load(f)
-                    results["prometheus_config_valid"] = prom_config is not None
+                    results["prometheus_config_valid"] = (
+                        prom_config is not None
+                    )
                     results["prometheus_config_keys"] = (
                         list(prom_config.keys()) if prom_config else []
                     )
@@ -264,14 +301,18 @@ class IntegrationSystemValidator:
             results["health_check_integration"] = health_manager is not None
 
             # Test metrics collector availability
-            results["metrics_collection_integration"] = metrics_collector is not None
+            results["metrics_collection_integration"] = (
+                metrics_collector is not None
+            )
 
             # Test if monitoring can track deployment status
             if hasattr(staging_deploy, "get_deployment_status"):
                 status = staging_deploy.get_deployment_status()
                 results["deployment_status_monitoring"] = status is not None
             else:
-                results["deployment_status_monitoring"] = True  # Assume working
+                results[
+                    "deployment_status_monitoring"
+                ] = True  # Assume working
 
         except Exception as e:
             results["integration_error"] = str(e)
@@ -290,7 +331,9 @@ class IntegrationSystemValidator:
         }
 
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
             from deploy.staging.deploy import StagingDeployment
             from ops.monitoring.observability.server import ObservabilityServer
 
@@ -368,7 +411,10 @@ class IntegrationSystemValidator:
                 exec(import_code)
                 results["import_tests"][test_name] = {"success": True}
             except Exception as e:
-                results["import_tests"][test_name] = {"success": False, "error": str(e)}
+                results["import_tests"][test_name] = {
+                    "success": False,
+                    "error": str(e),
+                }
                 results["all_imports_working"] = False
 
         return results
@@ -385,7 +431,9 @@ class IntegrationSystemValidator:
         environments = ["development", "staging", "production"]
 
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             loader = ConfigEnvironmentLoader()
 
@@ -448,9 +496,13 @@ class IntegrationSystemValidator:
             deploy = StagingDeployment()
             if hasattr(deploy, "get_service_info"):
                 service_info = deploy.get_service_info()
-                results["deployment_service_registration"] = service_info is not None
+                results["deployment_service_registration"] = (
+                    service_info is not None
+                )
             else:
-                results["deployment_service_registration"] = True  # Assume working
+                results[
+                    "deployment_service_registration"
+                ] = True  # Assume working
 
             # Test monitoring service info
             obs = ObservabilityServer()
@@ -458,7 +510,9 @@ class IntegrationSystemValidator:
                 endpoints = obs.get_service_endpoints()
                 results["monitoring_service_discovery"] = endpoints is not None
             else:
-                results["monitoring_service_discovery"] = True  # Assume working
+                results[
+                    "monitoring_service_discovery"
+                ] = True  # Assume working
 
             results["service_registry"] = True
 
@@ -491,26 +545,36 @@ class IntegrationSystemValidator:
                 enable_json=True,
                 log_directory="logs",
             )
-            logger_instance = setup_structured_logging(log_config, "integration-test")
+            logger_instance = setup_structured_logging(
+                log_config, "integration-test"
+            )
             results["structured_logging_setup"] = logger_instance is not None
 
             # Test deployment logging
             from deploy.staging.deploy import StagingDeployment
 
             StagingDeployment()
-            results["deployment_logging"] = True  # Assume deployment uses logging
+            results[
+                "deployment_logging"
+            ] = True  # Assume deployment uses logging
 
             # Test monitoring logging
             from ops.monitoring.observability.server import ObservabilityServer
 
             ObservabilityServer()
-            results["monitoring_logging"] = True  # Assume monitoring uses logging
+            results[
+                "monitoring_logging"
+            ] = True  # Assume monitoring uses logging
 
             # Test config logging
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             ConfigEnvironmentLoader()
-            results["config_logging"] = True  # Assume config loader uses logging
+            results[
+                "config_logging"
+            ] = True  # Assume config loader uses logging
 
         except Exception as e:
             results["logging_integration_error"] = str(e)
@@ -537,22 +601,30 @@ class IntegrationSystemValidator:
             if metrics_collector:
                 # Test metrics collection
                 metrics_dict = metrics_collector.get_metrics_dict()
-                results["metrics_collection_working"] = metrics_dict is not None
+                results["metrics_collection_working"] = (
+                    metrics_dict is not None
+                )
 
             # Test deployment metrics integration
             from deploy.staging.deploy import StagingDeployment
 
             StagingDeployment()
-            results["deployment_metrics"] = True  # Assume deployment can emit metrics
+            results[
+                "deployment_metrics"
+            ] = True  # Assume deployment can emit metrics
 
             # Test monitoring metrics integration
             from ops.monitoring.observability.server import ObservabilityServer
 
             ObservabilityServer()
-            results["monitoring_metrics"] = True  # Assume monitoring collects metrics
+            results[
+                "monitoring_metrics"
+            ] = True  # Assume monitoring collects metrics
 
             # Test config metrics integration
-            results["config_metrics"] = True  # Assume config system can emit metrics
+            results[
+                "config_metrics"
+            ] = True  # Assume config system can emit metrics
 
         except Exception as e:
             results["metrics_integration_error"] = str(e)
@@ -582,7 +654,9 @@ class IntegrationSystemValidator:
             for component_name, health_test in components:
                 try:
                     health_status = health_test()
-                    results["system_components"][component_name] = health_status
+                    results["system_components"][
+                        component_name
+                    ] = health_status
                     if health_status.get("healthy", False):
                         healthy_components += 1
                 except Exception as e:
@@ -593,7 +667,10 @@ class IntegrationSystemValidator:
 
             # Test integration health
             integration_tests = [
-                ("config_deploy", lambda: self.validate_config_deploy_integration()),
+                (
+                    "config_deploy",
+                    lambda: self.validate_config_deploy_integration(),
+                ),
                 (
                     "config_monitoring",
                     lambda: self.validate_config_monitoring_integration(),
@@ -612,7 +689,9 @@ class IntegrationSystemValidator:
                     integration_result = integration_test()
                     is_healthy = isinstance(
                         integration_result, dict
-                    ) and integration_result.get("all_integrations_working", False)
+                    ) and integration_result.get(
+                        "all_integrations_working", False
+                    )
                     results["integration_health"][integration_name] = {
                         "healthy": is_healthy,
                         "details": integration_result,
@@ -627,11 +706,19 @@ class IntegrationSystemValidator:
 
             # Calculate overall health
             component_health_ratio = healthy_components / total_components
-            integration_health_ratio = healthy_integrations / total_integrations
+            integration_health_ratio = (
+                healthy_integrations / total_integrations
+            )
 
-            if component_health_ratio >= 0.8 and integration_health_ratio >= 0.8:
+            if (
+                component_health_ratio >= 0.8
+                and integration_health_ratio >= 0.8
+            ):
                 results["overall_health"] = "HEALTHY"
-            elif component_health_ratio >= 0.6 and integration_health_ratio >= 0.6:
+            elif (
+                component_health_ratio >= 0.6
+                and integration_health_ratio >= 0.6
+            ):
                 results["overall_health"] = "DEGRADED"
             else:
                 results["overall_health"] = "UNHEALTHY"
@@ -654,7 +741,9 @@ class IntegrationSystemValidator:
     def _test_config_health(self) -> Dict[str, Any]:
         """Test configuration system health"""
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             loader = ConfigEnvironmentLoader()
             config = loader.load_default_config()
@@ -729,7 +818,9 @@ def main():
     print("🏁 Wave 5 Cross-System Integration Validation Results")
     print(f"{'='*80}")
     print(f"📊 Total Tests: {results['total_tests']}")
-    print(f"✅ Passed: {results['passed_tests']} ({results['success_rate']:.1%})")
+    print(
+        f"✅ Passed: {results['passed_tests']} ({results['success_rate']:.1%})"
+    )
     print(f"❌ Failed: {results['failed_tests']}")
     print(f"⏱️  Duration: {results['duration_seconds']:.2f} seconds")
     print(f"🎯 Overall Status: {results['overall_status']}")

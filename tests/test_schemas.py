@@ -154,7 +154,9 @@ class TestSpatialTypes:
 
     def test_position_creation_valid(self):
         """Test Position model with valid data."""
-        position = Position(x=100.0, y=200.0, z=10.0, facing=270.0, accuracy=0.95)
+        position = Position(
+            x=100.0, y=200.0, z=10.0, facing=270.0, accuracy=0.95
+        )
 
         assert position.x == 100.0
         assert position.y == 200.0
@@ -211,11 +213,15 @@ class TestSpatialTypes:
     def test_bounding_box_validation_errors(self):
         """Test BoundingBox coordinate validation."""
         # max_x must be greater than min_x
-        with pytest.raises(ValueError, match="max_x must be greater than min_x"):
+        with pytest.raises(
+            ValueError, match="max_x must be greater than min_x"
+        ):
             BoundingBox(min_x=10.0, min_y=0.0, max_x=5.0, max_y=10.0)
 
         # max_y must be greater than min_y
-        with pytest.raises(ValueError, match="max_y must be greater than min_y"):
+        with pytest.raises(
+            ValueError, match="max_y must be greater than min_y"
+        ):
             BoundingBox(min_x=0.0, min_y=10.0, max_x=10.0, max_y=5.0)
 
     def test_area_creation(self):
@@ -239,7 +245,9 @@ class TestResourceTypes:
 
     def test_resource_value_valid(self):
         """Test ResourceValue with valid data."""
-        resource = ResourceValue(current=75.0, maximum=100.0, regeneration_rate=5.0)
+        resource = ResourceValue(
+            current=75.0, maximum=100.0, regeneration_rate=5.0
+        )
 
         assert resource.current == 75.0
         assert resource.maximum == 100.0
@@ -356,7 +364,9 @@ class TestCharacterTypes:
     def test_character_resources_creation(self):
         """Test CharacterResources model creation."""
         health = ResourceValue(current=100.0, maximum=100.0)
-        stamina = ResourceValue(current=80.0, maximum=100.0, regeneration_rate=10.0)
+        stamina = ResourceValue(
+            current=80.0, maximum=100.0, regeneration_rate=10.0
+        )
         morale = ResourceValue(current=90.0, maximum=100.0)
 
         resources = CharacterResources(
@@ -364,7 +374,9 @@ class TestCharacterTypes:
             stamina=stamina,
             morale=morale,
             ammo={"las_cell": 20, "frag_grenade": 3},
-            special_resources={"faith": ResourceValue(current=50.0, maximum=50.0)},
+            special_resources={
+                "faith": ResourceValue(current=50.0, maximum=50.0)
+            },
         )
 
         assert resources.health.current == 100.0
@@ -407,7 +419,9 @@ class TestCharacterTypes:
         health = ResourceValue(current=100.0, maximum=100.0)
         stamina = ResourceValue(current=100.0, maximum=100.0)
         morale = ResourceValue(current=90.0, maximum=100.0)
-        resources = CharacterResources(health=health, stamina=stamina, morale=morale)
+        resources = CharacterResources(
+            health=health, stamina=stamina, morale=morale
+        )
 
         character = CharacterData(
             character_id="char_001",
@@ -473,7 +487,9 @@ class TestActionTypes:
 
     def test_proposed_action_creation(self):
         """Test ProposedAction model creation."""
-        target = ActionTarget(entity_id="enemy_001", entity_type=EntityType.CHARACTER)
+        target = ActionTarget(
+            entity_id="enemy_001", entity_type=EntityType.CHARACTER
+        )
         params = ActionParameters(intensity=0.8)
 
         action = ProposedAction(
@@ -516,7 +532,9 @@ class TestActionTypes:
 
     def test_validated_action_creation(self):
         """Test ValidatedAction model creation."""
-        target = ActionTarget(entity_id="enemy_001", entity_type=EntityType.CHARACTER)
+        target = ActionTarget(
+            entity_id="enemy_001", entity_type=EntityType.CHARACTER
+        )
         params = ActionParameters(intensity=0.8)
 
         validated_action = ValidatedAction(
@@ -555,7 +573,9 @@ class TestIronLawsTypes:
         assert violation.law_code == "E001"
         assert violation.law_name == "Resource Conservation"
         assert violation.severity == "error"
-        assert violation.description == "Action would result in negative health"
+        assert (
+            violation.description == "Action would result in negative health"
+        )
         assert "char_001" in violation.affected_entities
         assert violation.suggested_repair == "Reduce damage intensity"
 
@@ -682,7 +702,9 @@ class TestWorldStateTypes:
     def test_world_state_utility_methods(self):
         """Test WorldState utility methods."""
         char_entity = WorldEntity(
-            entity_id="char_001", entity_type=EntityType.CHARACTER, name="Marcus"
+            entity_id="char_001",
+            entity_type=EntityType.CHARACTER,
+            name="Marcus",
         )
 
         obj_entity = WorldEntity(
@@ -690,7 +712,8 @@ class TestWorldStateTypes:
         )
 
         world_state = WorldState(
-            turn_number=1, entities={"char_001": char_entity, "obj_001": obj_entity}
+            turn_number=1,
+            entities={"char_001": char_entity, "obj_001": obj_entity},
         )
 
         # Test get_entities_by_type
@@ -861,7 +884,9 @@ class TestTurnBriefTypes:
     def test_contextual_prompt_compilation(self):
         """Test ContextualPrompt compile_prompt method."""
         knowledge = KnowledgeFragment(
-            content="Test knowledge piece", source="test.md", knowledge_type="rule"
+            content="Test knowledge piece",
+            source="test.md",
+            knowledge_type="rule",
         )
 
         prompt = ContextualPrompt(
@@ -903,7 +928,11 @@ class TestTurnBriefTypes:
             character_id="char_001",
             turn_number=3,
             filtered_world_view=filtered_view,
-            available_actions=[ActionType.MOVE, ActionType.ATTACK, ActionType.DEFEND],
+            available_actions=[
+                ActionType.MOVE,
+                ActionType.ATTACK,
+                ActionType.DEFEND,
+            ],
             contextual_prompt=prompt,
             tactical_situation="Enemy forces advancing from east",
             objectives=["Hold position", "Maintain communication"],
@@ -981,7 +1010,9 @@ class TestSimulationTypes:
 
     def test_turn_result_creation(self):
         """Test TurnResult model creation."""
-        target = ActionTarget(entity_id="enemy_001", entity_type=EntityType.CHARACTER)
+        target = ActionTarget(
+            entity_id="enemy_001", entity_type=EntityType.CHARACTER
+        )
         params = ActionParameters()
         validated_action = ValidatedAction(
             action_id="action_001",
@@ -1004,7 +1035,9 @@ class TestSimulationTypes:
         health = ResourceValue(current=85.0, maximum=100.0)
         stamina = ResourceValue(current=90.0, maximum=100.0)
         morale = ResourceValue(current=95.0, maximum=100.0)
-        resources = CharacterResources(health=health, stamina=stamina, morale=morale)
+        resources = CharacterResources(
+            health=health, stamina=stamina, morale=morale
+        )
 
         character = CharacterData(
             character_id="char_001",
@@ -1020,8 +1053,14 @@ class TestSimulationTypes:
             executed_actions=[validated_action],
             world_state_changes={"entities_moved": 2, "objects_destroyed": 1},
             character_updates={"char_001": character},
-            events_generated=["explosion_at_200_150", "radio_chatter_intercepted"],
-            performance_metrics={"execution_time_ms": 1250.0, "memory_mb": 45.2},
+            events_generated=[
+                "explosion_at_200_150",
+                "radio_chatter_intercepted",
+            ],
+            performance_metrics={
+                "execution_time_ms": 1250.0,
+                "memory_mb": 45.2,
+            },
             errors=["minor_path_finding_error"],
             warnings=["low_ammunition_warning"],
             duration_seconds=1.25,
@@ -1104,7 +1143,9 @@ class TestAPITypes:
 
         # active_simulations must be non-negative
         with pytest.raises(ValueError):
-            SystemStatus(status="healthy", uptime_seconds=100.0, active_simulations=-1)
+            SystemStatus(
+                status="healthy", uptime_seconds=100.0, active_simulations=-1
+            )
 
         # cpu_usage_percent must be between 0 and 100
         with pytest.raises(ValueError):
@@ -1248,7 +1289,10 @@ class TestConsistencyTypes:
         assert consistency_check.is_consistent is False
         assert len(consistency_check.inconsistencies) == 2
         assert consistency_check.confidence == 0.95
-        assert "Update world state" in consistency_check.remediation_suggestions[0]
+        assert (
+            "Update world state"
+            in consistency_check.remediation_suggestions[0]
+        )
         assert len(consistency_check.check_id) > 0  # Auto-generated UUID
         assert isinstance(consistency_check.timestamp, datetime)
 
@@ -1299,7 +1343,9 @@ class TestModelRegistry:
         health = ResourceValue(current=100.0, maximum=100.0)
         stamina = ResourceValue(current=100.0, maximum=100.0)
         morale = ResourceValue(current=100.0, maximum=100.0)
-        resources = CharacterResources(health=health, stamina=stamina, morale=morale)
+        resources = CharacterResources(
+            health=health, stamina=stamina, morale=morale
+        )
 
         character = CharacterDataModel(
             character_id="test_char",
@@ -1332,7 +1378,9 @@ class TestJSONSerialization:
         health = ResourceValue(current=85.0, maximum=100.0)
         stamina = ResourceValue(current=95.0, maximum=100.0)
         morale = ResourceValue(current=90.0, maximum=100.0)
-        resources = CharacterResources(health=health, stamina=stamina, morale=morale)
+        resources = CharacterResources(
+            health=health, stamina=stamina, morale=morale
+        )
 
         original = CharacterData(
             character_id="char_001",
@@ -1360,13 +1408,16 @@ class TestJSONSerialization:
         assert reconstructed.position.x == original.position.x
         assert reconstructed.stats.strength == original.stats.strength
         assert (
-            reconstructed.resources.health.current == original.resources.health.current
+            reconstructed.resources.health.current
+            == original.resources.health.current
         )
 
     def test_world_state_json_serialization(self):
         """Test WorldState JSON serialization."""
         entity = WorldEntity(
-            entity_id="obj_001", entity_type=EntityType.OBJECT, name="Supply Cache"
+            entity_id="obj_001",
+            entity_type=EntityType.OBJECT,
+            name="Supply Cache",
         )
 
         world_state = WorldState(

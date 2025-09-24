@@ -3,7 +3,8 @@
 涌现式叙事系统 (Emergent Narrative System)
 =======================================
 
-Milestone 2 Implementation: CausalGraph + Multi-Agent Negotiation + Narrative Coherence
+Milestone 2 Implementation:
+CausalGraph + Multi-Agent Negotiation + Narrative Coherence
 
 核心理念：通过Agent间的真实交互和因果关系图，自然涌现出连贯的叙事，
 而非预设剧本。每个决策都会在因果图中留下轨迹，影响后续的故事发展。
@@ -165,15 +166,20 @@ class CausalGraph:
         self.edges[edge_key] = causal_edge
 
         self.graph.add_edge(
-            causal_edge.source_id, causal_edge.target_id, **causal_edge.to_dict()
+            causal_edge.source_id,
+            causal_edge.target_id,
+            **causal_edge.to_dict(),
         )
 
         logger.debug(
-            f"Added causal relation: {causal_edge.source_id} -> {causal_edge.target_id}"
+            f"Added causal relation: "
+            f"{causal_edge.source_id} -> {causal_edge.target_id}"
         )
         return True
 
-    def find_causal_chain(self, start_node: str, max_depth: int = 5) -> List[List[str]]:
+    def find_causal_chain(
+        self, start_node: str, max_depth: int = 5
+    ) -> List[List[str]]:
         """查找因果链"""
         chains = []
 
@@ -201,7 +207,9 @@ class CausalGraph:
             if node.timestamp >= cutoff_time:
                 # 计算影响力：出度 * 叙事权重 * 置信度
                 out_degree = self.graph.out_degree(node_id)
-                influence_score = out_degree * node.narrative_weight * node.confidence
+                influence_score = (
+                    out_degree * node.narrative_weight * node.confidence
+                )
 
                 if influence_score > 1.0:  # 阈值
                     influential_events.append(node)
@@ -265,7 +273,8 @@ class CausalGraph:
         # 基于最近事件的因果链预测
         recent_events = self.get_influential_events()
 
-        for event in recent_events[:5]:  # 只考虑前5个最有影响力的事件
+        # 只考虑前5个最有影响力的事件
+        for event in recent_events[:5]:
             # 查找此事件可能导致的后续事件
             chains = self.find_causal_chain(event.node_id, max_depth=2)
 
@@ -280,7 +289,9 @@ class CausalGraph:
                         if edge_key in self.edges:
                             edge = self.edges[edge_key]
                             probability = (
-                                edge.strength * edge.confidence * event.confidence
+                                edge.strength
+                                * edge.confidence
+                                * event.confidence
                             )
 
                             predictions.append(
@@ -304,7 +315,8 @@ class NegotiationProposal:
 
     proposal_id: str
     proposer_id: str
-    proposal_type: str  # "action", "resource_allocation", "territory", "cooperation"
+    # "action", "resource_allocation", "territory", "cooperation"
+    proposal_type: str
     content: Dict[str, Any]
     target_agents: List[str]
     requirements: List[str] = field(default_factory=list)
@@ -320,7 +332,8 @@ class NegotiationResponse:
     response_id: str
     proposal_id: str
     responder_id: str
-    response_type: str  # "accept", "reject", "counter", "conditional"
+    # "accept", "reject", "counter", "conditional"
+    response_type: str
     content: Dict[str, Any]
     counter_proposal: Optional[Dict[str, Any]] = None
     conditions: List[str] = field(default_factory=list)
@@ -401,7 +414,9 @@ class AgentNegotiationEngine:
             proposal_type=initial_proposal.get("type", "general"),
             content=initial_proposal,
             target_agents=target_agents,
-            expires_at=datetime.now() + timedelta(minutes=session.timeout_minutes),
+            expires_at=(
+                datetime.now() + timedelta(minutes=session.timeout_minutes)
+            ),
         )
 
         session.proposals.append(proposal)
@@ -420,7 +435,9 @@ class AgentNegotiationEngine:
         """通知Agent收到新的协商提议"""
         # 这里应该集成到消息系统中
         for agent_id in target_agents:
-            logger.debug(f"Notified {agent_id} of proposal {proposal.proposal_id}")
+            logger.debug(
+                f"Notified {agent_id} of proposal {proposal.proposal_id}"
+            )
 
     async def respond_to_proposal(
         self,
@@ -439,13 +456,16 @@ class AgentNegotiationEngine:
                 break
 
         if not session:
-            logger.warning(f"No active session found for proposal {proposal_id}")
+            logger.warning(
+                f"No active session found for proposal {proposal_id}"
+            )
             return False
 
         # 验证回应者是否为参与者
         if responder_id not in session.participants:
             logger.warning(
-                f"Agent {responder_id} not participant in session {session.session_id}"
+                f"Agent {responder_id} not participant in session "
+                f"{session.session_id}"
             )
             return False
 
@@ -464,13 +484,16 @@ class AgentNegotiationEngine:
 
         # 检查是否需要生成智能回应
         if response_type in ["counter", "conditional"]:
-            await self._generate_intelligent_counter_proposal(session, response)
+            await self._generate_intelligent_counter_proposal(
+                session, response
+            )
 
         # 检查协商状态
         await self._evaluate_negotiation_status(session)
 
         logger.debug(
-            f"Response added to negotiation {session.session_id}: {response_type}"
+            f"Response added to negotiation "
+            f"{session.session_id}: {response_type}"
         )
         return True
 
@@ -494,7 +517,7 @@ class AgentNegotiationEngine:
         原始提议：{session.proposals[-1].content}
         Agent性格特征：{responder_profile.get('style', {})}
         Agent优先级：{responder_profile.get('priorities', [])}
-        
+
         请生成一个JSON格式的反提议，包含：
         - type: 提议类型
         - content: 具体内容
@@ -504,7 +527,9 @@ class AgentNegotiationEngine:
 
         try:
             llm_request = LLMRequest(
-                prompt=prompt, response_format=ResponseFormat.JSON, max_tokens=500
+                prompt=prompt,
+                response_format=ResponseFormat.JSON,
+                max_tokens=500,
             )
 
             llm_response = await self.llm_service.process_request(llm_request)
@@ -513,7 +538,8 @@ class AgentNegotiationEngine:
                 counter_proposal = json.loads(llm_response.content)
                 response.counter_proposal = counter_proposal
                 logger.debug(
-                    f"Generated intelligent counter-proposal for {response.responder_id}"
+                    f"Generated intelligent counter-proposal for "
+                    f"{response.responder_id}"
                 )
 
         except Exception as e:
@@ -522,9 +548,10 @@ class AgentNegotiationEngine:
     async def _evaluate_negotiation_status(self, session: NegotiationSession):
         """评估协商状态"""
         # 检查超时
-        if datetime.now() > session.created_at + timedelta(
+        timeout_threshold = session.created_at + timedelta(
             minutes=session.timeout_minutes
-        ):
+        )
+        if datetime.now() > timeout_threshold:
             session.status = NegotiationStatus.TIMEOUT
             self._finalize_session(session)
             return
@@ -535,7 +562,9 @@ class AgentNegotiationEngine:
             return
 
         target_responses = [
-            r for r in session.responses if r.proposal_id == latest_proposal.proposal_id
+            r
+            for r in session.responses
+            if r.proposal_id == latest_proposal.proposal_id
         ]
 
         if len(target_responses) >= len(latest_proposal.target_agents):
@@ -546,14 +575,18 @@ class AgentNegotiationEngine:
         """尝试解决协商"""
         latest_proposal = session.proposals[-1]
         responses = [
-            r for r in session.responses if r.proposal_id == latest_proposal.proposal_id
+            r
+            for r in session.responses
+            if r.proposal_id == latest_proposal.proposal_id
         ]
 
         # 统计回应类型
         accepts = [r for r in responses if r.response_type == "accept"]
         rejects = [r for r in responses if r.response_type == "reject"]
         counters = [
-            r for r in responses if r.response_type in ["counter", "conditional"]
+            r
+            for r in responses
+            if r.response_type in ["counter", "conditional"]
         ]
 
         # 决议逻辑
@@ -598,7 +631,9 @@ class AgentNegotiationEngine:
         # 选择最有希望的反提议
         best_counter = max(
             counters,
-            key=lambda x: self._evaluate_proposal_viability(x.counter_proposal),
+            key=lambda x: self._evaluate_proposal_viability(
+                x.counter_proposal
+            ),
         )
 
         # 创建新的提议基于最佳反提议
@@ -608,15 +643,22 @@ class AgentNegotiationEngine:
             proposal_type=best_counter.counter_proposal.get("type", "counter"),
             content=best_counter.counter_proposal,
             target_agents=[
-                aid for aid in session.participants if aid != best_counter.responder_id
+                aid
+                for aid in session.participants
+                if aid != best_counter.responder_id
             ],
-            expires_at=datetime.now() + timedelta(minutes=session.timeout_minutes // 2),
+            expires_at=datetime.now()
+            + timedelta(minutes=session.timeout_minutes // 2),
         )
 
         session.proposals.append(new_proposal)
-        await self._notify_agents_of_proposal(new_proposal, new_proposal.target_agents)
+        await self._notify_agents_of_proposal(
+            new_proposal, new_proposal.target_agents
+        )
 
-        logger.info(f"New counter-proposal created in session {session.session_id}")
+        logger.info(
+            f"New counter-proposal created in session {session.session_id}"
+        )
 
     def _evaluate_proposal_viability(self, proposal: Dict[str, Any]) -> float:
         """评估提议的可行性"""
@@ -627,12 +669,14 @@ class AgentNegotiationEngine:
         score = 0.5  # 基础分
 
         # 根据提议内容调整分数
-        if "benefits_offered" in proposal and proposal["benefits_offered"]:
+        benefits = proposal.get("benefits_offered")
+        if benefits:
             score += 0.2
 
         if "requirements" in proposal:
             req_count = len(proposal["requirements"])
-            score -= min(0.3, req_count * 0.1)  # 要求越多，分数越低
+            # 要求越多，分数越低
+            score -= min(0.3, req_count * 0.1)
 
         return max(0.0, min(1.0, score))
 
@@ -649,7 +693,11 @@ class AgentNegotiationEngine:
             "topic": session.topic,
             "original_proposal": session.proposals[-1].content,
             "responses": [
-                {"agent": r.responder_id, "type": r.response_type, "content": r.content}
+                {
+                    "agent": r.responder_id,
+                    "type": r.response_type,
+                    "content": r.content,
+                }
                 for r in responses
             ],
             "participant_profiles": {
@@ -673,7 +721,9 @@ class AgentNegotiationEngine:
 
         try:
             llm_request = LLMRequest(
-                prompt=prompt, response_format=ResponseFormat.JSON, max_tokens=800
+                prompt=prompt,
+                response_format=ResponseFormat.JSON,
+                max_tokens=800,
             )
 
             llm_response = await self.llm_service.process_request(llm_request)
@@ -697,7 +747,8 @@ class AgentNegotiationEngine:
                 )
 
                 logger.info(
-                    f"Mediated proposal created for session {session.session_id}"
+                    f"Mediated proposal created for session "
+                    f"{session.session_id}"
                 )
             else:
                 session.status = NegotiationStatus.DEADLOCK
@@ -706,17 +757,23 @@ class AgentNegotiationEngine:
             logger.error(f"Mediation failed: {e}")
             session.status = NegotiationStatus.DEADLOCK
 
-    def _update_agent_reputations(self, session: NegotiationSession, success: bool):
+    def _update_agent_reputations(
+        self, session: NegotiationSession, success: bool
+    ):
         """更新Agent声誉"""
         for agent_id in session.participants:
             if agent_id in self.agent_negotiation_profiles:
                 profile = self.agent_negotiation_profiles[agent_id]
                 if success:
                     profile["successful_negotiations"] += 1
-                    profile["reputation"] = min(1.0, profile["reputation"] + 0.1)
+                    profile["reputation"] = min(
+                        1.0, profile["reputation"] + 0.1
+                    )
                 else:
                     profile["failed_negotiations"] += 1
-                    profile["reputation"] = max(0.0, profile["reputation"] - 0.05)
+                    profile["reputation"] = max(
+                        0.0, profile["reputation"] - 0.05
+                    )
 
     def _finalize_session(self, session: NegotiationSession):
         """结束协商会话"""
@@ -725,7 +782,7 @@ class AgentNegotiationEngine:
 
         self.negotiation_history.append(session)
         logger.info(
-            f"Negotiation session {session.session_id} finalized with status: {session.status}"
+            f"Negotiation session {session.session_id}finalized with status: {session.status}"
         )
 
     def get_negotiation_summary(self, session_id: str) -> Dict[str, Any]:
@@ -785,7 +842,9 @@ class NarrativeCoherenceEngine:
             context_events = self._get_relevant_context_events(event)
 
         # 检查事件一致性
-        consistency_check = await self._check_event_consistency(event, context_events)
+        consistency_check = await self._check_event_consistency(
+            event, context_events
+        )
 
         if not consistency_check["consistent"]:
             logger.warning(
@@ -801,7 +860,10 @@ class NarrativeCoherenceEngine:
                 logger.error(
                     f"Failed to correct event inconsistencies for {event.node_id}"
                 )
-                return {"success": False, "issues": consistency_check["issues"]}
+                return {
+                    "success": False,
+                    "issues": consistency_check["issues"],
+                }
 
         # 更新角色弧线
         if event.agent_id:
@@ -813,7 +875,9 @@ class NarrativeCoherenceEngine:
             self._update_plot_thread(plot_thread, event)
 
         # 生成叙事文本
-        narrative_text = await self._generate_coherent_narrative(event, context_events)
+        narrative_text = await self._generate_coherent_narrative(
+            event, context_events
+        )
 
         # 添加到时间线
         narrative_entry = {
@@ -822,7 +886,9 @@ class NarrativeCoherenceEngine:
             "agent_id": event.agent_id,
             "narrative_text": narrative_text,
             "plot_thread": plot_thread,
-            "character_development": self._extract_character_development(event),
+            "character_development": self._extract_character_development(
+                event
+            ),
             "causal_links": [
                 edge.source_id
                 for edge in self.causal_graph.edges.values()
@@ -888,14 +954,17 @@ class NarrativeCoherenceEngine:
             latest_context = max(context_events, key=lambda x: x.timestamp)
             if event.timestamp < latest_context.timestamp:
                 issues.append(
-                    "Temporal inconsistency: event occurs before required context"
+                    "Temporal inconsistency: event occurs before "
+                    "required context"
                 )
 
         # 2. 位置一致性
         if event.location and event.agent_id:
             # 检查Agent是否能在该位置执行该动作
             recent_agent_events = [
-                e for e in context_events if e.agent_id == event.agent_id and e.location
+                e
+                for e in context_events
+                if e.agent_id == event.agent_id and e.location
             ]
             if recent_agent_events:
                 last_location = recent_agent_events[-1].location
@@ -922,7 +991,9 @@ class NarrativeCoherenceEngine:
             "confidence": max(0.0, 1.0 - len(issues) * 0.2),
         }
 
-    def _event_satisfies_condition(self, event: CausalNode, condition: str) -> bool:
+    def _event_satisfies_condition(
+        self, event: CausalNode, condition: str
+    ) -> bool:
         """检查事件是否满足条件"""
         # 简化的条件匹配逻辑
         return (
@@ -976,9 +1047,13 @@ class NarrativeCoherenceEngine:
                 # 创建修正后的事件
                 corrected_event = CausalNode(
                     node_id=event.node_id,
-                    event_type=correction_data.get("event_type", event.event_type),
+                    event_type=correction_data.get(
+                        "event_type", event.event_type
+                    ),
                     agent_id=event.agent_id,
-                    action_data=correction_data.get("action_data", event.action_data),
+                    action_data=correction_data.get(
+                        "action_data", event.action_data
+                    ),
                     timestamp=event.timestamp,
                     location=correction_data.get("location", event.location),
                     participants=event.participants,
@@ -987,12 +1062,14 @@ class NarrativeCoherenceEngine:
                     metadata={
                         **event.metadata,
                         "corrected": True,
-                        "correction_reason": correction_data.get("explanation", ""),
+                        "correction_reason": correction_data.get(
+                            "explanation", ""
+                        ),
                     },
                 )
 
                 logger.info(
-                    f"Event {event.node_id} corrected: {correction_data.get('explanation', '')}"
+                    f"Event {event.node_id}corrected: {correction_data.get( 'explanation', '')}"
                 )
                 return corrected_event
 
@@ -1023,7 +1100,8 @@ class NarrativeCoherenceEngine:
         )
 
         # 分析角色发展阶段
-        if len(arc["events"]) % 5 == 0:  # 每5个事件评估一次发展阶段
+        # 每5个事件评估一次发展阶段
+        if len(arc["events"]) % 5 == 0:
             stage = self._analyze_character_development_stage(
                 agent_id, arc["events"][-5:]
             )
@@ -1042,15 +1120,18 @@ class NarrativeCoherenceEngine:
 
         stage_type = "exploration"
         if any(
-            "combat" in et.lower() or "conflict" in et.lower() for et in event_types
+            "combat" in et.lower() or "conflict" in et.lower()
+            for et in event_types
         ):
             stage_type = "conflict"
         elif any(
-            "social" in et.lower() or "negotiate" in et.lower() for et in event_types
+            "social" in et.lower() or "negotiate" in et.lower()
+            for et in event_types
         ):
             stage_type = "social_development"
         elif any(
-            "discover" in et.lower() or "learn" in et.lower() for et in event_types
+            "discover" in et.lower() or "learn" in et.lower()
+            for et in event_types
         ):
             stage_type = "learning"
 
@@ -1072,17 +1153,21 @@ class NarrativeCoherenceEngine:
             if (
                 event.location == thread_data.get("primary_location")
                 or event.agent_id in thread_data.get("involved_agents", [])
-                or event.event_type in thread_data.get("related_event_types", [])
+                or event.event_type
+                in thread_data.get("related_event_types", [])
             ):
                 return thread_id
 
         # 创建新的情节线索
-        if event.narrative_weight > 0.5:  # 只为重要事件创建新线索
+        # 只为重要事件创建新线索
+        if event.narrative_weight > 0.5:
             thread_id = f"thread_{len(self.plot_threads) + 1}"
             self.plot_threads[thread_id] = {
                 "thread_id": thread_id,
                 "primary_location": event.location,
-                "involved_agents": [event.agent_id] if event.agent_id else [],
+                "involved_agents": (
+                    [event.agent_id] if event.agent_id else []
+                ),
                 "related_event_types": [event.event_type],
                 "start_time": event.timestamp,
                 "events": [],
@@ -1116,7 +1201,9 @@ class NarrativeCoherenceEngine:
         """生成连贯的叙事文本"""
         if not self.llm_service:
             # 返回基础的事件描述
-            return f"{event.agent_id or 'Someone'} 进行了 {event.event_type} 在 {event.location or 'unknown location'}"
+            agent_desc = event.agent_id or "Someone"
+            location_desc = event.location or "unknown location"
+            return f"{agent_desc} 进行了 {event.event_type} 在 {location_desc}"
 
         # 构建叙事上下文
         context_summary = self._create_context_summary(context_events)
@@ -1192,7 +1279,9 @@ class NarrativeCoherenceEngine:
         template_index = hash(event.node_id) % len(narrative_templates)
         return narrative_templates[template_index]
 
-    def _extract_character_development(self, event: CausalNode) -> Dict[str, Any]:
+    def _extract_character_development(
+        self, event: CausalNode
+    ) -> Dict[str, Any]:
         """提取角色发展信息"""
         if not event.agent_id:
             return {}
@@ -1243,12 +1332,16 @@ class NarrativeCoherenceEngine:
         # 时间过滤
         if start_time:
             filtered_timeline = [
-                entry for entry in filtered_timeline if entry["timestamp"] >= start_time
+                entry
+                for entry in filtered_timeline
+                if entry["timestamp"] >= start_time
             ]
 
         if end_time:
             filtered_timeline = [
-                entry for entry in filtered_timeline if entry["timestamp"] <= end_time
+                entry
+                for entry in filtered_timeline
+                if entry["timestamp"] <= end_time
             ]
 
         # Agent过滤
@@ -1268,7 +1361,11 @@ class NarrativeCoherenceEngine:
             "character_arcs": len(self.character_arcs),
             "plot_threads": len(self.plot_threads),
             "active_plot_threads": len(
-                [t for t in self.plot_threads.values() if t["status"] == "active"]
+                [
+                    t
+                    for t in self.plot_threads.values()
+                    if t["status"] == "active"
+                ]
             ),
             "consistency_rule_count": len(self.consistency_rules),
             "timeline_span": {
@@ -1284,10 +1381,12 @@ class NarrativeCoherenceEngine:
                 ),
             },
             "character_summary": {
-                aid: len(arc["events"]) for aid, arc in self.character_arcs.items()
+                aid: len(arc["events"])
+                for aid, arc in self.character_arcs.items()
             },
             "plot_thread_summary": {
-                tid: len(thread["events"]) for tid, thread in self.plot_threads.items()
+                tid: len(thread["events"])
+                for tid, thread in self.plot_threads.items()
             },
         }
 
@@ -1298,7 +1397,9 @@ class EmergentNarrativeEngine:
     def __init__(self, llm_service=None):
         self.causal_graph = CausalGraph()
         self.negotiation_engine = AgentNegotiationEngine(llm_service)
-        self.coherence_engine = NarrativeCoherenceEngine(self.causal_graph, llm_service)
+        self.coherence_engine = NarrativeCoherenceEngine(
+            self.causal_graph, llm_service
+        )
         self.llm_service = llm_service or get_llm_service()
 
         self.active_agents: Set[str] = set()
@@ -1308,6 +1409,42 @@ class EmergentNarrativeEngine:
         self._register_default_consistency_rules()
 
         logger.info("涌现式叙事引擎初始化完成")
+
+    async def initialize(self) -> bool:
+        """Initialize the emergent narrative engine and all subsystems."""
+        try:
+            logger.info("Initializing EmergentNarrativeEngine subsystems")
+
+            # Ensure causal graph is ready
+            if not hasattr(self.causal_graph, "nodes"):
+                logger.error("CausalGraph not properly initialized")
+                return False
+
+            # Ensure negotiation engine is ready
+            if not hasattr(self.negotiation_engine, "agent_profiles"):
+                logger.error("AgentNegotiationEngine not properly initialized")
+                return False
+
+            # Ensure coherence engine is ready
+            if not hasattr(self.coherence_engine, "consistency_rules"):
+                logger.error(
+                    "NarrativeCoherenceEngine not properly initialized"
+                )
+                return False
+
+            # Ensure LLM service is available
+            if not self.llm_service:
+                logger.error("LLM service not available")
+                return False
+
+            logger.info(
+                "EmergentNarrativeEngine initialization completed successfully"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(f"EmergentNarrativeEngine initialization failed: {e}")
+            return False
 
     def _register_default_consistency_rules(self):
         """注册默认的一致性规则"""
@@ -1323,7 +1460,8 @@ class EmergentNarrativeEngine:
                     e
                     for e in context
                     if e.agent_id == event.agent_id
-                    and abs((e.timestamp - event.timestamp).total_seconds()) < 60
+                    and abs((e.timestamp - event.timestamp).total_seconds())
+                    < 60
                 ]
 
                 for same_time_event in same_time_events:
@@ -1362,7 +1500,9 @@ class EmergentNarrativeEngine:
 
         self.active_agents.add(agent_id)
 
-        logger.info(f"Agent {agent_id} initialized in emergent narrative engine")
+        logger.info(
+            f"Agent {agent_id} initialized in emergent narrative engine"
+        )
         return True
 
     async def process_agent_action(
@@ -1396,12 +1536,16 @@ class EmergentNarrativeEngine:
         negotiation_result = await self._check_and_handle_conflicts(event_node)
 
         # 整合到叙事中
-        integration_result = await self.coherence_engine.integrate_event_into_narrative(
-            event_node
+        integration_result = (
+            await self.coherence_engine.integrate_event_into_narrative(
+                event_node
+            )
         )
 
         # 预测后续事件
-        predictions = self.causal_graph.predict_next_events(self.global_narrative_state)
+        predictions = self.causal_graph.predict_next_events(
+            self.global_narrative_state
+        )
 
         return {
             "event_id": event_node.node_id,
@@ -1429,17 +1573,14 @@ class EmergentNarrativeEngine:
                 existing_node.timestamp >= cutoff_time
                 and existing_node.node_id != event_node.node_id
             ):
-
                 # 基于位置的关联
                 if existing_node.location == event_node.location or (
                     existing_node.agent_id == event_node.agent_id
                 ):
-
                     causal_strength = self._calculate_causal_strength(
                         existing_node, event_node
                     )
                     if causal_strength > 0.3:
-
                         # 确定关系类型
                         relation_type = self._determine_relation_type(
                             existing_node, event_node
@@ -1453,14 +1594,15 @@ class EmergentNarrativeEngine:
                             confidence=min(
                                 existing_node.confidence, event_node.confidence
                             ),
-                            delay=event_node.timestamp - existing_node.timestamp,
+                            delay=event_node.timestamp
+                            - existing_node.timestamp,
                         )
 
                         self.causal_graph.add_causal_relation(causal_edge)
                         potential_causes.append((existing_node, causal_edge))
 
         logger.debug(
-            f"Added {len(potential_causes)} causal relations for event {event_node.node_id}"
+            f"Added {len(potential_causes)}causal relations for event {event_node.node_id}"
         )
 
     def _calculate_causal_strength(
@@ -1479,25 +1621,35 @@ class EmergentNarrativeEngine:
             strength += 0.3
 
         # 3. 参与者重叠
-        cause_participants = set([cause_event.agent_id] + cause_event.participants)
-        effect_participants = set([effect_event.agent_id] + effect_event.participants)
+        cause_participants = set(
+            [cause_event.agent_id] + cause_event.participants
+        )
+        effect_participants = set(
+            [effect_event.agent_id] + effect_event.participants
+        )
         overlap = len(cause_participants.intersection(effect_participants))
         if overlap > 0:
             strength += overlap * 0.1
 
         # 4. 事件类型的逻辑关联
-        if self._are_logically_related(cause_event.event_type, effect_event.event_type):
+        if self._are_logically_related(
+            cause_event.event_type, effect_event.event_type
+        ):
             strength += 0.2
 
         # 5. 时间接近性
-        time_diff = (effect_event.timestamp - cause_event.timestamp).total_seconds()
+        time_diff = (
+            effect_event.timestamp - cause_event.timestamp
+        ).total_seconds()
         if 0 < time_diff <= 3600:  # 1小时内
             time_factor = max(0, 1.0 - time_diff / 3600)
             strength += 0.1 * time_factor
 
         return min(1.0, strength)
 
-    def _are_logically_related(self, cause_type: str, effect_type: str) -> bool:
+    def _are_logically_related(
+        self, cause_type: str, effect_type: str
+    ) -> bool:
         """判断事件类型是否逻辑相关"""
         logic_pairs = [
             ("attack", "defend"),
@@ -1527,7 +1679,8 @@ class EmergentNarrativeEngine:
 
         elif any(
             participant in effect_event.participants
-            for participant in [cause_event.agent_id] + cause_event.participants
+            for participant in [cause_event.agent_id]
+            + cause_event.participants
         ):
             return CausalRelationType.CATALYST
 
@@ -1540,7 +1693,9 @@ class EmergentNarrativeEngine:
         else:
             return CausalRelationType.INDIRECT_CAUSE
 
-    def _are_contradictory_events(self, event1: CausalNode, event2: CausalNode) -> bool:
+    def _are_contradictory_events(
+        self, event1: CausalNode, event2: CausalNode
+    ) -> bool:
         """判断两个事件是否矛盾"""
         contradictory_pairs = [
             ("attack", "help"),
@@ -1594,11 +1749,12 @@ class EmergentNarrativeEngine:
                 existing_event.node_id != event_node.node_id
                 and existing_event.agent_id != event_node.agent_id
                 and abs(
-                    (existing_event.timestamp - event_node.timestamp).total_seconds()
+                    (
+                        existing_event.timestamp - event_node.timestamp
+                    ).total_seconds()
                 )
                 < 300
             ):  # 5分钟内
-
                 conflict_score = self._calculate_conflict_score(
                     existing_event, event_node
                 )
@@ -1617,7 +1773,9 @@ class EmergentNarrativeEngine:
 
         # 如果存在冲突，启动协商
         if conflicts:
-            high_severity_conflicts = [c for c in conflicts if c["severity"] > 0.7]
+            high_severity_conflicts = [
+                c for c in conflicts if c["severity"] > 0.7
+            ]
 
             for conflict in high_severity_conflicts:
                 conflicting_event = self.causal_graph.nodes[
@@ -1677,7 +1835,9 @@ class EmergentNarrativeEngine:
 
         return min(1.0, score)
 
-    def _check_resource_conflict(self, event1: CausalNode, event2: CausalNode) -> bool:
+    def _check_resource_conflict(
+        self, event1: CausalNode, event2: CausalNode
+    ) -> bool:
         """检查资源冲突"""
         # 简化的资源冲突检测
         resources1 = set(event1.action_data.get("resources", []))
@@ -1685,7 +1845,9 @@ class EmergentNarrativeEngine:
 
         return len(resources1.intersection(resources2)) > 0
 
-    def _check_goal_conflict(self, event1: CausalNode, event2: CausalNode) -> bool:
+    def _check_goal_conflict(
+        self, event1: CausalNode, event2: CausalNode
+    ) -> bool:
         """检查目标冲突"""
         # 简化的目标冲突检测
         goals1 = set(event1.action_data.get("goals", []))
@@ -1693,10 +1855,13 @@ class EmergentNarrativeEngine:
 
         # 如果目标相同但Agent不同，可能存在竞争
         return (
-            len(goals1.intersection(goals2)) > 0 and event1.agent_id != event2.agent_id
+            len(goals1.intersection(goals2)) > 0
+            and event1.agent_id != event2.agent_id
         )
 
-    def _classify_conflict_type(self, event1: CausalNode, event2: CausalNode) -> str:
+    def _classify_conflict_type(
+        self, event1: CausalNode, event2: CausalNode
+    ) -> str:
         """分类冲突类型"""
         if self._check_resource_conflict(event1, event2):
             return "resource_competition"
@@ -1709,7 +1874,9 @@ class EmergentNarrativeEngine:
         else:
             return "general_conflict"
 
-    def _suggest_conflict_resolution(self, conflict: Dict[str, Any]) -> Dict[str, Any]:
+    def _suggest_conflict_resolution(
+        self, conflict: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """建议冲突解决方案"""
         conflict_type = conflict["conflict_type"]
 
@@ -1749,7 +1916,9 @@ class EmergentNarrativeEngine:
         """获取因果效应分析"""
 
         # 查找此事件的直接后果
-        successors = list(self.causal_graph.graph.successors(event_node.node_id))
+        successors = list(
+            self.causal_graph.graph.successors(event_node.node_id)
+        )
 
         # 分析影响范围
         influence_scope = {
@@ -1765,14 +1934,20 @@ class EmergentNarrativeEngine:
                 if successor.agent_id:
                     influence_scope["affected_agents"].add(successor.agent_id)
                 if successor.location:
-                    influence_scope["affected_locations"].add(successor.location)
+                    influence_scope["affected_locations"].add(
+                        successor.location
+                    )
 
         # 查找因果链
-        chains = self.causal_graph.find_causal_chain(event_node.node_id, max_depth=3)
+        chains = self.causal_graph.find_causal_chain(
+            event_node.node_id, max_depth=3
+        )
         influence_scope["causal_chains"] = chains[:5]  # 最多返回5个链条
 
         # 转换集合为列表以便序列化
-        influence_scope["affected_agents"] = list(influence_scope["affected_agents"])
+        influence_scope["affected_agents"] = list(
+            influence_scope["affected_agents"]
+        )
         influence_scope["affected_locations"] = list(
             influence_scope["affected_locations"]
         )
@@ -1789,7 +1964,9 @@ class EmergentNarrativeEngine:
         narrative_patterns = self.causal_graph.detect_narrative_patterns()
 
         # 检查是否接近收敛点
-        if event_node.node_id in narrative_patterns.get("convergence_points", []):
+        if event_node.node_id in narrative_patterns.get(
+            "convergence_points", []
+        ):
             opportunities.append(
                 {
                     "type": "story_convergence",
@@ -1809,7 +1986,10 @@ class EmergentNarrativeEngine:
                     "type": "catalyst_moment",
                     "description": "This event could catalyze significant story developments",
                     "potential_impact": "medium",
-                    "suggested_actions": ["share_information", "take_decisive_action"],
+                    "suggested_actions": [
+                        "share_information",
+                        "take_decisive_action",
+                    ],
                 }
             )
 
@@ -1829,7 +2009,9 @@ class EmergentNarrativeEngine:
 
         # 使用LLM识别更深层的机会
         if self.llm_service:
-            llm_opportunities = await self._llm_identify_opportunities(event_node)
+            llm_opportunities = await self._llm_identify_opportunities(
+                event_node
+            )
             opportunities.extend(llm_opportunities)
 
         return opportunities[:5]  # 限制返回数量
@@ -1843,13 +2025,16 @@ class EmergentNarrativeEngine:
         context_events = []
         for node in self.causal_graph.nodes.values():
             if (
-                abs((node.timestamp - event_node.timestamp).total_seconds()) < 3600
+                abs((node.timestamp - event_node.timestamp).total_seconds())
+                < 3600
                 and node.node_id != event_node.node_id
             ):
                 context_events.append(node)
 
         context_events.sort(key=lambda x: x.timestamp)
-        context_summary = [f"{e.agent_id}: {e.event_type}" for e in context_events[-5:]]
+        context_summary = [
+            f"{e.agent_id}: {e.event_type}" for e in context_events[-5:]
+        ]
 
         opportunity_prompt = f"""
         分析以下故事情境，识别可能的涌现机会：
@@ -1949,9 +2134,7 @@ class EmergentNarrativeEngine:
         """
 
         for i, event in enumerate(key_events, 1):
-            summary_prompt += (
-                f"\n{i}. {event['agent_id']}: {event['narrative_text'][:100]}..."
-            )
+            summary_prompt += f"\n{i}. {event['agent_id']}: {event['narrative_text'][:100]}..."
 
         summary_prompt += """
 
@@ -1985,16 +2168,22 @@ class EmergentNarrativeEngine:
             "active_agents": len(self.active_agents),
             "total_events": len(self.causal_graph.nodes),
             "causal_relations": len(self.causal_graph.edges),
-            "active_negotiations": len(self.negotiation_engine.active_sessions),
+            "active_negotiations": len(
+                self.negotiation_engine.active_sessions
+            ),
             "plot_threads": len(self.coherence_engine.plot_threads),
             "character_arcs": len(self.coherence_engine.character_arcs),
             "story_timeline_length": len(self.coherence_engine.story_timeline),
-            "narrative_patterns": len(self.causal_graph.detect_narrative_patterns()),
+            "narrative_patterns": len(
+                self.causal_graph.detect_narrative_patterns()
+            ),
         }
 
 
 # Factory function
-def create_emergent_narrative_engine(llm_service=None) -> EmergentNarrativeEngine:
+def create_emergent_narrative_engine(
+    llm_service=None,
+) -> EmergentNarrativeEngine:
     """创建涌现式叙事引擎实例"""
     return EmergentNarrativeEngine(llm_service)
 

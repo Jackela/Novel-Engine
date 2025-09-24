@@ -43,7 +43,11 @@ class TestRunner:
 
         try:
             result = subprocess.run(
-                command, capture_output=True, text=True, timeout=timeout, cwd=Path.cwd()
+                command,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                cwd=Path.cwd(),
             )
 
             success = result.returncode == 0
@@ -91,7 +95,9 @@ class TestRunner:
         if not self.verbose:
             command.append("-q")
 
-        success, stdout, stderr = self.run_command(command, "Unit Tests", timeout=600)
+        success, stdout, stderr = self.run_command(
+            command, "Unit Tests", timeout=600
+        )
 
         self.results["test_results"]["unit_tests"] = {
             "success": success,
@@ -163,7 +169,9 @@ class TestRunner:
         if not self.verbose:
             command.append("-q")
 
-        success, stdout, stderr = self.run_command(command, "API Tests", timeout=180)
+        success, stdout, stderr = self.run_command(
+            command, "API Tests", timeout=180
+        )
 
         self.results["test_results"]["api_tests"] = {
             "success": success,
@@ -254,7 +262,9 @@ class TestRunner:
             "--maxfail=1",
         ]
 
-        success, stdout, stderr = self.run_command(command, "Smoke Tests", timeout=60)
+        success, stdout, stderr = self.run_command(
+            command, "Smoke Tests", timeout=60
+        )
 
         self.results["test_results"]["smoke_tests"] = {
             "success": success,
@@ -317,7 +327,9 @@ class TestRunner:
             "duration_seconds": round(duration, 2),
             "overall_success": passed_suites == total_suites,
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "coverage_percent": self.results["coverage"].get("percent_covered", 0),
+            "coverage_percent": self.results["coverage"].get(
+                "percent_covered", 0
+            ),
         }
 
         # Write detailed report
@@ -394,12 +406,18 @@ def main():
         default="all",
         help="Test execution mode",
     )
-    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     parser.add_argument(
-        "--report", default="test_report.json", help="Output file for test report"
+        "--verbose", "-v", action="store_true", help="Verbose output"
     )
     parser.add_argument(
-        "--cleanup", action="store_true", help="Clean up test artifacts after execution"
+        "--report",
+        default="test_report.json",
+        help="Output file for test report",
+    )
+    parser.add_argument(
+        "--cleanup",
+        action="store_true",
+        help="Clean up test artifacts after execution",
     )
 
     args = parser.parse_args()

@@ -8,7 +8,7 @@ data for various query scenarios.
 """
 
 from datetime import timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from ...domain.repositories.negotiation_session_repository import (
     NegotiationSessionRepository,
@@ -62,7 +62,7 @@ class InteractionQueryHandler:
                 "error": "Session not found",
             }
 
-        result = {
+        result: Dict[str, Any] = {
             "found": True,
             "session_id": str(session.session_id),
             "session_name": session.session_name,
@@ -92,7 +92,7 @@ class InteractionQueryHandler:
         }
 
         if query.include_parties:
-            result["parties"] = []
+            result["parties"] = cast(List[Dict[str, Any]], [])
             for party_id, party in session.parties.items():
                 party_data = {
                     "party_id": str(party_id),
@@ -104,7 +104,9 @@ class InteractionQueryHandler:
                     "total_capabilities": party.total_capabilities_count,
                     "average_proficiency": float(party.average_proficiency),
                 }
-                result["parties"].append(party_data)
+                cast(List[Dict[str, Any]], result["parties"]).append(
+                    party_data
+                )
 
         if query.include_proposals:
             result["proposals"] = {
@@ -125,7 +127,9 @@ class InteractionQueryHandler:
                     "validity_period": proposal.validity_period,
                     "is_expired": proposal.is_expired,
                 }
-                result["proposals"]["active"].append(proposal_data)
+                cast(
+                    List[Dict[str, Any]], result["proposals"]["active"]
+                ).append(proposal_data)
 
         if query.include_responses:
             result["responses"] = {
@@ -134,7 +138,9 @@ class InteractionQueryHandler:
             }
 
             for party_id, responses in session.responses.items():
-                result["responses"]["by_party"][str(party_id)] = []
+                cast(Dict[str, Any], result["responses"])["by_party"][
+                    str(party_id)
+                ] = cast(List[Dict[str, Any]], [])
                 for response in responses:
                     response_data = {
                         "response_id": str(response.response_id),
@@ -144,7 +150,12 @@ class InteractionQueryHandler:
                         "response_timestamp": response.response_timestamp,
                         "requires_follow_up": response.requires_negotiation(),
                     }
-                    result["responses"]["by_party"][str(party_id)].append(response_data)
+                    cast(
+                        List[Dict[str, Any]],
+                        cast(Dict[str, Any], result["responses"])["by_party"][
+                            str(party_id)
+                        ],
+                    ).append(response_data)
 
         if query.include_events:
             result["uncommitted_events"] = [
@@ -166,7 +177,7 @@ class InteractionQueryHandler:
     ) -> Dict[str, Any]:
         """Handle listing of negotiation sessions with filters."""
         # Build filter criteria
-        filters = {}
+        filters: Dict[str, Any] = {}
 
         if query.created_by:
             filters["created_by"] = query.created_by
@@ -200,7 +211,10 @@ class InteractionQueryHandler:
         for session in sessions:
             # Apply status filter if specified
             if query.status_filter:
-                if query.status_filter == "active" and not session.status.is_active:
+                if (
+                    query.status_filter == "active"
+                    and not session.status.is_active
+                ):
                     continue
                 elif (
                     query.status_filter == "completed"
@@ -214,7 +228,10 @@ class InteractionQueryHandler:
                     continue
 
             # Apply participant filter if specified
-            if query.participant_id and query.participant_id not in session.parties:
+            if (
+                query.participant_id
+                and query.participant_id not in session.parties
+            ):
                 continue
 
             session_data = {
@@ -282,7 +299,8 @@ class InteractionQueryHandler:
                 summary["analytics"] = {
                     "party_compatibility": compatibility_scores,
                     "average_compatibility": (
-                        sum(compatibility_scores.values()) / len(compatibility_scores)
+                        sum(compatibility_scores.values())
+                        / len(compatibility_scores)
                         if compatibility_scores
                         else 0
                     ),
@@ -302,7 +320,9 @@ class InteractionQueryHandler:
                         "momentum_score": float(momentum["momentum_score"]),
                         "direction": momentum["direction"],
                         "velocity": momentum["velocity"],
-                        "trajectory_prediction": momentum["trajectory_prediction"],
+                        "trajectory_prediction": momentum[
+                            "trajectory_prediction"
+                        ],
                     }
 
         if query.summary_depth == "detailed":
@@ -318,7 +338,9 @@ class InteractionQueryHandler:
                         "capabilities": [
                             {
                                 "name": cap.capability_name,
-                                "proficiency": float(cap.get_effective_proficiency()),
+                                "proficiency": float(
+                                    cap.get_effective_proficiency()
+                                ),
                                 "domains": list(cap.applicable_domains),
                             }
                             for cap in party.capabilities
@@ -326,14 +348,18 @@ class InteractionQueryHandler:
                         "preferences": {
                             "negotiation_style": party.preferences.negotiation_style.value,
                             "communication_preference": party.preferences.communication_preference.value,
-                            "risk_tolerance": float(party.preferences.risk_tolerance),
+                            "risk_tolerance": float(
+                                party.preferences.risk_tolerance
+                            ),
                             "time_pressure_sensitivity": float(
                                 party.preferences.time_pressure_sensitivity
                             ),
                         },
                         "negotiation_power": (
                             float(
-                                party.get_negotiation_power(session.negotiation_domain)
+                                party.get_negotiation_power(
+                                    session.negotiation_domain
+                                )
                             )
                             if session.negotiation_domain
                             else 0
@@ -375,7 +401,7 @@ class InteractionQueryHandler:
                     )
 
                 # Sort by timestamp
-                timeline_events.sort(key=lambda x: x["timestamp"])
+                timeline_events.sort(key=lambda x: cast(Any, x["timestamp"]))
                 summary["timeline"] = timeline_events
 
         return {
@@ -401,7 +427,7 @@ class InteractionQueryHandler:
             }
 
         # Build timeline from available data (would be more comprehensive with event sourcing)
-        timeline_events = []
+        timeline_events: List[Dict[str, Any]] = []
 
         # Session events
         timeline_events.append(
@@ -451,9 +477,10 @@ class InteractionQueryHandler:
 
         # Response events (approximated)
         for party_id, responses in session.responses.items():
-            party_name = session.parties.get(
-                party_id, type("Party", (), {"party_name": "Unknown"})
-            ).party_name
+            party_obj = session.parties.get(party_id)
+            party_name = (
+                party_obj.party_name if party_obj is not None else "Unknown"
+            )
             for response in responses:
                 timeline_events.append(
                     {
@@ -472,26 +499,32 @@ class InteractionQueryHandler:
         # Filter events by date range
         if query.start_date:
             timeline_events = [
-                e for e in timeline_events if e["timestamp"] >= query.start_date
+                e
+                for e in timeline_events
+                if cast(Any, e["timestamp"]) >= query.start_date
             ]
 
         if query.end_date:
             timeline_events = [
-                e for e in timeline_events if e["timestamp"] <= query.end_date
+                e
+                for e in timeline_events
+                if cast(Any, e["timestamp"]) <= query.end_date
             ]
 
         # Filter by event types
         if query.event_types:
             timeline_events = [
-                e for e in timeline_events if e["event_type"] in query.event_types
+                e
+                for e in timeline_events
+                if e["event_type"] in query.event_types
             ]
 
         # Sort by timestamp
-        timeline_events.sort(key=lambda x: x["timestamp"])
+        timeline_events.sort(key=lambda x: cast(Any, x["timestamp"]))
 
         # Group by phase if requested
         if query.group_by_phase:
-            grouped_events = {}
+            grouped_events: Dict[str, List[Dict[str, Any]]] = {}
             for event in timeline_events:
                 phase = event["phase"]
                 if phase not in grouped_events:
@@ -544,7 +577,7 @@ class InteractionQueryHandler:
             ):
                 continue
 
-            party_data = {
+            party_data: Dict[str, Any] = {
                 "party_id": str(party.party_id),
                 "entity_id": str(party.entity_id),
                 "party_name": party.party_name,
@@ -560,13 +593,17 @@ class InteractionQueryHandler:
                         "name": cap.capability_name,
                         "proficiency_level": float(cap.proficiency_level),
                         "confidence_modifier": float(cap.confidence_modifier),
-                        "effective_proficiency": float(cap.get_effective_proficiency()),
+                        "effective_proficiency": float(
+                            cap.get_effective_proficiency()
+                        ),
                         "applicable_domains": list(cap.applicable_domains),
                     }
                     for cap in party.capabilities
                 ]
                 party_data["total_capabilities"] = len(party.capabilities)
-                party_data["average_proficiency"] = float(party.average_proficiency)
+                party_data["average_proficiency"] = float(
+                    party.average_proficiency
+                )
 
             if query.include_preferences:
                 party_data["preferences"] = {
@@ -586,7 +623,10 @@ class InteractionQueryHandler:
                 party_data["activity_summary"] = {
                     "total_responses": len(party_responses),
                     "avg_acceptance_rate": (
-                        sum(r.get_acceptance_percentage() for r in party_responses)
+                        sum(
+                            r.get_acceptance_percentage()
+                            for r in party_responses
+                        )
                         / len(party_responses)
                         if party_responses
                         else 0
@@ -642,7 +682,7 @@ class InteractionQueryHandler:
             }
 
         # Calculate compatibility matrix
-        compatibility_matrix = []
+        compatibility_matrix: List[Dict[str, Any]] = []
         compatibility_scores = []
 
         for i, party1 in enumerate(parties):
@@ -671,7 +711,7 @@ class InteractionQueryHandler:
             else 0
         )
 
-        result = {
+        result: Dict[str, Any] = {
             "found": True,
             "session_id": str(query.session_id),
             "analyzed_parties": [str(p.party_id) for p in parties],
@@ -685,7 +725,7 @@ class InteractionQueryHandler:
             # Alternative format - by party
             result["compatibility_by_party"] = {}
             for party in parties:
-                party_compatibilities = [
+                party_compatibilities: List[Dict[str, Any]] = [
                     cm
                     for cm in compatibility_matrix
                     if cm["party1_id"] == str(party.party_id)
@@ -693,7 +733,8 @@ class InteractionQueryHandler:
                 ]
                 if party_compatibilities:
                     avg_compatibility = sum(
-                        cm["compatibility_score"] for cm in party_compatibilities
+                        cm["compatibility_score"]
+                        for cm in party_compatibilities
                     ) / len(party_compatibilities)
                     result["compatibility_by_party"][str(party.party_id)] = {
                         "party_name": party.party_name,
@@ -702,11 +743,13 @@ class InteractionQueryHandler:
                     }
 
         if query.include_recommendations:
-            recommendations = []
+            recommendations: List[str] = []
 
             # Low compatibility warnings
             low_compatibility_pairs = [
-                cm for cm in compatibility_matrix if cm["compatibility_score"] < 30
+                cm
+                for cm in compatibility_matrix
+                if cm["compatibility_score"] < 30
             ]
             for pair in low_compatibility_pairs:
                 recommendations.append(
@@ -716,7 +759,9 @@ class InteractionQueryHandler:
 
             # High compatibility opportunities
             high_compatibility_pairs = [
-                cm for cm in compatibility_matrix if cm["compatibility_score"] > 80
+                cm
+                for cm in compatibility_matrix
+                if cm["compatibility_score"] > 80
             ]
             for pair in high_compatibility_pairs:
                 recommendations.append(
@@ -753,7 +798,7 @@ class InteractionQueryHandler:
         proposals_data = []
 
         # Determine which proposals to include
-        proposals_to_include = []
+        proposals_to_include: List[Any] = []
 
         if query.proposal_status in ["active", "all"]:
             proposals_to_include.extend(session.active_proposals.values())
@@ -775,7 +820,7 @@ class InteractionQueryHandler:
 
             # Note: submitted_by would need to be tracked in proposal metadata
 
-            proposal_data = {
+            proposal_data: Dict[str, Any] = {
                 "proposal_id": str(proposal.proposal_id),
                 "title": proposal.title,
                 "proposal_type": proposal.proposal_type.value,
@@ -836,7 +881,9 @@ class InteractionQueryHandler:
                     "overall_viability_score": float(
                         analysis["overall_viability_score"]
                     ),
-                    "acceptance_probability": float(analysis["acceptance_probability"]),
+                    "acceptance_probability": float(
+                        analysis["acceptance_probability"]
+                    ),
                     "risk_factors_count": len(analysis["risk_factors"]),
                     "success_factors_count": len(analysis["success_factors"]),
                 }
@@ -952,13 +999,17 @@ class InteractionQueryHandler:
                         responses.append(response)
 
             if responses:
-                total_acceptance = sum(r.get_acceptance_percentage() for r in responses)
+                total_acceptance = sum(
+                    r.get_acceptance_percentage() for r in responses
+                )
                 avg_acceptance = total_acceptance / len(responses)
 
-                response_types = {}
+                response_types: Dict[str, int] = {}
                 for response in responses:
                     resp_type = response.overall_response.value
-                    response_types[resp_type] = response_types.get(resp_type, 0) + 1
+                    response_types[resp_type] = (
+                        response_types.get(resp_type, 0) + 1
+                    )
 
                 proposal_data["response_summary"] = {
                     "total_responses": len(responses),
@@ -994,12 +1045,18 @@ class InteractionQueryHandler:
 
             proposal_data["optimization_suggestions"] = {
                 "optimized_terms_count": len(optimization["optimized_terms"]),
-                "expected_improvement": float(optimization["expected_improvement"]),
+                "expected_improvement": float(
+                    optimization["expected_improvement"]
+                ),
                 "risk_level": optimization["risk_assessment"].get(
                     "risk_level", "unknown"
                 ),
-                "implementation_difficulty": optimization["implementation_difficulty"],
-                "optimization_rationale": optimization["optimization_rationale"],
+                "implementation_difficulty": optimization[
+                    "implementation_difficulty"
+                ],
+                "optimization_rationale": optimization[
+                    "optimization_rationale"
+                ],
             }
 
         return {
@@ -1028,7 +1085,9 @@ class InteractionQueryHandler:
             }
 
         # Get recent responses within analysis window
-        cutoff_time = query.timestamp - timedelta(hours=query.analysis_window_hours)
+        cutoff_time = query.timestamp - timedelta(
+            hours=query.analysis_window_hours
+        )
         recent_responses = []
 
         for party_responses in session.responses.values():

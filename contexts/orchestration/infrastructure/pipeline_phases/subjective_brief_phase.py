@@ -11,7 +11,11 @@ from decimal import Decimal
 from typing import Any, Dict, List
 
 from ...domain.value_objects import PhaseType
-from .base_phase import BasePhaseImplementation, PhaseExecutionContext, PhaseResult
+from .base_phase import (
+    BasePhaseImplementation,
+    PhaseExecutionContext,
+    PhaseResult,
+)
 
 
 class SubjectiveBriefPhase(BasePhaseImplementation):
@@ -74,7 +78,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
                     if brief_result["success"]:
                         briefs_generated += 1
                         brief_results[participant_id] = brief_result
-                        total_ai_cost += Decimal(str(brief_result.get("ai_cost", 0)))
+                        total_ai_cost += Decimal(
+                            str(brief_result.get("ai_cost", 0))
+                        )
                     else:
                         failed_generations += 1
 
@@ -82,7 +88,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
                     failed_generations += 1
                     context.record_performance_metric(
                         "brief_generation_errors",
-                        context.performance_metrics.get("brief_generation_errors", 0)
+                        context.performance_metrics.get(
+                            "brief_generation_errors", 0
+                        )
                         + 1,
                     )
 
@@ -101,14 +109,17 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
             context.record_performance_metric(
                 "failed_generations", float(failed_generations)
             )
-            context.record_performance_metric("ai_cost_total", float(total_ai_cost))
+            context.record_performance_metric(
+                "ai_cost_total", float(total_ai_cost)
+            )
 
             # Calculate success rate
             total_participants = len(context.participants)
             success_rate = briefs_generated / max(1, total_participants)
 
             return PhaseResult(
-                success=success_rate > 0.5,  # Success if more than half generated
+                success=success_rate
+                > 0.5,  # Success if more than half generated
                 events_processed=len(world_changes),
                 events_generated=brief_events,
                 artifacts_created=[
@@ -201,7 +212,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         # Filter changes relevant to participants
         relevant_changes = []
         for change in changes:
-            if self._is_change_relevant_to_participants(change, context.participants):
+            if self._is_change_relevant_to_participants(
+                change, context.participants
+            ):
                 relevant_changes.append(change)
 
         return relevant_changes
@@ -231,11 +244,15 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
                 )
 
                 if agent_response.get("success"):
-                    agent_configs[participant_id] = agent_response.get("config", {})
+                    agent_configs[participant_id] = agent_response.get(
+                        "config", {}
+                    )
 
             except Exception:
                 # Use default configuration for this agent
-                agent_configs[participant_id] = self._get_default_agent_config()
+                agent_configs[
+                    participant_id
+                ] = self._get_default_agent_config()
 
         return agent_configs
 
@@ -398,7 +415,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         goals = agent_context.get("goals", [])
 
         # Build world changes summary
-        changes_summary = self._summarize_world_changes(world_changes, agent_id)
+        changes_summary = self._summarize_world_changes(
+            world_changes, agent_id
+        )
 
         # Build memories context
         memories_text = self._format_memories_for_prompt(recent_memories)
@@ -433,7 +452,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         return prompt
 
     async def _store_and_notify_briefs(
-        self, context: PhaseExecutionContext, brief_results: Dict[str, Dict[str, Any]]
+        self,
+        context: PhaseExecutionContext,
+        brief_results: Dict[str, Dict[str, Any]],
     ) -> None:
         """
         Store generated briefs and notify agent systems.
@@ -459,7 +480,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
                 )
 
                 # Create brief storage artifact
-                artifact_name = f"subjective_brief_{agent_id}_{context.turn_id}"
+                artifact_name = (
+                    f"subjective_brief_{agent_id}_{context.turn_id}"
+                )
                 context.artifacts_created.append(artifact_name)
 
     async def _generate_brief_events(
@@ -491,7 +514,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
                 "failed_generations": failed_generations,
                 "participants": context.participants,
                 "narrative_depth": context.configuration.narrative_analysis_depth,
-                "total_ai_cost": float(context.ai_usage_tracking.get("total_cost", 0)),
+                "total_ai_cost": float(
+                    context.ai_usage_tracking.get("total_cost", 0)
+                ),
                 "completed_at": datetime.now().isoformat(),
             },
         )
@@ -501,7 +526,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
 
     # Helper methods
 
-    def _create_ai_disabled_result(self, context: PhaseExecutionContext) -> PhaseResult:
+    def _create_ai_disabled_result(
+        self, context: PhaseExecutionContext
+    ) -> PhaseResult:
         """Create result when AI integration is disabled."""
         # Generate simple non-AI briefs
         simple_briefs = len(context.participants)
@@ -611,7 +638,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
 
         return "\n".join(summaries)
 
-    def _format_memories_for_prompt(self, memories: List[Dict[str, Any]]) -> str:
+    def _format_memories_for_prompt(
+        self, memories: List[Dict[str, Any]]
+    ) -> str:
         """Format memories for inclusion in AI prompt."""
         if not memories:
             return "No recent memories to consider."
@@ -693,7 +722,7 @@ You are {agent_name}, a complex character with these defining traits: {personali
 
 CURRENT SITUATION:
 - Location: {current_location}
-- Physical state: {current_health}  
+- Physical state: {current_health}
 - Emotional state: {current_mood}
 - Time elapsed since last conscious moment: {time_passed} seconds
 

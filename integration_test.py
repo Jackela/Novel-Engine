@@ -51,7 +51,9 @@ for wave, filename in wave_files.items():
 print("\n🎯 Integration Assessment:")
 total_dependencies = sum(len(deps) for deps in dependencies.values())
 print(f"   Total cross-wave dependencies: {total_dependencies}")
-print(f"   Dependency density: {total_dependencies / len(wave_files):.1f} per wave")
+print(
+    f"   Dependency density: {total_dependencies / len(wave_files):.1f} per wave"
+)
 
 if total_dependencies >= 3:
     print("✅ Good integration between waves detected")

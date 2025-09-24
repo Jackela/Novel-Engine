@@ -36,9 +36,7 @@ from src.database.context_db import ContextDatabase
 
 # Import enhanced memory and template systems
 from src.memory.layered_memory import LayeredMemorySystem
-from src.templates.character_template_manager import (
-    CharacterTemplateManager,
-)
+from src.templates.character_template_manager import CharacterTemplateManager
 from src.templates.dynamic_template_engine import (
     DynamicTemplateEngine,
     TemplateContext,
@@ -113,7 +111,9 @@ class RelationshipData:
     compatibility_score: float = 0.0  # -1.0 to 1.0
     conflict_potential: float = 0.0  # 0.0 to 1.0
     collaboration_potential: float = 0.0  # 0.0 to 1.0
-    power_dynamic: Dict[str, float] = field(default_factory=dict)  # influence levels
+    power_dynamic: Dict[str, float] = field(
+        default_factory=dict
+    )  # influence levels
     emotional_resonance: Dict[str, float] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
     last_updated: datetime = field(default_factory=datetime.now)
@@ -155,9 +155,15 @@ class InteractionOutcome:
     interaction_id: str
     participants: List[str]
     success_level: float = 0.0  # 0.0 (failed) to 1.0 (perfect success)
-    satisfaction_levels: Dict[str, float] = field(default_factory=dict)  # per character
-    relationship_changes: Dict[str, RelationshipData] = field(default_factory=dict)
-    character_state_changes: Dict[str, CharacterState] = field(default_factory=dict)
+    satisfaction_levels: Dict[str, float] = field(
+        default_factory=dict
+    )  # per character
+    relationship_changes: Dict[str, RelationshipData] = field(
+        default_factory=dict
+    )
+    character_state_changes: Dict[str, CharacterState] = field(
+        default_factory=dict
+    )
     new_memories: List[MemoryItem] = field(default_factory=list)
     equipment_changes: Dict[str, List[str]] = field(
         default_factory=dict
@@ -215,12 +221,16 @@ class CharacterInteractionProcessor:
         self.interaction_history: List[InteractionOutcome] = []
 
         # Blessed configuration
-        self.relationship_decay_rate = 0.95  # Daily decay for unused relationships
+        self.relationship_decay_rate = (
+            0.95  # Daily decay for unused relationships
+        )
         self.trust_volatility = 0.3  # How quickly trust can change
         self.memory_significance_threshold = (
             0.6  # Minimum significance for memory creation
         )
-        self.max_conversation_turns = 50  # Maximum turns in a single conversation
+        self.max_conversation_turns = (
+            50  # Maximum turns in a single conversation
+        )
         self.personality_influence_factor = (
             0.7  # How much personality affects interactions
         )
@@ -259,8 +269,10 @@ class CharacterInteractionProcessor:
 
             # Create or update social environment
             if social_environment is None:
-                social_environment = await self._create_default_social_environment(
-                    interaction_context, characters
+                social_environment = (
+                    await self._create_default_social_environment(
+                        interaction_context, characters
+                    )
                 )
 
             # Load character states and relationships
@@ -279,7 +291,10 @@ class CharacterInteractionProcessor:
             outcomes = []
             for phase in interaction_phases:
                 phase_outcome = await self._process_interaction_phase(
-                    phase, character_states, current_relationships, social_environment
+                    phase,
+                    character_states,
+                    current_relationships,
+                    social_environment,
                 )
                 outcomes.append(phase_outcome)
 
@@ -319,13 +334,19 @@ class CharacterInteractionProcessor:
                     "phases_processed": len(outcomes),
                     "participants": characters,
                     "relationship_changes": len(
-                        [r for r in final_outcome.relationship_changes.values() if r]
+                        [
+                            r
+                            for r in final_outcome.relationship_changes.values()
+                            if r
+                        ]
                     ),
                 },
             )
 
         except Exception as e:
-            logger.error(f"ERROR in character interaction processing: {str(e)}")
+            logger.error(
+                f"ERROR in character interaction processing: {str(e)}"
+            )
             return StandardResponse(
                 success=False,
                 message=f"Character interaction processing failed: {str(e)}",
@@ -354,9 +375,7 @@ class CharacterInteractionProcessor:
         """
         try:
             # Create conversation context
-            interaction_id = (
-                f"conv_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(participants)}p"
-            )
+            interaction_id = f"conv_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(participants)}p"
 
             interaction_context = InteractionContext(
                 interaction_id=interaction_id,
@@ -364,7 +383,10 @@ class CharacterInteractionProcessor:
                 priority=InteractionPriority.NORMAL,
                 participants=participants,
                 location=location,
-                metadata={"topic": topic, "conversation_type": "multi_character"},
+                metadata={
+                    "topic": topic,
+                    "conversation_type": "multi_character",
+                },
             )
 
             # Create social environment for conversation
@@ -374,7 +396,9 @@ class CharacterInteractionProcessor:
                 location=location,
                 present_characters=set(participants),
                 privacy_level=0.8 if len(participants) <= 3 else 0.5,
-                formality_level=0.3 if context == SocialContext.CASUAL else 0.7,
+                formality_level=0.3
+                if context == SocialContext.CASUAL
+                else 0.7,
             )
 
             # Process the conversation interaction
@@ -397,7 +421,10 @@ class CharacterInteractionProcessor:
                 error=ErrorInfo(
                     error_type="initiation_error",
                     error_code="CONVERSATION_FAILED",
-                    details={"exception": str(e), "participants": participants},
+                    details={
+                        "exception": str(e),
+                        "participants": participants,
+                    },
                 ),
             )
 
@@ -414,7 +441,9 @@ class CharacterInteractionProcessor:
         relationship impact management.
         """
         try:
-            participants = conflicted_characters + ([mediator] if mediator else [])
+            participants = conflicted_characters + (
+                [mediator] if mediator else []
+            )
 
             interaction_context = InteractionContext(
                 interaction_id=f"conflict_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -432,7 +461,9 @@ class CharacterInteractionProcessor:
             # Create tense social environment
             social_env = SocialEnvironment(
                 environment_id=f"conflict_{interaction_context.interaction_id}",
-                context=SocialContext.FORMAL if mediator else SocialContext.PUBLIC,
+                context=SocialContext.FORMAL
+                if mediator
+                else SocialContext.PUBLIC,
                 present_characters=set(participants),
                 tension_level=0.8,
                 formality_level=0.7 if mediator else 0.4,
@@ -548,7 +579,9 @@ class CharacterInteractionProcessor:
             location=interaction_context.location,
             present_characters=set(characters),
             privacy_level=0.8 if len(characters) <= 2 else 0.5,
-            formality_level=0.7 if social_context == SocialContext.FORMAL else 0.3,
+            formality_level=0.7
+            if social_context == SocialContext.FORMAL
+            else 0.3,
         )
 
     async def _load_character_states(
@@ -569,11 +602,15 @@ class CharacterInteractionProcessor:
 
                     if result:
                         state_data = json.loads(result[0])
-                        character_states[character] = CharacterState(**state_data)
+                        character_states[character] = CharacterState(
+                            **state_data
+                        )
                     else:
                         # Create default character state
                         character_states[character] = CharacterState(
-                            agent_id=character, name=character, current_status="active"
+                            agent_id=character,
+                            name=character,
+                            current_status="active",
                         )
             except Exception as e:
                 logger.warning(
@@ -632,7 +669,8 @@ class CharacterInteractionProcessor:
             InteractionType.INSTRUCTION: 3,
         }.get(interaction_context.interaction_type, 3)
 
-        # Adjust phases based on number of participants and relationship complexity
+        # Adjust phases based on number of participants and relationship
+        # complexity
         participant_modifier = min(len(characters) * 0.5, 2.0)
         relationship_complexity = sum(
             r.interaction_count for r in relationships.values()
@@ -677,7 +715,8 @@ class CharacterInteractionProcessor:
                     "objective": phase_templates[phase_type],
                     "participants": characters.copy(),
                     "sequence": i + 1,
-                    "estimated_duration": 30 + (i * 15),  # Progressive duration
+                    # Progressive duration
+                    "estimated_duration": 30 + (i * 15),
                 }
             )
 
@@ -723,13 +762,19 @@ class CharacterInteractionProcessor:
 
         # Calculate relationship impacts
         for char_a, char_b in relationships.keys():
-            if char_a in phase["participants"] and char_b in phase["participants"]:
-                # Simulate relationship change based on interaction type and personality
+            if (
+                char_a in phase["participants"]
+                and char_b in phase["participants"]
+            ):
+                # Simulate relationship change based on interaction type and
+                # personality
                 relationship = relationships[(char_a, char_b)]
 
                 # Base relationship evolution
                 trust_change = (self.personality_influence_factor * 0.1) - 0.05
-                respect_change = (self.personality_influence_factor * 0.08) - 0.04
+                respect_change = (
+                    self.personality_influence_factor * 0.08
+                ) - 0.04
                 familiarity_change = 0.02  # Always increases with interaction
 
                 # Apply changes with bounds checking
@@ -740,7 +785,11 @@ class CharacterInteractionProcessor:
                     -1.0, min(1.0, relationship.respect_level + respect_change)
                 )
                 relationship.familiarity_level = max(
-                    0.0, min(1.0, relationship.familiarity_level + familiarity_change)
+                    0.0,
+                    min(
+                        1.0,
+                        relationship.familiarity_level + familiarity_change,
+                    ),
                 )
                 relationship.interaction_count += 1
                 relationship.last_interaction = datetime.now()
@@ -822,7 +871,9 @@ class CharacterInteractionProcessor:
 
         # Calculate satisfaction levels (placeholder implementation)
         for participant in participants:
-            final_outcome.satisfaction_levels[participant] = overall_success * (
+            final_outcome.satisfaction_levels[
+                participant
+            ] = overall_success * (
                 0.8 + 0.4 * self.personality_influence_factor
             )
 
@@ -833,8 +884,8 @@ class CharacterInteractionProcessor:
         try:
             async with self.database.get_connection() as conn:
                 await conn.execute(
-                    """INSERT INTO character_interactions 
-                       (interaction_id, participants, outcome_data, timestamp) 
+                    """INSERT INTO character_interactions
+                       (interaction_id, participants, outcome_data, timestamp)
                        VALUES (?, ?, ?, ?)""",
                     (
                         outcome.interaction_id,
@@ -855,7 +906,9 @@ class CharacterInteractionProcessor:
                 await conn.commit()
 
             self.interaction_history.append(outcome)
-            logger.debug(f"Interaction outcome saved for {outcome.interaction_id}")
+            logger.debug(
+                f"Interaction outcome saved for {outcome.interaction_id}"
+            )
 
         except Exception as e:
             logger.error(f"ERROR saving interaction outcome: {str(e)}")
@@ -898,7 +951,8 @@ class CharacterInteractionProcessor:
                     participant, 0.5
                 )
                 if (
-                    participant_satisfaction > self.memory_significance_threshold
+                    participant_satisfaction
+                    > self.memory_significance_threshold
                     or participant_satisfaction
                     < (1.0 - self.memory_significance_threshold)
                 ):
@@ -907,7 +961,8 @@ class CharacterInteractionProcessor:
                         agent_id=participant,
                         memory_type=MemoryType.SEMANTIC,
                         content=f"Relationship dynamics updated through interaction {outcome.interaction_id}",
-                        emotional_intensity=abs(participant_satisfaction - 0.5) * 2,
+                        emotional_intensity=abs(participant_satisfaction - 0.5)
+                        * 2,
                         relevance_score=0.6,
                         created_at=outcome.timestamp,
                         context_tags=["relationship", "social_dynamics"]
@@ -917,21 +972,29 @@ class CharacterInteractionProcessor:
                     await self.memory_system.store_memory(relationship_memory)
 
             except Exception as e:
-                logger.error(f"ERROR creating memories for {participant}: {str(e)}")
+                logger.error(
+                    f"ERROR creating memories for {participant}: {str(e)}"
+                )
 
-    async def _process_equipment_interactions(self, outcome: InteractionOutcome):
+    async def _process_equipment_interactions(
+        self, outcome: InteractionOutcome
+    ):
         """Process equipment-related interactions if applicable."""
 
         # Check if any participants have equipment that should be affected
         for participant in outcome.participants:
             try:
                 # Query participant's equipment
-                equipment_response = await self.equipment_system.get_agent_equipment(
-                    participant
+                equipment_response = (
+                    await self.equipment_system.get_agent_equipment(
+                        participant
+                    )
                 )
 
                 if equipment_response.success and equipment_response.data:
-                    equipment_list = equipment_response.data.get("equipment", [])
+                    equipment_list = equipment_response.data.get(
+                        "equipment", []
+                    )
 
                     # Process equipment based on interaction type and success
                     for equipment_id in equipment_list:
@@ -952,7 +1015,9 @@ class CharacterInteractionProcessor:
                         )
 
             except Exception as e:
-                logger.error(f"ERROR processing equipment for {participant}: {str(e)}")
+                logger.error(
+                    f"ERROR processing equipment for {participant}: {str(e)}"
+                )
 
 
 # ENHANCED EXPORTS SANCTIFIED BY THE SYSTEM

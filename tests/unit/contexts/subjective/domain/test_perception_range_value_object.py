@@ -83,7 +83,9 @@ class TestPerceptionRangeValidation:
 
     def test_negative_effective_range_validation(self):
         """Test validation fails with negative effective range."""
-        with pytest.raises(ValueError, match="Effective range cannot be negative"):
+        with pytest.raises(
+            ValueError, match="Effective range cannot be negative"
+        ):
             PerceptionRange(
                 perception_type=PerceptionType.VISUAL,
                 base_range=100.0,
@@ -121,7 +123,8 @@ class TestPerceptionRangeValidation:
     def test_empty_environmental_modifier_name(self):
         """Test validation fails with empty environmental modifier name."""
         with pytest.raises(
-            ValueError, match="Environmental modifier names must be non-empty strings"
+            ValueError,
+            match="Environmental modifier names must be non-empty strings",
         ):
             PerceptionRange(
                 perception_type=PerceptionType.VISUAL,
@@ -134,7 +137,8 @@ class TestPerceptionRangeValidation:
     def test_whitespace_environmental_modifier_name(self):
         """Test validation fails with whitespace-only environmental modifier name."""
         with pytest.raises(
-            ValueError, match="Environmental modifier names must be non-empty strings"
+            ValueError,
+            match="Environmental modifier names must be non-empty strings",
         ):
             PerceptionRange(
                 perception_type=PerceptionType.VISUAL,
@@ -147,7 +151,8 @@ class TestPerceptionRangeValidation:
     def test_non_string_environmental_modifier_name(self):
         """Test validation fails with non-string environmental modifier name."""
         with pytest.raises(
-            ValueError, match="Environmental modifier names must be non-empty strings"
+            ValueError,
+            match="Environmental modifier names must be non-empty strings",
         ):
             PerceptionRange(
                 perception_type=PerceptionType.VISUAL,
@@ -220,11 +225,15 @@ class TestVisibilityCalculation:
         )
 
         # At effective range boundary
-        visibility_at_range = perception_range.calculate_visibility_at_distance(50.0)
+        visibility_at_range = (
+            perception_range.calculate_visibility_at_distance(50.0)
+        )
         assert visibility_at_range == VisibilityLevel.INVISIBLE
 
         # Beyond effective range
-        visibility_beyond = perception_range.calculate_visibility_at_distance(60.0)
+        visibility_beyond = perception_range.calculate_visibility_at_distance(
+            60.0
+        )
         assert visibility_beyond == VisibilityLevel.INVISIBLE
 
     def test_visibility_within_range_perfect_conditions(self):
@@ -238,15 +247,24 @@ class TestVisibilityCalculation:
         )
 
         # Very close - should be clear
-        visibility_close = perception_range.calculate_visibility_at_distance(10.0)
+        visibility_close = perception_range.calculate_visibility_at_distance(
+            10.0
+        )
         assert visibility_close == VisibilityLevel.CLEAR
 
         # Medium distance - should still be clear or partial
-        visibility_medium = perception_range.calculate_visibility_at_distance(50.0)
-        assert visibility_medium in [VisibilityLevel.CLEAR, VisibilityLevel.PARTIAL]
+        visibility_medium = perception_range.calculate_visibility_at_distance(
+            50.0
+        )
+        assert visibility_medium in [
+            VisibilityLevel.CLEAR,
+            VisibilityLevel.PARTIAL,
+        ]
 
         # Near maximum range - visibility degrades but still visible
-        visibility_far = perception_range.calculate_visibility_at_distance(90.0)
+        visibility_far = perception_range.calculate_visibility_at_distance(
+            90.0
+        )
         assert visibility_far in [
             VisibilityLevel.PARTIAL,
             VisibilityLevel.OBSCURED,
@@ -277,11 +295,11 @@ class TestVisibilityCalculation:
         )
 
         distance = 30.0
-        perfect_visibility = perfect_perception.calculate_visibility_at_distance(
-            distance
+        perfect_visibility = (
+            perfect_perception.calculate_visibility_at_distance(distance)
         )
-        degraded_visibility = degraded_perception.calculate_visibility_at_distance(
-            distance
+        degraded_visibility = (
+            degraded_perception.calculate_visibility_at_distance(distance)
         )
 
         # Degraded conditions should result in worse or equal visibility
@@ -310,8 +328,8 @@ class TestVisibilityCalculation:
         )
 
         # Even at close distance, low accuracy should affect visibility
-        visibility_close = low_accuracy_perception.calculate_visibility_at_distance(
-            20.0
+        visibility_close = (
+            low_accuracy_perception.calculate_visibility_at_distance(20.0)
         )
 
         # Should not be clear due to low accuracy
@@ -337,12 +355,17 @@ class TestVisibilityCalculation:
         test_distances = [10.0, 30.0, 50.0, 70.0, 90.0, 95.0]
 
         for distance in test_distances:
-            visibility = perception_range.calculate_visibility_at_distance(distance)
+            visibility = perception_range.calculate_visibility_at_distance(
+                distance
+            )
             assert isinstance(visibility, VisibilityLevel)
 
             # Verify visibility degrades with distance
             if distance < 20.0:
-                assert visibility in [VisibilityLevel.CLEAR, VisibilityLevel.PARTIAL]
+                assert visibility in [
+                    VisibilityLevel.CLEAR,
+                    VisibilityLevel.PARTIAL,
+                ]
 
 
 class TestPerceptionRangeUtilityMethods:
@@ -360,7 +383,9 @@ class TestPerceptionRangeUtilityMethods:
 
         assert perception_range.is_within_range(0.0)
         assert perception_range.is_within_range(40.0)
-        assert perception_range.is_within_range(80.0)  # Exactly at effective range
+        assert perception_range.is_within_range(
+            80.0
+        )  # Exactly at effective range
 
     def test_is_within_range_false(self):
         """Test is_within_range returns False for distances beyond effective range."""
@@ -497,7 +522,9 @@ class TestPerceptionCapabilitiesValidation:
         )
 
         with pytest.raises(ValueError, match="Invalid perception type"):
-            PerceptionCapabilities(perception_ranges={"invalid_key": visual_range})
+            PerceptionCapabilities(
+                perception_ranges={"invalid_key": visual_range}
+            )
 
     def test_invalid_perception_range_value(self):
         """Test validation fails with invalid perception range value."""
@@ -623,7 +650,9 @@ class TestPerceptionCapabilitiesBusinessLogic:
         distance = 50.0
 
         # Should use the best available sense at this distance
-        visibility = multi_sense_capabilities.get_best_visibility_at_distance(distance)
+        visibility = multi_sense_capabilities.get_best_visibility_at_distance(
+            distance
+        )
 
         assert isinstance(visibility, VisibilityLevel)
         # Should not be invisible since all senses can reach this distance
@@ -634,13 +663,15 @@ class TestPerceptionCapabilitiesBusinessLogic:
         distance = 50.0
 
         # Test focusing on visual perception
-        focused_visibility = multi_sense_capabilities.get_best_visibility_at_distance(
-            distance, focused_perception=PerceptionType.VISUAL
+        focused_visibility = (
+            multi_sense_capabilities.get_best_visibility_at_distance(
+                distance, focused_perception=PerceptionType.VISUAL
+            )
         )
 
         # Test without focus for comparison
-        unfocused_visibility = multi_sense_capabilities.get_best_visibility_at_distance(
-            distance
+        unfocused_visibility = (
+            multi_sense_capabilities.get_best_visibility_at_distance(distance)
         )
 
         # Both should be valid visibility levels
@@ -662,11 +693,15 @@ class TestPerceptionCapabilitiesBusinessLogic:
         # Focused should be better (lower index) or equal
         assert focused_index <= unfocused_index
 
-    def test_get_best_visibility_beyond_all_ranges(self, multi_sense_capabilities):
+    def test_get_best_visibility_beyond_all_ranges(
+        self, multi_sense_capabilities
+    ):
         """Test visibility beyond all perception ranges."""
         distance = 1000.0  # Beyond all ranges
 
-        visibility = multi_sense_capabilities.get_best_visibility_at_distance(distance)
+        visibility = multi_sense_capabilities.get_best_visibility_at_distance(
+            distance
+        )
         assert visibility == VisibilityLevel.INVISIBLE
 
     def test_get_maximum_range(self, multi_sense_capabilities):
@@ -688,25 +723,41 @@ class TestPerceptionCapabilitiesBusinessLogic:
         )
 
         # Create capabilities normally, then test empty case directly
-        PerceptionCapabilities(perception_ranges={PerceptionType.VISUAL: visual_range})
+        PerceptionCapabilities(
+            perception_ranges={PerceptionType.VISUAL: visual_range}
+        )
 
         # Temporarily clear ranges to test the method
-        empty_capabilities = PerceptionCapabilities.__new__(PerceptionCapabilities)
+        empty_capabilities = PerceptionCapabilities.__new__(
+            PerceptionCapabilities
+        )
         object.__setattr__(empty_capabilities, "perception_ranges", {})
         object.__setattr__(empty_capabilities, "passive_awareness_bonus", 0.0)
-        object.__setattr__(empty_capabilities, "focused_perception_multiplier", 1.5)
+        object.__setattr__(
+            empty_capabilities, "focused_perception_multiplier", 1.5
+        )
 
         max_range = empty_capabilities.get_maximum_range()
         assert max_range == 0.0
 
     def test_has_perception_type(self, multi_sense_capabilities):
         """Test checking for specific perception types."""
-        assert multi_sense_capabilities.has_perception_type(PerceptionType.VISUAL)
-        assert multi_sense_capabilities.has_perception_type(PerceptionType.AUDITORY)
-        assert multi_sense_capabilities.has_perception_type(PerceptionType.MAGICAL)
+        assert multi_sense_capabilities.has_perception_type(
+            PerceptionType.VISUAL
+        )
+        assert multi_sense_capabilities.has_perception_type(
+            PerceptionType.AUDITORY
+        )
+        assert multi_sense_capabilities.has_perception_type(
+            PerceptionType.MAGICAL
+        )
 
-        assert not multi_sense_capabilities.has_perception_type(PerceptionType.THERMAL)
-        assert not multi_sense_capabilities.has_perception_type(PerceptionType.PSYCHIC)
+        assert not multi_sense_capabilities.has_perception_type(
+            PerceptionType.THERMAL
+        )
+        assert not multi_sense_capabilities.has_perception_type(
+            PerceptionType.PSYCHIC
+        )
 
     def test_get_perception_types(self, multi_sense_capabilities):
         """Test getting all available perception types."""
@@ -732,7 +783,9 @@ class TestComplexPerceptionScenarios:
             base_range=100.0,
             effective_range=100.0,
             accuracy_modifier=0.8,
-            environmental_modifiers={"darkness": 0.2},  # Heavy penalty for darkness
+            environmental_modifiers={
+                "darkness": 0.2
+            },  # Heavy penalty for darkness
         )
 
         # Auditory perception less affected by darkness
@@ -821,10 +874,14 @@ class TestComplexPerceptionScenarios:
         )
 
         # Apply fog condition
-        foggy_range = base_visual_range.apply_environmental_modifier("fog", 0.4)
+        foggy_range = base_visual_range.apply_environmental_modifier(
+            "fog", 0.4
+        )
 
         # Apply additional rain condition
-        foggy_rainy_range = foggy_range.apply_environmental_modifier("rain", 0.7)
+        foggy_rainy_range = foggy_range.apply_environmental_modifier(
+            "rain", 0.7
+        )
 
         # Test visibility degradation with worsening conditions
         test_distance = 40.0
@@ -832,7 +889,9 @@ class TestComplexPerceptionScenarios:
         clear_visibility = base_visual_range.calculate_visibility_at_distance(
             test_distance
         )
-        foggy_visibility = foggy_range.calculate_visibility_at_distance(test_distance)
+        foggy_visibility = foggy_range.calculate_visibility_at_distance(
+            test_distance
+        )
         stormy_visibility = foggy_rainy_range.calculate_visibility_at_distance(
             test_distance
         )
@@ -857,7 +916,10 @@ class TestComplexPerceptionScenarios:
         # Verify environmental modifiers are correctly applied
         assert len(base_visual_range.environmental_modifiers) == 0
         assert foggy_range.environmental_modifiers == {"fog": 0.4}
-        assert foggy_rainy_range.environmental_modifiers == {"fog": 0.4, "rain": 0.7}
+        assert foggy_rainy_range.environmental_modifiers == {
+            "fog": 0.4,
+            "rain": 0.7,
+        }
 
     def test_focused_perception_effectiveness(self):
         """Test effectiveness of focused perception in different scenarios."""
@@ -881,7 +943,9 @@ class TestComplexPerceptionScenarios:
         far_beyond_distance = 120.0  # Beyond even focused range
 
         # Without focus, should be invisible at edge distance
-        unfocused_edge = capabilities.get_best_visibility_at_distance(edge_distance)
+        unfocused_edge = capabilities.get_best_visibility_at_distance(
+            edge_distance
+        )
         assert unfocused_edge == VisibilityLevel.INVISIBLE
 
         # With focus, might be visible at edge distance due to extended range
@@ -975,7 +1039,10 @@ class TestEdgeCasesAndBoundaryConditions:
         )
 
         # Only at zero distance should be clear
-        assert zero_range.calculate_visibility_at_distance(0.0) == VisibilityLevel.CLEAR
+        assert (
+            zero_range.calculate_visibility_at_distance(0.0)
+            == VisibilityLevel.CLEAR
+        )
         assert (
             zero_range.calculate_visibility_at_distance(0.1)
             == VisibilityLevel.INVISIBLE
@@ -1030,7 +1097,9 @@ class TestEdgeCasesAndBoundaryConditions:
 
         # Test with extremely large distance
         huge_distance = 1000000.0
-        visibility = normal_perception.calculate_visibility_at_distance(huge_distance)
+        visibility = normal_perception.calculate_visibility_at_distance(
+            huge_distance
+        )
         assert visibility == VisibilityLevel.INVISIBLE
         assert not normal_perception.is_within_range(huge_distance)
 
@@ -1045,8 +1114,12 @@ class TestEdgeCasesAndBoundaryConditions:
         )
 
         # Negative distances should be treated as zero (clear visibility)
-        visibility_negative = perception_range.calculate_visibility_at_distance(-10.0)
-        visibility_zero = perception_range.calculate_visibility_at_distance(0.0)
+        visibility_negative = (
+            perception_range.calculate_visibility_at_distance(-10.0)
+        )
+        visibility_zero = perception_range.calculate_visibility_at_distance(
+            0.0
+        )
 
         # Both should be clear since negative distance is treated as zero
         assert visibility_negative == VisibilityLevel.CLEAR
@@ -1068,7 +1141,8 @@ class TestEdgeCasesAndBoundaryConditions:
 
         # Try to focus on a non-existent perception type
         visibility = capabilities.get_best_visibility_at_distance(
-            50.0, focused_perception=PerceptionType.THERMAL  # Not in capabilities
+            50.0,
+            focused_perception=PerceptionType.THERMAL,  # Not in capabilities
         )
 
         # Should still work using available perceptions (visual)

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+# flake8: noqa: E501
 """
 Comprehensive Unit Tests for NarrativeArcApplicationService
 
 Test suite covering service initialization, arc lifecycle management,
-plot point management, theme management, analysis operations, and search functionality
+plot point management, theme management, analysis operations, and search
+functionality
 in the Narrative Context application layer.
 """
 
@@ -43,7 +45,7 @@ from contexts.narratives.application.queries.narrative_arc_queries import (
     GetThemesAtSequenceQuery,
     SearchNarrativeArcsQuery,
 )
-from contexts.narratives.application.services.narrative_arc_application_service import (
+from contexts.narratives.application.services.narrative_arc_application_service import (  # noqa: E501
     NarrativeArcApplicationService,
 )
 
@@ -82,10 +84,12 @@ class TestNarrativeArcApplicationServiceInitialization:
         assert service.query_handler is not None
 
     @patch(
-        "contexts.narratives.application.services.narrative_arc_application_service.NarrativeFlowService"
+        "contexts.narratives.application.services"
+        ".narrative_arc_application_service.NarrativeFlowService"
     )
     @patch(
-        "contexts.narratives.application.services.narrative_arc_application_service.CausalGraphService"
+        "contexts.narratives.application.services"
+        ".narrative_arc_application_service.CausalGraphService"
     )
     def test_default_service_initialization(
         self, mock_causal_service, mock_flow_service
@@ -105,7 +109,8 @@ class TestNarrativeArcApplicationServiceInitialization:
         assert service.causal_service == mock_causal_instance
 
     @patch(
-        "contexts.narratives.application.services.narrative_arc_application_service.logger"
+        "contexts.narratives.application.services"
+        ".narrative_arc_application_service.logger"
     )
     def test_initialization_logging(self, mock_logger):
         """Test that initialization is logged."""
@@ -144,15 +149,19 @@ class TestArcLifecycleManagement:
         )
 
         arc_id = self.service.create_narrative_arc(
-            arc_name="Test Arc", arc_type="main", description="A test narrative arc"
+            arc_name="Test Arc",
+            arc_type="main",
+            description="A test narrative arc",
         )
 
         assert arc_id == expected_arc_id
 
         # Verify command was called correctly
-        call_args = self.service.command_handler.handle_create_narrative_arc.call_args[
-            0
-        ][0]
+        call_args = (
+            self.service.command_handler.handle_create_narrative_arc.call_args[
+                0
+            ][0]
+        )
         assert isinstance(call_args, CreateNarrativeArcCommand)
         assert call_args.arc_name == "Test Arc"
         assert call_args.arc_type == "main"
@@ -190,9 +199,11 @@ class TestArcLifecycleManagement:
 
         assert arc_id == expected_arc_id
 
-        call_args = self.service.command_handler.handle_create_narrative_arc.call_args[
-            0
-        ][0]
+        call_args = (
+            self.service.command_handler.handle_create_narrative_arc.call_args[
+                0
+            ][0]
+        )
         assert call_args.arc_name == "Full Test Arc"
         assert call_args.arc_type == "subplot"
         assert call_args.target_length == 100
@@ -221,7 +232,9 @@ class TestArcLifecycleManagement:
 
         assert result == expected_result
 
-        call_args = self.service.query_handler.handle_get_narrative_arc.call_args[0][0]
+        call_args = (
+            self.service.query_handler.handle_get_narrative_arc.call_args[0][0]
+        )
         assert isinstance(call_args, GetNarrativeArcQuery)
         assert call_args.arc_id == arc_id
         assert call_args.include_details is True
@@ -236,7 +249,9 @@ class TestArcLifecycleManagement:
 
         assert result is None
 
-        call_args = self.service.query_handler.handle_get_narrative_arc.call_args[0][0]
+        call_args = (
+            self.service.query_handler.handle_get_narrative_arc.call_args[0][0]
+        )
         assert call_args.arc_id == arc_id
         assert call_args.include_details is True  # Default value
         assert call_args.include_events is False  # Default value
@@ -258,9 +273,11 @@ class TestArcLifecycleManagement:
             metadata=new_metadata,
         )
 
-        call_args = self.service.command_handler.handle_update_narrative_arc.call_args[
-            0
-        ][0]
+        call_args = (
+            self.service.command_handler.handle_update_narrative_arc.call_args[
+                0
+            ][0]
+        )
         assert isinstance(call_args, UpdateNarrativeArcCommand)
         assert call_args.arc_id == arc_id
         assert call_args.arc_name == "Updated Arc Name"
@@ -276,11 +293,15 @@ class TestArcLifecycleManagement:
         arc_id = "start-arc-456"
         start_sequence = 10
 
-        self.service.start_narrative_arc(arc_id=arc_id, start_sequence=start_sequence)
+        self.service.start_narrative_arc(
+            arc_id=arc_id, start_sequence=start_sequence
+        )
 
-        call_args = self.service.command_handler.handle_start_narrative_arc.call_args[
-            0
-        ][0]
+        call_args = (
+            self.service.command_handler.handle_start_narrative_arc.call_args[
+                0
+            ][0]
+        )
         assert isinstance(call_args, StartNarrativeArcCommand)
         assert call_args.arc_id == arc_id
         assert call_args.start_sequence == start_sequence
@@ -290,11 +311,15 @@ class TestArcLifecycleManagement:
         arc_id = "complete-arc-789"
         end_sequence = 100
 
-        self.service.complete_narrative_arc(arc_id=arc_id, end_sequence=end_sequence)
-
-        call_args = (
-            self.service.command_handler.handle_complete_narrative_arc.call_args[0][0]
+        self.service.complete_narrative_arc(
+            arc_id=arc_id, end_sequence=end_sequence
         )
+
+        call_args = self.service.command_handler.handle_complete_narrative_arc.call_args[
+            0
+        ][
+            0
+        ]
         assert isinstance(call_args, CompleteNarrativeArcCommand)
         assert call_args.arc_id == arc_id
         assert call_args.end_sequence == end_sequence
@@ -306,7 +331,9 @@ class TestPlotPointManagement:
     def setup_method(self):
         """Set up test dependencies."""
         self.mock_repository = Mock()
-        self.service = NarrativeArcApplicationService(repository=self.mock_repository)
+        self.service = NarrativeArcApplicationService(
+            repository=self.mock_repository
+        )
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
@@ -325,7 +352,9 @@ class TestPlotPointManagement:
             sequence_order=5,
         )
 
-        call_args = self.service.command_handler.handle_add_plot_point.call_args[0][0]
+        call_args = (
+            self.service.command_handler.handle_add_plot_point.call_args[0][0]
+        )
         assert isinstance(call_args, AddPlotPointCommand)
         assert call_args.arc_id == arc_id
         assert call_args.plot_point_id == plot_point_id
@@ -372,7 +401,9 @@ class TestPlotPointManagement:
             notes="Critical story moment",
         )
 
-        call_args = self.service.command_handler.handle_add_plot_point.call_args[0][0]
+        call_args = (
+            self.service.command_handler.handle_add_plot_point.call_args[0][0]
+        )
         assert call_args.arc_id == arc_id
         assert call_args.plot_point_id == plot_point_id
         assert call_args.emotional_intensity == Decimal("9.5")
@@ -398,13 +429,19 @@ class TestPlotPointManagement:
             "title": "Retrieved Plot Point",
             "sequence_order": 10,
         }
-        self.service.query_handler.handle_get_plot_point.return_value = expected_result
+        self.service.query_handler.handle_get_plot_point.return_value = (
+            expected_result
+        )
 
-        result = self.service.get_plot_point(arc_id=arc_id, plot_point_id=plot_point_id)
+        result = self.service.get_plot_point(
+            arc_id=arc_id, plot_point_id=plot_point_id
+        )
 
         assert result == expected_result
 
-        call_args = self.service.query_handler.handle_get_plot_point.call_args[0][0]
+        call_args = self.service.query_handler.handle_get_plot_point.call_args[
+            0
+        ][0]
         assert isinstance(call_args, GetPlotPointQuery)
         assert call_args.arc_id == arc_id
         assert call_args.plot_point_id == plot_point_id
@@ -416,9 +453,9 @@ class TestPlotPointManagement:
             {"plot_point_id": "plot-1", "sequence_order": 5},
             {"plot_point_id": "plot-2", "sequence_order": 10},
         ]
-        self.service.query_handler.handle_get_plot_points_in_sequence.return_value = (
-            expected_result
-        )
+        (
+            self.service.query_handler.handle_get_plot_points_in_sequence.return_value
+        ) = expected_result
 
         result = self.service.get_plot_points_in_sequence(
             arc_id=arc_id, start_sequence=1, end_sequence=20
@@ -426,11 +463,11 @@ class TestPlotPointManagement:
 
         assert result == expected_result
 
-        call_args = (
-            self.service.query_handler.handle_get_plot_points_in_sequence.call_args[0][
-                0
-            ]
-        )
+        call_args = self.service.query_handler.handle_get_plot_points_in_sequence.call_args[
+            0
+        ][
+            0
+        ]
         assert isinstance(call_args, GetPlotPointsInSequenceQuery)
         assert call_args.arc_id == arc_id
         assert call_args.start_sequence == 1
@@ -454,9 +491,11 @@ class TestPlotPointManagement:
             notes="Updated notes",
         )
 
-        call_args = self.service.command_handler.handle_update_plot_point.call_args[0][
-            0
-        ]
+        call_args = (
+            self.service.command_handler.handle_update_plot_point.call_args[0][
+                0
+            ]
+        )
         assert isinstance(call_args, UpdatePlotPointCommand)
         assert call_args.arc_id == arc_id
         assert call_args.plot_point_id == plot_point_id
@@ -478,9 +517,11 @@ class TestPlotPointManagement:
             arc_id=arc_id, plot_point_id=plot_point_id, title="New Title Only"
         )
 
-        call_args = self.service.command_handler.handle_update_plot_point.call_args[0][
-            0
-        ]
+        call_args = (
+            self.service.command_handler.handle_update_plot_point.call_args[0][
+                0
+            ]
+        )
         assert call_args.title == "New Title Only"
         assert call_args.description is None
         assert call_args.sequence_order is None
@@ -491,11 +532,15 @@ class TestPlotPointManagement:
         arc_id = "test-arc"
         plot_point_id = "plot-to-remove"
 
-        self.service.remove_plot_point(arc_id=arc_id, plot_point_id=plot_point_id)
+        self.service.remove_plot_point(
+            arc_id=arc_id, plot_point_id=plot_point_id
+        )
 
-        call_args = self.service.command_handler.handle_remove_plot_point.call_args[0][
-            0
-        ]
+        call_args = (
+            self.service.command_handler.handle_remove_plot_point.call_args[0][
+                0
+            ]
+        )
         assert isinstance(call_args, RemovePlotPointCommand)
         assert call_args.arc_id == arc_id
         assert call_args.plot_point_id == plot_point_id
@@ -507,7 +552,9 @@ class TestThemeManagement:
     def setup_method(self):
         """Set up test dependencies."""
         self.mock_repository = Mock()
-        self.service = NarrativeArcApplicationService(repository=self.mock_repository)
+        self.service = NarrativeArcApplicationService(
+            repository=self.mock_repository
+        )
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
@@ -525,14 +572,19 @@ class TestThemeManagement:
             description="The classic struggle between good and evil",
         )
 
-        call_args = self.service.command_handler.handle_add_theme.call_args[0][0]
+        call_args = self.service.command_handler.handle_add_theme.call_args[0][
+            0
+        ]
         assert isinstance(call_args, AddThemeCommand)
         assert call_args.arc_id == arc_id
         assert call_args.theme_id == theme_id
         assert call_args.theme_type == "moral"
         assert call_args.intensity == "moderate"
         assert call_args.name == "Good vs Evil"
-        assert call_args.description == "The classic struggle between good and evil"
+        assert (
+            call_args.description
+            == "The classic struggle between good and evil"
+        )
         assert call_args.moral_complexity == Decimal("5.0")
         assert call_args.emotional_resonance == Decimal("5.0")
         assert call_args.universal_appeal == Decimal("5.0")
@@ -565,7 +617,9 @@ class TestThemeManagement:
             notes="Core theme of the narrative",
         )
 
-        call_args = self.service.command_handler.handle_add_theme.call_args[0][0]
+        call_args = self.service.command_handler.handle_add_theme.call_args[0][
+            0
+        ]
         assert call_args.moral_complexity == Decimal("8.5")
         assert call_args.emotional_resonance == Decimal("9.0")
         assert call_args.universal_appeal == Decimal("7.5")
@@ -586,7 +640,9 @@ class TestThemeManagement:
             "name": "Retrieved Theme",
             "intensity": "moderate",
         }
-        self.service.query_handler.handle_get_theme.return_value = expected_result
+        self.service.query_handler.handle_get_theme.return_value = (
+            expected_result
+        )
 
         result = self.service.get_theme(arc_id=arc_id, theme_id=theme_id)
 
@@ -605,17 +661,21 @@ class TestThemeManagement:
             {"theme_id": "theme-1", "name": "Theme One"},
             {"theme_id": "theme-2", "name": "Theme Two"},
         ]
-        self.service.query_handler.handle_get_themes_at_sequence.return_value = (
-            expected_result
-        )
+        (
+            self.service.query_handler.handle_get_themes_at_sequence.return_value
+        ) = expected_result
 
-        result = self.service.get_themes_at_sequence(arc_id=arc_id, sequence=sequence)
+        result = self.service.get_themes_at_sequence(
+            arc_id=arc_id, sequence=sequence
+        )
 
         assert result == expected_result
 
-        call_args = self.service.query_handler.handle_get_themes_at_sequence.call_args[
-            0
-        ][0]
+        call_args = (
+            self.service.query_handler.handle_get_themes_at_sequence.call_args[
+                0
+            ][0]
+        )
         assert isinstance(call_args, GetThemesAtSequenceQuery)
         assert call_args.arc_id == arc_id
         assert call_args.sequence == sequence
@@ -634,7 +694,9 @@ class TestThemeManagement:
             development_notes=development_notes,
         )
 
-        call_args = self.service.command_handler.handle_develop_theme.call_args[0][0]
+        call_args = (
+            self.service.command_handler.handle_develop_theme.call_args[0][0]
+        )
         assert isinstance(call_args, DevelopThemeCommand)
         assert call_args.arc_id == arc_id
         assert call_args.theme_id == theme_id
@@ -648,7 +710,9 @@ class TestPacingManagement:
     def setup_method(self):
         """Set up test dependencies."""
         self.mock_repository = Mock()
-        self.service = NarrativeArcApplicationService(repository=self.mock_repository)
+        self.service = NarrativeArcApplicationService(
+            repository=self.mock_repository
+        )
         self.service.command_handler = Mock()
 
     def test_add_pacing_segment_minimal_params(self):
@@ -665,9 +729,11 @@ class TestPacingManagement:
             end_sequence=20,
         )
 
-        call_args = self.service.command_handler.handle_add_pacing_segment.call_args[0][
-            0
-        ]
+        call_args = (
+            self.service.command_handler.handle_add_pacing_segment.call_args[
+                0
+            ][0]
+        )
         assert isinstance(call_args, AddPacingSegmentCommand)
         assert call_args.arc_id == arc_id
         assert call_args.pacing_id == pacing_id
@@ -709,9 +775,11 @@ class TestPacingManagement:
             notes="Climactic battle sequence",
         )
 
-        call_args = self.service.command_handler.handle_add_pacing_segment.call_args[0][
-            0
-        ]
+        call_args = (
+            self.service.command_handler.handle_add_pacing_segment.call_args[
+                0
+            ][0]
+        )
         assert call_args.event_density == Decimal("8.5")
         assert call_args.tension_curve == [
             Decimal("3.0"),
@@ -725,7 +793,9 @@ class TestPacingManagement:
         assert call_args.description_density == Decimal("7.0")
         assert call_args.character_focus == set(character_focus)
         assert call_args.narrative_techniques == set(narrative_techniques)
-        assert call_args.reader_engagement_target == "High tension and excitement"
+        assert (
+            call_args.reader_engagement_target == "High tension and excitement"
+        )
         assert call_args.tags == set(tags)
         assert call_args.notes == "Climactic battle sequence"
 
@@ -736,7 +806,9 @@ class TestContextManagement:
     def setup_method(self):
         """Set up test dependencies."""
         self.mock_repository = Mock()
-        self.service = NarrativeArcApplicationService(repository=self.mock_repository)
+        self.service = NarrativeArcApplicationService(
+            repository=self.mock_repository
+        )
         self.service.command_handler = Mock()
 
     def test_add_narrative_context_minimal_params(self):
@@ -754,13 +826,18 @@ class TestContextManagement:
 
         call_args = self.service.command_handler.handle_add_narrative_context.call_args[
             0
-        ][0]
+        ][
+            0
+        ]
         assert isinstance(call_args, AddNarrativeContextCommand)
         assert call_args.arc_id == arc_id
         assert call_args.context_id == context_id
         assert call_args.context_type == "setting"
         assert call_args.name == "Castle Courtyard"
-        assert call_args.description == "A stone courtyard within the castle walls"
+        assert (
+            call_args.description
+            == "A stone courtyard within the castle walls"
+        )
         assert call_args.importance == Decimal("5.0")
         assert call_args.is_persistent is False
 
@@ -796,7 +873,9 @@ class TestContextManagement:
 
         call_args = self.service.command_handler.handle_add_narrative_context.call_args[
             0
-        ][0]
+        ][
+            0
+        ]
         assert call_args.importance == Decimal("8.5")
         assert call_args.is_persistent is True
         assert call_args.start_sequence == 10
@@ -819,7 +898,11 @@ class TestContextManagement:
 
         self.service.activate_context(arc_id=arc_id, context_id=context_id)
 
-        call_args = self.service.command_handler.handle_activate_context.call_args[0][0]
+        call_args = (
+            self.service.command_handler.handle_activate_context.call_args[0][
+                0
+            ]
+        )
         assert isinstance(call_args, ActivateContextCommand)
         assert call_args.arc_id == arc_id
         assert call_args.context_id == context_id
@@ -831,9 +914,11 @@ class TestContextManagement:
 
         self.service.deactivate_context(arc_id=arc_id, context_id=context_id)
 
-        call_args = self.service.command_handler.handle_deactivate_context.call_args[0][
-            0
-        ]
+        call_args = (
+            self.service.command_handler.handle_deactivate_context.call_args[
+                0
+            ][0]
+        )
         assert isinstance(call_args, DeactivateContextCommand)
         assert call_args.arc_id == arc_id
         assert call_args.context_id == context_id
@@ -845,7 +930,9 @@ class TestCharacterManagement:
     def setup_method(self):
         """Set up test dependencies."""
         self.mock_repository = Mock()
-        self.service = NarrativeArcApplicationService(repository=self.mock_repository)
+        self.service = NarrativeArcApplicationService(
+            repository=self.mock_repository
+        )
         self.service.command_handler = Mock()
 
     def test_add_character_to_arc(self):
@@ -860,14 +947,18 @@ class TestCharacterManagement:
             character_arc_notes="Main character development notes",
         )
 
-        call_args = self.service.command_handler.handle_add_character_to_arc.call_args[
-            0
-        ][0]
+        call_args = (
+            self.service.command_handler.handle_add_character_to_arc.call_args[
+                0
+            ][0]
+        )
         assert isinstance(call_args, AddCharacterToArcCommand)
         assert call_args.arc_id == arc_id
         assert call_args.character_id == character_id
         assert call_args.role == "protagonist"
-        assert call_args.character_arc_notes == "Main character development notes"
+        assert (
+            call_args.character_arc_notes == "Main character development notes"
+        )
 
     def test_add_character_to_arc_minimal(self):
         """Test adding a character to arc with minimal parameters."""
@@ -878,9 +969,11 @@ class TestCharacterManagement:
             arc_id=arc_id, character_id=character_id, role="supporting"
         )
 
-        call_args = self.service.command_handler.handle_add_character_to_arc.call_args[
-            0
-        ][0]
+        call_args = (
+            self.service.command_handler.handle_add_character_to_arc.call_args[
+                0
+            ][0]
+        )
         assert call_args.character_arc_notes == ""
 
 
@@ -890,7 +983,9 @@ class TestAnalysisAndOptimization:
     def setup_method(self):
         """Set up test dependencies."""
         self.mock_repository = Mock()
-        self.service = NarrativeArcApplicationService(repository=self.mock_repository)
+        self.service = NarrativeArcApplicationService(
+            repository=self.mock_repository
+        )
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
@@ -900,11 +995,14 @@ class TestAnalysisAndOptimization:
         expected_result = {
             "flow_score": 8.5,
             "tension_curve": [3.0, 6.0, 9.0, 7.0, 5.0],
-            "recommendations": ["Increase tension in middle", "Add climactic moment"],
+            "recommendations": [
+                "Increase tension in middle",
+                "Add climactic moment",
+            ],
         }
-        self.service.query_handler.handle_get_narrative_flow_analysis.return_value = (
-            expected_result
-        )
+        (
+            self.service.query_handler.handle_get_narrative_flow_analysis.return_value
+        ) = expected_result
 
         result = self.service.analyze_narrative_flow(
             arc_id=arc_id,
@@ -914,11 +1012,11 @@ class TestAnalysisAndOptimization:
 
         assert result == expected_result
 
-        call_args = (
-            self.service.query_handler.handle_get_narrative_flow_analysis.call_args[0][
-                0
-            ]
-        )
+        call_args = self.service.query_handler.handle_get_narrative_flow_analysis.call_args[
+            0
+        ][
+            0
+        ]
         assert isinstance(call_args, GetNarrativeFlowAnalysisQuery)
         assert call_args.arc_id == arc_id
         assert call_args.include_recommendations is True
@@ -927,14 +1025,17 @@ class TestAnalysisAndOptimization:
     def test_optimize_sequence(self):
         """Test optimizing plot point sequence."""
         arc_id = "test-arc"
-        optimization_criteria = ["tension_progression", "character_development"]
+        optimization_criteria = [
+            "tension_progression",
+            "character_development",
+        ]
         expected_result = {
             "optimized_sequence": ["plot-3", "plot-1", "plot-2"],
             "improvement_score": 7.2,
         }
-        self.service.command_handler.handle_optimize_sequence.return_value = (
-            expected_result
-        )
+        (
+            self.service.command_handler.handle_optimize_sequence.return_value
+        ) = expected_result
 
         result = self.service.optimize_sequence(
             arc_id=arc_id,
@@ -944,9 +1045,11 @@ class TestAnalysisAndOptimization:
 
         assert result == expected_result
 
-        call_args = self.service.command_handler.handle_optimize_sequence.call_args[0][
-            0
-        ]
+        call_args = (
+            self.service.command_handler.handle_optimize_sequence.call_args[0][
+                0
+            ]
+        )
         assert isinstance(call_args, OptimizeSequenceCommand)
         assert call_args.arc_id == arc_id
         assert call_args.preserve_critical_order is True
@@ -971,7 +1074,9 @@ class TestAnalysisAndOptimization:
 
         call_args = self.service.command_handler.handle_establish_causal_link.call_args[
             0
-        ][0]
+        ][
+            0
+        ]
         assert isinstance(call_args, EstablishCausalLinkCommand)
         assert call_args.arc_id == arc_id
         assert call_args.cause_id == cause_id
@@ -989,19 +1094,24 @@ class TestAnalysisAndOptimization:
             "feedback_loops": [["plot-2", "plot-4", "plot-2"]],
             "complexity_score": 6.8,
         }
-        self.service.query_handler.handle_get_causal_analysis.return_value = (
-            expected_result
-        )
+        (
+            self.service.query_handler.handle_get_causal_analysis.return_value
+        ) = expected_result
 
         result = self.service.analyze_causality(
-            arc_id=arc_id, include_paths=True, include_loops=True, max_path_depth=5
+            arc_id=arc_id,
+            include_paths=True,
+            include_loops=True,
+            max_path_depth=5,
         )
 
         assert result == expected_result
 
-        call_args = self.service.query_handler.handle_get_causal_analysis.call_args[0][
-            0
-        ]
+        call_args = (
+            self.service.query_handler.handle_get_causal_analysis.call_args[0][
+                0
+            ]
+        )
         assert isinstance(call_args, GetCausalAnalysisQuery)
         assert call_args.arc_id == arc_id
         assert call_args.include_paths is True
@@ -1015,7 +1125,9 @@ class TestComprehensiveAnalysis:
     def setup_method(self):
         """Set up test dependencies."""
         self.mock_repository = Mock()
-        self.service = NarrativeArcApplicationService(repository=self.mock_repository)
+        self.service = NarrativeArcApplicationService(
+            repository=self.mock_repository
+        )
         self.service.query_handler = Mock()
 
     def test_get_arc_metrics(self):
@@ -1027,7 +1139,9 @@ class TestComprehensiveAnalysis:
             "causal_consistency": 9.1,
             "overall_rating": 8.3,
         }
-        self.service.query_handler.handle_get_arc_metrics.return_value = expected_result
+        (
+            self.service.query_handler.handle_get_arc_metrics.return_value
+        ) = expected_result
 
         result = self.service.get_arc_metrics(
             arc_id=arc_id,
@@ -1038,7 +1152,9 @@ class TestComprehensiveAnalysis:
 
         assert result == expected_result
 
-        call_args = self.service.query_handler.handle_get_arc_metrics.call_args[0][0]
+        call_args = (
+            self.service.query_handler.handle_get_arc_metrics.call_args[0][0]
+        )
         assert isinstance(call_args, GetArcMetricsQuery)
         assert call_args.arc_id == arc_id
         assert call_args.include_coherence is True
@@ -1055,7 +1171,9 @@ class TestComprehensiveAnalysis:
             "character_count": 5,
             "progression_status": "in_progress",
         }
-        self.service.query_handler.handle_get_arc_summary.return_value = expected_result
+        (
+            self.service.query_handler.handle_get_arc_summary.return_value
+        ) = expected_result
 
         result = self.service.get_arc_summary(
             arc_id=arc_id, include_statistics=True, include_progression=True
@@ -1063,7 +1181,9 @@ class TestComprehensiveAnalysis:
 
         assert result == expected_result
 
-        call_args = self.service.query_handler.handle_get_arc_summary.call_args[0][0]
+        call_args = (
+            self.service.query_handler.handle_get_arc_summary.call_args[0][0]
+        )
         assert isinstance(call_args, GetArcSummaryQuery)
         assert call_args.arc_id == arc_id
         assert call_args.include_statistics is True
@@ -1076,7 +1196,9 @@ class TestSearchAndDiscovery:
     def setup_method(self):
         """Set up test dependencies."""
         self.mock_repository = Mock()
-        self.service = NarrativeArcApplicationService(repository=self.mock_repository)
+        self.service = NarrativeArcApplicationService(
+            repository=self.mock_repository
+        )
         self.service.query_handler = Mock()
 
     def test_search_narrative_arcs_minimal_params(self):
@@ -1088,17 +1210,19 @@ class TestSearchAndDiscovery:
             ],
             "total_count": 2,
         }
-        self.service.query_handler.handle_search_narrative_arcs.return_value = (
-            expected_result
-        )
+        (
+            self.service.query_handler.handle_search_narrative_arcs.return_value
+        ) = expected_result
 
         result = self.service.search_narrative_arcs()
 
         assert result == expected_result
 
-        call_args = self.service.query_handler.handle_search_narrative_arcs.call_args[
-            0
-        ][0]
+        call_args = (
+            self.service.query_handler.handle_search_narrative_arcs.call_args[
+                0
+            ][0]
+        )
         assert isinstance(call_args, SearchNarrativeArcsQuery)
         assert call_args.search_term is None
         assert call_args.arc_types is None
@@ -1120,12 +1244,14 @@ class TestSearchAndDiscovery:
         created_by = uuid4()
 
         expected_result = {
-            "results": [{"arc_id": "arc-filtered", "arc_name": "Filtered Arc"}],
+            "results": [
+                {"arc_id": "arc-filtered", "arc_name": "Filtered Arc"}
+            ],
             "total_count": 1,
         }
-        self.service.query_handler.handle_search_narrative_arcs.return_value = (
-            expected_result
-        )
+        (
+            self.service.query_handler.handle_search_narrative_arcs.return_value
+        ) = expected_result
 
         result = self.service.search_narrative_arcs(
             search_term="fantasy adventure",
@@ -1142,9 +1268,11 @@ class TestSearchAndDiscovery:
 
         assert result == expected_result
 
-        call_args = self.service.query_handler.handle_search_narrative_arcs.call_args[
-            0
-        ][0]
+        call_args = (
+            self.service.query_handler.handle_search_narrative_arcs.call_args[
+                0
+            ][0]
+        )
         assert call_args.search_term == "fantasy adventure"
         assert call_args.arc_types == arc_types
         assert call_args.statuses == statuses
@@ -1163,9 +1291,9 @@ class TestSearchAndDiscovery:
             {"arc_id": "main-1", "arc_name": "First Main Arc"},
             {"arc_id": "main-2", "arc_name": "Second Main Arc"},
         ]
-        self.service.query_handler.handle_get_narrative_arcs_by_type.return_value = (
-            expected_result
-        )
+        (
+            self.service.query_handler.handle_get_narrative_arcs_by_type.return_value
+        ) = expected_result
 
         result = self.service.get_arcs_by_type(
             arc_type=arc_type, status="active", limit=10, offset=0
@@ -1173,9 +1301,11 @@ class TestSearchAndDiscovery:
 
         assert result == expected_result
 
-        call_args = (
-            self.service.query_handler.handle_get_narrative_arcs_by_type.call_args[0][0]
-        )
+        call_args = self.service.query_handler.handle_get_narrative_arcs_by_type.call_args[
+            0
+        ][
+            0
+        ]
         assert isinstance(call_args, GetNarrativeArcsByTypeQuery)
         assert call_args.arc_type == arc_type
         assert call_args.status == "active"
@@ -1186,17 +1316,19 @@ class TestSearchAndDiscovery:
         """Test getting arcs by type with minimal parameters."""
         arc_type = "subplot"
         expected_result = [{"arc_id": "subplot-1", "arc_name": "Subplot Arc"}]
-        self.service.query_handler.handle_get_narrative_arcs_by_type.return_value = (
-            expected_result
-        )
+        (
+            self.service.query_handler.handle_get_narrative_arcs_by_type.return_value
+        ) = expected_result
 
         result = self.service.get_arcs_by_type(arc_type=arc_type)
 
         assert result == expected_result
 
-        call_args = (
-            self.service.query_handler.handle_get_narrative_arcs_by_type.call_args[0][0]
-        )
+        call_args = self.service.query_handler.handle_get_narrative_arcs_by_type.call_args[
+            0
+        ][
+            0
+        ]
         assert call_args.arc_type == arc_type
         assert call_args.status is None
         assert call_args.limit is None
@@ -1209,15 +1341,17 @@ class TestErrorHandling:
     def setup_method(self):
         """Set up test dependencies."""
         self.mock_repository = Mock()
-        self.service = NarrativeArcApplicationService(repository=self.mock_repository)
+        self.service = NarrativeArcApplicationService(
+            repository=self.mock_repository
+        )
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
     def test_command_handler_exception_propagation(self):
         """Test that exceptions from command handler are properly propagated."""
-        self.service.command_handler.handle_create_narrative_arc.side_effect = (
-            ValueError("Invalid arc parameters")
-        )
+        (
+            self.service.command_handler.handle_create_narrative_arc.side_effect
+        ) = ValueError("Invalid arc parameters")
 
         with pytest.raises(ValueError, match="Invalid arc parameters"):
             self.service.create_narrative_arc(
@@ -1226,9 +1360,9 @@ class TestErrorHandling:
 
     def test_query_handler_exception_propagation(self):
         """Test that exceptions from query handler are properly propagated."""
-        self.service.query_handler.handle_get_narrative_arc.side_effect = RuntimeError(
-            "Database connection failed"
-        )
+        (
+            self.service.query_handler.handle_get_narrative_arc.side_effect
+        ) = RuntimeError("Database connection failed")
 
         with pytest.raises(RuntimeError, match="Database connection failed"):
             self.service.get_narrative_arc(arc_id="test-arc")
@@ -1250,7 +1384,9 @@ class TestErrorHandling:
         )
 
         # Verify the Decimal conversion occurred
-        call_args = self.service.command_handler.handle_add_plot_point.call_args[0][0]
+        call_args = (
+            self.service.command_handler.handle_add_plot_point.call_args[0][0]
+        )
         assert call_args.emotional_intensity == Decimal("7.5")
         assert call_args.dramatic_tension == Decimal("8.0")
         assert call_args.story_significance == Decimal("9.2")
@@ -1262,7 +1398,9 @@ class TestIntegrationScenarios:
     def setup_method(self):
         """Set up test dependencies."""
         self.mock_repository = Mock()
-        self.service = NarrativeArcApplicationService(repository=self.mock_repository)
+        self.service = NarrativeArcApplicationService(
+            repository=self.mock_repository
+        )
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
@@ -1270,7 +1408,9 @@ class TestIntegrationScenarios:
         """Test complete workflow of creating and configuring an arc."""
         # 1. Create arc
         arc_id = "workflow-arc"
-        self.service.command_handler.handle_create_narrative_arc.return_value = arc_id
+        (
+            self.service.command_handler.handle_create_narrative_arc.return_value
+        ) = arc_id
 
         created_arc_id = self.service.create_narrative_arc(
             arc_name="Workflow Test Arc",
@@ -1314,17 +1454,22 @@ class TestIntegrationScenarios:
         arc_id = "analysis-arc"
 
         # Mock analysis results
-        flow_analysis = {"flow_score": 8.5, "recommendations": ["Improve pacing"]}
+        flow_analysis = {
+            "flow_score": 8.5,
+            "recommendations": ["Improve pacing"],
+        }
         causal_analysis = {"complexity_score": 7.2, "loops": []}
         metrics = {"overall_rating": 8.0}
 
-        self.service.query_handler.handle_get_narrative_flow_analysis.return_value = (
-            flow_analysis
-        )
-        self.service.query_handler.handle_get_causal_analysis.return_value = (
-            causal_analysis
-        )
-        self.service.query_handler.handle_get_arc_metrics.return_value = metrics
+        (
+            self.service.query_handler.handle_get_narrative_flow_analysis.return_value
+        ) = flow_analysis
+        (
+            self.service.query_handler.handle_get_causal_analysis.return_value
+        ) = causal_analysis
+        (
+            self.service.query_handler.handle_get_arc_metrics.return_value
+        ) = metrics
 
         # Perform analysis
         flow_result = self.service.analyze_narrative_flow(arc_id=arc_id)
@@ -1336,6 +1481,8 @@ class TestIntegrationScenarios:
         assert metrics_result == metrics
 
         # Verify all analysis queries were called
-        assert self.service.query_handler.handle_get_narrative_flow_analysis.called
+        assert (
+            self.service.query_handler.handle_get_narrative_flow_analysis.called
+        )
         assert self.service.query_handler.handle_get_causal_analysis.called
         assert self.service.query_handler.handle_get_arc_metrics.called

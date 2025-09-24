@@ -301,3 +301,7 @@ platform/temp/
 
 # Caching System (Legacy - Remove after refactoring)
 /src/caching/
+.actrc
+.actrc
+.actrc
+.actrc

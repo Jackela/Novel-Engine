@@ -55,7 +55,9 @@ class LLMClient:
 
         self.active_provider = self.providers.get(primary_provider)
         if not self.active_provider:
-            raise RuntimeError(f"Primary provider {primary_provider} not available")
+            raise RuntimeError(
+                f"Primary provider {primary_provider} not available"
+            )
 
     def generate_dialogue(
         self,
@@ -96,7 +98,11 @@ class LLMClient:
         try:
             if self.active_provider:
                 return self.active_provider.generate_event(
-                    event_type, characters, story_context, plot_stage, temperature
+                    event_type,
+                    characters,
+                    story_context,
+                    plot_stage,
+                    temperature,
                 )
             else:
                 raise RuntimeError("No active LLM provider available")
@@ -149,9 +155,13 @@ class LLMClient:
         try:
             # Test connection
             if hasattr(self.active_provider, "test_connection"):
-                test_results["connection"] = self.active_provider.test_connection()
+                test_results[
+                    "connection"
+                ] = self.active_provider.test_connection()
             else:
-                test_results["connection"] = True  # Assume working if no test method
+                test_results[
+                    "connection"
+                ] = True  # Assume working if no test method
 
             # Test dialogue generation
             dialogue = self.generate_dialogue(
@@ -204,6 +214,7 @@ class LLMClient:
             "active_provider": self.primary_provider,
             "available_providers": list(self.providers.keys()),
             "provider_health": {
-                name: provider is not None for name, provider in self.providers.items()
+                name: provider is not None
+                for name, provider in self.providers.items()
             },
         }

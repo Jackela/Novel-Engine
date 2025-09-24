@@ -129,7 +129,9 @@ class CharacterSheetParser:
 
         return character_data
 
-    def _extract_section(self, content: str, section_name: str) -> Optional[str]:
+    def _extract_section(
+        self, content: str, section_name: str
+    ) -> Optional[str]:
         """Extract a specific section from character sheet content."""
         pattern = rf"#{section_name.upper()}.*?\n(.*?)(?=\n#|\Z)"
         match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
@@ -149,14 +151,18 @@ class CharacterSheetParser:
 
         return identity_data
 
-    def _parse_psychological_section(self, section_content: str) -> Dict[str, Any]:
+    def _parse_psychological_section(
+        self, section_content: str
+    ) -> Dict[str, Any]:
         """Parse the psychological section of character sheet."""
         return {
             "traits": self._extract_bullet_points(section_content),
             "motivations": self._extract_weighted_items(section_content),
         }
 
-    def _parse_behavioral_section(self, section_content: str) -> Dict[str, Any]:
+    def _parse_behavioral_section(
+        self, section_content: str
+    ) -> Dict[str, Any]:
         """Parse the behavioral section of character sheet."""
         return {
             "behaviors": self._extract_bullet_points(section_content),
@@ -171,7 +177,9 @@ class CharacterSheetParser:
         """Parse the social section of character sheet."""
         return self._parse_simple_field_format(section_content)
 
-    def _parse_capabilities_section(self, section_content: str) -> Dict[str, Any]:
+    def _parse_capabilities_section(
+        self, section_content: str
+    ) -> Dict[str, Any]:
         """Parse the capabilities section of character sheet."""
         return self._parse_simple_field_format(section_content)
 
@@ -187,7 +195,9 @@ class CharacterSheetParser:
                 text = line[1:].strip()
                 if ":" in text:
                     key, value = text.split(":", 1)
-                    bullet_points[key.strip().lower().replace(" ", "_")] = value.strip()
+                    bullet_points[
+                        key.strip().lower().replace(" ", "_")
+                    ] = value.strip()
                 else:
                     # Use the text as both key and value
                     key = text.lower().replace(" ", "_")
@@ -203,7 +213,9 @@ class CharacterSheetParser:
         for line in lines:
             line = line.strip()
             # Look for patterns like "Item (weight)" or "Item: weight"
-            weight_match = re.search(r"(.+?)\s*[\(:]\s*([0-9.]+)\s*[\)]?", line)
+            weight_match = re.search(
+                r"(.+?)\s*[\(:]\s*([0-9.]+)\s*[\)]?", line
+            )
             if weight_match:
                 item = weight_match.group(1).strip()
                 weight = float(weight_match.group(2))

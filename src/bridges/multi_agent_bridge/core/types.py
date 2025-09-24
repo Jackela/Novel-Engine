@@ -112,10 +112,14 @@ class EnhancedWorldState:
     turn_number: int
     base_world_state: Dict[str, Any]
     agent_positions: Dict[str, Any] = field(default_factory=dict)
-    agent_relationships: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    agent_relationships: Dict[str, Dict[str, float]] = field(
+        default_factory=dict
+    )
     active_dialogues: List[AgentDialogue] = field(default_factory=list)
     narrative_pressure: Dict[str, float] = field(default_factory=dict)
-    coordination_opportunities: List[Dict[str, Any]] = field(default_factory=list)
+    coordination_opportunities: List[Dict[str, Any]] = field(
+        default_factory=list
+    )
     performance_metrics: Dict[str, Any] = field(default_factory=dict)
     ai_insights: List[Dict[str, Any]] = field(default_factory=list)
     timestamp: datetime = field(default_factory=datetime.now)

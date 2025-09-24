@@ -243,7 +243,9 @@ class EnhancedDialogueGenerator:
             # Every 5-7 turns, change scene or add major action
             if turn > 0 and turn % random.randint(5, 7) == 0:
                 events.extend(
-                    self._generate_scene_transition(characters, current_location)
+                    self._generate_scene_transition(
+                        characters, current_location
+                    )
                 )
                 current_location = random.choice(
                     [s for s in self.scene_settings if s != current_location]
@@ -286,7 +288,9 @@ class EnhancedDialogueGenerator:
 
                 # Sometimes add reaction
                 if random.random() > 0.5:
-                    reactor = random.choice([c for c in characters if c != speaker])
+                    reactor = random.choice(
+                        [c for c in characters if c != speaker]
+                    )
                     events.append(self._generate_reaction(reactor, speaker))
 
             elif event_type == ActionType.ACTION:
@@ -297,27 +301,39 @@ class EnhancedDialogueGenerator:
 
             elif event_type == ActionType.CRISIS:
                 events.append(
-                    self._generate_crisis(characters, current_location, tension_level)
+                    self._generate_crisis(
+                        characters, current_location, tension_level
+                    )
                 )
 
             elif event_type == ActionType.CONFLICT:
                 events.append(
-                    self._generate_conflict(characters, current_location, tension_level)
+                    self._generate_conflict(
+                        characters, current_location, tension_level
+                    )
                 )
 
             elif event_type == ActionType.DISCOVERY:
                 events.append(
-                    self._generate_discovery(speaker, current_location, tension_level)
+                    self._generate_discovery(
+                        speaker, current_location, tension_level
+                    )
                 )
 
             # Add environmental description occasionally
             if random.random() > 0.8:
-                events.append(self._generate_environment_description(current_location))
+                events.append(
+                    self._generate_environment_description(current_location)
+                )
 
         return events
 
     def _generate_unique_dialogue(
-        self, speaker: Character, others: List[Character], location: str, tension: float
+        self,
+        speaker: Character,
+        others: List[Character],
+        location: str,
+        tension: float,
     ) -> StoryEvent:
         """Generate unique dialogue without repetition"""
         # Select category based on tension and character
@@ -334,7 +350,9 @@ class EnhancedDialogueGenerator:
 
         # Get available dialogues
         available = [
-            d for d in self.dialogue_patterns[category] if d not in self.used_phrases
+            d
+            for d in self.dialogue_patterns[category]
+            if d not in self.used_phrases
         ]
 
         if available:
@@ -342,7 +360,10 @@ class EnhancedDialogueGenerator:
             self.used_phrases.add(content)
         else:
             # Generate unique dialogue using character vocabulary
-            if hasattr(speaker, "unique_vocabulary") and speaker.unique_vocabulary:
+            if (
+                hasattr(speaker, "unique_vocabulary")
+                and speaker.unique_vocabulary
+            ):
                 word = random.choice(speaker.unique_vocabulary)
                 templates = [
                     f"关于{word}，我有了新的理解。",
@@ -352,7 +373,9 @@ class EnhancedDialogueGenerator:
                 ]
                 content = random.choice(templates)
             else:
-                content = f"在这个时刻，我感受到了{random.choice(['希望', '力量', '真相', '命运'])}。"
+                content = (
+                    f"在这个时刻，我感受到了{random.choice(['希望', '力量', '真相', '命运'])}。"
+                )
 
         # Personalize based on speech style
         if "诗意" in speaker.speech_style:
@@ -449,7 +472,9 @@ class EnhancedDialogueGenerator:
         # but redirects to the enhanced version
         return self._generate_unique_dialogue(speaker, others, location, 0.5)
 
-    def _generate_action(self, character: Character, location: str) -> StoryEvent:
+    def _generate_action(
+        self, character: Character, location: str
+    ) -> StoryEvent:
         """Generate an action"""
         actions = [
             "缓缓走向控制台，手指轻触全息投影",
@@ -491,7 +516,9 @@ class EnhancedDialogueGenerator:
             tags=["internal"],
         )
 
-    def _generate_reaction(self, reactor: Character, speaker: Character) -> StoryEvent:
+    def _generate_reaction(
+        self, reactor: Character, speaker: Character
+    ) -> StoryEvent:
         """Generate reaction to previous speaker"""
         reactions = [
             f"若有所思地看着{speaker.name}",
@@ -633,7 +660,9 @@ class EnhancedLiteraryWriter:
 
         for i, chapter_events in enumerate(chapters, 1):
             if chapter_events:  # Only write non-empty chapters
-                novel_parts.append(self._write_chapter(i, chapter_events, characters))
+                novel_parts.append(
+                    self._write_chapter(i, chapter_events, characters)
+                )
 
         # Ending
         novel_parts.append(self._generate_ending(characters, blueprint))
@@ -676,7 +705,9 @@ class EnhancedLiteraryWriter:
 
         return chapters if chapters else [events]
 
-    def _group_by_tension(self, events: List[StoryEvent]) -> List[List[StoryEvent]]:
+    def _group_by_tension(
+        self, events: List[StoryEvent]
+    ) -> List[List[StoryEvent]]:
         """Group events by tension levels for chapter division"""
         if not events:
             return []
@@ -692,22 +723,24 @@ class EnhancedLiteraryWriter:
             events[act2_end:],  # Act 3: Resolution
         ]
 
-    def _generate_title(self, blueprint: Optional["StoryBlueprint"] = None) -> str:
+    def _generate_title(
+        self, blueprint: Optional["StoryBlueprint"] = None
+    ) -> str:
         """Generate thematic novel title"""
         if blueprint and hasattr(blueprint, "theme"):
             return f"《维度之间的回响》\n\n—— {blueprint.theme}"
         return "《维度之间的回响》\n\n—— 一个关于选择与命运的量子寓言"
 
     def _generate_opening(
-        self, characters: List[Character], blueprint: Optional["StoryBlueprint"] = None
+        self,
+        characters: List[Character],
+        blueprint: Optional["StoryBlueprint"] = None,
     ) -> str:
         """Generate thematic novel opening"""
         opening = "序章：命运的编织\n\n"
 
         if blueprint and hasattr(blueprint, "central_conflict"):
-            opening += (
-                f"在所有可能性的交汇点上，一个关于{self.theme}的故事即将展开。\n\n"
-            )
+            opening += f"在所有可能性的交汇点上，一个关于{self.theme}的故事即将展开。\n\n"
             opening += f"{blueprint.central_conflict}\n\n"
         else:
             opening += "在时间的尽头，空间的起点，存在着一个被称为'虚空观察站'的地方。"
@@ -716,19 +749,23 @@ class EnhancedLiteraryWriter:
 
         for character in characters:
             opening += f"{character.name}，{character.background}。"
-            if hasattr(character, "arc_description") and character.arc_description:
+            if (
+                hasattr(character, "arc_description")
+                and character.arc_description
+            ):
                 opening += f"命运赋予了{character.arc_description}的使命。\n\n"
             else:
-                opening += (
-                    f"带着{character.motivation}的使命，踏入了这个超越理解的领域。\n\n"
-                )
+                opening += f"带着{character.motivation}的使命，踏入了这个超越理解的领域。\n\n"
 
         opening += "当量子涟漪将他们聚集在一起时，多元宇宙的命运悬于一线..."
 
         return opening
 
     def _write_chapter(
-        self, chapter_num: int, events: List[StoryEvent], characters: List[Character]
+        self,
+        chapter_num: int,
+        events: List[StoryEvent],
+        characters: List[Character],
     ) -> str:
         """Write a chapter from events"""
         chapter_titles = {
@@ -782,7 +819,9 @@ class EnhancedLiteraryWriter:
 
         return chapter
 
-    def _enhance_dialogue(self, event: StoryEvent, characters: List[Character]) -> str:
+    def _enhance_dialogue(
+        self, event: StoryEvent, characters: List[Character]
+    ) -> str:
         """Enhance dialogue with literary elements"""
         next((c for c in characters if c.name == event.character), None)
 
@@ -832,7 +871,9 @@ class EnhancedLiteraryWriter:
         return paragraph
 
     def _generate_ending(
-        self, characters: List[Character], blueprint: Optional["StoryBlueprint"] = None
+        self,
+        characters: List[Character],
+        blueprint: Optional["StoryBlueprint"] = None,
     ) -> str:
         """Generate thematic novel ending"""
         ending = "尾声：永恒的共鸣\n\n"
@@ -848,14 +889,19 @@ class EnhancedLiteraryWriter:
         ending += "每一次相遇都是亿万种可能中的必然。\n\n"
 
         for character in characters:
-            if hasattr(character, "arc_description") and character.arc_description:
+            if (
+                hasattr(character, "arc_description")
+                and character.arc_description
+            ):
                 arc_parts = character.arc_description.split("→")
                 if len(arc_parts) >= 2:
                     ending += f"{character.name}完成了从{arc_parts[0]}到{arc_parts[-1]}的蜕变。\n"
                 else:
                     ending += f"{character.name}明白了，{character.motivation}不是终点，而是新的起点。\n"
             else:
-                ending += f"{character.name}明白了，{character.motivation}不是终点，而是新的起点。\n"
+                ending += (
+                    f"{character.name}明白了，{character.motivation}不是终点，而是新的起点。\n"
+                )
 
         if blueprint and hasattr(blueprint, "central_conflict"):
             ending += f"\n{blueprint.central_conflict}得到了解决，但这不是结束，而是新的开始。\n\n"
@@ -870,12 +916,16 @@ class EnhancedLiteraryWriter:
 class NovelQualityEvaluator:
     """Evaluate the quality of generated novel"""
 
-    def evaluate(self, novel_text: str, events: List[StoryEvent]) -> Dict[str, Any]:
+    def evaluate(
+        self, novel_text: str, events: List[StoryEvent]
+    ) -> Dict[str, Any]:
         """Comprehensive novel evaluation"""
         evaluation = {
             "overall_score": 0,
             "word_count": len(novel_text),
-            "character_count": len(novel_text.replace(" ", "").replace("\n", "")),
+            "character_count": len(
+                novel_text.replace(" ", "").replace("\n", "")
+            ),
             "dialogue_count": len(
                 [e for e in events if e.event_type == ActionType.DIALOGUE]
             ),
@@ -889,16 +939,22 @@ class NovelQualityEvaluator:
         }
 
         # Evaluate different aspects
-        evaluation["dimensions"]["literary_quality"] = self._evaluate_literary_quality(
+        evaluation["dimensions"][
+            "literary_quality"
+        ] = self._evaluate_literary_quality(novel_text)
+        evaluation["dimensions"][
+            "narrative_structure"
+        ] = self._evaluate_structure(events)
+        evaluation["dimensions"][
+            "character_depth"
+        ] = self._evaluate_characters(events)
+        evaluation["dimensions"]["pacing"] = self._evaluate_pacing(events)
+        evaluation["dimensions"]["creativity"] = self._evaluate_creativity(
             novel_text
         )
-        evaluation["dimensions"]["narrative_structure"] = self._evaluate_structure(
+        evaluation["dimensions"]["emotional_impact"] = self._evaluate_emotion(
             events
         )
-        evaluation["dimensions"]["character_depth"] = self._evaluate_characters(events)
-        evaluation["dimensions"]["pacing"] = self._evaluate_pacing(events)
-        evaluation["dimensions"]["creativity"] = self._evaluate_creativity(novel_text)
-        evaluation["dimensions"]["emotional_impact"] = self._evaluate_emotion(events)
 
         # Calculate overall score
         evaluation["overall_score"] = sum(
@@ -931,7 +987,9 @@ class NovelQualityEvaluator:
         score = 70.0
 
         # Check for scene changes
-        scene_changes = [e for e in events if e.event_type == ActionType.SCENE_CHANGE]
+        scene_changes = [
+            e for e in events if e.event_type == ActionType.SCENE_CHANGE
+        ]
         if len(scene_changes) >= 2:
             score += 10
 
@@ -946,7 +1004,9 @@ class NovelQualityEvaluator:
         score = 70.0
 
         # Check character participation
-        characters = set(e.character for e in events if e.character != "Narrator")
+        characters = set(
+            e.character for e in events if e.character != "Narrator"
+        )
         if len(characters) >= 3:
             score += 10
 
@@ -1041,7 +1101,9 @@ async def generate_complete_novel():
         # Generate story blueprint
         print("📐 Designing story structure with Wave Mode enhancements...")
         architect = StoryArchitect()
-        blueprint = architect.design_story_structure(characters, target_length=60)
+        blueprint = architect.design_story_structure(
+            characters, target_length=60
+        )
         print(f"  Theme: {blueprint.theme}")
         print(f"  Central Conflict: {blueprint.central_conflict}")
 
@@ -1053,7 +1115,9 @@ async def generate_complete_novel():
             )
 
         # Initialize event orchestrator
-        event_orchestrator = DynamicEventOrchestrator(blueprint, dialogue_engine)
+        event_orchestrator = DynamicEventOrchestrator(
+            blueprint, dialogue_engine
+        )
 
         # Generate events with orchestration
         print("🎬 Generating orchestrated story events...")
@@ -1174,7 +1238,9 @@ async def generate_complete_novel():
     print("📊 Quality Scores:")
     for dimension, score in evaluation["dimensions"].items():
         bar = "█" * int(score / 10) + "░" * (10 - int(score / 10))
-        print(f"  {dimension.replace('_', ' ').title()}: {bar} {score:.1f}/100")
+        print(
+            f"  {dimension.replace('_', ' ').title()}: {bar} {score:.1f}/100"
+        )
     print()
     print(f"⭐ Overall Score: {evaluation['overall_score']:.1f}/100")
     print()
@@ -1186,7 +1252,9 @@ async def generate_complete_novel():
 if __name__ == "__main__":
     print("🚀 Starting Wave Mode Enhanced Novel Generation...")
     print("🌊 Wave Mode Status: ACTIVE")
-    print("📊 Enhancements: Story Architecture | Dialogue Memory | Event Orchestration")
+    print(
+        "📊 Enhancements: Story Architecture | Dialogue Memory | Event Orchestration"
+    )
     print()
     novel, data, evaluation = asyncio.run(generate_complete_novel())
     print("\n✅ Wave Mode novel generation complete!")

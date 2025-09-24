@@ -20,7 +20,9 @@ class CausalRelationType(Enum):
     DIRECT_CAUSE = "direct_cause"  # A directly causes B
     INDIRECT_CAUSE = "indirect_cause"  # A causes C which causes B
     NECESSARY_CONDITION = "necessary_condition"  # A must happen for B to occur
-    SUFFICIENT_CONDITION = "sufficient_condition"  # A alone is enough to cause B
+    SUFFICIENT_CONDITION = (
+        "sufficient_condition"  # A alone is enough to cause B
+    )
     CONTRIBUTING_FACTOR = "contributing_factor"  # A increases likelihood of B
     PREVENTING_FACTOR = "preventing_factor"  # A decreases likelihood of B
     CATALYST = "catalyst"  # A accelerates B but doesn't cause it
@@ -55,7 +57,9 @@ class CausalNode:
     node_id: str
     event_id: Optional[str] = None  # Reference to specific narrative event
     plot_point_id: Optional[str] = None  # Reference to plot point
-    character_id: Optional[UUID] = None  # Character involved in this causal node
+    character_id: Optional[
+        UUID
+    ] = None  # Character involved in this causal node
 
     # Node description
     title: str = ""
@@ -65,11 +69,17 @@ class CausalNode:
     # Causal relationships
     direct_causes: Set[str] = None  # Node IDs that directly cause this node
     direct_effects: Set[str] = None  # Node IDs directly caused by this node
-    indirect_causes: Set[str] = None  # Node IDs that indirectly cause this node
-    indirect_effects: Set[str] = None  # Node IDs indirectly caused by this node
+    indirect_causes: Set[
+        str
+    ] = None  # Node IDs that indirectly cause this node
+    indirect_effects: Set[
+        str
+    ] = None  # Node IDs indirectly caused by this node
 
     # Relationship metadata
-    causal_relationships: Dict[str, Dict[str, Any]] = None  # Detailed relationship info
+    causal_relationships: Dict[
+        str, Dict[str, Any]
+    ] = None  # Detailed relationship info
 
     # Temporal context
     sequence_order: Optional[int] = None
@@ -83,8 +93,12 @@ class CausalNode:
     is_convergence_point: bool = False  # Multiple causes converge here
 
     # Probability and certainty
-    occurrence_probability: Decimal = Decimal("1.0")  # 0-1, likelihood of occurring
-    causal_certainty: Decimal = Decimal("0.8")  # 0-1, confidence in causal links
+    occurrence_probability: Decimal = Decimal(
+        "1.0"
+    )  # 0-1, likelihood of occurring
+    causal_certainty: Decimal = Decimal(
+        "0.8"
+    )  # 0-1, confidence in causal links
 
     # Impact and importance
     narrative_importance: Decimal = Decimal("5.0")  # 1-10 scale
@@ -92,7 +106,9 @@ class CausalNode:
     story_arc_impact: Decimal = Decimal("5.0")  # 1-10 scale
 
     # Conditions and constraints
-    prerequisite_conditions: Set[str] = None  # Conditions required for this node
+    prerequisite_conditions: Set[
+        str
+    ] = None  # Conditions required for this node
     blocking_conditions: Set[str] = None  # Conditions that prevent this node
 
     # Metadata
@@ -129,7 +145,9 @@ class CausalNode:
             object.__setattr__(self, "tags", set())
 
         if self.creation_timestamp is None:
-            object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
+            object.__setattr__(
+                self, "creation_timestamp", datetime.now(timezone.utc)
+            )
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -143,7 +161,9 @@ class CausalNode:
             raise ValueError("Causal node ID cannot be empty")
 
         if not self.title and not self.description:
-            raise ValueError("Causal node must have either title or description")
+            raise ValueError(
+                "Causal node must have either title or description"
+            )
 
         # Validate probability values (0-1)
         if not (Decimal("0") <= self.occurrence_probability <= Decimal("1")):
@@ -229,7 +249,10 @@ class CausalNode:
 
         # Add complexity for conditions
         complexity_bonus += Decimal(
-            str(len(self.prerequisite_conditions) + len(self.blocking_conditions))
+            str(
+                len(self.prerequisite_conditions)
+                + len(self.blocking_conditions)
+            )
         ) * Decimal("0.5")
 
         return base_complexity + complexity_bonus
@@ -247,7 +270,9 @@ class CausalNode:
 
     def causes_node(self, node_id: str) -> bool:
         """Check if this node causes another node (directly or indirectly)."""
-        return node_id in self.direct_effects or node_id in self.indirect_effects
+        return (
+            node_id in self.direct_effects or node_id in self.indirect_effects
+        )
 
     def caused_by_node(self, node_id: str) -> bool:
         """Check if this node is caused by another node (directly or indirectly)."""
@@ -261,18 +286,24 @@ class CausalNode:
         """Check if this node is directly caused by another node."""
         return node_id in self.direct_causes
 
-    def get_relationship_info(self, other_node_id: str) -> Optional[Dict[str, Any]]:
+    def get_relationship_info(
+        self, other_node_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Get detailed information about relationship with another node."""
         return self.causal_relationships.get(other_node_id)
 
-    def get_relationship_type(self, other_node_id: str) -> Optional[CausalRelationType]:
+    def get_relationship_type(
+        self, other_node_id: str
+    ) -> Optional[CausalRelationType]:
         """Get the type of relationship with another node."""
         rel_info = self.get_relationship_info(other_node_id)
         if rel_info and "relationship_type" in rel_info:
             return CausalRelationType(rel_info["relationship_type"])
         return None
 
-    def get_relationship_strength(self, other_node_id: str) -> Optional[CausalStrength]:
+    def get_relationship_strength(
+        self, other_node_id: str
+    ) -> Optional[CausalStrength]:
         """Get the strength of relationship with another node."""
         rel_info = self.get_relationship_info(other_node_id)
         if rel_info and "strength" in rel_info:

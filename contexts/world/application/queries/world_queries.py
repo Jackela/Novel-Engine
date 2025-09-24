@@ -102,7 +102,8 @@ class GetWorldSlice:
             x is not None for x in [self.center_x, self.center_y, self.radius]
         )
         has_bounds = any(
-            x is not None for x in [self.min_x, self.max_x, self.min_y, self.max_y]
+            x is not None
+            for x in [self.min_x, self.max_x, self.min_y, self.max_y]
         )
 
         if not has_circle and not has_bounds:
@@ -153,12 +154,15 @@ class GetWorldSlice:
 
     def is_circular_query(self) -> bool:
         """Check if this is a circular area query."""
-        return all(x is not None for x in [self.center_x, self.center_y, self.radius])
+        return all(
+            x is not None for x in [self.center_x, self.center_y, self.radius]
+        )
 
     def is_bounded_query(self) -> bool:
         """Check if this is a rectangular bounds query."""
         return any(
-            x is not None for x in [self.min_x, self.max_x, self.min_y, self.max_y]
+            x is not None
+            for x in [self.min_x, self.max_x, self.min_y, self.max_y]
         )
 
 
@@ -283,7 +287,10 @@ class GetWorldSliceQueryHandler:
                 # Get the read model for this world
                 read_model = (
                     session.query(WorldSliceReadModel)
-                    .filter(WorldSliceReadModel.world_state_id == UUID(query.world_id))
+                    .filter(
+                        WorldSliceReadModel.world_state_id
+                        == UUID(query.world_id)
+                    )
                     .first()
                 )
 
@@ -306,7 +313,9 @@ class GetWorldSliceQueryHandler:
                             if query.include_world_summary
                             else None
                         ),
-                        "query_time_ms": (datetime.now() - start_time).total_seconds()
+                        "query_time_ms": (
+                            datetime.now() - start_time
+                        ).total_seconds()
                         * 1000,
                     }
 
@@ -330,7 +339,9 @@ class GetWorldSliceQueryHandler:
                 # Apply pagination
                 total_count = len(entities)
                 if query.limit:
-                    entities = entities[query.offset : query.offset + query.limit]
+                    entities = entities[
+                        query.offset : query.offset + query.limit
+                    ]
                 elif query.offset > 0:
                     entities = entities[query.offset :]
 
@@ -341,7 +352,9 @@ class GetWorldSliceQueryHandler:
                     "entities": entities,
                     "entity_count": len(entities),
                     "total_entities": total_count,
-                    "query_time_ms": (datetime.now() - start_time).total_seconds()
+                    "query_time_ms": (
+                        datetime.now() - start_time
+                    ).total_seconds()
                     * 1000,
                 }
 
@@ -349,7 +362,10 @@ class GetWorldSliceQueryHandler:
                 if query.include_world_summary:
                     response["world_summary"] = read_model.get_world_summary()
 
-                if query.include_environment and read_model.environment_summary:
+                if (
+                    query.include_environment
+                    and read_model.environment_summary
+                ):
                     response["environment"] = read_model.environment_summary
 
                 if query.include_metadata and read_model.world_metadata:
@@ -371,7 +387,8 @@ class GetWorldSliceQueryHandler:
                         "circular" if query.is_circular_query() else "bounded"
                     ),
                     "filtered_by_type": query.entity_types is not None,
-                    "pagination_applied": query.limit is not None or query.offset > 0,
+                    "pagination_applied": query.limit is not None
+                    or query.offset > 0,
                     "world_version": read_model.world_version,
                     "projection_version": read_model.projection_version,
                 }
@@ -417,10 +434,18 @@ class GetWorldSliceQueryHandler:
             )
         else:
             # Check if rectangular bounds intersect
-            query_min_x = query.min_x if query.min_x is not None else float("-inf")
-            query_max_x = query.max_x if query.max_x is not None else float("inf")
-            query_min_y = query.min_y if query.min_y is not None else float("-inf")
-            query_max_y = query.max_y if query.max_y is not None else float("inf")
+            query_min_x = (
+                query.min_x if query.min_x is not None else float("-inf")
+            )
+            query_max_x = (
+                query.max_x if query.max_x is not None else float("inf")
+            )
+            query_min_y = (
+                query.min_y if query.min_y is not None else float("-inf")
+            )
+            query_max_y = (
+                query.max_y if query.max_y is not None else float("inf")
+            )
 
             return not (
                 query_max_x < read_model.min_x
@@ -442,7 +467,10 @@ class GetWorldSummaryQueryHandler:
             with get_db_session() as session:
                 read_model = (
                     session.query(WorldSliceReadModel)
-                    .filter(WorldSliceReadModel.world_state_id == UUID(query.world_id))
+                    .filter(
+                        WorldSliceReadModel.world_state_id
+                        == UUID(query.world_id)
+                    )
                     .first()
                 )
 
@@ -456,8 +484,13 @@ class GetWorldSummaryQueryHandler:
                 summary = read_model.get_world_summary()
 
                 # Add optional details
-                if query.include_entity_details and read_model.entity_type_counts:
-                    summary["entity_type_details"] = read_model.entity_type_counts
+                if (
+                    query.include_entity_details
+                    and read_model.entity_type_counts
+                ):
+                    summary[
+                        "entity_type_details"
+                    ] = read_model.entity_type_counts
 
                 if not query.include_spatial_bounds:
                     summary.pop("spatial_bounds", None)
@@ -481,7 +514,10 @@ class GetEntitiesInAreaQueryHandler:
             with get_db_session() as session:
                 read_model = (
                     session.query(WorldSliceReadModel)
-                    .filter(WorldSliceReadModel.world_state_id == UUID(query.world_id))
+                    .filter(
+                        WorldSliceReadModel.world_state_id
+                        == UUID(query.world_id)
+                    )
                     .first()
                 )
 
@@ -502,7 +538,9 @@ class GetEntitiesInAreaQueryHandler:
                 # Apply pagination
                 total_count = len(entities)
                 if query.limit:
-                    entities = entities[query.offset : query.offset + query.limit]
+                    entities = entities[
+                        query.offset : query.offset + query.limit
+                    ]
                 elif query.offset > 0:
                     entities = entities[query.offset :]
 
@@ -520,7 +558,9 @@ class GetEntitiesInAreaQueryHandler:
                 }
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Database error in GetEntitiesInArea query: {e}")
+            self.logger.error(
+                f"Database error in GetEntitiesInArea query: {e}"
+            )
             raise QueryExecutionException(f"Database error: {e}")
 
 
@@ -536,7 +576,10 @@ class GetEntitiesByTypeQueryHandler:
             with get_db_session() as session:
                 read_model = (
                     session.query(WorldSliceReadModel)
-                    .filter(WorldSliceReadModel.world_state_id == UUID(query.world_id))
+                    .filter(
+                        WorldSliceReadModel.world_state_id
+                        == UUID(query.world_id)
+                    )
                     .first()
                 )
 
@@ -552,7 +595,9 @@ class GetEntitiesByTypeQueryHandler:
                 # Apply pagination
                 total_count = len(entities)
                 if query.limit:
-                    entities = entities[query.offset : query.offset + query.limit]
+                    entities = entities[
+                        query.offset : query.offset + query.limit
+                    ]
                 elif query.offset > 0:
                     entities = entities[query.offset :]
 
@@ -571,7 +616,9 @@ class GetEntitiesByTypeQueryHandler:
                 }
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Database error in GetEntitiesByType query: {e}")
+            self.logger.error(
+                f"Database error in GetEntitiesByType query: {e}"
+            )
             raise QueryExecutionException(f"Database error: {e}")
 
 
@@ -592,11 +639,14 @@ class SearchWorldsQueryHandler:
 
                 if query.status_filter:
                     search_filter = and_(
-                        search_filter, WorldSliceReadModel.status == query.status_filter
+                        search_filter,
+                        WorldSliceReadModel.status == query.status_filter,
                     )
 
                 # Execute query with pagination
-                worlds_query = session.query(WorldSliceReadModel).filter(search_filter)
+                worlds_query = session.query(WorldSliceReadModel).filter(
+                    search_filter
+                )
 
                 total_count = worlds_query.count()
 
@@ -616,7 +666,9 @@ class SearchWorldsQueryHandler:
                         "description": world.world_description,
                         "status": world.status,
                         "world_time": (
-                            world.world_time.isoformat() if world.world_time else None
+                            world.world_time.isoformat()
+                            if world.world_time
+                            else None
                         ),
                     }
 

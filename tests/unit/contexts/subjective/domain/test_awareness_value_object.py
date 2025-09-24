@@ -37,7 +37,10 @@ class TestAwarenessStateCreation:
 
     def test_full_awareness_state_creation(self):
         """Test creating awareness state with all fields populated."""
-        modifiers = {AwarenessModifier.TRAINING: 0.3, AwarenessModifier.FATIGUE: -0.4}
+        modifiers = {
+            AwarenessModifier.TRAINING: 0.3,
+            AwarenessModifier.FATIGUE: -0.4,
+        }
 
         state = AwarenessState(
             base_alertness=AlertnessLevel.ALERT,
@@ -99,7 +102,9 @@ class TestAwarenessStateValidation:
 
     def test_invalid_modifier_value_type(self):
         """Test validation fails with non-numeric modifier value."""
-        with pytest.raises(ValueError, match="Modifier value .* must be numeric"):
+        with pytest.raises(
+            ValueError, match="Modifier value .* must be numeric"
+        ):
             AwarenessState(
                 base_alertness=AlertnessLevel.RELAXED,
                 current_alertness=AlertnessLevel.RELAXED,
@@ -445,7 +450,9 @@ class TestPerceptionBonus:
         )
 
         bonus = state.get_perception_bonus()
-        assert bonus == 0.31  # Environmental focus bonus (updated for better balance)
+        assert (
+            bonus == 0.31
+        )  # Environmental focus bonus (updated for better balance)
 
     def test_combined_alertness_and_focus_bonus(self):
         """Test combining high alertness with threat scanning focus."""
@@ -456,7 +463,9 @@ class TestPerceptionBonus:
         )
 
         bonus = state.get_perception_bonus()
-        assert bonus == 1.05  # 0.6 (vigilant) + 0.45 (threat scanning) = 1.05 (updated)
+        assert (
+            bonus == 1.05
+        )  # 0.6 (vigilant) + 0.45 (threat scanning) = 1.05 (updated)
 
 
 class TestReactionTimeModifier:
@@ -587,7 +596,9 @@ class TestStealthDetection:
                 attention_focus=AttentionFocus.UNFOCUSED,
             )
 
-            assert state.can_detect_stealth(), f"{alertness} should detect stealth"
+            assert (
+                state.can_detect_stealth()
+            ), f"{alertness} should detect stealth"
 
     def test_low_alertness_cannot_detect_stealth_normally(self):
         """Test low alertness without special focus cannot detect stealth."""
@@ -748,10 +759,14 @@ class TestImmutableOperations:
             awareness_modifiers={AwarenessModifier.TRAINING: 0.3},
         )
 
-        modified = original.with_added_modifier(AwarenessModifier.CONFIDENCE, 0.5)
+        modified = original.with_added_modifier(
+            AwarenessModifier.CONFIDENCE, 0.5
+        )
 
         # Original unchanged
-        assert original.awareness_modifiers == {AwarenessModifier.TRAINING: 0.3}
+        assert original.awareness_modifiers == {
+            AwarenessModifier.TRAINING: 0.3
+        }
 
         # New instance has changes
         expected_modifiers = {
@@ -772,10 +787,14 @@ class TestImmutableOperations:
             awareness_modifiers={AwarenessModifier.TRAINING: 0.3},
         )
 
-        modified = original.with_added_modifier(AwarenessModifier.TRAINING, 0.7)
+        modified = original.with_added_modifier(
+            AwarenessModifier.TRAINING, 0.7
+        )
 
         # Should overwrite, not add
-        assert modified.awareness_modifiers == {AwarenessModifier.TRAINING: 0.7}
+        assert modified.awareness_modifiers == {
+            AwarenessModifier.TRAINING: 0.7
+        }
 
 
 class TestComplexScenarios:
@@ -843,7 +862,9 @@ class TestComplexScenarios:
         assert effective_alertness == AlertnessLevel.PARANOID
 
         # Excellent perception
-        assert perception_bonus >= 1.0  # High bonus from alertness + threat scanning
+        assert (
+            perception_bonus >= 1.0
+        )  # High bonus from alertness + threat scanning
 
         # Very fast reactions
         assert reaction_modifier < 1.0  # Faster than normal
@@ -868,7 +889,9 @@ class TestComplexScenarios:
             stress_level=0.95,  # Extreme stress
         )
 
-        effective_alertness = terrified_civilian.calculate_effective_alertness()
+        effective_alertness = (
+            terrified_civilian.calculate_effective_alertness()
+        )
         perception_bonus = terrified_civilian.get_perception_bonus()
         reaction_modifier = terrified_civilian.get_reaction_time_modifier()
 
@@ -886,7 +909,10 @@ class TestComplexScenarios:
         assert reaction_modifier > 1.5
 
         # Unlikely to detect stealth
-        if effective_alertness in [AlertnessLevel.SLEEPING, AlertnessLevel.DROWSY]:
+        if effective_alertness in [
+            AlertnessLevel.SLEEPING,
+            AlertnessLevel.DROWSY,
+        ]:
             assert not terrified_civilian.can_detect_stealth()
 
     def test_focused_researcher_scenario(self):
@@ -903,11 +929,16 @@ class TestComplexScenarios:
             stress_level=0.4,
         )
 
-        effective_alertness = focused_researcher.calculate_effective_alertness()
+        effective_alertness = (
+            focused_researcher.calculate_effective_alertness()
+        )
         perception_bonus = focused_researcher.get_perception_bonus()
 
         # Should maintain good alertness
-        assert effective_alertness in [AlertnessLevel.RELAXED, AlertnessLevel.ALERT]
+        assert effective_alertness in [
+            AlertnessLevel.RELAXED,
+            AlertnessLevel.ALERT,
+        ]
 
         # Reduced perception due to task focus
         perception_without_task_penalty = (
@@ -919,11 +950,17 @@ class TestComplexScenarios:
         )  # But reduced due to focus
 
         # Poor stealth detection due to task focus
-        if effective_alertness in [AlertnessLevel.RELAXED, AlertnessLevel.DROWSY]:
+        if effective_alertness in [
+            AlertnessLevel.RELAXED,
+            AlertnessLevel.DROWSY,
+        ]:
             assert not focused_researcher.can_detect_stealth()
 
         # More likely to be surprised due to task focus
-        if effective_alertness in [AlertnessLevel.RELAXED, AlertnessLevel.DROWSY]:
+        if effective_alertness in [
+            AlertnessLevel.RELAXED,
+            AlertnessLevel.DROWSY,
+        ]:
             assert focused_researcher.is_surprised_by_combat()
 
 
@@ -1079,7 +1116,9 @@ class TestEquality:
             base_alertness=AlertnessLevel.ALERT,
             current_alertness=AlertnessLevel.ALERT,
             attention_focus=AttentionFocus.UNFOCUSED,
-            awareness_modifiers={AwarenessModifier.TRAINING: 0.5},  # Different value
+            awareness_modifiers={
+                AwarenessModifier.TRAINING: 0.5
+            },  # Different value
         )
 
         assert state1 != state2

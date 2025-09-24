@@ -29,11 +29,19 @@ def test_world_router_import():
 
         # Check route paths
         route_paths = [route.path for route in router.routes]
-        expected_endpoints = ["delta", "slice", "summary", "history", "validate"]
+        expected_endpoints = [
+            "delta",
+            "slice",
+            "summary",
+            "history",
+            "validate",
+        ]
 
         found_endpoints = []
         for endpoint in expected_endpoints:
-            matching_routes = [path for path in route_paths if endpoint in path]
+            matching_routes = [
+                path for path in route_paths if endpoint in path
+            ]
             if matching_routes:
                 found_endpoints.append(endpoint)
                 print(f"✅ Found {endpoint} endpoint")
@@ -101,7 +109,9 @@ def test_character_domain_direct():
         )
 
         character.heal(3)
-        print(f"✅ Healing applied: -> {character.stats.vital_stats.current_health}")
+        print(
+            f"✅ Healing applied: -> {character.stats.vital_stats.current_health}"
+        )
 
         character.level_up()
         print(f"✅ Leveled up to: {character.profile.level}")

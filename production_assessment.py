@@ -78,7 +78,6 @@ def assess_production_readiness():
         # Wave 2: Architecture Consolidation
         print("\nWave 2 - Architecture Consolidation:")
         try:
-
             print("  ✅ API server: READY")
             print("  ✅ Configuration system: WORKING")
             print("  ✅ Error handling: IMPLEMENTED")
@@ -145,7 +144,9 @@ def assess_production_readiness():
         # Wave 4: Advanced Features & Intelligence
         print("\nWave 4 - Advanced Features & Intelligence:")
         try:
-            from src.ai_intelligence.ai_orchestrator import AIIntelligenceOrchestrator
+            from src.ai_intelligence.ai_orchestrator import (
+                AIIntelligenceOrchestrator,
+            )
 
             AIIntelligenceOrchestrator(event_bus)
 
@@ -215,7 +216,9 @@ def assess_production_readiness():
             if "score" in wave_data:
                 wave_scores.append(wave_data["score"])
 
-        overall_score = sum(wave_scores) / len(wave_scores) if wave_scores else 0
+        overall_score = (
+            sum(wave_scores) / len(wave_scores) if wave_scores else 0
+        )
 
         print(f"Overall System Score: {overall_score:.1f}%")
 

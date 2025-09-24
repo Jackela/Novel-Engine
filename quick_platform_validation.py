@@ -492,7 +492,9 @@ class QuickPlatformValidator:
                 "status": (
                     "healthy"
                     if passed == total
-                    else "degraded" if passed > 0 else "unhealthy"
+                    else "degraded"
+                    if passed > 0
+                    else "unhealthy"
                 ),
             }
 
@@ -514,12 +516,15 @@ class QuickPlatformValidator:
                 "tests_passed": passed_tests,
                 "tests_failed": failed_tests,
                 "success_rate": (
-                    (passed_tests / total_tests) * 100 if total_tests > 0 else 0
+                    (passed_tests / total_tests) * 100
+                    if total_tests > 0
+                    else 0
                 ),
                 "duration_ms": total_duration,
             },
             "components": component_summary,
-            "platform_ready": overall_status != "unhealthy" and passed_tests > 0,
+            "platform_ready": overall_status != "unhealthy"
+            and passed_tests > 0,
             "detailed_results": self.results,
         }
 

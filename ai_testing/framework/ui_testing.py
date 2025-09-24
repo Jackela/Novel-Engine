@@ -16,10 +16,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 # Import AI testing contracts
-from ai_testing.interfaces.service_contracts import (
-    TestContext,
-    UITestSpec,
-)
+from ai_testing.interfaces.service_contracts import TestContext, UITestSpec
 
 # Import Novel-Engine patterns
 from PIL import Image, ImageChops
@@ -41,7 +38,10 @@ class VisualDiff:
         self.threshold = threshold
 
     def compare_images(
-        self, image1_path: str, image2_path: str, output_diff_path: Optional[str] = None
+        self,
+        image1_path: str,
+        image2_path: str,
+        output_diff_path: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Compare two images and return difference metrics"""
 
@@ -56,8 +56,12 @@ class VisualDiff:
                 max_width = max(img1.width, img2.width)
                 max_height = max(img1.height, img2.height)
 
-                img1 = img1.resize((max_width, max_height), Image.Resampling.LANCZOS)
-                img2 = img2.resize((max_width, max_height), Image.Resampling.LANCZOS)
+                img1 = img1.resize(
+                    (max_width, max_height), Image.Resampling.LANCZOS
+                )
+                img2 = img2.resize(
+                    (max_width, max_height), Image.Resampling.LANCZOS
+                )
 
             # Calculate pixel difference
             diff_img = ImageChops.difference(img1, img2)
@@ -96,7 +100,11 @@ class VisualDiff:
 
         except Exception as e:
             logger.error(f"Image comparison failed: {e}")
-            return {"images_match": False, "diff_percentage": 100.0, "error": str(e)}
+            return {
+                "images_match": False,
+                "diff_percentage": 100.0,
+                "error": str(e),
+            }
 
 
 class ResponsiveTestSuite:
@@ -104,7 +112,10 @@ class ResponsiveTestSuite:
 
     VIEWPORT_PRESETS = {
         "mobile_portrait": {"width": 375, "height": 667},  # iPhone SE
-        "mobile_landscape": {"width": 667, "height": 375},  # iPhone SE landscape
+        "mobile_landscape": {
+            "width": 667,
+            "height": 375,
+        },  # iPhone SE landscape
         "tablet_portrait": {"width": 768, "height": 1024},  # iPad
         "tablet_landscape": {"width": 1024, "height": 768},  # iPad landscape
         "desktop_small": {"width": 1280, "height": 720},  # HD
@@ -114,7 +125,9 @@ class ResponsiveTestSuite:
     }
 
     def __init__(self):
-        self.visual_diff = VisualDiff(threshold=0.05)  # Stricter for responsive testing
+        self.visual_diff = VisualDiff(
+            threshold=0.05
+        )  # Stricter for responsive testing
 
     async def test_responsive_design(
         self,
@@ -150,12 +163,16 @@ class ResponsiveTestSuite:
 
             try:
                 # Set viewport
-                await page.set_viewport_size(viewport["width"], viewport["height"])
+                await page.set_viewport_size(
+                    viewport["width"], viewport["height"]
+                )
                 await page.goto(page_url)
                 await page.wait_for_load_state("networkidle")
 
                 # Test responsive layout
-                layout_result = await self._test_viewport_layout(page, viewport_name)
+                layout_result = await self._test_viewport_layout(
+                    page, viewport_name
+                )
                 results["viewport_tests"][viewport_name] = layout_result
                 layout_scores.append(layout_result["layout_score"])
 
@@ -170,7 +187,9 @@ class ResponsiveTestSuite:
                 logger.info(f"Responsive test completed for {viewport_name}")
 
             except Exception as e:
-                logger.error(f"Responsive test failed for {viewport_name}: {e}")
+                logger.error(
+                    f"Responsive test failed for {viewport_name}: {e}"
+                )
                 results["viewport_tests"][viewport_name] = {
                     "layout_score": 0.0,
                     "error": str(e),
@@ -184,7 +203,9 @@ class ResponsiveTestSuite:
         results["screenshots"] = screenshots
 
         # Generate recommendations
-        results["recommendations"] = self._generate_responsive_recommendations(results)
+        results["recommendations"] = self._generate_responsive_recommendations(
+            results
+        )
 
         return results
 
@@ -205,7 +226,7 @@ class ResponsiveTestSuite:
                     touch_targets: 0,
                     readable_text: true
                 };
-                
+
                 // Check images
                 const images = document.querySelectorAll('img');
                 images.forEach(img => {
@@ -214,24 +235,24 @@ class ResponsiveTestSuite:
                         results.responsive_images++;
                     }
                 });
-                
+
                 // Check for fixed width elements
                 const allElements = document.querySelectorAll('*');
                 allElements.forEach(el => {
                     const style = window.getComputedStyle(el);
-                    
+
                     // Check for fixed widths
-                    if (style.width && style.width.includes('px') && 
+                    if (style.width && style.width.includes('px') &&
                         parseInt(style.width) > window.innerWidth) {
                         results.fixed_width_elements++;
                     }
-                    
+
                     // Check for overflow
                     if (style.overflow === 'hidden' && el.scrollWidth > el.clientWidth) {
                         results.overflow_elements++;
                     }
                 });
-                
+
                 // Check touch targets (buttons, links)
                 const touchTargets = document.querySelectorAll('button, a, input[type="submit"]');
                 touchTargets.forEach(target => {
@@ -240,7 +261,7 @@ class ResponsiveTestSuite:
                         results.touch_targets++;
                     }
                 });
-                
+
                 // Check text readability
                 const textElements = document.querySelectorAll('p, span, div, h1, h2, h3, h4, h5, h6');
                 let readableTextCount = 0;
@@ -251,11 +272,11 @@ class ResponsiveTestSuite:
                         readableTextCount++;
                     }
                 });
-                
+
                 results.readable_text = readableTextCount / Math.max(textElements.length, 1) > 0.8;
                 results.total_images = images.length;
                 results.total_touch_targets = touchTargets.length;
-                
+
                 return results;
             }
         """
@@ -265,15 +286,20 @@ class ResponsiveTestSuite:
         score_factors = []
 
         # No horizontal scroll (critical)
-        score_factors.append(0.0 if layout_checks["horizontal_scroll"] else 1.0)
+        score_factors.append(
+            0.0 if layout_checks["horizontal_scroll"] else 1.0
+        )
 
         # Viewport meta tag present
-        score_factors.append(1.0 if layout_checks["viewport_meta_tag"] else 0.5)
+        score_factors.append(
+            1.0 if layout_checks["viewport_meta_tag"] else 0.5
+        )
 
         # Responsive images ratio
         if layout_checks["total_images"] > 0:
             responsive_ratio = (
-                layout_checks["responsive_images"] / layout_checks["total_images"]
+                layout_checks["responsive_images"]
+                / layout_checks["total_images"]
             )
             score_factors.append(responsive_ratio)
         else:
@@ -285,7 +311,8 @@ class ResponsiveTestSuite:
             and layout_checks["total_touch_targets"] > 0
         ):
             touch_ratio = (
-                layout_checks["touch_targets"] / layout_checks["total_touch_targets"]
+                layout_checks["touch_targets"]
+                / layout_checks["total_touch_targets"]
             )
             score_factors.append(touch_ratio)
         else:
@@ -295,7 +322,9 @@ class ResponsiveTestSuite:
         score_factors.append(1.0 if layout_checks["readable_text"] else 0.7)
 
         # Fixed width elements penalty
-        fixed_width_penalty = min(layout_checks["fixed_width_elements"] * 0.1, 0.5)
+        fixed_width_penalty = min(
+            layout_checks["fixed_width_elements"] * 0.1, 0.5
+        )
         score_factors.append(1.0 - fixed_width_penalty)
 
         layout_score = statistics.mean(score_factors)
@@ -304,7 +333,9 @@ class ResponsiveTestSuite:
             "layout_score": layout_score,
             "layout_checks": layout_checks,
             "score_factors": score_factors,
-            "issues": self._identify_layout_issues(layout_checks, viewport_name),
+            "issues": self._identify_layout_issues(
+                layout_checks, viewport_name
+            ),
         }
 
     def _identify_layout_issues(
@@ -321,10 +352,13 @@ class ResponsiveTestSuite:
 
         if layout_checks["total_images"] > 0:
             responsive_ratio = (
-                layout_checks["responsive_images"] / layout_checks["total_images"]
+                layout_checks["responsive_images"]
+                / layout_checks["total_images"]
             )
             if responsive_ratio < 0.8:
-                issues.append(f"Only {responsive_ratio:.1%} of images are responsive")
+                issues.append(
+                    f"Only {responsive_ratio:.1%} of images are responsive"
+                )
 
         if layout_checks["fixed_width_elements"] > 0:
             issues.append(
@@ -355,16 +389,22 @@ class ResponsiveTestSuite:
 
         # Overall score recommendations
         if results["responsive_score"] < 0.7:
-            recommendations.append("Responsive design needs significant improvement")
+            recommendations.append(
+                "Responsive design needs significant improvement"
+            )
         elif results["responsive_score"] < 0.9:
             recommendations.append(
                 "Responsive design is good but has room for improvement"
             )
         else:
-            recommendations.append("Excellent responsive design implementation")
+            recommendations.append(
+                "Excellent responsive design implementation"
+            )
 
         # Specific viewport recommendations
-        for viewport_name, viewport_result in results["viewport_tests"].items():
+        for viewport_name, viewport_result in results[
+            "viewport_tests"
+        ].items():
             if "error" in viewport_result:
                 recommendations.append(
                     f"{viewport_name}: Test failed - {viewport_result['error']}"
@@ -421,25 +461,35 @@ class InteractionTestSuite:
             results["input_tests"][form_id] = input_result
 
             # Test form validation
-            validation_result = await self._test_form_validation(page, form, form_id)
+            validation_result = await self._test_form_validation(
+                page, form, form_id
+            )
             results["validation_tests"][form_id] = validation_result
 
             # Test form submission
-            submission_result = await self._test_form_submission(page, form, form_id)
+            submission_result = await self._test_form_submission(
+                page, form, form_id
+            )
             results["submission_tests"][form_id] = submission_result
 
         # Calculate scores
-        results["accessibility_score"] = self._calculate_form_accessibility_score(
+        results[
+            "accessibility_score"
+        ] = self._calculate_form_accessibility_score(results)
+        results["usability_score"] = self._calculate_form_usability_score(
             results
         )
-        results["usability_score"] = self._calculate_form_usability_score(results)
 
         # Generate recommendations
-        results["recommendations"] = self._generate_form_recommendations(results)
+        results["recommendations"] = self._generate_form_recommendations(
+            results
+        )
 
         return results
 
-    async def _test_form_inputs(self, page: Page, form, form_id: str) -> Dict[str, Any]:
+    async def _test_form_inputs(
+        self, page: Page, form, form_id: str
+    ) -> Dict[str, Any]:
         """Test form input interactions"""
 
         input_result = {
@@ -458,7 +508,9 @@ class InteractionTestSuite:
         for input_element in inputs:
             try:
                 # Check accessibility
-                input_type = await input_element.get_attribute("type") or "text"
+                input_type = (
+                    await input_element.get_attribute("type") or "text"
+                )
                 input_result["input_types"][input_type] = (
                     input_result["input_types"].get(input_type, 0) + 1
                 )
@@ -473,7 +525,9 @@ class InteractionTestSuite:
                 # Check for label
                 input_id = await input_element.get_attribute("id")
                 if input_id:
-                    label = await page.locator(f"label[for='{input_id}']").count()
+                    label = await page.locator(
+                        f"label[for='{input_id}']"
+                    ).count()
                     if label > 0:
                         input_result["inputs_with_labels"] += 1
 
@@ -529,7 +583,9 @@ class InteractionTestSuite:
                     validation_messages = await page.locator(
                         ".error, .invalid, [aria-invalid='true']"
                     ).count()
-                    validation_result["validation_messages"] = validation_messages
+                    validation_result[
+                        "validation_messages"
+                    ] = validation_messages
                     validation_result["client_side_validation"] = (
                         validation_messages > 0
                     )
@@ -565,26 +621,36 @@ class InteractionTestSuite:
 
         return submission_result
 
-    def _calculate_form_accessibility_score(self, results: Dict[str, Any]) -> float:
+    def _calculate_form_accessibility_score(
+        self, results: Dict[str, Any]
+    ) -> float:
         """Calculate form accessibility score"""
         scores = []
 
         for form_result in results["input_tests"].values():
             if form_result["inputs_found"] > 0:
                 label_ratio = (
-                    form_result["inputs_with_labels"] / form_result["inputs_found"]
+                    form_result["inputs_with_labels"]
+                    / form_result["inputs_found"]
                 )
                 accessible_ratio = (
-                    form_result["inputs_accessible"] / form_result["inputs_found"]
+                    form_result["inputs_accessible"]
+                    / form_result["inputs_found"]
                 )
-                keyboard_score = 1.0 if form_result["keyboard_navigation"] else 0.0
+                keyboard_score = (
+                    1.0 if form_result["keyboard_navigation"] else 0.0
+                )
 
-                form_score = (label_ratio + accessible_ratio + keyboard_score) / 3
+                form_score = (
+                    label_ratio + accessible_ratio + keyboard_score
+                ) / 3
                 scores.append(form_score)
 
         return statistics.mean(scores) if scores else 1.0
 
-    def _calculate_form_usability_score(self, results: Dict[str, Any]) -> float:
+    def _calculate_form_usability_score(
+        self, results: Dict[str, Any]
+    ) -> float:
         """Calculate form usability score"""
         scores = []
 
@@ -609,7 +675,9 @@ class InteractionTestSuite:
 
         return statistics.mean(scores) if scores else 1.0
 
-    def _generate_form_recommendations(self, results: Dict[str, Any]) -> List[str]:
+    def _generate_form_recommendations(
+        self, results: Dict[str, Any]
+    ) -> List[str]:
         """Generate form testing recommendations"""
         recommendations = []
 
@@ -640,7 +708,9 @@ class InteractionTestSuite:
         if results["usability_score"] < 0.8:
             recommendations.append("Form usability could be enhanced")
 
-            for form_id, validation_result in results["validation_tests"].items():
+            for form_id, validation_result in results[
+                "validation_tests"
+            ].items():
                 if not validation_result["client_side_validation"]:
                     recommendations.append(
                         f"{form_id}: Add client-side validation for better UX"
@@ -670,7 +740,9 @@ class UITestingFramework:
         self.event_bus = EventBus()
 
         # Initialize testing suites
-        self.visual_diff = VisualDiff(threshold=config.get("visual_threshold", 0.1))
+        self.visual_diff = VisualDiff(
+            threshold=config.get("visual_threshold", 0.1)
+        )
         self.responsive_suite = ResponsiveTestSuite()
         self.interaction_suite = InteractionTestSuite()
 
@@ -678,7 +750,9 @@ class UITestingFramework:
         self.screenshots_dir = Path(
             config.get("screenshots_dir", "ai_testing/screenshots")
         )
-        self.baseline_dir = Path(config.get("baseline_dir", "ai_testing/baselines"))
+        self.baseline_dir = Path(
+            config.get("baseline_dir", "ai_testing/baselines")
+        )
 
         # Ensure directories exist
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
@@ -715,29 +789,33 @@ class UITestingFramework:
 
             # Visual regression testing
             if test_spec.screenshot_comparison:
-                results["visual_regression"] = await self._run_visual_regression_test(
+                results[
+                    "visual_regression"
+                ] = await self._run_visual_regression_test(
                     page, test_spec.page_url, test_spec.visual_threshold
                 )
 
             # Responsive design testing
-            results["responsive_design"] = (
-                await self.responsive_suite.test_responsive_design(
-                    page, test_spec.page_url
-                )
+            results[
+                "responsive_design"
+            ] = await self.responsive_suite.test_responsive_design(
+                page, test_spec.page_url
             )
 
             # Interaction testing
-            results["interaction_testing"] = (
-                await self.interaction_suite.test_form_interactions(page)
-            )
+            results[
+                "interaction_testing"
+            ] = await self.interaction_suite.test_form_interactions(page)
 
             # Calculate overall score
-            results["overall_score"] = self._calculate_overall_ui_score(results)
-
-            # Generate comprehensive recommendations
-            results["recommendations"] = self._generate_comprehensive_recommendations(
+            results["overall_score"] = self._calculate_overall_ui_score(
                 results
             )
+
+            # Generate comprehensive recommendations
+            results[
+                "recommendations"
+            ] = self._generate_comprehensive_recommendations(results)
 
             logger.info(
                 f"Comprehensive UI test completed in {time.time() - start_time:.2f}s"
@@ -774,7 +852,9 @@ class UITestingFramework:
         # Execute assertions
         for i, assertion in enumerate(test_spec.assertions):
             try:
-                assertion_passed = await self._execute_assertion(page, assertion)
+                assertion_passed = await self._execute_assertion(
+                    page, assertion
+                )
                 if assertion_passed:
                     results["assertions_passed"] += 1
             except Exception as e:
@@ -800,11 +880,15 @@ class UITestingFramework:
         screenshot_name = f"visual_test_{url_hash}"
 
         # Capture current screenshot
-        current_screenshot = self.screenshots_dir / f"{screenshot_name}_current.png"
+        current_screenshot = (
+            self.screenshots_dir / f"{screenshot_name}_current.png"
+        )
         await page.screenshot(path=str(current_screenshot), full_page=True)
 
         # Check for baseline
-        baseline_screenshot = self.baseline_dir / f"{screenshot_name}_baseline.png"
+        baseline_screenshot = (
+            self.baseline_dir / f"{screenshot_name}_baseline.png"
+        )
 
         if not baseline_screenshot.exists():
             # Create baseline
@@ -830,7 +914,9 @@ class UITestingFramework:
             "diff_percentage": comparison_result["diff_percentage"],
             "baseline_path": str(baseline_screenshot),
             "current_path": str(current_screenshot),
-            "diff_path": str(diff_path) if comparison_result["images_match"] else None,
+            "diff_path": str(diff_path)
+            if comparison_result["images_match"]
+            else None,
             "comparison_details": comparison_result,
         }
 
@@ -853,7 +939,9 @@ class UITestingFramework:
         else:
             raise ValueError(f"Unknown action type: {action_type}")
 
-    async def _execute_assertion(self, page: Page, assertion: Dict[str, Any]) -> bool:
+    async def _execute_assertion(
+        self, page: Page, assertion: Dict[str, Any]
+    ) -> bool:
         """Execute UI assertion"""
         assertion_type = assertion["type"]
         selector = assertion.get("selector")
@@ -890,18 +978,24 @@ class UITestingFramework:
         # Visual regression score
         if results.get("visual_regression"):
             visual_result = results["visual_regression"]
-            visual_score = 1.0 if visual_result.get("visual_match", False) else 0.5
+            visual_score = (
+                1.0 if visual_result.get("visual_match", False) else 0.5
+            )
             scores.append(visual_score)
 
         # Responsive design score
         if results.get("responsive_design"):
-            responsive_score = results["responsive_design"].get("responsive_score", 0.0)
+            responsive_score = results["responsive_design"].get(
+                "responsive_score", 0.0
+            )
             scores.append(responsive_score)
 
         # Interaction testing score
         if results.get("interaction_testing"):
             interaction_result = results["interaction_testing"]
-            accessibility_score = interaction_result.get("accessibility_score", 1.0)
+            accessibility_score = interaction_result.get(
+                "accessibility_score", 1.0
+            )
             usability_score = interaction_result.get("usability_score", 1.0)
             interaction_score = (accessibility_score + usability_score) / 2
             scores.append(interaction_score)
@@ -938,12 +1032,16 @@ class UITestingFramework:
         # Responsive design recommendations
         if results.get("responsive_design"):
             responsive_result = results["responsive_design"]
-            recommendations.extend(responsive_result.get("recommendations", []))
+            recommendations.extend(
+                responsive_result.get("recommendations", [])
+            )
 
         # Interaction testing recommendations
         if results.get("interaction_testing"):
             interaction_result = results["interaction_testing"]
-            recommendations.extend(interaction_result.get("recommendations", []))
+            recommendations.extend(
+                interaction_result.get("recommendations", [])
+            )
 
         # Overall recommendations
         overall_score = results.get("overall_score", 0.0)

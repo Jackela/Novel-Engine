@@ -35,7 +35,10 @@ def check_dependencies():
     if not node_modules.exists():
         print("WARN: node_modules不存在，尝试安装依赖...")
         result = subprocess.run(
-            ["npm", "install"], cwd=frontend_dir, capture_output=True, text=True
+            ["npm", "install"],
+            cwd=frontend_dir,
+            capture_output=True,
+            text=True,
         )
         if result.returncode != 0:
             print(f"ERROR: npm install失败: {result.stderr}")
@@ -130,10 +133,10 @@ import { test, expect } from '@playwright/test';
 test('基础页面加载测试', async ({ page }) => {
   // 访问主页
   await page.goto('/');
-  
+
   // 检查页面标题
   await expect(page).toHaveTitle(/StoryForge/i);
-  
+
   // 检查是否有主要内容
   const body = await page.locator('body');
   await expect(body).toBeVisible();
@@ -142,10 +145,10 @@ test('基础页面加载测试', async ({ page }) => {
 test('API连接测试', async ({ page }) => {
   // 访问主页
   await page.goto('/');
-  
+
   // 等待页面加载
   await page.waitForTimeout(2000);
-  
+
   // 检查是否有API错误信息
   const errorMessages = await page.locator('.error, [class*="error"], [data-testid="error"]').count();
   expect(errorMessages).toBeLessThanOrEqual(0);
@@ -154,10 +157,10 @@ test('API连接测试', async ({ page }) => {
 test('字符选择功能测试', async ({ page }) => {
   // 访问主页
   await page.goto('/');
-  
+
   // 等待页面加载
   await page.waitForTimeout(3000);
-  
+
   // 尝试查找字符选择相关元素
   const characterElements = await page.locator('[class*="character"], [data-testid*="character"], button').count();
   expect(characterElements).toBeGreaterThan(0);
@@ -176,7 +179,13 @@ test('字符选择功能测试', async ({ page }) => {
     print("2. 运行Playwright测试...")
 
     test_result = subprocess.run(
-        ["npx", "playwright", "test", "--reporter=json", "--output-dir=test-results"],
+        [
+            "npx",
+            "playwright",
+            "test",
+            "--reporter=json",
+            "--output-dir=test-results",
+        ],
         cwd=frontend_dir,
         capture_output=True,
         text=True,
@@ -201,9 +210,7 @@ test('字符选择功能测试', async ({ page }) => {
             with open(test_results_file, "r", encoding="utf-8") as f:
                 test_data = json.load(f)
                 results["test_data"] = test_data
-                print(
-                    f"OK: 找到测试结果数据 - {len(test_data.get('tests', []))} 个测试"
-                )
+                print(f"OK: 找到测试结果数据 - {len(test_data.get('tests', []))} 个测试")
         except Exception as e:
             print(f"WARN: 无法解析测试结果: {e}")
 
@@ -236,7 +243,10 @@ test('页面截图', async ({ page }) => {
         screenshot_path = frontend_dir / "test-results" / "page-screenshot.png"
         if screenshot_path.exists():
             print("OK: 页面截图成功")
-            results["screenshot"] = {"success": True, "path": str(screenshot_path)}
+            results["screenshot"] = {
+                "success": True,
+                "path": str(screenshot_path),
+            }
         else:
             print("WARN: 截图测试运行成功但未找到截图文件")
             results["screenshot"] = {
@@ -245,7 +255,10 @@ test('页面截图', async ({ page }) => {
             }
     else:
         print("WARN: 截图测试失败")
-        results["screenshot"] = {"success": False, "error": screenshot_result.stderr}
+        results["screenshot"] = {
+            "success": False,
+            "error": screenshot_result.stderr,
+        }
 
     return results
 
@@ -255,7 +268,9 @@ def generate_ui_test_report(results):
     print("\\n=== UI测试报告 ===")
 
     total_tests = len(results)
-    successful_tests = sum(1 for r in results.values() if r.get("success", False))
+    successful_tests = sum(
+        1 for r in results.values() if r.get("success", False)
+    )
 
     print(f"总测试类型: {total_tests}")
     print(f"成功测试: {successful_tests}")
@@ -282,7 +297,9 @@ def generate_ui_test_report(results):
         "details": results,
     }
 
-    report_file = f"ui_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    report_file = (
+        f"ui_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
     with open(report_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 

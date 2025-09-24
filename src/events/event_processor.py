@@ -28,7 +28,9 @@ class ProcessingStrategy(Enum):
 class EventProcessor:
     """Processes events using configurable strategies."""
 
-    def __init__(self, strategy: ProcessingStrategy = ProcessingStrategy.SEQUENTIAL):
+    def __init__(
+        self, strategy: ProcessingStrategy = ProcessingStrategy.SEQUENTIAL
+    ):
         """Initialize the event processor."""
         self.strategy = strategy
         self.handlers: Dict[str, List[EventHandler]] = {}
@@ -43,7 +45,9 @@ class EventProcessor:
     async def process_event(self, event: Event) -> None:
         """Process a single event."""
         if event.event_type not in self.handlers:
-            logger.warning(f"No handlers registered for event type: {event.event_type}")
+            logger.warning(
+                f"No handlers registered for event type: {event.event_type}"
+            )
             return
 
         handlers = self.handlers[event.event_type]
@@ -52,7 +56,9 @@ class EventProcessor:
             for handler in handlers:
                 await self._call_handler(handler, event)
         elif self.strategy == ProcessingStrategy.PARALLEL:
-            tasks = [self._call_handler(handler, event) for handler in handlers]
+            tasks = [
+                self._call_handler(handler, event) for handler in handlers
+            ]
             await asyncio.gather(*tasks, return_exceptions=True)
         else:
             # Default to sequential

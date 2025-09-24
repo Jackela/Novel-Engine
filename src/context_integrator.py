@@ -58,27 +58,37 @@ class ContextIntegrator:
             # Add structured context data (additive enhancement)
             merged_data["enhanced_context"] = new_context
             merged_data["context_load_success"] = new_context.load_success
-            merged_data["context_timestamp"] = new_context.load_timestamp.isoformat()
+            merged_data[
+                "context_timestamp"
+            ] = new_context.load_timestamp.isoformat()
             merged_data["context_warnings"] = new_context.validation_warnings
 
             # Integrate specific contexts
             if new_context.memory_context:
                 merged_data["memory_context"] = new_context.memory_context
-                self._integrate_memory_data(merged_data, new_context.memory_context)
+                self._integrate_memory_data(
+                    merged_data, new_context.memory_context
+                )
 
             if new_context.objectives_context:
-                merged_data["objectives_context"] = new_context.objectives_context
+                merged_data[
+                    "objectives_context"
+                ] = new_context.objectives_context
                 self._integrate_objectives_data(
                     merged_data, new_context.objectives_context
                 )
 
             if new_context.profile_context:
                 merged_data["profile_context"] = new_context.profile_context
-                self._integrate_profile_data(merged_data, new_context.profile_context)
+                self._integrate_profile_data(
+                    merged_data, new_context.profile_context
+                )
 
             if new_context.stats_context:
                 merged_data["stats_context"] = new_context.stats_context
-                self._integrate_stats_data(merged_data, new_context.stats_context)
+                self._integrate_stats_data(
+                    merged_data, new_context.stats_context
+                )
 
             logger.info(
                 f"Context integration completed for {new_context.character_name}"
@@ -112,7 +122,9 @@ class ContextIntegrator:
                 merged_data["enhanced_relationships"] = {}
 
             for relationship in memory_context.relationships:
-                merged_data["enhanced_relationships"][relationship.character_name] = {
+                merged_data["enhanced_relationships"][
+                    relationship.character_name
+                ] = {
                     "trust_level": relationship.trust_level.score,
                     "relationship_type": relationship.relationship_type.value,
                     "emotional_dynamics": relationship.emotional_dynamics,
@@ -266,9 +278,9 @@ class ContextIntegrator:
                 hasattr(stats_context.combat_stats, "primary_stats")
                 and stats_context.combat_stats.primary_stats
             ):
-                merged_data["enhanced_combat_stats"] = (
-                    stats_context.combat_stats.primary_stats
-                )
+                merged_data[
+                    "enhanced_combat_stats"
+                ] = stats_context.combat_stats.primary_stats
 
             # Update psychological profile
             if (
@@ -288,7 +300,9 @@ class ContextIntegrator:
 
                 for rel_type, rel_list in stats_context.relationships.items():
                     for relationship in rel_list:
-                        merged_data["quantified_relationships"][relationship.name] = {
+                        merged_data["quantified_relationships"][
+                            relationship.name
+                        ] = {
                             "trust_level": relationship.trust_level,
                             "relationship_type": relationship.relationship_type,
                             "category": rel_type,
@@ -306,7 +320,9 @@ class ContextIntegrator:
         except Exception as e:
             logger.warning(f"Error integrating stats data: {e}")
 
-    def get_integration_summary(self, merged_data: Dict[str, Any]) -> Dict[str, Any]:
+    def get_integration_summary(
+        self, merged_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Get summary of context integration results."""
         try:
             enhanced_context = merged_data.get("enhanced_context")

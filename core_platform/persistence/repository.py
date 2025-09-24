@@ -113,13 +113,19 @@ class BaseRepository(Generic[T], ABC):
                 self.session.refresh(entity)
 
             self._metrics.record_operation_success("create_many")
-            logger.debug(f"Created {len(entities)} {self.model.__name__} entities")
+            logger.debug(
+                f"Created {len(entities)} {self.model.__name__} entities"
+            )
             return entities
 
         except SQLAlchemyError as e:
             self._metrics.record_operation_error("create_many")
-            logger.error(f"Failed to create {self.model.__name__} entities: {e}")
-            raise RepositoryOperationException(f"Failed to create entities: {e}")
+            logger.error(
+                f"Failed to create {self.model.__name__} entities: {e}"
+            )
+            raise RepositoryOperationException(
+                f"Failed to create entities: {e}"
+            )
 
     # Read Operations
 
@@ -136,7 +142,9 @@ class BaseRepository(Generic[T], ABC):
 
         except SQLAlchemyError as e:
             self._metrics.record_operation_error("get_by_id")
-            logger.error(f"Failed to get {self.model.__name__} by id {entity_id}: {e}")
+            logger.error(
+                f"Failed to get {self.model.__name__} by id {entity_id}: {e}"
+            )
             raise RepositoryOperationException(f"Failed to get entity: {e}")
 
     def get_by_id_or_raise(self, entity_id: Union[UUID, str]) -> T:
@@ -231,7 +239,9 @@ class BaseRepository(Generic[T], ABC):
             logger.error(
                 f"Failed to count {self.model.__name__} with filters {filters}: {e}"
             )
-            raise RepositoryOperationException(f"Failed to count entities: {e}")
+            raise RepositoryOperationException(
+                f"Failed to count entities: {e}"
+            )
 
     def exists(self, **filters) -> bool:
         """Check if entities exist matching filters."""
@@ -251,7 +261,9 @@ class BaseRepository(Generic[T], ABC):
             logger.error(
                 f"Failed to check existence of {self.model.__name__} with filters {filters}: {e}"
             )
-            raise RepositoryOperationException(f"Failed to check entity existence: {e}")
+            raise RepositoryOperationException(
+                f"Failed to check entity existence: {e}"
+            )
 
     # Update Operations
 
@@ -283,7 +295,9 @@ class BaseRepository(Generic[T], ABC):
             logger.error(f"Failed to update {self.model.__name__}: {e}")
             raise RepositoryOperationException(f"Failed to update entity: {e}")
 
-    def update_by_id(self, entity_id: Union[UUID, str], **updates) -> Optional[T]:
+    def update_by_id(
+        self, entity_id: Union[UUID, str], **updates
+    ) -> Optional[T]:
         """Update an entity by ID with given field updates."""
         try:
             self._metrics.record_operation_start("update_by_id")
@@ -344,7 +358,10 @@ class BaseRepository(Generic[T], ABC):
             if issubclass(self.model, SoftDeleteModel):
                 # Soft delete: update is_deleted flag
                 count = query.update(
-                    {self.model.is_deleted: True, self.model.deleted_at: func.now()}
+                    {
+                        self.model.is_deleted: True,
+                        self.model.deleted_at: func.now(),
+                    }
                 )
             else:
                 # Hard delete
@@ -361,7 +378,9 @@ class BaseRepository(Generic[T], ABC):
             logger.error(
                 f"Failed to delete {self.model.__name__} entities with filters {filters}: {e}"
             )
-            raise RepositoryOperationException(f"Failed to delete entities: {e}")
+            raise RepositoryOperationException(
+                f"Failed to delete entities: {e}"
+            )
 
     # Helper Methods
 
@@ -456,7 +475,9 @@ class AsyncBaseRepository(Generic[T], ABC):
 
         except SQLAlchemyError as e:
             self._metrics.record_operation_error("get_by_id")
-            logger.error(f"Failed to get {self.model.__name__} by id {entity_id}: {e}")
+            logger.error(
+                f"Failed to get {self.model.__name__} by id {entity_id}: {e}"
+            )
             raise RepositoryOperationException(f"Failed to get entity: {e}")
 
     async def get_all(

@@ -68,9 +68,13 @@ class Goal:
     completed_actions: List[str] = field(default_factory=list)
 
     # Timing
-    created_at: float = field(default_factory=lambda: datetime.now().timestamp())
+    created_at: float = field(
+        default_factory=lambda: datetime.now().timestamp()
+    )
     deadline: Optional[float] = None
-    last_updated: float = field(default_factory=lambda: datetime.now().timestamp())
+    last_updated: float = field(
+        default_factory=lambda: datetime.now().timestamp()
+    )
 
     # Context and conditions
     success_conditions: Dict[str, Any] = field(default_factory=dict)
@@ -130,7 +134,9 @@ class GoalManager:
     - Provide goal-based decision support
     """
 
-    def __init__(self, character_id: str, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, character_id: str, logger: Optional[logging.Logger] = None
+    ):
         self.character_id = character_id
         self.logger = logger or logging.getLogger(__name__)
 
@@ -153,9 +159,9 @@ class GoalManager:
         }
 
         # Goal interaction tracking
-        self._goal_relationships: Dict[str, List[str]] = (
-            {}
-        )  # goal_id -> [related_goal_ids]
+        self._goal_relationships: Dict[
+            str, List[str]
+        ] = {}  # goal_id -> [related_goal_ids]
 
         # Performance metrics
         self._metrics = {
@@ -229,7 +235,9 @@ class GoalManager:
             # Calculate priority scores for each goal
             scored_goals = []
             for goal in self._active_goals.values():
-                priority_score = await self._calculate_goal_priority(goal, context)
+                priority_score = await self._calculate_goal_priority(
+                    goal, context
+                )
                 scored_goals.append((goal, priority_score))
 
             # Sort by priority score (highest first)
@@ -262,7 +270,9 @@ class GoalManager:
         """
         try:
             if goal_id not in self._active_goals:
-                self.logger.warning(f"Goal {goal_id} not found in active goals")
+                self.logger.warning(
+                    f"Goal {goal_id} not found in active goals"
+                )
                 return False
 
             goal = self._active_goals[goal_id]
@@ -339,7 +349,9 @@ class GoalManager:
                         generated_goals.append(goal_data)
 
             # Remove duplicates and conflicts
-            filtered_goals = await self._filter_conflicting_goals(generated_goals)
+            filtered_goals = await self._filter_conflicting_goals(
+                generated_goals
+            )
 
             self.logger.info(
                 f"Generated {len(filtered_goals)} new goals from {len(events)} events"
@@ -353,18 +365,26 @@ class GoalManager:
     async def get_goals_by_type(self, goal_type: GoalType) -> List[Goal]:
         """Get active goals of specific type."""
         return [
-            goal for goal in self._active_goals.values() if goal.goal_type == goal_type
+            goal
+            for goal in self._active_goals.values()
+            if goal.goal_type == goal_type
         ]
 
-    async def get_goals_by_priority(self, priority: GoalPriority) -> List[Goal]:
+    async def get_goals_by_priority(
+        self, priority: GoalPriority
+    ) -> List[Goal]:
         """Get active goals of specific priority."""
         return [
-            goal for goal in self._active_goals.values() if goal.priority == priority
+            goal
+            for goal in self._active_goals.values()
+            if goal.priority == priority
         ]
 
     async def get_overdue_goals(self) -> List[Goal]:
         """Get goals that are past their deadline."""
-        return [goal for goal in self._active_goals.values() if goal.is_overdue()]
+        return [
+            goal for goal in self._active_goals.values() if goal.is_overdue()
+        ]
 
     async def abandon_goal(self, goal_id: str, reason: str) -> bool:
         """
@@ -416,13 +436,16 @@ class GoalManager:
 
             # Calculate completion rate
             completion_rate = (
-                (len(self._completed_goals) / total_goals) if total_goals > 0 else 0.0
+                (len(self._completed_goals) / total_goals)
+                if total_goals > 0
+                else 0.0
             )
 
             # Calculate average goal age
             if self._active_goals:
                 avg_age = sum(
-                    goal.get_age_hours() for goal in self._active_goals.values()
+                    goal.get_age_hours()
+                    for goal in self._active_goals.values()
                 ) / len(self._active_goals)
             else:
                 avg_age = 0.0
@@ -431,7 +454,9 @@ class GoalManager:
             type_distribution = {}
             for goal in self._active_goals.values():
                 goal_type = goal.goal_type.value
-                type_distribution[goal_type] = type_distribution.get(goal_type, 0) + 1
+                type_distribution[goal_type] = (
+                    type_distribution.get(goal_type, 0) + 1
+                )
 
             # Priority distribution
             priority_distribution = {}
@@ -468,7 +493,8 @@ class GoalManager:
                     for goal_id, goal in self._active_goals.items()
                 },
                 "completed_goals": [
-                    self._serialize_goal(goal) for goal in self._completed_goals
+                    self._serialize_goal(goal)
+                    for goal in self._completed_goals
                 ],
                 "failed_goals": [
                     self._serialize_goal(goal) for goal in self._failed_goals
@@ -500,7 +526,9 @@ class GoalManager:
 
             # Load active goals
             self._active_goals = {}
-            for goal_id, goal_data in state_data.get("active_goals", {}).items():
+            for goal_id, goal_data in state_data.get(
+                "active_goals", {}
+            ).items():
                 goal = self._deserialize_goal(goal_data)
                 self._active_goals[goal_id] = goal
 
@@ -526,7 +554,9 @@ class GoalManager:
 
     # Private helper methods
 
-    async def _calculate_goal_priority(self, goal: Goal, context: GoalContext) -> float:
+    async def _calculate_goal_priority(
+        self, goal: Goal, context: GoalContext
+    ) -> float:
         """Calculate priority score for a goal based on context."""
         try:
             score = 0.0
@@ -540,15 +570,21 @@ class GoalManager:
             score += importance_score * self._priority_weights["importance"]
 
             # Feasibility factor (resources, dependencies)
-            feasibility_score = await self._calculate_feasibility_score(goal, context)
+            feasibility_score = await self._calculate_feasibility_score(
+                goal, context
+            )
             score += feasibility_score * self._priority_weights["feasibility"]
 
             # Alignment factor (character traits, current state)
-            alignment_score = await self._calculate_alignment_score(goal, context)
+            alignment_score = await self._calculate_alignment_score(
+                goal, context
+            )
             score += alignment_score * self._priority_weights["alignment"]
 
             # Opportunity factor (current world state)
-            opportunity_score = await self._calculate_opportunity_score(goal, context)
+            opportunity_score = await self._calculate_opportunity_score(
+                goal, context
+            )
             score += opportunity_score * self._priority_weights["opportunity"]
 
             return max(0.0, min(1.0, score))
@@ -559,7 +595,9 @@ class GoalManager:
             )
             return 0.5
 
-    async def _calculate_urgency_score(self, goal: Goal, context: GoalContext) -> float:
+    async def _calculate_urgency_score(
+        self, goal: Goal, context: GoalContext
+    ) -> float:
         """Calculate urgency score based on deadlines and time pressure."""
         score = 0.5  # Base score
 
@@ -600,7 +638,9 @@ class GoalManager:
                     unmet_dependencies += 1
 
             if unmet_dependencies > 0:
-                score *= 1.0 - (unmet_dependencies / len(goal.dependencies)) * 0.5
+                score *= (
+                    1.0 - (unmet_dependencies / len(goal.dependencies)) * 0.5
+                )
 
         return max(0.1, score)
 
@@ -788,7 +828,10 @@ class GoalManager:
                     "plan_approach",
                     "execute_mission",
                 ],
-                "motivation_factors": {"faction_loyalty": 0.9, "mission_success": 0.8},
+                "motivation_factors": {
+                    "faction_loyalty": 0.9,
+                    "mission_success": 0.8,
+                },
             },
         }
 
@@ -823,7 +866,10 @@ class GoalManager:
         return opportunities
 
     async def _generate_goal_from_template(
-        self, opportunity: str, event: WorldEvent, character_context: Dict[str, Any]
+        self,
+        opportunity: str,
+        event: WorldEvent,
+        character_context: Dict[str, Any],
     ) -> Optional[Dict[str, Any]]:
         """Generate goal data from template."""
         if opportunity not in self._goal_templates:

@@ -209,7 +209,9 @@ class TestLLMRequestCreation:
 
     def test_request_validation_invalid_model_id(self):
         """Test request validation with invalid model ID."""
-        with pytest.raises(ValueError, match="model_id must be a ModelId instance"):
+        with pytest.raises(
+            ValueError, match="model_id must be a ModelId instance"
+        ):
             LLMRequest(
                 request_id=self.request_id,
                 request_type=LLMRequestType.COMPLETION,
@@ -220,7 +222,8 @@ class TestLLMRequestCreation:
     def test_request_validation_empty_prompt(self):
         """Test request validation with empty prompt."""
         with pytest.raises(
-            ValueError, match="prompt is required and must be a non-empty string"
+            ValueError,
+            match="prompt is required and must be a non-empty string",
         ):
             LLMRequest(
                 request_id=self.request_id,
@@ -231,7 +234,9 @@ class TestLLMRequestCreation:
 
     def test_request_validation_invalid_temperature(self):
         """Test request validation with invalid temperature values."""
-        with pytest.raises(ValueError, match="temperature must be between 0.0 and 2.0"):
+        with pytest.raises(
+            ValueError, match="temperature must be between 0.0 and 2.0"
+        ):
             LLMRequest(
                 request_id=self.request_id,
                 request_type=LLMRequestType.COMPLETION,
@@ -240,7 +245,9 @@ class TestLLMRequestCreation:
                 temperature=-0.1,
             )
 
-        with pytest.raises(ValueError, match="temperature must be between 0.0 and 2.0"):
+        with pytest.raises(
+            ValueError, match="temperature must be between 0.0 and 2.0"
+        ):
             LLMRequest(
                 request_id=self.request_id,
                 request_type=LLMRequestType.COMPLETION,
@@ -251,7 +258,9 @@ class TestLLMRequestCreation:
 
     def test_request_validation_invalid_top_p(self):
         """Test request validation with invalid top_p values."""
-        with pytest.raises(ValueError, match="top_p must be between 0.0 and 1.0"):
+        with pytest.raises(
+            ValueError, match="top_p must be between 0.0 and 1.0"
+        ):
             LLMRequest(
                 request_id=self.request_id,
                 request_type=LLMRequestType.COMPLETION,
@@ -260,7 +269,9 @@ class TestLLMRequestCreation:
                 top_p=-0.1,
             )
 
-        with pytest.raises(ValueError, match="top_p must be between 0.0 and 1.0"):
+        with pytest.raises(
+            ValueError, match="top_p must be between 0.0 and 1.0"
+        ):
             LLMRequest(
                 request_id=self.request_id,
                 request_type=LLMRequestType.COMPLETION,
@@ -295,7 +306,9 @@ class TestLLMRequestCreation:
 
     def test_request_validation_invalid_max_tokens(self):
         """Test request validation with invalid max_tokens values."""
-        with pytest.raises(ValueError, match="max_tokens must be a positive integer"):
+        with pytest.raises(
+            ValueError, match="max_tokens must be a positive integer"
+        ):
             LLMRequest(
                 request_id=self.request_id,
                 request_type=LLMRequestType.COMPLETION,
@@ -304,7 +317,9 @@ class TestLLMRequestCreation:
                 max_tokens=0,
             )
 
-        with pytest.raises(ValueError, match="max_tokens must be a positive integer"):
+        with pytest.raises(
+            ValueError, match="max_tokens must be a positive integer"
+        ):
             LLMRequest(
                 request_id=self.request_id,
                 request_type=LLMRequestType.COMPLETION,
@@ -315,7 +330,9 @@ class TestLLMRequestCreation:
 
     def test_request_validation_max_tokens_exceeds_model_limit(self):
         """Test request validation when max_tokens exceeds model limits."""
-        with pytest.raises(ValueError, match="max_tokens .* exceeds model limit"):
+        with pytest.raises(
+            ValueError, match="max_tokens .* exceeds model limit"
+        ):
             LLMRequest(
                 request_id=self.request_id,
                 request_type=LLMRequestType.COMPLETION,
@@ -384,7 +401,9 @@ class TestLLMRequestFactoryMethods:
         system_prompt = "You are a helpful assistant"
 
         request = LLMRequest.create_chat_request(
-            model_id=self.model_id, messages=messages, system_prompt=system_prompt
+            model_id=self.model_id,
+            messages=messages,
+            system_prompt=system_prompt,
         )
 
         assert request.system_prompt == system_prompt
@@ -619,7 +638,11 @@ class TestLLMResponseCreation:
 
     def test_response_creation_with_all_parameters(self):
         """Test response creation with all optional parameters."""
-        usage_stats = {"input_tokens": 100, "output_tokens": 50, "total_tokens": 150}
+        usage_stats = {
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "total_tokens": 150,
+        }
         cost_estimate = Decimal("0.05")
         metadata = {"generation_time": 1.5, "model_version": "gpt-4-0314"}
         provider_response = {"id": "chatcmpl-123", "object": "chat.completion"}
@@ -667,7 +690,9 @@ class TestLLMResponseCreation:
 
     def test_response_validation_invalid_status(self):
         """Test response validation with invalid status."""
-        with pytest.raises(ValueError, match="status must be a LLMResponseStatus enum"):
+        with pytest.raises(
+            ValueError, match="status must be a LLMResponseStatus enum"
+        ):
             LLMResponse(
                 request_id=self.request_id,
                 response_id=self.response_id,
@@ -677,7 +702,9 @@ class TestLLMResponseCreation:
 
     def test_response_validation_successful_without_content(self):
         """Test response validation for successful response without content."""
-        with pytest.raises(ValueError, match="Successful responses must have content"):
+        with pytest.raises(
+            ValueError, match="Successful responses must have content"
+        ):
             LLMResponse(
                 request_id=self.request_id,
                 response_id=self.response_id,
@@ -758,7 +785,10 @@ class TestLLMResponseFactoryMethods:
         assert response.finish_reason == "stop"
         assert response.usage_stats["input_tokens"] == input_tokens
         assert response.usage_stats["output_tokens"] == output_tokens
-        assert response.usage_stats["total_tokens"] == input_tokens + output_tokens
+        assert (
+            response.usage_stats["total_tokens"]
+            == input_tokens + output_tokens
+        )
         assert response.cost_estimate == self.model_id.estimate_cost(
             input_tokens, output_tokens
         )
@@ -788,7 +818,9 @@ class TestLLMResponseFactoryMethods:
         error_details = "Rate limit exceeded. Try again in 60 seconds."
 
         response = LLMResponse.create_error(
-            request_id=self.request_id, status=error_status, error_details=error_details
+            request_id=self.request_id,
+            status=error_status,
+            error_details=error_details,
         )
 
         assert response.request_id == self.request_id
@@ -866,21 +898,27 @@ class TestLLMResponseBusinessMethods:
         total_tokens = self.success_response.get_total_tokens()
 
         assert total_tokens == 150  # 100 input + 50 output
-        assert total_tokens == self.success_response.usage_stats["total_tokens"]
+        assert (
+            total_tokens == self.success_response.usage_stats["total_tokens"]
+        )
 
     def test_get_input_tokens(self):
         """Test getting input token usage."""
         input_tokens = self.success_response.get_input_tokens()
 
         assert input_tokens == 100
-        assert input_tokens == self.success_response.usage_stats["input_tokens"]
+        assert (
+            input_tokens == self.success_response.usage_stats["input_tokens"]
+        )
 
     def test_get_output_tokens(self):
         """Test getting output token usage."""
         output_tokens = self.success_response.get_output_tokens()
 
         assert output_tokens == 50
-        assert output_tokens == self.success_response.usage_stats["output_tokens"]
+        assert (
+            output_tokens == self.success_response.usage_stats["output_tokens"]
+        )
 
     def test_token_methods_with_empty_stats(self):
         """Test token methods when usage stats are empty."""
@@ -952,7 +990,9 @@ class TestLLMProviderErrorHierarchy:
         message = "Monthly quota exceeded"
 
         error = QuotaExceededError(
-            message=message, provider_id=provider_id, error_code="QUOTA_EXCEEDED"
+            message=message,
+            provider_id=provider_id,
+            error_code="QUOTA_EXCEEDED",
         )
 
         assert isinstance(error, LLMProviderError)
@@ -986,7 +1026,9 @@ class TestLLMProviderErrorHierarchy:
 class MockLLMProvider(ILLMProvider):
     """Mock LLM provider for testing abstract interface."""
 
-    def __init__(self, provider_id: ProviderId, supported_models: List[ModelId]):
+    def __init__(
+        self, provider_id: ProviderId, supported_models: List[ModelId]
+    ):
         self._provider_id = provider_id
         self._supported_models = supported_models
         self._available = True
@@ -1176,8 +1218,12 @@ class TestILLMProviderInterface:
         """Test getting pricing information."""
         pricing = self.provider.get_pricing_info(self.model_id)
 
-        assert pricing["input_token_cost"] == self.model_id.cost_per_input_token
-        assert pricing["output_token_cost"] == self.model_id.cost_per_output_token
+        assert (
+            pricing["input_token_cost"] == self.model_id.cost_per_input_token
+        )
+        assert (
+            pricing["output_token_cost"] == self.model_id.cost_per_output_token
+        )
         assert pricing["currency"] == "USD"
 
     def test_string_representation(self):
@@ -1208,7 +1254,9 @@ class TestILLMProviderWithBudget:
     @pytest.mark.asyncio
     async def test_generate_async_with_budget(self):
         """Test async generation with token budget."""
-        response = await self.provider.generate_async(self.request, self.budget)
+        response = await self.provider.generate_async(
+            self.request, self.budget
+        )
 
         assert isinstance(response, LLMResponse)
         assert response.status == LLMResponseStatus.SUCCESS

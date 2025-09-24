@@ -145,9 +145,7 @@ class EncryptionService:
             ).encode()
 
         # Derive encryption key from master key
-        salt = (
-            b"novel_engine_salt_2024"  # In production, use random salt per encryption
-        )
+        salt = b"novel_engine_salt_2024"  # In production, use random salt per encryption
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -239,7 +237,8 @@ class DataProtectionService:
         self.database_path = database_path
         self.encryption_service = EncryptionService(master_key)
         self.pseudonymization_service = PseudonymizationService(
-            master_key or os.getenv("PSEUDONYMIZATION_KEY", secrets.token_urlsafe(32))
+            master_key
+            or os.getenv("PSEUDONYMIZATION_KEY", secrets.token_urlsafe(32))
         )
 
         # Define data elements that require protection
@@ -380,7 +379,9 @@ class DataProtectionService:
         """STANDARD CONSENT RECORDING"""
         consent_id = secrets.token_urlsafe(16)
         now = datetime.now(timezone.utc)
-        expires_at = now + timedelta(days=expires_in_days) if expires_in_days else None
+        expires_at = (
+            now + timedelta(days=expires_in_days) if expires_in_days else None
+        )
 
         consent_record = ConsentRecord(
             consent_id=consent_id,
@@ -397,7 +398,7 @@ class DataProtectionService:
             await conn.execute(
                 """
                 INSERT INTO consent_records (
-                    consent_id, user_id, purpose, status, granted_at, 
+                    consent_id, user_id, purpose, status, granted_at,
                     expires_at, consent_text, processing_activities
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -422,7 +423,7 @@ class DataProtectionService:
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute(
                 """
-                UPDATE consent_records 
+                UPDATE consent_records
                 SET status = ?, withdrawn_at = ?, updated_at = ?
                 WHERE user_id = ? AND purpose = ? AND status = ?
             """,
@@ -475,7 +476,7 @@ class DataProtectionService:
                     # Mark as expired
                     await conn.execute(
                         """
-                        UPDATE consent_records 
+                        UPDATE consent_records
                         SET status = ?, updated_at = ?
                         WHERE user_id = ? AND purpose = ? AND status = ?
                     """,
@@ -506,10 +507,19 @@ class DataProtectionService:
             fields_to_encrypt = [element.field_name]
 
             # Add additional sensitive fields
-            sensitive_fields = ["email", "password_hash", "personal_info", "content"]
-            fields_to_encrypt.extend([f for f in sensitive_fields if f in data])
+            sensitive_fields = [
+                "email",
+                "password_hash",
+                "personal_info",
+                "content",
+            ]
+            fields_to_encrypt.extend(
+                [f for f in sensitive_fields if f in data]
+            )
 
-            return self.encryption_service.encrypt_dict(data, fields_to_encrypt)
+            return self.encryption_service.encrypt_dict(
+                data, fields_to_encrypt
+            )
 
         return data
 
@@ -527,7 +537,12 @@ class DataProtectionService:
             fields_to_decrypt = [element.field_name]
 
             # Add additional sensitive fields
-            sensitive_fields = ["email", "password_hash", "personal_info", "content"]
+            sensitive_fields = [
+                "email",
+                "password_hash",
+                "personal_info",
+                "content",
+            ]
             fields_to_decrypt.extend(
                 [f for f in sensitive_fields if f in encrypted_data]
             )
@@ -545,7 +560,10 @@ class DataProtectionService:
         pseudonymized_data = data.copy()
 
         # Create pseudonym for user ID
-        original_id, pseudonym = self.pseudonymization_service.create_pseudonym_mapping(
+        (
+            original_id,
+            pseudonym,
+        ) = self.pseudonymization_service.create_pseudonym_mapping(
             user_id, purpose
         )
 
@@ -581,7 +599,10 @@ class DataProtectionService:
             await conn.commit()
 
     async def schedule_data_deletion(
-        self, data_type: str, user_id: str, retention_period: DataRetentionPeriod
+        self,
+        data_type: str,
+        user_id: str,
+        retention_period: DataRetentionPeriod,
     ):
         """STANDARD DATA DELETION SCHEDULING"""
         deletion_id = secrets.token_urlsafe(16)
@@ -638,13 +659,14 @@ class DataProtectionService:
 
             for deletion_id, data_type, user_id in items_to_delete:
                 try:
-                    # Perform actual data deletion (implement based on data type)
+                    # Perform actual data deletion (implement based on data
+                    # type)
                     await self._delete_user_data(data_type, user_id)
 
                     # Mark as deleted
                     await conn.execute(
                         """
-                        UPDATE data_retention_schedule 
+                        UPDATE data_retention_schedule
                         SET deleted = TRUE, deletion_reason = 'Retention period expired'
                         WHERE id = ?
                     """,
@@ -694,7 +716,7 @@ class DataProtectionService:
         async with aiosqlite.connect(self.database_path) as conn:
             cursor = await conn.execute(
                 """
-                SELECT purpose, status, granted_at, consent_text 
+                SELECT purpose, status, granted_at, consent_text
                 FROM consent_records WHERE user_id = ?
             """,
                 (user_id,),
@@ -712,17 +734,20 @@ class DataProtectionService:
             ]
 
         # Export other user data (implement based on your data model)
-        # This would include decrypted personal data that the user has rights to
+        # This would include decrypted personal data that the user has rights
+        # to
 
         logger.info(f"USER DATA EXPORTED: {user_id}")
         return exported_data
 
-    async def get_processing_activities(self, user_id: str) -> List[Dict[str, Any]]:
+    async def get_processing_activities(
+        self, user_id: str
+    ) -> List[Dict[str, Any]]:
         """STANDARD PROCESSING ACTIVITIES REPORT"""
         async with aiosqlite.connect(self.database_path) as conn:
             cursor = await conn.execute(
                 """
-                SELECT processing_purpose, lawful_basis, data_categories, 
+                SELECT processing_purpose, lawful_basis, data_categories,
                        recipients, security_measures, created_at
                 FROM data_processing_records WHERE user_id = ?
             """,

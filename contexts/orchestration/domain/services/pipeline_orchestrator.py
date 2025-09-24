@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, Optional, Tuple
 from uuid import UUID
 
-from ..entities import Turn
+from ..entities import Turn, TurnState
 from ..value_objects import PhaseType
 
 
@@ -79,7 +79,11 @@ class PipelineOrchestrator:
             "current_phase": None,
             "phase_handlers": phase_handlers,
             "progress_callback": progress_callback,
-            "resource_usage": {"memory_mb": 0, "cpu_time_ms": 0, "ai_cost": 0.0},
+            "resource_usage": {
+                "memory_mb": 0,
+                "cpu_time_ms": 0,
+                "ai_cost": 0.0,
+            },
         }
 
         try:
@@ -125,8 +129,9 @@ class PipelineOrchestrator:
         Returns:
             Tuple of (success, phase_results)
         """
-        phase_timeout = timeout_override or turn.configuration.get_phase_timeout(
-            phase_type.value
+        phase_timeout = (
+            timeout_override
+            or turn.configuration.get_phase_timeout(phase_type.value)
         )
 
         # Prepare phase execution context
@@ -143,7 +148,9 @@ class PipelineOrchestrator:
 
             # Validate phase results
             if not self._validate_phase_results(phase_type, phase_results):
-                raise ValueError(f"Phase {phase_type} produced invalid results")
+                raise ValueError(
+                    f"Phase {phase_type} produced invalid results"
+                )
 
             # Update turn with successful phase completion
             events_processed = phase_results.get("events_processed", 0)
@@ -163,8 +170,12 @@ class PipelineOrchestrator:
             )
 
             # Update orchestrator metrics
-            execution_time = (datetime.now() - execution_start).total_seconds() * 1000
-            self._update_phase_metrics(phase_type, execution_time, success=True)
+            execution_time = (
+                datetime.now() - execution_start
+            ).total_seconds() * 1000
+            self._update_phase_metrics(
+                phase_type, execution_time, success=True
+            )
 
             return True, phase_results
 
@@ -174,7 +185,9 @@ class PipelineOrchestrator:
             error_details = {
                 "error_type": type(e).__name__,
                 "phase_context": phase_context,
-                "execution_time_ms": (datetime.now() - execution_start).total_seconds()
+                "execution_time_ms": (
+                    datetime.now() - execution_start
+                ).total_seconds()
                 * 1000,
             }
 
@@ -187,10 +200,17 @@ class PipelineOrchestrator:
             )
 
             # Update orchestrator metrics
-            execution_time = (datetime.now() - execution_start).total_seconds() * 1000
-            self._update_phase_metrics(phase_type, execution_time, success=False)
+            execution_time = (
+                datetime.now() - execution_start
+            ).total_seconds() * 1000
+            self._update_phase_metrics(
+                phase_type, execution_time, success=False
+            )
 
-            return False, {"error": error_message, "error_details": error_details}
+            return False, {
+                "error": error_message,
+                "error_details": error_details,
+            }
 
     def monitor_execution_progress(self, turn_id: UUID) -> Dict[str, Any]:
         """
@@ -222,7 +242,9 @@ class PipelineOrchestrator:
         return {
             "status": "executing",
             "turn_id": str(turn_id),
-            "current_phase": turn.current_phase.value if turn.current_phase else None,
+            "current_phase": turn.current_phase.value
+            if turn.current_phase
+            else None,
             "progress_percentage": progress_percentage,
             "completed_phases": completed_phases,
             "total_phases": total_phases,
@@ -243,7 +265,9 @@ class PipelineOrchestrator:
         """
         return {
             "execution_summary": {
-                "total_turns_executed": self.execution_metrics["total_turns_executed"],
+                "total_turns_executed": self.execution_metrics[
+                    "total_turns_executed"
+                ],
                 "successful_turns": self.execution_metrics["successful_turns"],
                 "failed_turns": self.execution_metrics["failed_turns"],
                 "success_rate": (
@@ -255,7 +279,9 @@ class PipelineOrchestrator:
                 ],
             },
             "phase_performance": self.execution_metrics["phase_success_rates"],
-            "resource_utilization": self.execution_metrics["resource_utilization"],
+            "resource_utilization": self.execution_metrics[
+                "resource_utilization"
+            ],
             "active_executions": len(self.active_executions),
             "resource_limits": self.resource_limits,
             "timestamp": datetime.now().isoformat(),
@@ -299,13 +325,15 @@ class PipelineOrchestrator:
             # Validate configuration
             config_errors = turn.configuration.validate_constraints()
             if config_errors:
-                raise ValueError(f"Configuration validation failed: {config_errors}")
+                raise ValueError(
+                    f"Configuration validation failed: {config_errors}"
+                )
 
             return True
 
         except Exception:
             # Planning failed
-            turn.state = turn.TurnState.FAILED
+            turn.state = TurnState.FAILED
             turn.completed_at = datetime.now()
             return False
 
@@ -361,7 +389,9 @@ class PipelineOrchestrator:
             "ai_integration_enabled": turn.configuration.should_use_ai_for_phase(
                 phase_type.value
             ),
-            "timeout_ms": turn.configuration.get_phase_timeout(phase_type.value),
+            "timeout_ms": turn.configuration.get_phase_timeout(
+                phase_type.value
+            ),
             "previous_phases": [p.value for p in turn.get_completed_phases()],
             "rollback_snapshots": turn.rollback_snapshots,
             "metadata": {
@@ -389,7 +419,9 @@ class PipelineOrchestrator:
             results = phase_handler(phase_context)
 
             # Check if execution exceeded timeout
-            execution_time = (datetime.now() - start_time).total_seconds() * 1000
+            execution_time = (
+                datetime.now() - start_time
+            ).total_seconds() * 1000
             if execution_time > timeout_ms:
                 raise TimeoutError(
                     f"Phase {phase_type} exceeded timeout of {timeout_ms}ms"
@@ -405,7 +437,9 @@ class PipelineOrchestrator:
             raise
         except Exception as e:
             # Wrap other exceptions with context
-            raise RuntimeError(f"Phase {phase_type} execution failed: {e}") from e
+            raise RuntimeError(
+                f"Phase {phase_type} execution failed: {e}"
+            ) from e
 
     def _validate_phase_results(
         self, phase_type: PhaseType, results: Dict[str, Any]
@@ -430,9 +464,14 @@ class PipelineOrchestrator:
             return False
 
         # Phase-specific validation
-        if phase_type in {PhaseType.SUBJECTIVE_BRIEF, PhaseType.NARRATIVE_INTEGRATION}:
+        if phase_type in {
+            PhaseType.SUBJECTIVE_BRIEF,
+            PhaseType.NARRATIVE_INTEGRATION,
+        }:
             # AI-enabled phases should have AI usage data
-            if results.get("ai_usage") and not isinstance(results["ai_usage"], dict):
+            if results.get("ai_usage") and not isinstance(
+                results["ai_usage"], dict
+            ):
                 return False
 
         return True
@@ -446,7 +485,9 @@ class PipelineOrchestrator:
         total_phases = len(PhaseType.get_all_phases_ordered())
 
         if completed_phases == 0:
-            return timedelta(milliseconds=turn.configuration.max_execution_time_ms)
+            return timedelta(
+                milliseconds=turn.configuration.max_execution_time_ms
+            )
 
         # Calculate average time per phase so far
         elapsed_time = datetime.now() - turn.started_at
@@ -458,7 +499,10 @@ class PipelineOrchestrator:
     def _check_resource_limits(self, turn: Turn) -> bool:
         """Check if current execution is within resource limits."""
         # Check concurrent executions
-        if len(self.active_executions) > self.resource_limits["max_concurrent_turns"]:
+        if (
+            len(self.active_executions)
+            > self.resource_limits["max_concurrent_turns"]
+        ):
             return False
 
         # Check memory usage (would integrate with actual memory monitoring)
@@ -484,7 +528,9 @@ class PipelineOrchestrator:
                 "average_time_ms": 0.0,
             }
 
-        phase_metrics = self.execution_metrics["phase_success_rates"][phase_key]
+        phase_metrics = self.execution_metrics["phase_success_rates"][
+            phase_key
+        ]
 
         # Update execution counts
         phase_metrics["total_executions"] += 1
@@ -498,7 +544,9 @@ class PipelineOrchestrator:
             current_avg * (total_executions - 1) + execution_time_ms
         ) / total_executions
 
-    def _complete_turn_execution(self, execution_id: UUID, success: bool) -> None:
+    def _complete_turn_execution(
+        self, execution_id: UUID, success: bool
+    ) -> None:
         """Complete turn execution and update metrics."""
         execution = self.active_executions.get(execution_id)
         if not execution:
@@ -522,7 +570,9 @@ class PipelineOrchestrator:
             current_avg * (total_turns - 1) + execution_time
         ) / total_turns
 
-    def _handle_execution_failure(self, execution_id: UUID, error_message: str) -> None:
+    def _handle_execution_failure(
+        self, execution_id: UUID, error_message: str
+    ) -> None:
         """Handle turn execution failure."""
         execution = self.active_executions.get(execution_id)
         if not execution:
@@ -532,7 +582,7 @@ class PipelineOrchestrator:
 
         # Ensure turn is marked as failed if not already
         if not turn.state.is_terminal():
-            turn.state = turn.TurnState.FAILED
+            turn.state = TurnState.FAILED
             turn.completed_at = datetime.now()
 
         # Complete execution tracking

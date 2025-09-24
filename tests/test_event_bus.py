@@ -5,7 +5,6 @@ from src.event_bus import EventBus
 
 
 class TestEventBus(unittest.TestCase):
-
     def setUp(self):
         self.event_bus = EventBus()
 
@@ -31,7 +30,9 @@ class TestEventBus(unittest.TestCase):
         try:
             self.event_bus.emit("unsubscribed_event")
         except Exception as e:
-            self.fail(f"Emitting to an unsubscribed event raised an exception: {e}")
+            self.fail(
+                f"Emitting to an unsubscribed event raised an exception: {e}"
+            )
 
     def test_callback_exception_handling(self):
         """Test that the event bus handles exceptions in callbacks gracefully."""

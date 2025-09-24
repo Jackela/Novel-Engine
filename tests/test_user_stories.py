@@ -18,6 +18,7 @@ import os
 import tempfile
 
 import pytest
+import pytest_asyncio
 
 # Import test framework
 from fastapi.testclient import TestClient
@@ -42,7 +43,7 @@ class TestUserStories:
     detailed acceptance criteria and business requirements.
     """
 
-    @pytest.fixture(scope="class")
+    @pytest_asyncio.fixture(scope="class")
     async def orchestrator(self):
         """Create test orchestrator instance."""
         config = OrchestratorConfig(
@@ -63,7 +64,9 @@ class TestUserStories:
             if startup_result.error
             else "Unknown startup error"
         )
-        assert startup_result.success, f"Orchestrator startup failed: {error_msg}"
+        assert (
+            startup_result.success
+        ), f"Orchestrator startup failed: {error_msg}"
 
         yield orchestrator
 
@@ -144,20 +147,31 @@ class TestUserStories:
             "personality_traits": "Analytical, curious, methodical",
         }
 
-        create_response = api_client.post("/api/v1/characters", json=character_data)
+        create_response = api_client.post(
+            "/api/v1/characters", json=character_data
+        )
         assert create_response.status_code == 200
 
         # Test character customization
         update_data = {
             "background_summary": "Senior research scientist specializing in AI cognition and machine learning",
             "personality_traits": "Highly analytical, deeply curious, extremely methodical, collaborative",
-            "skills": {"research": 0.95, "analysis": 0.9, "collaboration": 0.8},
+            "skills": {
+                "research": 0.95,
+                "analysis": 0.9,
+                "collaboration": 0.8,
+            },
             "current_location": "AI Research Laboratory",
-            "inventory": ["research_tablet", "lab_access_card", "cognitive_scanner"],
+            "inventory": [
+                "research_tablet",
+                "lab_access_card",
+                "cognitive_scanner",
+            ],
         }
 
         update_response = api_client.put(
-            f"/api/v1/characters/{character_data['agent_id']}", json=update_data
+            f"/api/v1/characters/{character_data['agent_id']}",
+            json=update_data,
         )
         assert update_response.status_code == 200
 
@@ -252,7 +266,9 @@ class TestUserStories:
                 "real_time_updates": False,
             }
 
-            response = api_client.post("/api/v1/interactions", json=interaction_data)
+            response = api_client.post(
+                "/api/v1/interactions", json=interaction_data
+            )
             assert response.status_code == 200
 
             result = response.json()
@@ -269,7 +285,9 @@ class TestUserStories:
             "auto_process": True,
         }
 
-        response = api_client.post("/api/v1/interactions", json=multi_char_interaction)
+        response = api_client.post(
+            "/api/v1/interactions", json=multi_char_interaction
+        )
         assert response.status_code == 200
 
         result = response.json()
@@ -308,7 +326,9 @@ class TestUserStories:
             "intervention_allowed": True,  # Allow user intervention
         }
 
-        response = api_client.post("/api/v1/interactions", json=interaction_data)
+        response = api_client.post(
+            "/api/v1/interactions", json=interaction_data
+        )
         assert response.status_code == 200
 
         result = response.json()
@@ -317,7 +337,9 @@ class TestUserStories:
         assert result["websocket_url"] is not None
 
         # Check interaction status progression
-        status_response = api_client.get(f"/api/v1/interactions/{interaction_id}")
+        status_response = api_client.get(
+            f"/api/v1/interactions/{interaction_id}"
+        )
         assert status_response.status_code == 200
 
         status_data = status_response.json()
@@ -384,7 +406,9 @@ class TestUserStories:
                 context_tags=["test", "validation", memory_data["type"].value],
             )
 
-            memory_result = await orchestrator.memory_system.store_memory(memory)
+            memory_result = await orchestrator.memory_system.store_memory(
+                memory
+            )
             assert memory_result.success
 
         # Query memories to verify storage and retrieval
@@ -421,8 +445,12 @@ class TestUserStories:
             personality_traits="Analytical and thoughtful character designed for relationship testing with adequate description length",
         )
 
-        await orchestrator.create_agent_context("relationship_test_a", char_a_state)
-        await orchestrator.create_agent_context("relationship_test_b", char_b_state)
+        await orchestrator.create_agent_context(
+            "relationship_test_a", char_a_state
+        )
+        await orchestrator.create_agent_context(
+            "relationship_test_b", char_b_state
+        )
 
         # Check initial relationship status (should be neutral/unknown)
         (
@@ -433,14 +461,19 @@ class TestUserStories:
 
         # Process multiple interactions to evolve relationship
         for i in range(3):
-            interaction_result = await orchestrator.orchestrate_multi_agent_interaction(
-                participants=["relationship_test_a", "relationship_test_b"],
-                interaction_type=InteractionType.COOPERATION,
-                context={
-                    "topic": f"Collaboration session {i+1}",
-                    "positive_outcome": True,
-                    "cooperation_level": "high",
-                },
+            interaction_result = (
+                await orchestrator.orchestrate_multi_agent_interaction(
+                    participants=[
+                        "relationship_test_a",
+                        "relationship_test_b",
+                    ],
+                    interaction_type=InteractionType.COOPERATION,
+                    context={
+                        "topic": f"Collaboration session {i+1}",
+                        "positive_outcome": True,
+                        "cooperation_level": "high",
+                    },
+                )
             )
             assert interaction_result.success
 

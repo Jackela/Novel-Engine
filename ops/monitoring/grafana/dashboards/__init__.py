@@ -82,7 +82,10 @@ def get_api_dashboard() -> Dict[str, Any]:
                         "type": "query",
                         "datasource": "prometheus",
                         "query": "label_values(environment)",
-                        "current": {"text": "production", "value": "production"},
+                        "current": {
+                            "text": "production",
+                            "value": "production",
+                        },
                         "includeAll": False,
                         "multi": False,
                     },
@@ -401,7 +404,10 @@ def get_security_dashboard() -> Dict[str, Any]:
                     "type": "table",
                     "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
                     "targets": [
-                        {"expr": "novel_engine_security_events", "format": "table"}
+                        {
+                            "expr": "novel_engine_security_events",
+                            "format": "table",
+                        }
                     ],
                 },
             ],
@@ -433,7 +439,10 @@ def get_application_overview() -> Dict[str, Any]:
                     "type": "stat",
                     "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
                     "targets": [
-                        {"expr": 'up{job=~"novel-engine.*"}', "legendFormat": "{{job}}"}
+                        {
+                            "expr": 'up{job=~"novel-engine.*"}',
+                            "legendFormat": "{{job}}",
+                        }
                     ],
                     "fieldConfig": {
                         "defaults": {
@@ -508,7 +517,10 @@ def create_custom_panel(panel_type: str, **kwargs) -> Dict[str, Any]:
         )
     elif panel_type == "table":
         base_panel.update(
-            {"styles": kwargs.get("styles", []), "columns": kwargs.get("columns", [])}
+            {
+                "styles": kwargs.get("styles", []),
+                "columns": kwargs.get("columns", []),
+            }
         )
 
     return base_panel

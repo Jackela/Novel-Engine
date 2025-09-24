@@ -61,7 +61,9 @@ class NovelEngineSimulator:
         }
 
     @staticmethod
-    async def simulate_performance_test(concurrent_requests: int) -> Dict[str, Any]:
+    async def simulate_performance_test(
+        concurrent_requests: int,
+    ) -> Dict[str, Any]:
         """模拟性能测试"""
         await asyncio.sleep(1.0)
 
@@ -92,7 +94,6 @@ async def comprehensive_framework_test():
     }
 
     async with httpx.AsyncClient(timeout=60.0):
-
         # === 测试类别1: 功能测试能力 ===
         print("\n📝 类别1: 功能测试能力验证")
         print("-" * 40)
@@ -137,7 +138,9 @@ async def comprehensive_framework_test():
         # 模拟质量评估
         print("  测试: AI内容质量评估...")
         sample_content = "这是一段测试文本，用于评估AI生成内容的质量。"
-        quality_result = await simulator.simulate_quality_assessment(sample_content)
+        quality_result = await simulator.simulate_quality_assessment(
+            sample_content
+        )
 
         # 验证质量评估
         quality_test_passed = quality_result["overall_score"] > 0.6 and all(
@@ -170,7 +173,9 @@ async def comprehensive_framework_test():
 
         # 模拟性能测试
         print("  测试: 高负载性能测试...")
-        perf_result = await simulator.simulate_performance_test(concurrent_requests=10)
+        perf_result = await simulator.simulate_performance_test(
+            concurrent_requests=10
+        )
 
         # 验证性能测试
         perf_test_passed = (
@@ -276,9 +281,13 @@ async def comprehensive_framework_test():
         )
         for scenario in error_scenarios:
             icon = (
-                "✅" if scenario["detected"] and scenario["handled_correctly"] else "❌"
+                "✅"
+                if scenario["detected"] and scenario["handled_correctly"]
+                else "❌"
             )
-            print(f"       {icon} {scenario['scenario']}: {scenario['error_message']}")
+            print(
+                f"       {icon} {scenario['scenario']}: {scenario['error_message']}"
+            )
 
         test_results["test_categories"].append(
             {
@@ -391,7 +400,9 @@ async def comprehensive_framework_test():
         "ai_testing/validation_reports/novel_engine_simulation_report.json"
     )
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(test_results, indent=2, ensure_ascii=False))
+    report_path.write_text(
+        json.dumps(test_results, indent=2, ensure_ascii=False)
+    )
     print(f"\n📄 详细报告已保存至: {report_path}")
 
     return test_results

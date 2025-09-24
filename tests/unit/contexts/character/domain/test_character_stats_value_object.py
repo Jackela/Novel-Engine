@@ -186,9 +186,16 @@ class TestCoreAbilities:
         )
 
         assert abilities.is_exceptional_ability(AbilityScore.STRENGTH) is True
-        assert abilities.is_exceptional_ability(AbilityScore.DEXTERITY) is False
-        assert abilities.is_exceptional_ability(AbilityScore.CONSTITUTION) is True
-        assert abilities.is_exceptional_ability(AbilityScore.INTELLIGENCE) is False
+        assert (
+            abilities.is_exceptional_ability(AbilityScore.DEXTERITY) is False
+        )
+        assert (
+            abilities.is_exceptional_ability(AbilityScore.CONSTITUTION) is True
+        )
+        assert (
+            abilities.is_exceptional_ability(AbilityScore.INTELLIGENCE)
+            is False
+        )
 
     def test_get_strongest_ability(self):
         """Test finding strongest ability."""
@@ -300,7 +307,9 @@ class TestVitalStats:
                 armor_class=10,
                 speed=30,
             )
-        assert "Current health must be between 0 and max health" in str(exc_info.value)
+        assert "Current health must be between 0 and max health" in str(
+            exc_info.value
+        )
 
     def test_vital_stats_validation_current_health_negative_fails(self):
         """Test validation fails for negative current health."""
@@ -315,7 +324,9 @@ class TestVitalStats:
                 armor_class=10,
                 speed=30,
             )
-        assert "Current health must be between 0 and max health" in str(exc_info.value)
+        assert "Current health must be between 0 and max health" in str(
+            exc_info.value
+        )
 
     def test_vital_stats_validation_max_mana_negative_fails(self):
         """Test validation fails for negative max mana."""
@@ -345,7 +356,9 @@ class TestVitalStats:
                 armor_class=10,
                 speed=30,
             )
-        assert "Current mana must be between 0 and max mana" in str(exc_info.value)
+        assert "Current mana must be between 0 and max mana" in str(
+            exc_info.value
+        )
 
     def test_vital_stats_validation_armor_class_too_high_fails(self):
         """Test validation fails for armor class too high."""
@@ -767,7 +780,9 @@ class TestCombatStats:
                 critical_hit_chance=0.15,
                 critical_damage_multiplier=2.5,
             )
-        assert "Base attack bonus must be between -10 and 30" in str(exc_info.value)
+        assert "Base attack bonus must be between -10 and 30" in str(
+            exc_info.value
+        )
 
     def test_combat_stats_validation_attack_bonus_too_high_fails(self):
         """Test validation fails for attack bonus too high."""
@@ -780,7 +795,9 @@ class TestCombatStats:
                 critical_hit_chance=0.15,
                 critical_damage_multiplier=2.5,
             )
-        assert "Base attack bonus must be between -10 and 30" in str(exc_info.value)
+        assert "Base attack bonus must be between -10 and 30" in str(
+            exc_info.value
+        )
 
     def test_combat_stats_validation_initiative_modifier_too_low_fails(self):
         """Test validation fails for initiative modifier too low."""
@@ -793,7 +810,9 @@ class TestCombatStats:
                 critical_hit_chance=0.15,
                 critical_damage_multiplier=2.5,
             )
-        assert "Initiative modifier must be between -10 and 20" in str(exc_info.value)
+        assert "Initiative modifier must be between -10 and 20" in str(
+            exc_info.value
+        )
 
     def test_combat_stats_validation_critical_chance_too_high_fails(self):
         """Test validation fails for critical hit chance too high."""
@@ -806,7 +825,9 @@ class TestCombatStats:
                 critical_hit_chance=1.5,  # Too high (>1.0)
                 critical_damage_multiplier=2.5,
             )
-        assert "Critical hit chance must be between 0.0 and 1.0" in str(exc_info.value)
+        assert "Critical hit chance must be between 0.0 and 1.0" in str(
+            exc_info.value
+        )
 
     def test_combat_stats_validation_critical_multiplier_too_low_fails(self):
         """Test validation fails for critical damage multiplier too low."""
@@ -819,8 +840,9 @@ class TestCombatStats:
                 critical_hit_chance=0.15,
                 critical_damage_multiplier=0.5,  # Too low (<1.0)
             )
-        assert "Critical damage multiplier must be between 1.0 and 10.0" in str(
-            exc_info.value
+        assert (
+            "Critical damage multiplier must be between 1.0 and 10.0"
+            in str(exc_info.value)
         )
 
     def test_combat_stats_boundary_values(self):
@@ -1115,7 +1137,9 @@ class TestCharacterStats:
                 experience_points=10_000_001,  # Too high
                 skill_points=20,
             )
-        assert "Experience points cannot exceed 10 million" in str(exc_info.value)
+        assert "Experience points cannot exceed 10 million" in str(
+            exc_info.value
+        )
 
     def test_character_stats_validation_skill_points_too_high_fails(
         self, sample_core_abilities, sample_vital_stats, sample_combat_stats
@@ -1164,17 +1188,23 @@ class TestCharacterStats:
     def test_get_ability_modifier(self, sample_character_stats):
         """Test getting ability modifier through character stats."""
         assert (
-            sample_character_stats.get_ability_modifier(AbilityScore.STRENGTH) == 2
+            sample_character_stats.get_ability_modifier(AbilityScore.STRENGTH)
+            == 2
         )  # 15 -> +2
         assert (
-            sample_character_stats.get_ability_modifier(AbilityScore.CONSTITUTION) == 3
+            sample_character_stats.get_ability_modifier(
+                AbilityScore.CONSTITUTION
+            )
+            == 3
         )  # 16 -> +3
 
     def test_is_alive_when_alive(self, sample_character_stats):
         """Test is_alive returns True when character is alive."""
         assert sample_character_stats.is_alive() is True
 
-    def test_is_alive_when_dead(self, sample_core_abilities, sample_combat_stats):
+    def test_is_alive_when_dead(
+        self, sample_core_abilities, sample_combat_stats
+    ):
         """Test is_alive returns False when character is dead."""
         dead_vital_stats = VitalStats(
             max_health=50,
@@ -1304,7 +1334,9 @@ class TestCharacterStats:
 
         assert novice_stats.get_overall_power_level() == "Novice"
 
-    def test_needs_rest_low_health(self, sample_core_abilities, sample_combat_stats):
+    def test_needs_rest_low_health(
+        self, sample_core_abilities, sample_combat_stats
+    ):
         """Test needs_rest returns True with low health."""
         low_health_vital_stats = VitalStats(
             max_health=50,
@@ -1327,7 +1359,9 @@ class TestCharacterStats:
 
         assert stats.needs_rest() is True
 
-    def test_needs_rest_low_mana(self, sample_core_abilities, sample_combat_stats):
+    def test_needs_rest_low_mana(
+        self, sample_core_abilities, sample_combat_stats
+    ):
         """Test needs_rest returns True with low mana."""
         low_mana_vital_stats = VitalStats(
             max_health=50,
@@ -1350,7 +1384,9 @@ class TestCharacterStats:
 
         assert stats.needs_rest() is True
 
-    def test_needs_rest_low_stamina(self, sample_core_abilities, sample_combat_stats):
+    def test_needs_rest_low_stamina(
+        self, sample_core_abilities, sample_combat_stats
+    ):
         """Test needs_rest returns True with low stamina."""
         low_stamina_vital_stats = VitalStats(
             max_health=50,
@@ -1520,7 +1556,8 @@ class TestCharacterStats:
 
         # Should still calculate correctly despite unusual combination
         assert (
-            edge_case_stats.get_ability_modifier(AbilityScore.CONSTITUTION) == 7
+            edge_case_stats.get_ability_modifier(AbilityScore.CONSTITUTION)
+            == 7
         )  # 25 -> +7
         assert edge_case_stats.is_alive() is True  # Still has 5 health
         assert edge_case_stats.can_cast_spells() is False  # No mana

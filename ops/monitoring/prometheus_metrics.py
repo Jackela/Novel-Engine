@@ -103,7 +103,9 @@ class PrometheusMetricsCollector:
         )
         self.metrics[metric_key] = metric
 
-    def set_gauge(self, name: str, value: float, labels: Dict[str, str] = None):
+    def set_gauge(
+        self, name: str, value: float, labels: Dict[str, str] = None
+    ):
         """Set a gauge metric value"""
         metric_key = self._build_metric_key(name, labels)
         self.gauge_values[metric_key] = value
@@ -118,7 +120,9 @@ class PrometheusMetricsCollector:
         )
         self.metrics[metric_key] = metric
 
-    def observe_histogram(self, name: str, value: float, labels: Dict[str, str] = None):
+    def observe_histogram(
+        self, name: str, value: float, labels: Dict[str, str] = None
+    ):
         """Observe a value for histogram metric"""
         metric_key = self._build_metric_key(name, labels)
         self.histograms[metric_key].append(value)
@@ -137,7 +141,9 @@ class PrometheusMetricsCollector:
         )
         self.metrics[metric_key] = metric
 
-    def _build_metric_key(self, name: str, labels: Dict[str, str] = None) -> str:
+    def _build_metric_key(
+        self, name: str, labels: Dict[str, str] = None
+    ) -> str:
         """Build unique metric key from name and labels"""
         if not labels:
             return name
@@ -147,7 +153,11 @@ class PrometheusMetricsCollector:
 
     # Application Performance Metrics
     def record_http_request(
-        self, method: str, endpoint: str, status_code: int, duration_seconds: float
+        self,
+        method: str,
+        endpoint: str,
+        status_code: int,
+        duration_seconds: float,
     ):
         """Record HTTP request metrics"""
         labels = {
@@ -177,7 +187,11 @@ class PrometheusMetricsCollector:
             self.http_errors_total += 1
 
     def record_database_query(
-        self, query_type: str, table: str, duration_seconds: float, success: bool = True
+        self,
+        query_type: str,
+        table: str,
+        duration_seconds: float,
+        success: bool = True,
     ):
         """Record database query metrics"""
         labels = {
@@ -232,7 +246,9 @@ class PrometheusMetricsCollector:
         )
 
         if quality_score > 0:
-            self.set_gauge("story_generation_quality_score", quality_score, labels)
+            self.set_gauge(
+                "story_generation_quality_score", quality_score, labels
+            )
 
         # Update internal counters
         self.story_generation_requests += 1
@@ -309,7 +325,9 @@ class PrometheusMetricsCollector:
             self.set_gauge("system_disk_total_bytes", disk.total)
             self.set_gauge("system_disk_used_bytes", disk.used)
             self.set_gauge("system_disk_free_bytes", disk.free)
-            self.set_gauge("system_disk_usage_percent", (disk.used / disk.total) * 100)
+            self.set_gauge(
+                "system_disk_usage_percent", (disk.used / disk.total) * 100
+            )
 
             # Process uptime
             uptime = time.time() - self.start_time
@@ -372,7 +390,9 @@ class PrometheusMetricsCollector:
             # Add metric values
             for metric in metric_list:
                 if metric.labels:
-                    label_parts = [f'{k}="{v}"' for k, v in metric.labels.items()]
+                    label_parts = [
+                        f'{k}="{v}"' for k, v in metric.labels.items()
+                    ]
                     label_str = "{" + ",".join(label_parts) + "}"
                     lines.append(f"{metric_name}{label_str} {metric.value}")
                 else:
@@ -381,15 +401,21 @@ class PrometheusMetricsCollector:
         # Add summary metrics for histograms
         for metric_name, values in self.histograms.items():
             if values:
-                base_name = metric_name.split("{")[0]  # Remove labels for base name
+                base_name = metric_name.split("{")[
+                    0
+                ]  # Remove labels for base name
                 count = len(values)
                 total = sum(values)
 
-                lines.append(f"# HELP {base_name}_sum Total sum of {base_name}")
+                lines.append(
+                    f"# HELP {base_name}_sum Total sum of {base_name}"
+                )
                 lines.append(f"# TYPE {base_name}_sum counter")
                 lines.append(f"{base_name}_sum {total}")
 
-                lines.append(f"# HELP {base_name}_count Total count of {base_name}")
+                lines.append(
+                    f"# HELP {base_name}_count Total count of {base_name}"
+                )
                 lines.append(f"# TYPE {base_name}_count counter")
                 lines.append(f"{base_name}_count {count}")
 
@@ -424,7 +450,9 @@ class PrometheusMetricsCollector:
                         if bucket == "+Inf":
                             bucket_count = count
                         else:
-                            bucket_count = sum(1 for v in values if v <= bucket)
+                            bucket_count = sum(
+                                1 for v in values if v <= bucket
+                            )
                         lines.append(
                             f'{base_name}_bucket{{le="{bucket}"}} {bucket_count}'
                         )
@@ -440,13 +468,15 @@ class PrometheusMetricsCollector:
                 "total_http_requests": self.http_requests_total,
                 "total_http_errors": self.http_errors_total,
                 "avg_response_time": (
-                    self.http_request_duration_sum / self.http_request_duration_count
+                    self.http_request_duration_sum
+                    / self.http_request_duration_count
                     if self.http_request_duration_count > 0
                     else 0
                 ),
                 "total_database_queries": self.database_queries_total,
                 "avg_query_time": (
-                    self.database_query_duration_sum / self.database_queries_total
+                    self.database_query_duration_sum
+                    / self.database_queries_total
                     if self.database_queries_total > 0
                     else 0
                 ),
@@ -496,7 +526,9 @@ async def time_request(method: str, endpoint: str):
         raise
     finally:
         duration = time.time() - start_time
-        metrics_collector.record_http_request(method, endpoint, status_code, duration)
+        metrics_collector.record_http_request(
+            method, endpoint, status_code, duration
+        )
 
 
 # Decorator for timing functions
@@ -522,7 +554,9 @@ def time_operation(operation_name: str, labels: Dict[str, str] = None):
                 operation_labels = (labels or {}).copy()
                 operation_labels["success"] = str(success).lower()
                 metrics_collector.observe_histogram(
-                    f"{operation_name}_duration_seconds", duration, operation_labels
+                    f"{operation_name}_duration_seconds",
+                    duration,
+                    operation_labels,
                 )
                 metrics_collector.increment_counter(
                     f"{operation_name}_total", operation_labels
@@ -531,7 +565,9 @@ def time_operation(operation_name: str, labels: Dict[str, str] = None):
         return (
             async_wrapper
             if asyncio.iscoroutinefunction(func)
-            else lambda *args, **kwargs: asyncio.run(async_wrapper(*args, **kwargs))
+            else lambda *args, **kwargs: asyncio.run(
+                async_wrapper(*args, **kwargs)
+            )
         )
 
     return decorator
@@ -609,7 +645,9 @@ def record_story_generation_success(
 
 def record_story_generation_failure(story_type: str, duration_seconds: float):
     """Record failed story generation"""
-    metrics_collector.record_story_generation(story_type, duration_seconds, False)
+    metrics_collector.record_story_generation(
+        story_type, duration_seconds, False
+    )
 
 
 def record_agent_coordination_event(
@@ -621,14 +659,18 @@ def record_agent_coordination_event(
     )
 
 
-def record_character_interaction_success(interaction_type: str, character_count: int):
+def record_character_interaction_success(
+    interaction_type: str, character_count: int
+):
     """Record successful character interaction"""
     metrics_collector.record_character_interaction(
         interaction_type, character_count, True
     )
 
 
-def record_character_interaction_failure(interaction_type: str, character_count: int):
+def record_character_interaction_failure(
+    interaction_type: str, character_count: int
+):
     """Record failed character interaction"""
     metrics_collector.record_character_interaction(
         interaction_type, character_count, False

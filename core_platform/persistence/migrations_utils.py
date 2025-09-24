@@ -44,12 +44,16 @@ class MigrationManager:
         self.alembic_config = Config(self.config_path)
 
         # Set up paths
-        script_location = self.alembic_config.get_main_option("script_location")
+        script_location = self.alembic_config.get_main_option(
+            "script_location"
+        )
         if not os.path.isabs(script_location):
             # Make relative paths absolute from config file location
             config_dir = os.path.dirname(self.config_path)
             script_location = os.path.join(config_dir, script_location)
-            self.alembic_config.set_main_option("script_location", script_location)
+            self.alembic_config.set_main_option(
+                "script_location", script_location
+            )
 
     def initialize_migration_repository(self) -> None:
         """Initialize the migration repository if it doesn't exist."""
@@ -63,7 +67,9 @@ class MigrationManager:
             logger.error(f"Failed to initialize migration repository: {e}")
             raise
 
-    def generate_migration(self, message: str, auto_generate: bool = True) -> str:
+    def generate_migration(
+        self, message: str, auto_generate: bool = True
+    ) -> str:
         """
         Generate a new migration script.
 
@@ -84,9 +90,13 @@ class MigrationManager:
                 )
             else:
                 # Create empty migration template
-                revision = command.revision(self.alembic_config, message=message)
+                revision = command.revision(
+                    self.alembic_config, message=message
+                )
 
-            logger.info(f"Generated migration with revision ID: {revision.revision}")
+            logger.info(
+                f"Generated migration with revision ID: {revision.revision}"
+            )
             return revision.revision
 
         except Exception as e:
@@ -181,7 +191,9 @@ class MigrationManager:
 
             # Get revisions between current and head
             revisions = []
-            for revision in script_dir.walk_revisions("head", current_revision):
+            for revision in script_dir.walk_revisions(
+                "head", current_revision
+            ):
                 if revision.revision != current_revision:
                     revisions.append(revision.revision)
 
@@ -248,7 +260,9 @@ class MigrationManager:
 
                 if not result.fetchone():
                     logger.info(f"Creating database: {database_name}")
-                    connection.execute(text(f'CREATE DATABASE "{database_name}"'))
+                    connection.execute(
+                        text(f'CREATE DATABASE "{database_name}"')
+                    )
                     logger.info("Database created successfully")
                 else:
                     logger.info(f"Database {database_name} already exists")

@@ -69,7 +69,9 @@ try:
     import config_loader
 
     fixes = fix_config_compatibility()
-    config_loader.get_default_character_sheets = fixes["get_default_character_sheets"]
+    config_loader.get_default_character_sheets = fixes[
+        "get_default_character_sheets"
+    ]
     config_loader.get_simulation_turns = fixes["get_simulation_turns"]
 
 except ImportError:

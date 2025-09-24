@@ -280,7 +280,9 @@ class TermGuard:
                     violations.append(violation)
 
             except re.error as e:
-                logger.warning(f"⚠️ Invalid regex pattern '{rule.pattern}': {e}")
+                logger.warning(
+                    f"⚠️ Invalid regex pattern '{rule.pattern}': {e}"
+                )
 
         logger.info(
             f"🔍 Analyzed content: found {len(violations)} potential violations"
@@ -325,22 +327,30 @@ class TermGuard:
                     and matching_rule.replacement
                 ):
                     content = (
-                        content[:start] + matching_rule.replacement + content[end:]
+                        content[:start]
+                        + matching_rule.replacement
+                        + content[end:]
                     )
                     actions_taken.append(
                         f"Replaced '{violation.term}' with '{matching_rule.replacement}'"
                     )
 
                 elif matching_rule.action == FilterAction.GENERIC:
-                    generic_replacement = self._generate_generic_replacement(violation)
-                    content = content[:start] + generic_replacement + content[end:]
+                    generic_replacement = self._generate_generic_replacement(
+                        violation
+                    )
+                    content = (
+                        content[:start] + generic_replacement + content[end:]
+                    )
                     actions_taken.append(
                         f"Genericized '{violation.term}' to '{generic_replacement}'"
                     )
 
                 elif matching_rule.action == FilterAction.BLOCK:
                     # For blocking, we replace with safe placeholder
-                    content = content[:start] + "[CONTENT_FILTERED]" + content[end:]
+                    content = (
+                        content[:start] + "[CONTENT_FILTERED]" + content[end:]
+                    )
                     actions_taken.append(f"Blocked '{violation.term}'")
 
                 elif matching_rule.action == FilterAction.WARN:
@@ -350,7 +360,9 @@ class TermGuard:
 
         # Calculate overall confidence score
         if violations:
-            confidence_score = sum(v.confidence for v in violations) / len(violations)
+            confidence_score = sum(v.confidence for v in violations) / len(
+                violations
+            )
         else:
             confidence_score = 1.0
 
@@ -375,7 +387,9 @@ class TermGuard:
 
         return content, report
 
-    def _find_matching_rule(self, violation: IPViolation) -> Optional[FilterRule]:
+    def _find_matching_rule(
+        self, violation: IPViolation
+    ) -> Optional[FilterRule]:
         """Find the filter rule that matched a given violation."""
         for rule in self.filter_rules:
             if rule.violation_type == violation.violation_type:
@@ -416,11 +430,16 @@ class TermGuard:
             Comprehensive compliance analysis
         """
         if not reports:
-            return {"status": "no_data", "message": "No cleaning reports provided"}
+            return {
+                "status": "no_data",
+                "message": "No cleaning reports provided",
+            }
 
         total_violations = sum(len(r.violations_found) for r in reports)
         total_actions = sum(len(r.actions_taken) for r in reports)
-        avg_confidence = sum(r.confidence_score for r in reports) / len(reports)
+        avg_confidence = sum(r.confidence_score for r in reports) / len(
+            reports
+        )
 
         violation_types = {}
         for report in reports:
@@ -441,7 +460,9 @@ class TermGuard:
                 "safe_content_percentage": round(safe_percentage, 1),
             },
             "violation_breakdown": violation_types,
-            "recommendations": self._generate_compliance_recommendations(reports),
+            "recommendations": self._generate_compliance_recommendations(
+                reports
+            ),
             "generated_at": datetime.now().isoformat(),
         }
 
@@ -460,7 +481,10 @@ class TermGuard:
             )
 
         critical_violations = sum(
-            1 for r in reports for v in r.violations_found if v.confidence > 0.9
+            1
+            for r in reports
+            for v in r.violations_found
+            if v.confidence > 0.9
         )
         if critical_violations > 0:
             recommendations.append(
@@ -483,17 +507,27 @@ class TermGuard:
 
 def main():
     """Command-line interface for the Term Guard tool."""
-    parser = argparse.ArgumentParser(description="Novel Engine IP Cleaning Tool")
-    parser.add_argument("--input", "-i", type=Path, help="Input file to analyze")
+    parser = argparse.ArgumentParser(
+        description="Novel Engine IP Cleaning Tool"
+    )
+    parser.add_argument(
+        "--input", "-i", type=Path, help="Input file to analyze"
+    )
     parser.add_argument(
         "--output", "-o", type=Path, help="Output file for cleaned content"
     )
-    parser.add_argument("--config", "-c", type=Path, help="Configuration file path")
+    parser.add_argument(
+        "--config", "-c", type=Path, help="Configuration file path"
+    )
     parser.add_argument(
         "--analyze-only", action="store_true", help="Only analyze, don't clean"
     )
-    parser.add_argument("--report", "-r", type=Path, help="Generate compliance report")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+    parser.add_argument(
+        "--report", "-r", type=Path, help="Generate compliance report"
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Verbose output"
+    )
 
     args = parser.parse_args()
 
@@ -521,7 +555,9 @@ def main():
                     print(f"   Context: ...{violation.context}...")
                     print(f"   Confidence: {violation.confidence:.2f}")
                     if violation.suggested_replacement:
-                        print(f"   Suggested: '{violation.suggested_replacement}'")
+                        print(
+                            f"   Suggested: '{violation.suggested_replacement}'"
+                        )
             else:
                 cleaned_content, report = term_guard.clean_content(content)
 
@@ -538,7 +574,9 @@ def main():
                     print(f"✅ Cleaned content saved to {args.output}")
 
                 if args.report:
-                    compliance_report = term_guard.generate_compliance_report([report])
+                    compliance_report = term_guard.generate_compliance_report(
+                        [report]
+                    )
                     with open(args.report, "w", encoding="utf-8") as f:
                         json.dump(compliance_report, f, indent=2)
                     print(f"📊 Compliance report saved to {args.report}")

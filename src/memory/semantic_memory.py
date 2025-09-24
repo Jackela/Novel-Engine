@@ -17,7 +17,12 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
+from src.core.data_models import (
+    ErrorInfo,
+    MemoryItem,
+    MemoryType,
+    StandardResponse,
+)
 from src.core.types import AgentID
 from src.database.context_db import ContextDatabase
 
@@ -123,7 +128,9 @@ class SemanticMemory:
 
         logger.info(f"SemanticMemory initialized for {agent_id}")
 
-    async def extract_and_store_knowledge(self, memory: MemoryItem) -> StandardResponse:
+    async def extract_and_store_knowledge(
+        self, memory: MemoryItem
+    ) -> StandardResponse:
         """
         Extracts factual knowledge from memory content and stores it as
         structured facts, creating concepts and links automatically.
@@ -155,14 +162,19 @@ class SemanticMemory:
 
             return StandardResponse(
                 success=True,
-                data={"facts_extracted": stored_count, "entities_found": len(entities)},
+                data={
+                    "facts_extracted": stored_count,
+                    "entities_found": len(entities),
+                },
             )
 
         except Exception as e:
             logger.error(f"Knowledge extraction failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="KNOWLEDGE_EXTRACTION_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="KNOWLEDGE_EXTRACTION_FAILED", message=str(e)
+                ),
             )
 
     def _extract_facts_from_content(
@@ -204,19 +216,28 @@ class SemanticMemory:
 
             matching_facts.sort(key=lambda f: f.confidence, reverse=True)
 
-            fact_statements = [fact.to_natural_language() for fact in matching_facts]
+            fact_statements = [
+                fact.to_natural_language() for fact in matching_facts
+            ]
 
-            logger.info(f"Retrieved {len(matching_facts)} facts about '{subject}'")
+            logger.info(
+                f"Retrieved {len(matching_facts)} facts about '{subject}'"
+            )
 
             return StandardResponse(
-                success=True, data={"subject": subject, "facts": fact_statements}
+                success=True,
+                data={"subject": subject, "facts": fact_statements},
             )
 
         except Exception as e:
-            logger.error(f"Fact retrieval by subject failed: {e}", exc_info=True)
+            logger.error(
+                f"Fact retrieval by subject failed: {e}", exc_info=True
+            )
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="SUBJECT_FACT_RETRIEVAL_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="SUBJECT_FACT_RETRIEVAL_FAILED", message=str(e)
+                ),
             )
 
     async def query_facts_by_predicate(
@@ -237,24 +258,33 @@ class SemanticMemory:
             matching_facts.sort(key=lambda f: f.confidence, reverse=True)
 
             limited_facts = matching_facts[:limit]
-            fact_statements = [fact.to_natural_language() for fact in limited_facts]
+            fact_statements = [
+                fact.to_natural_language() for fact in limited_facts
+            ]
 
             logger.info(
                 f"Retrieved {len(limited_facts)} facts with predicate '{predicate}'"
             )
 
             return StandardResponse(
-                success=True, data={"predicate": predicate, "facts": fact_statements}
+                success=True,
+                data={"predicate": predicate, "facts": fact_statements},
             )
 
         except Exception as e:
-            logger.error(f"Fact retrieval by predicate failed: {e}", exc_info=True)
+            logger.error(
+                f"Fact retrieval by predicate failed: {e}", exc_info=True
+            )
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="PREDICATE_FACT_RETRIEVAL_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="PREDICATE_FACT_RETRIEVAL_FAILED", message=str(e)
+                ),
             )
 
-    async def get_concept_knowledge(self, concept_name: str) -> StandardResponse:
+    async def get_concept_knowledge(
+        self, concept_name: str
+    ) -> StandardResponse:
         """
         Retrieves comprehensive knowledge about a concept, including its
         relationships and associated facts.
@@ -291,7 +321,9 @@ class SemanticMemory:
             return StandardResponse(success=True, data=knowledge)
 
         except Exception as e:
-            logger.error(f"Concept knowledge retrieval failed: {e}", exc_info=True)
+            logger.error(
+                f"Concept knowledge retrieval failed: {e}", exc_info=True
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -326,14 +358,18 @@ class SemanticMemory:
         subject_concept.associated_facts.add(fact.fact_id)
 
         if self._is_entity(fact.object_value):
-            object_concept = await self._ensure_concept_exists(fact.object_value)
+            object_concept = await self._ensure_concept_exists(
+                fact.object_value
+            )
             object_concept.associated_facts.add(fact.fact_id)
 
     def _extract_entities(self, content: str) -> List[str]:
         """Extracts named entities from text content."""
         # This is a simple heuristic. A proper NER model would be better.
         return [
-            word for word in re.findall(r"\b[A-Z][a-z]+\b", content) if len(word) > 2
+            word
+            for word in re.findall(r"\b[A-Z][a-z]+\b", content)
+            if len(word) > 2
         ]
 
     def _is_entity(self, text: str) -> bool:
@@ -352,7 +388,8 @@ class SemanticMemory:
 
         for fact in facts_to_prune:
             del self._facts[fact.fact_id]
-            # This is simplified; a real implementation would clean indices too.
+            # This is simplified; a real implementation would clean indices
+            # too.
 
         logger.info(f"Pruned {num_to_prune} low-confidence facts.")
 
@@ -361,7 +398,9 @@ class SemanticMemory:
         if not self._facts:
             return {"total_facts": 0, "average_confidence": 0.0}
 
-        total_confidence = sum(fact.confidence for fact in self._facts.values())
+        total_confidence = sum(
+            fact.confidence for fact in self._facts.values()
+        )
 
         return {
             "total_facts": len(self._facts),

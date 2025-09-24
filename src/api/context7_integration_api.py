@@ -61,13 +61,21 @@ class CodeExampleRequest(BaseModel):
     framework: FrameworkType = Field(
         FrameworkType.PYTHON, description="Target framework"
     )
-    format: ExampleFormat = Field(ExampleFormat.PYTHON, description="Example format")
-    include_auth: bool = Field(True, description="Include authentication examples")
-    include_error_handling: bool = Field(True, description="Include error handling")
+    format: ExampleFormat = Field(
+        ExampleFormat.PYTHON, description="Example format"
+    )
+    include_auth: bool = Field(
+        True, description="Include authentication examples"
+    )
+    include_error_handling: bool = Field(
+        True, description="Include error handling"
+    )
     complexity_level: str = Field(
         "intermediate", description="Example complexity level"
     )
-    use_case: Optional[str] = Field(None, description="Specific use case scenario")
+    use_case: Optional[str] = Field(
+        None, description="Specific use case scenario"
+    )
 
 
 class CodeExampleResponse(BaseModel):
@@ -83,7 +91,9 @@ class CodeExampleResponse(BaseModel):
     requirements: List[str] = Field(
         default_factory=list, description="Required dependencies"
     )
-    notes: List[str] = Field(default_factory=list, description="Implementation notes")
+    notes: List[str] = Field(
+        default_factory=list, description="Implementation notes"
+    )
     related_patterns: List[str] = Field(
         default_factory=list, description="Related framework patterns"
     )
@@ -108,11 +118,17 @@ class PatternValidationRequest(BaseModel):
 class ValidationIssue(BaseModel):
     """API pattern validation issue."""
 
-    severity: str = Field(..., description="Issue severity (error, warning, info)")
+    severity: str = Field(
+        ..., description="Issue severity (error, warning, info)"
+    )
     category: str = Field(..., description="Issue category")
     message: str = Field(..., description="Issue description")
-    line_number: Optional[int] = Field(None, description="Line number if applicable")
-    suggestion: Optional[str] = Field(None, description="Improvement suggestion")
+    line_number: Optional[int] = Field(
+        None, description="Line number if applicable"
+    )
+    suggestion: Optional[str] = Field(
+        None, description="Improvement suggestion"
+    )
     pattern_reference: Optional[str] = Field(
         None, description="Reference to best practice"
     )
@@ -148,9 +164,13 @@ class DocumentationRequest(BaseModel):
     framework_focus: List[FrameworkType] = Field(
         default_factory=list, description="Framework emphasis"
     )
-    audience_level: str = Field("intermediate", description="Target audience level")
+    audience_level: str = Field(
+        "intermediate", description="Target audience level"
+    )
     include_examples: bool = Field(True, description="Include code examples")
-    include_patterns: bool = Field(True, description="Include framework patterns")
+    include_patterns: bool = Field(
+        True, description="Include framework patterns"
+    )
 
 
 class DocumentationSection(BaseModel):
@@ -185,8 +205,12 @@ class BestPracticeRequest(BaseModel):
 
     framework: FrameworkType = Field(..., description="Target framework")
     category: str = Field("general", description="Best practice category")
-    api_pattern: Optional[str] = Field(None, description="Specific API pattern")
-    include_examples: bool = Field(True, description="Include example implementations")
+    api_pattern: Optional[str] = Field(
+        None, description="Specific API pattern"
+    )
+    include_examples: bool = Field(
+        True, description="Include example implementations"
+    )
 
 
 class BestPracticeItem(BaseModel):
@@ -197,7 +221,9 @@ class BestPracticeItem(BaseModel):
     rationale: str = Field(..., description="Why this practice is important")
     example: Optional[str] = Field(None, description="Code example")
     anti_pattern: Optional[str] = Field(None, description="What to avoid")
-    references: List[str] = Field(default_factory=list, description="Reference links")
+    references: List[str] = Field(
+        default_factory=list, description="Reference links"
+    )
 
 
 class BestPracticesResponse(BaseModel):
@@ -205,7 +231,9 @@ class BestPracticesResponse(BaseModel):
 
     framework: str = Field(..., description="Target framework")
     category: str = Field(..., description="Best practice category")
-    practices: List[BestPracticeItem] = Field(..., description="Best practice items")
+    practices: List[BestPracticeItem] = Field(
+        ..., description="Best practice items"
+    )
     framework_version: str = Field(..., description="Framework version info")
     last_updated: datetime = Field(default_factory=datetime.now)
 
@@ -290,7 +318,10 @@ class Context7IntegrationAPI:
                         "Use dependency injection",
                         "Implement proper error handling",
                     ],
-                    "framework_compliance": {"fastapi": True, "pydantic": True},
+                    "framework_compliance": {
+                        "fastapi": True,
+                        "pydantic": True,
+                    },
                 },
             }
         elif operation == "get_best_practices":
@@ -309,7 +340,10 @@ class Context7IntegrationAPI:
                 ],
             }
         else:
-            return {"success": False, "error": f"Unknown operation: {operation}"}
+            return {
+                "success": False,
+                "error": f"Unknown operation: {operation}",
+            }
 
     def _generate_mock_code_example(self, params: Dict[str, Any]) -> str:
         """Generate mock code examples based on parameters."""
@@ -366,7 +400,8 @@ if (response.ok) {{
             description="Generate Context7-powered code examples for API endpoints",
         )
         async def generate_code_example(
-            request: CodeExampleRequest, current_user: Dict = Depends(get_current_user)
+            request: CodeExampleRequest,
+            current_user: Dict = Depends(get_current_user),
         ):
             """Generate code examples using Context7 documentation patterns."""
             try:
@@ -386,7 +421,8 @@ if (response.ok) {{
 
                 if not context7_response.get("success"):
                     raise HTTPException(
-                        status_code=500, detail="Failed to generate code example"
+                        status_code=500,
+                        detail="Failed to generate code example",
                     )
 
                 example_data = context7_response["example"]
@@ -409,7 +445,9 @@ if (response.ok) {{
                 raise
             except Exception as e:
                 logger.error(f"Error generating code example: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
         @app.post(
             "/api/v1/context7/validate",
@@ -436,7 +474,8 @@ if (response.ok) {{
 
                 if not context7_response.get("success"):
                     raise HTTPException(
-                        status_code=500, detail="Failed to validate API pattern"
+                        status_code=500,
+                        detail="Failed to validate API pattern",
                     )
 
                 validation_data = context7_response["validation"]
@@ -453,7 +492,9 @@ if (response.ok) {{
                     issues=issues,
                     suggestions=validation_data["suggestions"],
                     best_practices=validation_data["best_practices"],
-                    framework_compliance=validation_data["framework_compliance"],
+                    framework_compliance=validation_data[
+                        "framework_compliance"
+                    ],
                 )
 
                 return StandardResponse(success=True, data=validation_response)
@@ -462,7 +503,9 @@ if (response.ok) {{
                 raise
             except Exception as e:
                 logger.error(f"Error validating API pattern: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
         @app.post(
             "/api/v1/context7/documentation",
@@ -482,7 +525,9 @@ if (response.ok) {{
                     {
                         "doc_type": request.doc_type.value,
                         "api_endpoints": request.api_endpoints,
-                        "framework_focus": [f.value for f in request.framework_focus],
+                        "framework_focus": [
+                            f.value for f in request.framework_focus
+                        ],
                         "audience_level": request.audience_level,
                         "include_examples": request.include_examples,
                         "include_patterns": request.include_patterns,
@@ -536,7 +581,9 @@ if (response.ok) {{
                 raise
             except Exception as e:
                 logger.error(f"Error generating enhanced documentation: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
         @app.get(
             "/api/v1/context7/best-practices/{framework}",
@@ -549,7 +596,9 @@ if (response.ok) {{
                 ..., description="Framework to get practices for"
             ),
             category: str = Query("general", description="Practice category"),
-            include_examples: bool = Query(True, description="Include code examples"),
+            include_examples: bool = Query(
+                True, description="Include code examples"
+            ),
             current_user: Dict = Depends(get_current_user),
         ):
             """Get framework best practices from Context7."""
@@ -566,7 +615,8 @@ if (response.ok) {{
 
                 if not context7_response.get("success"):
                     raise HTTPException(
-                        status_code=500, detail="Failed to retrieve best practices"
+                        status_code=500,
+                        detail="Failed to retrieve best practices",
                     )
 
                 practices_data = context7_response["practices"]
@@ -583,13 +633,17 @@ if (response.ok) {{
                     framework_version="latest",
                 )
 
-                return StandardResponse(success=True, data=best_practices_response)
+                return StandardResponse(
+                    success=True, data=best_practices_response
+                )
 
             except HTTPException:
                 raise
             except Exception as e:
                 logger.error(f"Error getting best practices: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
         @app.get(
             "/api/v1/context7/status",
@@ -604,7 +658,9 @@ if (response.ok) {{
                     "available": self.context7_available,
                     "supported_frameworks": [f.value for f in FrameworkType],
                     "supported_formats": [f.value for f in ExampleFormat],
-                    "documentation_types": [d.value for d in DocumentationType],
+                    "documentation_types": [
+                        d.value for d in DocumentationType
+                    ],
                     "capabilities": [
                         "Code example generation",
                         "API pattern validation",
@@ -620,9 +676,13 @@ if (response.ok) {{
 
             except Exception as e:
                 logger.error(f"Error getting Context7 status: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
 
-def create_context7_integration_api(orchestrator=None) -> Context7IntegrationAPI:
+def create_context7_integration_api(
+    orchestrator=None,
+) -> Context7IntegrationAPI:
     """Factory function to create Context7IntegrationAPI instance."""
     return Context7IntegrationAPI(orchestrator)

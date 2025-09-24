@@ -104,14 +104,21 @@ def monitor_containers(
     if filter_labels:
         filtered_containers = []
         for container in containers:
-            if all(container["labels"].get(k) == v for k, v in filter_labels.items()):
+            if all(
+                container["labels"].get(k) == v
+                for k, v in filter_labels.items()
+            ):
                 filtered_containers.append(container)
         containers = filtered_containers
 
     return {
         "total_containers": len(containers),
-        "running_containers": len([c for c in containers if c["status"] == "running"]),
-        "healthy_containers": len([c for c in containers if c["health"] == "healthy"]),
+        "running_containers": len(
+            [c for c in containers if c["status"] == "running"]
+        ),
+        "healthy_containers": len(
+            [c for c in containers if c["health"] == "healthy"]
+        ),
         "unhealthy_containers": len(
             [c for c in containers if c["health"] != "healthy"]
         ),
@@ -235,7 +242,9 @@ def manage_container_lifecycle(
     valid_actions = ["start", "stop", "restart", "remove", "update", "scale"]
 
     if action not in valid_actions:
-        raise ValueError(f"Invalid action: {action}. Must be one of {valid_actions}")
+        raise ValueError(
+            f"Invalid action: {action}. Must be one of {valid_actions}"
+        )
 
     operation_id = (
         f"{action}-{container_name}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"

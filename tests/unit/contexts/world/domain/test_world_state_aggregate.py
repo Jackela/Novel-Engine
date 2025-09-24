@@ -133,7 +133,9 @@ class TestWorldStateAggregate:
         future_time = datetime.now() + timedelta(days=400)  # More than a year
         with pytest.raises(ValueError) as exc_info:
             WorldState(name="Test", world_time=future_time)
-        assert "World time is more than a year in the future" in str(exc_info.value)
+        assert "World time is more than a year in the future" in str(
+            exc_info.value
+        )
 
     def test_world_state_validation_entity_limit(self):
         """Test validation for entity limit exceeded."""
@@ -147,7 +149,9 @@ class TestWorldStateAggregate:
         # Adding one more should fail
         with pytest.raises(ValueError) as exc_info:
             world.add_entity("entity3", EntityType.CHARACTER, "Char2", coords)
-        assert "World has reached maximum entity limit of 2" in str(exc_info.value)
+        assert "World has reached maximum entity limit of 2" in str(
+            exc_info.value
+        )
 
     # ==================== State Transition Tests ====================
 
@@ -182,7 +186,9 @@ class TestWorldStateAggregate:
 
         # Check domain event was raised
         events = world_state.get_domain_events()
-        pause_event = next((e for e in events if "paused" in e.change_reason), None)
+        pause_event = next(
+            (e for e in events if "paused" in e.change_reason), None
+        )
         assert pause_event is not None
 
     def test_pause_non_active_world_state(self, world_state):
@@ -207,7 +213,9 @@ class TestWorldStateAggregate:
 
         # Check domain event was raised
         events = world_state.get_domain_events()
-        archive_event = next((e for e in events if "archived" in e.change_reason), None)
+        archive_event = next(
+            (e for e in events if "archived" in e.change_reason), None
+        )
         assert archive_event is not None
 
     # ==================== Entity Management Tests ====================
@@ -230,9 +238,14 @@ class TestWorldStateAggregate:
         assert world_state.version == initial_version + 1
 
         # Check spatial index was updated
-        grid_key = world_state._get_spatial_grid_key(sample_entity_data["coordinates"])
+        grid_key = world_state._get_spatial_grid_key(
+            sample_entity_data["coordinates"]
+        )
         assert grid_key in world_state.spatial_index
-        assert sample_entity_data["entity_id"] in world_state.spatial_index[grid_key]
+        assert (
+            sample_entity_data["entity_id"]
+            in world_state.spatial_index[grid_key]
+        )
 
         # Check domain event was raised
         events = world_state.get_domain_events()
@@ -271,7 +284,9 @@ class TestWorldStateAggregate:
         assert world_state.version == initial_version + 1
 
         # Check spatial index was updated
-        grid_key = world_state._get_spatial_grid_key(sample_entity_data["coordinates"])
+        grid_key = world_state._get_spatial_grid_key(
+            sample_entity_data["coordinates"]
+        )
         assert grid_key not in world_state.spatial_index or sample_entity_data[
             "entity_id"
         ] not in world_state.spatial_index.get(grid_key, [])
@@ -279,7 +294,8 @@ class TestWorldStateAggregate:
         # Check domain event was raised
         events = world_state.get_domain_events()
         remove_event = next(
-            (e for e in events if e.change_type.value == "entity_removed"), None
+            (e for e in events if e.change_type.value == "entity_removed"),
+            None,
         )
         assert remove_event is not None
 
@@ -295,7 +311,9 @@ class TestWorldStateAggregate:
         initial_version = world_state.version
         world_state.clear_domain_events()
 
-        new_coordinates = Coordinates(x=150.0, y=260.0, z=10.0)  # Different grid cell
+        new_coordinates = Coordinates(
+            x=150.0, y=260.0, z=10.0
+        )  # Different grid cell
         success = world_state.move_entity(
             sample_entity_data["entity_id"], new_coordinates, "Test move"
         )
@@ -311,11 +329,12 @@ class TestWorldStateAggregate:
         )
         new_grid_key = world_state._get_spatial_grid_key(new_coordinates)
 
-        assert sample_entity_data["entity_id"] not in world_state.spatial_index.get(
-            old_grid_key, []
-        )
+        assert sample_entity_data[
+            "entity_id"
+        ] not in world_state.spatial_index.get(old_grid_key, [])
         assert (
-            sample_entity_data["entity_id"] in world_state.spatial_index[new_grid_key]
+            sample_entity_data["entity_id"]
+            in world_state.spatial_index[new_grid_key]
         )
 
         # Check domain event was raised
@@ -328,7 +347,9 @@ class TestWorldStateAggregate:
     def test_move_nonexistent_entity(self, world_state):
         """Test moving non-existent entity returns False."""
         new_coordinates = Coordinates(x=50.0, y=60.0, z=10.0)
-        success = world_state.move_entity("nonexistent-id", new_coordinates, "Test")
+        success = world_state.move_entity(
+            "nonexistent-id", new_coordinates, "Test"
+        )
         assert success is False
 
     def test_update_entity_success(self, world_state, sample_entity_data):
@@ -354,13 +375,16 @@ class TestWorldStateAggregate:
         assert entity.properties["mana"] == 100
         assert entity.properties["level"] == 1  # Original property preserved
         assert entity.metadata["updated_by"] == "admin"
-        assert entity.metadata["created_by"] == "test"  # Original metadata preserved
+        assert (
+            entity.metadata["created_by"] == "test"
+        )  # Original metadata preserved
         assert world_state.version == initial_version + 1
 
         # Check domain event was raised
         events = world_state.get_domain_events()
         update_event = next(
-            (e for e in events if e.change_type.value == "entity_updated"), None
+            (e for e in events if e.change_type.value == "entity_updated"),
+            None,
         )
         assert update_event is not None
 
@@ -392,8 +416,12 @@ class TestWorldStateAggregate:
         coords1 = Coordinates(0, 0, 0)
         coords2 = Coordinates(10, 10, 10)
 
-        world_state.add_entity("char1", EntityType.CHARACTER, "Character 1", coords1)
-        world_state.add_entity("char2", EntityType.CHARACTER, "Character 2", coords2)
+        world_state.add_entity(
+            "char1", EntityType.CHARACTER, "Character 1", coords1
+        )
+        world_state.add_entity(
+            "char2", EntityType.CHARACTER, "Character 2", coords2
+        )
         world_state.add_entity("obj1", EntityType.OBJECT, "Object 1", coords1)
 
         characters = world_state.get_entities_by_type(EntityType.CHARACTER)
@@ -403,8 +431,12 @@ class TestWorldStateAggregate:
         assert len(characters) == 2
         assert len(objects) == 1
         assert len(locations) == 0
-        assert all(entity.entity_type == EntityType.CHARACTER for entity in characters)
-        assert all(entity.entity_type == EntityType.OBJECT for entity in objects)
+        assert all(
+            entity.entity_type == EntityType.CHARACTER for entity in characters
+        )
+        assert all(
+            entity.entity_type == EntityType.OBJECT for entity in objects
+        )
 
     def test_get_entities_in_area(self, world_state):
         """Test spatial query for entities within radius."""
@@ -412,12 +444,20 @@ class TestWorldStateAggregate:
         coords_near = Coordinates(5, 5, 0)  # ~7.07 units away
         coords_far = Coordinates(20, 20, 0)  # ~28.28 units away
 
-        world_state.add_entity("near_entity", EntityType.CHARACTER, "Near", coords_near)
-        world_state.add_entity("far_entity", EntityType.CHARACTER, "Far", coords_far)
-        world_state.add_entity("center_entity", EntityType.OBJECT, "Center", center)
+        world_state.add_entity(
+            "near_entity", EntityType.CHARACTER, "Near", coords_near
+        )
+        world_state.add_entity(
+            "far_entity", EntityType.CHARACTER, "Far", coords_far
+        )
+        world_state.add_entity(
+            "center_entity", EntityType.OBJECT, "Center", center
+        )
 
         # Query with radius 10 should get near and center entities
-        entities_in_area = world_state.get_entities_in_area(center, radius=10.0)
+        entities_in_area = world_state.get_entities_in_area(
+            center, radius=10.0
+        )
         entity_ids = [entity.id for entity in entities_in_area]
 
         assert "near_entity" in entity_ids
@@ -433,7 +473,9 @@ class TestWorldStateAggregate:
         world_state.add_entity(
             "near_char", EntityType.CHARACTER, "Near Char", coords_near
         )
-        world_state.add_entity("near_obj", EntityType.OBJECT, "Near Obj", coords_near)
+        world_state.add_entity(
+            "near_obj", EntityType.OBJECT, "Near Obj", coords_near
+        )
 
         # Query for only characters
         characters_in_area = world_state.get_entities_in_area(
@@ -446,12 +488,19 @@ class TestWorldStateAggregate:
     def test_get_entities_at_coordinates_exact(self, world_state):
         """Test getting entities at exact coordinates."""
         coords = Coordinates(10, 20, 5)
-        world_state.add_entity("exact_entity", EntityType.CHARACTER, "Exact", coords)
         world_state.add_entity(
-            "other_entity", EntityType.CHARACTER, "Other", Coordinates(15, 25, 5)
+            "exact_entity", EntityType.CHARACTER, "Exact", coords
+        )
+        world_state.add_entity(
+            "other_entity",
+            EntityType.CHARACTER,
+            "Other",
+            Coordinates(15, 25, 5),
         )
 
-        entities = world_state.get_entities_at_coordinates(coords, tolerance=0.0)
+        entities = world_state.get_entities_at_coordinates(
+            coords, tolerance=0.0
+        )
 
         assert len(entities) == 1
         assert entities[0].id == "exact_entity"
@@ -461,12 +510,16 @@ class TestWorldStateAggregate:
         coords = Coordinates(10, 20, 5)
         nearby_coords = Coordinates(10.5, 20.5, 5)  # ~0.71 units away
 
-        world_state.add_entity("exact_entity", EntityType.CHARACTER, "Exact", coords)
+        world_state.add_entity(
+            "exact_entity", EntityType.CHARACTER, "Exact", coords
+        )
         world_state.add_entity(
             "nearby_entity", EntityType.CHARACTER, "Nearby", nearby_coords
         )
 
-        entities = world_state.get_entities_at_coordinates(coords, tolerance=1.0)
+        entities = world_state.get_entities_at_coordinates(
+            coords, tolerance=1.0
+        )
 
         assert len(entities) == 2
         entity_ids = [entity.id for entity in entities]
@@ -501,7 +554,9 @@ class TestWorldStateAggregate:
 
         with pytest.raises(ValueError) as exc_info:
             world_state.advance_time(past_time, "Invalid time")
-        assert "New time must be after current world time" in str(exc_info.value)
+        assert "New time must be after current world time" in str(
+            exc_info.value
+        )
 
     def test_advance_time_same_time_fails(self, world_state):
         """Test advancing to same time fails."""
@@ -509,7 +564,9 @@ class TestWorldStateAggregate:
 
         with pytest.raises(ValueError) as exc_info:
             world_state.advance_time(current_time, "Same time")
-        assert "New time must be after current world time" in str(exc_info.value)
+        assert "New time must be after current world time" in str(
+            exc_info.value
+        )
 
     # ==================== Environment Tests ====================
 
@@ -533,13 +590,21 @@ class TestWorldStateAggregate:
         # Check domain event was raised
         events = world_state.get_domain_events()
         env_event = next(
-            (e for e in events if e.change_type.value == "environment_changed"), None
+            (
+                e
+                for e in events
+                if e.change_type.value == "environment_changed"
+            ),
+            None,
         )
         assert env_event is not None
 
     def test_update_environment_merge_properties(self, world_state):
         """Test environment updates merge with existing properties."""
-        world_state.environment = {"existing_prop": "value", "weather": "sunny"}
+        world_state.environment = {
+            "existing_prop": "value",
+            "weather": "sunny",
+        }
 
         environment_changes = {"weather": "cloudy", "new_prop": "new_value"}
         world_state.update_environment(environment_changes, "Update")
@@ -605,7 +670,9 @@ class TestWorldStateAggregate:
     def test_get_entities_from_spatial_index(self, world_state):
         """Test getting candidate entities from spatial index."""
         # Add entities in different grid cells
-        world_state._add_to_spatial_index("entity1", Coordinates(50, 50, 0))  # Grid 0,0
+        world_state._add_to_spatial_index(
+            "entity1", Coordinates(50, 50, 0)
+        )  # Grid 0,0
         world_state._add_to_spatial_index(
             "entity2", Coordinates(150, 150, 0)
         )  # Grid 1,1
@@ -648,11 +715,14 @@ class TestWorldStateAggregate:
         # Check domain event was raised
         events = world_state.get_domain_events()
         snapshot_event = next(
-            (e for e in events if e.change_type.value == "state_snapshot"), None
+            (e for e in events if e.change_type.value == "state_snapshot"),
+            None,
         )
         assert snapshot_event is not None
 
-    def test_reset_state_preserve_entities(self, world_state, sample_entity_data):
+    def test_reset_state_preserve_entities(
+        self, world_state, sample_entity_data
+    ):
         """Test resetting state while preserving entities."""
         world_state.add_entity(**sample_entity_data)
         world_state.update_environment({"weather": "sunny"}, "Setup")
@@ -661,7 +731,9 @@ class TestWorldStateAggregate:
 
         world_state.reset_state("Testing reset", preserve_entities=True)
 
-        assert world_state.status == WorldStatus.ACTIVE  # Should be reactivated
+        assert (
+            world_state.status == WorldStatus.ACTIVE
+        )  # Should be reactivated
         assert len(world_state.entities) == 1  # Entities preserved
         assert len(world_state.environment) == 0  # Environment cleared
         assert (
@@ -695,7 +767,9 @@ class TestWorldStateAggregate:
         world_state.add_entity("char1", EntityType.CHARACTER, "Char 1", coords)
         world_state.add_entity("char2", EntityType.CHARACTER, "Char 2", coords)
         world_state.add_entity("obj1", EntityType.OBJECT, "Obj 1", coords)
-        world_state.update_environment({"prop1": "value1", "prop2": "value2"}, "Setup")
+        world_state.update_environment(
+            {"prop1": "value1", "prop2": "value2"}, "Setup"
+        )
 
         stats = world_state.get_statistics()
 
@@ -766,7 +840,9 @@ class TestWorldStateAggregate:
         large_coords = Coordinates(x=1e9, y=1e9, z=1e9)
 
         # Should not raise validation errors
-        world_state.add_entity("large_entity", EntityType.OBJECT, "Large", large_coords)
+        world_state.add_entity(
+            "large_entity", EntityType.OBJECT, "Large", large_coords
+        )
 
         entity = world_state.get_entity("large_entity")
         assert entity.coordinates == large_coords
@@ -779,7 +855,9 @@ class TestWorldStateAggregate:
         grid_key = world_state._get_spatial_grid_key(boundary_coords)
         assert grid_key == "1,2"  # Should consistently assign to one grid
 
-    def test_concurrent_entity_modifications(self, world_state, sample_entity_data):
+    def test_concurrent_entity_modifications(
+        self, world_state, sample_entity_data
+    ):
         """Test entity modifications update timestamps correctly."""
         world_state.add_entity(**sample_entity_data)
         entity = world_state.get_entity(sample_entity_data["entity_id"])
@@ -794,7 +872,9 @@ class TestWorldStateAggregate:
             sample_entity_data["entity_id"], properties={"test": "value"}
         )
 
-        updated_entity = world_state.get_entity(sample_entity_data["entity_id"])
+        updated_entity = world_state.get_entity(
+            sample_entity_data["entity_id"]
+        )
         assert updated_entity.updated_at > initial_updated_at
 
     def test_entity_id_consistency(self, world_state):
@@ -894,7 +974,9 @@ class TestWorldStateAggregate:
         nearby_entities_after_move = world_state.get_entities_in_area(
             center, radius=5.0
         )
-        nearby_ids_after_move = [entity.id for entity in nearby_entities_after_move]
+        nearby_ids_after_move = [
+            entity.id for entity in nearby_entities_after_move
+        ]
 
         assert "far1" in nearby_ids_after_move
         assert len(nearby_ids_after_move) == 3
@@ -921,8 +1003,12 @@ class TestWorldStateAggregate:
 
         # Check all changes generated events
         events = world_state.get_domain_events()
-        env_events = [e for e in events if e.change_type.value == "environment_changed"]
-        time_events = [e for e in events if e.change_type.value == "time_advanced"]
+        env_events = [
+            e for e in events if e.change_type.value == "environment_changed"
+        ]
+        time_events = [
+            e for e in events if e.change_type.value == "time_advanced"
+        ]
 
         assert len(env_events) >= 2  # Initial and evening updates
         assert len(time_events) >= 1  # Time advancement

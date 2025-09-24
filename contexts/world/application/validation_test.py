@@ -102,7 +102,10 @@ def test_command_creation():
         return True, "Command creation tests passed"
 
     except Exception as e:
-        return False, f"Command creation error: {str(e)}\n{traceback.format_exc()}"
+        return (
+            False,
+            f"Command creation error: {str(e)}\n{traceback.format_exc()}",
+        )
 
 
 def test_use_case_structure():
@@ -110,7 +113,9 @@ def test_use_case_structure():
     print("\nTesting use case structure...")
 
     try:
-        from ..domain.repositories.world_state_repo import IWorldStateRepository
+        from ..domain.repositories.world_state_repo import (
+            IWorldStateRepository,
+        )
         from .use_cases.update_world_state_uc import (
             UpdateWorldStateResult,
             UpdateWorldStateUC,
@@ -226,7 +231,10 @@ def test_use_case_structure():
         return True, "Use case structure tests passed"
 
     except Exception as e:
-        return False, f"Use case structure error: {str(e)}\n{traceback.format_exc()}"
+        return (
+            False,
+            f"Use case structure error: {str(e)}\n{traceback.format_exc()}",
+        )
 
 
 def test_clean_architecture_compliance():
@@ -245,8 +253,12 @@ def test_clean_architecture_compliance():
         params = list(uc_signature.parameters.values())
 
         # Should depend on IWorldStateRepository (interface), not concrete implementation
-        repo_param = next((p for p in params if "repository" in p.name.lower()), None)
-        assert repo_param is not None, "Use case should depend on repository interface"
+        repo_param = next(
+            (p for p in params if "repository" in p.name.lower()), None
+        )
+        assert (
+            repo_param is not None
+        ), "Use case should depend on repository interface"
         print("✅ Use case depends on repository abstraction")
 
         # Verify commands are data structures (dataclasses)
@@ -256,13 +268,17 @@ def test_clean_architecture_compliance():
         print("✅ Commands are proper data structures")
 
         # Verify use cases orchestrate but don't contain business logic
-        uc_methods = [m for m in dir(UpdateWorldStateUC) if not m.startswith("_")]
+        uc_methods = [
+            m for m in dir(UpdateWorldStateUC) if not m.startswith("_")
+        ]
         public_methods = [
             m for m in uc_methods if callable(getattr(UpdateWorldStateUC, m))
         ]
 
         # Should have execute method as main entry point
-        assert "execute" in public_methods, "Use case should have execute method"
+        assert (
+            "execute" in public_methods
+        ), "Use case should have execute method"
         print("✅ Use case has proper public interface")
 
         # Test that domain objects are used properly
@@ -304,7 +320,9 @@ def run_validation():
             success, message = test()
             results.append((test.__name__, success, message))
         except Exception as e:
-            results.append((test.__name__, False, f"Test execution error: {str(e)}"))
+            results.append(
+                (test.__name__, False, f"Test execution error: {str(e)}")
+            )
 
     print("\n" + "=" * 60)
     print("VALIDATION RESULTS")
@@ -324,10 +342,14 @@ def run_validation():
     print(f"\nSUMMARY: {passed} passed, {failed} failed")
 
     if failed == 0:
-        print("🎉 All validation tests passed! Application services are ready for use.")
+        print(
+            "🎉 All validation tests passed! Application services are ready for use."
+        )
         return True
     else:
-        print("⚠️ Some validation tests failed. Please review and fix the issues.")
+        print(
+            "⚠️ Some validation tests failed. Please review and fix the issues."
+        )
         return False
 
 

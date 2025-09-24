@@ -52,7 +52,9 @@ class LLMRequestBatch:
     """Batch of LLM requests for efficient processing."""
 
     requests: List[Tuple[str, str, Dict]]  # (agent_id, prompt, context)
-    batch_id: str = field(default_factory=lambda: f"batch_{int(time.time() * 1000)}")
+    batch_id: str = field(
+        default_factory=lambda: f"batch_{int(time.time() * 1000)}"
+    )
     created_at: datetime = field(default_factory=datetime.now)
 
 
@@ -151,7 +153,9 @@ class AsyncLLMClient:
             # Start batch processing task
             self._batch_task = asyncio.create_task(self._batch_processor())
 
-            logger.info("AsyncLLMClient session initialized with connection pooling")
+            logger.info(
+                "AsyncLLMClient session initialized with connection pooling"
+            )
 
     async def close(self) -> None:
         """Clean shutdown of async resources."""
@@ -189,7 +193,9 @@ class AsyncLLMClient:
         self.total_requests += 1
 
         # Generate cache key based on prompt and character context
-        cache_key = self._generate_cache_key(agent_id, prompt, character_context)
+        cache_key = self._generate_cache_key(
+            agent_id, prompt, character_context
+        )
 
         # Check intelligent cache first
         cached_response = self._get_cached_response(cache_key)
@@ -207,7 +213,9 @@ class AsyncLLMClient:
 
         # Check circuit breaker
         if self._is_circuit_open():
-            logger.warning(f"Agent {agent_id} circuit breaker open - using fallback")
+            logger.warning(
+                f"Agent {agent_id} circuit breaker open - using fallback"
+            )
             return await self._generate_fallback_response_async(
                 agent_id, prompt, character_context
             )
@@ -244,7 +252,9 @@ class AsyncLLMClient:
                 agent_id, prompt, character_context
             )
 
-    async def _make_async_api_call(self, agent_id: str, prompt: str) -> Optional[str]:
+    async def _make_async_api_call(
+        self, agent_id: str, prompt: str
+    ) -> Optional[str]:
         """Make async API call to Gemini with connection limiting."""
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
@@ -263,10 +273,14 @@ class AsyncLLMClient:
                     api_url, headers=headers, json=request_body
                 ) as response:
                     if response.status == 401:
-                        logger.error(f"Agent {agent_id} API authentication failed")
+                        logger.error(
+                            f"Agent {agent_id} API authentication failed"
+                        )
                         return None
                     elif response.status == 429:
-                        logger.warning(f"Agent {agent_id} API rate limit exceeded")
+                        logger.warning(
+                            f"Agent {agent_id} API rate limit exceeded"
+                        )
                         return None
                     elif response.status != 200:
                         logger.error(
@@ -275,7 +289,9 @@ class AsyncLLMClient:
                         return None
 
                     response_data = await response.json()
-                    return response_data["candidates"][0]["content"]["parts"][0]["text"]
+                    return response_data["candidates"][0]["content"]["parts"][
+                        0
+                    ]["text"]
 
             except asyncio.TimeoutError:
                 logger.error(
@@ -292,9 +308,13 @@ class AsyncLLMClient:
         """Generate intelligent cache key based on prompt and character context."""
         # Create context hash from relevant character data
         context_data = {
-            "personality_traits": character_context.get("personality_traits", {}),
+            "personality_traits": character_context.get(
+                "personality_traits", {}
+            ),
             "decision_weights": character_context.get("decision_weights", {}),
-            "recent_events_count": len(character_context.get("recent_events", [])),
+            "recent_events_count": len(
+                character_context.get("recent_events", [])
+            ),
             "faction": character_context.get("faction", ""),
         }
         context_str = json.dumps(context_data, sort_keys=True)
@@ -335,14 +355,16 @@ class AsyncLLMClient:
         # Implement LRU eviction if cache is full
         if len(self.cache) >= self.max_cache_size:
             # Remove least recently used entry
-            lru_key = min(self.cache.keys(), key=lambda k: self.cache[k].last_accessed)
+            lru_key = min(
+                self.cache.keys(), key=lambda k: self.cache[k].last_accessed
+            )
             del self.cache[lru_key]
 
         # Create cache entry
         prompt_hash = hashlib.md5(prompt.encode()).hexdigest()[:12]
-        context_hash = self._generate_cache_key(agent_id, "", character_context).split(
-            ":"
-        )[-1]
+        context_hash = self._generate_cache_key(
+            agent_id, "", character_context
+        ).split(":")[-1]
 
         entry = LLMCacheEntry(
             response=response,
@@ -360,7 +382,9 @@ class AsyncLLMClient:
             return False
 
         # Auto-recover after 60 seconds
-        if self._last_failure_time and (time.time() - self._last_failure_time > 60):
+        if self._last_failure_time and (
+            time.time() - self._last_failure_time > 60
+        ):
             self._circuit_open = False
             self._failure_count = 0
             logger.info("Circuit breaker reset - attempting recovery")
@@ -381,7 +405,9 @@ class AsyncLLMClient:
         # Open circuit after 5 consecutive failures
         if self._failure_count >= 5:
             self._circuit_open = True
-            logger.warning("Circuit breaker opened due to consecutive failures")
+            logger.warning(
+                "Circuit breaker opened due to consecutive failures"
+            )
 
     async def _generate_fallback_response_async(
         self, agent_id: str, prompt: str, character_context: Dict[str, Any]
@@ -432,7 +458,9 @@ class AsyncLLMClient:
         tasks = []
         for agent_id, prompt, context, future in current_batch:
             if not future.cancelled():
-                task = asyncio.create_task(self._make_async_api_call(agent_id, prompt))
+                task = asyncio.create_task(
+                    self._make_async_api_call(agent_id, prompt)
+                )
                 tasks.append((future, task))
 
         # Await all tasks
@@ -448,7 +476,9 @@ class AsyncLLMClient:
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get performance statistics for monitoring and optimization."""
         cache_hit_rate = (self.cache_hits / max(1, self.total_requests)) * 100
-        avg_response_time = self.total_response_time / max(1, self.total_requests)
+        avg_response_time = self.total_response_time / max(
+            1, self.total_requests
+        )
 
         return {
             "total_requests": self.total_requests,
@@ -505,7 +535,9 @@ def call_llm_async_wrapper(
                 _call_async_from_sync(agent_id, prompt, character_context)
             )
             # Wait briefly to avoid blocking
-            return asyncio.run_coroutine_threadsafe(task, loop).result(timeout=1.0)
+            return asyncio.run_coroutine_threadsafe(task, loop).result(
+                timeout=1.0
+            )
         else:
             # Run in new event loop
             return asyncio.run(

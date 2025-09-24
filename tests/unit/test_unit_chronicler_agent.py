@@ -32,7 +32,8 @@ class TestChroniclerAgent:
         self.mock_event_bus = Mock()
         self.test_character_names = ["hero", "villain", "sage"]
         self.chronicler = ChroniclerAgent(
-            event_bus=self.mock_event_bus, character_names=self.test_character_names
+            event_bus=self.mock_event_bus,
+            character_names=self.test_character_names,
         )
 
         # 创建测试日志文件
@@ -44,7 +45,9 @@ class TestChroniclerAgent:
             f.write("## Turn 2\n")
             f.write("Villain: You cannot defeat me, foolish hero!\n\n")
             f.write("## Turn 3\n")
-            f.write("Sage: Wait! There is another way to resolve this conflict.\n\n")
+            f.write(
+                "Sage: Wait! There is another way to resolve this conflict.\n\n"
+            )
 
     def teardown_method(self):
         """每个测试方法的清理"""
@@ -137,7 +140,9 @@ class TestChroniclerAgent:
             with open(empty_log_file, "w") as f:
                 f.write("")
 
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch(
+                "chronicler_agent._make_gemini_api_request"
+            ) as mock_gemini:
                 mock_response = Mock()
                 mock_response.text = "A tale begins in silence..."
                 mock_gemini.return_value = mock_response
@@ -217,7 +222,9 @@ class TestChroniclerAgent:
         """测试角色名集成"""
         # 检查角色名是否在转录过程中被使用
         if hasattr(self.chronicler, "transcribe_log"):
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch(
+                "chronicler_agent._make_gemini_api_request"
+            ) as mock_gemini:
                 mock_response = Mock()
                 mock_response.text = (
                     "The hero, villain, and sage embark on their journey..."
@@ -258,7 +265,8 @@ class TestChroniclerAgentAdvanced:
         """每个测试方法的设置"""
         self.mock_event_bus = Mock()
         self.chronicler = ChroniclerAgent(
-            event_bus=self.mock_event_bus, character_names=["protagonist", "antagonist"]
+            event_bus=self.mock_event_bus,
+            character_names=["protagonist", "antagonist"],
         )
 
     @pytest.mark.unit
@@ -296,11 +304,13 @@ class TestChroniclerAgentAdvanced:
                     f.write(f"Protagonist: Action in turn {turn + 1}\n")
                     f.write(f"Antagonist: Response in turn {turn + 1}\n\n")
 
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch(
+                "chronicler_agent._make_gemini_api_request"
+            ) as mock_gemini:
                 mock_response = Mock()
-                mock_response.text = """In an epic tale spanning five crucial moments, 
-                the protagonist and antagonist engaged in a series of meaningful exchanges 
-                that would determine the fate of their world. Each turn brought new 
+                mock_response.text = """In an epic tale spanning five crucial moments,
+                the protagonist and antagonist engaged in a series of meaningful exchanges
+                that would determine the fate of their world. Each turn brought new
                 revelations and deeper understanding of their eternal struggle."""
                 mock_gemini.return_value = mock_response
 
@@ -310,12 +320,19 @@ class TestChroniclerAgentAdvanced:
                 if story:
                     assert len(story) > 50  # 应该有实质性内容
                     assert (
-                        "protagonist" in story.lower() or "antagonist" in story.lower()
+                        "protagonist" in story.lower()
+                        or "antagonist" in story.lower()
                     )
                     # 检查是否有叙述结构
                     assert any(
                         word in story.lower()
-                        for word in ["tale", "story", "journey", "struggle", "battle"]
+                        for word in [
+                            "tale",
+                            "story",
+                            "journey",
+                            "struggle",
+                            "battle",
+                        ]
                     )
 
         finally:
@@ -375,9 +392,13 @@ class TestChroniclerAgentAdvanced:
                         f"Antagonist: Elaborate response {turn + 1} with intricate details...\n\n"
                     )
 
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch(
+                "chronicler_agent._make_gemini_api_request"
+            ) as mock_gemini:
                 mock_response = Mock()
-                mock_response.text = "An epic saga of twenty pivotal moments..."
+                mock_response.text = (
+                    "An epic saga of twenty pivotal moments..."
+                )
                 mock_gemini.return_value = mock_response
 
                 # 测试处理大文件不会崩溃
@@ -405,7 +426,8 @@ class TestChroniclerAgentPerformance:
         """每个测试方法的设置"""
         self.mock_event_bus = Mock()
         self.chronicler = ChroniclerAgent(
-            event_bus=self.mock_event_bus, character_names=["perf_hero", "perf_villain"]
+            event_bus=self.mock_event_bus,
+            character_names=["perf_hero", "perf_villain"],
         )
 
     @pytest.mark.performance
@@ -424,7 +446,9 @@ class TestChroniclerAgentPerformance:
                     f.write(f"Perf Hero: Action {turn + 1}\n")
                     f.write(f"Perf Villain: Response {turn + 1}\n\n")
 
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch(
+                "chronicler_agent._make_gemini_api_request"
+            ) as mock_gemini:
                 mock_response = Mock()
                 mock_response.text = (
                     "A performance test story with multiple characters..."
@@ -472,7 +496,9 @@ class TestChroniclerAgentPerformance:
                     f.write(f"Hero: Action in log {i}\n")
                     f.write(f"Villain: Response in log {i}\n\n")
 
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch(
+                "chronicler_agent._make_gemini_api_request"
+            ) as mock_gemini:
                 mock_response = Mock()
                 mock_response.text = "Quick test story..."
                 mock_gemini.return_value = mock_response

@@ -1,0 +1,1 @@
+getting-started is not a valid Python package name

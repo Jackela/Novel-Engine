@@ -55,7 +55,8 @@ class ResponseTemplate:
     category: ResponseCategory
     tone: ResponseTone
     templates: List[str]
-    personality_weights: Dict[str, float]  # personality_trait -> weight influence
+    # personality_trait -> weight influence
+    personality_weights: Dict[str, float]
     faction_weights: Dict[str, float]  # faction_belief -> weight influence
     context_requirements: List[str]  # required context keys
 
@@ -87,7 +88,9 @@ class ResponseTemplate:
                     score += 0.15
 
         # Check context requirements
-        met_requirements = sum(1 for req in self.context_requirements if req in context)
+        met_requirements = sum(
+            1 for req in self.context_requirements if req in context
+        )
         if self.context_requirements:
             score += (met_requirements / len(self.context_requirements)) * 0.2
 
@@ -107,7 +110,9 @@ class ResponseGenerator:
     - Adapt responses to character emotional state
     """
 
-    def __init__(self, character_id: str, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, character_id: str, logger: Optional[logging.Logger] = None
+    ):
         self.character_id = character_id
         self.logger = logger or logging.getLogger(__name__)
 
@@ -204,7 +209,9 @@ class ResponseGenerator:
             )
 
             # Final formatting and validation
-            final_response = await self._format_and_validate(emotional_response)
+            final_response = await self._format_and_validate(
+                emotional_response
+            )
 
             # Update statistics
             self._stats["total_generated"] += 1
@@ -219,7 +226,9 @@ class ResponseGenerator:
             return await self._get_emergency_response()
 
     async def generate_dialogue(
-        self, speaker_context: Dict[str, Any], conversation_context: Dict[str, Any]
+        self,
+        speaker_context: Dict[str, Any],
+        conversation_context: Dict[str, Any],
     ) -> str:
         """
         Generate dialogue response for conversations.
@@ -233,7 +242,9 @@ class ResponseGenerator:
         """
         try:
             # Determine dialogue type
-            dialogue_type = conversation_context.get("dialogue_type", "general")
+            dialogue_type = conversation_context.get(
+                "dialogue_type", "general"
+            )
 
             # Select appropriate category
             category_mapping = {
@@ -244,10 +255,16 @@ class ResponseGenerator:
                 "emotional_expression": ResponseCategory.EMOTIONAL,
             }
 
-            category = category_mapping.get(dialogue_type, ResponseCategory.SOCIAL)
+            category = category_mapping.get(
+                dialogue_type, ResponseCategory.SOCIAL
+            )
 
             # Generate with dialogue-specific context
-            context = {**speaker_context, **conversation_context, "is_dialogue": True}
+            context = {
+                **speaker_context,
+                **conversation_context,
+                "is_dialogue": True,
+            }
 
             dialogue = await self.generate_response(
                 context, category, ResponseTone.CASUAL
@@ -314,7 +331,9 @@ class ResponseGenerator:
             }
 
             # Get character name
-            character_name = context.get("basic_info", {}).get("name", "The character")
+            character_name = context.get("basic_info", {}).get(
+                "name", "The character"
+            )
 
             # Select appropriate template
             templates = narration_templates.get(action_type, ["takes action"])
@@ -370,7 +389,10 @@ class ResponseGenerator:
             emotion_templates = {
                 "angry": {
                     "low": ["shows mild irritation", "seems somewhat annoyed"],
-                    "medium": ["displays clear anger", "shows growing frustration"],
+                    "medium": [
+                        "displays clear anger",
+                        "shows growing frustration",
+                    ],
                     "high": ["erupts in fury", "blazes with intense anger"],
                 },
                 "happy": {
@@ -379,19 +401,34 @@ class ResponseGenerator:
                     "high": ["beams with elation", "radiates pure happiness"],
                 },
                 "sad": {
-                    "low": ["looks somewhat downcast", "shows a hint of sadness"],
-                    "medium": ["appears clearly saddened", "displays obvious grief"],
+                    "low": [
+                        "looks somewhat downcast",
+                        "shows a hint of sadness",
+                    ],
+                    "medium": [
+                        "appears clearly saddened",
+                        "displays obvious grief",
+                    ],
                     "high": ["is overcome with sorrow", "weeps openly"],
                 },
                 "fearful": {
                     "low": ["shows slight nervousness", "appears cautious"],
                     "medium": ["displays clear fear", "shows obvious anxiety"],
-                    "high": ["is gripped by terror", "trembles with overwhelming fear"],
+                    "high": [
+                        "is gripped by terror",
+                        "trembles with overwhelming fear",
+                    ],
                 },
                 "excited": {
                     "low": ["shows mild interest", "appears somewhat eager"],
-                    "medium": ["displays enthusiasm", "shows clear excitement"],
-                    "high": ["buzzes with energy", "vibrates with intense excitement"],
+                    "medium": [
+                        "displays enthusiasm",
+                        "shows clear excitement",
+                    ],
+                    "high": [
+                        "buzzes with energy",
+                        "vibrates with intense excitement",
+                    ],
                 },
             }
 
@@ -412,7 +449,9 @@ class ResponseGenerator:
             base_response = random.choice(templates)
 
             # Add character name and personality influence
-            character_name = context.get("basic_info", {}).get("name", "The character")
+            character_name = context.get("basic_info", {}).get(
+                "name", "The character"
+            )
             personality = context.get("personality", {})
 
             # Modify based on personality
@@ -429,7 +468,9 @@ class ResponseGenerator:
                     "fearful": "remains outwardly calm despite concern",
                     "excited": "shows controlled enthusiasm",
                 }
-                base_response = subdued_versions.get(emotion, "shows restraint")
+                base_response = subdued_versions.get(
+                    emotion, "shows restraint"
+                )
 
             return f"{character_name} {base_response}."
 
@@ -449,7 +490,9 @@ class ResponseGenerator:
                 "template_usage": self._stats["template_used"],
                 "fallback_usage": self._stats["fallback_used"],
                 "template_success_rate": (
-                    (self._stats["template_used"] / total) if total > 0 else 0.0
+                    (self._stats["template_used"] / total)
+                    if total > 0
+                    else 0.0
                 ),
                 "available_templates": len(self._templates),
                 "configuration": self._config.copy(),
@@ -465,7 +508,9 @@ class ResponseGenerator:
         """Update character data from context."""
         try:
             self._personality = context.get("personality", {})
-            self._faction_beliefs = context.get("faction_info", {}).get("beliefs", {})
+            self._faction_beliefs = context.get("faction_info", {}).get(
+                "beliefs", {}
+            )
             self._current_emotional_state = context.get("state", {}).get(
                 "emotional_state", "neutral"
             )
@@ -496,13 +541,19 @@ class ResponseGenerator:
 
                     if "battle" in event_type or "attack" in event_type:
                         return ResponseCategory.COMBAT
-                    elif "negotiate" in event_type or "diplomacy" in event_type:
+                    elif (
+                        "negotiate" in event_type or "diplomacy" in event_type
+                    ):
                         return ResponseCategory.DIPLOMATIC
                     elif "explore" in event_type or "discover" in event_type:
                         return ResponseCategory.EXPLORATION
 
             # Check emotional state
-            if self._current_emotional_state in ["angry", "fearful", "excited"]:
+            if self._current_emotional_state in [
+                "angry",
+                "fearful",
+                "excited",
+            ]:
                 return ResponseCategory.EMOTIONAL
 
             # Default to social
@@ -558,7 +609,10 @@ class ResponseGenerator:
             return ResponseTone.CASUAL
 
     async def _find_matching_templates(
-        self, category: ResponseCategory, tone: ResponseTone, context: Dict[str, Any]
+        self,
+        category: ResponseCategory,
+        tone: ResponseTone,
+        context: Dict[str, Any],
     ) -> List[ResponseTemplate]:
         """Find templates that match the given criteria."""
         try:
@@ -572,7 +626,10 @@ class ResponseGenerator:
                         self._personality, self._faction_beliefs, context
                     )
 
-                    if match_score >= self._config["template_selection_threshold"]:
+                    if (
+                        match_score
+                        >= self._config["template_selection_threshold"]
+                    ):
                         matching_templates.append(template)
 
             # Sort by match score
@@ -607,7 +664,10 @@ class ResponseGenerator:
             return "I consider the situation carefully."
 
     async def _generate_fallback_response(
-        self, category: ResponseCategory, tone: ResponseTone, context: Dict[str, Any]
+        self,
+        category: ResponseCategory,
+        tone: ResponseTone,
+        context: Dict[str, Any],
     ) -> str:
         """Generate fallback response when no templates match."""
         try:
@@ -653,7 +713,9 @@ class ResponseGenerator:
 
             # Apply tone modifications
             if tone == ResponseTone.AGGRESSIVE:
-                base_response = base_response.replace("I consider", "I determine")
+                base_response = base_response.replace(
+                    "I consider", "I determine"
+                )
                 base_response = base_response.replace("I think", "I decide")
             elif tone == ResponseTone.FORMAL:
                 base_response = base_response.replace("I ", "I shall ")
@@ -720,7 +782,10 @@ class ResponseGenerator:
             modifiers = {
                 "angry": {
                     "prefixes": ["With growing frustration,", "Angrily,"],
-                    "replacements": {"consider": "demand to know", "think": "realize"},
+                    "replacements": {
+                        "consider": "demand to know",
+                        "think": "realize",
+                    },
                 },
                 "fearful": {
                     "prefixes": ["Nervously,", "With caution,"],
@@ -731,7 +796,10 @@ class ResponseGenerator:
                 },
                 "excited": {
                     "prefixes": ["Eagerly,", "With enthusiasm,"],
-                    "replacements": {"go": "rush toward", "see": "spot with interest"},
+                    "replacements": {
+                        "go": "rush toward",
+                        "see": "spot with interest",
+                    },
                 },
                 "sad": {
                     "prefixes": ["Heavily,", "With a heavy heart,"],
@@ -747,7 +815,9 @@ class ResponseGenerator:
                     response = f"{prefix} {response.lower()}"
 
                 # Apply word replacements
-                for original, replacement in emotion_modifier["replacements"].items():
+                for original, replacement in emotion_modifier[
+                    "replacements"
+                ].items():
                     response = response.replace(original, replacement)
 
             return response
@@ -772,7 +842,9 @@ class ResponseGenerator:
 
             # Validate length
             if len(formatted) < self._config["min_response_length"]:
-                formatted += " I take a moment to consider the situation further."
+                formatted += (
+                    " I take a moment to consider the situation further."
+                )
             elif len(formatted) > self._config["max_response_length"]:
                 # Truncate at sentence boundary
                 sentences = formatted.split(".")
@@ -793,11 +865,15 @@ class ResponseGenerator:
         try:
             # Common placeholders
             placeholders = {
-                "{character_name}": context.get("basic_info", {}).get("name", "I"),
+                "{character_name}": context.get("basic_info", {}).get(
+                    "name", "I"
+                ),
                 "{faction}": context.get("faction_info", {}).get(
                     "faction", "Independent"
                 ),
-                "{location}": context.get("state", {}).get("current_location", "here"),
+                "{location}": context.get("state", {}).get(
+                    "current_location", "here"
+                ),
                 "{threat_level}": str(context.get("threat_level", "unknown")),
             }
 
@@ -874,7 +950,8 @@ class ResponseGenerator:
         ]
 
         # Add more templates for other categories...
-        # This is a simplified version - full implementation would have many more templates
+        # This is a simplified version - full implementation would have many
+        # more templates
 
     def _initialize_vocabulary(self) -> Dict[str, List[str]]:
         """Initialize vocabulary alternatives for different intelligence levels."""
@@ -922,7 +999,11 @@ class ResponseGenerator:
                 "It's difficult to say",
                 "I have my doubts",
             ],
-            "confidence": ["I'm certain that", "Without question", "I have no doubt"],
+            "confidence": [
+                "I'm certain that",
+                "Without question",
+                "I have no doubt",
+            ],
             "urgency": [
                 "Time is of the essence",
                 "We must act quickly",

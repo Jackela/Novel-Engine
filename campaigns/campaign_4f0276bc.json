@@ -1,0 +1,11 @@
+{
+  "id": "campaign_4f0276bc",
+  "name": "Deep Space Exploration",
+  "description": "A scientific expedition to unknown sectors",
+  "participants": [
+    "pilot",
+    "scientist"
+  ],
+  "created_at": "2025-09-15T10:39:17.220684",
+  "status": "created"
+}

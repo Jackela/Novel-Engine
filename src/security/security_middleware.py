@@ -29,7 +29,10 @@ import bleach
 from fastapi import HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.middleware.base import (
+    BaseHTTPMiddleware,
+    RequestResponseEndpoint,
+)
 from starlette.types import ASGIApp
 
 # Enhanced logging
@@ -188,7 +191,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
 
             # Post-response security processing
-            response = await self._post_response_security_processing(request, response)
+            response = await self._post_response_security_processing(
+                request, response
+            )
 
             return response
 
@@ -205,8 +210,13 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         """Comprehensive pre-request security validation"""
         # Check request size
         content_length = request.headers.get("content-length")
-        if content_length and int(content_length) > self.config.max_request_size:
-            raise HTTPException(status_code=413, detail="Request entity too large")
+        if (
+            content_length
+            and int(content_length) > self.config.max_request_size
+        ):
+            raise HTTPException(
+                status_code=413, detail="Request entity too large"
+            )
 
         # Host validation
         if self.config.allowed_hosts:
@@ -307,7 +317,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         for header_name in headers_to_validate:
             header_value = request.headers.get(header_name)
             if header_value:
-                self._validate_input_string(header_value, f"Header {header_name}")
+                self._validate_input_string(
+                    header_value, f"Header {header_name}"
+                )
 
         # Validate request body if present
         if request.method in ["POST", "PUT", "PATCH"]:
@@ -325,7 +337,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                     json_data = json.loads(body.decode("utf-8"))
                     self._validate_json_data(json_data)
             except json.JSONDecodeError:
-                raise HTTPException(status_code=400, detail="Invalid JSON format")
+                raise HTTPException(
+                    status_code=400, detail="Invalid JSON format"
+                )
             except UnicodeDecodeError:
                 raise HTTPException(
                     status_code=400, detail="Invalid character encoding"
@@ -337,9 +351,13 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 for field_name, field_value in form_data.items():
                     self._validate_input_string(field_name, "Form field name")
                     if isinstance(field_value, str):
-                        self._validate_input_string(field_value, "Form field value")
+                        self._validate_input_string(
+                            field_value, "Form field value"
+                        )
             except Exception:
-                raise HTTPException(status_code=400, detail="Invalid form data")
+                raise HTTPException(
+                    status_code=400, detail="Invalid form data"
+                )
 
     def _validate_json_data(self, data: Any, path: str = "root"):
         """Recursively validate JSON data"""
@@ -369,7 +387,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                         f"🚨 {category.upper()} DETECTED in {context}: {input_str[:100]}"
                     )
                     raise HTTPException(
-                        status_code=400, detail=f"Invalid input detected: {category}"
+                        status_code=400,
+                        detail=f"Invalid input detected: {category}",
                     )
 
         # Check for null bytes
@@ -396,7 +415,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         # Add CSP header
         if self.config.enable_csp:
-            response.headers["Content-Security-Policy"] = self.config.csp_policy
+            response.headers[
+                "Content-Security-Policy"
+            ] = self.config.csp_policy
 
         # Add CSRF token for GET requests to HTML pages
         if request.method == "GET" and response.headers.get(
@@ -436,9 +457,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 sanitized_data = self._sanitize_json_data(json_data)
 
                 # Create new response with sanitized content
-                response_body = json.dumps(sanitized_data, ensure_ascii=True).encode(
-                    "utf-8"
-                )
+                response_body = json.dumps(
+                    sanitized_data, ensure_ascii=True
+                ).encode("utf-8")
                 response.headers["content-length"] = str(len(response_body))
 
             # Create new response
@@ -457,7 +478,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         """Recursively sanitize JSON data"""
         if isinstance(data, dict):
             return {
-                self._sanitize_string(str(key)): self._sanitize_json_data(value)
+                self._sanitize_string(str(key)): self._sanitize_json_data(
+                    value
+                )
                 for key, value in data.items()
             }
 
@@ -481,7 +504,10 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         # Additional cleaning using bleach for HTML content
         if any(char in sanitized for char in ["<", ">", "&"]):
             sanitized = bleach.clean(
-                sanitized, tags=[], attributes={}, strip=True  # No HTML tags allowed
+                sanitized,
+                tags=[],
+                attributes={},
+                strip=True,  # No HTML tags allowed
             )
 
         return sanitized
@@ -491,7 +517,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         if response.status_code >= 400:
             logger.warning(
                 f"🔍 Security Event: {request.method} {request.url.path} "
-                f"-> {response.status_code} from {request.client.host if request.client else 'unknown'}"
+                f"-> {response.status_code}from {request.client.host if request.client else 'unknown'}"
             )
 
     def get_csrf_token(self) -> str:
@@ -521,13 +547,17 @@ class InputValidator:
     def validate_username(username: str) -> bool:
         """Validate username format"""
         return (
-            bool(VALIDATION_PATTERNS["username"].match(username)) if username else False
+            bool(VALIDATION_PATTERNS["username"].match(username))
+            if username
+            else False
         )
 
     @staticmethod
     def validate_email(email: str) -> bool:
         """Validate email format"""
-        return bool(VALIDATION_PATTERNS["email"].match(email)) if email else False
+        return (
+            bool(VALIDATION_PATTERNS["email"].match(email)) if email else False
+        )
 
     @staticmethod
     def validate_session_id(session_id: str) -> bool:
@@ -635,14 +665,21 @@ def validate_request_data(
             # Apply specific validation rules if provided
             if validation_rules and key in validation_rules:
                 rule = validation_rules[key]
-                if rule == "username" and not validator.validate_username(clean_value):
-                    raise InputValidationError(f"Invalid username: {key}")
-                elif rule == "email" and not validator.validate_email(clean_value):
-                    raise InputValidationError(f"Invalid email: {key}")
-                elif rule == "narrative" and not validator.validate_narrative_content(
+                if rule == "username" and not validator.validate_username(
                     clean_value
                 ):
-                    raise InputValidationError(f"Invalid narrative content: {key}")
+                    raise InputValidationError(f"Invalid username: {key}")
+                elif rule == "email" and not validator.validate_email(
+                    clean_value
+                ):
+                    raise InputValidationError(f"Invalid email: {key}")
+                elif (
+                    rule == "narrative"
+                    and not validator.validate_narrative_content(clean_value)
+                ):
+                    raise InputValidationError(
+                        f"Invalid narrative content: {key}"
+                    )
 
             sanitized_data[clean_key] = clean_value
 

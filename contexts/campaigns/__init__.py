@@ -18,4 +18,6 @@ External Interfaces: Character context, Narrative context, Orchestration context
 
 __version__ = "1.0.0"
 __context_name__ = "campaigns"
-__description__ = "Campaign Domain Context with Session and World State Management"
+__description__ = (
+    "Campaign Domain Context with Session and World State Management"
+)

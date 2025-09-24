@@ -37,11 +37,7 @@ from src.core.data_models import (
     RelationshipStatus,
     StandardResponse,
 )
-from src.core.types import (
-    AgentID,
-    MemoryID,
-    SacredConstants,
-)
+from src.core.types import AgentID, MemoryID, SacredConstants
 
 # Comprehensive logging configuration enhanced by diagnostic clarity
 logging.basicConfig(level=logging.INFO)
@@ -93,7 +89,7 @@ class ContextDatabase:
         self._last_cache_cleanup = 0
 
         logger.info(
-            f"STANDARD DATABASE INITIALIZED: {self.database_path} for agent {self.agent_id} with {self.connection_pool_size} connections"
+            f"STANDARD DATABASE INITIALIZED: {self.database_path}for agent {self.agent_id} with {self.connection_pool_size} connections"
         )
 
     async def _secure_database_permissions(self):
@@ -106,7 +102,9 @@ class ContextDatabase:
             if self.database_path.exists():
                 # Set restrictive permissions: owner read/write only (600)
                 os.chmod(self.database_path, stat.S_IRUSR | stat.S_IWUSR)
-                logger.info(f"SECURED DATABASE PERMISSIONS: {self.database_path}")
+                logger.info(
+                    f"SECURED DATABASE PERMISSIONS: {self.database_path}"
+                )
 
             # Also secure WAL and SHM files if they exist
             wal_file = Path(str(self.database_path) + "-wal")
@@ -128,7 +126,8 @@ class ContextDatabase:
             raise Exception(
                 f"Database initialization failed: {response.error.message if response.error else 'Unknown error'}"
             )
-        # Set connection attribute for test compatibility - create proper mock connection
+        # Set connection attribute for test compatibility - create proper mock
+        # connection
         from unittest.mock import AsyncMock, MagicMock
 
         # Create a mock cursor that acts as async context manager
@@ -162,7 +161,9 @@ class ContextDatabase:
         self._connection_pool.clear()
         self._initialized = False
 
-    async def store_context(self, session_id: str, character_id: str, context: str):
+    async def store_context(
+        self, session_id: str, character_id: str, context: str
+    ):
         """Store context data (emergency stub for test compatibility)."""
         logger.info(
             f"Storing context for session {session_id}, character {character_id}"
@@ -205,7 +206,9 @@ class ContextDatabase:
                 standard_schema = schema_file.read()
 
             # Execute enhanced schema creation
-            async with aiosqlite.connect(str(self.database_path)) as connection:
+            async with aiosqlite.connect(
+                str(self.database_path)
+            ) as connection:
                 await connection.executescript(standard_schema)
                 await connection.commit()
 
@@ -224,7 +227,10 @@ class ContextDatabase:
                     "initialized": True,
                     "secure": True,
                 },
-                metadata={"blessing": "omnissiah_approved", "security": "enhanced"},
+                metadata={
+                    "blessing": "omnissiah_approved",
+                    "security": "enhanced",
+                },
             )
 
         except Exception as e:
@@ -256,7 +262,8 @@ class ContextDatabase:
                 await connection.execute(
                     "PRAGMA synchronous = NORMAL"
                 )  # Balanced safety/speed
-                await connection.execute("PRAGMA cache_size = -64000")  # 64MB cache
+                # 64MB cache
+                await connection.execute("PRAGMA cache_size = -64000")
                 await connection.execute(
                     "PRAGMA temp_store = MEMORY"
                 )  # Memory temp tables
@@ -284,7 +291,9 @@ class ContextDatabase:
                     connection = self._connection_pool.pop()
                 else:
                     # Create enhanced temporary connection if pool exhausted
-                    connection = await aiosqlite.connect(str(self.database_path))
+                    connection = await aiosqlite.connect(
+                        str(self.database_path)
+                    )
                     connection.row_factory = aiosqlite.Row
 
                     # Apply performance optimizations to temporary connection
@@ -327,7 +336,9 @@ class ContextDatabase:
 
     # STANDARD MEMORY MANAGEMENT OPERATIONS ENHANCED BY REMEMBRANCE
 
-    async def store_enhanced_memory(self, memory: MemoryItem) -> StandardResponse:
+    async def store_enhanced_memory(
+        self, memory: MemoryItem
+    ) -> StandardResponse:
         """
         STANDARD MEMORY STORAGE RITUAL ENHANCED BY PERSISTENCE
 
@@ -365,7 +376,7 @@ class ContextDatabase:
                 await connection.commit()
 
                 logger.info(
-                    f"STANDARD MEMORY STORED: {memory.memory_id} FOR {memory.agent_id}"
+                    f"STANDARD MEMORY STORED: {memory.memory_id}FOR {memory.agent_id}"
                 )
 
                 return StandardResponse(
@@ -417,8 +428,12 @@ class ContextDatabase:
                 # Add enhanced memory type filtering
                 if memory_types:
                     type_placeholders = ",".join("?" * len(memory_types))
-                    query_parts.append(f"AND memory_type IN ({type_placeholders})")
-                    params.extend([mem_type.value for mem_type in memory_types])
+                    query_parts.append(
+                        f"AND memory_type IN ({type_placeholders})"
+                    )
+                    params.extend(
+                        [mem_type.value for mem_type in memory_types]
+                    )
 
                 # Sacred ordering enhanced by relevance and recency
                 query_parts.append(
@@ -450,7 +465,9 @@ class ContextDatabase:
                         tags=json.loads(row["tags"] or "[]"),
                         decay_factor=row["decay_factor"],
                         timestamp=datetime.fromisoformat(row["created_at"]),
-                        last_accessed=datetime.fromisoformat(row["last_accessed"]),
+                        last_accessed=datetime.fromisoformat(
+                            row["last_accessed"]
+                        ),
                     )
                     memories.append(memory)
 
@@ -461,7 +478,10 @@ class ContextDatabase:
                 return StandardResponse(
                     success=True,
                     data={"memories": memories, "count": len(memories)},
-                    metadata={"agent_id": agent_id, "blessing": "memories_retrieved"},
+                    metadata={
+                        "agent_id": agent_id,
+                        "blessing": "memories_retrieved",
+                    },
                 )
 
         except Exception as e:
@@ -476,13 +496,15 @@ class ContextDatabase:
                 ),
             )
 
-    async def update_memory_access(self, memory_id: MemoryID) -> StandardResponse:
+    async def update_memory_access(
+        self, memory_id: MemoryID
+    ) -> StandardResponse:
         """STANDARD MEMORY ACCESS UPDATE ENHANCED BY TRACKING"""
         try:
             async with self.get_enhanced_connection() as connection:
                 await connection.execute(
                     """
-                    UPDATE memories 
+                    UPDATE memories
                     SET last_accessed = ?, access_count = access_count + 1
                     WHERE memory_id = ?
                 """,
@@ -496,7 +518,9 @@ class ContextDatabase:
         except Exception as e:
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="MEMORY_ACCESS_UPDATE_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="MEMORY_ACCESS_UPDATE_FAILED", message=str(e)
+                ),
             )
 
     # STANDARD RELATIONSHIP MANAGEMENT ENHANCED BY SOCIAL BONDS
@@ -513,9 +537,7 @@ class ContextDatabase:
         try:
             async with self.get_enhanced_connection() as connection:
                 # Generate enhanced relationship ID if not present
-                relationship_id = (
-                    f"{relationship.target_agent_id}_{relationship.target_agent_id}"
-                )
+                relationship_id = f"{relationship.target_agent_id}_{relationship.target_agent_id}"
 
                 await connection.execute(
                     """
@@ -565,7 +587,9 @@ class ContextDatabase:
                 ),
             )
 
-    async def query_agent_relationships(self, agent_id: AgentID) -> StandardResponse:
+    async def query_agent_relationships(
+        self, agent_id: AgentID
+    ) -> StandardResponse:
         """
         STANDARD RELATIONSHIP QUERY ENHANCED BY SOCIAL NETWORK RETRIEVAL
 
@@ -577,7 +601,7 @@ class ContextDatabase:
                 async with connection.execute(
                     """
                     SELECT relationship_id, agent_id, target_agent_id, target_name,
-                           relationship_type, trust_level, emotional_bond, 
+                           relationship_type, trust_level, emotional_bond,
                            interaction_count, shared_experiences, relationship_notes,
                            last_interaction, last_updated
                     FROM relationships
@@ -594,7 +618,9 @@ class ContextDatabase:
                     relationship = RelationshipState(
                         target_agent_id=row["target_agent_id"],
                         target_name=row["target_name"],
-                        relationship_type=RelationshipStatus(row["relationship_type"]),
+                        relationship_type=RelationshipStatus(
+                            row["relationship_type"]
+                        ),
                         trust_level=row["trust_level"],
                         emotional_bond=row["emotional_bond"],
                         interaction_count=row["interaction_count"],
@@ -612,7 +638,10 @@ class ContextDatabase:
 
                 return StandardResponse(
                     success=True,
-                    data={"relationships": relationships, "count": len(relationships)},
+                    data={
+                        "relationships": relationships,
+                        "count": len(relationships),
+                    },
                     metadata={
                         "agent_id": agent_id,
                         "blessing": "relationships_retrieved",
@@ -726,7 +755,9 @@ class ContextDatabase:
 
                 await connection.commit()
 
-                logger.info(f"STANDARD AGENT REGISTERED: {agent_id} ({character_name})")
+                logger.info(
+                    f"STANDARD AGENT REGISTERED: {agent_id} ({character_name})"
+                )
 
                 return StandardResponse(
                     success=True,
@@ -765,10 +796,10 @@ class ContextDatabase:
                 # Sacred cleanup of old memories beyond capacity
                 await connection.execute(
                     """
-                    DELETE FROM memories 
+                    DELETE FROM memories
                     WHERE memory_id NOT IN (
-                        SELECT memory_id FROM memories 
-                        ORDER BY relevance_score * decay_factor DESC 
+                        SELECT memory_id FROM memories
+                        ORDER BY relevance_score * decay_factor DESC
                         LIMIT ?
                     )
                 """,
@@ -778,7 +809,7 @@ class ContextDatabase:
                 # Update enhanced maintenance timestamp
                 await connection.execute(
                     """
-                    UPDATE system_config 
+                    UPDATE system_config
                     SET config_value = ?, last_updated = ?
                     WHERE config_key = 'last_maintenance'
                 """,
@@ -833,12 +864,14 @@ class ContextDatabase:
                         statistics[f"{table}_count"] = row["count"]
 
                 # Core database file size
-                statistics["database_size_bytes"] = self.database_path.stat().st_size
+                statistics[
+                    "database_size_bytes"
+                ] = self.database_path.stat().st_size
 
                 # Blessed memory statistics
                 async with connection.execute(
                     """
-                    SELECT 
+                    SELECT
                         AVG(emotional_weight) as avg_emotional_weight,
                         AVG(relevance_score) as avg_relevance_score,
                         MAX(access_count) as max_access_count
@@ -848,8 +881,10 @@ class ContextDatabase:
                     row = await cursor.fetchone()
                     statistics.update(
                         {
-                            "avg_emotional_weight": row["avg_emotional_weight"] or 0.0,
-                            "avg_relevance_score": row["avg_relevance_score"] or 0.0,
+                            "avg_emotional_weight": row["avg_emotional_weight"]
+                            or 0.0,
+                            "avg_relevance_score": row["avg_relevance_score"]
+                            or 0.0,
                             "max_access_count": row["max_access_count"] or 0,
                         }
                     )
@@ -982,7 +1017,7 @@ async def test_standard_database_operations():
     # Test enhanced memory query
     query_result = await test_db.query_memories_by_agent("test_agent_001")
     print(
-        f"MEMORY QUERY: {query_result.success}, Count: {len(query_result.data.get('memories', []))}"
+        f"MEMORY QUERY: {query_result.success}, Count: {len( query_result.data.get( 'memories', []))}"
     )
 
     # Test enhanced database statistics

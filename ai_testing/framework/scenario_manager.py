@@ -95,8 +95,12 @@ class ScenarioCollection(BaseModel):
 
     # Collection properties
     total_estimated_minutes: int = 0
-    category_distribution: Dict[ScenarioCategory, int] = Field(default_factory=dict)
-    complexity_distribution: Dict[ScenarioComplexity, int] = Field(default_factory=dict)
+    category_distribution: Dict[ScenarioCategory, int] = Field(
+        default_factory=dict
+    )
+    complexity_distribution: Dict[ScenarioComplexity, int] = Field(
+        default_factory=dict
+    )
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
@@ -122,12 +126,12 @@ class AIScenarioGenerator:
         self.http_client: Optional[httpx.AsyncClient] = None
 
         # Generation parameters
-        self.creativity_temperature = config.get("scenario_generation", {}).get(
-            "creativity", 0.7
-        )
-        self.max_scenarios_per_request = config.get("scenario_generation", {}).get(
-            "max_per_request", 10
-        )
+        self.creativity_temperature = config.get(
+            "scenario_generation", {}
+        ).get("creativity", 0.7)
+        self.max_scenarios_per_request = config.get(
+            "scenario_generation", {}
+        ).get("max_per_request", 10)
 
         logger.info("AI Scenario Generator initialized")
 
@@ -178,7 +182,9 @@ class AIScenarioGenerator:
         """Generate comprehensive user journey test scenarios"""
 
         prompt = self._create_user_journey_prompt(
-            journey_description, user_personas or ["default_user"], complexity_level
+            journey_description,
+            user_personas or ["default_user"],
+            complexity_level,
         )
 
         try:
@@ -212,21 +218,26 @@ class AIScenarioGenerator:
             return self._generate_default_ai_quality_scenarios(ai_features)
 
     def _create_api_scenario_prompt(
-        self, api_spec: Dict[str, Any], scenario_count: int, focus_areas: List[str]
+        self,
+        api_spec: Dict[str, Any],
+        scenario_count: int,
+        focus_areas: List[str],
     ) -> str:
         """Create AI prompt for API scenario generation"""
 
         endpoints = api_spec.get("endpoints", [])
-        focus_text = f"Focus on: {', '.join(focus_areas)}" if focus_areas else ""
+        focus_text = (
+            f"Focus on: {', '.join(focus_areas)}" if focus_areas else ""
+        )
 
         prompt = f"""
         Generate {scenario_count} comprehensive test scenarios for this Novel-Engine API:
-        
+
         API Endpoints:
         {json.dumps(endpoints, indent=2)}
-        
+
         {focus_text}
-        
+
         For each scenario, provide:
         1. Scenario name and description
         2. Test type (api, ui, ai_quality, integration, performance)
@@ -234,21 +245,21 @@ class AIScenarioGenerator:
         4. Detailed test configuration
         5. Expected outcomes and validation criteria
         6. Quality thresholds for AI features
-        
+
         Consider these Novel-Engine specific aspects:
         - Character simulation and AI decision-making
         - Story generation and narrative quality
         - Multi-agent interactions and event bus patterns
         - Real-time simulation execution
         - Performance under AI workloads
-        
+
         Generate scenarios that cover:
         - Happy path and edge cases
         - Error handling and resilience
         - Performance under load
         - AI output quality and consistency
         - Security and input validation
-        
+
         Return as JSON array with this structure:
         [
           {{
@@ -278,17 +289,17 @@ class AIScenarioGenerator:
 
         prompt = f"""
         Generate comprehensive user journey test scenarios for Novel-Engine:
-        
+
         Journey Description: {journey_description}
         User Personas: {', '.join(user_personas)}
         Complexity Level: {complexity_level.value}
-        
+
         Novel-Engine is an AI-powered interactive story generation system with:
         - React frontend for simulation control
         - FastAPI backend with character management
         - Multi-agent AI for character decision-making
         - Real-time story generation and narrative creation
-        
+
         Generate scenarios that test complete user workflows:
         1. User authentication and onboarding
         2. Character selection and customization
@@ -296,14 +307,14 @@ class AIScenarioGenerator:
         4. Real-time interaction and decision-making
         5. Story generation and narrative viewing
         6. Results sharing and campaign management
-        
+
         For each scenario, include:
         - Multi-step user actions (UI interactions)
         - API calls and data validation
         - AI quality assessment for generated content
         - Performance measurement for user experience
         - Accessibility and usability validation
-        
+
         Return as JSON array with detailed step-by-step scenarios.
         """
 
@@ -318,17 +329,17 @@ class AIScenarioGenerator:
 
         prompt = f"""
         Generate AI quality assessment scenarios for Novel-Engine features:
-        
+
         AI Features to Test: {', '.join(ai_features)}
         Quality Metrics: {metrics_text}
-        
+
         Novel-Engine AI capabilities include:
         - Character AI decision-making with Gemini API
         - Dynamic story generation and narrative creation
         - Multi-agent interaction and dialogue
         - Context-aware character behavior
         - Adaptive storytelling based on user preferences
-        
+
         Generate scenarios that assess:
         1. AI output coherence and logical consistency
         2. Creative quality and narrative engagement
@@ -336,14 +347,14 @@ class AIScenarioGenerator:
         4. Safety and content appropriateness
         5. Relevance to context and user input
         6. Consistency across multiple generations
-        
+
         Each scenario should include:
         - Specific AI prompts and inputs
         - Expected output characteristics
         - Quality assessment criteria
         - Comparison baselines
         - Multi-model validation approach
-        
+
         Use "LLM as a Judge" methodology for quality assessment.
         Return as JSON array with comprehensive quality scenarios.
         """
@@ -373,7 +384,9 @@ class AIScenarioGenerator:
           }
         ]"""
 
-    def _parse_ai_scenario_response(self, ai_response: str) -> List[TestScenario]:
+    def _parse_ai_scenario_response(
+        self, ai_response: str
+    ) -> List[TestScenario]:
         """Parse AI response into TestScenario objects"""
         try:
             scenarios_data = json.loads(ai_response)
@@ -445,7 +458,10 @@ class AIScenarioGenerator:
                         "expected_status": 200,
                     }
                 },
-                expected_outcomes=["Returns character list", "Valid JSON structure"],
+                expected_outcomes=[
+                    "Returns character list",
+                    "Valid JSON structure",
+                ],
             )
         )
 
@@ -613,7 +629,9 @@ class ScenarioManager:
         # Validate scenario
         validation_errors = self._validate_scenario(scenario)
         if validation_errors:
-            raise ValueError(f"Scenario validation failed: {validation_errors}")
+            raise ValueError(
+                f"Scenario validation failed: {validation_errors}"
+            )
 
         # Store scenario
         self.scenarios[scenario.id] = scenario
@@ -650,7 +668,9 @@ class ScenarioManager:
 
         if category:
             scenarios = [
-                s for s in scenarios if s.config.get("category") == category.value
+                s
+                for s in scenarios
+                if s.config.get("category") == category.value
             ]
 
         if tags:
@@ -680,7 +700,9 @@ class ScenarioManager:
         # Validate updated scenario
         validation_errors = self._validate_scenario(scenario)
         if validation_errors:
-            raise ValueError(f"Updated scenario validation failed: {validation_errors}")
+            raise ValueError(
+                f"Updated scenario validation failed: {validation_errors}"
+            )
 
         # Save updated scenario
         await self._save_scenario(scenario)
@@ -732,10 +754,14 @@ class ScenarioManager:
         self.collections[collection.id] = collection
         await self._save_collection(collection)
 
-        logger.info(f"Collection created: {name} with {len(scenarios)} scenarios")
+        logger.info(
+            f"Collection created: {name} with {len(scenarios)} scenarios"
+        )
         return collection
 
-    def get_collection(self, collection_id: str) -> Optional[ScenarioCollection]:
+    def get_collection(
+        self, collection_id: str
+    ) -> Optional[ScenarioCollection]:
         """Get collection by ID"""
         return self.collections.get(collection_id)
 
@@ -746,7 +772,9 @@ class ScenarioManager:
     # === AI-Powered Generation ===
 
     async def generate_scenarios_for_novel_engine(
-        self, generation_type: str = "comprehensive", focus_areas: List[str] = None
+        self,
+        generation_type: str = "comprehensive",
+        focus_areas: List[str] = None,
     ) -> ScenarioCollection:
         """Generate comprehensive scenarios for Novel-Engine"""
 
@@ -767,8 +795,10 @@ class ScenarioManager:
         ]
 
         for journey in user_journeys:
-            journey_scenarios = await self.ai_generator.generate_user_journey_scenarios(
-                journey
+            journey_scenarios = (
+                await self.ai_generator.generate_user_journey_scenarios(
+                    journey
+                )
             )
             scenarios.extend(journey_scenarios)
 
@@ -803,7 +833,10 @@ class ScenarioManager:
     # === Import/Export ===
 
     async def export_collection(
-        self, collection_id: str, format: str = "json", include_results: bool = False
+        self,
+        collection_id: str,
+        format: str = "json",
+        include_results: bool = False,
     ) -> str:
         """Export collection to file"""
         collection = self.collections.get(collection_id)
@@ -824,7 +857,9 @@ class ScenarioManager:
             raise ValueError(f"Unsupported export format: {format}")
 
         # Save to file
-        export_file = self.scenarios_directory / f"export_{collection_id}.{format}"
+        export_file = (
+            self.scenarios_directory / f"export_{collection_id}.{format}"
+        )
         export_file.write_text(export_content)
 
         logger.info(f"Collection exported: {export_file}")
@@ -906,7 +941,9 @@ class ScenarioManager:
 
     async def _save_collection(self, collection: ScenarioCollection):
         """Save collection to file"""
-        collection_file = self.scenarios_directory / f"collection_{collection.id}.json"
+        collection_file = (
+            self.scenarios_directory / f"collection_{collection.id}.json"
+        )
         collection_file.write_text(collection.model_dump_json(indent=2))
 
     async def _load_existing_scenarios(self):
@@ -934,7 +971,11 @@ class ScenarioManager:
         # This would extract API spec from the actual API server
         return {
             "endpoints": [
-                {"path": "/health", "method": "GET", "description": "Health check"},
+                {
+                    "path": "/health",
+                    "method": "GET",
+                    "description": "Health check",
+                },
                 {
                     "path": "/characters",
                     "method": "GET",

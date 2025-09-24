@@ -72,8 +72,12 @@ class NarrativeTheme:
 
     # Emotional and moral dimensions
     moral_complexity: Decimal = Decimal("5.0")  # 1-10, higher = more complex
-    emotional_resonance: Decimal = Decimal("5.0")  # 1-10, expected emotional impact
-    universal_appeal: Decimal = Decimal("5.0")  # 1-10, cross-cultural relevance
+    emotional_resonance: Decimal = Decimal(
+        "5.0"
+    )  # 1-10, expected emotional impact
+    universal_appeal: Decimal = Decimal(
+        "5.0"
+    )  # 1-10, cross-cultural relevance
 
     # Expression methods
     expressed_through_dialogue: bool = False
@@ -115,7 +119,9 @@ class NarrativeTheme:
             object.__setattr__(self, "tags", set())
 
         if self.creation_timestamp is None:
-            object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
+            object.__setattr__(
+                self, "creation_timestamp", datetime.now(timezone.utc)
+            )
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -164,7 +170,9 @@ class NarrativeTheme:
             raise ValueError("Theme name too long (max 200 characters)")
 
         if len(self.description) > 1000:
-            raise ValueError("Theme description too long (max 1000 characters)")
+            raise ValueError(
+                "Theme description too long (max 1000 characters)"
+            )
 
     @property
     def is_major_theme(self) -> bool:
@@ -188,7 +196,9 @@ class NarrativeTheme:
     @property
     def has_character_expression(self) -> bool:
         """Check if theme is expressed through character development."""
-        return self.expressed_through_character_arc or bool(self.character_archetypes)
+        return self.expressed_through_character_arc or bool(
+            self.character_archetypes
+        )
 
     @property
     def spans_full_narrative(self) -> bool:
@@ -222,12 +232,16 @@ class NarrativeTheme:
 
         # Add complexity for thematic relationships
         relationship_bonus = Decimal(
-            str((len(self.conflicts_with_themes) + len(self.reinforces_themes)) * 0.3)
+            str(
+                (len(self.conflicts_with_themes) + len(self.reinforces_themes))
+                * 0.3
+            )
         )
 
         # Cap at 10
         return min(
-            Decimal("10"), base_complexity + expression_bonus + relationship_bonus
+            Decimal("10"),
+            base_complexity + expression_bonus + relationship_bonus,
         )
 
     @property
@@ -311,7 +325,9 @@ class NarrativeTheme:
             },
         }
 
-    def with_updated_intensity(self, new_intensity: ThemeIntensity) -> "NarrativeTheme":
+    def with_updated_intensity(
+        self, new_intensity: ThemeIntensity
+    ) -> "NarrativeTheme":
         """
         Create a new NarrativeTheme with updated intensity.
 

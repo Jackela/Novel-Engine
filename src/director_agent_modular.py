@@ -57,24 +57,7 @@ from director_components import (
 
 # Try to import Iron Laws types
 try:
-    from src.shared_types import (
-        ActionIntensity,
-        ActionParameters,
-        ActionTarget,
-        ActionType,
-        CharacterData,
-        CharacterResources,
-        CharacterStats,
-        EntityType,
-        IronLawsReport,
-        IronLawsViolation,
-        Position,
-        ProposedAction,
-        ResourceValue,
-        ValidatedAction,
-        ValidationResult,
-        ValidationStatus,
-    )
+    from src.shared_types import ProposedAction
 
     IRON_LAWS_AVAILABLE = True
 except ImportError as e:
@@ -100,7 +83,11 @@ except ImportError:
 
 
 try:
-    from campaign_brief import CampaignBrief, CampaignBriefLoader, NarrativeEvent
+    from campaign_brief import (
+        CampaignBrief,
+        CampaignBriefLoader,
+        NarrativeEvent,
+    )
 except ImportError:
 
     class CampaignBrief:
@@ -169,7 +156,9 @@ class DirectorAgent:
         # Backward compatibility attributes
         self.agents = []  # Will be managed by AgentLifecycleManager
         self.world_state = {}  # Will be managed by WorldStateManager
-        self.campaign_log_data = []  # Will be managed by CampaignLoggingService
+        self.campaign_log_data = (
+            []
+        )  # Will be managed by CampaignLoggingService
         self.turn_count = 0
 
         # Legacy attributes for compatibility
@@ -198,7 +187,9 @@ class DirectorAgent:
 
             # World state manager
             self.world_state_manager = WorldStateManager(
-                state_file=self.config.get("world_state_file", "world_state.json"),
+                state_file=self.config.get(
+                    "world_state_file", "world_state.json"
+                ),
                 logger=self.logger,
             )
 
@@ -208,7 +199,9 @@ class DirectorAgent:
             )
 
             # Narrative orchestrator
-            self.narrative_orchestrator = NarrativeOrchestrator(logger=self.logger)
+            self.narrative_orchestrator = NarrativeOrchestrator(
+                logger=self.logger
+            )
 
             # Campaign logging service
             log_dir = self.config.get("log_directory", "logs")
@@ -297,7 +290,9 @@ class DirectorAgent:
                 }
             )
 
-            self.logger.info("DirectorAgent initialization completed successfully")
+            self.logger.info(
+                "DirectorAgent initialization completed successfully"
+            )
             return True
 
         except Exception as e:
@@ -386,7 +381,9 @@ class DirectorAgent:
                 )
 
                 # Update backward compatibility attribute
-                self.world_state = await self.world_state_manager.get_world_state()
+                self.world_state = (
+                    await self.world_state_manager.get_world_state()
+                )
 
             # Process narrative events
             if turn_result.get("narrative_events"):
@@ -403,8 +400,12 @@ class DirectorAgent:
                     "turn_number": self.turn_count,
                     "success": turn_result.get("success", False),
                     "agent_results": turn_result.get("agent_results", {}),
-                    "world_state_changes": turn_result.get("world_state_changes", {}),
-                    "narrative_events": turn_result.get("narrative_events", []),
+                    "world_state_changes": turn_result.get(
+                        "world_state_changes", {}
+                    ),
+                    "narrative_events": turn_result.get(
+                        "narrative_events", []
+                    ),
                     "metrics": turn_result.get("metrics", {}),
                 }
             )
@@ -422,7 +423,9 @@ class DirectorAgent:
                 "turn_number": self.turn_count,
                 "component": "DirectorAgent",
             }
-            error_result = await self.error_handler.handle_error(e, error_context)
+            error_result = await self.error_handler.handle_error(
+                e, error_context
+            )
 
             # Return error result with backward compatibility
             return {
@@ -520,25 +523,27 @@ class DirectorAgent:
 
             # Get component-specific status
             if hasattr(self.agent_manager, "get_system_status"):
-                status["agent_manager"] = await self.agent_manager.get_system_status()
+                status[
+                    "agent_manager"
+                ] = await self.agent_manager.get_system_status()
 
             if hasattr(self.campaign_logger, "get_statistics"):
                 status["logging"] = await self.campaign_logger.get_statistics()
 
             if hasattr(self.error_handler, "get_error_statistics"):
-                status["error_handling"] = (
-                    await self.error_handler.get_error_statistics()
-                )
+                status[
+                    "error_handling"
+                ] = await self.error_handler.get_error_statistics()
 
             if hasattr(self.world_state_manager, "get_state_statistics"):
-                status["world_state"] = (
-                    await self.world_state_manager.get_state_statistics()
-                )
+                status[
+                    "world_state"
+                ] = await self.world_state_manager.get_state_statistics()
 
             if hasattr(self.narrative_orchestrator, "get_story_summary"):
-                status["narrative"] = (
-                    await self.narrative_orchestrator.get_story_summary()
-                )
+                status[
+                    "narrative"
+                ] = await self.narrative_orchestrator.get_story_summary()
 
             return status
 
@@ -566,7 +571,9 @@ class DirectorAgent:
             # Apply any configuration overrides
             config_world_state = self.config.get("initial_world_state", {})
             if config_world_state:
-                await self.world_state_manager.update_world_state(config_world_state)
+                await self.world_state_manager.update_world_state(
+                    config_world_state
+                )
                 state = await self.world_state_manager.get_world_state()
 
             # Update backward compatibility attribute
@@ -601,8 +608,12 @@ class DirectorAgent:
                 "timestamp": datetime.now().isoformat(),
                 "success": turn_result.get("success", False),
                 "agent_count": len(self.agents),
-                "narrative_events": len(turn_result.get("narrative_events", [])),
-                "world_state_changes": len(turn_result.get("world_state_changes", {})),
+                "narrative_events": len(
+                    turn_result.get("narrative_events", [])
+                ),
+                "world_state_changes": len(
+                    turn_result.get("world_state_changes", {})
+                ),
             }
 
             self.campaign_log_data.append(log_entry)
@@ -620,7 +631,9 @@ class DirectorAgent:
         """Legacy method for adding agents (synchronous wrapper)."""
         return asyncio.run(self.register_agent(agent))
 
-    def run_turn(self, turn_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def run_turn(
+        self, turn_data: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Legacy method for running turns (synchronous wrapper)."""
         return asyncio.run(self.execute_turn(turn_data))
 
@@ -676,9 +689,15 @@ class DirectorAgent:
                     getattr(self, "narrative_orchestrator", None),
                 ),
                 ("Agent Manager", getattr(self, "agent_manager", None)),
-                ("World State Manager", getattr(self, "world_state_manager", None)),
+                (
+                    "World State Manager",
+                    getattr(self, "world_state_manager", None),
+                ),
                 ("Campaign Logger", getattr(self, "campaign_logger", None)),
-                ("Configuration Service", getattr(self, "config_service", None)),
+                (
+                    "Configuration Service",
+                    getattr(self, "config_service", None),
+                ),
                 ("Error Handler", getattr(self, "error_handler", None)),
             ]
 
@@ -697,7 +716,10 @@ class DirectorAgent:
 
     def __del__(self):
         """Cleanup on destruction."""
-        if hasattr(self, "_shutdown_requested") and not self._shutdown_requested:
+        if (
+            hasattr(self, "_shutdown_requested")
+            and not self._shutdown_requested
+        ):
             try:
                 asyncio.run(self.shutdown())
             except Exception:

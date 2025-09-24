@@ -111,7 +111,13 @@ class TestMigrationUtilities:
             },
             "performance": {
                 "target": "tests/performance",
-                "patterns": ["performance", "optimization", "async", "memory", "cache"],
+                "patterns": [
+                    "performance",
+                    "optimization",
+                    "async",
+                    "memory",
+                    "cache",
+                ],
                 "files": [
                     "test_performance_optimizations.py",
                     "test_async_llm_performance.py",
@@ -134,7 +140,10 @@ class TestMigrationUtilities:
             "quality": {
                 "target": "tests/unit/quality",
                 "patterns": ["quality", "testing", "code_quality"],
-                "files": ["test_quality_framework.py", "test_code_quality_analyzer.py"],
+                "files": [
+                    "test_quality_framework.py",
+                    "test_code_quality_analyzer.py",
+                ],
             },
             "security": {
                 "target": "tests/security",  # Keep existing security location
@@ -146,7 +155,12 @@ class TestMigrationUtilities:
             },
             "specialized": {
                 "target": "tests/integration/components",
-                "patterns": ["ai_intelligence", "story", "narrative", "chronicler"],
+                "patterns": [
+                    "ai_intelligence",
+                    "story",
+                    "narrative",
+                    "chronicler",
+                ],
                 "files": [
                     "test_ai_intelligence_integration.py",
                     "test_story_generation_comprehensive.py",
@@ -178,11 +192,15 @@ class TestMigrationUtilities:
             analysis["imports"] = import_matches
 
             # Find test classes
-            class_matches = re.findall(r"^class\s+(Test\w+)", content, re.MULTILINE)
+            class_matches = re.findall(
+                r"^class\s+(Test\w+)", content, re.MULTILINE
+            )
             analysis["test_classes"] = class_matches
 
             # Find test functions
-            func_matches = re.findall(r"^\s*def\s+(test_\w+)", content, re.MULTILINE)
+            func_matches = re.findall(
+                r"^\s*def\s+(test_\w+)", content, re.MULTILINE
+            )
             analysis["test_functions"] = func_matches
 
             # Find pytest markers
@@ -331,7 +349,9 @@ class TestMigrationUtilities:
             }
 
             if category in self.migration_map:
-                migration_info["target"] = self.migration_map[category]["target"]
+                migration_info["target"] = self.migration_map[category][
+                    "target"
+                ]
 
             plan["files_to_migrate"].append(migration_info)
 
@@ -348,7 +368,11 @@ class TestMigrationUtilities:
                 [f for f in plan["files_to_migrate"] if f["confidence"] > 0.7]
             ),
             "medium_confidence": len(
-                [f for f in plan["files_to_migrate"] if 0.3 <= f["confidence"] <= 0.7]
+                [
+                    f
+                    for f in plan["files_to_migrate"]
+                    if 0.3 <= f["confidence"] <= 0.7
+                ]
             ),
             "low_confidence": len(
                 [f for f in plan["files_to_migrate"] if f["confidence"] < 0.3]
@@ -378,7 +402,9 @@ class TestMigrationUtilities:
 
         return output_path
 
-    def execute_migration(self, plan: Dict, dry_run: bool = True) -> Dict[str, any]:
+    def execute_migration(
+        self, plan: Dict, dry_run: bool = True
+    ) -> Dict[str, any]:
         """Execute the migration plan."""
         results = {
             "dry_run": dry_run,
@@ -398,7 +424,9 @@ class TestMigrationUtilities:
                 full_path = self.project_root / dir_path
                 if not dry_run:
                     full_path.mkdir(parents=True, exist_ok=True)
-                    results["actions_taken"].append(f"Created directory: {dir_path}")
+                    results["actions_taken"].append(
+                        f"Created directory: {dir_path}"
+                    )
                 else:
                     results["actions_taken"].append(
                         f"[DRY RUN] Would create directory: {dir_path}"
@@ -414,7 +442,9 @@ class TestMigrationUtilities:
 
                     if source_path.exists():
                         if not dry_run:
-                            target_path.parent.mkdir(parents=True, exist_ok=True)
+                            target_path.parent.mkdir(
+                                parents=True, exist_ok=True
+                            )
                             shutil.copy2(source_path, target_path)
                             results["actions_taken"].append(
                                 f"Migrated: {migration['source']} -> {migration['target']}"
@@ -425,7 +455,9 @@ class TestMigrationUtilities:
                             )
                         results["statistics"]["files_migrated"] += 1
                     else:
-                        error_msg = f"Source file not found: {migration['source']}"
+                        error_msg = (
+                            f"Source file not found: {migration['source']}"
+                        )
                         results["errors"].append(error_msg)
                         results["statistics"]["errors_encountered"] += 1
 
@@ -456,7 +488,9 @@ class TestMigrationUtilities:
             print(f"  {dir_path}")
 
         print("\n🔄 HIGH CONFIDENCE MIGRATIONS:")
-        high_conf_files = [f for f in plan["files_to_migrate"] if f["confidence"] > 0.7]
+        high_conf_files = [
+            f for f in plan["files_to_migrate"] if f["confidence"] > 0.7
+        ]
         for migration in high_conf_files[:10]:  # Show first 10
             print(
                 f"  {migration['source']} -> {migration['target']} ({migration['confidence']:.2f})"

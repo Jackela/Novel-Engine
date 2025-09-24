@@ -92,7 +92,9 @@ class ProductionIntegrationTestSuite:
             has_basic_structure = True
             if hasattr(config, "__dict__"):
                 # Check for expected configuration sections
-                config_dict = config.__dict__ if hasattr(config, "__dict__") else {}
+                config_dict = (
+                    config.__dict__ if hasattr(config, "__dict__") else {}
+                )
             elif hasattr(config, "keys"):
                 config_dict = config
             else:
@@ -119,7 +121,9 @@ class ProductionIntegrationTestSuite:
                 logger.warning(f"Environment override test failed: {e}")
                 env_override_test = False
 
-            success = config_loaded and has_basic_structure and env_override_test
+            success = (
+                config_loaded and has_basic_structure and env_override_test
+            )
             duration = time.time() - start_time
 
             return IntegrationTestResult(
@@ -132,7 +136,9 @@ class ProductionIntegrationTestSuite:
                     "config_loaded": config_loaded,
                     "structure_valid": has_basic_structure,
                     "environment_override": env_override_test,
-                    "config_keys": list(config_dict.keys()) if config_dict else [],
+                    "config_keys": list(config_dict.keys())
+                    if config_dict
+                    else [],
                 },
                 critical=True,
             )
@@ -157,7 +163,6 @@ class ProductionIntegrationTestSuite:
 
             # Test DirectorAgent import
             try:
-
                 components_loaded["DirectorAgent"] = True
             except Exception as e:
                 logger.warning(f"DirectorAgent import failed: {e}")
@@ -165,7 +170,6 @@ class ProductionIntegrationTestSuite:
 
             # Test ChroniclerAgent import
             try:
-
                 components_loaded["ChroniclerAgent"] = True
             except Exception as e:
                 logger.warning(f"ChroniclerAgent import failed: {e}")
@@ -173,7 +177,6 @@ class ProductionIntegrationTestSuite:
 
             # Test character_factory import
             try:
-
                 components_loaded["CharacterFactory"] = True
             except Exception as e:
                 logger.warning(f"CharacterFactory import failed: {e}")
@@ -181,7 +184,6 @@ class ProductionIntegrationTestSuite:
 
             # Test shared_types import
             try:
-
                 components_loaded["SharedTypes"] = True
             except Exception as e:
                 logger.warning(f"SharedTypes import failed: {e}")
@@ -189,7 +191,9 @@ class ProductionIntegrationTestSuite:
 
             loaded_count = sum(components_loaded.values())
             total_count = len(components_loaded)
-            success = loaded_count >= total_count * 0.75  # At least 75% should load
+            success = (
+                loaded_count >= total_count * 0.75
+            )  # At least 75% should load
 
             duration = time.time() - start_time
 
@@ -238,7 +242,9 @@ class ProductionIntegrationTestSuite:
                 narrative_processing = False
 
             # Test log transcription capability
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".md", delete=False
+            ) as f:
                 f.write("# Test Campaign Log\n\nTurn 1: Test event occurred\n")
                 test_log_path = f.name
                 self.temp_files.append(test_log_path)
@@ -247,7 +253,9 @@ class ProductionIntegrationTestSuite:
             if hasattr(chronicler, "transcribe_log"):
                 try:
                     story = chronicler.transcribe_log(test_log_path)
-                    log_transcription = isinstance(story, str) and len(story) > 10
+                    log_transcription = (
+                        isinstance(story, str) and len(story) > 10
+                    )
                 except Exception as e:
                     logger.warning(f"Log transcription failed: {e}")
 
@@ -282,7 +290,9 @@ class ProductionIntegrationTestSuite:
         start_time = time.time()
         try:
             # Create temporary database
-            with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as temp_db:
+            with tempfile.NamedTemporaryFile(
+                suffix=".db", delete=False
+            ) as temp_db:
                 db_path = temp_db.name
                 self.temp_files.append(db_path)
 
@@ -340,7 +350,9 @@ class ProductionIntegrationTestSuite:
             record_count = cursor.fetchone()[0]
 
             # Test query with filtering
-            cursor.execute("SELECT * FROM campaign_events WHERE turn_number = ?", (1,))
+            cursor.execute(
+                "SELECT * FROM campaign_events WHERE turn_number = ?", (1,)
+            )
             turn_1_events = cursor.fetchall()
 
             # Test transaction rollback
@@ -369,7 +381,9 @@ class ProductionIntegrationTestSuite:
             query_success = len(turn_1_events) == 2  # Two events in turn 1
             transaction_success = rollback_count == 0  # Rollback should work
 
-            success = insertion_success and query_success and transaction_success
+            success = (
+                insertion_success and query_success and transaction_success
+            )
             duration = time.time() - start_time
 
             return IntegrationTestResult(
@@ -442,7 +456,9 @@ class ProductionIntegrationTestSuite:
                 fallback_ready = False
 
             # System should work with API or fallback
-            success = (api_key_available and api_integration_ready) or fallback_ready
+            success = (
+                api_key_available and api_integration_ready
+            ) or fallback_ready
             duration = time.time() - start_time
 
             return IntegrationTestResult(
@@ -479,7 +495,9 @@ class ProductionIntegrationTestSuite:
             chronicler = ChroniclerAgent()
 
             # Create test campaign log
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".md", delete=False
+            ) as f:
                 test_log_content = """# Campaign Log
 
 ## Turn 1 - Character Actions
@@ -487,7 +505,7 @@ class ProductionIntegrationTestSuite:
 **Event**: Character pilot performed action 'investigate'
 **Details**: Investigating the mysterious signal from sector 7
 
-## Turn 2 - World Events  
+## Turn 2 - World Events
 **Timestamp**: 2024-01-01 12:05:00
 **Event**: Environmental change detected
 **Details**: Atmospheric readings show anomalous energy patterns
@@ -509,7 +527,8 @@ class ProductionIntegrationTestSuite:
                 try:
                     story_content = chronicler.transcribe_log(test_log_path)
                     story_generated = (
-                        isinstance(story_content, str) and len(story_content) > 100
+                        isinstance(story_content, str)
+                        and len(story_content) > 100
                     )
                 except Exception as e:
                     logger.warning(f"Story generation failed: {e}")
@@ -532,7 +551,13 @@ class ProductionIntegrationTestSuite:
                 )
 
                 # Should not contain banned brand terms
-                banned_terms = ["warhammer", "40k", "emperor", "imperial", "chaos"]
+                banned_terms = [
+                    "warhammer",
+                    "40k",
+                    "emperor",
+                    "imperial",
+                    "chaos",
+                ]
                 has_banned = any(term in story_lower for term in banned_terms)
 
                 story_quality_ok = has_sci_fi and not has_banned
@@ -576,10 +601,16 @@ class ProductionIntegrationTestSuite:
             for char_dir in character_dirs:
                 if os.path.exists(char_dir):
                     for item in os.listdir(char_dir):
-                        if item.endswith(".md") and "character" in item.lower():
-                            character_files_found.append(os.path.join(char_dir, item))
+                        if (
+                            item.endswith(".md")
+                            and "character" in item.lower()
+                        ):
+                            character_files_found.append(
+                                os.path.join(char_dir, item)
+                            )
                         elif (
-                            os.path.isdir(os.path.join(char_dir, item)) and item != "."
+                            os.path.isdir(os.path.join(char_dir, item))
+                            and item != "."
                         ):
                             # Check subdirectories for character files
                             subdir_path = os.path.join(char_dir, item)
@@ -606,14 +637,18 @@ class ProductionIntegrationTestSuite:
                         priority=ActionPriority.HIGH,
                     )
 
-                    character_data_created = test_action.action_type == "investigate"
+                    character_data_created = (
+                        test_action.action_type == "investigate"
+                    )
 
                 except Exception as e:
                     logger.warning(f"Character data creation failed: {e}")
                     character_data_created = False
 
             # Test character workflow readiness
-            workflow_ready = len(character_files_found) > 0 and character_data_created
+            workflow_ready = (
+                len(character_files_found) > 0 and character_data_created
+            )
 
             success = workflow_ready
             duration = time.time() - start_time
@@ -673,11 +708,15 @@ class ProductionIntegrationTestSuite:
 
             # Calculate readiness score
             required_score = sum(files_present.values()) / len(files_present)
-            optional_score = sum(optional_present.values()) / len(optional_present)
+            optional_score = sum(optional_present.values()) / len(
+                optional_present
+            )
             dirs_score = sum(dirs_present.values()) / len(dirs_present)
 
             overall_score = (
-                (required_score * 0.6) + (dirs_score * 0.3) + (optional_score * 0.1)
+                (required_score * 0.6)
+                + (dirs_score * 0.3)
+                + (optional_score * 0.1)
             )
 
             success = required_score >= 0.75 and dirs_score >= 0.66
@@ -911,7 +950,9 @@ class ProductionIntegrationTestSuite:
                         actions.append(action)
 
                     # Test narrative processing
-                    test_content = f"Iteration {iteration} narrative content " * 50
+                    test_content = (
+                        f"Iteration {iteration} narrative content " * 50
+                    )
                     if hasattr(chronicler, "process_narrative"):
                         try:
                             chronicler.process_narrative(test_content)
@@ -925,7 +966,9 @@ class ProductionIntegrationTestSuite:
                     del actions
 
                 except Exception as e:
-                    logger.warning(f"Memory test iteration {iteration} failed: {e}")
+                    logger.warning(
+                        f"Memory test iteration {iteration} failed: {e}"
+                    )
 
             # Force garbage collection
             gc.collect()
@@ -1014,18 +1057,24 @@ class ProductionIntegrationTestSuite:
         total_tests = len(self.results)
         passed_tests = sum(1 for r in self.results if r.success)
         failed_tests = total_tests - passed_tests
-        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        success_rate = (
+            (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        )
 
         # Critical tests analysis
         critical_tests = [r for r in self.results if r.critical]
         critical_passed = sum(1 for r in critical_tests if r.success)
         critical_success_rate = (
-            (critical_passed / len(critical_tests) * 100) if critical_tests else 100
+            (critical_passed / len(critical_tests) * 100)
+            if critical_tests
+            else 100
         )
 
         # Production readiness assessment
         production_ready = (
-            success_rate >= 75.0 and critical_success_rate >= 85.0 and failed_tests <= 3
+            success_rate >= 75.0
+            and critical_success_rate >= 85.0
+            and failed_tests <= 3
         )
 
         # Production readiness score
@@ -1066,7 +1115,9 @@ class ProductionIntegrationTestSuite:
             category_passed = sum(1 for r in results if r.success)
             category_total = len(results)
             category_success_rate = (
-                (category_passed / category_total * 100) if category_total > 0 else 0
+                (category_passed / category_total * 100)
+                if category_total > 0
+                else 0
             )
 
             report["test_categories"][category] = {
@@ -1168,7 +1219,9 @@ def main():
         print("PRODUCTION INTEGRATION TEST RESULTS")
         print("=" * 100)
         print(f"Production Status: {report['production_status']}")
-        print(f"Production Readiness Score: {report['production_readiness_score']}/100")
+        print(
+            f"Production Readiness Score: {report['production_readiness_score']}/100"
+        )
         print(f"Success Rate: {report['summary']['success_rate']:.1f}%")
         print(
             f"Tests Passed: {report['summary']['passed_tests']}/{report['summary']['total_tests']}"
@@ -1185,8 +1238,12 @@ def main():
             )
 
         if report["production_issues"]:
-            print(f"\nProduction Issues Identified: {len(report['production_issues'])}")
-            for issue in report["production_issues"][:5]:  # Show first 5 issues
+            print(
+                f"\nProduction Issues Identified: {len(report['production_issues'])}"
+            )
+            for issue in report["production_issues"][
+                :5
+            ]:  # Show first 5 issues
                 critical_marker = " [CRITICAL]" if issue["critical"] else ""
                 print(
                     f"  • {issue['category']}::{issue['test']}{critical_marker}: {issue['issue']}"
@@ -1201,7 +1258,9 @@ def main():
                     else (
                         "🟠"
                         if rec["priority"] == "HIGH"
-                        else "🟡" if rec["priority"] == "MEDIUM" else "ℹ️"
+                        else "🟡"
+                        if rec["priority"] == "MEDIUM"
+                        else "ℹ️"
                     )
                 )
                 print(f"  {priority_icon} {rec['category']}: {rec['action']}")

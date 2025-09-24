@@ -67,7 +67,9 @@ class CharacterDataManager:
             # Load all markdown files in directory
             for md_file in character_path.glob("*.md"):
                 file_data = await self._load_markdown_file(md_file)
-                character_data = self._merge_character_data(character_data, file_data)
+                character_data = self._merge_character_data(
+                    character_data, file_data
+                )
 
             # Load any JSON/YAML configuration files
             for config_file in character_path.glob("*.{json,yaml,yml}"):
@@ -75,7 +77,9 @@ class CharacterDataManager:
                     config_data = await self._load_json_file(config_file)
                 else:
                     config_data = await self._load_yaml_file(config_file)
-                character_data = self._merge_character_data(character_data, config_data)
+                character_data = self._merge_character_data(
+                    character_data, config_data
+                )
 
             # Validate loaded data
             if not await self.validate_character_data(character_data):
@@ -96,7 +100,9 @@ class CharacterDataManager:
             )
             raise
 
-    async def validate_character_data(self, character_data: Dict[str, Any]) -> bool:
+    async def validate_character_data(
+        self, character_data: Dict[str, Any]
+    ) -> bool:
         """
         Validate character data structure and required fields.
 
@@ -124,7 +130,12 @@ class CharacterDataManager:
             # Validate attributes (if present)
             attributes = character_data.get("attributes", {})
             if attributes:
-                numeric_attrs = ["strength", "intelligence", "charisma", "constitution"]
+                numeric_attrs = [
+                    "strength",
+                    "intelligence",
+                    "charisma",
+                    "constitution",
+                ]
                 for attr in numeric_attrs:
                     if attr in attributes:
                         try:
@@ -195,7 +206,9 @@ class CharacterDataManager:
 
     def get_character_name(self) -> str:
         """Get character name."""
-        return self._character_data.get("basic_info", {}).get("name", "Unknown")
+        return self._character_data.get("basic_info", {}).get(
+            "name", "Unknown"
+        )
 
     def get_faction(self) -> str:
         """Get character faction."""
@@ -238,10 +251,14 @@ class CharacterDataManager:
                     if frontmatter_data:
                         return frontmatter_data
                 except yaml.YAMLError as e:
-                    self.logger.warning(f"Invalid YAML frontmatter in {file_path}: {e}")
+                    self.logger.warning(
+                        f"Invalid YAML frontmatter in {file_path}: {e}"
+                    )
 
             # If no frontmatter, try to extract structured data from markdown
-            return await self._parse_markdown_structure(content, file_path.stem)
+            return await self._parse_markdown_structure(
+                content, file_path.stem
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to load markdown file {file_path}: {e}")
@@ -263,7 +280,9 @@ class CharacterDataManager:
             }
 
             for section, pattern in sections.items():
-                match = re.search(pattern, content, re.IGNORECASE | re.MULTILINE)
+                match = re.search(
+                    pattern, content, re.IGNORECASE | re.MULTILINE
+                )
                 if match:
                     value = match.group(1).strip()
 
@@ -271,10 +290,13 @@ class CharacterDataManager:
                     if section in ["goals"]:
                         # Split goals by comma or newline
                         goals = [
-                            g.strip() for g in re.split(r"[,\n]", value) if g.strip()
+                            g.strip()
+                            for g in re.split(r"[,\n]", value)
+                            if g.strip()
                         ]
                         data[section] = [
-                            {"description": goal, "priority": 0.5} for goal in goals
+                            {"description": goal, "priority": 0.5}
+                            for goal in goals
                         ]
                     else:
                         data[section] = value
@@ -285,7 +307,9 @@ class CharacterDataManager:
                 if "name" in data:
                     structured_data["basic_info"]["name"] = data["name"]
                 if "faction" in data:
-                    structured_data["faction_info"] = {"faction": data["faction"]}
+                    structured_data["faction_info"] = {
+                        "faction": data["faction"]
+                    }
                 if "personality" in data:
                     structured_data["personality"] = {
                         "description": data["personality"]

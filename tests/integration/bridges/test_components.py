@@ -9,6 +9,7 @@ import asyncio
 import logging
 import os
 import sys
+
 import pytest
 
 # Add src to path for package imports
@@ -31,7 +32,9 @@ try:
     print("✅ Successfully imported bridge components from enhanced system")
     BRIDGE_AVAILABLE = True
 except ImportError as e:
-    print(f"ℹ️ Bridge components not available (expected after refactoring): {e}")
+    print(
+        f"ℹ️ Bridge components not available (expected after refactoring): {e}"
+    )
     BRIDGE_AVAILABLE = False
 
 # Set up logging

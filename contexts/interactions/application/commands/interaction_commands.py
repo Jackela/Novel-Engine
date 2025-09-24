@@ -22,7 +22,10 @@ from ...domain.value_objects.negotiation_status import (
     NegotiationPhase,
     TerminationReason,
 )
-from ...domain.value_objects.proposal_response import ProposalResponse, TermResponse
+from ...domain.value_objects.proposal_response import (
+    ProposalResponse,
+    TermResponse,
+)
 from ...domain.value_objects.proposal_terms import ProposalTerms, TermCondition
 
 
@@ -134,7 +137,10 @@ class UpdateSessionConfigurationCommand(InteractionCommand):
         super().__post_init__()
         if self.max_parties is not None and self.max_parties < 2:
             raise ValueError("max_parties must be at least 2")
-        if self.session_timeout_hours is not None and self.session_timeout_hours <= 0:
+        if (
+            self.session_timeout_hours is not None
+            and self.session_timeout_hours <= 0
+        ):
             raise ValueError("session_timeout_hours must be positive")
         if self.priority_level is not None and self.priority_level not in [
             "low",
@@ -215,7 +221,9 @@ class UpdatePartyCapabilitiesCommand(InteractionCommand):
             raise ValueError("updated_capabilities cannot be empty")
 
         # Validate capability uniqueness
-        capability_names = [cap.capability_name for cap in self.updated_capabilities]
+        capability_names = [
+            cap.capability_name for cap in self.updated_capabilities
+        ]
         if len(capability_names) != len(set(capability_names)):
             raise ValueError("Capability names must be unique")
 
@@ -424,7 +432,12 @@ class DetectNegotiationConflictsCommand(InteractionCommand):
 
     def __post_init__(self):
         super().__post_init__()
-        if self.severity_threshold not in ["low", "medium", "high", "critical"]:
+        if self.severity_threshold not in [
+            "low",
+            "medium",
+            "high",
+            "critical",
+        ]:
             raise ValueError(
                 "severity_threshold must be one of: low, medium, high, critical"
             )
@@ -485,7 +498,9 @@ class BatchSubmitResponsesCommand(InteractionCommand):
         # Validate all responses
         for response in self.responses:
             if not isinstance(response, ProposalResponse):
-                raise ValueError("All responses must be ProposalResponse instances")
+                raise ValueError(
+                    "All responses must be ProposalResponse instances"
+                )
             if response.is_expired():
                 raise ValueError("Cannot submit expired responses")
 
@@ -510,7 +525,11 @@ class SynchronizeExternalDataCommand(InteractionCommand):
             raise ValueError(
                 "sync_type must be one of: full, incremental, differential"
             )
-        if self.conflict_resolution_strategy not in ["overwrite", "merge", "manual"]:
+        if self.conflict_resolution_strategy not in [
+            "overwrite",
+            "merge",
+            "manual",
+        ]:
             raise ValueError(
                 "conflict_resolution_strategy must be one of: overwrite, merge, manual"
             )
@@ -529,8 +548,15 @@ class ExportNegotiationDataCommand(InteractionCommand):
     def __post_init__(self):
         super().__post_init__()
         if self.export_format not in ["json", "xml", "csv", "pdf"]:
-            raise ValueError("export_format must be one of: json, xml, csv, pdf")
-        if self.export_scope not in ["session", "proposals", "responses", "summary"]:
+            raise ValueError(
+                "export_format must be one of: json, xml, csv, pdf"
+            )
+        if self.export_scope not in [
+            "session",
+            "proposals",
+            "responses",
+            "summary",
+        ]:
             raise ValueError(
                 "export_scope must be one of: session, proposals, responses, summary"
             )
@@ -577,7 +603,7 @@ class SchedulePeriodicAnalysisCommand(InteractionCommand):
 
     session_id: UUID
     analysis_frequency_hours: int = 6
-    analysis_types: List[str] = None
+    analysis_types: Optional[List[str]] = None
     alert_thresholds: Optional[Dict[str, Any]] = None
     auto_recommendations: bool = True
 
@@ -586,4 +612,6 @@ class SchedulePeriodicAnalysisCommand(InteractionCommand):
         if self.analysis_frequency_hours <= 0:
             raise ValueError("analysis_frequency_hours must be positive")
         if self.analysis_types is None:
-            self.analysis_types = ["momentum", "conflicts", "viability"]
+            object.__setattr__(
+                self, "analysis_types", ["momentum", "conflicts", "viability"]
+            )

@@ -133,7 +133,9 @@ class ITurnBriefRepository(ABC):
         pass
 
     @abstractmethod
-    def find_by_alertness_level(self, alertness: AlertnessLevel) -> List["TurnBrief"]:
+    def find_by_alertness_level(
+        self, alertness: AlertnessLevel
+    ) -> List["TurnBrief"]:
         """
         Find all TurnBriefs with entities at a specific alertness level.
 
@@ -149,7 +151,9 @@ class ITurnBriefRepository(ABC):
         pass
 
     @abstractmethod
-    def find_stale_turn_briefs(self, cutoff_time: datetime) -> List["TurnBrief"]:
+    def find_stale_turn_briefs(
+        self, cutoff_time: datetime
+    ) -> List["TurnBrief"]:
         """
         Find TurnBriefs that haven't been updated since the cutoff time.
 
@@ -166,7 +170,9 @@ class ITurnBriefRepository(ABC):
 
     @abstractmethod
     def find_entities_with_knowledge_about(
-        self, subject: str, min_certainty: CertaintyLevel = CertaintyLevel.MINIMAL
+        self,
+        subject: str,
+        min_certainty: CertaintyLevel = CertaintyLevel.MINIMAL,
     ) -> List[str]:
         """
         Find all entities that have knowledge about a specific subject.
@@ -185,7 +191,9 @@ class ITurnBriefRepository(ABC):
 
     @abstractmethod
     def find_entities_in_perception_range_of_location(
-        self, location_id: str, perception_type: Optional[PerceptionType] = None
+        self,
+        location_id: str,
+        perception_type: Optional[PerceptionType] = None,
     ) -> List[str]:
         """
         Find all entities that can perceive a specific location.
@@ -257,7 +265,9 @@ class ITurnBriefRepository(ABC):
         pass
 
     @abstractmethod
-    def count_active_turn_briefs(self, cutoff_time: Optional[datetime] = None) -> int:
+    def count_active_turn_briefs(
+        self, cutoff_time: Optional[datetime] = None
+    ) -> int:
         """
         Count TurnBriefs that have been updated recently (are considered active).
 
@@ -274,7 +284,9 @@ class ITurnBriefRepository(ABC):
         pass
 
     @abstractmethod
-    def get_entities_needing_updates(self, world_state_version: int) -> List[str]:
+    def get_entities_needing_updates(
+        self, world_state_version: int
+    ) -> List[str]:
         """
         Get entities whose TurnBriefs need updates for a new world state version.
 

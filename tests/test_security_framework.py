@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
 import pytest
+import pytest_asyncio
 
 # Import the security framework components
 from src.security.auth_system import (
@@ -64,7 +65,7 @@ from src.security.security_logging import (
 class TestSecurityService:
     """Security Service Tests"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_service(self):
         """Create a temporary security service for testing"""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
@@ -109,12 +110,22 @@ class TestSecurityService:
         )
 
         # First registration should succeed
-        await security_service.register_user(registration, "127.0.0.1", "test-agent")
+        await security_service.register_user(
+            registration, "127.0.0.1", "test-agent"
+        )
 
-        # Second registration with same username should fail
-        with pytest.raises(AuthenticationError, match="Username already exists"):
+        # Second registration with same username but different email should fail
+        duplicate_registration = UserRegistration(
+            username="testuser",  # Same username
+            email="different@example.com",  # Different email to test username constraint
+            password="securepassword123",
+            role=UserRole.READER,
+        )
+        with pytest.raises(
+            AuthenticationError, match="Username already exists"
+        ):
             await security_service.register_user(
-                registration, "127.0.0.1", "test-agent"
+                duplicate_registration, "127.0.0.1", "test-agent"
             )
 
     @pytest.mark.asyncio
@@ -127,7 +138,9 @@ class TestSecurityService:
             password="securepassword123",
             role=UserRole.READER,
         )
-        await security_service.register_user(registration, "127.0.0.1", "test-agent")
+        await security_service.register_user(
+            registration, "127.0.0.1", "test-agent"
+        )
 
         # Test successful login
         login = UserLogin(username="testuser", password="securepassword123")
@@ -156,7 +169,9 @@ class TestSecurityService:
             password="securepassword123",
             role=UserRole.READER,
         )
-        await security_service.register_user(registration, "127.0.0.1", "test-agent")
+        await security_service.register_user(
+            registration, "127.0.0.1", "test-agent"
+        )
 
         # Attempt multiple failed logins
         wrong_login = UserLogin(username="testuser", password="wrongpassword")
@@ -168,7 +183,9 @@ class TestSecurityService:
             assert user is None
 
         # Next attempt should raise account locked error
-        with pytest.raises(AuthenticationError, match="Account is temporarily locked"):
+        with pytest.raises(
+            AuthenticationError, match="Account is temporarily locked"
+        ):
             await security_service.authenticate_user(
                 wrong_login, "127.0.0.1", "test-agent"
             )
@@ -194,7 +211,8 @@ class TestSecurityService:
         assert token_pair.refresh_token is not None
         assert token_pair.token_type == "Bearer"
 
-        # Test token refresh
+        # Test token refresh (add small delay to ensure different timestamps)
+        await asyncio.sleep(1.1)  # Ensure timestamp difference
         new_token_pair = await security_service.refresh_access_token(
             token_pair.refresh_token
         )
@@ -390,7 +408,10 @@ class TestRateLimiter:
                 await asyncio.sleep(0.05)  # Very fast requests
             except RateLimitExceeded as e:
                 # Should detect as suspicious activity
-                assert e.threat_level in [ThreatLevel.HIGH, ThreatLevel.CRITICAL]
+                assert e.threat_level in [
+                    ThreatLevel.HIGH,
+                    ThreatLevel.CRITICAL,
+                ]
                 break
 
     @pytest.mark.asyncio
@@ -478,7 +499,9 @@ class TestSecurityHeaders:
 
     def test_permissions_policy_construction(self, security_headers):
         """Test Permissions Policy header construction"""
-        permissions_header = security_headers._build_permissions_policy_header()
+        permissions_header = (
+            security_headers._build_permissions_policy_header()
+        )
 
         assert "camera=()" in permissions_header
         assert "microphone=()" in permissions_header
@@ -488,7 +511,7 @@ class TestSecurityHeaders:
 class TestDataProtection:
     """Data Protection Tests"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def data_protection_service(self):
         """Create data protection service for testing"""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
@@ -525,7 +548,9 @@ class TestDataProtection:
         }
 
         fields_to_encrypt = ["email", "password"]
-        encrypted_data = encryption_service.encrypt_dict(data, fields_to_encrypt)
+        encrypted_data = encryption_service.encrypt_dict(
+            data, fields_to_encrypt
+        )
 
         # Should encrypt specified fields
         assert encrypted_data["email"] != data["email"]
@@ -559,15 +584,21 @@ class TestDataProtection:
         assert consent_record.status == ConsentStatus.GRANTED
 
         # Check consent
-        has_consent = await data_protection_service.check_consent(user_id, purpose)
+        has_consent = await data_protection_service.check_consent(
+            user_id, purpose
+        )
         assert has_consent is True
 
         # Withdraw consent
-        withdrawn = await data_protection_service.withdraw_consent(user_id, purpose)
+        withdrawn = await data_protection_service.withdraw_consent(
+            user_id, purpose
+        )
         assert withdrawn is True
 
         # Check consent after withdrawal
-        has_consent = await data_protection_service.check_consent(user_id, purpose)
+        has_consent = await data_protection_service.check_consent(
+            user_id, purpose
+        )
         assert has_consent is False
 
     @pytest.mark.asyncio
@@ -610,7 +641,7 @@ class TestDataProtection:
 class TestSecurityLogging:
     """Security Logging Tests"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_logger(self):
         """Create security logger for testing"""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
@@ -679,7 +710,9 @@ class TestSecurityLogging:
             await security_logger.log_security_event(event)
 
         # Get statistics
-        stats = await security_logger.get_security_statistics(time_range_hours=1)
+        stats = await security_logger.get_security_statistics(
+            time_range_hours=1
+        )
 
         assert stats["total_events"] == 10
         assert "login_success" in stats["event_counts"]
@@ -736,9 +769,13 @@ class TestIntegratedSecurity:
             password = "securepassword123"
 
             # Validate inputs
-            validated_username = validator.validate_input(username, InputType.USERNAME)
+            validated_username = validator.validate_input(
+                username, InputType.USERNAME
+            )
             validated_email = validator.validate_input(email, InputType.EMAIL)
-            validated_password = validator.validate_input(password, InputType.PASSWORD)
+            validated_password = validator.validate_input(
+                password, InputType.PASSWORD
+            )
 
             # Register user
             registration = UserRegistration(

@@ -16,9 +16,7 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 # Platform imports
-from ..config.settings import (
-    get_platform_config,
-)
+from ..config.settings import get_platform_config
 from ..messaging.event_bus import (
     DomainEvent,
     EventPriority,
@@ -27,7 +25,11 @@ from ..messaging.event_bus import (
 )
 from ..messaging.kafka_client import get_kafka_client
 from ..messaging.outbox import get_outbox_publisher
-from ..persistence.database import DatabaseManager, get_async_db_session, get_db_session
+from ..persistence.database import (
+    DatabaseManager,
+    get_async_db_session,
+    get_db_session,
+)
 from ..persistence.models import OutboxEvent
 from ..security.authentication import get_auth_service
 from ..security.authorization import get_authorization_service
@@ -36,7 +38,8 @@ logger = logging.getLogger(__name__)
 
 # Configure logging for validation
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 
@@ -116,7 +119,10 @@ class PlatformValidator:
         """Validate configuration loading and settings."""
         logger.info("\n🔧 VALIDATING CONFIGURATION FRAMEWORK...")
         component = ComponentStatus(
-            name="Configuration", status="healthy", tests_passed=0, tests_failed=0
+            name="Configuration",
+            status="healthy",
+            tests_passed=0,
+            tests_failed=0,
         )
 
         # Test 1: Configuration loading
@@ -151,7 +157,9 @@ class PlatformValidator:
 
         # Update component status
         if component.tests_failed > 0:
-            component.status = "degraded" if component.tests_passed > 0 else "unhealthy"
+            component.status = (
+                "degraded" if component.tests_passed > 0 else "unhealthy"
+            )
 
         self.component_status["configuration"] = component
         logger.info(
@@ -197,7 +205,9 @@ class PlatformValidator:
 
         # Update component status
         if component.tests_failed > 0:
-            component.status = "degraded" if component.tests_passed > 0 else "unhealthy"
+            component.status = (
+                "degraded" if component.tests_passed > 0 else "unhealthy"
+            )
 
         self.component_status["database"] = component
         logger.info(
@@ -241,7 +251,9 @@ class PlatformValidator:
 
         # Update component status
         if component.tests_failed > 0:
-            component.status = "degraded" if component.tests_passed > 0 else "unhealthy"
+            component.status = (
+                "degraded" if component.tests_passed > 0 else "unhealthy"
+            )
 
         self.component_status["messaging"] = component
         logger.info(
@@ -285,7 +297,9 @@ class PlatformValidator:
 
         # Update component status
         if component.tests_failed > 0:
-            component.status = "degraded" if component.tests_passed > 0 else "unhealthy"
+            component.status = (
+                "degraded" if component.tests_passed > 0 else "unhealthy"
+            )
 
         self.component_status["security"] = component
         logger.info(
@@ -296,11 +310,16 @@ class PlatformValidator:
         """Validate event sourcing functionality."""
         logger.info("\n📝 VALIDATING EVENT SOURCING...")
         component = ComponentStatus(
-            name="Event Sourcing", status="healthy", tests_passed=0, tests_failed=0
+            name="Event Sourcing",
+            status="healthy",
+            tests_passed=0,
+            tests_failed=0,
         )
 
         # Test 1: Domain events
-        result = await self._run_test("Domain Events", self._test_domain_events)
+        result = await self._run_test(
+            "Domain Events", self._test_domain_events
+        )
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -308,7 +327,9 @@ class PlatformValidator:
             component.tests_failed += 1
 
         # Test 2: Event storage
-        result = await self._run_test("Event Storage", self._test_event_storage)
+        result = await self._run_test(
+            "Event Storage", self._test_event_storage
+        )
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -317,7 +338,9 @@ class PlatformValidator:
 
         # Update component status
         if component.tests_failed > 0:
-            component.status = "degraded" if component.tests_passed > 0 else "unhealthy"
+            component.status = (
+                "degraded" if component.tests_passed > 0 else "unhealthy"
+            )
 
         self.component_status["event_sourcing"] = component
         logger.info(
@@ -328,11 +351,16 @@ class PlatformValidator:
         """Validate outbox pattern implementation."""
         logger.info("\n📤 VALIDATING OUTBOX PATTERN...")
         component = ComponentStatus(
-            name="Outbox Pattern", status="healthy", tests_passed=0, tests_failed=0
+            name="Outbox Pattern",
+            status="healthy",
+            tests_passed=0,
+            tests_failed=0,
         )
 
         # Test 1: Outbox publisher
-        result = await self._run_test("Outbox Publisher", self._test_outbox_publisher)
+        result = await self._run_test(
+            "Outbox Publisher", self._test_outbox_publisher
+        )
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -351,7 +379,9 @@ class PlatformValidator:
 
         # Update component status
         if component.tests_failed > 0:
-            component.status = "degraded" if component.tests_passed > 0 else "unhealthy"
+            component.status = (
+                "degraded" if component.tests_passed > 0 else "unhealthy"
+            )
 
         self.component_status["outbox"] = component
         logger.info(
@@ -362,11 +392,16 @@ class PlatformValidator:
         """Validate cross-service integration."""
         logger.info("\n🔄 VALIDATING CROSS-SERVICE INTEGRATION...")
         component = ComponentStatus(
-            name="Integration", status="healthy", tests_passed=0, tests_failed=0
+            name="Integration",
+            status="healthy",
+            tests_passed=0,
+            tests_failed=0,
         )
 
         # Test 1: End-to-end workflow
-        result = await self._run_test("End-to-End Workflow", self._test_e2e_workflow)
+        result = await self._run_test(
+            "End-to-End Workflow", self._test_e2e_workflow
+        )
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -385,7 +420,9 @@ class PlatformValidator:
 
         # Update component status
         if component.tests_failed > 0:
-            component.status = "degraded" if component.tests_passed > 0 else "unhealthy"
+            component.status = (
+                "degraded" if component.tests_passed > 0 else "unhealthy"
+            )
 
         self.component_status["integration"] = component
         logger.info(
@@ -439,7 +476,8 @@ class PlatformValidator:
         return {
             "environment": config.app.environment.value,
             "app_name": config.app.app_name,
-            "database_url": config.database.url[:50] + "...",  # Truncate for security
+            "database_url": config.database.url[:50]
+            + "...",  # Truncate for security
             "messaging_servers": config.messaging.bootstrap_servers,
         }
 
@@ -537,7 +575,9 @@ class PlatformValidator:
 
             # Query it back
             result = await session.execute(
-                text("SELECT COUNT(*) FROM outbox_events WHERE aggregate_id = :aid"),
+                text(
+                    "SELECT COUNT(*) FROM outbox_events WHERE aggregate_id = :aid"
+                ),
                 {"aid": "test-aggregate"},
             )
             count = result.scalar()
@@ -582,7 +622,9 @@ class PlatformValidator:
             "migration_directory": "exists",
             "alembic_ini": "exists" if alembic_ini_exists else "not_found",
             "migration_files_count": len(migration_files),
-            "migration_files": migration_files[:3],  # First 3 files for brevity
+            "migration_files": migration_files[
+                :3
+            ],  # First 3 files for brevity
         }
 
     # Messaging tests
@@ -595,7 +637,10 @@ class PlatformValidator:
 
         # Get health status
         health = await kafka_client.health_check()
-        assert health["status"] in ["healthy", "degraded"], f"Kafka unhealthy: {health}"
+        assert health["status"] in [
+            "healthy",
+            "degraded",
+        ], f"Kafka unhealthy: {health}"
 
         return {"connection": "established", "health": health}
 
@@ -616,7 +661,9 @@ class PlatformValidator:
         )
 
         # Test batch publishing
-        batch_messages = [{"batch_id": str(uuid4()), "index": i} for i in range(3)]
+        batch_messages = [
+            {"batch_id": str(uuid4()), "index": i} for i in range(3)
+        ]
 
         await kafka_client.publish_batch(
             topic=test_topic, messages=batch_messages, keys=["batch-test"] * 3
@@ -664,11 +711,17 @@ class PlatformValidator:
         auth_service = get_auth_service()
 
         # Test service initialization
-        assert auth_service is not None, "Authentication service not initialized"
+        assert (
+            auth_service is not None
+        ), "Authentication service not initialized"
 
         # Test configuration access
-        assert hasattr(auth_service, "config"), "Auth service config not loaded"
-        assert hasattr(auth_service, "_secret_key"), "JWT secret key not loaded"
+        assert hasattr(
+            auth_service, "config"
+        ), "Auth service config not loaded"
+        assert hasattr(
+            auth_service, "_secret_key"
+        ), "JWT secret key not loaded"
 
         return {
             "service": "initialized",
@@ -681,7 +734,9 @@ class PlatformValidator:
         auth_service = get_authorization_service()
 
         # Test service initialization
-        assert auth_service is not None, "Authorization service not initialized"
+        assert (
+            auth_service is not None
+        ), "Authorization service not initialized"
         assert (
             auth_service.permission_manager is not None
         ), "Permission manager not initialized"
@@ -700,7 +755,9 @@ class PlatformValidator:
         has_permission = auth_service.permission_manager.has_permission(
             fake_user_id, "story.read", use_cache=False
         )
-        assert not has_permission, "Non-existent user should not have permissions"
+        assert (
+            not has_permission
+        ), "Non-existent user should not have permissions"
 
         # Test role checking
         has_role = auth_service.permission_manager.has_role(
@@ -731,7 +788,9 @@ class PlatformValidator:
         # Test event serialization
         event_dict = event.to_dict()
         assert "event_id" in event_dict, "Event serialization missing event_id"
-        assert "event_type" in event_dict, "Event serialization missing event_type"
+        assert (
+            "event_type" in event_dict
+        ), "Event serialization missing event_type"
 
         # Test topic and partition key generation
         topic = event.get_topic_name()
@@ -838,7 +897,9 @@ class PlatformValidator:
             from sqlalchemy import text
 
             result = session.execute(
-                text("SELECT COUNT(*) FROM outbox_events WHERE aggregate_id = :aid"),
+                text(
+                    "SELECT COUNT(*) FROM outbox_events WHERE aggregate_id = :aid"
+                ),
                 {"aid": test_event.aggregate_id},
             )
             count = result.scalar()
@@ -890,7 +951,9 @@ class PlatformValidator:
 
             # Check outbox
             result = await session.execute(
-                text("SELECT COUNT(*) FROM outbox_events WHERE correlation_id = :cid"),
+                text(
+                    "SELECT COUNT(*) FROM outbox_events WHERE correlation_id = :cid"
+                ),
                 {"cid": workflow_id},
             )
             result.scalar()
@@ -956,8 +1019,12 @@ class PlatformValidator:
             comp.tests_passed + comp.tests_failed
             for comp in self.component_status.values()
         )
-        total_passed = sum(comp.tests_passed for comp in self.component_status.values())
-        total_failed = sum(comp.tests_failed for comp in self.component_status.values())
+        total_passed = sum(
+            comp.tests_passed for comp in self.component_status.values()
+        )
+        total_failed = sum(
+            comp.tests_failed for comp in self.component_status.values()
+        )
 
         # Determine overall status
         if total_failed == 0:
@@ -995,7 +1062,9 @@ class PlatformValidator:
                 "tests_passed": total_passed,
                 "tests_failed": total_failed,
                 "success_rate": (
-                    (total_passed / total_tests) * 100 if total_tests > 0 else 0
+                    (total_passed / total_tests) * 100
+                    if total_tests > 0
+                    else 0
                 ),
                 "duration_ms": total_duration,
             },
@@ -1013,7 +1082,9 @@ class PlatformValidator:
             f"Tests: {total_passed}/{total_tests} passed ({(total_passed/total_tests)*100:.1f}%)"
         )
         logger.info(f"Duration: {total_duration:.1f}ms")
-        logger.info(f"Platform Ready: {'YES' if report['platform_ready'] else 'NO'}")
+        logger.info(
+            f"Platform Ready: {'YES' if report['platform_ready'] else 'NO'}"
+        )
 
         if report["platform_ready"]:
             logger.info("\n🎉 NOVEL ENGINE PLATFORM FOUNDATION IS OPERATIONAL!")

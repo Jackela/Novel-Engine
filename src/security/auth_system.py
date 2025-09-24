@@ -358,9 +358,13 @@ class SecurityService:
 
     def _verify_password(self, password: str, password_hash: str) -> bool:
         """STANDARD PASSWORD VERIFICATION"""
-        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+        return bcrypt.checkpw(
+            password.encode("utf-8"), password_hash.encode("utf-8")
+        )
 
-    def _generate_token(self, payload: Dict[str, Any], expires_delta: timedelta) -> str:
+    def _generate_token(
+        self, payload: Dict[str, Any], expires_delta: timedelta
+    ) -> str:
         """STANDARD JWT TOKEN GENERATION"""
         expire = datetime.now(timezone.utc) + expires_delta
         payload.update({"exp": expire, "iat": datetime.now(timezone.utc)})
@@ -369,7 +373,9 @@ class SecurityService:
     def _decode_token(self, token: str) -> Dict[str, Any]:
         """STANDARD JWT TOKEN DECODING"""
         try:
-            payload = jwt.decode(token, self.secret_key, algorithms=[JWT_ALGORITHM])
+            payload = jwt.decode(
+                token, self.secret_key, algorithms=[JWT_ALGORITHM]
+            )
             return payload
         except jwt.ExpiredSignatureError:
             raise AuthenticationError("Token has expired")
@@ -392,7 +398,14 @@ class SecurityService:
                 INSERT INTO security_events (id, event_type, user_id, ip_address, user_agent, details)
                 VALUES (?, ?, ?, ?, ?, ?)
             """,
-                (event_id, event_type, user_id, ip_address, user_agent, str(details)),
+                (
+                    event_id,
+                    event_type,
+                    user_id,
+                    ip_address,
+                    user_agent,
+                    str(details),
+                ),
             )
             await conn.commit()
 
@@ -444,7 +457,9 @@ class SecurityService:
                     },
                 )
 
-                logger.info(f"USER REGISTERED: {user.username} ({user.role.value})")
+                logger.info(
+                    f"USER REGISTERED: {user.username} ({user.role.value})"
+                )
                 return user
 
         except aiosqlite.IntegrityError as e:
@@ -491,11 +506,15 @@ class SecurityService:
                 created_at=datetime.fromisoformat(row[7]) if row[7] else None,
                 last_login=datetime.fromisoformat(row[8]) if row[8] else None,
                 failed_login_attempts=row[9],
-                locked_until=datetime.fromisoformat(row[10]) if row[10] else None,
+                locked_until=datetime.fromisoformat(row[10])
+                if row[10]
+                else None,
             )
 
             # Check if account is locked
-            if user.locked_until and user.locked_until > datetime.now(timezone.utc):
+            if user.locked_until and user.locked_until > datetime.now(
+                timezone.utc
+            ):
                 await self._log_security_event(
                     "login_failed",
                     user.id,
@@ -629,7 +648,7 @@ class SecurityService:
             async with aiosqlite.connect(self.database_path) as conn:
                 cursor = await conn.execute(
                     """
-                    SELECT id, revoked, expires_at FROM refresh_tokens
+                    SELECT id, token_hash, revoked, expires_at FROM refresh_tokens
                     WHERE user_id = ? AND expires_at > ?
                 """,
                     (user_id, datetime.now(timezone.utc)),
@@ -641,12 +660,16 @@ class SecurityService:
                 for token_row in tokens:
                     if self._verify_password(
                         refresh_token, token_row[1]
-                    ):  # Assuming token_hash is at index 1
+                    ):  # token_hash is at index 1
                         valid_token = token_row
                         break
 
-                if not valid_token or valid_token[1]:  # revoked
-                    raise AuthenticationError("Invalid or revoked refresh token")
+                if (
+                    not valid_token or valid_token[2]
+                ):  # revoked is now at index 2
+                    raise AuthenticationError(
+                        "Invalid or revoked refresh token"
+                    )
 
                 # Get user details
                 cursor = await conn.execute(
@@ -745,7 +768,9 @@ class SecurityService:
             Raises:
                 HTTPException: If user lacks required permission
             """
-            if permission not in ROLE_PERMISSIONS.get(current_user.role, set()):
+            if permission not in ROLE_PERMISSIONS.get(
+                current_user.role, set()
+            ):
                 raise HTTPException(
                     status_code=403,
                     detail=f"Insufficient permissions. Required: {permission.value}",
@@ -757,7 +782,9 @@ class SecurityService:
     def require_role(self, required_role: UserRole):
         """STANDARD ROLE REQUIREMENT DECORATOR"""
 
-        def role_checker(current_user: User = Depends(self.get_current_user)) -> User:
+        def role_checker(
+            current_user: User = Depends(self.get_current_user),
+        ) -> User:
             """
             Check if current user has required role level.
 
@@ -810,7 +837,7 @@ class SecurityService:
         async with aiosqlite.connect(self.database_path) as conn:
             cursor = await conn.execute(
                 """
-                SELECT id, username, email, role, is_active 
+                SELECT id, username, email, role, is_active
                 FROM users WHERE api_key = ?
             """,
                 (api_key,),

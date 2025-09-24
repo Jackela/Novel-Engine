@@ -107,7 +107,9 @@ class IntelligentCachingTest:
 
         # Compile results
         test_results["total_tests"] = len(self.test_results)
-        test_results["passed_tests"] = sum(1 for r in self.test_results if r["success"])
+        test_results["passed_tests"] = sum(
+            1 for r in self.test_results if r["success"]
+        )
         test_results["failed_tests"] = sum(
             1 for r in self.test_results if not r["success"]
         )
@@ -193,7 +195,8 @@ class IntelligentCachingTest:
 
             # Verify multi-level operation
             multi_level_active = stats["l1_stats"]["entries"] > 0 and (
-                stats["l2_stats"]["entries"] > 0 or stats["l3_stats"]["entries"] > 0
+                stats["l2_stats"]["entries"] > 0
+                or stats["l3_stats"]["entries"] > 0
             )
 
             logger.info(
@@ -206,7 +209,9 @@ class IntelligentCachingTest:
 
             # Calculate performance improvement over no cache
             no_cache_time = store_time + retrieve_time  # Simulate no cache
-            cached_time = retrieve_time  # Only retrieve time since store is one-time
+            cached_time = (
+                retrieve_time  # Only retrieve time since store is one-time
+            )
             improvement = (
                 ((no_cache_time - cached_time) / no_cache_time) * 100
                 if no_cache_time > 0
@@ -255,7 +260,9 @@ class IntelligentCachingTest:
                 prompt = random.choice(prompts)
 
                 context = {
-                    "mood": random.choice(["curious", "cautious", "confident"]),
+                    "mood": random.choice(
+                        ["curious", "cautious", "confident"]
+                    ),
                     "energy": random.randint(50, 100),
                     "location": f"location_{random.randint(1, 5)}",
                 }
@@ -311,7 +318,9 @@ class IntelligentCachingTest:
                 similar_request.prompt,
                 similar_request.context,
             )
-            similar_response = await llm_cache.get_similar_response(similar_key, 0.7)
+            similar_response = await llm_cache.get_similar_response(
+                similar_key, 0.7
+            )
             fuzzy_matching_works = similar_response is not None
 
             # Calculate cache effectiveness
@@ -414,7 +423,9 @@ class IntelligentCachingTest:
 
             # Calculate performance metrics
             throughput_store = len(load_data) / store_time  # items per second
-            throughput_retrieve = len(access_keys) / retrieve_time  # items per second
+            throughput_retrieve = (
+                len(access_keys) / retrieve_time
+            )  # items per second
             success_rate = (retrieved_count / len(access_keys)) * 100
 
             logger.info("Load Test Results:")
@@ -501,7 +512,9 @@ class IntelligentCachingTest:
                     await cache.put(key, value)
 
                 # Create biased access pattern (some keys accessed much more)
-                hot_keys = list(test_data.keys())[:20]  # First 20 keys are "hot"
+                hot_keys = list(test_data.keys())[
+                    :20
+                ]  # First 20 keys are "hot"
                 cold_keys = list(test_data.keys())[20:]  # Rest are "cold"
 
                 # Access hot keys multiple times, cold keys once
@@ -545,10 +558,15 @@ class IntelligentCachingTest:
                 cache.stop()
 
             # Compare adaptive strategy performance
-            adaptive_hit_rate = strategy_results["adaptive"]["hit_rate_percent"]
-            other_strategies = [s for s in strategy_results.keys() if s != "adaptive"]
+            adaptive_hit_rate = strategy_results["adaptive"][
+                "hit_rate_percent"
+            ]
+            other_strategies = [
+                s for s in strategy_results.keys() if s != "adaptive"
+            ]
             avg_other_hit_rate = sum(
-                strategy_results[s]["hit_rate_percent"] for s in other_strategies
+                strategy_results[s]["hit_rate_percent"]
+                for s in other_strategies
             ) / len(other_strategies)
 
             adaptive_improvement = adaptive_hit_rate - avg_other_hit_rate
@@ -560,7 +578,9 @@ class IntelligentCachingTest:
                 "adaptive_hit_rate_percent": adaptive_hit_rate,
                 "average_other_hit_rate_percent": avg_other_hit_rate,
                 "adaptive_improvement_percent": adaptive_improvement,
-                "performance_improvement_percent": max(0, adaptive_improvement),
+                "performance_improvement_percent": max(
+                    0, adaptive_improvement
+                ),
             }
 
         except Exception as e:
@@ -603,10 +623,13 @@ class IntelligentCachingTest:
                 response_data = {
                     "turn": request["current_turn"],
                     "discoveries": [
-                        f"discovery_{request['current_turn']}_{i}" for i in range(3)
+                        f"discovery_{request['current_turn']}_{i}"
+                        for i in range(3)
                     ],
                     "agent_states": {
-                        agent_id: {"location": f'loc_{request["current_turn"]}'}
+                        agent_id: {
+                            "location": f'loc_{request["current_turn"]}'
+                        }
                     },
                 }
                 await cache.put(cache_key, response_data)
@@ -644,7 +667,8 @@ class IntelligentCachingTest:
                 # If not cached, simulate storing it
                 if cached_value is None:
                     await cache.put(
-                        future_key, {"turn": future_turn, "prefetch_test": True}
+                        future_key,
+                        {"turn": future_turn, "prefetch_test": True},
                     )
 
             cache_stats_after = cache.get_comprehensive_stats()
@@ -702,7 +726,8 @@ class IntelligentCachingTest:
                     "large_text": "This is a long text string that repeats. "
                     * 20,  # Reduced repetition
                     "numbers": list(range(50)),  # Smaller list
-                    "repeated_data": ["same_value"] * 25,  # Smaller repeated data
+                    "repeated_data": ["same_value"]
+                    * 25,  # Smaller repeated data
                 }
                 large_data.append((f"memory_test_key_{i}", data))
 
@@ -740,7 +765,9 @@ class IntelligentCachingTest:
             stats = cache.get_comprehensive_stats()
 
             # Test data retrieval performance with compression
-            retrieval_keys = [key for key, _ in large_data[:50]]  # Test first 50 items
+            retrieval_keys = [
+                key for key, _ in large_data[:50]
+            ]  # Test first 50 items
 
             retrieve_start = time.time()
             retrieved_count = 0
@@ -817,7 +844,9 @@ EXECUTIVE SUMMARY:
                 else 0
             )
             max_improvement = (
-                max(performance_improvements) if performance_improvements else 0
+                max(performance_improvements)
+                if performance_improvements
+                else 0
             )
 
             report += f"""
@@ -836,7 +865,8 @@ CACHING SYSTEM VALIDATION:
                     if result.get("performance_improvement_percent", 0) > 50
                     else (
                         "⚡"
-                        if result.get("performance_improvement_percent", 0) > 25
+                        if result.get("performance_improvement_percent", 0)
+                        > 25
                         else "✅"
                     )
                 )
@@ -933,7 +963,7 @@ RECOMMENDATION:
 🧠 CACHING SYSTEM: PRODUCTION READY
    Expected response time improvement: 50%+
    Memory efficiency improvement: 40%+
-   
+
 ═══════════════════════════════════════════════════════════════
 """
 

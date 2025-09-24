@@ -11,7 +11,11 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ..value_objects.causal_node import CausalNode, CausalRelationType, CausalStrength
+from ..value_objects.causal_node import (
+    CausalNode,
+    CausalRelationType,
+    CausalStrength,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -131,12 +135,16 @@ class CausalGraphService:
             return False
 
         if cause_id == effect_id:
-            logger.warning(f"Cannot establish self-referential causal link: {cause_id}")
+            logger.warning(
+                f"Cannot establish self-referential causal link: {cause_id}"
+            )
             return False
 
         # Check for circular dependencies
         if self._would_create_cycle(cause_id, effect_id):
-            logger.warning(f"Causal link {cause_id} -> {effect_id} would create cycle")
+            logger.warning(
+                f"Causal link {cause_id} -> {effect_id} would create cycle"
+            )
             return False
 
         cause_node = self.nodes[cause_id]
@@ -249,7 +257,13 @@ class CausalGraphService:
 
         paths = []
         self._find_paths_recursive(
-            start_node, end_node, [start_node], [], Decimal("1.0"), max_depth, paths
+            start_node,
+            end_node,
+            [start_node],
+            [],
+            Decimal("1.0"),
+            max_depth,
+            paths,
         )
 
         # Sort by strength and path length
@@ -391,9 +405,13 @@ class CausalGraphService:
             # 2. High connectivity (many causes/effects)
             # 3. Branch point or convergence point
             importance_score = node.overall_impact_score
-            connectivity_score = Decimal(str(node.total_causes + node.total_effects))
+            connectivity_score = Decimal(
+                str(node.total_causes + node.total_effects)
+            )
 
-            criticality_score = importance_score + (connectivity_score * Decimal("0.5"))
+            criticality_score = importance_score + (
+                connectivity_score * Decimal("0.5")
+            )
 
             if node.is_branch_point:
                 criticality_score += Decimal("2.0")
@@ -418,7 +436,9 @@ class CausalGraphService:
 
             if node_id in self.nodes:
                 node = self.nodes[node_id]
-                for neighbor in node.direct_effects.union(node.indirect_effects):
+                for neighbor in node.direct_effects.union(
+                    node.indirect_effects
+                ):
                     if neighbor in rec_stack:
                         # Found a cycle
                         cycle_start = current_path.index(neighbor)
@@ -442,7 +462,9 @@ class CausalGraphService:
 
         # Start from root causes
         root_causes = [
-            node_id for node_id, node in self.nodes.items() if not node.has_causes
+            node_id
+            for node_id, node in self.nodes.items()
+            if not node.has_causes
         ]
 
         for root in root_causes:
@@ -450,7 +472,9 @@ class CausalGraphService:
             all_chains.extend(chains)
 
         # Sort by path length and strength
-        all_chains.sort(key=lambda c: (-c.path_length, -float(c.average_strength)))
+        all_chains.sort(
+            key=lambda c: (-c.path_length, -float(c.average_strength))
+        )
 
         return all_chains[:max_chains]
 
@@ -487,7 +511,9 @@ class CausalGraphService:
                     sub_chains = self._get_chains_from_node(effect_id, visited)
 
                     rel_info = node.causal_relationships.get(effect_id, {})
-                    rel_type_str = rel_info.get("relationship_type", "direct_cause")
+                    rel_type_str = rel_info.get(
+                        "relationship_type", "direct_cause"
+                    )
                     rel_type = CausalRelationType(rel_type_str)
                     strength_str = rel_info.get("strength", "moderate")
                     strength_modifier = self._get_strength_modifier(
@@ -497,7 +523,8 @@ class CausalGraphService:
                     for sub_chain in sub_chains:
                         extended_chain = CausalPath(
                             nodes=[start_node] + sub_chain.nodes,
-                            total_strength=strength_modifier * sub_chain.total_strength,
+                            total_strength=strength_modifier
+                            * sub_chain.total_strength,
                             path_length=sub_chain.path_length + 1,
                             relationship_types=[rel_type]
                             + sub_chain.relationship_types,
@@ -550,7 +577,9 @@ class CausalGraphService:
         consistency_score = Decimal("10.0")
 
         # Check for orphaned nodes (no relationships)
-        orphaned_count = sum(1 for node in self.nodes.values() if node.is_isolated)
+        orphaned_count = sum(
+            1 for node in self.nodes.values() if node.is_isolated
+        )
         consistency_score -= Decimal(str(orphaned_count * 0.5))
 
         # Check for extremely weak causal chains
@@ -598,10 +627,14 @@ class CausalGraphService:
 
         # Reward clear progression from root causes to terminal effects
         root_causes = [
-            n for n in self.nodes.values() if not n.has_causes and n.has_effects
+            n
+            for n in self.nodes.values()
+            if not n.has_causes and n.has_effects
         ]
         terminal_effects = [
-            n for n in self.nodes.values() if n.has_causes and not n.has_effects
+            n
+            for n in self.nodes.values()
+            if n.has_causes and not n.has_effects
         ]
 
         if root_causes and terminal_effects:
@@ -619,7 +652,9 @@ class CausalGraphService:
             flow_score -= Decimal("1.0")
 
         # Reward balanced branching and convergence
-        branch_points = sum(1 for n in self.nodes.values() if n.is_branch_point)
+        branch_points = sum(
+            1 for n in self.nodes.values() if n.is_branch_point
+        )
         convergence_points = sum(
             1 for n in self.nodes.values() if n.is_convergence_point
         )
@@ -661,7 +696,10 @@ class CausalGraphService:
         )
 
         total_influence = (
-            base_influence + connectivity_bonus + junction_bonus + downstream_influence
+            base_influence
+            + connectivity_bonus
+            + junction_bonus
+            + downstream_influence
         )
         return min(Decimal("10.0"), total_influence)
 
@@ -690,7 +728,9 @@ class CausalGraphService:
                 )
 
                 # Add weighted influence from this effect
-                effect_influence = effect_node.overall_impact_score * strength_modifier
+                effect_influence = (
+                    effect_node.overall_impact_score * strength_modifier
+                )
                 downstream_influence += effect_influence * Decimal(
                     "0.5"
                 )  # Decay factor

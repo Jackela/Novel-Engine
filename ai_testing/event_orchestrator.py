@@ -44,7 +44,9 @@ class EventCandidate:
         priority_score = self.priority.value * 2.0
 
         # Tension alignment score
-        tension_diff = abs(target_tension - (current_tension + self.tension_impact))
+        tension_diff = abs(
+            target_tension - (current_tension + self.tension_impact)
+        )
         tension_score = max(0, 5.0 - tension_diff * 10)
 
         # Character balance score (new!)
@@ -69,7 +71,9 @@ class DynamicEventOrchestrator:
     """Orchestrates events based on story structure and context"""
 
     def __init__(
-        self, blueprint: StoryBlueprint, dialogue_engine: ContextAwareDialogueEngine
+        self,
+        blueprint: StoryBlueprint,
+        dialogue_engine: ContextAwareDialogueEngine,
     ):
         self.blueprint = blueprint
         self.dialogue_engine = dialogue_engine
@@ -81,9 +85,13 @@ class DynamicEventOrchestrator:
         self.character_usage = {}
         self.last_speaker = None
         self.character_turn_queue = []
-        self.min_character_turns = 3  # Minimum turns before character can repeat
+        self.min_character_turns = (
+            3  # Minimum turns before character can repeat
+        )
 
-    def generate_next_event(self, characters: List, current_location: str) -> Dict:
+    def generate_next_event(
+        self, characters: List, current_location: str
+    ) -> Dict:
         """Generate the next event based on story context"""
 
         # Get current story context
@@ -100,7 +108,8 @@ class DynamicEventOrchestrator:
         target_tension = plot_guidance["tension_level"]
 
         best_candidate = max(
-            candidates, key=lambda c: c.score(current_tension, target_tension, self)
+            candidates,
+            key=lambda c: c.score(current_tension, target_tension, self),
         )
 
         # Generate actual event content
@@ -131,7 +140,9 @@ class DynamicEventOrchestrator:
         tension = self.blueprint.get_current_tension(progress)
 
         # Determine event suggestions based on plot stage
-        event_suggestions = self._get_stage_appropriate_events(plot_point.stage)
+        event_suggestions = self._get_stage_appropriate_events(
+            plot_point.stage
+        )
 
         return {
             "current_stage": plot_point.stage,
@@ -146,13 +157,29 @@ class DynamicEventOrchestrator:
     def _get_stage_appropriate_events(self, stage: PlotStage) -> List[str]:
         """Get appropriate event types for current stage"""
         stage_events = {
-            PlotStage.SETUP: ["introduction", "worldbuilding", "foreshadowing"],
-            PlotStage.INCITING_INCIDENT: ["discovery", "revelation", "disruption"],
-            PlotStage.RISING_ACTION: ["challenge", "conflict", "investigation"],
+            PlotStage.SETUP: [
+                "introduction",
+                "worldbuilding",
+                "foreshadowing",
+            ],
+            PlotStage.INCITING_INCIDENT: [
+                "discovery",
+                "revelation",
+                "disruption",
+            ],
+            PlotStage.RISING_ACTION: [
+                "challenge",
+                "conflict",
+                "investigation",
+            ],
             PlotStage.MIDPOINT: ["reversal", "revelation", "betrayal"],
             PlotStage.CRISIS: ["dilemma", "sacrifice", "confrontation"],
             PlotStage.CLIMAX: ["battle", "resolution", "transformation"],
-            PlotStage.RESOLUTION: ["consequence", "new_equilibrium", "reflection"],
+            PlotStage.RESOLUTION: [
+                "consequence",
+                "new_equilibrium",
+                "reflection",
+            ],
             PlotStage.DENOUEMENT: ["farewell", "epilogue", "hint_of_future"],
         }
 
@@ -172,7 +199,8 @@ class DynamicEventOrchestrator:
             if not self.character_turn_queue:
                 # Sort by usage and create balanced queue
                 sorted_chars = sorted(
-                    characters, key=lambda c: self.character_usage.get(c.name, 0)
+                    characters,
+                    key=lambda c: self.character_usage.get(c.name, 0),
                 )
                 # Add least used character multiple times to balance
                 for char in sorted_chars:
@@ -243,7 +271,9 @@ class DynamicEventOrchestrator:
             sorted_chars = sorted(
                 characters, key=lambda c: self.character_usage.get(c.name, 0)
             )
-            discoverer = sorted_chars[0].name if sorted_chars else characters[0].name
+            discoverer = (
+                sorted_chars[0].name if sorted_chars else characters[0].name
+            )
 
             candidates.append(
                 EventCandidate(
@@ -297,7 +327,9 @@ class DynamicEventOrchestrator:
 
         return candidates
 
-    def _realize_event(self, candidate: EventCandidate, guidance: Dict) -> Dict:
+    def _realize_event(
+        self, candidate: EventCandidate, guidance: Dict
+    ) -> Dict:
         """Convert event candidate into actual event content"""
         event = {
             "type": candidate.event_type,
@@ -309,7 +341,10 @@ class DynamicEventOrchestrator:
         if candidate.event_type == "dialogue":
             # Generate contextual dialogue
             character = candidate.characters_involved[0]
-            dialogue, emotion = self.dialogue_engine.generate_contextual_dialogue(
+            (
+                dialogue,
+                emotion,
+            ) = self.dialogue_engine.generate_contextual_dialogue(
                 character, guidance
             )
             event["content"] = {
@@ -378,7 +413,9 @@ class DynamicEventOrchestrator:
 
         return tension_map.get(event.get("type", "dialogue"), 0.4)
 
-    def _generate_conflict_content(self, characters: List[str], guidance: Dict) -> Dict:
+    def _generate_conflict_content(
+        self, characters: List[str], guidance: Dict
+    ) -> Dict:
         """Generate diverse conflict scene content"""
 
         # Initialize conflict history
@@ -461,7 +498,9 @@ class DynamicEventOrchestrator:
 
         # Filter unused conflicts
         available = [
-            c for c in conflicts if c.get("description", "") not in self.used_conflicts
+            c
+            for c in conflicts
+            if c.get("description", "") not in self.used_conflicts
         ]
 
         if not available:
@@ -473,7 +512,9 @@ class DynamicEventOrchestrator:
 
         return selected
 
-    def _generate_discovery_content(self, character: str, guidance: Dict) -> Dict:
+    def _generate_discovery_content(
+        self, character: str, guidance: Dict
+    ) -> Dict:
         """Generate diverse discovery content"""
 
         # Initialize discovery history
@@ -574,7 +615,9 @@ class DynamicEventOrchestrator:
 
         # Filter unused discoveries
         available = [
-            d for d in discoveries if d["description"] not in self.used_discoveries
+            d
+            for d in discoveries
+            if d["description"] not in self.used_discoveries
         ]
 
         if not available:
@@ -586,7 +629,9 @@ class DynamicEventOrchestrator:
 
         return selected
 
-    def _generate_action_content(self, characters: List[str], guidance: Dict) -> Dict:
+    def _generate_action_content(
+        self, characters: List[str], guidance: Dict
+    ) -> Dict:
         """Generate diverse action sequence content"""
 
         # Initialize action history if not exists
@@ -808,7 +853,9 @@ class DynamicEventOrchestrator:
 
         # Filter unused environments
         available = [
-            e for e in candidates if e["description"] not in self.used_environments
+            e
+            for e in candidates
+            if e["description"] not in self.used_environments
         ]
 
         if not available:
@@ -820,7 +867,9 @@ class DynamicEventOrchestrator:
 
         return selected
 
-    def _generate_crisis_content(self, characters: List[str], guidance: Dict) -> Dict:
+    def _generate_crisis_content(
+        self, characters: List[str], guidance: Dict
+    ) -> Dict:
         """Generate diverse crisis moment content"""
 
         # Initialize crisis history
@@ -917,7 +966,9 @@ class DynamicEventOrchestrator:
             ]
 
         # Filter unused crises
-        available = [c for c in crises if c["description"] not in self.used_crises]
+        available = [
+            c for c in crises if c["description"] not in self.used_crises
+        ]
 
         if not available:
             self.used_crises.clear()

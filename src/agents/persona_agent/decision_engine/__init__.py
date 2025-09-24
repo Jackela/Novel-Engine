@@ -6,7 +6,11 @@ Core decision-making components for PersonaAgent character behavior.
 Provides sophisticated decision processing, threat assessment, and goal management.
 """
 
-from .decision_processor import ActionCategory, DecisionContext, DecisionProcessor
+from .decision_processor import (
+    ActionCategory,
+    DecisionContext,
+    DecisionProcessor,
+)
 from .goal_manager import (
     Goal,
     GoalContext,

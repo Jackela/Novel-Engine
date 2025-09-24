@@ -16,13 +16,15 @@ providing concrete persistence capabilities for domain aggregates.
 """
 
 # Conditional import to handle platform naming conflict
+from typing import Any, Optional, Type
+
 try:
     from .character_repository import SQLAlchemyCharacterRepository
 
     _REPOSITORY_AVAILABLE = True
 except ImportError:
     # Handle platform naming conflict gracefully
-    SQLAlchemyCharacterRepository = None
+    SQLAlchemyCharacterRepository: Optional[Type[Any]] = None  # type: ignore
     _REPOSITORY_AVAILABLE = False
 
 __all__ = ["SQLAlchemyCharacterRepository"]

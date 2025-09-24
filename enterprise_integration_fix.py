@@ -21,14 +21,18 @@ def create_compatible_character_factory():
     class EnterpriseCharacterFactory:
         """Enhanced CharacterFactory with full enterprise integration support."""
 
-        def __init__(self, event_bus=None, base_character_path: str = "characters"):
+        def __init__(
+            self, event_bus=None, base_character_path: str = "characters"
+        ):
             self.event_bus = event_bus
             self.base_character_path = Path(base_character_path).resolve()
             logger.info(
                 f"Enterprise CharacterFactory initialized with path: {self.base_character_path}"
             )
 
-        def create_character(self, character_name: str, agent_id: Optional[str] = None):
+        def create_character(
+            self, character_name: str, agent_id: Optional[str] = None
+        ):
             """Create a real PersonaAgent instance for enterprise integration."""
             try:
                 from src.persona_agent import PersonaAgent
@@ -48,12 +52,18 @@ def create_compatible_character_factory():
                     )
                 else:
                     # Create demo PersonaAgent with mock data
-                    logger.info(f"Creating demo PersonaAgent for: {character_name}")
-                    return self._create_demo_persona_agent(character_name, agent_id)
+                    logger.info(
+                        f"Creating demo PersonaAgent for: {character_name}"
+                    )
+                    return self._create_demo_persona_agent(
+                        character_name, agent_id
+                    )
 
             except Exception as e:
                 logger.error(f"Error creating character {character_name}: {e}")
-                return self._create_demo_persona_agent(character_name, agent_id)
+                return self._create_demo_persona_agent(
+                    character_name, agent_id
+                )
 
         def _create_demo_persona_agent(
             self, character_name: str, agent_id: Optional[str] = None
@@ -100,7 +110,9 @@ def create_compatible_character_factory():
                     """Return demo character data."""
                     return self.character_data
 
-                def process_turn(self, turn_data: Dict[str, Any]) -> Dict[str, Any]:
+                def process_turn(
+                    self, turn_data: Dict[str, Any]
+                ) -> Dict[str, Any]:
                     """Process a turn with demo behavior."""
                     return {
                         "agent_id": self.agent_id,
@@ -116,7 +128,9 @@ def create_compatible_character_factory():
             """List available character directories."""
             if self.base_character_path.exists():
                 return [
-                    d.name for d in self.base_character_path.iterdir() if d.is_dir()
+                    d.name
+                    for d in self.base_character_path.iterdir()
+                    if d.is_dir()
                 ]
             return ["demo_character_1", "demo_character_2"]
 
@@ -166,7 +180,9 @@ def fix_enterprise_orchestrator_enums():
                 self.event_bus = event_bus
                 self.system_health = SystemHealth.HEALTHY
                 self.current_metrics = (
-                    emo.SystemMetrics() if hasattr(emo, "SystemMetrics") else None
+                    emo.SystemMetrics()
+                    if hasattr(emo, "SystemMetrics")
+                    else None
                 )
                 return None
 
@@ -186,25 +202,35 @@ def apply_enhanced_simulation_fixes():
         import enhanced_simulation_orchestrator as eso
 
         # Patch character factory creation
-        getattr(eso.EnhancedSimulationOrchestrator, "_create_character_factory", None)
+        getattr(
+            eso.EnhancedSimulationOrchestrator,
+            "_create_character_factory",
+            None,
+        )
 
         def patched_create_character_factory(self):
             """Create character factory with proper event bus integration."""
             try:
                 # Use enterprise character factory
-                EnterpriseCharacterFactory = create_compatible_character_factory()
+                EnterpriseCharacterFactory = (
+                    create_compatible_character_factory()
+                )
                 factory = EnterpriseCharacterFactory(
                     event_bus=self.event_bus, base_character_path="characters"
                 )
                 logger.info("✅ Enterprise character factory created")
                 return factory
             except Exception as e:
-                logger.error(f"Error creating enterprise character factory: {e}")
+                logger.error(
+                    f"Error creating enterprise character factory: {e}"
+                )
                 # Fallback to basic factory
                 return None
 
         # Apply character factory patch
-        if hasattr(eso.EnhancedSimulationOrchestrator, "_create_character_factory"):
+        if hasattr(
+            eso.EnhancedSimulationOrchestrator, "_create_character_factory"
+        ):
             eso.EnhancedSimulationOrchestrator._create_character_factory = (
                 patched_create_character_factory
             )

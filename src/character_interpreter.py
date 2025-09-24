@@ -50,7 +50,9 @@ class CharacterInterpreter:
         self.file_cache: Dict[str, str] = {}
         self.yaml_cache: Dict[str, Dict[str, Any]] = {}
 
-        logger.info(f"CharacterInterpreter initialized for: {character_directory_path}")
+        logger.info(
+            f"CharacterInterpreter initialized for: {character_directory_path}"
+        )
 
     def load_character_context(self) -> Dict[str, Any]:
         """
@@ -102,15 +104,18 @@ class CharacterInterpreter:
 
             # Process Markdown files
             if md_files:
-                hybrid_context["markdown_content"] = self._process_markdown_files(
-                    md_files
-                )
+                hybrid_context[
+                    "markdown_content"
+                ] = self._process_markdown_files(md_files)
 
             # Process YAML files
             if yaml_files:
-                hybrid_context["yaml_data"] = self._process_yaml_files(yaml_files)
+                hybrid_context["yaml_data"] = self._process_yaml_files(
+                    yaml_files
+                )
 
-            # Parse character data from markdown content for backward compatibility
+            # Parse character data from markdown content for backward
+            # compatibility
             if hybrid_context["markdown_content"]:
                 self.character_data = self._parse_character_sheet_content(
                     hybrid_context["markdown_content"]
@@ -122,7 +127,9 @@ class CharacterInterpreter:
             self.character_data["hybrid_context"] = hybrid_context
 
             # Merge YAML data into character_data for easier access
-            self._merge_yaml_data_into_character_data(hybrid_context["yaml_data"])
+            self._merge_yaml_data_into_character_data(
+                hybrid_context["yaml_data"]
+            )
 
             # Extract and interpret character characteristics
             self._extract_character_characteristics()
@@ -152,7 +159,9 @@ class CharacterInterpreter:
         try:
             for filename in os.listdir(self.character_directory_path):
                 file_lower = filename.lower()
-                full_path = os.path.join(self.character_directory_path, filename)
+                full_path = os.path.join(
+                    self.character_directory_path, filename
+                )
 
                 if file_lower.endswith(".md"):
                     md_files.append(full_path)
@@ -160,7 +169,7 @@ class CharacterInterpreter:
                     yaml_files.append(full_path)
 
             logger.debug(
-                f"Discovered {len(md_files)} MD files and {len(yaml_files)} YAML files"
+                f"Discovered {len(md_files)}MD files and {len(yaml_files)} YAML files"
             )
 
         except Exception as e:
@@ -189,7 +198,9 @@ class CharacterInterpreter:
 
                 # Add file separator and filename for context
                 filename = os.path.basename(file_path)
-                markdown_parts.append(f"# === {filename} ===\n\n{file_content}")
+                markdown_parts.append(
+                    f"# === {filename} ===\n\n{file_content}"
+                )
 
             combined_content = "\n\n".join(markdown_parts)
             logger.debug(
@@ -216,18 +227,26 @@ class CharacterInterpreter:
             logger.info(f"Processing {len(yaml_files)} YAML files")
             yaml_data = {}
 
-            for file_path in sorted(yaml_files):  # Sort for consistent ordering
+            for file_path in sorted(
+                yaml_files
+            ):  # Sort for consistent ordering
                 logger.debug(f"Reading YAML file: {file_path}")
 
                 try:
                     parsed_yaml = self._parse_cached_yaml(file_path)
-                    filename_key = os.path.splitext(os.path.basename(file_path))[0]
+                    filename_key = os.path.splitext(
+                        os.path.basename(file_path)
+                    )[0]
                     yaml_data[filename_key] = parsed_yaml
 
                 except yaml.YAMLError as e:
-                    logger.warning(f"Failed to parse YAML file {file_path}: {e}")
+                    logger.warning(
+                        f"Failed to parse YAML file {file_path}: {e}"
+                    )
                     # Store as raw text if YAML parsing fails
-                    filename_key = os.path.splitext(os.path.basename(file_path))[0]
+                    filename_key = os.path.splitext(
+                        os.path.basename(file_path)
+                    )[0]
                     raw_content = self._read_cached_file(file_path)
                     yaml_data[filename_key] = {
                         "_raw": raw_content,
@@ -282,14 +301,18 @@ class CharacterInterpreter:
                 )
                 yaml_content = {"content": yaml_content}
 
-            logger.debug(f"Parsed YAML from {file_path}: {len(yaml_content)} keys")
+            logger.debug(
+                f"Parsed YAML from {file_path}: {len(yaml_content)} keys"
+            )
             return yaml_content
 
         except Exception as e:
             logger.error(f"Error parsing YAML file {file_path}: {e}")
             raise
 
-    def _merge_yaml_data_into_character_data(self, yaml_data: Dict[str, Any]) -> None:
+    def _merge_yaml_data_into_character_data(
+        self, yaml_data: Dict[str, Any]
+    ) -> None:
         """
         Merge YAML data into character_data for easier access.
 
@@ -298,7 +321,10 @@ class CharacterInterpreter:
         """
         try:
             for yaml_file, yaml_content in yaml_data.items():
-                if isinstance(yaml_content, dict) and "_raw" not in yaml_content:
+                if (
+                    isinstance(yaml_content, dict)
+                    and "_raw" not in yaml_content
+                ):
                     # Use prefixed keys to avoid conflicts
                     prefixed_key = f"yaml_{yaml_file}"
                     self.character_data[prefixed_key] = yaml_content
@@ -311,7 +337,9 @@ class CharacterInterpreter:
         except Exception as e:
             logger.error(f"Error merging YAML data: {str(e)}")
 
-    def _parse_character_sheet_content(self, markdown_content: str) -> Dict[str, Any]:
+    def _parse_character_sheet_content(
+        self, markdown_content: str
+    ) -> Dict[str, Any]:
         """
         Parse character sheet content from markdown text.
 
@@ -331,21 +359,31 @@ class CharacterInterpreter:
             character_data.update(self._extract_basic_info(markdown_content))
 
             # Extract character statistics
-            character_data.update(self._extract_character_stats(markdown_content))
+            character_data.update(
+                self._extract_character_stats(markdown_content)
+            )
 
             # Extract background and narrative elements
-            character_data.update(self._extract_background_info(markdown_content))
+            character_data.update(
+                self._extract_background_info(markdown_content)
+            )
 
             # Extract personality traits and behavioral patterns
-            character_data.update(self._extract_personality_info(markdown_content))
+            character_data.update(
+                self._extract_personality_info(markdown_content)
+            )
 
             # Extract relationships and social connections
-            character_data.update(self._extract_relationship_info(markdown_content))
+            character_data.update(
+                self._extract_relationship_info(markdown_content)
+            )
 
             # Extract skills and capabilities
             character_data.update(self._extract_skills_info(markdown_content))
 
-            logger.debug(f"Parsed character sheet data: {len(character_data)} fields")
+            logger.debug(
+                f"Parsed character sheet data: {len(character_data)} fields"
+            )
             return character_data
 
         except Exception as e:
@@ -366,7 +404,9 @@ class CharacterInterpreter:
             ]
 
             for pattern in name_patterns:
-                match = re.search(pattern, content, re.IGNORECASE | re.MULTILINE)
+                match = re.search(
+                    pattern, content, re.IGNORECASE | re.MULTILINE
+                )
                 if match:
                     name = match.group(1).strip()
                     # Skip if it's the filename separator
@@ -377,7 +417,9 @@ class CharacterInterpreter:
             # Fallback: look for first non-separator header
             if "name" not in basic_info:
                 header_match = re.search(
-                    r"^#{1,3}\s+(?!===)([^\n]+)(?<!===)$", content, re.MULTILINE
+                    r"^#{1,3}\s+(?!===)([^\n]+)(?<!===)$",
+                    content,
+                    re.MULTILINE,
                 )
                 if header_match:
                     basic_info["name"] = header_match.group(1).strip()
@@ -385,15 +427,19 @@ class CharacterInterpreter:
             # Extract faction
             faction_patterns = [
                 r"\*\*Affiliation\*\*:\s*([^\n]+)",  # **Affiliation**: pattern
-                r"- \*\*Affiliation\*\*:\s*([^\n]+)",  # - **Affiliation**: pattern
-                r"(?:^|\n)Affiliation:\s*([^\n]+)",  # Affiliation: at start of line
+                # - **Affiliation**: pattern
+                r"- \*\*Affiliation\*\*:\s*([^\n]+)",
+                # Affiliation: at start of line
+                r"(?:^|\n)Affiliation:\s*([^\n]+)",
                 r"faction:\s*([^\n]+)",
                 r"allegiance:\s*([^\n]+)",
                 r"organization:\s*([^\n]+)",
             ]
 
             for pattern in faction_patterns:
-                match = re.search(pattern, content, re.IGNORECASE | re.MULTILINE)
+                match = re.search(
+                    pattern, content, re.IGNORECASE | re.MULTILINE
+                )
                 if match:
                     basic_info["faction"] = match.group(1).strip()
                     break
@@ -458,7 +504,9 @@ class CharacterInterpreter:
             }
 
             for key, pattern in section_patterns.items():
-                match = re.search(pattern, content, re.IGNORECASE | re.MULTILINE)
+                match = re.search(
+                    pattern, content, re.IGNORECASE | re.MULTILINE
+                )
                 if match:
                     background_info[key] = match.group(1).strip()
 
@@ -476,7 +524,9 @@ class CharacterInterpreter:
             traits_pattern = (
                 r"(?:personality|traits?):\s*([^\n]+(?:\n(?!\\w+:)[^\n]+)*)"
             )
-            match = re.search(traits_pattern, content, re.IGNORECASE | re.MULTILINE)
+            match = re.search(
+                traits_pattern, content, re.IGNORECASE | re.MULTILINE
+            )
 
             if match:
                 traits_text = match.group(1).strip()
@@ -492,7 +542,9 @@ class CharacterInterpreter:
             motivation_pattern = (
                 r"(?:motivation|goal)s?:\s*([^\n]+(?:\n(?!\w+:)[^\n]+)*)"
             )
-            match = re.search(motivation_pattern, content, re.IGNORECASE | re.MULTILINE)
+            match = re.search(
+                motivation_pattern, content, re.IGNORECASE | re.MULTILINE
+            )
 
             if match:
                 motivation_text = match.group(1).strip()
@@ -509,7 +561,9 @@ class CharacterInterpreter:
 
         try:
             # Extract relationships section
-            relationships_pattern = r"relationships?:\s*([^\n]+(?:\n(?!\w+:)[^\n]+)*)"
+            relationships_pattern = (
+                r"relationships?:\s*([^\n]+(?:\n(?!\w+:)[^\n]+)*)"
+            )
             match = re.search(
                 relationships_pattern, content, re.IGNORECASE | re.MULTILINE
             )
@@ -540,7 +594,9 @@ class CharacterInterpreter:
         try:
             # Extract skills section
             skills_pattern = r"skills?:\s*([^\n]+(?:\n(?!\w+:)[^\n]+)*)"
-            match = re.search(skills_pattern, content, re.IGNORECASE | re.MULTILINE)
+            match = re.search(
+                skills_pattern, content, re.IGNORECASE | re.MULTILINE
+            )
 
             if match:
                 skills_text = match.group(1).strip()
@@ -575,11 +631,13 @@ class CharacterInterpreter:
             self._extract_knowledge_domains()
 
             logger.debug(
-                f"Extracted character characteristics for {self.character_data.get('name', 'Unknown')}"
+                f"Extracted character characteristics for {self.character_data.get( 'name', 'Unknown')}"
             )
 
         except Exception as e:
-            logger.error(f"Error extracting character characteristics: {str(e)}")
+            logger.error(
+                f"Error extracting character characteristics: {str(e)}"
+            )
 
     def _extract_core_identity(self) -> None:
         """Extract core identity elements from character data."""
@@ -590,7 +648,9 @@ class CharacterInterpreter:
                 dir_name = os.path.basename(
                     os.path.normpath(self.character_directory_path)
                 )
-                self.character_data["name"] = dir_name.replace("_", " ").title()
+                self.character_data["name"] = dir_name.replace(
+                    "_", " "
+                ).title()
 
             # Set default faction if not specified
             if "faction" not in self.character_data:
@@ -611,7 +671,9 @@ class CharacterInterpreter:
             traits_dict = {}
 
             # Extract from parsed personality traits
-            personality_traits = self.character_data.get("personality_traits", [])
+            personality_traits = self.character_data.get(
+                "personality_traits", []
+            )
 
             if isinstance(personality_traits, list):
                 for trait in personality_traits:
@@ -624,7 +686,8 @@ class CharacterInterpreter:
                     ):
                         traits_dict["bravery"] = 0.8
                     if any(
-                        word in trait_lower for word in ["loyal", "devoted", "faithful"]
+                        word in trait_lower
+                        for word in ["loyal", "devoted", "faithful"]
                     ):
                         traits_dict["loyalty"] = 0.9
                     if any(
@@ -663,7 +726,9 @@ class CharacterInterpreter:
             }
 
             # Adjust weights based on character traits
-            personality_scores = self.character_data.get("personality_scores", {})
+            personality_scores = self.character_data.get(
+                "personality_scores", {}
+            )
 
             if "loyalty" in personality_scores:
                 decision_weights["faction_loyalty"] = min(
@@ -732,14 +797,16 @@ class CharacterInterpreter:
                         word in desc_lower
                         for word in ["superior", "commander", "leader"]
                     ):
-                        relationships_dict[entity] = 0.5  # Respectful but hierarchical
+                        # Respectful but hierarchical
+                        relationships_dict[entity] = 0.5
                     elif any(
                         word in desc_lower
                         for word in ["neutral", "unknown", "stranger"]
                     ):
                         relationships_dict[entity] = 0.0
                     else:
-                        relationships_dict[entity] = 0.1  # Slight positive default
+                        # Slight positive default
+                        relationships_dict[entity] = 0.1
 
             if relationships_dict:
                 self.character_data["relationship_scores"] = relationships_dict
@@ -779,7 +846,9 @@ class CharacterInterpreter:
 
             # Store unique knowledge domains
             if knowledge_domains:
-                self.character_data["knowledge_domains"] = list(set(knowledge_domains))
+                self.character_data["knowledge_domains"] = list(
+                    set(knowledge_domains)
+                )
 
         except Exception as e:
             logger.error(f"Error extracting knowledge domains: {str(e)}")
@@ -799,9 +868,12 @@ class CharacterInterpreter:
                 "faction": self.character_data.get("faction", "Unknown"),
                 "archetype": self.character_data.get("archetype", "Unknown"),
                 "files_processed": hybrid_context.get("file_count", {}),
-                "has_personality_traits": "personality_scores" in self.character_data,
-                "has_decision_weights": "decision_weights" in self.character_data,
-                "has_relationships": "relationship_scores" in self.character_data,
+                "has_personality_traits": "personality_scores"
+                in self.character_data,
+                "has_decision_weights": "decision_weights"
+                in self.character_data,
+                "has_relationships": "relationship_scores"
+                in self.character_data,
                 "knowledge_domains": len(
                     self.character_data.get("knowledge_domains", [])
                 ),
@@ -845,7 +917,9 @@ class CharacterInterpreter:
                         )
 
             # Validate personality scores
-            personality_scores = self.character_data.get("personality_scores", {})
+            personality_scores = self.character_data.get(
+                "personality_scores", {}
+            )
             if personality_scores:
                 for trait_name, trait_value in personality_scores.items():
                     if not isinstance(trait_value, (int, float)) or not (
@@ -856,7 +930,9 @@ class CharacterInterpreter:
                         )
 
             # Validate relationship scores
-            relationship_scores = self.character_data.get("relationship_scores", {})
+            relationship_scores = self.character_data.get(
+                "relationship_scores", {}
+            )
             if relationship_scores:
                 for entity, score in relationship_scores.items():
                     if not isinstance(score, (int, float)) or not (

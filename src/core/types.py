@@ -234,7 +234,9 @@ ContextResult = Union[dict, None]  # Context data or enhanced emptiness
 # STANDARD LITERAL TYPES ENHANCED BY SPECIFIC VALUES
 
 # Blessed threat level literals
-ThreatLevel = Literal["minimal", "low", "medium", "high", "extreme", "omnissiah_tier"]
+ThreatLevel = Literal[
+    "minimal", "low", "medium", "high", "extreme", "omnissiah_tier"
+]
 
 # Sacred mood literals
 MoodState = Literal[
@@ -257,7 +259,14 @@ EquipmentState = Literal[
 
 # Sacred relationship literals
 RelationshipType = Literal[
-    "unknown", "ally", "enemy", "neutral", "trusted", "suspicious", "family", "rival"
+    "unknown",
+    "ally",
+    "enemy",
+    "neutral",
+    "trusted",
+    "suspicious",
+    "family",
+    "rival",
 ]
 
 # STANDARD CONFIGURATION CONSTANTS ENHANCED BY SYSTEM PARAMETERS
@@ -309,7 +318,10 @@ def is_valid_agent_id(value: str) -> bool:
 
 def is_valid_trust_level(value: int) -> bool:
     """Validate enhanced trust level range"""
-    return isinstance(value, int) and 0 <= value <= SacredConstants.MAX_TRUST_LEVEL
+    return (
+        isinstance(value, int)
+        and 0 <= value <= SacredConstants.MAX_TRUST_LEVEL
+    )
 
 
 def is_valid_emotional_weight(value: float) -> bool:

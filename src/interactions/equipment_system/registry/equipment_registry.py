@@ -84,7 +84,8 @@ class EquipmentRegistry:
 
         # Equipment storage
         self._equipment_registry: Dict[str, DynamicEquipment] = {}
-        self._agent_equipment: Dict[str, Set[str]] = {}  # agent_id -> equipment_ids
+        # agent_id -> equipment_ids
+        self._agent_equipment: Dict[str, Set[str]] = {}
         self._equipment_by_category: Dict[EquipmentCategory, Set[str]] = {
             category: set() for category in EquipmentCategory
         }
@@ -92,7 +93,8 @@ class EquipmentRegistry:
         # State tracking
         self._processing_lock = asyncio.Lock()
         self._equipment_locations: Dict[str, str] = {}
-        self._equipment_assignments: Dict[str, str] = {}  # equipment_id -> agent_id
+        # equipment_id -> agent_id
+        self._equipment_assignments: Dict[str, str] = {}
 
         self.logger.info("Equipment registry initialized")
 
@@ -120,7 +122,9 @@ class EquipmentRegistry:
                 # Generate equipment ID if not provided
                 equipment_id = getattr(equipment_item, "equipment_id", None)
                 if not equipment_id:
-                    equipment_id = f"eq_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+                    equipment_id = (
+                        f"eq_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+                    )
 
                 # Check for duplicate registration
                 if equipment_id in self._equipment_registry:
@@ -156,18 +160,24 @@ class EquipmentRegistry:
 
                 # Update agent assignment
                 if owner_id:
-                    await self._assign_equipment_to_agent(equipment_id, owner_id)
+                    await self._assign_equipment_to_agent(
+                        equipment_id, owner_id
+                    )
 
                 # Save to context database if available
                 if self.context_db and self.config.context_db_enabled:
                     try:
-                        await self._save_equipment_registration(dynamic_equipment)
+                        await self._save_equipment_registration(
+                            dynamic_equipment
+                        )
                     except Exception as e:
                         self.logger.warning(
                             f"Failed to save equipment registration to database: {e}"
                         )
 
-                self.logger.info(f"Equipment '{equipment_id}' registered successfully")
+                self.logger.info(
+                    f"Equipment '{equipment_id}' registered successfully"
+                )
 
                 return StandardResponse(
                     success=True,
@@ -192,7 +202,9 @@ class EquipmentRegistry:
                 ),
             )
 
-    async def get_equipment(self, equipment_id: str) -> Optional[DynamicEquipment]:
+    async def get_equipment(
+        self, equipment_id: str
+    ) -> Optional[DynamicEquipment]:
         """Get equipment by ID."""
         return self._equipment_registry.get(equipment_id)
 
@@ -231,7 +243,10 @@ class EquipmentRegistry:
                         continue
 
                 # Apply status filter
-                if status_filter and equipment.current_status not in status_filter:
+                if (
+                    status_filter
+                    and equipment.current_status not in status_filter
+                ):
                     continue
 
                 equipment_info = {
@@ -246,7 +261,9 @@ class EquipmentRegistry:
                     ),
                     "wear_accumulation": equipment.wear_accumulation,
                     "last_used": (
-                        equipment.last_used.isoformat() if equipment.last_used else None
+                        equipment.last_used.isoformat()
+                        if equipment.last_used
+                        else None
                     ),
                     "location": equipment.location,
                     "performance_metrics": equipment.performance_metrics.copy(),
@@ -386,7 +403,9 @@ class EquipmentRegistry:
                 # Add to usage statistics
                 if "status_changes" not in equipment.usage_statistics:
                     equipment.usage_statistics["status_changes"] = []
-                equipment.usage_statistics["status_changes"].append(status_change)
+                equipment.usage_statistics["status_changes"].append(
+                    status_change
+                )
 
                 self.logger.info(
                     f"Equipment '{equipment_id}' status changed: {old_status.value} -> {new_status.value}"
@@ -415,7 +434,9 @@ class EquipmentRegistry:
                 ),
             )
 
-    def get_equipment_by_category(self, category: EquipmentCategory) -> List[str]:
+    def get_equipment_by_category(
+        self, category: EquipmentCategory
+    ) -> List[str]:
         """Get all equipment IDs in a specific category."""
         return list(self._equipment_by_category.get(category, set()))
 
@@ -475,29 +496,46 @@ class EquipmentRegistry:
             for word in ["weapon", "gun", "rifle", "pistol", "sword", "knife"]
         ):
             return EquipmentCategory.WEAPON
-        elif any(word in name_lower for word in ["armor", "shield", "helmet", "vest"]):
+        elif any(
+            word in name_lower
+            for word in ["armor", "shield", "helmet", "vest"]
+        ):
             return EquipmentCategory.ARMOR
-        elif any(word in name_lower for word in ["tool", "wrench", "hammer", "kit"]):
+        elif any(
+            word in name_lower for word in ["tool", "wrench", "hammer", "kit"]
+        ):
             return EquipmentCategory.TOOL
-        elif any(word in name_lower for word in ["ammo", "battery", "fuel", "med"]):
+        elif any(
+            word in name_lower for word in ["ammo", "battery", "fuel", "med"]
+        ):
             return EquipmentCategory.CONSUMABLE
-        elif any(word in name_lower for word in ["augmetic", "implant", "cyber"]):
+        elif any(
+            word in name_lower for word in ["augmetic", "implant", "cyber"]
+        ):
             return EquipmentCategory.AUGMETIC
-        elif any(word in name_lower for word in ["relic", "artifact", "sacred"]):
+        elif any(
+            word in name_lower for word in ["relic", "artifact", "sacred"]
+        ):
             return EquipmentCategory.RELIC
-        elif any(word in name_lower for word in ["vehicle", "transport", "bike"]):
+        elif any(
+            word in name_lower for word in ["vehicle", "transport", "bike"]
+        ):
             return EquipmentCategory.TRANSPORT
         elif any(word in name_lower for word in ["vox", "comm", "radio"]):
             return EquipmentCategory.COMMUNICATION
         elif any(word in name_lower for word in ["medical", "medic", "heal"]):
             return EquipmentCategory.MEDICAL
-        elif any(word in name_lower for word in ["sensor", "scanner", "detector"]):
+        elif any(
+            word in name_lower for word in ["sensor", "scanner", "detector"]
+        ):
             return EquipmentCategory.SENSOR
 
         # Default to TOOL category
         return EquipmentCategory.TOOL
 
-    async def _save_equipment_registration(self, equipment: DynamicEquipment) -> None:
+    async def _save_equipment_registration(
+        self, equipment: DynamicEquipment
+    ) -> None:
         """Save equipment registration to context database."""
         if not self.context_db:
             return

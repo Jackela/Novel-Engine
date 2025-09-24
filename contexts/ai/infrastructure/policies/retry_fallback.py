@@ -15,7 +15,11 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
-from ...domain.services.llm_provider import LLMRequest, LLMResponse, LLMResponseStatus
+from ...domain.services.llm_provider import (
+    LLMRequest,
+    LLMResponse,
+    LLMResponseStatus,
+)
 from ...domain.value_objects.common import ProviderId
 
 
@@ -109,7 +113,9 @@ class RetryConfig:
 
         Uses exponential backoff with jitter and reason-specific overrides.
         """
-        base_delay = self.reason_specific_delays.get(reason, self.initial_delay_seconds)
+        base_delay = self.reason_specific_delays.get(
+            reason, self.initial_delay_seconds
+        )
 
         # Exponential backoff
         delay = base_delay * (self.exponential_base ** (attempt - 1))
@@ -473,7 +479,10 @@ class ExponentialBackoffRetry(IRetryPolicy):
 
         # Check circuit breaker
         circuit_breaker = await self._get_circuit_breaker_async(provider_key)
-        if circuit_breaker.is_open and not circuit_breaker.should_attempt_reset():
+        if (
+            circuit_breaker.is_open
+            and not circuit_breaker.should_attempt_reset()
+        ):
             return False, retry_reason
 
         return True, retry_reason
@@ -499,7 +508,9 @@ class ExponentialBackoffRetry(IRetryPolicy):
         async with self._lock:
             self._provider_configs[provider_key] = config
 
-    async def reset_circuit_breaker_async(self, provider_id: ProviderId) -> None:
+    async def reset_circuit_breaker_async(
+        self, provider_id: ProviderId
+    ) -> None:
         """
         Manually reset circuit breaker for provider.
 
@@ -516,7 +527,9 @@ class ExponentialBackoffRetry(IRetryPolicy):
     async def _get_config_async(self, provider_key: str) -> RetryConfig:
         """Get retry configuration for provider."""
         async with self._lock:
-            return self._provider_configs.get(provider_key, self._default_config)
+            return self._provider_configs.get(
+                provider_key, self._default_config
+            )
 
     async def _get_circuit_breaker_async(
         self, provider_key: str

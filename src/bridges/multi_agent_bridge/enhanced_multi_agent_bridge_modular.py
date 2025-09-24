@@ -2,8 +2,9 @@
 Enhanced Multi-Agent Bridge (Modular)
 =====================================
 
-Modular implementation of the enhanced multi-agent bridge using component-based architecture.
-Maintains full backward compatibility while providing enterprise-grade modularity.
+Modular implementation of the enhanced multi-agent bridge using
+component-based architecture. Maintains full backward compatibility
+while providing enterprise-grade modularity.
 """
 
 import logging
@@ -38,7 +39,9 @@ except ImportError:
 
 # Import advanced AI intelligence systems
 try:
-    from src.ai_intelligence.agent_coordination_engine import AgentCoordinationEngine
+    from src.ai_intelligence.agent_coordination_engine import (
+        AgentCoordinationEngine,
+    )
     from src.ai_intelligence.ai_orchestrator import AIIntelligenceOrchestrator
 except ImportError:
     AIIntelligenceOrchestrator = type("AIIntelligenceOrchestrator", (), {})
@@ -51,15 +54,19 @@ class EnhancedMultiAgentBridge:
     """
     Modular enhanced multi-agent bridge implementation.
 
-    This class provides a facade over specialized components while maintaining
-    full backward compatibility with the original enhanced multi-agent bridge interface.
+    This class provides a facade over specialized components while
+    maintaining full backward compatibility with the original enhanced
+    multi-agent bridge interface.
 
     Components:
     - CostTracker: LLM cost management and budget enforcement
     - PerformanceBudget: Timing constraints and performance optimization
-    - LLMBatchProcessor: Intelligent batching and processing of LLM requests
-    - DialogueManager: Agent-to-agent communication and conversation coordination
-    - PerformanceMetrics: Comprehensive performance tracking and analysis
+    - LLMBatchProcessor: Intelligent batching and processing of
+      LLM requests
+    - DialogueManager: Agent-to-agent communication and conversation
+      coordination
+    - PerformanceMetrics: Comprehensive performance tracking and
+      analysis
     """
 
     def __init__(
@@ -111,7 +118,8 @@ class EnhancedMultiAgentBridge:
         try:
             # Core performance components
             self.cost_tracker = CostTracker(
-                max_cost_per_turn=self.config.max_cost_per_turn, max_total_cost=1.0
+                max_cost_per_turn=self.config.max_cost_per_turn,
+                max_total_cost=1.0,
             )
 
             self.performance_budget = PerformanceBudget(
@@ -175,7 +183,9 @@ class EnhancedMultiAgentBridge:
                     self._ai_orchestrator = AIIntelligenceOrchestrator()
                     # Additional initialization would go here
             except Exception as e:
-                self.logger.debug(f"AI orchestrator initialization failed: {e}")
+                self.logger.debug(
+                    f"AI orchestrator initialization failed: {e}"
+                )
 
             # Initialize coordination engine if available
             try:
@@ -185,20 +195,29 @@ class EnhancedMultiAgentBridge:
                     self._coordination_engine = AgentCoordinationEngine()
                     # Additional initialization would go here
             except Exception as e:
-                self.logger.debug(f"Coordination engine initialization failed: {e}")
+                self.logger.debug(
+                    f"Coordination engine initialization failed: {e}"
+                )
 
             self._is_initialized = True
             self._integration_stats["initialization_time"] = (
                 datetime.now() - start_time
             ).total_seconds()
 
-            self.logger.info("AI systems initialization completed successfully")
+            self.logger.info(
+                "AI systems initialization completed successfully"
+            )
 
             return {
                 "success": True,
-                "initialization_time": self._integration_stats["initialization_time"],
-                "ai_orchestrator_available": self._ai_orchestrator is not None,
-                "coordination_engine_available": self._coordination_engine is not None,
+                "initialization_time": (
+                    self._integration_stats["initialization_time"]
+                ),
+                "ai_orchestrator_available": (
+                    self._ai_orchestrator is not None
+                ),
+                "coordination_engine_available": self._coordination_engine
+                is not None,
             }
 
         except Exception as e:
@@ -233,10 +252,14 @@ class EnhancedMultiAgentBridge:
             pre_turn_analysis = await self._analyze_pre_turn_state()
 
             # Prepare enhanced world state
-            enhanced_world_state = await self._prepare_enhanced_world_state(turn_number)
+            enhanced_world_state = await self._prepare_enhanced_world_state(
+                turn_number
+            )
 
             # Identify dialogue opportunities
-            dialogue_opportunities = await self._identify_dialogue_opportunities()
+            dialogue_opportunities = (
+                await self._identify_dialogue_opportunities()
+            )
 
             # Execute agent dialogues
             dialogue_results = []
@@ -263,9 +286,13 @@ class EnhancedMultiAgentBridge:
 
             # Run base simulation turn if director agent is available
             base_turn_result = {}
-            if self.director_agent and hasattr(self.director_agent, "run_turn"):
+            if self.director_agent and hasattr(
+                self.director_agent, "run_turn"
+            ):
                 try:
-                    base_turn_result = await self.director_agent.run_turn(turn_data)
+                    base_turn_result = await self.director_agent.run_turn(
+                        turn_data
+                    )
                 except Exception as e:
                     self.logger.warning(f"Base turn execution failed: {e}")
                     base_turn_result = {"error": str(e)}
@@ -276,7 +303,9 @@ class EnhancedMultiAgentBridge:
             )
 
             # Update metrics
-            coordination_count = len([r for r in dialogue_results if r.get("success")])
+            coordination_count = len(
+                [r for r in dialogue_results if r.get("success")]
+            )
             self.performance_metrics.record_coordination_event(
                 "turn_coordination",
                 list(self._agents.keys()),
@@ -297,16 +326,22 @@ class EnhancedMultiAgentBridge:
 
             # Generate enhanced turn summary
             enhanced_summary = await self._generate_enhanced_turn_summary(
-                turn_number, base_turn_result, dialogue_results, post_turn_analysis
+                turn_number,
+                base_turn_result,
+                dialogue_results,
+                post_turn_analysis,
             )
 
             # Update integration stats
             self._integration_stats["total_turns_processed"] += 1
-            self._integration_stats["successful_coordinations"] += coordination_count
+            self._integration_stats[
+                "successful_coordinations"
+            ] += coordination_count
 
             total_time = (datetime.now() - turn_start).total_seconds()
             self.logger.info(
-                f"Enhanced turn {turn_number} completed in {total_time:.3f}s with {coordination_count} coordinations"
+                f"Enhanced turn {turn_number} completed in "
+                f"{total_time:.3f}s with {coordination_count} coordinations"
             )
 
             return {
@@ -332,7 +367,9 @@ class EnhancedMultiAgentBridge:
             return {
                 "success": False,
                 "error": str(e),
-                "turn_number": turn_number if "turn_number" in locals() else 0,
+                "turn_number": (
+                    turn_number if "turn_number" in locals() else 0
+                ),
             }
 
     async def initiate_agent_dialogue(
@@ -353,7 +390,11 @@ class EnhancedMultiAgentBridge:
 
             result = await self.dialogue_manager.execute_dialogue(dialogue_id)
 
-            return {"success": True, "dialogue_id": dialogue_id, "result": result}
+            return {
+                "success": True,
+                "dialogue_id": dialogue_id,
+                "result": result,
+            }
 
         except Exception as e:
             self.logger.error(f"Error initiating agent dialogue: {e}")
@@ -421,14 +462,20 @@ class EnhancedMultiAgentBridge:
                 "system_status": (
                     "operational" if self._is_initialized else "initializing"
                 ),
-                "performance_metrics": self.performance_metrics.get_comprehensive_metrics(),
+                "performance_metrics": (
+                    self.performance_metrics.get_comprehensive_metrics()
+                ),
                 "dialogue_stats": self.dialogue_manager.get_dialogue_stats(),
-                "llm_processing_stats": self.llm_processor.get_processing_stats(),
+                "llm_processing_stats": (
+                    self.llm_processor.get_processing_stats()
+                ),
                 "active_agents": len(self._agents),
                 "integration_stats": self._integration_stats,
                 "ai_systems_status": {
                     "orchestrator_active": self._ai_orchestrator is not None,
-                    "coordination_engine_active": self._coordination_engine is not None,
+                    "coordination_engine_active": (
+                        self._coordination_engine is not None
+                    ),
                 },
             }
 
@@ -443,9 +490,15 @@ class EnhancedMultiAgentBridge:
         try:
             return {
                 "active_agents": len(self._agents),
-                "budget_status": self.cost_tracker.get_cost_efficiency_stats(),
-                "performance_status": self.performance_budget.get_performance_stats(),
-                "system_health": self.performance_metrics._calculate_system_health_score(),
+                "budget_status": (
+                    self.cost_tracker.get_cost_efficiency_stats()
+                ),
+                "performance_status": (
+                    self.performance_budget.get_performance_stats()
+                ),
+                "system_health": (
+                    self.performance_metrics._calculate_system_health_score()
+                ),
             }
         except Exception as e:
             self.logger.error(f"Pre-turn analysis failed: {e}")
@@ -459,13 +512,19 @@ class EnhancedMultiAgentBridge:
             return EnhancedWorldState(
                 turn_number=turn_number,
                 base_world_state={},  # Would be populated from director agent
-                agent_positions={agent_id: {} for agent_id in self._agents.keys()},
+                agent_positions={
+                    agent_id: {} for agent_id in self._agents.keys()
+                },
                 active_dialogues=self.dialogue_manager.get_active_dialogues(),
-                performance_metrics=self.performance_metrics.get_comprehensive_metrics(),
+                performance_metrics=(
+                    self.performance_metrics.get_comprehensive_metrics()
+                ),
             )
         except Exception as e:
             self.logger.error(f"Enhanced world state preparation failed: {e}")
-            return EnhancedWorldState(turn_number=turn_number, base_world_state={})
+            return EnhancedWorldState(
+                turn_number=turn_number, base_world_state={}
+            )
 
     async def _identify_dialogue_opportunities(self) -> List[Dict[str, Any]]:
         """Identify opportunities for agent dialogues."""
@@ -491,7 +550,9 @@ class EnhancedMultiAgentBridge:
             return opportunities
 
         except Exception as e:
-            self.logger.error(f"Dialogue opportunity identification failed: {e}")
+            self.logger.error(
+                f"Dialogue opportunity identification failed: {e}"
+            )
             return []
 
     def _should_use_fast_mode(self) -> bool:
@@ -503,9 +564,8 @@ class EnhancedMultiAgentBridge:
                 return True
 
             # Check cost constraints
-            if not self.cost_tracker.is_under_budget(
-                0.02
-            ):  # Reserve for remaining operations
+            # Reserve for remaining operations
+            if not self.cost_tracker.is_under_budget(0.02):
                 return True
 
             return False
@@ -514,29 +574,35 @@ class EnhancedMultiAgentBridge:
             return True  # Default to fast mode on errors
 
     async def _analyze_post_turn_results(
-        self, base_turn_result: Dict[str, Any], dialogue_results: List[Dict[str, Any]]
+        self,
+        base_turn_result: Dict[str, Any],
+        dialogue_results: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
         """Analyze results after turn execution."""
         try:
             successful_dialogues = sum(
-                1 for result in dialogue_results if result.get("success", False)
+                1
+                for result in dialogue_results
+                if result.get("success", False)
             )
             total_dialogues = len(dialogue_results)
 
             return {
                 "base_turn_success": base_turn_result.get("success", False),
                 "dialogue_success_rate": (
-                    successful_dialogues / max(1, total_dialogues)
-                )
-                * 100,
-                "coordination_effectiveness": successful_dialogues
-                / max(1, len(self._agents)),
-                "quality_score": sum(
-                    result.get("quality", 0.5)
-                    for result in dialogue_results
-                    if "quality" in result
-                )
-                / max(1, total_dialogues),
+                    successful_dialogues / max(1, total_dialogues) * 100
+                ),
+                "coordination_effectiveness": (
+                    successful_dialogues / max(1, len(self._agents))
+                ),
+                "quality_score": (
+                    sum(
+                        result.get("quality", 0.5)
+                        for result in dialogue_results
+                        if "quality" in result
+                    )
+                    / max(1, total_dialogues)
+                ),
             }
 
         except Exception as e:
@@ -553,14 +619,19 @@ class EnhancedMultiAgentBridge:
         """Generate enhanced turn summary."""
         try:
             successful_dialogues = sum(
-                1 for result in dialogue_results if result.get("success", False)
+                1
+                for result in dialogue_results
+                if result.get("success", False)
             )
 
             summary_parts = [
                 f"Turn {turn_number} Summary:",
-                f"• {successful_dialogues}/{len(dialogue_results)} successful agent interactions",
-                f"• Coordination effectiveness: {post_turn_analysis.get('coordination_effectiveness', 0):.1%}",
-                f"• System health: {self.performance_metrics._calculate_system_health_score():.1%}",
+                f"• {successful_dialogues}/"
+                f"{len(dialogue_results)} successful agent interactions",
+                f"• Coordination effectiveness: "
+                f"{post_turn_analysis.get('coordination_effectiveness', 0):.1%}",
+                f"• System health: "
+                f"{self.performance_metrics._calculate_system_health_score():.1%}",
             ]
 
             if base_turn_result.get("success"):
@@ -585,7 +656,10 @@ class EnhancedMultiAgentBridge:
             if total_interactions == 0:
                 return 0.0
 
-            return min(1.0, agent_interactions / total_interactions * len(self._agents))
+            return min(
+                1.0,
+                agent_interactions / total_interactions * len(self._agents),
+            )
 
         except Exception:
             return 0.5
@@ -600,7 +674,9 @@ class EnhancedMultiAgentBridge:
             self.logger.info("Enhanced multi-agent bridge shutdown complete")
 
         except Exception as e:
-            self.logger.error(f"Error during coordination systems shutdown: {e}")
+            self.logger.error(
+                f"Error during coordination systems shutdown: {e}"
+            )
 
     # Backward compatibility methods
 
@@ -610,14 +686,20 @@ class EnhancedMultiAgentBridge:
         legacy_mappings = {
             "queue_llm_request": "llm_processor.queue_llm_request",
             "get_dialogue_stats": "dialogue_manager.get_dialogue_stats",
-            "get_performance_stats": "performance_metrics.get_comprehensive_metrics",
+            "get_performance_stats": (
+                "performance_metrics.get_comprehensive_metrics"
+            ),
         }
 
         if name in legacy_mappings:
-            self.logger.debug(f"Legacy method call: {name} -> {legacy_mappings[name]}")
+            self.logger.debug(
+                f"Legacy method call: {name} -> {legacy_mappings[name]}"
+            )
             # Return the mapped method
             if "." in legacy_mappings[name]:
-                component_name, method_name = legacy_mappings[name].split(".", 1)
+                component_name, method_name = legacy_mappings[name].split(
+                    ".", 1
+                )
                 component = getattr(self, component_name)
                 return getattr(component, method_name)
             else:

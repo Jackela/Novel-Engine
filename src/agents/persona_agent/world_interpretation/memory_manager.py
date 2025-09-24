@@ -47,15 +47,23 @@ class Memory:
     )
 
     # Timing
-    created_at: float = field(default_factory=lambda: datetime.now().timestamp())
-    last_accessed: float = field(default_factory=lambda: datetime.now().timestamp())
-    last_reinforced: float = field(default_factory=lambda: datetime.now().timestamp())
+    created_at: float = field(
+        default_factory=lambda: datetime.now().timestamp()
+    )
+    last_accessed: float = field(
+        default_factory=lambda: datetime.now().timestamp()
+    )
+    last_reinforced: float = field(
+        default_factory=lambda: datetime.now().timestamp()
+    )
 
     # Context and associations
     tags: List[str] = field(default_factory=list)
     associated_entities: List[str] = field(default_factory=list)
     associated_locations: List[str] = field(default_factory=list)
-    related_memories: List[str] = field(default_factory=list)  # IDs of related memories
+    related_memories: List[str] = field(
+        default_factory=list
+    )  # IDs of related memories
 
     # Decay and consolidation
     decay_rate: float = 0.01  # How fast this memory fades
@@ -69,11 +77,17 @@ class Memory:
 
     def get_current_strength(self) -> float:
         """Calculate current memory strength accounting for decay."""
-        time_since_reinforcement = datetime.now().timestamp() - self.last_reinforced
+        time_since_reinforcement = (
+            datetime.now().timestamp() - self.last_reinforced
+        )
         decay_factor = math.exp(
             -self.decay_rate * time_since_reinforcement / (24 * 3600)
         )  # Daily decay
-        return self.strength * decay_factor * (0.5 + 0.5 * self.consolidation_level)
+        return (
+            self.strength
+            * decay_factor
+            * (0.5 + 0.5 * self.consolidation_level)
+        )
 
     def get_retrieval_probability(self, query_relevance: float = 1.0) -> float:
         """Calculate probability this memory will be retrieved for a query."""
@@ -85,12 +99,16 @@ class Memory:
             max(
                 0,
                 1.0
-                - (datetime.now().timestamp() - self.last_accessed) / (7 * 24 * 3600),
+                - (datetime.now().timestamp() - self.last_accessed)
+                / (7 * 24 * 3600),
             )
             * 0.1
         )
         return min(
-            1.0, current_strength * query_relevance + emotional_boost + recency_boost
+            1.0,
+            current_strength * query_relevance
+            + emotional_boost
+            + recency_boost,
         )
 
 
@@ -121,7 +139,9 @@ class MemoryManager:
     - Maintain associations between related memories
     """
 
-    def __init__(self, character_id: str, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, character_id: str, logger: Optional[logging.Logger] = None
+    ):
         self.character_id = character_id
         self.logger = logger or logging.getLogger(__name__)
 
@@ -154,9 +174,9 @@ class MemoryManager:
         }
 
         # Memory associations graph
-        self._memory_associations: Dict[str, Dict[str, float]] = (
-            {}
-        )  # memory_id -> {related_id: strength}
+        self._memory_associations: Dict[
+            str, Dict[str, float]
+        ] = {}  # memory_id -> {related_id: strength}
 
     async def store_memory(
         self, memory: Dict[str, Any], memory_type: str = "episodic"
@@ -240,7 +260,9 @@ class MemoryManager:
                 keywords=query.get("keywords", []),
                 entities=query.get("entities", []),
                 locations=query.get("locations", []),
-                memory_types=[MemoryType(mt) for mt in query.get("memory_types", [])],
+                memory_types=[
+                    MemoryType(mt) for mt in query.get("memory_types", [])
+                ],
                 minimum_strength=query.get("minimum_strength", 0.0),
                 context=query.get("context", {}),
             )
@@ -259,7 +281,9 @@ class MemoryManager:
                     relevance_score
                 )
 
-                scored_memories.append((memory, relevance_score, retrieval_probability))
+                scored_memories.append(
+                    (memory, relevance_score, retrieval_probability)
+                )
 
             # Sort by retrieval probability
             scored_memories.sort(key=lambda x: x[2], reverse=True)
@@ -301,13 +325,18 @@ class MemoryManager:
 
             # Find memories that qualify for consolidation
             for memory_id, memory in self._memories.items():
-                if memory.consolidation_level < self._config["consolidation_threshold"]:
+                if (
+                    memory.consolidation_level
+                    < self._config["consolidation_threshold"]
+                ):
                     # Calculate consolidation score
-                    consolidation_score = await self._calculate_consolidation_score(
-                        memory
+                    consolidation_score = (
+                        await self._calculate_consolidation_score(memory)
                     )
                     if consolidation_score > 0.5:
-                        consolidation_candidates.append((memory, consolidation_score))
+                        consolidation_candidates.append(
+                            (memory, consolidation_score)
+                        )
 
             # Sort by consolidation score
             consolidation_candidates.sort(key=lambda x: x[1], reverse=True)
@@ -349,7 +378,9 @@ class MemoryManager:
 
             # Increase memory strength
             old_strength = memory.strength
-            memory.strength = min(1.0, memory.strength + reinforcement_strength)
+            memory.strength = min(
+                1.0, memory.strength + reinforcement_strength
+            )
             memory.reinforcement_count += 1
             memory.last_reinforced = datetime.now().timestamp()
 
@@ -401,7 +432,9 @@ class MemoryManager:
                     memory_id
                 ].items():
                     if related_id in self._memory_associations:
-                        self._memory_associations[related_id].pop(memory_id, None)
+                        self._memory_associations[related_id].pop(
+                            memory_id, None
+                        )
                 del self._memory_associations[memory_id]
 
             # Remove memory
@@ -442,7 +475,8 @@ class MemoryManager:
             # Calculate average memory strength
             if self._memories:
                 total_strength = sum(
-                    memory.get_current_strength() for memory in self._memories.values()
+                    memory.get_current_strength()
+                    for memory in self._memories.values()
                 )
                 avg_strength = total_strength / len(self._memories)
             else:
@@ -468,7 +502,8 @@ class MemoryManager:
             consolidated_memories = sum(
                 1
                 for memory in self._memories.values()
-                if memory.consolidation_level >= self._config["consolidation_threshold"]
+                if memory.consolidation_level
+                >= self._config["consolidation_threshold"]
             )
 
             return {
@@ -546,9 +581,13 @@ class MemoryManager:
 
             # Load memories
             self._memories = {}
-            self._memories_by_type = {memory_type: [] for memory_type in MemoryType}
+            self._memories_by_type = {
+                memory_type: [] for memory_type in MemoryType
+            }
 
-            for memory_id, memory_data in state_data.get("memories", {}).items():
+            for memory_id, memory_data in state_data.get(
+                "memories", {}
+            ).items():
                 memory = Memory(
                     memory_id=memory_data["memory_id"],
                     memory_type=MemoryType(memory_data["memory_type"]),
@@ -575,7 +614,9 @@ class MemoryManager:
 
             # Load other state
             self._working_memory = state_data.get("working_memory", [])
-            self._memory_associations = state_data.get("memory_associations", {})
+            self._memory_associations = state_data.get(
+                "memory_associations", {}
+            )
             self._stats.update(state_data.get("stats", {}))
             self._config.update(state_data.get("config", {}))
 
@@ -617,7 +658,9 @@ class MemoryManager:
             # Filter by memory type
             if query.memory_types:
                 for memory_type in query.memory_types:
-                    candidates.update(self._memories_by_type.get(memory_type, []))
+                    candidates.update(
+                        self._memories_by_type.get(memory_type, [])
+                    )
             else:
                 # Include all memories
                 candidates.update(self._memories.keys())
@@ -672,7 +715,9 @@ class MemoryManager:
             if query.keywords:
                 content_text = str(memory.content).lower()
                 keyword_matches = sum(
-                    1 for keyword in query.keywords if keyword.lower() in content_text
+                    1
+                    for keyword in query.keywords
+                    if keyword.lower() in content_text
                 )
                 score += (keyword_matches / len(query.keywords)) * 0.4
 
@@ -697,14 +742,20 @@ class MemoryManager:
                     if key in memory.content:
                         if memory.content[key] == value:
                             context_score += 1.0
-                        elif str(value).lower() in str(memory.content[key]).lower():
+                        elif (
+                            str(value).lower()
+                            in str(memory.content[key]).lower()
+                        ):
                             context_score += 0.5
                 if query.context:
                     score += (context_score / len(query.context)) * 0.1
 
             # Base relevance if no specific criteria matched
             if score == 0.0 and not (
-                query.keywords or query.entities or query.locations or query.context
+                query.keywords
+                or query.entities
+                or query.locations
+                or query.context
             ):
                 score = 0.5  # Default relevance
 
@@ -720,7 +771,9 @@ class MemoryManager:
             score = 0.0
 
             # Access frequency
-            age_days = (datetime.now().timestamp() - memory.created_at) / (24 * 3600)
+            age_days = (datetime.now().timestamp() - memory.created_at) / (
+                24 * 3600
+            )
             if age_days > 0:
                 access_frequency = memory.access_count / age_days
                 score += (
@@ -734,8 +787,11 @@ class MemoryManager:
             # Memory strength
             score += memory.get_current_strength() * 0.2
 
-            # Association richness (memories with more associations are more important)
-            association_count = len(self._memory_associations.get(memory.memory_id, {}))
+            # Association richness (memories with more associations are more
+            # important)
+            association_count = len(
+                self._memory_associations.get(memory.memory_id, {})
+            )
             association_score = min(0.1, association_count / 20.0)  # Normalize
             score += association_score
 
@@ -753,7 +809,9 @@ class MemoryManager:
         try:
             # Increase consolidation level
             old_level = memory.consolidation_level
-            memory.consolidation_level = min(1.0, memory.consolidation_level + 0.3)
+            memory.consolidation_level = min(
+                1.0, memory.consolidation_level + 0.3
+            )
 
             # Reduce decay rate for consolidated memories
             memory.decay_rate *= 0.8
@@ -809,28 +867,34 @@ class MemoryManager:
 
             # Entity overlap
             entity_overlap = len(
-                set(memory1.associated_entities) & set(memory2.associated_entities)
+                set(memory1.associated_entities)
+                & set(memory2.associated_entities)
             )
             if memory1.associated_entities and memory2.associated_entities:
                 entity_score = entity_overlap / max(
-                    len(memory1.associated_entities), len(memory2.associated_entities)
+                    len(memory1.associated_entities),
+                    len(memory2.associated_entities),
                 )
                 strength += entity_score * 0.4
 
             # Location overlap
             location_overlap = len(
-                set(memory1.associated_locations) & set(memory2.associated_locations)
+                set(memory1.associated_locations)
+                & set(memory2.associated_locations)
             )
             if memory1.associated_locations and memory2.associated_locations:
                 location_score = location_overlap / max(
-                    len(memory1.associated_locations), len(memory2.associated_locations)
+                    len(memory1.associated_locations),
+                    len(memory2.associated_locations),
                 )
                 strength += location_score * 0.3
 
             # Tag overlap
             tag_overlap = len(set(memory1.tags) & set(memory2.tags))
             if memory1.tags and memory2.tags:
-                tag_score = tag_overlap / max(len(memory1.tags), len(memory2.tags))
+                tag_score = tag_overlap / max(
+                    len(memory1.tags), len(memory2.tags)
+                )
                 strength += tag_score * 0.2
 
             # Temporal proximity
@@ -862,7 +926,9 @@ class MemoryManager:
             weak_memories.sort(key=lambda x: x[1])
 
             # Remove excess memories
-            excess_count = len(self._memories) - self._config["max_total_memories"]
+            excess_count = (
+                len(self._memories) - self._config["max_total_memories"]
+            )
             removal_count = min(len(weak_memories), excess_count)
 
             for memory_id, strength in weak_memories[:removal_count]:

@@ -53,15 +53,17 @@ class CostEntry:
         if self.output_tokens < 0:
             raise ValueError("output_tokens cannot be negative")
         if self.total_tokens != self.input_tokens + self.output_tokens:
-            raise ValueError("total_tokens must equal input_tokens + output_tokens")
+            raise ValueError(
+                "total_tokens must equal input_tokens + output_tokens"
+            )
 
         if self.input_cost < 0:
             raise ValueError("input_cost cannot be negative")
         if self.output_cost < 0:
             raise ValueError("output_cost cannot be negative")
-        if abs(self.total_cost - (self.input_cost + self.output_cost)) > Decimal(
-            "0.0001"
-        ):
+        if abs(
+            self.total_cost - (self.input_cost + self.output_cost)
+        ) > Decimal("0.0001"):
             raise ValueError("total_cost must equal input_cost + output_cost")
 
     @classmethod
@@ -88,7 +90,9 @@ class CostEntry:
         usage_stats = response.usage_stats or {}
         input_tokens = usage_stats.get("input_tokens", 0)
         output_tokens = usage_stats.get("output_tokens", 0)
-        total_tokens = usage_stats.get("total_tokens", input_tokens + output_tokens)
+        total_tokens = usage_stats.get(
+            "total_tokens", input_tokens + output_tokens
+        )
 
         # Calculate costs using model pricing
         model_id = request.model_id
@@ -96,14 +100,22 @@ class CostEntry:
         output_cost = Decimal("0")
 
         if model_id.cost_per_input_token:
-            input_cost = Decimal(str(input_tokens)) * model_id.cost_per_input_token
+            input_cost = (
+                Decimal(str(input_tokens)) * model_id.cost_per_input_token
+            )
 
         if model_id.cost_per_output_token:
-            output_cost = Decimal(str(output_tokens)) * model_id.cost_per_output_token
+            output_cost = (
+                Decimal(str(output_tokens)) * model_id.cost_per_output_token
+            )
 
         # Round to reasonable precision (4 decimal places)
-        input_cost = input_cost.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
-        output_cost = output_cost.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+        input_cost = input_cost.quantize(
+            Decimal("0.0001"), rounding=ROUND_HALF_UP
+        )
+        output_cost = output_cost.quantize(
+            Decimal("0.0001"), rounding=ROUND_HALF_UP
+        )
         total_cost = input_cost + output_cost
 
         return cls(
@@ -155,7 +167,9 @@ class UsageSummary:
             self.avg_cost_per_request = (
                 self.total_cost / self.total_requests
             ).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
-            self.avg_tokens_per_request = self.total_tokens / self.total_requests
+            self.avg_tokens_per_request = (
+                self.total_tokens / self.total_requests
+            )
 
 
 @dataclass
@@ -198,7 +212,9 @@ class BudgetStatus:
         cost_limit = budget.cost_limit or Decimal("0")
         remaining_budget = max(Decimal("0"), cost_limit - current_cost)
 
-        utilization = float(current_cost / cost_limit * 100) if cost_limit > 0 else 0.0
+        utilization = (
+            float(current_cost / cost_limit * 100) if cost_limit > 0 else 0.0
+        )
         is_exceeded = current_cost > cost_limit if cost_limit > 0 else False
         is_at_risk = utilization > 80.0
 
@@ -271,7 +287,9 @@ class ICostTracker(ABC):
         pass
 
     @abstractmethod
-    async def get_budget_status_async(self, budget_id: str) -> Optional[BudgetStatus]:
+    async def get_budget_status_async(
+        self, budget_id: str
+    ) -> Optional[BudgetStatus]:
         """
         Get current status of specific budget.
 
@@ -346,15 +364,21 @@ class DefaultCostTracker(ICostTracker):
             # Filter to recent entries (last 30 days)
             cutoff_time = datetime.now() - timedelta(days=30)
             recent_entries = [
-                entry for entry in budget_entries if entry.timestamp > cutoff_time
+                entry
+                for entry in budget_entries
+                if entry.timestamp > cutoff_time
             ]
 
             # Calculate current status
-            status = BudgetStatus.from_budget_and_entries(budget, recent_entries)
+            status = BudgetStatus.from_budget_and_entries(
+                budget, recent_entries
+            )
 
             # Check if estimated cost would exceed budget
             cost_limit = budget.cost_limit or Decimal("0")
-            would_exceed = (status.current_consumption + estimated_cost) > cost_limit
+            would_exceed = (
+                status.current_consumption + estimated_cost
+            ) > cost_limit
 
             is_allowed = not would_exceed if cost_limit > 0 else True
 
@@ -380,19 +404,28 @@ class DefaultCostTracker(ICostTracker):
                 filtered_entries = [
                     entry
                     for entry in filtered_entries
-                    if entry.provider_id.provider_name == provider_id.provider_name
+                    if entry.provider_id.provider_name
+                    == provider_id.provider_name
                 ]
 
             if client_id:
                 filtered_entries = [
-                    entry for entry in filtered_entries if entry.client_id == client_id
+                    entry
+                    for entry in filtered_entries
+                    if entry.client_id == client_id
                 ]
 
             # Calculate aggregations
             total_requests = len(filtered_entries)
-            total_tokens = sum(entry.total_tokens for entry in filtered_entries)
-            input_tokens = sum(entry.input_tokens for entry in filtered_entries)
-            output_tokens = sum(entry.output_tokens for entry in filtered_entries)
+            total_tokens = sum(
+                entry.total_tokens for entry in filtered_entries
+            )
+            input_tokens = sum(
+                entry.input_tokens for entry in filtered_entries
+            )
+            output_tokens = sum(
+                entry.output_tokens for entry in filtered_entries
+            )
 
             total_cost = sum(entry.total_cost for entry in filtered_entries)
             input_cost = sum(entry.input_cost for entry in filtered_entries)
@@ -410,7 +443,9 @@ class DefaultCostTracker(ICostTracker):
                     }
 
                 provider_breakdown[provider_name]["requests"] += 1
-                provider_breakdown[provider_name]["tokens"] += entry.total_tokens
+                provider_breakdown[provider_name][
+                    "tokens"
+                ] += entry.total_tokens
                 provider_breakdown[provider_name]["cost"] += entry.total_cost
 
             # Model breakdown
@@ -442,7 +477,9 @@ class DefaultCostTracker(ICostTracker):
                 model_breakdown=model_breakdown,
             )
 
-    async def get_budget_status_async(self, budget_id: str) -> Optional[BudgetStatus]:
+    async def get_budget_status_async(
+        self, budget_id: str
+    ) -> Optional[BudgetStatus]:
         """Get current budget status with analysis."""
         async with self._lock:
             if budget_id not in self._budget_entries:
@@ -460,7 +497,9 @@ class DefaultCostTracker(ICostTracker):
             budget = TokenBudget(
                 budget_id=budget_id,
                 allocated_tokens=100000,  # Would be retrieved from storage
-                cost_limit=Decimal("100.00"),  # Would be retrieved from storage
+                cost_limit=Decimal(
+                    "100.00"
+                ),  # Would be retrieved from storage
             )
 
             return BudgetStatus.from_budget_and_entries(budget, entries)
@@ -507,14 +546,19 @@ class DefaultCostTracker(ICostTracker):
             confidence = (
                 "high"
                 if days_with_data > 20
-                else "medium" if days_with_data > 10 else "low"
+                else "medium"
+                if days_with_data > 10
+                else "low"
             )
 
             # Simple trend analysis (compare first half vs second half)
             mid_point = len(recent_entries) // 2
             if mid_point > 0:
                 first_half_avg = (
-                    sum(entry.total_cost for entry in recent_entries[:mid_point])
+                    sum(
+                        entry.total_cost
+                        for entry in recent_entries[:mid_point]
+                    )
                     / mid_point
                 )
                 second_half_avg = sum(
@@ -545,7 +589,9 @@ class DefaultCostTracker(ICostTracker):
 
         # Clean main entries list
         self._cost_entries = [
-            entry for entry in self._cost_entries if entry.timestamp > cutoff_time
+            entry
+            for entry in self._cost_entries
+            if entry.timestamp > cutoff_time
         ]
 
         # Clean budget-specific entries

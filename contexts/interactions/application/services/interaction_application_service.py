@@ -85,13 +85,19 @@ class InteractionApplicationService:
             require_unanimous_agreement=kwargs.get(
                 "require_unanimous_agreement", False
             ),
-            allow_partial_agreements=kwargs.get("allow_partial_agreements", True),
+            allow_partial_agreements=kwargs.get(
+                "allow_partial_agreements", True
+            ),
             session_context=kwargs.get("session_context"),
             priority_level=kwargs.get("priority_level", "medium"),
-            confidentiality_level=kwargs.get("confidentiality_level", "standard"),
+            confidentiality_level=kwargs.get(
+                "confidentiality_level", "standard"
+            ),
         )
 
-        result = await self.command_handler.handle_create_negotiation_session(command)
+        result = await self.command_handler.handle_create_negotiation_session(
+            command
+        )
 
         return {
             "operation": "create_negotiation_session",
@@ -104,7 +110,9 @@ class InteractionApplicationService:
                 "max_parties": result["max_parties"],
                 "timeout_hours": kwargs.get("session_timeout_hours", 72),
                 "auto_advance_phases": kwargs.get("auto_advance_phases", True),
-                "require_unanimous": kwargs.get("require_unanimous_agreement", False),
+                "require_unanimous": kwargs.get(
+                    "require_unanimous_agreement", False
+                ),
             },
             "events_generated": result["events"],
         }
@@ -130,7 +138,9 @@ class InteractionApplicationService:
             validate_compatibility=validate_compatibility,
         )
 
-        result = await self.command_handler.handle_add_party_to_session(command)
+        result = await self.command_handler.handle_add_party_to_session(
+            command
+        )
 
         return {
             "operation": "add_party_to_negotiation",
@@ -171,8 +181,10 @@ class InteractionApplicationService:
             analysis_depth="standard",
         )
 
-        analysis_result = await self.command_handler.handle_analyze_proposal_viability(
-            analysis_command
+        analysis_result = (
+            await self.command_handler.handle_analyze_proposal_viability(
+                analysis_command
+            )
         )
 
         # Submit proposal
@@ -227,7 +239,9 @@ class InteractionApplicationService:
             response=response,
         )
 
-        result = await self.command_handler.handle_submit_proposal_response(command)
+        result = await self.command_handler.handle_submit_proposal_response(
+            command
+        )
 
         # Check momentum after response
         momentum_command = CalculateNegotiationMomentumCommand(
@@ -284,7 +298,9 @@ class InteractionApplicationService:
             force_advancement=force_advancement,
         )
 
-        result = await self.command_handler.handle_advance_negotiation_phase(command)
+        result = await self.command_handler.handle_advance_negotiation_phase(
+            command
+        )
 
         return {
             "operation": "advance_negotiation_phase",
@@ -352,8 +368,10 @@ class InteractionApplicationService:
             completion_notes=completion_notes,
         )
 
-        result = await self.command_handler.handle_terminate_negotiation_session(
-            command
+        result = (
+            await self.command_handler.handle_terminate_negotiation_session(
+                command
+            )
         )
 
         return {
@@ -457,14 +475,20 @@ class InteractionApplicationService:
             "analysis_depth": analysis_depth,
             "insights": {
                 "party_compatibility": compatibility_result,
-                "recommended_strategy": strategy_result["strategy_recommendation"],
+                "recommended_strategy": strategy_result[
+                    "strategy_recommendation"
+                ],
                 "detected_conflicts": conflicts_result["conflicts_detected"],
                 "momentum_analysis": momentum_result["momentum_analysis"],
             },
             "overall_assessment": {
-                "compatibility_score": compatibility_result["overall_compatibility"],
+                "compatibility_score": compatibility_result[
+                    "overall_compatibility"
+                ],
                 "conflict_level": len(conflicts_result["conflicts_detected"]),
-                "momentum_direction": momentum_result["momentum_analysis"]["direction"],
+                "momentum_direction": momentum_result["momentum_analysis"][
+                    "direction"
+                ],
                 "success_probability": self._calculate_success_probability(
                     compatibility_result["overall_compatibility"],
                     len(conflicts_result["conflicts_detected"]),
@@ -472,7 +496,10 @@ class InteractionApplicationService:
                 ),
             },
             "recommendations": self._generate_recommendations(
-                compatibility_result, strategy_result, conflicts_result, momentum_result
+                compatibility_result,
+                strategy_result,
+                conflicts_result,
+                momentum_result,
             ),
         }
 
@@ -488,7 +515,9 @@ class InteractionApplicationService:
         Analyzes and suggests improvements for better acceptance rates.
         """
         # Get session to find active proposals
-        session = await self.session_repository.get_by_id(InteractionId(session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(session_id)
+        )
         if not session:
             raise ValueError(f"Session {session_id} not found")
 
@@ -517,10 +546,12 @@ class InteractionApplicationService:
                     "current_viability": analysis_result["analysis_result"][
                         "overall_viability_score"
                     ],
-                    "optimization_suggestions": analysis_result["analysis_result"][
-                        "optimization_suggestions"
+                    "optimization_suggestions": analysis_result[
+                        "analysis_result"
+                    ]["optimization_suggestions"],
+                    "risk_factors": analysis_result["analysis_result"][
+                        "risk_factors"
                     ],
-                    "risk_factors": analysis_result["analysis_result"]["risk_factors"],
                     "success_factors": analysis_result["analysis_result"][
                         "success_factors"
                     ],
@@ -532,7 +563,9 @@ class InteractionApplicationService:
             result["current_viability"] for result in optimization_results
         )
         avg_viability = (
-            total_viability / len(optimization_results) if optimization_results else 0
+            total_viability / len(optimization_results)
+            if optimization_results
+            else 0
         )
 
         return {
@@ -557,12 +590,16 @@ class InteractionApplicationService:
         Provides real-time health indicators and alerts.
         """
         # Get session basic info
-        session = await self.session_repository.get_by_id(InteractionId(session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(session_id)
+        )
         if not session:
             raise ValueError(f"Session {session_id} not found")
 
         # Check for timeout issues
-        timeout_approaching = session.is_timeout_approaching(24)  # 24-hour warning
+        timeout_approaching = session.is_timeout_approaching(
+            24
+        )  # 24-hour warning
         time_since_activity = session.status.time_since_last_activity
 
         # Detect conflicts
@@ -649,7 +686,9 @@ class InteractionApplicationService:
                 "health_status": self._get_health_status(health_score),
                 "active_alerts": health_alerts,
                 "session_age_hours": int(
-                    (datetime.now(timezone.utc) - session.created_at).total_seconds()
+                    (
+                        datetime.now(timezone.utc) - session.created_at
+                    ).total_seconds()
                     // 3600
                 ),
                 "time_since_last_activity_hours": time_since_activity // 3600,
@@ -659,7 +698,9 @@ class InteractionApplicationService:
                 "active_proposals": len(session.active_proposals),
                 "total_responses": session.total_responses,
                 "current_phase": session.status.phase.value,
-                "momentum_direction": momentum_result["momentum_analysis"]["direction"],
+                "momentum_direction": momentum_result["momentum_analysis"][
+                    "direction"
+                ],
                 "conflict_count": len(conflicts_result["conflicts_detected"]),
             },
             "recommendations": self._generate_health_recommendations(
@@ -670,7 +711,10 @@ class InteractionApplicationService:
     # Private Helper Methods
 
     def _calculate_success_probability(
-        self, compatibility_score: float, conflict_count: int, momentum_score: float
+        self,
+        compatibility_score: float,
+        conflict_count: int,
+        momentum_score: float,
     ) -> float:
         """Calculate overall probability of negotiation success."""
         # Weighted factors
@@ -713,10 +757,14 @@ class InteractionApplicationService:
         # Conflict resolution recommendations
         for conflict in conflicts_result["conflicts_detected"]:
             if conflict.get("severity") in ["high", "critical"]:
-                recommendations.extend(conflict.get("resolution_suggestions", []))
+                recommendations.extend(
+                    conflict.get("resolution_suggestions", [])
+                )
 
         # Momentum recommendations
-        momentum_recs = momentum_result["momentum_analysis"].get("recommendations", [])
+        momentum_recs = momentum_result["momentum_analysis"].get(
+            "recommendations", []
+        )
         recommendations.extend(momentum_recs)
 
         # Remove duplicates and limit to top 10
@@ -735,9 +783,11 @@ class InteractionApplicationService:
             all_suggestions.extend(result["optimization_suggestions"])
 
         # Find most common suggestions
-        suggestion_counts = {}
+        suggestion_counts: Dict[str, int] = {}
         for suggestion in all_suggestions:
-            suggestion_counts[suggestion] = suggestion_counts.get(suggestion, 0) + 1
+            suggestion_counts[suggestion] = (
+                suggestion_counts.get(suggestion, 0) + 1
+            )
 
         # Add most common suggestions as recommendations
         common_suggestions = sorted(
@@ -751,7 +801,9 @@ class InteractionApplicationService:
 
         # Add viability-based recommendations
         low_viability_count = sum(
-            1 for result in optimization_results if result["current_viability"] < 50
+            1
+            for result in optimization_results
+            if result["current_viability"] < 50
         )
         if low_viability_count > 0:
             recommendations.append(

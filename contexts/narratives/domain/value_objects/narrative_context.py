@@ -68,9 +68,9 @@ class NarrativeContext:
 
     # Character context
     affected_characters: Set[UUID] = None
-    character_knowledge_required: Set[UUID] = (
-        None  # Characters who must know this context
-    )
+    character_knowledge_required: Set[
+        UUID
+    ] = None  # Characters who must know this context
     character_reactions: Dict[UUID, str] = None  # Expected character reactions
 
     # Contextual details
@@ -79,14 +79,24 @@ class NarrativeContext:
     hidden_information: List[str] = None  # Information not generally known
 
     # Influence and constraints
-    narrative_constraints: List[str] = None  # What this context prevents/requires
-    behavioral_influences: List[str] = None  # How this affects character behavior
+    narrative_constraints: List[
+        str
+    ] = None  # What this context prevents/requires
+    behavioral_influences: List[
+        str
+    ] = None  # How this affects character behavior
     plot_implications: List[str] = None  # Plot consequences of this context
 
     # Atmospheric elements
-    mood_influences: Dict[str, Decimal] = None  # Mood effects (emotion -> strength)
-    tension_modifiers: Dict[str, Decimal] = None  # Tension effects (type -> modifier)
-    pacing_effects: Dict[str, Decimal] = None  # Pacing influences (aspect -> effect)
+    mood_influences: Dict[
+        str, Decimal
+    ] = None  # Mood effects (emotion -> strength)
+    tension_modifiers: Dict[
+        str, Decimal
+    ] = None  # Tension effects (type -> modifier)
+    pacing_effects: Dict[
+        str, Decimal
+    ] = None  # Pacing influences (aspect -> effect)
 
     # Relationship to other contexts
     prerequisite_contexts: Set[str] = None  # Required preceding contexts
@@ -94,12 +104,20 @@ class NarrativeContext:
     reinforcing_contexts: Set[str] = None  # Contexts that strengthen this one
 
     # Importance and priority
-    narrative_importance: Decimal = Decimal("5.0")  # 1-10, how critical this context is
-    visibility_level: Decimal = Decimal("5.0")  # 1-10, how obvious to characters
-    complexity_level: Decimal = Decimal("5.0")  # 1-10, how complex to understand
+    narrative_importance: Decimal = Decimal(
+        "5.0"
+    )  # 1-10, how critical this context is
+    visibility_level: Decimal = Decimal(
+        "5.0"
+    )  # 1-10, how obvious to characters
+    complexity_level: Decimal = Decimal(
+        "5.0"
+    )  # 1-10, how complex to understand
 
     # Dynamic properties
-    evolution_rate: Decimal = Decimal("0.0")  # How quickly context changes (0-1)
+    evolution_rate: Decimal = Decimal(
+        "0.0"
+    )  # How quickly context changes (0-1)
     stability: Decimal = Decimal("1.0")  # How stable context is (0-1)
 
     # Metadata
@@ -167,7 +185,9 @@ class NarrativeContext:
             object.__setattr__(self, "tags", set())
 
         if self.creation_timestamp is None:
-            object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
+            object.__setattr__(
+                self, "creation_timestamp", datetime.now(timezone.utc)
+            )
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -192,7 +212,9 @@ class NarrativeContext:
             and self.applies_to_sequence is not None
             and self.applies_from_sequence > self.applies_to_sequence
         ):
-            raise ValueError("From sequence must be before or equal to to sequence")
+            raise ValueError(
+                "From sequence must be before or equal to to sequence"
+            )
 
         # Validate decimal values
         for value_name, value in [
@@ -230,7 +252,9 @@ class NarrativeContext:
             raise ValueError("Context name too long (max 200 characters)")
 
         if len(self.description) > 2000:
-            raise ValueError("Context description too long (max 2000 characters)")
+            raise ValueError(
+                "Context description too long (max 2000 characters)"
+            )
 
     @property
     def has_sequence_range(self) -> bool:
@@ -300,7 +324,9 @@ class NarrativeContext:
             + len(self.narrative_constraints)
         )
 
-        influence_bonus = min(Decimal("3"), Decimal(str(influence_count * 0.2)))
+        influence_bonus = min(
+            Decimal("3"), Decimal(str(influence_count * 0.2))
+        )
 
         return min(Decimal("10"), base_strength + influence_bonus)
 

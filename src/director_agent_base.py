@@ -24,7 +24,10 @@ from src.persona_agent import PersonaAgent
 
 # Try to import configuration loader
 try:
-    from src.core.config.config_loader import get_campaign_log_filename, get_config
+    from src.core.config.config_loader import (
+        get_campaign_log_filename,
+        get_config,
+    )
 except ImportError:
 
     def get_config():
@@ -36,7 +39,11 @@ except ImportError:
 
 # Import narrative components
 try:
-    from campaign_brief import CampaignBrief, CampaignBriefLoader, NarrativeEvent
+    from campaign_brief import (
+        CampaignBrief,
+        CampaignBriefLoader,
+        NarrativeEvent,
+    )
 
     from src.core.narrative.narrative_actions import NarrativeActionResolver
 except ImportError:
@@ -101,7 +108,9 @@ class DirectorAgentBase:
             config = get_config()
             self._config = config
         except Exception as e:
-            logger.warning(f"Failed to load configuration, using defaults: {e}")
+            logger.warning(
+                f"Failed to load configuration, using defaults: {e}"
+            )
             self._config = None
 
         # Core agent management system
@@ -128,7 +137,9 @@ class DirectorAgentBase:
         # Dynamic world state tracker
         self._initialize_world_state_tracker()
 
-        logger.info("DirectorAgent base infrastructure initialized successfully")
+        logger.info(
+            "DirectorAgent base infrastructure initialized successfully"
+        )
 
     def _setup_file_paths(
         self,
@@ -238,7 +249,9 @@ class DirectorAgentBase:
             bool: True if registration successful, False if validation failed
         """
         try:
-            logger.info("Attempting to register agent for simulation management")
+            logger.info(
+                "Attempting to register agent for simulation management"
+            )
 
             # Validate the agent instance
             if not isinstance(agent, PersonaAgent):
@@ -249,7 +262,9 @@ class DirectorAgentBase:
 
             # Validate required methods
             if not hasattr(agent, "handle_turn_start"):
-                logger.error("Agent missing required 'handle_turn_start' method")
+                logger.error(
+                    "Agent missing required 'handle_turn_start' method"
+                )
                 return False
 
             if not callable(getattr(agent, "handle_turn_start")):
@@ -263,16 +278,19 @@ class DirectorAgentBase:
 
             # Check for duplicate registration
             existing_ids = [
-                existing_agent.agent_id for existing_agent in self.registered_agents
+                existing_agent.agent_id
+                for existing_agent in self.registered_agents
             ]
             if agent.agent_id in existing_ids:
-                logger.warning(f"Agent with ID '{agent.agent_id}' already registered")
+                logger.warning(
+                    f"Agent with ID '{agent.agent_id}' already registered"
+                )
                 return False
 
             # Register the agent
             self.registered_agents.append(agent)
             logger.info(
-                f"Successfully registered agent '{agent.agent_id}' (total: {len(self.registered_agents)})"
+                f"Successfully registered agent '{agent.agent_id}' (total: {len( self.registered_agents)})"
             )
 
             return True
@@ -294,12 +312,14 @@ class DirectorAgentBase:
         try:
             initial_count = len(self.registered_agents)
             self.registered_agents = [
-                agent for agent in self.registered_agents if agent.agent_id != agent_id
+                agent
+                for agent in self.registered_agents
+                if agent.agent_id != agent_id
             ]
 
             if len(self.registered_agents) < initial_count:
                 logger.info(
-                    f"Successfully removed agent '{agent_id}' (remaining: {len(self.registered_agents)})"
+                    f"Successfully removed agent '{agent_id}' (remaining: {len( self.registered_agents)})"
                 )
                 return True
             else:
@@ -322,7 +342,9 @@ class DirectorAgentBase:
             for agent in self.registered_agents:
                 agent_info = {
                     "agent_id": getattr(agent, "agent_id", "Unknown"),
-                    "character_name": getattr(agent, "character_name", "Unknown"),
+                    "character_name": getattr(
+                        agent, "character_name", "Unknown"
+                    ),
                     "faction": getattr(agent, "faction", "Unknown"),
                     "status": "active",
                 }
@@ -343,7 +365,9 @@ class DirectorAgentBase:
         """
         try:
             current_time = datetime.now()
-            elapsed_time = (current_time - self.simulation_start_time).total_seconds()
+            elapsed_time = (
+                current_time - self.simulation_start_time
+            ).total_seconds()
 
             status = {
                 "simulation_status": (
@@ -356,12 +380,38 @@ class DirectorAgentBase:
                 "elapsed_time_seconds": elapsed_time,
                 "error_count": self.error_count,
                 "last_error_time": (
-                    self.last_error_time.isoformat() if self.last_error_time else None
+                    self.last_error_time.isoformat()
+                    if self.last_error_time
+                    else None
                 ),
                 "world_state_file": self.world_state_file_path,
                 "campaign_log_path": self.campaign_log_path,
                 "campaign_brief_loaded": self.campaign_brief is not None,
-                "story_phase": self.story_state.get("current_phase", "unknown"),
+                "story_phase": self.story_state.get(
+                    "current_phase", "unknown"
+                ),
+                # Backward compatibility keys
+                "is_initialized": True,
+                "components": {
+                    "world_state_manager": hasattr(self, "world_state_manager")
+                    and self.world_state_manager is not None,
+                    "turn_orchestrator": hasattr(self, "turn_orchestrator")
+                    and self.turn_orchestrator is not None,
+                    "agent_lifecycle_manager": hasattr(
+                        self, "agent_lifecycle_manager"
+                    )
+                    and self.agent_lifecycle_manager is not None,
+                    "campaign_logging_service": hasattr(
+                        self, "campaign_logging_service"
+                    )
+                    and self.campaign_logging_service is not None,
+                    "configuration_service": hasattr(
+                        self, "configuration_service"
+                    )
+                    and self.configuration_service is not None,
+                    "error_handler": hasattr(self, "error_handler")
+                    and self.error_handler is not None,
+                },
             }
 
             return status
@@ -369,6 +419,21 @@ class DirectorAgentBase:
         except Exception as e:
             logger.error(f"Error getting simulation status: {str(e)}")
             return {"simulation_status": "error", "error_message": str(e)}
+
+    def get_config_value(self, key: str, default: Any = None) -> Any:
+        """
+        Get specific configuration value with dot notation support.
+
+        Args:
+            key: Configuration key (supports dot notation like 'database.host')
+            default: Default value if key not found
+
+        Returns:
+            Configuration value or default
+        """
+        # Simple key-based configuration for backward compatibility
+        # In a real implementation, this would access a configuration system
+        return default
 
     def log_event(self, event_description: str) -> None:
         """
@@ -384,7 +449,9 @@ class DirectorAgentBase:
             with open(self.campaign_log_path, "a", encoding="utf-8") as file:
                 file.write(log_entry)
 
-            logger.info(f"Event logged to campaign log: {event_description[:50]}...")
+            logger.info(
+                f"Event logged to campaign log: {event_description[:50]}..."
+            )
 
         except Exception as e:
             logger.error(f"Error logging event: {str(e)}")

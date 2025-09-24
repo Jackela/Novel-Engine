@@ -119,7 +119,9 @@ class TestSacredCharacterIdentity:
 
     def test_character_identity_validation_blessed_by_requirements(self):
         """Test blessed character identity validation catches nameless corruption"""
-        with pytest.raises(ValueError, match="Sacred identity requires blessed name"):
+        with pytest.raises(
+            ValueError, match="Sacred identity requires blessed name"
+        ):
             CharacterIdentity(name="")
 
 
@@ -145,11 +147,15 @@ class TestSacredPhysicalCondition:
     def test_physical_condition_health_assessment_blessed_by_logic(self):
         """Test blessed health assessment logic"""
         # Healthy condition blessed by good metrics
-        healthy_condition = PhysicalCondition(health_points=70, stress_level=40)
+        healthy_condition = PhysicalCondition(
+            health_points=70, stress_level=40
+        )
         assert healthy_condition.is_healthy() is True
 
         # Unhealthy condition cursed by poor metrics
-        unhealthy_condition = PhysicalCondition(health_points=30, stress_level=80)
+        unhealthy_condition = PhysicalCondition(
+            health_points=30, stress_level=80
+        )
         assert unhealthy_condition.is_healthy() is False
 
 
@@ -204,7 +210,9 @@ class TestSacredEquipmentItem:
         """Test blessed equipment functionality assessment"""
         # Functional blessed equipment
         functional_item = EquipmentItem(
-            name="Working Gear", condition=EquipmentCondition.WORN, durability=50
+            name="Working Gear",
+            condition=EquipmentCondition.WORN,
+            durability=50,
         )
         assert functional_item.is_functional() is True
 
@@ -220,8 +228,12 @@ class TestSacredEquipmentState:
 
     def test_equipment_state_creation_blessed_by_inventory(self):
         """Test blessed equipment state with sacred inventory"""
-        lasgun = EquipmentItem(name="Lasgun", item_type="weapon", effectiveness=1.0)
-        armor = EquipmentItem(name="Flak Armor", item_type="armor", effectiveness=0.8)
+        lasgun = EquipmentItem(
+            name="Lasgun", item_type="weapon", effectiveness=1.0
+        )
+        armor = EquipmentItem(
+            name="Flak Armor", item_type="armor", effectiveness=0.8
+        )
         relic = EquipmentItem(
             name="Sacred Aquila", item_type="relic", effectiveness=1.5
         )
@@ -248,10 +260,14 @@ class TestSacredEquipmentState:
             name="Great Weapon", effectiveness=1.8, durability=90
         )
 
-        equipment_state = EquipmentState(combat_equipment=[good_weapon, great_weapon])
+        equipment_state = EquipmentState(
+            combat_equipment=[good_weapon, great_weapon]
+        )
         effectiveness = equipment_state.calculate_combat_effectiveness()
 
-        expected_effectiveness = (1.2 + 1.8) / 2  # Average of functional weapons
+        expected_effectiveness = (
+            1.2 + 1.8
+        ) / 2  # Average of functional weapons
         assert effectiveness == expected_effectiveness
 
     def test_equipment_empty_combat_blessed_by_fallback(self):
@@ -284,7 +300,8 @@ class TestSacredRelationshipState:
     def test_relationship_validation_blessed_by_requirements(self):
         """Test blessed relationship validation catches ID corruption"""
         with pytest.raises(
-            ValueError, match="Sacred relationship requires blessed target_agent_id"
+            ValueError,
+            match="Sacred relationship requires blessed target_agent_id",
         ):
             RelationshipState(target_agent_id="", target_name="Test")
 
@@ -312,8 +329,12 @@ class TestSacredRelationshipState:
         # Positive interaction blessed by cooperation
         relationship.update_from_interaction("positive_outcome", 3.0)
 
-        assert relationship.trust_level == 6  # Increased by positive interaction
-        assert relationship.emotional_bond == 5.0  # Increased by emotional impact
+        assert (
+            relationship.trust_level == 6
+        )  # Increased by positive interaction
+        assert (
+            relationship.emotional_bond == 5.0
+        )  # Increased by emotional impact
         assert relationship.interaction_count == 1
         assert relationship.last_interaction is not None
 
@@ -323,7 +344,9 @@ class TestSacredCharacterState:
 
     def test_character_state_creation_blessed_by_completeness(self):
         """Test blessed character state creation with complete sacred data"""
-        identity = CharacterIdentity(name="Test Character", faction=["Test Faction"])
+        identity = CharacterIdentity(
+            name="Test Character", faction=["Test Faction"]
+        )
 
         character_state = CharacterState(
             base_identity=identity,
@@ -367,7 +390,9 @@ class TestSacredDynamicContext:
 
     def test_dynamic_context_creation_blessed_by_completeness(self):
         """Test blessed dynamic context creation with complete sacred data"""
-        memory = MemoryItem(agent_id="test_agent", content="Test blessed memory")
+        memory = MemoryItem(
+            agent_id="test_agent", content="Test blessed memory"
+        )
         identity = CharacterIdentity(name="Test Character")
         character_state = CharacterState(base_identity=identity)
 
@@ -422,12 +447,16 @@ class TestSacredDynamicContext:
         )
 
         assert len(episodic_memories) == 2
-        assert all(mem.memory_type == MemoryType.EPISODIC for mem in episodic_memories)
+        assert all(
+            mem.memory_type == MemoryType.EPISODIC for mem in episodic_memories
+        )
 
         # Test limiting results
         limited_memories = context.get_relevant_memories(max_memories=1)
         assert len(limited_memories) == 1
-        assert limited_memories[0].relevance_score == 0.9  # Highest relevance first
+        assert (
+            limited_memories[0].relevance_score == 0.9
+        )  # Highest relevance first
 
     def test_dynamic_context_json_serialization_blessed_by_persistence(self):
         """Test blessed dynamic context JSON serialization for sacred persistence"""
@@ -471,7 +500,8 @@ class TestSacredInteractionStructures:
     def test_character_interaction_validation_blessed_by_participants(self):
         """Test blessed character interaction validation catches participant corruption"""
         with pytest.raises(
-            ValueError, match="Sacred interaction requires blessed participants"
+            ValueError,
+            match="Sacred interaction requires blessed participants",
         ):
             CharacterInteraction(participants=[])
 

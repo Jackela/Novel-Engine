@@ -9,7 +9,13 @@ types, and state transitions in the turn orchestration system.
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
+
+# Import orchestration domain type safety patterns
+from ...infrastructure.orchestration_domain_types import (
+    DataclassValidationPatterns,
+    OrchestrationDomainTyping,
+)
 
 
 class PhaseType(Enum):
@@ -32,24 +38,24 @@ class PhaseType(Enum):
     def get_display_name(self) -> str:
         """Get human-readable phase name."""
         names = {
-            self.WORLD_UPDATE: "World State Update",
-            self.SUBJECTIVE_BRIEF: "Subjective Brief Generation",
-            self.INTERACTION_ORCHESTRATION: "Interaction Orchestration",
-            self.EVENT_INTEGRATION: "Event Integration",
-            self.NARRATIVE_INTEGRATION: "Narrative Integration",
+            PhaseType.WORLD_UPDATE.value: "World State Update",
+            PhaseType.SUBJECTIVE_BRIEF.value: "Subjective Brief Generation",
+            PhaseType.INTERACTION_ORCHESTRATION.value: "Interaction Orchestration",
+            PhaseType.EVENT_INTEGRATION.value: "Event Integration",
+            PhaseType.NARRATIVE_INTEGRATION.value: "Narrative Integration",
         }
-        return names[self]
+        return names.get(self.value, f"Unknown Phase: {self.value}")
 
     def get_phase_order(self) -> int:
         """Get numeric ordering of phases."""
         order = {
-            self.WORLD_UPDATE: 1,
-            self.SUBJECTIVE_BRIEF: 2,
-            self.INTERACTION_ORCHESTRATION: 3,
-            self.EVENT_INTEGRATION: 4,
-            self.NARRATIVE_INTEGRATION: 5,
+            PhaseType.WORLD_UPDATE.value: 1,
+            PhaseType.SUBJECTIVE_BRIEF.value: 2,
+            PhaseType.INTERACTION_ORCHESTRATION.value: 3,
+            PhaseType.EVENT_INTEGRATION.value: 4,
+            PhaseType.NARRATIVE_INTEGRATION.value: 5,
         }
-        return order[self]
+        return order.get(self.value, 0)
 
     def get_next_phase(self) -> Optional["PhaseType"]:
         """Get the next phase in sequence."""
@@ -58,12 +64,12 @@ class PhaseType(Enum):
             return None  # Last phase
 
         next_phases = {
-            1: self.SUBJECTIVE_BRIEF,
-            2: self.INTERACTION_ORCHESTRATION,
-            3: self.EVENT_INTEGRATION,
-            4: self.NARRATIVE_INTEGRATION,
+            1: PhaseType.SUBJECTIVE_BRIEF,
+            2: PhaseType.INTERACTION_ORCHESTRATION,
+            3: PhaseType.EVENT_INTEGRATION,
+            4: PhaseType.NARRATIVE_INTEGRATION,
         }
-        return next_phases.get(order)
+        return next_phases.get(order, None)
 
     def get_previous_phase(self) -> Optional["PhaseType"]:
         """Get the previous phase in sequence."""
@@ -72,12 +78,12 @@ class PhaseType(Enum):
             return None  # First phase
 
         prev_phases = {
-            2: self.WORLD_UPDATE,
-            3: self.SUBJECTIVE_BRIEF,
-            4: self.INTERACTION_ORCHESTRATION,
-            5: self.EVENT_INTEGRATION,
+            2: PhaseType.WORLD_UPDATE,
+            3: PhaseType.SUBJECTIVE_BRIEF,
+            4: PhaseType.INTERACTION_ORCHESTRATION,
+            5: PhaseType.EVENT_INTEGRATION,
         }
-        return prev_phases.get(order)
+        return prev_phases.get(order, None)
 
     @classmethod
     def get_all_phases_ordered(cls) -> List["PhaseType"]:
@@ -112,32 +118,54 @@ class PhaseStatusEnum(Enum):
 
     def is_terminal(self) -> bool:
         """Check if this is a terminal state."""
-        return self in {self.COMPLETED, self.FAILED, self.COMPENSATED, self.SKIPPED}
+        return self in {
+            PhaseStatusEnum.COMPLETED,
+            PhaseStatusEnum.FAILED,
+            PhaseStatusEnum.COMPENSATED,
+            PhaseStatusEnum.SKIPPED,
+        }
 
     def is_active(self) -> bool:
         """Check if phase is actively executing."""
-        return self in {self.RUNNING, self.COMPENSATING}
+        return self in {PhaseStatusEnum.RUNNING, PhaseStatusEnum.COMPENSATING}
 
     def is_successful(self) -> bool:
         """Check if phase completed successfully."""
-        return self == self.COMPLETED
+        return self == PhaseStatusEnum.COMPLETED
 
     def is_failure(self) -> bool:
         """Check if phase failed."""
-        return self in {self.FAILED, self.COMPENSATED}
+        return self in {PhaseStatusEnum.FAILED, PhaseStatusEnum.COMPENSATED}
 
     def can_transition_to(self, new_status: "PhaseStatusEnum") -> bool:
         """Check if transition to new status is valid."""
-        valid_transitions = {
-            self.PENDING: {self.RUNNING, self.SKIPPED},
-            self.RUNNING: {self.COMPLETED, self.FAILED},
-            self.COMPLETED: {self.COMPENSATING},
-            self.FAILED: {self.COMPENSATING, self.COMPENSATED},
-            self.COMPENSATING: {self.COMPENSATED, self.FAILED},
-            self.COMPENSATED: set(),  # Terminal
-            self.SKIPPED: set(),  # Terminal
-        }
-        return new_status in valid_transitions.get(self, set())
+        # Use explicit enum type checking for MyPy compatibility
+        if self == PhaseStatusEnum.PENDING:
+            return new_status in {
+                PhaseStatusEnum.RUNNING,
+                PhaseStatusEnum.SKIPPED,
+            }
+        elif self == PhaseStatusEnum.RUNNING:
+            return new_status in {
+                PhaseStatusEnum.COMPLETED,
+                PhaseStatusEnum.FAILED,
+            }
+        elif self == PhaseStatusEnum.COMPLETED:
+            return new_status in {PhaseStatusEnum.COMPENSATING}
+        elif self == PhaseStatusEnum.FAILED:
+            return new_status in {
+                PhaseStatusEnum.COMPENSATING,
+                PhaseStatusEnum.COMPENSATED,
+            }
+        elif self == PhaseStatusEnum.COMPENSATING:
+            return new_status in {
+                PhaseStatusEnum.COMPENSATED,
+                PhaseStatusEnum.FAILED,
+            }
+        elif self in {PhaseStatusEnum.COMPENSATED, PhaseStatusEnum.SKIPPED}:
+            return False  # Terminal states
+        else:
+            return False
 
 
 @dataclass(frozen=True)
@@ -176,17 +204,27 @@ class PhaseStatus:
     progress_percentage: int = 0
     events_processed: int = 0
     error_message: Optional[str] = None
-    compensation_actions: List[str] = None
-    metadata: Dict[str, Any] = None
+    compensation_actions: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
         """Validate phase status structure and business rules."""
-        # Initialize mutable defaults
-        if self.compensation_actions is None:
-            object.__setattr__(self, "compensation_actions", [])
+        # Initialize mutable defaults using type-safe patterns
+        safe_compensation_actions = (
+            DataclassValidationPatterns.safe_list_field_initialization(
+                self.compensation_actions
+            )
+        )
+        safe_metadata = (
+            DataclassValidationPatterns.safe_dict_field_initialization(
+                self.metadata
+            )
+        )
 
-        if self.metadata is None:
-            object.__setattr__(self, "metadata", {})
+        object.__setattr__(
+            self, "compensation_actions", safe_compensation_actions
+        )
+        object.__setattr__(self, "metadata", safe_metadata)
 
         # Validate progress percentage
         if not 0 <= self.progress_percentage <= 100:
@@ -199,7 +237,9 @@ class PhaseStatus:
         # Validate business rules based on status
         if self.status.is_terminal() and self.status.is_successful():
             if self.completed_at is None:
-                raise ValueError("Completed phases must have completion timestamp")
+                raise ValueError(
+                    "Completed phases must have completion timestamp"
+                )
             if self.progress_percentage != 100:
                 raise ValueError("Completed phases must have 100% progress")
 
@@ -310,7 +350,9 @@ class PhaseStatus:
             metadata=metadata or {},
         )
 
-    def transition_to(self, new_status: PhaseStatusEnum, **updates) -> "PhaseStatus":
+    def transition_to(
+        self, new_status: PhaseStatusEnum, **updates
+    ) -> "PhaseStatus":
         """
         Create new phase status with status transition.
 
@@ -330,7 +372,10 @@ class PhaseStatus:
             )
 
         # Set defaults for specific transitions
-        if new_status == PhaseStatusEnum.RUNNING and "started_at" not in updates:
+        if (
+            new_status == PhaseStatusEnum.RUNNING
+            and "started_at" not in updates
+        ):
             updates["started_at"] = datetime.now()
 
         if new_status == PhaseStatusEnum.COMPLETED:
@@ -353,12 +398,14 @@ class PhaseStatus:
             progress_percentage=updates.get(
                 "progress_percentage", self.progress_percentage
             ),
-            events_processed=updates.get("events_processed", self.events_processed),
+            events_processed=updates.get(
+                "events_processed", self.events_processed
+            ),
             error_message=updates.get("error_message", self.error_message),
             compensation_actions=updates.get(
                 "compensation_actions", self.compensation_actions
             ),
-            metadata={**self.metadata, **updates.get("metadata", {})},
+            metadata={**(self.metadata or {}), **updates.get("metadata", {})},
         )
 
     def update_progress(
@@ -396,7 +443,10 @@ class PhaseStatus:
             events_processed=events_processed or self.events_processed,
             error_message=self.error_message,
             compensation_actions=self.compensation_actions,
-            metadata={**self.metadata, **updates["metadata"]},
+            metadata={
+                **(self.metadata or {}),
+                **cast(Dict[str, Any], updates.get("metadata") or {}),
+            },
         )
 
     def get_execution_time(self) -> Optional[timedelta]:

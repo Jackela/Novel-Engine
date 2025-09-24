@@ -23,15 +23,22 @@ import opentelemetry.baggage as baggage
 # OpenTelemetry imports
 from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+    OTLPSpanExporter,
+)
+from opentelemetry.instrumentation.aiohttp_client import (
+    AioHttpClientInstrumentor,
+)
 from opentelemetry.instrumentation.asyncio import AsyncIOInstrumentor
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.instrumentation.sqlite3 import SQLite3Instrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+)
 from opentelemetry.sdk.trace.sampling import TraceIdRatioBased
 from opentelemetry.trace import Status, StatusCode
 
@@ -47,10 +54,14 @@ class TracingConfig:
     environment: str = "production"
 
     # Sampling configuration
-    sampling_rate: float = 1.0  # 100% sampling for production readiness assessment
+    sampling_rate: float = (
+        1.0  # 100% sampling for production readiness assessment
+    )
 
     # Exporter configuration
-    jaeger_endpoint: Optional[str] = None  # "http://localhost:14268/api/traces"
+    jaeger_endpoint: Optional[
+        str
+    ] = None  # "http://localhost:14268/api/traces"
     otlp_endpoint: Optional[str] = None  # "http://localhost:4317"
     console_export: bool = True
 
@@ -92,7 +103,9 @@ class TracingManager:
 
             # Create tracer provider with sampling
             sampler = TraceIdRatioBased(self.config.sampling_rate)
-            self.tracer_provider = TracerProvider(resource=resource, sampler=sampler)
+            self.tracer_provider = TracerProvider(
+                resource=resource, sampler=sampler
+            )
 
             # Set up exporters
             self._setup_exporters()
@@ -301,7 +314,10 @@ def trace_function(
                     bound_args = sig.bind(*args, **kwargs)
                     bound_args.apply_defaults()
 
-                    for param_name, param_value in bound_args.arguments.items():
+                    for (
+                        param_name,
+                        param_value,
+                    ) in bound_args.arguments.items():
                         # Only record simple types to avoid serialization issues
                         if isinstance(param_value, (str, int, float, bool)):
                             span.set_attribute(
@@ -356,7 +372,10 @@ def trace_function(
                     bound_args = sig.bind(*args, **kwargs)
                     bound_args.apply_defaults()
 
-                    for param_name, param_value in bound_args.arguments.items():
+                    for (
+                        param_name,
+                        param_value,
+                    ) in bound_args.arguments.items():
                         # Only record simple types to avoid serialization issues
                         if isinstance(param_value, (str, int, float, bool)):
                             span.set_attribute(
@@ -390,7 +409,11 @@ def trace_function(
                         span.set_status(Status(StatusCode.ERROR, str(e)))
                     raise
 
-        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+        return (
+            async_wrapper
+            if asyncio.iscoroutinefunction(func)
+            else sync_wrapper
+        )
 
     return decorator
 
@@ -539,7 +562,9 @@ def get_tracing_health() -> Dict[str, Any]:
     if tracing_manager:
         health.update(
             {
-                "status": "healthy" if tracing_manager.is_initialized else "unhealthy",
+                "status": "healthy"
+                if tracing_manager.is_initialized
+                else "unhealthy",
                 "initialized": tracing_manager.is_initialized,
                 "sampling_rate": tracing_manager.config.sampling_rate,
                 "service_name": tracing_manager.config.service_name,

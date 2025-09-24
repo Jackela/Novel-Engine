@@ -73,7 +73,9 @@ def demo_environment_overrides():
         # Load with overrides
         override_config = loader.load_config(force_reload=True)
 
-        print(f"With environment override - turns: {override_config.simulation.turns}")
+        print(
+            f"With environment override - turns: {override_config.simulation.turns}"
+        )
         print(
             f"With environment override - narrative style: {override_config.chronicler.narrative_style}"
         )
@@ -107,17 +109,23 @@ def demo_config_sections():
     print(f"  - Test narratives: {config.paths.test_narratives_directory}")
 
     print("\nDirector settings:")
-    print(f"  - Campaign log filename: {config.director.campaign_log_filename}")
+    print(
+        f"  - Campaign log filename: {config.director.campaign_log_filename}"
+    )
     print(f"  - Max turn history: {config.director.max_turn_history}")
     print(f"  - Error threshold: {config.director.error_threshold}")
 
     print("\nChronicler settings:")
-    print(f"  - Max events per batch: {config.chronicler.max_events_per_batch}")
+    print(
+        f"  - Max events per batch: {config.chronicler.max_events_per_batch}"
+    )
     print(f"  - Narrative style: {config.chronicler.narrative_style}")
     print(f"  - Output directory: {config.chronicler.output_directory}")
 
     print("\nFeature flags:")
-    print(f"  - AI enhanced narratives: {config.features.ai_enhanced_narratives}")
+    print(
+        f"  - AI enhanced narratives: {config.features.ai_enhanced_narratives}"
+    )
     print(f"  - Advanced world state: {config.features.advanced_world_state}")
     print(f"  - Multiplayer support: {config.features.multiplayer_support}")
 

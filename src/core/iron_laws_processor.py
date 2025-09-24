@@ -15,14 +15,8 @@ from src.persona_agent import PersonaAgent
 # Try to import Iron Laws types
 try:
     from src.shared_types import (
-        ActionIntensity,
-        ActionParameters,
-        ActionTarget,
         ActionType,
         CharacterData,
-        CharacterResources,
-        CharacterStats,
-        EntityType,
         IronLawsReport,
         IronLawsViolation,
         Position,
@@ -30,7 +24,6 @@ try:
         ResourceValue,
         ValidatedAction,
         ValidationResult,
-        ValidationStatus,
     )
 
     IRON_LAWS_AVAILABLE = True
@@ -63,7 +56,9 @@ class IronLawsProcessor:
         """Initialize the Iron Laws Processor."""
         self.validation_enabled = IRON_LAWS_AVAILABLE
         if not self.validation_enabled:
-            logger.warning("Iron Laws validation disabled - types not available")
+            logger.warning(
+                "Iron Laws validation disabled - types not available"
+            )
 
     def adjudicate_action(
         self,
@@ -89,14 +84,13 @@ class IronLawsProcessor:
         """
         if not self.validation_enabled:
             # Return a dummy approval if validation is disabled
-            from src.shared_types import (
-                IronLawsReport,
-                ValidationResult,
-            )
+            from src.shared_types import IronLawsReport, ValidationResult
 
             return IronLawsReport(
-                character_id=getattr(proposed_action, "character_id", "unknown"),
-                action_summary=f"Action: {getattr(proposed_action, 'action_type', 'unknown')}",
+                character_id=getattr(
+                    proposed_action, "character_id", "unknown"
+                ),
+                action_summary=f"Action: {getattr( proposed_action, 'action_type', 'unknown')}",
                 validation_result=ValidationResult.APPROVED,
                 violations=[],
                 repaired_action=None,
@@ -125,10 +119,14 @@ class IronLawsProcessor:
                 )
             )
             all_violations.extend(
-                self._validate_narrative_law(proposed_action, agent, world_context)
+                self._validate_narrative_law(
+                    proposed_action, agent, world_context
+                )
             )
             all_violations.extend(
-                self._validate_social_law(proposed_action, agent, world_context)
+                self._validate_social_law(
+                    proposed_action, agent, world_context
+                )
             )
 
             # Determine overall validation result
@@ -139,7 +137,10 @@ class IronLawsProcessor:
             # Attempt repairs if there are violations
             repaired_action = None
             repair_log = []
-            if all_violations and validation_result != ValidationResult.REJECTED:
+            if (
+                all_violations
+                and validation_result != ValidationResult.REJECTED
+            ):
                 repaired_action, repair_log = self._attempt_action_repairs(
                     proposed_action, all_violations, character_data
                 )
@@ -147,7 +148,7 @@ class IronLawsProcessor:
             # Create comprehensive report
             report = IronLawsReport(
                 character_id=proposed_action.character_id,
-                action_summary=f"{proposed_action.action_type}: {getattr(proposed_action, 'description', 'No description')}",
+                action_summary=f"{proposed_action.action_type}: {getattr( proposed_action, 'description', 'No description')}",
                 validation_result=validation_result,
                 violations=all_violations,
                 repaired_action=repaired_action,
@@ -160,7 +161,9 @@ class IronLawsProcessor:
             logger.error(f"Error during Iron Laws validation: {str(e)}")
             # Return rejection on unexpected errors
             return IronLawsReport(
-                character_id=getattr(proposed_action, "character_id", "unknown"),
+                character_id=getattr(
+                    proposed_action, "character_id", "unknown"
+                ),
                 action_summary="Validation Error",
                 validation_result=ValidationResult.REJECTED,
                 violations=[
@@ -229,7 +232,9 @@ class IronLawsProcessor:
         return violations
 
     def _validate_resource_law(
-        self, action: "ProposedAction", character_data: Optional["CharacterData"]
+        self,
+        action: "ProposedAction",
+        character_data: Optional["CharacterData"],
     ) -> List["IronLawsViolation"]:
         """
         E002 Resource Law: Characters cannot exceed their capabilities/resources.
@@ -255,7 +260,9 @@ class IronLawsProcessor:
         # Check stamina requirements
         stamina_cost = self._calculate_action_stamina_cost(action)
         current_stamina = getattr(
-            character_data.resources, "stamina", ResourceValue(current=100, maximum=100)
+            character_data.resources,
+            "stamina",
+            ResourceValue(current=100, maximum=100),
         )
 
         if current_stamina.current < stamina_cost:
@@ -316,8 +323,12 @@ class IronLawsProcessor:
         if action.action_type == ActionType.MOVE and action.target:
             if hasattr(action.target, "position"):
                 target_position = action.target.position
-                distance = self._calculate_distance(character_position, target_position)
-                max_movement = self._calculate_max_movement_distance(character_data)
+                distance = self._calculate_distance(
+                    character_position, target_position
+                )
+                max_movement = self._calculate_max_movement_distance(
+                    character_data
+                )
 
                 if distance > max_movement:
                     violations.append(
@@ -325,7 +336,7 @@ class IronLawsProcessor:
                             law_code="E003",
                             law_name="Physics_Law",
                             severity="error",
-                            description=f"Movement distance {distance:.1f} exceeds maximum {max_movement:.1f}",
+                            description=f"Movement distance {distance:.1f}exceeds maximum {max_movement:.1f}",
                             affected_entities=[action.character_id],
                             suggested_repair="Choose a closer destination or move in stages",
                         )
@@ -385,7 +396,9 @@ class IronLawsProcessor:
                 )
 
         # Check personality consistency
-        if self._action_contradicts_personality(action, agent.personality_traits):
+        if self._action_contradicts_personality(
+            action, agent.personality_traits
+        ):
             violations.append(
                 IronLawsViolation(
                     law_code="E004",
@@ -420,7 +433,9 @@ class IronLawsProcessor:
             )
             agent_rank = getattr(agent, "military_rank", "private")
 
-            if self._is_insubordinate_communication(action, agent_rank, target_rank):
+            if self._is_insubordinate_communication(
+                action, agent_rank, target_rank
+            ):
                 violations.append(
                     IronLawsViolation(
                         law_code="E005",
@@ -466,23 +481,38 @@ class IronLawsProcessor:
         # Attempt repairs for each law
         for law_name, law_violations in grouped_violations.items():
             if law_name == "Causality_Law":
-                modified_action, law_repair_log = self._repair_causality_violations(
+                (
+                    modified_action,
+                    law_repair_log,
+                ) = self._repair_causality_violations(
                     modified_action, law_violations, character_data
                 )
             elif law_name == "Resource_Law":
-                modified_action, law_repair_log = self._repair_resource_violations(
+                (
+                    modified_action,
+                    law_repair_log,
+                ) = self._repair_resource_violations(
                     modified_action, law_violations, character_data
                 )
             elif law_name == "Physics_Law":
-                modified_action, law_repair_log = self._repair_physics_violations(
+                (
+                    modified_action,
+                    law_repair_log,
+                ) = self._repair_physics_violations(
                     modified_action, law_violations, character_data
                 )
             elif law_name == "Narrative_Law":
-                modified_action, law_repair_log = self._repair_narrative_violations(
+                (
+                    modified_action,
+                    law_repair_log,
+                ) = self._repair_narrative_violations(
                     modified_action, law_violations, character_data
                 )
             elif law_name == "Social_Law":
-                modified_action, law_repair_log = self._repair_social_violations(
+                (
+                    modified_action,
+                    law_repair_log,
+                ) = self._repair_social_violations(
                     modified_action, law_violations, character_data
                 )
 
@@ -510,7 +540,9 @@ class IronLawsProcessor:
         """Calculate stamina cost for an action."""
         return 10  # Placeholder
 
-    def _get_action_equipment_requirements(self, action: "ProposedAction") -> List[str]:
+    def _get_action_equipment_requirements(
+        self, action: "ProposedAction"
+    ) -> List[str]:
         """Get equipment requirements for an action."""
         return []  # Placeholder
 
@@ -594,7 +626,9 @@ class IronLawsProcessor:
         return action, ["Social repair not implemented"]
 
     def _convert_proposed_to_validated(
-        self, proposed_action: "ProposedAction", validation_result: "ValidationResult"
+        self,
+        proposed_action: "ProposedAction",
+        validation_result: "ValidationResult",
     ) -> "ValidatedAction":
         """Convert proposed action to validated action."""
         # Placeholder implementation
@@ -608,7 +642,9 @@ class IronLawsProcessor:
             return ValidationResult.APPROVED
 
         # Check for critical violations
-        critical_violations = [v for v in violations if v.severity == "critical"]
+        critical_violations = [
+            v for v in violations if v.severity == "critical"
+        ]
         if critical_violations:
             return ValidationResult.REJECTED
 

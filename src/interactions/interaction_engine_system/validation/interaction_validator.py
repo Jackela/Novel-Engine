@@ -18,7 +18,11 @@ from ..core.types import (
 
 # Import enhanced core systems
 try:
-    from src.core.data_models import CharacterState, ErrorInfo, StandardResponse
+    from src.core.data_models import (
+        CharacterState,
+        ErrorInfo,
+        StandardResponse,
+    )
     from src.core.types import AgentID
 except ImportError:
     # Fallback for testing
@@ -57,7 +61,9 @@ class InteractionValidator:
     """
 
     def __init__(
-        self, config: InteractionEngineConfig, logger: Optional[logging.Logger] = None
+        self,
+        config: InteractionEngineConfig,
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize interaction validator.
@@ -139,7 +145,9 @@ class InteractionValidator:
             validation_results.append("participants")
 
             # Type-specific validation
-            type_validator = self._validation_rules.get(context.interaction_type)
+            type_validator = self._validation_rules.get(
+                context.interaction_type
+            )
             if type_validator:
                 type_validation = await type_validator(context)
                 if not type_validation["valid"]:
@@ -155,7 +163,9 @@ class InteractionValidator:
 
             # Resource validation
             if self.config.enforce_resource_requirements:
-                resource_validation = self._validate_resource_requirements(context)
+                resource_validation = self._validate_resource_requirements(
+                    context
+                )
                 if not resource_validation["valid"]:
                     return StandardResponse(
                         success=False,
@@ -232,7 +242,9 @@ class InteractionValidator:
             failed_prerequisites = []
 
             for prerequisite in context.prerequisites:
-                if await self._check_single_prerequisite(context, prerequisite):
+                if await self._check_single_prerequisite(
+                    context, prerequisite
+                ):
                     satisfied_prerequisites.append(prerequisite)
                 else:
                     failed_prerequisites.append(prerequisite)
@@ -273,7 +285,9 @@ class InteractionValidator:
                 ),
             )
 
-    def calculate_risk_assessment(self, context: InteractionContext) -> Dict[str, Any]:
+    def calculate_risk_assessment(
+        self, context: InteractionContext
+    ) -> Dict[str, Any]:
         """
         Calculate risk assessment for interaction.
 
@@ -358,11 +372,17 @@ class InteractionValidator:
 
         except Exception as e:
             self.logger.error(f"Risk assessment failed: {e}")
-            return {"risk_score": 0.5, "risk_level": "Unknown", "error": str(e)}
+            return {
+                "risk_score": 0.5,
+                "risk_level": "Unknown",
+                "error": str(e),
+            }
 
     # Private validation methods
 
-    def _validate_basic_context(self, context: InteractionContext) -> Dict[str, Any]:
+    def _validate_basic_context(
+        self, context: InteractionContext
+    ) -> Dict[str, Any]:
         """Validate basic context requirements."""
         if not context.interaction_id:
             return {"valid": False, "message": "Missing interaction ID"}
@@ -371,10 +391,16 @@ class InteractionValidator:
             return {"valid": False, "message": "No participants specified"}
 
         if len(context.participants) < 1:
-            return {"valid": False, "message": "At least one participant required"}
+            return {
+                "valid": False,
+                "message": "At least one participant required",
+            }
 
         if context.initiator and context.initiator not in context.participants:
-            return {"valid": False, "message": "Initiator must be a participant"}
+            return {
+                "valid": False,
+                "message": "Initiator must be a participant",
+            }
 
         return {"valid": True, "message": "Basic context validation passed"}
 
@@ -386,11 +412,17 @@ class InteractionValidator:
         # For now, simulate basic validation
 
         if len(context.participants) > 10:  # Arbitrary limit
-            return {"valid": False, "message": "Too many participants (max 10)"}
+            return {
+                "valid": False,
+                "message": "Too many participants (max 10)",
+            }
 
         # Check for duplicate participants
         if len(context.participants) != len(set(context.participants)):
-            return {"valid": False, "message": "Duplicate participants not allowed"}
+            return {
+                "valid": False,
+                "message": "Duplicate participants not allowed",
+            }
 
         return {"valid": True, "message": "Participant validation passed"}
 
@@ -414,7 +446,9 @@ class InteractionValidator:
 
         return {"valid": True, "message": "Resource validation passed"}
 
-    def _validate_constraints(self, context: InteractionContext) -> Dict[str, Any]:
+    def _validate_constraints(
+        self, context: InteractionContext
+    ) -> Dict[str, Any]:
         """Validate interaction constraints."""
         # Simulate constraint validation
         constraints = context.constraints

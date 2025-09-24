@@ -41,14 +41,20 @@ class ConfigurationSystemValidator:
         validation_tests = [
             ("Config Directory Structure", self.validate_directory_structure),
             ("Configuration File Loading", self.validate_config_loading),
-            ("Environment-specific Configs", self.validate_environment_configs),
+            (
+                "Environment-specific Configs",
+                self.validate_environment_configs,
+            ),
             ("Configuration Inheritance", self.validate_config_inheritance),
             ("Python Module Imports", self.validate_python_imports),
             ("Path Resolution", self.validate_path_resolution),
             ("YAML File Parsing", self.validate_yaml_parsing),
             ("Environment Variables", self.validate_environment_variables),
             ("Config Loader Functionality", self.validate_config_loader),
-            ("Cross-Environment Compatibility", self.validate_cross_environment),
+            (
+                "Cross-Environment Compatibility",
+                self.validate_cross_environment,
+            ),
         ]
 
         start_time = datetime.now()
@@ -60,7 +66,9 @@ class ConfigurationSystemValidator:
                 self.validation_results[test_name] = {
                     "status": "PASSED" if result else "FAILED",
                     "details": (
-                        result if isinstance(result, dict) else {"result": result}
+                        result
+                        if isinstance(result, dict)
+                        else {"result": result}
                     ),
                 }
 
@@ -88,7 +96,9 @@ class ConfigurationSystemValidator:
             "passed_tests": len(self.passed_tests),
             "failed_tests": len(self.failed_tests),
             "success_rate": len(self.passed_tests) / len(validation_tests),
-            "overall_status": "PASSED" if len(self.failed_tests) == 0 else "FAILED",
+            "overall_status": "PASSED"
+            if len(self.failed_tests) == 0
+            else "FAILED",
             "test_results": self.validation_results,
             "failed_test_names": self.failed_tests,
             "passed_test_names": self.passed_tests,
@@ -122,7 +132,11 @@ class ConfigurationSystemValidator:
             "configs/security/security.yaml",
         ]
 
-        structure_results = {"directories": {}, "files": {}, "all_present": True}
+        structure_results = {
+            "directories": {},
+            "files": {},
+            "all_present": True,
+        }
 
         # Check directories
         for dir_path in required_dirs:
@@ -160,7 +174,9 @@ class ConfigurationSystemValidator:
 
         # Test importing config loader
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             results["config_loader_import"] = True
         except ImportError as e:
@@ -219,7 +235,9 @@ class ConfigurationSystemValidator:
             default_config = loader.load_default_config()
             results["configurations_loaded"]["default"] = {
                 "success": default_config is not None,
-                "config_keys": list(default_config.keys()) if default_config else None,
+                "config_keys": list(default_config.keys())
+                if default_config
+                else None,
             }
 
         except Exception as e:
@@ -237,7 +255,9 @@ class ConfigurationSystemValidator:
         }
 
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             loader = ConfigEnvironmentLoader()
 
@@ -256,7 +276,10 @@ class ConfigurationSystemValidator:
                         "has_api_config": "api" in config if config else False,
                     }
                 except Exception as e:
-                    results["environments"][env] = {"loaded": False, "error": str(e)}
+                    results["environments"][env] = {
+                        "loaded": False,
+                        "error": str(e),
+                    }
 
             # Test configuration inheritance
             try:
@@ -290,7 +313,9 @@ class ConfigurationSystemValidator:
         }
 
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             loader = ConfigEnvironmentLoader()
 
@@ -318,7 +343,9 @@ class ConfigurationSystemValidator:
                 results["override_keys"] = dev_only_keys
 
                 # Test merge: final config should have both
-                merged_keys = set(list(base_config.keys()) + list(dev_config.keys()))
+                merged_keys = set(
+                    list(base_config.keys()) + list(dev_config.keys())
+                )
                 expected_keys = len(base_config) + len(dev_only_keys)
 
                 results["merge_test"] = len(merged_keys) >= expected_keys
@@ -335,7 +362,10 @@ class ConfigurationSystemValidator:
 
         import_tests = [
             ("configs", "configs"),
-            ("configs.config_environment_loader", "configs.config_environment_loader"),
+            (
+                "configs.config_environment_loader",
+                "configs.config_environment_loader",
+            ),
             ("configs.environments", "configs.environments"),
             ("configs.nginx", "configs.nginx"),
             ("configs.prometheus", "configs.prometheus"),
@@ -351,7 +381,10 @@ class ConfigurationSystemValidator:
                 __import__(import_path)
                 results["imports"][module_name] = {"success": True}
             except ImportError as e:
-                results["imports"][module_name] = {"success": False, "error": str(e)}
+                results["imports"][module_name] = {
+                    "success": False,
+                    "error": str(e),
+                }
                 results["all_imports_successful"] = False
             except Exception as e:
                 results["imports"][module_name] = {
@@ -372,7 +405,9 @@ class ConfigurationSystemValidator:
         }
 
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             ConfigEnvironmentLoader()
 
@@ -387,7 +422,9 @@ class ConfigurationSystemValidator:
 
             for test_name, expected_path in relative_tests:
                 # Test if the path exists from different starting points
-                test_path = self.project_root / expected_path.replace("../", "")
+                test_path = self.project_root / expected_path.replace(
+                    "../", ""
+                )
                 results["relative_paths"][test_name] = {
                     "expected": expected_path,
                     "resolved": str(test_path),
@@ -409,14 +446,19 @@ class ConfigurationSystemValidator:
                 results["absolute_paths"][path_name] = {
                     "path": abs_path,
                     "exists": path_obj.exists(),
-                    "is_directory": path_obj.is_dir() if path_obj.exists() else False,
+                    "is_directory": path_obj.is_dir()
+                    if path_obj.exists()
+                    else False,
                 }
                 if not path_obj.exists():
                     results["all_paths_resolved"] = False
 
             # Test config file paths
             config_paths = [
-                ("development_config", "configs/environments/development.yaml"),
+                (
+                    "development_config",
+                    "configs/environments/development.yaml",
+                ),
                 ("nginx_config", "configs/nginx/nginx.conf"),
                 ("prometheus_config", "configs/prometheus/prometheus.yml"),
                 ("security_config", "configs/security/security.yaml"),
@@ -475,15 +517,21 @@ class ConfigurationSystemValidator:
                                 "parsed_successfully": True,
                                 "content_type": type(parsed).__name__,
                                 "content_size": len(content),
-                                "structure": self._analyze_yaml_structure(parsed),
+                                "structure": self._analyze_yaml_structure(
+                                    parsed
+                                ),
                             }
                         )
                 except yaml.YAMLError as e:
-                    results["yaml_files"][file_name]["parsed_successfully"] = False
+                    results["yaml_files"][file_name][
+                        "parsed_successfully"
+                    ] = False
                     results["yaml_files"][file_name]["yaml_error"] = str(e)
                     results["all_yaml_valid"] = False
                 except Exception as e:
-                    results["yaml_files"][file_name]["parsed_successfully"] = False
+                    results["yaml_files"][file_name][
+                        "parsed_successfully"
+                    ] = False
                     results["yaml_files"][file_name]["error"] = str(e)
                     results["all_yaml_valid"] = False
             else:
@@ -528,7 +576,10 @@ class ConfigurationSystemValidator:
 
     def validate_environment_variables(self) -> Dict[str, Any]:
         """Test environment variables and runtime configuration"""
-        results = {"environment_variables": {}, "env_config_integration": False}
+        results = {
+            "environment_variables": {},
+            "env_config_integration": False,
+        }
 
         # Test common environment variables
         env_vars = [
@@ -549,7 +600,9 @@ class ConfigurationSystemValidator:
 
         # Test environment variable integration with config
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             loader = ConfigEnvironmentLoader()
 
@@ -568,7 +621,9 @@ class ConfigurationSystemValidator:
         results = {"loader_functionality": {}, "all_functions_working": True}
 
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             loader = ConfigEnvironmentLoader()
 
@@ -581,7 +636,9 @@ class ConfigurationSystemValidator:
                 ),
                 (
                     "get_config_path",
-                    lambda: loader.get_config_path("environments", "development.yaml"),
+                    lambda: loader.get_config_path(
+                        "environments", "development.yaml"
+                    ),
                 ),
                 ("validate_config", lambda: True),  # Assume this method exists
             ]
@@ -591,7 +648,9 @@ class ConfigurationSystemValidator:
                     result = test_func()
                     results["loader_functionality"][test_name] = {
                         "success": result is not None,
-                        "result_type": type(result).__name__ if result else "None",
+                        "result_type": type(result).__name__
+                        if result
+                        else "None",
                     }
                 except AttributeError:
                     results["loader_functionality"][test_name] = {
@@ -622,7 +681,9 @@ class ConfigurationSystemValidator:
         environments = ["development", "staging", "production"]
 
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             loader = ConfigEnvironmentLoader()
 
@@ -638,18 +699,26 @@ class ConfigurationSystemValidator:
                     }
                 except Exception as e:
                     configs[env] = None
-                    results["environments"][env] = {"loaded": False, "error": str(e)}
+                    results["environments"][env] = {
+                        "loaded": False,
+                        "error": str(e),
+                    }
                     results["all_environments_compatible"] = False
 
             # Check consistency across environments
             if len(configs) > 1:
                 # Get common keys across all loaded configs
-                loaded_configs = {k: v for k, v in configs.items() if v is not None}
+                loaded_configs = {
+                    k: v for k, v in configs.items() if v is not None
+                }
                 if loaded_configs:
                     key_sets = [
-                        set(config.keys()) for config in loaded_configs.values()
+                        set(config.keys())
+                        for config in loaded_configs.values()
                     ]
-                    common_keys = set.intersection(*key_sets) if key_sets else set()
+                    common_keys = (
+                        set.intersection(*key_sets) if key_sets else set()
+                    )
                     all_keys = set.union(*key_sets) if key_sets else set()
 
                     results["consistency_check"] = {
@@ -689,7 +758,9 @@ def main():
     print("🏁 Wave 5 Configuration System Validation Results")
     print(f"{'='*80}")
     print(f"📊 Total Tests: {results['total_tests']}")
-    print(f"✅ Passed: {results['passed_tests']} ({results['success_rate']:.1%})")
+    print(
+        f"✅ Passed: {results['passed_tests']} ({results['success_rate']:.1%})"
+    )
     print(f"❌ Failed: {results['failed_tests']}")
     print(f"⏱️  Duration: {results['duration_seconds']:.2f} seconds")
     print(f"🎯 Overall Status: {results['overall_status']}")

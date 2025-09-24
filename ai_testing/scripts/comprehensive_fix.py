@@ -27,7 +27,9 @@ class ComprehensiveFixer:
         print("\n🔧 Wave 1: Fixing Orchestrator Health Check...")
 
         # Fix the health check logic in master_orchestrator.py
-        orchestrator_file = self.base_path / "orchestration" / "master_orchestrator.py"
+        orchestrator_file = (
+            self.base_path / "orchestration" / "master_orchestrator.py"
+        )
 
         if orchestrator_file.exists():
             content = orchestrator_file.read_text(encoding="utf-8")
@@ -47,7 +49,9 @@ class ComprehensiveFixer:
             if old_status in content:
                 content = content.replace(old_status, new_status)
                 orchestrator_file.write_text(content, encoding="utf-8")
-                print("  ✅ Fixed message_queue_status to always show connected")
+                print(
+                    "  ✅ Fixed message_queue_status to always show connected"
+                )
                 self.fixes_applied.append("orchestrator_health_status")
                 self.services_to_restart.append("orchestrator")
 
@@ -57,7 +61,9 @@ class ComprehensiveFixer:
         """Fix API testing service to return correct test results"""
         print("\n🔧 Wave 2: Fixing API Testing Service Response...")
 
-        api_service_file = self.base_path / "services" / "api_testing_service.py"
+        api_service_file = (
+            self.base_path / "services" / "api_testing_service.py"
+        )
 
         if api_service_file.exists():
             content = api_service_file.read_text(encoding="utf-8")
@@ -98,7 +104,9 @@ class ComprehensiveFixer:
                 if fix_needed:
                     content = "\n".join(new_lines)
                     api_service_file.write_text(content, encoding="utf-8")
-                    print("  ✅ Added special handling for health endpoint tests")
+                    print(
+                        "  ✅ Added special handling for health endpoint tests"
+                    )
                     self.fixes_applied.append("api_health_test_handling")
                     self.services_to_restart.append("api_testing")
 
@@ -108,7 +116,9 @@ class ComprehensiveFixer:
         """Fix E2E workflow to properly calculate scores"""
         print("\n🔧 Wave 3: Fixing E2E Workflow...")
 
-        orchestrator_file = self.base_path / "orchestration" / "master_orchestrator.py"
+        orchestrator_file = (
+            self.base_path / "orchestration" / "master_orchestrator.py"
+        )
 
         if orchestrator_file.exists():
             content = orchestrator_file.read_text(encoding="utf-8")
@@ -136,7 +146,9 @@ class ComprehensiveFixer:
         print("\n🔧 Wave 5: Normalizing Service Names...")
 
         # Service names should use hyphens in URLs and underscores in code
-        print("  ✅ Service name normalization already handled by ServiceConfig")
+        print(
+            "  ✅ Service name normalization already handled by ServiceConfig"
+        )
 
         return True
 
@@ -196,7 +208,9 @@ class ComprehensiveFixer:
         print("\n📊 Running validation...")
 
         # Run the validation script
-        validation_script = self.base_path / "scripts" / "validate_deployment.py"
+        validation_script = (
+            self.base_path / "scripts" / "validate_deployment.py"
+        )
 
         if validation_script.exists():
             result = subprocess.run(

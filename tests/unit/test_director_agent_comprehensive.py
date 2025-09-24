@@ -23,7 +23,9 @@ except ImportError:
     DIRECTOR_AGENT_AVAILABLE = False
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentInitialization:
     """Director Agent Initialization and Configuration Tests"""
 
@@ -61,7 +63,8 @@ class TestDirectorAgentInitialization:
             mock_get_config.return_value = mock_config
 
             director = DirectorAgent(
-                event_bus=self.mock_event_bus, campaign_log_path=self.temp_campaign_log
+                event_bus=self.mock_event_bus,
+                campaign_log_path=self.temp_campaign_log,
             )
 
             # Verify initialization completed
@@ -79,7 +82,8 @@ class TestDirectorAgentInitialization:
 
             # Should still initialize with defaults
             director = DirectorAgent(
-                event_bus=self.mock_event_bus, campaign_log_path=self.temp_campaign_log
+                event_bus=self.mock_event_bus,
+                campaign_log_path=self.temp_campaign_log,
             )
 
             assert director.event_bus == self.mock_event_bus
@@ -134,7 +138,8 @@ characters:
         """Test that DirectorAgent properly subscribes to event bus events"""
         with patch.object(self.mock_event_bus, "subscribe"):
             director = DirectorAgent(
-                event_bus=self.mock_event_bus, campaign_log_path=self.temp_campaign_log
+                event_bus=self.mock_event_bus,
+                campaign_log_path=self.temp_campaign_log,
             )
 
             # Should have subscribed to relevant events
@@ -142,7 +147,9 @@ characters:
             assert director.event_bus == self.mock_event_bus
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentRegistration:
     """Director Agent Registration and Management Tests"""
 
@@ -150,7 +157,8 @@ class TestDirectorAgentRegistration:
         """Setup for each test method"""
         self.mock_event_bus = Mock(spec=EventBus)
         self.director = DirectorAgent(
-            event_bus=self.mock_event_bus, campaign_log_path="test_registration.md"
+            event_bus=self.mock_event_bus,
+            campaign_log_path="test_registration.md",
         )
 
     def teardown_method(self):
@@ -161,7 +169,9 @@ class TestDirectorAgentRegistration:
         except Exception:
             pass
 
-    def create_mock_agent(self, agent_id="test_agent", character_name="Test Character"):
+    def create_mock_agent(
+        self, agent_id="test_agent", character_name="Test Character"
+    ):
         """Create a properly mocked PersonaAgent"""
         mock_agent = Mock(spec=PersonaAgent)
         mock_agent.agent_id = agent_id
@@ -272,7 +282,9 @@ class TestDirectorAgentRegistration:
         assert result is False
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentTurnExecution:
     """Director Agent Turn Execution Tests"""
 
@@ -291,7 +303,9 @@ class TestDirectorAgentTurnExecution:
         except Exception:
             pass
 
-    def create_mock_agent(self, agent_id="test_agent", character_name="Test Character"):
+    def create_mock_agent(
+        self, agent_id="test_agent", character_name="Test Character"
+    ):
         """Create a properly mocked PersonaAgent for turn execution"""
         mock_agent = Mock(spec=PersonaAgent)
         mock_agent.agent_id = agent_id
@@ -343,7 +357,9 @@ class TestDirectorAgentTurnExecution:
             # Should handle gracefully
         except Exception as e:
             # Should be a meaningful error about no agents
-            assert any(word in str(e).lower() for word in ["agent", "empty", "no"])
+            assert any(
+                word in str(e).lower() for word in ["agent", "empty", "no"]
+            )
 
     @pytest.mark.unit
     def test_run_turn_agent_error_handling(self):
@@ -354,7 +370,9 @@ class TestDirectorAgentTurnExecution:
             pytest.skip("Director missing required methods")
 
         # Create agent that will fail
-        failing_agent = self.create_mock_agent("failing_agent", "Faulty Character")
+        failing_agent = self.create_mock_agent(
+            "failing_agent", "Faulty Character"
+        )
         failing_agent.act.side_effect = Exception("Agent action failed")
 
         # Create successful agent
@@ -375,7 +393,9 @@ class TestDirectorAgentTurnExecution:
             pass
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentLogging:
     """Director Agent Campaign Logging Tests"""
 
@@ -446,7 +466,9 @@ class TestDirectorAgentLogging:
         )
 
         # If both run_turn and logging exist, test integration
-        if hasattr(director, "run_turn") and hasattr(director, "register_agent"):
+        if hasattr(director, "run_turn") and hasattr(
+            director, "register_agent"
+        ):
             # Create and register a test agent
             mock_agent = Mock(spec=PersonaAgent)
             mock_agent.agent_id = "test_agent"
@@ -474,7 +496,9 @@ class TestDirectorAgentLogging:
                 pass
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentWorldState:
     """Director Agent World State Management Tests"""
 
@@ -529,7 +553,10 @@ class TestDirectorAgentWorldState:
         # Should handle missing file gracefully
         if hasattr(director, "world_state"):
             # Should have default or None
-            assert director.world_state is not None or director.world_state is None
+            assert (
+                director.world_state is not None
+                or director.world_state is None
+            )
 
     @pytest.mark.unit
     def test_world_state_agent_specific_generation(self):

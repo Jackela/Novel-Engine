@@ -58,7 +58,9 @@ class PerformanceBudget:
         """Check if time budget has been exceeded."""
         return self.get_elapsed_turn_time() > self.max_turn_time_seconds
 
-    def is_batch_budget_available(self, estimated_batch_time: float = 0.0) -> bool:
+    def is_batch_budget_available(
+        self, estimated_batch_time: float = 0.0
+    ) -> bool:
         """Check if there's enough time budget for a batch operation."""
         remaining = self.get_remaining_time()
         required = estimated_batch_time + 0.5  # Add buffer
@@ -102,7 +104,8 @@ class PerformanceBudget:
                 "timestamp": datetime.now().isoformat(),
                 "total_turn_time": total_time,
                 "budget_exceeded": total_time > self.max_turn_time_seconds,
-                "budget_utilization": (total_time / self.max_turn_time_seconds) * 100,
+                "budget_utilization": (total_time / self.max_turn_time_seconds)
+                * 100,
                 "batch_operations": len(self.batch_times),
                 "llm_operations": len(self.llm_times),
                 "avg_batch_time": (
@@ -111,7 +114,9 @@ class PerformanceBudget:
                     else 0.0
                 ),
                 "avg_llm_time": (
-                    sum(self.llm_times) / len(self.llm_times) if self.llm_times else 0.0
+                    sum(self.llm_times) / len(self.llm_times)
+                    if self.llm_times
+                    else 0.0
                 ),
             }
 
@@ -129,7 +134,9 @@ class PerformanceBudget:
             return performance_data
 
         except Exception as e:
-            self.logger.error(f"Error completing turn performance tracking: {e}")
+            self.logger.error(
+                f"Error completing turn performance tracking: {e}"
+            )
             return {}
 
     def get_performance_stats(self) -> Dict[str, Any]:
@@ -148,10 +155,13 @@ class PerformanceBudget:
                 entry["total_turn_time"] for entry in self.performance_history
             ]
             budget_exceeds = sum(
-                1 for entry in self.performance_history if entry["budget_exceeded"]
+                1
+                for entry in self.performance_history
+                if entry["budget_exceeded"]
             )
             utilizations = [
-                entry["budget_utilization"] for entry in self.performance_history
+                entry["budget_utilization"]
+                for entry in self.performance_history
             ]
 
             stats = {
@@ -179,7 +189,10 @@ class PerformanceBudget:
 
             # Compare recent 5 vs previous 5
             recent_avg = (
-                sum(entry["total_turn_time"] for entry in self.performance_history[-5:])
+                sum(
+                    entry["total_turn_time"]
+                    for entry in self.performance_history[-5:]
+                )
                 / 5
             )
             previous_avg = (
@@ -250,7 +263,9 @@ class PerformanceBudget:
             return recommendations
 
         except Exception as e:
-            self.logger.error(f"Error generating performance recommendations: {e}")
+            self.logger.error(
+                f"Error generating performance recommendations: {e}"
+            )
             return []
 
     def adjust_budgets_for_performance(
@@ -282,7 +297,9 @@ class PerformanceBudget:
             self.max_batch_time_seconds = new_batch_budget
             self.max_llm_wait_seconds = new_llm_budget
 
-            self.logger.info(f"Auto-adjusted budgets by factor {adjustment_factor:.2f}")
+            self.logger.info(
+                f"Auto-adjusted budgets by factor {adjustment_factor:.2f}"
+            )
 
             return {
                 "status": "adjusted",

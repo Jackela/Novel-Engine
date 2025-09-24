@@ -22,7 +22,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -86,7 +85,9 @@ class InformationFragment:
             / 3600,
         )
         confirmation_boost = min(0.3, self.confirmation_count * 0.05)
-        return min(1.0, self.reliability.value * time_decay + confirmation_boost)
+        return min(
+            1.0, self.reliability.value * time_decay + confirmation_boost
+        )
 
 
 @dataclass
@@ -95,10 +96,18 @@ class BeliefModel:
 
     agent_id: str
     personality_bias: Dict[str, float] = field(default_factory=dict)
-    trust_network: Dict[str, float] = field(default_factory=dict)  # 对其他Agent的信任度
-    information_fragments: List[InformationFragment] = field(default_factory=list)
-    active_hypotheses: Dict[str, float] = field(default_factory=dict)  # 假设->可信度
-    cognitive_filters: Dict[KnowledgeCategory, float] = field(default_factory=dict)
+    trust_network: Dict[str, float] = field(
+        default_factory=dict
+    )  # 对其他Agent的信任度
+    information_fragments: List[InformationFragment] = field(
+        default_factory=list
+    )
+    active_hypotheses: Dict[str, float] = field(
+        default_factory=dict
+    )  # 假设->可信度
+    cognitive_filters: Dict[KnowledgeCategory, float] = field(
+        default_factory=dict
+    )
 
     def __post_init__(self):
         """初始化认知过滤器"""
@@ -137,7 +146,9 @@ class BeliefModel:
             if (
                 existing.category == new_fragment.category
                 and existing.location_context == new_fragment.location_context
-                and self._are_contradictory(existing.content, new_fragment.content)
+                and self._are_contradictory(
+                    existing.content, new_fragment.content
+                )
             ):
                 conflicts.append(existing)
         return conflicts
@@ -151,7 +162,9 @@ class BeliefModel:
         return False
 
     def _resolve_conflicts(
-        self, new_fragment: InformationFragment, conflicts: List[InformationFragment]
+        self,
+        new_fragment: InformationFragment,
+        conflicts: List[InformationFragment],
     ):
         """解决信息冲突"""
         new_reliability = new_fragment.get_current_reliability()
@@ -166,7 +179,9 @@ class BeliefModel:
             # 保留可靠性更高的信息
             if new_reliability > adjusted_conflict_reliability:
                 self.information_fragments.remove(conflict)
-                logger.debug(f"Replaced conflicting information for {self.agent_id}")
+                logger.debug(
+                    f"Replaced conflicting information for {self.agent_id}"
+                )
 
     def _update_hypotheses(self, fragment: InformationFragment):
         """根据新信息更新假设"""
@@ -175,9 +190,7 @@ class BeliefModel:
         reliability = fragment.get_current_reliability()
 
         # 生成假设键
-        hypothesis_key = (
-            f"{fragment.category.value}_{fragment.location_context or 'global'}"
-        )
+        hypothesis_key = f"{fragment.category.value}_{fragment.location_context or 'global'}"
         current_confidence = self.active_hypotheses.get(hypothesis_key, 0.0)
 
         # 更新假设可信度
@@ -192,7 +205,9 @@ class FogOfWarState:
 
     agent_id: str
     visible_locations: Set[str] = field(default_factory=set)
-    known_agents: Dict[str, float] = field(default_factory=dict)  # agent_id -> 了解程度
+    known_agents: Dict[str, float] = field(
+        default_factory=dict
+    )  # agent_id -> 了解程度
     information_access_level: Dict[KnowledgeCategory, float] = field(
         default_factory=dict
     )
@@ -211,7 +226,8 @@ class FogOfWarState:
 
         # 时间衰减
         time_decay = max(
-            0.1, 1.0 - (datetime.now() - self.last_update).total_seconds() / 7200
+            0.1,
+            1.0 - (datetime.now() - self.last_update).total_seconds() / 7200,
         )
 
         return min(1.0, base_access * location_modifier * time_decay)
@@ -226,7 +242,9 @@ class FogOfWarService:
             set
         )  # location -> visible_agents
 
-    def initialize_agent_fog(self, agent_id: str, initial_location: str = None):
+    def initialize_agent_fog(
+        self, agent_id: str, initial_location: str = None
+    ):
         """初始化Agent的迷雾战争状态"""
         fog_state = FogOfWarState(
             agent_id=agent_id,
@@ -248,7 +266,10 @@ class FogOfWarService:
         self.fog_states[agent_id] = fog_state
 
     def update_visibility(
-        self, agent_id: str, new_locations: List[str], lost_locations: List[str] = None
+        self,
+        agent_id: str,
+        new_locations: List[str],
+        lost_locations: List[str] = None,
     ):
         """更新Agent的可见区域"""
         if agent_id not in self.fog_states:
@@ -284,7 +305,9 @@ class FogOfWarService:
         visible_agents.discard(agent_id)  # 移除自己
         return list(visible_agents)
 
-    def filter_world_state_for_agent(self, world_state: Dict, agent_id: str) -> Dict:
+    def filter_world_state_for_agent(
+        self, world_state: Dict, agent_id: str
+    ) -> Dict:
         """为特定Agent过滤世界状态信息"""
         if agent_id not in self.fog_states:
             # 如果没有初始化，返回最小信息
@@ -308,7 +331,9 @@ class FogOfWarService:
         # 过滤可见Agent信息
         visible_agents = self.get_visible_agents(agent_id)
         for visible_agent in visible_agents:
-            access_level = fog_state.can_access_information(KnowledgeCategory.SOCIAL)
+            access_level = fog_state.can_access_information(
+                KnowledgeCategory.SOCIAL
+            )
             if access_level > 0.3:
                 filtered_state["known_agents"].append(
                     {
@@ -319,7 +344,9 @@ class FogOfWarService:
                 )
 
         # 过滤环境信息
-        env_access = fog_state.can_access_information(KnowledgeCategory.ENVIRONMENTAL)
+        env_access = fog_state.can_access_information(
+            KnowledgeCategory.ENVIRONMENTAL
+        )
         if env_access > 0.2:
             for location in fog_state.visible_locations:
                 if location in world_state.get("locations", {}):
@@ -352,11 +379,15 @@ class FogOfWarService:
             actions.extend(["communicate", "negotiate"])
 
         # 根据信息访问等级添加专业行动
-        tactical_access = fog_state.can_access_information(KnowledgeCategory.TACTICAL)
+        tactical_access = fog_state.can_access_information(
+            KnowledgeCategory.TACTICAL
+        )
         if tactical_access > 0.5:
             actions.append("plan")
 
-        resource_access = fog_state.can_access_information(KnowledgeCategory.RESOURCE)
+        resource_access = fog_state.can_access_information(
+            KnowledgeCategory.RESOURCE
+        )
         if resource_access > 0.4:
             actions.extend(["gather", "craft"])
 
@@ -528,7 +559,9 @@ class TurnBriefFactory:
             available_info.append(fragment)
 
         # 按可靠性排序
-        available_info.sort(key=lambda x: x.get_current_reliability(), reverse=True)
+        available_info.sort(
+            key=lambda x: x.get_current_reliability(), reverse=True
+        )
 
         return available_info[:20]  # 限制信息数量
 
@@ -561,13 +594,17 @@ class TurnBriefFactory:
 
         # 基于可用信息的行动推荐
         tactical_info = [
-            f for f in available_info if f.category == KnowledgeCategory.TACTICAL
+            f
+            for f in available_info
+            if f.category == KnowledgeCategory.TACTICAL
         ]
         if tactical_info and len(tactical_info) > 2:
             actions.add("plan")
 
         resource_info = [
-            f for f in available_info if f.category == KnowledgeCategory.RESOURCE
+            f
+            for f in available_info
+            if f.category == KnowledgeCategory.RESOURCE
         ]
         if resource_info:
             actions.update(["gather", "craft"])
@@ -583,7 +620,9 @@ class TurnBriefFactory:
         """生成叙事背景"""
 
         # 选择主要的情境类型
-        situation_type = self._determine_situation_type(world_state, available_info)
+        situation_type = self._determine_situation_type(
+            world_state, available_info
+        )
 
         # 获取叙事模板
         template = self.narrative_templates.get(
@@ -593,7 +632,9 @@ class TurnBriefFactory:
         # 填充模板变量
         context_vars = {
             "agent_name": agent_id.replace("_", " ").title(),
-            "location": ", ".join(world_state.get("visible_locations", ["未知区域"])),
+            "location": ", ".join(
+                world_state.get("visible_locations", ["未知区域"])
+            ),
             "other_agents": ", ".join(
                 [
                     a.get("agent_id", "Unknown")
@@ -637,7 +678,9 @@ class TurnBriefFactory:
         else:
             return "mystery"
 
-    def _summarize_information(self, available_info: List[InformationFragment]) -> str:
+    def _summarize_information(
+        self, available_info: List[InformationFragment]
+    ) -> str:
         """汇总可用信息"""
         if not available_info:
             return ""
@@ -652,10 +695,14 @@ class TurnBriefFactory:
         # 生成每个类别的摘要
         for category, infos in categorized_info.items():
             if category == KnowledgeCategory.SPATIAL:
-                locations = [info.content.get("location", "Unknown") for info in infos]
+                locations = [
+                    info.content.get("location", "Unknown") for info in infos
+                ]
                 summary_parts.append(f"已知区域：{', '.join(set(locations))}")
             elif category == KnowledgeCategory.SOCIAL:
-                agents = [info.content.get("agent_id", "Unknown") for info in infos]
+                agents = [
+                    info.content.get("agent_id", "Unknown") for info in infos
+                ]
                 summary_parts.append(f"已知人员：{', '.join(set(agents))}")
             elif category == KnowledgeCategory.RESOURCE:
                 summary_parts.append("掌握了一些资源信息")
@@ -668,7 +715,9 @@ class TurnBriefFactory:
         return ""
 
     def _calculate_confidence_levels(
-        self, belief_model: BeliefModel, available_info: List[InformationFragment]
+        self,
+        belief_model: BeliefModel,
+        available_info: List[InformationFragment],
     ) -> Dict[str, float]:
         """计算各类信息的可信度"""
         confidence = {}
@@ -707,6 +756,30 @@ class SubjectiveRealityEngine:
         self.active_agents: Set[str] = set()
 
         logger.info("主观现实引擎初始化完成")
+
+    async def initialize(self) -> bool:
+        """Initialize the subjective reality engine and all subsystems."""
+        try:
+            logger.info("Initializing SubjectiveRealityEngine subsystems")
+
+            # Ensure fog service is ready
+            if not hasattr(self.fog_service, "fog_states"):
+                logger.error("FogOfWarService not properly initialized")
+                return False
+
+            # Ensure turn brief factory is ready
+            if not hasattr(self.turn_brief_factory, "fog_service"):
+                logger.error("TurnBriefFactory not properly initialized")
+                return False
+
+            logger.info(
+                "SubjectiveRealityEngine initialization completed successfully"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(f"SubjectiveRealityEngine initialization failed: {e}")
+            return False
 
     async def initialize_agent(
         self,
@@ -753,7 +826,9 @@ class SubjectiveRealityEngine:
         )
         return brief
 
-    async def update_agent_knowledge(self, agent_id: str, new_information: List[Dict]):
+    async def update_agent_knowledge(
+        self, agent_id: str, new_information: List[Dict]
+    ):
         """更新Agent的知识状态"""
 
         if agent_id not in self.active_agents:
@@ -766,11 +841,19 @@ class SubjectiveRealityEngine:
 
         for info_dict in new_information:
             fragment = InformationFragment(
-                fragment_id=info_dict.get("id", f"info_{hash(str(info_dict))}"),
+                fragment_id=info_dict.get(
+                    "id", f"info_{hash(str(info_dict))}"
+                ),
                 content=info_dict.get("content", {}),
-                source=InformationSource[info_dict.get("source", "DIRECT_OBSERVATION")],
-                reliability=ReliabilityLevel[info_dict.get("reliability", "MEDIUM")],
-                category=KnowledgeCategory[info_dict.get("category", "ENVIRONMENTAL")],
+                source=InformationSource[
+                    info_dict.get("source", "DIRECT_OBSERVATION")
+                ],
+                reliability=ReliabilityLevel[
+                    info_dict.get("reliability", "MEDIUM")
+                ],
+                category=KnowledgeCategory[
+                    info_dict.get("category", "ENVIRONMENTAL")
+                ],
                 timestamp=datetime.fromisoformat(
                     info_dict.get("timestamp", datetime.now().isoformat())
                 ),
@@ -795,11 +878,17 @@ class SubjectiveRealityEngine:
 
         return {
             "agent_id": agent_id,
-            "total_information_fragments": len(belief_model.information_fragments),
+            "total_information_fragments": len(
+                belief_model.information_fragments
+            ),
             "active_hypotheses": len(belief_model.active_hypotheses),
-            "visible_locations": list(fog_state.visible_locations) if fog_state else [],
+            "visible_locations": list(fog_state.visible_locations)
+            if fog_state
+            else [],
             "trust_network_size": len(belief_model.trust_network),
-            "last_update": fog_state.last_update.isoformat() if fog_state else None,
+            "last_update": fog_state.last_update.isoformat()
+            if fog_state
+            else None,
             "personality_traits": belief_model.personality_bias,
         }
 
@@ -833,7 +922,9 @@ if __name__ == "__main__":
 
         # 生成个性化简报
         brief = await engine.generate_turn_brief(
-            agent_id="test_agent", turn_number=1, global_world_state=global_world_state
+            agent_id="test_agent",
+            turn_number=1,
+            global_world_state=global_world_state,
         )
 
         print("生成的个性化简报：")

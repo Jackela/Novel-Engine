@@ -1,0 +1,21 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.6, pytest-8.4.2, pluggy-1.5.0 -- C:\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: D:\Code\Novel-Engine
+configfile: pytest.ini
+plugins: asyncio-1.1.0, cov-4.1.0, mock-3.12.0, anyio-4.8.0
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1624 items
+
+tests/unit/agents/test_director_refactored.py::TestDirectorAgentComponents::test_agent_lifecycle_manager_agent_registration FAILED [  0%]
+
+================================== FAILURES ===================================
+_ TestDirectorAgentComponents.test_agent_lifecycle_manager_agent_registration _
+tests\unit\agents\test_director_refactored.py:188: in test_agent_lifecycle_manager_agent_registration
+    asyncio.run(manager.initialize())
+                ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'AgentLifecycleManager' object has no attribute 'initialize'
+=========================== short test summary info ===========================
+FAILED tests/unit/agents/test_director_refactored.py::TestDirectorAgentComponents::test_agent_lifecycle_manager_agent_registration
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+============================== 1 failed in 3.33s ==============================

@@ -118,9 +118,9 @@ class ServiceContainer:
 
         # Service registry
         self._services: Dict[Type, ServiceDescriptor] = {}
-        self._instances: Dict[Type, Dict[str, ServiceInstance]] = (
-            {}
-        )  # Type -> {scope_key: instance}
+        self._instances: Dict[
+            Type, Dict[str, ServiceInstance]
+        ] = {}  # Type -> {scope_key: instance}
         self._singletons: Dict[Type, ServiceInstance] = {}
 
         # Lifecycle management
@@ -196,12 +196,14 @@ class ServiceContainer:
             self._update_initialization_order()
 
             logger.debug(
-                f"Registered service: {interface.__name__} -> {implementation.__name__}"
+                f"Registered service: {interface.__name__}-> {implementation.__name__}"
             )
 
         return self
 
-    def register_singleton(self, interface: Type[T], instance: T) -> "ServiceContainer":
+    def register_singleton(
+        self, interface: Type[T], instance: T
+    ) -> "ServiceContainer":
         """Register a singleton instance directly."""
         with self._lock:
             service_instance = ServiceInstance(
@@ -220,7 +222,9 @@ class ServiceContainer:
 
         return self
 
-    def get_service(self, service_type: Type[T], context: Optional[str] = None) -> T:
+    def get_service(
+        self, service_type: Type[T], context: Optional[str] = None
+    ) -> T:
         """
         Resolve and return service instance.
 
@@ -252,12 +256,16 @@ class ServiceContainer:
                 # Check existing instances for this scope
                 if service_type in self._instances:
                     if scope_key in self._instances[service_type]:
-                        existing_instance = self._instances[service_type][scope_key]
+                        existing_instance = self._instances[service_type][
+                            scope_key
+                        ]
                         if existing_instance.state == ServiceState.RUNNING:
                             return existing_instance.instance
 
                 # Create new instance
-                return self._create_instance(service_type, descriptor, scope_key)
+                return self._create_instance(
+                    service_type, descriptor, scope_key
+                )
 
         except Exception as e:
             if self.error_handler:
@@ -266,7 +274,9 @@ class ServiceContainer:
                     operation="get_service",
                     metadata={"service_type": service_type.__name__},
                 )
-                asyncio.create_task(self.error_handler.handle_error(e, error_context))
+                asyncio.create_task(
+                    self.error_handler.handle_error(e, error_context)
+                )
 
             raise DependencyResolutionError(
                 f"Failed to resolve service {service_type.__name__}: {e}"
@@ -329,7 +339,9 @@ class ServiceContainer:
                 started_count += 1
 
             except Exception as e:
-                logger.error(f"Failed to start service {service_type.__name__}: {e}")
+                logger.error(
+                    f"Failed to start service {service_type.__name__}: {e}"
+                )
 
         logger.info(f"Started {started_count} services")
 
@@ -345,7 +357,9 @@ class ServiceContainer:
                 shutdown_count += 1
 
             except Exception as e:
-                logger.error(f"Failed to shutdown service {service_type.__name__}: {e}")
+                logger.error(
+                    f"Failed to shutdown service {service_type.__name__}: {e}"
+                )
 
         logger.info(f"Shut down {shutdown_count} services")
 
@@ -408,7 +422,9 @@ class ServiceContainer:
                     "interface": service_type.__name__,
                     "implementation": descriptor.implementation.__name__,
                     "scope": descriptor.scope.value,
-                    "dependencies": [dep.__name__ for dep in descriptor.dependencies],
+                    "dependencies": [
+                        dep.__name__ for dep in descriptor.dependencies
+                    ],
                     "tags": list(descriptor.tags),
                     "priority": descriptor.priority,
                     "configuration_section": descriptor.configuration_section,
@@ -461,7 +477,9 @@ class ServiceContainer:
         # Must be a class
         return inspect.isclass(type_hint)
 
-    def _get_scope_key(self, scope: ServiceScope, context: Optional[str]) -> str:
+    def _get_scope_key(
+        self, scope: ServiceScope, context: Optional[str]
+    ) -> str:
         """Generate scope key for service instance tracking."""
         if scope == ServiceScope.SINGLETON:
             return "singleton"
@@ -502,11 +520,15 @@ class ServiceContainer:
 
             # Apply configuration if specified
             if descriptor.configuration_section and self.config_manager:
-                self._apply_configuration(instance, descriptor.configuration_section)
+                self._apply_configuration(
+                    instance, descriptor.configuration_section
+                )
 
             # Create service instance wrapper
             service_instance = ServiceInstance(
-                descriptor=descriptor, instance=instance, state=ServiceState.INITIALIZED
+                descriptor=descriptor,
+                instance=instance,
+                state=ServiceState.INITIALIZED,
             )
 
             # Store instance
@@ -629,9 +651,13 @@ class ServiceContainer:
         else:
             # Find first instance
             if service_type in self._instances:
-                service_instance = next(iter(self._instances[service_type].values()))
+                service_instance = next(
+                    iter(self._instances[service_type].values())
+                )
 
-        if service_instance and hasattr(instance, descriptor.initialize_method):
+        if service_instance and hasattr(
+            instance, descriptor.initialize_method
+        ):
             service_instance.state = ServiceState.INITIALIZING
 
             try:
@@ -659,7 +685,9 @@ class ServiceContainer:
             service_instance = self._singletons[service_type]
         else:
             if service_type in self._instances:
-                service_instance = next(iter(self._instances[service_type].values()))
+                service_instance = next(
+                    iter(self._instances[service_type].values())
+                )
 
         if service_instance and hasattr(instance, descriptor.startup_method):
             service_instance.state = ServiceState.STARTING
@@ -694,11 +722,15 @@ class ServiceContainer:
                         iter(self._instances[service_type].values())
                     )
 
-            if service_instance and hasattr(instance, descriptor.shutdown_method):
+            if service_instance and hasattr(
+                instance, descriptor.shutdown_method
+            ):
                 service_instance.state = ServiceState.STOPPING
 
                 try:
-                    shutdown_method = getattr(instance, descriptor.shutdown_method)
+                    shutdown_method = getattr(
+                        instance, descriptor.shutdown_method
+                    )
 
                     if asyncio.iscoroutinefunction(shutdown_method):
                         await shutdown_method()
@@ -732,7 +764,9 @@ class ServiceContainer:
         # Call health check method if available
         if hasattr(instance, descriptor.health_check_method):
             try:
-                health_method = getattr(instance, descriptor.health_check_method)
+                health_method = getattr(
+                    instance, descriptor.health_check_method
+                )
 
                 if asyncio.iscoroutinefunction(health_method):
                     result = await health_method()
@@ -767,7 +801,9 @@ def register_service(
     interface: Type[T], implementation: Type[T], **kwargs
 ) -> ServiceContainer:
     """Register service with global container."""
-    return get_service_container().register_service(interface, implementation, **kwargs)
+    return get_service_container().register_service(
+        interface, implementation, **kwargs
+    )
 
 
 def get_service(service_type: Type[T]) -> T:

@@ -130,7 +130,9 @@ def validate_domain_structure():
     print("\n" + "=" * 60)
     print("🎉 Domain Model Implementation Validation: SUCCESS")
     print("\nNote: Import validation skipped due to platform naming conflict")
-    print("in infrastructure layer (not related to domain model implementation)")
+    print(
+        "in infrastructure layer (not related to domain model implementation)"
+    )
 
     return True
 

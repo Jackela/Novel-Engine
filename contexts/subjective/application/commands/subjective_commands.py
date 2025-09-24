@@ -16,9 +16,7 @@ from ...domain.value_objects.awareness import (
     AttentionFocus,
     AwarenessModifier,
 )
-from ...domain.value_objects.knowledge_level import (
-    KnowledgeItem,
-)
+from ...domain.value_objects.knowledge_level import KnowledgeItem
 from ...domain.value_objects.perception_range import (
     PerceptionCapabilities,
     PerceptionType,
@@ -68,7 +66,9 @@ class CreateTurnBriefCommand(SubjectiveCommand):
         if self.world_state_version < 0:
             raise ValueError("World state version cannot be negative")
 
-        if not isinstance(self.perception_capabilities, PerceptionCapabilities):
+        if not isinstance(
+            self.perception_capabilities, PerceptionCapabilities
+        ):
             raise ValueError(
                 "Perception capabilities must be a PerceptionCapabilities object"
             )
@@ -98,7 +98,9 @@ class UpdatePerceptionCapabilitiesCommand(SubjectiveCommand):
         if not self.entity_id or not self.entity_id.strip():
             raise ValueError("Entity ID cannot be empty")
 
-        if not isinstance(self.new_perception_capabilities, PerceptionCapabilities):
+        if not isinstance(
+            self.new_perception_capabilities, PerceptionCapabilities
+        ):
             raise ValueError(
                 "New perception capabilities must be a PerceptionCapabilities object"
             )
@@ -140,12 +142,20 @@ class UpdateAwarenessStateCommand(SubjectiveCommand):
                 self.awareness_modifiers is not None,
             ]
         ):
-            raise ValueError("At least one awareness parameter must be specified")
+            raise ValueError(
+                "At least one awareness parameter must be specified"
+            )
 
-        if self.fatigue_level is not None and not 0.0 <= self.fatigue_level <= 1.0:
+        if (
+            self.fatigue_level is not None
+            and not 0.0 <= self.fatigue_level <= 1.0
+        ):
             raise ValueError("Fatigue level must be between 0.0 and 1.0")
 
-        if self.stress_level is not None and not 0.0 <= self.stress_level <= 1.0:
+        if (
+            self.stress_level is not None
+            and not 0.0 <= self.stress_level <= 1.0
+        ):
             raise ValueError("Stress level must be between 0.0 and 1.0")
 
         if (
@@ -245,10 +255,14 @@ class UpdateKnowledgeCommand(SubjectiveCommand):
             raise ValueError("Subject cannot be empty")
 
         if not isinstance(self.updated_knowledge_item, KnowledgeItem):
-            raise ValueError("Updated knowledge item must be a KnowledgeItem object")
+            raise ValueError(
+                "Updated knowledge item must be a KnowledgeItem object"
+            )
 
         if self.updated_knowledge_item.subject != self.subject:
-            raise ValueError("Knowledge item subject must match command subject")
+            raise ValueError(
+                "Knowledge item subject must match command subject"
+            )
 
         if not self.update_reason or not self.update_reason.strip():
             raise ValueError("Update reason cannot be empty")
@@ -402,13 +416,20 @@ class ShareInformationCommand(SubjectiveCommand):
 
         for item in self.knowledge_items:
             if not isinstance(item, KnowledgeItem):
-                raise ValueError("All knowledge items must be KnowledgeItem objects")
+                raise ValueError(
+                    "All knowledge items must be KnowledgeItem objects"
+                )
 
-        if not self.communication_method or not self.communication_method.strip():
+        if (
+            not self.communication_method
+            or not self.communication_method.strip()
+        ):
             raise ValueError("Communication method cannot be empty")
 
         if not 0.0 <= self.reliability_modifier <= 1.0:
-            raise ValueError("Reliability modifier must be between 0.0 and 1.0")
+            raise ValueError(
+                "Reliability modifier must be between 0.0 and 1.0"
+            )
 
         if self.max_sharing_distance <= 0:
             raise ValueError("Max sharing distance must be positive")
@@ -461,7 +482,9 @@ class CleanupStaleKnowledgeCommand(SubjectiveCommand):
             raise ValueError("Staleness threshold must be positive")
 
         if not 0.0 <= self.min_reliability_threshold <= 1.0:
-            raise ValueError("Min reliability threshold must be between 0.0 and 1.0")
+            raise ValueError(
+                "Min reliability threshold must be between 0.0 and 1.0"
+            )
 
 
 @dataclass(frozen=True)

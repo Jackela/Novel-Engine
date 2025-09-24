@@ -12,7 +12,11 @@ from typing import Any, AsyncGenerator, Dict, Optional
 
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from ..config.settings import get_database_settings
@@ -48,7 +52,9 @@ class DatabaseManager:
         self._metrics = DatabaseMetrics()
         self._is_initialized = False
 
-    async def initialize(self, config: Optional[Dict[str, Any]] = None) -> None:
+    async def initialize(
+        self, config: Optional[Dict[str, Any]] = None
+    ) -> None:
         """Initialize database connections with configuration."""
         if self._is_initialized:
             logger.warning("DatabaseManager already initialized")
@@ -69,7 +75,9 @@ class DatabaseManager:
         )
 
         # Create asynchronous engine
-        async_url = settings["url"].replace("postgresql://", "postgresql+asyncpg://")
+        async_url = settings["url"].replace(
+            "postgresql://", "postgresql+asyncpg://"
+        )
         self._async_engine = create_async_engine(
             async_url,
             pool_size=settings.get("pool_size", 20),
@@ -187,7 +195,9 @@ class DatabaseManager:
                 if row and row[0] == 1:
                     health_status["async_connection"] = True
         except Exception as e:
-            health_status["errors"].append(f"Async connection failed: {str(e)}")
+            health_status["errors"].append(
+                f"Async connection failed: {str(e)}"
+            )
             health_status["status"] = "unhealthy"
 
         # Get pool status

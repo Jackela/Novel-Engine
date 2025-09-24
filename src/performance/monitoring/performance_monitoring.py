@@ -100,14 +100,20 @@ class MetricsCollector:
         """Record a counter metric."""
         with self.lock:
             self.counters[name] += value
-            self._add_metric_point(name, self.counters[name], MetricType.COUNTER, tags)
+            self._add_metric_point(
+                name, self.counters[name], MetricType.COUNTER, tags
+            )
 
-    def record_gauge(self, name: str, value: float, tags: Dict[str, str] = None):
+    def record_gauge(
+        self, name: str, value: float, tags: Dict[str, str] = None
+    ):
         """Record a gauge metric."""
         with self.lock:
             self._add_metric_point(name, value, MetricType.GAUGE, tags)
 
-    def record_histogram(self, name: str, value: float, tags: Dict[str, str] = None):
+    def record_histogram(
+        self, name: str, value: float, tags: Dict[str, str] = None
+    ):
         """Record a histogram metric."""
         with self.lock:
             self.histograms[name].append(value)
@@ -117,13 +123,19 @@ class MetricsCollector:
 
             self._add_metric_point(name, value, MetricType.HISTOGRAM, tags)
 
-    def record_timer(self, name: str, duration: float, tags: Dict[str, str] = None):
+    def record_timer(
+        self, name: str, duration: float, tags: Dict[str, str] = None
+    ):
         """Record a timer metric."""
         with self.lock:
             self._add_metric_point(name, duration, MetricType.TIMER, tags)
 
     def _add_metric_point(
-        self, name: str, value: float, metric_type: MetricType, tags: Dict[str, str]
+        self,
+        name: str,
+        value: float,
+        metric_type: MetricType,
+        tags: Dict[str, str],
     ):
         """Add a metric point to the collection."""
         point = MetricPoint(
@@ -145,7 +157,9 @@ class MetricsCollector:
 
             cutoff_time = time.time() - duration_seconds
             return [
-                point for point in self.metrics[name] if point.timestamp >= cutoff_time
+                point
+                for point in self.metrics[name]
+                if point.timestamp >= cutoff_time
             ]
 
     def get_current_value(self, name: str) -> Optional[float]:
@@ -211,7 +225,9 @@ class SystemMetricsCollector:
         try:
             # CPU metrics
             cpu_percent = psutil.cpu_percent(interval=None)
-            self.collector.record_gauge("system.cpu.usage_percent", cpu_percent)
+            self.collector.record_gauge(
+                "system.cpu.usage_percent", cpu_percent
+            )
 
             # Memory metrics
             memory = psutil.virtual_memory()
@@ -221,7 +237,9 @@ class SystemMetricsCollector:
             self.collector.record_gauge(
                 "system.memory.available_mb", memory.available / 1024 / 1024
             )
-            self.collector.record_gauge("system.memory.used_percent", memory.percent)
+            self.collector.record_gauge(
+                "system.memory.used_percent", memory.percent
+            )
 
             # Process-specific metrics
             process_memory = self.process.memory_info()
@@ -234,7 +252,9 @@ class SystemMetricsCollector:
 
             # Process CPU
             process_cpu = self.process.cpu_percent()
-            self.collector.record_gauge("process.cpu.usage_percent", process_cpu)
+            self.collector.record_gauge(
+                "process.cpu.usage_percent", process_cpu
+            )
 
             # Disk I/O
             io_counters = self.process.io_counters()
@@ -245,16 +265,27 @@ class SystemMetricsCollector:
                     / 1024
                 )
                 write_rate = (
-                    (io_counters.write_bytes - self.last_io_counters.write_bytes)
+                    (
+                        io_counters.write_bytes
+                        - self.last_io_counters.write_bytes
+                    )
                     / 1024
                     / 1024
                 )
-                self.collector.record_gauge("process.io.read_mb_per_sec", read_rate)
-                self.collector.record_gauge("process.io.write_mb_per_sec", write_rate)
+                self.collector.record_gauge(
+                    "process.io.read_mb_per_sec", read_rate
+                )
+                self.collector.record_gauge(
+                    "process.io.write_mb_per_sec", write_rate
+                )
             self.last_io_counters = io_counters
 
             # File descriptors
-            num_fds = self.process.num_fds() if hasattr(self.process, "num_fds") else 0
+            num_fds = (
+                self.process.num_fds()
+                if hasattr(self.process, "num_fds")
+                else 0
+            )
             self.collector.record_gauge("process.file_descriptors", num_fds)
 
             # Threads
@@ -290,7 +321,10 @@ class ApplicationMetricsCollector:
         self.request_start_times[request_id] = time.time()
 
     def end_request(
-        self, request_id: str, status_code: int = 200, endpoint: str = "unknown"
+        self,
+        request_id: str,
+        status_code: int = 200,
+        endpoint: str = "unknown",
     ):
         """End tracking a request."""
         start_time = self.request_start_times.pop(request_id, None)
@@ -360,7 +394,7 @@ class AlertManager:
         """Add a performance threshold."""
         self.thresholds[threshold.metric_name] = threshold
         logger.info(
-            f"Added performance threshold: {threshold.metric_name} {threshold.operator} {threshold.threshold_value}"
+            f"Added performance threshold: {threshold.metric_name}{threshold.operator} {threshold.threshold_value}"
         )
 
     def remove_threshold(self, metric_name: str):
@@ -382,7 +416,9 @@ class AlertManager:
             if current_value is None:
                 continue
 
-            violated = self._check_threshold_violation(current_value, threshold)
+            violated = self._check_threshold_violation(
+                current_value, threshold
+            )
 
             if violated:
                 self.violation_counts[metric_name] += 1
@@ -416,7 +452,10 @@ class AlertManager:
         return op_func(value, threshold.threshold_value)
 
     def _generate_alert(
-        self, metric_name: str, current_value: float, threshold: PerformanceThreshold
+        self,
+        metric_name: str,
+        current_value: float,
+        threshold: PerformanceThreshold,
     ):
         """Generate a performance alert."""
         alert_id = f"{metric_name}_{int(time.time())}"
@@ -428,7 +467,7 @@ class AlertManager:
             threshold=threshold,
             timestamp=time.time(),
             level=threshold.alert_level,
-            message=f"{threshold.description or metric_name} violated: {current_value} {threshold.operator} {threshold.threshold_value}",
+            message=f"{threshold.description or metric_name}violated: {current_value} {threshold.operator} {threshold.threshold_value}",
         )
 
         self.alerts[alert_id] = alert
@@ -449,13 +488,17 @@ class AlertManager:
 
     def get_active_alerts(self) -> List[PerformanceAlert]:
         """Get all active (unacknowledged) alerts."""
-        return [alert for alert in self.alerts.values() if not alert.acknowledged]
+        return [
+            alert for alert in self.alerts.values() if not alert.acknowledged
+        ]
 
     def get_alert_history(self, hours: int = 24) -> List[PerformanceAlert]:
         """Get alert history for the specified period."""
         cutoff_time = time.time() - (hours * 3600)
         return [
-            alert for alert in self.alerts.values() if alert.timestamp >= cutoff_time
+            alert
+            for alert in self.alerts.values()
+            if alert.timestamp >= cutoff_time
         ]
 
 
@@ -464,14 +507,20 @@ class PerformanceRegression:
 
     def __init__(self, collector: MetricsCollector, sensitivity: float = 2.0):
         self.collector = collector
-        self.sensitivity = sensitivity  # Standard deviations for regression detection
+        self.sensitivity = (
+            sensitivity  # Standard deviations for regression detection
+        )
         self.baselines = {}
 
     def establish_baseline(self, metric_name: str, duration_hours: int = 24):
         """Establish a performance baseline for a metric."""
-        history = self.collector.get_metric_history(metric_name, duration_hours * 3600)
+        history = self.collector.get_metric_history(
+            metric_name, duration_hours * 3600
+        )
         if len(history) < 10:
-            logger.warning(f"Insufficient data to establish baseline for {metric_name}")
+            logger.warning(
+                f"Insufficient data to establish baseline for {metric_name}"
+            )
             return
 
         values = [point.value for point in history]
@@ -505,7 +554,9 @@ class PerformanceRegression:
 
         # Calculate Z-score
         if baseline["stddev"] > 0:
-            z_score = abs(current_value - baseline["mean"]) / baseline["stddev"]
+            z_score = (
+                abs(current_value - baseline["mean"]) / baseline["stddev"]
+            )
         else:
             z_score = 0.0
 
@@ -513,7 +564,9 @@ class PerformanceRegression:
         is_regression = z_score > self.sensitivity
 
         # Determine direction
-        direction = "increase" if current_value > baseline["mean"] else "decrease"
+        direction = (
+            "increase" if current_value > baseline["mean"] else "decrease"
+        )
 
         return {
             "metric_name": metric_name,
@@ -526,7 +579,9 @@ class PerformanceRegression:
             "severity": (
                 "high"
                 if z_score > self.sensitivity * 1.5
-                else "medium" if is_regression else "low"
+                else "medium"
+                if is_regression
+                else "low"
             ),
         }
 
@@ -649,7 +704,9 @@ class PerformanceMonitor:
         ]
 
         for metric in key_metrics:
-            self.regression_detector.establish_baseline(metric, duration_hours=1)
+            self.regression_detector.establish_baseline(
+                metric, duration_hours=1
+            )
 
         logger.info("Performance monitoring started")
 
@@ -690,9 +747,13 @@ class PerformanceMonitor:
     def _check_regressions(self):
         """Check for performance regressions."""
         for metric_name in self.regression_detector.baselines.keys():
-            regression_info = self.regression_detector.check_regression(metric_name)
+            regression_info = self.regression_detector.check_regression(
+                metric_name
+            )
             if regression_info and regression_info["is_regression"]:
-                logger.warning(f"Performance regression detected: {regression_info}")
+                logger.warning(
+                    f"Performance regression detected: {regression_info}"
+                )
 
     async def _persist_metrics(self):
         """Persist current metrics to database."""
@@ -702,7 +763,9 @@ class PerformanceMonitor:
                 cutoff_time = time.time() - self.collection_interval
 
                 for metric_name, points in self.collector.metrics.items():
-                    recent_points = [p for p in points if p.timestamp >= cutoff_time]
+                    recent_points = [
+                        p for p in points if p.timestamp >= cutoff_time
+                    ]
 
                     for point in recent_points:
                         await conn.execute(
@@ -738,13 +801,17 @@ class PerformanceMonitor:
         ]
 
         for metric in key_metrics:
-            history = self.collector.get_metric_history(metric, 3600)  # Last hour
+            history = self.collector.get_metric_history(
+                metric, 3600
+            )  # Last hour
             if len(history) >= 2:
                 values = [p.value for p in history[-10:]]  # Last 10 points
                 trend = (
                     "up"
                     if values[-1] > values[0]
-                    else "down" if values[-1] < values[0] else "stable"
+                    else "down"
+                    if values[-1] < values[0]
+                    else "stable"
                 )
                 trends[metric] = {
                     "trend": trend,
@@ -767,10 +834,15 @@ class PerformanceMonitor:
     def _calculate_system_health(self) -> Dict[str, Any]:
         """Calculate overall system health score."""
         health_factors = {
-            "memory": self.collector.get_current_value("system.memory.used_percent")
+            "memory": self.collector.get_current_value(
+                "system.memory.used_percent"
+            )
             or 0,
-            "cpu": self.collector.get_current_value("system.cpu.usage_percent") or 0,
-            "process_memory": self.collector.get_current_value("process.memory.rss_mb")
+            "cpu": self.collector.get_current_value("system.cpu.usage_percent")
+            or 0,
+            "process_memory": self.collector.get_current_value(
+                "process.memory.rss_mb"
+            )
             or 0,
         }
 
@@ -790,7 +862,11 @@ class PerformanceMonitor:
         else:
             status = "critical"
 
-        return {"score": overall_score, "status": status, "factors": health_factors}
+        return {
+            "score": overall_score,
+            "status": status,
+            "factors": health_factors,
+        }
 
 
 # Global performance monitor instance
@@ -832,7 +908,11 @@ def monitor_performance(metric_name: str, tags: Dict[str, str] = None):
             with TimerContext(metric_name, tags):
                 return func(*args, **kwargs)
 
-        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+        return (
+            async_wrapper
+            if asyncio.iscoroutinefunction(func)
+            else sync_wrapper
+        )
 
     return decorator
 
@@ -865,10 +945,14 @@ if __name__ == "__main__":
             # Simulate some work
             await asyncio.sleep(0.1)
 
-            performance_monitor.app_collector.end_request(request_id, 200, "/api/test")
+            performance_monitor.app_collector.end_request(
+                request_id, 200, "/api/test"
+            )
 
             # Simulate database queries
-            performance_monitor.app_collector.record_database_query("SELECT", 0.05)
+            performance_monitor.app_collector.record_database_query(
+                "SELECT", 0.05
+            )
 
             # Simulate cache operations
             performance_monitor.app_collector.record_cache_operation(
@@ -880,7 +964,9 @@ if __name__ == "__main__":
 
         # Get dashboard data
         dashboard = performance_monitor.get_dashboard_data()
-        print(f"Dashboard data: {json.dumps(dashboard, indent=2, default=str)}")
+        print(
+            f"Dashboard data: {json.dumps(dashboard, indent=2, default=str)}"
+        )
 
         # Test alert functionality
         print("\nActive alerts:")

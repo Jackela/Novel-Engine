@@ -111,7 +111,8 @@ class ObjectPool:
                 "created_count": self.created_count,
                 "reused_count": self.reused_count,
                 "reuse_rate_percent": (
-                    self.reused_count / max(1, self.created_count + self.reused_count)
+                    self.reused_count
+                    / max(1, self.created_count + self.reused_count)
                 )
                 * 100,
             }
@@ -127,12 +128,16 @@ class WeakReferenceManager:
         self.cleanup_callbacks: Dict[str, Callable] = {}
         self._lock = threading.Lock()
 
-    def register(self, key: str, obj: Any, cleanup_callback: Optional[Callable] = None):
+    def register(
+        self, key: str, obj: Any, cleanup_callback: Optional[Callable] = None
+    ):
         """Register object with weak reference."""
         with self._lock:
             if cleanup_callback:
                 self.cleanup_callbacks[key] = cleanup_callback
-                weak_ref = weakref.ref(obj, lambda ref: self._cleanup_callback(key))
+                weak_ref = weakref.ref(
+                    obj, lambda ref: self._cleanup_callback(key)
+                )
             else:
                 weak_ref = weakref.ref(obj)
 
@@ -182,7 +187,9 @@ class WeakReferenceManager:
     def get_stats(self) -> Dict[str, Any]:
         """Get weak reference manager statistics."""
         with self._lock:
-            alive_refs = sum(1 for ref in self.weak_refs.values() if ref() is not None)
+            alive_refs = sum(
+                1 for ref in self.weak_refs.values() if ref() is not None
+            )
             return {
                 "total_references": len(self.weak_refs),
                 "alive_references": alive_refs,
@@ -209,7 +216,6 @@ class MemoryOptimizer:
         gc_threshold_multiplier: float = 1.5,
         monitoring_interval: float = 30.0,
     ):
-
         self.target_memory_percent = target_memory_percent
         self.gc_threshold_multiplier = gc_threshold_multiplier
         self.monitoring_interval = monitoring_interval
@@ -238,7 +244,9 @@ class MemoryOptimizer:
             "weak_ref_cleanups": 0,
         }
 
-        logger.info(f"MemoryOptimizer initialized: target={target_memory_percent}%")
+        logger.info(
+            f"MemoryOptimizer initialized: target={target_memory_percent}%"
+        )
 
     async def start_monitoring(self):
         """Start memory monitoring and optimization."""
@@ -338,7 +346,9 @@ class MemoryOptimizer:
 
     async def _aggressive_memory_cleanup(self):
         """Aggressive memory cleanup for critical pressure."""
-        logger.warning("Critical memory pressure - performing aggressive cleanup")
+        logger.warning(
+            "Critical memory pressure - performing aggressive cleanup"
+        )
 
         # Force garbage collection multiple times
         for generation in [2, 1, 0]:  # Reverse order for efficiency
@@ -558,7 +568,10 @@ class PersonaAgentMemoryOptimizer:
 
         try:
             # Optimize decision history using object pooling
-            if hasattr(agent, "decision_history") and len(agent.decision_history) > 100:
+            if (
+                hasattr(agent, "decision_history")
+                and len(agent.decision_history) > 100
+            ):
                 # Keep only recent decisions, pool the rest
                 recent_decisions = agent.decision_history[-50:]
                 old_decisions = agent.decision_history[:-50]
@@ -579,7 +592,10 @@ class PersonaAgentMemoryOptimizer:
                 )  # Rough estimate
 
             # Optimize context history
-            if hasattr(agent, "context_history") and len(agent.context_history) > 50:
+            if (
+                hasattr(agent, "context_history")
+                and len(agent.context_history) > 50
+            ):
                 old_contexts = agent.context_history[:-25]
                 agent.context_history = agent.context_history[-25:]
 
@@ -591,7 +607,9 @@ class PersonaAgentMemoryOptimizer:
                 optimization_results["optimizations_applied"].append(
                     "context_history_pooling"
                 )
-                optimization_results["memory_saved_estimate"] += len(old_contexts) * 512
+                optimization_results["memory_saved_estimate"] += (
+                    len(old_contexts) * 512
+                )
 
             # Register agent with weak reference for lifecycle management
             agent_key = f"persona_agent_{optimization_results['agent_id']}"
@@ -626,7 +644,12 @@ class DirectorAgentMemoryOptimizer:
         # Create specialized object pools
         self.world_state_pool = memory_optimizer.create_object_pool(
             "world_states",
-            lambda: {"turn": 0, "agents": {}, "discoveries": {}, "interactions": {}},
+            lambda: {
+                "turn": 0,
+                "agents": {},
+                "discoveries": {},
+                "interactions": {},
+            },
             max_size=50,
         )
 
@@ -645,7 +668,10 @@ class DirectorAgentMemoryOptimizer:
 
     def optimize_director_agent(self, director: Any) -> Dict[str, Any]:
         """Optimize memory usage for DirectorAgent."""
-        optimization_results = {"optimizations_applied": [], "memory_saved_estimate": 0}
+        optimization_results = {
+            "optimizations_applied": [],
+            "memory_saved_estimate": 0,
+        }
 
         try:
             # Optimize world state history
@@ -674,7 +700,9 @@ class DirectorAgentMemoryOptimizer:
                 coord_cache = getattr(director, "coordination_cache", {})
                 if isinstance(coord_cache, dict) and len(coord_cache) > 50:
                     # Clear old coordination data
-                    items_to_remove = list(coord_cache.keys())[:-25]  # Keep last 25
+                    items_to_remove = list(coord_cache.keys())[
+                        :-25
+                    ]  # Keep last 25
                     for key in items_to_remove:
                         old_coord = coord_cache.pop(key, None)
                         if isinstance(old_coord, dict):
@@ -717,7 +745,9 @@ def get_persona_agent_optimizer() -> PersonaAgentMemoryOptimizer:
         if _global_memory_optimizer is None:
             # Create synchronously for backward compatibility
             _global_memory_optimizer = MemoryOptimizer()
-        _persona_optimizer = PersonaAgentMemoryOptimizer(_global_memory_optimizer)
+        _persona_optimizer = PersonaAgentMemoryOptimizer(
+            _global_memory_optimizer
+        )
     return _persona_optimizer
 
 
@@ -727,7 +757,9 @@ def get_director_agent_optimizer() -> DirectorAgentMemoryOptimizer:
     if _director_optimizer is None:
         if _global_memory_optimizer is None:
             _global_memory_optimizer = MemoryOptimizer()
-        _director_optimizer = DirectorAgentMemoryOptimizer(_global_memory_optimizer)
+        _director_optimizer = DirectorAgentMemoryOptimizer(
+            _global_memory_optimizer
+        )
     return _director_optimizer
 
 
@@ -752,7 +784,9 @@ async def get_comprehensive_memory_optimization_report() -> Dict[str, Any]:
     report = {"timestamp": datetime.now().isoformat(), "status": "active"}
 
     if _global_memory_optimizer:
-        report["memory_optimizer"] = _global_memory_optimizer.get_memory_report()
+        report[
+            "memory_optimizer"
+        ] = _global_memory_optimizer.get_memory_report()
 
     # System-wide memory info
     memory = psutil.virtual_memory()

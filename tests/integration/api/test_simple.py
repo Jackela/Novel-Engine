@@ -9,6 +9,7 @@ import sys
 import time
 from datetime import datetime
 
+import pytest
 import requests
 
 
@@ -37,15 +38,15 @@ def test_gemini_direct():
         model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content("Say 'API test OK'")
 
-        if response and response.text:
-            print(f"OK: {response.text.strip()}")
-            return True
-        else:
-            print("ERROR: No response")
-            return False
+        assert response is not None, "No response from Gemini API"
+        assert response.text, "Response has no text content"
+
+        print(f"OK: {response.text.strip()}")
+        assert "API test OK" in response.text or "OK" in response.text
+
     except Exception as e:
         print(f"ERROR: {str(e)}")
-        return False
+        pytest.fail(f"Gemini API test failed: {str(e)}")
 
 
 def test_api_server():
@@ -66,37 +67,37 @@ def test_api_server():
         time.sleep(5)
 
         base_url = "http://127.0.0.1:8000"
-        results = []
 
         # 测试health
         try:
             r = requests.get(f"{base_url}/health", timeout=10)
-            if r.status_code == 200:
-                print("OK: /health")
-                results.append("health: PASS")
-            else:
-                print(f"ERROR: /health status {r.status_code}")
-                results.append("health: FAIL")
-        except Exception as e:
-            print(f"ERROR: /health - {e}")
-            results.append("health: ERROR")
+            assert (
+                r.status_code == 200
+            ), f"Health endpoint failed with status {r.status_code}"
+            print("OK: /health")
+        except requests.RequestException as e:
+            pytest.fail(f"Health endpoint request failed: {e}")
 
         # 测试characters
         try:
             r = requests.get(f"{base_url}/characters", timeout=10)
-            if r.status_code == 200:
-                data = r.json()
-                chars = len(data.get("characters", []))
-                print(f"OK: /characters ({chars} found)")
-                results.append(f"characters: PASS ({chars})")
-            else:
-                print(f"ERROR: /characters status {r.status_code}")
-                results.append("characters: FAIL")
-        except Exception as e:
-            print(f"ERROR: /characters - {e}")
-            results.append("characters: ERROR")
+            assert (
+                r.status_code == 200
+            ), f"Characters endpoint failed with status {r.status_code}"
 
-        return results
+            data = r.json()
+            assert (
+                "characters" in data
+            ), "Characters response missing 'characters' field"
+
+            chars = len(data.get("characters", []))
+            assert chars > 0, "No characters found in response"
+
+            print(f"OK: /characters ({chars} found)")
+        except requests.RequestException as e:
+            pytest.fail(f"Characters endpoint request failed: {e}")
+        except (ValueError, KeyError) as e:
+            pytest.fail(f"Characters endpoint response parsing failed: {e}")
 
     finally:
         # 清理服务器
