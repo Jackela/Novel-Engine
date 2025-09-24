@@ -82,7 +82,9 @@ class QualityGateValidator:
 
         # Find all Python files
         python_files = list(self.project_root.rglob("*.py"))
-        python_files = [f for f in python_files if not self._should_skip_file(f)]
+        python_files = [
+            f for f in python_files if not self._should_skip_file(f)
+        ]
 
         self.metrics.total_files = len(python_files)
 
@@ -92,7 +94,9 @@ class QualityGateValidator:
         self._calculate_metrics()
         self.metrics.total_issues = len(self.issues)
 
-        logger.info(f"Quality validation complete: {len(self.issues)} issues found")
+        logger.info(
+            f"Quality validation complete: {len(self.issues)} issues found"
+        )
         return self.metrics, self.issues
 
     def _should_skip_file(self, file_path: Path) -> bool:
@@ -146,7 +150,9 @@ class QualityGateValidator:
         except Exception as e:
             logger.error(f"Error validating file {file_path}: {e}")
 
-    def _validate_ast(self, file_path: Path, tree: ast.AST, lines: List[str]) -> None:
+    def _validate_ast(
+        self, file_path: Path, tree: ast.AST, lines: List[str]
+    ) -> None:
         """Validate AST structure."""
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
@@ -303,10 +309,16 @@ class QualityGateValidator:
         report.append("## Quality Metrics")
         report.append(f"- Total Python files: {self.metrics.total_files}")
         report.append(f"- Total lines of code: {self.metrics.total_lines:,}")
-        report.append(f"- Average file size: {self.metrics.avg_file_size:.1f} lines")
+        report.append(
+            f"- Average file size: {self.metrics.avg_file_size:.1f} lines"
+        )
         report.append(f"- Largest file: {self.metrics.max_file_size} lines")
-        report.append(f"- Files over 500 lines: {self.metrics.files_over_500_lines}")
-        report.append(f"- Files over 1000 lines: {self.metrics.files_over_1000_lines}")
+        report.append(
+            f"- Files over 500 lines: {self.metrics.files_over_500_lines}"
+        )
+        report.append(
+            f"- Files over 1000 lines: {self.metrics.files_over_1000_lines}"
+        )
         report.append(
             f"- Functions over 50 lines: {self.metrics.functions_over_50_lines}"
         )
@@ -316,13 +328,19 @@ class QualityGateValidator:
         report.append(
             f"- Unprofessional comments: {self.metrics.unprofessional_comments}"
         )
-        report.append(f"- Missing docstrings: {self.metrics.missing_docstrings}")
+        report.append(
+            f"- Missing docstrings: {self.metrics.missing_docstrings}"
+        )
         report.append("")
 
         # Issues summary
-        critical_issues = [i for i in self.issues if i.level == QualityLevel.CRITICAL]
+        critical_issues = [
+            i for i in self.issues if i.level == QualityLevel.CRITICAL
+        ]
         high_issues = [i for i in self.issues if i.level == QualityLevel.HIGH]
-        medium_issues = [i for i in self.issues if i.level == QualityLevel.MEDIUM]
+        medium_issues = [
+            i for i in self.issues if i.level == QualityLevel.MEDIUM
+        ]
         low_issues = [i for i in self.issues if i.level == QualityLevel.LOW]
 
         report.append("## Issues Summary")
@@ -364,8 +382,12 @@ class QualityGateValidator:
                     )
                     report.append("")
 
-                    for issue in level_issues[:10]:  # Limit to first 10 per level
-                        report.append(f"**{issue.file_path}:{issue.line_number}**")
+                    for issue in level_issues[
+                        :10
+                    ]:  # Limit to first 10 per level
+                        report.append(
+                            f"**{issue.file_path}:{issue.line_number}**"
+                        )
                         report.append(f"- Type: {issue.issue_type}")
                         report.append(f"- Message: {issue.message}")
                         if issue.suggestion:
@@ -402,7 +424,9 @@ def main():
     # Exit with appropriate code
     critical_issues = [i for i in issues if i.level == QualityLevel.CRITICAL]
     if critical_issues:
-        print(f"❌ Quality gates FAILED: {len(critical_issues)} critical issues")
+        print(
+            f"❌ Quality gates FAILED: {len(critical_issues)} critical issues"
+        )
         return 1
     else:
         print("✅ Quality gates PASSED")

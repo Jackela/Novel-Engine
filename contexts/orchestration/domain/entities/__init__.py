@@ -8,6 +8,6 @@ Domain entities for turn orchestration including:
 - Event sourcing and state tracking
 """
 
-from .turn import Turn
+from .turn import Turn, TurnState
 
-__all__ = ["Turn"]
+__all__ = ["Turn", "TurnState"]

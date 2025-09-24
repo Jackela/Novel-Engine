@@ -169,7 +169,9 @@ class InteractionOutcome:
     failed_phases: List[str] = field(default_factory=list)
 
     # State changes
-    participant_state_changes: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    participant_state_changes: Dict[str, Dict[str, Any]] = field(
+        default_factory=dict
+    )
     environment_changes: Dict[str, Any] = field(default_factory=dict)
 
     # Memory updates

@@ -34,8 +34,12 @@ class TestNegotiationEnums:
     def test_negotiation_outcome_values(self):
         """Test NegotiationOutcome enum values."""
         assert NegotiationOutcome.PENDING.value == "pending"
-        assert NegotiationOutcome.AGREEMENT_REACHED.value == "agreement_reached"
-        assert NegotiationOutcome.PARTIAL_AGREEMENT.value == "partial_agreement"
+        assert (
+            NegotiationOutcome.AGREEMENT_REACHED.value == "agreement_reached"
+        )
+        assert (
+            NegotiationOutcome.PARTIAL_AGREEMENT.value == "partial_agreement"
+        )
         assert NegotiationOutcome.STALEMATE.value == "stalemate"
         assert NegotiationOutcome.WALKAWAY.value == "walkaway"
         assert NegotiationOutcome.TIMEOUT.value == "timeout"
@@ -44,14 +48,22 @@ class TestNegotiationEnums:
     def test_termination_reason_values(self):
         """Test TerminationReason enum values."""
         assert TerminationReason.MUTUAL_AGREEMENT.value == "mutual_agreement"
-        assert TerminationReason.UNILATERAL_WITHDRAWAL.value == "unilateral_withdrawal"
+        assert (
+            TerminationReason.UNILATERAL_WITHDRAWAL.value
+            == "unilateral_withdrawal"
+        )
         assert TerminationReason.TIMEOUT_EXCEEDED.value == "timeout_exceeded"
         assert (
             TerminationReason.IRRECONCILABLE_DIFFERENCES.value
             == "irreconcilable_differences"
         )
-        assert TerminationReason.EXTERNAL_INTERVENTION.value == "external_intervention"
-        assert TerminationReason.VIOLATION_OF_TERMS.value == "violation_of_terms"
+        assert (
+            TerminationReason.EXTERNAL_INTERVENTION.value
+            == "external_intervention"
+        )
+        assert (
+            TerminationReason.VIOLATION_OF_TERMS.value == "violation_of_terms"
+        )
         assert TerminationReason.FORCE_MAJEURE.value == "force_majeure"
 
 
@@ -124,7 +136,9 @@ class TestNegotiationStatusValidation:
         naive_datetime = datetime(2023, 1, 1, 12, 0, 0)  # No timezone
         aware_datetime = datetime.now(timezone.utc)
 
-        with pytest.raises(ValueError, match="started_at must be timezone-aware"):
+        with pytest.raises(
+            ValueError, match="started_at must be timezone-aware"
+        ):
             NegotiationStatus(
                 phase=NegotiationPhase.INITIATION,
                 outcome=NegotiationOutcome.PENDING,
@@ -137,7 +151,9 @@ class TestNegotiationStatusValidation:
         aware_datetime = datetime.now(timezone.utc)
         naive_datetime = datetime(2023, 1, 1, 12, 0, 0)  # No timezone
 
-        with pytest.raises(ValueError, match="last_activity_at must be timezone-aware"):
+        with pytest.raises(
+            ValueError, match="last_activity_at must be timezone-aware"
+        ):
             NegotiationStatus(
                 phase=NegotiationPhase.INITIATION,
                 outcome=NegotiationOutcome.PENDING,
@@ -184,7 +200,8 @@ class TestNegotiationStatusValidation:
         earlier = now - timedelta(hours=1)
 
         with pytest.raises(
-            ValueError, match="started_at cannot be later than last_activity_at"
+            ValueError,
+            match="started_at cannot be later than last_activity_at",
         ):
             NegotiationStatus(
                 phase=NegotiationPhase.INITIATION,
@@ -199,7 +216,8 @@ class TestNegotiationStatusValidation:
         earlier = now - timedelta(hours=1)
 
         with pytest.raises(
-            ValueError, match="started_at cannot be later than expected_completion_at"
+            ValueError,
+            match="started_at cannot be later than expected_completion_at",
         ):
             NegotiationStatus(
                 phase=NegotiationPhase.INITIATION,
@@ -215,7 +233,8 @@ class TestNegotiationStatusValidation:
         earlier = now - timedelta(hours=1)
 
         with pytest.raises(
-            ValueError, match="started_at cannot be later than actual_completion_at"
+            ValueError,
+            match="started_at cannot be later than actual_completion_at",
         ):
             NegotiationStatus(
                 phase=NegotiationPhase.TERMINATED,
@@ -231,7 +250,8 @@ class TestNegotiationStatusValidation:
         now = datetime.now(timezone.utc)
 
         with pytest.raises(
-            ValueError, match="Terminated negotiations cannot have pending outcome"
+            ValueError,
+            match="Terminated negotiations cannot have pending outcome",
         ):
             NegotiationStatus(
                 phase=NegotiationPhase.TERMINATED,
@@ -245,7 +265,8 @@ class TestNegotiationStatusValidation:
         now = datetime.now(timezone.utc)
 
         with pytest.raises(
-            ValueError, match="Terminated negotiations must have a termination reason"
+            ValueError,
+            match="Terminated negotiations must have a termination reason",
         ):
             NegotiationStatus(
                 phase=NegotiationPhase.TERMINATED,
@@ -260,7 +281,8 @@ class TestNegotiationStatusValidation:
         now = datetime.now(timezone.utc)
 
         with pytest.raises(
-            ValueError, match="Terminated negotiations must have actual completion time"
+            ValueError,
+            match="Terminated negotiations must have actual completion time",
         ):
             NegotiationStatus(
                 phase=NegotiationPhase.TERMINATED,
@@ -466,7 +488,8 @@ class TestNegotiationStatusPhaseTransitions:
         status = NegotiationStatus.create_initial(started_at=now)
 
         with pytest.raises(
-            ValueError, match="Invalid phase transition from initiation to bargaining"
+            ValueError,
+            match="Invalid phase transition from initiation to bargaining",
         ):
             status.advance_to_phase(NegotiationPhase.BARGAINING)
 
@@ -491,7 +514,10 @@ class TestNegotiationStatusCompletion:
         assert completed_status.started_at == now  # Unchanged
         assert completed_status.last_activity_at == completion_time
         assert completed_status.actual_completion_at == completion_time
-        assert completed_status.termination_reason == TerminationReason.MUTUAL_AGREEMENT
+        assert (
+            completed_status.termination_reason
+            == TerminationReason.MUTUAL_AGREEMENT
+        )
 
     def test_complete_with_outcome_default_time(self):
         """Test completion with default completion time."""
@@ -518,15 +544,27 @@ class TestNegotiationStatusCompletion:
         status = NegotiationStatus.create_initial(started_at=now)
 
         outcomes_reasons = [
-            (NegotiationOutcome.AGREEMENT_REACHED, TerminationReason.MUTUAL_AGREEMENT),
-            (NegotiationOutcome.PARTIAL_AGREEMENT, TerminationReason.MUTUAL_AGREEMENT),
+            (
+                NegotiationOutcome.AGREEMENT_REACHED,
+                TerminationReason.MUTUAL_AGREEMENT,
+            ),
+            (
+                NegotiationOutcome.PARTIAL_AGREEMENT,
+                TerminationReason.MUTUAL_AGREEMENT,
+            ),
             (
                 NegotiationOutcome.STALEMATE,
                 TerminationReason.IRRECONCILABLE_DIFFERENCES,
             ),
-            (NegotiationOutcome.WALKAWAY, TerminationReason.UNILATERAL_WITHDRAWAL),
+            (
+                NegotiationOutcome.WALKAWAY,
+                TerminationReason.UNILATERAL_WITHDRAWAL,
+            ),
             (NegotiationOutcome.TIMEOUT, TerminationReason.TIMEOUT_EXCEEDED),
-            (NegotiationOutcome.CANCELLED, TerminationReason.EXTERNAL_INTERVENTION),
+            (
+                NegotiationOutcome.CANCELLED,
+                TerminationReason.EXTERNAL_INTERVENTION,
+            ),
         ]
 
         for outcome, reason in outcomes_reasons:
@@ -557,8 +595,13 @@ class TestNegotiationStatusActivityUpdate:
         assert updated_status.outcome == status.outcome
         assert updated_status.started_at == status.started_at
         assert updated_status.last_activity_at == activity_time
-        assert updated_status.expected_completion_at == status.expected_completion_at
-        assert updated_status.actual_completion_at == status.actual_completion_at
+        assert (
+            updated_status.expected_completion_at
+            == status.expected_completion_at
+        )
+        assert (
+            updated_status.actual_completion_at == status.actual_completion_at
+        )
         assert updated_status.termination_reason == status.termination_reason
 
     def test_update_last_activity_default_time(self):
@@ -646,7 +689,9 @@ class TestNegotiationStatusProperties:
                 actual_completion_at=now,
                 termination_reason=TerminationReason.MUTUAL_AGREEMENT,
             )
-            assert status.is_completed, f"Outcome {outcome.value} should be completed"
+            assert (
+                status.is_completed
+            ), f"Outcome {outcome.value} should be completed"
 
     def test_duration_property(self):
         """Test duration property calculation."""
@@ -699,7 +744,9 @@ class TestNegotiationStatusProperties:
             mock_datetime.now.return_value = mock_current_time
 
             time_since_activity = status.time_since_last_activity
-            expected_seconds = int((mock_current_time - last_activity).total_seconds())
+            expected_seconds = int(
+                (mock_current_time - last_activity).total_seconds()
+            )
 
             assert time_since_activity == expected_seconds
             assert time_since_activity == 3 * 3600  # 3 hours in seconds
@@ -812,7 +859,9 @@ class TestNegotiationStatusStringRepresentation:
         )
 
         str_repr = str(status)
-        assert str_repr == "NegotiationStatus(phase=bargaining, outcome=pending)"
+        assert (
+            str_repr == "NegotiationStatus(phase=bargaining, outcome=pending)"
+        )
         assert isinstance(str_repr, str)
 
     def test_str_representation_completed(self):
@@ -829,7 +878,8 @@ class TestNegotiationStatusStringRepresentation:
 
         str_repr = str(status)
         assert (
-            str_repr == "NegotiationStatus(phase=terminated, outcome=agreement_reached)"
+            str_repr
+            == "NegotiationStatus(phase=terminated, outcome=agreement_reached)"
         )
 
 
@@ -890,8 +940,12 @@ class TestNegotiationStatusEdgeCases:
 
     def test_microsecond_precision_timestamps(self):
         """Test negotiation status with microsecond-precision timestamps."""
-        start_time = datetime(2023, 1, 1, 12, 0, 0, 123456, tzinfo=timezone.utc)
-        activity_time = datetime(2023, 1, 1, 12, 0, 0, 789012, tzinfo=timezone.utc)
+        start_time = datetime(
+            2023, 1, 1, 12, 0, 0, 123456, tzinfo=timezone.utc
+        )
+        activity_time = datetime(
+            2023, 1, 1, 12, 0, 0, 789012, tzinfo=timezone.utc
+        )
 
         status = NegotiationStatus(
             phase=NegotiationPhase.OPENING,
@@ -922,7 +976,9 @@ class TestNegotiationStatusEdgeCases:
             NegotiationPhase.CLOSING,
             NegotiationPhase.IMPLEMENTATION,
         ]:
-            assert status._is_valid_phase_transition(phase, NegotiationPhase.TERMINATED)
+            assert status._is_valid_phase_transition(
+                phase, NegotiationPhase.TERMINATED
+            )
 
     def test_outcome_phase_consistency_edge_cases(self):
         """Test edge cases in outcome-phase consistency validation."""

@@ -24,7 +24,13 @@ from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 # =============================================================================
 # Base Types and Enums
@@ -124,7 +130,10 @@ class Position(BaseModel):
     y: float = Field(..., description="Y coordinate")
     z: float = Field(default=0.0, description="Z coordinate (elevation)")
     facing: Optional[float] = Field(
-        default=None, ge=0.0, lt=360.0, description="Facing direction in degrees"
+        default=None,
+        ge=0.0,
+        lt=360.0,
+        description="Facing direction in degrees",
     )
     accuracy: Optional[float] = Field(
         default=1.0, ge=0.0, le=1.0, description="Position accuracy (0.0-1.0)"
@@ -172,7 +181,9 @@ class BoundingBox(BaseModel):
 class Area(BaseModel):
     """Named area with bounding box and properties."""
 
-    name: str = Field(..., min_length=1, max_length=100, description="Area identifier")
+    name: str = Field(
+        ..., min_length=1, max_length=100, description="Area identifier"
+    )
     bounds: BoundingBox = Field(..., description="Area boundaries")
     area_type: str = Field(
         ..., description="Type of area (battlefield, building, etc.)"
@@ -191,7 +202,9 @@ class ResourceValue(BaseModel):
     """Resource with current and maximum values."""
 
     current: float = Field(..., ge=0.0, description="Current resource amount")
-    maximum: float = Field(..., gt=0.0, description="Maximum resource capacity")
+    maximum: float = Field(
+        ..., gt=0.0, description="Maximum resource capacity"
+    )
     regeneration_rate: Optional[float] = Field(
         default=0.0, description="Per-turn regeneration rate"
     )
@@ -214,13 +227,17 @@ class ResourceValue(BaseModel):
     @property
     def percentage(self) -> float:
         """Get resource as percentage of maximum."""
-        return (self.current / self.maximum) * 100.0 if self.maximum > 0 else 0.0
+        return (
+            (self.current / self.maximum) * 100.0 if self.maximum > 0 else 0.0
+        )
 
 
 class Equipment(BaseModel):
     """Equipment item with properties and condition."""
 
-    name: str = Field(..., min_length=1, max_length=100, description="Equipment name")
+    name: str = Field(
+        ..., min_length=1, max_length=100, description="Equipment name"
+    )
     equipment_type: str = Field(..., description="Category of equipment")
     condition: float = Field(
         default=1.0, ge=0.0, le=1.0, description="Condition rating (0.0-1.0)"
@@ -236,7 +253,11 @@ class Equipment(BaseModel):
                 "name": "Lasgun",
                 "equipment_type": "weapon",
                 "condition": 0.85,
-                "properties": {"damage": 15, "range": 150, "ammo_type": "las_cell"},
+                "properties": {
+                    "damage": 15,
+                    "range": 150,
+                    "ammo_type": "las_cell",
+                },
                 "quantity": 1,
             }
         }
@@ -252,14 +273,25 @@ class CharacterStats(BaseModel):
     """Character statistics and attributes."""
 
     strength: int = Field(..., ge=1, le=10, description="Physical strength")
-    dexterity: int = Field(..., ge=1, le=10, description="Agility and coordination")
-    intelligence: int = Field(..., ge=1, le=10, description="Reasoning ability")
+    dexterity: int = Field(
+        ..., ge=1, le=10, description="Agility and coordination"
+    )
+    intelligence: int = Field(
+        ..., ge=1, le=10, description="Reasoning ability"
+    )
     willpower: int = Field(..., ge=1, le=10, description="Mental fortitude")
-    perception: int = Field(..., ge=1, le=10, description="Awareness and observation")
+    perception: int = Field(
+        ..., ge=1, le=10, description="Awareness and observation"
+    )
     charisma: int = Field(..., ge=1, le=10, description="Social influence")
 
     @field_validator(
-        "strength", "dexterity", "intelligence", "willpower", "perception", "charisma"
+        "strength",
+        "dexterity",
+        "intelligence",
+        "willpower",
+        "perception",
+        "charisma",
     )
     @classmethod
     def validate_stats_range(cls, v):
@@ -283,10 +315,14 @@ class CharacterStats(BaseModel):
 class CharacterResources(BaseModel):
     """Character resource pools."""
 
-    health: ResourceValue = Field(..., description="Physical health/hit points")
+    health: ResourceValue = Field(
+        ..., description="Physical health/hit points"
+    )
     stamina: ResourceValue = Field(..., description="Physical endurance")
     morale: ResourceValue = Field(..., description="Mental/spiritual strength")
-    ammo: Dict[str, int] = Field(default_factory=dict, description="Ammunition by type")
+    ammo: Dict[str, int] = Field(
+        default_factory=dict, description="Ammunition by type"
+    )
     special_resources: Dict[str, ResourceValue] = Field(
         default_factory=dict, description="Custom resource pools"
     )
@@ -295,13 +331,21 @@ class CharacterResources(BaseModel):
 class CharacterState(BaseModel):
     """Current state and status effects of a character."""
 
-    conscious: bool = Field(default=True, description="Whether character is conscious")
-    mobile: bool = Field(default=True, description="Whether character can move")
-    combat_ready: bool = Field(default=True, description="Whether character can fight")
+    conscious: bool = Field(
+        default=True, description="Whether character is conscious"
+    )
+    mobile: bool = Field(
+        default=True, description="Whether character can move"
+    )
+    combat_ready: bool = Field(
+        default=True, description="Whether character can fight"
+    )
     status_effects: List[str] = Field(
         default_factory=list, description="Active status effects"
     )
-    injuries: List[str] = Field(default_factory=list, description="Current injuries")
+    injuries: List[str] = Field(
+        default_factory=list, description="Current injuries"
+    )
     fatigue_level: float = Field(
         default=0.0, ge=0.0, le=1.0, description="Fatigue level (0.0-1.0)"
     )
@@ -313,7 +357,9 @@ class CharacterData(BaseModel):
     character_id: str = Field(
         ..., min_length=1, description="Unique character identifier"
     )
-    name: str = Field(..., min_length=1, max_length=100, description="Character name")
+    name: str = Field(
+        ..., min_length=1, max_length=100, description="Character name"
+    )
     faction: str = Field(..., description="Character's faction/allegiance")
     position: Position = Field(..., description="Current position")
     stats: CharacterStats = Field(..., description="Character attributes")
@@ -394,11 +440,18 @@ class ProposedAction(BaseModel):
     """Action proposed by an agent before validation."""
 
     action_id: str = Field(
-        default_factory=lambda: str(uuid4()), description="Unique action identifier"
+        default_factory=lambda: str(uuid4()),
+        description="Unique action identifier",
     )
-    character_id: str = Field(..., description="Character performing the action")
-    action_type: ActionType = Field(..., description="Type of action to perform")
-    target: Optional[ActionTarget] = Field(default=None, description="Action target")
+    character_id: str = Field(
+        ..., description="Character performing the action"
+    )
+    action_type: ActionType = Field(
+        ..., description="Type of action to perform"
+    )
+    target: Optional[ActionTarget] = Field(
+        default=None, description="Action target"
+    )
     parameters: ActionParameters = Field(
         default_factory=ActionParameters, description="Action parameters"
     )
@@ -406,7 +459,10 @@ class ProposedAction(BaseModel):
         ..., min_length=1, description="AI reasoning for this action"
     )
     confidence: float = Field(
-        default=0.5, ge=0.0, le=1.0, description="AI confidence in action choice"
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="AI confidence in action choice",
     )
     alternatives: List[str] = Field(
         default_factory=list, description="Alternative actions considered"
@@ -417,7 +473,10 @@ class ProposedAction(BaseModel):
             "example": {
                 "character_id": "char_001",
                 "action_type": "attack",
-                "target": {"entity_id": "enemy_001", "entity_type": "character"},
+                "target": {
+                    "entity_id": "enemy_001",
+                    "entity_type": "character",
+                },
                 "reasoning": "Enemy is within range and vulnerable",
                 "confidence": 0.8,
             }
@@ -429,11 +488,19 @@ class ValidatedAction(BaseModel):
     """Action that has passed Iron Laws validation."""
 
     action_id: str = Field(..., description="Unique action identifier")
-    character_id: str = Field(..., description="Character performing the action")
-    action_type: ActionType = Field(..., description="Type of action to perform")
-    target: Optional[ActionTarget] = Field(default=None, description="Action target")
+    character_id: str = Field(
+        ..., description="Character performing the action"
+    )
+    action_type: ActionType = Field(
+        ..., description="Type of action to perform"
+    )
+    target: Optional[ActionTarget] = Field(
+        default=None, description="Action target"
+    )
     parameters: ActionParameters = Field(..., description="Action parameters")
-    validation_result: ValidationResult = Field(..., description="Validation outcome")
+    validation_result: ValidationResult = Field(
+        ..., description="Validation outcome"
+    )
     validation_details: Dict[str, Any] = Field(
         default_factory=dict, description="Validation specifics"
     )
@@ -480,7 +547,9 @@ class IronLawsReport(BaseModel):
     violations: List[IronLawsViolation] = Field(
         default_factory=list, description="Rule violations found"
     )
-    checks_performed: List[str] = Field(..., description="Validation checks executed")
+    checks_performed: List[str] = Field(
+        ..., description="Validation checks executed"
+    )
     repair_attempts: List[str] = Field(
         default_factory=list, description="Repairs attempted"
     )
@@ -512,7 +581,9 @@ class WorldEntity(BaseModel):
 
     entity_id: str = Field(..., description="Unique entity identifier")
     entity_type: EntityType = Field(..., description="Type of entity")
-    name: str = Field(..., min_length=1, description="Entity name or identifier")
+    name: str = Field(
+        ..., min_length=1, description="Entity name or identifier"
+    )
     position: Optional[Position] = Field(
         default=None, description="Entity position if applicable"
     )
@@ -530,8 +601,12 @@ class WorldEntity(BaseModel):
 class EnvironmentalCondition(BaseModel):
     """Environmental factors affecting the simulation."""
 
-    condition_type: str = Field(..., description="Type of environmental condition")
-    severity: float = Field(..., ge=0.0, le=1.0, description="Condition intensity")
+    condition_type: str = Field(
+        ..., description="Type of environmental condition"
+    )
+    severity: float = Field(
+        ..., ge=0.0, le=1.0, description="Condition intensity"
+    )
     affected_area: Optional[Area] = Field(
         default=None, description="Area affected by condition"
     )
@@ -553,7 +628,9 @@ class WorldState(BaseModel):
     entities: Dict[str, WorldEntity] = Field(
         default_factory=dict, description="All world entities"
     )
-    environmental_conditions: List[EnvironmentalCondition] = Field(default_factory=list)
+    environmental_conditions: List[EnvironmentalCondition] = Field(
+        default_factory=list
+    )
     active_areas: Dict[str, Area] = Field(
         default_factory=dict, description="Defined areas"
     )
@@ -561,7 +638,9 @@ class WorldState(BaseModel):
         default_factory=dict, description="Global world properties"
     )
 
-    def get_entities_by_type(self, entity_type: EntityType) -> List[WorldEntity]:
+    def get_entities_by_type(
+        self, entity_type: EntityType
+    ) -> List[WorldEntity]:
         """Get all entities of a specific type."""
         return [
             entity
@@ -576,7 +655,9 @@ class WorldState(BaseModel):
             if entity.position:
                 if (
                     area.bounds.min_x <= entity.position.x <= area.bounds.max_x
-                    and area.bounds.min_y <= entity.position.y <= area.bounds.max_y
+                    and area.bounds.min_y
+                    <= entity.position.y
+                    <= area.bounds.max_y
                 ):
                     entities_in_area.append(entity)
         return entities_in_area
@@ -607,7 +688,8 @@ class InformationFragment(BaseModel):
     """Piece of information with provenance and reliability."""
 
     fragment_id: str = Field(
-        default_factory=lambda: str(uuid4()), description="Unique fragment identifier"
+        default_factory=lambda: str(uuid4()),
+        description="Unique fragment identifier",
     )
     entity_id: str = Field(..., description="Entity this information is about")
     information_type: str = Field(..., description="Type of information")
@@ -642,7 +724,10 @@ class FogOfWarFilter(BaseModel):
         default=25.0, ge=0.0, description="Electronic sensor range"
     )
     rumor_reliability: float = Field(
-        default=0.3, ge=0.0, le=1.0, description="Rumor information reliability"
+        default=0.3,
+        ge=0.0,
+        le=1.0,
+        description="Rumor information reliability",
     )
     channel_preferences: Dict[FogOfWarChannel, float] = Field(
         default_factory=dict, description="Channel weighting"
@@ -653,7 +738,9 @@ class FilteredWorldView(BaseModel):
     """World state as seen by a specific observer through Fog of War."""
 
     observer_id: str = Field(..., description="Observer character/entity")
-    base_world_state: str = Field(..., description="Reference to base world state")
+    base_world_state: str = Field(
+        ..., description="Reference to base world state"
+    )
     visible_entities: Dict[str, WorldEntity] = Field(
         default_factory=dict, description="Entities visible to observer"
     )
@@ -666,7 +753,9 @@ class FilteredWorldView(BaseModel):
     last_updated: datetime = Field(
         default_factory=datetime.now, description="Last filter update"
     )
-    filter_config: FogOfWarFilter = Field(..., description="Filter configuration used")
+    filter_config: FogOfWarFilter = Field(
+        ..., description="Filter configuration used"
+    )
 
 
 # =============================================================================
@@ -678,10 +767,15 @@ class KnowledgeFragment(BaseModel):
     """Piece of knowledge for RAG injection."""
 
     fragment_id: str = Field(
-        default_factory=lambda: str(uuid4()), description="Unique fragment identifier"
+        default_factory=lambda: str(uuid4()),
+        description="Unique fragment identifier",
     )
-    content: str = Field(..., min_length=1, description="Knowledge content text")
-    source: str = Field(..., description="Source of knowledge (file, database, etc.)")
+    content: str = Field(
+        ..., min_length=1, description="Knowledge content text"
+    )
+    source: str = Field(
+        ..., description="Source of knowledge (file, database, etc.)"
+    )
     relevance_score: float = Field(
         default=0.0, ge=0.0, le=1.0, description="Relevance to current context"
     )
@@ -699,8 +793,12 @@ class KnowledgeFragment(BaseModel):
 class ContextualPrompt(BaseModel):
     """AI prompt with context injection."""
 
-    base_prompt: str = Field(..., min_length=1, description="Base prompt template")
-    character_context: str = Field(default="", description="Character-specific context")
+    base_prompt: str = Field(
+        ..., min_length=1, description="Base prompt template"
+    )
+    character_context: str = Field(
+        default="", description="Character-specific context"
+    )
     world_context: str = Field(default="", description="World state context")
     injected_knowledge: List[KnowledgeFragment] = Field(
         default_factory=list, description="RAG knowledge fragments"
@@ -717,7 +815,9 @@ class ContextualPrompt(BaseModel):
         components = [self.base_prompt]
 
         if self.character_context:
-            components.append(f"\n## Character Context\n{self.character_context}")
+            components.append(
+                f"\n## Character Context\n{self.character_context}"
+            )
 
         if self.world_context:
             components.append(f"\n## World State\n{self.world_context}")
@@ -729,7 +829,9 @@ class ContextualPrompt(BaseModel):
             components.append(f"\n## Relevant Knowledge\n{knowledge_text}")
 
         if self.fog_of_war_mask:
-            components.append(f"\n## Information Constraints\n{self.fog_of_war_mask}")
+            components.append(
+                f"\n## Information Constraints\n{self.fog_of_war_mask}"
+            )
 
         return "\n".join(components)
 
@@ -770,8 +872,14 @@ class TurnBrief(BaseModel):
                 "character_id": "char_001",
                 "turn_number": 5,
                 "tactical_situation": "Enemy forces advancing from the east",
-                "objectives": ["Hold current position", "Maintain communication"],
-                "constraints": ["Limited ammunition", "Maintain radio discipline"],
+                "objectives": [
+                    "Hold current position",
+                    "Maintain communication",
+                ],
+                "constraints": [
+                    "Limited ammunition",
+                    "Maintain radio discipline",
+                ],
             }
         }
     )
@@ -806,22 +914,29 @@ class SimulationConfig(BaseModel):
     performance_mode: Literal["accuracy", "balanced", "speed"] = Field(
         default="balanced"
     )
-    logging_level: Literal["debug", "info", "warning", "error"] = Field(default="info")
+    logging_level: Literal["debug", "info", "warning", "error"] = Field(
+        default="info"
+    )
 
 
 class SimulationState(BaseModel):
     """Current state of simulation execution."""
 
     simulation_id: str = Field(..., description="Unique simulation identifier")
-    current_turn: int = Field(default=0, ge=0, description="Current turn number")
+    current_turn: int = Field(
+        default=0, ge=0, description="Current turn number"
+    )
     phase: SimulationPhase = Field(
-        default=SimulationPhase.INITIALIZATION, description="Current simulation phase"
+        default=SimulationPhase.INITIALIZATION,
+        description="Current simulation phase",
     )
     active_characters: List[str] = Field(
         default_factory=list, description="Active character IDs"
     )
     world_state: WorldState = Field(..., description="Current world state")
-    config: SimulationConfig = Field(..., description="Simulation configuration")
+    config: SimulationConfig = Field(
+        ..., description="Simulation configuration"
+    )
     start_time: datetime = Field(
         default_factory=datetime.now, description="Simulation start time"
     )
@@ -858,7 +973,9 @@ class TurnResult(BaseModel):
     warnings: List[str] = Field(
         default_factory=list, description="Warnings generated during turn"
     )
-    duration_seconds: float = Field(..., ge=0.0, description="Turn execution time")
+    duration_seconds: float = Field(
+        ..., ge=0.0, description="Turn execution time"
+    )
 
 
 # =============================================================================
@@ -871,9 +988,15 @@ class APIResponse(BaseModel):
 
     success: bool = Field(..., description="Whether the operation succeeded")
     message: str = Field(default="", description="Human-readable message")
-    data: Optional[Dict[str, Any]] = Field(default=None, description="Response data")
-    errors: List[str] = Field(default_factory=list, description="Error messages")
-    warnings: List[str] = Field(default_factory=list, description="Warning messages")
+    data: Optional[Dict[str, Any]] = Field(
+        default=None, description="Response data"
+    )
+    errors: List[str] = Field(
+        default_factory=list, description="Error messages"
+    )
+    warnings: List[str] = Field(
+        default_factory=list, description="Warning messages"
+    )
     timestamp: datetime = Field(
         default_factory=datetime.now, description="Response timestamp"
     )
@@ -890,7 +1013,9 @@ class SystemStatus(BaseModel):
     status: Literal["healthy", "degraded", "error", "offline"] = Field(
         ..., description="Overall system status"
     )
-    uptime_seconds: float = Field(..., ge=0.0, description="System uptime in seconds")
+    uptime_seconds: float = Field(
+        ..., ge=0.0, description="System uptime in seconds"
+    )
     active_simulations: int = Field(
         default=0, ge=0, description="Number of active simulations"
     )
@@ -900,7 +1025,9 @@ class SystemStatus(BaseModel):
     cpu_usage_percent: Optional[float] = Field(
         default=None, ge=0.0, le=100.0, description="CPU usage percentage"
     )
-    last_error: Optional[str] = Field(default=None, description="Last error message")
+    last_error: Optional[str] = Field(
+        default=None, description="Last error message"
+    )
     components: Dict[str, str] = Field(
         default_factory=dict, description="Component status"
     )
@@ -922,24 +1049,32 @@ class CacheEntry(BaseModel):
     last_accessed: datetime = Field(
         default_factory=datetime.now, description="Last access time"
     )
-    access_count: int = Field(default=0, ge=0, description="Number of times accessed")
+    access_count: int = Field(
+        default=0, ge=0, description="Number of times accessed"
+    )
     ttl_seconds: Optional[float] = Field(
         default=None, ge=0.0, description="Time to live in seconds"
     )
-    tags: List[str] = Field(default_factory=list, description="Cache entry tags")
+    tags: List[str] = Field(
+        default_factory=list, description="Cache entry tags"
+    )
 
     @property
     def is_expired(self) -> bool:
         """Check if cache entry has expired."""
         if self.ttl_seconds is None:
             return False
-        return (datetime.now() - self.created_at).total_seconds() > self.ttl_seconds
+        return (
+            datetime.now() - self.created_at
+        ).total_seconds() > self.ttl_seconds
 
 
 class PerformanceMetrics(BaseModel):
     """Performance tracking metrics."""
 
-    operation_name: str = Field(..., description="Name of operation being measured")
+    operation_name: str = Field(
+        ..., description="Name of operation being measured"
+    )
     duration_ms: float = Field(
         ..., ge=0.0, description="Operation duration in milliseconds"
     )
@@ -949,8 +1084,12 @@ class PerformanceMetrics(BaseModel):
     tokens_consumed: Optional[int] = Field(
         default=None, ge=0, description="AI tokens consumed"
     )
-    cache_hits: int = Field(default=0, ge=0, description="Number of cache hits")
-    cache_misses: int = Field(default=0, ge=0, description="Number of cache misses")
+    cache_hits: int = Field(
+        default=0, ge=0, description="Number of cache hits"
+    )
+    cache_misses: int = Field(
+        default=0, ge=0, description="Number of cache misses"
+    )
     error_count: int = Field(
         default=0, ge=0, description="Number of errors encountered"
     )
@@ -968,7 +1107,9 @@ class StateHash(BaseModel):
     """Hash representation of system state for consistency checks."""
 
     entity_id: str = Field(..., description="Entity being hashed")
-    hash_type: str = Field(..., description="Type of hash (character, world, action)")
+    hash_type: str = Field(
+        ..., description="Type of hash (character, world, action)"
+    )
     hash_value: str = Field(
         ..., min_length=32, max_length=128, description="Computed hash value"
     )
@@ -997,18 +1138,26 @@ class ConsistencyCheck(BaseModel):
     """Consistency validation results."""
 
     check_id: str = Field(
-        default_factory=lambda: str(uuid4()), description="Unique check identifier"
+        default_factory=lambda: str(uuid4()),
+        description="Unique check identifier",
     )
     entity_ids: List[str] = Field(
         ..., description="Entities involved in consistency check"
     )
-    check_type: str = Field(..., description="Type of consistency check performed")
-    is_consistent: bool = Field(..., description="Whether entities are consistent")
+    check_type: str = Field(
+        ..., description="Type of consistency check performed"
+    )
+    is_consistent: bool = Field(
+        ..., description="Whether entities are consistent"
+    )
     inconsistencies: List[str] = Field(
         default_factory=list, description="Inconsistencies found"
     )
     confidence: float = Field(
-        default=1.0, ge=0.0, le=1.0, description="Confidence in consistency check"
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="Confidence in consistency check",
     )
     timestamp: datetime = Field(
         default_factory=datetime.now, description="Check execution time"

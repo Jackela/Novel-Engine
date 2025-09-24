@@ -34,7 +34,8 @@ from chronicler_agent import create_chronicler_with_output
 
 # Configure logging for demonstration
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,9 @@ def demonstrate_chronicler_transcription():
         print("-" * 40)
 
         if not os.path.exists(campaign_log_path):
-            raise FileNotFoundError(f"Campaign log not found: {campaign_log_path}")
+            raise FileNotFoundError(
+                f"Campaign log not found: {campaign_log_path}"
+            )
 
         log_size = os.path.getsize(campaign_log_path)
         print(f"✅ Campaign log found: {log_size:,} bytes")
@@ -128,7 +131,8 @@ def demonstrate_chronicler_transcription():
             or "trooper 86" in complete_narrative.lower()
         )
         has_griznork = (
-            "Griznork" in complete_narrative or "griznork" in complete_narrative.lower()
+            "Griznork" in complete_narrative
+            or "griznork" in complete_narrative.lower()
         )
 
         # Check for Warhammer 40k atmosphere
@@ -145,24 +149,31 @@ def demonstrate_chronicler_transcription():
             "Krieg",
         ]
         wh40k_score = sum(
-            1 for term in wh40k_terms if term.lower() in complete_narrative.lower()
+            1
+            for term in wh40k_terms
+            if term.lower() in complete_narrative.lower()
         )
 
         # Check for narrative coherence (basic checks)
         has_opening = len(complete_narrative) > 100
         has_proper_structure = (
-            "." in complete_narrative and len(complete_narrative.split(".")) > 3
+            "." in complete_narrative
+            and len(complete_narrative.split(".")) > 3
         )
 
         print("🪖 Character Representation:")
         print(
             f"   Trooper 86 (Death Korps): {'✅ Present' if has_trooper_86 else '❌ Missing'}"
         )
-        print(f"   Griznork (Orks): {'✅ Present' if has_griznork else '❌ Missing'}")
+        print(
+            f"   Griznork (Orks): {'✅ Present' if has_griznork else '❌ Missing'}"
+        )
         print()
 
         print("🌌 Warhammer 40k Atmosphere:")
-        print(f"   Atmospheric Terms: {wh40k_score}/{len(wh40k_terms)} detected")
+        print(
+            f"   Atmospheric Terms: {wh40k_score}/{len(wh40k_terms)} detected"
+        )
         print(
             f"   Atmosphere Quality: {'✅ Excellent' if wh40k_score >= 5 else '⚠️ Adequate' if wh40k_score >= 3 else '❌ Poor'}"
         )
@@ -182,17 +193,23 @@ def demonstrate_chronicler_transcription():
         status = chronicler.get_chronicler_status()
 
         print("📈 Processing Statistics:")
-        print(f"   Events Processed: {status['processing_stats']['events_processed']}")
+        print(
+            f"   Events Processed: {status['processing_stats']['events_processed']}"
+        )
         print(
             f"   Narratives Generated: {status['processing_stats']['narratives_generated']}"
         )
-        print(f"   LLM Calls Made: {status['processing_stats']['llm_calls_made']}")
+        print(
+            f"   LLM Calls Made: {status['processing_stats']['llm_calls_made']}"
+        )
         print(f"   Error Count: {status['processing_stats']['error_count']}")
         print()
 
         print("🏥 System Health:")
         print(f"   Status: {status['system_health']['status'].upper()}")
-        print(f"   Templates Loaded: {status['system_health']['templates_loaded']}")
+        print(
+            f"   Templates Loaded: {status['system_health']['templates_loaded']}"
+        )
         print(
             f"   Faction Descriptions: {status['system_health']['faction_descriptions_loaded']}"
         )
@@ -230,7 +247,9 @@ def demonstrate_chronicler_transcription():
 
         print()
         print(f"📁 Narrative saved to: {output_directory}/")
-        print(f"⏱️  Total demonstration time: {processing_duration:.2f} seconds")
+        print(
+            f"⏱️  Total demonstration time: {processing_duration:.2f} seconds"
+        )
         print()
 
         return complete_narrative, overall_success
@@ -364,7 +383,9 @@ def main():
             print(
                 "The Warhammer 40k Multi-Agent Simulator has successfully demonstrated"
             )
-            print("its complete end-to-end workflow from structured simulation data")
+            print(
+                "its complete end-to-end workflow from structured simulation data"
+            )
             print("to dramatic narrative storytelling.")
             print()
             print("Key achievements:")
@@ -378,7 +399,9 @@ def main():
 
         else:
             print("⚠️  Demonstration encountered issues.")
-            print("Please review the output above for troubleshooting guidance.")
+            print(
+                "Please review the output above for troubleshooting guidance."
+            )
 
     except KeyboardInterrupt:
         print("\n🛑 Demonstration interrupted by user.")

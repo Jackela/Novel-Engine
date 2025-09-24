@@ -5,11 +5,19 @@ Character Aggregate Root
 This module implements the Character aggregate root, which serves as the main
 entry point for character-related domain operations and enforces business
 invariants across all character data.
+
+Follows P3 Sprint 3 patterns for type safety and validation.
 """
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
+
+if TYPE_CHECKING:
+    from ...infrastructure.character_domain_types import (
+        CharacterTypeGuards,
+        ValueObjectFactory,
+    )
 
 from ..events.character_events import (
     CharacterCreated,
@@ -106,7 +114,9 @@ class Character:
         self._validate_age_consistency(errors)
 
         if errors:
-            raise ValueError(f"Character validation failed: {'; '.join(errors)}")
+            raise ValueError(
+                f"Character validation failed: {'; '.join(errors)}"
+            )
 
     def _validate_racial_abilities(self, errors: List[str]) -> None:
         """Validate ability scores are appropriate for character race."""
@@ -132,13 +142,34 @@ class Character:
     def _validate_class_skills(self, errors: List[str]) -> None:
         """Validate character has appropriate skills for their class."""
         class_skills = {
-            CharacterClass.FIGHTER: [SkillCategory.COMBAT, SkillCategory.PHYSICAL],
-            CharacterClass.WIZARD: [SkillCategory.INTELLECTUAL, SkillCategory.MAGICAL],
-            CharacterClass.ROGUE: [SkillCategory.PHYSICAL, SkillCategory.SOCIAL],
-            CharacterClass.CLERIC: [SkillCategory.MAGICAL, SkillCategory.SOCIAL],
-            CharacterClass.RANGER: [SkillCategory.SURVIVAL, SkillCategory.COMBAT],
-            CharacterClass.BARD: [SkillCategory.SOCIAL, SkillCategory.ARTISTIC],
-            CharacterClass.PILOT: [SkillCategory.TECHNICAL, SkillCategory.PHYSICAL],
+            CharacterClass.FIGHTER: [
+                SkillCategory.COMBAT,
+                SkillCategory.PHYSICAL,
+            ],
+            CharacterClass.WIZARD: [
+                SkillCategory.INTELLECTUAL,
+                SkillCategory.MAGICAL,
+            ],
+            CharacterClass.ROGUE: [
+                SkillCategory.PHYSICAL,
+                SkillCategory.SOCIAL,
+            ],
+            CharacterClass.CLERIC: [
+                SkillCategory.MAGICAL,
+                SkillCategory.SOCIAL,
+            ],
+            CharacterClass.RANGER: [
+                SkillCategory.SURVIVAL,
+                SkillCategory.COMBAT,
+            ],
+            CharacterClass.BARD: [
+                SkillCategory.SOCIAL,
+                SkillCategory.ARTISTIC,
+            ],
+            CharacterClass.PILOT: [
+                SkillCategory.TECHNICAL,
+                SkillCategory.PHYSICAL,
+            ],
             CharacterClass.SCIENTIST: [
                 SkillCategory.INTELLECTUAL,
                 SkillCategory.TECHNICAL,
@@ -149,7 +180,9 @@ class Character:
             ],
         }
 
-        expected_categories = class_skills.get(self.profile.character_class, [])
+        expected_categories = class_skills.get(
+            self.profile.character_class, []
+        )
         for category in expected_categories:
             if category not in self.skills.skill_groups:
                 errors.append(
@@ -174,7 +207,10 @@ class Character:
         }
 
         for level_range, min_age in min_age_by_level.items():
-            if self.profile.level in level_range and self.profile.age < min_age:
+            if (
+                self.profile.level in level_range
+                and self.profile.age < min_age
+            ):
                 errors.append(
                     f"Character too young ({self.profile.age}) for level {self.profile.level} (minimum age: {min_age})"
                 )
@@ -226,17 +262,23 @@ class Character:
 
         # Business rule: Cannot lose more than half health in one update
         if (
-            new_stats.vital_stats.current_health < old_stats.vital_stats.current_health
+            new_stats.vital_stats.current_health
+            < old_stats.vital_stats.current_health
             and new_stats.vital_stats.current_health
             < old_stats.vital_stats.current_health / 2
         ):
-            raise ValueError("Cannot lose more than half health in a single update")
+            raise ValueError(
+                "Cannot lose more than half health in a single update"
+            )
 
         # Business rule: Cannot exceed maximum values
         if (
-            new_stats.vital_stats.current_health > new_stats.vital_stats.max_health
-            or new_stats.vital_stats.current_mana > new_stats.vital_stats.max_mana
-            or new_stats.vital_stats.current_stamina > new_stats.vital_stats.max_stamina
+            new_stats.vital_stats.current_health
+            > new_stats.vital_stats.max_health
+            or new_stats.vital_stats.current_mana
+            > new_stats.vital_stats.max_mana
+            or new_stats.vital_stats.current_stamina
+            > new_stats.vital_stats.max_stamina
         ):
             raise ValueError("Current values cannot exceed maximum values")
 
@@ -302,7 +344,9 @@ class Character:
             + self.stats.core_abilities.constitution
         )
         new_mana = (
-            self.stats.vital_stats.max_mana + 5 + self.stats.core_abilities.intelligence
+            self.stats.vital_stats.max_mana
+            + 5
+            + self.stats.core_abilities.intelligence
         )
 
         # Create updated profile
@@ -326,9 +370,13 @@ class Character:
         # Create updated vital stats
         new_vital_stats = VitalStats(
             max_health=new_health,
-            current_health=min(self.stats.vital_stats.current_health + 10, new_health),
+            current_health=min(
+                self.stats.vital_stats.current_health + 10, new_health
+            ),
             max_mana=new_mana,
-            current_mana=min(self.stats.vital_stats.current_mana + 5, new_mana),
+            current_mana=min(
+                self.stats.vital_stats.current_mana + 5, new_mana
+            ),
             max_stamina=self.stats.vital_stats.max_stamina + 5,
             current_stamina=self.stats.vital_stats.max_stamina + 5,
             armor_class=self.stats.vital_stats.armor_class,
@@ -415,8 +463,12 @@ class Character:
             raise ValueError("Damage amount must be positive")
 
         # Apply damage reduction
-        actual_damage = max(1, amount - self.stats.combat_stats.damage_reduction)
-        new_health = max(0, self.stats.vital_stats.current_health - actual_damage)
+        actual_damage = max(
+            1, amount - self.stats.combat_stats.damage_reduction
+        )
+        new_health = max(
+            0, self.stats.vital_stats.current_health - actual_damage
+        )
 
         new_vital_stats = VitalStats(
             max_health=self.stats.vital_stats.max_health,
@@ -462,7 +514,10 @@ class Character:
 
     def can_level_up(self, required_xp: int) -> bool:
         """Check if character has enough experience to level up."""
-        return self.stats.experience_points >= required_xp and self.profile.level < 100
+        return (
+            self.stats.experience_points >= required_xp
+            and self.profile.level < 100
+        )
 
     def get_character_summary(self) -> Dict[str, Any]:
         """Get a comprehensive summary of the character."""

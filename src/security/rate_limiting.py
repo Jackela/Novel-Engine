@@ -156,7 +156,9 @@ class ClientState:
 class RateLimitExceeded(Exception):
     """ENHANCED RATE LIMIT EXCEPTION"""
 
-    def __init__(self, message: str, retry_after: int, threat_level: ThreatLevel):
+    def __init__(
+        self, message: str, retry_after: int, threat_level: ThreatLevel
+    ):
         self.message = message
         self.retry_after = retry_after
         self.threat_level = threat_level
@@ -227,7 +229,9 @@ class RateLimiter:
 
         return f"{client_ip}:{user_agent_hash}"
 
-    def _get_client_state(self, client_id: str, request: Request) -> ClientState:
+    def _get_client_state(
+        self, client_id: str, request: Request
+    ) -> ClientState:
         """STANDARD CLIENT STATE RETRIEVAL"""
         if client_id not in self.clients:
             # Extract IP address
@@ -259,7 +263,9 @@ class RateLimiter:
             client.minute_bucket = TokenBucket(
                 capacity=int(self.config.burst_size * role_multiplier),
                 tokens=int(self.config.burst_size * role_multiplier),
-                refill_rate=self.config.requests_per_minute * role_multiplier / 60.0,
+                refill_rate=self.config.requests_per_minute
+                * role_multiplier
+                / 60.0,
                 last_refill=time.time(),
             )
 
@@ -267,7 +273,9 @@ class RateLimiter:
             client.hour_bucket = TokenBucket(
                 capacity=int(self.config.requests_per_hour * role_multiplier),
                 tokens=int(self.config.requests_per_hour * role_multiplier),
-                refill_rate=self.config.requests_per_hour * role_multiplier / 3600.0,
+                refill_rate=self.config.requests_per_hour
+                * role_multiplier
+                / 3600.0,
                 last_refill=time.time(),
             )
 
@@ -275,7 +283,9 @@ class RateLimiter:
             client.day_bucket = TokenBucket(
                 capacity=int(self.config.requests_per_day * role_multiplier),
                 tokens=int(self.config.requests_per_day * role_multiplier),
-                refill_rate=self.config.requests_per_day * role_multiplier / 86400.0,
+                refill_rate=self.config.requests_per_day
+                * role_multiplier
+                / 86400.0,
                 last_refill=time.time(),
             )
 
@@ -287,7 +297,9 @@ class RateLimiter:
         threat_level = ThreatLevel.LOW
 
         # Check for rapid successive requests
-        if client.last_request and now - client.last_request < 0.1:  # Less than 100ms
+        if (
+            client.last_request and now - client.last_request < 0.1
+        ):  # Less than 100ms
             client.suspicious_patterns["rapid_requests"] = (
                 client.suspicious_patterns.get("rapid_requests", 0) + 1
             )
@@ -325,7 +337,9 @@ class RateLimiter:
 
         return threat_level
 
-    def _apply_adaptive_limits(self, client: ClientState, threat_level: ThreatLevel):
+    def _apply_adaptive_limits(
+        self, client: ClientState, threat_level: ThreatLevel
+    ):
         """STANDARD ADAPTIVE LIMIT APPLICATION"""
         if not self.config.enable_adaptive:
             return
@@ -355,7 +369,9 @@ class RateLimiter:
         ip_address = client_id.split(":")[0]
         if ip_address in self.config.blacklist_ips:
             raise RateLimitExceeded(
-                "IP address is blacklisted", 3600, ThreatLevel.CRITICAL  # 1 hour
+                "IP address is blacklisted",
+                3600,
+                ThreatLevel.CRITICAL,  # 1 hour
             )
 
         if ip_address in self.config.whitelist_ips:
@@ -399,7 +415,9 @@ class RateLimiter:
         # Check endpoint-specific limits
         endpoint_config = self.config.endpoint_configs.get(request.url.path)
         if endpoint_config:
-            endpoint_config.get("requests_per_minute", self.config.requests_per_minute)
+            endpoint_config.get(
+                "requests_per_minute", self.config.requests_per_minute
+            )
             if client.minute_bucket and not client.minute_bucket.consume():
                 raise RateLimitExceeded(
                     f"Rate limit exceeded for endpoint {request.url.path}",
@@ -449,10 +467,16 @@ class RateLimiter:
             "suspicious_patterns": client.suspicious_patterns,
             "remaining_tokens": {
                 "minute": (
-                    int(client.minute_bucket.tokens) if client.minute_bucket else 0
+                    int(client.minute_bucket.tokens)
+                    if client.minute_bucket
+                    else 0
                 ),
-                "hour": int(client.hour_bucket.tokens) if client.hour_bucket else 0,
-                "day": int(client.day_bucket.tokens) if client.day_bucket else 0,
+                "hour": int(client.hour_bucket.tokens)
+                if client.hour_bucket
+                else 0,
+                "day": int(client.day_bucket.tokens)
+                if client.day_bucket
+                else 0,
             },
         }
 
@@ -543,7 +567,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 response.headers["X-RateLimit-Remaining"] = str(
                     client_info["remaining_tokens"]["minute"]
                 )
-                response.headers["X-RateLimit-Reset"] = str(int(time.time()) + 60)
+                response.headers["X-RateLimit-Reset"] = str(
+                    int(time.time()) + 60
+                )
 
             return response
 
@@ -555,7 +581,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 f"Threat: {e.threat_level.value}"
             )
 
-            status_code = 429 if e.threat_level != ThreatLevel.CRITICAL else 403
+            status_code = (
+                429 if e.threat_level != ThreatLevel.CRITICAL else 403
+            )
 
             raise HTTPException(
                 status_code=status_code,
@@ -584,7 +612,9 @@ def get_rate_limiter() -> RateLimiter:
     return rate_limiter
 
 
-def create_rate_limit_middleware(app, config: Optional[RateLimitConfig] = None):
+def create_rate_limit_middleware(
+    app, config: Optional[RateLimitConfig] = None
+):
     """STANDARD RATE LIMIT MIDDLEWARE CREATOR"""
     global rate_limiter
     if config:

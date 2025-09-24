@@ -97,7 +97,9 @@ class StateStore(ABC):
         pass
 
     @abstractmethod
-    async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(
+        self, key: StateKey, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """Store value with key"""
         pass
 
@@ -186,7 +188,9 @@ class RedisStateStore(StateStore):
             logger.error(f"Failed to get key {key.to_string()}: {e}")
             return None
 
-    async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(
+        self, key: StateKey, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """Store value in Redis"""
         if not self._connected:
             await self.connect()
@@ -234,7 +238,9 @@ class RedisStateStore(StateStore):
             return result > 0
 
         except Exception as e:
-            logger.error(f"Failed to check existence of key {key.to_string()}: {e}")
+            logger.error(
+                f"Failed to check existence of key {key.to_string()}: {e}"
+            )
             return False
 
     async def list_keys(self, pattern: str) -> List[StateKey]:
@@ -245,7 +251,9 @@ class RedisStateStore(StateStore):
         try:
             keys = await self.redis.keys(pattern)
             return [
-                StateKey.from_string(key.decode() if isinstance(key, bytes) else key)
+                StateKey.from_string(
+                    key.decode() if isinstance(key, bytes) else key
+                )
                 for key in keys
             ]
 
@@ -276,7 +284,9 @@ class RedisStateStore(StateStore):
             return result is True
 
         except Exception as e:
-            logger.error(f"Failed to set expire for key {key.to_string()}: {e}")
+            logger.error(
+                f"Failed to set expire for key {key.to_string()}: {e}"
+            )
             return False
 
     async def health_check(self) -> bool:
@@ -319,7 +329,8 @@ class PostgreSQLStateStore(StateStore):
                 min_size=5,
                 max_size=20,
                 command_timeout=self.config.connection_timeout,
-                server_settings={"jit": "off"},  # Disable JIT for better predictability
+                # Disable JIT for better predictability
+                server_settings={"jit": "off"},
             )
 
             # Initialize tables
@@ -345,12 +356,12 @@ class PostgreSQLStateStore(StateStore):
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             expires_at TIMESTAMP WITH TIME ZONE
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_state_data_namespace ON state_data(namespace);
         CREATE INDEX IF NOT EXISTS idx_state_data_entity ON state_data(entity_type, entity_id);
         CREATE INDEX IF NOT EXISTS idx_state_data_created ON state_data(created_at);
         CREATE INDEX IF NOT EXISTS idx_state_data_expires ON state_data(expires_at) WHERE expires_at IS NOT NULL;
-        
+
         CREATE TABLE IF NOT EXISTS state_metadata (
             key_hash VARCHAR(64) PRIMARY KEY,
             metadata JSONB NOT NULL,
@@ -389,7 +400,9 @@ class PostgreSQLStateStore(StateStore):
             logger.error(f"Failed to get key {key.to_string()}: {e}")
             return None
 
-    async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(
+        self, key: StateKey, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """Store value in PostgreSQL"""
         if not self._connected:
             await self.connect()
@@ -399,7 +412,9 @@ class PostgreSQLStateStore(StateStore):
 
         # Ensure value is JSON serializable
         try:
-            if not isinstance(value, (dict, list, str, int, float, bool, type(None))):
+            if not isinstance(
+                value, (dict, list, str, int, float, bool, type(None))
+            ):
                 # Convert complex objects to dict if possible
                 if hasattr(value, "__dict__"):
                     value = value.__dict__
@@ -416,8 +431,8 @@ class PostgreSQLStateStore(StateStore):
                     """
                     INSERT INTO state_data (key_hash, namespace, entity_type, entity_id, version, data, expires_at)
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    ON CONFLICT (key_hash) 
-                    DO UPDATE SET 
+                    ON CONFLICT (key_hash)
+                    DO UPDATE SET
                         data = EXCLUDED.data,
                         updated_at = NOW(),
                         expires_at = EXCLUDED.expires_at
@@ -448,7 +463,8 @@ class PostgreSQLStateStore(StateStore):
                 result = await conn.execute(
                     "DELETE FROM state_data WHERE key_hash = $1", key_hash
                 )
-                return result.split()[-1] != "0"  # Check if any rows were affected
+                # Check if any rows were affected
+                return result.split()[-1] != "0"
 
         except Exception as e:
             logger.error(f"Failed to delete key {key.to_string()}: {e}")
@@ -470,7 +486,9 @@ class PostgreSQLStateStore(StateStore):
                 return row is not None
 
         except Exception as e:
-            logger.error(f"Failed to check existence of key {key.to_string()}: {e}")
+            logger.error(
+                f"Failed to check existence of key {key.to_string()}: {e}"
+            )
             return False
 
     async def list_keys(self, pattern: str) -> List[StateKey]:
@@ -486,7 +504,7 @@ class PostgreSQLStateStore(StateStore):
                 rows = await conn.fetch(
                     """
                     SELECT namespace, entity_type, entity_id, version
-                    FROM state_data 
+                    FROM state_data
                     WHERE CONCAT(namespace, ':', entity_type, ':', entity_id, COALESCE(':', version, '')) LIKE $1
                     AND (expires_at IS NULL OR expires_at > NOW())
                     ORDER BY created_at DESC
@@ -520,8 +538,8 @@ class PostgreSQLStateStore(StateStore):
                 rows = await conn.fetch(
                     """
                     SELECT namespace, entity_type, entity_id, version, data, created_at, updated_at
-                    FROM state_data 
-                    WHERE namespace = $1 
+                    FROM state_data
+                    WHERE namespace = $1
                     AND (expires_at IS NULL OR expires_at > NOW())
                     ORDER BY updated_at DESC
                     LIMIT $2
@@ -605,7 +623,9 @@ class S3StateStore(StateStore):
                 logger.info("S3 connection established")
             except ClientError as e:
                 if e.response["Error"]["Code"] == "NoCredentialsError":
-                    logger.warning("S3 credentials not configured, S3 storage disabled")
+                    logger.warning(
+                        "S3 credentials not configured, S3 storage disabled"
+                    )
                     self._connected = False
                 else:
                     raise
@@ -623,7 +643,9 @@ class S3StateStore(StateStore):
                 # Create bucket
                 try:
                     if self.config.s3_region == "us-east-1":
-                        self.s3_client.create_bucket(Bucket=self.config.s3_bucket)
+                        self.s3_client.create_bucket(
+                            Bucket=self.config.s3_bucket
+                        )
                     else:
                         self.s3_client.create_bucket(
                             Bucket=self.config.s3_bucket,
@@ -663,7 +685,9 @@ class S3StateStore(StateStore):
             content = response["Body"].read()
 
             # Try to deserialize based on content type
-            content_type = response.get("ContentType", "application/octet-stream")
+            content_type = response.get(
+                "ContentType", "application/octet-stream"
+            )
 
             if content_type == "application/json":
                 return json.loads(content.decode("utf-8"))
@@ -683,7 +707,9 @@ class S3StateStore(StateStore):
             logger.error(f"Failed to get S3 object {s3_key}: {e}")
             return None
 
-    async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(
+        self, key: StateKey, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """Store value in S3"""
         if not self._connected:
             await self.connect()
@@ -729,7 +755,10 @@ class S3StateStore(StateStore):
 
             # Upload to S3
             self.s3_client.put_object(
-                Bucket=self.config.s3_bucket, Key=s3_key, Body=content, **extra_args
+                Bucket=self.config.s3_bucket,
+                Key=s3_key,
+                Body=content,
+                **extra_args,
             )
 
             return True
@@ -749,7 +778,9 @@ class S3StateStore(StateStore):
         s3_key = self._key_to_s3_key(key)
 
         try:
-            self.s3_client.delete_object(Bucket=self.config.s3_bucket, Key=s3_key)
+            self.s3_client.delete_object(
+                Bucket=self.config.s3_bucket, Key=s3_key
+            )
             return True
 
         except Exception as e:
@@ -767,14 +798,18 @@ class S3StateStore(StateStore):
         s3_key = self._key_to_s3_key(key)
 
         try:
-            self.s3_client.head_object(Bucket=self.config.s3_bucket, Key=s3_key)
+            self.s3_client.head_object(
+                Bucket=self.config.s3_bucket, Key=s3_key
+            )
             return True
 
         except ClientError as e:
             if e.response["Error"]["Code"] == "404":
                 return False
             else:
-                logger.error(f"Failed to check S3 object existence {s3_key}: {e}")
+                logger.error(
+                    f"Failed to check S3 object existence {s3_key}: {e}"
+                )
                 return False
 
         except Exception as e:
@@ -885,7 +920,9 @@ class UnifiedStateManager:
         else:
             return self.postgres_store
 
-    async def get(self, key: StateKey, use_cache: bool = True) -> Optional[Any]:
+    async def get(
+        self, key: StateKey, use_cache: bool = True
+    ) -> Optional[Any]:
         """Get value with intelligent routing and caching"""
 
         # Try cache first for non-cache keys
@@ -918,11 +955,14 @@ class UnifiedStateManager:
                 entity_id=f"{key.entity_type}:{key.entity_id}",
                 version=key.version,
             )
-            await self.redis_store.set(cache_key, value, ttl=300)  # 5 minute cache
+            # 5 minute cache
+            await self.redis_store.set(cache_key, value, ttl=300)
 
         return value
 
-    async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(
+        self, key: StateKey, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """Set value with intelligent routing"""
         primary_store = self._get_store(key)
         success = await primary_store.set(key, value, ttl)
@@ -975,7 +1015,11 @@ class UnifiedStateManager:
         else:
             # Search all stores and combine results
             all_keys = []
-            for store in [self.redis_store, self.postgres_store, self.s3_store]:
+            for store in [
+                self.redis_store,
+                self.postgres_store,
+                self.s3_store,
+            ]:
                 try:
                     keys = await store.list_keys(pattern)
                     all_keys.extend(keys)
@@ -1032,12 +1076,18 @@ class ConfigurationManager:
                         file_config = yaml.safe_load(f)
                         if file_config:
                             self._merge_config(self.config_data, file_config)
-                            logger.info(f"Loaded configuration from {config_path}")
+                            logger.info(
+                                f"Loaded configuration from {config_path}"
+                            )
                 except Exception as e:
-                    logger.warning(f"Failed to load config from {config_path}: {e}")
+                    logger.warning(
+                        f"Failed to load config from {config_path}: {e}"
+                    )
 
         # Apply environment-specific overrides
-        env_config = self.config_data.get("environments", {}).get(self.environment, {})
+        env_config = self.config_data.get("environments", {}).get(
+            self.environment, {}
+        )
         if env_config:
             self._merge_config(self.config_data, env_config)
 
@@ -1073,7 +1123,11 @@ class ConfigurationManager:
     def _merge_config(self, base: Dict[str, Any], override: Dict[str, Any]):
         """Merge configuration dictionaries"""
         for key, value in override.items():
-            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            if (
+                key in base
+                and isinstance(base[key], dict)
+                and isinstance(value, dict)
+            ):
                 self._merge_config(base[key], value)
             else:
                 base[key] = value

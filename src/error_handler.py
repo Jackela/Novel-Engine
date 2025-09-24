@@ -2,10 +2,10 @@
 Centralized error handling system for the application.
 """
 
-from typing import Any, Dict, Optional, List
-from datetime import datetime, timezone
 import logging
 import traceback
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,6 @@ class CentralizedErrorHandler:
     def detect_category(self, error: Exception) -> str:
         """Detect error category from exception."""
         error_str = str(error).lower()
-        error_type = type(error).__name__
 
         if (
             "connection" in error_str
@@ -33,10 +32,14 @@ class CentralizedErrorHandler:
             or "timeout" in error_str
         ):
             return "network"
-        elif "database" in error_str or "sql" in error_str or "db" in error_str:
+        elif (
+            "database" in error_str or "sql" in error_str or "db" in error_str
+        ):
             return "database"
         elif (
-            "validation" in error_str or "invalid" in error_str or "value" in error_str
+            "validation" in error_str
+            or "invalid" in error_str
+            or "value" in error_str
         ):
             return "validation"
         elif "llm" in error_str or "api" in error_str or "model" in error_str:
@@ -73,7 +76,10 @@ class CentralizedErrorHandler:
         }
 
     def attempt_recovery(
-        self, category: str, error: Exception, context: Optional[Dict[str, Any]] = None
+        self,
+        category: str,
+        error: Exception,
+        context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Attempt to recover from error based on category."""
         if category in self.recovery_strategies:

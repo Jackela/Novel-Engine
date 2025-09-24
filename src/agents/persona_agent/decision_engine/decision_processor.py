@@ -12,10 +12,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..protocols import (
-    ThreatLevel,
-    WorldEvent,
-)
+from ..protocols import ThreatLevel, WorldEvent
 
 # Import shared types with fallback
 try:
@@ -123,7 +120,7 @@ class DecisionProcessor:
             )
 
             self.logger.info(
-                f"Decision made: {selected_action.get('action_type', 'unknown')}"
+                f"Decision made: {selected_action.get( 'action_type', 'unknown')}"
             )
             return selected_action
 
@@ -146,7 +143,9 @@ class DecisionProcessor:
             ThreatLevel: Assessment of threat level
         """
         try:
-            threat_factors = await self._analyze_threat_factors(event, character_data)
+            threat_factors = await self._analyze_threat_factors(
+                event, character_data
+            )
             threat_level = await self._calculate_threat_level(threat_factors)
 
             self.logger.debug(
@@ -184,7 +183,9 @@ class DecisionProcessor:
             # Return prioritized goals
             prioritized_goals = [goal for goal, score in scored_goals]
 
-            self.logger.debug(f"Goals prioritized: {len(prioritized_goals)} goals")
+            self.logger.debug(
+                f"Goals prioritized: {len(prioritized_goals)} goals"
+            )
             return prioritized_goals
 
         except Exception as e:
@@ -242,10 +243,14 @@ class DecisionProcessor:
 
             for action_type in context.available_actions:
                 # Generate action details
-                action = await self._generate_action_details(action_type, context)
+                action = await self._generate_action_details(
+                    action_type, context
+                )
 
                 # Score the action
-                score = await self._score_action(action, context, decision_weights)
+                score = await self._score_action(
+                    action, context, decision_weights
+                )
 
                 evaluations.append((action, score))
 
@@ -273,12 +278,18 @@ class DecisionProcessor:
                 "self_preservation": await self._score_self_preservation(
                     action, context
                 ),
-                "faction_loyalty": await self._score_faction_loyalty(action, context),
+                "faction_loyalty": await self._score_faction_loyalty(
+                    action, context
+                ),
                 "personal_relationships": await self._score_personal_relationships(
                     action, context
                 ),
-                "mission_success": await self._score_mission_success(action, context),
-                "moral_principles": await self._score_moral_principles(action, context),
+                "mission_success": await self._score_mission_success(
+                    action, context
+                ),
+                "moral_principles": await self._score_moral_principles(
+                    action, context
+                ),
                 "resource_acquisition": await self._score_resource_acquisition(
                     action, context
                 ),
@@ -296,7 +307,9 @@ class DecisionProcessor:
                 base_score += score * weight
 
             # Apply threat level modifier
-            threat_modifier = await self._get_threat_modifier(context.threat_level)
+            threat_modifier = await self._get_threat_modifier(
+                context.threat_level
+            )
             final_score = base_score * threat_modifier
 
             # Apply time pressure modifier
@@ -312,7 +325,9 @@ class DecisionProcessor:
             return 0.5  # Neutral score on error
 
     async def _select_optimal_action(
-        self, evaluations: List[Tuple[Dict[str, Any], float]], context: DecisionContext
+        self,
+        evaluations: List[Tuple[Dict[str, Any], float]],
+        context: DecisionContext,
     ) -> CharacterAction:
         """Select the optimal action from evaluations."""
         try:
@@ -394,7 +409,10 @@ class DecisionProcessor:
                 action["category"] = ActionCategory.TACTICAL.value
                 action["priority"] = "medium"
                 action["resource_cost"] = {"time": 0.3}
-                action["expected_outcomes"] = ["information", "strategic_advantage"]
+                action["expected_outcomes"] = [
+                    "information",
+                    "strategic_advantage",
+                ]
 
             return action
 
@@ -417,7 +435,10 @@ class DecisionProcessor:
                 base_score -= 0.2
 
             # Defensive actions score higher in dangerous situations
-            if context.threat_level in [ThreatLevel.HIGH, ThreatLevel.CRITICAL]:
+            if context.threat_level in [
+                ThreatLevel.HIGH,
+                ThreatLevel.CRITICAL,
+            ]:
                 if action["action_type"] in ["defend", "retreat", "hide"]:
                     base_score += 0.3
 
@@ -443,7 +464,11 @@ class DecisionProcessor:
                 base_score += 0.2
 
             # Actions that harm faction interests score lower
-            if action["action_type"] in ["betray", "desert", "negotiate_with_enemies"]:
+            if action["action_type"] in [
+                "betray",
+                "desert",
+                "negotiate_with_enemies",
+            ]:
                 base_score -= 0.3
 
             return max(0.0, min(1.0, base_score))
@@ -504,9 +529,9 @@ class DecisionProcessor:
             }
 
             # Add reasoning
-            enhanced_action["reasoning"] = await self._generate_action_reasoning(
-                action, context
-            )
+            enhanced_action[
+                "reasoning"
+            ] = await self._generate_action_reasoning(action, context)
 
             return enhanced_action
 
@@ -532,7 +557,8 @@ class DecisionProcessor:
             }
 
             return reasoning_templates.get(
-                action_type, f"Action {action_type} selected based on current context"
+                action_type,
+                f"Action {action_type} selected based on current context",
             )
 
         except Exception as e:
@@ -689,4 +715,6 @@ class DecisionProcessor:
 
     def get_decision_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent decision history."""
-        return self._decision_history[-limit:] if self._decision_history else []
+        return (
+            self._decision_history[-limit:] if self._decision_history else []
+        )

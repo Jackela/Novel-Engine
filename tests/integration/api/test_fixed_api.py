@@ -10,6 +10,7 @@ import sys
 import time
 from datetime import datetime
 
+import pytest
 import requests
 
 
@@ -67,20 +68,20 @@ async def health():
     """健康检查"""
     try:
         gemini_available = False
-        
+
         if GEMINI_API_KEY and GEMINI_API_KEY != 'your_key_here':
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=GEMINI_API_KEY)
-                
+
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 response = model.generate_content("hello")
-                
+
                 gemini_available = bool(response and response.text)
             except Exception as e:
                 logger.warning(f"Gemini API test failed: {e}")
                 gemini_available = False
-        
+
         return {
             "status": "healthy" if gemini_available else "limited",
             "timestamp": time.time(),
@@ -103,45 +104,43 @@ async def get_characters():
     """获取角色列表"""
     try:
         characters_dir = "characters"
-        
+
         if not os.path.isdir(characters_dir):
             os.makedirs(characters_dir, exist_ok=True)
             return {"characters": []}
-        
+
         characters = []
         for item in os.listdir(characters_dir):
             if os.path.isdir(os.path.join(characters_dir, item)):
                 characters.append(item)
-        
+
         return {"characters": sorted(characters)}
-        
+
     except Exception as e:
         logger.error(f"Get characters error: {e}")
         return {"characters": [], "error": str(e)}
 
 @app.post("/test-gemini")
-@pytest.mark.asyncio
-async def test_gemini():
-    """测试Gemini API"""
+async def test_gemini_endpoint():
+    """测试Gemini API端点"""
     if not GEMINI_API_KEY or GEMINI_API_KEY == 'your_key_here':
         return {"success": False, "error": "GEMINI_API_KEY not set"}
-    
+
     try:
         import google.generativeai as genai
-import pytest
         genai.configure(api_key=GEMINI_API_KEY)
-        
+
         model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content("Generate a simple test response")
-        
+
         if response and response.text:
             return {
-                "success": True, 
+                "success": True,
                 "response": response.text[:200] + "..." if len(response.text) > 200 else response.text
             }
         else:
             return {"success": False, "error": "No response from Gemini"}
-            
+
     except Exception as e:
         logger.error(f"Gemini test error: {e}")
         return {"success": False, "error": str(e)}
@@ -160,13 +159,6 @@ def test_minimal_api():
     """测试最小化API服务器"""
     print("=== 测试最小化API服务器 ===")
 
-    # 设置真实的API密钥（如果需要）
-    if (
-        not os.getenv("GEMINI_API_KEY")
-        or os.getenv("GEMINI_API_KEY") == "your_key_here"
-    ):
-        print("警告: GEMINI_API_KEY未设置或为占位符，将使用模拟模式")
-
     # 启动服务器
     server = subprocess.Popen(
         [sys.executable, "minimal_api_server.py"],
@@ -180,79 +172,99 @@ def test_minimal_api():
         time.sleep(6)
 
         base_url = "http://127.0.0.1:8003"
-        results = {}
 
         print(f"测试API端点 ({base_url})...")
 
         # 1. 测试根路径
         try:
             r = requests.get(f"{base_url}/", timeout=5)
-            if r.status_code == 200:
-                data = r.json()
-                print(f"OK / - {data.get('message', 'OK')}")
-                results["root"] = {"success": True, "data": data}
-            else:
-                print(f"FAIL / - Status {r.status_code}")
-                results["root"] = {"success": False, "status": r.status_code}
-        except Exception as e:
-            print(f"ERROR / - {e}")
-            results["root"] = {"success": False, "error": str(e)}
+            assert (
+                r.status_code == 200
+            ), f"Root endpoint failed with status {r.status_code}"
+            data = r.json()
+            assert isinstance(
+                data, dict
+            ), "Root endpoint should return JSON object"
+            assert (
+                "message" in data
+            ), "Root endpoint should contain 'message' field"
+            print(f"✅ / - {data.get('message', 'OK')}")
+        except requests.RequestException as e:
+            pytest.fail(f"Root endpoint request failed: {e}")
 
         # 2. 测试健康检查
         try:
             r = requests.get(f"{base_url}/health", timeout=5)
-            if r.status_code == 200:
-                data = r.json()
-                status = data.get("status", "unknown")
-                gemini_key_set = data.get("gemini_key_set", False)
-                gemini_available = data.get("gemini_available", False)
-                print(
-                    f"OK /health - Status: {status}, Gemini Key: {gemini_key_set}, Gemini Available: {gemini_available}"
-                )
-                results["health"] = {"success": True, "data": data}
-            else:
-                print(f"FAIL /health - Status {r.status_code}")
-                results["health"] = {"success": False, "status": r.status_code}
-        except Exception as e:
-            print(f"ERROR /health - {e}")
-            results["health"] = {"success": False, "error": str(e)}
+            assert (
+                r.status_code == 200
+            ), f"Health endpoint failed with status {r.status_code}"
+            data = r.json()
+            assert isinstance(
+                data, dict
+            ), "Health endpoint should return JSON object"
+            assert (
+                "status" in data
+            ), "Health endpoint should contain 'status' field"
+
+            status = data.get("status", "unknown")
+            gemini_key_set = data.get("gemini_key_set", False)
+            gemini_available = data.get("gemini_available", False)
+            print(
+                f"✅ /health - Status: {status}, Gemini Key: {gemini_key_set}, Available: {gemini_available}"
+            )
+        except requests.RequestException as e:
+            pytest.fail(f"Health endpoint request failed: {e}")
 
         # 3. 测试字符列表
         try:
             r = requests.get(f"{base_url}/characters", timeout=5)
-            if r.status_code == 200:
-                data = r.json()
-                chars = data.get("characters", [])
-                print(f"OK /characters - Found {len(chars)} characters: {chars}")
-                results["characters"] = {"success": True, "data": data}
-            else:
-                print(f"FAIL /characters - Status {r.status_code}")
-                results["characters"] = {"success": False, "status": r.status_code}
-        except Exception as e:
-            print(f"ERROR /characters - {e}")
-            results["characters"] = {"success": False, "error": str(e)}
+            assert (
+                r.status_code == 200
+            ), f"Characters endpoint failed with status {r.status_code}"
+            data = r.json()
+            assert isinstance(
+                data, dict
+            ), "Characters endpoint should return JSON object"
+            assert (
+                "characters" in data
+            ), "Characters endpoint should contain 'characters' field"
 
-        # 4. 测试Gemini API
-        try:
-            r = requests.post(f"{base_url}/test-gemini", timeout=10)
-            if r.status_code == 200:
+            chars = data.get("characters", [])
+            assert isinstance(chars, list), "Characters field should be a list"
+            print(f"✅ /characters - Found {len(chars)} characters: {chars}")
+        except requests.RequestException as e:
+            pytest.fail(f"Characters endpoint request failed: {e}")
+
+        # 4. 测试Gemini API（可选，如果有密钥的话）
+        if (
+            os.getenv("GEMINI_API_KEY")
+            and os.getenv("GEMINI_API_KEY") != "your_key_here"
+        ):
+            try:
+                r = requests.post(f"{base_url}/test-gemini", timeout=10)
+                assert (
+                    r.status_code == 200
+                ), f"Gemini endpoint failed with status {r.status_code}"
                 data = r.json()
+                assert isinstance(
+                    data, dict
+                ), "Gemini endpoint should return JSON object"
+
                 success = data.get("success", False)
                 if success:
                     response_text = data.get("response", "")
-                    print(f"OK /test-gemini - Response: {response_text[:50]}...")
+                    print(
+                        f"✅ /test-gemini - Response: {response_text[:50]}..."
+                    )
                 else:
                     error = data.get("error", "unknown")
-                    print(f"FAIL /test-gemini - Error: {error}")
-                results["gemini"] = {"success": success, "data": data}
-            else:
-                print(f"FAIL /test-gemini - Status {r.status_code}")
-                results["gemini"] = {"success": False, "status": r.status_code}
-        except Exception as e:
-            print(f"ERROR /test-gemini - {e}")
-            results["gemini"] = {"success": False, "error": str(e)}
-
-        return results
+                    print(
+                        f"⚠️ /test-gemini - Error (expected if API key invalid): {error}"
+                    )
+            except requests.RequestException as e:
+                pytest.fail(f"Gemini endpoint request failed: {e}")
+        else:
+            print("⚠️ /test-gemini - Skipped (GEMINI_API_KEY not set)")
 
     finally:
         # 清理服务器
@@ -266,7 +278,9 @@ def generate_report(results):
     print("\\n=== 测试报告 ===")
 
     total_tests = len(results)
-    successful_tests = sum(1 for r in results.values() if r.get("success", False))
+    successful_tests = sum(
+        1 for r in results.values() if r.get("success", False)
+    )
 
     print(f"总测试数: {total_tests}")
     print(f"成功测试: {successful_tests}")
@@ -285,9 +299,7 @@ def generate_report(results):
         "details": results,
     }
 
-    report_file = (
-        f"minimal_api_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    )
+    report_file = f"minimal_api_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(report_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 

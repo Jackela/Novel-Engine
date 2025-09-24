@@ -27,10 +27,7 @@ from .error_handler import CentralizedErrorHandler
 from .event_bus import Event, EventBus, EventHandler, EventPriority
 
 # Import new architectural components
-from .service_container import (
-    ServiceContainer,
-    ServiceScope,
-)
+from .service_container import ServiceContainer, ServiceScope
 from .subjective_reality import SubjectiveRealityEngine
 
 # Import existing core components
@@ -124,7 +121,10 @@ class SystemHealthEvent:
     """System health status change event."""
 
     def __init__(
-        self, previous_health: str, current_health: str, details: Dict[str, Any]
+        self,
+        previous_health: str,
+        current_health: str,
+        details: Dict[str, Any],
     ):
         self.previous_health = previous_health
         self.current_health = current_health
@@ -151,14 +151,18 @@ class HealthMonitoringHandler(EventHandler):
             if event.event_type == "system.health.changed":
                 payload = event.payload
                 logger.info(
-                    f"Health status changed: {payload.previous_health} -> {payload.current_health}"
+                    f"Health status changed: {payload.previous_health}-> {payload.current_health}"
                 )
 
                 # Take action based on health status
                 if payload.current_health == "critical":
-                    await self.orchestrator._handle_critical_health_event(payload)
+                    await self.orchestrator._handle_critical_health_event(
+                        payload
+                    )
                 elif payload.current_health == "degraded":
-                    await self.orchestrator._handle_degraded_health_event(payload)
+                    await self.orchestrator._handle_degraded_health_event(
+                        payload
+                    )
 
                 return True
 
@@ -180,7 +184,9 @@ class PerformanceMonitoringHandler(EventHandler):
                 payload = event.payload
 
                 # Check performance thresholds
-                await self.orchestrator._check_performance_thresholds(payload.metrics)
+                await self.orchestrator._check_performance_thresholds(
+                    payload.metrics
+                )
 
                 return True
 
@@ -243,7 +249,9 @@ class EnhancedSystemOrchestrator:
             "cpu_usage": 0.0,
         }
 
-        logger.info(f"Enhanced orchestrator initialized: {self.orchestrator_id}")
+        logger.info(
+            f"Enhanced orchestrator initialized: {self.orchestrator_id}"
+        )
 
     async def startup(self) -> Dict[str, Any]:
         """
@@ -296,7 +304,9 @@ class EnhancedSystemOrchestrator:
                     else 0
                 ),
                 "database_pools": (
-                    len(self.database_manager._pools) if self.database_manager else 0
+                    len(self.database_manager._pools)
+                    if self.database_manager
+                    else 0
                 ),
                 "health_status": self.current_health.value,
                 "timestamp": datetime.now().isoformat(),
@@ -363,7 +373,9 @@ class EnhancedSystemOrchestrator:
             if self.event_bus:
                 await self.event_bus.stop()
 
-            shutdown_duration = (datetime.now() - shutdown_start).total_seconds()
+            shutdown_duration = (
+                datetime.now() - shutdown_start
+            ).total_seconds()
 
             shutdown_result = {
                 "success": True,
@@ -407,13 +419,16 @@ class EnhancedSystemOrchestrator:
 
         # Event bus
         self.event_bus = EventBus(
-            self.error_handler, enable_event_store=self.config.enable_event_sourcing
+            self.error_handler,
+            enable_event_store=self.config.enable_event_sourcing,
         )
         await self.event_bus.start()
         logger.debug("Event bus initialized")
 
         # Database manager
-        self.database_manager = DatabaseManager(self.config_manager, self.error_handler)
+        self.database_manager = DatabaseManager(
+            self.config_manager, self.error_handler
+        )
 
         # Create database config from orchestrator config
         db_config = DatabaseConfig(
@@ -443,7 +458,9 @@ class EnhancedSystemOrchestrator:
         )
 
         # Register enhanced orchestrator as singleton
-        self.service_container.register_singleton(EnhancedSystemOrchestrator, self)
+        self.service_container.register_singleton(
+            EnhancedSystemOrchestrator, self
+        )
 
         # Register narrative engines
         self.service_container.register_service(
@@ -489,7 +506,9 @@ class EnhancedSystemOrchestrator:
             tags={"interaction", "core"},
         )
 
-        logger.debug(f"Registered {len(self.service_container._services)} services")
+        logger.debug(
+            f"Registered {len(self.service_container._services)} services"
+        )
 
     async def _initialize_services(self) -> None:
         """Initialize all registered services."""
@@ -541,7 +560,9 @@ class EnhancedSystemOrchestrator:
         health_handler = HealthMonitoringHandler(self)
         performance_handler = PerformanceMonitoringHandler(self)
 
-        self.event_bus.subscribe("system.health.changed", health_handler, priority=100)
+        self.event_bus.subscribe(
+            "system.health.changed", health_handler, priority=100
+        )
         self.event_bus.subscribe(
             "system.metrics.collected", performance_handler, priority=100
         )
@@ -553,11 +574,15 @@ class EnhancedSystemOrchestrator:
 
         # Start performance monitoring task
         if self.config.enable_performance_monitoring:
-            perf_task = asyncio.create_task(self._performance_monitoring_loop())
+            perf_task = asyncio.create_task(
+                self._performance_monitoring_loop()
+            )
             self._background_tasks.append(perf_task)
 
         # Start service health check task
-        service_health_task = asyncio.create_task(self._service_health_check_loop())
+        service_health_task = asyncio.create_task(
+            self._service_health_check_loop()
+        )
         self._background_tasks.append(service_health_task)
 
         logger.debug(f"Started {len(self._background_tasks)} background tasks")
@@ -619,15 +644,21 @@ class EnhancedSystemOrchestrator:
             db_health = await self.database_manager.health_check()
 
             # Check service health
-            service_health = await self.service_container.perform_health_checks()
+            service_health = (
+                await self.service_container.perform_health_checks()
+            )
 
             # Check legacy orchestrator health
-            legacy_metrics = await self.legacy_orchestrator.get_system_metrics()
+            legacy_metrics = (
+                await self.legacy_orchestrator.get_system_metrics()
+            )
 
             # Determine overall health
             all_healthy = (
                 all(pool["healthy"] for pool in db_health.values())
-                and all(result["healthy"] for result in service_health.values())
+                and all(
+                    result["healthy"] for result in service_health.values()
+                )
                 and legacy_metrics.success
             )
 
@@ -635,7 +666,9 @@ class EnhancedSystemOrchestrator:
                 SystemHealth.OPTIMAL if all_healthy else SystemHealth.DEGRADED
             )
 
-            logger.info(f"Initial health check completed: {self.current_health.value}")
+            logger.info(
+                f"Initial health check completed: {self.current_health.value}"
+            )
 
         except Exception as e:
             logger.error(f"Initial health check failed: {e}")
@@ -698,7 +731,9 @@ class EnhancedSystemOrchestrator:
                     break
 
                 # Perform service health checks
-                health_results = await self.service_container.perform_health_checks()
+                health_results = (
+                    await self.service_container.perform_health_checks()
+                )
 
                 # Log any unhealthy services
                 for service_name, health_result in health_results.items():
@@ -720,7 +755,9 @@ class EnhancedSystemOrchestrator:
             db_healthy = all(pool["healthy"] for pool in db_health.values())
 
             # Check service health
-            service_health = await self.service_container.perform_health_checks()
+            service_health = (
+                await self.service_container.perform_health_checks()
+            )
             services_healthy = all(
                 result["healthy"] for result in service_health.values()
             )
@@ -760,7 +797,9 @@ class EnhancedSystemOrchestrator:
             event_stats = self.event_bus.get_statistics()
 
             # Get legacy orchestrator metrics
-            legacy_metrics = await self.legacy_orchestrator.get_system_metrics()
+            legacy_metrics = (
+                await self.legacy_orchestrator.get_system_metrics()
+            )
 
             comprehensive_metrics = {
                 "uptime_seconds": uptime,
@@ -787,7 +826,9 @@ class EnhancedSystemOrchestrator:
         except Exception as e:
             logger.error(f"Performance metrics collection failed: {e}")
 
-    async def _check_performance_thresholds(self, metrics: Dict[str, Any]) -> None:
+    async def _check_performance_thresholds(
+        self, metrics: Dict[str, Any]
+    ) -> None:
         """Check performance metrics against configured thresholds."""
         thresholds = self.config.performance_alert_thresholds
 
@@ -828,9 +869,13 @@ class EnhancedSystemOrchestrator:
         """Get service instance from container."""
         return self.service_container.get_service(service_type)
 
-    async def publish_event(self, event_type: str, payload: Any, **metadata) -> None:
+    async def publish_event(
+        self, event_type: str, payload: Any, **metadata
+    ) -> None:
         """Publish event through event bus."""
-        event = Event(event_type=event_type, payload=payload, metadata=metadata)
+        event = Event(
+            event_type=event_type, payload=payload, metadata=metadata
+        )
         await self.event_bus.publish(event)
 
     async def get_database_connection(self, pool_name: str = "default"):
@@ -850,10 +895,14 @@ class EnhancedSystemOrchestrator:
             "uptime_seconds": uptime,
             "startup_time": self.startup_time.isoformat(),
             "service_count": (
-                len(self.service_container._services) if self.service_container else 0
+                len(self.service_container._services)
+                if self.service_container
+                else 0
             ),
             "database_pools": (
-                len(self.database_manager._pools) if self.database_manager else 0
+                len(self.database_manager._pools)
+                if self.database_manager
+                else 0
             ),
             "event_processing": (
                 self.event_bus.get_statistics() if self.event_bus else {}
@@ -876,7 +925,9 @@ class EnhancedSystemOrchestrator:
     async def process_dynamic_context(self, context):
         """Process dynamic context (legacy compatibility)."""
         if self.legacy_orchestrator:
-            return await self.legacy_orchestrator.process_dynamic_context(context)
+            return await self.legacy_orchestrator.process_dynamic_context(
+                context
+            )
         else:
             raise RuntimeError("Legacy orchestrator not initialized")
 

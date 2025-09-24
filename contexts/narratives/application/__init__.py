@@ -18,7 +18,9 @@ Architecture:
 - Application Services orchestrate the above flows
 """
 
-from .services.narrative_arc_application_service import NarrativeArcApplicationService
+from .services.narrative_arc_application_service import (
+    NarrativeArcApplicationService,
+)
 
 __all__ = ["NarrativeArcApplicationService"]
 

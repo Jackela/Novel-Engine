@@ -19,13 +19,17 @@ def test_world_api_implementation():
 
     try:
         # Test World router direct import
-        world_router_path = Path("D:/Code/Novel-Engine/apps/api/http/world_router.py")
+        world_router_path = Path(
+            "D:/Code/Novel-Engine/apps/api/http/world_router.py"
+        )
         if not world_router_path.exists():
             print("❌ World router file not found")
             return False
 
         # Load module directly
-        spec = importlib.util.spec_from_file_location("world_router", world_router_path)
+        spec = importlib.util.spec_from_file_location(
+            "world_router", world_router_path
+        )
         world_router_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(world_router_module)
 
@@ -35,14 +39,24 @@ def test_world_api_implementation():
             return False
 
         router = world_router_module.router
-        print(f"✅ World router loaded successfully with {len(router.routes)} routes")
+        print(
+            f"✅ World router loaded successfully with {len(router.routes)} routes"
+        )
 
         # Check expected endpoints
         route_paths = [route.path for route in router.routes]
-        expected_endpoints = ["delta", "slice", "summary", "history", "validate"]
+        expected_endpoints = [
+            "delta",
+            "slice",
+            "summary",
+            "history",
+            "validate",
+        ]
 
         for endpoint in expected_endpoints:
-            matching_routes = [path for path in route_paths if endpoint in path]
+            matching_routes = [
+                path for path in route_paths if endpoint in path
+            ]
             if not matching_routes:
                 print(f"❌ Missing expected endpoint: {endpoint}")
                 return False
@@ -124,7 +138,9 @@ def test_character_domain_layer():
         # Test domain events
         events = character.get_events()
         assert len(events) > 0
-        print(f"✅ Domain events system working: {len(events)} events generated")
+        print(
+            f"✅ Domain events system working: {len(events)} events generated"
+        )
 
         print("✅ M4 Part 1: Character Domain Layer - PASSED")
         return True
@@ -205,7 +221,9 @@ def test_character_application_layer():
         levelup_command = LevelUpCharacterCommand(
             character_id="test-id",
             ability_score_improvements={"strength": 1, "constitution": 1},
-            skill_improvements=[{"skill_name": "sword_fighting", "improvement": 1}],
+            skill_improvements=[
+                {"skill_name": "sword_fighting", "improvement": 1}
+            ],
         )
         assert "strength" in levelup_command.ability_score_improvements
         assert levelup_command.ability_score_improvements["strength"] == 1
@@ -215,7 +233,9 @@ def test_character_application_layer():
         return True
 
     except Exception as e:
-        print(f"❌ M4 Part 2: Character Application Layer validation failed: {e}")
+        print(
+            f"❌ M4 Part 2: Character Application Layer validation failed: {e}"
+        )
         import traceback
 
         traceback.print_exc()
@@ -240,7 +260,9 @@ def test_character_infrastructure_design():
             if not os.path.exists(file_path):
                 print(f"❌ Missing infrastructure file: {file_path}")
                 return False
-            print(f"✅ Infrastructure file exists: {os.path.basename(file_path)}")
+            print(
+                f"✅ Infrastructure file exists: {os.path.basename(file_path)}"
+            )
 
         # Check file sizes to ensure they're not empty
         model_file = "D:/Code/Novel-Engine/contexts/character/infrastructure/persistence/character_models.py"
@@ -295,7 +317,9 @@ def test_character_infrastructure_design():
         return True
 
     except Exception as e:
-        print(f"❌ M4 Part 3: Character Infrastructure Layer validation failed: {e}")
+        print(
+            f"❌ M4 Part 3: Character Infrastructure Layer validation failed: {e}"
+        )
         return False
 
 
@@ -347,9 +371,14 @@ def run_wave7_validation():
 
     # Test M4: Character Context Implementation
     results.append(("M4.1: Character Domain", test_character_domain_layer()))
-    results.append(("M4.2: Character Application", test_character_application_layer()))
     results.append(
-        ("M4.3: Character Infrastructure", test_character_infrastructure_design())
+        ("M4.2: Character Application", test_character_application_layer())
+    )
+    results.append(
+        (
+            "M4.3: Character Infrastructure",
+            test_character_infrastructure_design(),
+        )
     )
 
     # Test Integration
@@ -384,7 +413,9 @@ def run_wave7_validation():
             "\n🚨 KNOWN ISSUE: Platform naming conflict prevents SQLAlchemy execution"
         )
         print("   - Infrastructure layer is fully designed and implemented")
-        print("   - Requires renaming 'platform/' directory to resolve conflict")
+        print(
+            "   - Requires renaming 'platform/' directory to resolve conflict"
+        )
         print("   - All other functionality is working correctly")
 
         return True

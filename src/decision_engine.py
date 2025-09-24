@@ -73,7 +73,9 @@ class DecisionEngine:
         self.llm_available = LLM_AVAILABLE
         self._setup_llm_session()
 
-        logger.info(f"DecisionEngine initialized for agent {self.agent_core.agent_id}")
+        logger.info(
+            f"DecisionEngine initialized for agent {self.agent_core.agent_id}"
+        )
 
     def _setup_llm_session(self) -> None:
         """Set up LLM session with retry strategy if available."""
@@ -128,13 +130,17 @@ class DecisionEngine:
 
             # Step 2: Assess current situation and identify options
             situation_assessment = self._assess_current_situation()
-            available_actions = self._identify_available_actions(situation_assessment)
+            available_actions = self._identify_available_actions(
+                situation_assessment
+            )
 
             # Step 3: Attempt LLM-enhanced decision-making
             if self.llm_available:
                 try:
                     llm_action = self._llm_enhanced_decision_making(
-                        world_state_update, situation_assessment, available_actions
+                        world_state_update,
+                        situation_assessment,
+                        available_actions,
                     )
                     if llm_action:
                         self._record_decision(llm_action, "llm_enhanced")
@@ -168,7 +174,9 @@ class DecisionEngine:
             )
             return None
 
-    def _process_world_state_update(self, world_state_update: Dict[str, Any]) -> None:
+    def _process_world_state_update(
+        self, world_state_update: Dict[str, Any]
+    ) -> None:
         """
         Process incoming world state information through character's subjective lens.
 
@@ -232,7 +240,7 @@ class DecisionEngine:
             }
 
             logger.debug(
-                f"Agent {self.agent_core.agent_id} situation assessment: threat={situation['threat_level']}, opportunity={situation['opportunity_level']}"
+                f"Agent {self.agent_core.agent_id}situation assessment: threat={situation['threat_level']}, opportunity={situation['opportunity_level']}"
             )
 
             return situation
@@ -309,10 +317,14 @@ class DecisionEngine:
         """Assess social context and relationships."""
         try:
             positive_relationships = sum(
-                1 for strength in self.agent_core.relationships.values() if strength > 0
+                1
+                for strength in self.agent_core.relationships.values()
+                if strength > 0
             )
             negative_relationships = sum(
-                1 for strength in self.agent_core.relationships.values() if strength < 0
+                1
+                for strength in self.agent_core.relationships.values()
+                if strength < 0
             )
 
             return {
@@ -360,9 +372,21 @@ class DecisionEngine:
             # Basic actions always available
             actions.extend(
                 [
-                    {"action_type": "observe", "priority": "low", "risk": "none"},
-                    {"action_type": "investigate", "priority": "medium", "risk": "low"},
-                    {"action_type": "communicate", "priority": "medium", "risk": "low"},
+                    {
+                        "action_type": "observe",
+                        "priority": "low",
+                        "risk": "none",
+                    },
+                    {
+                        "action_type": "investigate",
+                        "priority": "medium",
+                        "risk": "low",
+                    },
+                    {
+                        "action_type": "communicate",
+                        "priority": "medium",
+                        "risk": "low",
+                    },
                 ]
             )
 
@@ -377,11 +401,17 @@ class DecisionEngine:
                             "priority": "high",
                             "risk": "medium",
                         },
-                        {"action_type": "retreat", "priority": "medium", "risk": "low"},
+                        {
+                            "action_type": "retreat",
+                            "priority": "medium",
+                            "risk": "low",
+                        },
                     ]
                 )
 
-            opportunity_level = situation_assessment.get("opportunity_level", "unknown")
+            opportunity_level = situation_assessment.get(
+                "opportunity_level", "unknown"
+            )
             if opportunity_level in ["moderate", "high"]:
                 actions.extend(
                     [
@@ -402,14 +432,20 @@ class DecisionEngine:
             social_context = situation_assessment.get("social_context", {})
             if social_context.get("allies_present", 0) > 0:
                 actions.append(
-                    {"action_type": "coordinate", "priority": "medium", "risk": "low"}
+                    {
+                        "action_type": "coordinate",
+                        "priority": "medium",
+                        "risk": "low",
+                    }
                 )
 
             return actions
 
         except Exception as e:
             logger.error(f"Error identifying available actions: {str(e)}")
-            return [{"action_type": "observe", "priority": "low", "risk": "none"}]
+            return [
+                {"action_type": "observe", "priority": "low", "risk": "none"}
+            ]
 
     def _evaluate_action_option(
         self, action: Dict[str, Any], situation: Dict[str, Any]
@@ -428,11 +464,21 @@ class DecisionEngine:
             score = 0.0
 
             # Base score from action priority
-            priority_scores = {"low": 0.2, "medium": 0.5, "high": 0.8, "critical": 1.0}
+            priority_scores = {
+                "low": 0.2,
+                "medium": 0.5,
+                "high": 0.8,
+                "critical": 1.0,
+            }
             score += priority_scores.get(action.get("priority", "low"), 0.2)
 
             # Adjust for risk tolerance based on character state
-            risk_penalty = {"none": 0.0, "low": 0.1, "medium": 0.3, "high": 0.5}
+            risk_penalty = {
+                "none": 0.0,
+                "low": 0.1,
+                "medium": 0.3,
+                "high": 0.5,
+            }
             risk = action.get("risk", "none")
 
             # Characters with low morale are more risk-averse
@@ -442,13 +488,17 @@ class DecisionEngine:
             # Apply character decision weights
             action_type = action.get("action_type", "")
             if action_type in ["retreat", "defensive_action"]:
-                score *= self.agent_core.decision_weights.get("self_preservation", 0.5)
+                score *= self.agent_core.decision_weights.get(
+                    "self_preservation", 0.5
+                )
             elif action_type in ["communicate", "coordinate"]:
                 score *= self.agent_core.decision_weights.get(
                     "personal_relationships", 0.6
                 )
             elif action_type in ["advance", "exploit_opportunity"]:
-                score *= self.agent_core.decision_weights.get("mission_success", 0.8)
+                score *= self.agent_core.decision_weights.get(
+                    "mission_success", 0.8
+                )
 
             # Situation-based modifiers
             threat_level = situation.get("threat_level", "unknown")
@@ -497,9 +547,7 @@ class DecisionEngine:
             selected = random.choice(best_actions)
 
             # Convert to CharacterAction format
-            action_id = (
-                f"{self.agent_core.agent_id}_action_{datetime.now().strftime('%H%M%S')}"
-            )
+            action_id = f"{self.agent_core.agent_id}_action_{datetime.now().strftime('%H%M%S')}"
 
             character_action = {
                 "action_id": action_id,
@@ -554,7 +602,9 @@ class DecisionEngine:
             # Add character-specific context
             morale_context = ""
             if self.agent_core.morale_level > 0.7:
-                morale_context = " Their high morale drives them to act decisively."
+                morale_context = (
+                    " Their high morale drives them to act decisively."
+                )
             elif self.agent_core.morale_level < 0.3:
                 morale_context = (
                     " Their low morale makes them cautious in their approach."
@@ -593,7 +643,8 @@ class DecisionEngine:
     ) -> None:
         """Process narrative context updates."""
         try:
-            # Extract story elements and update character's narrative understanding
+            # Extract story elements and update character's narrative
+            # understanding
             story_phase = narrative_context.get("current_phase", "unknown")
             events = narrative_context.get("triggered_events", [])
 
@@ -610,13 +661,16 @@ class DecisionEngine:
                 )
 
         except Exception as e:
-            logger.error(f"Error processing narrative situation update: {str(e)}")
+            logger.error(
+                f"Error processing narrative situation update: {str(e)}"
+            )
 
     def _process_event_for_relationships(self, event: Dict[str, Any]) -> None:
         """Process events for relationship and social context updates."""
         try:
             # Basic event processing for relationship updates
-            # This would be expanded with more sophisticated relationship modeling
+            # This would be expanded with more sophisticated relationship
+            # modeling
             event_type = event.get("type", "unknown")
             participants = event.get("participants", [])
 
@@ -624,8 +678,10 @@ class DecisionEngine:
             if event_type in ["cooperation", "alliance"]:
                 for participant in participants:
                     if participant != self.agent_core.agent_id:
-                        current_strength = self.agent_core.get_relationship_strength(
-                            participant
+                        current_strength = (
+                            self.agent_core.get_relationship_strength(
+                                participant
+                            )
                         )
                         self.agent_core.add_relationship(
                             participant, min(1.0, current_strength + 0.1)
@@ -633,8 +689,10 @@ class DecisionEngine:
             elif event_type in ["conflict", "betrayal"]:
                 for participant in participants:
                     if participant != self.agent_core.agent_id:
-                        current_strength = self.agent_core.get_relationship_strength(
-                            participant
+                        current_strength = (
+                            self.agent_core.get_relationship_strength(
+                                participant
+                            )
                         )
                         self.agent_core.add_relationship(
                             participant, max(-1.0, current_strength - 0.2)
@@ -654,7 +712,9 @@ class DecisionEngine:
                 "action_type": action.get("action_type") if action else "wait",
                 "decision_type": decision_type,
                 "reasoning": (
-                    action.get("reasoning") if action else "Chose to wait and observe"
+                    action.get("reasoning")
+                    if action
+                    else "Chose to wait and observe"
                 ),
                 "morale_at_decision": self.agent_core.morale_level,
             }
@@ -677,7 +737,10 @@ class DecisionEngine:
         """
         try:
             if not self.decision_history:
-                return {"decisions_made": 0, "error": "No decision history available"}
+                return {
+                    "decisions_made": 0,
+                    "error": "No decision history available",
+                }
 
             recent_decisions = self.decision_history[-10:]  # Last 10 decisions
 
@@ -688,8 +751,12 @@ class DecisionEngine:
                 action_type = decision.get("action_type", "unknown")
                 decision_type = decision.get("decision_type", "unknown")
 
-                action_types[action_type] = action_types.get(action_type, 0) + 1
-                decision_types[decision_type] = decision_types.get(decision_type, 0) + 1
+                action_types[action_type] = (
+                    action_types.get(action_type, 0) + 1
+                )
+                decision_types[decision_type] = (
+                    decision_types.get(decision_type, 0) + 1
+                )
 
             return {
                 "total_decisions": len(self.decision_history),

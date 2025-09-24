@@ -73,7 +73,17 @@ class PrometheusMetricsCollector:
             "novel_engine_turn_duration_seconds",
             "Turn execution duration in seconds",
             ["phase", "participants_count", "ai_enabled", "success"],
-            buckets=[0.5, 1.0, 2.5, 5.0, 10.0, 25.0, 60.0, 120.0, float("inf")],
+            buckets=[
+                0.5,
+                1.0,
+                2.5,
+                5.0,
+                10.0,
+                25.0,
+                60.0,
+                120.0,
+                float("inf"),
+            ],
             registry=self.registry,
         )
 
@@ -395,9 +405,9 @@ class PrometheusMetricsCollector:
             # AI efficiency calculation
             if events_processed > 0 and ai_cost > 0:
                 efficiency = events_processed / float(ai_cost)
-                self.ai_cost_efficiency.labels(phase=phase_name, model="gpt-4").set(
-                    efficiency
-                )
+                self.ai_cost_efficiency.labels(
+                    phase=phase_name, model="gpt-4"
+                ).set(efficiency)
 
         if ai_requests > 0:
             self.ai_requests_total.labels(
@@ -507,7 +517,9 @@ class PrometheusMetricsCollector:
             target_context=target_context, operation=operation
         ).observe(duration_seconds)
 
-    def update_success_rate(self, time_window: str, success_rate: float) -> None:
+    def update_success_rate(
+        self, time_window: str, success_rate: float
+    ) -> None:
         """
         Update success rate gauge for alerting.
 
@@ -515,7 +527,9 @@ class PrometheusMetricsCollector:
             time_window: Time window for success rate calculation
             success_rate: Success rate (0-1)
         """
-        self.turn_success_rate.labels(time_window=time_window).set(success_rate)
+        self.turn_success_rate.labels(time_window=time_window).set(
+            success_rate
+        )
 
     def get_metrics_data(self) -> str:
         """
@@ -524,7 +538,13 @@ class PrometheusMetricsCollector:
         Returns:
             Metrics data in Prometheus format
         """
-        return generate_latest(self.registry)
+        try:
+            # generate_latest returns bytes, need to decode to string
+            metrics_bytes = generate_latest(self.registry)
+            return metrics_bytes.decode("utf-8")
+        except Exception as e:
+            logger.error(f"Error generating Prometheus metrics: {e}")
+            return "# Error generating metrics\n"
 
     def get_metrics_content_type(self) -> str:
         """
@@ -559,7 +579,10 @@ class PrometheusMetricsCollector:
             return "10+"
 
     def _record_phase_metrics(
-        self, phase_name: str, phase_result: Dict[str, Any], participants_count: int
+        self,
+        phase_name: str,
+        phase_result: Dict[str, Any],
+        participants_count: int,
     ) -> None:
         """
         Record metrics from phase result data.

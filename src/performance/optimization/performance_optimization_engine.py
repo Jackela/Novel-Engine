@@ -28,7 +28,47 @@ from enum import Enum
 from functools import wraps
 from typing import Any, Dict, List, Optional, Tuple
 
-import aioredis
+try:
+    import aioredis
+except ImportError:
+    # Mock aioredis for testing environments
+    class MockRedis:
+        async def get(self, *args, **kwargs):
+            return None
+
+        async def set(self, *args, **kwargs):
+            pass
+
+        async def delete(self, *args, **kwargs):
+            pass
+
+        async def exists(self, *args, **kwargs):
+            return False
+
+        async def publish(self, *args, **kwargs):
+            pass
+
+        async def subscribe(self, *args, **kwargs):
+            return MockPubSub()
+
+        def pubsub(self):
+            return MockPubSub()
+
+        async def close(self, *args, **kwargs):
+            pass
+
+    class MockPubSub:
+        async def subscribe(self, *args, **kwargs):
+            pass
+
+        async def get_message(self, *args, **kwargs):
+            return None
+
+    aioredis = type(
+        "MockAioredis",
+        (),
+        {"Redis": MockRedis, "from_url": lambda url: MockRedis()},
+    )()
 import aiosqlite
 import psutil
 
@@ -163,7 +203,9 @@ class PerformanceMonitor:
         cutoff = now - window_seconds
 
         values = [
-            value for timestamp, value in self.metrics[metric] if timestamp >= cutoff
+            value
+            for timestamp, value in self.metrics[metric]
+            if timestamp >= cutoff
         ]
 
         if not values:
@@ -314,7 +356,9 @@ class MultiTierCache:
             return {"hit_rate": 0.0, "stats": self.stats}
 
         total_hits = (
-            self.stats["l1_hits"] + self.stats["l2_hits"] + self.stats["l3_hits"]
+            self.stats["l1_hits"]
+            + self.stats["l2_hits"]
+            + self.stats["l3_hits"]
         )
         hit_rate = total_hits / total_requests
 
@@ -388,7 +432,8 @@ class ConnectionPool:
 
             # Wait longer for available connection
             conn = await asyncio.wait_for(
-                self.available.get(), timeout=self.config.connection_pool_timeout
+                self.available.get(),
+                timeout=self.config.connection_pool_timeout,
             )
 
             self.active_connections += 1
@@ -417,18 +462,22 @@ class BatchProcessor:
 
     def __init__(self, config: OptimizationConfig):
         self.config = config
-        self.pending_operations: Dict[str, List[Tuple[Any, asyncio.Future]]] = (
-            defaultdict(list)
-        )
+        self.pending_operations: Dict[
+            str, List[Tuple[Any, asyncio.Future]]
+        ] = defaultdict(list)
         self.batch_timers: Dict[str, asyncio.Task] = {}
         self.batch_lock = asyncio.Lock()
 
-    async def add_operation(self, operation_type: str, operation_data: Any) -> Any:
+    async def add_operation(
+        self, operation_type: str, operation_data: Any
+    ) -> Any:
         """Add an operation to be batched."""
         future = asyncio.Future()
 
         async with self.batch_lock:
-            self.pending_operations[operation_type].append((operation_data, future))
+            self.pending_operations[operation_type].append(
+                (operation_data, future)
+            )
 
             # Start batch timer if not already running
             if operation_type not in self.batch_timers:
@@ -437,7 +486,10 @@ class BatchProcessor:
                 )
 
             # Trigger immediate batch if size limit reached
-            if len(self.pending_operations[operation_type]) >= self.config.batch_size:
+            if (
+                len(self.pending_operations[operation_type])
+                >= self.config.batch_size
+            ):
                 await self._process_batch(operation_type)
 
         return await future
@@ -535,7 +587,9 @@ class PerformanceOptimizationEngine:
         await self.monitor.start_monitoring()
 
         # Start background optimization tasks
-        self._background_tasks.append(asyncio.create_task(self._optimization_loop()))
+        self._background_tasks.append(
+            asyncio.create_task(self._optimization_loop())
+        )
 
         logger.info("Performance Optimization Engine initialized")
 
@@ -554,7 +608,9 @@ class PerformanceOptimizationEngine:
 
         # Wait for tasks to complete
         if self._background_tasks:
-            await asyncio.gather(*self._background_tasks, return_exceptions=True)
+            await asyncio.gather(
+                *self._background_tasks, return_exceptions=True
+            )
 
         # Close connection pools
         for pool in self.connection_pools.values():
@@ -630,7 +686,9 @@ class PerformanceOptimizationEngine:
         # Cache optimization
         cache_stats = self.cache.get_cache_stats()
         if cache_stats.get("hit_rate", 0) < 0.8:
-            logger.info(f"Low cache hit rate: {cache_stats.get('hit_rate', 0):.2f}")
+            logger.info(
+                f"Low cache hit rate: {cache_stats.get('hit_rate', 0):.2f}"
+            )
 
         # Performance alerts
         response_time_stats = self.monitor.get_metric_stats(
@@ -638,7 +696,8 @@ class PerformanceOptimizationEngine:
         )
         if (
             response_time_stats
-            and response_time_stats.get("avg", 0) > self.targets.max_response_time_ms
+            and response_time_stats.get("avg", 0)
+            > self.targets.max_response_time_ms
         ):
             logger.warning(
                 f"High average response time: {response_time_stats['avg']:.2f}ms"
@@ -659,7 +718,9 @@ class PerformanceOptimizationEngine:
 
         # Response time statistics
         if self.request_times:
-            avg_response_time = sum(self.request_times) / len(self.request_times)
+            avg_response_time = sum(self.request_times) / len(
+                self.request_times
+            )
             p95_response_time = sorted(self.request_times)[
                 int(len(self.request_times) * 0.95)
             ]
@@ -675,7 +736,8 @@ class PerformanceOptimizationEngine:
                 "target_met": {
                     "response_time": avg_response_time
                     <= self.targets.max_response_time_ms,
-                    "throughput": throughput >= self.targets.min_throughput_rps,
+                    "throughput": throughput
+                    >= self.targets.min_throughput_rps,
                 },
             },
             "current_metrics": {

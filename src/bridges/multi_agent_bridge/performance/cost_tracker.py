@@ -79,13 +79,13 @@ class CostTracker:
             # Check budget limits
             if self.current_turn_cost > self.max_cost_per_turn:
                 self.logger.warning(
-                    f"Turn cost exceeded: ${self.current_turn_cost:.4f} > ${self.max_cost_per_turn:.4f}"
+                    f"Turn cost exceeded: ${self.current_turn_cost:.4f}> ${self.max_cost_per_turn:.4f}"
                 )
                 return False
 
             if self.total_cost > self.max_total_cost:
                 self.logger.warning(
-                    f"Total cost exceeded: ${self.total_cost:.4f} > ${self.max_total_cost:.4f}"
+                    f"Total cost exceeded: ${self.total_cost:.4f}> ${self.max_total_cost:.4f}"
                 )
                 return False
 
@@ -101,7 +101,9 @@ class CostTracker:
 
     def is_under_budget(self, estimated_additional_cost: float = 0.0) -> bool:
         """Check if we're under budget for additional spending."""
-        projected_turn_cost = self.current_turn_cost + estimated_additional_cost
+        projected_turn_cost = (
+            self.current_turn_cost + estimated_additional_cost
+        )
         projected_total_cost = self.total_cost + estimated_additional_cost
 
         return (
@@ -139,10 +141,14 @@ class CostTracker:
                 count = self.request_counts.get(request_type, 0)
 
                 if tokens > 0:
-                    stats["cost_per_token_by_type"][request_type] = cost / tokens
+                    stats["cost_per_token_by_type"][request_type] = (
+                        cost / tokens
+                    )
 
                 if count > 0:
-                    stats["avg_cost_per_request_by_type"][request_type] = cost / count
+                    stats["avg_cost_per_request_by_type"][request_type] = (
+                        cost / count
+                    )
 
             return stats
 
@@ -160,7 +166,9 @@ class CostTracker:
             if total_requests > 0:
                 for request_type, cost in self.costs_by_type.items():
                     cost_percentage = (
-                        (cost / self.total_cost) * 100 if self.total_cost > 0 else 0
+                        (cost / self.total_cost) * 100
+                        if self.total_cost > 0
+                        else 0
                     )
                     count_percentage = (
                         self.request_counts[request_type] / total_requests
@@ -190,7 +198,9 @@ class CostTracker:
             return recommendations
 
         except Exception as e:
-            self.logger.error(f"Error generating optimization recommendations: {e}")
+            self.logger.error(
+                f"Error generating optimization recommendations: {e}"
+            )
             return []
 
     def reset_costs(self) -> None:

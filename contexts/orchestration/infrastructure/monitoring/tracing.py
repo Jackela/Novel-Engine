@@ -9,18 +9,33 @@ Provides turn-level and phase-level instrumentation with cross-context propagati
 import functools
 import logging
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Callable, Dict, List, Optional
+from typing import (
+    Any,
+    AsyncGenerator,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+)
 from uuid import UUID
 
 from opentelemetry import baggage, propagate, trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+    OTLPSpanExporter,
+)
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import Span, TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, SimpleSpanProcessor
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    SimpleSpanProcessor,
+)
 from opentelemetry.sdk.trace.sampling import (
     Decision,
     ParentBased,
+    Sampler,
+    SamplingResult,
     StaticSampler,
     TraceIdRatioBased,
 )
@@ -57,13 +72,15 @@ class NovelEngineTracingConfig:
         self.service_name = service_name
         self.service_version = service_version
         self.environment = environment
-        self.jaeger_endpoint = jaeger_endpoint or "http://localhost:14268/api/traces"
+        self.jaeger_endpoint = (
+            jaeger_endpoint or "http://localhost:14268/api/traces"
+        )
         self.otlp_endpoint = otlp_endpoint or "http://localhost:4317"
         self.sampling_rate = sampling_rate
         self.enable_console_exporter = enable_console_exporter
 
 
-class IntelligentSampler:
+class IntelligentSampler(Sampler):
     """
     Intelligent sampling strategy for Novel Engine tracing.
 
@@ -83,8 +100,12 @@ class IntelligentSampler:
         """
         self.default_rate = default_rate
         self.error_sampler = StaticSampler(Decision.RECORD_AND_SAMPLE)
-        self.high_cost_sampler = TraceIdRatioBased(0.5)  # 50% for expensive operations
-        self.slow_operation_sampler = TraceIdRatioBased(0.8)  # 80% for slow operations
+        self.high_cost_sampler = TraceIdRatioBased(
+            0.5
+        )  # 50% for expensive operations
+        self.slow_operation_sampler = TraceIdRatioBased(
+            0.8
+        )  # 80% for slow operations
         self.default_sampler = TraceIdRatioBased(default_rate)
 
     def should_sample(
@@ -92,11 +113,11 @@ class IntelligentSampler:
         context: Optional[trace.Context],
         trace_id: int,
         name: str,
-        kind: trace.SpanKind = None,
+        kind: Optional[trace.SpanKind] = None,
         attributes: Optional[Attributes] = None,
-        links: Optional[List] = None,
+        links: Optional[Sequence[trace.Link]] = None,
         trace_state: Optional[trace.TraceState] = None,
-    ) -> trace.sampling.SamplingResult:
+    ) -> SamplingResult:
         """
         Determine sampling decision based on intelligent criteria.
 
@@ -140,6 +161,10 @@ class IntelligentSampler:
             context, trace_id, name, kind, attributes, links, trace_state
         )
 
+    def get_description(self) -> str:
+        """Get sampler description."""
+        return f"IntelligentSampler(default_rate={self.default_rate})"
+
 
 class NovelEngineTracer:
     """
@@ -160,8 +185,8 @@ class NovelEngineTracer:
             config: Tracing configuration
         """
         self.config = config
-        self.tracer_provider = None
-        self.tracer = None
+        self.tracer_provider: Optional[TracerProvider] = None
+        self.tracer: Optional[trace.Tracer] = None
         self._initialize_tracing()
 
         logger.info(f"NovelEngineTracer initialized for {config.service_name}")
@@ -180,36 +205,80 @@ class NovelEngineTracer:
         )
 
         # Create tracer provider with intelligent sampling
-        sampler = ParentBased(root=IntelligentSampler(self.config.sampling_rate))
+        sampler = ParentBased(
+            root=IntelligentSampler(self.config.sampling_rate)
+        )
 
-        self.tracer_provider = TracerProvider(resource=resource, sampler=sampler)
+        self.tracer_provider = TracerProvider(
+            resource=resource, sampler=sampler
+        )
 
         # Add exporters
         if self.config.jaeger_endpoint:
-            jaeger_exporter = JaegerExporter(endpoint=self.config.jaeger_endpoint)
-            self.tracer_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
-            logger.info(f"Jaeger exporter configured: {self.config.jaeger_endpoint}")
+            # JaegerExporter parameter compatibility fix
+            try:
+                # Try newer parameter name first
+                jaeger_exporter = JaegerExporter(
+                    collector_endpoint=self.config.jaeger_endpoint
+                )
+            except TypeError:
+                # Fallback to older parameter name
+                try:
+                    jaeger_exporter = JaegerExporter(
+                        endpoint=self.config.jaeger_endpoint
+                    )
+                except TypeError:
+                    # Final fallback with minimal parameters
+                    jaeger_exporter = JaegerExporter()
+                    logger.warning(
+                        "Using default Jaeger exporter configuration due to parameter incompatibility"
+                    )
+
+            self.tracer_provider.add_span_processor(
+                BatchSpanProcessor(jaeger_exporter)
+            )
+            logger.info(
+                f"Jaeger exporter configured: {self.config.jaeger_endpoint}"
+            )
 
         if self.config.otlp_endpoint:
-            otlp_exporter = OTLPSpanExporter(endpoint=self.config.otlp_endpoint)
-            self.tracer_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
-            logger.info(f"OTLP exporter configured: {self.config.otlp_endpoint}")
+            try:
+                # OTLP exporter configuration with error handling
+                otlp_exporter = OTLPSpanExporter(
+                    endpoint=self.config.otlp_endpoint
+                )
+                self.tracer_provider.add_span_processor(
+                    BatchSpanProcessor(otlp_exporter)
+                )
+                logger.info(
+                    f"OTLP exporter configured: {self.config.otlp_endpoint}"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to configure OTLP exporter: {e}")
+                # Continue without OTLP if it fails
+                pass
 
         if self.config.enable_console_exporter:
-            from opentelemetry.exporter.console import ConsoleSpanExporter
+            try:
+                from opentelemetry.exporter.console import ConsoleSpanExporter
 
-            console_exporter = ConsoleSpanExporter()
-            self.tracer_provider.add_span_processor(
-                SimpleSpanProcessor(console_exporter)
-            )
-            logger.info("Console exporter enabled for debugging")
+                console_exporter = ConsoleSpanExporter()
+                self.tracer_provider.add_span_processor(
+                    SimpleSpanProcessor(console_exporter)
+                )
+                logger.info("Console exporter enabled for debugging")
+            except ImportError as e:
+                logger.warning(f"Console exporter not available: {e}")
+                # Continue without console exporter if not available
+                pass
 
         # Set global tracer provider
         trace.set_tracer_provider(self.tracer_provider)
 
         # Get tracer instance
         self.tracer = trace.get_tracer(
-            instrumenting_module_name=__name__, instrumenting_library_version="1.0.0"
+            instrumenting_module_name=__name__,
+            instrumenting_library_version="1.0.0",
         )
 
     def start_turn_span(
@@ -218,7 +287,7 @@ class NovelEngineTracer:
         participants: List[str],
         configuration: Dict[str, Any],
         user_context: Optional[Dict[str, Any]] = None,
-    ) -> Span:
+    ) -> trace.Span:
         """
         Start root span for turn execution.
 
@@ -231,6 +300,9 @@ class NovelEngineTracer:
         Returns:
             Root span for turn execution
         """
+        if self.tracer is None:
+            raise RuntimeError("Tracer not initialized")
+
         span = self.tracer.start_span(
             name="novel_engine.turn_execution", kind=trace.SpanKind.SERVER
         )
@@ -240,7 +312,8 @@ class NovelEngineTracer:
         span.set_attribute("turn.participants.count", len(participants))
         span.set_attribute("turn.participants", ",".join(participants))
         span.set_attribute(
-            "turn.ai_enabled", configuration.get("ai_integration_enabled", False)
+            "turn.ai_enabled",
+            configuration.get("ai_integration_enabled", False),
         )
         span.set_attribute(
             "turn.narrative_depth",
@@ -253,8 +326,12 @@ class NovelEngineTracer:
 
         # Add user context if available (for security tracing)
         if user_context:
-            span.set_attribute("user.id", user_context.get("user_id", "anonymous"))
-            span.set_attribute("user.roles", ",".join(user_context.get("roles", [])))
+            span.set_attribute(
+                "user.id", user_context.get("user_id", "anonymous")
+            )
+            span.set_attribute(
+                "user.roles", ",".join(user_context.get("roles", []))
+            )
 
         # Set baggage for cross-context propagation
         baggage.set_baggage("turn.id", str(turn_id))
@@ -268,8 +345,8 @@ class NovelEngineTracer:
         phase_name: str,
         turn_id: UUID,
         phase_order: int,
-        parent_span: Optional[Span] = None,
-    ) -> Span:
+        parent_span: Optional[trace.Span] = None,
+    ) -> trace.Span:
         """
         Start span for individual phase execution.
 
@@ -282,6 +359,9 @@ class NovelEngineTracer:
         Returns:
             Phase execution span
         """
+        if self.tracer is None:
+            raise RuntimeError("Tracer not initialized")
+
         # Create span name
         span_name = f"novel_engine.phase.{phase_name}"
 
@@ -292,7 +372,9 @@ class NovelEngineTracer:
                     name=span_name, kind=trace.SpanKind.INTERNAL
                 )
         else:
-            span = self.tracer.start_span(name=span_name, kind=trace.SpanKind.INTERNAL)
+            span = self.tracer.start_span(
+                name=span_name, kind=trace.SpanKind.INTERNAL
+            )
 
         # Set phase attributes
         span.set_attribute("phase.name", phase_name)
@@ -302,14 +384,16 @@ class NovelEngineTracer:
         # Get turn context from baggage
         turn_participants = baggage.get_baggage("turn.participants_count")
         if turn_participants:
-            span.set_attribute("turn.participants_count", turn_participants)
+            span.set_attribute(
+                "turn.participants_count", str(turn_participants)
+            )
 
         logger.debug(f"Started phase span: {phase_name} for turn {turn_id}")
         return span
 
     def record_phase_result(
         self,
-        span: Span,
+        span: trace.Span,
         success: bool,
         events_processed: int,
         events_generated: int,
@@ -340,7 +424,8 @@ class NovelEngineTracer:
         if not success:
             span.set_status(
                 trace.Status(
-                    trace.StatusCode.ERROR, error_details or "Phase execution failed"
+                    trace.StatusCode.ERROR,
+                    error_details or "Phase execution failed",
                 )
             )
             if error_details:
@@ -350,7 +435,7 @@ class NovelEngineTracer:
 
     def record_turn_result(
         self,
-        span: Span,
+        span: trace.Span,
         success: bool,
         execution_time_seconds: float,
         total_ai_cost: float,
@@ -369,15 +454,20 @@ class NovelEngineTracer:
             error_details: Error details if turn failed
         """
         span.set_attribute("turn.success", success)
-        span.set_attribute("turn.execution_time_seconds", execution_time_seconds)
+        span.set_attribute(
+            "turn.execution_time_seconds", execution_time_seconds
+        )
         span.set_attribute("turn.total_cost", total_ai_cost)
         span.set_attribute("turn.phases_completed", ",".join(phases_completed))
-        span.set_attribute("turn.completion_percentage", len(phases_completed) / 5.0)
+        span.set_attribute(
+            "turn.completion_percentage", len(phases_completed) / 5.0
+        )
 
         if not success:
             span.set_status(
                 trace.Status(
-                    trace.StatusCode.ERROR, error_details or "Turn execution failed"
+                    trace.StatusCode.ERROR,
+                    error_details or "Turn execution failed",
                 )
             )
             if error_details:
@@ -387,7 +477,7 @@ class NovelEngineTracer:
 
     def record_cross_context_call(
         self,
-        span: Span,
+        span: trace.Span,
         target_context: str,
         operation: str,
         success: bool,
@@ -420,7 +510,7 @@ class NovelEngineTracer:
         Returns:
             Trace context headers for HTTP propagation
         """
-        carrier = {}
+        carrier: Dict[str, str] = {}
         propagate.inject(carrier)
         return carrier
 
@@ -459,7 +549,9 @@ def trace_async_operation(operation_name: str, **span_attributes):
                     span.set_status(trace.Status(trace.StatusCode.OK))
                     return result
                 except Exception as e:
-                    span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
+                    span.set_status(
+                        trace.Status(trace.StatusCode.ERROR, str(e))
+                    )
                     span.record_exception(e)
                     raise
 
@@ -471,7 +563,7 @@ def trace_async_operation(operation_name: str, **span_attributes):
 @asynccontextmanager
 async def trace_context(
     operation_name: str, **attributes
-) -> AsyncGenerator[Span, None]:
+) -> AsyncGenerator[trace.Span, None]:
     """
     Async context manager for tracing operations.
 

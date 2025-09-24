@@ -85,7 +85,9 @@ def test_memory_usage():
         from src.persona_agent import PersonaAgent
 
         event_bus = EventBus()
-        DirectorAgent(event_bus=event_bus, campaign_log_path="test_memory_campaign.md")
+        DirectorAgent(
+            event_bus=event_bus, campaign_log_path="test_memory_campaign.md"
+        )
 
         # Create test character for PersonaAgent
         test_char_content = """
@@ -167,11 +169,17 @@ def test_syntax_validation():
                     logger.error(f"❌ {file_path}: Syntax Error - {e}")
                 except Exception as e:
                     logger.warning(f"⚠️ {file_path}: Warning - {e}")
-                    valid_files += 1  # Still count as valid if it's not a syntax error
+                    valid_files += (
+                        1  # Still count as valid if it's not a syntax error
+                    )
             else:
-                logger.info(f"ℹ️ {file_path}: File not found (may be expected)")
+                logger.info(
+                    f"ℹ️ {file_path}: File not found (may be expected)"
+                )
 
-        logger.info(f"Syntax validation: {valid_files}/{total_files} files passed")
+        logger.info(
+            f"Syntax validation: {valid_files}/{total_files} files passed"
+        )
 
         # At least 80% of files should pass
         if total_files > 0:
@@ -205,12 +213,15 @@ def test_initialization_stability():
             try:
                 event_bus = EventBus()
                 director = DirectorAgent(
-                    event_bus=event_bus, campaign_log_path=f"test_stability_{i}.md"
+                    event_bus=event_bus,
+                    campaign_log_path=f"test_stability_{i}.md",
                 )
 
                 # Test basic functionality
                 status = director.get_simulation_status()
-                assert isinstance(status, dict), "Simulation status should be dict"
+                assert isinstance(
+                    status, dict
+                ), "Simulation status should be dict"
 
                 successful_cycles += 1
                 logger.info(f"Cycle {i+1}/{num_cycles}: OK")
@@ -270,7 +281,9 @@ def test_error_handling():
         total_error_tests += 1
         try:
             event_bus = EventBus()
-            agent = PersonaAgent("/nonexistent/character.md", event_bus=event_bus)
+            agent = PersonaAgent(
+                "/nonexistent/character.md", event_bus=event_bus
+            )
             # Should handle gracefully
             error_tests_passed += 1
             logger.info("✅ Invalid character file handled gracefully")
@@ -281,7 +294,9 @@ def test_error_handling():
         total_error_tests += 1
         try:
             event_bus = EventBus()
-            agent = PersonaAgent("/tmp/test_error_char.md", event_bus=event_bus)
+            agent = PersonaAgent(
+                "/tmp/test_error_char.md", event_bus=event_bus
+            )
             agent.update_memory("Test memory update")
             # Should handle gracefully even if file operations fail
             error_tests_passed += 1
@@ -290,7 +305,9 @@ def test_error_handling():
             logger.warning(f"⚠️ Memory operation error test failed: {e}")
 
         success_rate = (
-            error_tests_passed / total_error_tests if total_error_tests > 0 else 0
+            error_tests_passed / total_error_tests
+            if total_error_tests > 0
+            else 0
         )
         logger.info(
             f"Error handling: {error_tests_passed}/{total_error_tests} tests passed ({success_rate:.1%})"
@@ -343,7 +360,9 @@ def run_performance_stability_tests():
             passed += 1
 
     logger.info("-" * 60)
-    logger.info(f"Overall: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
+    logger.info(
+        f"Overall: {passed}/{total} tests passed ({passed/total*100:.1f}%)"
+    )
 
     if passed == total:
         logger.info("🎉 Performance & Stability Validation: SUCCESS")

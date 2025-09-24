@@ -47,7 +47,9 @@ class NarrativeArc:
 
     # Arc structure and progression
     plot_points: Dict[str, PlotPoint] = field(default_factory=dict)
-    plot_sequence: List[str] = field(default_factory=list)  # Ordered plot point IDs
+    plot_sequence: List[str] = field(
+        default_factory=list
+    )  # Ordered plot point IDs
 
     # Thematic elements
     themes: Dict[str, NarrativeTheme] = field(default_factory=dict)
@@ -62,7 +64,9 @@ class NarrativeArc:
     )  # Ordered pacing segment IDs
 
     # Context and setting
-    narrative_contexts: Dict[str, NarrativeContext] = field(default_factory=dict)
+    narrative_contexts: Dict[str, NarrativeContext] = field(
+        default_factory=dict
+    )
     active_contexts: Set[str] = field(
         default_factory=set
     )  # Currently active context IDs
@@ -77,7 +81,9 @@ class NarrativeArc:
     # Arc metrics and properties
     target_length: Optional[int] = None  # Target number of sequences
     current_length: int = 0
-    completion_percentage: Decimal = field(default_factory=lambda: Decimal("0.0"))
+    completion_percentage: Decimal = field(
+        default_factory=lambda: Decimal("0.0")
+    )
     complexity_score: Decimal = field(default_factory=lambda: Decimal("5.0"))
 
     # Arc status and lifecycle
@@ -86,7 +92,9 @@ class NarrativeArc:
     end_sequence: Optional[int] = None
 
     # Quality metrics
-    narrative_coherence: Decimal = field(default_factory=lambda: Decimal("5.0"))  # 1-10
+    narrative_coherence: Decimal = field(
+        default_factory=lambda: Decimal("5.0")
+    )  # 1-10
     thematic_consistency: Decimal = field(
         default_factory=lambda: Decimal("5.0")
     )  # 1-10
@@ -102,8 +110,12 @@ class NarrativeArc:
     )  # NarrativeThread IDs
 
     # Metadata
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
     created_by: Optional[UUID] = None
     tags: Set[str] = field(default_factory=set)
     notes: str = ""
@@ -158,7 +170,9 @@ class NarrativeArc:
             ValueError: If plot point already exists or sequence conflicts
         """
         if plot_point.plot_point_id in self.plot_points:
-            raise ValueError(f"Plot point {plot_point.plot_point_id} already exists")
+            raise ValueError(
+                f"Plot point {plot_point.plot_point_id} already exists"
+            )
 
         # Check for sequence conflicts
         for existing_id, existing_plot in self.plot_points.items():
@@ -233,7 +247,9 @@ class NarrativeArc:
         self.theme_development[theme.theme_id] = []
 
         if theme.introduction_sequence is not None:
-            self.theme_development[theme.theme_id].append(theme.introduction_sequence)
+            self.theme_development[theme.theme_id].append(
+                theme.introduction_sequence
+            )
 
         self._update_timestamp_and_version()
 
@@ -291,12 +307,16 @@ class NarrativeArc:
     def add_pacing_segment(self, pacing: StoryPacing) -> None:
         """Add a pacing segment to the arc."""
         if pacing.pacing_id in self.pacing_segments:
-            raise ValueError(f"Pacing segment {pacing.pacing_id} already exists")
+            raise ValueError(
+                f"Pacing segment {pacing.pacing_id} already exists"
+            )
 
         # Check for sequence overlaps
         for existing_pacing in self.pacing_segments.values():
             if self._sequences_overlap(pacing, existing_pacing):
-                raise ValueError("Pacing segment overlaps with existing segment")
+                raise ValueError(
+                    "Pacing segment overlaps with existing segment"
+                )
 
         self.pacing_segments[pacing.pacing_id] = pacing
         self._insert_pacing_in_sequence(pacing.pacing_id)
@@ -318,7 +338,9 @@ class NarrativeArc:
         )
         self._add_event(event)
 
-    def _sequences_overlap(self, pacing1: StoryPacing, pacing2: StoryPacing) -> bool:
+    def _sequences_overlap(
+        self, pacing1: StoryPacing, pacing2: StoryPacing
+    ) -> bool:
         """Check if two pacing segments overlap in sequence range."""
         return not (
             pacing1.end_sequence < pacing2.start_sequence
@@ -450,7 +472,9 @@ class NarrativeArc:
     def calculate_narrative_coherence(self) -> Decimal:
         """Calculate narrative coherence score based on plot point connections."""
         if len(self.plot_points) < 2:
-            return Decimal("10.0")  # Single or no plot points are perfectly coherent
+            return Decimal(
+                "10.0"
+            )  # Single or no plot points are perfectly coherent
 
         coherence_score = Decimal("5.0")  # Base score
 
@@ -466,7 +490,9 @@ class NarrativeArc:
                 if prereq not in self.plot_points:
                     coherence_penalties += Decimal("0.5")
 
-        coherence_score = max(Decimal("1.0"), coherence_score - coherence_penalties)
+        coherence_score = max(
+            Decimal("1.0"), coherence_score - coherence_penalties
+        )
         self.narrative_coherence = min(Decimal("10.0"), coherence_score)
 
         return self.narrative_coherence

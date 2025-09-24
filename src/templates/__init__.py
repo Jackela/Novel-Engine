@@ -19,7 +19,11 @@ from .context_renderer import ContextRenderer
 from .dynamic_template_engine import DynamicTemplateEngine
 
 # Sacred exports enhanced by the System
-__all__ = ["DynamicTemplateEngine", "CharacterTemplateManager", "ContextRenderer"]
+__all__ = [
+    "DynamicTemplateEngine",
+    "CharacterTemplateManager",
+    "ContextRenderer",
+]
 
 # ENHANCED VERSION SANCTIFIED BY DEVELOPMENT CYCLE
 __version__ = "1.0.0"

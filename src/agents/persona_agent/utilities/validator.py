@@ -65,13 +65,15 @@ class ValidationResult:
     def has_critical_issues(self) -> bool:
         """Check if validation has critical issues."""
         return any(
-            issue.severity == ValidationSeverity.CRITICAL for issue in self.issues
+            issue.severity == ValidationSeverity.CRITICAL
+            for issue in self.issues
         )
 
     def has_errors(self) -> bool:
         """Check if validation has errors or critical issues."""
         return any(
-            issue.severity in [ValidationSeverity.ERROR, ValidationSeverity.CRITICAL]
+            issue.severity
+            in [ValidationSeverity.ERROR, ValidationSeverity.CRITICAL]
             for issue in self.issues
         )
 
@@ -95,7 +97,9 @@ class Validator:
     - Support custom validation rules and schemas
     """
 
-    def __init__(self, character_id: str, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, character_id: str, logger: Optional[logging.Logger] = None
+    ):
         self.character_id = character_id
         self.logger = logger or logging.getLogger(__name__)
 
@@ -123,7 +127,8 @@ class Validator:
             "location": re.compile(r"^[a-zA-Z\s\-'\.0-9]{2,50}$"),
             "id": re.compile(r"^[a-zA-Z0-9_\-]{3,50}$"),
             "percentage": re.compile(r"^[0-9]{1,3}%$"),
-            "float_0_1": lambda x: isinstance(x, (int, float)) and 0.0 <= x <= 1.0,
+            "float_0_1": lambda x: isinstance(x, (int, float))
+            and 0.0 <= x <= 1.0,
             "positive_int": lambda x: isinstance(x, int) and x > 0,
         }
 
@@ -192,7 +197,9 @@ class Validator:
 
             # Goals validation
             if "goals" in character_data:
-                goals_issues = await self._validate_goals(character_data["goals"])
+                goals_issues = await self._validate_goals(
+                    character_data["goals"]
+                )
                 issues.extend(goals_issues)
 
             # Decision weights validation
@@ -288,7 +295,9 @@ class Validator:
 
             # Priority validation
             if "priority" in action:
-                priority_issues = await self._validate_priority(action["priority"])
+                priority_issues = await self._validate_priority(
+                    action["priority"]
+                )
                 issues.extend(priority_issues)
 
             # Parameters validation
@@ -300,7 +309,9 @@ class Validator:
 
             # Context validation
             if context:
-                context_issues = await self._validate_action_context(action, context)
+                context_issues = await self._validate_action_context(
+                    action, context
+                )
                 issues.extend(context_issues)
 
             # Feasibility check
@@ -345,7 +356,9 @@ class Validator:
                 ],
             )
 
-    async def validate_world_event(self, event: WorldEvent) -> ValidationResult:
+    async def validate_world_event(
+        self, event: WorldEvent
+    ) -> ValidationResult:
         """
         Validate world event structure and content.
 
@@ -360,7 +373,9 @@ class Validator:
             issues = []
 
             # Event ID validation
-            if not event.event_id or not self._patterns["id"].match(event.event_id):
+            if not event.event_id or not self._patterns["id"].match(
+                event.event_id
+            ):
                 issues.append(
                     ValidationIssue(
                         severity=ValidationSeverity.ERROR,
@@ -382,7 +397,9 @@ class Validator:
                 )
 
             # Source validation
-            if not event.source or not self._patterns["id"].match(event.source):
+            if not event.source or not self._patterns["id"].match(
+                event.source
+            ):
                 issues.append(
                     ValidationIssue(
                         severity=ValidationSeverity.WARNING,
@@ -417,7 +434,9 @@ class Validator:
                         )
 
             # Location validation
-            if event.location and not self._patterns["location"].match(event.location):
+            if event.location and not self._patterns["location"].match(
+                event.location
+            ):
                 issues.append(
                     ValidationIssue(
                         severity=ValidationSeverity.WARNING,
@@ -480,7 +499,9 @@ class Validator:
                 ],
             )
 
-    async def validate_system_state(self, state: Dict[str, Any]) -> ValidationResult:
+    async def validate_system_state(
+        self, state: Dict[str, Any]
+    ) -> ValidationResult:
         """
         Validate system state for integrity and consistency.
 
@@ -503,7 +524,9 @@ class Validator:
 
             # Goal system validation
             if "goal_system" in state:
-                goal_issues = await self._validate_goal_system(state["goal_system"])
+                goal_issues = await self._validate_goal_system(
+                    state["goal_system"]
+                )
                 issues.extend(goal_issues)
 
             # Decision system validation
@@ -515,8 +538,10 @@ class Validator:
 
             # World interpretation validation
             if "world_interpretation" in state:
-                interpretation_issues = await self._validate_world_interpretation(
-                    state["world_interpretation"]
+                interpretation_issues = (
+                    await self._validate_world_interpretation(
+                        state["world_interpretation"]
+                    )
                 )
                 issues.extend(interpretation_issues)
 
@@ -563,7 +588,9 @@ class Validator:
                 ],
             )
 
-    async def add_custom_rule(self, rule_name: str, rule_function: callable) -> None:
+    async def add_custom_rule(
+        self, rule_name: str, rule_function: callable
+    ) -> None:
         """
         Add custom validation rule.
 
@@ -583,12 +610,16 @@ class Validator:
         try:
             total = self._stats["total_validations"]
             success_rate = (
-                (self._stats["successful_validations"] / total) if total > 0 else 0.0
+                (self._stats["successful_validations"] / total)
+                if total > 0
+                else 0.0
             )
 
             return {
                 "total_validations": total,
-                "successful_validations": self._stats["successful_validations"],
+                "successful_validations": self._stats[
+                    "successful_validations"
+                ],
                 "failed_validations": self._stats["failed_validations"],
                 "success_rate": success_rate,
                 "issues_by_type": self._stats["issues_by_type"].copy(),
@@ -687,7 +718,9 @@ class Validator:
 
         # Check for common traits
         common_traits = ["aggression", "intelligence", "loyalty", "charisma"]
-        missing_traits = [trait for trait in common_traits if trait not in personality]
+        missing_traits = [
+            trait for trait in common_traits if trait not in personality
+        ]
 
         if missing_traits:
             issues.append(
@@ -729,7 +762,9 @@ class Validator:
         issues = []
 
         if "faction" in faction_info:
-            if not self._patterns["faction"].match(str(faction_info["faction"])):
+            if not self._patterns["faction"].match(
+                str(faction_info["faction"])
+            ):
                 issues.append(
                     ValidationIssue(
                         severity=ValidationSeverity.WARNING,
@@ -811,7 +846,9 @@ class Validator:
 
         return issues
 
-    async def _validate_action_type(self, action_type: str) -> List[ValidationIssue]:
+    async def _validate_action_type(
+        self, action_type: str
+    ) -> List[ValidationIssue]:
         """Validate action type."""
         issues = []
 
@@ -874,8 +911,16 @@ class Validator:
                     "type": "object",
                     "required": ["name"],
                     "properties": {
-                        "name": {"type": "string", "minLength": 2, "maxLength": 50},
-                        "age": {"type": "integer", "minimum": 1, "maximum": 1000},
+                        "name": {
+                            "type": "string",
+                            "minLength": 2,
+                            "maxLength": 50,
+                        },
+                        "age": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 1000,
+                        },
                     },
                 },
                 "personality": {"type": "object"},
@@ -964,7 +1009,9 @@ class Validator:
                 items.append((new_key, v))
         return dict(items)
 
-    async def _calculate_validation_score(self, issues: List[ValidationIssue]) -> float:
+    async def _calculate_validation_score(
+        self, issues: List[ValidationIssue]
+    ) -> float:
         """Calculate validation score based on issues."""
         if not issues:
             return 1.0
@@ -1053,6 +1100,8 @@ class Validator:
         """Validate action feasibility."""
         return []  # Placeholder
 
-    async def _validate_event_data(self, data: Dict[str, Any]) -> List[ValidationIssue]:
+    async def _validate_event_data(
+        self, data: Dict[str, Any]
+    ) -> List[ValidationIssue]:
         """Validate event data."""
         return []  # Placeholder

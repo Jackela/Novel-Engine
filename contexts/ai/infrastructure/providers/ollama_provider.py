@@ -114,7 +114,10 @@ class OllamaProvider(ILLMProvider):
         # Budget checking is simpler for local models (no API costs)
         if budget and budget.allocated_tokens > 0:
             estimated_tokens = self.estimate_tokens(request.prompt)
-            if budget.consumed_tokens + estimated_tokens > budget.allocated_tokens:
+            if (
+                budget.consumed_tokens + estimated_tokens
+                > budget.allocated_tokens
+            ):
                 return LLMResponse.create_error(
                     request_id=request.request_id,
                     status=LLMResponseStatus.QUOTA_EXCEEDED,
@@ -130,7 +133,6 @@ class OllamaProvider(ILLMProvider):
                 json=api_request,
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
-
                 if response.status == 200:
                     # Ollama streams by default, collect full response
                     full_response = await self._collect_full_response(response)
@@ -188,7 +190,6 @@ class OllamaProvider(ILLMProvider):
                 json=api_request,
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
-
                 if response.status != 200:
                     yield f"Error: HTTP {response.status}"
                     return
@@ -286,9 +287,9 @@ class OllamaProvider(ILLMProvider):
 
             # Test API connectivity
             async with session.get(
-                f"{self._base_url}/api/tags", timeout=aiohttp.ClientTimeout(total=10)
+                f"{self._base_url}/api/tags",
+                timeout=aiohttp.ClientTimeout(total=10),
             ) as response:
-
                 is_healthy = response.status == 200
 
                 if is_healthy:
@@ -303,7 +304,9 @@ class OllamaProvider(ILLMProvider):
                         "api_status": response.status,
                         "provider": "Ollama",
                         "timestamp": asyncio.get_event_loop().time(),
-                        "issues": [] if has_models else ["No models installed"],
+                        "issues": []
+                        if has_models
+                        else ["No models installed"],
                     }
                 else:
                     return {
@@ -339,9 +342,9 @@ class OllamaProvider(ILLMProvider):
             session = await self._get_session()
 
             async with session.get(
-                f"{self._base_url}/api/tags", timeout=aiohttp.ClientTimeout(total=10)
+                f"{self._base_url}/api/tags",
+                timeout=aiohttp.ClientTimeout(total=10),
             ) as response:
-
                 if response.status == 200:
                     data = await response.json()
                     models = data.get("models", [])
@@ -382,7 +385,8 @@ class OllamaProvider(ILLMProvider):
 
         # Common model patterns and their capabilities
         if any(
-            pattern in model_name.lower() for pattern in ["chat", "instruct", "vicuna"]
+            pattern in model_name.lower()
+            for pattern in ["chat", "instruct", "vicuna"]
         ):
             capabilities.add(ModelCapability.CONVERSATION)
 
@@ -437,7 +441,9 @@ class OllamaProvider(ILLMProvider):
         # Combine system prompt and main prompt
         prompt = ""
         if request.system_prompt:
-            prompt = f"System: {request.system_prompt}\n\nUser: {request.prompt}"
+            prompt = (
+                f"System: {request.system_prompt}\n\nUser: {request.prompt}"
+            )
         else:
             prompt = request.prompt
 
@@ -449,7 +455,9 @@ class OllamaProvider(ILLMProvider):
         }
 
         # Map parameters to Ollama options
-        if request.temperature != 0.7:  # Only include if different from default
+        if (
+            request.temperature != 0.7
+        ):  # Only include if different from default
             api_request["options"]["temperature"] = request.temperature
 
         if request.top_p is not None:

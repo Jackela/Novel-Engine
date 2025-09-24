@@ -26,7 +26,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-
 # Import base Novel Engine components
 from src.event_bus import EventBus
 
@@ -155,7 +154,9 @@ class IntelligenceInsight:
     recommendation: str
     supporting_data: Dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
-    category: str = "performance"  # performance, quality, user_behavior, system_health
+    category: str = (
+        "performance"  # performance, quality, user_behavior, system_health
+    )
 
 
 class AIIntelligenceOrchestrator:
@@ -164,7 +165,9 @@ class AIIntelligenceOrchestrator:
     in Novel Engine, providing unified intelligence, optimization, and monitoring.
     """
 
-    def __init__(self, event_bus: EventBus, config: Optional[AISystemConfig] = None):
+    def __init__(
+        self, event_bus: EventBus, config: Optional[AISystemConfig] = None
+    ):
         """
         Initialize the AI Intelligence Orchestrator.
 
@@ -199,9 +202,9 @@ class AIIntelligenceOrchestrator:
         self.optimization_suggestions: List[str] = []
 
         # Resource management
-        self.resource_allocation: Dict[str, float] = (
-            self.config.resource_allocation.copy()
-        )
+        self.resource_allocation: Dict[
+            str, float
+        ] = self.config.resource_allocation.copy()
         self.load_balancer: Dict[str, float] = defaultdict(float)
         self.performance_history: Dict[str, deque] = defaultdict(
             lambda: deque(maxlen=100)
@@ -275,8 +278,12 @@ class AIIntelligenceOrchestrator:
             await self._setup_event_handlers()
 
             self.status = OrchestratorStatus.ACTIVE
-            self.current_metrics.orchestrator_status = OrchestratorStatus.ACTIVE
-            self.current_metrics.intelligence_level = self.config.intelligence_level
+            self.current_metrics.orchestrator_status = (
+                OrchestratorStatus.ACTIVE
+            )
+            self.current_metrics.intelligence_level = (
+                self.config.intelligence_level
+            )
 
             result = {
                 "success": True,
@@ -284,7 +291,9 @@ class AIIntelligenceOrchestrator:
                 "initialized_systems": initialization_results,
                 "total_systems": len(initialization_results),
                 "intelligence_level": self.config.intelligence_level.value,
-                "startup_time": (datetime.now() - self.startup_time).total_seconds(),
+                "startup_time": (
+                    datetime.now() - self.startup_time
+                ).total_seconds(),
             }
 
             logger.info(
@@ -294,8 +303,14 @@ class AIIntelligenceOrchestrator:
 
         except Exception as e:
             self.status = OrchestratorStatus.ERROR
-            logger.error(f"Failed to initialize AI Intelligence Orchestrator: {e}")
-            return {"success": False, "error": str(e), "status": self.status.value}
+            logger.error(
+                f"Failed to initialize AI Intelligence Orchestrator: {e}"
+            )
+            return {
+                "success": False,
+                "error": str(e),
+                "status": self.status.value,
+            }
 
     async def shutdown_systems(self) -> Dict[str, Any]:
         """
@@ -341,7 +356,9 @@ class AIIntelligenceOrchestrator:
             return result
 
         except Exception as e:
-            logger.error(f"Error during AI Intelligence Orchestrator shutdown: {e}")
+            logger.error(
+                f"Error during AI Intelligence Orchestrator shutdown: {e}"
+            )
             return {"success": False, "error": str(e)}
 
     async def process_story_generation(
@@ -362,7 +379,7 @@ class AIIntelligenceOrchestrator:
             Enhanced story generation result with AI intelligence
         """
         try:
-            operation_id = f"story_gen_{user_id}_{datetime.now().strftime('%H%M%S')}_{uuid.uuid4().hex[:8]}"
+            operation_id = f"story_gen_{user_id}_{datetime.now().strftime('%H%M%S')}_{uuid.uuid4().hex[ :8]}"
 
             # Create operation tracking
             operation = AIOperation(
@@ -389,8 +406,10 @@ class AIIntelligenceOrchestrator:
 
             # 1. Apply user preference adaptations
             if self.recommendations:
-                adapted_context = await self.recommendations.adapt_story_generation(
-                    user_id, generation_context or {}
+                adapted_context = (
+                    await self.recommendations.adapt_story_generation(
+                        user_id, generation_context or {}
+                    )
                 )
                 result["user_adaptations"] = adapted_context
                 result["enhancements"]["preference_adaptation"] = True
@@ -400,17 +419,21 @@ class AIIntelligenceOrchestrator:
                 coordination_result = await self._coordinate_story_agents(
                     story_data["characters"], story_data
                 )
-                result["enhancements"]["agent_coordination"] = coordination_result
+                result["enhancements"][
+                    "agent_coordination"
+                ] = coordination_result
 
             # 3. Analyze story quality
             if self.story_quality:
-                quality_report = await self.story_quality.analyze_story_quality(
-                    story_text=story_data.get("content", ""),
-                    story_id=story_data.get("story_id", operation_id),
-                    context={
-                        "user_id": user_id,
-                        "generation_context": generation_context,
-                    },
+                quality_report = (
+                    await self.story_quality.analyze_story_quality(
+                        story_text=story_data.get("content", ""),
+                        story_id=story_data.get("story_id", operation_id),
+                        context={
+                            "user_id": user_id,
+                            "generation_context": generation_context,
+                        },
+                    )
                 )
                 result["quality_analysis"] = asdict(quality_report)
                 result["enhancements"]["quality_analysis"] = True
@@ -428,17 +451,21 @@ class AIIntelligenceOrchestrator:
                     session_context=generation_context,
                 )
 
-                recommendations = await self.recommendations.generate_recommendations(
-                    context=rec_context,
-                    recommendation_types=[
-                        RecommendationType.CHARACTER,
-                        RecommendationType.STORY_THEME,
-                        RecommendationType.IMPROVEMENT,
-                    ],
-                    max_recommendations=5,
+                recommendations = (
+                    await self.recommendations.generate_recommendations(
+                        context=rec_context,
+                        recommendation_types=[
+                            RecommendationType.CHARACTER,
+                            RecommendationType.STORY_THEME,
+                            RecommendationType.IMPROVEMENT,
+                        ],
+                        max_recommendations=5,
+                    )
                 )
 
-                result["recommendations"] = [asdict(rec) for rec in recommendations]
+                result["recommendations"] = [
+                    asdict(rec) for rec in recommendations
+                ]
                 result["enhancements"]["personalized_recommendations"] = True
 
             # 5. Track analytics
@@ -447,11 +474,13 @@ class AIIntelligenceOrchestrator:
                     story_id=story_data.get("story_id", operation_id),
                     user_id=user_id,
                     generation_data={
-                        "word_count": len(story_data.get("content", "").split()),
-                        "generation_time": operation.processing_time,
-                        "quality_score": result.get("quality_analysis", {}).get(
-                            "overall_score", 0.0
+                        "word_count": len(
+                            story_data.get("content", "").split()
                         ),
+                        "generation_time": operation.processing_time,
+                        "quality_score": result.get(
+                            "quality_analysis", {}
+                        ).get("overall_score", 0.0),
                         "characters_used": story_data.get("characters", []),
                         "genre": story_data.get("genre"),
                     },
@@ -533,9 +562,13 @@ class AIIntelligenceOrchestrator:
                 )
 
                 # Get user insights
-                user_insights = await self.recommendations.get_user_insights(user_id)
+                user_insights = await self.recommendations.get_user_insights(
+                    user_id
+                )
                 enhancement_result["insights"] = user_insights
-                enhancement_result["enhancements"]["preference_learning"] = True
+                enhancement_result["enhancements"][
+                    "preference_learning"
+                ] = True
 
             # Track user engagement
             if self.analytics:
@@ -544,11 +577,15 @@ class AIIntelligenceOrchestrator:
                     session_id=interaction_data.get("session_id", "unknown"),
                     engagement_data=interaction_data,
                 )
-                enhancement_result["enhancements"]["engagement_tracking"] = True
+                enhancement_result["enhancements"][
+                    "engagement_tracking"
+                ] = True
 
             # Generate personalized experience recommendations
-            personalization = await self._generate_personalization_recommendations(
-                user_id, interaction_data
+            personalization = (
+                await self._generate_personalization_recommendations(
+                    user_id, interaction_data
+                )
             )
             enhancement_result["personalization"] = personalization
 
@@ -579,8 +616,12 @@ class AIIntelligenceOrchestrator:
 
             # Optimize resource allocation
             if current_load > 0.8:  # High load threshold
-                resource_adjustments = await self._optimize_resource_allocation()
-                optimization_result["resource_adjustments"] = resource_adjustments
+                resource_adjustments = (
+                    await self._optimize_resource_allocation()
+                )
+                optimization_result[
+                    "resource_adjustments"
+                ] = resource_adjustments
                 optimization_result["optimizations_applied"].append(
                     "resource_allocation"
                 )
@@ -603,7 +644,7 @@ class AIIntelligenceOrchestrator:
             )
 
             logger.info(
-                f"System performance optimization completed: {len(optimization_result['optimizations_applied'])} optimizations applied"
+                f"System performance optimization completed: {len( optimization_result['optimizations_applied'])} optimizations applied"
             )
             return optimization_result
 
@@ -624,7 +665,9 @@ class AIIntelligenceOrchestrator:
                 "timestamp": datetime.now(),
                 "orchestrator_status": self.status.value,
                 "intelligence_level": self.config.intelligence_level.value,
-                "uptime_seconds": (datetime.now() - self.startup_time).total_seconds(),
+                "uptime_seconds": (
+                    datetime.now() - self.startup_time
+                ).total_seconds(),
                 "system_overview": {},
                 "performance_metrics": {},
                 "active_operations": len(self.active_operations),
@@ -635,7 +678,9 @@ class AIIntelligenceOrchestrator:
 
             # Agent Coordination metrics
             if self.agent_coordination:
-                coord_metrics = self.agent_coordination.get_coordination_metrics()
+                coord_metrics = (
+                    self.agent_coordination.get_coordination_metrics()
+                )
                 dashboard["system_overview"]["agent_coordination"] = {
                     "active": True,
                     "total_coordinations": coord_metrics.total_coordinations,
@@ -646,18 +691,20 @@ class AIIntelligenceOrchestrator:
 
             # Analytics platform metrics
             if self.analytics:
-                analytics_dashboard = await self.analytics.get_real_time_dashboard()
+                analytics_dashboard = (
+                    await self.analytics.get_real_time_dashboard()
+                )
                 dashboard["system_overview"]["analytics"] = {
                     "active": True,
-                    "active_users": analytics_dashboard.get("overview", {}).get(
-                        "active_users", 0
-                    ),
-                    "stories_generated": analytics_dashboard.get("overview", {}).get(
-                        "stories_generated", 0
-                    ),
-                    "system_health": analytics_dashboard.get("performance", {}).get(
-                        "system_health", "unknown"
-                    ),
+                    "active_users": analytics_dashboard.get(
+                        "overview", {}
+                    ).get("active_users", 0),
+                    "stories_generated": analytics_dashboard.get(
+                        "overview", {}
+                    ).get("stories_generated", 0),
+                    "system_health": analytics_dashboard.get(
+                        "performance", {}
+                    ).get("system_health", "unknown"),
                 }
 
             # Performance metrics
@@ -716,30 +763,40 @@ class AIIntelligenceOrchestrator:
                         export_request.story_id
                     )
                     if story_data:
-                        quality_report = await self.story_quality.analyze_story_quality(
-                            story_text=story_data.get("content", ""),
-                            story_id=export_request.story_id,
+                        quality_report = (
+                            await self.story_quality.analyze_story_quality(
+                                story_text=story_data.get("content", ""),
+                                story_id=export_request.story_id,
+                            )
                         )
-                        export_request.metadata_options["quality_analysis"] = asdict(
-                            quality_report
-                        )
+                        export_request.metadata_options[
+                            "quality_analysis"
+                        ] = asdict(quality_report)
 
                 # Add user insights to export
                 if (
                     intelligence_options.get("include_user_insights", False)
                     and self.recommendations
                 ):
-                    user_insights = await self.recommendations.get_user_insights(
-                        export_request.user_id
+                    user_insights = (
+                        await self.recommendations.get_user_insights(
+                            export_request.user_id
+                        )
                     )
-                    export_request.metadata_options["user_insights"] = user_insights
+                    export_request.metadata_options[
+                        "user_insights"
+                    ] = user_insights
 
             # Perform export
-            export_result = await self.export_integration.export_story(export_request)
+            export_result = await self.export_integration.export_story(
+                export_request
+            )
 
             # Track export analytics
             if self.analytics and export_result.success:
-                await self._track_export_analytics(export_request, export_result)
+                await self._track_export_analytics(
+                    export_request, export_result
+                )
 
             return export_result
 
@@ -756,9 +813,13 @@ class AIIntelligenceOrchestrator:
 
     async def _setup_event_handlers(self):
         """Setup event handlers for system coordination."""
-        self.event_bus.subscribe("STORY_GENERATED", self._handle_story_generated)
+        self.event_bus.subscribe(
+            "STORY_GENERATED", self._handle_story_generated
+        )
         self.event_bus.subscribe("USER_FEEDBACK", self._handle_user_feedback)
-        self.event_bus.subscribe("AGENT_ACTION_COMPLETE", self._handle_agent_action)
+        self.event_bus.subscribe(
+            "AGENT_ACTION_COMPLETE", self._handle_agent_action
+        )
         self.event_bus.subscribe("SYSTEM_ALERT", self._handle_system_alert)
 
     async def _start_background_monitoring(self):
@@ -775,7 +836,9 @@ class AIIntelligenceOrchestrator:
         health_task = asyncio.create_task(self._health_monitoring_loop())
         self.background_tasks.append(health_task)
 
-        logger.info(f"Started {len(self.background_tasks)} background monitoring tasks")
+        logger.info(
+            f"Started {len(self.background_tasks)} background monitoring tasks"
+        )
 
     async def _start_optimization_tasks(self):
         """Start optimization background tasks."""
@@ -794,14 +857,19 @@ class AIIntelligenceOrchestrator:
     ) -> Dict[str, Any]:
         """Coordinate agents for story generation."""
         if not self.agent_coordination:
-            return {"coordinated": False, "reason": "Agent coordination not available"}
+            return {
+                "coordinated": False,
+                "reason": "Agent coordination not available",
+            }
 
         try:
             # This would coordinate character agents for the story
-            coordination_result = await self.agent_coordination.coordinate_agents(
-                agent_ids=characters,
-                coordination_type="narrative",
-                context={"story_data": story_data},
+            coordination_result = (
+                await self.agent_coordination.coordinate_agents(
+                    agent_ids=characters,
+                    coordination_type="narrative",
+                    context={"story_data": story_data},
+                )
             )
 
             return {
@@ -822,7 +890,9 @@ class AIIntelligenceOrchestrator:
 
         # Quality insights
         if "quality_analysis" in result:
-            quality_score = result["quality_analysis"].get("overall_score", 0.0)
+            quality_score = result["quality_analysis"].get(
+                "overall_score", 0.0
+            )
             if quality_score > 0.8:
                 insights.append(
                     {
@@ -886,14 +956,17 @@ class AIIntelligenceOrchestrator:
         )
         load_factors.append(operation_load)
 
-        # Individual system loads (would be implemented based on actual metrics)
+        # Individual system loads (would be implemented based on actual
+        # metrics)
         if self.agent_coordination:
             load_factors.append(0.3)  # Placeholder
 
         if self.analytics:
             load_factors.append(0.2)  # Placeholder
 
-        return min(sum(load_factors) / len(load_factors) if load_factors else 0.0, 1.0)
+        return min(
+            sum(load_factors) / len(load_factors) if load_factors else 0.0, 1.0
+        )
 
     async def _optimize_resource_allocation(self) -> Dict[str, float]:
         """Optimize resource allocation based on system performance."""
@@ -915,7 +988,9 @@ class AIIntelligenceOrchestrator:
         # Apply adjustments
         for system, adjustment in adjustments.items():
             if system in self.resource_allocation:
-                self.resource_allocation[system] = min(adjustment, 0.5)  # Cap at 50%
+                self.resource_allocation[system] = min(
+                    adjustment, 0.5
+                )  # Cap at 50%
 
         return adjustments
 
@@ -930,7 +1005,9 @@ class AIIntelligenceOrchestrator:
 
         return optimizations
 
-    async def _generate_performance_insights(self) -> List[IntelligenceInsight]:
+    async def _generate_performance_insights(
+        self,
+    ) -> List[IntelligenceInsight]:
         """Generate performance insights."""
         insights = []
 
@@ -944,7 +1021,9 @@ class AIIntelligenceOrchestrator:
                 confidence=0.9,
                 impact_level="high",
                 recommendation="Investigate error patterns and implement corrective measures",
-                supporting_data={"error_rate": self.current_metrics.error_rate},
+                supporting_data={
+                    "error_rate": self.current_metrics.error_rate
+                },
             )
             insights.append(insight)
 
@@ -956,13 +1035,17 @@ class AIIntelligenceOrchestrator:
 
         # Analyze system state and generate optimization suggestions
         if self.current_metrics.average_response_time > 2.0:
-            suggestions.append("Consider implementing response time optimization")
+            suggestions.append(
+                "Consider implementing response time optimization"
+            )
 
         if self.current_metrics.system_load > 0.8:
             suggestions.append("Enable auto-scaling to handle high load")
 
         if self.current_metrics.user_satisfaction < 0.7:
-            suggestions.append("Review user experience and implement improvements")
+            suggestions.append(
+                "Review user experience and implement improvements"
+            )
 
         return suggestions
 
@@ -1007,8 +1090,12 @@ class AIIntelligenceOrchestrator:
 
                 # Update current metrics
                 self.current_metrics.timestamp = datetime.now()
-                self.current_metrics.active_operations = len(self.active_operations)
-                self.current_metrics.system_load = await self._calculate_system_load()
+                self.current_metrics.active_operations = len(
+                    self.active_operations
+                )
+                self.current_metrics.system_load = (
+                    await self._calculate_system_load()
+                )
 
                 # Check for performance issues
                 await self._check_performance_alerts()
@@ -1090,7 +1177,9 @@ class AIIntelligenceOrchestrator:
             if user_id:
                 await self.recommendations.apply_recommendation_feedback(
                     user_id=user_id,
-                    recommendation_id=feedback_data.get("recommendation_id", ""),
+                    recommendation_id=feedback_data.get(
+                        "recommendation_id", ""
+                    ),
                     feedback=feedback_data.get("feedback", "neutral"),
                 )
 
@@ -1112,7 +1201,9 @@ class AIIntelligenceOrchestrator:
                 description=alert_data.get("message", "System alert received"),
                 confidence=0.9,
                 impact_level=alert_level,
-                recommendation=alert_data.get("recommendation", "Review system status"),
+                recommendation=alert_data.get(
+                    "recommendation", "Review system status"
+                ),
                 supporting_data=alert_data,
             )
             self.intelligence_insights.append(insight)
@@ -1169,7 +1260,9 @@ class AIIntelligenceOrchestrator:
         """Save final system state before shutdown."""
         final_state = {
             "shutdown_time": datetime.now().isoformat(),
-            "uptime_seconds": (datetime.now() - self.startup_time).total_seconds(),
+            "uptime_seconds": (
+                datetime.now() - self.startup_time
+            ).total_seconds(),
             "total_operations": len(self.completed_operations),
             "final_metrics": asdict(self.current_metrics),
             "intelligence_insights": len(self.intelligence_insights),
@@ -1178,7 +1271,9 @@ class AIIntelligenceOrchestrator:
         # This would save to persistent storage
         logger.info(f"Final system state: {final_state}")
 
-    async def _get_story_for_export(self, story_id: str) -> Optional[Dict[str, Any]]:
+    async def _get_story_for_export(
+        self, story_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Get story data for export."""
         # This would retrieve story data from storage
         return None

@@ -20,7 +20,11 @@ def run_comprehensive_test():
     print("🚀 FINAL INTEGRATION TEST - WAVE MODE IMPROVEMENTS")
     print("=" * 80)
 
-    results = {"timestamp": datetime.now().isoformat(), "tests": [], "summary": {}}
+    results = {
+        "timestamp": datetime.now().isoformat(),
+        "tests": [],
+        "summary": {},
+    }
 
     # Run 3 iterations to test consistency
     for iteration in range(3):
@@ -44,10 +48,18 @@ def run_comprehensive_test():
         # Collect metrics
         iteration_results = {
             "iteration": iteration + 1,
-            "character_balance": evaluation["enhanced_metrics"]["character_balance"],
-            "dialogue_variety": evaluation["enhanced_metrics"]["dialogue_variety"],
-            "repetition_ratio": evaluation["enhanced_metrics"]["repetition_ratio"],
-            "event_types": evaluation["enhanced_metrics"]["unique_event_types"],
+            "character_balance": evaluation["enhanced_metrics"][
+                "character_balance"
+            ],
+            "dialogue_variety": evaluation["enhanced_metrics"][
+                "dialogue_variety"
+            ],
+            "repetition_ratio": evaluation["enhanced_metrics"][
+                "repetition_ratio"
+            ],
+            "event_types": evaluation["enhanced_metrics"][
+                "unique_event_types"
+            ],
             "overall_score": evaluation["overall_score"],
             "novel_length": len(novel),
         }
@@ -58,7 +70,9 @@ def run_comprehensive_test():
         print(
             f"  Dialogue Variety: {evaluation['enhanced_metrics']['dialogue_variety']:.1%}"
         )
-        print(f"  Repetition: {evaluation['enhanced_metrics']['repetition_ratio']:.1%}")
+        print(
+            f"  Repetition: {evaluation['enhanced_metrics']['repetition_ratio']:.1%}"
+        )
         print(
             f"  Character Balance: {list(evaluation['enhanced_metrics']['character_balance'].values())}"
         )
@@ -135,7 +149,9 @@ def run_comprehensive_test():
         print("  • Coherent narrative structure")
     elif passed >= 3:
         print("✅ WAVE MODE IMPROVEMENTS EFFECTIVE")
-        print("Significant improvements achieved with minor areas for enhancement.")
+        print(
+            "Significant improvements achieved with minor areas for enhancement."
+        )
     else:
         print("⚠️ WAVE MODE IMPROVEMENTS PARTIAL")
         print("Some improvements achieved but more work needed.")

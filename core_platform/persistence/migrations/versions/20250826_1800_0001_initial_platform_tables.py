@@ -44,17 +44,30 @@ def upgrade() -> None:
             nullable=False,
         ),
         # Event identification
-        sa.Column("aggregate_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "aggregate_id", postgresql.UUID(as_uuid=True), nullable=False
+        ),
         sa.Column("aggregate_type", sa.String(length=100), nullable=False),
         sa.Column("event_type", sa.String(length=200), nullable=False),
         sa.Column(
-            "event_version", sa.String(length=20), nullable=False, default="1.0.0"
+            "event_version",
+            sa.String(length=20),
+            nullable=False,
+            default="1.0.0",
         ),
         # Event data
-        sa.Column("event_data", postgresql.JSON(astext_type=sa.Text()), nullable=False),
+        sa.Column(
+            "event_data",
+            postgresql.JSON(astext_type=sa.Text()),
+            nullable=False,
+        ),
         # Event metadata
-        sa.Column("correlation_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("causation_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column(
+            "correlation_id", postgresql.UUID(as_uuid=True), nullable=True
+        ),
+        sa.Column(
+            "causation_id", postgresql.UUID(as_uuid=True), nullable=True
+        ),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
         # Processing status
         sa.Column("processed", sa.Boolean(), nullable=False, default=False),
@@ -69,13 +82,21 @@ def upgrade() -> None:
     )
 
     # Create indexes for outbox_events
-    op.create_index("ix_outbox_events_aggregate_id", "outbox_events", ["aggregate_id"])
-    op.create_index("ix_outbox_events_processed", "outbox_events", ["processed"])
+    op.create_index(
+        "ix_outbox_events_aggregate_id", "outbox_events", ["aggregate_id"]
+    )
+    op.create_index(
+        "ix_outbox_events_processed", "outbox_events", ["processed"]
+    )
     op.create_index(
         "ix_outbox_events_correlation_id", "outbox_events", ["correlation_id"]
     )
-    op.create_index("ix_outbox_events_created_at", "outbox_events", ["created_at"])
-    op.create_index("ix_outbox_events_event_type", "outbox_events", ["event_type"])
+    op.create_index(
+        "ix_outbox_events_created_at", "outbox_events", ["created_at"]
+    )
+    op.create_index(
+        "ix_outbox_events_event_type", "outbox_events", ["event_type"]
+    )
 
     # Create event_store table for event sourcing
     op.create_table(
@@ -114,13 +135,23 @@ def upgrade() -> None:
         sa.Column("sequence_number", sa.BigInteger(), nullable=False),
         sa.Column("global_sequence", sa.BigInteger(), nullable=False),
         # Event data
-        sa.Column("event_data", postgresql.JSON(astext_type=sa.Text()), nullable=False),
         sa.Column(
-            "event_metadata", postgresql.JSON(astext_type=sa.Text()), nullable=True
+            "event_data",
+            postgresql.JSON(astext_type=sa.Text()),
+            nullable=False,
+        ),
+        sa.Column(
+            "event_metadata",
+            postgresql.JSON(astext_type=sa.Text()),
+            nullable=True,
         ),
         # Event context
-        sa.Column("correlation_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("causation_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column(
+            "correlation_id", postgresql.UUID(as_uuid=True), nullable=True
+        ),
+        sa.Column(
+            "causation_id", postgresql.UUID(as_uuid=True), nullable=True
+        ),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("event_id"),
@@ -134,7 +165,9 @@ def upgrade() -> None:
         "event_store",
         ["stream_id", "sequence_number"],
     )
-    op.create_index("ix_event_store_correlation_id", "event_store", ["correlation_id"])
+    op.create_index(
+        "ix_event_store_correlation_id", "event_store", ["correlation_id"]
+    )
     op.create_index("ix_event_store_event_type", "event_store", ["event_type"])
     op.create_index(
         "ix_event_store_global_sequence", "event_store", ["global_sequence"]
@@ -206,7 +239,9 @@ def downgrade() -> None:
     """Downgrade database schema - Remove initial platform tables."""
 
     # Drop triggers
-    op.execute("DROP TRIGGER IF EXISTS trigger_event_store_updated_at ON event_store")
+    op.execute(
+        "DROP TRIGGER IF EXISTS trigger_event_store_updated_at ON event_store"
+    )
     op.execute(
         "DROP TRIGGER IF EXISTS trigger_outbox_events_updated_at ON outbox_events"
     )
@@ -226,12 +261,16 @@ def downgrade() -> None:
     op.drop_index("ix_event_store_global_sequence", table_name="event_store")
     op.drop_index("ix_event_store_event_type", table_name="event_store")
     op.drop_index("ix_event_store_correlation_id", table_name="event_store")
-    op.drop_index("ix_event_store_stream_id_sequence", table_name="event_store")
+    op.drop_index(
+        "ix_event_store_stream_id_sequence", table_name="event_store"
+    )
     op.drop_index("ix_event_store_stream_id", table_name="event_store")
 
     op.drop_index("ix_outbox_events_event_type", table_name="outbox_events")
     op.drop_index("ix_outbox_events_created_at", table_name="outbox_events")
-    op.drop_index("ix_outbox_events_correlation_id", table_name="outbox_events")
+    op.drop_index(
+        "ix_outbox_events_correlation_id", table_name="outbox_events"
+    )
     op.drop_index("ix_outbox_events_processed", table_name="outbox_events")
     op.drop_index("ix_outbox_events_aggregate_id", table_name="outbox_events")
 

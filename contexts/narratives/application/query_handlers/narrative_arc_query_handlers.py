@@ -84,12 +84,21 @@ class NarrativeArcQueryHandler:
                     {
                         "target_length": arc.target_length,
                         "current_length": arc.current_length,
-                        "completion_percentage": float(arc.completion_percentage),
+                        "completion_percentage": float(
+                            arc.completion_percentage
+                        ),
                         "complexity_score": float(arc.complexity_score),
                         "narrative_coherence": float(arc.narrative_coherence),
-                        "thematic_consistency": float(arc.thematic_consistency),
-                        "pacing_effectiveness": float(arc.pacing_effectiveness),
-                        "sequence_range": [arc.start_sequence, arc.end_sequence],
+                        "thematic_consistency": float(
+                            arc.thematic_consistency
+                        ),
+                        "pacing_effectiveness": float(
+                            arc.pacing_effectiveness
+                        ),
+                        "sequence_range": [
+                            arc.start_sequence,
+                            arc.end_sequence,
+                        ],
                         "plot_points_count": len(arc.plot_points),
                         "themes_count": len(arc.themes),
                         "pacing_segments_count": len(arc.pacing_segments),
@@ -122,7 +131,9 @@ class NarrativeArcQueryHandler:
             return result
 
         except Exception as e:
-            logger.error(f"Failed to get narrative arc {query.arc_id}: {str(e)}")
+            logger.error(
+                f"Failed to get narrative arc {query.arc_id}: {str(e)}"
+            )
             raise
 
     def handle_get_narrative_arcs_by_type(
@@ -145,7 +156,9 @@ class NarrativeArcQueryHandler:
                         "arc_name": arc.arc_name,
                         "arc_type": arc.arc_type,
                         "status": arc.status,
-                        "completion_percentage": float(arc.completion_percentage),
+                        "completion_percentage": float(
+                            arc.completion_percentage
+                        ),
                         "plot_points_count": len(arc.plot_points),
                         "created_at": arc.created_at.isoformat(),
                         "updated_at": arc.updated_at.isoformat(),
@@ -197,11 +210,15 @@ class NarrativeArcQueryHandler:
                             if len(arc.description) > 200
                             else arc.description
                         ),
-                        "completion_percentage": float(arc.completion_percentage),
+                        "completion_percentage": float(
+                            arc.completion_percentage
+                        ),
                         "complexity_score": float(arc.complexity_score),
                         "plot_points_count": len(arc.plot_points),
                         "themes_count": len(arc.themes),
-                        "primary_characters_count": len(arc.primary_characters),
+                        "primary_characters_count": len(
+                            arc.primary_characters
+                        ),
                         "tags": list(arc.tags),
                         "created_at": arc.created_at.isoformat(),
                         "updated_at": arc.updated_at.isoformat(),
@@ -256,12 +273,15 @@ class NarrativeArcQueryHandler:
                 "location": plot_point.location,
                 "time_context": plot_point.time_context,
                 "pov_character": (
-                    str(plot_point.pov_character) if plot_point.pov_character else None
+                    str(plot_point.pov_character)
+                    if plot_point.pov_character
+                    else None
                 ),
                 "outcome": plot_point.outcome,
                 "conflict_type": plot_point.conflict_type,
                 "thematic_relevance": {
-                    k: float(v) for k, v in plot_point.thematic_relevance.items()
+                    k: float(v)
+                    for k, v in plot_point.thematic_relevance.items()
                 },
                 "tags": list(plot_point.tags),
                 "notes": plot_point.notes,
@@ -284,7 +304,10 @@ class NarrativeArcQueryHandler:
             plot_points = arc.get_plot_points_in_sequence()
 
             # Filter by sequence range if specified
-            if query.start_sequence is not None or query.end_sequence is not None:
+            if (
+                query.start_sequence is not None
+                or query.end_sequence is not None
+            ):
                 filtered_points = []
                 for pp in plot_points:
                     if (
@@ -309,9 +332,13 @@ class NarrativeArcQueryHandler:
                         "plot_point_type": plot_point.plot_point_type.value,
                         "importance": plot_point.importance.value,
                         "sequence_order": plot_point.sequence_order,
-                        "emotional_intensity": float(plot_point.emotional_intensity),
+                        "emotional_intensity": float(
+                            plot_point.emotional_intensity
+                        ),
                         "dramatic_tension": float(plot_point.dramatic_tension),
-                        "story_significance": float(plot_point.story_significance),
+                        "story_significance": float(
+                            plot_point.story_significance
+                        ),
                         "involved_characters": [
                             str(cid) for cid in plot_point.involved_characters
                         ],
@@ -352,12 +379,15 @@ class NarrativeArcQueryHandler:
                                 "emotional_intensity": float(
                                     plot_point.emotional_intensity
                                 ),
-                                "dramatic_tension": float(plot_point.dramatic_tension),
+                                "dramatic_tension": float(
+                                    plot_point.dramatic_tension
+                                ),
                                 "story_significance": float(
                                     plot_point.story_significance
                                 ),
                                 "involved_characters": [
-                                    str(cid) for cid in plot_point.involved_characters
+                                    str(cid)
+                                    for cid in plot_point.involved_characters
                                 ],
                                 "outcome": plot_point.outcome,
                                 "conflict_type": plot_point.conflict_type,
@@ -376,7 +406,9 @@ class NarrativeArcQueryHandler:
             logger.error(f"Failed to get plot points by type: {str(e)}")
             raise
 
-    def handle_get_theme(self, query: GetThemeQuery) -> Optional[Dict[str, Any]]:
+    def handle_get_theme(
+        self, query: GetThemeQuery
+    ) -> Optional[Dict[str, Any]]:
         """Handle get theme query."""
         try:
             arc = self.repository.get_by_id(NarrativeId(query.arc_id))
@@ -403,8 +435,12 @@ class NarrativeArcQueryHandler:
                 "resolution_sequence": theme.resolution_sequence,
                 "tags": list(theme.tags),
                 "notes": theme.notes,
-                "overall_significance_score": float(theme.overall_significance_score),
-                "development_sequences": arc.theme_development.get(query.theme_id, []),
+                "overall_significance_score": float(
+                    theme.overall_significance_score
+                ),
+                "development_sequences": arc.theme_development.get(
+                    query.theme_id, []
+                ),
             }
 
         except Exception as e:
@@ -430,7 +466,9 @@ class NarrativeArcQueryHandler:
                         "name": theme.name,
                         "theme_type": theme.theme_type.value,
                         "intensity": theme.intensity.value,
-                        "emotional_resonance": float(theme.emotional_resonance),
+                        "emotional_resonance": float(
+                            theme.emotional_resonance
+                        ),
                         "introduction_sequence": theme.introduction_sequence,
                         "is_active": True,
                     }
@@ -442,7 +480,9 @@ class NarrativeArcQueryHandler:
             logger.error(f"Failed to get themes at sequence: {str(e)}")
             raise
 
-    def handle_get_arc_metrics(self, query: GetArcMetricsQuery) -> Dict[str, Any]:
+    def handle_get_arc_metrics(
+        self, query: GetArcMetricsQuery
+    ) -> Dict[str, Any]:
         """Handle get arc metrics query."""
         try:
             arc = self.repository.get_by_id(NarrativeId(query.arc_id))
@@ -462,8 +502,12 @@ class NarrativeArcQueryHandler:
                 metrics.update(
                     {
                         "narrative_coherence": float(coherence),
-                        "thematic_consistency": float(arc.thematic_consistency),
-                        "pacing_effectiveness": float(arc.pacing_effectiveness),
+                        "thematic_consistency": float(
+                            arc.thematic_consistency
+                        ),
+                        "pacing_effectiveness": float(
+                            arc.pacing_effectiveness
+                        ),
                     }
                 )
 
@@ -471,17 +515,28 @@ class NarrativeArcQueryHandler:
                 flow_analysis = self.flow_service.analyze_narrative_flow(arc)
                 metrics["flow_analysis"] = {
                     "pacing_score": float(flow_analysis.pacing_score),
-                    "climax_positioning": float(flow_analysis.climax_positioning),
-                    "resolution_quality": float(flow_analysis.resolution_quality),
-                    "narrative_momentum": float(flow_analysis.narrative_momentum),
+                    "climax_positioning": float(
+                        flow_analysis.climax_positioning
+                    ),
+                    "resolution_quality": float(
+                        flow_analysis.resolution_quality
+                    ),
+                    "narrative_momentum": float(
+                        flow_analysis.narrative_momentum
+                    ),
                     "flow_consistency": float(flow_analysis.flow_consistency),
                 }
 
             if query.include_causal_analysis and self.causal_service:
                 # Add plot points to causal service
                 for plot_point in arc.plot_points.values():
-                    if plot_point.plot_point_id not in self.causal_service.nodes:
-                        from ...domain.value_objects.causal_node import CausalNode
+                    if (
+                        plot_point.plot_point_id
+                        not in self.causal_service.nodes
+                    ):
+                        from ...domain.value_objects.causal_node import (
+                            CausalNode,
+                        )
 
                         causal_node = CausalNode(
                             node_id=plot_point.plot_point_id,
@@ -490,15 +545,29 @@ class NarrativeArcQueryHandler:
                         )
                         self.causal_service.add_node(causal_node)
 
-                causal_analysis = self.causal_service.analyze_narrative_causality()
+                causal_analysis = (
+                    self.causal_service.analyze_narrative_causality()
+                )
                 metrics["causal_analysis"] = {
-                    "graph_complexity": float(causal_analysis.graph_complexity),
-                    "consistency_score": float(causal_analysis.consistency_score),
-                    "narrative_flow_score": float(causal_analysis.narrative_flow_score),
+                    "graph_complexity": float(
+                        causal_analysis.graph_complexity
+                    ),
+                    "consistency_score": float(
+                        causal_analysis.consistency_score
+                    ),
+                    "narrative_flow_score": float(
+                        causal_analysis.narrative_flow_score
+                    ),
                     "root_causes_count": len(causal_analysis.root_causes),
-                    "terminal_effects_count": len(causal_analysis.terminal_effects),
-                    "critical_nodes_count": len(causal_analysis.critical_nodes),
-                    "feedback_loops_count": len(causal_analysis.feedback_loops),
+                    "terminal_effects_count": len(
+                        causal_analysis.terminal_effects
+                    ),
+                    "critical_nodes_count": len(
+                        causal_analysis.critical_nodes
+                    ),
+                    "feedback_loops_count": len(
+                        causal_analysis.feedback_loops
+                    ),
                 }
 
             return metrics
@@ -507,7 +576,9 @@ class NarrativeArcQueryHandler:
             logger.error(f"Failed to get arc metrics: {str(e)}")
             raise
 
-    def handle_get_arc_summary(self, query: GetArcSummaryQuery) -> Dict[str, Any]:
+    def handle_get_arc_summary(
+        self, query: GetArcSummaryQuery
+    ) -> Dict[str, Any]:
         """Handle get arc summary query."""
         try:
             arc = self.repository.get_by_id(NarrativeId(query.arc_id))
@@ -536,13 +607,19 @@ class NarrativeArcQueryHandler:
                     "plot_types_distribution": plot_types_distribution,
                     "theme_types_distribution": theme_types_distribution,
                     "average_emotional_intensity": float(
-                        sum(pp.emotional_intensity for pp in arc.plot_points.values())
+                        sum(
+                            pp.emotional_intensity
+                            for pp in arc.plot_points.values()
+                        )
                         / len(arc.plot_points)
                         if arc.plot_points
                         else Decimal("0")
                     ),
                     "average_dramatic_tension": float(
-                        sum(pp.dramatic_tension for pp in arc.plot_points.values())
+                        sum(
+                            pp.dramatic_tension
+                            for pp in arc.plot_points.values()
+                        )
                         / len(arc.plot_points)
                         if arc.plot_points
                         else Decimal("0")

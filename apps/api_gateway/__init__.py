@@ -17,5 +17,5 @@ Architecture: Central API gateway with service mesh capabilities
 """
 
 __version__ = "1.0.0"
-__service_name__ = "api-gateway"
+__service_name__ = "api_gateway"
 __description__ = "API Gateway and Orchestration Service"

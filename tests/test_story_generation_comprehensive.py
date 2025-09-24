@@ -24,7 +24,6 @@ import tempfile
 import pytest
 from chronicler_agent import CampaignEvent, ChroniclerAgent, NarrativeSegment
 
-
 # Test Constants
 GENERIC_CHARACTERS = ["pilot", "scientist", "engineer", "test"]
 SCI_FI_KEYWORDS = [
@@ -71,18 +70,18 @@ class TestChroniclerAgentCore:
         chronicler = ChroniclerAgent()
 
         # Check all narrative templates
-        for style, template_dict in chronicler.narrative_templates.items():
-            for template_name, template in template_dict.items():
-                template_lower = template.lower()
+        for template_name, template in chronicler.narrative_templates.items():
+            template_lower = template.lower()
 
-                for banned_term in BANNED_BRAND_TERMS:
-                    assert (
-                        banned_term not in template_lower
-                    ), f"Banned term '{banned_term}' found in template {style}:{template_name}"
+            for banned_term in BANNED_BRAND_TERMS:
+                assert (
+                    banned_term not in template_lower
+                ), f"Banned term '{banned_term}' found in template {template_name}"
 
-        # Verify sci_fi_dramatic style exists instead of grimdark_dramatic
-        assert "sci_fi_dramatic" in chronicler.narrative_templates
-        assert "grimdark_dramatic" not in chronicler.narrative_templates
+        # Verify basic templates exist
+        assert "opening" in chronicler.narrative_templates
+        assert "closing" in chronicler.narrative_templates
+        assert "character_action" in chronicler.narrative_templates
 
     def test_faction_descriptions_generic(self):
         """Test that faction descriptions are generic sci-fi"""
@@ -137,14 +136,16 @@ class TestChroniclerAgentCore:
         [Turn Begin] Starting simulation turn 1
         [Action] pilot: Navigate to research station
         [Turn End] Turn 1 completed
-        
+
         Turn 2 - 2024-01-01 12:05:00
         [Agent Registration] scientist registered as Dr. Maya Patel
         [Action] scientist: Begin xenobiology research
         [Turn End] Turn 2 completed
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(mock_log_content)
             temp_log_path = f.name
 
@@ -207,7 +208,7 @@ class TestStoryContentQuality:
         [Turn Begin] Starting simulation in deep space research facility
         [Action] pilot: Navigating through asteroid field to reach station
         [Turn End] Turn 1 completed successfully
-        
+
         Turn 2 - 2024-01-01 12:05:00
         [Agent Registration] scientist registered as Dr. Maya Patel - Research Institute
         [Action] scientist: Analyzing alien artifact discovered on asteroid
@@ -215,7 +216,9 @@ class TestStoryContentQuality:
         [Turn End] Turn 2 completed with significant discoveries
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(log_content)
             yield f.name
         os.unlink(f.name)
@@ -294,7 +297,9 @@ class TestStoryContentQuality:
             "endless",
             "eternal",
         ]
-        has_drama = any(indicator in story_lower for indicator in dramatic_indicators)
+        has_drama = any(
+            indicator in story_lower for indicator in dramatic_indicators
+        )
         assert has_drama, "Story should maintain dramatic tone"
 
     def test_story_readability(self, sample_campaign_log):
@@ -355,7 +360,9 @@ class TestDebrandingValidation:
             [Turn End] Scenario completed
             """
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".md", delete=False
+            ) as f:
                 f.write(mock_log)
                 temp_path = f.name
 
@@ -385,7 +392,9 @@ class TestDebrandingValidation:
         [Turn End] Operation completed
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(mock_log)
             temp_path = f.name
 
@@ -394,7 +403,13 @@ class TestDebrandingValidation:
             story_lower = story.lower()
 
             # Should use generic terms
-            generic_terms = ["galactic", "defense", "alliance", "forces", "corps"]
+            generic_terms = [
+                "galactic",
+                "defense",
+                "alliance",
+                "forces",
+                "corps",
+            ]
             has_generic = any(term in story_lower for term in generic_terms)
             assert has_generic, "Story should use generic faction terminology"
 
@@ -413,7 +428,9 @@ class TestDebrandingValidation:
         [Turn End] Mission parameters achieved
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(mock_log)
             temp_path = f.name
 
@@ -433,13 +450,19 @@ class TestDebrandingValidation:
                 "stars",
             ]
 
-            has_sci_fi_themes = any(theme in story_lower for theme in sci_fi_themes)
-            assert has_sci_fi_themes, "Story should contain generic sci-fi themes"
+            has_sci_fi_themes = any(
+                theme in story_lower for theme in sci_fi_themes
+            )
+            assert (
+                has_sci_fi_themes
+            ), "Story should contain generic sci-fi themes"
 
             # Should not contain old branded themes
             old_themes = ["grim darkness", "far future", "41st millennium"]
             has_old_themes = any(theme in story_lower for theme in old_themes)
-            assert not has_old_themes, "Story should not contain old branded themes"
+            assert (
+                not has_old_themes
+            ), "Story should not contain old branded themes"
 
         finally:
             os.unlink(temp_path)
@@ -460,7 +483,9 @@ class TestNarrativeStyleAndTone:
         [Turn End] Dramatic conclusion
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(mock_log)
             temp_path = f.name
 
@@ -481,8 +506,12 @@ class TestNarrativeStyleAndTone:
                 "echo",
             ]
 
-            has_dramatic = any(element in story_lower for element in dramatic_elements)
-            assert has_dramatic, "sci_fi_dramatic style should have dramatic elements"
+            has_dramatic = any(
+                element in story_lower for element in dramatic_elements
+            )
+            assert (
+                has_dramatic
+            ), "sci_fi_dramatic style should have dramatic elements"
 
         finally:
             os.unlink(temp_path)
@@ -499,7 +528,9 @@ class TestNarrativeStyleAndTone:
         [Turn End] Mission parameters achieved
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(mock_log)
             temp_path = f.name
 
@@ -510,7 +541,9 @@ class TestNarrativeStyleAndTone:
             # Tactical style should be more focused and practical
 
             # Should have some tactical elements or maintain professional tone
-            assert len(story) > 50, "Tactical style should produce substantive content"
+            assert (
+                len(story) > 50
+            ), "Tactical style should produce substantive content"
 
         finally:
             os.unlink(temp_path)
@@ -526,7 +559,9 @@ class TestNarrativeStyleAndTone:
         [Turn End] Profound implications realized
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(mock_log)
             temp_path = f.name
 
@@ -553,7 +588,7 @@ class TestCharacterIntegration:
         mock_log = """
         Turn 1 - 2024-01-01 12:00:00
         [Agent Registration] pilot registered as Alex Chen
-        [Agent Registration] scientist registered as Dr. Maya Patel  
+        [Agent Registration] scientist registered as Dr. Maya Patel
         [Agent Registration] engineer registered as Jordan Kim
         [Action] pilot: Navigation procedures
         [Action] scientist: Research protocols
@@ -561,7 +596,9 @@ class TestCharacterIntegration:
         [Turn End] Collaborative effort completed
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(mock_log)
             temp_path = f.name
 
@@ -605,7 +642,9 @@ class TestCharacterIntegration:
         [Turn End] Inter-faction collaboration successful
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(mock_log)
             temp_path = f.name
 
@@ -624,7 +663,9 @@ class TestCharacterIntegration:
                 "alliance",
             ]
 
-            has_factions = any(element in story_lower for element in faction_elements)
+            has_factions = any(
+                element in story_lower for element in faction_elements
+            )
             assert has_factions, "Story should integrate character factions"
 
         finally:
@@ -647,7 +688,9 @@ class TestTemplateAndPatternSystems:
             [Turn End] Sequence {i+1} completed
             """
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".md", delete=False
+            ) as f:
                 f.write(mock_log)
                 temp_path = f.name
 
@@ -674,7 +717,9 @@ class TestTemplateAndPatternSystems:
         [Turn End] Chapter opening completed
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(mock_log)
             temp_path = f.name
 
@@ -722,14 +767,16 @@ class TestPerformanceAndScalability:
         [Action] pilot: Multiple actions
         [Action] scientist: Detailed analysis
         [Turn End] Turn completed
-        
+
         Turn 2 - 2024-01-01 12:05:00
         [Action] pilot: Follow-up actions
         [Action] scientist: Continued research
         [Turn End] Second turn completed
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(mock_log)
             temp_path = f.name
 
@@ -767,7 +814,9 @@ class TestPerformanceAndScalability:
 
         large_log = "\n".join(large_log_parts)
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(large_log)
             temp_path = f.name
 
@@ -775,7 +824,9 @@ class TestPerformanceAndScalability:
             story = chronicler.transcribe_log(temp_path)
 
             # Should handle large logs without crashes
-            assert len(story) > 500, "Large log should generate substantial story"
+            assert (
+                len(story) > 500
+            ), "Large log should generate substantial story"
             assert len(story) < 20000, "Story should not be excessively long"
 
         finally:
@@ -789,7 +840,9 @@ class TestErrorHandlingAndEdgeCases:
         """Test handling of empty campaign logs"""
         chronicler = ChroniclerAgent()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write("")  # Empty log
             temp_path = f.name
 
@@ -798,7 +851,9 @@ class TestErrorHandlingAndEdgeCases:
 
             # Should handle empty logs gracefully
             assert isinstance(story, str)
-            assert len(story) > 0, "Should generate default content for empty logs"
+            assert (
+                len(story) > 0
+            ), "Should generate default content for empty logs"
 
         finally:
             os.unlink(temp_path)
@@ -814,7 +869,9 @@ class TestErrorHandlingAndEdgeCases:
         No timestamp or proper format
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(malformed_log)
             temp_path = f.name
 
@@ -847,7 +904,9 @@ class TestErrorHandlingAndEdgeCases:
         [Turn End] Mixed content
         """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(corrupted_log)
             temp_path = f.name
 
@@ -891,7 +950,11 @@ def sample_events():
 
 
 # Test markers
-pytestmark = [pytest.mark.story, pytest.mark.narrative, pytest.mark.integration]
+pytestmark = [
+    pytest.mark.story,
+    pytest.mark.narrative,
+    pytest.mark.integration,
+]
 
 
 if __name__ == "__main__":

@@ -24,7 +24,11 @@ from ..core.types import (
 
 # Import enhanced core systems
 try:
-    from src.core.data_models import CharacterState, ErrorInfo, StandardResponse
+    from src.core.data_models import (
+        CharacterState,
+        ErrorInfo,
+        StandardResponse,
+    )
     from src.core.types import AgentID
 except ImportError:
     # Fallback for testing
@@ -102,7 +106,9 @@ class QueueManager:
     """
 
     def __init__(
-        self, config: InteractionEngineConfig, logger: Optional[logging.Logger] = None
+        self,
+        config: InteractionEngineConfig,
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize queue manager.
@@ -225,7 +231,9 @@ class QueueManager:
                     "interaction_id": context.interaction_id,
                     "priority_score": priority_score,
                     "queue_position": self.interaction_queue.qsize(),
-                    "estimated_wait_time": self._estimate_wait_time(priority_score),
+                    "estimated_wait_time": self._estimate_wait_time(
+                        priority_score
+                    ),
                 },
                 metadata={"blessing": "interaction_queued"},
             )
@@ -317,7 +325,9 @@ class QueueManager:
                 ),
             )
 
-    async def cancel_interaction(self, interaction_id: str) -> StandardResponse:
+    async def cancel_interaction(
+        self, interaction_id: str
+    ) -> StandardResponse:
         """
         Cancel a queued or processing interaction.
 
@@ -334,7 +344,9 @@ class QueueManager:
                 interaction.status = QueueStatus.CANCELLED
                 self.processing_interactions.pop(interaction_id)
 
-                self.logger.info(f"Processing interaction cancelled: {interaction_id}")
+                self.logger.info(
+                    f"Processing interaction cancelled: {interaction_id}"
+                )
                 return StandardResponse(
                     success=True,
                     data={"status": "cancelled_processing"},
@@ -379,7 +391,9 @@ class QueueManager:
             **self.queue_stats,
         }
 
-    def get_interaction_status(self, interaction_id: str) -> Optional[Dict[str, Any]]:
+    def get_interaction_status(
+        self, interaction_id: str
+    ) -> Optional[Dict[str, Any]]:
         """
         Get status of specific interaction.
 
@@ -444,7 +458,9 @@ class QueueManager:
                 except Exception:
                     break
 
-            self.logger.info(f"Queue cleared: {cleared_count} interactions removed")
+            self.logger.info(
+                f"Queue cleared: {cleared_count} interactions removed"
+            )
 
             return StandardResponse(
                 success=True,
@@ -480,7 +496,9 @@ class QueueManager:
 
                     # Get next interaction from queue
                     try:
-                        queued_interaction = self.interaction_queue.get_nowait()
+                        queued_interaction = (
+                            self.interaction_queue.get_nowait()
+                        )
                     except Exception:
                         # Queue empty, wait and continue
                         await asyncio.sleep(0.5)
@@ -504,7 +522,9 @@ class QueueManager:
         except Exception as e:
             self.logger.error(f"Queue processing loop failed: {e}")
 
-    async def _process_queued_interaction(self, queued_interaction: QueuedInteraction):
+    async def _process_queued_interaction(
+        self, queued_interaction: QueuedInteraction
+    ):
         """
         Process a single queued interaction.
         """
@@ -527,7 +547,8 @@ class QueueManager:
                 except Exception as e:
                     self.logger.warning(f"Processing callback failed: {e}")
 
-            # Simulate processing (in real implementation, would call interaction processor)
+            # Simulate processing (in real implementation, would call
+            # interaction processor)
             await asyncio.sleep(0.1)  # Simulate processing time
             processing_success = True  # Simulate success
 
@@ -549,7 +570,10 @@ class QueueManager:
                         self.logger.warning(f"Completion callback failed: {e}")
             else:
                 # Handle failure
-                if queued_interaction.attempts < queued_interaction.max_attempts:
+                if (
+                    queued_interaction.attempts
+                    < queued_interaction.max_attempts
+                ):
                     # Retry
                     queued_interaction.status = QueueStatus.QUEUED
                     self.interaction_queue.put_nowait(queued_interaction)
@@ -580,9 +604,9 @@ class QueueManager:
         except Exception as e:
             self.logger.error(f"Failed to process queued interaction: {e}")
             queued_interaction.status = QueueStatus.FAILED
-            self.failed_interactions[queued_interaction.context.interaction_id] = (
-                queued_interaction
-            )
+            self.failed_interactions[
+                queued_interaction.context.interaction_id
+            ] = queued_interaction
             self.queue_stats["total_failed"] += 1
 
         finally:
@@ -621,7 +645,9 @@ class QueueManager:
                 self.failed_interactions.pop(interaction_id, None)
 
             if to_remove:
-                self.logger.info(f"Cleaned up {len(to_remove)} old interactions")
+                self.logger.info(
+                    f"Cleaned up {len(to_remove)} old interactions"
+                )
 
         except Exception as e:
             self.logger.error(f"Cleanup failed: {e}")
@@ -647,7 +673,9 @@ class QueueManager:
         base_score += len(context.participants) * 10
 
         # Add time decay for older interactions
-        age_bonus = min(100, (datetime.now() - datetime.now()).total_seconds() * 0.1)
+        age_bonus = min(
+            100, (datetime.now() - datetime.now()).total_seconds() * 0.1
+        )
         base_score += age_bonus
 
         return base_score
@@ -659,12 +687,16 @@ class QueueManager:
         # Simple estimation based on queue position and processing capacity
         queue_size = self.interaction_queue.qsize()
         processing_capacity = self.max_concurrent
-        average_processing_time = max(1.0, self.queue_stats["average_processing_time"])
+        average_processing_time = max(
+            1.0, self.queue_stats["average_processing_time"]
+        )
 
         # Estimate position in queue based on priority
         estimated_position = queue_size * 0.5  # Simplified estimation
 
-        return (estimated_position / processing_capacity) * average_processing_time
+        return (
+            estimated_position / processing_capacity
+        ) * average_processing_time
 
     def _update_queue_time_stats(self, queue_time: float):
         """

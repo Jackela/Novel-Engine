@@ -18,13 +18,14 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-# Import AI testing contracts
-
 # Import Novel-Engine patterns
 from PIL import Image, ImageFilter, ImageStat
 from pydantic import BaseModel, Field
 
 from src.event_bus import EventBus
+
+# Import AI testing contracts
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -75,7 +76,9 @@ class ModalityContent:
     encoding: Optional[str] = None
 
     def __post_init__(self):
-        if self.modality == ModalityType.TEXT and not isinstance(self.content, str):
+        if self.modality == ModalityType.TEXT and not isinstance(
+            self.content, str
+        ):
             raise ValueError("Text modality requires string content")
 
 
@@ -93,7 +96,9 @@ class MultiModalAssessmentRequest(BaseModel):
     # Assessment configuration
     primary_modality: ModalityType = ModalityType.TEXT
     cross_modal_assessment: bool = True
-    visual_quality_metrics: List[VisualQualityMetric] = Field(default_factory=list)
+    visual_quality_metrics: List[VisualQualityMetric] = Field(
+        default_factory=list
+    )
     cross_modal_metrics: List[CrossModalMetric] = Field(default_factory=list)
 
     # Context and criteria
@@ -127,7 +132,9 @@ class MultiModalAssessmentResult(BaseModel):
     )
 
     # Cross-modal analysis
-    cross_modal_scores: Dict[CrossModalMetric, float] = Field(default_factory=dict)
+    cross_modal_scores: Dict[CrossModalMetric, float] = Field(
+        default_factory=dict
+    )
     cross_modal_analysis: str = ""
 
     # Comprehensive analysis
@@ -182,7 +189,9 @@ class VisualQualityAssessor:
             aesthetic_scores = await self._assess_aesthetic_quality(
                 image, quality_metrics
             )
-            content_scores = await self._assess_content_accuracy(image, context or {})
+            content_scores = await self._assess_content_accuracy(
+                image, context or {}
+            )
 
             # Combine all scores
             all_scores = {**aesthetic_scores, **content_scores}
@@ -223,7 +232,9 @@ class VisualQualityAssessor:
                 recommendations=["Check image format and accessibility"],
             )
 
-    async def _load_image(self, image_content: Union[str, bytes, Path]) -> Image.Image:
+    async def _load_image(
+        self, image_content: Union[str, bytes, Path]
+    ) -> Image.Image:
         """Load image from various content types"""
 
         if isinstance(image_content, Path):
@@ -234,7 +245,9 @@ class VisualQualityAssessor:
                 # Extract base64 content
                 header, data = image_content.split(",", 1)
                 image_bytes = base64.b64decode(data)
-            elif len(image_content) > 1000 and not Path(image_content).exists():
+            elif (
+                len(image_content) > 1000 and not Path(image_content).exists()
+            ):
                 # Assume base64
                 image_bytes = base64.b64decode(image_content)
             else:
@@ -252,9 +265,13 @@ class VisualQualityAssessor:
             return Image.open(temp_path)
 
         else:
-            raise ValueError(f"Unsupported image content type: {type(image_content)}")
+            raise ValueError(
+                f"Unsupported image content type: {type(image_content)}"
+            )
 
-    async def _assess_technical_quality(self, image: Image.Image) -> Dict[str, float]:
+    async def _assess_technical_quality(
+        self, image: Image.Image
+    ) -> Dict[str, float]:
         """Assess technical quality metrics"""
 
         try:
@@ -297,7 +314,9 @@ class VisualQualityAssessor:
 
             # Color richness (unique colors as percentage)
             unique_colors = (
-                len(set(image.getdata())) if image.mode in ["RGB", "RGBA"] else 0
+                len(set(image.getdata()))
+                if image.mode in ["RGB", "RGBA"]
+                else 0
             )
             max_possible_colors = 256**color_channels
             color_richness = min(unique_colors / max_possible_colors, 1.0)
@@ -341,7 +360,9 @@ class VisualQualityAssessor:
             scores["clarity"] = await self._assess_clarity(image)
 
         if VisualQualityMetric.AESTHETIC_APPEAL in quality_metrics:
-            scores["aesthetic_appeal"] = await self._assess_aesthetic_appeal(image)
+            scores["aesthetic_appeal"] = await self._assess_aesthetic_appeal(
+                image
+            )
 
         return scores
 
@@ -379,7 +400,9 @@ class VisualQualityAssessor:
                 height // 4 : 3 * height // 4, width // 4 : 3 * width // 4
             ]
             edge_regions = edge_array.copy()
-            edge_regions[height // 4 : 3 * height // 4, width // 4 : 3 * width // 4] = 0
+            edge_regions[
+                height // 4 : 3 * height // 4, width // 4 : 3 * width // 4
+            ] = 0
 
             center_density = np.mean(center_region) / 255.0
             edge_density = np.mean(edge_regions) / 255.0
@@ -410,7 +433,9 @@ class VisualQualityAssessor:
             ]
 
             # Calculate color diversity
-            unique_colors = len(np.unique(sampled_pixels.view(np.void), axis=0))
+            unique_colors = len(
+                np.unique(sampled_pixels.view(np.void), axis=0)
+            )
             color_diversity = min(unique_colors / sample_size, 1.0)
 
             # Calculate color temperature consistency
@@ -454,7 +479,9 @@ class VisualQualityAssessor:
             # Check for noise (high frequency content that doesn't contribute to clarity)
             # Apply Gaussian blur and compare
             blurred = image.filter(ImageFilter.GaussianBlur(radius=1))
-            diff = np.abs(np.array(image.convert("L")) - np.array(blurred.convert("L")))
+            diff = np.abs(
+                np.array(image.convert("L")) - np.array(blurred.convert("L"))
+            )
             noise_level = np.mean(diff) / 255.0
 
             # Reduce clarity score based on noise
@@ -582,7 +609,9 @@ class VisualQualityAssessor:
         return " | ".join(analysis_parts)
 
     def _analyze_visual_strengths_weaknesses(
-        self, quality_scores: Dict[str, float], technical_metrics: Dict[str, float]
+        self,
+        quality_scores: Dict[str, float],
+        technical_metrics: Dict[str, float],
     ) -> Tuple[List[str], List[str]]:
         """Analyze visual strengths and weaknesses"""
 
@@ -612,7 +641,9 @@ class VisualQualityAssessor:
         return strengths, weaknesses
 
     def _generate_visual_recommendations(
-        self, quality_scores: Dict[str, float], technical_metrics: Dict[str, float]
+        self,
+        quality_scores: Dict[str, float],
+        technical_metrics: Dict[str, float],
     ) -> List[str]:
         """Generate visual quality recommendations"""
 
@@ -621,7 +652,9 @@ class VisualQualityAssessor:
         # Technical recommendations
         resolution = technical_metrics.get("resolution_score", 0)
         if resolution < 0.6:
-            recommendations.append("Increase image resolution for better quality")
+            recommendations.append(
+                "Increase image resolution for better quality"
+            )
 
         sharpness = technical_metrics.get("sharpness", 0)
         if sharpness < 0.5:
@@ -629,14 +662,24 @@ class VisualQualityAssessor:
 
         contrast = technical_metrics.get("contrast", 0)
         if contrast < 0.3:
-            recommendations.append("Increase contrast for better visual impact")
+            recommendations.append(
+                "Increase contrast for better visual impact"
+            )
 
         # Aesthetic recommendations
-        if "composition" in quality_scores and quality_scores["composition"] < 0.6:
+        if (
+            "composition" in quality_scores
+            and quality_scores["composition"] < 0.6
+        ):
             recommendations.append("Improve composition using rule of thirds")
 
-        if "color_harmony" in quality_scores and quality_scores["color_harmony"] < 0.6:
-            recommendations.append("Enhance color harmony and palette consistency")
+        if (
+            "color_harmony" in quality_scores
+            and quality_scores["color_harmony"] < 0.6
+        ):
+            recommendations.append(
+                "Enhance color harmony and palette consistency"
+            )
 
         # Overall recommendations
         all_scores = list(quality_scores.values())
@@ -688,32 +731,35 @@ class CrossModalAssessmentEngine:
 
         if CrossModalMetric.TEXT_IMAGE_ALIGNMENT in cross_modal_metrics:
             if text_content and image_content:
-                scores[CrossModalMetric.TEXT_IMAGE_ALIGNMENT] = (
-                    await self._assess_text_image_alignment(
-                        text_content, image_content, context
-                    )
+                scores[
+                    CrossModalMetric.TEXT_IMAGE_ALIGNMENT
+                ] = await self._assess_text_image_alignment(
+                    text_content, image_content, context
                 )
 
-        if CrossModalMetric.NARRATIVE_VISUAL_CONSISTENCY in cross_modal_metrics:
+        if (
+            CrossModalMetric.NARRATIVE_VISUAL_CONSISTENCY
+            in cross_modal_metrics
+        ):
             if text_content and image_content:
-                scores[CrossModalMetric.NARRATIVE_VISUAL_CONSISTENCY] = (
-                    await self._assess_narrative_visual_consistency(
-                        text_content, image_content, context
-                    )
+                scores[
+                    CrossModalMetric.NARRATIVE_VISUAL_CONSISTENCY
+                ] = await self._assess_narrative_visual_consistency(
+                    text_content, image_content, context
                 )
 
         if CrossModalMetric.MULTIMODAL_COHERENCE in cross_modal_metrics:
-            scores[CrossModalMetric.MULTIMODAL_COHERENCE] = (
-                await self._assess_multimodal_coherence(
-                    text_content, image_content, context
-                )
+            scores[
+                CrossModalMetric.MULTIMODAL_COHERENCE
+            ] = await self._assess_multimodal_coherence(
+                text_content, image_content, context
             )
 
         if CrossModalMetric.ACCESSIBILITY_COMPLIANCE in cross_modal_metrics:
-            scores[CrossModalMetric.ACCESSIBILITY_COMPLIANCE] = (
-                await self._assess_accessibility_compliance(
-                    text_content, image_content, context
-                )
+            scores[
+                CrossModalMetric.ACCESSIBILITY_COMPLIANCE
+            ] = await self._assess_accessibility_compliance(
+                text_content, image_content, context
             )
 
         return scores
@@ -731,7 +777,9 @@ class CrossModalAssessmentEngine:
             text_keywords = self._extract_keywords(text_content)
 
             # Extract visual concepts (would use image captioning/tagging)
-            visual_concepts = await self._extract_visual_concepts(image_content)
+            visual_concepts = await self._extract_visual_concepts(
+                image_content
+            )
 
             # Calculate semantic overlap
             if not text_keywords or not visual_concepts:
@@ -774,7 +822,9 @@ class CrossModalAssessmentEngine:
             return tone_mood_alignment
 
         except Exception as e:
-            logger.warning(f"Narrative-visual consistency assessment failed: {e}")
+            logger.warning(
+                f"Narrative-visual consistency assessment failed: {e}"
+            )
             return 0.5
 
     async def _assess_multimodal_coherence(
@@ -809,7 +859,11 @@ class CrossModalAssessmentEngine:
                 )
                 coherence_factors.append(style_consistency)
 
-            return statistics.mean(coherence_factors) if coherence_factors else 0.5
+            return (
+                statistics.mean(coherence_factors)
+                if coherence_factors
+                else 0.5
+            )
 
         except Exception as e:
             logger.warning(f"Multimodal coherence assessment failed: {e}")
@@ -828,7 +882,9 @@ class CrossModalAssessmentEngine:
 
             # Text accessibility
             if text_content:
-                text_accessibility = self._assess_text_accessibility(text_content)
+                text_accessibility = self._assess_text_accessibility(
+                    text_content
+                )
                 accessibility_scores.append(text_accessibility)
 
             # Visual accessibility
@@ -843,7 +899,9 @@ class CrossModalAssessmentEngine:
             accessibility_scores.append(alt_text_score)
 
             return (
-                statistics.mean(accessibility_scores) if accessibility_scores else 0.0
+                statistics.mean(accessibility_scores)
+                if accessibility_scores
+                else 0.0
             )
 
         except Exception as e:
@@ -902,11 +960,23 @@ class CrossModalAssessmentEngine:
             "amazing",
             "good",
         ]
-        negative_words = ["sad", "angry", "dark", "evil", "terrible", "bad", "fear"]
+        negative_words = [
+            "sad",
+            "angry",
+            "dark",
+            "evil",
+            "terrible",
+            "bad",
+            "fear",
+        ]
 
         text_lower = text.lower()
-        positive_count = sum(1 for word in positive_words if word in text_lower)
-        negative_count = sum(1 for word in negative_words if word in text_lower)
+        positive_count = sum(
+            1 for word in positive_words if word in text_lower
+        )
+        negative_count = sum(
+            1 for word in negative_words if word in text_lower
+        )
 
         if positive_count > negative_count:
             return "positive"
@@ -940,17 +1010,23 @@ class CrossModalAssessmentEngine:
 
         return alignment_map.get((narrative_tone, visual_mood), 0.5)
 
-    def _assess_temporal_coherence(self, sequence_data: List[Dict[str, Any]]) -> float:
+    def _assess_temporal_coherence(
+        self, sequence_data: List[Dict[str, Any]]
+    ) -> float:
         """Assess coherence across temporal sequence"""
         # Would analyze consistency across time sequence
         return 0.8  # Mock score
 
-    def _assess_contextual_coherence(self, text: str, context: Dict[str, Any]) -> float:
+    def _assess_contextual_coherence(
+        self, text: str, context: Dict[str, Any]
+    ) -> float:
         """Assess coherence with provided context"""
         # Would check consistency with context requirements
         return 0.75  # Mock score
 
-    async def _assess_style_consistency(self, text: str, image_content: str) -> float:
+    async def _assess_style_consistency(
+        self, text: str, image_content: str
+    ) -> float:
         """Assess style consistency between text and image"""
         # Would analyze style elements across modalities
         return 0.7  # Mock score
@@ -988,7 +1064,9 @@ class CrossModalAssessmentEngine:
             # Contrast check (simplified)
             if stat.stddev:
                 contrast = stat.stddev[0] / 255.0
-                contrast_score = min(contrast * 2, 1.0)  # Prefer higher contrast
+                contrast_score = min(
+                    contrast * 2, 1.0
+                )  # Prefer higher contrast
             else:
                 contrast_score = 0.5
 
@@ -1044,7 +1122,9 @@ class MultiModalAssessmentFramework:
         start_time = time.time()
 
         try:
-            logger.info(f"Starting multi-modal assessment: {request.assessment_id}")
+            logger.info(
+                f"Starting multi-modal assessment: {request.assessment_id}"
+            )
 
             # Assess individual modalities
             modality_results = {}
@@ -1087,13 +1167,17 @@ class MultiModalAssessmentFramework:
             all_scores.extend(cross_modal_scores.values())
 
             overall_score = statistics.mean(all_scores) if all_scores else 0.0
-            overall_confidence = 0.85  # Would calculate based on assessment reliability
+            overall_confidence = (
+                0.85  # Would calculate based on assessment reliability
+            )
 
             # Generate comprehensive analysis
-            strengths, weaknesses, recommendations = (
-                self._generate_comprehensive_analysis(
-                    modality_results, cross_modal_scores
-                )
+            (
+                strengths,
+                weaknesses,
+                recommendations,
+            ) = self._generate_comprehensive_analysis(
+                modality_results, cross_modal_scores
             )
 
             # Calculate specific scores
@@ -1154,8 +1238,12 @@ class MultiModalAssessmentFramework:
 
         # Collect from individual modalities
         for modality, result in modality_results.items():
-            strengths.extend([f"{modality.value}: {s}" for s in result.strengths])
-            weaknesses.extend([f"{modality.value}: {w}" for w in result.weaknesses])
+            strengths.extend(
+                [f"{modality.value}: {s}" for s in result.strengths]
+            )
+            weaknesses.extend(
+                [f"{modality.value}: {w}" for w in result.weaknesses]
+            )
             recommendations.extend(result.recommendations)
 
         # Cross-modal analysis
@@ -1174,7 +1262,11 @@ class MultiModalAssessmentFramework:
                 )
 
         # Remove duplicates
-        return list(set(strengths)), list(set(weaknesses)), list(set(recommendations))
+        return (
+            list(set(strengths)),
+            list(set(weaknesses)),
+            list(set(recommendations)),
+        )
 
     def _generate_cross_modal_analysis(
         self, cross_modal_scores: Dict[CrossModalMetric, float]
@@ -1190,16 +1282,26 @@ class MultiModalAssessmentFramework:
             quality_level = (
                 "excellent"
                 if score >= 0.8
-                else "good" if score >= 0.6 else "needs improvement"
+                else "good"
+                if score >= 0.6
+                else "needs improvement"
             )
-            analysis_parts.append(f"{metric.value}: {quality_level} ({score:.2f})")
+            analysis_parts.append(
+                f"{metric.value}: {quality_level} ({score:.2f})"
+            )
 
         avg_score = statistics.mean(cross_modal_scores.values())
         overall_assessment = (
-            "strong" if avg_score >= 0.7 else "moderate" if avg_score >= 0.5 else "weak"
+            "strong"
+            if avg_score >= 0.7
+            else "moderate"
+            if avg_score >= 0.5
+            else "weak"
         )
 
-        analysis_parts.append(f"Overall cross-modal quality: {overall_assessment}")
+        analysis_parts.append(
+            f"Overall cross-modal quality: {overall_assessment}"
+        )
 
         return " | ".join(analysis_parts)
 

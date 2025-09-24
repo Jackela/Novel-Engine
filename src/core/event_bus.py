@@ -15,16 +15,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import (
-    Any,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    Protocol,
-    Set,
-    TypeVar,
-)
+from typing import Any, Dict, Generic, List, Optional, Protocol, Set, TypeVar
 
 from .error_handler import CentralizedErrorHandler, ErrorContext
 
@@ -172,7 +163,9 @@ class EventStore:
                 if event_id in self._event_index
             ]
 
-    def get_events_by_type(self, event_type: str, limit: int = 100) -> List[Event]:
+    def get_events_by_type(
+        self, event_type: str, limit: int = 100
+    ) -> List[Event]:
         """Get recent events by type."""
         with self._lock:
             matching_events = []
@@ -212,7 +205,9 @@ class EventBus:
         self.error_handler = error_handler
 
         # Handler registry
-        self._handlers: Dict[str, List[HandlerRegistration]] = defaultdict(list)
+        self._handlers: Dict[str, List[HandlerRegistration]] = defaultdict(
+            list
+        )
         self._global_handlers: List[HandlerRegistration] = []
 
         # Event processing
@@ -288,7 +283,9 @@ class EventBus:
             self._handlers[event_type].append(registration)
 
             # Sort by priority (higher priority first)
-            self._handlers[event_type].sort(key=lambda x: x.priority, reverse=True)
+            self._handlers[event_type].sort(
+                key=lambda x: x.priority, reverse=True
+            )
 
             logger.debug(f"Handler subscribed to {event_type}")
 
@@ -318,10 +315,14 @@ class EventBus:
             if event_type in self._handlers:
                 original_count = len(self._handlers[event_type])
                 self._handlers[event_type] = [
-                    reg for reg in self._handlers[event_type] if reg.handler != handler
+                    reg
+                    for reg in self._handlers[event_type]
+                    if reg.handler != handler
                 ]
                 removed = original_count - len(self._handlers[event_type])
-                logger.debug(f"Unsubscribed {removed} handlers from {event_type}")
+                logger.debug(
+                    f"Unsubscribed {removed} handlers from {event_type}"
+                )
                 return removed > 0
 
             return False
@@ -362,12 +363,14 @@ class EventBus:
             )
 
             logger.debug(
-                f"Event published: {event.event_type} ({event.metadata.event_id})"
+                f"Event published: {event.event_type}({event.metadata.event_id})"
             )
             return result
 
         except Exception as e:
-            logger.error(f"Failed to publish event {event.metadata.event_id}: {e}")
+            logger.error(
+                f"Failed to publish event {event.metadata.event_id}: {e}"
+            )
 
             if self.error_handler:
                 error_context = ErrorContext(
@@ -464,7 +467,9 @@ class EventBus:
             # Execute handlers concurrently
             handler_tasks = []
             for registration in handlers:
-                task = asyncio.create_task(self._execute_handler(event, registration))
+                task = asyncio.create_task(
+                    self._execute_handler(event, registration)
+                )
                 handler_tasks.append(task)
 
             # Wait for all handlers to complete
@@ -513,7 +518,9 @@ class EventBus:
             if metrics["count"] == 1:
                 metrics["success_rate"] = 1.0 if failed_handlers == 0 else 0.0
             else:
-                current_successes = metrics["success_rate"] * (metrics["count"] - 1)
+                current_successes = metrics["success_rate"] * (
+                    metrics["count"] - 1
+                )
                 if failed_handlers == 0:
                     current_successes += 1
                 metrics["success_rate"] = current_successes / metrics["count"]
@@ -546,7 +553,9 @@ class EventBus:
                 }
             )
 
-    def _get_applicable_handlers(self, event: Event) -> List[HandlerRegistration]:
+    def _get_applicable_handlers(
+        self, event: Event
+    ) -> List[HandlerRegistration]:
         """Get all handlers that should process this event."""
         applicable_handlers = []
 
@@ -600,9 +609,7 @@ class EventBus:
         self, event: Event, registration: HandlerRegistration
     ) -> bool:
         """Execute a single handler with error handling and circuit breaker."""
-        handler_id = (
-            f"{registration.handler.__class__.__name__}_{registration.event_type}"
-        )
+        handler_id = f"{registration.handler.__class__.__name__}_{registration.event_type}"
 
         # Check circuit breaker
         if self._is_circuit_open(handler_id):
@@ -612,7 +619,8 @@ class EventBus:
         try:
             # Execute handler with timeout
             result = await asyncio.wait_for(
-                registration.handler.handle(event), timeout=registration.timeout_seconds
+                registration.handler.handle(event),
+                timeout=registration.timeout_seconds,
             )
 
             # Reset circuit breaker on success
@@ -652,7 +660,9 @@ class EventBus:
 
         # Check if circuit is open and timeout has passed
         if cb["state"] == "open":
-            if datetime.now() - cb["opened_at"] > timedelta(seconds=cb["timeout"]):
+            if datetime.now() - cb["opened_at"] > timedelta(
+                seconds=cb["timeout"]
+            ):
                 cb["state"] = "half_open"
                 cb["failure_count"] = 0
                 return False
@@ -692,10 +702,15 @@ class EventBus:
         return {
             "processing_stats": self._processing_stats.copy(),
             "event_metrics": dict(self._event_metrics),
-            "handler_count": sum(len(handlers) for handlers in self._handlers.values()),
+            "handler_count": sum(
+                len(handlers) for handlers in self._handlers.values()
+            ),
             "global_handler_count": len(self._global_handlers),
             "circuit_breakers": {
-                handler_id: {"state": cb["state"], "failure_count": cb["failure_count"]}
+                handler_id: {
+                    "state": cb["state"],
+                    "failure_count": cb["failure_count"],
+                }
                 for handler_id, cb in self._circuit_breakers.items()
             },
             "dead_letter_queue_size": len(self._dead_letter_queue),
@@ -793,7 +808,9 @@ async def publish_event(
 ) -> EventProcessingResult:
     """Convenience function to publish event."""
     event_metadata = EventMetadata(**metadata)
-    event = Event(event_type=event_type, payload=payload, metadata=event_metadata)
+    event = Event(
+        event_type=event_type, payload=payload, metadata=event_metadata
+    )
     return await get_event_bus().publish(event)
 
 

@@ -25,7 +25,9 @@ class DocumentationGenerator:
     def __init__(self, app: FastAPI):
         self.app = app
 
-    def generate_openapi_schema(self, version: str = "1.1.0") -> Dict[str, Any]:
+    def generate_openapi_schema(
+        self, version: str = "1.1.0"
+    ) -> Dict[str, Any]:
         """Generate enhanced OpenAPI schema with comprehensive documentation."""
 
         if self.app.openapi_schema:
@@ -50,8 +52,8 @@ class DocumentationGenerator:
         return """
 # Novel Engine API
 
-The Novel Engine API provides comprehensive endpoints for character management, 
-story generation, and interactive narrative experiences. This RESTful API enables 
+The Novel Engine API provides comprehensive endpoints for character management,
+story generation, and interactive narrative experiences. This RESTful API enables
 developers to integrate advanced AI-driven storytelling capabilities into their applications.
 
 ## Key Features
@@ -151,13 +153,21 @@ Official SDKs are available for:
             },
         ]
 
-    def _enhance_openapi_schema(self, schema: Dict[str, Any]) -> Dict[str, Any]:
+    def _enhance_openapi_schema(
+        self, schema: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Enhance OpenAPI schema with additional information."""
 
         # Add servers information
         schema["servers"] = [
-            {"url": "http://localhost:8000", "description": "Development server"},
-            {"url": "https://api.novel-engine.app", "description": "Production server"},
+            {
+                "url": "http://localhost:8000",
+                "description": "Development server",
+            },
+            {
+                "url": "https://api.novel-engine.app",
+                "description": "Production server",
+            },
         ]
 
         # Add contact and license information
@@ -398,7 +408,7 @@ def _generate_integration_guide() -> str:
         <div class="section" id="quick-start">
             <h2>Quick Start</h2>
             <p>Get started with the Novel Engine API in minutes:</p>
-            
+
             <h3>1. Check System Health</h3>
             <div class="endpoint">
                 <span class="method get">GET</span> <code>/health</code>
@@ -444,7 +454,7 @@ curl -X POST "http://localhost:8000/api/v1/stories/generate" \\
         <div class="section" id="authentication">
             <h2>Authentication</h2>
             <p>The Novel Engine API supports multiple authentication methods:</p>
-            
+
             <h3>API Key Authentication</h3>
             <div class="code-block">
 curl -X GET "http://localhost:8000/api/v1/characters" \\
@@ -460,22 +470,22 @@ curl -X GET "http://localhost:8000/api/v1/characters" \\
 
         <div class="section" id="characters">
             <h2>Character Management</h2>
-            
+
             <h3>Create Character</h3>
             <div class="endpoint">
                 <span class="method post">POST</span> <code>/api/v1/characters</code>
             </div>
-            
+
             <h3>List Characters</h3>
             <div class="endpoint">
                 <span class="method get">GET</span> <code>/api/v1/characters</code>
             </div>
-            
+
             <h3>Get Character Details</h3>
             <div class="endpoint">
                 <span class="method get">GET</span> <code>/api/v1/characters/{character_id}</code>
             </div>
-            
+
             <h3>Update Character</h3>
             <div class="endpoint">
                 <span class="method put">PUT</span> <code>/api/v1/characters/{character_id}</code>
@@ -484,12 +494,12 @@ curl -X GET "http://localhost:8000/api/v1/characters" \\
 
         <div class="section" id="stories">
             <h2>Story Generation</h2>
-            
+
             <h3>Generate Story</h3>
             <div class="endpoint">
                 <span class="method post">POST</span> <code>/api/v1/stories/generate</code>
             </div>
-            
+
             <h3>Check Generation Status</h3>
             <div class="endpoint">
                 <span class="method get">GET</span> <code>/api/v1/stories/status/{generation_id}</code>
@@ -499,7 +509,7 @@ curl -X GET "http://localhost:8000/api/v1/characters" \\
         <div class="section" id="websockets">
             <h2>Real-time Features</h2>
             <p>The API provides WebSocket endpoints for real-time updates:</p>
-            
+
             <h3>Story Generation Progress</h3>
             <div class="code-block">
 const ws = new WebSocket('ws://localhost:8000/api/v1/stories/progress/story_12345678');
@@ -514,7 +524,7 @@ ws.onmessage = function(event) {
         <div class="section" id="error-handling">
             <h2>Error Handling</h2>
             <p>All errors follow a standardized format:</p>
-            
+
             <div class="code-block">
 {
   "status": "error",
@@ -542,7 +552,7 @@ ws.onmessage = function(event) {
                 <li><strong>Development</strong>: 1000 requests per hour per IP</li>
                 <li><strong>Production</strong>: Custom limits based on subscription</li>
             </ul>
-            
+
             <p>Rate limit headers are included in responses:</p>
             <div class="code-block">
 X-RateLimit-Limit: 1000
@@ -553,7 +563,7 @@ X-RateLimit-Reset: 1640995200
 
         <div class="section" id="sdks">
             <h2>SDKs and Libraries</h2>
-            
+
             <h3>Python SDK</h3>
             <div class="code-block">
 pip install novel-engine-python

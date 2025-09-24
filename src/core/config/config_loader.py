@@ -312,7 +312,9 @@ class ConfigLoader:
             try:
                 # Check YAML library availability
                 if not YAML_AVAILABLE:
-                    logger.warning("PyYAML not available, using default configuration")
+                    logger.warning(
+                        "PyYAML not available, using default configuration"
+                    )
                     return self._create_default_config()
 
                 # Check if config file exists
@@ -337,12 +339,16 @@ class ConfigLoader:
 
                 # Cache the configuration
                 self._config = config
-                self._last_modified = self._get_file_mtime(self.config_file_path)
+                self._last_modified = self._get_file_mtime(
+                    self.config_file_path
+                )
 
                 logger.info("Configuration loaded successfully")
                 logger.debug(f"Simulation turns: {config.simulation.turns}")
                 logger.debug(f"Log file path: {config.paths.log_file_path}")
-                logger.debug(f"Output directory: {config.paths.output_directory}")
+                logger.debug(
+                    f"Output directory: {config.paths.output_directory}"
+                )
 
                 return config
 
@@ -416,7 +422,9 @@ class ConfigLoader:
                 f"Unexpected error loading configuration: {str(e)}"
             )
 
-    def _create_config_from_data(self, config_data: Dict[str, Any]) -> AppConfig:
+    def _create_config_from_data(
+        self, config_data: Dict[str, Any]
+    ) -> AppConfig:
         """
         Create AppConfig object from parsed configuration data.
 
@@ -442,9 +450,15 @@ class ConfigLoader:
         if "paths" in config_data:
             paths_data = config_data["paths"]
             config.paths = PathsConfig(
-                character_sheets_path=paths_data.get("character_sheets_path", "."),
-                log_file_path=paths_data.get("log_file_path", "campaign_log.md"),
-                output_directory=paths_data.get("output_directory", "demo_narratives"),
+                character_sheets_path=paths_data.get(
+                    "character_sheets_path", "."
+                ),
+                log_file_path=paths_data.get(
+                    "log_file_path", "campaign_log.md"
+                ),
+                output_directory=paths_data.get(
+                    "output_directory", "demo_narratives"
+                ),
                 test_narratives_directory=paths_data.get(
                     "test_narratives_directory", "test_narratives"
                 ),
@@ -458,7 +472,8 @@ class ConfigLoader:
             char_data = config_data["characters"]
             config.characters = CharacterConfig(
                 default_sheets=char_data.get(
-                    "default_sheets", ["character_krieg.md", "character_ork.md"]
+                    "default_sheets",
+                    ["character_krieg.md", "character_ork.md"],
                 ),
                 max_actions_per_turn=char_data.get("max_actions_per_turn", 5),
             )
@@ -479,7 +494,9 @@ class ConfigLoader:
         if "chronicler" in config_data:
             chronicler_data = config_data["chronicler"]
             config.chronicler = ChroniclerConfig(
-                max_events_per_batch=chronicler_data.get("max_events_per_batch", 50),
+                max_events_per_batch=chronicler_data.get(
+                    "max_events_per_batch", 50
+                ),
                 narrative_style=chronicler_data.get(
                     "narrative_style", "grimdark_dramatic"
                 ),
@@ -526,8 +543,12 @@ class ConfigLoader:
                 ai_enhanced_narratives=features_data.get(
                     "ai_enhanced_narratives", False
                 ),
-                advanced_world_state=features_data.get("advanced_world_state", False),
-                multiplayer_support=features_data.get("multiplayer_support", False),
+                advanced_world_state=features_data.get(
+                    "advanced_world_state", False
+                ),
+                multiplayer_support=features_data.get(
+                    "multiplayer_support", False
+                ),
                 realtime_updates=features_data.get("realtime_updates", False),
             )
 
@@ -604,14 +625,18 @@ class ConfigLoader:
                 try:
                     setter(env_value)
                     applied_overrides.append(f"{env_var}={env_value}")
-                    logger.info(f"Applied environment override: {env_var}={env_value}")
+                    logger.info(
+                        f"Applied environment override: {env_var}={env_value}"
+                    )
                 except (ValueError, TypeError) as e:
                     logger.warning(
                         f"Invalid environment variable value for {env_var}: {env_value} ({e})"
                     )
 
         if applied_overrides:
-            logger.info(f"Applied {len(applied_overrides)} environment overrides")
+            logger.info(
+                f"Applied {len(applied_overrides)} environment overrides"
+            )
 
         return config
 
@@ -637,25 +662,35 @@ class ConfigLoader:
 
         # Validate path configurations
         if not config.paths.character_sheets_path:
-            raise ConfigurationError("paths.character_sheets_path cannot be empty")
+            raise ConfigurationError(
+                "paths.character_sheets_path cannot be empty"
+            )
 
         if not config.paths.log_file_path:
             raise ConfigurationError("paths.log_file_path cannot be empty")
 
         # Validate character configuration
         if config.characters.max_actions_per_turn <= 0:
-            raise ConfigurationError("characters.max_actions_per_turn must be positive")
+            raise ConfigurationError(
+                "characters.max_actions_per_turn must be positive"
+            )
 
         # Validate director configuration
         if config.director.max_turn_history <= 0:
-            raise ConfigurationError("director.max_turn_history must be positive")
+            raise ConfigurationError(
+                "director.max_turn_history must be positive"
+            )
 
         if config.director.error_threshold <= 0:
-            raise ConfigurationError("director.error_threshold must be positive")
+            raise ConfigurationError(
+                "director.error_threshold must be positive"
+            )
 
         # Validate chronicler configuration
         if config.chronicler.max_events_per_batch <= 0:
-            raise ConfigurationError("chronicler.max_events_per_batch must be positive")
+            raise ConfigurationError(
+                "chronicler.max_events_per_batch must be positive"
+            )
 
         valid_styles = ["grimdark_dramatic", "tactical", "philosophical"]
         if config.chronicler.narrative_style not in valid_styles:
@@ -668,7 +703,9 @@ class ConfigLoader:
             raise ConfigurationError("llm.max_tokens must be positive")
 
         if not (0.0 <= config.llm.temperature <= 2.0):
-            raise ConfigurationError("llm.temperature must be between 0.0 and 2.0")
+            raise ConfigurationError(
+                "llm.temperature must be between 0.0 and 2.0"
+            )
 
         logger.debug("Configuration validation passed")
 

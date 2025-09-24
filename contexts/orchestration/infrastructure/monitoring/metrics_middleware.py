@@ -8,7 +8,7 @@ Integrates with the PrometheusMetricsCollector to provide comprehensive API obse
 
 import logging
 import time
-from typing import Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from fastapi import Request, Response
 from prometheus_client import Counter, Gauge, Histogram, Info
@@ -63,7 +63,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         ]
 
         # Use provided collector or create new one
-        self.metrics_collector = metrics_collector or PrometheusMetricsCollector()
+        self.metrics_collector = (
+            metrics_collector or PrometheusMetricsCollector()
+        )
 
         # Initialize HTTP-specific metrics
         self._initialize_http_metrics()
@@ -114,7 +116,17 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
             f"{self.app_name}_http_request_size_bytes",
             "HTTP request size in bytes",
             ["method", "endpoint"],
-            buckets=[64, 256, 1024, 4096, 16384, 65536, 262144, 1048576, float("inf")],
+            buckets=[
+                64,
+                256,
+                1024,
+                4096,
+                16384,
+                65536,
+                262144,
+                1048576,
+                float("inf"),
+            ],
             registry=self.metrics_collector.registry,
         )
 
@@ -122,7 +134,17 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
             f"{self.app_name}_http_response_size_bytes",
             "HTTP response size in bytes",
             ["method", "endpoint", "status_code"],
-            buckets=[64, 256, 1024, 4096, 16384, 65536, 262144, 1048576, float("inf")],
+            buckets=[
+                64,
+                256,
+                1024,
+                4096,
+                16384,
+                65536,
+                262144,
+                1048576,
+                float("inf"),
+            ],
             registry=self.metrics_collector.registry,
         )
 
@@ -157,7 +179,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
             }
         )
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable
+    ) -> Response:
         """
         Process HTTP request and collect metrics.
 
@@ -192,7 +216,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         start_time = time.time()
 
         # Increment in-progress requests
-        self.http_requests_in_progress.labels(method=method, endpoint=path).inc()
+        self.http_requests_in_progress.labels(
+            method=method, endpoint=path
+        ).inc()
 
         try:
             # Process request
@@ -204,7 +230,10 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 
             # Get response size
             response_size = 0
-            if hasattr(response, "headers") and "content-length" in response.headers:
+            if (
+                hasattr(response, "headers")
+                and "content-length" in response.headers
+            ):
                 try:
                     response_size = int(response.headers["content-length"])
                 except (ValueError, TypeError):
@@ -249,7 +278,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 
         finally:
             # Decrement in-progress requests
-            self.http_requests_in_progress.labels(method=method, endpoint=path).dec()
+            self.http_requests_in_progress.labels(
+                method=method, endpoint=path
+            ).dec()
 
     def _record_request_metrics(
         self,
@@ -285,9 +316,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         ).observe(duration)
 
         if request_size > 0:
-            self.http_request_size_bytes.labels(method=method, endpoint=path).observe(
-                request_size
-            )
+            self.http_request_size_bytes.labels(
+                method=method, endpoint=path
+            ).observe(request_size)
 
         if response_size > 0:
             self.http_response_size_bytes.labels(
@@ -297,7 +328,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         # Error tracking
         if error_occurred:
             error_type = (
-                "client_error" if status_code.startswith("4") else "server_error"
+                "client_error"
+                if status_code.startswith("4")
+                else "server_error"
             )
             if exception:
                 error_type = f"{error_type}_{type(exception).__name__}"
@@ -316,7 +349,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 
         # Log significant events
         if duration > 10.0:  # Slow requests
-            logger.warning(f"Slow request: {method} {path} took {duration:.2f}s")
+            logger.warning(
+                f"Slow request: {method} {path} took {duration:.2f}s"
+            )
         elif error_occurred:
             logger.error(f"Request error: {method} {path} -> {status_code}")
         elif duration > 1.0:  # Moderately slow requests
@@ -367,14 +402,16 @@ class MetricsRegistry:
     """
 
     _instance = None
-    _collectors = {}
+    _collectors: Dict[str, Any] = {}
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def get_collector(self, name: str = "default") -> PrometheusMetricsCollector:
+    def get_collector(
+        self, name: str = "default"
+    ) -> PrometheusMetricsCollector:
         """
         Get or create a metrics collector.
 
@@ -414,7 +451,9 @@ class MetricsRegistry:
                 if data.strip():  # Only add non-empty data
                     all_data.append(data)
             except Exception as e:
-                logger.error(f"Error getting metrics from collector {name}: {e}")
+                logger.error(
+                    f"Error getting metrics from collector {name}: {e}"
+                )
 
         return "\n".join(all_data)
 

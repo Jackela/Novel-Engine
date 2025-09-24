@@ -51,7 +51,9 @@ class PerformanceMetrics:
 class HighPerformanceConnectionPool:
     """Ultra-high performance database connection pool with intelligent load balancing."""
 
-    def __init__(self, database_path: str, pool_size: int = 50, max_overflow: int = 20):
+    def __init__(
+        self, database_path: str, pool_size: int = 50, max_overflow: int = 20
+    ):
         self.database_path = database_path
         self.pool_size = pool_size
         self.max_overflow = max_overflow
@@ -85,12 +87,20 @@ class HighPerformanceConnectionPool:
 
         # Advanced SQLite performance optimizations
         await conn.execute("PRAGMA journal_mode=WAL")  # Write-Ahead Logging
-        await conn.execute("PRAGMA synchronous=NORMAL")  # Balanced durability/speed
-        await conn.execute("PRAGMA cache_size=-128000")  # 128MB cache per connection
+        await conn.execute(
+            "PRAGMA synchronous=NORMAL"
+        )  # Balanced durability/speed
+        await conn.execute(
+            "PRAGMA cache_size=-128000"
+        )  # 128MB cache per connection
         await conn.execute("PRAGMA temp_store=MEMORY")  # In-memory temp tables
         await conn.execute("PRAGMA mmap_size=1073741824")  # 1GB memory mapping
-        await conn.execute("PRAGMA page_size=32768")  # Large page size for performance
-        await conn.execute("PRAGMA auto_vacuum=INCREMENTAL")  # Incremental vacuum
+        await conn.execute(
+            "PRAGMA page_size=32768"
+        )  # Large page size for performance
+        await conn.execute(
+            "PRAGMA auto_vacuum=INCREMENTAL"
+        )  # Incremental vacuum
         await conn.execute(
             "PRAGMA wal_autocheckpoint=1000"
         )  # Checkpoint every 1000 pages
@@ -98,7 +108,9 @@ class HighPerformanceConnectionPool:
 
         # Enable additional optimizations
         await conn.execute("PRAGMA threads=4")  # Multi-threaded operations
-        await conn.execute("PRAGMA busy_timeout=30000")  # 30 second busy timeout
+        await conn.execute(
+            "PRAGMA busy_timeout=30000"
+        )  # 30 second busy timeout
 
         await conn.commit()
         self._stats["connection_creations"] += 1
@@ -121,7 +133,9 @@ class HighPerformanceConnectionPool:
                 from_overflow = True
                 self._stats["overflow_hits"] += 1
             # Create new connection if under limit
-            elif len(self._busy_connections) < (self.pool_size + self.max_overflow):
+            elif len(self._busy_connections) < (
+                self.pool_size + self.max_overflow
+            ):
                 conn = await self._create_optimized_connection()
                 from_overflow = True
             else:
@@ -144,7 +158,10 @@ class HighPerformanceConnectionPool:
             async with self._pool_lock:
                 self._busy_connections.discard(conn)
 
-                if from_overflow and len(self._overflow_pool) < self.max_overflow:
+                if (
+                    from_overflow
+                    and len(self._overflow_pool) < self.max_overflow
+                ):
                     self._overflow_pool.append(conn)
                 elif not from_overflow and len(self._pool) < self.pool_size:
                     self._pool.append(conn)
@@ -208,7 +225,9 @@ class IntelligentCache:
                 # Track access pattern
                 self._access_patterns[key].append(time.time())
                 if len(self._access_patterns[key]) > 100:
-                    self._access_patterns[key] = self._access_patterns[key][-100:]
+                    self._access_patterns[key] = self._access_patterns[key][
+                        -100:
+                    ]
 
                 self._stats["hits"] += 1
                 access_time = time.time() - start_time
@@ -219,7 +238,9 @@ class IntelligentCache:
             self._stats["misses"] += 1
             return None
 
-    async def set(self, key: str, value: Any, ttl: float = 3600.0, priority: int = 1):
+    async def set(
+        self, key: str, value: Any, ttl: float = 3600.0, priority: int = 1
+    ):
         """Set value with intelligent memory management."""
         async with self._lock:
             # Calculate size
@@ -300,7 +321,10 @@ class IntelligentCache:
             score += time_since_access / 1800.0  # Normalize to 30 minutes
 
             # Access pattern prediction
-            if key in self._access_patterns and len(self._access_patterns[key]) > 5:
+            if (
+                key in self._access_patterns
+                and len(self._access_patterns[key]) > 5
+            ):
                 recent_accesses = self._access_patterns[key][-5:]
                 avg_interval = sum(
                     recent_accesses[i + 1] - recent_accesses[i]
@@ -314,7 +338,9 @@ class IntelligentCache:
             eviction_scores[key] = score
 
         # Evict entry with highest score
-        key_to_evict = max(eviction_scores.keys(), key=lambda k: eviction_scores[k])
+        key_to_evict = max(
+            eviction_scores.keys(), key=lambda k: eviction_scores[k]
+        )
         await self._remove_entry(key_to_evict)
         self._stats["evictions"] += 1
 
@@ -334,14 +360,18 @@ class IntelligentCache:
             self._stats["avg_access_time"] = access_time
         else:
             self._stats["avg_access_time"] = (
-                alpha * access_time + (1 - alpha) * self._stats["avg_access_time"]
+                alpha * access_time
+                + (1 - alpha) * self._stats["avg_access_time"]
             )
 
     async def get_stats(self) -> Dict[str, Any]:
         """Get comprehensive cache statistics."""
         async with self._lock:
             hit_rate = (
-                (self._stats["hits"] / (self._stats["hits"] + self._stats["misses"]))
+                (
+                    self._stats["hits"]
+                    / (self._stats["hits"] + self._stats["misses"])
+                )
                 if (self._stats["hits"] + self._stats["misses"]) > 0
                 else 0.0
             )
@@ -367,7 +397,9 @@ class ConcurrentProcessingManager:
         self.max_processes = max_processes or (os.cpu_count() or 1)
 
         self.thread_executor = ThreadPoolExecutor(max_workers=self.max_threads)
-        self.process_executor = ProcessPoolExecutor(max_workers=self.max_processes)
+        self.process_executor = ProcessPoolExecutor(
+            max_workers=self.max_processes
+        )
 
         self._active_tasks = weakref.WeakSet()
         self._task_metrics = defaultdict(list)
@@ -409,19 +441,24 @@ class ConcurrentProcessingManager:
             raise
 
     async def execute_concurrent_batch(
-        self, tasks: List[Tuple[Callable, tuple, dict]], task_type: str = "io_bound"
+        self,
+        tasks: List[Tuple[Callable, tuple, dict]],
+        task_type: str = "io_bound",
     ) -> List[Any]:
         """Execute multiple tasks concurrently with optimal resource allocation."""
         if not tasks:
             return []
 
         executor_func = (
-            self.execute_io_bound if task_type == "io_bound" else self.execute_cpu_bound
+            self.execute_io_bound
+            if task_type == "io_bound"
+            else self.execute_cpu_bound
         )
 
         # Create coroutines for all tasks
         coroutines = [
-            executor_func(func, *args, **kwargs) for func, args, kwargs in tasks
+            executor_func(func, *args, **kwargs)
+            for func, args, kwargs in tasks
         ]
 
         # Execute with controlled concurrency
@@ -433,7 +470,9 @@ class ConcurrentProcessingManager:
 
         bounded_coroutines = [bounded_task(coro) for coro in coroutines]
 
-        return await asyncio.gather(*bounded_coroutines, return_exceptions=True)
+        return await asyncio.gather(
+            *bounded_coroutines, return_exceptions=True
+        )
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get performance statistics for concurrent processing."""
@@ -545,20 +584,25 @@ class MemoryOptimizer:
         if len(self.optimization_history) > 100:
             self.optimization_history = self.optimization_history[-100:]
 
-        logger.info(f"Memory optimization completed: {memory_freed:.2f}MB freed")
+        logger.info(
+            f"Memory optimization completed: {memory_freed:.2f}MB freed"
+        )
 
         return optimization_result
 
     def detect_memory_leaks(self) -> Dict[str, Any]:
         """Detect potential memory leaks."""
         current_memory = self.get_memory_usage()["rss_mb"]
-        baseline_increase = current_memory - (self.baseline_memory / (1024 * 1024))
+        baseline_increase = current_memory - (
+            self.baseline_memory / (1024 * 1024)
+        )
 
         # Analyze optimization history for trends
         if len(self.optimization_history) >= 5:
             recent_optimizations = self.optimization_history[-5:]
             avg_effectiveness = sum(
-                opt["optimization_effectiveness"] for opt in recent_optimizations
+                opt["optimization_effectiveness"]
+                for opt in recent_optimizations
             ) / len(recent_optimizations)
 
             leak_indicators = {
@@ -622,7 +666,9 @@ class ProductionPerformanceEngine:
             ]
         )
 
-        logger.info("Performance engine fully initialized with background tasks")
+        logger.info(
+            "Performance engine fully initialized with background tasks"
+        )
 
     @asynccontextmanager
     async def optimized_db_operation(self):
@@ -701,7 +747,9 @@ class ProductionPerformanceEngine:
             cpu_usage_percent=psutil.cpu_percent(),
             active_requests=len(self.concurrent_manager._active_tasks),
             error_rate=(
-                self.error_count / self.request_count if self.request_count > 0 else 0
+                self.error_count / self.request_count
+                if self.request_count > 0
+                else 0
             ),
         )
 
@@ -721,16 +769,18 @@ class ProductionPerformanceEngine:
         # Calculate aggregate metrics
         if self.metrics_history:
             recent_metrics = self.metrics_history[-100:]  # Last 100 operations
-            avg_response_time = sum(m.response_time for m in recent_metrics) / len(
-                recent_metrics
-            )
-            p95_response_time = sorted([m.response_time for m in recent_metrics])[
-                int(len(recent_metrics) * 0.95)
-            ]
+            avg_response_time = sum(
+                m.response_time for m in recent_metrics
+            ) / len(recent_metrics)
+            p95_response_time = sorted(
+                [m.response_time for m in recent_metrics]
+            )[int(len(recent_metrics) * 0.95)]
 
             uptime_seconds = time.time() - self.startup_time
             throughput_rps = (
-                self.request_count / uptime_seconds if uptime_seconds > 0 else 0
+                self.request_count / uptime_seconds
+                if uptime_seconds > 0
+                else 0
             )
         else:
             avg_response_time = 0
@@ -767,7 +817,9 @@ class ProductionPerformanceEngine:
 
         # Cache recommendations
         if cache_stats["hit_rate"] < 0.7:
-            recommendations.append("Consider increasing cache size or TTL values")
+            recommendations.append(
+                "Consider increasing cache size or TTL values"
+            )
 
         if cache_stats["evictions"] > cache_stats["hits"] * 0.1:
             recommendations.append(
@@ -787,7 +839,8 @@ class ProductionPerformanceEngine:
             ]
             if (
                 recent_response_times
-                and sum(recent_response_times) / len(recent_response_times) > 0.1
+                and sum(recent_response_times) / len(recent_response_times)
+                > 0.1
             ):  # >100ms average
                 recommendations.append(
                     "High response times detected - consider database query optimization"
@@ -819,7 +872,9 @@ class ProductionPerformanceEngine:
                 # Check for memory leaks
                 leak_detection = self.memory_optimizer.detect_memory_leaks()
                 if leak_detection.get("potential_leak", False):
-                    logger.warning(f"Potential memory leak detected: {leak_detection}")
+                    logger.warning(
+                        f"Potential memory leak detected: {leak_detection}"
+                    )
 
             except asyncio.CancelledError:
                 break
@@ -914,7 +969,9 @@ def optimized_db_operation(func):
     return wrapper
 
 
-def cached_result(cache_key_template: str, ttl: float = 3600.0, priority: int = 2):
+def cached_result(
+    cache_key_template: str, ttl: float = 3600.0, priority: int = 2
+):
     """Decorator for automatic result caching."""
 
     def decorator(func):
@@ -936,7 +993,9 @@ def cached_result(cache_key_template: str, ttl: float = 3600.0, priority: int = 
 async def initialize_performance_engine():
     """Initialize the production performance engine."""
     await performance_engine.initialize()
-    logger.info("Production Performance Engine ready for high-performance operations")
+    logger.info(
+        "Production Performance Engine ready for high-performance operations"
+    )
 
 
 if __name__ == "__main__":

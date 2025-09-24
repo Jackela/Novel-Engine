@@ -125,7 +125,9 @@ def analyze_narrative_quality():
             + narrative_content.count("!")
             + narrative_content.count("?")
         )
-        paragraph_count = len([p for p in narrative_content.split("\n\n") if p.strip()])
+        paragraph_count = len(
+            [p for p in narrative_content.split("\n\n") if p.strip()]
+        )
 
         # Warhammer 40k atmosphere indicators
         wh40k_terms = {
@@ -137,8 +139,20 @@ def analyze_narrative_quality():
                 "darkness",
                 "shadows",
             ],
-            "imperial_terms": ["Emperor's", "Imperium", "duty", "service", "throne"],
-            "military_terms": ["warrior", "battle", "conflict", "ranks", "combat"],
+            "imperial_terms": [
+                "Emperor's",
+                "Imperium",
+                "duty",
+                "service",
+                "throne",
+            ],
+            "military_terms": [
+                "warrior",
+                "battle",
+                "conflict",
+                "ranks",
+                "combat",
+            ],
             "atmospheric_descriptors": [
                 "terrible purpose",
                 "eternal conflict",
@@ -150,14 +164,18 @@ def analyze_narrative_quality():
 
         term_analysis = {}
         for category, terms in wh40k_terms.items():
-            count = sum(narrative_content.lower().count(term.lower()) for term in terms)
+            count = sum(
+                narrative_content.lower().count(term.lower()) for term in terms
+            )
             term_analysis[category] = count
 
         print("📊 NARRATIVE STATISTICS:")
         print(f"   • Total words: {word_count:,}")
         print(f"   • Sentences: {sentence_count}")
         print(f"   • Paragraphs: {paragraph_count}")
-        print(f"   • Average words per sentence: {word_count/sentence_count:.1f}")
+        print(
+            f"   • Average words per sentence: {word_count/sentence_count:.1f}"
+        )
         print()
 
         print("🎨 ATMOSPHERIC ANALYSIS:")
@@ -173,8 +191,12 @@ def analyze_narrative_quality():
         character_mentions = {
             "Trooper 86": narrative_content.lower().count("trooper 86"),
             "Griznork": narrative_content.lower().count("griznork"),
-            "Test Character": narrative_content.lower().count("test character"),
-            "Brother Marcus": narrative_content.lower().count("brother marcus"),
+            "Test Character": narrative_content.lower().count(
+                "test character"
+            ),
+            "Brother Marcus": narrative_content.lower().count(
+                "brother marcus"
+            ),
             "Commissar Vex": narrative_content.lower().count("commissar vex"),
         }
 
@@ -198,7 +220,8 @@ def analyze_narrative_quality():
 
 def compare_enhancement_levels():
     """
-    Compare the enhancement levels between placeholder and AI-integrated systems.
+    Compare the enhancement levels between placeholder and AI-integrated
+    systems.
     """
     print("⚖️ ENHANCEMENT COMPARISON")
     print("=" * 50)
@@ -216,22 +239,29 @@ def compare_enhancement_levels():
     print("📈 CURRENT AI-ENHANCED SYSTEM:")
     print("   ✅ Sophisticated tactical reasoning:")
     print(
-        "      'Coordination with allies is essential before responding to this threat'"
+        "      'Coordination with allies is essential before responding "
+        "to this threat'"
     )
     print("   ✅ Faction-specific motivations:")
     print(
-        "      'My aggressive nature and loyalty to the faction demand immediate action'"
+        "      'My aggressive nature and loyalty to the faction demand "
+        "immediate action'"
     )
     print("   ✅ Character-appropriate decision-making:")
     print(
-        "      'As a proper Goff Ork, aggressive nature demands he seek out a good fight'"
+        "      'As a proper Goff Ork, aggressive nature demands he seek "
+        "out a good fight'"
     )
     print("   ✅ Complex strategic thinking:")
     print(
-        "      'My duty is to the Emperor... I will press forward through any moderate threat'"
+        "      'My duty is to the Emperor... I will press forward through "
+        "any moderate threat'"
     )
     print("   ✅ Authentic lore-based reasoning:")
-    print("      'Da WAAAGH! demands action, and a loud, direct attack is da best way'")
+    print(
+        "      'Da WAAAGH! demands action, and a loud, direct attack "
+        "is da best way'"
+    )
     print()
 
     # Calculate improvement metrics
@@ -245,26 +275,32 @@ def compare_enhancement_levels():
         if len(ai_decisions) > 10:
             improvement_score += 25
             print(
-                "   ✅ Decision Complexity: +25 points (Multiple sophisticated decisions)"
+                "   ✅ Decision Complexity: +25 points "
+                "(Multiple sophisticated decisions)"
             )
 
         # Narrative quality improvement
         if narrative_metrics.get("word_count", 0) > 1000:
             improvement_score += 25
-            print("   ✅ Narrative Length: +25 points (Substantial content generated)")
+            print(
+                "   ✅ Narrative Length: +25 points "
+                "(Substantial content generated)"
+            )
 
         # Atmosphere improvement
         if narrative_metrics.get("atmosphere_score", 0) > 50:
             improvement_score += 25
             print(
-                "   ✅ Warhammer 40k Atmosphere: +25 points (Rich authentic terminology)"
+                "   ✅ Warhammer 40k Atmosphere: +25 points "
+                "(Rich authentic terminology)"
             )
 
         # Character integration improvement
         if narrative_metrics.get("character_integration", 0) > 3:
             improvement_score += 25
             print(
-                "   ✅ Character Integration: +25 points (Multiple characters featured)"
+                "   ✅ Character Integration: +25 points "
+                "(Multiple characters featured)"
             )
 
         print(f"\n🏆 TOTAL IMPROVEMENT SCORE: {improvement_score}/100")

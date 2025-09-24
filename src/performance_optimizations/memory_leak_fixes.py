@@ -114,7 +114,9 @@ class SlidingWindowMemoryManager:
 
         return archived_count
 
-    def manage_deque(self, data_deque: Deque[Any], name: str = "unknown") -> int:
+    def manage_deque(
+        self, data_deque: Deque[Any], name: str = "unknown"
+    ) -> int:
         """Manage a deque with sliding window pattern."""
         if len(data_deque) <= self.max_size:
             return 0
@@ -187,7 +189,9 @@ class PersonaAgentMemoryFixer:
     """
 
     @staticmethod
-    def fix_persona_agent_memory_leaks(persona_agent_instance) -> Dict[str, Any]:
+    def fix_persona_agent_memory_leaks(
+        persona_agent_instance,
+    ) -> Dict[str, Any]:
         """
         Apply comprehensive memory leak fixes to PersonaAgent instance.
 
@@ -209,7 +213,9 @@ class PersonaAgentMemoryFixer:
         try:
             # Capture before metrics
             process = psutil.Process()
-            fix_results["memory_before_mb"] = process.memory_info().rss / 1024 / 1024
+            fix_results["memory_before_mb"] = (
+                process.memory_info().rss / 1024 / 1024
+            )
 
             # Fix 1: Decision History Memory Leak (THE CRITICAL ONE)
             if hasattr(persona_agent_instance, "decision_history"):
@@ -229,12 +235,16 @@ class PersonaAgentMemoryFixer:
                     f"decisions_{persona_agent_instance.agent_id}",
                 )
 
-                fix_results["fixes_applied"].append("decision_history_sliding_window")
-                fix_results["items_archived"]["decision_history"] = archived_count
+                fix_results["fixes_applied"].append(
+                    "decision_history_sliding_window"
+                )
+                fix_results["items_archived"][
+                    "decision_history"
+                ] = archived_count
 
                 logger.info(
                     f"PersonaAgent {persona_agent_instance.agent_id}: "
-                    f"decision_history {original_count} → {len(persona_agent_instance.decision_history)} "
+                    f"decision_history {original_count} → {len( persona_agent_instance.decision_history)} "
                     f"({archived_count} archived)"
                 )
 
@@ -252,7 +262,9 @@ class PersonaAgentMemoryFixer:
 
                     archived_cache_count = len(cache_items) - 100
                     fix_results["fixes_applied"].append("llm_cache_cleanup")
-                    fix_results["items_archived"]["llm_cache"] = archived_cache_count
+                    fix_results["items_archived"][
+                        "llm_cache"
+                    ] = archived_cache_count
 
                     logger.info(
                         f"PersonaAgent {persona_agent_instance.agent_id}: "
@@ -272,9 +284,12 @@ class PersonaAgentMemoryFixer:
                         original_length = len(attr_value)
 
                         # Use sliding window
-                        memory_manager = SlidingWindowMemoryManager(max_size=100)
+                        memory_manager = SlidingWindowMemoryManager(
+                            max_size=100
+                        )
                         archived_count = memory_manager.manage_list(
-                            attr_value, f"{attr}_{persona_agent_instance.agent_id}"
+                            attr_value,
+                            f"{attr}_{persona_agent_instance.agent_id}",
                         )
 
                         fix_results["fixes_applied"].append(f"{attr}_cleanup")
@@ -295,10 +310,13 @@ class PersonaAgentMemoryFixer:
             gc.collect()
 
             # Capture after metrics
-            fix_results["memory_after_mb"] = process.memory_info().rss / 1024 / 1024
+            fix_results["memory_after_mb"] = (
+                process.memory_info().rss / 1024 / 1024
+            )
 
             memory_saved = (
-                fix_results["memory_before_mb"] - fix_results["memory_after_mb"]
+                fix_results["memory_before_mb"]
+                - fix_results["memory_after_mb"]
             )
             logger.info(
                 f"PersonaAgent memory fixes completed: {memory_saved:.1f}MB saved"
@@ -320,17 +338,22 @@ class PersonaAgentMemoryMonitor:
             persona_agent_instance
         )  # Weak reference to prevent circular refs
         self.agent_id = persona_agent_instance.agent_id
-        self.memory_history = deque(maxlen=100)  # Keep last 100 memory measurements
+        # Keep last 100 memory measurements
+        self.memory_history = deque(maxlen=100)
         self.last_cleanup = datetime.now()
         self.cleanup_interval = timedelta(minutes=15)  # Check every 15 minutes
         self.memory_threshold_mb = 50  # Alert if agent uses > 50MB
 
         # Start background monitoring
         self._monitoring_active = True
-        self._monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
+        self._monitor_thread = threading.Thread(
+            target=self._monitor_loop, daemon=True
+        )
         self._monitor_thread.start()
 
-        logger.debug(f"Memory monitor started for PersonaAgent {self.agent_id}")
+        logger.debug(
+            f"Memory monitor started for PersonaAgent {self.agent_id}"
+        )
 
     def _monitor_loop(self):
         """Background memory monitoring loop."""
@@ -350,7 +373,9 @@ class PersonaAgentMemoryMonitor:
                     rss_mb=memory_info.rss / 1024 / 1024,
                     vms_mb=memory_info.vms / 1024 / 1024,
                     percent=process.memory_percent(),
-                    available_mb=psutil.virtual_memory().available / 1024 / 1024,
+                    available_mb=psutil.virtual_memory().available
+                    / 1024
+                    / 1024,
                 )
 
                 self.memory_history.append(stats)
@@ -375,10 +400,13 @@ class PersonaAgentMemoryMonitor:
             cleanup_needed = False
 
             # Check decision history size
-            if hasattr(agent, "decision_history") and len(agent.decision_history) > 750:
+            if (
+                hasattr(agent, "decision_history")
+                and len(agent.decision_history) > 750
+            ):
                 cleanup_needed = True
                 logger.warning(
-                    f"Agent {self.agent_id} decision_history at {len(agent.decision_history)} items"
+                    f"Agent {self.agent_id}decision_history at {len( agent.decision_history)} items"
                 )
 
             # Check other memory-intensive attributes
@@ -392,7 +420,7 @@ class PersonaAgentMemoryMonitor:
                     if isinstance(attr_value, list) and len(attr_value) > 150:
                         cleanup_needed = True
                         logger.warning(
-                            f"Agent {self.agent_id} {attr_name} at {len(attr_value)} items"
+                            f"Agent {self.agent_id}{attr_name} at {len(attr_value)} items"
                         )
 
             if cleanup_needed:
@@ -430,7 +458,9 @@ class PersonaAgentMemoryMonitor:
         oldest_sample = recent_samples[0]
         newest_sample = recent_samples[-1]
 
-        time_diff = (newest_sample.timestamp - oldest_sample.timestamp).total_seconds()
+        time_diff = (
+            newest_sample.timestamp - oldest_sample.timestamp
+        ).total_seconds()
         memory_diff = newest_sample.rss_mb - oldest_sample.rss_mb
 
         if time_diff > 0:
@@ -449,8 +479,12 @@ class PersonaAgentMemoryMonitor:
         agent_info = {}
         if agent:
             agent_info = {
-                "decision_history_size": len(getattr(agent, "decision_history", [])),
-                "context_history_size": len(getattr(agent, "context_history", [])),
+                "decision_history_size": len(
+                    getattr(agent, "decision_history", [])
+                ),
+                "context_history_size": len(
+                    getattr(agent, "context_history", [])
+                ),
                 "has_memory_monitor": hasattr(agent, "_memory_monitor"),
             }
 
@@ -520,7 +554,9 @@ class SystemWideMemoryManager:
     ):
         """Register a cleanup function for a specific component."""
         self.cleanup_callbacks.append((callback, component_name))
-        logger.debug(f"Cleanup callback registered for component: {component_name}")
+        logger.debug(
+            f"Cleanup callback registered for component: {component_name}"
+        )
 
     def _monitoring_loop(self):
         """Main monitoring loop."""
@@ -593,7 +629,9 @@ class SystemWideMemoryManager:
                 logger.info(f"Running emergency cleanup for {component_name}")
                 callback()
             except Exception as e:
-                logger.error(f"Emergency cleanup failed for {component_name}: {e}")
+                logger.error(
+                    f"Emergency cleanup failed for {component_name}: {e}"
+                )
 
     def _check_for_memory_leaks(self):
         """Check for potential memory leaks."""
@@ -727,7 +765,9 @@ def get_comprehensive_memory_report() -> Dict[str, Any]:
         "system_memory": system_report,
         "timestamp": datetime.now().isoformat(),
         "status": (
-            "healthy" if not system_report.get("limit_exceeded", False) else "warning"
+            "healthy"
+            if not system_report.get("limit_exceeded", False)
+            else "warning"
         ),
     }
 
@@ -742,7 +782,9 @@ def emergency_memory_cleanup():
     # Force garbage collection multiple times
     for i in range(3):
         collected = gc.collect()
-        logger.info(f"Garbage collection pass {i+1}: {collected} objects collected")
+        logger.info(
+            f"Garbage collection pass {i+1}: {collected} objects collected"
+        )
 
     # Clear module-level caches if they exist
     try:
@@ -760,7 +802,9 @@ def setup_automatic_memory_management():
     manager = get_global_memory_manager()
 
     # Register emergency cleanup
-    manager.register_cleanup_callback(emergency_memory_cleanup, "emergency_cleanup")
+    manager.register_cleanup_callback(
+        emergency_memory_cleanup, "emergency_cleanup"
+    )
 
     logger.info("Automatic memory management setup completed")
     return manager

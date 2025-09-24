@@ -3,7 +3,8 @@
 Enhanced API Documentation System with Context7 Integration
 ==========================================================
 
-Comprehensive documentation system that leverages Context7 for interactive examples,
+Comprehensive documentation system that leverages Context7 for
+interactive examples,
 framework patterns, and best practices integration.
 """
 
@@ -38,7 +39,9 @@ class EnhancedDocumentationSystem:
         if not docs_template_path.exists():
             self._create_default_template(docs_template_path)
 
-        return Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
+        return Environment(
+            loader=FileSystemLoader(str(templates_dir)), autoescape=True
+        )
 
     def _create_default_template(self, template_path: Path):
         """Create default documentation template."""
@@ -48,21 +51,63 @@ class EnhancedDocumentationSystem:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - Novel Engine API</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css"
+          rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js">
+    </script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
         .container { max-width: 1200px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 40px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; }
-        .nav { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
-        .nav a { text-decoration: none; padding: 10px 15px; background: #f8f9fa; border-radius: 5px; color: #333; }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+        }
+        .nav {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            text-decoration: none;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            color: #333;
+        }
         .nav a:hover { background: #e9ecef; }
         .section { margin-bottom: 40px; }
-        .endpoint { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
-        .endpoint-header { background: #f8f9fa; padding: 15px; border-bottom: 1px solid #ddd; }
+        .endpoint {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .endpoint-header {
+            background: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+        }
         .endpoint-content { padding: 15px; }
-        .method { display: inline-block; padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; margin-right: 10px; }
+        .method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
         .method.get { background: #28a745; }
         .method.post { background: #007bff; }
         .method.put { background: #ffc107; color: #333; }
@@ -70,12 +115,29 @@ class EnhancedDocumentationSystem:
         .code-example { margin: 15px 0; }
         .tab-container { border: 1px solid #ddd; border-radius: 5px; }
         .tab-headers { display: flex; background: #f8f9fa; }
-        .tab-header { padding: 10px 15px; cursor: pointer; border-right: 1px solid #ddd; }
-        .tab-header.active { background: white; border-bottom: 1px solid white; }
+        .tab-header {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-right: 1px solid #ddd;
+        }
+        .tab-header.active {
+            background: white;
+            border-bottom: 1px solid white;
+        }
         .tab-content { display: none; padding: 15px; }
         .tab-content.active { display: block; }
-        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 30px 0; }
-        .feature-card { padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa; }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature-card {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
     </style>
 </head>
 <body>
@@ -84,10 +146,14 @@ class EnhancedDocumentationSystem:
             <h1>{{ title }}</h1>
             <p>{{ description }}</p>
             {% if version %}
-                <span style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px;">v{{ version }}</span>
+                <span style="background: rgba(255,255,255,0.2);
+                             padding: 5px 10px;
+                             border-radius: 20px;">
+                    v{{ version }}
+                </span>
             {% endif %}
         </div>
-        
+
         <div class="nav">
             <a href="#overview">Overview</a>
             <a href="#authentication">Authentication</a>
@@ -96,11 +162,11 @@ class EnhancedDocumentationSystem:
             <a href="#best-practices">Best Practices</a>
             <a href="#sdk">SDK & Tools</a>
         </div>
-        
+
         <div id="overview" class="section">
             <h2>Overview</h2>
             <p>{{ overview }}</p>
-            
+
             <div class="features">
                 {% for feature in features %}
                 <div class="feature-card">
@@ -110,16 +176,25 @@ class EnhancedDocumentationSystem:
                 {% endfor %}
             </div>
         </div>
-        
+
         <div id="authentication" class="section">
             <h2>Authentication</h2>
             <p>The Novel Engine API uses JWT tokens for authentication.</p>
-            
+
             <div class="tab-container">
                 <div class="tab-headers">
-                    <div class="tab-header active" onclick="showTab(this, 'auth-curl')">cURL</div>
-                    <div class="tab-header" onclick="showTab(this, 'auth-python')">Python</div>
-                    <div class="tab-header" onclick="showTab(this, 'auth-javascript')">JavaScript</div>
+                    <div class="tab-header active"
+                         onclick="showTab(this, 'auth-curl')">
+                        cURL
+                    </div>
+                    <div class="tab-header"
+                         onclick="showTab(this, 'auth-python')">
+                        Python
+                    </div>
+                    <div class="tab-header"
+                         onclick="showTab(this, 'auth-javascript')">
+                        JavaScript
+                    </div>
                 </div>
                 <div id="auth-curl" class="tab-content active">
                     <pre><code class="language-bash">curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \\
@@ -129,16 +204,22 @@ class EnhancedDocumentationSystem:
                     <pre><code class="language-python">import httpx
 
 headers = {"Authorization": "Bearer YOUR_JWT_TOKEN"}
-response = httpx.get("http://localhost:8000/api/v1/endpoint", headers=headers)</code></pre>
+response = httpx.get(
+    "http://localhost:8000/api/v1/endpoint",
+    headers=headers
+)</code></pre>
                 </div>
                 <div id="auth-javascript" class="tab-content">
-                    <pre><code class="language-javascript">const response = await fetch('http://localhost:8000/api/v1/endpoint', {
-    headers: {'Authorization': 'Bearer YOUR_JWT_TOKEN'}
-});</code></pre>
+                    <pre><code class="language-javascript">const response = await fetch(
+    'http://localhost:8000/api/v1/endpoint',
+    {
+        headers: {'Authorization': 'Bearer YOUR_JWT_TOKEN'}
+    }
+);</code></pre>
                 </div>
             </div>
         </div>
-        
+
         <div id="endpoints" class="section">
             <h2>API Endpoints</h2>
             {% for endpoint in endpoints %}
@@ -154,23 +235,26 @@ response = httpx.get("http://localhost:8000/api/v1/endpoint", headers=headers)</
                     {% if endpoint.description %}
                         <p>{{ endpoint.description }}</p>
                     {% endif %}
-                    
+
                     {% if endpoint.examples %}
                     <div class="code-example">
                         <h4>Examples</h4>
                         <div class="tab-container">
                             <div class="tab-headers">
                                 {% for example in endpoint.examples %}
-                                <div class="tab-header{% if loop.first %} active{% endif %}" 
-                                     onclick="showTab(this, '{{ endpoint.path|replace('/', '_') }}_{{ example.format }}')">
-                                     {{ example.format|title }}
+                                <div class="tab-header{% if loop.first %} active{% endif %}"
+                                     onclick="showTab(this,
+                                       '{{ endpoint.path|replace('/', '_') }}_{{ example.format }}')">
+                                    {{ example.format|title }}
                                 </div>
                                 {% endfor %}
                             </div>
                             {% for example in endpoint.examples %}
-                            <div id="{{ endpoint.path|replace('/', '_') }}_{{ example.format }}" 
+                            <div id="{{ endpoint.path|replace('/', '_') }}_{{ example.format }}"
                                  class="tab-content{% if loop.first %} active{% endif %}">
-                                <pre><code class="language-{{ example.language }}">{{ example.code }}</code></pre>
+                                <pre><code class="language-{{ example.language }}">
+                                    {{ example.code }}
+                                </code></pre>
                                 {% if example.explanation %}
                                     <p><em>{{ example.explanation }}</em></p>
                                 {% endif %}
@@ -183,11 +267,11 @@ response = httpx.get("http://localhost:8000/api/v1/endpoint", headers=headers)</
             </div>
             {% endfor %}
         </div>
-        
+
         <div id="examples" class="section">
             <h2>Code Examples</h2>
             <p>Interactive code examples powered by Context7 integration.</p>
-            
+
             <div class="tab-container">
                 <div class="tab-headers">
                     <div class="tab-header active" onclick="showTab(this, 'example-quickstart')">Quick Start</div>
@@ -195,7 +279,7 @@ response = httpx.get("http://localhost:8000/api/v1/endpoint", headers=headers)</
                     <div class="tab-header" onclick="showTab(this, 'example-characters')">Characters</div>
                     <div class="tab-header" onclick="showTab(this, 'example-stories')">Stories</div>
                 </div>
-                
+
                 <div id="example-quickstart" class="tab-content active">
                     <h3>Quick Start Guide</h3>
                     <pre><code class="language-python"># Install dependencies
@@ -210,7 +294,7 @@ async def main():
         # Get API status
         response = await client.get("http://localhost:8000/")
         print("API Status:", response.json())
-        
+
         # Get health check
         health = await client.get("http://localhost:8000/health")
         print("Health:", health.json())
@@ -218,7 +302,7 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())</code></pre>
                 </div>
-                
+
                 <div id="example-auth" class="tab-content">
                     <h3>Authentication Example</h3>
                     <pre><code class="language-python"># Authentication workflow
@@ -229,7 +313,7 @@ class NovelEngineClient:
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url
         self.token: Optional[str] = None
-        
+
     async def login(self, username: str, password: str):
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -238,20 +322,20 @@ class NovelEngineClient:
             )
             response.raise_for_status()
             self.token = response.json()["token"]
-            
+
     def get_headers(self) -> Dict[str, str]:
         headers = {"Content-Type": "application/json"}
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         return headers</code></pre>
                 </div>
-                
+
                 <div id="example-characters" class="tab-content">
                     <h3>Character Management</h3>
                     <pre><code class="language-python"># Character operations
 async def character_examples(client: NovelEngineClient):
     headers = client.get_headers()
-    
+
     async with httpx.AsyncClient() as http_client:
         # List all characters
         response = await http_client.get(
@@ -259,14 +343,14 @@ async def character_examples(client: NovelEngineClient):
             headers=headers
         )
         characters = response.json()["data"]
-        
+
         # Create new character
         new_character = {
             "name": "Hero Protagonist",
             "background_summary": "A brave adventurer",
             "personality_traits": ["brave", "curious", "loyal"]
         }
-        
+
         response = await http_client.post(
             f"{client.base_url}/api/v1/characters",
             json=new_character,
@@ -274,13 +358,13 @@ async def character_examples(client: NovelEngineClient):
         )
         character_id = response.json()["data"]["character_id"]</code></pre>
                 </div>
-                
+
                 <div id="example-stories" class="tab-content">
                     <h3>Story Generation</h3>
                     <pre><code class="language-python"># Story generation workflow
 async def story_examples(client: NovelEngineClient):
     headers = client.get_headers()
-    
+
     async with httpx.AsyncClient() as http_client:
         # Generate new story
         story_request = {
@@ -290,7 +374,7 @@ async def story_examples(client: NovelEngineClient):
             "genre": "fantasy",
             "complexity_level": "intermediate"
         }
-        
+
         # Start generation
         response = await http_client.post(
             f"{client.base_url}/api/v1/stories/generate",
@@ -298,25 +382,27 @@ async def story_examples(client: NovelEngineClient):
             headers=headers
         )
         generation_id = response.json()["data"]["generation_id"]
-        
+
         # Check progress
         progress_response = await http_client.get(
-            f"{client.base_url}/api/v1/stories/generate/{generation_id}/progress",
+            f"{client.base_url}/api/v1/stories/generate/"
+            f"{generation_id}/progress",
             headers=headers
         )
         print("Progress:", progress_response.json())</code></pre>
                 </div>
             </div>
         </div>
-        
+
         <div id="best-practices" class="section">
             <h2>Best Practices</h2>
             <p>Framework best practices powered by Context7 integration.</p>
-            
+
             <div class="features">
                 <div class="feature-card">
                     <h3>Error Handling</h3>
-                    <p>Always implement proper error handling with try-catch blocks and status code checks.</p>
+                    <p>Always implement proper error handling with try-catch
+                       blocks and status code checks.</p>
                     <pre><code class="language-python">try:
     response.raise_for_status()
     return response.json()
@@ -324,22 +410,24 @@ except httpx.HTTPError as e:
     logger.error(f"API call failed: {e}")
     return None</code></pre>
                 </div>
-                
+
                 <div class="feature-card">
                     <h3>Rate Limiting</h3>
-                    <p>Implement backoff strategies and respect rate limits to ensure stable API usage.</p>
+                    <p>Implement backoff strategies and respect rate limits to
+                       ensure stable API usage.</p>
                     <pre><code class="language-python">import asyncio
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-@retry(stop=stop_after_attempt(3), 
+@retry(stop=stop_after_attempt(3),
        wait=wait_exponential(multiplier=1, min=4, max=10))
 async def api_call_with_retry():
     return await client.get("/api/endpoint")</code></pre>
                 </div>
-                
+
                 <div class="feature-card">
                     <h3>Authentication</h3>
-                    <p>Store tokens securely and implement proper token refresh mechanisms.</p>
+                    <p>Store tokens securely and implement proper token refresh
+                       mechanisms.</p>
                     <pre><code class="language-python"># Use environment variables for sensitive data
 import os
 token = os.getenv("NOVEL_ENGINE_TOKEN")
@@ -351,49 +439,53 @@ if response.status_code == 401:
                 </div>
             </div>
         </div>
-        
+
         <div id="sdk" class="section">
             <h2>SDK & Tools</h2>
-            <p>Official SDKs and development tools for the Novel Engine API.</p>
-            
+            <p>Official SDKs and development tools for the Novel Engine
+               API.</p>
+
             <div class="features">
                 <div class="feature-card">
                     <h3>Python SDK</h3>
-                    <p>Official Python SDK with async support and comprehensive type hints.</p>
+                    <p>Official Python SDK with async support and comprehensive
+                       type hints.</p>
                     <pre><code class="language-bash">pip install novel-engine-sdk</code></pre>
                 </div>
-                
+
                 <div class="feature-card">
                     <h3>CLI Tool</h3>
-                    <p>Command-line interface for quick API interactions and testing.</p>
+                    <p>Command-line interface for quick API interactions and
+                       testing.</p>
                     <pre><code class="language-bash">novel-engine characters list
 novel-engine stories generate --title "My Story"</code></pre>
                 </div>
-                
+
                 <div class="feature-card">
                     <h3>Postman Collection</h3>
-                    <p>Ready-to-use Postman collection with example requests and environments.</p>
+                    <p>Ready-to-use Postman collection with example requests and
+                       environments.</p>
                     <a href="/api/v1/postman/collection" style="color: #007bff;">Download Collection</a>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <script>
         function showTab(element, tabId) {
             // Hide all tabs in the same container
             const container = element.closest('.tab-container');
             const tabs = container.querySelectorAll('.tab-content');
             const headers = container.querySelectorAll('.tab-header');
-            
+
             tabs.forEach(tab => tab.classList.remove('active'));
             headers.forEach(header => header.classList.remove('active'));
-            
+
             // Show selected tab
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
         }
-        
+
         // Smooth scrolling for navigation links
         document.addEventListener('DOMContentLoaded', function() {
             const navLinks = document.querySelectorAll('.nav a');
@@ -423,21 +515,24 @@ novel-engine stories generate --title "My Story"</code></pre>
                     "path": "/api/v1/characters",
                     "method": "GET",
                     "summary": "List all characters",
-                    "description": "Retrieve a list of all available characters",
+                    "description": "Retrieve a list of all available "
+                    "characters",
                     "category": "Characters",
                 },
                 {
                     "path": "/api/v1/characters",
                     "method": "POST",
                     "summary": "Create new character",
-                    "description": "Create a new character with detailed attributes",
+                    "description": "Create a new character with detailed "
+                    "attributes",
                     "category": "Characters",
                 },
                 {
                     "path": "/api/v1/stories/generate",
                     "method": "POST",
                     "summary": "Generate story",
-                    "description": "Generate a new story with specified parameters",
+                    "description": "Generate a new story with specified "
+                    "parameters",
                     "category": "Stories",
                 },
                 {
@@ -458,7 +553,8 @@ novel-engine stories generate --title "My Story"</code></pre>
                     "path": "/api/v1/narratives/emergent/generate",
                     "method": "POST",
                     "summary": "Generate emergent narrative",
-                    "description": "Generate emergent narrative based on interactions",
+                    "description": "Generate emergent narrative based on "
+                    "interactions",
                     "category": "Narrative",
                 },
             ],
@@ -472,23 +568,38 @@ novel-engine stories generate --title "My Story"</code></pre>
             "features": [
                 {
                     "title": "Character Management",
-                    "description": "Create, modify, and manage complex character profiles with personality traits, backgrounds, and relationships.",
+                    "description": (
+                        "Create, modify, and manage complex character profiles "
+                        "with personality traits, backgrounds, and relationships."
+                    ),
                 },
                 {
                     "title": "Story Generation",
-                    "description": "Generate dynamic stories with multiple characters, complex plots, and narrative coherence.",
+                    "description": (
+                        "Generate dynamic stories with multiple characters, "
+                        "complex plots, and narrative coherence."
+                    ),
                 },
                 {
                     "title": "Subjective Reality",
-                    "description": "Each character has their own perspective and knowledge base, creating realistic interactions.",
+                    "description": (
+                        "Each character has their own perspective and "
+                        "knowledge base, creating realistic interactions."
+                    ),
                 },
                 {
                     "title": "Emergent Narratives",
-                    "description": "Stories emerge naturally from character interactions and causal relationships.",
+                    "description": (
+                        "Stories emerge naturally from character interactions "
+                        "and causal relationships."
+                    ),
                 },
                 {
                     "title": "Context7 Integration",
-                    "description": "Enhanced documentation with interactive examples and framework best practices.",
+                    "description": (
+                        "Enhanced documentation with interactive examples and "
+                        "framework best practices."
+                    ),
                 },
             ],
         }
@@ -509,8 +620,12 @@ novel-engine stories generate --title "My Story"</code></pre>
                 # This would call the Context7 API to generate examples
                 example = {
                     "format": format_type,
-                    "language": format_type if format_type != "curl" else "bash",
-                    "code": self._generate_example_code(endpoint_path, format_type),
+                    "language": (
+                        format_type if format_type != "curl" else "bash"
+                    ),
+                    "code": self._generate_example_code(
+                        endpoint_path, format_type
+                    ),
                     "explanation": f"Example usage in {format_type}",
                 }
                 examples.append(example)
@@ -519,17 +634,25 @@ novel-engine stories generate --title "My Story"</code></pre>
 
         except Exception as e:
             logger.warning(
-                f"Failed to generate Context7 examples for {endpoint_path}: {e}"
+                f"Failed to generate Context7 examples for "
+                f"{endpoint_path}: {e}"
             )
             return self._get_fallback_examples(endpoint_path)
 
-    def _get_fallback_examples(self, endpoint_path: str) -> List[Dict[str, Any]]:
+    def _get_fallback_examples(
+        self, endpoint_path: str
+    ) -> List[Dict[str, Any]]:
         """Get fallback examples when Context7 is not available."""
         return [
             {
                 "format": "python",
                 "language": "python",
-                "code": f'import httpx\nresponse = await httpx.get("http://localhost:8000{endpoint_path}")\nprint(response.json())',
+                "code": (
+                    f"import httpx\n"
+                    f"response = await httpx.get("
+                    f'"http://localhost:8000{endpoint_path}")\n'
+                    f"print(response.json())"
+                ),
                 "explanation": "Basic Python example using httpx",
             },
             {
@@ -540,7 +663,9 @@ novel-engine stories generate --title "My Story"</code></pre>
             },
         ]
 
-    def _generate_example_code(self, endpoint_path: str, format_type: str) -> str:
+    def _generate_example_code(
+        self, endpoint_path: str, format_type: str
+    ) -> str:
         """Generate example code for different formats."""
         if format_type == "python":
             return f"""import httpx
@@ -555,11 +680,17 @@ async def call_api():
 result = asyncio.run(call_api())
 print(result)"""
         elif format_type == "curl":
-            return f'curl -X GET "http://localhost:8000{endpoint_path}" -H "Content-Type: application/json"'
+            return (
+                f'curl -X GET "http://localhost:8000{endpoint_path}" '
+                f'-H "Content-Type: application/json"'
+            )
         elif format_type == "javascript":
-            return f"""const response = await fetch('http://localhost:8000{endpoint_path}');
-const data = await response.json();
-console.log(data);"""
+            return (
+                f"const response = await fetch("
+                f"'http://localhost:8000{endpoint_path}');\n"
+                f"const data = await response.json();\n"
+                f"console.log(data);"
+            )
         else:
             return f"# Example for {endpoint_path} in {format_type}"
 
@@ -578,9 +709,12 @@ console.log(data);"""
             template = self.template_env.get_template("enhanced_docs.html")
             return template.render(
                 title="Novel Engine API Documentation",
-                description="Comprehensive API documentation with Context7-powered examples",
+                description="Comprehensive API documentation with "
+                "Context7-powered examples",
                 version="1.1.0",
-                overview="The Novel Engine API provides a powerful framework for creating dynamic, narrative-driven experiences with intelligent character interactions and emergent storytelling.",
+                overview="The Novel Engine API provides a powerful framework "
+                "for creating dynamic, narrative-driven experiences with "
+                "intelligent character interactions and emergent storytelling.",
                 endpoints=enhanced_endpoints,
                 features=self._api_inventory["features"],
             )
@@ -597,8 +731,18 @@ console.log(data);"""
         <head>
             <title>Novel Engine API Documentation</title>
             <style>
-                body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
-                .endpoint { border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px; }
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 20px;
+                    max-width: 800px;
+                    margin: 0 auto;
+                }
+                .endpoint {
+                    border: 1px solid #ddd;
+                    margin: 10px 0;
+                    padding: 15px;
+                    border-radius: 5px;
+                }
                 .method { font-weight: bold; color: #007bff; }
                 pre { background: #f8f9fa; padding: 10px; border-radius: 3px; }
             </style>
@@ -624,7 +768,9 @@ console.log(data);"""
             return await self.generate_enhanced_documentation()
 
         @app.get(
-            "/api/documentation", response_class=HTMLResponse, include_in_schema=False
+            "/api/documentation",
+            response_class=HTMLResponse,
+            include_in_schema=False,
         )
         async def api_documentation():
             """API documentation endpoint."""
@@ -637,7 +783,8 @@ console.log(data);"""
                 "info": {
                     "name": "Novel Engine API",
                     "version": "1.1.0",
-                    "description": "Comprehensive API collection for Novel Engine",
+                    "description": "Comprehensive API collection for "
+                    "Novel Engine",
                 },
                 "item": [
                     {
@@ -657,7 +804,10 @@ console.log(data);"""
                         "request": {
                             "method": "GET",
                             "header": [
-                                {"key": "Authorization", "value": "Bearer {{token}}"}
+                                {
+                                    "key": "Authorization",
+                                    "value": "Bearer {{token}}",
+                                }
                             ],
                             "url": {
                                 "raw": "{{base_url}}/api/v1/characters",
@@ -676,6 +826,9 @@ console.log(data);"""
             return JSONResponse(
                 content=collection,
                 headers={
-                    "Content-Disposition": "attachment; filename=novel-engine-api.postman_collection.json"
+                    "Content-Disposition": (
+                        "attachment; "
+                        "filename=novel-engine-api.postman_collection.json"
+                    )
                 },
             )

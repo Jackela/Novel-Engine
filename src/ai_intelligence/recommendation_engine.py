@@ -149,7 +149,9 @@ class RecommendationEngine:
 
         # Core data structures
         self.user_profiles: Dict[str, UserProfile] = {}
-        self.recommendations_cache: Dict[str, List[Recommendation]] = defaultdict(list)
+        self.recommendations_cache: Dict[
+            str, List[Recommendation]
+        ] = defaultdict(list)
         self.similarity_matrix: Dict[Tuple[str, str], float] = {}
 
         # Content knowledge base
@@ -185,7 +187,12 @@ class RecommendationEngine:
         # Genre characteristics
         self.genre_characteristics = {
             "science_fiction": {
-                "themes": ["technology", "future", "space", "artificial_intelligence"],
+                "themes": [
+                    "technology",
+                    "future",
+                    "space",
+                    "artificial_intelligence",
+                ],
                 "settings": [
                     "spaceship",
                     "alien_world",
@@ -210,22 +217,45 @@ class RecommendationEngine:
                     "mythical_realm",
                 ],
                 "character_types": ["wizard", "warrior", "elf", "dragon"],
-                "plot_elements": ["hero_journey", "magical_conflict", "prophecy"],
+                "plot_elements": [
+                    "hero_journey",
+                    "magical_conflict",
+                    "prophecy",
+                ],
                 "tone": ["epic", "mystical", "adventurous"],
                 "complexity": "medium",
             },
             "mystery": {
                 "themes": ["investigation", "secrets", "justice", "deduction"],
                 "settings": ["crime_scene", "city", "mansion", "small_town"],
-                "character_types": ["detective", "suspect", "witness", "victim"],
-                "plot_elements": ["clues", "red_herrings", "revelation", "twist"],
+                "character_types": [
+                    "detective",
+                    "suspect",
+                    "witness",
+                    "victim",
+                ],
+                "plot_elements": [
+                    "clues",
+                    "red_herrings",
+                    "revelation",
+                    "twist",
+                ],
                 "tone": ["suspenseful", "analytical", "dark"],
                 "complexity": "high",
             },
             "romance": {
                 "themes": ["love", "relationships", "passion", "commitment"],
-                "settings": ["romantic_location", "everyday_setting", "exotic_place"],
-                "character_types": ["lover", "romantic_interest", "friend", "rival"],
+                "settings": [
+                    "romantic_location",
+                    "everyday_setting",
+                    "exotic_place",
+                ],
+                "character_types": [
+                    "lover",
+                    "romantic_interest",
+                    "friend",
+                    "rival",
+                ],
                 "plot_elements": [
                     "meet_cute",
                     "conflict",
@@ -241,7 +271,11 @@ class RecommendationEngine:
         self.character_archetypes = {
             "hero": {
                 "traits": ["brave", "determined", "moral", "protective"],
-                "motivations": ["save_others", "fight_evil", "achieve_justice"],
+                "motivations": [
+                    "save_others",
+                    "fight_evil",
+                    "achieve_justice",
+                ],
                 "growth_arcs": ["reluctant_hero", "fallen_hero", "chosen_one"],
             },
             "mentor": {
@@ -250,14 +284,27 @@ class RecommendationEngine:
                 "growth_arcs": ["passing_torch", "final_lesson", "redemption"],
             },
             "villain": {
-                "traits": ["ambitious", "ruthless", "intelligent", "charismatic"],
+                "traits": [
+                    "ambitious",
+                    "ruthless",
+                    "intelligent",
+                    "charismatic",
+                ],
                 "motivations": ["power", "revenge", "ideology", "survival"],
                 "growth_arcs": ["corruption", "downfall", "redemption"],
             },
             "companion": {
                 "traits": ["loyal", "supportive", "complementary", "growth"],
-                "motivations": ["friendship", "shared_goal", "personal_growth"],
-                "growth_arcs": ["coming_of_age", "finding_purpose", "sacrifice"],
+                "motivations": [
+                    "friendship",
+                    "shared_goal",
+                    "personal_growth",
+                ],
+                "growth_arcs": [
+                    "coming_of_age",
+                    "finding_purpose",
+                    "sacrifice",
+                ],
             },
         }
 
@@ -280,13 +327,21 @@ class RecommendationEngine:
                 "pacing": "rapid",
             },
             "dialogue_heavy": {
-                "characteristics": ["character_interaction", "voice", "personality"],
+                "characteristics": [
+                    "character_interaction",
+                    "voice",
+                    "personality",
+                ],
                 "sentence_structure": "conversational",
                 "vocabulary": "character_specific",
                 "pacing": "character_driven",
             },
             "introspective": {
-                "characteristics": ["internal_thoughts", "psychological", "depth"],
+                "characteristics": [
+                    "internal_thoughts",
+                    "psychological",
+                    "depth",
+                ],
                 "sentence_structure": "flowing_reflective",
                 "vocabulary": "emotional_nuanced",
                 "pacing": "contemplative",
@@ -310,8 +365,10 @@ class RecommendationEngine:
             profile = self.user_profiles[user_id]
 
             # Extract preferences from interaction data
-            extracted_preferences = await self._extract_preferences_from_interaction(
-                interaction_data
+            extracted_preferences = (
+                await self._extract_preferences_from_interaction(
+                    interaction_data
+                )
             )
 
             # Update existing preferences or create new ones
@@ -328,7 +385,9 @@ class RecommendationEngine:
             await self._update_similarity_groups(user_id)
 
             # Update profile completeness
-            profile.profile_completeness = self._calculate_profile_completeness(profile)
+            profile.profile_completeness = (
+                self._calculate_profile_completeness(profile)
+            )
             profile.last_updated = datetime.now()
 
             logger.info(
@@ -336,7 +395,9 @@ class RecommendationEngine:
             )
 
         except Exception as e:
-            logger.error(f"Failed to learn user preferences for {user_id}: {e}")
+            logger.error(
+                f"Failed to learn user preferences for {user_id}: {e}"
+            )
 
     async def generate_recommendations(
         self,
@@ -373,7 +434,9 @@ class RecommendationEngine:
             if cache_key in self.recommendations_cache:
                 cached_recommendations = self.recommendations_cache[cache_key]
                 if self._is_cache_valid(cached_recommendations):
-                    logger.info(f"Returning cached recommendations for {user_id}")
+                    logger.info(
+                        f"Returning cached recommendations for {user_id}"
+                    )
                     return cached_recommendations[:max_recommendations]
 
             # Generate fresh recommendations
@@ -384,8 +447,10 @@ class RecommendationEngine:
                 recommendation_types = list(RecommendationType)
 
             for rec_type in recommendation_types:
-                type_recommendations = await self._generate_typed_recommendations(
-                    profile, context, rec_type
+                type_recommendations = (
+                    await self._generate_typed_recommendations(
+                        profile, context, rec_type
+                    )
                 )
                 recommendations.extend(type_recommendations)
 
@@ -448,13 +513,19 @@ class RecommendationEngine:
             profile.feedback_history[recommendation_id] = feedback
 
             # Learn from feedback
-            await self._learn_from_feedback(profile, recommendation, feedback, context)
+            await self._learn_from_feedback(
+                profile, recommendation, feedback, context
+            )
 
             # Update preference weights based on feedback
-            await self._update_preference_weights(profile, recommendation, feedback)
+            await self._update_preference_weights(
+                profile, recommendation, feedback
+            )
 
             # Update collaborative filtering data
-            await self._update_collaborative_data(user_id, recommendation, feedback)
+            await self._update_collaborative_data(
+                user_id, recommendation, feedback
+            )
 
             logger.info(
                 f"Applied feedback '{feedback}' for recommendation {recommendation_id}"
@@ -484,15 +555,18 @@ class RecommendationEngine:
             adapted_context = story_context.copy()
 
             # Adapt genre preferences
-            if "genre" not in adapted_context or adapted_context["genre"] is None:
+            if (
+                "genre" not in adapted_context
+                or adapted_context["genre"] is None
+            ):
                 preferred_genre = await self._get_preferred_genre(profile)
                 if preferred_genre:
                     adapted_context["genre"] = preferred_genre
 
             # Adapt character preferences
-            adapted_context["character_suggestions"] = (
-                await self._get_preferred_characters(profile)
-            )
+            adapted_context[
+                "character_suggestions"
+            ] = await self._get_preferred_characters(profile)
 
             # Adapt writing style
             preferred_style = await self._get_preferred_style(profile)
@@ -500,7 +574,9 @@ class RecommendationEngine:
                 adapted_context["writing_style"] = preferred_style
 
             # Adapt complexity level
-            preferred_complexity = await self._get_preferred_complexity(profile)
+            preferred_complexity = await self._get_preferred_complexity(
+                profile
+            )
             if preferred_complexity:
                 adapted_context["complexity"] = preferred_complexity
 
@@ -518,7 +594,9 @@ class RecommendationEngine:
             adapted_context["personalization"] = {
                 "user_id": user_id,
                 "profile_completeness": profile.profile_completeness,
-                "adaptation_confidence": self._calculate_adaptation_confidence(profile),
+                "adaptation_confidence": self._calculate_adaptation_confidence(
+                    profile
+                ),
                 "applied_adaptations": list(adapted_context.keys()),
             }
 
@@ -546,18 +624,24 @@ class RecommendationEngine:
             profile = self.user_profiles[user_id]
 
             # Analyze preference patterns
-            preference_analysis = await self._analyze_preference_patterns(profile)
-
-            # Analyze behavioral patterns
-            behavior_analysis = await self._analyze_behavioral_patterns(profile)
-
-            # Calculate recommendation effectiveness
-            rec_effectiveness = await self._calculate_recommendation_effectiveness(
+            preference_analysis = await self._analyze_preference_patterns(
                 profile
             )
 
+            # Analyze behavioral patterns
+            behavior_analysis = await self._analyze_behavioral_patterns(
+                profile
+            )
+
+            # Calculate recommendation effectiveness
+            rec_effectiveness = (
+                await self._calculate_recommendation_effectiveness(profile)
+            )
+
             # Generate improvement suggestions
-            suggestions = await self._generate_profile_improvement_suggestions(profile)
+            suggestions = await self._generate_profile_improvement_suggestions(
+                profile
+            )
 
             insights = {
                 "user_id": user_id,
@@ -574,7 +658,9 @@ class RecommendationEngine:
                 "preference_evolution": await self._analyze_preference_evolution(
                     profile
                 ),
-                "similarity_insights": await self._get_similarity_insights(user_id),
+                "similarity_insights": await self._get_similarity_insights(
+                    user_id
+                ),
                 "improvement_suggestions": suggestions,
             }
 
@@ -598,13 +684,19 @@ class RecommendationEngine:
                 if user_id not in self.user_profiles:
                     self.user_profiles[user_id] = UserProfile(user_id=user_id)
 
-                await self._update_single_preference(user_id, preference_type, data)
+                await self._update_single_preference(
+                    user_id, preference_type, data
+                )
 
             # Recalculate similarity matrix for affected users
-            affected_users = list(set(user_id for user_id, _, _ in preference_updates))
+            affected_users = list(
+                set(user_id for user_id, _, _ in preference_updates)
+            )
             await self._batch_update_similarity_matrix(affected_users)
 
-            logger.info(f"Batch updated preferences for {len(affected_users)} users")
+            logger.info(
+                f"Batch updated preferences for {len(affected_users)} users"
+            )
 
         except Exception as e:
             logger.error(f"Failed to batch update preferences: {e}")
@@ -619,7 +711,9 @@ class RecommendationEngine:
 
         # Extract explicit preferences
         if "explicit_preferences" in interaction_data:
-            for category, value in interaction_data["explicit_preferences"].items():
+            for category, value in interaction_data[
+                "explicit_preferences"
+            ].items():
                 preferences.append(
                     {
                         "type": PreferenceType.EXPLICIT,
@@ -739,16 +833,22 @@ class RecommendationEngine:
             if "session_duration" in session_data:
                 if "session_durations" not in patterns:
                     patterns["session_durations"] = []
-                patterns["session_durations"].append(session_data["session_duration"])
+                patterns["session_durations"].append(
+                    session_data["session_duration"]
+                )
                 # Keep only last 20 sessions
-                patterns["session_durations"] = patterns["session_durations"][-20:]
+                patterns["session_durations"] = patterns["session_durations"][
+                    -20:
+                ]
 
     async def _update_preference_vectors(self, profile: UserProfile):
         """Update user preference vectors for similarity calculation."""
         vectors = {}
 
         # Create vectors for different categories
-        categories = set(pref.category for pref in profile.preferences.values())
+        categories = set(
+            pref.category for pref in profile.preferences.values()
+        )
 
         for category in categories:
             category_prefs = [
@@ -805,11 +905,14 @@ class RecommendationEngine:
                 user_id=context.user_id,
                 recommendation_type=RecommendationType.GENRE,
                 title=f"Try {genre.replace('_', ' ').title()}",
-                description=f"Popular {genre.replace('_', ' ')} stories are trending",
+                description=f"Popular {genre.replace( '_', ' ')} stories are trending",
                 target_value=genre,
                 confidence=ConfidenceLevel.MEDIUM,
                 score=0.7 - (i * 0.1),
-                reasoning=["Popular genre for new users", "High engagement rates"],
+                reasoning=[
+                    "Popular genre for new users",
+                    "High engagement rates",
+                ],
                 metadata={"is_trending": True, "new_user_rec": True},
             )
             recommendations.append(rec)
@@ -879,7 +982,9 @@ class RecommendationEngine:
         }
 
         # Get similar users' preferences
-        similar_genres = await self._get_collaborative_genre_preferences(profile)
+        similar_genres = await self._get_collaborative_genre_preferences(
+            profile
+        )
 
         # Combine content-based and collaborative filtering
         all_genres = set(self.genre_characteristics.keys())
@@ -889,7 +994,9 @@ class RecommendationEngine:
                 continue  # Skip already preferred genres
 
             # Calculate recommendation score
-            content_score = await self._calculate_genre_content_score(profile, genre)
+            content_score = await self._calculate_genre_content_score(
+                profile, genre
+            )
             collaborative_score = similar_genres.get(genre, 0.0)
 
             final_score = content_score * 0.6 + collaborative_score * 0.4
@@ -900,7 +1007,7 @@ class RecommendationEngine:
                     user_id=profile.user_id,
                     recommendation_type=RecommendationType.GENRE,
                     title=f"Try {genre.replace('_', ' ').title()}",
-                    description=f"Based on your interests, you might enjoy {genre.replace('_', ' ')} stories",
+                    description=f"Based on your interests, you might enjoy {genre.replace( '_', ' ')} stories",
                     target_value=genre,
                     confidence=self._score_to_confidence(final_score),
                     score=final_score,
@@ -935,8 +1042,10 @@ class RecommendationEngine:
                 continue
 
             # Calculate compatibility with user preferences
-            compatibility_score = await self._calculate_character_compatibility(
-                profile, archetype
+            compatibility_score = (
+                await self._calculate_character_compatibility(
+                    profile, archetype
+                )
             )
 
             if compatibility_score > 0.5:
@@ -953,7 +1062,9 @@ class RecommendationEngine:
                         "Complements your existing preferences",
                         "Popular in similar stories",
                     ],
-                    metadata={"archetype_traits": characteristics.get("traits", [])},
+                    metadata={
+                        "archetype_traits": characteristics.get("traits", [])
+                    },
                 )
                 recommendations.append(rec)
 
@@ -994,7 +1105,7 @@ class RecommendationEngine:
                     user_id=profile.user_id,
                     recommendation_type=RecommendationType.WRITING_STYLE,
                     title=f"Try {style.replace('_', ' ').title()} Style",
-                    description=f"Experiment with {style.replace('_', ' ')} writing",
+                    description=f"Experiment with {style.replace( '_', ' ')} writing",
                     target_value=style,
                     confidence=self._score_to_confidence(style_score),
                     score=style_score,
@@ -1036,11 +1147,14 @@ class RecommendationEngine:
             )
 
             # Adjust score based on context
-            context_adjustment = await self._calculate_context_adjustment(context, rec)
+            context_adjustment = await self._calculate_context_adjustment(
+                context, rec
+            )
 
             # Apply adjustments
             rec.score = max(
-                0.0, min(1.0, rec.score + feedback_adjustment + context_adjustment)
+                0.0,
+                min(1.0, rec.score + feedback_adjustment + context_adjustment),
             )
 
             # Update confidence based on final score
@@ -1167,7 +1281,9 @@ class RecommendationEngine:
 
     # Additional methods for specific recommendation types...
 
-    async def _get_preferred_genre(self, profile: UserProfile) -> Optional[str]:
+    async def _get_preferred_genre(
+        self, profile: UserProfile
+    ) -> Optional[str]:
         """Get user's most preferred genre."""
         genre_prefs = [
             (pref.value, pref.weight * pref.confidence)
@@ -1180,7 +1296,9 @@ class RecommendationEngine:
 
         return max(genre_prefs, key=lambda x: x[1])[0]
 
-    async def _get_preferred_characters(self, profile: UserProfile) -> List[str]:
+    async def _get_preferred_characters(
+        self, profile: UserProfile
+    ) -> List[str]:
         """Get user's preferred character types."""
         char_prefs = [
             (pref.value, pref.weight * pref.confidence)
@@ -1192,7 +1310,9 @@ class RecommendationEngine:
         char_prefs.sort(key=lambda x: x[1], reverse=True)
         return [char for char, _ in char_prefs[:5]]
 
-    async def _get_preferred_style(self, profile: UserProfile) -> Optional[str]:
+    async def _get_preferred_style(
+        self, profile: UserProfile
+    ) -> Optional[str]:
         """Get user's preferred writing style."""
         style_prefs = [
             (pref.value, pref.weight * pref.confidence)
@@ -1205,7 +1325,9 @@ class RecommendationEngine:
 
         return max(style_prefs, key=lambda x: x[1])[0]
 
-    async def _get_preferred_complexity(self, profile: UserProfile) -> Optional[str]:
+    async def _get_preferred_complexity(
+        self, profile: UserProfile
+    ) -> Optional[str]:
         """Get user's preferred complexity level."""
         complexity_prefs = [
             (pref.value, pref.weight * pref.confidence)
@@ -1231,7 +1353,9 @@ class RecommendationEngine:
 
         return max(tone_prefs, key=lambda x: x[1])[0]
 
-    async def _get_preferred_length(self, profile: UserProfile) -> Optional[int]:
+    async def _get_preferred_length(
+        self, profile: UserProfile
+    ) -> Optional[int]:
         """Get user's preferred story length."""
         if "usage_patterns" not in profile.behavioral_patterns:
             return None
@@ -1283,7 +1407,10 @@ class RecommendationEngine:
         pass
 
     async def _update_preference_weights(
-        self, profile: UserProfile, recommendation: Recommendation, feedback: str
+        self,
+        profile: UserProfile,
+        recommendation: Recommendation,
+        feedback: str,
     ):
         """Update preference weights based on feedback."""
         # Implementation would adjust preference weights
@@ -1322,7 +1449,9 @@ class RecommendationEngine:
         """Generate suggestions for improving user profile."""
         return ["Suggestion placeholder"]
 
-    def _get_top_preferences(self, profile: UserProfile) -> List[Dict[str, Any]]:
+    def _get_top_preferences(
+        self, profile: UserProfile
+    ) -> List[Dict[str, Any]]:
         """Get top user preferences."""
         top_prefs = sorted(
             profile.preferences.values(),
@@ -1396,7 +1525,10 @@ class RecommendationEngine:
         return 0.6
 
     async def _calculate_style_compatibility(
-        self, profile: UserProfile, style: str, genre_preferences: Dict[str, float]
+        self,
+        profile: UserProfile,
+        style: str,
+        genre_preferences: Dict[str, float],
     ) -> float:
         """Calculate writing style compatibility."""
         return 0.5

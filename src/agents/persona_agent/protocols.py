@@ -73,7 +73,8 @@ class SubjectiveInterpretation:
     belief_impact: Dict[str, float]  # Changes to beliefs (-1.0 to 1.0)
     threat_assessment: ThreatLevel = ThreatLevel.NEGLIGIBLE
     relationship_changes: Dict[str, float] = None  # Changes to relationships
-    memory_priority: float = 0.5  # How likely this is to be remembered (0.0 to 1.0)
+    # How likely this is to be remembered (0.0 to 1.0)
+    memory_priority: float = 0.5
 
     def __post_init__(self):
         if self.belief_impact is None:
@@ -93,7 +94,9 @@ class CharacterDataManagerProtocol(Protocol):
         ...
 
     @abstractmethod
-    async def validate_character_data(self, character_data: Dict[str, Any]) -> bool:
+    async def validate_character_data(
+        self, character_data: Dict[str, Any]
+    ) -> bool:
         """Validate character data structure."""
         ...
 
@@ -139,7 +142,9 @@ class WorldInterpretationProtocol(Protocol):
         ...
 
     @abstractmethod
-    async def update_worldview(self, interpretation: SubjectiveInterpretation) -> None:
+    async def update_worldview(
+        self, interpretation: SubjectiveInterpretation
+    ) -> None:
         """Update character's worldview based on event interpretation."""
         ...
 

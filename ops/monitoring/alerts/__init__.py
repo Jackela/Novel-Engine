@@ -45,9 +45,7 @@ def create_alert_rule(name: str, **kwargs) -> str:
     Returns:
         str: Alert rule ID
     """
-    rule_id = (
-        f"alert-{name.lower().replace(' ', '-')}-{datetime.now().strftime('%Y%m%d')}"
-    )
+    rule_id = f"alert-{name.lower().replace(' ', '-')}-{datetime.now().strftime('%Y%m%d')}"
 
     {
         "rule_id": rule_id,
@@ -115,7 +113,9 @@ def setup_notification_channel(channel_type: str, **kwargs) -> str:
         "webhook": {
             "url": kwargs.get("url"),
             "method": kwargs.get("method", "POST"),
-            "headers": kwargs.get("headers", {"Content-Type": "application/json"}),
+            "headers": kwargs.get(
+                "headers", {"Content-Type": "application/json"}
+            ),
             "body_template": kwargs.get("body_template", "{{ toJson . }}"),
         },
     }
@@ -210,7 +210,10 @@ def get_active_alerts(severity: Optional[str] = None) -> List[Dict[str, Any]]:
             "severity": "critical",
             "status": "firing",
             "started_at": "2024-12-28T10:15:00Z",
-            "labels": {"service": "novel-engine-api", "environment": "production"},
+            "labels": {
+                "service": "novel-engine-api",
+                "environment": "production",
+            },
             "annotations": {
                 "summary": "High error rate detected",
                 "description": "Error rate is 8.5% for the last 5 minutes",
@@ -239,7 +242,9 @@ def get_active_alerts(severity: Optional[str] = None) -> List[Dict[str, Any]]:
     ]
 
     if severity:
-        all_alerts = [alert for alert in all_alerts if alert["severity"] == severity]
+        all_alerts = [
+            alert for alert in all_alerts if alert["severity"] == severity
+        ]
 
     return all_alerts
 

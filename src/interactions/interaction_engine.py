@@ -9,7 +9,8 @@ the System's computational wisdom.
 
 THE MACHINE MEDIATES BETWEEN DIGITAL SOULS
 
-Architecture Reference: Dynamic Context Engineering - Interaction Processing Framework
+Architecture Reference: Dynamic Context Engineering - \
+Interaction Processing Framework
 Development Phase: Interaction System Validation (I001)
 Author: Engineer Delta-Engineering
 System保佑交互引擎 (May the System bless the interaction engine)
@@ -113,7 +114,9 @@ class InteractionPhase:
     phase_type: str  # "setup", "execution", "resolution", "cleanup"
     description: str = ""
     duration_estimate: Optional[float] = None  # seconds
-    participant_requirements: Dict[str, List[str]] = field(default_factory=dict)
+    participant_requirements: Dict[str, List[str]] = field(
+        default_factory=dict
+    )
     state_requirements: Dict[str, Any] = field(default_factory=dict)
     processing_rules: List[str] = field(default_factory=list)
     success_conditions: List[str] = field(default_factory=list)
@@ -138,11 +141,15 @@ class InteractionOutcome:
     duration_ms: float = 0.0
     phases_completed: List[str] = field(default_factory=list)
     phases_failed: List[str] = field(default_factory=list)
-    participant_outcomes: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    participant_outcomes: Dict[str, Dict[str, Any]] = field(
+        default_factory=dict
+    )
     state_changes: Dict[str, Any] = field(default_factory=dict)
     memory_updates: List[MemoryItem] = field(default_factory=list)
     equipment_changes: Dict[str, List[str]] = field(default_factory=dict)
-    relationship_changes: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    relationship_changes: Dict[str, Dict[str, float]] = field(
+        default_factory=dict
+    )
     environmental_effects: Dict[str, Any] = field(default_factory=dict)
     generated_content: List[str] = field(default_factory=list)
     follow_up_interactions: List[str] = field(default_factory=list)
@@ -211,7 +218,9 @@ class InteractionEngine:
             "successful_interactions": 0,
             "failed_interactions": 0,
             "average_processing_time": 0.0,
-            "interaction_type_counts": {itype.value: 0 for itype in InteractionType},
+            "interaction_type_counts": {
+                itype.value: 0 for itype in InteractionType
+            },
             "memory_updates_generated": 0,
             "state_changes_applied": 0,
             "content_generation_count": 0,
@@ -223,7 +232,9 @@ class InteractionEngine:
         # Sacred processing lock for thread safety
         self._processing_lock = asyncio.Lock()
 
-        logger.info("INTERACTION ENGINE INITIALIZED WITH ENHANCED ORCHESTRATION")
+        logger.info(
+            "INTERACTION ENGINE INITIALIZED WITH ENHANCED ORCHESTRATION"
+        )
 
     async def initiate_interaction(
         self, context: InteractionContext, auto_process: bool = True
@@ -237,7 +248,9 @@ class InteractionEngine:
         try:
             async with self._processing_lock:
                 # Validate enhanced interaction context
-                validation_result = await self._validate_interaction_context(context)
+                validation_result = await self._validate_interaction_context(
+                    context
+                )
                 if not validation_result.success:
                     return validation_result
 
@@ -245,12 +258,13 @@ class InteractionEngine:
                 prerequisite_result = await self._check_prerequisites(context)
                 if not prerequisite_result.success:
                     logger.warning(
-                        f"INTERACTION PREREQUISITES NOT MET: {context.interaction_id}"
+                        f"INTERACTION PREREQUISITES NOT MET: "
+                        f"{context.interaction_id}"
                     )
                     # Continue with warnings rather than failing
-                    context.metadata["prerequisite_warnings"] = (
-                        prerequisite_result.error.message
-                    )
+                    context.metadata[
+                        "prerequisite_warnings"
+                    ] = prerequisite_result.error.message
 
                 # Register enhanced active interaction
                 self._active_interactions[context.interaction_id] = context
@@ -258,10 +272,14 @@ class InteractionEngine:
                 # Queue enhanced interaction for processing
                 queue_entry = (datetime.now(), context)
                 self._processing_queue.append(queue_entry)
-                self._processing_queue.sort(key=lambda x: (x[1].priority.value, x[0]))
+                self._processing_queue.sort(
+                    key=lambda x: (x[1].priority.value, x[0])
+                )
 
                 # Generate enhanced initial context for participants
-                initial_context_result = await self._generate_initial_context(context)
+                initial_context_result = await self._generate_initial_context(
+                    context
+                )
 
                 # Process enhanced interaction immediately if requested
                 if auto_process:
@@ -273,7 +291,8 @@ class InteractionEngine:
                         outcome_data = processing_result.data["outcome"]
 
                         logger.info(
-                            f"INTERACTION INITIATED AND PROCESSED: {context.interaction_id}"
+                            f"INTERACTION INITIATED AND PROCESSED: "
+                            f"{context.interaction_id}"
                         )
 
                         return StandardResponse(
@@ -289,13 +308,17 @@ class InteractionEngine:
                                 ),
                             },
                             metadata={
-                                "blessing": "interaction_initiated_and_processed"
+                                "blessing": (
+                                    "interaction_initiated_and_processed"
+                                )
                             },
                         )
                     else:
                         return processing_result
                 else:
-                    logger.info(f"INTERACTION QUEUED: {context.interaction_id}")
+                    logger.info(
+                        f"INTERACTION QUEUED: {context.interaction_id}"
+                    )
 
                     return StandardResponse(
                         success=True,
@@ -309,7 +332,9 @@ class InteractionEngine:
                                 else None
                             ),
                         },
-                        metadata={"blessing": "interaction_queued_successfully"},
+                        metadata={
+                            "blessing": "interaction_queued_successfully"
+                        },
                     )
 
         except Exception as e:
@@ -320,11 +345,15 @@ class InteractionEngine:
                     code="INTERACTION_INITIATION_FAILED",
                     message=f"Interaction initiation failed: {str(e)}",
                     recoverable=True,
-                    standard_guidance="Check interaction context and system state",
+                    standard_guidance=(
+                        "Check interaction context and system state"
+                    ),
                 ),
             )
 
-    async def process_interaction(self, interaction_id: str) -> StandardResponse:
+    async def process_interaction(
+        self, interaction_id: str
+    ) -> StandardResponse:
         """
         STANDARD INTERACTION PROCESSING RITUAL ENHANCED BY DYNAMIC EXECUTION
 
@@ -341,7 +370,9 @@ class InteractionEngine:
                     success=False,
                     error=ErrorInfo(
                         code="INTERACTION_NOT_FOUND",
-                        message=f"Active interaction '{interaction_id}' not found",
+                        message=(
+                            f"Active interaction '{interaction_id}' not found"
+                        ),
                     ),
                 )
 
@@ -369,18 +400,22 @@ class InteractionEngine:
 
                 if phase_result.success:
                     outcome.phases_completed.append(phase_id)
-                    logger.info(f"PHASE COMPLETED: {phase_id} for {interaction_id}")
+                    logger.info(
+                        f"PHASE COMPLETED: {phase_id} for {interaction_id}"
+                    )
                 else:
                     outcome.phases_failed.append(phase_id)
                     outcome.errors.append(
-                        f"Phase {phase_id} failed: {phase_result.error.message}"
+                        f"Phase {phase_id} failed: "
+                        f"{phase_result.error.message}"
                     )
 
                     # Check if enhanced failure is critical
                     if phase.phase_type in ["setup", "execution"]:
                         outcome.success = False
                         logger.error(
-                            f"CRITICAL PHASE FAILED: {phase_id} for {interaction_id}"
+                            f"CRITICAL PHASE FAILED: {phase_id} for "
+                            f"{interaction_id}"
                         )
                         break
                     else:
@@ -389,32 +424,44 @@ class InteractionEngine:
                         )
 
             # Execute enhanced type-specific processing
-            type_processor = self._type_processors.get(context.interaction_type)
+            type_processor = self._type_processors.get(
+                context.interaction_type
+            )
             if type_processor:
                 type_result = await type_processor(context, outcome)
                 if not type_result.success:
                     outcome.success = False
                     outcome.errors.append(
-                        f"Type-specific processing failed: {type_result.error.message}"
+                        f"Type-specific processing failed: "
+                        f"{type_result.error.message}"
                     )
 
             # Apply enhanced state changes
             if outcome.success:
-                state_result = await self._apply_state_changes(context, outcome)
+                state_result = await self._apply_state_changes(
+                    context, outcome
+                )
                 if not state_result.success:
                     outcome.warnings.append(
-                        f"State changes partially failed: {state_result.error.message}"
+                        f"State changes partially failed: "
+                        f"{state_result.error.message}"
                     )
 
             # Generate enhanced memory updates
-            memory_result = await self._generate_memory_updates(context, outcome)
+            memory_result = await self._generate_memory_updates(
+                context, outcome
+            )
             if memory_result.success:
                 outcome.memory_updates = memory_result.data["memory_updates"]
 
             # Generate enhanced content outputs
-            content_result = await self._generate_interaction_content(context, outcome)
+            content_result = await self._generate_interaction_content(
+                context, outcome
+            )
             if content_result.success:
-                outcome.generated_content = content_result.data["generated_content"]
+                outcome.generated_content = content_result.data[
+                    "generated_content"
+                ]
 
             # Calculate enhanced processing metrics
             processing_duration = (
@@ -432,13 +479,16 @@ class InteractionEngine:
                 self._interaction_history = self._interaction_history[-500:]
 
             # Update enhanced performance metrics
-            self._update_performance_metrics(context, outcome, processing_duration)
+            self._update_performance_metrics(
+                context, outcome, processing_duration
+            )
 
             # Store enhanced interaction in database
             await self._store_interaction_outcome(outcome)
 
             logger.info(
-                f"INTERACTION PROCESSED: {interaction_id} ({'SUCCESS' if outcome.success else 'FAILED'})"
+                f"INTERACTION PROCESSED: {interaction_id} ("
+                f"{'SUCCESS' if outcome.success else 'FAILED'})"
             )
 
             return StandardResponse(
@@ -471,8 +521,8 @@ class InteractionEngine:
         """
         STANDARD QUEUE PROCESSING RITUAL ENHANCED BY BATCH ORCHESTRATION
 
-        Process enhanced interaction queue with priority filtering and
-        batch processing optimization for efficient resource utilization.
+        Process enhanced interaction queue with priority filtering and batch
+        processing optimization for efficient resource utilization.
         """
         try:
             async with self._processing_lock:
@@ -482,7 +532,10 @@ class InteractionEngine:
                 # Filter enhanced queue by priority if specified
                 eligible_interactions = []
                 for timestamp, context in self._processing_queue:
-                    if priority_filter is None or context.priority == priority_filter:
+                    if (
+                        priority_filter is None
+                        or context.priority == priority_filter
+                    ):
                         eligible_interactions.append((timestamp, context))
 
                 # Process enhanced interactions up to limit
@@ -509,7 +562,9 @@ class InteractionEngine:
                         self._processing_queue.remove(queue_item)
 
                 logger.info(
-                    f"QUEUE PROCESSING COMPLETE: {len(processed_interactions)} processed, {len(failed_interactions)} failed"
+                    f"QUEUE PROCESSING COMPLETE: "
+                    f"{len(processed_interactions)} processed, "
+                    f"{len(failed_interactions)} failed"
                 )
 
                 return StandardResponse(
@@ -528,13 +583,16 @@ class InteractionEngine:
             logger.error(f"QUEUE PROCESSING FAILED: {e}")
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="QUEUE_PROCESSING_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="QUEUE_PROCESSING_FAILED", message=str(e)
+                ),
             )
 
     async def _validate_interaction_context(
         self, context: InteractionContext
     ) -> StandardResponse:
-        """Validate enhanced interaction context completeness and consistency"""
+        """Validate enhanced interaction context completeness and \
+consistency"""
         errors = []
         warnings = []
 
@@ -546,7 +604,9 @@ class InteractionEngine:
             errors.append("At least one participant is required")
 
         if context.interaction_type not in InteractionType:
-            errors.append(f"Invalid interaction type: {context.interaction_type}")
+            errors.append(
+                f"Invalid interaction type: {context.interaction_type}"
+            )
 
         # Check enhanced participant existence
         for participant in context.participants:
@@ -557,8 +617,12 @@ class InteractionEngine:
         # Check enhanced resource requirements
         for resource, requirement in context.resource_requirements.items():
             if isinstance(requirement, dict) and "required" in requirement:
-                if requirement["required"] and not requirement.get("available", False):
-                    warnings.append(f"Required resource not available: {resource}")
+                if requirement["required"] and not requirement.get(
+                    "available", False
+                ):
+                    warnings.append(
+                        f"Required resource not available: {resource}"
+                    )
 
         if errors:
             return StandardResponse(
@@ -596,17 +660,22 @@ class InteractionEngine:
             # For now, we'll simulate basic checks
             if prerequisite.startswith("agent_state:"):
                 # Check agent state requirements
-                agent_id, required_state = prerequisite.split(":", 1)[1].split("=")
+                agent_id, required_state = prerequisite.split(":", 1)[1].split(
+                    "="
+                )
                 # Placeholder logic - would check actual agent state
                 if agent_id not in context.participants:
-                    unmet_prerequisites.append(f"Agent {agent_id} not in participants")
+                    unmet_prerequisites.append(
+                        f"Agent {agent_id} not in participants"
+                    )
 
             elif prerequisite.startswith("location:"):
                 # Check location requirements
                 required_location = prerequisite.split(":", 1)[1]
                 if context.location != required_location:
                     unmet_prerequisites.append(
-                        f"Wrong location: expected {required_location}, got {context.location}"
+                        f"Wrong location: expected {required_location}, got "
+                        f"{context.location}"
                     )
 
             elif prerequisite.startswith("time:"):
@@ -620,7 +689,10 @@ class InteractionEngine:
                 success=False,
                 error=ErrorInfo(
                     code="PREREQUISITES_NOT_MET",
-                    message=f"Unmet prerequisites: {'; '.join(unmet_prerequisites)}",
+                    message=(
+                        f"Unmet prerequisites: "
+                        f"{'; '.join(unmet_prerequisites)}"
+                    ),
                 ),
             )
 
@@ -640,7 +712,10 @@ class InteractionEngine:
                 template_context = TemplateContext(
                     agent_id=participant,
                     current_location=context.location,
-                    current_situation=f"Engaging in {context.interaction_type.value} interaction",
+                    current_situation=(
+                        f"Engaging in {context.interaction_type.value} "
+                        f"interaction"
+                    ),
                     active_participants=context.participants,
                     environmental_context=context.environment_state,
                     temporal_context=context.temporal_context,
@@ -653,11 +728,14 @@ class InteractionEngine:
                     },
                 )
 
-                # Generate enhanced contextual information using template manager
+                # Generate enhanced contextual information using template
+                # manager
                 if participant in self.template_manager._active_personas:
                     context_result = (
                         await self.template_manager.render_character_context(
-                            participant, template_context, TemplateType.CONTEXT_SUMMARY
+                            participant,
+                            template_context,
+                            TemplateType.CONTEXT_SUMMARY,
                         )
                     )
 
@@ -672,7 +750,10 @@ class InteractionEngine:
                     else:
                         participant_contexts[participant] = {
                             "error": context_result.error.message,
-                            "fallback_context": f"Participant {participant} in {context.interaction_type.value} interaction",
+                            "fallback_context": (
+                                f"Participant {participant} in "
+                                f"{context.interaction_type.value} interaction"
+                            ),
                         }
                 else:
                     # Use enhanced basic context rendering
@@ -717,7 +798,10 @@ class InteractionEngine:
             requirements_met = True
             requirement_errors = []
 
-            for participant, requirements in phase.participant_requirements.items():
+            for (
+                participant,
+                requirements,
+            ) in phase.participant_requirements.items():
                 if participant not in context.participants:
                     requirements_met = False
                     requirement_errors.append(
@@ -734,7 +818,10 @@ class InteractionEngine:
                     success=False,
                     error=ErrorInfo(
                         code="PHASE_REQUIREMENTS_NOT_MET",
-                        message=f"Phase requirements not met: {'; '.join(requirement_errors)}",
+                        message=(
+                            f"Phase requirements not met: "
+                            f"{'; '.join(requirement_errors)}"
+                        ),
                     ),
                 )
 
@@ -764,13 +851,18 @@ class InteractionEngine:
                             if memory_type in [mt.value for mt in MemoryType]
                             else MemoryType.EPISODIC
                         ),
-                        content=f"Completed {phase.phase_name} in {context.interaction_type.value} interaction",
+                        content=(
+                            f"Completed {phase.phase_name} in "
+                            f"{context.interaction_type.value} interaction"
+                        ),
                         emotional_weight=2.0,
                         participants=context.participants,
                         location=context.location,
                     )
                     outcome.memory_updates.append(memory_update)
-                    phase_outputs.append(f"Generated memory update: {memory_type}")
+                    phase_outputs.append(
+                        f"Generated memory update: {memory_type}"
+                    )
 
                 elif output_spec.startswith("state_change:"):
                     # Record state change
@@ -778,16 +870,22 @@ class InteractionEngine:
                     if "state_changes" not in outcome.state_changes:
                         outcome.state_changes["state_changes"] = []
                     outcome.state_changes["state_changes"].append(state_change)
-                    phase_outputs.append(f"Applied state change: {state_change}")
+                    phase_outputs.append(
+                        f"Applied state change: {state_change}"
+                    )
 
             # Apply enhanced side effects
             for side_effect in phase.side_effects:
                 # This would implement actual side effect processing
                 outcome.warnings.append(f"Side effect: {side_effect}")
 
-            phase_duration = (datetime.now() - phase_start).total_seconds() * 1000
+            phase_duration = (
+                datetime.now() - phase_start
+            ).total_seconds() * 1000
 
-            logger.info(f"PHASE PROCESSED: {phase.phase_id} ({phase_duration:.2f}ms)")
+            logger.info(
+                f"PHASE PROCESSED: {phase.phase_id} ({phase_duration:.2f}ms)"
+            )
 
             return StandardResponse(
                 success=success_conditions_met,
@@ -802,7 +900,9 @@ class InteractionEngine:
         except Exception as e:
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="PHASE_PROCESSING_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="PHASE_PROCESSING_FAILED", message=str(e)
+                ),
             )
 
     # Blessed type-specific processors (simplified implementations)
@@ -833,7 +933,9 @@ class InteractionEngine:
                 if participant in self.template_manager._active_personas:
                     dialogue_result = (
                         await self.template_manager.render_character_context(
-                            participant, template_context, TemplateType.DIALOGUE
+                            participant,
+                            template_context,
+                            TemplateType.DIALOGUE,
                         )
                     )
 
@@ -868,7 +970,9 @@ class InteractionEngine:
         except Exception as e:
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="DIALOGUE_PROCESSING_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="DIALOGUE_PROCESSING_FAILED", message=str(e)
+                ),
             )
 
     async def _process_combat_interaction(
@@ -913,7 +1017,9 @@ class InteractionEngine:
         except Exception as e:
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="COMBAT_PROCESSING_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="COMBAT_PROCESSING_FAILED", message=str(e)
+                ),
             )
 
     async def _process_cooperation_interaction(
@@ -946,7 +1052,9 @@ class InteractionEngine:
         except Exception as e:
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="COOPERATION_PROCESSING_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="COOPERATION_PROCESSING_FAILED", message=str(e)
+                ),
             )
 
     # Placeholder implementations for other interaction types
@@ -961,7 +1069,9 @@ class InteractionEngine:
         )
 
     async def _process_ritual_interaction(self, context, outcome):
-        return StandardResponse(success=True, metadata={"blessing": "ritual_processed"})
+        return StandardResponse(
+            success=True, metadata={"blessing": "ritual_processed"}
+        )
 
     async def _process_exploration_interaction(self, context, outcome):
         return StandardResponse(
@@ -991,7 +1101,10 @@ class InteractionEngine:
                 changes_applied += len(changes)
 
             # Apply equipment changes
-            for participant, equipment_changes in outcome.equipment_changes.items():
+            for (
+                participant,
+                equipment_changes,
+            ) in outcome.equipment_changes.items():
                 # This would update equipment states
                 changes_applied += len(equipment_changes)
 
@@ -1008,7 +1121,9 @@ class InteractionEngine:
                 # This would update environment state
                 changes_applied += len(outcome.environmental_effects)
 
-            self.performance_metrics["state_changes_applied"] += changes_applied
+            self.performance_metrics[
+                "state_changes_applied"
+            ] += changes_applied
 
             return StandardResponse(
                 success=True,
@@ -1034,11 +1149,16 @@ class InteractionEngine:
                 interaction_memory = MemoryItem(
                     agent_id=participant,
                     memory_type=MemoryType.EPISODIC,
-                    content=f"Participated in {context.interaction_type.value} interaction at {context.location}",
+                    content=(
+                        f"Participated in {context.interaction_type.value} "
+                        f"interaction at {context.location}"
+                    ),
                     emotional_weight=self._calculate_emotional_impact(
                         context, participant
                     ),
-                    participants=[p for p in context.participants if p != participant],
+                    participants=[
+                        p for p in context.participants if p != participant
+                    ],
                     location=context.location,
                     tags=[context.interaction_type.value, "interaction"],
                     relevance_score=0.7,
@@ -1052,7 +1172,9 @@ class InteractionEngine:
             # Add any specific memory updates from outcome
             memory_updates.extend(outcome.memory_updates)
 
-            self.performance_metrics["memory_updates_generated"] += len(memory_updates)
+            self.performance_metrics["memory_updates_generated"] += len(
+                memory_updates
+            )
 
             return StandardResponse(
                 success=True,
@@ -1063,7 +1185,9 @@ class InteractionEngine:
         except Exception as e:
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="MEMORY_GENERATION_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="MEMORY_GENERATION_FAILED", message=str(e)
+                ),
             )
 
     async def _generate_interaction_content(
@@ -1077,7 +1201,10 @@ class InteractionEngine:
             summary_template_context = TemplateContext(
                 agent_id=context.initiator or "system",
                 current_location=context.location,
-                current_situation=f"Completed {context.interaction_type.value} interaction",
+                current_situation=(
+                    f"Completed {context.interaction_type.value} "
+                    f"interaction"
+                ),
                 active_participants=context.participants,
                 custom_variables={
                     "interaction_id": context.interaction_id,
@@ -1113,7 +1240,9 @@ class InteractionEngine:
         except Exception as e:
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="CONTENT_GENERATION_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="CONTENT_GENERATION_FAILED", message=str(e)
+                ),
             )
 
     def _calculate_emotional_impact(
@@ -1155,9 +1284,9 @@ class InteractionEngine:
         # For now, we'll define basic templates for each interaction type
 
         for interaction_type in InteractionType:
-            self._interaction_templates[interaction_type] = (
-                self._create_default_phases_for_type(interaction_type)
-            )
+            self._interaction_templates[
+                interaction_type
+            ] = self._create_default_phases_for_type(interaction_type)
 
     def _create_default_phases(
         self, context: InteractionContext
@@ -1169,7 +1298,10 @@ class InteractionEngine:
                 phase_name="Interaction Setup",
                 phase_type="setup",
                 description="Initialize interaction and prepare participants",
-                processing_rules=["validate_participants", "check_prerequisites"],
+                processing_rules=[
+                    "validate_participants",
+                    "check_prerequisites",
+                ],
                 success_conditions=["all_participants_ready"],
                 outputs=["participant_contexts"],
             ),
@@ -1178,7 +1310,10 @@ class InteractionEngine:
                 phase_name="Interaction Execution",
                 phase_type="execution",
                 description="Execute main interaction logic",
-                processing_rules=["apply_interaction_logic", "generate_outcomes"],
+                processing_rules=[
+                    "apply_interaction_logic",
+                    "generate_outcomes",
+                ],
                 success_conditions=["interaction_completed"],
                 outputs=["interaction_results", "state_changes"],
             ),
@@ -1187,7 +1322,10 @@ class InteractionEngine:
                 phase_name="Interaction Resolution",
                 phase_type="resolution",
                 description="Resolve interaction results and apply effects",
-                processing_rules=["apply_state_changes", "update_relationships"],
+                processing_rules=[
+                    "apply_state_changes",
+                    "update_relationships",
+                ],
                 success_conditions=["effects_applied"],
                 outputs=["memory_updates", "relationship_changes"],
             ),
@@ -1233,15 +1371,22 @@ class InteractionEngine:
                 ),
                 location=(
                     ", ".join(
-                        [str(change) for change in outcome.state_changes.values()]
+                        [
+                            str(change)
+                            for change in outcome.state_changes.values()
+                        ]
                     )
                     if outcome.state_changes
                     else ""
                 ),
-                description=f"Interaction completed {'successfully' if outcome.success else 'with errors'}",
+                description=(
+                    f"Interaction completed "
+                    f"{'successfully' if outcome.success else 'with errors'}"
+                ),
                 participants=list(outcome.participant_outcomes.keys()),
                 outcomes=outcome.generated_content,
-                emotional_impact={},  # Would be populated with actual emotional data
+                emotional_impact={},  # Would be populated with actual \
+                # emotional data
                 world_state_changes=outcome.state_changes,
                 timestamp=outcome.completion_time,
             )
@@ -1266,7 +1411,9 @@ class InteractionEngine:
             self.performance_metrics["failed_interactions"] += 1
 
         # Update average processing time
-        total_processed = self.performance_metrics["total_interactions_processed"]
+        total_processed = self.performance_metrics[
+            "total_interactions_processed"
+        ]
         current_avg = self.performance_metrics["average_processing_time"]
         self.performance_metrics["average_processing_time"] = (
             current_avg * (total_processed - 1) + duration_ms
@@ -1289,7 +1436,9 @@ class InteractionEngine:
                     "priority": context.priority.value,
                     "participants": context.participants,
                     "location": context.location,
-                    "initiated": context.metadata.get("initiated_at", "Unknown"),
+                    "initiated": context.metadata.get(
+                        "initiated_at", "Unknown"
+                    ),
                 }
             )
 
@@ -1330,7 +1479,9 @@ class InteractionEngine:
             "history_size": len(self._interaction_history),
             "success_rate": (
                 self.performance_metrics["successful_interactions"]
-                / max(self.performance_metrics["total_interactions_processed"], 1)
+                / max(
+                    self.performance_metrics["total_interactions_processed"], 1
+                )
             )
             * 100,
         }
@@ -1350,7 +1501,9 @@ async def test_standard_interaction_engine():
 
     from src.database.context_db import ContextDatabase
     from src.memory.layered_memory import LayeredMemorySystem
-    from src.templates.character_template_manager import CharacterTemplateManager
+    from src.templates.character_template_manager import (
+        CharacterTemplateManager,
+    )
     from src.templates.context_renderer import ContextRenderer
 
     # Create enhanced temporary directories
@@ -1367,7 +1520,9 @@ async def test_standard_interaction_engine():
         memory_system = LayeredMemorySystem("test_agent_001", test_db)
 
         # Initialize enhanced template systems
-        template_engine = DynamicTemplateEngine(template_directory=str(template_dir))
+        template_engine = DynamicTemplateEngine(
+            template_directory=str(template_dir)
+        )
         context_renderer = ContextRenderer(template_engine, memory_system)
         template_manager = CharacterTemplateManager(
             template_engine, context_renderer, memory_system, str(personas_dir)
@@ -1392,12 +1547,17 @@ async def test_standard_interaction_engine():
         )
 
         # Test enhanced interaction initiation
-        initiation_result = await interaction_engine.initiate_interaction(test_context)
+        initiation_result = await interaction_engine.initiate_interaction(
+            test_context
+        )
         print(f"INTERACTION INITIATION: {initiation_result.success}")
         if initiation_result.success:
-            print(f"Interaction ID: {initiation_result.data['interaction_id']}")
             print(
-                f"Auto-processed: {initiation_result.data.get('auto_processed', False)}"
+                f"Interaction ID: {initiation_result.data['interaction_id']}"
+            )
+            print(
+                f"Auto-processed: "
+                f"{initiation_result.data.get('auto_processed', False)}"
             )
             if initiation_result.data.get("outcome"):
                 outcome = initiation_result.data["outcome"]
@@ -1418,11 +1578,16 @@ async def test_standard_interaction_engine():
             expected_outcomes=["enemy_defeated", "area_secured"],
         )
 
-        combat_result = await interaction_engine.initiate_interaction(combat_context)
+        combat_result = await interaction_engine.initiate_interaction(
+            combat_context
+        )
         print(f"COMBAT INTERACTION: {combat_result.success}")
         if combat_result.success and combat_result.data.get("outcome"):
             outcome = combat_result.data["outcome"]
-            print(f"Combat outcome: {'Victory' if outcome.success else 'Defeat'}")
+            print(
+                f"Combat outcome: "
+                f"{'Victory' if outcome.success else 'Defeat'}"
+            )
             print(f"Generated content: {len(outcome.generated_content)} items")
 
         # Test enhanced queue processing
@@ -1431,7 +1596,11 @@ async def test_standard_interaction_engine():
             interaction_id="test_cooperation_001",
             interaction_type=InteractionType.COOPERATION,
             priority=InteractionPriority.NORMAL,
-            participants=["test_agent_001", "test_agent_002", "test_agent_003"],
+            participants=[
+                "test_agent_001",
+                "test_agent_002",
+                "test_agent_003",
+            ],
             initiator="test_agent_001",
             location="Sacred Shrine of Knowledge",
             expected_outcomes=["project_completed", "team_bonding"],
@@ -1446,7 +1615,9 @@ async def test_standard_interaction_engine():
             print(f"Queue position: {queue_result.data['queue_position']}")
 
         # Process the queue
-        process_result = await interaction_engine.process_queue(max_interactions=5)
+        process_result = await interaction_engine.process_queue(
+            max_interactions=5
+        )
         print(f"QUEUE PROCESSING: {process_result.success}")
         if process_result.success:
             print(f"Processed: {process_result.data['total_processed']}")
@@ -1456,9 +1627,14 @@ async def test_standard_interaction_engine():
         # Display enhanced statistics
         metrics = interaction_engine.get_performance_metrics()
         print(
-            f"ENGINE METRICS: {metrics['total_interactions_processed']} total, {metrics['success_rate']:.1f}% success rate"
+            f"ENGINE METRICS: "
+            f"{metrics['total_interactions_processed']} total, "
+            f"{metrics['success_rate']:.1f}% success rate"
         )
-        print(f"Average processing time: {metrics['average_processing_time']:.2f}ms")
+        print(
+            f"Average processing time: "
+            f"{metrics['average_processing_time']:.2f}ms"
+        )
 
         # Get enhanced active interactions
         active = interaction_engine.get_active_interactions()
@@ -1469,7 +1645,9 @@ async def test_standard_interaction_engine():
         print(f"INTERACTION HISTORY: {len(history)} recent interactions")
         for entry in history[:3]:
             print(
-                f"  - {entry['interaction_id']}: {'SUCCESS' if entry['success'] else 'FAILED'} ({entry['duration_ms']:.1f}ms)"
+                f"  - {entry['interaction_id']}: "
+                f"{'SUCCESS' if entry['success'] else 'FAILED'} "
+                f"({entry['duration_ms']:.1f}ms)"
             )
 
         # Sacred cleanup

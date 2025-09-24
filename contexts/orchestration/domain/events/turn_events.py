@@ -234,12 +234,16 @@ class TurnCompleted:
             phases_completed=performance_summary.get("phases_completed", 0),
             events_processed=performance_summary.get("events_processed", 0),
             ai_operations_count=performance_summary.get("ai_operations", 0),
-            total_ai_cost=str(performance_summary.get("total_ai_cost", "0.00")),
+            total_ai_cost=str(
+                performance_summary.get("total_ai_cost", "0.00")
+            ),
             success_metrics={
                 "completion_percentage": performance_summary.get(
                     "completion_percentage", 0
                 ),
-                "performance_score": performance_summary.get("performance_score", 0),
+                "performance_score": performance_summary.get(
+                    "performance_score", 0
+                ),
                 "resource_efficiency": performance_summary.get(
                     "resource_efficiency", 0
                 ),
@@ -303,10 +307,14 @@ class TurnFailed:
             error_summary=error_summary,
             failed_phases=error_summary.get("failed_phases", []),
             completed_phases=error_summary.get("completed_phases", []),
-            compensation_attempted=error_summary.get("compensation_attempted", False),
+            compensation_attempted=error_summary.get(
+                "compensation_attempted", False
+            ),
             execution_time_seconds=execution_time_seconds,
             failure_metrics={
-                "completion_percentage": error_summary.get("completion_percentage", 0),
+                "completion_percentage": error_summary.get(
+                    "completion_percentage", 0
+                ),
                 "phases_attempted": error_summary.get("phases_attempted", 0),
                 "compensation_success_rate": error_summary.get(
                     "compensation_success_rate", 0

@@ -142,7 +142,9 @@ class DynamicEquipment:
     wear_accumulation: float = 0.0  # 0.0-1.0, tracks degradation
     usage_statistics: Dict[str, Any] = field(default_factory=dict)
     performance_metrics: Dict[str, float] = field(default_factory=dict)
-    maintenance_history: List[EquipmentMaintenance] = field(default_factory=list)
+    maintenance_history: List[EquipmentMaintenance] = field(
+        default_factory=list
+    )
     modifications: List[EquipmentModification] = field(default_factory=list)
 
     # Sacred machine spirit attributes

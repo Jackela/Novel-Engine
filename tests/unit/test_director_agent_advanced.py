@@ -28,7 +28,9 @@ except ImportError as e:
     DIRECTOR_AGENT_AVAILABLE = False
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentKnowledgeSystem:
     """Director Agent Knowledge Retrieval and RAG System Tests"""
 
@@ -71,7 +73,10 @@ class TestDirectorAgentKnowledgeSystem:
     def test_retrieve_relevant_knowledge_rag_no_knowledge_base(self):
         """Test RAG knowledge retrieval when knowledge base doesn't exist"""
         mock_agent = self.create_mock_agent()
-        filtered_world_view = {"current_situation": "combat", "location": "battlefield"}
+        filtered_world_view = {
+            "current_situation": "combat",
+            "location": "battlefield",
+        }
 
         with patch("pathlib.Path.exists", return_value=False):
             if hasattr(self.director, "_retrieve_relevant_knowledge_rag"):
@@ -89,7 +94,9 @@ class TestDirectorAgentKnowledgeSystem:
         mock_agent = self.create_mock_agent()
 
         if hasattr(self.director, "_create_default_knowledge_fragments"):
-            result = self.director._create_default_knowledge_fragments(mock_agent)
+            result = self.director._create_default_knowledge_fragments(
+                mock_agent
+            )
 
             # Should return a list of knowledge fragments
             assert result is not None
@@ -142,7 +149,9 @@ class TestDirectorAgentKnowledgeSystem:
             fragment.tags = (
                 ["combat", "imperial"]
                 if i == 0
-                else ["ork", "combat"] if i == 1 else ["warfare"]
+                else ["ork", "combat"]
+                if i == 1
+                else ["warfare"]
             )
             mock_fragments.append(fragment)
 
@@ -160,7 +169,9 @@ class TestDirectorAgentKnowledgeSystem:
             assert len(result) <= len(mock_fragments)
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentNarrativeEngine:
     """Director Agent Narrative Engine and Story Management Tests"""
 
@@ -195,7 +206,11 @@ class TestDirectorAgentNarrativeEngine:
         assert isinstance(self.director.story_state, dict)
 
         # Should have expected story state components
-        expected_components = ["current_phase", "triggered_events", "story_progression"]
+        expected_components = [
+            "current_phase",
+            "triggered_events",
+            "story_progression",
+        ]
         for component in expected_components:
             assert component in self.director.story_state
 
@@ -228,7 +243,9 @@ class TestDirectorAgentNarrativeEngine:
         )
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentWorldStateManagement:
     """Director Agent World State Management and Persistence Tests"""
 
@@ -314,7 +331,9 @@ class TestDirectorAgentWorldStateManagement:
                 assert callable(method)
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentAgentOrchestration:
     """Director Agent Advanced Agent Orchestration Tests"""
 
@@ -355,7 +374,9 @@ class TestDirectorAgentAgentOrchestration:
 
             if hasattr(self.director, "register_agent"):
                 success = self.director.register_agent(agent)
-                assert success is True or success is False  # Should return boolean
+                assert (
+                    success is True or success is False
+                )  # Should return boolean
 
         # Verify agent list management
         if hasattr(self.director, "registered_agents"):
@@ -442,7 +463,9 @@ class TestDirectorAgentAgentOrchestration:
         assert self.director.error_threshold > 0
 
 
-@pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
+@pytest.mark.skipif(
+    not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available"
+)
 class TestDirectorAgentEventHandling:
     """Director Agent Event Handling and Communication Tests"""
 

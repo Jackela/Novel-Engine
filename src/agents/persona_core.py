@@ -17,13 +17,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 # Core systems integration
-from src.core.error_handler import (
-    get_error_handler,
-)
-from src.core.logging_system import (
-    LogContext,
-    get_logger,
-)
+from src.core.error_handler import get_error_handler
+from src.core.logging_system import LogContext, get_logger
 from src.events.event_bus import EventBus
 
 # Import shared types
@@ -103,9 +98,12 @@ class PersonaCore:
         self.character_data: Dict[str, Any] = {}
 
         # File caching for performance
-        self._file_cache: Dict[str, Tuple[str, float]] = {}  # path -> (content, mtime)
+        # path -> (content, mtime)
+        self._file_cache: Dict[str, Tuple[str, float]] = {}
 
-        logger.info(f"PersonaCore initialized for agent: {self.identity.agent_id}")
+        logger.info(
+            f"PersonaCore initialized for agent: {self.identity.agent_id}"
+        )
 
         # Initialize core systems
         self.logger = get_logger(f"{self.__class__.__name__}_{id(self)}")
@@ -154,7 +152,9 @@ class PersonaCore:
         agent_id = directory_name.lower().replace(" ", "_").replace("-", "_")
 
         # Remove non-alphanumeric characters except underscores
-        agent_id = "".join(char for char in agent_id if char.isalnum() or char == "_")
+        agent_id = "".join(
+            char for char in agent_id if char.isalnum() or char == "_"
+        )
 
         # Ensure agent ID doesn't start with a number
         if agent_id and agent_id[0].isdigit():
@@ -234,7 +234,9 @@ class PersonaCore:
         self.state.turn_count += 1
         self.state.last_world_state_update = world_state_update.copy()
 
-        logger.debug(f"Agent {self.agent_id} starting turn {self.state.turn_count}")
+        logger.debug(
+            f"Agent {self.agent_id} starting turn {self.state.turn_count}"
+        )
 
     def get_agent_state(self) -> Dict[str, Any]:
         """

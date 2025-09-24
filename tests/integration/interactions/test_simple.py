@@ -7,6 +7,7 @@ Simplified test suite validating core interaction engine functionality.
 
 import asyncio
 import logging
+
 import pytest
 
 # Configure logging
@@ -62,7 +63,9 @@ except ImportError as e:
     InteractionEngine = MockInteractionEngine
 
     class InteractionContext:
-        def __init__(self, interaction_id, interaction_type, participants, **kwargs):
+        def __init__(
+            self, interaction_id, interaction_type, participants, **kwargs
+        ):
             self.interaction_id = interaction_id
             self.interaction_type = interaction_type
             self.participants = participants
@@ -245,7 +248,9 @@ async def run_simple_tests():
     # Run tests
     test_results["initialization"] = await test_engine_initialization()
     test_results["dialogue_processing"] = await test_dialogue_interaction()
-    test_results["cooperation_processing"] = await test_cooperation_interaction()
+    test_results[
+        "cooperation_processing"
+    ] = await test_cooperation_interaction()
     test_results["performance_monitoring"] = await test_engine_statistics()
 
     # Calculate success rate

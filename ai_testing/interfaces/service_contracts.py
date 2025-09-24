@@ -59,7 +59,9 @@ class BaseTestModel(BaseModel):
     """Base model for all test-related entities"""
 
     model_config = ConfigDict(
-        use_enum_values=True, validate_assignment=True, arbitrary_types_allowed=True
+        use_enum_values=True,
+        validate_assignment=True,
+        arbitrary_types_allowed=True,
     )
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -97,7 +99,9 @@ class TestScenario(BaseTestModel):
 
     # Validation criteria
     expected_outcomes: List[str] = Field(default_factory=list)
-    quality_thresholds: Dict[QualityMetric, float] = Field(default_factory=dict)
+    quality_thresholds: Dict[QualityMetric, float] = Field(
+        default_factory=dict
+    )
     performance_thresholds: Dict[str, float] = Field(default_factory=dict)
 
 
@@ -124,9 +128,13 @@ class UITestSpec(BaseModel):
     """UI testing specification for Playwright"""
 
     page_url: str = Field(..., description="Page URL to test")
-    viewport_size: Dict[str, int] = Field(default={"width": 1280, "height": 720})
+    viewport_size: Dict[str, int] = Field(
+        default={"width": 1280, "height": 720}
+    )
     device_type: Optional[str] = None  # mobile, tablet, desktop
-    browser: str = Field(default="chromium", pattern="^(chromium|firefox|webkit)$")
+    browser: str = Field(
+        default="chromium", pattern="^(chromium|firefox|webkit)$"
+    )
 
     # Test actions
     actions: List[Dict[str, Any]] = Field(default_factory=list)
@@ -140,7 +148,9 @@ class UITestSpec(BaseModel):
     performance_metrics: List[str] = Field(
         default_factory=lambda: ["FCP", "LCP", "CLS"]
     )
-    accessibility_standards: List[str] = Field(default_factory=lambda: ["WCAG2A"])
+    accessibility_standards: List[str] = Field(
+        default_factory=lambda: ["WCAG2A"]
+    )
 
 
 class AIQualitySpec(BaseModel):
@@ -150,7 +160,9 @@ class AIQualitySpec(BaseModel):
     context_data: Dict[str, Any] = Field(default_factory=dict)
 
     # Quality assessment configuration
-    assessment_models: List[str] = Field(default_factory=lambda: ["gpt-4", "claude-3"])
+    assessment_models: List[str] = Field(
+        default_factory=lambda: ["gpt-4", "claude-3"]
+    )
     quality_metrics: List[QualityMetric] = Field(default_factory=list)
 
     # Comparison data
@@ -271,7 +283,9 @@ class IBrowserAutomation(ABC):
         pass
 
     @abstractmethod
-    async def capture_screenshot(self, page_url: str, viewport: Dict[str, int]) -> str:
+    async def capture_screenshot(
+        self, page_url: str, viewport: Dict[str, int]
+    ) -> str:
         """Capture page screenshot"""
         pass
 
@@ -305,7 +319,10 @@ class IAPITesting(ABC):
 
     @abstractmethod
     async def run_load_test(
-        self, test_spec: APITestSpec, concurrent_users: int, duration_seconds: int
+        self,
+        test_spec: APITestSpec,
+        concurrent_users: int,
+        duration_seconds: int,
     ) -> Dict[str, Any]:
         """Run API load testing"""
         pass
@@ -362,7 +379,9 @@ class IResultsAggregation(ABC):
         pass
 
     @abstractmethod
-    async def create_dashboard_data(self, dashboard_type: str) -> Dict[str, Any]:
+    async def create_dashboard_data(
+        self, dashboard_type: str
+    ) -> Dict[str, Any]:
         """Create real-time dashboard data"""
         pass
 
@@ -420,7 +439,9 @@ class QualityAssessmentEvent(BaseModel):
 class PerformanceMetricEvent(BaseModel):
     """Performance metric event"""
 
-    event_type: Literal["metric_recorded", "threshold_exceeded", "anomaly_detected"]
+    event_type: Literal[
+        "metric_recorded", "threshold_exceeded", "anomaly_detected"
+    ]
     metric_name: str
     metric_value: float
     threshold: Optional[float] = None
@@ -540,19 +561,27 @@ def validate_test_scenario(scenario: TestScenario) -> List[str]:
     """Validate test scenario configuration"""
     errors = []
 
-    if scenario.test_type == TestType.API and not scenario.config.get("api_spec"):
+    if scenario.test_type == TestType.API and not scenario.config.get(
+        "api_spec"
+    ):
         errors.append("API test requires api_spec in config")
 
-    if scenario.test_type == TestType.UI and not scenario.config.get("ui_spec"):
+    if scenario.test_type == TestType.UI and not scenario.config.get(
+        "ui_spec"
+    ):
         errors.append("UI test requires ui_spec in config")
 
-    if scenario.test_type == TestType.AI_QUALITY and not scenario.config.get("ai_spec"):
+    if scenario.test_type == TestType.AI_QUALITY and not scenario.config.get(
+        "ai_spec"
+    ):
         errors.append("AI quality test requires ai_spec in config")
 
     # Validate quality thresholds
     for metric, threshold in scenario.quality_thresholds.items():
         if not 0.0 <= threshold <= 1.0:
-            errors.append(f"Quality threshold for {metric} must be between 0.0 and 1.0")
+            errors.append(
+                f"Quality threshold for {metric} must be between 0.0 and 1.0"
+            )
 
     return errors
 

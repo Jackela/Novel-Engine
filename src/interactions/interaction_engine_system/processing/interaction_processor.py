@@ -106,7 +106,9 @@ class InteractionProcessor:
 
         # Thread pool for parallel processing
         self.executor = (
-            ThreadPoolExecutor(max_workers=self.config.max_concurrent_interactions)
+            ThreadPoolExecutor(
+                max_workers=self.config.max_concurrent_interactions
+            )
             if self.config.enable_parallel_processing
             else None
         )
@@ -165,7 +167,9 @@ class InteractionProcessor:
             InteractionOutcome with complete processing results
         """
         start_time = datetime.now()
-        processing_id = f"{context.interaction_id}_{int(start_time.timestamp())}"
+        processing_id = (
+            f"{context.interaction_id}_{int( start_time.timestamp())}"
+        )
 
         try:
             self.logger.info(
@@ -190,18 +194,23 @@ class InteractionProcessor:
 
             # Process phases sequentially
             for phase in phases:
-                phase_result = await self._process_phase(processing_id, phase, outcome)
+                phase_result = await self._process_phase(
+                    processing_id, phase, outcome
+                )
 
                 if not phase_result.success:
                     # Handle phase failure
                     outcome.success = False
                     outcome.failed_phases.append(phase.phase_id)
                     outcome.errors.append(
-                        f"Phase {phase.phase_id} failed: {phase_result.error.message if phase_result.error else 'Unknown error'}"
+                        f"Phase {phase.phase_id}failed: {phase_result.error.message if phase_result.error else 'Unknown error'}"
                     )
 
                     # Check if failure is recoverable
-                    if not phase_result.error or not phase_result.error.recoverable:
+                    if (
+                        not phase_result.error
+                        or not phase_result.error.recoverable
+                    ):
                         self.logger.error(
                             f"Non-recoverable failure in phase {phase.phase_id}"
                         )
@@ -219,7 +228,9 @@ class InteractionProcessor:
             # Calculate processing metrics
             end_time = datetime.now()
             outcome.completion_time = end_time
-            outcome.processing_duration = (end_time - start_time).total_seconds()
+            outcome.processing_duration = (
+                end_time - start_time
+            ).total_seconds()
 
             # Update processing statistics
             self._update_processing_stats(outcome)
@@ -228,7 +239,7 @@ class InteractionProcessor:
             self.active_interactions.pop(processing_id, None)
 
             self.logger.info(
-                f"Interaction processing completed: {context.interaction_id} (success: {outcome.success})"
+                f"Interaction processing completed: {context.interaction_id}(success: {outcome.success})"
             )
             return outcome
 
@@ -241,7 +252,9 @@ class InteractionProcessor:
                 context=context,
                 success=False,
                 completion_time=datetime.now(),
-                processing_duration=(datetime.now() - start_time).total_seconds(),
+                processing_duration=(
+                    datetime.now() - start_time
+                ).total_seconds(),
                 errors=[f"Critical processing error: {str(e)}"],
             )
 
@@ -268,7 +281,9 @@ class InteractionProcessor:
 
             # Validate phase prerequisites
             if phase.prerequisites:
-                prereq_result = await self._validate_phase_prerequisites(context, phase)
+                prereq_result = await self._validate_phase_prerequisites(
+                    context, phase
+                )
                 if not prereq_result.success:
                     return prereq_result
 
@@ -278,7 +293,9 @@ class InteractionProcessor:
             if phase_result.success:
                 # Update phase completion status
                 phase.completion_status = "completed"
-                self.logger.debug(f"Phase {phase.phase_id} completed successfully")
+                self.logger.debug(
+                    f"Phase {phase.phase_id} completed successfully"
+                )
             else:
                 phase.completion_status = "failed"
                 self.logger.warning(
@@ -300,7 +317,9 @@ class InteractionProcessor:
                 ),
             )
 
-    def get_processing_status(self, interaction_id: str) -> Optional[Dict[str, Any]]:
+    def get_processing_status(
+        self, interaction_id: str
+    ) -> Optional[Dict[str, Any]]:
         """
         Get current processing status for an interaction.
 
@@ -317,7 +336,9 @@ class InteractionProcessor:
                     "start_time": info["start_time"],
                     "current_phase": info["current_phase"],
                     "status": info["status"],
-                    "duration": (datetime.now() - info["start_time"]).total_seconds(),
+                    "duration": (
+                        datetime.now() - info["start_time"]
+                    ).total_seconds(),
                 }
 
         return None
@@ -349,7 +370,9 @@ class InteractionProcessor:
             if info["context"].interaction_id == interaction_id:
                 try:
                     info["status"] = "cancelled"
-                    self.logger.info(f"Interaction cancelled: {interaction_id}")
+                    self.logger.info(
+                        f"Interaction cancelled: {interaction_id}"
+                    )
                     return True
                 except Exception as e:
                     self.logger.error(
@@ -395,7 +418,10 @@ class InteractionProcessor:
                     "Apply environment changes",
                 ]
             elif phase_name == "memory_processing":
-                phase.objectives = ["Generate memories", "Update relationships"]
+                phase.objectives = [
+                    "Generate memories",
+                    "Update relationships",
+                ]
 
             phases.append(phase)
             sequence_order += 1
@@ -403,7 +429,10 @@ class InteractionProcessor:
         return phases
 
     async def _process_phase(
-        self, processing_id: str, phase: InteractionPhase, outcome: InteractionOutcome
+        self,
+        processing_id: str,
+        phase: InteractionPhase,
+        outcome: InteractionOutcome,
     ) -> StandardResponse:
         """Process a single phase with timeout and monitoring."""
         try:
@@ -417,7 +446,9 @@ class InteractionProcessor:
             phase.completion_status = "active"
 
             # Process phase with timeout
-            timeout = phase.expected_duration or self.config.phase_timeout_seconds
+            timeout = (
+                phase.expected_duration or self.config.phase_timeout_seconds
+            )
 
             try:
                 phase_result = await asyncio.wait_for(
@@ -517,7 +548,8 @@ class InteractionProcessor:
                     continue
 
             return StandardResponse(
-                success=True, data={"prerequisites_validated": len(phase.prerequisites)}
+                success=True,
+                data={"prerequisites_validated": len(phase.prerequisites)},
             )
 
         except Exception as e:
@@ -531,18 +563,27 @@ class InteractionProcessor:
             )
 
     async def _attempt_phase_recovery(
-        self, processing_id: str, phase: InteractionPhase, outcome: InteractionOutcome
+        self,
+        processing_id: str,
+        phase: InteractionPhase,
+        outcome: InteractionOutcome,
     ) -> bool:
         """Attempt to recover from phase failure."""
         try:
-            self.logger.info(f"Attempting recovery for phase: {phase.phase_id}")
+            self.logger.info(
+                f"Attempting recovery for phase: {phase.phase_id}"
+            )
 
             # Simple recovery strategies
             if phase.phase_name in ["preparation", "memory_processing"]:
                 # These phases can often be retried
-                retry_result = await self._process_phase(processing_id, phase, outcome)
+                retry_result = await self._process_phase(
+                    processing_id, phase, outcome
+                )
                 if retry_result.success:
-                    self.logger.info(f"Phase recovery successful: {phase.phase_id}")
+                    self.logger.info(
+                        f"Phase recovery successful: {phase.phase_id}"
+                    )
                     return True
 
             # More complex recovery logic would go here
@@ -552,18 +593,32 @@ class InteractionProcessor:
             self.logger.error(f"Phase recovery failed: {e}")
             return False
 
-    def _generate_execution_objectives(self, context: InteractionContext) -> List[str]:
+    def _generate_execution_objectives(
+        self, context: InteractionContext
+    ) -> List[str]:
         """Generate context-specific execution objectives."""
         objectives = []
 
         if context.interaction_type == InteractionType.DIALOGUE:
-            objectives = ["Generate dialogue content", "Process conversational flow"]
+            objectives = [
+                "Generate dialogue content",
+                "Process conversational flow",
+            ]
         elif context.interaction_type == InteractionType.COMBAT:
-            objectives = ["Process combat actions", "Calculate damage and effects"]
+            objectives = [
+                "Process combat actions",
+                "Calculate damage and effects",
+            ]
         elif context.interaction_type == InteractionType.COOPERATION:
-            objectives = ["Coordinate collaborative actions", "Track shared objectives"]
+            objectives = [
+                "Coordinate collaborative actions",
+                "Track shared objectives",
+            ]
         elif context.interaction_type == InteractionType.NEGOTIATION:
-            objectives = ["Process negotiation terms", "Track agreement progress"]
+            objectives = [
+                "Process negotiation terms",
+                "Track agreement progress",
+            ]
         else:
             objectives = ["Execute interaction-specific processing"]
 
@@ -639,7 +694,9 @@ class InteractionProcessor:
         except Exception as e:
             return StandardResponse(
                 success=False,
-                error=ErrorInfo("PREP_FAILED", f"Preparation failed: {str(e)}", True),
+                error=ErrorInfo(
+                    "PREP_FAILED", f"Preparation failed: {str(e)}", True
+                ),
             )
 
     async def _process_execution_phase(
@@ -682,7 +739,9 @@ class InteractionProcessor:
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
-                    "STATE_UPDATE_FAILED", f"State update failed: {str(e)}", True
+                    "STATE_UPDATE_FAILED",
+                    f"State update failed: {str(e)}",
+                    True,
                 ),
             )
 
@@ -693,14 +752,19 @@ class InteractionProcessor:
         try:
             return StandardResponse(
                 success=True,
-                data={"phase": "memory_processing", "memories_generated": True},
+                data={
+                    "phase": "memory_processing",
+                    "memories_generated": True,
+                },
                 metadata={"blessing": "memory_processing_complete"},
             )
         except Exception as e:
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
-                    "MEMORY_FAILED", f"Memory processing failed: {str(e)}", True
+                    "MEMORY_FAILED",
+                    f"Memory processing failed: {str(e)}",
+                    True,
                 ),
             )
 
@@ -718,7 +782,9 @@ class InteractionProcessor:
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
-                    "FINALIZATION_FAILED", f"Finalization failed: {str(e)}", True
+                    "FINALIZATION_FAILED",
+                    f"Finalization failed: {str(e)}",
+                    True,
                 ),
             )
 

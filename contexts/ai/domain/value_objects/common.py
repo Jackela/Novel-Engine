@@ -121,12 +121,16 @@ class ProviderId:
 
         # Validate API version format (semantic versioning)
         if not re.match(r"^\d+\.\d+\.\d+$", self.api_version):
-            raise ValueError("api_version must follow semantic versioning (x.y.z)")
+            raise ValueError(
+                "api_version must follow semantic versioning (x.y.z)"
+            )
 
         # Validate region code if provided (ISO 3166-1 alpha-2)
         if self.region is not None:
             if not isinstance(self.region, str) or len(self.region) != 2:
-                raise ValueError("region must be a 2-character ISO country code")
+                raise ValueError(
+                    "region must be a 2-character ISO country code"
+                )
             if not self.region.isupper():
                 raise ValueError("region code must be uppercase")
 
@@ -140,7 +144,11 @@ class ProviderId:
             provider_type=ProviderType.OPENAI,
             api_version=api_version,
             region=region,
-            metadata={"official": True, "chat_models": True, "completion_models": True},
+            metadata={
+                "official": True,
+                "chat_models": True,
+                "completion_models": True,
+            },
         )
 
     @classmethod
@@ -243,7 +251,9 @@ class ModelId:
         """Validate ModelId business rules and constraints."""
         # Initialize collections if None
         if self.capabilities is None:
-            object.__setattr__(self, "capabilities", {ModelCapability.TEXT_GENERATION})
+            object.__setattr__(
+                self, "capabilities", {ModelCapability.TEXT_GENERATION}
+            )
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -270,33 +280,47 @@ class ModelId:
             raise ValueError("provider_id must be a ProviderId instance")
 
         # Validate token limits
-        if not isinstance(self.max_context_tokens, int) or self.max_context_tokens <= 0:
+        if (
+            not isinstance(self.max_context_tokens, int)
+            or self.max_context_tokens <= 0
+        ):
             raise ValueError("max_context_tokens must be a positive integer")
 
-        if not isinstance(self.max_output_tokens, int) or self.max_output_tokens <= 0:
+        if (
+            not isinstance(self.max_output_tokens, int)
+            or self.max_output_tokens <= 0
+        ):
             raise ValueError("max_output_tokens must be a positive integer")
 
         if self.max_output_tokens > self.max_context_tokens:
-            raise ValueError("max_output_tokens cannot exceed max_context_tokens")
+            raise ValueError(
+                "max_output_tokens cannot exceed max_context_tokens"
+            )
 
         # Validate costs
         if (
             not isinstance(self.cost_per_input_token, Decimal)
             or self.cost_per_input_token < 0
         ):
-            raise ValueError("cost_per_input_token must be a non-negative Decimal")
+            raise ValueError(
+                "cost_per_input_token must be a non-negative Decimal"
+            )
 
         if (
             not isinstance(self.cost_per_output_token, Decimal)
             or self.cost_per_output_token < 0
         ):
-            raise ValueError("cost_per_output_token must be a non-negative Decimal")
+            raise ValueError(
+                "cost_per_output_token must be a non-negative Decimal"
+            )
 
         # Validate capabilities
         if self.capabilities and not all(
             isinstance(cap, ModelCapability) for cap in self.capabilities
         ):
-            raise ValueError("All capabilities must be ModelCapability enum values")
+            raise ValueError(
+                "All capabilities must be ModelCapability enum values"
+            )
 
     @classmethod
     def create_gpt4(cls, provider_id: ProviderId) -> "ModelId":
@@ -434,7 +458,9 @@ class TokenBudget:
         """Validate TokenBudget business rules and constraints."""
         # Initialize optional fields
         if self.cost_limit is None:
-            object.__setattr__(self, "cost_limit", Decimal("1000.00"))  # $1000 default
+            object.__setattr__(
+                self, "cost_limit", Decimal("1000.00")
+            )  # $1000 default
 
         if self.accumulated_cost is None:
             object.__setattr__(self, "accumulated_cost", Decimal("0.00"))
@@ -453,13 +479,22 @@ class TokenBudget:
             raise ValueError("budget_id contains invalid characters")
 
         # Validate token values
-        if not isinstance(self.allocated_tokens, int) or self.allocated_tokens <= 0:
+        if (
+            not isinstance(self.allocated_tokens, int)
+            or self.allocated_tokens <= 0
+        ):
             raise ValueError("allocated_tokens must be a positive integer")
 
-        if not isinstance(self.consumed_tokens, int) or self.consumed_tokens < 0:
+        if (
+            not isinstance(self.consumed_tokens, int)
+            or self.consumed_tokens < 0
+        ):
             raise ValueError("consumed_tokens must be a non-negative integer")
 
-        if not isinstance(self.reserved_tokens, int) or self.reserved_tokens < 0:
+        if (
+            not isinstance(self.reserved_tokens, int)
+            or self.reserved_tokens < 0
+        ):
             raise ValueError("reserved_tokens must be a non-negative integer")
 
         # Validate token budget constraints
@@ -469,14 +504,19 @@ class TokenBudget:
         if not isinstance(self.cost_limit, Decimal) or self.cost_limit < 0:
             raise ValueError("cost_limit must be a non-negative Decimal")
 
-        if not isinstance(self.accumulated_cost, Decimal) or self.accumulated_cost < 0:
+        if (
+            not isinstance(self.accumulated_cost, Decimal)
+            or self.accumulated_cost < 0
+        ):
             raise ValueError("accumulated_cost must be a non-negative Decimal")
 
         if self.accumulated_cost > self.cost_limit:
             raise ValueError("accumulated_cost cannot exceed cost_limit")
 
         # Validate priority
-        if not isinstance(self.priority, int) or not (1 <= self.priority <= 10):
+        if not isinstance(self.priority, int) or not (
+            1 <= self.priority <= 10
+        ):
             raise ValueError("priority must be an integer between 1 and 10")
 
     @classmethod
@@ -509,7 +549,10 @@ class TokenBudget:
     def get_available_tokens(self) -> int:
         """Calculate available tokens for new operations."""
         return max(
-            0, self.allocated_tokens - self.consumed_tokens - self.reserved_tokens
+            0,
+            self.allocated_tokens
+            - self.consumed_tokens
+            - self.reserved_tokens,
         )
 
     def get_utilization_percentage(self) -> Decimal:
@@ -595,7 +638,8 @@ class TokenBudget:
     def is_exhausted(self) -> bool:
         """Check if budget is exhausted (no available tokens or cost limit reached)."""
         return (
-            self.get_available_tokens() == 0 or self.accumulated_cost >= self.cost_limit
+            self.get_available_tokens() == 0
+            or self.accumulated_cost >= self.cost_limit
         )
 
     def is_near_exhaustion(
@@ -604,7 +648,10 @@ class TokenBudget:
         """Check if budget is near exhaustion."""
         token_util = self.get_utilization_percentage()
         cost_util = self.get_cost_utilization_percentage()
-        return token_util >= threshold_percentage or cost_util >= threshold_percentage
+        return (
+            token_util >= threshold_percentage
+            or cost_util >= threshold_percentage
+        )
 
     def get_budget_summary(self) -> Dict[str, Any]:
         """Get comprehensive budget summary for monitoring."""
@@ -615,13 +662,17 @@ class TokenBudget:
                 "consumed": self.consumed_tokens,
                 "reserved": self.reserved_tokens,
                 "available": self.get_available_tokens(),
-                "utilization_percent": float(self.get_utilization_percentage()),
+                "utilization_percent": float(
+                    self.get_utilization_percentage()
+                ),
             },
             "cost": {
                 "limit": float(self.cost_limit),
                 "accumulated": float(self.accumulated_cost),
                 "available": float(self.cost_limit - self.accumulated_cost),
-                "utilization_percent": float(self.get_cost_utilization_percentage()),
+                "utilization_percent": float(
+                    self.get_cost_utilization_percentage()
+                ),
             },
             "status": {
                 "exhausted": self.is_exhausted(),

@@ -72,7 +72,9 @@ class NegotiationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_created_by(self, created_by: UUID) -> List[NegotiationSession]:
+    async def find_by_created_by(
+        self, created_by: UUID
+    ) -> List[NegotiationSession]:
         """
         Find all negotiation sessions created by a specific user.
 
@@ -126,7 +128,9 @@ class NegotiationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_sessions_by_domain(self, domain: str) -> List[NegotiationSession]:
+    async def find_sessions_by_domain(
+        self, domain: str
+    ) -> List[NegotiationSession]:
         """
         Find negotiation sessions in a specific domain.
 

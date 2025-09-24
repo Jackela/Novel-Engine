@@ -40,10 +40,14 @@ class WorldStateModel(FullAuditModel):
     # Core world properties
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
-    status = Column(String(50), nullable=False, default="initializing", index=True)
+    status = Column(
+        String(50), nullable=False, default="initializing", index=True
+    )
 
     # World time and versioning
-    world_time = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    world_time = Column(
+        DateTime(timezone=True), nullable=False, default=func.now()
+    )
     version = Column(Integer, nullable=False, default=1, index=True)
 
     # Configuration
@@ -51,10 +55,18 @@ class WorldStateModel(FullAuditModel):
     spatial_grid_size = Column(Float, nullable=False, default=100.0)
 
     # JSON storage for complex data
-    entities = Column(JSON, nullable=False, default=dict)  # Stores all entities
-    environment = Column(JSON, nullable=False, default=dict)  # Environment properties
-    spatial_index = Column(JSON, nullable=False, default=dict)  # Spatial grid index
-    metadata = Column(JSON, nullable=False, default=dict)  # Additional metadata
+    entities = Column(
+        JSON, nullable=False, default=dict
+    )  # Stores all entities
+    environment = Column(
+        JSON, nullable=False, default=dict
+    )  # Environment properties
+    spatial_index = Column(
+        JSON, nullable=False, default=dict
+    )  # Spatial grid index
+    metadata = Column(
+        JSON, nullable=False, default=dict
+    )  # Additional metadata
 
     # Performance indexes
     __table_args__ = (
@@ -86,7 +98,9 @@ class WorldStateModel(FullAuditModel):
         if self.entities:
             for entity_id, entity_data in self.entities.items():
                 if entity_data:  # Skip None/empty entities
-                    coordinates = Coordinates.from_dict(entity_data["coordinates"])
+                    coordinates = Coordinates.from_dict(
+                        entity_data["coordinates"]
+                    )
                     entity_type = EntityType(entity_data["entity_type"])
 
                     world_entity = WorldEntity(
@@ -332,7 +346,9 @@ class WorldStateVersionModel(FullAuditModel):
     # Performance indexes
     __table_args__ = (
         Index(
-            "idx_world_versions_world_id_version", "world_state_id", "version_number"
+            "idx_world_versions_world_id_version",
+            "world_state_id",
+            "version_number",
         ),
         Index("idx_world_versions_created_at", "created_at"),
         Index("idx_world_versions_changed_by", "changed_by"),

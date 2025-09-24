@@ -85,7 +85,9 @@ class ResponseProcessor:
     - Extract actionable information from responses
     """
 
-    def __init__(self, character_id: str, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, character_id: str, logger: Optional[logging.Logger] = None
+    ):
         self.character_id = character_id
         self.logger = logger or logging.getLogger(__name__)
 
@@ -148,7 +150,9 @@ class ResponseProcessor:
             await self._update_character_data(context)
 
             # Initial validation
-            initial_validation = await self._validate_response_basic(raw_response)
+            initial_validation = await self._validate_response_basic(
+                raw_response
+            )
             if not initial_validation[0]:
                 return ProcessingResult(
                     success=False,
@@ -158,14 +162,19 @@ class ResponseProcessor:
                 )
 
             # Determine response type
-            response_type = await self._classify_response_type(raw_response, context)
+            response_type = await self._classify_response_type(
+                raw_response, context
+            )
 
             # Clean and format response
             cleaned_response = await self._clean_response(raw_response)
 
             # Character consistency validation
             consistency_check = None
-            if validation_level in [ValidationLevel.MODERATE, ValidationLevel.STRICT]:
+            if validation_level in [
+                ValidationLevel.MODERATE,
+                ValidationLevel.STRICT,
+            ]:
                 consistency_check = await self._check_character_consistency(
                     cleaned_response, context
                 )
@@ -177,8 +186,10 @@ class ResponseProcessor:
 
                     # Auto-correction if enabled
                     if self._config["enable_auto_correction"]:
-                        cleaned_response = await self._apply_consistency_corrections(
-                            cleaned_response, consistency_check, context
+                        cleaned_response = (
+                            await self._apply_consistency_corrections(
+                                cleaned_response, consistency_check, context
+                            )
                         )
                         self._stats["auto_corrections"] += 1
 
@@ -202,7 +213,9 @@ class ResponseProcessor:
                     "original_length": len(raw_response),
                     "processed_length": len(parsed_content),
                     "consistency_check": (
-                        consistency_check.__dict__ if consistency_check else None
+                        consistency_check.__dict__
+                        if consistency_check
+                        else None
                     ),
                     "validation_level": validation_level.value,
                 },
@@ -260,7 +273,9 @@ class ResponseProcessor:
                     action_verb = match.group(1).lower()
 
                     # Map verbs to action types
-                    action_type = await self._map_verb_to_action_type(action_verb)
+                    action_type = await self._map_verb_to_action_type(
+                        action_verb
+                    )
 
                     if action_type:
                         # Extract context around the action
@@ -289,7 +304,9 @@ class ResponseProcessor:
             ]
 
             for pattern in decision_patterns:
-                matches = re.finditer(pattern, response, re.IGNORECASE | re.DOTALL)
+                matches = re.finditer(
+                    pattern, response, re.IGNORECASE | re.DOTALL
+                )
                 for match in matches:
                     decision_text = match.group(1).strip()
 
@@ -304,14 +321,18 @@ class ResponseProcessor:
 
                     actions.append(action)
 
-            self.logger.debug(f"Extracted {len(actions)} actions from response")
+            self.logger.debug(
+                f"Extracted {len(actions)} actions from response"
+            )
             return actions
 
         except Exception as e:
             self.logger.error(f"Action extraction failed: {e}")
             return []
 
-    async def enhance_response(self, response: str, context: Dict[str, Any]) -> str:
+    async def enhance_response(
+        self, response: str, context: Dict[str, Any]
+    ) -> str:
         """
         Enhance response with character-specific improvements.
 
@@ -343,7 +364,9 @@ class ResponseProcessor:
             self.logger.error(f"Response enhancement failed: {e}")
             return response
 
-    async def validate_response_safety(self, response: str) -> Tuple[bool, List[str]]:
+    async def validate_response_safety(
+        self, response: str
+    ) -> Tuple[bool, List[str]]:
         """
         Validate response for safety and appropriateness.
 
@@ -402,7 +425,9 @@ class ResponseProcessor:
         try:
             total = self._stats["total_processed"]
             success_rate = (
-                (self._stats["successful_processing"] / total) if total > 0 else 0.0
+                (self._stats["successful_processing"] / total)
+                if total > 0
+                else 0.0
             )
 
             return {
@@ -427,11 +452,15 @@ class ResponseProcessor:
         try:
             self._character_data = context
             self._personality_traits = context.get("personality", {})
-            self._faction_beliefs = context.get("faction_info", {}).get("beliefs", {})
+            self._faction_beliefs = context.get("faction_info", {}).get(
+                "beliefs", {}
+            )
 
             # Extract speaking patterns from character data
             self._speaking_patterns = {
-                "formality_level": self._personality_traits.get("formality", 0.5),
+                "formality_level": self._personality_traits.get(
+                    "formality", 0.5
+                ),
                 "verbosity": self._personality_traits.get("verbosity", 0.5),
                 "emotional_expression": self._personality_traits.get(
                     "emotional_expression", 0.5
@@ -441,7 +470,9 @@ class ResponseProcessor:
         except Exception as e:
             self.logger.debug(f"Character data update failed: {e}")
 
-    async def _validate_response_basic(self, response: str) -> Tuple[bool, List[str]]:
+    async def _validate_response_basic(
+        self, response: str
+    ) -> Tuple[bool, List[str]]:
         """Basic response validation."""
         try:
             issues = []
@@ -451,7 +482,10 @@ class ResponseProcessor:
                 issues.append("Response is empty or too short")
 
             # Check for obvious errors
-            if response.startswith("Error") or "error occurred" in response.lower():
+            if (
+                response.startswith("Error")
+                or "error occurred" in response.lower()
+            ):
                 issues.append("Response contains error message")
 
             # Check for incomplete responses
@@ -483,12 +517,15 @@ class ResponseProcessor:
                 "i choose to",
                 "my action is",
             ]
-            if any(indicator in response_lower for indicator in action_indicators):
+            if any(
+                indicator in response_lower for indicator in action_indicators
+            ):
                 return ResponseType.ACTION
 
             # Look for dialogue indicators
             if '"' in response or any(
-                word in response_lower for word in ["says", "replies", "responds"]
+                word in response_lower
+                for word in ["says", "replies", "responds"]
             ):
                 return ResponseType.DIALOGUE
 
@@ -500,17 +537,35 @@ class ResponseProcessor:
                 "i consider",
                 "my thoughts",
             ]
-            if any(indicator in response_lower for indicator in thought_indicators):
+            if any(
+                indicator in response_lower for indicator in thought_indicators
+            ):
                 return ResponseType.THOUGHT
 
             # Look for decision indicators
-            decision_indicators = ["i decide", "my decision", "i choose", "i determine"]
-            if any(indicator in response_lower for indicator in decision_indicators):
+            decision_indicators = [
+                "i decide",
+                "my decision",
+                "i choose",
+                "i determine",
+            ]
+            if any(
+                indicator in response_lower
+                for indicator in decision_indicators
+            ):
                 return ResponseType.DECISION
 
             # Look for reaction indicators
-            reaction_indicators = ["i react", "i respond", "i feel", "my reaction"]
-            if any(indicator in response_lower for indicator in reaction_indicators):
+            reaction_indicators = [
+                "i react",
+                "i respond",
+                "i feel",
+                "my reaction",
+            ]
+            if any(
+                indicator in response_lower
+                for indicator in reaction_indicators
+            ):
                 return ResponseType.REACTION
 
             # Default to description
@@ -562,13 +617,22 @@ class ResponseProcessor:
     ) -> CharacterConsistencyCheck:
         """Check response consistency with character."""
         try:
-            personality_score = await self._check_personality_consistency(response)
+            personality_score = await self._check_personality_consistency(
+                response
+            )
             faction_score = await self._check_faction_alignment(response)
-            emotional_score = await self._check_emotional_consistency(response, context)
-            knowledge_score = await self._check_knowledge_consistency(response, context)
+            emotional_score = await self._check_emotional_consistency(
+                response, context
+            )
+            knowledge_score = await self._check_knowledge_consistency(
+                response, context
+            )
 
             overall_score = (
-                personality_score + faction_score + emotional_score + knowledge_score
+                personality_score
+                + faction_score
+                + emotional_score
+                + knowledge_score
             ) / 4
 
             issues = []
@@ -618,12 +682,14 @@ class ResponseProcessor:
             aggression = self._personality_traits.get("aggression", 0.5)
             aggressive_words = len(
                 re.findall(
-                    r"\b(?:fight|attack|destroy|eliminate|crush)\b", response_lower
+                    r"\b(?:fight|attack|destroy|eliminate|crush)\b",
+                    response_lower,
                 )
             )
             peaceful_words = len(
                 re.findall(
-                    r"\b(?:peace|calm|negotiate|discuss|diplomacy)\b", response_lower
+                    r"\b(?:peace|calm|negotiate|discuss|diplomacy)\b",
+                    response_lower,
                 )
             )
 
@@ -640,7 +706,9 @@ class ResponseProcessor:
 
             # Check intelligence level
             intelligence = self._personality_traits.get("intelligence", 0.5)
-            complex_words = len(re.findall(r"\b\w{8,}\b", response))  # 8+ letter words
+            complex_words = len(
+                re.findall(r"\b\w{8,}\b", response)
+            )  # 8+ letter words
             simple_ratio = len(response.split()) / max(1, complex_words)
 
             if intelligence > 0.7:  # High intelligence
@@ -699,7 +767,9 @@ class ResponseProcessor:
             score = 0.5
 
             # Get current emotional state
-            current_emotion = context.get("state", {}).get("emotional_state", "neutral")
+            current_emotion = context.get("state", {}).get(
+                "emotional_state", "neutral"
+            )
             threat_level = context.get("threat_level", ThreatLevel.NEGLIGIBLE)
 
             response_lower = response.lower()
@@ -720,7 +790,8 @@ class ResponseProcessor:
             # Check consistency with stated emotion
             if current_emotion == "angry" and "anger" not in response_lower:
                 if any(
-                    word in response_lower for word in ["calm", "peaceful", "happy"]
+                    word in response_lower
+                    for word in ["calm", "peaceful", "happy"]
                 ):
                     score -= 0.2
 
@@ -750,7 +821,8 @@ class ResponseProcessor:
         """Parse and structure response content."""
         try:
             # For now, return cleaned response
-            # Future versions could parse JSON, extract specific data structures, etc.
+            # Future versions could parse JSON, extract specific data
+            # structures, etc.
             return response
 
         except Exception as e:
@@ -830,7 +902,14 @@ class ResponseProcessor:
                 "My plan is to",
                 "I decide to",
             ],
-            "dialogue_markers": ['"', "'", "says", "replies", "responds", "declares"],
+            "dialogue_markers": [
+                '"',
+                "'",
+                "says",
+                "replies",
+                "responds",
+                "declares",
+            ],
             "thought_indicators": [
                 "I think",
                 "I believe",
@@ -884,10 +963,13 @@ class ResponseProcessor:
         ):
             return "critical"
         elif any(
-            word in action_lower for word in ["important", "priority", "must", "need"]
+            word in action_lower
+            for word in ["important", "priority", "must", "need"]
         ):
             return "high"
-        elif any(word in action_lower for word in ["should", "ought", "better"]):
+        elif any(
+            word in action_lower for word in ["should", "ought", "better"]
+        ):
             return "medium"
         else:
             return "low"

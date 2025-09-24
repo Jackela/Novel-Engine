@@ -11,6 +11,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
+
 import pytest
 
 # Add src to path for imports
@@ -53,10 +54,19 @@ async def test_component_initialization():
             "ConfigurationService",
             lambda: ConfigurationService(config_dir="config", logger=logger),
         ),
-        ("AgentLifecycleManager", lambda: AgentLifecycleManager(logger=logger)),
+        (
+            "AgentLifecycleManager",
+            lambda: AgentLifecycleManager(logger=logger),
+        ),
         ("WorldStateManager", lambda: WorldStateManager(logger=logger)),
-        ("NarrativeOrchestrator", lambda: NarrativeOrchestrator(logger=logger)),
-        ("CampaignLoggingService", lambda: CampaignLoggingService(logger=logger)),
+        (
+            "NarrativeOrchestrator",
+            lambda: NarrativeOrchestrator(logger=logger),
+        ),
+        (
+            "CampaignLoggingService",
+            lambda: CampaignLoggingService(logger=logger),
+        ),
     ]
 
     initialized_components = []
@@ -188,7 +198,9 @@ async def test_component_protocols():
         for protocol_name, component_class in protocol_tests:
             # Check that required methods exist
             component_class()
-            print(f"✅ {component_class.__name__} implements {protocol_name} interface")
+            print(
+                f"✅ {component_class.__name__} implements {protocol_name} interface"
+            )
 
         print("✅ All protocol conformance checks passed")
         return True
@@ -286,7 +298,9 @@ async def main():
 
     if success_rate >= 75:
         print("🎉 Wave 2 Implementation: SUCCESS")
-        print("✅ DirectorAgent successfully decomposed into modular components")
+        print(
+            "✅ DirectorAgent successfully decomposed into modular components"
+        )
         print("✅ All core components are functional and integrated")
         print("✅ Ready to proceed to Wave 3: Large file modularization")
     else:

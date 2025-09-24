@@ -1,0 +1,125 @@
+error: cannot format D:\Code\Novel-Engine\src\agent_lifecycle_manager.py: Cannot parse: 120:13:             f"AgentLifecycleManager initialized (Iron Laws: {
+error: cannot format D:\Code\Novel-Engine\src\agents\context_manager.py: Cannot parse: 77:17:                 f"Character context loaded successfully for {
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_agent\core\character_data_manager.py: Cannot parse: 138:33:                                 f"Invalid numeric value for {attr}: {
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_agent\core\agent_state_manager.py: Cannot parse: 201:21:                     f"Agent ID mismatch: expected {
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_agent\decision_engine\threat_assessor.py: Cannot parse: 144:17:                 f"Threat assessment completed: {
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_agent\decision_engine\goal_manager.py: Cannot parse: 183:23:             goal_id = f"{
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_agent\decision_engine\decision_processor.py: Cannot parse: 123:17:                 f"Decision made: {
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_agent\llm_integration\response_processor.py: Cannot parse: 218:17:                 f"Response processing completed with confidence {
+error: cannot format D:\Code\Novel-Engine\src\ai_intelligence\export_integration_engine.py: Cannot parse: 235:13:             f"ExportIntegrationEngine initialized with storage at {
+error: cannot format D:\Code\Novel-Engine\src\ai_intelligence\analytics_platform.py: Cannot parse: 292:26:                 event_id=f"story_gen_{story_id}_{
+error: cannot format D:\Code\Novel-Engine\src\api\health_system.py: Cannot parse: 124:25:                 message=f"Health check timed out after {
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_agent\world_interpretation\world_interpreter.py: Cannot parse: 121:17:                 f"Interpreting event {
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_agent_modular.py: Cannot parse: 195:25:                         f"Character data validation issues: {
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_agent\world_interpretation\memory_manager.py: Cannot parse: 182:25:             memory_id = f"{
+error: cannot format D:\Code\Novel-Engine\src\api\interaction_api.py: Cannot parse: 132:32:                         detail=f"Participants not found: {
+error: cannot format D:\Code\Novel-Engine\src\ai_intelligence\recommendation_engine.py: Cannot parse: 337:17:                 f"Updated user preferences for {user_id} (completeness: {
+error: cannot format D:\Code\Novel-Engine\src\ai_intelligence\story_quality_engine.py: Cannot parse: 376:16:                 f"(Score: {
+error: cannot format D:\Code\Novel-Engine\src\api\emergent_narrative_api.py: Cannot parse: 264:41:                         "narrative_id", f"narrative_{
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_core.py: Cannot parse: 272:13:             f"PersonaCore cleanup completed for agent: {
+error: cannot format D:\Code\Novel-Engine\src\architecture\microservices_patterns.py: Cannot parse: 121:21:                     f"Updated service instance: {
+error: cannot format D:\Code\Novel-Engine\src\api\story_generation_api.py: Cannot parse: 187:32:                         detail=f"Characters not found: {
+error: cannot format D:\Code\Novel-Engine\src\bridge\dialogue_manager.py: Cannot parse: 85:17:                 f"Dialogue {dialogue_id} initiated: {initiator_id} -> {target_id} ({
+error: cannot format D:\Code\Novel-Engine\src\api\main_api_server.py: Cannot parse: 255:13:             f"Initial health check completed - Status: {
+error: cannot format D:\Code\Novel-Engine\src\ai_intelligence\agent_coordination_engine.py: Cannot parse: 211:25:                 task_id=f"welcome_{agent_id}_{
+error: cannot format D:\Code\Novel-Engine\src\bridges\multi_agent_bridge\dialogue\dialogue_manager.py: Cannot parse: 101:17:                 f"Initiated {
+error: cannot format D:\Code\Novel-Engine\src\ai_intelligence\integration_orchestrator.py: Cannot parse: 635:26:                 story_id=f"story_{user_id}_{
+error: cannot format D:\Code\Novel-Engine\src\character_interpreter.py: Cannot parse: 74:17:                 f"Loading character context from directory: {
+error: cannot format D:\Code\Novel-Engine\src\core\campaign_logger.py: Cannot parse: 47:21:                     f"Continuing existing campaign log: {
+error: cannot format D:\Code\Novel-Engine\src\bridges\multi_agent_bridge\performance\cost_tracker.py: Cannot parse: 82:21:                     f"Turn cost exceeded: ${
+error: cannot format D:\Code\Novel-Engine\src\bridge\llm_coordinator.py: Cannot parse: 142:17:                 f"Request {
+error: cannot format D:\Code\Novel-Engine\src\context_integrator.py: Cannot parse: 87:17:                 f"Context integration completed for {
+error: cannot format D:\Code\Novel-Engine\src\core\agent_coordinator.py: Cannot parse: 73:13:             f"Successfully registered agent: {character_name} (ID: {
+error: cannot format D:\Code\Novel-Engine\src\bridges\multi_agent_bridge\performance\performance_budget.py: Cannot parse: 78:17:                 f"Batch time exceeded budget: {
+error: cannot format D:\Code\Novel-Engine\src\core\character_llm_integration.py: Cannot parse: 88:21:                     f"Agent {
+error: cannot format D:\Code\Novel-Engine\src\constraints_loader.py: Cannot parse: 118:13:             f"Character name must be {
+error: cannot format D:\Code\Novel-Engine\src\api\integration_tests.py: Cannot parse: 466:35:                     error_message=f"Expected 404, got {
+error: cannot format D:\Code\Novel-Engine\src\core\character_decision_maker.py: Cannot parse: 125:13:             f"Agent {
+error: cannot format D:\Code\Novel-Engine\src\core\character_memory_manager.py: Cannot parse: 84:13:             f"Agent {
+error: cannot format D:\Code\Novel-Engine\src\ai_intelligence\ai_orchestrator.py: Cannot parse: 216:13:             f"AIIntelligenceOrchestrator initialized with {
+error: cannot format D:\Code\Novel-Engine\src\api\context7_integration_api.py: Cannot parse: 512:31:                         title=f"Novel Engine API {
+error: cannot format D:\Code\Novel-Engine\src\api\logging_system.py: Cannot parse: 417:27:             log_message = f"Performance: {operation} completed in {
+error: cannot format D:\Code\Novel-Engine\src\core\iron_laws_processor.py: Cannot parse: 91:32:                 action_summary=f"Action: {
+error: cannot format D:\Code\Novel-Engine\src\core\narrative_processor.py: Cannot parse: 84:21:                     f"Campaign brief file not found: {
+error: cannot format D:\Code\Novel-Engine\src\core\simulation_coordinator.py: Cannot parse: 82:21:                     f"Invalid agent type: {
+error: cannot format D:\Code\Novel-Engine\src\api\secure_main_api.py: Cannot parse: 406:17:                 f"User registered successfully: {
+error: cannot format D:\Code\Novel-Engine\src\core\enhanced_orchestrator.py: Cannot parse: 151:21:                     f"Health status changed: {
+error: cannot format D:\Code\Novel-Engine\src\api\subjective_reality_api.py: Cannot parse: 338:34:                     turn_summary=f"Turn {turn_id} briefs generated for {
+error: cannot format D:\Code\Novel-Engine\src\core\turn_manager.py: Cannot parse: 130:17:                 f"{character_name} ({
+error: cannot format D:\Code\Novel-Engine\src\core\subjective_reality.py: Cannot parse: 127:17:                 f"Information conflict detected for {
+error: cannot format D:\Code\Novel-Engine\src\database\context_db.py: Cannot parse: 92:13:             f"STANDARD DATABASE INITIALIZED: {
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_agent\llm_integration\llm_client.py: Cannot parse: 871:20:         key_data = f"{
+error: cannot format D:\Code\Novel-Engine\src\agents\persona_agent\utilities\validator.py: Cannot parse: 706:29:                     message=f"Consider adding common traits: {
+error: cannot format D:\Code\Novel-Engine\src\core\config\config_loader.py: Cannot parse: 322:25:                         f"Configuration file not found: {
+error: cannot format D:\Code\Novel-Engine\src\director_components\agent_lifecycle.py: Cannot parse: 94:25:                         f"Agent {agent_id} failed interface validation: {
+error: cannot format D:\Code\Novel-Engine\src\core\service_container.py: Cannot parse: 199:17:                 f"Registered service: {
+error: cannot format D:\Code\Novel-Engine\src\decision_engine.py: Cannot parse: 146:25:                         f"LLM decision-making failed for {agent_id}: {
+error: cannot format D:\Code\Novel-Engine\src\director_components\configuration.py: Cannot parse: 142:25:                         f"Configuration validation failed: {
+error: cannot format D:\Code\Novel-Engine\src\director_components\campaign_logging.py: Cannot parse: 129:17:                 f"Campaign logging service initialized for session {
+error: cannot format D:\Code\Novel-Engine\src\director_agent_base.py: Cannot parse: 249:21:                     f"Invalid agent type: {
+error: cannot format D:\Code\Novel-Engine\src\core\error_handler.py: Cannot parse: 335:27:         error_signature = f"{
+error: cannot format D:\Code\Novel-Engine\src\event_bus.py: Cannot parse: 53:17:                 f"Emitting event '{event_type}' to {
+error: cannot format D:\Code\Novel-Engine\src\enhanced_decision_engine.py: Cannot parse: 69:17:                 f"Action {
+error: cannot format D:\Code\Novel-Engine\src\director_components\turn_execution.py: Cannot parse: 125:40:                 turn_result["error"] = f"Preparation failed: {
+error: cannot format D:\Code\Novel-Engine\src\infrastructure\postgresql_manager.py: Cannot parse: 74:21:         ssl_param = f"?sslmode={
+error: cannot format D:\Code\Novel-Engine\src\director_components\narrative_orchestrator.py: Cannot parse: 217:17:                 f"Processed {
+error: cannot format D:\Code\Novel-Engine\src\core\event_bus.py: Cannot parse: 360:17:                 f"Event published: {
+error: cannot format D:\Code\Novel-Engine\src\core\database_manager.py: Cannot parse: 384:13:             f"Database connection pool initialized for {
+error: cannot format D:\Code\Novel-Engine\src\core\system_orchestrator.py: Cannot parse: 452:21:                     f"Agent registration failed for {agent_id}: {
+error: cannot format D:\Code\Novel-Engine\src\core\performance_cache.py: Cannot parse: 431:13:             f"Invalidated {
+error: cannot format D:\Code\Novel-Engine\src\cqrs\command_bus.py: Cannot parse: 394:13:             f"Registered handler {
+error: cannot format D:\Code\Novel-Engine\src\interactions\equipment_system\modifications\modification_system.py: Cannot parse: 114:33:                         message=f"Equipment already has maximum modifications ({
+error: cannot format D:\Code\Novel-Engine\src\infrastructure\s3_manager.py: Cannot parse: 186:17:                 f"S3 storage manager initialized: bucket={
+error: cannot format D:\Code\Novel-Engine\src\director\turn_engine.py: Cannot parse: 334:13:             f"Turn #{
+error: cannot format D:\Code\Novel-Engine\src\interactions\equipment_system\registry\equipment_registry.py: Cannot parse: 125:36:                     equipment_id = f"eq_{
+error: cannot format D:\Code\Novel-Engine\src\interactions\equipment_system\maintenance\maintenance_system.py: Cannot parse: 188:21:                     f"Maintenance scheduled for equipment '{
+error: cannot format D:\Code\Novel-Engine\src\events\event_bus.py: Cannot parse: 209:13:             f"Registered handler {handler_id} for events: {
+error: cannot format D:\Code\Novel-Engine\src\interactions\interaction_engine_system\interaction_engine_modular.py: Cannot parse: 187:25:                         f"Validation failed: {
+error: cannot format D:\Code\Novel-Engine\src\infrastructure\redis_manager.py: Cannot parse: 238:17:                 f"Redis connection pool initialized: {
+error: cannot format D:\Code\Novel-Engine\src\interactions\interaction_engine_system\processing\interaction_processor.py: Cannot parse: 169:25:         processing_id = f"{
+error: cannot format D:\Code\Novel-Engine\src\interactions\interaction_engine_system\queue_management\queue_manager.py: Cannot parse: 161:13:             f"Queue manager initialized with max queue size: {
+error: cannot format D:\Code\Novel-Engine\src\director_components\world_state.py: Cannot parse: 311:27:             snapshot_id = f"snapshot_{
+error: cannot format D:\Code\Novel-Engine\src\interactions\equipment_system\usage\equipment_usage.py: Cannot parse: 135:37:                             message=f"Equipment '{
+error: cannot format D:\Code\Novel-Engine\src\interactions\interaction_engine_system\queue_management\queue_manager_broken.py: Cannot parse: 163:13:             f"Queue manager initialized with max queue size: {
+error: cannot format D:\Code\Novel-Engine\src\director_components\error_handler.py: Cannot parse: 470:17:                 f"Retrying operation for error {
+error: cannot format D:\Code\Novel-Engine\src\interactions\character_interaction_processor.py: Cannot parse: 309:17:                 f"Character interaction {
+error: cannot format D:\Code\Novel-Engine\src\performance\optimization\performance_optimization.py: Cannot parse: 48:13:             f"Initialized database pool with {
+error: cannot format D:\Code\Novel-Engine\src\memory\working_memory.py: Cannot parse: 102:13:             f"WorkingMemory initialized for {agent_id} with capacity {
+error: cannot format D:\Code\Novel-Engine\src\interactions\interaction_engine_system\validation\interaction_validator.py: Cannot parse: 186:17:                 f"Interaction context '{
+error: cannot format D:\Code\Novel-Engine\src\memory\semantic_memory.py: Cannot parse: 154:17:                 f"Extracted {stored_count} facts from memory {
+error: cannot format D:\Code\Novel-Engine\src\memory\layered_memory.py: Cannot parse: 199:21:                     f"Layered memory stored: {
+error: cannot format D:\Code\Novel-Engine\src\llm_service.py: Cannot parse: 277:17:                 f"LLM request {request_id} completed: {response_time_ms}ms, ${
+error: cannot format D:\Code\Novel-Engine\src\core\emergent_narrative.py: Cannot parse: 780:13:             f"Negotiation session {
+error: cannot format D:\Code\Novel-Engine\src\performance\tests\performance_validation.py: Cannot parse: 133:25:                         f"{status} {description}: {
+error: cannot format D:\Code\Novel-Engine\src\performance_optimizations\persona_agent_async_patch.py: Cannot parse: 47:13:             f"Applying async LLM patch to agent {
+error: cannot format D:\Code\Novel-Engine\src\memory\memory_query_engine.py: Cannot parse: 245:17:                 f"Associative query found {
+error: cannot format D:\Code\Novel-Engine\src\performance_optimizations\async_processing_improvements.py: Cannot parse: 191:17:                 f"Task submitted: {
+error: cannot format D:\Code\Novel-Engine\src\performance_optimizations\memory_leak_fixes.py: Cannot parse: 138:13:             f"Deque sliding window for {name}: archived {
+error: cannot format D:\Code\Novel-Engine\src\persona_agent_integrated.py: Cannot parse: 147:13:             f"PersonaAgent integrated architecture initialized for '{
+error: cannot format D:\Code\Novel-Engine\src\persona_agent_core.py: Cannot parse: 194:17:                 f"PersonaAgent '{
+error: cannot format D:\Code\Novel-Engine\src\performance_optimizations\async_llm_integration.py: Cannot parse: 280:29:                             f"Agent {agent_id} API request failed: {
+error: cannot format D:\Code\Novel-Engine\src\interactions\interaction_engine_system\state_management\state_manager.py: Cannot parse: 490:43:                             change_reason=f"Interaction: {
+error: cannot format D:\Code\Novel-Engine\src\memory\episodic_memory.py: Cannot parse: 408:17:                 f"Episodic consolidation complete: {consolidated_count} episodes in {
+error: cannot format D:\Code\Novel-Engine\src\interactions\interaction_engine_system\type_processors\interaction_type_processors.py: Cannot parse: 681:13:             f"Interaction type processor manager initialized with {
+error: cannot format D:\Code\Novel-Engine\src\performance_optimizations\director_agent_loop_optimizer.py: Cannot parse: 343:13:             f"Async campaign logger stopped - {
+error: cannot format D:\Code\Novel-Engine\src\performance\monitoring\performance_monitoring.py: Cannot parse: 372:13:             f"Added performance threshold: {
+error: cannot format D:\Code\Novel-Engine\src\performance_optimizations\memory_optimization_gc.py: Cannot parse: 419:13:             f"GC thresholds adjusted: {
+error: cannot format D:\Code\Novel-Engine\src\security\security_integration.py: Cannot parse: 140:17:                 f"   • Behavioral Analytics: {
+error: cannot format D:\Code\Novel-Engine\src\security\security_dashboard.py: Cannot parse: 309:23:                 title=f"Security Event: {
+error: cannot format D:\Code\Novel-Engine\src\performance\monitoring.py: Cannot parse: 527:12:             f"Alert duration: {
+error: cannot format D:\Code\Novel-Engine\src\templates\dynamic_template_engine.py: Cannot parse: 197:13:             f"DYNAMIC TEMPLATE ENGINE INITIALIZED: {
+error: cannot format D:\Code\Novel-Engine\src\security\input_validation.py: Cannot parse: 526:49:                 status_code=status_code, detail=f"Input validation failed: {
+error: cannot format D:\Code\Novel-Engine\src\performance\optimization\performance_optimization_engine.py: Cannot parse: 630:29:                             f"Slow operation {operation_name}: {
+error: cannot format D:\Code\Novel-Engine\src\world_state_coordinator.py: Cannot parse: 86:21:                     f"World state file {
+error: cannot format D:\Code\Novel-Engine\src\templates\context_renderer.py: Cannot parse: 244:17:                 f"CONTEXT RENDERED: {
+error: cannot format D:\Code\Novel-Engine\src\templates\character_template_manager.py: Cannot parse: 196:13:             f"CHARACTER TEMPLATE MANAGER INITIALIZED: {
+error: cannot format D:\Code\Novel-Engine\src\turn_orchestrator.py: Cannot parse: 281:13:             f"Context refresh completed: {
+error: cannot format D:\Code\Novel-Engine\src\quality\code_quality_monitor.py: Cannot parse: 584:37:                             message=f"Long function '{current_function_name}': {
+error: cannot format D:\Code\Novel-Engine\src\security\rate_limiting.py: Cannot parse: 559:16:                 f"Client: {
+error: cannot format D:\Code\Novel-Engine\src\security\security_headers.py: Cannot parse: 317:17:                 f"INSECURE REQUEST DETECTED: HTTP request to {
+error: cannot format D:\Code\Novel-Engine\src\security\auth_system.py: Cannot parse: 760:28:                     detail=f"Insufficient permissions. Required: {
+error: cannot format D:\Code\Novel-Engine\src\security\security_middleware.py: Cannot parse: 500:16:                 f"-> {
+error: cannot format D:\Code\Novel-Engine\src\performance\tests\performance_stress_test.py: Cannot parse: 703:21:                     f"High error rate in {
+error: cannot format D:\Code\Novel-Engine\src\security\compliance_framework.py: Cannot parse: 684:13:             f"Standards: {
+error: cannot format D:\Code\Novel-Engine\src\interactions\dynamic_equipment_system.py: Cannot parse: 1635:21:                     f"Modification '{
+error: cannot format D:\Code\Novel-Engine\src\security\enterprise_security_manager.py: Cannot parse: 1134:13:             f"🚨 SECURITY ALERT: {

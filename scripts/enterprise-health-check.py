@@ -99,12 +99,20 @@ class EnterpriseHealthChecker:
 
                 CompleteEnterpriseSimulation()
                 status = "healthy"
-                details = {"enterprise_mode": "available", "all_waves": "active"}
+                details = {
+                    "enterprise_mode": "available",
+                    "all_waves": "active",
+                }
             except Exception as e:
-                self.logger.warning(f"Enterprise simulation not available: {e}")
+                self.logger.warning(
+                    f"Enterprise simulation not available: {e}"
+                )
                 # Fallback to basic API check
                 status = "degraded"
-                details = {"basic_api": "available", "enterprise_mode": "unavailable"}
+                details = {
+                    "basic_api": "available",
+                    "enterprise_mode": "unavailable",
+                }
 
             response_time = (time.time() - start_time) * 1000
 
@@ -295,7 +303,8 @@ class EnterpriseHealthChecker:
             if (
                 memory.percent
                 > self.config.performance_thresholds["memory_usage_percent"]
-                or cpu_percent > self.config.performance_thresholds["cpu_usage_percent"]
+                or cpu_percent
+                > self.config.performance_thresholds["cpu_usage_percent"]
             ):
                 status = "degraded"
             else:
@@ -357,7 +366,9 @@ class EnterpriseHealthChecker:
                             overall_status = "degraded"
 
                 except Exception as e:
-                    self.logger.error(f"Health check failed for {service}: {e}")
+                    self.logger.error(
+                        f"Health check failed for {service}: {e}"
+                    )
                     health_checks.append(
                         HealthStatus(
                             name=service,
@@ -379,7 +390,9 @@ class EnterpriseHealthChecker:
             self.logger.error(f"System resource check failed: {e}")
 
         # Calculate overall metrics
-        total_response_time = sum(check.response_time_ms for check in health_checks)
+        total_response_time = sum(
+            check.response_time_ms for check in health_checks
+        )
         avg_response_time = (
             total_response_time / len(health_checks) if health_checks else 0
         )

@@ -108,7 +108,9 @@ class APIVersionRegistry:
     def get_current_version(self) -> APIVersion:
         """Get the current recommended API version."""
         current_versions = [
-            v for v in self.versions.values() if v.status == VersionStatus.CURRENT
+            v
+            for v in self.versions.values()
+            if v.status == VersionStatus.CURRENT
         ]
         if current_versions:
             # Return the latest current version
@@ -120,7 +122,10 @@ class APIVersionRegistry:
         version_info = self.get_version_info(version)
         if not version_info:
             return False
-        return version_info.status in [VersionStatus.CURRENT, VersionStatus.SUPPORTED]
+        return version_info.status in [
+            VersionStatus.CURRENT,
+            VersionStatus.SUPPORTED,
+        ]
 
     def get_supported_versions(self) -> List[APIVersion]:
         """Get all currently supported versions."""
@@ -154,9 +159,9 @@ class VersionExtractor:
         accept_header = request.headers.get("accept", "")
         if "application/vnd.novel-engine.v" in accept_header:
             try:
-                version_part = accept_header.split("application/vnd.novel-engine.v")[
-                    1
-                ].split("+")[0]
+                version_part = accept_header.split(
+                    "application/vnd.novel-engine.v"
+                )[1].split("+")[0]
                 return APIVersion(version_part)
             except (IndexError, ValueError):
                 pass
@@ -232,7 +237,8 @@ class CompatibilityLayer:
         # Convert new status field
         if "status" in data:
             if data["status"] == "success":
-                data.pop("status", None)  # v1.0 didn't have status field for success
+                # v1.0 didn't have status field for success
+                data.pop("status", None)
             elif data["status"] == "error":
                 data["error"] = True
                 data.pop("status", None)
@@ -290,9 +296,9 @@ class VersionMiddleware:
                     "%a, %d %b %Y %H:%M:%S GMT"
                 )
             if version_info.migration_guide_url:
-                response.headers["Link"] = (
-                    f'<{version_info.migration_guide_url}>; rel="migration-guide"'
-                )
+                response.headers[
+                    "Link"
+                ] = f'<{version_info.migration_guide_url}>; rel="migration-guide"'
 
         return response
 
@@ -336,7 +342,9 @@ def create_version_info_endpoint():
                 "status": info.status.value,
                 "release_date": info.release_date.isoformat(),
                 "deprecation_date": (
-                    info.deprecation_date.isoformat() if info.deprecation_date else None
+                    info.deprecation_date.isoformat()
+                    if info.deprecation_date
+                    else None
                 ),
                 "sunset_date": (
                     info.sunset_date.isoformat() if info.sunset_date else None
@@ -348,7 +356,9 @@ def create_version_info_endpoint():
 
         return {
             "current_version": registry.get_current_version().value,
-            "supported_versions": [v.value for v in registry.get_supported_versions()],
+            "supported_versions": [
+                v.value for v in registry.get_supported_versions()
+            ],
             "versions": versions_info,
         }
 

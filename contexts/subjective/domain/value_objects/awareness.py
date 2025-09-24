@@ -62,9 +62,9 @@ class AwarenessState:
     current_alertness: AlertnessLevel
     attention_focus: AttentionFocus
     focus_target: Optional[str] = None  # What/who is being focused on
-    awareness_modifiers: Dict[AwarenessModifier, float] = (
-        None  # Modifier -> effect strength
-    )
+    awareness_modifiers: Dict[
+        AwarenessModifier, float
+    ] = None  # Modifier -> effect strength
     fatigue_level: float = 0.0  # 0.0 = fresh, 1.0 = exhausted
     stress_level: float = 0.0  # 0.0 = calm, 1.0 = maximum stress
 
@@ -83,7 +83,9 @@ class AwarenessState:
             if not isinstance(modifier, AwarenessModifier):
                 raise ValueError(f"Invalid awareness modifier: {modifier}")
             if not isinstance(value, (int, float)):
-                raise ValueError(f"Modifier value for {modifier} must be numeric")
+                raise ValueError(
+                    f"Modifier value for {modifier} must be numeric"
+                )
             if not -1.0 <= value <= 1.0:
                 raise ValueError(
                     f"Modifier value for {modifier} must be between -1.0 and 1.0"
@@ -144,7 +146,9 @@ class AwarenessState:
             elif modifier == AwarenessModifier.FEAR:
                 # Fear can increase or decrease alertness depending on strength
                 if strength > 0:
-                    modified_value += strength * 1.5  # Fear increases alertness
+                    modified_value += (
+                        strength * 1.5
+                    )  # Fear increases alertness
                 else:
                     modified_value += (
                         strength * 2
@@ -213,7 +217,10 @@ class AwarenessState:
         base_modifier = reaction_modifiers[effective_alertness]
 
         # Unconscious and sleeping states are absolute - no modifiers apply
-        if effective_alertness in [AlertnessLevel.UNCONSCIOUS, AlertnessLevel.SLEEPING]:
+        if effective_alertness in [
+            AlertnessLevel.UNCONSCIOUS,
+            AlertnessLevel.SLEEPING,
+        ]:
             return base_modifier
 
         # Apply fatigue and stress penalties to conscious states only
@@ -255,7 +262,10 @@ class AwarenessState:
         effective_alertness = self.calculate_effective_alertness()
 
         # Unconscious or sleeping entities are always surprised
-        if effective_alertness in [AlertnessLevel.UNCONSCIOUS, AlertnessLevel.SLEEPING]:
+        if effective_alertness in [
+            AlertnessLevel.UNCONSCIOUS,
+            AlertnessLevel.SLEEPING,
+        ]:
             return True
 
         # Task-focused entities are more likely to be surprised

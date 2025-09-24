@@ -83,7 +83,9 @@ class ConnectionMetrics:
 class DatabaseConnection:
     """Managed database connection wrapper."""
 
-    def __init__(self, connection: aiosqlite.Connection, config: DatabaseConfig):
+    def __init__(
+        self, connection: aiosqlite.Connection, config: DatabaseConfig
+    ):
         """Initialize database connection wrapper."""
         self.connection = connection
         self.config = config
@@ -100,7 +102,9 @@ class DatabaseConnection:
                 await self._initialize_sqlite()
 
             # Start health check task
-            self._health_check_task = asyncio.create_task(self._health_check_loop())
+            self._health_check_task = asyncio.create_task(
+                self._health_check_loop()
+            )
 
             logger.debug("Database connection initialized")
 
@@ -126,11 +130,15 @@ class DatabaseConnection:
                 await self.connection.execute(setting)
                 logger.debug(f"Applied SQLite setting: {setting}")
             except Exception as e:
-                logger.warning(f"Failed to apply SQLite setting {setting}: {e}")
+                logger.warning(
+                    f"Failed to apply SQLite setting {setting}: {e}"
+                )
 
         await self.connection.commit()
 
-    async def execute(self, query: str, parameters: tuple = None) -> aiosqlite.Cursor:
+    async def execute(
+        self, query: str, parameters: tuple = None
+    ) -> aiosqlite.Cursor:
         """Execute query with metrics tracking."""
         async with self._lock:
             self.state = ConnectionState.ACTIVE
@@ -201,7 +209,8 @@ class DatabaseConnection:
                     current_avg = self.metrics.average_query_time
                     total_queries = self.metrics.total_queries
                     self.metrics.average_query_time = (
-                        current_avg * (total_queries - batch_size) + execution_time
+                        current_avg * (total_queries - batch_size)
+                        + execution_time
                     ) / total_queries
 
                 return cursor
@@ -279,7 +288,9 @@ class DatabaseConnection:
                 await self.health_check()
 
                 # Check for idle timeout
-                idle_time = (datetime.now() - self._last_activity).total_seconds()
+                idle_time = (
+                    datetime.now() - self._last_activity
+                ).total_seconds()
                 if idle_time > self.config.idle_timeout:
                     logger.debug(
                         f"Connection idle for {idle_time}s, marking for cleanup"
@@ -397,17 +408,21 @@ class DatabaseConnectionPool:
                         error_context = ErrorContext(
                             component="DatabaseConnectionPool",
                             operation="initialize",
-                            metadata={"database_type": self.config.database_type.value},
+                            metadata={
+                                "database_type": self.config.database_type.value
+                            },
                         )
                         await self.error_handler.handle_error(e, error_context)
                     raise
 
             # Start maintenance task
-            self._maintenance_task = asyncio.create_task(self._maintenance_loop())
+            self._maintenance_task = asyncio.create_task(
+                self._maintenance_loop()
+            )
 
             self._initialized = True
             logger.info(
-                f"Connection pool initialized with {len(self._available_connections)} connections"
+                f"Connection pool initialized with {len( self._available_connections)} connections"
             )
 
     async def get_connection(self) -> AsyncContextManager[DatabaseConnection]:
@@ -442,15 +457,22 @@ class DatabaseConnectionPool:
 
                     # Update metrics
                     active_count = len(self._active_connections)
-                    if active_count > self._pool_metrics["peak_active_connections"]:
-                        self._pool_metrics["peak_active_connections"] = active_count
+                    if (
+                        active_count
+                        > self._pool_metrics["peak_active_connections"]
+                    ):
+                        self._pool_metrics[
+                            "peak_active_connections"
+                        ] = active_count
 
                     wait_time = time.time() - wait_start
-                    self._pool_metrics["connection_wait_times"].append(wait_time)
+                    self._pool_metrics["connection_wait_times"].append(
+                        wait_time
+                    )
                     if len(self._pool_metrics["connection_wait_times"]) > 1000:
-                        self._pool_metrics["connection_wait_times"] = (
-                            self._pool_metrics["connection_wait_times"][-1000:]
-                        )
+                        self._pool_metrics[
+                            "connection_wait_times"
+                        ] = self._pool_metrics["connection_wait_times"][-1000:]
 
                     return connection
                 else:
@@ -472,11 +494,18 @@ class DatabaseConnectionPool:
 
                     # Update peak active connections
                     active_count = len(self._active_connections)
-                    if active_count > self._pool_metrics["peak_active_connections"]:
-                        self._pool_metrics["peak_active_connections"] = active_count
+                    if (
+                        active_count
+                        > self._pool_metrics["peak_active_connections"]
+                    ):
+                        self._pool_metrics[
+                            "peak_active_connections"
+                        ] = active_count
 
                     wait_time = time.time() - wait_start
-                    self._pool_metrics["connection_wait_times"].append(wait_time)
+                    self._pool_metrics["connection_wait_times"].append(
+                        wait_time
+                    )
 
                     return connection
 
@@ -503,7 +532,9 @@ class DatabaseConnectionPool:
 
             raise RuntimeError(f"Connection pool timeout after {timeout}s")
 
-    async def _release_connection(self, connection: DatabaseConnection) -> None:
+    async def _release_connection(
+        self, connection: DatabaseConnection
+    ) -> None:
         """Release connection back to pool."""
         async with self._pool_lock:
             connection_id = id(connection)
@@ -526,7 +557,8 @@ class DatabaseConnectionPool:
             db_path.parent.mkdir(parents=True, exist_ok=True)
 
             raw_connection = await aiosqlite.connect(
-                self.config.connection_string, timeout=self.config.connection_timeout
+                self.config.connection_string,
+                timeout=self.config.connection_timeout,
             )
 
             connection = DatabaseConnection(raw_connection, self.config)
@@ -620,7 +652,9 @@ class DatabaseConnectionPool:
                         self._pool_metrics["total_connections_created"] += 1
 
                     except Exception as e:
-                        logger.error(f"Failed to create maintenance connection: {e}")
+                        logger.error(
+                            f"Failed to create maintenance connection: {e}"
+                        )
                         break
 
             # Update pool utilization metrics
@@ -661,9 +695,15 @@ class DatabaseConnectionPool:
             "total_connections_created": self._pool_metrics[
                 "total_connections_created"
             ],
-            "total_connections_closed": self._pool_metrics["total_connections_closed"],
-            "peak_active_connections": self._pool_metrics["peak_active_connections"],
-            "average_pool_utilization": self._pool_metrics["average_pool_utilization"],
+            "total_connections_closed": self._pool_metrics[
+                "total_connections_closed"
+            ],
+            "peak_active_connections": self._pool_metrics[
+                "peak_active_connections"
+            ],
+            "average_pool_utilization": self._pool_metrics[
+                "average_pool_utilization"
+            ],
             "average_wait_time": (
                 sum(wait_times) / len(wait_times) if wait_times else 0.0
             ),
@@ -733,7 +773,9 @@ class DatabaseManager:
         # Create database config
         config = DatabaseConfig(
             database_type=DatabaseType.SQLITE,
-            connection_string=database_config_dict.get("url", "data/novel_engine.db"),
+            connection_string=database_config_dict.get(
+                "url", "data/novel_engine.db"
+            ),
             min_pool_size=database_config_dict.get("min_pool_size", 2),
             max_pool_size=database_config_dict.get("max_pool_size", 20),
             connection_timeout=database_config_dict.get("timeout", 30.0),
@@ -744,7 +786,9 @@ class DatabaseManager:
         await pool.initialize()
 
         self._pools[self._default_pool_name] = pool
-        logger.info(f"Default database pool created: {config.connection_string}")
+        logger.info(
+            f"Default database pool created: {config.connection_string}"
+        )
 
     async def add_pool(self, name: str, config: DatabaseConfig) -> None:
         """Add named database pool."""
@@ -774,7 +818,10 @@ class DatabaseManager:
         return await pool.get_connection()
 
     async def execute_query(
-        self, query: str, parameters: tuple = None, pool_name: Optional[str] = None
+        self,
+        query: str,
+        parameters: tuple = None,
+        pool_name: Optional[str] = None,
     ) -> aiosqlite.Cursor:
         """Execute query on specified or default pool."""
         async with await self.get_connection(pool_name) as conn:
@@ -812,7 +859,9 @@ class DatabaseManager:
             self._pools.clear()
             self._initialized = False
 
-    def get_pool_status(self, pool_name: Optional[str] = None) -> Dict[str, Any]:
+    def get_pool_status(
+        self, pool_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Get status of specified or all pools."""
         if pool_name:
             if pool_name not in self._pools:
@@ -820,9 +869,13 @@ class DatabaseManager:
             return {pool_name: self._pools[pool_name].get_pool_status()}
 
         # Return all pool statuses
-        return {name: pool.get_pool_status() for name, pool in self._pools.items()}
+        return {
+            name: pool.get_pool_status() for name, pool in self._pools.items()
+        }
 
-    def get_pool_metrics(self, pool_name: Optional[str] = None) -> Dict[str, Any]:
+    def get_pool_metrics(
+        self, pool_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Get metrics for specified or all pools."""
         if pool_name:
             if pool_name not in self._pools:
@@ -830,7 +883,9 @@ class DatabaseManager:
             return {pool_name: self._pools[pool_name].get_pool_metrics()}
 
         # Return all pool metrics
-        return {name: pool.get_pool_metrics() for name, pool in self._pools.items()}
+        return {
+            name: pool.get_pool_metrics() for name, pool in self._pools.items()
+        }
 
     async def health_check(self) -> Dict[str, Dict[str, Any]]:
         """Perform health check on all pools."""

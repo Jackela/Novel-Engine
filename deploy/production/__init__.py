@@ -36,7 +36,9 @@ __all__ = [
 ]
 
 
-def deploy_application(version: str, strategy: str = "rolling", **kwargs) -> str:
+def deploy_application(
+    version: str, strategy: str = "rolling", **kwargs
+) -> str:
     """
     Deploy application to production environment.
 
@@ -48,7 +50,9 @@ def deploy_application(version: str, strategy: str = "rolling", **kwargs) -> str
     Returns:
         str: Deployment ID for tracking
     """
-    deployment_id = f"prod-{version}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    deployment_id = (
+        f"prod-{version}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    )
 
     # Validate strategy
     valid_strategies = ["rolling", "blue_green", "canary"]
@@ -87,8 +91,16 @@ def monitor_deployment(deployment_id: str) -> Dict[str, Any]:
         "deployment_id": deployment_id,
         "status": "healthy",
         "progress": 100,
-        "health_checks": {"readiness": True, "liveness": True, "startup": True},
-        "metrics": {"response_time_p95": 200, "error_rate": 0.001, "throughput": 1000},
+        "health_checks": {
+            "readiness": True,
+            "liveness": True,
+            "startup": True,
+        },
+        "metrics": {
+            "response_time_p95": 200,
+            "error_rate": 0.001,
+            "throughput": 1000,
+        },
         "last_check": datetime.now().isoformat(),
     }
 
@@ -129,7 +141,9 @@ def emergency_rollback(deployment_id: str, reason: str) -> str:
     Returns:
         str: Rollback deployment ID
     """
-    rollback_id = f"prod-emergency-rollback-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    rollback_id = (
+        f"prod-emergency-rollback-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    )
 
     # Log emergency rollback
     {

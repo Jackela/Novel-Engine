@@ -11,14 +11,16 @@ __version__ = "1.0.0"
 import importlib.util
 import os
 
-# Import from the main types module
-import sys
-
 # Export shared types from this package
 from .shared_types import ActionPriority, ActionType
 
+# Import from the main types module
+
+
 # Direct import from the types.py file
-types_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "types.py")
+types_path = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "types.py"
+)
 spec = importlib.util.spec_from_file_location("core_types", types_path)
 core_types = importlib.util.module_from_spec(spec)
 
@@ -107,13 +109,19 @@ except Exception:
 
     # Fallback validation functions
     def is_valid_agent_id(value: str) -> bool:
-        return isinstance(value, str) and 2 <= len(value) <= 100 and value.strip() != ""
+        return (
+            isinstance(value, str)
+            and 2 <= len(value) <= 100
+            and value.strip() != ""
+        )
 
     def is_valid_trust_level(value: int) -> bool:
         return isinstance(value, int) and 0 <= value <= 10
 
     def is_valid_emotional_weight(value: float) -> bool:
-        return isinstance(value, (int, float)) and -10.0 <= float(value) <= 10.0
+        return (
+            isinstance(value, (int, float)) and -10.0 <= float(value) <= 10.0
+        )
 
     def is_valid_relevance_score(value: float) -> bool:
         return isinstance(value, (int, float)) and 0.0 <= float(value) <= 1.0

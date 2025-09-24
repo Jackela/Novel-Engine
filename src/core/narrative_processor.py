@@ -88,23 +88,33 @@ class NarrativeProcessor:
                 return
 
             # Load campaign brief
-            logger.info(f"Loading campaign brief from: {self.campaign_brief_path}")
+            logger.info(
+                f"Loading campaign brief from: {self.campaign_brief_path}"
+            )
 
             brief_loader = CampaignBriefLoader()
-            self.campaign_brief = brief_loader.load_from_file(campaign_brief_path)
+            self.campaign_brief = brief_loader.load_from_file(
+                campaign_brief_path
+            )
 
             if self.campaign_brief:
-                logger.info(f"Campaign brief loaded: {self.campaign_brief.title}")
-                logger.info(f"Narrative context: {self.campaign_brief.setting}")
+                logger.info(
+                    f"Campaign brief loaded: {self.campaign_brief.title}"
+                )
+                logger.info(
+                    f"Narrative context: {self.campaign_brief.setting}"
+                )
 
                 # Initialize narrative action resolver with campaign context
-                self.narrative_resolver = NarrativeActionResolver(self.campaign_brief)
+                self.narrative_resolver = NarrativeActionResolver(
+                    self.campaign_brief
+                )
 
                 # Initialize story state phase from campaign brief
                 if hasattr(self.campaign_brief, "initial_phase"):
-                    self.story_state["current_phase"] = (
-                        self.campaign_brief.initial_phase
-                    )
+                    self.story_state[
+                        "current_phase"
+                    ] = self.campaign_brief.initial_phase
                 else:
                     self.story_state["current_phase"] = "investigation"
 
@@ -135,7 +145,9 @@ class NarrativeProcessor:
 
         for event in self.campaign_brief.key_events:
             if event.trigger_condition == "simulation_start":
-                logger.info(f"Triggering initial narrative event: {event.description}")
+                logger.info(
+                    f"Triggering initial narrative event: {event.description}"
+                )
 
                 # Add event to story state
                 self.story_state["triggered_events"].append(
@@ -201,7 +213,9 @@ class NarrativeProcessor:
                 "available_actions": self._identify_available_narrative_actions(
                     target_agent, registered_agents
                 ),
-                "relationship_status": self._get_agent_relationships(target_agent),
+                "relationship_status": self._get_agent_relationships(
+                    target_agent
+                ),
                 "story_progress": self.story_state["story_progression"][
                     -3:
                 ],  # Last 3 progressions
@@ -210,7 +224,9 @@ class NarrativeProcessor:
             return narrative_context
 
         except Exception as e:
-            logger.error(f"Error generating narrative context for {agent_id}: {str(e)}")
+            logger.error(
+                f"Error generating narrative context for {agent_id}: {str(e)}"
+            )
             return None
 
     def _generate_character_specific_context(self, agent: PersonaAgent) -> str:
@@ -231,14 +247,10 @@ class NarrativeProcessor:
 
         # Add faction-specific narrative perspective
         if "imperial" in faction.lower():
-            imperial_context = (
-                " Your duty to the Emperor guides your perception of these events."
-            )
+            imperial_context = " Your duty to the Emperor guides your perception of these events."
             base_context += imperial_context
         elif "ork" in faction.lower():
-            ork_context = (
-                " Your ork instincts tell you there's a good fight brewing here."
-            )
+            ork_context = " Your ork instincts tell you there's a good fight brewing here."
             base_context += ork_context
         elif "mechanicus" in faction.lower():
             mechanicus_context = " Your augmetic senses detect deeper mysteries in the system processes here."
@@ -246,11 +258,15 @@ class NarrativeProcessor:
 
         # Add context based on the current story phase
         if self.story_state["current_phase"] == "investigation":
-            base_context += " The mysteries here call for careful investigation."
+            base_context += (
+                " The mysteries here call for careful investigation."
+            )
         elif self.story_state["current_phase"] == "revelation":
             base_context += " Critical information is coming to light."
         elif self.story_state["current_phase"] == "confrontation":
-            base_context += " The tension is building toward a decisive moment."
+            base_context += (
+                " The tension is building toward a decisive moment."
+            )
 
         return base_context
 
@@ -278,7 +294,9 @@ class NarrativeProcessor:
             # Check for turn-based triggers
             if "turn >=" in event.trigger_condition:
                 try:
-                    required_turn = int(event.trigger_condition.split(">=")[1].strip())
+                    required_turn = int(
+                        event.trigger_condition.split(">=")[1].strip()
+                    )
                     if current_turn_number >= required_turn:
                         should_trigger = True
                 except ValueError:
@@ -289,8 +307,13 @@ class NarrativeProcessor:
             # Check for investigation count-based triggers
             elif "investigation_count >=" in event.trigger_condition:
                 try:
-                    required_count = int(event.trigger_condition.split(">=")[1].strip())
-                    if self.story_state["investigation_count"] >= required_count:
+                    required_count = int(
+                        event.trigger_condition.split(">=")[1].strip()
+                    )
+                    if (
+                        self.story_state["investigation_count"]
+                        >= required_count
+                    ):
                         should_trigger = True
                 except ValueError:
                     logger.warning(
@@ -321,7 +344,10 @@ class NarrativeProcessor:
         Returns:
             List of available narrative action names
         """
-        available_actions = ["investigate", "observe_environment"]  # Always available
+        available_actions = [
+            "investigate",
+            "observe_environment",
+        ]  # Always available
 
         # Add actions based on story state
         if self.story_state["investigation_count"] > 0:
@@ -346,7 +372,9 @@ class NarrativeProcessor:
         # Remove duplicates and return
         return list(set(available_actions))
 
-    def _get_agent_relationships(self, agent: PersonaAgent) -> Dict[str, float]:
+    def _get_agent_relationships(
+        self, agent: PersonaAgent
+    ) -> Dict[str, float]:
         """
         Get relationship status for the agent with other characters.
 
@@ -392,7 +420,7 @@ class NarrativeProcessor:
             return None
 
         logger.info(
-            f"Processing narrative action: {action.action_type} by {agent.agent_id}"
+            f"Processing narrative action: {action.action_type}by {agent.agent_id}"
         )
 
         # Get character data for narrative processing
@@ -438,13 +466,23 @@ class NarrativeProcessor:
                     logger.info(f"Story advancement: {advancement}")
 
             # Update character relationships
-            for character, change in narrative_outcome.relationship_changes.items():
-                if character not in self.story_state["character_relationships"]:
-                    self.story_state["character_relationships"][character] = 0.0
+            for (
+                character,
+                change,
+            ) in narrative_outcome.relationship_changes.items():
+                if (
+                    character
+                    not in self.story_state["character_relationships"]
+                ):
+                    self.story_state["character_relationships"][
+                        character
+                    ] = 0.0
 
-                self.story_state["character_relationships"][character] += change
+                self.story_state["character_relationships"][
+                    character
+                ] += change
                 logger.info(
-                    f"Relationship change: {character} {change:+.2f} (now {self.story_state['character_relationships'][character]:.2f})"
+                    f"Relationship change: {character} {change:+.2f}(now {self.story_state['character_relationships'][character]:.2f})"
                 )
 
             # Track investigation count for event triggers
@@ -454,7 +492,8 @@ class NarrativeProcessor:
             # Track dialogue count for event triggers
             if (
                 "dialogue" in str(narrative_outcome.description).lower()
-                or "communication" in str(narrative_outcome.description).lower()
+                or "communication"
+                in str(narrative_outcome.description).lower()
             ):
                 self.story_state["dialogue_count"] += 1
 
@@ -463,8 +502,12 @@ class NarrativeProcessor:
                 hasattr(narrative_outcome, "phase_change")
                 and narrative_outcome.phase_change
             ):
-                self.story_state["current_phase"] = narrative_outcome.phase_change
-                logger.info(f"Story phase changed to: {narrative_outcome.phase_change}")
+                self.story_state[
+                    "current_phase"
+                ] = narrative_outcome.phase_change
+                logger.info(
+                    f"Story phase changed to: {narrative_outcome.phase_change}"
+                )
 
         except Exception as e:
             logger.error(f"Error updating story state: {str(e)}")

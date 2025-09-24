@@ -8,8 +8,8 @@ Comprehensive tests for the modular enhanced multi-agent bridge implementation.
 import asyncio
 import logging
 from typing import Any
-import pytest
 
+import pytest
 
 # Import the modular bridge
 from src.bridges.multi_agent_bridge import (
@@ -52,7 +52,11 @@ class MockDirectorAgent:
 
     async def run_turn(self, turn_data):
         self.turn_count += 1
-        return {"success": True, "turn_number": self.turn_count, "agents_processed": 2}
+        return {
+            "success": True,
+            "turn_number": self.turn_count,
+            "agents_processed": 2,
+        }
 
 
 @pytest.mark.asyncio
@@ -71,7 +75,9 @@ async def test_bridge_initialization():
         )
 
         # Verify components are initialized
-        assert bridge.cost_tracker is not None, "CostTracker should be initialized"
+        assert (
+            bridge.cost_tracker is not None
+        ), "CostTracker should be initialized"
         assert (
             bridge.performance_budget is not None
         ), "PerformanceBudget should be initialized"
@@ -112,8 +118,12 @@ async def test_ai_systems_initialization():
         # Initialize AI systems
         result = await bridge.initialize_ai_systems()
 
-        assert result["success"] is True, "AI systems initialization should succeed"
-        assert bridge._is_initialized is True, "Bridge should be marked as initialized"
+        assert (
+            result["success"] is True
+        ), "AI systems initialization should succeed"
+        assert (
+            bridge._is_initialized is True
+        ), "Bridge should be marked as initialized"
         assert (
             result["initialization_time"] is not None
         ), "Should record initialization time"
@@ -151,7 +161,9 @@ async def test_agent_registration():
 
         # Test agent status retrieval
         status = await bridge.get_enhanced_agent_status("agent_001")
-        assert status["agent_id"] == "agent_001", "Should return correct agent status"
+        assert (
+            status["agent_id"] == "agent_001"
+        ), "Should return correct agent status"
         assert "basic_status" in status, "Should include basic status"
 
         print("✅ Agent registration successful")
@@ -235,9 +247,15 @@ async def test_enhanced_turn_execution():
 
         assert turn_result["success"] is True, "Enhanced turn should succeed"
         assert turn_result["turn_number"] == 1, "Should track turn number"
-        assert "dialogue_results" in turn_result, "Should include dialogue results"
-        assert "performance_data" in turn_result, "Should include performance data"
-        assert "enhanced_summary" in turn_result, "Should generate enhanced summary"
+        assert (
+            "dialogue_results" in turn_result
+        ), "Should include dialogue results"
+        assert (
+            "performance_data" in turn_result
+        ), "Should include performance data"
+        assert (
+            "enhanced_summary" in turn_result
+        ), "Should generate enhanced summary"
 
         print("✅ Enhanced turn execution successful")
         print(f"   Turn time: {turn_result['total_time']:.3f}s")
@@ -270,9 +288,15 @@ async def test_performance_tracking():
         # Get comprehensive metrics
         metrics = bridge.get_coordination_performance_metrics()
 
-        assert "cost_efficiency" in metrics, "Should include cost efficiency metrics"
-        assert "performance_stats" in metrics, "Should include performance statistics"
-        assert "system_health_score" in metrics, "Should calculate system health score"
+        assert (
+            "cost_efficiency" in metrics
+        ), "Should include cost efficiency metrics"
+        assert (
+            "performance_stats" in metrics
+        ), "Should include performance statistics"
+        assert (
+            "system_health_score" in metrics
+        ), "Should calculate system health score"
 
         # Test system intelligence dashboard
         dashboard = await bridge.get_system_intelligence_dashboard()
@@ -280,8 +304,12 @@ async def test_performance_tracking():
         assert (
             dashboard["system_status"] == "operational"
         ), "System should be operational"
-        assert "performance_metrics" in dashboard, "Should include performance metrics"
-        assert "integration_stats" in dashboard, "Should include integration statistics"
+        assert (
+            "performance_metrics" in dashboard
+        ), "Should include performance metrics"
+        assert (
+            "integration_stats" in dashboard
+        ), "Should include integration statistics"
 
         print("✅ Performance tracking successful")
         print(f"   System health: {metrics.get('system_health_score', 0):.1%}")
@@ -303,7 +331,9 @@ async def test_cost_and_budget_management():
     try:
         event_bus = MockEventBus()
         config = LLMCoordinationConfig(max_cost_per_turn=0.05)
-        bridge = EnhancedMultiAgentBridge(event_bus, coordination_config=config)
+        bridge = EnhancedMultiAgentBridge(
+            event_bus, coordination_config=config
+        )
         await bridge.initialize_ai_systems()
 
         # Test cost tracking
@@ -355,7 +385,9 @@ async def test_component_integration():
         cost_stats = metrics.cost_tracker.get_cost_efficiency_stats()
         perf_stats = metrics.performance_budget.get_performance_stats()
 
-        assert cost_stats is not None, "Performance metrics should access cost tracker"
+        assert (
+            cost_stats is not None
+        ), "Performance metrics should access cost tracker"
         assert (
             perf_stats is not None
         ), "Performance metrics should access performance budget"

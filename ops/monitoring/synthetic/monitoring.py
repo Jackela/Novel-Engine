@@ -213,7 +213,9 @@ class SyntheticMonitor:
         )
 
         timeout = aiohttp.ClientTimeout(total=30)
-        self.http_session = aiohttp.ClientSession(connector=connector, timeout=timeout)
+        self.http_session = aiohttp.ClientSession(
+            connector=connector, timeout=timeout
+        )
 
         # Start monitoring tasks for each check
         for check_name, check in self.checks.items():
@@ -221,7 +223,9 @@ class SyntheticMonitor:
                 task = asyncio.create_task(self._monitor_check(check))
                 self.check_tasks[check_name] = task
 
-        logger.info(f"Started synthetic monitoring for {len(self.check_tasks)} checks")
+        logger.info(
+            f"Started synthetic monitoring for {len(self.check_tasks)} checks"
+        )
 
     async def stop_monitoring(self):
         """Stop synthetic monitoring"""
@@ -233,7 +237,9 @@ class SyntheticMonitor:
 
         # Wait for tasks to complete
         if self.check_tasks:
-            await asyncio.gather(*self.check_tasks.values(), return_exceptions=True)
+            await asyncio.gather(
+                *self.check_tasks.values(), return_exceptions=True
+            )
 
         self.check_tasks.clear()
 
@@ -265,7 +271,10 @@ class SyntheticMonitor:
                     self.consecutive_failures[check.name] += 1
 
                     # Log failures
-                    if self.consecutive_failures[check.name] >= check.failure_threshold:
+                    if (
+                        self.consecutive_failures[check.name]
+                        >= check.failure_threshold
+                    ):
                         logger.error(
                             f"Synthetic check '{check.name}' has failed "
                             f"{self.consecutive_failures[check.name]} consecutive times: "
@@ -352,7 +361,9 @@ class SyntheticMonitor:
                 )
 
                 # Validate response
-                await self._validate_http_response(result, response, content, config)
+                await self._validate_http_response(
+                    result, response, content, config
+                )
 
                 return result
 
@@ -407,7 +418,9 @@ class SyntheticMonitor:
                     }
                 )
                 result.status = CheckStatus.FAILURE
-                result.error_message = f"Unexpected status code: {response.status}"
+                result.error_message = (
+                    f"Unexpected status code: {response.status}"
+                )
 
         # Validate response time
         if config.expected_response_time_ms:
@@ -431,9 +444,7 @@ class SyntheticMonitor:
                 )
                 result.status = CheckStatus.FAILURE
                 if not result.error_message:
-                    result.error_message = (
-                        f"Response time too slow: {result.response_time_ms:.2f}ms"
-                    )
+                    result.error_message = f"Response time too slow: {result.response_time_ms:.2f}ms"
 
         # Validate content
         if config.expected_content:
@@ -496,7 +507,9 @@ class SyntheticMonitor:
 
         # Update validation counters
         result.validations_passed = sum(1 for v in validations if v["passed"])
-        result.validations_failed = sum(1 for v in validations if not v["passed"])
+        result.validations_failed = sum(
+            1 for v in validations if not v["passed"]
+        )
         result.validation_details = validations
 
     def _validate_json_schema(self, data: Any, schema: Dict[str, Any]) -> bool:
@@ -512,7 +525,9 @@ class SyntheticMonitor:
                     return False
                 elif expected_type == "string" and not isinstance(data, str):
                     return False
-                elif expected_type == "number" and not isinstance(data, (int, float)):
+                elif expected_type == "number" and not isinstance(
+                    data, (int, float)
+                ):
                     return False
                 elif expected_type == "boolean" and not isinstance(data, bool):
                     return False
@@ -536,7 +551,9 @@ class SyntheticMonitor:
 
             # Test each endpoint
             for endpoint_config in config.endpoints:
-                endpoint_result = await self._test_api_endpoint(config, endpoint_config)
+                endpoint_result = await self._test_api_endpoint(
+                    config, endpoint_config
+                )
                 results.append(endpoint_result)
 
             # Aggregate results
@@ -546,25 +563,35 @@ class SyntheticMonitor:
             result = CheckResult(
                 check_name=check.name,
                 check_type=CheckType.API,
-                status=CheckStatus.SUCCESS if all_passed else CheckStatus.FAILURE,
+                status=CheckStatus.SUCCESS
+                if all_passed
+                else CheckStatus.FAILURE,
                 timestamp=datetime.now(timezone.utc),
                 duration_ms=total_duration,
                 custom_metrics={
                     "endpoints_tested": len(results),
-                    "endpoints_passed": sum(1 for r in results if r["success"]),
-                    "endpoints_failed": sum(1 for r in results if not r["success"]),
+                    "endpoints_passed": sum(
+                        1 for r in results if r["success"]
+                    ),
+                    "endpoints_failed": sum(
+                        1 for r in results if not r["success"]
+                    ),
                 },
             )
 
             if not all_passed:
-                failed_endpoints = [r["endpoint"] for r in results if not r["success"]]
+                failed_endpoints = [
+                    r["endpoint"] for r in results if not r["success"]
+                ]
                 result.error_message = (
                     f"API endpoints failed: {', '.join(failed_endpoints)}"
                 )
 
             result.validation_details = results
             result.validations_passed = sum(1 for r in results if r["success"])
-            result.validations_failed = sum(1 for r in results if not r["success"])
+            result.validations_failed = sum(
+                1 for r in results if not r["success"]
+            )
 
             return result
 
@@ -583,9 +610,7 @@ class SyntheticMonitor:
         self, config: ApiCheckConfig, endpoint_config: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Test a single API endpoint"""
-        endpoint_url = (
-            f"{config.base_url.rstrip('/')}/{endpoint_config['path'].lstrip('/')}"
-        )
+        endpoint_url = f"{config.base_url.rstrip('/')}/{endpoint_config['path'].lstrip('/')}"
         method = endpoint_config.get("method", "GET")
 
         try:
@@ -596,9 +621,9 @@ class SyntheticMonitor:
             # Handle authentication
             if config.authentication:
                 if config.authentication.get("type") == "bearer":
-                    headers["Authorization"] = (
-                        f"Bearer {config.authentication['token']}"
-                    )
+                    headers[
+                        "Authorization"
+                    ] = f"Bearer {config.authentication['token']}"
                 elif config.authentication.get("type") == "basic":
                     # Basic auth would be handled by aiohttp BasicAuth
                     pass
@@ -634,7 +659,9 @@ class SyntheticMonitor:
                 "error": str(e),
             }
 
-    async def _run_user_journey_check(self, check: SyntheticCheck) -> CheckResult:
+    async def _run_user_journey_check(
+        self, check: SyntheticCheck
+    ) -> CheckResult:
         """Run user journey synthetic check"""
         config: UserJourneyConfig = check.config
         start_time = time.time()
@@ -657,25 +684,33 @@ class SyntheticMonitor:
                     step_results.append(step_result)
 
                     # If step failed and it's critical, stop journey
-                    if not step_result["success"] and step_result.get("critical", True):
+                    if not step_result["success"] and step_result.get(
+                        "critical", True
+                    ):
                         break
 
                 # Calculate overall success
-                critical_steps = [r for r in step_results if r.get("critical", True)]
+                critical_steps = [
+                    r for r in step_results if r.get("critical", True)
+                ]
                 journey_success = all(r["success"] for r in critical_steps)
 
                 result = CheckResult(
                     check_name=check.name,
                     check_type=CheckType.USER_JOURNEY,
                     status=(
-                        CheckStatus.SUCCESS if journey_success else CheckStatus.FAILURE
+                        CheckStatus.SUCCESS
+                        if journey_success
+                        else CheckStatus.FAILURE
                     ),
                     timestamp=datetime.now(timezone.utc),
                     duration_ms=(time.time() - start_time) * 1000,
                     custom_metrics={
                         "steps_total": len(config.steps),
                         "steps_completed": len(step_results),
-                        "steps_passed": sum(1 for r in step_results if r["success"]),
+                        "steps_passed": sum(
+                            1 for r in step_results if r["success"]
+                        ),
                         "steps_failed": sum(
                             1 for r in step_results if not r["success"]
                         ),
@@ -684,14 +719,16 @@ class SyntheticMonitor:
 
                 if not journey_success:
                     failed_steps = [
-                        r["step_name"] for r in step_results if not r["success"]
+                        r["step_name"]
+                        for r in step_results
+                        if not r["success"]
                     ]
-                    result.error_message = (
-                        f"User journey failed at steps: {', '.join(failed_steps)}"
-                    )
+                    result.error_message = f"User journey failed at steps: {', '.join(failed_steps)}"
 
                 result.validation_details = step_results
-                result.validations_passed = sum(1 for r in step_results if r["success"])
+                result.validations_passed = sum(
+                    1 for r in step_results if r["success"]
+                )
                 result.validations_failed = sum(
                     1 for r in step_results if not r["success"]
                 )
@@ -699,7 +736,10 @@ class SyntheticMonitor:
                 return result
 
             finally:
-                if config.maintain_session and journey_session != self.http_session:
+                if (
+                    config.maintain_session
+                    and journey_session != self.http_session
+                ):
                     await journey_session.close()
 
         except Exception as e:
@@ -773,7 +813,8 @@ class SyntheticMonitor:
             # Substitute context variables in URL and headers
             url = self._substitute_variables(url, context)
             headers = {
-                k: self._substitute_variables(v, context) for k, v in headers.items()
+                k: self._substitute_variables(v, context)
+                for k, v in headers.items()
             }
 
             # Make request
@@ -801,17 +842,13 @@ class SyntheticMonitor:
                     expected_status = step.validation.get("status_code", 200)
                     if response.status != expected_status:
                         success = False
-                        validation_error = (
-                            f"Expected status {expected_status}, got {response.status}"
-                        )
+                        validation_error = f"Expected status {expected_status}, got {response.status}"
 
                     if "content_contains" in step.validation:
                         expected_content = step.validation["content_contains"]
                         if expected_content not in content:
                             success = False
-                            validation_error = (
-                                f"Response does not contain: {expected_content}"
-                            )
+                            validation_error = f"Response does not contain: {expected_content}"
 
                 return {
                     "step_name": step.name,
@@ -865,14 +902,18 @@ class SyntheticMonitor:
                 text = text.replace(f"{{{key}}}", value)
         return text
 
-    def get_check_results(self, check_name: str, limit: int = 100) -> List[CheckResult]:
+    def get_check_results(
+        self, check_name: str, limit: int = 100
+    ) -> List[CheckResult]:
         """Get recent results for a check"""
         if check_name not in self.results:
             return []
 
         return self.results[check_name][-limit:]
 
-    def get_check_statistics(self, check_name: str, hours: int = 24) -> Dict[str, Any]:
+    def get_check_statistics(
+        self, check_name: str, hours: int = 24
+    ) -> Dict[str, Any]:
         """Get statistics for a check"""
         if check_name not in self.results:
             return {}
@@ -894,12 +935,16 @@ class SyntheticMonitor:
         failed_checks = sum(
             1 for r in recent_results if r.status == CheckStatus.FAILURE
         )
-        error_checks = sum(1 for r in recent_results if r.status == CheckStatus.ERROR)
+        error_checks = sum(
+            1 for r in recent_results if r.status == CheckStatus.ERROR
+        )
         timeout_checks = sum(
             1 for r in recent_results if r.status == CheckStatus.TIMEOUT
         )
 
-        response_times = [r.duration_ms for r in recent_results if r.duration_ms]
+        response_times = [
+            r.duration_ms for r in recent_results if r.duration_ms
+        ]
 
         return {
             "check_name": check_name,
@@ -910,14 +955,24 @@ class SyntheticMonitor:
             "error_checks": error_checks,
             "timeout_checks": timeout_checks,
             "success_rate": (
-                (successful_checks / total_checks) * 100 if total_checks > 0 else 0
+                (successful_checks / total_checks) * 100
+                if total_checks > 0
+                else 0
             ),
             "avg_response_time_ms": (
-                sum(response_times) / len(response_times) if response_times else 0
+                sum(response_times) / len(response_times)
+                if response_times
+                else 0
             ),
-            "min_response_time_ms": min(response_times) if response_times else 0,
-            "max_response_time_ms": max(response_times) if response_times else 0,
-            "consecutive_failures": self.consecutive_failures.get(check_name, 0),
+            "min_response_time_ms": min(response_times)
+            if response_times
+            else 0,
+            "max_response_time_ms": max(response_times)
+            if response_times
+            else 0,
+            "consecutive_failures": self.consecutive_failures.get(
+                check_name, 0
+            ),
             "last_success": self.last_success.get(check_name, None),
         }
 
@@ -973,7 +1028,10 @@ def create_http_check(
     )
 
     return SyntheticCheck(
-        name=name, check_type=CheckType.HTTP, config=config, interval_seconds=interval
+        name=name,
+        check_type=CheckType.HTTP,
+        config=config,
+        interval_seconds=interval,
     )
 
 
@@ -989,7 +1047,10 @@ def create_api_health_check(
     config = ApiCheckConfig(base_url=base_url, endpoints=endpoint_configs)
 
     return SyntheticCheck(
-        name=name, check_type=CheckType.API, config=config, interval_seconds=interval
+        name=name,
+        check_type=CheckType.API,
+        config=config,
+        interval_seconds=interval,
     )
 
 

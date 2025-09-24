@@ -112,7 +112,9 @@ class ThreatAssessor:
             )
 
             # Calculate overall threat level
-            overall_threat = await self._calculate_overall_threat(threat_factors)
+            overall_threat = await self._calculate_overall_threat(
+                threat_factors
+            )
 
             # Determine confidence level
             confidence = await self._calculate_assessment_confidence(
@@ -120,11 +122,15 @@ class ThreatAssessor:
             )
 
             # Identify primary threat source
-            primary_source = await self._identify_primary_threat_source(threat_factors)
+            primary_source = await self._identify_primary_threat_source(
+                threat_factors
+            )
 
             # Generate recommended response
-            recommended_response = await self._generate_response_recommendation(
-                overall_threat, threat_factors, character_data
+            recommended_response = (
+                await self._generate_response_recommendation(
+                    overall_threat, threat_factors, character_data
+                )
             )
 
             # Create assessment
@@ -141,7 +147,7 @@ class ThreatAssessor:
             await self._record_assessment(assessment, event, character_data)
 
             self.logger.debug(
-                f"Threat assessment completed: {overall_threat.value} (confidence: {confidence:.2f})"
+                f"Threat assessment completed: {overall_threat.value}(confidence: {confidence:.2f})"
             )
             return assessment
 
@@ -157,7 +163,10 @@ class ThreatAssessor:
             )
 
     async def assess_environmental_threats(
-        self, location: str, world_state: Dict[str, Any], character_data: Dict[str, Any]
+        self,
+        location: str,
+        world_state: Dict[str, Any],
+        character_data: Dict[str, Any],
     ) -> List[ThreatFactor]:
         """
         Assess environmental threats at a specific location.
@@ -292,14 +301,20 @@ class ThreatAssessor:
 
                 # Keep only recent outcomes
                 if len(pattern["typical_outcomes"]) > 20:
-                    pattern["typical_outcomes"] = pattern["typical_outcomes"][-10:]
+                    pattern["typical_outcomes"] = pattern["typical_outcomes"][
+                        -10:
+                    ]
 
-            self.logger.debug(f"Updated {len(self._threat_patterns)} threat patterns")
+            self.logger.debug(
+                f"Updated {len(self._threat_patterns)} threat patterns"
+            )
 
         except Exception as e:
             self.logger.error(f"Threat pattern update failed: {e}")
 
-    async def get_threat_trend(self, time_window_hours: int = 24) -> Dict[str, Any]:
+    async def get_threat_trend(
+        self, time_window_hours: int = 24
+    ) -> Dict[str, Any]:
         """
         Analyze threat trends over specified time window.
 
@@ -310,7 +325,9 @@ class ThreatAssessor:
             Dict containing threat trend analysis
         """
         try:
-            cutoff_time = datetime.now().timestamp() - (time_window_hours * 3600)
+            cutoff_time = datetime.now().timestamp() - (
+                time_window_hours * 3600
+            )
 
             # Filter recent assessments
             recent_assessments = [
@@ -353,7 +370,9 @@ class ThreatAssessor:
 
             category_counts = {}
             for category in threat_categories:
-                category_counts[category] = category_counts.get(category, 0) + 1
+                category_counts[category] = (
+                    category_counts.get(category, 0) + 1
+                )
 
             most_common_category = (
                 max(category_counts.items(), key=lambda x: x[1])[0]
@@ -385,7 +404,9 @@ class ThreatAssessor:
             threat_factors = []
 
             # Analyze direct threats from event
-            direct_threats = await self._analyze_direct_threats(event, character_data)
+            direct_threats = await self._analyze_direct_threats(
+                event, character_data
+            )
             threat_factors.extend(direct_threats)
 
             # Analyze indirect threats
@@ -458,12 +479,16 @@ class ThreatAssessor:
             threats = []
 
             # Check location-based threats
-            character_location = character_data.get("state", {}).get("current_location")
+            character_location = character_data.get("state", {}).get(
+                "current_location"
+            )
             if character_location == event.location:
                 severity = await self._calculate_indirect_threat_severity(
                     event, character_data
                 )
-                certainty = 0.7  # Moderate certainty for location-based threats
+                certainty = (
+                    0.7  # Moderate certainty for location-based threats
+                )
                 immediacy = (
                     await self._calculate_threat_immediacy(event) * 0.8
                 )  # Slightly reduced immediacy
@@ -491,10 +516,15 @@ class ThreatAssessor:
                 else None
             )
 
-            if event_source_faction and character_faction != event_source_faction:
+            if (
+                event_source_faction
+                and character_faction != event_source_faction
+            ):
                 # Check if factions are hostile
                 faction_relations = (
-                    world_context.get("faction_relations", {}) if world_context else {}
+                    world_context.get("faction_relations", {})
+                    if world_context
+                    else {}
                 )
                 relation_key = f"{character_faction}_{event_source_faction}"
                 relation_score = faction_relations.get(relation_key, 0.0)
@@ -662,13 +692,19 @@ class ThreatAssessor:
         return None  # Placeholder
 
     async def _assess_weather_threats(
-        self, location: str, world_state: Dict[str, Any], character_data: Dict[str, Any]
+        self,
+        location: str,
+        world_state: Dict[str, Any],
+        character_data: Dict[str, Any],
     ) -> List[ThreatFactor]:
         """Assess weather-related threats."""
         return []  # Placeholder
 
     async def _assess_resource_threats(
-        self, location: str, world_state: Dict[str, Any], character_data: Dict[str, Any]
+        self,
+        location: str,
+        world_state: Dict[str, Any],
+        character_data: Dict[str, Any],
     ) -> List[ThreatFactor]:
         """Assess resource scarcity threats."""
         return []  # Placeholder
@@ -692,16 +728,18 @@ class ThreatAssessor:
         return []  # Placeholder
 
     async def _calculate_assessment_confidence(
-        self, threat_factors: List[ThreatFactor], character_data: Dict[str, Any]
+        self,
+        threat_factors: List[ThreatFactor],
+        character_data: Dict[str, Any],
     ) -> float:
         """Calculate confidence in threat assessment."""
         if not threat_factors:
             return 0.5
 
         # Average certainty of all factors
-        avg_certainty = sum(factor.certainty for factor in threat_factors) / len(
-            threat_factors
-        )
+        avg_certainty = sum(
+            factor.certainty for factor in threat_factors
+        ) / len(threat_factors)
         return avg_certainty
 
     async def _identify_primary_threat_source(
@@ -712,7 +750,9 @@ class ThreatAssessor:
             return None
 
         # Find factor with highest weighted severity
-        max_factor = max(threat_factors, key=lambda f: f.get_weighted_severity())
+        max_factor = max(
+            threat_factors, key=lambda f: f.get_weighted_severity()
+        )
         return max_factor.source
 
     async def _generate_response_recommendation(
@@ -747,11 +787,19 @@ class ThreatAssessor:
             if len(self._assessment_history) > 500:
                 self._assessment_history = self._assessment_history[-250:]
 
-            self.logger.debug(f"Recorded threat assessment for event {event.event_id}")
+            self.logger.debug(
+                f"Recorded threat assessment for event {event.event_id}"
+            )
 
         except Exception as e:
             self.logger.debug(f"Assessment recording failed: {e}")
 
-    def get_assessment_history(self, limit: int = 10) -> List[ThreatAssessment]:
+    def get_assessment_history(
+        self, limit: int = 10
+    ) -> List[ThreatAssessment]:
         """Get recent threat assessment history."""
-        return self._assessment_history[-limit:] if self._assessment_history else []
+        return (
+            self._assessment_history[-limit:]
+            if self._assessment_history
+            else []
+        )

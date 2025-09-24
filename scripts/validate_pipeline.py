@@ -156,15 +156,21 @@ def validate_pipeline_components():
     print("📊 Validation Summary")
     print("=" * 40)
 
-    passed_checks = sum(1 for result in validation_results.values() if result is True)
-    total_checks = len([v for v in validation_results.values() if isinstance(v, bool)])
+    passed_checks = sum(
+        1 for result in validation_results.values() if result is True
+    )
+    total_checks = len(
+        [v for v in validation_results.values() if isinstance(v, bool)]
+    )
 
     if passed_checks == total_checks:
         print(f"🎉 ALL CHECKS PASSED ({passed_checks}/{total_checks})")
         print("\n✅ Pipeline is ready for execution!")
         return True
     else:
-        print(f"⚠️  PARTIAL SUCCESS ({passed_checks}/{total_checks} checks passed)")
+        print(
+            f"⚠️  PARTIAL SUCCESS ({passed_checks}/{total_checks} checks passed)"
+        )
         print("\n❌ Pipeline requires fixes before execution.")
 
         # Show failed checks
@@ -183,7 +189,10 @@ def test_dry_run():
     try:
         # Import pipeline runner
         sys.path.insert(0, "scripts")
-        from run_evaluation_pipeline import EvaluationPipeline, load_pipeline_config
+        from run_evaluation_pipeline import (
+            EvaluationPipeline,
+            load_pipeline_config,
+        )
 
         # Load configuration
         config = load_pipeline_config(Path("evaluation/pipeline_config.yaml"))
@@ -216,7 +225,9 @@ def main():
             dry_run_ok = test_dry_run()
 
             if dry_run_ok:
-                print("\n🚀 Pipeline validation complete - Ready for evaluation!")
+                print(
+                    "\n🚀 Pipeline validation complete - Ready for evaluation!"
+                )
                 return 0
             else:
                 print("\n⚠️ Pipeline validation failed at dry run stage")

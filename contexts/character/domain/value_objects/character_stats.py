@@ -4,12 +4,20 @@ Character Stats Value Object
 
 This module implements character statistics and attributes including core
 ability scores, health/mana, derived stats, and combat modifiers.
+
+Follows P3 Sprint 3 patterns for type safety and validation.
 """
 
 import math
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict
+from typing import TYPE_CHECKING, Any, Dict, Union
+
+if TYPE_CHECKING:
+    from ...infrastructure.character_domain_types import (
+        ensure_float,
+        ensure_int,
+    )
 
 
 class AbilityScore(Enum):
@@ -35,20 +43,24 @@ class CoreAbilities:
     charisma: int
 
     def __post_init__(self):
-        """Validate ability scores."""
+        """Validate ability scores with type safety."""
+        from ...infrastructure.character_domain_types import (
+            CharacterTypeGuards,
+        )
+
         abilities = [
-            self.strength,
-            self.dexterity,
-            self.constitution,
-            self.intelligence,
-            self.wisdom,
-            self.charisma,
+            ("strength", self.strength),
+            ("dexterity", self.dexterity),
+            ("constitution", self.constitution),
+            ("intelligence", self.intelligence),
+            ("wisdom", self.wisdom),
+            ("charisma", self.charisma),
         ]
 
-        for ability in abilities:
-            if not 1 <= ability <= 30:
+        for name, ability in abilities:
+            if not CharacterTypeGuards.is_valid_ability_score(ability):
                 raise ValueError(
-                    f"Ability scores must be between 1 and 30, got {ability}"
+                    f"Ability score '{name}' must be between 1 and 30, got {ability}"
                 )
 
     def get_ability_score(self, ability: AbilityScore) -> int:
@@ -82,14 +94,16 @@ class CoreAbilities:
     def get_strongest_ability(self) -> AbilityScore:
         """Get the character's highest ability score."""
         scores = [
-            (ability, self.get_ability_score(ability)) for ability in AbilityScore
+            (ability, self.get_ability_score(ability))
+            for ability in AbilityScore
         ]
         return max(scores, key=lambda x: x[1])[0]
 
     def get_weakest_ability(self) -> AbilityScore:
         """Get the character's lowest ability score."""
         scores = [
-            (ability, self.get_ability_score(ability)) for ability in AbilityScore
+            (ability, self.get_ability_score(ability))
+            for ability in AbilityScore
         ]
         return min(scores, key=lambda x: x[1])[0]
 
@@ -108,9 +122,18 @@ class VitalStats:
     speed: int  # Movement speed in feet/meters
 
     def __post_init__(self):
-        """Validate vital statistics."""
+        """Validate vital statistics with type safety."""
+        from ...infrastructure.character_domain_types import (
+            CharacterTypeGuards,
+        )
+
         if self.max_health <= 0:
             raise ValueError("Max health must be positive")
+
+        if not CharacterTypeGuards.is_valid_health(self.current_health):
+            raise ValueError(
+                f"Current health must be non-negative, got {self.current_health}"
+            )
 
         if not 0 <= self.current_health <= self.max_health:
             raise ValueError("Current health must be between 0 and max health")
@@ -125,7 +148,9 @@ class VitalStats:
             raise ValueError("Max stamina cannot be negative")
 
         if not 0 <= self.current_stamina <= self.max_stamina:
-            raise ValueError("Current stamina must be between 0 and max stamina")
+            raise ValueError(
+                "Current stamina must be between 0 and max stamina"
+            )
 
         if not 0 <= self.armor_class <= 50:
             raise ValueError("Armor class must be between 0 and 50")
@@ -216,7 +241,9 @@ class CombatStats:
             raise ValueError("Critical hit chance must be between 0.0 and 1.0")
 
         if not 1.0 <= self.critical_damage_multiplier <= 10.0:
-            raise ValueError("Critical damage multiplier must be between 1.0 and 10.0")
+            raise ValueError(
+                "Critical damage multiplier must be between 1.0 and 10.0"
+            )
 
     def has_spell_resistance(self) -> bool:
         """Check if character has spell resistance."""
@@ -239,23 +266,31 @@ class CombatStats:
                 else (
                     "Skilled"
                     if self.base_attack_bonus > 10
-                    else "Average" if self.base_attack_bonus > 5 else "Novice"
+                    else "Average"
+                    if self.base_attack_bonus > 5
+                    else "Novice"
                 )
             ),
             "initiative": (
                 "Fast"
                 if self.initiative_modifier > 3
-                else "Average" if self.initiative_modifier > -1 else "Slow"
+                else "Average"
+                if self.initiative_modifier > -1
+                else "Slow"
             ),
             "durability": (
                 "Tough"
                 if self.damage_reduction > 5
-                else "Average" if self.damage_reduction > 0 else "Fragile"
+                else "Average"
+                if self.damage_reduction > 0
+                else "Fragile"
             ),
             "magic_resistance": (
                 "High"
                 if self.spell_resistance > 15
-                else "Some" if self.spell_resistance > 0 else "None"
+                else "Some"
+                if self.spell_resistance > 0
+                else "None"
             ),
         }
 
@@ -276,7 +311,7 @@ class CharacterStats:
     skill_points: int
 
     def __post_init__(self):
-        """Validate character statistics."""
+        """Validate character statistics with type safety."""
         if self.experience_points < 0:
             raise ValueError("Experience points cannot be negative")
 
@@ -288,6 +323,16 @@ class CharacterStats:
 
         if self.skill_points > 1000:
             raise ValueError("Skill points cannot exceed 1000")
+
+        # Validate that all nested value objects are properly initialized
+        if not isinstance(self.core_abilities, CoreAbilities):
+            raise TypeError("core_abilities must be a CoreAbilities instance")
+
+        if not isinstance(self.vital_stats, VitalStats):
+            raise TypeError("vital_stats must be a VitalStats instance")
+
+        if not isinstance(self.combat_stats, CombatStats):
+            raise TypeError("combat_stats must be a CombatStats instance")
 
     def get_ability_modifier(self, ability: AbilityScore) -> int:
         """Get the modifier for an ability score."""
@@ -342,7 +387,7 @@ class CharacterStats:
             or self.vital_stats.stamina_percentage() < 0.2
         )
 
-    def get_stats_summary(self) -> Dict[str, any]:
+    def get_stats_summary(self) -> Dict[str, Any]:
         """Get a comprehensive summary of character statistics."""
         return {
             "power_level": self.get_overall_power_level(),
@@ -354,3 +399,27 @@ class CharacterStats:
             "skill_points": self.skill_points,
             "needs_rest": self.needs_rest(),
         }
+
+    @classmethod
+    def create_with_validation(
+        cls,
+        strength: Union[int, str],
+        dexterity: Union[int, str],
+        constitution: Union[int, str],
+        intelligence: Union[int, str],
+        wisdom: Union[int, str],
+        charisma: Union[int, str],
+        **kwargs: Any,
+    ) -> "CharacterStats":
+        """Factory method to create CharacterStats with type validation."""
+        from ...infrastructure.character_domain_types import ValueObjectFactory
+
+        return ValueObjectFactory.create_character_stats_with_validation(
+            strength=strength,
+            dexterity=dexterity,
+            constitution=constitution,
+            intelligence=intelligence,
+            wisdom=wisdom,
+            charisma=charisma,
+            **kwargs,
+        )

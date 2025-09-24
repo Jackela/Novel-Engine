@@ -44,7 +44,9 @@ class TestLegalFoundation:
         ]
 
         for section in required_sections:
-            assert section in content, f"LEGAL.md must contain '{section}' section"
+            assert (
+                section in content
+            ), f"LEGAL.md must contain '{section}' section"
 
     def test_legal_fan_mode_compliance(self):
         """Validate fan mode compliance requirements are documented."""
@@ -59,7 +61,9 @@ class TestLegalFoundation:
         ]
 
         for requirement in fan_mode_requirements:
-            assert requirement in content, f"Fan mode must document '{requirement}'"
+            assert (
+                requirement in content
+            ), f"Fan mode must document '{requirement}'"
 
     def test_notice_file_exists(self):
         """Verify NOTICE file exists for third-party attributions."""
@@ -129,7 +133,9 @@ class TestConfigurationFoundation:
         ]
 
         for section in required_sections:
-            assert section in config, f"settings.yaml must contain '{section}' section"
+            assert (
+                section in config
+            ), f"settings.yaml must contain '{section}' section"
 
     def test_legal_settings_configuration(self):
         """Validate legal compliance settings are properly configured."""
@@ -151,7 +157,9 @@ class TestConfigurationFoundation:
         ], "Compliance mode must be 'standard' or 'fan'"
 
         # Verify registry file path is configured
-        assert "registry_file" in legal_config, "Registry file path must be configured"
+        assert (
+            "registry_file" in legal_config
+        ), "Registry file path must be configured"
 
     def test_simulation_engine_settings(self):
         """Validate simulation engine settings are properly configured."""
@@ -162,7 +170,9 @@ class TestConfigurationFoundation:
 
         # Verify Iron Laws settings
         iron_laws = simulation_config.get("iron_laws", {})
-        assert iron_laws.get("enabled", False), "Iron Laws validation must be enabled"
+        assert iron_laws.get(
+            "enabled", False
+        ), "Iron Laws validation must be enabled"
 
         # Verify Fog of War settings
         fog_of_war = simulation_config.get("fog_of_war", {})
@@ -236,7 +246,9 @@ class TestDocumentationFoundation:
 
         for doc_path in dev_docs:
             path = Path(doc_path)
-            assert path.exists(), f"Developer documentation {doc_path} must exist"
+            assert (
+                path.exists()
+            ), f"Developer documentation {doc_path} must exist"
             assert (
                 path.stat().st_size > 0
             ), f"Developer documentation {doc_path} must not be empty"
@@ -247,7 +259,14 @@ class TestProjectStructure:
 
     def test_directory_structure(self):
         """Verify essential directories exist."""
-        essential_dirs = ["src", "tests", "docs", "docs/ADRs", "scripts", "private"]
+        essential_dirs = [
+            "src",
+            "tests",
+            "docs",
+            "docs/ADRs",
+            "scripts",
+            "private",
+        ]
 
         for dir_path in essential_dirs:
             path = Path(dir_path)
@@ -257,7 +276,9 @@ class TestProjectStructure:
     def test_private_directory_structure(self):
         """Verify private directory structure for data isolation."""
         private_path = Path("private")
-        assert private_path.exists(), "private/ directory must exist for data isolation"
+        assert (
+            private_path.exists()
+        ), "private/ directory must exist for data isolation"
 
         # Create .gitignore if it doesn't exist
         gitignore_path = private_path / ".gitignore"
@@ -327,11 +348,15 @@ class TestComplianceValidation:
 
         # Verify legal safeguards in configuration
         legal_config = config.get("legal", {})
-        assert legal_config.get("enable_safeguards"), "Legal safeguards must be enabled"
+        assert legal_config.get(
+            "enable_safeguards"
+        ), "Legal safeguards must be enabled"
 
         # Verify content filtering is configured
         content_filtering = legal_config.get("content_filtering", {})
-        assert content_filtering.get("enable"), "Content filtering must be enabled"
+        assert content_filtering.get(
+            "enable"
+        ), "Content filtering must be enabled"
         assert content_filtering.get("severity") in [
             "strict",
             "moderate",

@@ -42,7 +42,9 @@ class CharacterFactory:
     character data.
     """
 
-    def __init__(self, event_bus: EventBus, base_character_path: str = "characters"):
+    def __init__(
+        self, event_bus: EventBus, base_character_path: str = "characters"
+    ):
         """
         Initialize the CharacterFactory.
 
@@ -55,7 +57,9 @@ class CharacterFactory:
         if not os.path.isabs(base_character_path):
             current_dir = os.path.abspath(os.getcwd())
             project_root = self._find_project_root(current_dir)
-            self.base_character_path = os.path.join(project_root, base_character_path)
+            self.base_character_path = os.path.join(
+                project_root, base_character_path
+            )
         else:
             self.base_character_path = base_character_path
 
@@ -80,7 +84,9 @@ class CharacterFactory:
         markers = ["persona_agent.py", "director_agent.py", "configs/", ".git"]
 
         current_path = os.path.abspath(start_path)
-        while current_path != os.path.dirname(current_path):  # Not at filesystem root
+        while current_path != os.path.dirname(
+            current_path
+        ):  # Not at filesystem root
             for marker in markers:
                 if os.path.exists(os.path.join(current_path, marker)):
                     logger.debug(
@@ -153,7 +159,9 @@ class CharacterFactory:
             )
             return persona_agent
         except Exception as e:
-            logger.error(f"Failed to create PersonaAgent for '{character_name}': {e}")
+            logger.error(
+                f"Failed to create PersonaAgent for '{character_name}': {e}"
+            )
             raise
 
     def list_available_characters(self) -> list[str]:
@@ -177,5 +185,7 @@ class CharacterFactory:
             if os.path.isdir(item_path):
                 characters.append(item)
 
-        logger.info(f"Found {len(characters)} available characters: {characters}")
+        logger.info(
+            f"Found {len(characters)} available characters: {characters}"
+        )
         return sorted(characters)

@@ -16,7 +16,47 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-import aioredis
+try:
+    import aioredis
+except ImportError:
+    # Mock aioredis for testing environments
+    class MockRedis:
+        async def get(self, *args, **kwargs):
+            return None
+
+        async def set(self, *args, **kwargs):
+            pass
+
+        async def delete(self, *args, **kwargs):
+            pass
+
+        async def exists(self, *args, **kwargs):
+            return False
+
+        async def publish(self, *args, **kwargs):
+            pass
+
+        async def subscribe(self, *args, **kwargs):
+            return MockPubSub()
+
+        def pubsub(self):
+            return MockPubSub()
+
+        async def close(self, *args, **kwargs):
+            pass
+
+    class MockPubSub:
+        async def subscribe(self, *args, **kwargs):
+            pass
+
+        async def get_message(self, *args, **kwargs):
+            return None
+
+    aioredis = type(
+        "MockAioredis",
+        (),
+        {"Redis": MockRedis, "from_url": lambda url: MockRedis()},
+    )()
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +197,10 @@ class RedisConnectionPool:
                 # Redis Cluster support
                 self.redis = aioredis.RedisCluster(
                     startup_nodes=[
-                        {"host": node.split(":")[0], "port": int(node.split(":")[1])}
+                        {
+                            "host": node.split(":")[0],
+                            "port": int(node.split(":")[1]),
+                        }
                         for node in self.config.cluster_nodes
                     ],
                     password=self.config.password,
@@ -190,7 +233,9 @@ class RedisConnectionPool:
             await self._configure_redis()
 
             # Start health monitoring
-            self._health_check_task = asyncio.create_task(self._health_check_loop())
+            self._health_check_task = asyncio.create_task(
+                self._health_check_loop()
+            )
 
             self._initialized = True
             logger.info(
@@ -208,7 +253,9 @@ class RedisConnectionPool:
             await self.redis.config_set(
                 "maxmemory-policy", self.config.max_memory_policy
             )
-            logger.debug(f"Set Redis memory policy: {self.config.max_memory_policy}")
+            logger.debug(
+                f"Set Redis memory policy: {self.config.max_memory_policy}"
+            )
 
         except Exception as e:
             logger.warning(f"Failed to configure Redis: {e}")
@@ -230,9 +277,9 @@ class RedisConnectionPool:
                 # Update metrics
                 self._metrics["response_times"].append(response_time)
                 if len(self._metrics["response_times"]) > 1000:
-                    self._metrics["response_times"] = self._metrics["response_times"][
-                        -1000:
-                    ]
+                    self._metrics["response_times"] = self._metrics[
+                        "response_times"
+                    ][-1000:]
 
                 if self._metrics["response_times"]:
                     self._metrics["avg_response_time"] = sum(
@@ -248,7 +295,9 @@ class RedisConnectionPool:
                 self._is_healthy = False
 
     def _serialize_value(
-        self, value: Any, strategy: RedisStorageStrategy = RedisStorageStrategy.JSON
+        self,
+        value: Any,
+        strategy: RedisStorageStrategy = RedisStorageStrategy.JSON,
     ) -> str:
         """Serialize value based on strategy."""
         if strategy == RedisStorageStrategy.JSON:
@@ -262,7 +311,9 @@ class RedisConnectionPool:
             return json.dumps(value, default=str)
 
     def _deserialize_value(
-        self, value: str, strategy: RedisStorageStrategy = RedisStorageStrategy.JSON
+        self,
+        value: str,
+        strategy: RedisStorageStrategy = RedisStorageStrategy.JSON,
     ) -> Any:
         """Deserialize value based on strategy."""
         if not value:
@@ -315,7 +366,9 @@ class RedisConnectionPool:
             raise
 
     async def get(
-        self, key: str, strategy: RedisStorageStrategy = RedisStorageStrategy.JSON
+        self,
+        key: str,
+        strategy: RedisStorageStrategy = RedisStorageStrategy.JSON,
     ) -> Any:
         """Get value by key."""
         if not self._initialized:
@@ -408,7 +461,9 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis HSET failed for key {key}, field {field}: {e}")
+            logger.error(
+                f"Redis HSET failed for key {key}, field {field}: {e}"
+            )
             raise
 
     async def hget(self, key: str, field: str) -> Any:
@@ -426,7 +481,9 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis HGET failed for key {key}, field {field}: {e}")
+            logger.error(
+                f"Redis HGET failed for key {key}, field {field}: {e}"
+            )
             raise
 
     async def hgetall(self, key: str) -> Dict[str, Any]:
@@ -440,7 +497,8 @@ class RedisConnectionPool:
 
             # Deserialize all values
             return {
-                field: self._deserialize_value(value) for field, value in result.items()
+                field: self._deserialize_value(value)
+                for field, value in result.items()
             }
 
         except Exception as e:
@@ -450,7 +508,9 @@ class RedisConnectionPool:
 
     # List operations
 
-    async def lpush(self, key: str, *values: Any, ttl: Optional[int] = None) -> int:
+    async def lpush(
+        self, key: str, *values: Any, ttl: Optional[int] = None
+    ) -> int:
         """Push values to list head."""
         if not self._initialized:
             await self.initialize()
@@ -470,7 +530,9 @@ class RedisConnectionPool:
             logger.error(f"Redis LPUSH failed for key {key}: {e}")
             raise
 
-    async def lrange(self, key: str, start: int = 0, stop: int = -1) -> List[Any]:
+    async def lrange(
+        self, key: str, start: int = 0, stop: int = -1
+    ) -> List[Any]:
         """Get list range."""
         if not self._initialized:
             await self.initialize()
@@ -488,7 +550,9 @@ class RedisConnectionPool:
 
     # Set operations
 
-    async def sadd(self, key: str, *values: Any, ttl: Optional[int] = None) -> int:
+    async def sadd(
+        self, key: str, *values: Any, ttl: Optional[int] = None
+    ) -> int:
         """Add values to set."""
         if not self._initialized:
             await self.initialize()
@@ -527,13 +591,18 @@ class RedisConnectionPool:
     # Novel Engine specific operations
 
     async def cache_character(
-        self, character_id: str, character_data: Dict[str, Any], ttl: int = 3600
+        self,
+        character_id: str,
+        character_data: Dict[str, Any],
+        ttl: int = 3600,
     ) -> bool:
         """Cache character data."""
         cache_key = CacheKey("novel_engine", "character", character_id).build()
         return await self.set(cache_key, character_data, ttl)
 
-    async def get_cached_character(self, character_id: str) -> Optional[Dict[str, Any]]:
+    async def get_cached_character(
+        self, character_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Get cached character data."""
         cache_key = CacheKey("novel_engine", "character", character_id).build()
         return await self.get(cache_key)
@@ -560,7 +629,9 @@ class RedisConnectionPool:
         # Store as hash for efficient partial updates
         pipe = self.redis.pipeline()
         for session_field, value in session_data.items():
-            await pipe.hset(session_key, session_field, self._serialize_value(value))
+            await pipe.hset(
+                session_key, session_field, self._serialize_value(value)
+            )
         await pipe.expire(session_key, ttl)
 
         await pipe.execute()
@@ -582,19 +653,27 @@ class RedisConnectionPool:
         self, agent_id: str, context_data: Dict[str, Any], ttl: int = 3600
     ) -> bool:
         """Store agent context for quick access."""
-        context_key = CacheKey("novel_engine", "agent_context", agent_id).build()
+        context_key = CacheKey(
+            "novel_engine", "agent_context", agent_id
+        ).build()
         return await self.set(context_key, context_data, ttl)
 
-    async def get_agent_context(self, agent_id: str) -> Optional[Dict[str, Any]]:
+    async def get_agent_context(
+        self, agent_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Get agent context."""
-        context_key = CacheKey("novel_engine", "agent_context", agent_id).build()
+        context_key = CacheKey(
+            "novel_engine", "agent_context", agent_id
+        ).build()
         return await self.get(context_key)
 
     async def add_to_narrative_stream(
         self, narrative_id: str, event_data: Dict[str, Any]
     ) -> bool:
         """Add event to narrative stream."""
-        stream_key = CacheKey("novel_engine", "narrative_stream", narrative_id).build()
+        stream_key = CacheKey(
+            "novel_engine", "narrative_stream", narrative_id
+        ).build()
         event_data["timestamp"] = datetime.now().isoformat()
 
         # Use list for simple streaming
@@ -609,7 +688,9 @@ class RedisConnectionPool:
         self, narrative_id: str, limit: int = 50
     ) -> List[Dict[str, Any]]:
         """Get narrative event stream."""
-        stream_key = CacheKey("novel_engine", "narrative_stream", narrative_id).build()
+        stream_key = CacheKey(
+            "novel_engine", "narrative_stream", narrative_id
+        ).build()
         return await self.lrange(stream_key, 0, limit - 1)
 
     async def close(self) -> None:
@@ -637,7 +718,8 @@ class RedisConnectionPool:
         hit_rate = (
             self._metrics["cache_hits"]
             / (self._metrics["cache_hits"] + self._metrics["cache_misses"])
-            if (self._metrics["cache_hits"] + self._metrics["cache_misses"]) > 0
+            if (self._metrics["cache_hits"] + self._metrics["cache_misses"])
+            > 0
             else 0.0
         )
 
@@ -648,7 +730,9 @@ class RedisConnectionPool:
             "hit_rate": hit_rate,
             "errors": self._metrics["errors"],
             "avg_response_time": self._metrics["avg_response_time"],
-            "max_response_time": max(response_times) if response_times else 0.0,
+            "max_response_time": max(response_times)
+            if response_times
+            else 0.0,
             "active_connections": self._metrics["active_connections"],
             "is_healthy": self._is_healthy,
         }
@@ -725,12 +809,15 @@ def create_redis_config_from_env() -> RedisConfig:
         min_pool_size=int(os.getenv("REDIS_MIN_POOL_SIZE", "5")),
         max_pool_size=int(os.getenv("REDIS_MAX_POOL_SIZE", "100")),
         default_ttl=int(os.getenv("REDIS_DEFAULT_TTL", "3600")),
-        cluster_enabled=os.getenv("REDIS_CLUSTER_ENABLED", "false").lower() == "true",
+        cluster_enabled=os.getenv("REDIS_CLUSTER_ENABLED", "false").lower()
+        == "true",
         ssl_enabled=os.getenv("REDIS_SSL_ENABLED", "false").lower() == "true",
     )
 
 
-async def create_redis_manager(config: Optional[RedisConfig] = None) -> RedisManager:
+async def create_redis_manager(
+    config: Optional[RedisConfig] = None,
+) -> RedisManager:
     """Create and initialize Redis manager."""
     if config is None:
         config = create_redis_config_from_env()

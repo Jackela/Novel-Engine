@@ -17,13 +17,18 @@ sys.path.append("src")
 
 # Import components to test
 try:
+    from src.agents.context_manager import CharacterContextManager
+    from src.agents.decision_engine import DecisionEngine
     from src.agents.director_agent import DirectorAgent
     from src.agents.persona_agent import PersonaAgent
+    from src.agents.persona_core import PersonaCore
 
     print("✅ Component imports successful")
     AGENTS_AVAILABLE = True
 except ImportError as e:
-    print(f"ℹ️ Agent components not available (expected in some configurations): {e}")
+    print(
+        f"ℹ️ Agent components not available (expected in some configurations): {e}"
+    )
     AGENTS_AVAILABLE = False
 
 
@@ -96,28 +101,34 @@ def test_character_context_manager():
         * Name: Test Character
         * Faction: Test Faction
         * Profession: Test Profession
-        
+
         # Psychological
         * Aggressive: 0.7
         * Cautious: 0.3
-        
-        # Behavioral  
+
+        # Behavioral
         * Combat Weight: 0.8
         * Social Weight: 0.2
         """
 
         # Test section extraction
-        identity_section = context_manager._extract_section(test_content, "identity")
+        identity_section = context_manager._extract_section(
+            test_content, "identity"
+        )
         assert identity_section is not None
         assert "Test Character" in identity_section
 
         # Test identity parsing
-        identity_data = context_manager._parse_identity_section(identity_section)
+        identity_data = context_manager._parse_identity_section(
+            identity_section
+        )
         assert "name" in identity_data
         assert identity_data["name"] == "Test Character"
 
         # Test weighted items extraction
-        psych_section = context_manager._extract_section(test_content, "psychological")
+        psych_section = context_manager._extract_section(
+            test_content, "psychological"
+        )
         traits = context_manager._extract_weighted_items(psych_section)
         assert "aggressive" in traits
         assert traits["aggressive"] == 0.7
@@ -158,10 +169,17 @@ def test_decision_engine():
 
         situation = decision_engine._assess_current_situation(world_state)
         assert situation.current_location == "battlefield"
-        assert situation.threat_level.value in ["low", "moderate", "high", "critical"]
+        assert situation.threat_level.value in [
+            "low",
+            "moderate",
+            "high",
+            "critical",
+        ]
 
         # Test action identification
-        available_actions = decision_engine._identify_available_actions(situation)
+        available_actions = decision_engine._identify_available_actions(
+            situation
+        )
         assert len(available_actions) > 0
 
         # Test action evaluation
@@ -244,7 +262,9 @@ def test_performance_improvements():
         start_time = time.time()
 
         for i in range(10):
-            agent = PersonaAgent(f"test_character_{i}", event_bus, f"agent_{i}")
+            agent = PersonaAgent(
+                f"test_character_{i}", event_bus, f"agent_{i}"
+            )
             agent.cleanup()
 
         initialization_time = time.time() - start_time
@@ -291,10 +311,16 @@ def run_validation_tests():
 
     # Run individual component tests
     test_results.append(("PersonaCore", test_persona_core()))
-    test_results.append(("CharacterContextManager", test_character_context_manager()))
+    test_results.append(
+        ("CharacterContextManager", test_character_context_manager())
+    )
     test_results.append(("DecisionEngine", test_decision_engine()))
-    test_results.append(("Refactored PersonaAgent", test_refactored_persona_agent()))
-    test_results.append(("Performance Improvements", test_performance_improvements()))
+    test_results.append(
+        ("Refactored PersonaAgent", test_refactored_persona_agent())
+    )
+    test_results.append(
+        ("Performance Improvements", test_performance_improvements())
+    )
 
     # Summary
     print("\n" + "=" * 80)
@@ -319,7 +345,9 @@ def run_validation_tests():
             "\n🎉 ALL TESTS PASSED - Wave 6.2 Phase 1 PersonaAgent Decomposition Complete!"
         )
         print("\n📈 ACHIEVEMENTS:")
-        print("   • Reduced PersonaAgent from 2,442 LOC to <500 LOC (80% reduction)")
+        print(
+            "   • Reduced PersonaAgent from 2,442 LOC to <500 LOC (80% reduction)"
+        )
         print("   • Implemented component-based architecture")
         print("   • Maintained full backward compatibility")
         print("   • Improved testability and maintainability")

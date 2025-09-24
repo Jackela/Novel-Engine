@@ -5,11 +5,13 @@ Character SQLAlchemy ORM Models
 This module defines SQLAlchemy ORM models for persisting Character
 aggregates and their associated value objects. The models provide
 a relational database representation of the domain model.
+
+Follows P3 Sprint 3 patterns for type safety and SQLAlchemy integration.
 """
 
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from sqlalchemy import (
     JSON,
@@ -25,26 +27,37 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, relationship, validates
 
+# Import P3 Sprint 3 patterns
+from ..sqlalchemy_types import CharacterModelBase, ColumnMappingMixin
 
-# Base class for all ORM models
-class Base(DeclarativeBase):
-    """Base class for all SQLAlchemy models."""
-
+if TYPE_CHECKING:
     pass
 
+# Use P3 Sprint 3 base class for type safety
+if TYPE_CHECKING:
+    from sqlalchemy.orm import DeclarativeBase
 
-class CharacterORM(Base):
+    Base = DeclarativeBase
+else:
+    Base = CharacterModelBase
+
+
+class CharacterORM(Base, ColumnMappingMixin):
     """
     Main Character ORM model representing the Character aggregate root.
 
     This model stores core character data and maintains relationships
     to other character-related data models.
+
+    Inherits from ColumnMappingMixin for P3 Sprint 3 type safety.
     """
 
     __tablename__ = "characters"
 
-    # Primary key and identity
-    character_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # Primary key and identity (P3 Sprint 3 type-safe)
+    character_id = Column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
 
     # Basic character information
     name = Column(String(100), nullable=False, index=True)
@@ -63,7 +76,10 @@ class CharacterORM(Base):
     # Timestamps
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     # Domain events (JSON storage for simplicity)
@@ -116,7 +132,9 @@ class CharacterProfileORM(Base):
     __tablename__ = "character_profiles"
 
     # Primary key and foreign key
-    profile_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    profile_id = Column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     character_id = Column(
         UUID(as_uuid=True),
         ForeignKey("characters.character_id"),
@@ -148,7 +166,10 @@ class CharacterProfileORM(Base):
     # Timestamps
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     # Relationship back to character
@@ -222,7 +243,10 @@ class CharacterStatsORM(Base):
     # Timestamps
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     # Relationship back to character
@@ -232,7 +256,12 @@ class CharacterStatsORM(Base):
         return f"<CharacterStatsORM(character_id={self.character_id}, level={self.character.level if self.character else 'N/A'})>"
 
     @validates(
-        "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"
+        "strength",
+        "dexterity",
+        "constitution",
+        "intelligence",
+        "wisdom",
+        "charisma",
     )
     def validate_ability_score(self, key, score):
         if not 1 <= score <= 30:
@@ -269,7 +298,9 @@ class CharacterSkillsORM(Base):
     __tablename__ = "character_skills"
 
     # Primary key and foreign key
-    skills_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    skills_id = Column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     character_id = Column(
         UUID(as_uuid=True),
         ForeignKey("characters.character_id"),
@@ -285,12 +316,17 @@ class CharacterSkillsORM(Base):
     languages = Column(JSON, nullable=True)  # List of language strings
 
     # Specializations and expertise
-    specializations = Column(JSON, nullable=True)  # List of specialization strings
+    specializations = Column(
+        JSON, nullable=True
+    )  # List of specialization strings
 
     # Timestamps
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     # Relationship back to character
@@ -299,7 +335,9 @@ class CharacterSkillsORM(Base):
     def __repr__(self):
         return f"<CharacterSkillsORM(character_id={self.character_id})>"
 
-    def get_skill(self, category: str, skill_name: str) -> Optional[Dict[str, Any]]:
+    def get_skill(
+        self, category: str, skill_name: str
+    ) -> Optional[Dict[str, Any]]:
         """Get a specific skill from the skill groups."""
         if not self.skill_groups:
             return None
@@ -313,22 +351,26 @@ class CharacterSkillsORM(Base):
         skill_name: str,
         proficiency_level: int,
         modifier: int = 0,
-        description: str = None,
+        description: Optional[str] = None,
     ) -> None:
         """Set a specific skill in the skill groups."""
         if not self.skill_groups:
-            self.skill_groups = {}
+            object.__setattr__(self, "skill_groups", {})
 
-        if category not in self.skill_groups:
-            self.skill_groups[category] = {}
+        skill_groups_dict: Dict[str, Dict[str, Dict[str, Any]]] = self.skill_groups or {}  # type: ignore[assignment]
+        if category not in skill_groups_dict:
+            skill_groups_dict[category] = {}
 
-        self.skill_groups[category][skill_name.lower()] = {
+        skill_groups_dict[category][skill_name.lower()] = {
             "proficiency_level": proficiency_level,
             "modifier": modifier,
             "description": description,
         }
+        object.__setattr__(self, "skill_groups", skill_groups_dict)
 
-    def get_skills_by_category(self, category: str) -> Dict[str, Dict[str, Any]]:
+    def get_skills_by_category(
+        self, category: str
+    ) -> Dict[str, Dict[str, Any]]:
         """Get all skills in a specific category."""
         if not self.skill_groups:
             return {}

@@ -126,9 +126,9 @@ class KnowledgeRevealed(SubjectiveDomainEvent):
     turn_brief_id: SubjectiveId
     knowledge_item: KnowledgeItem
     revelation_method: str  # How the knowledge was acquired
-    confidence_change: Optional[float] = (
-        None  # Change in confidence if updating existing knowledge
-    )
+    confidence_change: Optional[
+        float
+    ] = None  # Change in confidence if updating existing knowledge
 
     def get_event_type(self) -> str:
         return "KnowledgeRevealed"
@@ -297,7 +297,9 @@ class FogOfWarUpdated(SubjectiveDomainEvent):
     turn_brief_id: SubjectiveId
     newly_revealed: List[str]  # Subjects that became visible
     newly_concealed: List[str]  # Subjects that became hidden
-    visibility_changes: Dict[str, VisibilityLevel]  # Changes in visibility levels
+    visibility_changes: Dict[
+        str, VisibilityLevel
+    ]  # Changes in visibility levels
     update_reason: str
 
     def get_event_type(self) -> str:

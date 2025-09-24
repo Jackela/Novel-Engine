@@ -2,7 +2,8 @@
 Accessibility and Performance Testing Integration
 
 Advanced accessibility compliance and performance measurement framework
-for Novel-Engine AI acceptance testing with WCAG compliance and Core Web Vitals.
+for Novel-Engine AI acceptance testing with WCAG compliance and Core Web
+Vitals.
 """
 
 import asyncio
@@ -14,16 +15,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-
 # Import AI testing contracts
-from ai_testing.interfaces.service_contracts import (
-    QualityMetric,
-    TestContext,
-)
+from ai_testing.interfaces.service_contracts import QualityMetric, TestContext
 
 # Import Novel-Engine patterns
 from playwright.async_api import Page
-
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -99,15 +95,19 @@ class CoreWebVitals:
     """Core Web Vitals measurements"""
 
     # Loading performance
-    largest_contentful_paint: Optional[float] = None  # LCP - should be < 2.5s
-    first_contentful_paint: Optional[float] = None  # FCP - should be < 1.8s
+    # LCP - should be < 2.5s
+    largest_contentful_paint: Optional[float] = None
+    # FCP - should be < 1.8s
+    first_contentful_paint: Optional[float] = None
 
     # Interactivity
-    first_input_delay: Optional[float] = None  # FID - should be < 100ms
+    # FID - should be < 100ms
+    first_input_delay: Optional[float] = None
     total_blocking_time: Optional[float] = None  # TBT
 
     # Visual stability
-    cumulative_layout_shift: Optional[float] = None  # CLS - should be < 0.1
+    # CLS - should be < 0.1
+    cumulative_layout_shift: Optional[float] = None
 
     def get_score(self) -> float:
         """Calculate overall Core Web Vitals score"""
@@ -117,7 +117,9 @@ class CoreWebVitals:
             lcp_score = (
                 1.0
                 if self.largest_contentful_paint <= 2500
-                else 0.5 if self.largest_contentful_paint <= 4000 else 0.0
+                else 0.5
+                if self.largest_contentful_paint <= 4000
+                else 0.0
             )
             scores.append(lcp_score)
 
@@ -125,7 +127,9 @@ class CoreWebVitals:
             fcp_score = (
                 1.0
                 if self.first_contentful_paint <= 1800
-                else 0.5 if self.first_contentful_paint <= 3000 else 0.0
+                else 0.5
+                if self.first_contentful_paint <= 3000
+                else 0.0
             )
             scores.append(fcp_score)
 
@@ -133,7 +137,9 @@ class CoreWebVitals:
             fid_score = (
                 1.0
                 if self.first_input_delay <= 100
-                else 0.5 if self.first_input_delay <= 300 else 0.0
+                else 0.5
+                if self.first_input_delay <= 300
+                else 0.0
             )
             scores.append(fid_score)
 
@@ -141,7 +147,9 @@ class CoreWebVitals:
             cls_score = (
                 1.0
                 if self.cumulative_layout_shift <= 0.1
-                else 0.5 if self.cumulative_layout_shift <= 0.25 else 0.0
+                else 0.5
+                if self.cumulative_layout_shift <= 0.25
+                else 0.0
             )
             scores.append(cls_score)
 
@@ -222,9 +230,13 @@ class AccessibilityTester:
 
         # Testing configuration
         self.keyboard_test_timeout = config.get("keyboard_test_timeout", 5000)
-        self.focus_indicators_required = config.get("focus_indicators_required", True)
+        self.focus_indicators_required = config.get(
+            "focus_indicators_required", True
+        )
 
-        logger.info(f"Accessibility Tester initialized for WCAG {self.wcag_level}")
+        logger.info(
+            f"Accessibility Tester initialized for WCAG {self.wcag_level}"
+        )
 
     async def run_comprehensive_accessibility_test(
         self, page: Page, context: TestContext
@@ -249,7 +261,8 @@ class AccessibilityTester:
             )
 
             logger.info(
-                f"Accessibility test completed with score: {result.overall_score:.2f}"
+                f"Accessibility test completed with score: "
+                f"{result.overall_score:.2f}"
             )
             return result
 
@@ -271,7 +284,9 @@ class AccessibilityTester:
             )
 
             # Wait for axe to be available
-            await page.wait_for_function("typeof axe !== 'undefined'", timeout=10000)
+            await page.wait_for_function(
+                "typeof axe !== 'undefined'", timeout=10000
+            )
 
         except Exception as e:
             logger.error(f"Failed to inject axe-core: {e}")
@@ -294,7 +309,9 @@ class AccessibilityTester:
             f"""
             async () => {{
                 try {{
-                    const results = await axe.run(document, {json.dumps(axe_config)});
+                    const results = await axe.run(
+                        document, {json.dumps(axe_config)}
+                    );
                     return {{
                         violations: results.violations,
                         passes: results.passes,
@@ -334,17 +351,24 @@ class AccessibilityTester:
                 () => {
                     const focusableSelectors = [
                         'a[href]', 'button', 'input', 'textarea', 'select',
-                        '[tabindex]:not([tabindex="-1"])', '[contenteditable="true"]'
+                        '[tabindex]:not([tabindex="-1"])',
+                        '[contenteditable="true"]'
                     ];
-                    
-                    const elements = document.querySelectorAll(focusableSelectors.join(', '));
+
+                    const elements = document.querySelectorAll(
+                        focusableSelectors.join(', ')
+                    );
                     return Array.from(elements).map(el => ({
                         tagName: el.tagName,
                         type: el.type || '',
                         tabIndex: el.tabIndex,
                         id: el.id || '',
                         className: el.className || '',
-                        visible: !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length)
+                        visible: !!(
+                            el.offsetWidth ||
+                            el.offsetHeight ||
+                            el.getClientRects().length
+                        )
                     }));
                 }
             """
@@ -360,9 +384,8 @@ class AccessibilityTester:
                 keyboard_accessible = 0
                 focus_indicators = 0
 
-                for i, element in enumerate(
-                    focusable_elements[:10]
-                ):  # Test first 10 elements
+                # Test first 10 elements
+                for i, element in enumerate(focusable_elements[:10]):
                     try:
                         # Check if element receives focus
                         focused_element = await page.evaluate(
@@ -376,8 +399,10 @@ class AccessibilityTester:
                             """
                             () => {
                                 const activeElement = document.activeElement;
-                                const styles = window.getComputedStyle(activeElement);
-                                return styles.outline !== 'none' || 
+                                const styles = (
+                                    window.getComputedStyle(activeElement)
+                                );
+                                return styles.outline !== 'none' ||
                                        styles.outlineWidth !== '0px' ||
                                        styles.boxShadow !== 'none';
                             }
@@ -399,7 +424,9 @@ class AccessibilityTester:
 
             # Check for skip links
             skip_links = (
-                await page.locator("a[href*='#']").filter(has_text="skip").count()
+                await page.locator("a[href*='#']")
+                .filter(has_text="skip")
+                .count()
             )
             results["skip_links_present"] = skip_links > 0
 
@@ -430,12 +457,14 @@ class AccessibilityTester:
                     testButton.style.position = 'absolute';
                     testButton.style.top = '-1000px';
                     document.body.appendChild(testButton);
-                    
+
                     testButton.focus();
                     const styles = window.getComputedStyle(testButton);
-                    const hasFocusIndicator = styles.outline !== 'none' || 
-                                            styles.outlineWidth !== '0px';
-                    
+                    const hasFocusIndicator = (
+                        styles.outline !== 'none' ||
+                        styles.outlineWidth !== '0px'
+                    );
+
                     document.body.removeChild(testButton);
                     return hasFocusIndicator;
                 }
@@ -450,19 +479,23 @@ class AccessibilityTester:
             heading_order_test = await page.evaluate(
                 """
                 () => {
-                    const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+                    const headings = document.querySelectorAll(
+                        'h1, h2, h3, h4, h5, h6'
+                    );
                     let previousLevel = 0;
                     let orderIssues = 0;
-                    
+
                     headings.forEach(heading => {
-                        const currentLevel = parseInt(heading.tagName.charAt(1));
+                        const currentLevel = parseInt(
+                            heading.tagName.charAt(1)
+                        );
                         if (currentLevel - previousLevel > 1) {
                             orderIssues++;
                         }
                         previousLevel = currentLevel;
                     });
-                    
-                    return { 
+
+                    return {
                         totalHeadings: headings.length,
                         orderIssues: orderIssues,
                         logicalOrder: orderIssues === 0
@@ -471,7 +504,9 @@ class AccessibilityTester:
             """
             )
 
-            results["logical_reading_order"] = heading_order_test["logicalOrder"]
+            results["logical_reading_order"] = heading_order_test[
+                "logicalOrder"
+            ]
             if not heading_order_test["logicalOrder"]:
                 results["issues"].append(
                     "Heading structure may not follow logical order"
@@ -484,7 +519,9 @@ class AccessibilityTester:
                 results["no_focus_traps"],
             ]
 
-            results["focus_management_score"] = sum(focus_factors) / len(focus_factors)
+            results["focus_management_score"] = sum(focus_factors) / len(
+                focus_factors
+            )
 
         except Exception as e:
             logger.error(f"Focus management testing failed: {e}")
@@ -507,22 +544,27 @@ class AccessibilityTester:
             contrast_analysis = await page.evaluate(
                 """
                 () => {
-                    const textElements = document.querySelectorAll('p, span, div, h1, h2, h3, h4, h5, h6, a, button, label');
+                    const textElements = document.querySelectorAll(
+                        'p, span, div, h1, h2, h3, h4, h5, h6, a, button, '
+                        'label'
+                    );
                     const contrastResults = [];
-                    
+
                     function getRGB(color) {
                         const match = color.match(/\\d+/g);
                         return match ? match.map(Number) : [0, 0, 0];
                     }
-                    
+
                     function getLuminance(r, g, b) {
                         const [rs, gs, bs] = [r, g, b].map(c => {
                             c = c / 255;
-                            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+                            return c <= 0.03928 ?
+                                c / 12.92 :
+                                Math.pow((c + 0.055) / 1.055, 2.4);
                         });
                         return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
                     }
-                    
+
                     function getContrastRatio(color1, color2) {
                         const lum1 = getLuminance(...getRGB(color1));
                         const lum2 = getLuminance(...getRGB(color2));
@@ -530,36 +572,56 @@ class AccessibilityTester:
                         const darker = Math.min(lum1, lum2);
                         return (lighter + 0.05) / (darker + 0.05);
                     }
-                    
+
                     textElements.forEach((element, index) => {
-                        if (element.offsetWidth > 0 && element.offsetHeight > 0) {
+                        if (element.offsetWidth > 0 &&
+                            element.offsetHeight > 0) {
                             const styles = window.getComputedStyle(element);
                             const textColor = styles.color;
                             const backgroundColor = styles.backgroundColor;
-                            
-                            // If background is transparent, try to find parent background
+
+                            // If background is transparent, find parent
                             let bgColor = backgroundColor;
-                            if (bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') {
+                            const transparentColors = [
+                                'rgba(0, 0, 0, 0)', 'transparent'
+                            ];
+                            if (transparentColors.includes(bgColor)) {
                                 let parent = element.parentElement;
-                                while (parent && (bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent')) {
-                                    bgColor = window.getComputedStyle(parent).backgroundColor;
+                                while (parent &&
+                                       transparentColors.includes(bgColor)) {
+                                    const parentStyle = (
+                                        window.getComputedStyle(parent)
+                                    );
+                                    bgColor = parentStyle.backgroundColor;
                                     parent = parent.parentElement;
                                 }
-                                if (bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') {
-                                    bgColor = 'rgb(255, 255, 255)'; // Default to white
+                                if (transparentColors.includes(bgColor)) {
+                                    // Default to white
+                                    bgColor = 'rgb(255, 255, 255)';
                                 }
                             }
-                            
-                            const contrastRatio = getContrastRatio(textColor, bgColor);
+
+                            const contrastRatio = getContrastRatio(
+                                textColor, bgColor
+                            );
                             const fontSize = parseFloat(styles.fontSize);
                             const fontWeight = styles.fontWeight;
-                            
-                            const isLargeText = fontSize >= 18 || (fontSize >= 14 && (fontWeight === 'bold' || parseInt(fontWeight) >= 700));
+
+                            const isLargeText = (
+                                fontSize >= 18 ||
+                                (fontSize >= 14 &&
+                                 (fontWeight === 'bold' ||
+                                  parseInt(fontWeight) >= 700))
+                            );
                             const aaThreshold = isLargeText ? 3.0 : 4.5;
                             const aaaThreshold = isLargeText ? 4.5 : 7.0;
-                            
+
                             contrastResults.push({
-                                element: element.tagName + (element.className ? '.' + element.className.split(' ')[0] : ''),
+                                element: element.tagName + (
+                                    element.className ?
+                                    '.' + element.className.split(' ')[0] :
+                                    ''
+                                ),
                                 textColor,
                                 backgroundColor: bgColor,
                                 contrastRatio,
@@ -570,7 +632,7 @@ class AccessibilityTester:
                             });
                         }
                     });
-                    
+
                     return contrastResults;
                 }
             """
@@ -586,8 +648,12 @@ class AccessibilityTester:
                     1 for result in contrast_analysis if result["passesAAA"]
                 )
 
-                results["contrast_ratio_aa"] = aa_passing / len(contrast_analysis)
-                results["contrast_ratio_aaa"] = aaa_passing / len(contrast_analysis)
+                results["contrast_ratio_aa"] = aa_passing / len(
+                    contrast_analysis
+                )
+                results["contrast_ratio_aaa"] = aaa_passing / len(
+                    contrast_analysis
+                )
 
                 # Calculate average contrast
                 contrast_ratios = [
@@ -602,7 +668,9 @@ class AccessibilityTester:
                             {
                                 "element": result["element"],
                                 "contrast_ratio": result["contrastRatio"],
-                                "required": 4.5 if not result["isLargeText"] else 3.0,
+                                "required": (
+                                    4.5 if not result["isLargeText"] else 3.0
+                                ),
                                 "text_color": result["textColor"],
                                 "background_color": result["backgroundColor"],
                             }
@@ -624,7 +692,8 @@ class AccessibilityTester:
 
         # Process axe violations
         violations = [
-            AccessibilityViolation(v) for v in axe_results.get("violations", [])
+            AccessibilityViolation(v)
+            for v in axe_results.get("violations", [])
         ]
         passes = axe_results.get("passes", [])
         incomplete = axe_results.get("incomplete", [])
@@ -633,13 +702,20 @@ class AccessibilityTester:
         perceivable_score = self._calculate_perceivable_score(
             violations, contrast_results
         )
-        operable_score = self._calculate_operable_score(violations, keyboard_results)
+        operable_score = self._calculate_operable_score(
+            violations, keyboard_results
+        )
         understandable_score = self._calculate_understandable_score(violations)
         robust_score = self._calculate_robust_score(violations)
 
         # Calculate overall score
         overall_score = statistics.mean(
-            [perceivable_score, operable_score, understandable_score, robust_score]
+            [
+                perceivable_score,
+                operable_score,
+                understandable_score,
+                robust_score,
+            ]
         )
 
         # Generate recommendations
@@ -660,11 +736,19 @@ class AccessibilityTester:
             operable_score=operable_score,
             understandable_score=understandable_score,
             robust_score=robust_score,
-            color_contrast_issues=len(contrast_results.get("contrast_issues", [])),
-            keyboard_navigation_issues=keyboard_results.get("focusable_elements", 0)
-            - keyboard_results.get("keyboard_accessible", 0),
+            color_contrast_issues=len(
+                contrast_results.get("contrast_issues", [])
+            ),
+            keyboard_navigation_issues=(
+                keyboard_results.get("focusable_elements", 0)
+                - keyboard_results.get("keyboard_accessible", 0)
+            ),
             screen_reader_issues=len(
-                [v for v in violations if "screen reader" in v.description.lower()]
+                [
+                    v
+                    for v in violations
+                    if "screen reader" in v.description.lower()
+                ]
             ),
             focus_management_issues=len(focus_results.get("issues", [])),
             recommendations=recommendations,
@@ -672,7 +756,9 @@ class AccessibilityTester:
         )
 
     def _calculate_perceivable_score(
-        self, violations: List[AccessibilityViolation], contrast_results: Dict[str, Any]
+        self,
+        violations: List[AccessibilityViolation],
+        contrast_results: Dict[str, Any],
     ) -> float:
         """Calculate perceivable principle score"""
         perceivable_violations = [
@@ -685,7 +771,9 @@ class AccessibilityTester:
         ]
 
         # Base score from violations
-        violation_penalty = sum(v.severity_score for v in perceivable_violations) * 0.1
+        violation_penalty = (
+            sum(v.severity_score for v in perceivable_violations) * 0.1
+        )
         base_score = max(0.0, 1.0 - violation_penalty)
 
         # Adjust for contrast testing
@@ -696,17 +784,24 @@ class AccessibilityTester:
         return base_score
 
     def _calculate_operable_score(
-        self, violations: List[AccessibilityViolation], keyboard_results: Dict[str, Any]
+        self,
+        violations: List[AccessibilityViolation],
+        keyboard_results: Dict[str, Any],
     ) -> float:
         """Calculate operable principle score"""
         operable_violations = [
             v
             for v in violations
-            if any(tag in ["keyboard", "focus", "timing"] for tag in v.get("tags", []))
+            if any(
+                tag in ["keyboard", "focus", "timing"]
+                for tag in v.get("tags", [])
+            )
         ]
 
         # Base score from violations
-        violation_penalty = sum(v.severity_score for v in operable_violations) * 0.1
+        violation_penalty = (
+            sum(v.severity_score for v in operable_violations) * 0.1
+        )
         base_score = max(0.0, 1.0 - violation_penalty)
 
         # Adjust for keyboard testing
@@ -732,7 +827,8 @@ class AccessibilityTester:
             v
             for v in violations
             if any(
-                tag in ["forms", "navigation", "language"] for tag in v.get("tags", [])
+                tag in ["forms", "navigation", "language"]
+                for tag in v.get("tags", [])
             )
         ]
 
@@ -748,10 +844,15 @@ class AccessibilityTester:
         robust_violations = [
             v
             for v in violations
-            if any(tag in ["parsing", "compatibility"] for tag in v.get("tags", []))
+            if any(
+                tag in ["parsing", "compatibility"]
+                for tag in v.get("tags", [])
+            )
         ]
 
-        violation_penalty = sum(v.severity_score for v in robust_violations) * 0.1
+        violation_penalty = (
+            sum(v.severity_score for v in robust_violations) * 0.1
+        )
         return max(0.0, 1.0 - violation_penalty)
 
     def _generate_accessibility_recommendations(
@@ -768,7 +869,8 @@ class AccessibilityTester:
         critical_violations = [v for v in violations if v.impact == "critical"]
         if critical_violations:
             recommendations.append(
-                f"Address {len(critical_violations)} critical accessibility violations immediately"
+                f"Address {len(critical_violations)} critical accessibility "
+                f"violations immediately"
             )
 
         serious_violations = [v for v in violations if v.impact == "serious"]
@@ -779,7 +881,9 @@ class AccessibilityTester:
 
         # Keyboard navigation recommendations
         if keyboard_results.get("focusable_elements", 0) > 0:
-            keyboard_accessible = keyboard_results.get("keyboard_accessible", 0)
+            keyboard_accessible = keyboard_results.get(
+                "keyboard_accessible", 0
+            )
             if keyboard_accessible < keyboard_results["focusable_elements"]:
                 recommendations.append(
                     "Improve keyboard accessibility for all interactive elements"
@@ -794,11 +898,15 @@ class AccessibilityTester:
         # Color contrast recommendations
         contrast_aa_ratio = contrast_results.get("contrast_ratio_aa", 1.0)
         if contrast_aa_ratio < 0.9:
-            recommendations.append("Improve color contrast to meet WCAG AA standards")
+            recommendations.append(
+                "Improve color contrast to meet WCAG AA standards"
+            )
 
         contrast_issues = len(contrast_results.get("contrast_issues", []))
         if contrast_issues > 0:
-            recommendations.append(f"Fix {contrast_issues} color contrast issues")
+            recommendations.append(
+                f"Fix {contrast_issues} color contrast issues"
+            )
 
         # Focus management recommendations
         focus_issues = focus_results.get("issues", [])
@@ -887,7 +995,10 @@ class PerformanceTester:
             resource_analysis = await self._analyze_resources(page)
 
             # Generate performance insights
-            opportunities, diagnostics = await self._generate_performance_insights(
+            (
+                opportunities,
+                diagnostics,
+            ) = await self._generate_performance_insights(
                 core_web_vitals, additional_metrics, resource_analysis
             )
 
@@ -906,7 +1017,8 @@ class PerformanceTester:
             )
 
             logger.info(
-                f"Performance test completed with score: {result.get_lighthouse_score()}"
+                f"Performance test completed with score: "
+                f"{result.get_lighthouse_score()}"
             )
             return result
 
@@ -915,7 +1027,9 @@ class PerformanceTester:
             return PerformanceTestResult(
                 core_web_vitals=CoreWebVitals(),
                 overall_score=0.0,
-                opportunities=["Performance testing failed - check page performance"],
+                opportunities=[
+                    "Performance testing failed - check page performance"
+                ],
                 diagnostics=[f"Error: {str(e)}"],
             )
 
@@ -923,9 +1037,10 @@ class PerformanceTester:
         """Measure Core Web Vitals"""
 
         # Inject Web Vitals measurement script
-        await page.add_script_tag(
-            url="https://unpkg.com/web-vitals@latest/dist/web-vitals.umd.js"
+        vitals_url = (
+            "https://unpkg.com/web-vitals@latest/dist/web-vitals.umd.js"
         )
+        await page.add_script_tag(url=vitals_url)
 
         # Set up measurement collection
         vitals_data = await page.evaluate(
@@ -933,28 +1048,28 @@ class PerformanceTester:
             () => {
                 return new Promise((resolve) => {
                     const vitals = {};
-                    
+
                     // Measure Core Web Vitals
                     webVitals.getCLS((metric) => {
                         vitals.cls = metric.value;
                     });
-                    
+
                     webVitals.getFCP((metric) => {
                         vitals.fcp = metric.value;
                     });
-                    
+
                     webVitals.getFID((metric) => {
                         vitals.fid = metric.value;
                     });
-                    
+
                     webVitals.getLCP((metric) => {
                         vitals.lcp = metric.value;
                     });
-                    
+
                     webVitals.getTTFB((metric) => {
                         vitals.ttfb = metric.value;
                     });
-                    
+
                     // Wait for measurements to complete
                     setTimeout(() => {
                         resolve(vitals);
@@ -979,19 +1094,25 @@ class PerformanceTester:
             () => {
                 const navigation = performance.getEntriesByType('navigation')[0];
                 const timing = performance.timing;
-                
+
                 return {
                     load_time_ms: timing.loadEventEnd - timing.navigationStart,
-                    dom_content_loaded_ms: timing.domContentLoadedEventEnd - timing.navigationStart,
+                    dom_content_loaded_ms: (
+                        timing.domContentLoadedEventEnd - timing.navigationStart
+                    ),
                     time_to_interactive_ms: null, // Would need complex calculation
-                    
+
                     // Memory metrics (if available)
-                    js_heap_used_mb: performance.memory ? performance.memory.usedJSHeapSize / (1024 * 1024) : 0,
-                    js_heap_total_mb: performance.memory ? performance.memory.totalJSHeapSize / (1024 * 1024) : 0,
-                    
+                    js_heap_used_mb: performance.memory ?
+                        performance.memory.usedJSHeapSize / (1024 * 1024) : 0,
+                    js_heap_total_mb: performance.memory ?
+                        performance.memory.totalJSHeapSize / (1024 * 1024) : 0,
+
                     // Network metrics (if available)
-                    effective_connection_type: navigator.connection ? navigator.connection.effectiveType : null,
-                    bandwidth_estimate_mbps: navigator.connection ? navigator.connection.downlink : null
+                    effective_connection_type: navigator.connection ?
+                        navigator.connection.effectiveType : null,
+                    bandwidth_estimate_mbps: navigator.connection ?
+                        navigator.connection.downlink : null
                 };
             }
         """
@@ -1006,31 +1127,37 @@ class PerformanceTester:
             """
             () => {
                 const resources = performance.getEntriesByType('resource');
-                
+
                 let totalSize = 0;
                 let imageSize = 0;
                 let scriptSize = 0;
                 let styleSize = 0;
                 let failedRequests = 0;
-                
+
                 resources.forEach(resource => {
                     const size = resource.transferSize || 0;
                     totalSize += size;
-                    
+
                     if (resource.initiatorType === 'img') {
                         imageSize += size;
                     } else if (resource.initiatorType === 'script') {
                         scriptSize += size;
-                    } else if (resource.initiatorType === 'link' && resource.name.includes('.css')) {
+                    } else if (
+                        resource.initiatorType === 'link' &&
+                        resource.name.includes('.css')
+                    ) {
                         styleSize += size;
                     }
-                    
+
                     // Check for failed requests (status >= 400)
-                    if (resource.responseStatus && resource.responseStatus >= 400) {
+                    if (
+                        resource.responseStatus &&
+                        resource.responseStatus >= 400
+                    ) {
                         failedRequests++;
                     }
                 });
-                
+
                 return {
                     total_requests: resources.length,
                     failed_requests: failedRequests,
@@ -1057,28 +1184,22 @@ class PerformanceTester:
         diagnostics = []
 
         # Core Web Vitals opportunities
-        if (
-            core_web_vitals.largest_contentful_paint
-            and core_web_vitals.largest_contentful_paint > self.thresholds["lcp_ms"]
-        ):
+        lcp = core_web_vitals.largest_contentful_paint
+        if lcp and lcp > self.thresholds["lcp_ms"]:
             opportunities.append(
-                f"Improve Largest Contentful Paint (current: {core_web_vitals.largest_contentful_paint:.0f}ms)"
+                f"Improve Largest Contentful Paint (current: {lcp:.0f}ms)"
             )
 
-        if (
-            core_web_vitals.first_contentful_paint
-            and core_web_vitals.first_contentful_paint > self.thresholds["fcp_ms"]
-        ):
+        fcp = core_web_vitals.first_contentful_paint
+        if fcp and fcp > self.thresholds["fcp_ms"]:
             opportunities.append(
-                f"Improve First Contentful Paint (current: {core_web_vitals.first_contentful_paint:.0f}ms)"
+                f"Improve First Contentful Paint (current: {fcp:.0f}ms)"
             )
 
-        if (
-            core_web_vitals.cumulative_layout_shift
-            and core_web_vitals.cumulative_layout_shift > self.thresholds["cls"]
-        ):
+        cls = core_web_vitals.cumulative_layout_shift
+        if cls and cls > self.thresholds["cls"]:
             opportunities.append(
-                f"Reduce Cumulative Layout Shift (current: {core_web_vitals.cumulative_layout_shift:.3f})"
+                f"Reduce Cumulative Layout Shift (current: {cls:.3f})"
             )
 
         # Resource-based opportunities
@@ -1098,7 +1219,10 @@ class PerformanceTester:
             )
 
         # Performance diagnostics
-        if additional_metrics["load_time_ms"] > self.thresholds["load_time_ms"]:
+        if (
+            additional_metrics["load_time_ms"]
+            > self.thresholds["load_time_ms"]
+        ):
             diagnostics.append(
                 f"Page load time exceeds threshold: {additional_metrics['load_time_ms']:.0f}ms"
             )
@@ -1114,7 +1238,10 @@ class PerformanceTester:
             )
 
         # Network diagnostics
-        if additional_metrics["effective_connection_type"] in ["slow-2g", "2g"]:
+        if additional_metrics["effective_connection_type"] in [
+            "slow-2g",
+            "2g",
+        ]:
             diagnostics.append(
                 "Slow network connection detected - optimize for low bandwidth"
             )
@@ -1122,7 +1249,9 @@ class PerformanceTester:
         return opportunities, diagnostics
 
     def _calculate_performance_score(
-        self, core_web_vitals: CoreWebVitals, additional_metrics: Dict[str, Any]
+        self,
+        core_web_vitals: CoreWebVitals,
+        additional_metrics: Dict[str, Any],
     ) -> float:
         """Calculate overall performance score (0.0 to 1.0)"""
 
@@ -1149,13 +1278,17 @@ class PerformanceTester:
 
         # Memory efficiency score (10% weight)
         js_heap = additional_metrics.get("js_heap_used_mb", 0)
-        memory_score = 1.0 if js_heap <= 50 else max(0.0, 1.0 - (js_heap - 50) / 50)
+        memory_score = (
+            1.0 if js_heap <= 50 else max(0.0, 1.0 - (js_heap - 50) / 50)
+        )
         scores.append(memory_score * 0.1)
 
         # Resource efficiency score (10% weight)
         total_size_mb = additional_metrics.get("total_size_kb", 0) / 1024
         resource_score = (
-            1.0 if total_size_mb <= 2 else max(0.0, 1.0 - (total_size_mb - 2) / 2)
+            1.0
+            if total_size_mb <= 2
+            else max(0.0, 1.0 - (total_size_mb - 2) / 2)
         )
         scores.append(resource_score * 0.1)
 
@@ -1175,8 +1308,12 @@ class AccessibilityPerformanceFramework:
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.accessibility_tester = AccessibilityTester(config.get("accessibility", {}))
-        self.performance_tester = PerformanceTester(config.get("performance", {}))
+        self.accessibility_tester = AccessibilityTester(
+            config.get("accessibility", {})
+        )
+        self.performance_tester = PerformanceTester(
+            config.get("performance", {})
+        )
 
         logger.info("Accessibility & Performance Framework initialized")
 
@@ -1206,7 +1343,9 @@ class AccessibilityPerformanceFramework:
 
             # Handle any exceptions
             if isinstance(accessibility_result, Exception):
-                logger.error(f"Accessibility testing failed: {accessibility_result}")
+                logger.error(
+                    f"Accessibility testing failed: {accessibility_result}"
+                )
                 accessibility_result = AccessibilityTestResult(
                     wcag_level=WCAGLevel.AA,
                     overall_score=0.0,
@@ -1214,7 +1353,9 @@ class AccessibilityPerformanceFramework:
                 )
 
             if isinstance(performance_result, Exception):
-                logger.error(f"Performance testing failed: {performance_result}")
+                logger.error(
+                    f"Performance testing failed: {performance_result}"
+                )
                 performance_result = PerformanceTestResult(
                     core_web_vitals=CoreWebVitals(),
                     overall_score=0.0,
@@ -1223,7 +1364,8 @@ class AccessibilityPerformanceFramework:
 
             # Calculate combined score
             combined_score = (
-                accessibility_result.overall_score + performance_result.overall_score
+                accessibility_result.overall_score
+                + performance_result.overall_score
             ) / 2
 
             # Generate combined recommendations
@@ -1278,7 +1420,8 @@ class AccessibilityPerformanceFramework:
         critical_performance = [
             opp
             for opp in performance_result.opportunities
-            if "Largest Contentful Paint" in opp or "Cumulative Layout Shift" in opp
+            if "Largest Contentful Paint" in opp
+            or "Cumulative Layout Shift" in opp
         ]
         recommendations.extend(critical_performance)
 
@@ -1288,7 +1431,9 @@ class AccessibilityPerformanceFramework:
             for rec in accessibility_result.recommendations
             if not any(priority in rec for priority in ["CRITICAL", "SERIOUS"])
         ]
-        recommendations.extend(accessibility_recommendations[:3])  # Limit to top 3
+        recommendations.extend(
+            accessibility_recommendations[:3]
+        )  # Limit to top 3
 
         # General performance recommendations
         performance_recommendations = [
@@ -1296,7 +1441,9 @@ class AccessibilityPerformanceFramework:
             for opp in performance_result.opportunities
             if opp not in critical_performance
         ]
-        recommendations.extend(performance_recommendations[:3])  # Limit to top 3
+        recommendations.extend(
+            performance_recommendations[:3]
+        )  # Limit to top 3
 
         # Combined insights
         if (

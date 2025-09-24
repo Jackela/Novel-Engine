@@ -12,6 +12,7 @@ import time
 from datetime import datetime
 from typing import List
 
+import pytest
 import requests
 
 # 配置日志
@@ -80,16 +81,18 @@ def test_gemini_api_direct():
             "Hello, please respond with 'API test successful'"
         )
 
-        if response and response.text:
-            print(f"✅ Gemini API 响应: {response.text.strip()}")
-            return True
-        else:
-            print("❌ Gemini API 无响应")
-            return False
+        assert response is not None, "Gemini API returned no response"
+        assert response.text, "Gemini API response has no text content"
+
+        print(f"✅ Gemini API 响应: {response.text.strip()}")
+        assert (
+            "API test successful" in response.text
+            or "successful" in response.text
+        )
 
     except Exception as e:
         print(f"❌ Gemini API 错误: {str(e)}")
-        return False
+        pytest.fail(f"Gemini API direct test failed: {str(e)}")
 
 
 def start_api_server():
@@ -120,83 +123,88 @@ def test_api_endpoints(base_url="http://127.0.0.1:8000"):
     """测试API端点"""
     print(f"\n🧪 测试API端点 ({base_url})...")
 
-    test_results = []
-
     # 测试健康检查
     try:
         response = requests.get(f"{base_url}/health", timeout=10)
-        if response.status_code == 200:
-            print("✅ /health - 正常")
-            test_results.append(("health", True, response.json()))
-        else:
-            print(f"❌ /health - 状态码: {response.status_code}")
-            test_results.append(("health", False, response.text))
-    except Exception as e:
-        print(f"❌ /health - 错误: {str(e)}")
-        test_results.append(("health", False, str(e)))
+        assert (
+            response.status_code == 200
+        ), f"Health endpoint failed with status {response.status_code}"
+        print("✅ /health - 正常")
+        health_data = response.json()
+        assert isinstance(
+            health_data, dict
+        ), "Health endpoint should return JSON object"
+    except requests.RequestException as e:
+        pytest.fail(f"Health endpoint request failed: {str(e)}")
 
     # 测试根路径
     try:
         response = requests.get(f"{base_url}/", timeout=10)
-        if response.status_code == 200:
-            print("✅ / - 正常")
-            test_results.append(("root", True, response.json()))
-        else:
-            print(f"❌ / - 状态码: {response.status_code}")
-            test_results.append(("root", False, response.text))
-    except Exception as e:
-        print(f"❌ / - 错误: {str(e)}")
-        test_results.append(("root", False, str(e)))
+        assert (
+            response.status_code == 200
+        ), f"Root endpoint failed with status {response.status_code}"
+        print("✅ / - 正常")
+        root_data = response.json()
+        assert isinstance(
+            root_data, dict
+        ), "Root endpoint should return JSON object"
+    except requests.RequestException as e:
+        pytest.fail(f"Root endpoint request failed: {str(e)}")
 
     # 测试字符列表
     try:
         response = requests.get(f"{base_url}/characters", timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            characters = data.get("characters", [])
-            print(f"✅ /characters - 找到 {len(characters)} 个角色")
-            test_results.append(("characters", True, data))
-        else:
-            print(f"❌ /characters - 状态码: {response.status_code}")
-            test_results.append(("characters", False, response.text))
-    except Exception as e:
-        print(f"❌ /characters - 错误: {str(e)}")
-        test_results.append(("characters", False, str(e)))
+        assert (
+            response.status_code == 200
+        ), f"Characters endpoint failed with status {response.status_code}"
 
-    # 测试模拟运行（如果有角色）
-    characters_data = None
-    for test_name, success, data in test_results:
-        if test_name == "characters" and success:
-            characters_data = data
-            break
+        data = response.json()
+        assert (
+            "characters" in data
+        ), "Characters endpoint should return 'characters' field"
 
-    if characters_data and characters_data.get("characters"):
-        available_chars = characters_data["characters"]
-        if len(available_chars) >= 2:
-            test_chars = available_chars[:2]  # 取前两个角色
+        characters = data.get("characters", [])
+        assert (
+            len(characters) > 0
+        ), "Should have at least one character available"
+
+        print(f"✅ /characters - 找到 {len(characters)} 个角色")
+
+        # 测试模拟运行（如果有足够角色）
+        if len(characters) >= 2:
+            test_chars = characters[:2]  # 取前两个角色
             try:
-                simulation_request = {"character_names": test_chars, "turns": 1}
+                simulation_request = {
+                    "character_names": test_chars,
+                    "turns": 1,
+                }
                 response = requests.post(
-                    f"{base_url}/simulations", json=simulation_request, timeout=30
+                    f"{base_url}/simulations",
+                    json=simulation_request,
+                    timeout=30,
                 )
-                if response.status_code == 200:
-                    data = response.json()
-                    print(
-                        f"✅ /simulations - 模拟完成，故事长度: {len(data.get('story', ''))}"
-                    )
-                    test_results.append(("simulations", True, data))
-                else:
-                    print(f"❌ /simulations - 状态码: {response.status_code}")
-                    test_results.append(("simulations", False, response.text))
-            except Exception as e:
-                print(f"❌ /simulations - 错误: {str(e)}")
-                test_results.append(("simulations", False, str(e)))
+                assert (
+                    response.status_code == 200
+                ), f"Simulations endpoint failed with status {response.status_code}"
+
+                sim_data = response.json()
+                assert "story" in sim_data, "Simulation should return a story"
+                assert (
+                    len(sim_data.get("story", "")) > 0
+                ), "Story should not be empty"
+
+                print(
+                    f"✅ /simulations - 模拟完成，故事长度: {len(sim_data.get('story', ''))}"
+                )
+            except requests.RequestException as e:
+                pytest.fail(f"Simulations endpoint request failed: {str(e)}")
         else:
             print("⚠️ /simulations - 角色不足，跳过测试")
-    else:
-        print("⚠️ /simulations - 无可用角色，跳过测试")
 
-    return test_results
+    except requests.RequestException as e:
+        pytest.fail(f"Characters endpoint request failed: {str(e)}")
+    except (ValueError, KeyError) as e:
+        pytest.fail(f"Characters endpoint response parsing failed: {str(e)}")
 
 
 def generate_test_report(test_results: List, start_time: datetime):
@@ -233,12 +241,16 @@ def generate_test_report(test_results: List, start_time: datetime):
         "successful_tests": successful_tests,
         "failed_tests": total_tests - successful_tests,
         "success_rate": (
-            f"{(successful_tests/total_tests)*100:.1f}%" if total_tests > 0 else "0%"
+            f"{(successful_tests/total_tests)*100:.1f}%"
+            if total_tests > 0
+            else "0%"
         ),
     }
 
     # 保存报告
-    report_file = f"api_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    report_file = (
+        f"api_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
     with open(report_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 

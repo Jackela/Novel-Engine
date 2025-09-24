@@ -207,13 +207,13 @@ class SecurityEventMonitor:
             )
             await db.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_events_timestamp 
+                CREATE INDEX IF NOT EXISTS idx_events_timestamp
                 ON security_events(timestamp)
             """
             )
             await db.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_events_severity 
+                CREATE INDEX IF NOT EXISTS idx_events_severity
                 ON security_events(severity)
             """
             )
@@ -224,8 +224,8 @@ class SecurityEventMonitor:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """
-                INSERT INTO security_events 
-                (event_id, event_type, severity, source_ip, user_id, endpoint, 
+                INSERT INTO security_events
+                (event_id, event_type, severity, source_ip, user_id, endpoint,
                  description, timestamp, metadata)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -282,13 +282,20 @@ class SecurityEventMonitor:
                 )
                 await self.log_event(threat_event)
 
-    async def _matches_pattern(self, event: SecurityEvent, pattern: Dict) -> bool:
+    async def _matches_pattern(
+        self, event: SecurityEvent, pattern: Dict
+    ) -> bool:
         """Check if event matches threat pattern"""
         # Simple pattern matching - could be enhanced with ML
-        if pattern.get("event_type") and event.event_type != pattern["event_type"]:
+        if (
+            pattern.get("event_type")
+            and event.event_type != pattern["event_type"]
+        ):
             return False
 
-        if pattern.get("severity") and event.severity != RiskLevel(pattern["severity"]):
+        if pattern.get("severity") and event.severity != RiskLevel(
+            pattern["severity"]
+        ):
             return False
 
         if pattern.get("description_regex"):
@@ -502,7 +509,11 @@ class ComplianceEngine:
             [r for r in all_results if r.status == ComplianceStatus.COMPLIANT]
         )
         non_compliant_rules = len(
-            [r for r in all_results if r.status == ComplianceStatus.NON_COMPLIANT]
+            [
+                r
+                for r in all_results
+                if r.status == ComplianceStatus.NON_COMPLIANT
+            ]
         )
 
         # Calculate overall score (weighted by severity)
@@ -544,7 +555,9 @@ class ComplianceEngine:
             results=all_results,
         )
 
-        logger.info(f"Compliance assessment complete: {overall_score:.1f}% compliant")
+        logger.info(
+            f"Compliance assessment complete: {overall_score:.1f}% compliant"
+        )
 
         return report
 
@@ -558,7 +571,9 @@ class ComplianceEngine:
 
         return all([auth_system, role_based_access, session_management])
 
-    async def _check_cryptographic_controls(self, context: Dict[str, Any]) -> bool:
+    async def _check_cryptographic_controls(
+        self, context: Dict[str, Any]
+    ) -> bool:
         """Check cryptographic controls"""
         https_enabled = context.get("https_enabled", False)
         password_hashing = context.get("password_hashing", False)
@@ -566,7 +581,9 @@ class ComplianceEngine:
 
         return all([https_enabled, password_hashing, data_encryption])
 
-    async def _check_injection_prevention(self, context: Dict[str, Any]) -> bool:
+    async def _check_injection_prevention(
+        self, context: Dict[str, Any]
+    ) -> bool:
         """Check injection prevention measures"""
         parameterized_queries = context.get("parameterized_queries", False)
         input_validation = context.get("input_validation", False)
@@ -580,9 +597,13 @@ class ComplianceEngine:
         security_requirements = context.get("security_requirements", False)
         secure_coding_practices = context.get("secure_coding_practices", False)
 
-        return all([threat_modeling, security_requirements, secure_coding_practices])
+        return all(
+            [threat_modeling, security_requirements, secure_coding_practices]
+        )
 
-    async def _check_security_configuration(self, context: Dict[str, Any]) -> bool:
+    async def _check_security_configuration(
+        self, context: Dict[str, Any]
+    ) -> bool:
         """Check security configuration"""
         security_headers = context.get("security_headers", False)
         error_handling = context.get("proper_error_handling", False)
@@ -612,7 +633,9 @@ class ComplianceEngine:
         automated_deletion = context.get("automated_data_deletion", False)
         retention_documentation = context.get("retention_documentation", False)
 
-        return all([retention_policy, automated_deletion, retention_documentation])
+        return all(
+            [retention_policy, automated_deletion, retention_documentation]
+        )
 
     def generate_compliance_report(
         self, report: ComplianceReport, format_type: str = "json"
@@ -627,12 +650,16 @@ class ComplianceEngine:
         else:
             raise ValueError(f"Unsupported format: {format_type}")
 
-    def _generate_json_compliance_report(self, report: ComplianceReport) -> str:
+    def _generate_json_compliance_report(
+        self, report: ComplianceReport
+    ) -> str:
         """Generate JSON compliance report"""
         data = {
             "assessment_id": report.assessment_id,
             "generated_at": report.generated_at.isoformat(),
-            "standards_evaluated": [s.value for s in report.standards_evaluated],
+            "standards_evaluated": [
+                s.value for s in report.standards_evaluated
+            ],
             "summary": {
                 "total_rules": report.total_rules,
                 "compliant_rules": report.compliant_rules,
@@ -660,16 +687,20 @@ class ComplianceEngine:
 
         return json.dumps(data, indent=2)
 
-    def _generate_console_compliance_report(self, report: ComplianceReport) -> str:
+    def _generate_console_compliance_report(
+        self, report: ComplianceReport
+    ) -> str:
         """Generate console compliance report"""
         output = []
         output.append("=" * 60)
         output.append("COMPLIANCE ASSESSMENT REPORT")
         output.append("=" * 60)
         output.append(f"Assessment ID: {report.assessment_id}")
-        output.append(f"Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M:%S')}")
         output.append(
-            f"Standards: {', '.join(s.value for s in report.standards_evaluated)}"
+            f"Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+        output.append(
+            f"Standards: {', '.join( s.value for s in report.standards_evaluated)}"
         )
         output.append("")
 
@@ -684,14 +715,18 @@ class ComplianceEngine:
 
         # Non-compliant rules
         non_compliant = [
-            r for r in report.results if r.status == ComplianceStatus.NON_COMPLIANT
+            r
+            for r in report.results
+            if r.status == ComplianceStatus.NON_COMPLIANT
         ]
         if non_compliant:
             output.append("NON-COMPLIANT RULES:")
             for result in non_compliant:
-                severity_icon = "🔴" if result.severity == RiskLevel.CRITICAL else "🟠"
+                severity_icon = (
+                    "🔴" if result.severity == RiskLevel.CRITICAL else "🟠"
+                )
                 output.append(
-                    f"  {severity_icon} {result.rule_id} ({result.severity.value})"
+                    f"  {severity_icon} {result.rule_id}({result.severity.value})"
                 )
                 output.append(f"      {result.title}")
                 output.append(f"      💡 {result.remediation}")
@@ -699,7 +734,9 @@ class ComplianceEngine:
 
         return "\n".join(output)
 
-    def _generate_html_compliance_report(self, report: ComplianceReport) -> str:
+    def _generate_html_compliance_report(
+        self, report: ComplianceReport
+    ) -> str:
         """Generate HTML compliance report"""
         return f"""
         <!DOCTYPE html>

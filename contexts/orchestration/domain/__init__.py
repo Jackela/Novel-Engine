@@ -10,5 +10,7 @@ Core domain abstractions for turn pipeline orchestration including:
 - Saga patterns with compensation logic
 """
 
+from typing import List
+
 # Core exports will be added as components are implemented
-__all__ = []
+__all__: List[str] = []

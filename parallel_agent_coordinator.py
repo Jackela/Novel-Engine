@@ -28,7 +28,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-
 from shared_types import CharacterAction
 
 # Import Novel Engine components
@@ -41,16 +40,12 @@ logger = logging.getLogger(__name__)
 class ConflictType(Enum):
     """Types of conflicts that can occur between agent actions."""
 
-    RESOURCE_CONTENTION = "resource_contention"  # Multiple agents want same resource
-    LOCATION_CONFLICT = (
-        "location_conflict"  # Agents trying to be in same exclusive location
-    )
-    DIRECT_CONFRONTATION = "direct_confrontation"  # Agents directly opposing each other
-    NARRATIVE_INCONSISTENCY = (
-        "narrative_inconsistency"  # Actions create story inconsistencies
-    )
-    TEMPORAL_CONFLICT = "temporal_conflict"  # Actions conflict in timing
-    SOCIAL_CONFLICT = "social_conflict"  # Actions conflict socially/politically
+    RESOURCE_CONTENTION = "resource_contention"  # Multiple agents want same
+    LOCATION_CONFLICT = "location_conflict"  # Same exclusive location
+    DIRECT_CONFRONTATION = "direct_confrontation"  # Direct opposition
+    NARRATIVE_INCONSISTENCY = "narrative_inconsistency"  # Story conflicts
+    TEMPORAL_CONFLICT = "temporal_conflict"  # Timing conflicts
+    SOCIAL_CONFLICT = "social_conflict"  # Social/political conflicts
 
 
 class ResolutionStrategy(Enum):
@@ -139,7 +134,8 @@ class ParallelAgentCoordinator:
     """
     Advanced parallel processing coordinator for multi-agent systems.
 
-    Enables simultaneous agent decision-making with intelligent conflict detection,
+    Enables simultaneous agent decision-making with intelligent conflict
+    detection,
     resolution, and collaboration opportunity identification.
     """
 
@@ -149,7 +145,7 @@ class ParallelAgentCoordinator:
 
         Args:
             event_bus: Event bus for agent communication
-            max_parallel_agents: Maximum number of agents to process in parallel
+            max_parallel_agents: Max agents to process in parallel
         """
         self.event_bus = event_bus
         self.max_parallel_agents = max_parallel_agents
@@ -167,12 +163,14 @@ class ParallelAgentCoordinator:
         ] = self._initialize_resolution_strategies()
 
         # Collaboration management
-        self.collaboration_opportunities: Dict[str, CollaborationOpportunity] = {}
+        self.collaboration_opportunities: Dict[
+            str, CollaborationOpportunity
+        ] = {}
         self.active_collaborations: Dict[str, Dict[str, Any]] = {}
 
         # Resource management
         self.resource_registry: Dict[str, Any] = {}
-        self.resource_allocation: Dict[str, str] = {}  # resource_id -> agent_id
+        self.resource_allocation: Dict[str, str] = {}  # resource -> agent
         self.location_occupancy: Dict[str, Set[str]] = defaultdict(set)
 
         # Performance tracking
@@ -188,7 +186,8 @@ class ParallelAgentCoordinator:
         self.parallel_execution_timeout = 30.0
 
         logger.info(
-            f"ParallelAgentCoordinator initialized for {max_parallel_agents} parallel agents"
+            f"ParallelAgentCoordinator initialized for "
+            f"{max_parallel_agents} parallel agents"
         )
 
     async def coordinate_parallel_turn(
@@ -210,11 +209,14 @@ class ParallelAgentCoordinator:
         """
         try:
             execution_id = (
-                f"parallel_{datetime.now().strftime('%H%M%S')}_{uuid.uuid4().hex[:8]}"
+                f"parallel_{datetime.now().strftime('%H%M%S')}_"
+                f"{uuid.uuid4().hex[:8]}"
             )
             start_time = datetime.now()
 
-            logger.info(f"Starting parallel turn coordination for {len(agents)} agents")
+            logger.info(
+                f"Starting parallel turn coordination for {len(agents)} agents"
+            )
 
             # Phase 1: Simultaneous decision-making
             agent_decisions = await self._collect_simultaneous_decisions(
@@ -222,13 +224,17 @@ class ParallelAgentCoordinator:
             )
 
             # Phase 2: Action analysis and preparation
-            parallel_actions = await self._prepare_parallel_actions(agent_decisions)
+            parallel_actions = await self._prepare_parallel_actions(
+                agent_decisions
+            )
 
             # Phase 3: Conflict detection
             conflicts = await self._detect_conflicts(parallel_actions)
 
             # Phase 4: Collaboration opportunity identification
-            collaborations = await self._identify_collaborations(parallel_actions)
+            collaborations = await self._identify_collaborations(
+                parallel_actions
+            )
 
             # Phase 5: Conflict resolution
             resolution_results = await self._resolve_conflicts(
@@ -246,7 +252,9 @@ class ParallelAgentCoordinator:
             )
 
             # Phase 8: Post-execution analysis
-            post_analysis = await self._analyze_execution_results(execution_results)
+            post_analysis = await self._analyze_execution_results(
+                execution_results
+            )
 
             execution_time = (datetime.now() - start_time).total_seconds()
 
@@ -258,7 +266,9 @@ class ParallelAgentCoordinator:
                     [r for r in execution_results if r.get("success")]
                 ),
                 conflicts_detected=len(conflicts),
-                conflicts_resolved=len([c for c in conflicts if c.resolution_result]),
+                conflicts_resolved=len(
+                    [c for c in conflicts if c.resolution_result]
+                ),
                 collaborations_formed=len(collaboration_results),
                 execution_time=execution_time,
                 performance_metrics=self._calculate_performance_metrics(
@@ -275,7 +285,9 @@ class ParallelAgentCoordinator:
             await self._update_performance_tracking(result)
 
             logger.info(
-                f"Parallel turn completed: {result.successful_actions}/{result.total_actions} actions successful in {execution_time:.2f}s"
+                f"Parallel turn completed: "
+                f"{result.successful_actions}/{result.total_actions} "
+                f"actions successful in {execution_time:.2f}s"
             )
 
             return result
@@ -309,7 +321,9 @@ class ParallelAgentCoordinator:
                 agent_world_state["agent_specific_context"] = {
                     "agent_id": agent.agent_id,
                     "other_agents": [
-                        a.agent_id for a in agents if a.agent_id != agent.agent_id
+                        a.agent_id
+                        for a in agents
+                        if a.agent_id != agent.agent_id
                     ],
                 }
                 agent_world_states[agent.agent_id] = agent_world_state
@@ -334,10 +348,14 @@ class ParallelAgentCoordinator:
                         decision = await asyncio.wait_for(task, timeout=10.0)
                         decisions[agent_id] = decision
                     except asyncio.TimeoutError:
-                        logger.warning(f"Decision timeout for agent {agent_id}")
+                        logger.warning(
+                            f"Decision timeout for agent {agent_id}"
+                        )
                         decisions[agent_id] = None
                     except Exception as e:
-                        logger.error(f"Decision error for agent {agent_id}: {e}")
+                        logger.error(
+                            f"Decision error for agent {agent_id}: {e}"
+                        )
                         decisions[agent_id] = None
 
             except Exception as e:
@@ -345,11 +363,14 @@ class ParallelAgentCoordinator:
 
             # Filter out None decisions
             valid_decisions = {
-                aid: action for aid, action in decisions.items() if action is not None
+                aid: action
+                for aid, action in decisions.items()
+                if action is not None
             }
 
             logger.info(
-                f"Collected {len(valid_decisions)}/{len(agents)} agent decisions"
+                f"Collected {len(valid_decisions)}/{len(agents)} "
+                f"agent decisions"
             )
             return valid_decisions
 
@@ -377,7 +398,9 @@ class ParallelAgentCoordinator:
                     priority=0.5,
                 )
         except Exception as e:
-            logger.error(f"Error getting decision from agent {agent.agent_id}: {e}")
+            logger.error(
+                f"Error getting decision from agent {agent.agent_id}: {e}"
+            )
             return None
 
     async def _prepare_parallel_actions(
@@ -388,19 +411,26 @@ class ParallelAgentCoordinator:
 
         for agent_id, action in agent_decisions.items():
             if action:
-                action_id = f"action_{agent_id}_{datetime.now().strftime('%H%M%S%f')}"
+                action_id = (
+                    f"action_{agent_id}_"
+                    f"{datetime.now().strftime('%H%M%S%f')}"
+                )
 
                 # Analyze action for resources, targets, etc.
-                resources_required = self._extract_resources_from_action(action)
-                locations_required = self._extract_locations_from_action(action)
+                resources_required = self._extract_resources_from_action(
+                    action
+                )
+                locations_required = self._extract_locations_from_action(
+                    action
+                )
                 target_agents = self._extract_target_agents_from_action(action)
 
                 # Determine priority from action
                 priority = self._determine_action_priority(action)
 
                 # Calculate collaboration potential and conflict risk
-                collaboration_potential = self._calculate_collaboration_potential(
-                    action, agent_id
+                collaboration_potential = (
+                    self._calculate_collaboration_potential(action, agent_id)
                 )
                 conflict_risk = self._calculate_conflict_risk(action, agent_id)
 
@@ -451,14 +481,18 @@ class ParallelAgentCoordinator:
         conflicts_found = []
 
         # Resource contention
-        resource_overlap = action_a.resources_required & action_b.resources_required
+        resource_overlap = (
+            action_a.resources_required & action_b.resources_required
+        )
         if resource_overlap:
             conflicts_found.append(
                 (ConflictType.RESOURCE_CONTENTION, len(resource_overlap) * 0.3)
             )
 
         # Location conflicts
-        location_overlap = action_a.locations_required & action_b.locations_required
+        location_overlap = (
+            action_a.locations_required & action_b.locations_required
+        )
         if location_overlap:
             conflicts_found.append(
                 (ConflictType.LOCATION_CONFLICT, len(location_overlap) * 0.4)
@@ -473,7 +507,9 @@ class ParallelAgentCoordinator:
             if self._actions_are_opposing(
                 action_a.original_action, action_b.original_action
             ):
-                conflicts_found.append((ConflictType.DIRECT_CONFRONTATION, 0.8))
+                conflicts_found.append(
+                    (ConflictType.DIRECT_CONFRONTATION, 0.8)
+                )
 
         # Narrative inconsistency
         if self._check_narrative_inconsistency(
@@ -486,7 +522,9 @@ class ParallelAgentCoordinator:
             conflict_type, severity = max(conflicts_found, key=lambda x: x[1])
 
             if severity >= self.conflict_detection_threshold:
-                conflict_id = f"conflict_{action_a.action_id}_{action_b.action_id}"
+                conflict_id = (
+                    f"conflict_{action_a.action_id}_{action_b.action_id}"
+                )
                 return ActionConflict(
                     conflict_id=conflict_id,
                     conflict_type=conflict_type,
@@ -521,7 +559,9 @@ class ParallelAgentCoordinator:
         for collab in collaborations:
             self.collaboration_opportunities[collab.opportunity_id] = collab
 
-        logger.info(f"Identified {len(collaborations)} collaboration opportunities")
+        logger.info(
+            f"Identified {len(collaborations)} collaboration opportunities"
+        )
         return collaborations
 
     async def _analyze_collaboration_potential(
@@ -556,19 +596,28 @@ class ParallelAgentCoordinator:
             synergy_score = sum(synergy_factors) / len(synergy_factors)
 
             if synergy_score >= self.collaboration_threshold:
-                opportunity_id = f"collab_{action_a.action_id}_{action_b.action_id}"
+                opportunity_id = (
+                    f"collab_{action_a.action_id}_{action_b.action_id}"
+                )
                 return CollaborationOpportunity(
                     opportunity_id=opportunity_id,
-                    participant_actions=[action_a.action_id, action_b.action_id],
+                    participant_actions=[
+                        action_a.action_id,
+                        action_b.action_id,
+                    ],
                     collaboration_type="joint_action",
                     synergy_score=synergy_score,
-                    estimated_benefit=synergy_score * 1.5,  # Collaboration multiplier
+                    estimated_benefit=(
+                        synergy_score * 1.5
+                    ),  # Collaboration multiplier
                 )
 
         return None
 
     async def _resolve_conflicts(
-        self, conflicts: List[ActionConflict], parallel_actions: List[ParallelAction]
+        self,
+        conflicts: List[ActionConflict],
+        parallel_actions: List[ParallelAction],
     ) -> Dict[str, Any]:
         """Resolve detected conflicts using appropriate strategies."""
         resolution_results = {}
@@ -576,7 +625,9 @@ class ParallelAgentCoordinator:
         for conflict in conflicts:
             try:
                 # Select resolution strategy
-                strategy = self._select_resolution_strategy(conflict, parallel_actions)
+                strategy = self._select_resolution_strategy(
+                    conflict, parallel_actions
+                )
                 conflict.resolution_strategy = strategy
 
                 # Apply resolution strategy
@@ -595,9 +646,13 @@ class ParallelAgentCoordinator:
                         del self.active_conflicts[conflict.conflict_id]
 
             except Exception as e:
-                logger.error(f"Failed to resolve conflict {conflict.conflict_id}: {e}")
+                logger.error(
+                    f"Failed to resolve conflict {conflict.conflict_id}: {e}"
+                )
 
-        logger.info(f"Resolved {len(resolution_results)}/{len(conflicts)} conflicts")
+        logger.info(
+            f"Resolved {len(resolution_results)}/{len(conflicts)} conflicts"
+        )
         return resolution_results
 
     async def _form_collaborations(
@@ -625,13 +680,14 @@ class ParallelAgentCoordinator:
 
                     if collaboration["success"]:
                         collaboration_results.append(collaboration)
-                        self.active_collaborations[opportunity.opportunity_id] = (
-                            collaboration
-                        )
+                        self.active_collaborations[
+                            opportunity.opportunity_id
+                        ] = collaboration
 
             except Exception as e:
                 logger.error(
-                    f"Failed to form collaboration {opportunity.opportunity_id}: {e}"
+                    f"Failed to form collaboration "
+                    f"{opportunity.opportunity_id}: {e}"
                 )
 
         logger.info(f"Formed {len(collaboration_results)} collaborations")
@@ -643,7 +699,8 @@ class ParallelAgentCoordinator:
         resolution_results: Dict[str, Any],
         collaboration_results: List[Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
-        """Execute parallel actions with conflict resolutions and collaborations."""
+        """Execute parallel actions with conflict resolutions and
+        collaborations."""
         execution_results = []
 
         # Group actions by execution batch
@@ -651,10 +708,12 @@ class ParallelAgentCoordinator:
             parallel_actions, resolution_results, collaboration_results
         )
 
-        # Execute batches in sequence (parallel within batch, sequential between batches)
+        # Execute batches in sequence (parallel within batch, sequential
+        # between batches)
         for batch_index, batch in enumerate(execution_batches):
             logger.info(
-                f"Executing batch {batch_index + 1}/{len(execution_batches)} with {len(batch)} actions"
+                f"Executing batch {batch_index + 1}/{len(execution_batches)} "
+                f"with {len(batch)} actions"
             )
 
             batch_results = await self._execute_action_batch(batch)
@@ -670,7 +729,8 @@ class ParallelAgentCoordinator:
 
         for action in action_batch:
             task = asyncio.create_task(
-                self._execute_single_action(action), name=f"execute_{action.action_id}"
+                self._execute_single_action(action),
+                name=f"execute_{action.action_id}",
             )
             execution_tasks.append((action.action_id, task))
 
@@ -699,7 +759,9 @@ class ParallelAgentCoordinator:
 
         return batch_results
 
-    async def _execute_single_action(self, action: ParallelAction) -> Dict[str, Any]:
+    async def _execute_single_action(
+        self, action: ParallelAction
+    ) -> Dict[str, Any]:
         """Execute a single action with resource allocation."""
         try:
             # Allocate resources
@@ -747,7 +809,9 @@ class ParallelAgentCoordinator:
             }
 
         except Exception as e:
-            logger.error(f"Action execution failed for {action.action_id}: {e}")
+            logger.error(
+                f"Action execution failed for {action.action_id}: {e}"
+            )
             return {
                 "action_id": action.action_id,
                 "agent_id": action.agent_id,
@@ -793,7 +857,9 @@ class ParallelAgentCoordinator:
             ],
         }
 
-    def _extract_resources_from_action(self, action: CharacterAction) -> Set[str]:
+    def _extract_resources_from_action(
+        self, action: CharacterAction
+    ) -> Set[str]:
         """Extract required resources from action."""
         resources = set()
 
@@ -812,7 +878,9 @@ class ParallelAgentCoordinator:
 
         return resources
 
-    def _extract_locations_from_action(self, action: CharacterAction) -> Set[str]:
+    def _extract_locations_from_action(
+        self, action: CharacterAction
+    ) -> Set[str]:
         """Extract required locations from action."""
         locations = set()
 
@@ -825,7 +893,9 @@ class ParallelAgentCoordinator:
 
         return locations
 
-    def _extract_target_agents_from_action(self, action: CharacterAction) -> Set[str]:
+    def _extract_target_agents_from_action(
+        self, action: CharacterAction
+    ) -> Set[str]:
         """Extract target agents from action."""
         targets = set()
 
@@ -837,7 +907,9 @@ class ParallelAgentCoordinator:
 
         return targets
 
-    def _determine_action_priority(self, action: CharacterAction) -> ActionPriority:
+    def _determine_action_priority(
+        self, action: CharacterAction
+    ) -> ActionPriority:
         """Determine priority level for an action."""
         if hasattr(action, "priority") and action.priority:
             priority_value = action.priority
@@ -855,7 +927,11 @@ class ParallelAgentCoordinator:
         # Default based on action type
         if action.action_type in ["defend", "escape", "emergency"]:
             return ActionPriority.CRITICAL
-        elif action.action_type in ["attack", "investigate", "important_dialogue"]:
+        elif action.action_type in [
+            "attack",
+            "investigate",
+            "important_dialogue",
+        ]:
             return ActionPriority.HIGH
         elif action.action_type in ["dialogue", "search", "interact"]:
             return ActionPriority.MEDIUM
@@ -878,7 +954,9 @@ class ParallelAgentCoordinator:
 
         return collaboration_types.get(action.action_type, 0.3)
 
-    def _calculate_conflict_risk(self, action: CharacterAction, agent_id: str) -> float:
+    def _calculate_conflict_risk(
+        self, action: CharacterAction, agent_id: str
+    ) -> float:
         """Calculate conflict risk for an action."""
         # Base conflict risk based on action type
         conflict_types = {
@@ -904,8 +982,12 @@ class ParallelAgentCoordinator:
 
         for pair in opposing_pairs:
             if (
-                action_a.action_type == pair[0] and action_b.action_type == pair[1]
-            ) or (action_a.action_type == pair[1] and action_b.action_type == pair[0]):
+                action_a.action_type == pair[0]
+                and action_b.action_type == pair[1]
+            ) or (
+                action_a.action_type == pair[1]
+                and action_b.action_type == pair[0]
+            ):
                 return True
 
         return False
@@ -940,9 +1022,13 @@ class ParallelAgentCoordinator:
     ) -> bool:
         """Check if actions have complementary resource requirements."""
         # Actions are complementary if they don't compete for resources
-        return len(action_a.resources_required & action_b.resources_required) == 0
+        return (
+            len(action_a.resources_required & action_b.resources_required) == 0
+        )
 
-    def _get_agent_relationship_bonus(self, agent_a: str, agent_b: str) -> float:
+    def _get_agent_relationship_bonus(
+        self, agent_a: str, agent_b: str
+    ) -> float:
         """Get relationship bonus between two agents."""
         # This would access the relationship system
         # For now, return a neutral value
@@ -977,13 +1063,17 @@ class ParallelAgentCoordinator:
 
         return group_collaborations
 
-    def _can_form_group_collaboration(self, actions: List[ParallelAction]) -> bool:
+    def _can_form_group_collaboration(
+        self, actions: List[ParallelAction]
+    ) -> bool:
         """Check if a group of actions can form a collaboration."""
         # All actions should have high collaboration potential
         return all(action.collaboration_potential >= 0.6 for action in actions)
 
     def _select_resolution_strategy(
-        self, conflict: ActionConflict, parallel_actions: List[ParallelAction]
+        self,
+        conflict: ActionConflict,
+        parallel_actions: List[ParallelAction],
     ) -> ResolutionStrategy:
         """Select the best resolution strategy for a conflict."""
         available_strategies = self.conflict_resolution_strategies[
@@ -991,7 +1081,8 @@ class ParallelAgentCoordinator:
         ]
 
         # For now, select the first available strategy
-        # In a full implementation, this would consider context and agent preferences
+        # In a full implementation, this would consider context and
+        # agent preferences
         return (
             available_strategies[0]
             if available_strategies
@@ -1007,15 +1098,25 @@ class ParallelAgentCoordinator:
         """Apply a resolution strategy to a conflict."""
         try:
             if strategy == ResolutionStrategy.PRIORITY_BASED:
-                return await self._resolve_by_priority(conflict, parallel_actions)
+                return await self._resolve_by_priority(
+                    conflict, parallel_actions
+                )
             elif strategy == ResolutionStrategy.SEQUENTIAL:
-                return await self._resolve_sequentially(conflict, parallel_actions)
+                return await self._resolve_sequentially(
+                    conflict, parallel_actions
+                )
             elif strategy == ResolutionStrategy.NEGOTIATION:
-                return await self._resolve_by_negotiation(conflict, parallel_actions)
+                return await self._resolve_by_negotiation(
+                    conflict, parallel_actions
+                )
             elif strategy == ResolutionStrategy.COMPROMISE:
-                return await self._resolve_by_compromise(conflict, parallel_actions)
+                return await self._resolve_by_compromise(
+                    conflict, parallel_actions
+                )
             elif strategy == ResolutionStrategy.COLLABORATION:
-                return await self._resolve_by_collaboration(conflict, parallel_actions)
+                return await self._resolve_by_collaboration(
+                    conflict, parallel_actions
+                )
             else:
                 return await self._resolve_randomly(conflict, parallel_actions)
 
@@ -1024,7 +1125,9 @@ class ParallelAgentCoordinator:
             return {"success": False, "error": str(e)}
 
     async def _resolve_by_priority(
-        self, conflict: ActionConflict, parallel_actions: List[ParallelAction]
+        self,
+        conflict: ActionConflict,
+        parallel_actions: List[ParallelAction],
     ) -> Dict[str, Any]:
         """Resolve conflict by action priority."""
         involved_actions = [
@@ -1042,7 +1145,9 @@ class ParallelAgentCoordinator:
             ActionPriority.TRIVIAL: 1,
         }
 
-        involved_actions.sort(key=lambda a: priority_order[a.priority], reverse=True)
+        involved_actions.sort(
+            key=lambda a: priority_order[a.priority], reverse=True
+        )
 
         # Highest priority action wins
         winner = involved_actions[0]
@@ -1057,7 +1162,9 @@ class ParallelAgentCoordinator:
         }
 
     async def _resolve_sequentially(
-        self, conflict: ActionConflict, parallel_actions: List[ParallelAction]
+        self,
+        conflict: ActionConflict,
+        parallel_actions: List[ParallelAction],
     ) -> Dict[str, Any]:
         """Resolve conflict by executing actions sequentially."""
         involved_actions = [
@@ -1075,7 +1182,9 @@ class ParallelAgentCoordinator:
             ActionPriority.TRIVIAL: 1,
         }
 
-        involved_actions.sort(key=lambda a: priority_order[a.priority], reverse=True)
+        involved_actions.sort(
+            key=lambda a: priority_order[a.priority], reverse=True
+        )
 
         return {
             "success": True,
@@ -1162,10 +1271,13 @@ class ParallelAgentCoordinator:
     ) -> List[List[ParallelAction]]:
         """Create execution batches based on dependencies and resolutions."""
         # For now, create a single batch with all actions
-        # In a full implementation, this would consider dependencies and sequential requirements
+        # In a full implementation, this would consider dependencies
+        # and sequential requirements
         return [parallel_actions]
 
-    async def _allocate_resources(self, action: ParallelAction) -> Dict[str, Any]:
+    async def _allocate_resources(
+        self, action: ParallelAction
+    ) -> Dict[str, Any]:
         """Allocate resources for action execution."""
         allocated_resources = []
 
@@ -1175,7 +1287,8 @@ class ParallelAgentCoordinator:
                 self.resource_allocation[resource] = action.agent_id
                 allocated_resources.append(resource)
             else:
-                # Resource is already allocated - conflict should have been resolved
+                # Resource is already allocated - conflict should have been
+                # resolved
                 logger.warning(
                     f"Resource {resource} already allocated but not resolved"
                 )
@@ -1217,15 +1330,21 @@ class ParallelAgentCoordinator:
         }
 
     def _calculate_performance_metrics(
-        self, execution_results: List[Dict[str, Any]], execution_time: float
+        self,
+        execution_results: List[Dict[str, Any]],
+        execution_time: float,
     ) -> Dict[str, float]:
         """Calculate performance metrics for the execution."""
         total_actions = len(execution_results)
-        successful_actions = len([r for r in execution_results if r.get("success")])
+        successful_actions = len(
+            [r for r in execution_results if r.get("success")]
+        )
 
         return {
             "success_rate": (
-                successful_actions / total_actions if total_actions > 0 else 0.0
+                successful_actions / total_actions
+                if total_actions > 0
+                else 0.0
             ),
             "execution_time": execution_time,
             "actions_per_second": (
@@ -1239,7 +1358,9 @@ class ParallelAgentCoordinator:
             ),
         }
 
-    async def _update_performance_tracking(self, result: ParallelExecutionResult):
+    async def _update_performance_tracking(
+        self, result: ParallelExecutionResult
+    ):
         """Update performance tracking metrics."""
         # Store metrics for trend analysis
         self.performance_metrics["success_rate"].append(
@@ -1247,7 +1368,9 @@ class ParallelAgentCoordinator:
             if result.total_actions > 0
             else 0
         )
-        self.performance_metrics["execution_time"].append(result.execution_time)
+        self.performance_metrics["execution_time"].append(
+            result.execution_time
+        )
         self.performance_metrics["conflicts_per_action"].append(
             result.conflicts_detected / result.total_actions
             if result.total_actions > 0

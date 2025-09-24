@@ -113,9 +113,13 @@ class StoryGenerationAPI:
         self.orchestrator = orchestrator
         self.active_generations: Dict[str, Any] = {}
         self.connection_pool = ConnectionPool()
-        self.generation_semaphore = Semaphore(5)  # Limit concurrent generations
+        self.generation_semaphore = Semaphore(
+            5
+        )  # Limit concurrent generations
         self.cleanup_task = None
-        logger.info("Story Generation API initialized with performance optimizations.")
+        logger.info(
+            "Story Generation API initialized with performance optimizations."
+        )
 
     def set_orchestrator(self, orchestrator: SystemOrchestrator):
         """Set the orchestrator after initialization."""
@@ -149,7 +153,9 @@ class StoryGenerationAPI:
                     gen_id
                     for gen_id, state in self.active_generations.items()
                     if state.get("status") in ["completed", "failed"]
-                    and current_time - state.get("completion_time", current_time) > 3600
+                    and current_time
+                    - state.get("completion_time", current_time)
+                    > 3600
                 ]
                 for gen_id in completed_generations:
                     self.active_generations.pop(gen_id, None)
@@ -162,21 +168,26 @@ class StoryGenerationAPI:
     def setup_routes(self, app: FastAPI):
         """Sets up API routes for story generation."""
 
-        @app.post("/api/v1/stories/generate", response_model=StoryGenerationResponse)
+        @app.post(
+            "/api/v1/stories/generate", response_model=StoryGenerationResponse
+        )
         async def generate_story(
             request: StoryGenerationRequest, background_tasks: BackgroundTasks
         ):
             """Generates a story from character interactions."""
             if not self.orchestrator:
                 raise HTTPException(
-                    status_code=503, detail="System not ready. Please try again."
+                    status_code=503,
+                    detail="System not ready. Please try again.",
                 )
 
             try:
                 # Validate that all characters exist
                 active_agents = getattr(self.orchestrator, "active_agents", {})
                 missing_characters = [
-                    char for char in request.characters if char not in active_agents
+                    char
+                    for char in request.characters
+                    if char not in active_agents
                 ]
                 if missing_characters:
                     raise HTTPException(
@@ -193,7 +204,9 @@ class StoryGenerationAPI:
                     "stage": "initializing",
                     "start_time": datetime.now(),
                 }
-                background_tasks.add_task(self._generate_story_async, generation_id)
+                background_tasks.add_task(
+                    self._generate_story_async, generation_id
+                )
 
                 return StoryGenerationResponse(
                     generation_id=generation_id,
@@ -204,7 +217,9 @@ class StoryGenerationAPI:
                 raise
             except Exception as e:
                 logger.error(f"Error initiating story generation: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error.")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error."
+                )
 
         @app.websocket("/api/v1/stories/progress/{generation_id}")
         async def websocket_progress(websocket: WebSocket, generation_id: str):
@@ -225,7 +240,8 @@ class StoryGenerationAPI:
                     try:
                         # Use timeout to implement heartbeat
                         data = await asyncio.wait_for(
-                            websocket.receive_text(), timeout=heartbeat_interval
+                            websocket.receive_text(),
+                            timeout=heartbeat_interval,
                         )
 
                         # Handle ping/pong for connection health
@@ -238,7 +254,9 @@ class StoryGenerationAPI:
                         current_time = time.time()
                         if current_time - last_heartbeat >= heartbeat_interval:
                             try:
-                                await websocket.send_text('{"type": "heartbeat"}')
+                                await websocket.send_text(
+                                    '{"type": "heartbeat"}'
+                                )
                                 last_heartbeat = current_time
                             except Exception:
                                 break
@@ -250,9 +268,13 @@ class StoryGenerationAPI:
                     f"WebSocket connection closed for generation {generation_id}"
                 )
             except Exception as e:
-                logger.error(f"WebSocket error for generation {generation_id}: {e}")
+                logger.error(
+                    f"WebSocket error for generation {generation_id}: {e}"
+                )
             finally:
-                self.connection_pool.remove_connection(generation_id, websocket)
+                self.connection_pool.remove_connection(
+                    generation_id, websocket
+                )
 
         @app.get("/api/v1/stories/status/{generation_id}")
         async def get_generation_status(generation_id: str):
@@ -266,7 +288,9 @@ class StoryGenerationAPI:
                 "status": state["status"],
                 "progress": state.get("progress", 0),
                 "stage": state.get("stage", "unknown"),
-                "estimated_time_remaining": self._calculate_time_remaining(state),
+                "estimated_time_remaining": self._calculate_time_remaining(
+                    state
+                ),
             }
 
     async def _generate_story_async(self, generation_id: str):
@@ -278,22 +302,33 @@ class StoryGenerationAPI:
 
                 # Stage 1: Parallel initialization (0-20%)
                 await self._update_progress(
-                    generation_id, 5, "initializing", "Setting up generation parameters"
+                    generation_id,
+                    5,
+                    "initializing",
+                    "Setting up generation parameters",
                 )
 
                 # Use actual orchestrator instead of sleep
                 initialization_tasks = [
                     self._initialize_generation_context(generation_id),
-                    self._prepare_character_contexts(state["request"].characters),
+                    self._prepare_character_contexts(
+                        state["request"].characters
+                    ),
                 ]
                 await asyncio.gather(*initialization_tasks)
                 await self._update_progress(
-                    generation_id, 20, "initialized", "Generation context prepared"
+                    generation_id,
+                    20,
+                    "initialized",
+                    "Generation context prepared",
                 )
 
                 # Stage 2: Character Analysis (20-40%)
                 await self._update_progress(
-                    generation_id, 25, "analyzing", "Analyzing character personalities"
+                    generation_id,
+                    25,
+                    "analyzing",
+                    "Analyzing character personalities",
                 )
 
                 # Parallel character analysis
@@ -305,7 +340,10 @@ class StoryGenerationAPI:
                     *character_tasks, return_exceptions=True
                 )
                 await self._update_progress(
-                    generation_id, 40, "analyzed", "Character analysis complete"
+                    generation_id,
+                    40,
+                    "analyzed",
+                    "Character analysis complete",
                 )
 
                 # Stage 3: Narrative Planning (40-60%)
@@ -323,11 +361,16 @@ class StoryGenerationAPI:
 
                 # Stage 4: Story Generation (60-90%)
                 await self._update_progress(
-                    generation_id, 65, "generating", "AI agents creating content"
+                    generation_id,
+                    65,
+                    "generating",
+                    "AI agents creating content",
                 )
 
                 # Parallel turn generation with progress updates
-                turn_count = min(len(state["request"].characters) * 2, 8)  # Limit turns
+                turn_count = min(
+                    len(state["request"].characters) * 2, 8
+                )  # Limit turns
                 for turn in range(turn_count):
                     progress = 65 + (turn / turn_count) * 25
                     await self._update_progress(
@@ -344,7 +387,10 @@ class StoryGenerationAPI:
 
                 # Stage 5: Finalizing (90-100%)
                 await self._update_progress(
-                    generation_id, 95, "finalizing", "Quality checks and formatting"
+                    generation_id,
+                    95,
+                    "finalizing",
+                    "Quality checks and formatting",
                 )
 
                 # Finalize and save
@@ -374,11 +420,18 @@ class StoryGenerationAPI:
                         "completion_time"
                     ] = time.time()
                     await self._update_progress(
-                        generation_id, 0, "failed", f"Generation failed: {str(e)}"
+                        generation_id,
+                        0,
+                        "failed",
+                        f"Generation failed: {str(e)}",
                     )
 
     async def _update_progress(
-        self, generation_id: str, progress: float, stage: str, stage_detail: str
+        self,
+        generation_id: str,
+        progress: float,
+        stage: str,
+        stage_detail: str,
     ):
         """Optimized progress update with batch broadcasting."""
         if generation_id not in self.active_generations:
@@ -392,7 +445,9 @@ class StoryGenerationAPI:
         state["last_update"] = time.time()
 
         # Batch broadcast to all connected WebSockets
-        connections = self.connection_pool.connections.get(generation_id, set())
+        connections = self.connection_pool.connections.get(
+            generation_id, set()
+        )
         if connections:
             # Create update message once
             update_message = self._create_progress_message(generation_id)
@@ -400,18 +455,25 @@ class StoryGenerationAPI:
             # Broadcast in parallel with error handling
             broadcast_tasks = [
                 self._safe_send_update(websocket, update_message)
-                for websocket in connections.copy()  # Copy to avoid modification during iteration
+                # Copy to avoid modification during iteration
+                for websocket in connections.copy()
             ]
 
             # Execute broadcasts concurrently
-            results = await asyncio.gather(*broadcast_tasks, return_exceptions=True)
+            results = await asyncio.gather(
+                *broadcast_tasks, return_exceptions=True
+            )
 
             # Remove failed connections
             for websocket, result in zip(connections.copy(), results):
                 if isinstance(result, Exception):
-                    self.connection_pool.remove_connection(generation_id, websocket)
+                    self.connection_pool.remove_connection(
+                        generation_id, websocket
+                    )
 
-    async def _safe_send_update(self, websocket: WebSocket, message: str) -> bool:
+    async def _safe_send_update(
+        self, websocket: WebSocket, message: str
+    ) -> bool:
         """Safely send update to WebSocket with timeout."""
         try:
             await asyncio.wait_for(websocket.send_text(message), timeout=1.0)
@@ -437,7 +499,9 @@ class StoryGenerationAPI:
         )
         return update.model_dump_json()
 
-    async def _send_progress_update(self, generation_id: str, websocket: WebSocket):
+    async def _send_progress_update(
+        self, generation_id: str, websocket: WebSocket
+    ):
         """Send progress update to a specific WebSocket."""
         if generation_id not in self.active_generations:
             return
@@ -495,7 +559,9 @@ class StoryGenerationAPI:
             )
             return result if result.success else None
         except Exception as e:
-            logger.error(f"Context initialization failed for {generation_id}: {e}")
+            logger.error(
+                f"Context initialization failed for {generation_id}: {e}"
+            )
             return None
 
     async def _prepare_character_contexts(self, characters: List[str]):
@@ -509,11 +575,14 @@ class StoryGenerationAPI:
 
             # Check if characters already exist (they should from validation)
             active_agents = getattr(self.orchestrator, "active_agents", {})
-            existing_characters = [char for char in characters if char in active_agents]
+            existing_characters = [
+                char for char in characters if char in active_agents
+            ]
 
             # For existing characters, just return success indicators
             return [
-                {"character": char, "status": "ready"} for char in existing_characters
+                {"character": char, "status": "ready"}
+                for char in existing_characters
             ]
         except Exception as e:
             logger.error(f"Character context preparation failed: {e}")
@@ -527,15 +596,26 @@ class StoryGenerationAPI:
             await asyncio.sleep(0.1)  # Minimal delay for simulation
             return {"character": character_name, "analysis": "completed"}
         except Exception as e:
-            logger.error(f"Character analysis failed for {character_name}: {e}")
-            return {"character": character_name, "analysis": "failed", "error": str(e)}
+            logger.error(
+                f"Character analysis failed for {character_name}: {e}"
+            )
+            return {
+                "character": character_name,
+                "analysis": "failed",
+                "error": str(e),
+            }
 
-    async def _create_narrative_plan(self, generation_id: str, character_results: List):
+    async def _create_narrative_plan(
+        self, generation_id: str, character_results: List
+    ):
         """Create narrative plan using orchestrator."""
         try:
             # This would use the actual story planning system
             await asyncio.sleep(0.2)  # Minimal delay for simulation
-            return {"plan": "narrative_structure", "characters": len(character_results)}
+            return {
+                "plan": "narrative_structure",
+                "characters": len(character_results),
+            }
         except Exception as e:
             logger.error(f"Narrative planning failed for {generation_id}: {e}")
             return None
@@ -547,7 +627,10 @@ class StoryGenerationAPI:
         try:
             # This would use the actual multi-agent story generation
             await asyncio.sleep(0.3)  # Reduced from original 1.5s
-            return {"turn": turn_number, "content": f"Turn {turn_number} content"}
+            return {
+                "turn": turn_number,
+                "content": f"Turn {turn_number} content",
+            }
         except Exception as e:
             logger.error(
                 f"Turn generation failed for {generation_id}, turn {turn_number}: {e}"

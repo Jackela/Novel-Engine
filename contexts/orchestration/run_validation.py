@@ -16,7 +16,8 @@ from typing import Any, Dict, List
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ class M9OrchestrationValidator:
             ("Documentation Coverage", self._validate_documentation),
         ]
 
-        validation_summary = {
+        validation_summary: Dict[str, Any] = {
             "test_categories": [],
             "total_tests": 0,
             "passed_tests": 0,
@@ -66,12 +67,16 @@ class M9OrchestrationValidator:
             try:
                 category_start = datetime.now()
                 category_results = await test_method()
-                category_time = (datetime.now() - category_start).total_seconds() * 1000
+                category_time = (
+                    datetime.now() - category_start
+                ).total_seconds() * 1000
 
                 category_summary = {
                     "category": category_name,
                     "tests_run": len(category_results),
-                    "tests_passed": len([r for r in category_results if r["passed"]]),
+                    "tests_passed": len(
+                        [r for r in category_results if r["passed"]]
+                    ),
                     "tests_failed": len(
                         [r for r in category_results if not r["passed"]]
                     ),
@@ -80,9 +85,15 @@ class M9OrchestrationValidator:
                 }
 
                 validation_summary["test_categories"].append(category_summary)
-                validation_summary["total_tests"] += category_summary["tests_run"]
-                validation_summary["passed_tests"] += category_summary["tests_passed"]
-                validation_summary["failed_tests"] += category_summary["tests_failed"]
+                validation_summary["total_tests"] += category_summary[
+                    "tests_run"
+                ]
+                validation_summary["passed_tests"] += category_summary[
+                    "tests_passed"
+                ]
+                validation_summary["failed_tests"] += category_summary[
+                    "tests_failed"
+                ]
 
                 logger.info(
                     f"{category_name} completed: "
@@ -107,7 +118,9 @@ class M9OrchestrationValidator:
             datetime.now() - self.validation_start_time
         ).total_seconds() * 1000
         validation_summary["execution_time_ms"] = total_execution_time
-        validation_summary["overall_success"] = validation_summary["failed_tests"] == 0
+        validation_summary["overall_success"] = (
+            validation_summary["failed_tests"] == 0
+        )
         validation_summary["detailed_results"] = self.test_results
 
         # Generate validation report
@@ -140,7 +153,9 @@ class M9OrchestrationValidator:
                 "test_name": "Domain Layer Architecture",
                 "passed": domain_files_exist,
                 "details": f"Core domain files exist: {domain_files_exist}",
-                "file_count": len([f for f in domain_files if Path(f).exists()]),
+                "file_count": len(
+                    [f for f in domain_files if Path(f).exists()]
+                ),
             }
         )
 
@@ -163,7 +178,9 @@ class M9OrchestrationValidator:
                 "test_name": "Infrastructure Layer Architecture",
                 "passed": infra_files_exist,
                 "details": f"Infrastructure phase implementations exist: {infra_files_exist}",
-                "file_count": len([f for f in infra_files if Path(f).exists()]),
+                "file_count": len(
+                    [f for f in infra_files if Path(f).exists()]
+                ),
             }
         )
 
@@ -259,7 +276,8 @@ class M9OrchestrationValidator:
             content = saga_path.read_text()
             has_coordinator_class = "class SagaCoordinator" in content
             has_compensation_methods = (
-                "plan_compensation" in content and "execute_compensation" in content
+                "plan_compensation" in content
+                and "execute_compensation" in content
             )
             has_rollback_logic = "rollback" in content.lower()
 
@@ -336,7 +354,9 @@ class M9OrchestrationValidator:
             results.append(
                 {
                     "test_name": "Main Entry Point",
-                    "passed": has_uvicorn and has_main_function and has_app_import,
+                    "passed": has_uvicorn
+                    and has_main_function
+                    and has_app_import,
                     "details": f"Service entry point with uvicorn: {has_uvicorn and has_main_function}",
                     "validation_checks": [
                         ("Has uvicorn server", has_uvicorn),
@@ -403,7 +423,9 @@ class M9OrchestrationValidator:
             results.append(
                 {
                     "test_name": "Turn Configuration Validation",
-                    "passed": has_dataclass and has_validation and has_defaults,
+                    "passed": has_dataclass
+                    and has_validation
+                    and has_defaults,
                     "details": f"Configuration with validation and defaults: {has_validation and has_defaults}",
                     "validation_checks": [
                         ("Has dataclass structure", has_dataclass),
@@ -445,9 +467,15 @@ class M9OrchestrationValidator:
                     and content_length > 1000,
                     "details": f"Comprehensive architecture docs ({content_length} chars): {has_pipeline_description and has_saga_description}",
                     "validation_checks": [
-                        ("Describes 5-phase pipeline", has_pipeline_description),
+                        (
+                            "Describes 5-phase pipeline",
+                            has_pipeline_description,
+                        ),
                         ("Describes saga pattern", has_saga_description),
-                        ("Includes compensation matrix", has_compensation_matrix),
+                        (
+                            "Includes compensation matrix",
+                            has_compensation_matrix,
+                        ),
                         ("Substantial content", content_length > 1000),
                     ],
                 }
@@ -472,13 +500,17 @@ class M9OrchestrationValidator:
         for file_path in files_to_check:
             if Path(file_path).exists():
                 content = Path(file_path).read_text()
-                if '"""' in content and len(content.split('"""')[1].strip()) > 50:
+                if (
+                    '"""' in content
+                    and len(content.split('"""')[1].strip()) > 50
+                ):
                     documented_files += 1
 
         results.append(
             {
                 "test_name": "Module Documentation",
-                "passed": documented_files >= len(files_to_check) * 0.8,  # At least 80%
+                "passed": documented_files
+                >= len(files_to_check) * 0.8,  # At least 80%
                 "details": f"Documented modules: {documented_files}/{len(files_to_check)}",
                 "documented_files": documented_files,
                 "total_files": len(files_to_check),
@@ -519,7 +551,9 @@ class M9OrchestrationValidator:
         print(
             f"Success Rate: {validation_summary['passed_tests']/max(1, validation_summary['total_tests']):.1%}"
         )
-        print(f"Execution Time: {validation_summary['execution_time_ms']:.0f}ms")
+        print(
+            f"Execution Time: {validation_summary['execution_time_ms']:.0f}ms"
+        )
         print(
             f"Overall Success: {'✅ PASS' if validation_summary['overall_success'] else '❌ FAIL'}"
         )
@@ -548,7 +582,9 @@ class M9OrchestrationValidator:
 
         print("\nM9 ORCHESTRATION MILESTONE STATUS:")
         if validation_summary["overall_success"]:
-            print("✅ IMPLEMENTATION COMPLETE - All architectural components validated")
+            print(
+                "✅ IMPLEMENTATION COMPLETE - All architectural components validated"
+            )
             print("✅ READY FOR PRODUCTION DEPLOYMENT")
         else:
             print("⚠️  IMPLEMENTATION VALIDATION ISSUES DETECTED")

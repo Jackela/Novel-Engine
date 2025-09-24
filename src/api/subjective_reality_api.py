@@ -15,7 +15,11 @@ from fastapi import Depends, FastAPI, HTTPException, Path
 from pydantic import BaseModel, Field
 
 from src.core.data_models import StandardResponse
-from src.security.auth_system import Permission, get_current_user, require_permission
+from src.security.auth_system import (
+    Permission,
+    get_current_user,
+    require_permission,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +28,15 @@ logger = logging.getLogger(__name__)
 class TurnBriefRequest(BaseModel):
     """Query parameters for turn brief generation"""
 
-    include_context: bool = Field(True, description="Include contextual information")
+    include_context: bool = Field(
+        True, description="Include contextual information"
+    )
     confidence_threshold: float = Field(
         0.3, ge=0.0, le=1.0, description="Minimum information confidence"
     )
-    time_window_hours: int = Field(2, ge=1, le=24, description="Context time window")
+    time_window_hours: int = Field(
+        2, ge=1, le=24, description="Context time window"
+    )
 
 
 class InformationFragmentResponse(BaseModel):
@@ -42,8 +50,12 @@ class InformationFragmentResponse(BaseModel):
     )
     category: str = Field(..., description="Knowledge category")
     timestamp: datetime = Field(..., description="Information timestamp")
-    location_context: Optional[str] = Field(None, description="Location context")
-    current_reliability: float = Field(..., description="Time-adjusted reliability")
+    location_context: Optional[str] = Field(
+        None, description="Location context"
+    )
+    current_reliability: float = Field(
+        ..., description="Time-adjusted reliability"
+    )
 
 
 class TurnBriefData(BaseModel):
@@ -66,7 +78,9 @@ class TurnBriefData(BaseModel):
     confidence_levels: Dict[str, float] = Field(
         ..., description="Confidence in different information categories"
     )
-    visible_locations: List[str] = Field(..., description="Currently visible locations")
+    visible_locations: List[str] = Field(
+        ..., description="Currently visible locations"
+    )
     known_agents: List[Dict[str, Any]] = Field(
         ..., description="Known agents and their visibility"
     )
@@ -87,7 +101,9 @@ class MultiBriefRequest(BaseModel):
     agent_filter: Optional[List[str]] = Field(
         None, description="Filter to specific agents"
     )
-    include_context: bool = Field(True, description="Include contextual information")
+    include_context: bool = Field(
+        True, description="Include contextual information"
+    )
     confidence_threshold: float = Field(
         0.3, ge=0.0, le=1.0, description="Minimum information confidence"
     )
@@ -100,8 +116,12 @@ class MultiBriefData(BaseModel):
     agent_briefs: Dict[str, TurnBriefData] = Field(
         ..., description="Agent ID to brief mapping"
     )
-    global_context: Dict[str, Any] = Field(..., description="Shared global context")
-    turn_summary: str = Field(..., description="Overall turn situation summary")
+    global_context: Dict[str, Any] = Field(
+        ..., description="Shared global context"
+    )
+    turn_summary: str = Field(
+        ..., description="Overall turn situation summary"
+    )
     conflicts_detected: List[Dict[str, Any]] = Field(
         default_factory=list, description="Detected agent conflicts"
     )
@@ -127,7 +147,9 @@ class TurnBriefGenerationRequest(BaseModel):
 class BeliefModelRequest(BaseModel):
     """Request for agent belief model"""
 
-    include_fragments: bool = Field(True, description="Include information fragments")
+    include_fragments: bool = Field(
+        True, description="Include information fragments"
+    )
     category_filter: Optional[List[str]] = Field(
         None, description="Filter by knowledge categories"
     )
@@ -155,7 +177,9 @@ class BeliefModelData(BaseModel):
     cognitive_filters: Dict[str, float] = Field(
         ..., description="Cognitive filtering preferences"
     )
-    total_fragments: int = Field(..., description="Total information fragments")
+    total_fragments: int = Field(
+        ..., description="Total information fragments"
+    )
     average_reliability: float = Field(
         ..., description="Average information reliability"
     )
@@ -201,16 +225,22 @@ class SubjectiveRealityAPI:
             current_user: Dict = Depends(get_current_user),
         ):
             try:
-                if not self.orchestrator or not hasattr(self.orchestrator, "director"):
+                if not self.orchestrator or not hasattr(
+                    self.orchestrator, "director"
+                ):
                     raise HTTPException(
-                        status_code=503, detail="Turn execution engine not available"
+                        status_code=503,
+                        detail="Turn execution engine not available",
                     )
 
                 # Get turn engine from orchestrator
-                turn_engine = getattr(self.orchestrator.director, "turn_engine", None)
+                turn_engine = getattr(
+                    self.orchestrator.director, "turn_engine", None
+                )
                 if not turn_engine:
                     raise HTTPException(
-                        status_code=503, detail="Turn execution engine not initialized"
+                        status_code=503,
+                        detail="Turn execution engine not initialized",
                     )
 
                 # Generate turn brief
@@ -221,7 +251,9 @@ class SubjectiveRealityAPI:
                 )
 
                 if not result.get("success", False):
-                    error_msg = result.get("error", "Failed to generate turn brief")
+                    error_msg = result.get(
+                        "error", "Failed to generate turn brief"
+                    )
                     raise HTTPException(status_code=404, detail=error_msg)
 
                 # Transform result to expected format
@@ -229,14 +261,22 @@ class SubjectiveRealityAPI:
                 turn_brief = TurnBriefData(
                     agent_id=agent_id,
                     turn_number=turn_id,
-                    subjective_world_state=brief_data.get("subjective_world_state", {}),
-                    available_information=brief_data.get("available_information", []),
-                    recommended_actions=brief_data.get("recommended_actions", []),
+                    subjective_world_state=brief_data.get(
+                        "subjective_world_state", {}
+                    ),
+                    available_information=brief_data.get(
+                        "available_information", []
+                    ),
+                    recommended_actions=brief_data.get(
+                        "recommended_actions", []
+                    ),
                     narrative_context=brief_data.get("narrative_context", ""),
                     confidence_levels=brief_data.get("confidence_levels", {}),
                     visible_locations=brief_data.get("visible_locations", []),
                     known_agents=brief_data.get("known_agents", []),
-                    personality_factors=brief_data.get("personality_factors", {}),
+                    personality_factors=brief_data.get(
+                        "personality_factors", {}
+                    ),
                     fog_of_war_status=brief_data.get("fog_of_war_status", {}),
                 )
 
@@ -245,8 +285,12 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting turn brief for agent {agent_id}: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                logger.error(
+                    f"Error getting turn brief for agent {agent_id}: {e}"
+                )
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
         @app.get(
             "/api/v1/turns/{turn_id}/briefs",
@@ -261,15 +305,21 @@ class SubjectiveRealityAPI:
             current_user: Dict = Depends(get_current_user),
         ):
             try:
-                if not self.orchestrator or not hasattr(self.orchestrator, "director"):
+                if not self.orchestrator or not hasattr(
+                    self.orchestrator, "director"
+                ):
                     raise HTTPException(
-                        status_code=503, detail="Turn execution engine not available"
+                        status_code=503,
+                        detail="Turn execution engine not available",
                     )
 
-                turn_engine = getattr(self.orchestrator.director, "turn_engine", None)
+                turn_engine = getattr(
+                    self.orchestrator.director, "turn_engine", None
+                )
                 if not turn_engine:
                     raise HTTPException(
-                        status_code=503, detail="Turn execution engine not initialized"
+                        status_code=503,
+                        detail="Turn execution engine not initialized",
                     )
 
                 # Get all agent briefs
@@ -278,12 +328,16 @@ class SubjectiveRealityAPI:
                 )
 
                 if not result.get("success", False):
-                    error_msg = result.get("error", "Failed to generate turn briefs")
+                    error_msg = result.get(
+                        "error", "Failed to generate turn briefs"
+                    )
                     raise HTTPException(status_code=500, detail=error_msg)
 
                 # Transform results
                 agent_briefs = {}
-                for agent_id, brief_data in result.get("agent_briefs", {}).items():
+                for agent_id, brief_data in result.get(
+                    "agent_briefs", {}
+                ).items():
                     agent_briefs[agent_id] = TurnBriefData(
                         agent_id=agent_id,
                         turn_number=turn_id,
@@ -293,13 +347,25 @@ class SubjectiveRealityAPI:
                         available_information=brief_data.get(
                             "available_information", []
                         ),
-                        recommended_actions=brief_data.get("recommended_actions", []),
-                        narrative_context=brief_data.get("narrative_context", ""),
-                        confidence_levels=brief_data.get("confidence_levels", {}),
-                        visible_locations=brief_data.get("visible_locations", []),
+                        recommended_actions=brief_data.get(
+                            "recommended_actions", []
+                        ),
+                        narrative_context=brief_data.get(
+                            "narrative_context", ""
+                        ),
+                        confidence_levels=brief_data.get(
+                            "confidence_levels", {}
+                        ),
+                        visible_locations=brief_data.get(
+                            "visible_locations", []
+                        ),
                         known_agents=brief_data.get("known_agents", []),
-                        personality_factors=brief_data.get("personality_factors", {}),
-                        fog_of_war_status=brief_data.get("fog_of_war_status", {}),
+                        personality_factors=brief_data.get(
+                            "personality_factors", {}
+                        ),
+                        fog_of_war_status=brief_data.get(
+                            "fog_of_war_status", {}
+                        ),
                     )
 
                 multi_brief = MultiBriefData(
@@ -314,8 +380,12 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting all turn briefs for turn {turn_id}: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                logger.error(
+                    f"Error getting all turn briefs for turn {turn_id}: {e}"
+                )
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
         @app.get(
             "/api/v1/agents/{agent_id}/beliefs",
@@ -355,12 +425,22 @@ class SubjectiveRealityAPI:
                     agent_id=agent_id,
                     personality_bias=belief_model.get("personality_bias", {}),
                     trust_network=belief_model.get("trust_network", {}),
-                    information_fragments=belief_model.get("information_fragments", []),
-                    active_hypotheses=belief_model.get("active_hypotheses", {}),
-                    cognitive_filters=belief_model.get("cognitive_filters", {}),
+                    information_fragments=belief_model.get(
+                        "information_fragments", []
+                    ),
+                    active_hypotheses=belief_model.get(
+                        "active_hypotheses", {}
+                    ),
+                    cognitive_filters=belief_model.get(
+                        "cognitive_filters", {}
+                    ),
                     total_fragments=belief_model.get("total_fragments", 0),
-                    average_reliability=belief_model.get("average_reliability", 0.0),
-                    last_update=belief_model.get("last_update", datetime.now()),
+                    average_reliability=belief_model.get(
+                        "average_reliability", 0.0
+                    ),
+                    last_update=belief_model.get(
+                        "last_update", datetime.now()
+                    ),
                 )
 
                 return StandardResponse(success=True, data=belief_data)
@@ -368,8 +448,12 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting belief model for agent {agent_id}: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                logger.error(
+                    f"Error getting belief model for agent {agent_id}: {e}"
+                )
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                )
 
 
 def create_subjective_reality_api(orchestrator=None) -> SubjectiveRealityAPI:

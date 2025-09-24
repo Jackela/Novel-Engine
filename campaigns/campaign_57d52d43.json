@@ -1,0 +1,11 @@
+{
+  "id": "campaign_57d52d43",
+  "name": "Test Campaign",
+  "description": "A test campaign for testing",
+  "participants": [
+    "engineer",
+    "pilot"
+  ],
+  "created_at": "2025-09-14T22:27:03.489001",
+  "status": "created"
+}

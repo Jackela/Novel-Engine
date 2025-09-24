@@ -57,7 +57,9 @@ class ModificationSystem:
     """
 
     def __init__(
-        self, config: EquipmentSystemConfig, logger: Optional[logging.Logger] = None
+        self,
+        config: EquipmentSystemConfig,
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize modification system."""
         self.config = config
@@ -79,7 +81,10 @@ class ModificationSystem:
             },
             "enhanced_motor": {
                 "compatible_categories": ["tool", "weapon", "transport"],
-                "performance_impact": {"efficiency": 0.3, "reliability": -0.05},
+                "performance_impact": {
+                    "efficiency": 0.3,
+                    "reliability": -0.05,
+                },
                 "conflicts_with": ["power_saver"],
                 "stability_rating": 0.8,
             },
@@ -106,7 +111,10 @@ class ModificationSystem:
         """
         try:
             # Check if modification limit would be exceeded
-            if len(equipment.modifications) >= self.config.max_modifications_per_item:
+            if (
+                len(equipment.modifications)
+                >= self.config.max_modifications_per_item
+            ):
                 return StandardResponse(
                     success=False,
                     error=ErrorInfo(
@@ -148,7 +156,9 @@ class ModificationSystem:
             equipment.modifications.append(modification)
 
             # Update compatibility sets
-            equipment.compatible_modifications.discard(modification.modification_id)
+            equipment.compatible_modifications.discard(
+                modification.modification_id
+            )
             if "conflicts_with" in installation_result:
                 equipment.incompatible_with.update(
                     installation_result["conflicts_with"]
@@ -186,14 +196,19 @@ class ModificationSystem:
                 ),
             )
 
-    def get_compatible_modifications(self, equipment: DynamicEquipment) -> List[str]:
+    def get_compatible_modifications(
+        self, equipment: DynamicEquipment
+    ) -> List[str]:
         """Get list of compatible modifications for equipment."""
         compatible = []
         equipment_category = self._get_equipment_category(equipment)
 
         for mod_id, template in self._modification_templates.items():
             # Skip if already installed
-            if any(mod.modification_id == mod_id for mod in equipment.modifications):
+            if any(
+                mod.modification_id == mod_id
+                for mod in equipment.modifications
+            ):
                 continue
 
             # Check category compatibility
@@ -217,7 +232,9 @@ class ModificationSystem:
         self, equipment: DynamicEquipment, modification: EquipmentModification
     ) -> Dict[str, Any]:
         """Check if modification is compatible with equipment."""
-        mod_template = self._modification_templates.get(modification.modification_name)
+        mod_template = self._modification_templates.get(
+            modification.modification_name
+        )
 
         if not mod_template:
             return {
@@ -254,7 +271,9 @@ class ModificationSystem:
     ) -> Dict[str, Any]:
         """Perform the physical modification installation."""
         # Simulate installation process
-        template = self._modification_templates.get(modification.modification_name, {})
+        template = self._modification_templates.get(
+            modification.modification_name, {}
+        )
 
         return {
             "success": True,
@@ -275,7 +294,9 @@ class ModificationSystem:
                 equipment.performance_metrics[metric] = 1.0 + impact
 
         # Apply template effects if available
-        template = self._modification_templates.get(modification.modification_name, {})
+        template = self._modification_templates.get(
+            modification.modification_name, {}
+        )
         template_impacts = template.get("performance_impact", {})
 
         for metric, impact in template_impacts.items():

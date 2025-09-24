@@ -63,7 +63,10 @@ class ComponentIntegrationTester:
             # Give some time for event processing
             time.sleep(0.1)
 
-            success = len(received_events) == 1 and received_events[0]["test"] == "data"
+            success = (
+                len(received_events) == 1
+                and received_events[0]["test"] == "data"
+            )
             duration = time.time() - start_time
 
             return ComponentTestResult(
@@ -75,7 +78,9 @@ class ComponentIntegrationTester:
             )
         except Exception as e:
             duration = time.time() - start_time
-            return ComponentTestResult("EventBus", False, duration, f"Error: {e}")
+            return ComponentTestResult(
+                "EventBus", False, duration, f"Error: {e}"
+            )
 
     def test_character_factory(self) -> ComponentTestResult:
         """Test CharacterFactory component."""
@@ -107,7 +112,10 @@ class ComponentIntegrationTester:
                 success,
                 duration,
                 f"Found {len(characters)} characters, creation {'successful' if char_created else 'failed'}",
-                {"character_count": len(characters), "characters": characters[:3]},
+                {
+                    "character_count": len(characters),
+                    "characters": characters[:3],
+                },
             )
         except Exception as e:
             duration = time.time() - start_time
@@ -158,7 +166,9 @@ class ComponentIntegrationTester:
             )
         except Exception as e:
             duration = time.time() - start_time
-            return ComponentTestResult("DirectorAgent", False, duration, f"Error: {e}")
+            return ComponentTestResult(
+                "DirectorAgent", False, duration, f"Error: {e}"
+            )
 
     def test_chronicler_agent(self) -> ComponentTestResult:
         """Test ChroniclerAgent component."""
@@ -199,7 +209,9 @@ class ComponentIntegrationTester:
             config = get_config()
 
             # Verify config has expected structure
-            has_required_keys = all(key in config for key in ["llm", "campaign_log"])
+            has_required_keys = all(
+                key in config for key in ["llm", "campaign_log"]
+            )
 
             success = config is not None and has_required_keys
             duration = time.time() - start_time
@@ -213,7 +225,9 @@ class ComponentIntegrationTester:
             )
         except Exception as e:
             duration = time.time() - start_time
-            return ComponentTestResult("ConfigLoader", False, duration, f"Error: {e}")
+            return ComponentTestResult(
+                "ConfigLoader", False, duration, f"Error: {e}"
+            )
 
     def test_memory_system(self) -> ComponentTestResult:
         """Test memory system components."""
@@ -245,11 +259,16 @@ class ComponentIntegrationTester:
                 success,
                 duration,
                 f"Memory operations {'successful' if success else 'failed'}",
-                {"memory_id": str(memory_id), "retrieved_count": len(retrieved)},
+                {
+                    "memory_id": str(memory_id),
+                    "retrieved_count": len(retrieved),
+                },
             )
         except Exception as e:
             duration = time.time() - start_time
-            return ComponentTestResult("MemorySystem", False, duration, f"Error: {e}")
+            return ComponentTestResult(
+                "MemorySystem", False, duration, f"Error: {e}"
+            )
 
     def test_simulation_integration(self) -> ComponentTestResult:
         """Test complete simulation integration."""
@@ -293,7 +312,9 @@ class ComponentIntegrationTester:
 
             # Test simulation execution
             try:
-                simulation_result = director_agent.run_simulation(turns=1, timeout=30)
+                simulation_result = director_agent.run_simulation(
+                    turns=1, timeout=30
+                )
                 simulation_success = simulation_result is not None
             except Exception as sim_error:
                 logger.warning(f"Simulation execution failed: {sim_error}")
@@ -379,7 +400,9 @@ class ComponentIntegrationTester:
                 for r in self.results
             ],
             "critical_components": {
-                comp: any(r.success for r in self.results if r.component == comp)
+                comp: any(
+                    r.success for r in self.results if r.component == comp
+                )
                 for comp in critical_components
             },
         }
@@ -398,9 +421,7 @@ def main():
     report = tester.run_comprehensive_component_test()
 
     # Save report
-    report_file = (
-        f"component_integration_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    )
+    report_file = f"component_integration_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(report_file, "w") as f:
         json.dump(report, f, indent=2)
 

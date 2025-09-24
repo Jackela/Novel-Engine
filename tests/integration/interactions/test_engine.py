@@ -70,7 +70,11 @@ except ImportError as e:
                     "context": context,
                     "processing_duration": 0.1,
                     "interaction_content": {"result": "mock_success"},
-                    "completed_phases": ["validation", "processing", "state_update"],
+                    "completed_phases": [
+                        "validation",
+                        "processing",
+                        "state_update",
+                    ],
                     "errors": [],
                 },
             )()
@@ -83,11 +87,20 @@ except ImportError as e:
                     **self.engine_stats,
                 },
                 "queue_status": {"queue_size": 0, "processing_count": 0},
-                "supported_interaction_types": ["dialogue", "combat", "cooperation"],
+                "supported_interaction_types": [
+                    "dialogue",
+                    "combat",
+                    "cooperation",
+                ],
             }
 
         async def create_character_interaction(
-            self, agent_id, target_id, interaction_type, content, priority="normal"
+            self,
+            agent_id,
+            target_id,
+            interaction_type,
+            content,
+            priority="normal",
         ):
             context = InteractionContext(
                 interaction_id=f"{agent_id}_{target_id}_mock",
@@ -132,7 +145,9 @@ except ImportError as e:
     InteractionEngine = MockInteractionEngine
 
     class InteractionContext:
-        def __init__(self, interaction_id, interaction_type, participants, **kwargs):
+        def __init__(
+            self, interaction_id, interaction_type, participants, **kwargs
+        ):
             self.interaction_id = interaction_id
             self.interaction_type = interaction_type
             self.participants = participants
@@ -418,7 +433,10 @@ class ComprehensiveTestSuite:
                 ],
                 initiator="supervisor_delta",
                 location="engineering_bay",
-                metadata={"project": "reactor_maintenance", "duration": "4_hours"},
+                metadata={
+                    "project": "reactor_maintenance",
+                    "duration": "4_hours",
+                },
             )
 
             outcome = await engine.process_interaction(context)
@@ -534,7 +552,9 @@ class ComprehensiveTestSuite:
             )
 
             # Test validation without processing
-            validation_result = engine.validate_interaction_context(valid_context)
+            validation_result = engine.validate_interaction_context(
+                valid_context
+            )
             assert validation_result.success is True
 
             # Test risk calculation
@@ -617,7 +637,9 @@ class ComprehensiveTestSuite:
             successful_results = [
                 r
                 for r in results
-                if not isinstance(r, Exception) and hasattr(r, "success") and r.success
+                if not isinstance(r, Exception)
+                and hasattr(r, "success")
+                and r.success
             ]
             success_rate = len(successful_results) / len(results)
 
@@ -627,7 +649,8 @@ class ComprehensiveTestSuite:
                 "successful_interactions": len(successful_results),
                 "success_rate": success_rate,
                 "total_time": end_time - start_time,
-                "avg_time_per_interaction": (end_time - start_time) / len(tasks),
+                "avg_time_per_interaction": (end_time - start_time)
+                / len(tasks),
             }
 
             assert success_rate >= 0.8  # At least 80% should succeed
@@ -671,14 +694,18 @@ class ComprehensiveTestSuite:
                 queue_tasks.append(task)
 
             # Wait for queuing to complete
-            queue_results = await asyncio.gather(*queue_tasks, return_exceptions=True)
+            queue_results = await asyncio.gather(
+                *queue_tasks, return_exceptions=True
+            )
             end_time = time.time()
 
             # Check queue performance
             successful_queues = [
                 r
                 for r in queue_results
-                if not isinstance(r, Exception) and hasattr(r, "success") and r.success
+                if not isinstance(r, Exception)
+                and hasattr(r, "success")
+                and r.success
             ]
             queue_success_rate = len(successful_queues) / len(queue_results)
 
@@ -690,7 +717,9 @@ class ComprehensiveTestSuite:
                 "avg_queue_time": (end_time - start_time) / len(queue_tasks),
             }
 
-            assert queue_success_rate >= 0.9  # At least 90% should queue successfully
+            assert (
+                queue_success_rate >= 0.9
+            )  # At least 90% should queue successfully
 
             # Wait for processing to complete
             await asyncio.sleep(1.0)
@@ -826,9 +855,14 @@ class ComprehensiveTestSuite:
                         interaction_id=f"scalability_load_{load}_interaction_{i:03d}",
                         interaction_type=InteractionType.DIALOGUE,
                         priority=InteractionPriority.NORMAL,
-                        participants=[f"scale_{load}_{i}_a", f"scale_{load}_{i}_b"],
+                        participants=[
+                            f"scale_{load}_{i}_a",
+                            f"scale_{load}_{i}_b",
+                        ],
                     )
-                    task = asyncio.create_task(engine.process_interaction(context))
+                    task = asyncio.create_task(
+                        engine.process_interaction(context)
+                    )
                     tasks.append(task)
 
                 results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -964,7 +998,8 @@ class ComprehensiveTestSuite:
         try:
             # Test queue exhaustion
             config = InteractionEngineConfig(
-                max_queue_size=5, max_concurrent_interactions=1  # Very small queue
+                max_queue_size=5,
+                max_concurrent_interactions=1,  # Very small queue
             )
             engine = InteractionEngine(config=config)
             await asyncio.sleep(0.1)
@@ -984,10 +1019,14 @@ class ComprehensiveTestSuite:
                 queue_tasks.append(task)
 
             # Wait for all queuing attempts
-            results = await asyncio.gather(*queue_tasks, return_exceptions=True)
+            results = await asyncio.gather(
+                *queue_tasks, return_exceptions=True
+            )
 
             # Some should succeed, some should fail gracefully
-            successful_queues = [r for r in results if not isinstance(r, Exception)]
+            successful_queues = [
+                r for r in results if not isinstance(r, Exception)
+            ]
             resource_handling_ok = (
                 len(successful_queues) <= 5
             )  # Should not exceed queue capacity
@@ -1067,7 +1106,9 @@ class ComprehensiveTestSuite:
 
             # Process valid interaction
             outcome1 = await engine.process_interaction(context1)
-            first_success = outcome1.success if hasattr(outcome1, "success") else False
+            first_success = (
+                outcome1.success if hasattr(outcome1, "success") else False
+            )
 
             # Process another interaction to test recovery
             context2 = InteractionContext(
@@ -1250,10 +1291,15 @@ class ComprehensiveTestSuite:
                     interaction_id=f"shutdown_test_{i:03d}",
                     interaction_type=InteractionType.DIALOGUE,
                     priority=InteractionPriority.NORMAL,
-                    participants=[f"shutdown_agent_{i}_a", f"shutdown_agent_{i}_b"],
+                    participants=[
+                        f"shutdown_agent_{i}_a",
+                        f"shutdown_agent_{i}_b",
+                    ],
                 )
                 # Queue for async processing
-                await engine.process_interaction(context, async_processing=True)
+                await engine.process_interaction(
+                    context, async_processing=True
+                )
 
             # Test graceful shutdown
             shutdown_result = await engine.shutdown_engine()
@@ -1275,7 +1321,9 @@ class ComprehensiveTestSuite:
         """Generate comprehensive test report."""
         # Calculate overall statistics
         total_tests = len(self.test_results)
-        passed_tests = sum(1 for result in self.test_results.values() if result)
+        passed_tests = sum(
+            1 for result in self.test_results.values() if result
+        )
         failed_tests = total_tests - passed_tests
         overall_success_rate = (
             (passed_tests / total_tests) * 100 if total_tests > 0 else 0
@@ -1283,15 +1331,21 @@ class ComprehensiveTestSuite:
 
         # Categorize results
         categories = {
-            "core": [k for k in self.test_results.keys() if k.startswith("core_")],
+            "core": [
+                k for k in self.test_results.keys() if k.startswith("core_")
+            ],
             "performance": [
-                k for k in self.test_results.keys() if k.startswith("performance_")
+                k
+                for k in self.test_results.keys()
+                if k.startswith("performance_")
             ],
             "error_handling": [
                 k for k in self.test_results.keys() if k.startswith("error_")
             ],
             "integration": [
-                k for k in self.test_results.keys() if k.startswith("integration_")
+                k
+                for k in self.test_results.keys()
+                if k.startswith("integration_")
             ],
         }
 
@@ -1302,7 +1356,9 @@ class ComprehensiveTestSuite:
                     1 for key in test_keys if self.test_results.get(key, False)
                 )
                 category_total = len(test_keys)
-                category_success_rate = (category_passed / category_total) * 100
+                category_success_rate = (
+                    category_passed / category_total
+                ) * 100
                 category_results[category] = {
                     "passed": category_passed,
                     "total": category_total,

@@ -10,6 +10,13 @@ import time
 
 import psutil
 
+# Try to import requests
+try:
+    import requests
+except ImportError:
+    subprocess.run("pip install requests", shell=True)
+    import requests
+
 
 def kill_all_python_processes():
     """Kill all Python processes on Windows"""
@@ -51,7 +58,10 @@ def start_service(name, port, module):
 
     try:
         subprocess.Popen(
-            cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            cmd,
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
         time.sleep(2)
         print(f"✅ {name} started")
@@ -63,8 +73,6 @@ def start_service(name, port, module):
 
 def check_service_health(port):
     """Check if a service is healthy"""
-    import requests
-
     try:
         response = requests.get(f"http://localhost:{port}/health", timeout=5)
         data = response.json()
@@ -171,7 +179,7 @@ def get_ai_testing_config() -> Dict[str, Any]:
 def get_ai_testing_service_config(service_name: str) -> Dict[str, Any]:
     """Get configuration for a specific AI testing service"""
     config = get_ai_testing_config()
-    
+
     if service_name == "browser_automation":
         return config["ai_testing"]["browser_automation"]
     elif service_name == "api_testing":
@@ -208,8 +216,16 @@ def main():
 
     # Step 3: Start all services in correct order
     services = [
-        ("Master Orchestrator", 8000, "ai_testing.orchestration.master_orchestrator"),
-        ("Browser Automation", 8001, "ai_testing.services.browser_automation_service"),
+        (
+            "Master Orchestrator",
+            8000,
+            "ai_testing.orchestration.master_orchestrator",
+        ),
+        (
+            "Browser Automation",
+            8001,
+            "ai_testing.services.browser_automation_service",
+        ),
         ("API Testing", 8002, "ai_testing.services.api_testing_service"),
         ("AI Quality", 8003, "ai_testing.services.ai_quality_service"),
         (
@@ -257,22 +273,12 @@ def main():
             break
 
     print("\n✨ Fix script complete!")
-    print("Run 'python ai_testing/scripts/validate_deployment.py' for full results")
+    print(
+        "Run 'python ai_testing/scripts/validate_deployment.py' for full results"
+    )
 
 
 if __name__ == "__main__":
     # Check if psutil is installed
-    try:
-        import psutil
-    except ImportError:
-        print("Installing psutil...")
-        subprocess.run("pip install psutil", shell=True)
-        import psutil
-
-    try:
-        import requests
-    except ImportError:
-        print("Installing requests...")
-        subprocess.run("pip install requests", shell=True)
-
+    # psutil and requests already imported at top of file
     main()

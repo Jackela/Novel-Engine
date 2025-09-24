@@ -9,10 +9,10 @@ Tests component integration, backward compatibility, and end-to-end functionalit
 import asyncio
 from datetime import datetime
 
+import pytest
 
 # Test the modular PersonaAgent
 from src.agents.persona_agent_modular import PersonaAgent, create_persona_agent
-import pytest
 
 
 def create_test_character_data():
@@ -79,7 +79,11 @@ def create_test_world_state():
                 "affected_entities": ["TestCharacter", "ally_001"],
                 "location": "Forest Path",
                 "timestamp": datetime.now().timestamp(),
-                "data": {"enemy_count": 3, "ally_count": 2, "terrain": "forest"},
+                "data": {
+                    "enemy_count": 3,
+                    "ally_count": 2,
+                    "terrain": "forest",
+                },
             },
             {
                 "event_id": "social_001",
@@ -91,7 +95,13 @@ def create_test_world_state():
                 "data": {"topic": "alliance_proposal", "urgency": "high"},
             },
         ],
-        "available_actions": ["attack", "defend", "negotiate", "retreat", "observe"],
+        "available_actions": [
+            "attack",
+            "defend",
+            "negotiate",
+            "retreat",
+            "observe",
+        ],
         "time_pressure": "moderate",
     }
 
@@ -185,7 +195,9 @@ async def test_response_generation():
         await agent.initialize()
 
         # Test basic response generation
-        prompt = "You encounter a group of bandits on the road. What do you do?"
+        prompt = (
+            "You encounter a group of bandits on the road. What do you do?"
+        )
         response = await agent.generate_response(prompt)
 
         assert isinstance(response, str), "Response should be a string"
@@ -224,7 +236,9 @@ async def test_world_event_processing():
         assert (
             "processing_results" in results
         ), "Results should include processing results"
-        assert results["processed_events"] == len(events), "Should process all events"
+        assert results["processed_events"] == len(
+            events
+        ), "Should process all events"
 
         print(
             f"✅ World event processing: SUCCESS - {results['processed_events']} events"
@@ -248,7 +262,9 @@ async def test_data_access_methods():
 
         # Test character data access
         char_data = await agent.get_character_data()
-        assert isinstance(char_data, dict), "Character data should be a dictionary"
+        assert isinstance(
+            char_data, dict
+        ), "Character data should be a dictionary"
         assert "basic_info" in char_data, "Should contain basic_info"
         assert (
             char_data["basic_info"]["name"] == "TestCharacter"
@@ -256,7 +272,9 @@ async def test_data_access_methods():
 
         # Test current state access
         current_state = await agent.get_current_state()
-        assert isinstance(current_state, dict), "Current state should be a dictionary"
+        assert isinstance(
+            current_state, dict
+        ), "Current state should be a dictionary"
 
         # Test active goals access
         goals = await agent.get_active_goals()
@@ -289,7 +307,9 @@ async def test_integration_statistics():
 
         assert isinstance(stats, dict), "Statistics should be a dictionary"
         assert "component_status" in stats, "Should include component status"
-        assert "initialization_time" in stats, "Should include initialization time"
+        assert (
+            "initialization_time" in stats
+        ), "Should include initialization time"
 
         # Verify all components are tracked
         expected_components = [
@@ -332,8 +352,12 @@ async def test_factory_function():
             character_id="factory_test", character_data=character_data
         )
 
-        assert isinstance(agent, PersonaAgent), "Factory should return PersonaAgent"
-        assert agent.character_id == "factory_test", "Should have correct character ID"
+        assert isinstance(
+            agent, PersonaAgent
+        ), "Factory should return PersonaAgent"
+        assert (
+            agent.character_id == "factory_test"
+        ), "Should have correct character ID"
         assert agent._is_initialized, "Should be initialized"
 
         print("✅ Factory function: SUCCESS")

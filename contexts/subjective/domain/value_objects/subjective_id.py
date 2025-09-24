@@ -26,7 +26,9 @@ class SubjectiveId:
     def __post_init__(self):
         """Validate the UUID value."""
         if not isinstance(self.value, UUID):
-            raise ValueError(f"SubjectiveId must be a UUID, got {type(self.value)}")
+            raise ValueError(
+                f"SubjectiveId must be a UUID, got {type(self.value)}"
+            )
 
     @classmethod
     def generate(cls) -> "SubjectiveId":
@@ -56,7 +58,9 @@ class SubjectiveId:
         # Also allow compact format without hyphens (32 hex digits)
         compact_pattern = re.compile(r"^[0-9a-fA-F]{32}$")
 
-        if not (uuid_pattern.match(uuid_str) or compact_pattern.match(uuid_str)):
+        if not (
+            uuid_pattern.match(uuid_str) or compact_pattern.match(uuid_str)
+        ):
             raise ValueError(f"Invalid UUID string: {uuid_string}")
 
         try:

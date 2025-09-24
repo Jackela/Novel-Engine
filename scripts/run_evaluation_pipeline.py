@@ -46,7 +46,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(), logging.FileHandler("evaluation/pipeline.log")],
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("evaluation/pipeline.log"),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -66,7 +69,9 @@ class PipelineConfig:
 
     # Performance monitoring
     enable_performance_tracking: bool = True
-    performance_baseline_file: Path = Path("evaluation/baseline_performance.json")
+    performance_baseline_file: Path = Path(
+        "evaluation/baseline_performance.json"
+    )
     regression_threshold: float = 0.1  # 10% performance degradation threshold
 
     # Quality gates
@@ -151,7 +156,9 @@ class PerformanceTracker:
         }
 
     def update_baseline(
-        self, results: PipelineResults, individual_metrics: List[Dict[str, Any]]
+        self,
+        results: PipelineResults,
+        individual_metrics: List[Dict[str, Any]],
     ):
         """Update baseline with new performance data."""
 
@@ -188,7 +195,9 @@ class PerformanceTracker:
         except Exception as e:
             logger.error(f"Failed to save baseline data: {e}")
 
-    def detect_regression(self, results: PipelineResults) -> Tuple[bool, List[str]]:
+    def detect_regression(
+        self, results: PipelineResults
+    ) -> Tuple[bool, List[str]]:
         """
         Detect performance regressions.
 
@@ -221,8 +230,12 @@ class PerformanceTracker:
             )
 
         # Check violation rate regression
-        baseline_violation_rate = baseline_metrics.get("average_violation_rate", 0.02)
-        violation_rate_regression = results.violation_rate - baseline_violation_rate
+        baseline_violation_rate = baseline_metrics.get(
+            "average_violation_rate", 0.02
+        )
+        violation_rate_regression = (
+            results.violation_rate - baseline_violation_rate
+        )
 
         if violation_rate_regression > 0.05:  # 5% increase in violations
             regressions.append(
@@ -267,7 +280,9 @@ class ReportGenerator:
         )
 
         # Generate HTML content
-        html_content = self._build_html_report(results, individual_results, trend_data)
+        html_content = self._build_html_report(
+            results, individual_results, trend_data
+        )
 
         # Write HTML file
         report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -316,7 +331,7 @@ class ReportGenerator:
         <p>Generated: {results.timestamp.strftime('%Y-%m-%d %H:%M:%S')}</p>
         <p class="status-{status_color}">Status: {'SUCCESS' if results.pipeline_success else 'FAILED'}</p>
     </div>
-    
+
     <div class="summary">
         <div class="metric-card">
             <div class="metric-value">{results.pass_rate:.1%}</div>
@@ -335,7 +350,7 @@ class ReportGenerator:
             <div class="metric-label">Pipeline Time</div>
         </div>
     </div>
-    
+
     <div class="seed-results">
         <h2>Iron Laws Violations by Type</h2>
         <table class="violations-table">
@@ -350,7 +365,7 @@ class ReportGenerator:
         html += """
         </table>
     </div>
-    
+
     <div class="seed-results">
         <h2>Individual Seed Results</h2>
         <table class="violations-table">
@@ -381,12 +396,15 @@ class ReportGenerator:
         return html
 
     def generate_json_summary(
-        self, results: PipelineResults, individual_results: List[Dict[str, Any]]
+        self,
+        results: PipelineResults,
+        individual_results: List[Dict[str, Any]],
     ) -> Path:
         """Generate JSON summary report."""
         timestamp = results.timestamp.strftime("%Y%m%d_%H%M%S")
         report_path = (
-            self.config.results_directory / f"pipeline_summary_{timestamp}.json"
+            self.config.results_directory
+            / f"pipeline_summary_{timestamp}.json"
         )
 
         summary_data = {
@@ -447,7 +465,9 @@ class AlertSystem:
         alert_level = (
             "CRITICAL"
             if not results.pipeline_success
-            else "WARNING" if regressions else "INFO"
+            else "WARNING"
+            if regressions
+            else "INFO"
         )
 
         # Generate alert message
@@ -462,7 +482,10 @@ class AlertSystem:
             logger.error(f"Failed to send alert: {e}")
 
     def _generate_alert_body(
-        self, results: PipelineResults, regressions: List[str], alert_level: str
+        self,
+        results: PipelineResults,
+        regressions: List[str],
+        alert_level: str,
     ) -> str:
         """Generate alert message body."""
 
@@ -505,7 +528,9 @@ SUMMARY:
 
         msg.attach(MIMEText(body, "plain"))
 
-        with smtplib.SMTP(self.config.smtp_server, self.config.smtp_port) as server:
+        with smtplib.SMTP(
+            self.config.smtp_server, self.config.smtp_port
+        ) as server:
             server.starttls()
             server.send_message(msg)
 
@@ -521,7 +546,9 @@ class EvaluationPipeline:
             config: Pipeline configuration
         """
         self.config = config
-        self.performance_tracker = PerformanceTracker(config.performance_baseline_file)
+        self.performance_tracker = PerformanceTracker(
+            config.performance_baseline_file
+        )
         self.report_generator = ReportGenerator(config)
         self.alert_system = AlertSystem(config)
 
@@ -547,15 +574,17 @@ class EvaluationPipeline:
             )
 
             # Check quality gates
-            results.quality_gates_passed, results.gate_failures = (
-                self._check_quality_gates(results)
-            )
+            (
+                results.quality_gates_passed,
+                results.gate_failures,
+            ) = self._check_quality_gates(results)
             results.pipeline_success = results.quality_gates_passed
 
             # Detect performance regressions
-            has_regression, regressions = self.performance_tracker.detect_regression(
-                results
-            )
+            (
+                has_regression,
+                regressions,
+            ) = self.performance_tracker.detect_regression(results)
             if has_regression:
                 results.performance_regression = max(
                     0.1, results.performance_regression
@@ -563,13 +592,19 @@ class EvaluationPipeline:
 
             # Update performance baseline
             if results.pipeline_success:
-                self.performance_tracker.update_baseline(results, individual_results)
+                self.performance_tracker.update_baseline(
+                    results, individual_results
+                )
 
             # Generate reports
             if self.config.generate_html_report:
-                self.report_generator.generate_html_report(results, individual_results)
+                self.report_generator.generate_html_report(
+                    results, individual_results
+                )
 
-            self.report_generator.generate_json_summary(results, individual_results)
+            self.report_generator.generate_json_summary(
+                results, individual_results
+            )
 
             # Send alerts if needed
             if not results.pipeline_success or has_regression:
@@ -597,7 +632,9 @@ class EvaluationPipeline:
         """Run baseline evaluator on all seeds."""
 
         # Build command to run baseline evaluator
-        evaluator_script = Path(__file__).parent.parent / "evaluate_baseline.py"
+        evaluator_script = (
+            Path(__file__).parent.parent / "evaluate_baseline.py"
+        )
         seeds_dir = self.config.seeds_directory
 
         cmd = [
@@ -657,18 +694,22 @@ class EvaluationPipeline:
                         {
                             "seed_id": eval_summary.get("seed_id", "unknown"),
                             "score": eval_summary.get("overall_score", 0.0),
-                            "passed": eval_summary.get("evaluation_passed", False),
-                            "violations": data.get("iron_laws_compliance", {}).get(
-                                "total_violations", 0
+                            "passed": eval_summary.get(
+                                "evaluation_passed", False
                             ),
-                            "execution_time": data.get("execution_metrics", {}).get(
-                                "execution_time_seconds", 0
-                            ),
+                            "violations": data.get(
+                                "iron_laws_compliance", {}
+                            ).get("total_violations", 0),
+                            "execution_time": data.get(
+                                "execution_metrics", {}
+                            ).get("execution_time_seconds", 0),
                         }
                     )
 
             except Exception as e:
-                logger.warning(f"Failed to parse result file {result_file}: {e}")
+                logger.warning(
+                    f"Failed to parse result file {result_file}: {e}"
+                )
 
         return results
 
@@ -690,11 +731,15 @@ class EvaluationPipeline:
 
         # Calculate aggregate metrics
         total_seeds = len(individual_results)
-        passed_seeds = sum(1 for r in individual_results if r.get("passed", False))
+        passed_seeds = sum(
+            1 for r in individual_results if r.get("passed", False)
+        )
         failed_seeds = total_seeds - passed_seeds
         pass_rate = passed_seeds / total_seeds if total_seeds > 0 else 0.0
 
-        total_violations = sum(r.get("violations", 0) for r in individual_results)
+        total_violations = sum(
+            r.get("violations", 0) for r in individual_results
+        )
         total_actions = sum(
             r.get("total_actions", 100) for r in individual_results
         )  # Estimate
@@ -709,7 +754,9 @@ class EvaluationPipeline:
             "E005": int(total_violations * 0.1),
         }
 
-        execution_times = [r.get("execution_time", 0) for r in individual_results]
+        execution_times = [
+            r.get("execution_time", 0) for r in individual_results
+        ]
         avg_execution_time = mean(execution_times) if execution_times else 0.0
         total_evaluation_time = sum(execution_times)
 
@@ -727,7 +774,9 @@ class EvaluationPipeline:
             total_evaluation_time=total_evaluation_time,
         )
 
-    def _check_quality_gates(self, results: PipelineResults) -> Tuple[bool, List[str]]:
+    def _check_quality_gates(
+        self, results: PipelineResults
+    ) -> Tuple[bool, List[str]]:
         """Check quality gates against results."""
         failures = []
 
@@ -759,14 +808,14 @@ def load_pipeline_config(config_path: Path) -> PipelineConfig:
             config_data = yaml.safe_load(f)
 
         # Convert paths
-        for field in [
+        for path_field in [
             "seeds_directory",
             "results_directory",
             "archive_directory",
             "performance_baseline_file",
         ]:
-            if field in config_data:
-                config_data[field] = Path(config_data[field])
+            if path_field in config_data:
+                config_data[path_field] = Path(config_data[path_field])
 
         return PipelineConfig(**config_data)
     else:
@@ -792,9 +841,13 @@ def main():
         default="manual",
         help="Pipeline execution mode",
     )
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument(
-        "--dry-run", action="store_true", help="Dry run mode - no actual evaluation"
+        "--verbose", action="store_true", help="Enable verbose logging"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Dry run mode - no actual evaluation",
     )
 
     args = parser.parse_args()
@@ -818,7 +871,9 @@ def main():
 
         # Print summary
         print("\n🎯 Pipeline Execution Summary:")
-        print(f"   Status: {'✅ SUCCESS' if results.pipeline_success else '❌ FAILED'}")
+        print(
+            f"   Status: {'✅ SUCCESS' if results.pipeline_success else '❌ FAILED'}"
+        )
         print(f"   Seeds Evaluated: {results.total_seeds_evaluated}")
         print(f"   Pass Rate: {results.pass_rate:.1%}")
         print(f"   Total Violations: {results.total_violations}")

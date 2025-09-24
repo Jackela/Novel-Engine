@@ -50,8 +50,12 @@ class NarrativeThread(StoryElement):
 
     # Thread metrics
     complexity_score: Decimal = field(default_factory=lambda: Decimal("5.0"))
-    resolution_progress: Decimal = field(default_factory=lambda: Decimal("0.0"))  # 0-1
-    reader_engagement: Decimal = field(default_factory=lambda: Decimal("5.0"))  # 1-10
+    resolution_progress: Decimal = field(
+        default_factory=lambda: Decimal("0.0")
+    )  # 0-1
+    reader_engagement: Decimal = field(
+        default_factory=lambda: Decimal("5.0")
+    )  # 1-10
 
     # Timeline and pacing
     estimated_total_length: Optional[int] = None
@@ -78,7 +82,9 @@ class NarrativeThread(StoryElement):
 
             # Update current arc if needed
             if self.current_arc_id == arc_id:
-                self.current_arc_id = next(iter(self.participating_arc_ids), None)
+                self.current_arc_id = next(
+                    iter(self.participating_arc_ids), None
+                )
 
             self.update_element()
 
@@ -252,7 +258,9 @@ class NarrativeThread(StoryElement):
             "priority": self.priority_level,
             "status": self.status,
             "is_active": self.is_active_thread,
-            "current_arc": str(self.current_arc_id) if self.current_arc_id else None,
+            "current_arc": str(self.current_arc_id)
+            if self.current_arc_id
+            else None,
             "total_arcs": self.total_arc_count,
             "completed_arcs": len(self.completed_arc_ids),
             "resolution_progress": float(self.resolution_progress),

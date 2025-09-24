@@ -7,7 +7,9 @@ from unittest.mock import patch
 import yaml
 
 # HACK: Force project root onto path to fix persistent import issue
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+)
 
 from shared_types import CharacterAction
 from src.agents.persona_agent.protocols import ThreatLevel
@@ -43,7 +45,9 @@ class TestLLMIntegration(unittest.TestCase):
 """
             )
         with open(os.path.join(self.test_dir, "personality.yaml"), "w") as f:
-            yaml.dump({"personality_traits": {"aggressive": 0.8, "cautious": 0.2}}, f)
+            yaml.dump(
+                {"personality_traits": {"aggressive": 0.8, "cautious": 0.2}}, f
+            )
 
         self.event_bus = EventBus()
         self.agent = PersonaAgent(
@@ -68,7 +72,8 @@ class TestLLMIntegration(unittest.TestCase):
 
         # Act
         with patch(
-            "src.persona_agent._validate_gemini_api_key", return_value="fake_key"
+            "src.persona_agent._validate_gemini_api_key",
+            return_value="fake_key",
         ):
             action = self.agent._llm_enhanced_decision_making(
                 world_state, situation_assessment, available_actions
@@ -104,7 +109,9 @@ class TestLLMIntegration(unittest.TestCase):
 
     @patch("src.persona_agent._validate_gemini_api_key", return_value=None)
     @patch("src.persona_agent._generate_fallback_response")
-    def test_llm_uses_fallback_when_no_api_key(self, mock_fallback, mock_validate_key):
+    def test_llm_uses_fallback_when_no_api_key(
+        self, mock_fallback, mock_validate_key
+    ):
         """Test the agent uses the fallback mechanism when the API key is not available."""
         # Arrange
         fallback_response = (
@@ -143,7 +150,8 @@ class TestLLMIntegration(unittest.TestCase):
 
         # Act
         with patch(
-            "src.persona_agent._validate_gemini_api_key", return_value="fake_key"
+            "src.persona_agent._validate_gemini_api_key",
+            return_value="fake_key",
         ):
             with patch(
                 "src.persona_agent._generate_fallback_response"
@@ -159,17 +167,22 @@ class TestLLMIntegration(unittest.TestCase):
                 self.assertIsInstance(action, CharacterAction)
                 self.assertEqual(action.action_type, "attack")
                 self.assertEqual(
-                    action.reasoning, "[LLM-Guided] Fallback response from API failure."
+                    action.reasoning,
+                    "[LLM-Guided] Fallback response from API failure.",
                 )
                 mock_fallback.assert_called_once()
 
         mock_gemini_request.assert_called_once()
 
     @patch("src.persona_agent._make_gemini_api_request")
-    def test_llm_decision_making_handles_observe_action(self, mock_gemini_request):
+    def test_llm_decision_making_handles_observe_action(
+        self, mock_gemini_request
+    ):
         """Test _llm_enhanced_decision_making returns None when LLM chooses to observe."""
         # Arrange
-        mock_response = "ACTION: 1\nTARGET: none\nREASONING: I need more information."
+        mock_response = (
+            "ACTION: 1\nTARGET: none\nREASONING: I need more information."
+        )
         mock_gemini_request.return_value = mock_response
 
         world_state = {"recent_events": [], "entity_updates": {}}
@@ -178,7 +191,8 @@ class TestLLMIntegration(unittest.TestCase):
 
         # Act
         with patch(
-            "src.persona_agent._validate_gemini_api_key", return_value="fake_key"
+            "src.persona_agent._validate_gemini_api_key",
+            return_value="fake_key",
         ):
             action = self.agent._llm_enhanced_decision_making(
                 world_state, situation_assessment, available_actions

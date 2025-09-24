@@ -69,7 +69,9 @@ class EnvironmentConfigLoader:
             f"EnvironmentConfigLoader initialized for environment: {self.environment.value}"
         )
 
-    def _detect_environment(self, env_override: Optional[str] = None) -> Environment:
+    def _detect_environment(
+        self, env_override: Optional[str] = None
+    ) -> Environment:
         """
         Detect the current environment from various sources.
 
@@ -88,7 +90,13 @@ class EnvironmentConfigLoader:
                 )
 
         # Check environment variables (in order of precedence)
-        env_vars = ["NOVEL_ENGINE_ENV", "ENVIRONMENT", "ENV", "FLASK_ENV", "NODE_ENV"]
+        env_vars = [
+            "NOVEL_ENGINE_ENV",
+            "ENVIRONMENT",
+            "ENV",
+            "FLASK_ENV",
+            "NODE_ENV",
+        ]
 
         for env_var in env_vars:
             env_value = os.environ.get(env_var)
@@ -100,7 +108,9 @@ class EnvironmentConfigLoader:
                     )
                     return environment
                 except ValueError:
-                    logger.debug(f"Invalid environment value in {env_var}: {env_value}")
+                    logger.debug(
+                        f"Invalid environment value in {env_var}: {env_value}"
+                    )
                     continue
 
         # Check for Kubernetes environment
@@ -158,7 +168,9 @@ class EnvironmentConfigLoader:
                         config = self._deep_merge(config, additional_config)
                         logger.debug(f"Loaded {config_name} configuration")
                 except Exception as e:
-                    logger.warning(f"Failed to load {config_name} configuration: {e}")
+                    logger.warning(
+                        f"Failed to load {config_name} configuration: {e}"
+                    )
 
             # Apply environment variable overrides
             config = self._apply_environment_overrides(config)
@@ -245,7 +257,9 @@ class EnvironmentConfigLoader:
 
         return result
 
-    def _apply_environment_overrides(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _apply_environment_overrides(
+        self, config: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Apply environment variable overrides to configuration.
 
@@ -289,7 +303,9 @@ class EnvironmentConfigLoader:
                     else:
                         current[final_key] = env_value
 
-                    logger.info(f"Applied environment override: {env_var}={env_value}")
+                    logger.info(
+                        f"Applied environment override: {env_var}={env_value}"
+                    )
 
                 except Exception as e:
                     logger.warning(
@@ -312,7 +328,12 @@ class EnvironmentConfigLoader:
                 "environment": self.environment.value,
                 "debug_mode": self.environment == Environment.DEVELOPMENT,
             },
-            "api": {"host": "127.0.0.1", "port": 8000, "workers": 1, "timeout": 30},
+            "api": {
+                "host": "127.0.0.1",
+                "port": 8000,
+                "workers": 1,
+                "timeout": 30,
+            },
             "logging": {
                 "level": "INFO",
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -362,7 +383,9 @@ class EnvironmentConfigLoader:
         required_sections = ["system", "api", "logging", "simulation"]
         for section in required_sections:
             if section not in self.config_cache:
-                errors.append(f"Missing required configuration section: {section}")
+                errors.append(
+                    f"Missing required configuration section: {section}"
+                )
 
         # Validate API configuration
         api_config = self.config_cache.get("api", {})
@@ -370,7 +393,9 @@ class EnvironmentConfigLoader:
             errors.append("Missing API host configuration")
         if "port" not in api_config:
             errors.append("Missing API port configuration")
-        elif not isinstance(api_config["port"], int) or api_config["port"] <= 0:
+        elif (
+            not isinstance(api_config["port"], int) or api_config["port"] <= 0
+        ):
             errors.append("API port must be a positive integer")
 
         # Validate simulation configuration

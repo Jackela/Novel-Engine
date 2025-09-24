@@ -90,7 +90,9 @@ class GetSessionSummaryQuery(InteractionQuery):
     def __post_init__(self):
         super().__post_init__()
         if self.summary_depth not in ["basic", "standard", "detailed"]:
-            raise ValueError("summary_depth must be one of: basic, standard, detailed")
+            raise ValueError(
+                "summary_depth must be one of: basic, standard, detailed"
+            )
 
 
 @dataclass(frozen=True)
@@ -106,7 +108,11 @@ class GetSessionTimelineQuery(InteractionQuery):
 
     def __post_init__(self):
         super().__post_init__()
-        if self.start_date and self.end_date and self.start_date >= self.end_date:
+        if (
+            self.start_date
+            and self.end_date
+            and self.start_date >= self.end_date
+        ):
             raise ValueError("start_date must be before end_date")
 
 
@@ -164,7 +170,12 @@ class GetSessionProposalsQuery(InteractionQuery):
 
     def __post_init__(self):
         super().__post_init__()
-        if self.proposal_status not in ["active", "withdrawn", "expired", "all"]:
+        if self.proposal_status not in [
+            "active",
+            "withdrawn",
+            "expired",
+            "all",
+        ]:
             raise ValueError(
                 "proposal_status must be one of: active, withdrawn, expired, all"
             )
@@ -209,7 +220,9 @@ class GetNegotiationAnalyticsQuery(InteractionQuery):
     """Query to get comprehensive analytics for a negotiation session."""
 
     session_id: UUID
-    analytics_types: List[str] = None  # momentum, conflicts, viability, compatibility
+    analytics_types: Optional[
+        List[str]
+    ] = None  # momentum, conflicts, viability, compatibility
     time_window_hours: int = 168  # 1 week default
     include_trends: bool = True
     include_predictions: bool = False
@@ -222,12 +235,16 @@ class GetNegotiationAnalyticsQuery(InteractionQuery):
         if self.granularity not in ["hour", "day", "phase"]:
             raise ValueError("granularity must be one of: hour, day, phase")
         if self.analytics_types is None:
-            self.analytics_types = [
-                "momentum",
-                "conflicts",
-                "viability",
-                "compatibility",
-            ]
+            object.__setattr__(
+                self,
+                "analytics_types",
+                [
+                    "momentum",
+                    "conflicts",
+                    "viability",
+                    "compatibility",
+                ],
+            )
 
 
 @dataclass(frozen=True)
@@ -258,7 +275,12 @@ class GetConflictAnalysisQuery(InteractionQuery):
 
     def __post_init__(self):
         super().__post_init__()
-        if self.severity_threshold not in ["low", "medium", "high", "critical"]:
+        if self.severity_threshold not in [
+            "low",
+            "medium",
+            "high",
+            "critical",
+        ]:
             raise ValueError(
                 "severity_threshold must be one of: low, medium, high, critical"
             )
@@ -296,9 +318,9 @@ class GetSessionPerformanceQuery(InteractionQuery):
     """Query to get performance metrics for a negotiation session."""
 
     session_id: UUID
-    metrics_types: List[str] = (
-        None  # efficiency, effectiveness, engagement, satisfaction
-    )
+    metrics_types: Optional[
+        List[str]
+    ] = None  # efficiency, effectiveness, engagement, satisfaction
     include_benchmarks: bool = True
     include_party_performance: bool = True
     performance_period: Optional[str] = None  # overall, recent, phase-specific
@@ -306,12 +328,20 @@ class GetSessionPerformanceQuery(InteractionQuery):
     def __post_init__(self):
         super().__post_init__()
         if self.metrics_types is None:
-            self.metrics_types = ["efficiency", "effectiveness", "engagement"]
-        if self.performance_period is not None and self.performance_period not in [
-            "overall",
-            "recent",
-            "phase-specific",
-        ]:
+            object.__setattr__(
+                self,
+                "metrics_types",
+                ["efficiency", "effectiveness", "engagement"],
+            )
+        if (
+            self.performance_period is not None
+            and self.performance_period
+            not in [
+                "overall",
+                "recent",
+                "phase-specific",
+            ]
+        ):
             raise ValueError(
                 "performance_period must be one of: overall, recent, phase-specific"
             )
@@ -350,7 +380,9 @@ class GenerateSessionReportQuery(InteractionQuery):
                 "target_audience must be one of: technical, business, executive, general"
             )
         if self.export_format not in ["json", "pdf", "html", "csv"]:
-            raise ValueError("export_format must be one of: json, pdf, html, csv")
+            raise ValueError(
+                "export_format must be one of: json, pdf, html, csv"
+            )
 
 
 # Search and Filter Queries
@@ -361,8 +393,10 @@ class SearchNegotiationSessionsQuery(InteractionQuery):
     """Query to search negotiation sessions with flexible criteria."""
 
     search_term: Optional[str] = None
-    filters: Dict[str, Any] = None
-    search_fields: List[str] = None  # session_name, session_type, party_names, etc.
+    filters: Optional[Dict[str, Any]] = None
+    search_fields: Optional[
+        List[str]
+    ] = None  # session_name, session_type, party_names, etc.
     full_text_search: bool = False
     fuzzy_matching: bool = False
     limit: int = 50
@@ -375,9 +409,11 @@ class SearchNegotiationSessionsQuery(InteractionQuery):
         if self.offset < 0:
             raise ValueError("offset must be non-negative")
         if self.search_fields is None:
-            self.search_fields = ["session_name", "session_type"]
+            object.__setattr__(
+                self, "search_fields", ["session_name", "session_type"]
+            )
         if self.filters is None:
-            self.filters = {}
+            object.__setattr__(self, "filters", {})
 
 
 @dataclass(frozen=True)
@@ -413,10 +449,14 @@ class SearchProposalsQuery(InteractionQuery):
 class GetNegotiationTrendsQuery(InteractionQuery):
     """Query to get negotiation trends over time."""
 
-    time_period: str = "last_30_days"  # last_7_days, last_30_days, last_90_days, custom
+    time_period: str = (
+        "last_30_days"  # last_7_days, last_30_days, last_90_days, custom
+    )
     custom_start_date: Optional[datetime] = None
     custom_end_date: Optional[datetime] = None
-    trend_metrics: List[str] = None  # success_rate, avg_duration, party_satisfaction
+    trend_metrics: Optional[
+        List[str]
+    ] = None  # success_rate, avg_duration, party_satisfaction
     group_by: str = "week"  # day, week, month
     filters: Optional[Dict[str, Any]] = None
 
@@ -437,11 +477,17 @@ class GetNegotiationTrendsQuery(InteractionQuery):
                     "custom_start_date and custom_end_date required for custom time_period"
                 )
             if self.custom_start_date >= self.custom_end_date:
-                raise ValueError("custom_start_date must be before custom_end_date")
+                raise ValueError(
+                    "custom_start_date must be before custom_end_date"
+                )
         if self.group_by not in ["day", "week", "month"]:
             raise ValueError("group_by must be one of: day, week, month")
         if self.trend_metrics is None:
-            self.trend_metrics = ["success_rate", "avg_duration", "completion_rate"]
+            object.__setattr__(
+                self,
+                "trend_metrics",
+                ["success_rate", "avg_duration", "completion_rate"],
+            )
 
 
 @dataclass(frozen=True)
@@ -449,7 +495,7 @@ class GetHistoricalAnalysisQuery(InteractionQuery):
     """Query to get historical analysis of negotiation patterns."""
 
     analysis_type: str = "success_factors"
-    time_range: Dict[str, datetime] = None
+    time_range: Optional[Dict[str, datetime]] = None
     include_patterns: bool = True
     include_benchmarks: bool = True
     pattern_types: Optional[List[str]] = None
@@ -502,7 +548,11 @@ class GetSessionHealthQuery(InteractionQuery):
 
     def __post_init__(self):
         super().__post_init__()
-        if self.health_check_depth not in ["basic", "standard", "comprehensive"]:
+        if self.health_check_depth not in [
+            "basic",
+            "standard",
+            "comprehensive",
+        ]:
             raise ValueError(
                 "health_check_depth must be one of: basic, standard, comprehensive"
             )

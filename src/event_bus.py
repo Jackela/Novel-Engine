@@ -50,7 +50,7 @@ class EventBus:
         """
         if event_type in self._subscribers:
             logger.info(
-                f"Emitting event '{event_type}' to {len(self._subscribers[event_type])} subscribers."
+                f"Emitting event '{event_type}' to {len( self._subscribers[event_type])} subscribers."
             )
             for callback in self._subscribers[event_type]:
                 try:
@@ -61,7 +61,9 @@ class EventBus:
                         exc_info=True,
                     )
         else:
-            logger.debug(f"Event '{event_type}' emitted, but has no subscribers.")
+            logger.debug(
+                f"Event '{event_type}' emitted, but has no subscribers."
+            )
 
     async def publish(self, event_type: str, data: Any):
         """
@@ -73,7 +75,7 @@ class EventBus:
         """
         if event_type in self._subscribers:
             logger.info(
-                f"Publishing event '{event_type}' to {len(self._subscribers[event_type])} subscribers."
+                f"Publishing event '{event_type}' to {len( self._subscribers[event_type])} subscribers."
             )
             for callback in self._subscribers[event_type]:
                 try:
@@ -91,7 +93,9 @@ class EventBus:
                         exc_info=True,
                     )
         else:
-            logger.debug(f"Event '{event_type}' published, but has no subscribers.")
+            logger.debug(
+                f"Event '{event_type}' published, but has no subscribers."
+            )
 
     def unsubscribe(self, event_type: str, callback: Callable):
         """
@@ -104,8 +108,12 @@ class EventBus:
         if event_type in self._subscribers:
             try:
                 self._subscribers[event_type].remove(callback)
-                callback_name = getattr(callback, "__name__", "unknown_callback")
-                logger.debug(f"Unsubscribed {callback_name} from event '{event_type}'")
+                callback_name = getattr(
+                    callback, "__name__", "unknown_callback"
+                )
+                logger.debug(
+                    f"Unsubscribed {callback_name} from event '{event_type}'"
+                )
 
                 # Clean up empty subscriber lists
                 if not self._subscribers[event_type]:

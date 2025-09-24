@@ -115,7 +115,10 @@ class TurnOrchestrator:
             logger.warning("No registered agents found - turn will be empty")
             log_event_callback(f"TURN {self.current_turn_number} COMPLETED")
             self._finalize_turn()
-            return {"status": "empty_turn", "turn_number": self.current_turn_number}
+            return {
+                "status": "empty_turn",
+                "turn_number": self.current_turn_number,
+            }
 
         # NEW: Dynamic context loading for all agents
         context_loading_start = datetime.now()
@@ -133,7 +136,9 @@ class TurnOrchestrator:
         self.current_turn_state.world_state_updates = world_state_update
 
         # Emit the turn start event with enhanced context
-        self.event_bus.emit("TURN_START", world_state_update=world_state_update)
+        self.event_bus.emit(
+            "TURN_START", world_state_update=world_state_update
+        )
 
         return {
             "status": "turn_started",
@@ -212,7 +217,8 @@ class TurnOrchestrator:
                 }
             },
             "entity_updates": {
-                # Information about other agents/entities the agent might be aware of
+                # Information about other agents/entities the agent might be
+                # aware of
             },
             "faction_updates": {
                 "imperium": {"activity": "normal", "influence": 0.6},
@@ -259,10 +265,14 @@ class TurnOrchestrator:
                     logger.debug(f"Context refreshed for agent {agent_id}")
                 else:
                     context_results["failed_refreshes"] += 1
-                    logger.warning(f"Context refresh failed for agent {agent_id}")
+                    logger.warning(
+                        f"Context refresh failed for agent {agent_id}"
+                    )
             except Exception as e:
                 context_results["failed_refreshes"] += 1
-                logger.error(f"Context refresh error for agent {agent_id}: {e}")
+                logger.error(
+                    f"Context refresh error for agent {agent_id}: {e}"
+                )
 
         context_results["refresh_duration"] = (
             datetime.now() - start_time
@@ -274,17 +284,21 @@ class TurnOrchestrator:
         )
         logger.info(
             f"Context refresh completed: {context_results['successful_refreshes']}/{context_results['total_agents']} "
-            f"agents ({success_rate:.1%} success rate) in {context_results['refresh_duration']:.2f}s"
+            f"agents ({success_rate:.1%}success rate) in {context_results['refresh_duration']:.2f}s"
         )
 
         return context_results
 
     def _prepare_enhanced_world_state_for_turn(
-        self, world_state_data: Dict[str, Any], registered_agents: List[PersonaAgent]
+        self,
+        world_state_data: Dict[str, Any],
+        registered_agents: List[PersonaAgent],
     ) -> Dict[str, Any]:
         """Prepare enhanced world state information for the current turn with context data."""
         # Base world state preparation (existing logic)
-        world_state_update = self._prepare_world_state_for_turn(world_state_data)
+        world_state_update = self._prepare_world_state_for_turn(
+            world_state_data
+        )
 
         # Add context enhancement metadata
         world_state_update["context_enhanced"] = True
@@ -292,16 +306,21 @@ class TurnOrchestrator:
 
         # Track which agents have enhanced context loaded
         for agent in registered_agents:
-            if hasattr(agent, "core") and hasattr(agent.core, "character_data"):
+            if hasattr(agent, "core") and hasattr(
+                agent.core, "character_data"
+            ):
                 character_data = agent.core.character_data
-                if "enhanced_context" in character_data and character_data.get(
-                    "context_load_success", False
+                if (
+                    "enhanced_context" in character_data
+                    and character_data.get("context_load_success", False)
                 ):
                     world_state_update["agents_with_enhanced_context"].append(
                         agent.agent_id
                     )
 
-        context_enhanced_count = len(world_state_update["agents_with_enhanced_context"])
+        context_enhanced_count = len(
+            world_state_update["agents_with_enhanced_context"]
+        )
         logger.info(
             f"Enhanced context available for {context_enhanced_count}/{len(registered_agents)} agents"
         )
@@ -329,7 +348,9 @@ class TurnOrchestrator:
         """
         try:
             if not self.current_turn_state:
-                logger.warning("No active turn state when handling agent action")
+                logger.warning(
+                    "No active turn state when handling agent action"
+                )
                 return False
 
             # Record that this agent has been processed
@@ -376,12 +397,16 @@ class TurnOrchestrator:
                 character_name = getattr(agent, "character_data", {}).get(
                     "name", agent.agent_id
                 )
-                log_event_callback(f"{character_name} is waiting and observing.")
+                log_event_callback(
+                    f"{character_name} is waiting and observing."
+                )
 
             return True
 
         except Exception as e:
-            logger.error(f"Error handling agent action from {agent.agent_id}: {str(e)}")
+            logger.error(
+                f"Error handling agent action from {agent.agent_id}: {str(e)}"
+            )
             return False
 
     def _store_turn_in_history(self, turn_summary: Dict[str, Any]) -> None:
@@ -408,7 +433,7 @@ class TurnOrchestrator:
             if len(self.turn_history) > self.max_turn_history:
                 removed_turn = self.turn_history.pop(0)
                 logger.debug(
-                    f"Removed turn {removed_turn.turn_number} from history (limit: {self.max_turn_history})"
+                    f"Removed turn {removed_turn.turn_number}from history (limit: {self.max_turn_history})"
                 )
 
             # Update performance metrics
@@ -425,7 +450,7 @@ class TurnOrchestrator:
                     )
 
             logger.info(
-                f"Turn {self.current_turn_number} stored in history ({len(self.turn_history)} total)"
+                f"Turn {self.current_turn_number}stored in history ({len( self.turn_history)} total)"
             )
 
         except Exception as e:
@@ -438,7 +463,9 @@ class TurnOrchestrator:
             self._store_turn_in_history({})
         self.current_turn_state = None
 
-    def get_turn_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    def get_turn_history(
+        self, limit: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """
         Get turn history information.
 
@@ -450,7 +477,9 @@ class TurnOrchestrator:
         """
         try:
             history_data = []
-            recent_turns = self.turn_history[-limit:] if limit else self.turn_history
+            recent_turns = (
+                self.turn_history[-limit:] if limit else self.turn_history
+            )
 
             for turn_state in reversed(recent_turns):  # Most recent first
                 turn_data = {
@@ -483,7 +512,9 @@ class TurnOrchestrator:
                 "turn_number": self.current_turn_state.turn_number,
                 "start_time": self.current_turn_state.start_time.isoformat(),
                 "agents_processed": self.current_turn_state.agents_processed.copy(),
-                "actions_received": len(self.current_turn_state.actions_received),
+                "actions_received": len(
+                    self.current_turn_state.actions_received
+                ),
                 "completed": self.current_turn_state.completed,
             }
         except Exception as e:

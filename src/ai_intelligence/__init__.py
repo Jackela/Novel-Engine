@@ -36,10 +36,7 @@ from .analytics_platform import (
     MetricType,
 )
 from .analytics_platform import SystemMetrics as AnalyticsSystemMetrics
-from .analytics_platform import (
-    TimeWindow,
-    UserEngagement,
-)
+from .analytics_platform import TimeWindow, UserEngagement
 from .export_integration_engine import (
     ExportFormat,
     ExportIntegrationEngine,

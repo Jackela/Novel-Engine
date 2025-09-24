@@ -6,7 +6,6 @@ Python 3.12+ deprecates datetime.utcnow() in favor of timezone-aware datetime.
 
 import os
 import re
-from pathlib import Path
 
 
 def fix_datetime_in_file(file_path):
@@ -44,11 +43,14 @@ def fix_datetime_in_file(file_path):
                 content = re.sub(import_pattern, add_timezone, content)
 
         # Replace datetime.utcnow() with datetime.now(timezone.utc)
-        content = content.replace("datetime.utcnow()", "datetime.now(timezone.utc)")
+        content = content.replace(
+            "datetime.utcnow()", "datetime.now(timezone.utc)"
+        )
 
         # Also handle cases where datetime is imported as a module
         content = content.replace(
-            "datetime.datetime.utcnow()", "datetime.datetime.now(datetime.timezone.utc)"
+            "datetime.datetime.utcnow()",
+            "datetime.datetime.now(datetime.timezone.utc)",
         )
 
         if content != original:
@@ -121,11 +123,13 @@ def main():
                     with open(file_path, "r", encoding="utf-8") as f:
                         if "datetime.utcnow()" in f.read():
                             remaining.append(file_path)
-                except:
+                except (OSError, UnicodeDecodeError):
                     pass
 
     if remaining:
-        print(f"⚠️ Found {len(remaining)} files still containing datetime.utcnow():")
+        print(
+            f"⚠️ Found {len(remaining)} files still containing datetime.utcnow():"
+        )
         for path in remaining[:10]:  # Show first 10
             print(f"  - {path}")
     else:

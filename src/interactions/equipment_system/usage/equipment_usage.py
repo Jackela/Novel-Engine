@@ -20,7 +20,11 @@ from ..core.types import (
 
 # Import enhanced core systems
 try:
-    from src.core.data_models import EquipmentCondition, ErrorInfo, StandardResponse
+    from src.core.data_models import (
+        EquipmentCondition,
+        ErrorInfo,
+        StandardResponse,
+    )
     from src.core.types import AgentID
 except ImportError:
     # Fallback for testing
@@ -70,7 +74,9 @@ class EquipmentUsageProcessor:
     """
 
     def __init__(
-        self, config: EquipmentSystemConfig, logger: Optional[logging.Logger] = None
+        self,
+        config: EquipmentSystemConfig,
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize equipment usage processor.
@@ -165,7 +171,9 @@ class EquipmentUsageProcessor:
                 self._update_performance_from_wear(equipment)
 
                 # Update usage statistics
-                self._update_usage_statistics(equipment, duration_seconds, usage_result)
+                self._update_usage_statistics(
+                    equipment, duration_seconds, usage_result
+                )
 
                 # Handle machine spirit response
                 spirit_response = self._evaluate_machine_spirit_response(
@@ -176,7 +184,8 @@ class EquipmentUsageProcessor:
                 # Update timestamps
                 equipment.last_used = usage_start
 
-                # Restore equipment status (or set to maintenance if critically worn)
+                # Restore equipment status (or set to maintenance if critically
+                # worn)
                 if equipment.wear_accumulation >= self.config.wear_threshold:
                     equipment.current_status = EquipmentStatus.MAINTENANCE
                 else:
@@ -233,12 +242,20 @@ class EquipmentUsageProcessor:
         effects = []
 
         # Calculate weapon wear based on usage intensity
-        intensity_multipliers = {"low": 0.5, "normal": 1.0, "high": 1.5, "extreme": 2.0}
+        intensity_multipliers = {
+            "low": 0.5,
+            "normal": 1.0,
+            "high": 1.5,
+            "extreme": 2.0,
+        }
         intensity_factor = intensity_multipliers.get(combat_intensity, 1.0)
 
         # Track accuracy for performance metrics
         if "accuracy_stats" not in equipment.usage_statistics:
-            equipment.usage_statistics["accuracy_stats"] = {"shots": 0, "hits": 0}
+            equipment.usage_statistics["accuracy_stats"] = {
+                "shots": 0,
+                "hits": 0,
+            }
 
         equipment.usage_statistics["accuracy_stats"]["shots"] += shots_fired
         if target_hit:
@@ -289,9 +306,13 @@ class EquipmentUsageProcessor:
                 "protection_events": 0,
             }
 
-        equipment.usage_statistics["damage_stats"]["total_absorbed"] += damage_taken
+        equipment.usage_statistics["damage_stats"][
+            "total_absorbed"
+        ] += damage_taken
         if damage_taken > 0:
-            equipment.usage_statistics["damage_stats"]["protection_events"] += 1
+            equipment.usage_statistics["damage_stats"][
+                "protection_events"
+            ] += 1
             effects.append(f"Absorbed {damage_taken} points of damage")
 
         # Environmental wear
@@ -301,11 +322,14 @@ class EquipmentUsageProcessor:
         # Update armor-specific performance metrics
         equipment.performance_metrics["protection"] = max(
             0.1,
-            equipment.performance_metrics.get("protection", 1.0) - damage_taken * 0.01,
+            equipment.performance_metrics.get("protection", 1.0)
+            - damage_taken * 0.01,
         )
         equipment.performance_metrics["durability"] *= 1 - 0.005 * env_factor
 
-        effects.append(f"Provided protection in {environmental_exposure} environment")
+        effects.append(
+            f"Provided protection in {environmental_exposure} environment"
+        )
 
         return {
             "effects": effects,
@@ -343,7 +367,9 @@ class EquipmentUsageProcessor:
         equipment.usage_statistics["task_stats"]["tasks_completed"] += 1
         if success_rate:
             equipment.usage_statistics["task_stats"]["successful_tasks"] += 1
-            effects.append(f"Successfully completed {complexity} {task_type} task")
+            effects.append(
+                f"Successfully completed {complexity} {task_type} task"
+            )
 
         # Complexity affects wear
         complexity_multipliers = {
@@ -359,11 +385,15 @@ class EquipmentUsageProcessor:
             "successful_tasks"
         ] / max(1, equipment.usage_statistics["task_stats"]["tasks_completed"])
         equipment.performance_metrics["effectiveness"] = success_ratio
-        equipment.performance_metrics["precision"] = equipment.performance_metrics.get(
-            "precision", 1.0
-        ) * (1 - 0.01 * complexity_factor)
+        equipment.performance_metrics[
+            "precision"
+        ] = equipment.performance_metrics.get("precision", 1.0) * (
+            1 - 0.01 * complexity_factor
+        )
 
-        effects.append(f"Tool used for {task_type} task at {complexity} complexity")
+        effects.append(
+            f"Tool used for {task_type} task at {complexity} complexity"
+        )
 
         return {
             "effects": effects,
@@ -393,7 +423,9 @@ class EquipmentUsageProcessor:
         new_quantity = max(0, current_quantity - quantity_used)
         equipment.usage_statistics["remaining_quantity"] = new_quantity
 
-        effects.append(f"Consumed {quantity_used} units (remaining: {new_quantity})")
+        effects.append(
+            f"Consumed {quantity_used} units (remaining: {new_quantity})"
+        )
 
         # If depleted, mark as destroyed
         if new_quantity <= 0:
@@ -510,11 +542,17 @@ class EquipmentUsageProcessor:
         base_wear = self.config.wear_accumulation_rate
 
         # Duration factor (longer usage = more wear)
-        duration_factor = min(2.0, duration / 3600.0)  # Cap at 2x for 1 hour+ usage
+        # Cap at 2x for 1 hour+ usage
+        duration_factor = min(2.0, duration / 3600.0)
 
         # Intensity factor from context
         intensity = usage_context.get("intensity", "normal")
-        intensity_multipliers = {"low": 0.5, "normal": 1.0, "high": 1.5, "extreme": 2.0}
+        intensity_multipliers = {
+            "low": 0.5,
+            "normal": 1.0,
+            "high": 1.5,
+            "extreme": 2.0,
+        }
         intensity_factor = intensity_multipliers.get(intensity, 1.0)
 
         # Equipment condition factor (poor condition wears faster)
@@ -550,7 +588,9 @@ class EquipmentUsageProcessor:
 
         return min(0.1, total_wear)  # Cap wear per use at 10%
 
-    def _update_performance_from_wear(self, equipment: DynamicEquipment) -> None:
+    def _update_performance_from_wear(
+        self, equipment: DynamicEquipment
+    ) -> None:
         """Update equipment performance metrics based on wear."""
         wear_impact = (
             equipment.wear_accumulation * 0.3
@@ -563,7 +603,10 @@ class EquipmentUsageProcessor:
             equipment.performance_metrics[metric] = degraded_value
 
     def _update_usage_statistics(
-        self, equipment: DynamicEquipment, duration: float, usage_result: Dict[str, Any]
+        self,
+        equipment: DynamicEquipment,
+        duration: float,
+        usage_result: Dict[str, Any],
     ) -> None:
         """Update equipment usage statistics."""
         stats = equipment.usage_statistics
@@ -581,7 +624,9 @@ class EquipmentUsageProcessor:
 
         # Calculate usage frequency
         if equipment.last_used:
-            time_since_last = (datetime.now() - equipment.last_used).total_seconds()
+            time_since_last = (
+                datetime.now() - equipment.last_used
+            ).total_seconds()
             if "usage_intervals" not in stats:
                 stats["usage_intervals"] = []
             stats["usage_intervals"].append(time_since_last)
@@ -600,16 +645,20 @@ class EquipmentUsageProcessor:
         usage_care = usage_context.get(
             "care_level", "normal"
         )  # poor, normal, excellent
-        equipment_condition = getattr(equipment.base_equipment, "condition", "good")
+        equipment_condition = getattr(
+            equipment.base_equipment, "condition", "good"
+        )
         if hasattr(equipment_condition, "value"):
             equipment_condition = equipment_condition.value
 
         # Define mood transitions
         transitions = {
-            "pleased": equipment.wear_accumulation < 0.2 and usage_care == "excellent",
+            "pleased": equipment.wear_accumulation < 0.2
+            and usage_care == "excellent",
             "content": equipment.wear_accumulation < 0.5
             and usage_care in ["normal", "excellent"],
-            "agitated": equipment.wear_accumulation > 0.5 or usage_care == "poor",
+            "agitated": equipment.wear_accumulation > 0.5
+            or usage_care == "poor",
             "angry": equipment.wear_accumulation > 0.8
             or equipment_condition in ["damaged", "broken"],
         }
@@ -629,7 +678,9 @@ class EquipmentUsageProcessor:
 
         return {
             "mood": new_mood,
-            "response": responses.get(new_mood, "Machine spirit status unknown"),
+            "response": responses.get(
+                new_mood, "Machine spirit status unknown"
+            ),
         }
 
     def _determine_equipment_category(

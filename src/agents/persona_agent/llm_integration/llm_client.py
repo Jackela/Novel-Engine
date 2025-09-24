@@ -81,7 +81,9 @@ class LLMClient:
     - Track usage and performance metrics
     """
 
-    def __init__(self, character_id: str, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, character_id: str, logger: Optional[logging.Logger] = None
+    ):
         self.character_id = character_id
         self.logger = logger or logging.getLogger(__name__)
 
@@ -201,10 +203,14 @@ class LLMClient:
         try:
             for provider in self._provider_priority[:-1]:  # Exclude fallback
                 if await self._test_provider_connection(provider):
-                    self.logger.info(f"LLM provider {provider.value} is available")
+                    self.logger.info(
+                        f"LLM provider {provider.value} is available"
+                    )
                     return True
 
-            self.logger.warning("No LLM providers available, fallback mode only")
+            self.logger.warning(
+                "No LLM providers available, fallback mode only"
+            )
             return self._config["fallback_enabled"]
 
         except Exception as e:
@@ -226,7 +232,9 @@ class LLMClient:
         """
         try:
             # Extract character information
-            character_name = character_data.get("basic_info", {}).get("name", "Unknown")
+            character_name = character_data.get("basic_info", {}).get(
+                "name", "Unknown"
+            )
             faction = character_data.get("faction_info", {}).get(
                 "faction", "Independent"
             )
@@ -248,7 +256,9 @@ class LLMClient:
                         intensity = (
                             "high"
                             if value > 0.7
-                            else "low" if value < 0.3 else "moderate"
+                            else "low"
+                            if value < 0.3
+                            else "moderate"
                         )
                         trait_descriptions.append(f"{trait} ({intensity})")
 
@@ -261,20 +271,28 @@ class LLMClient:
             if current_state:
                 state_info = []
                 if "current_location" in current_state:
-                    state_info.append(f"Location: {current_state['current_location']}")
+                    state_info.append(
+                        f"Location: {current_state['current_location']}"
+                    )
                 if "current_status" in current_state:
-                    state_info.append(f"Status: {current_state['current_status']}")
+                    state_info.append(
+                        f"Status: {current_state['current_status']}"
+                    )
                 if "morale_level" in current_state:
                     morale = current_state["morale_level"]
                     morale_desc = (
                         "high"
                         if morale > 0.6
-                        else "low" if morale < 0.4 else "moderate"
+                        else "low"
+                        if morale < 0.4
+                        else "moderate"
                     )
                     state_info.append(f"Morale: {morale_desc}")
 
                 if state_info:
-                    context_parts.append(f"Current State: {', '.join(state_info)}")
+                    context_parts.append(
+                        f"Current State: {', '.join(state_info)}"
+                    )
 
             # Goals and motivations
             goals = character_data.get("goals", [])
@@ -325,17 +343,23 @@ Respond as {character_name}, staying in character based on the personality, fact
                 provider_stats[provider] = {
                     "requests": count,
                     "percentage": (
-                        (count / total_requests * 100) if total_requests > 0 else 0.0
+                        (count / total_requests * 100)
+                        if total_requests > 0
+                        else 0.0
                     ),
                 }
 
             return {
                 "total_requests": total_requests,
-                "successful_requests": self._usage_stats["successful_requests"],
+                "successful_requests": self._usage_stats[
+                    "successful_requests"
+                ],
                 "failed_requests": self._usage_stats["failed_requests"],
                 "success_rate": success_rate,
                 "total_tokens_used": self._usage_stats["total_tokens"],
-                "average_response_time": self._usage_stats["average_response_time"],
+                "average_response_time": self._usage_stats[
+                    "average_response_time"
+                ],
                 "provider_statistics": provider_stats,
                 "cache_size": len(self._response_cache),
                 "available_providers": [
@@ -390,7 +414,9 @@ Respond as {character_name}, staying in character based on the personality, fact
 
                 except Exception as e:
                     last_error = str(e)
-                    self.logger.warning(f"Provider {provider.value} failed: {e}")
+                    self.logger.warning(
+                        f"Provider {provider.value} failed: {e}"
+                    )
                     continue
 
             # All providers failed
@@ -405,7 +431,10 @@ Respond as {character_name}, staying in character based on the personality, fact
         except Exception as e:
             self.logger.error(f"Response generation failed: {e}")
             return LLMResponse(
-                success=False, content="", provider=LLMProvider.FALLBACK, error=str(e)
+                success=False,
+                content="",
+                provider=LLMProvider.FALLBACK,
+                error=str(e),
             )
 
     async def _call_provider(
@@ -458,7 +487,9 @@ Respond as {character_name}, staying in character based on the personality, fact
             }
 
             if request.stop_sequences:
-                payload["generationConfig"]["stopSequences"] = request.stop_sequences
+                payload["generationConfig"][
+                    "stopSequences"
+                ] = request.stop_sequences
 
             headers = {
                 "Content-Type": "application/json",
@@ -477,15 +508,21 @@ Respond as {character_name}, staying in character based on the personality, fact
             if response.status_code == 200:
                 response_data = response.json()
 
-                if "candidates" in response_data and response_data["candidates"]:
+                if (
+                    "candidates" in response_data
+                    and response_data["candidates"]
+                ):
                     candidate = response_data["candidates"][0]
-                    if "content" in candidate and "parts" in candidate["content"]:
+                    if (
+                        "content" in candidate
+                        and "parts" in candidate["content"]
+                    ):
                         content = candidate["content"]["parts"][0]["text"]
 
                         # Extract token usage if available
-                        tokens_used = response_data.get("usageMetadata", {}).get(
-                            "totalTokenCount", 0
-                        )
+                        tokens_used = response_data.get(
+                            "usageMetadata", {}
+                        ).get("totalTokenCount", 0)
 
                         return LLMResponse(
                             success=True,
@@ -504,7 +541,10 @@ Respond as {character_name}, staying in character based on the personality, fact
 
         except Exception as e:
             return LLMResponse(
-                success=False, content="", provider=LLMProvider.GEMINI, error=str(e)
+                success=False,
+                content="",
+                provider=LLMProvider.GEMINI,
+                error=str(e),
             )
 
     async def _call_openai(self, request: LLMRequest) -> LLMResponse:
@@ -538,7 +578,10 @@ Respond as {character_name}, staying in character based on the personality, fact
             }
 
             response = requests.post(
-                url, json=payload, headers=headers, timeout=self._config["timeout"]
+                url,
+                json=payload,
+                headers=headers,
+                timeout=self._config["timeout"],
             )
 
             if response.status_code == 200:
@@ -546,7 +589,9 @@ Respond as {character_name}, staying in character based on the personality, fact
 
                 if "choices" in response_data and response_data["choices"]:
                     content = response_data["choices"][0]["message"]["content"]
-                    tokens_used = response_data.get("usage", {}).get("total_tokens", 0)
+                    tokens_used = response_data.get("usage", {}).get(
+                        "total_tokens", 0
+                    )
 
                     return LLMResponse(
                         success=True,
@@ -565,7 +610,10 @@ Respond as {character_name}, staying in character based on the personality, fact
 
         except Exception as e:
             return LLMResponse(
-                success=False, content="", provider=LLMProvider.OPENAI, error=str(e)
+                success=False,
+                content="",
+                provider=LLMProvider.OPENAI,
+                error=str(e),
             )
 
     async def _call_local(self, request: LLMRequest) -> LLMResponse:
@@ -591,13 +639,16 @@ Respond as {character_name}, staying in character based on the personality, fact
 
             if response.status_code == 200:
                 response_data = response.json()
-                content = response_data.get("text", response_data.get("response", ""))
+                content = response_data.get(
+                    "text", response_data.get("response", "")
+                )
 
                 return LLMResponse(
                     success=True,
                     content=content,
                     provider=LLMProvider.LOCAL,
-                    tokens_used=len(content.split()),  # Approximate token count
+                    # Approximate token count
+                    tokens_used=len(content.split()),
                     metadata=response_data,
                 )
 
@@ -610,7 +661,10 @@ Respond as {character_name}, staying in character based on the personality, fact
 
         except Exception as e:
             return LLMResponse(
-                success=False, content="", provider=LLMProvider.LOCAL, error=str(e)
+                success=False,
+                content="",
+                provider=LLMProvider.LOCAL,
+                error=str(e),
             )
 
     async def _call_fallback(self, request: LLMRequest) -> LLMResponse:
@@ -621,7 +675,8 @@ Respond as {character_name}, staying in character based on the personality, fact
 
             # Simple keyword-based response selection
             if any(
-                word in prompt_lower for word in ["attack", "combat", "fight", "battle"]
+                word in prompt_lower
+                for word in ["attack", "combat", "fight", "battle"]
             ):
                 response_category = "combat"
             elif any(
@@ -635,7 +690,8 @@ Respond as {character_name}, staying in character based on the personality, fact
             ):
                 response_category = "exploration"
             elif any(
-                word in prompt_lower for word in ["help", "assist", "support", "aid"]
+                word in prompt_lower
+                for word in ["help", "assist", "support", "aid"]
             ):
                 response_category = "helpful"
             else:
@@ -647,9 +703,9 @@ Respond as {character_name}, staying in character based on the personality, fact
             )
 
             # Simple selection based on character context
-            character_name = request.character_context.get("basic_info", {}).get(
-                "name", "Character"
-            )
+            character_name = request.character_context.get(
+                "basic_info", {}
+            ).get("name", "Character")
             faction = request.character_context.get("faction_info", {}).get(
                 "faction", "Independent"
             )
@@ -660,7 +716,9 @@ Respond as {character_name}, staying in character based on the personality, fact
             template = random.choice(responses)
 
             # Simple template variable replacement
-            response_text = template.replace("{character_name}", character_name)
+            response_text = template.replace(
+                "{character_name}", character_name
+            )
             response_text = response_text.replace("{faction}", faction)
 
             return LLMResponse(
@@ -695,7 +753,9 @@ Respond as {character_name}, staying in character based on the personality, fact
         """Setup local LLM client."""
         return {
             "configured": True,
-            "endpoint": os.getenv("LOCAL_LLM_ENDPOINT", "http://localhost:8000"),
+            "endpoint": os.getenv(
+                "LOCAL_LLM_ENDPOINT", "http://localhost:8000"
+            ),
         }
 
     def _initialize_fallback_responses(self) -> Dict[str, List[str]]:
@@ -730,7 +790,9 @@ Respond as {character_name}, staying in character based on the personality, fact
 
     # Utility methods
 
-    async def _get_fallback_response(self, prompt: str, context: Dict[str, Any]) -> str:
+    async def _get_fallback_response(
+        self, prompt: str, context: Dict[str, Any]
+    ) -> str:
         """Get fallback response when LLM fails."""
         try:
             request = LLMRequest(prompt=prompt, character_context=context)
@@ -806,7 +868,9 @@ Respond as {character_name}, staying in character based on the personality, fact
         except Exception:
             return True  # Allow on error
 
-    async def _get_cached_response(self, request: LLMRequest) -> Optional[LLMResponse]:
+    async def _get_cached_response(
+        self, request: LLMRequest
+    ) -> Optional[LLMResponse]:
         """Get cached response if available and valid."""
         try:
             cache_key = self._generate_cache_key(request)
@@ -826,7 +890,9 @@ Respond as {character_name}, staying in character based on the personality, fact
         except Exception:
             return None
 
-    async def _cache_response(self, request: LLMRequest, response: LLMResponse) -> None:
+    async def _cache_response(
+        self, request: LLMRequest, response: LLMResponse
+    ) -> None:
         """Cache successful response."""
         try:
             cache_key = self._generate_cache_key(request)
@@ -849,10 +915,14 @@ Respond as {character_name}, staying in character based on the personality, fact
         import hashlib
 
         # Include relevant request parameters in cache key
-        key_data = f"{request.prompt}_{request.temperature}_{request.max_tokens}"
+        key_data = (
+            f"{request.prompt}_{request.temperature}_{request.max_tokens}"
+        )
         return hashlib.md5(key_data.encode()).hexdigest()
 
-    async def _update_usage_stats(self, response: LLMResponse, success: bool) -> None:
+    async def _update_usage_stats(
+        self, response: LLMResponse, success: bool
+    ) -> None:
         """Update usage statistics."""
         try:
             self._usage_stats["total_requests"] += 1
@@ -860,7 +930,9 @@ Respond as {character_name}, staying in character based on the personality, fact
             if success:
                 self._usage_stats["successful_requests"] += 1
                 self._usage_stats["total_tokens"] += response.tokens_used
-                self._usage_stats["provider_usage"][response.provider.value] += 1
+                self._usage_stats["provider_usage"][
+                    response.provider.value
+                ] += 1
 
                 # Update average response time
                 total_time = self._usage_stats["average_response_time"] * (

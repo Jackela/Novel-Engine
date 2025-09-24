@@ -51,7 +51,10 @@ class ValidationException(NovelEngineException):
     """Validation error exception."""
 
     def __init__(
-        self, message: str, field: Optional[str] = None, detail: Optional[str] = None
+        self,
+        message: str,
+        field: Optional[str] = None,
+        detail: Optional[str] = None,
     ):
         super().__init__(
             message=message,
@@ -155,7 +158,9 @@ class ErrorHandler:
             api_error = APIError(
                 type=APIErrorType.INTERNAL_ERROR,
                 message=(
-                    "An unexpected error occurred" if not self.debug else str(error)
+                    "An unexpected error occurred"
+                    if not self.debug
+                    else str(error)
                 ),
                 detail=traceback.format_exc() if self.debug else None,
             )
@@ -251,7 +256,9 @@ class ErrorHandler:
                 {
                     "method": request.method,
                     "url": str(request.url),
-                    "client_ip": request.client.host if request.client else "unknown",
+                    "client_ip": request.client.host
+                    if request.client
+                    else "unknown",
                 }
             )
 
@@ -322,7 +329,9 @@ def setup_error_handlers(app, debug: bool = False):
             field_path = ".".join(str(loc) for loc in error["loc"])
             validation_errors.append(
                 ValidationError(
-                    field=field_path, message=error["msg"], value=error.get("input")
+                    field=field_path,
+                    message=error["msg"],
+                    value=error.get("input"),
                 )
             )
 

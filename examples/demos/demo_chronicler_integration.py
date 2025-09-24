@@ -8,16 +8,14 @@ Warhammer 40k Multi-Agent Simulator ecosystem, showing how campaign logs can
 be transformed into dramatic narrative stories.
 """
 
+import logging
 import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-import logging
-
 from chronicler_agent import ChroniclerAgent
 from director_agent import DirectorAgent
-
 
 # Configure logging for demo output
 logging.basicConfig(level=logging.INFO)
@@ -53,8 +51,12 @@ def demonstrate_basic_transcription():
 
         # Get chronicler status
         status = chronicler.get_chronicler_status()
-        print(f"  Events processed: {status['processing_stats']['events_processed']}")
-        print(f"  LLM calls made: {status['processing_stats']['llm_calls_made']}")
+        print(
+            f"  Events processed: {status['processing_stats']['events_processed']}"
+        )
+        print(
+            f"  LLM calls made: {status['processing_stats']['llm_calls_made']}"
+        )
 
         # Show sample of the narrative
         print("\n" + "=" * 40)
@@ -91,7 +93,9 @@ def demonstrate_narrative_styles():
 
             # Show style description
             if style == "grimdark_dramatic":
-                print("  - Atmospheric, dramatic prose with Warhammer 40k flavor")
+                print(
+                    "  - Atmospheric, dramatic prose with Warhammer 40k flavor"
+                )
             elif style == "tactical":
                 print("  - Military-style tactical reports and assessments")
             elif style == "philosophical":
@@ -135,7 +139,9 @@ def demonstrate_file_output():
         chronicler.transcribe_log(log_path)
 
         # Check if file was created
-        narrative_files = [f for f in os.listdir(output_dir) if f.endswith(".md")]
+        narrative_files = [
+            f for f in os.listdir(output_dir) if f.endswith(".md")
+        ]
         if narrative_files:
             latest_file = max(narrative_files)
             print(f"✓ Narrative file created: {latest_file}")
@@ -169,7 +175,9 @@ def demonstrate_integration_workflow():
     try:
         # Show the integration points
         print("\nIntegration Points:")
-        print("- DirectorAgent.campaign_log_path → ChroniclerAgent.transcribe_log()")
+        print(
+            "- DirectorAgent.campaign_log_path → ChroniclerAgent.transcribe_log()"
+        )
         print("- Structured event format → Narrative prose generation")
         print("- Character actions → Dramatic story elements")
         print("- Turn-based events → Chronological narrative flow")
@@ -198,8 +206,12 @@ def demonstrate_integration_workflow():
             chronicler = ChroniclerAgent()
             status = chronicler.get_chronicler_status()
             print("✓ ChroniclerAgent: Available")
-            print(f"  Templates loaded: {status['system_health']['templates_loaded']}")
-            print(f"  LLM integration: {status['capabilities']['llm_integration']}")
+            print(
+                f"  Templates loaded: {status['system_health']['templates_loaded']}"
+            )
+            print(
+                f"  LLM integration: {status['capabilities']['llm_integration']}"
+            )
         except Exception as e:
             print(f"✗ ChroniclerAgent: Error - {e}")
 
@@ -240,13 +252,21 @@ def main():
     print(f"DEMO RESULTS: {passed}/{total} demos completed successfully")
 
     if passed == total:
-        print("🎉 All demos passed! ChroniclerAgent integration is working perfectly.")
+        print(
+            "🎉 All demos passed! ChroniclerAgent integration is working perfectly."
+        )
         print("\nThe Warhammer 40k Multi-Agent Simulator now has complete")
-        print("story transcription capabilities. Campaign logs can be transformed")
-        print("into dramatic narrative prose that captures the grimdark atmosphere")
+        print(
+            "story transcription capabilities. Campaign logs can be transformed"
+        )
+        print(
+            "into dramatic narrative prose that captures the grimdark atmosphere"
+        )
         print("of the 41st millennium.")
     else:
-        print(f"⚠️  {total - passed} demos failed. Check the output above for details.")
+        print(
+            f"⚠️  {total - passed} demos failed. Check the output above for details."
+        )
 
     print("\nIn the grim darkness of the far future, there is only war...")
     print("...and now there are stories to tell about it.")

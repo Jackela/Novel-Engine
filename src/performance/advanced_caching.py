@@ -158,10 +158,14 @@ class IntelligentCacheManager:
         if self.config.background_cleanup:
             try:
                 loop = asyncio.get_event_loop()
-                self._cleanup_task = loop.create_task(self._background_cleanup())
+                self._cleanup_task = loop.create_task(
+                    self._background_cleanup()
+                )
 
                 if self.config.enable_metrics:
-                    self._metrics_task = loop.create_task(self._metrics_collection())
+                    self._metrics_task = loop.create_task(
+                        self._metrics_collection()
+                    )
             except RuntimeError:
                 # No event loop running yet
                 pass
@@ -264,7 +268,9 @@ class IntelligentCacheManager:
                 disk_value = await self._get_from_disk(key)
                 if disk_value is not None:
                     # Load back into memory cache
-                    await self.set(key, disk_value, ttl=self.config.default_ttl)
+                    await self.set(
+                        key, disk_value, ttl=self.config.default_ttl
+                    )
                     self.stats.hits += 1
                     self._record_access_time(key, time.time() - start_time)
                     return disk_value
@@ -279,7 +285,9 @@ class IntelligentCacheManager:
             self.stats.misses += 1
             return default
 
-    async def set(self, key: str, value: T, ttl: Optional[float] = None) -> bool:
+    async def set(
+        self, key: str, value: T, ttl: Optional[float] = None
+    ) -> bool:
         """Store value in cache with optional TTL."""
         try:
             # Use default TTL if not specified
@@ -294,7 +302,9 @@ class IntelligentCacheManager:
             if size_bytes > self.config.compression_threshold:
                 value = self._compress_value(value)
                 compressed = True
-                size_bytes = len(value) if isinstance(value, bytes) else size_bytes
+                size_bytes = (
+                    len(value) if isinstance(value, bytes) else size_bytes
+                )
 
             # Create cache entry
             entry = CacheEntry(
@@ -328,7 +338,9 @@ class IntelligentCacheManager:
             # Record relationship patterns
             self._record_key_relationship(key)
 
-            logger.debug(f"Cached key {key} | Size: {size_bytes} bytes | TTL: {ttl}")
+            logger.debug(
+                f"Cached key {key} | Size: {size_bytes} bytes | TTL: {ttl}"
+            )
             return True
 
         except Exception as e:
@@ -358,12 +370,16 @@ class IntelligentCacheManager:
     async def invalidate_pattern(self, pattern: str) -> int:
         """Invalidate all cache keys matching pattern."""
         try:
-            keys_to_delete = [key for key in self.cache.keys() if pattern in key]
+            keys_to_delete = [
+                key for key in self.cache.keys() if pattern in key
+            ]
 
             for key in keys_to_delete:
                 await self.delete(key)
 
-            logger.info(f"Invalidated pattern {pattern} | Keys: {len(keys_to_delete)}")
+            logger.info(
+                f"Invalidated pattern {pattern} | Keys: {len(keys_to_delete)}"
+            )
             return len(keys_to_delete)
 
         except Exception as e:
@@ -407,7 +423,6 @@ class IntelligentCacheManager:
             len(self.cache) > self.config.max_size
             or self.stats.total_size_bytes > max_memory_bytes
         ):
-
             if not self.cache:
                 break
 
@@ -521,7 +536,9 @@ class IntelligentCacheManager:
 
         # Keep only recent metrics
         if len(self.performance_metrics[key]) > 100:
-            self.performance_metrics[key] = self.performance_metrics[key][-100:]
+            self.performance_metrics[key] = self.performance_metrics[key][
+                -100:
+            ]
 
         # Track slow keys
         if access_time_ms > 10:  # 10ms threshold
@@ -623,7 +640,9 @@ class IntelligentCacheManager:
         """Retrieve value from disk cache."""
         try:
             key_hash = self._generate_key_hash(key)
-            file_path = os.path.join(self.config.disk_cache_path, f"{key_hash}.cache")
+            file_path = os.path.join(
+                self.config.disk_cache_path, f"{key_hash}.cache"
+            )
 
             if os.path.exists(file_path):
                 with open(file_path, "rb") as f:
@@ -640,7 +659,9 @@ class IntelligentCacheManager:
         """Save value to disk cache."""
         try:
             key_hash = self._generate_key_hash(key)
-            file_path = os.path.join(self.config.disk_cache_path, f"{key_hash}.cache")
+            file_path = os.path.join(
+                self.config.disk_cache_path, f"{key_hash}.cache"
+            )
 
             with open(file_path, "wb") as f:
                 f.write(pickle.dumps(value))
@@ -652,7 +673,9 @@ class IntelligentCacheManager:
         """Delete value from disk cache."""
         try:
             key_hash = self._generate_key_hash(key)
-            file_path = os.path.join(self.config.disk_cache_path, f"{key_hash}.cache")
+            file_path = os.path.join(
+                self.config.disk_cache_path, f"{key_hash}.cache"
+            )
 
             if os.path.exists(file_path):
                 os.remove(file_path)
@@ -667,7 +690,8 @@ class IntelligentCacheManager:
             "cache_size": len(self.cache),
             "memory_usage_mb": self.stats.total_size_bytes / 1024 / 1024,
             "memory_usage_percent": (
-                self.stats.total_size_bytes / (self.config.max_memory_mb * 1024 * 1024)
+                self.stats.total_size_bytes
+                / (self.config.max_memory_mb * 1024 * 1024)
             )
             * 100,
             "slow_keys_count": len(self.slow_keys),

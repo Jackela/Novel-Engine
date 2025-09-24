@@ -106,7 +106,9 @@ class PersonaAgentCore:
         # Event system integration
         self._setup_event_handling()
 
-        logger.info(f"PersonaAgent core '{self.agent_id}' initialized successfully")
+        logger.info(
+            f"PersonaAgent core '{self.agent_id}' initialized successfully"
+        )
 
     def _derive_agent_id_from_path(self, path: str) -> str:
         """
@@ -193,7 +195,9 @@ class PersonaAgentCore:
                 f"PersonaAgent '{self.agent_id}' subscribed to TURN_START events"
             )
         except Exception as e:
-            logger.error(f"Failed to set up event handling for {self.agent_id}: {e}")
+            logger.error(
+                f"Failed to set up event handling for {self.agent_id}: {e}"
+            )
 
     def handle_turn_start(self, world_state_update: Dict[str, Any]) -> None:
         """
@@ -216,16 +220,22 @@ class PersonaAgentCore:
             action = self._create_basic_action(world_state_update)
 
             # Emit action completion event
-            self.event_bus.emit("AGENT_ACTION_COMPLETE", agent=self, action=action)
+            self.event_bus.emit(
+                "AGENT_ACTION_COMPLETE", agent=self, action=action
+            )
 
         except Exception as e:
             logger.error(
                 f"Error handling TURN_START for agent {self.agent_id}: {str(e)}"
             )
             # Emit a safe fallback action
-            self.event_bus.emit("AGENT_ACTION_COMPLETE", agent=self, action=None)
+            self.event_bus.emit(
+                "AGENT_ACTION_COMPLETE", agent=self, action=None
+            )
 
-    def _process_world_state_update(self, world_state_update: Dict[str, Any]) -> None:
+    def _process_world_state_update(
+        self, world_state_update: Dict[str, Any]
+    ) -> None:
         """
         Process incoming world state information and update internal knowledge.
 
@@ -242,16 +252,18 @@ class PersonaAgentCore:
                     "processed_at": datetime.now().isoformat(),
                 }
 
-                self.subjective_worldview["recent_events"].append(event_summary)
+                self.subjective_worldview["recent_events"].append(
+                    event_summary
+                )
 
                 # Keep only recent events (last 10)
                 if len(self.subjective_worldview["recent_events"]) > 10:
-                    self.subjective_worldview["recent_events"] = (
-                        self.subjective_worldview["recent_events"][-10:]
-                    )
+                    self.subjective_worldview[
+                        "recent_events"
+                    ] = self.subjective_worldview["recent_events"][-10:]
 
                 logger.debug(
-                    f"Agent {self.agent_id} processed world state update for turn {event_summary['turn_number']}"
+                    f"Agent {self.agent_id}processed world state update for turn {event_summary['turn_number']}"
                 )
 
         except Exception as e:
@@ -310,7 +322,9 @@ class PersonaAgentCore:
         Returns:
             str: Directory name of the character
         """
-        return os.path.basename(os.path.normpath(self.character_directory_path))
+        return os.path.basename(
+            os.path.normpath(self.character_directory_path)
+        )
 
     @property
     def character_context(self) -> str:
@@ -324,7 +338,9 @@ class PersonaAgentCore:
             hybrid_context = self.character_data.get("hybrid_context", {})
             return hybrid_context.get("markdown_content", "")
         except Exception as e:
-            logger.error(f"Error accessing character context for {self.agent_id}: {e}")
+            logger.error(
+                f"Error accessing character context for {self.agent_id}: {e}"
+            )
             return ""
 
     @property
@@ -363,10 +379,14 @@ class PersonaAgentCore:
                 "relationships_count": len(self.relationships),
                 "short_term_memory_count": len(self.short_term_memory),
                 "long_term_memory_count": len(self.long_term_memory),
-                "initialization_time": getattr(self, "_initialization_time", "unknown"),
+                "initialization_time": getattr(
+                    self, "_initialization_time", "unknown"
+                ),
             }
         except Exception as e:
-            logger.error(f"Error generating agent info for {self.agent_id}: {e}")
+            logger.error(
+                f"Error generating agent info for {self.agent_id}: {e}"
+            )
             return {"agent_id": self.agent_id, "error": str(e)}
 
     def update_character_state(
@@ -386,7 +406,9 @@ class PersonaAgentCore:
         try:
             if status is not None:
                 self.current_status = status
-                logger.info(f"Agent {self.agent_id} status updated to: {status}")
+                logger.info(
+                    f"Agent {self.agent_id} status updated to: {status}"
+                )
 
             if location is not None:
                 old_location = self.current_location
@@ -399,13 +421,17 @@ class PersonaAgentCore:
                 # Clamp morale to valid range
                 self.morale_level = max(-1.0, min(1.0, morale))
                 logger.info(
-                    f"Agent {self.agent_id} morale updated to: {self.morale_level}"
+                    f"Agent {self.agent_id}morale updated to: {self.morale_level}"
                 )
 
         except Exception as e:
-            logger.error(f"Error updating character state for {self.agent_id}: {e}")
+            logger.error(
+                f"Error updating character state for {self.agent_id}: {e}"
+            )
 
-    def add_relationship(self, entity_id: str, relationship_strength: float) -> None:
+    def add_relationship(
+        self, entity_id: str, relationship_strength: float
+    ) -> None:
         """
         Add or update a relationship with another entity.
 
@@ -437,7 +463,9 @@ class PersonaAgentCore:
         """
         return self.relationships.get(entity_id, 0.0)
 
-    def add_to_subjective_worldview(self, category: str, key: str, value: Any) -> None:
+    def add_to_subjective_worldview(
+        self, category: str, key: str, value: Any
+    ) -> None:
         """
         Add information to the character's subjective worldview.
 
@@ -507,5 +535,7 @@ class PersonaAgentCore:
                 "last_updated": datetime.now().isoformat(),
             }
         except Exception as e:
-            logger.error(f"Error generating core metrics for {self.agent_id}: {e}")
+            logger.error(
+                f"Error generating core metrics for {self.agent_id}: {e}"
+            )
             return {"agent_id": self.agent_id, "error": str(e)}

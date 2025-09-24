@@ -22,7 +22,47 @@ import ipaddress
 import json
 import time
 
-import aioredis
+try:
+    import aioredis
+except ImportError:
+    # Mock aioredis for testing environments
+    class MockRedis:
+        async def get(self, *args, **kwargs):
+            return None
+
+        async def set(self, *args, **kwargs):
+            pass
+
+        async def delete(self, *args, **kwargs):
+            pass
+
+        async def exists(self, *args, **kwargs):
+            return False
+
+        async def publish(self, *args, **kwargs):
+            pass
+
+        async def subscribe(self, *args, **kwargs):
+            return MockPubSub()
+
+        def pubsub(self):
+            return MockPubSub()
+
+        async def close(self, *args, **kwargs):
+            pass
+
+    class MockPubSub:
+        async def subscribe(self, *args, **kwargs):
+            pass
+
+        async def get_message(self, *args, **kwargs):
+            return None
+
+    aioredis = type(
+        "MockAioredis",
+        (),
+        {"Redis": MockRedis, "from_url": lambda url: MockRedis()},
+    )()
 import aiosqlite
 
 try:
@@ -154,7 +194,9 @@ class BehavioralProfile:
     typical_user_agents: Set[str] = field(default_factory=set)
     typical_request_patterns: Dict[str, int] = field(default_factory=dict)
     average_session_duration: float = 0.0
-    last_updated: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_updated: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
     anomaly_score: float = 0.0
 
 
@@ -206,7 +248,9 @@ class EnterpriseSecurityManager:
         self.geoip_database_path = geoip_database_path
         self.enable_geo_blocking = enable_geo_blocking
         self.enable_behavioral_analytics = enable_behavioral_analytics
-        self.compliance_frameworks = compliance_frameworks or [ComplianceFramework.GDPR]
+        self.compliance_frameworks = compliance_frameworks or [
+            ComplianceFramework.GDPR
+        ]
 
         # Initialize components
         self.redis_client = None
@@ -231,8 +275,13 @@ class EnterpriseSecurityManager:
             logger.info("✅ Redis connection established for security cache")
 
             # Initialize GeoIP database
-            if self.geoip_database_path and Path(self.geoip_database_path).exists():
-                self.geoip_reader = geoip2.database.Reader(self.geoip_database_path)
+            if (
+                self.geoip_database_path
+                and Path(self.geoip_database_path).exists()
+            ):
+                self.geoip_reader = geoip2.database.Reader(
+                    self.geoip_database_path
+                )
                 logger.info("✅ GeoIP database loaded for geo-blocking")
 
             # Initialize security database
@@ -245,7 +294,9 @@ class EnterpriseSecurityManager:
             logger.info("🛡️ ENTERPRISE SECURITY MANAGER INITIALIZED")
 
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Enterprise Security Manager: {e}")
+            logger.error(
+                f"❌ Failed to initialize Enterprise Security Manager: {e}"
+            )
             raise
 
     async def _initialize_security_database(self):
@@ -397,7 +448,9 @@ class EnterpriseSecurityManager:
 
         try:
             # 1. Rate limiting check
-            rate_limit_result = await self._check_rate_limits(client_ip, user_id)
+            rate_limit_result = await self._check_rate_limits(
+                client_ip, user_id
+            )
             if not rate_limit_result["allowed"]:
                 threat_indicators.append("rate_limit_exceeded")
                 security_actions.append(SecurityAction.RATE_LIMIT)
@@ -409,7 +462,9 @@ class EnterpriseSecurityManager:
                 threat_indicators.append(
                     f"ip_reputation_{ip_reputation['threat_level']}"
                 )
-                max_threat_level = max(max_threat_level, ip_reputation["threat_level"])
+                max_threat_level = max(
+                    max_threat_level, ip_reputation["threat_level"]
+                )
 
                 if ip_reputation["threat_level"] == ThreatLevel.CRITICAL:
                     security_actions.append(SecurityAction.BLOCK_TEMPORARY)
@@ -422,7 +477,9 @@ class EnterpriseSecurityManager:
                 if geo_result["is_high_risk"]:
                     threat_indicators.append("high_risk_geography")
                     security_actions.append(SecurityAction.REQUIRE_MFA)
-                    max_threat_level = max(max_threat_level, ThreatLevel.MEDIUM)
+                    max_threat_level = max(
+                        max_threat_level, ThreatLevel.MEDIUM
+                    )
 
             # 4. User agent analysis
             ua_analysis = self._analyze_user_agent(user_agent)
@@ -600,7 +657,7 @@ class EnterpriseSecurityManager:
                 # Check IP blacklist/whitelist
                 cursor = await conn.execute(
                     """
-                    SELECT list_type, severity FROM ip_reputation 
+                    SELECT list_type, severity FROM ip_reputation
                     WHERE ip_address = ? AND is_active = TRUE
                     AND (expires_at IS NULL OR expires_at > ?)
                 """,
@@ -618,7 +675,9 @@ class EnterpriseSecurityManager:
                         reputation_score = 0.0
 
         except Exception as e:
-            logger.error(f"Error analyzing IP reputation for {ip_address}: {e}")
+            logger.error(
+                f"Error analyzing IP reputation for {ip_address}: {e}"
+            )
 
         return {
             "threat_level": threat_level,
@@ -627,7 +686,9 @@ class EnterpriseSecurityManager:
             "is_known_threat": reputation_score > 0.5,
         }
 
-    async def _analyze_geographic_risk(self, ip_address: str) -> Dict[str, Any]:
+    async def _analyze_geographic_risk(
+        self, ip_address: str
+    ) -> Dict[str, Any]:
         """Analyze geographic risk factors"""
         if not self.geoip_reader:
             return {"is_high_risk": False, "country_code": None}
@@ -665,7 +726,8 @@ class EnterpriseSecurityManager:
 
         # Check against allowed patterns
         is_valid_pattern = any(
-            re.match(pattern, user_agent) for pattern in ALLOWED_USER_AGENTS_PATTERNS
+            re.match(pattern, user_agent)
+            for pattern in ALLOWED_USER_AGENTS_PATTERNS
         )
 
         suspicious_indicators = []
@@ -680,8 +742,17 @@ class EnterpriseSecurityManager:
             suspicious_indicators.append("too_long")
 
         # Check for suspicious keywords
-        suspicious_keywords = ["bot", "crawler", "spider", "scraper", "hack", "exploit"]
-        if any(keyword in user_agent.lower() for keyword in suspicious_keywords):
+        suspicious_keywords = [
+            "bot",
+            "crawler",
+            "spider",
+            "scraper",
+            "hack",
+            "exploit",
+        ]
+        if any(
+            keyword in user_agent.lower() for keyword in suspicious_keywords
+        ):
             suspicious_indicators.append("suspicious_keywords")
 
         return {
@@ -730,7 +801,9 @@ class EnterpriseSecurityManager:
 
         # Check request patterns
         request_category = self._categorize_request_path(request_path)
-        expected_frequency = profile.typical_request_patterns.get(request_category, 0)
+        expected_frequency = profile.typical_request_patterns.get(
+            request_category, 0
+        )
         if expected_frequency == 0:
             anomaly_score += 0.2
             anomalies.append("unusual_request_pattern")
@@ -767,7 +840,10 @@ class EnterpriseSecurityManager:
             r"delete\s+from",
             r"update.*set",
         ]
-        if any(re.search(pattern, request_path.lower()) for pattern in sql_patterns):
+        if any(
+            re.search(pattern, request_path.lower())
+            for pattern in sql_patterns
+        ):
             attack_indicators.append("sql_injection")
 
         # XSS patterns
@@ -778,7 +854,10 @@ class EnterpriseSecurityManager:
             r"eval\s*\(",
             r"alert\s*\(",
         ]
-        if any(re.search(pattern, request_path.lower()) for pattern in xss_patterns):
+        if any(
+            re.search(pattern, request_path.lower())
+            for pattern in xss_patterns
+        ):
             attack_indicators.append("xss_attempt")
 
         # Path traversal patterns
@@ -787,7 +866,10 @@ class EnterpriseSecurityManager:
 
         # Command injection patterns
         cmd_patterns = [r";\s*cat", r";\s*ls", r";\s*rm", r"&&", r"\|\|"]
-        if any(re.search(pattern, request_path.lower()) for pattern in cmd_patterns):
+        if any(
+            re.search(pattern, request_path.lower())
+            for pattern in cmd_patterns
+        ):
             attack_indicators.append("command_injection")
 
         return {
@@ -849,7 +931,7 @@ class EnterpriseSecurityManager:
                 cursor = await conn.execute(
                     """
                     SELECT typical_access_hours, typical_countries, typical_user_agents,
-                           typical_request_patterns, average_session_duration, 
+                           typical_request_patterns, average_session_duration,
                            anomaly_score, last_updated
                     FROM behavioral_profiles WHERE user_id = ?
                 """,
@@ -873,7 +955,9 @@ class EnterpriseSecurityManager:
                         ),
                     )
         except Exception as e:
-            logger.error(f"Error retrieving behavioral profile for {user_id}: {e}")
+            logger.error(
+                f"Error retrieving behavioral profile for {user_id}: {e}"
+            )
 
         return None
 
@@ -894,7 +978,9 @@ class EnterpriseSecurityManager:
                 profile = BehavioralProfile(
                     user_id=user_id,
                     typical_access_hours=[current_hour],
-                    typical_countries={country_code} if country_code else set(),
+                    typical_countries={country_code}
+                    if country_code
+                    else set(),
                     typical_user_agents={user_agent},
                     typical_request_patterns={request_category: 1},
                 )
@@ -904,9 +990,9 @@ class EnterpriseSecurityManager:
                     profile.typical_access_hours.append(current_hour)
                     # Keep only recent patterns (last 30 days)
                     if len(profile.typical_access_hours) > 24:
-                        profile.typical_access_hours = profile.typical_access_hours[
-                            -24:
-                        ]
+                        profile.typical_access_hours = (
+                            profile.typical_access_hours[-24:]
+                        )
 
                 if country_code:
                     profile.typical_countries.add(country_code)
@@ -920,7 +1006,8 @@ class EnterpriseSecurityManager:
                     profile.typical_user_agents.pop()
 
                 profile.typical_request_patterns[request_category] = (
-                    profile.typical_request_patterns.get(request_category, 0) + 1
+                    profile.typical_request_patterns.get(request_category, 0)
+                    + 1
                 )
 
             profile.last_updated = datetime.now(timezone.utc)
@@ -929,7 +1016,7 @@ class EnterpriseSecurityManager:
             async with aiosqlite.connect(self.database_path) as conn:
                 await conn.execute(
                     """
-                    INSERT OR REPLACE INTO behavioral_profiles 
+                    INSERT OR REPLACE INTO behavioral_profiles
                     (user_id, typical_access_hours, typical_countries, typical_user_agents,
                      typical_request_patterns, average_session_duration, anomaly_score, last_updated)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -948,7 +1035,9 @@ class EnterpriseSecurityManager:
                 await conn.commit()
 
         except Exception as e:
-            logger.error(f"Error updating behavioral profile for {user_id}: {e}")
+            logger.error(
+                f"Error updating behavioral profile for {user_id}: {e}"
+            )
 
     async def _load_behavioral_profiles(self):
         """Load behavioral profiles into memory"""
@@ -956,7 +1045,7 @@ class EnterpriseSecurityManager:
             async with aiosqlite.connect(self.database_path) as conn:
                 cursor = await conn.execute(
                     """
-                    SELECT user_id, typical_access_hours, typical_countries, 
+                    SELECT user_id, typical_access_hours, typical_countries,
                            typical_user_agents, typical_request_patterns,
                            average_session_duration, anomaly_score, last_updated
                     FROM behavioral_profiles
@@ -1023,7 +1112,7 @@ class EnterpriseSecurityManager:
             async with aiosqlite.connect(self.database_path) as conn:
                 await conn.execute(
                     """
-                    INSERT INTO enhanced_security_events 
+                    INSERT INTO enhanced_security_events
                     (id, timestamp, event_type, severity, source_ip, user_id, user_agent,
                      request_path, threat_indicators, automated_response, evidence, compliance_tags)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -1038,7 +1127,9 @@ class EnterpriseSecurityManager:
                         event.user_agent,
                         event.request_path,
                         json.dumps(event.threat_indicators),
-                        json.dumps([a.value for a in event.automated_response]),
+                        json.dumps(
+                            [a.value for a in event.automated_response]
+                        ),
                         json.dumps(event.evidence, default=str),
                         json.dumps([f.value for f in event.compliance_tags]),
                     ),
@@ -1072,7 +1163,7 @@ class EnterpriseSecurityManager:
         )
 
         logger.warning(
-            f"🚨 SECURITY ALERT: {event.severity.value.upper()} - {event.event_type} from {event.source_ip}"
+            f"🚨 SECURITY ALERT: {event.severity.value.upper()}- {event.event_type} from {event.source_ip}"
         )
 
     async def get_security_metrics(self) -> Dict[str, Any]:
@@ -1086,7 +1177,7 @@ class EnterpriseSecurityManager:
                 cursor = await conn.execute(
                     """
                     SELECT severity, COUNT(*) as count
-                    FROM enhanced_security_events 
+                    FROM enhanced_security_events
                     WHERE timestamp > ?
                     GROUP BY severity
                 """,
@@ -1097,7 +1188,7 @@ class EnterpriseSecurityManager:
                 # Get blocked IPs
                 cursor = await conn.execute(
                     """
-                    SELECT COUNT(*) FROM ip_reputation 
+                    SELECT COUNT(*) FROM ip_reputation
                     WHERE list_type = 'blacklist' AND is_active = TRUE
                 """
                 )
@@ -1144,16 +1235,25 @@ class EnterpriseSecurityManager:
         """Add IP to blacklist or whitelist"""
         expires_at = None
         if expires_hours:
-            expires_at = datetime.now(timezone.utc) + timedelta(hours=expires_hours)
+            expires_at = datetime.now(timezone.utc) + timedelta(
+                hours=expires_hours
+            )
 
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute(
                 """
-                INSERT OR REPLACE INTO ip_reputation 
+                INSERT OR REPLACE INTO ip_reputation
                 (ip_address, list_type, reason, severity, created_by, expires_at)
                 VALUES (?, ?, ?, ?, ?, ?)
             """,
-                (ip_address, list_type, reason, severity.value, created_by, expires_at),
+                (
+                    ip_address,
+                    list_type,
+                    reason,
+                    severity.value,
+                    created_by,
+                    expires_at,
+                ),
             )
             await conn.commit()
 
@@ -1182,7 +1282,9 @@ def get_enterprise_security_manager() -> EnterpriseSecurityManager:
     return enterprise_security_manager
 
 
-async def initialize_enterprise_security_manager(**kwargs) -> EnterpriseSecurityManager:
+async def initialize_enterprise_security_manager(
+    **kwargs,
+) -> EnterpriseSecurityManager:
     """Initialize the global enterprise security manager"""
     global enterprise_security_manager
     enterprise_security_manager = EnterpriseSecurityManager(**kwargs)

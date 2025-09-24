@@ -144,7 +144,9 @@ async def run_async_migrations() -> None:
     # Convert sync URL to async URL
     database_url = get_database_url()
     if database_url.startswith("postgresql://"):
-        database_url = database_url.replace("postgresql://", "postgresql+asyncpg://")
+        database_url = database_url.replace(
+            "postgresql://", "postgresql+asyncpg://"
+        )
 
     configuration["sqlalchemy.url"] = database_url
 

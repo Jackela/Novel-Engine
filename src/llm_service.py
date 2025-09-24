@@ -166,7 +166,9 @@ class UnifiedLLMService:
             }
             logger.info("Gemini provider configured successfully")
         else:
-            logger.warning("GEMINI_API_KEY not found - Gemini provider unavailable")
+            logger.warning(
+                "GEMINI_API_KEY not found - Gemini provider unavailable"
+            )
 
         # Future providers (OpenAI, Anthropic) can be added here
         if os.getenv("OPENAI_API_KEY"):
@@ -231,7 +233,9 @@ class UnifiedLLMService:
             # Generate response via provider
             provider_config = self.providers.get(request.provider)
             if not provider_config or not provider_config["available"]:
-                raise Exception(f"Provider {request.provider.value} not available")
+                raise Exception(
+                    f"Provider {request.provider.value} not available"
+                )
 
             # Call provider
             if request.provider == LLMProvider.GEMINI:
@@ -309,7 +313,10 @@ class UnifiedLLMService:
         api_url = provider_config["base_url"]
         api_key = provider_config["api_key"]
 
-        headers = {"Content-Type": "application/json", "x-goog-api-key": api_key}
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key,
+        }
 
         request_body = {
             "contents": [{"parts": [{"text": request.prompt}]}],
@@ -326,7 +333,10 @@ class UnifiedLLMService:
         response = await loop.run_in_executor(
             None,
             lambda: self._http_session.post(
-                api_url, headers=headers, json=request_body, timeout=request.timeout
+                api_url,
+                headers=headers,
+                json=request_body,
+                timeout=request.timeout,
             ),
         )
 
@@ -336,11 +346,15 @@ class UnifiedLLMService:
         elif response.status_code == 429:
             raise Exception("Gemini API rate limit exceeded")
         elif response.status_code != 200:
-            raise Exception(f"Gemini API error {response.status_code}: {response.text}")
+            raise Exception(
+                f"Gemini API error {response.status_code}: {response.text}"
+            )
 
         try:
             response_json = response.json()
-            content = response_json["candidates"][0]["content"]["parts"][0]["text"]
+            content = response_json["candidates"][0]["content"]["parts"][0][
+                "text"
+            ]
             return content
         except (KeyError, IndexError, TypeError) as e:
             raise Exception(f"Failed to parse Gemini response: {e}")
@@ -361,8 +375,12 @@ class UnifiedLLMService:
         try:
             if format_type == ResponseFormat.ACTION_FORMAT:
                 # Validate ACTION/TARGET/REASONING format (from PersonaAgent)
-                has_action = bool(re.search(r"ACTION:\s*(.+)", content, re.IGNORECASE))
-                has_target = bool(re.search(r"TARGET:\s*(.+)", content, re.IGNORECASE))
+                has_action = bool(
+                    re.search(r"ACTION:\s*(.+)", content, re.IGNORECASE)
+                )
+                has_target = bool(
+                    re.search(r"TARGET:\s*(.+)", content, re.IGNORECASE)
+                )
                 has_reasoning = bool(
                     re.search(r"REASONING:\s*(.+)", content, re.IGNORECASE)
                 )
@@ -385,7 +403,9 @@ class UnifiedLLMService:
                 ResponseFormat.DIALOGUE_TEXT,
             ]:
                 # Validate minimum content length and coherence
-                return len(content.strip()) > 10 and not content.startswith("[")
+                return len(content.strip()) > 10 and not content.startswith(
+                    "["
+                )
 
             return True  # Default validation
 
@@ -399,7 +419,9 @@ class UnifiedLLMService:
         timestamp = int(time.time() * 1000) % 10000
         return f"{request.requester}_{prompt_hash}_{timestamp}"
 
-    def _get_cached_response(self, request: LLMRequest) -> Optional[LLMResponse]:
+    def _get_cached_response(
+        self, request: LLMRequest
+    ) -> Optional[LLMResponse]:
         """Get cached response if available."""
         cache_key = self._generate_cache_key(request)
         cached_data = self._request_cache.get(cache_key)
@@ -420,7 +442,9 @@ class UnifiedLLMService:
 
         return None
 
-    def _cache_response(self, request: LLMRequest, response: LLMResponse) -> None:
+    def _cache_response(
+        self, request: LLMRequest, response: LLMResponse
+    ) -> None:
         """Cache successful response."""
         cache_key = self._generate_cache_key(request)
         self._request_cache[cache_key] = {
@@ -450,7 +474,9 @@ class UnifiedLLMService:
 
         # Clean old request times
         one_hour_ago = datetime.now() - timedelta(hours=1)
-        self._request_times = [t for t in self._request_times if t > one_hour_ago]
+        self._request_times = [
+            t for t in self._request_times if t > one_hour_ago
+        ]
 
         # Check hourly limit
         if len(self._request_times) >= self.cost_control.hourly_limit:
@@ -471,7 +497,9 @@ class UnifiedLLMService:
         # Rough estimation: ~4 characters per token
         return max(1, len(text) // 4)
 
-    def _calculate_cost(self, tokens: int, provider_config: Dict[str, Any]) -> float:
+    def _calculate_cost(
+        self, tokens: int, provider_config: Dict[str, Any]
+    ) -> float:
         """Calculate cost estimate for token usage."""
         cost_per_1k = provider_config.get("cost_per_1k_tokens", 0.001)
         return (tokens / 1000) * cost_per_1k
@@ -518,7 +546,10 @@ class UnifiedLLMService:
         return await self.generate(request)
 
     async def generate_narrative(
-        self, prompt: str, style: str = "dramatic", requester: str = "chronicler"
+        self,
+        prompt: str,
+        style: str = "dramatic",
+        requester: str = "chronicler",
     ) -> LLMResponse:
         """Generate narrative text."""
         enhanced_prompt = f"Write {style} narrative: {prompt}"
@@ -555,7 +586,7 @@ class UnifiedLLMService:
     ) -> LLMResponse:
         """Generate character dialogue (compatible with ai_testing approach)."""
         prompt = f"""Generate a single line of dialogue for {character_name}.
-        
+
 Personality: {json.dumps(personality, ensure_ascii=False)}
 Current emotion: {emotion}
 Context: {json.dumps(context, ensure_ascii=False)}
@@ -597,7 +628,7 @@ Context: {json.dumps(story_context, ensure_ascii=False)}
 Return in JSON format:
 {{
     "description": "Brief description of what happens",
-    "details": "Specific details of the event", 
+    "details": "Specific details of the event",
     "impact": "How this affects the story",
     "emotion": "Emotional tone"
 }}"""
@@ -635,7 +666,8 @@ Return in JSON format:
                 "total_cost": self.metrics.total_cost,
                 "daily_spend": self.metrics.daily_spend,
                 "budget_remaining": max(
-                    0, self.cost_control.daily_budget - self.metrics.daily_spend
+                    0,
+                    self.cost_control.daily_budget - self.metrics.daily_spend,
                 ),
             },
             "providers": {
@@ -653,7 +685,9 @@ Return in JSON format:
 _llm_service: Optional[UnifiedLLMService] = None
 
 
-def get_llm_service(cost_control: Optional[CostControl] = None) -> UnifiedLLMService:
+def get_llm_service(
+    cost_control: Optional[CostControl] = None,
+) -> UnifiedLLMService:
     """
     Get the global LLM service instance.
 
@@ -679,17 +713,23 @@ async def generate_character_action(prompt: str, agent_id: str) -> str:
     return response.content
 
 
-async def generate_narrative_content(prompt: str, style: str = "dramatic") -> str:
+async def generate_narrative_content(
+    prompt: str, style: str = "dramatic"
+) -> str:
     """Generate narrative content - compatible with ChroniclerAgent."""
     service = get_llm_service()
-    response = await service.generate_narrative(prompt, style, requester="chronicler")
+    response = await service.generate_narrative(
+        prompt, style, requester="chronicler"
+    )
     return response.content
 
 
 async def generate_investigation_clue(target: str, action_type: str) -> str:
     """Generate investigation clue - compatible with DirectorAgent."""
     service = get_llm_service()
-    response = await service.generate_clue(target, action_type, requester="director")
+    response = await service.generate_clue(
+        target, action_type, requester="director"
+    )
     return response.content
 
 

@@ -185,7 +185,9 @@ async def shutdown_event():
     # Cleanup any active turn resources
     for turn_id in list(active_turns.keys()):
         try:
-            await turn_orchestrator.cleanup_turn_resources(TurnId.parse(turn_id))
+            await turn_orchestrator.cleanup_turn_resources(
+                TurnId.from_string(turn_id)
+            )
         except Exception as e:
             logger.error(f"Error cleaning up turn {turn_id}: {e}")
 
@@ -224,7 +226,7 @@ async def execute_turn(
         # Parse and validate turn ID
         turn_id = None
         if request.turn_id:
-            turn_id = TurnId.parse(request.turn_id)
+            turn_id = TurnId.from_string(request.turn_id)
         else:
             turn_id = TurnId.generate()
 
@@ -232,7 +234,9 @@ async def execute_turn(
         configuration = None
         if request.configuration:
             try:
-                configuration = TurnConfiguration.from_dict(request.configuration)
+                configuration = TurnConfiguration.from_dict(
+                    request.configuration
+                )
             except Exception as e:
                 raise HTTPException(
                     status_code=400, detail=f"Invalid configuration: {e}"
@@ -241,7 +245,10 @@ async def execute_turn(
             configuration = TurnConfiguration.create_default()
 
         # Validate preconditions
-        is_valid, validation_errors = await orchestrator.validate_turn_preconditions(
+        (
+            is_valid,
+            validation_errors,
+        ) = await orchestrator.validate_turn_preconditions(
             request.participants, configuration
         )
 
@@ -267,7 +274,10 @@ async def execute_turn(
         if request.async_execution:
             # Execute asynchronously in background
             background_tasks.add_task(
-                _execute_turn_background, turn_id, request.participants, configuration
+                _execute_turn_background,
+                turn_id,
+                request.participants,
+                configuration,
             )
 
             # Return immediate response for async execution
@@ -304,12 +314,15 @@ async def execute_turn(
         raise
     except Exception as e:
         logger.error(f"Unexpected error in execute_turn: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Internal server error: {str(e)}"
+        )
 
 
 @app.get("/v1/turns/{turn_id}/status", response_model=TurnStatusResponse)
 async def get_turn_status(
-    turn_id: str, orchestrator: TurnOrchestrator = Depends(get_turn_orchestrator)
+    turn_id: str,
+    orchestrator: TurnOrchestrator = Depends(get_turn_orchestrator),
 ) -> TurnStatusResponse:
     """
     Get the current status of a turn execution.
@@ -320,16 +333,20 @@ async def get_turn_status(
     try:
         # Validate turn ID format
         try:
-            parsed_turn_id = TurnId.parse(turn_id)
+            parsed_turn_id = TurnId.from_string(turn_id)
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid turn_id format")
+            raise HTTPException(
+                status_code=400, detail="Invalid turn_id format"
+            )
 
         # Check active turns tracking
         if turn_id in active_turns:
             turn_info = active_turns[turn_id]
 
             # Get detailed status from orchestrator
-            detailed_status = await orchestrator.get_turn_status(parsed_turn_id)
+            detailed_status = await orchestrator.get_turn_status(
+                parsed_turn_id
+            )
 
             return TurnStatusResponse(
                 turn_id=turn_id,
@@ -341,13 +358,17 @@ async def get_turn_status(
                     else None
                 ),
                 current_phase=(
-                    detailed_status.get("current_phase") if detailed_status else None
+                    detailed_status.get("current_phase")
+                    if detailed_status
+                    else None
                 ),
             )
 
         else:
             # Try to get status from orchestrator (might be completed/archived)
-            detailed_status = await orchestrator.get_turn_status(parsed_turn_id)
+            detailed_status = await orchestrator.get_turn_status(
+                parsed_turn_id
+            )
 
             if detailed_status:
                 return TurnStatusResponse(
@@ -364,7 +385,9 @@ async def get_turn_status(
         raise
     except Exception as e:
         logger.error(f"Error getting turn status for {turn_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve turn status")
+        raise HTTPException(
+            status_code=500, detail="Failed to retrieve turn status"
+        )
 
 
 @app.get("/v1/health", response_model=HealthResponse)
@@ -418,12 +441,15 @@ async def list_active_turns() -> List[Dict[str, Any]]:
 
     except Exception as e:
         logger.error(f"Error listing active turns: {e}")
-        raise HTTPException(status_code=500, detail="Failed to list active turns")
+        raise HTTPException(
+            status_code=500, detail="Failed to list active turns"
+        )
 
 
 @app.delete("/v1/turns/{turn_id}")
 async def cleanup_turn(
-    turn_id: str, orchestrator: TurnOrchestrator = Depends(get_turn_orchestrator)
+    turn_id: str,
+    orchestrator: TurnOrchestrator = Depends(get_turn_orchestrator),
 ) -> Dict[str, str]:
     """
     Clean up resources for a completed or failed turn.
@@ -434,9 +460,11 @@ async def cleanup_turn(
     try:
         # Validate turn ID format
         try:
-            parsed_turn_id = TurnId.parse(turn_id)
+            parsed_turn_id = TurnId.from_string(turn_id)
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid turn_id format")
+            raise HTTPException(
+                status_code=400, detail="Invalid turn_id format"
+            )
 
         # Remove from active tracking
         if turn_id in active_turns:
@@ -451,7 +479,9 @@ async def cleanup_turn(
         raise
     except Exception as e:
         logger.error(f"Error cleaning up turn {turn_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to cleanup turn resources")
+        raise HTTPException(
+            status_code=500, detail="Failed to cleanup turn resources"
+        )
 
 
 # Utility Functions
@@ -465,7 +495,9 @@ async def _execute_turn_background(
         logger.info(f"Starting background turn execution: {turn_id}")
 
         result = await turn_orchestrator.execute_turn(
-            participants=participants, configuration=configuration, turn_id=turn_id
+            participants=participants,
+            configuration=configuration,
+            turn_id=turn_id,
         )
 
         # Update active turns tracking
@@ -528,7 +560,9 @@ def _convert_to_response(result) -> TurnExecutionResponse:
                 "target_phase": action.target_phase,
                 "triggered_at": action.triggered_at.isoformat(),
                 "status": (
-                    action.status.value if hasattr(action, "status") else "executed"
+                    action.status.value
+                    if hasattr(action, "status")
+                    else "executed"
                 ),
             }
         )
@@ -572,7 +606,9 @@ async def get_prometheus_metrics():
         return Response(content=metrics_data, media_type=content_type)
     except Exception as e:
         logger.error(f"Error serving Prometheus metrics: {e}")
-        raise HTTPException(status_code=500, detail="Error retrieving metrics data")
+        raise HTTPException(
+            status_code=500, detail="Error retrieving metrics data"
+        )
 
 
 @app.get("/v1/metrics/business-kpis")
@@ -627,12 +663,19 @@ async def general_exception_handler(request, exc):
     logger.error(f"Unhandled exception: {exc}")
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error", "error_type": "internal_error"},
+        content={
+            "detail": "Internal server error",
+            "error_type": "internal_error",
+        },
     )
 
 
 # Development Server
 if __name__ == "__main__":
     uvicorn.run(
-        "turn_api:app", host="0.0.0.0", port=8000, log_level="info", reload=True
+        "turn_api:app",
+        host="0.0.0.0",
+        port=8000,
+        log_level="info",
+        reload=True,
     )

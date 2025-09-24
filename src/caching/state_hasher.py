@@ -12,21 +12,10 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 try:
-    from src.shared_types import (
-        ActionParameters,
-        ActionType,
-        CharacterData,
-        CharacterResources,
-        CharacterStats,
-        IronLawsReport,
-        Position,
-        ProposedAction,
-        ResourceValue,
-        ValidationStatus,
-    )
+    from src.shared_types import *
 
     SHARED_TYPES_AVAILABLE = True
 except ImportError:
@@ -91,7 +80,9 @@ class StateHasher:
         """Initializes the state hasher."""
         self.config = config or HashingConfig()
         self.hash_cache: Dict[str, StateHash] = {}
-        self.hasher_class = getattr(hashlib, self.config.algorithm, hashlib.sha256)
+        self.hasher_class = getattr(
+            hashlib, self.config.algorithm, hashlib.sha256
+        )
         logger.info(f"StateHasher initialized with {self.config.algorithm}.")
 
     def _compute_hash(self, data: Any) -> str:
@@ -107,7 +98,9 @@ class StateHasher:
         if isinstance(data, (datetime, Path)):
             return str(data)
         if isinstance(data, dict):
-            return {k: self._make_json_serializable(v) for k, v in data.items()}
+            return {
+                k: self._make_json_serializable(v) for k, v in data.items()
+            }
         if isinstance(data, list):
             return [self._make_json_serializable(v) for v in data]
         if hasattr(data, "to_dict"):
@@ -129,9 +122,9 @@ class StateHasher:
             component_id=component_id,
         )
         if self.config.cache_intermediate_results:
-            self.hash_cache[f"{component_type}_{component_id or 'singleton'}"] = (
-                state_hash
-            )
+            self.hash_cache[
+                f"{component_type}_{component_id or 'singleton'}"
+            ] = state_hash
         return state_hash
 
     def clear_cache(self):

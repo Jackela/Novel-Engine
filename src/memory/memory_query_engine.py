@@ -16,10 +16,19 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
+from src.core.data_models import (
+    ErrorInfo,
+    MemoryItem,
+    MemoryType,
+    StandardResponse,
+)
 from src.database.context_db import ContextDatabase
 
-from .layered_memory import LayeredMemorySystem, MemoryQueryRequest, MemoryQueryResult
+from .layered_memory import (
+    LayeredMemorySystem,
+    MemoryQueryRequest,
+    MemoryQueryResult,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +111,9 @@ class MemoryQueryEngine:
         self._query_cache: Dict[str, Tuple[datetime, MemoryQueryResult]] = {}
         self._query_statistics: Dict[str, Any] = defaultdict(int)
 
-        logger.info(f"MemoryQueryEngine initialized for {layered_memory.agent_id}")
+        logger.info(
+            f"MemoryQueryEngine initialized for {layered_memory.agent_id}"
+        )
 
     async def execute_query(
         self,
@@ -156,7 +167,10 @@ class MemoryQueryEngine:
             enhanced_result.query_duration_ms = query_duration_ms
 
             if self.enable_query_cache:
-                self._query_cache[cache_key] = (datetime.now(), enhanced_result)
+                self._query_cache[cache_key] = (
+                    datetime.now(),
+                    enhanced_result,
+                )
                 self._cleanup_expired_cache()
 
             self._update_query_statistics(query_type, metrics)
@@ -184,7 +198,10 @@ class MemoryQueryEngine:
             )
 
     async def execute_associative_query(
-        self, seed_memory_id: str, association_depth: int = 2, max_results: int = 15
+        self,
+        seed_memory_id: str,
+        association_depth: int = 2,
+        max_results: int = 15,
     ) -> StandardResponse:
         """
         Executes an associative query to find related memories through
@@ -209,7 +226,8 @@ class MemoryQueryEngine:
                 next_level = []
 
                 for memory in current_level:
-                    # This is a simplified stand-in for a real association logic
+                    # This is a simplified stand-in for a real association
+                    # logic
                     associations = await self._find_contextual_associations(
                         memory, max_results
                     )
@@ -233,21 +251,27 @@ class MemoryQueryEngine:
 
             result = MemoryQueryResult(
                 memories=[mem for mem, _, _ in associated_memories],
-                relevance_scores=[score for _, score, _ in associated_memories],
+                relevance_scores=[
+                    score for _, score, _ in associated_memories
+                ],
                 memory_sources=["associative"] * len(associated_memories),
             )
 
             logger.info(
-                f"Associative query found {len(result.memories)} associations for {seed_memory_id}"
+                f"Associative query found {len( result.memories)} associations for {seed_memory_id}"
             )
 
-            return StandardResponse(success=True, data={"query_result": result})
+            return StandardResponse(
+                success=True, data={"query_result": result}
+            )
 
         except Exception as e:
             logger.error(f"Associative query failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="ASSOCIATIVE_QUERY_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="ASSOCIATIVE_QUERY_FAILED", message=str(e)
+                ),
             )
 
     async def execute_temporal_analysis(
@@ -268,7 +292,9 @@ class MemoryQueryEngine:
                 relevance_threshold=0.1,
             )
 
-            temporal_result = await self.layered_memory.query_memories(temporal_query)
+            temporal_result = await self.layered_memory.query_memories(
+                temporal_query
+            )
             if not temporal_result.success:
                 return temporal_result
 
@@ -302,7 +328,9 @@ class MemoryQueryEngine:
             logger.error(f"Temporal analysis failed: {e}", exc_info=True)
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="TEMPORAL_ANALYSIS_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="TEMPORAL_ANALYSIS_FAILED", message=str(e)
+                ),
             )
 
     def _analyze_query_type(self, query_text: str) -> QueryType:
@@ -329,7 +357,9 @@ class MemoryQueryEngine:
             QueryType.SIMPLE_TEXT: self._process_simple_query,
         }
 
-        process_func = processing_map.get(query_type, self._process_simple_query)
+        process_func = processing_map.get(
+            query_type, self._process_simple_query
+        )
         return await process_func(query_text, context)
 
     async def _process_simple_query(
@@ -393,9 +423,7 @@ class MemoryQueryEngine:
         self, query_text: str, context: QueryContext
     ) -> StandardResponse:
         """Processes a query with heavy emphasis on the current context."""
-        enhanced_query = (
-            f"{query_text} {context.current_situation} {context.location_context}"
-        )
+        enhanced_query = f"{query_text} {context.current_situation}{context.location_context}"
 
         query_request = MemoryQueryRequest(
             query_text=enhanced_query,
@@ -444,7 +472,9 @@ class MemoryQueryEngine:
         associations = []
         if memory.participants:
             query = MemoryQueryRequest(
-                query_text="", participants=memory.participants, max_results=max_results
+                query_text="",
+                participants=memory.participants,
+                max_results=max_results,
             )
             result = await self.layered_memory.query_memories(query)
             if result.success:
@@ -457,7 +487,9 @@ class MemoryQueryEngine:
         """Extracts key terms from content."""
         words = content.lower().split()
         stop_words = {"the", "a", "an", "in", "on", "at", "is", "and"}
-        return [word for word in words if word not in stop_words and len(word) > 3][:5]
+        return [
+            word for word in words if word not in stop_words and len(word) > 3
+        ][:5]
 
     def _extract_temporal_range(
         self, query_text: str
@@ -466,7 +498,9 @@ class MemoryQueryEngine:
         now = datetime.now()
         query_lower = query_text.lower()
         if "yesterday" in query_lower:
-            start = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0)
+            start = (now - timedelta(days=1)).replace(
+                hour=0, minute=0, second=0
+            )
             return (start, start.replace(hour=23, minute=59, second=59))
         if "last week" in query_lower:
             return (now - timedelta(days=7), now)
@@ -485,7 +519,8 @@ class MemoryQueryEngine:
 
     def _extract_emotional_filters(self, query_text: str) -> Dict[str, Any]:
         """Extracts emotional filters from a query string."""
-        # This is a placeholder for a more sophisticated NLP-based implementation.
+        # This is a placeholder for a more sophisticated NLP-based
+        # implementation.
         from .emotional_memory import EmotionalValence
 
         filters = {}
@@ -497,7 +532,8 @@ class MemoryQueryEngine:
 
     async def _get_memory_by_id(self, memory_id: str) -> List[MemoryItem]:
         """Retrieves a memory by its ID from any layer."""
-        # This is a simplified retrieval. A real implementation would be more robust.
+        # This is a simplified retrieval. A real implementation would be more
+        # robust.
         query = MemoryQueryRequest(query_text=f"id:{memory_id}")
         result = await self.layered_memory.query_memories(query)
         if result.success:
@@ -512,55 +548,75 @@ class MemoryQueryEngine:
         """Calculates a simple complexity score for a query."""
         return min(len(query_text.split()) / 20.0, 1.0)
 
-    def _analyze_memory_trends(self, memories: List[MemoryItem]) -> Dict[str, Any]:
+    def _analyze_memory_trends(
+        self, memories: List[MemoryItem]
+    ) -> Dict[str, Any]:
         """Analyzes trends in a list of memories."""
         daily_counts = defaultdict(int)
         for mem in memories:
             daily_counts[mem.timestamp.date().isoformat()] += 1
         return {"daily_memory_counts": dict(daily_counts)}
 
-    def _analyze_emotional_patterns(self, memories: List[MemoryItem]) -> Dict[str, Any]:
+    def _analyze_emotional_patterns(
+        self, memories: List[MemoryItem]
+    ) -> Dict[str, Any]:
         """Analyzes emotional patterns in a list of memories."""
         emotions = [
-            mem.emotional_weight for mem in memories if mem.emotional_weight != 0
+            mem.emotional_weight
+            for mem in memories
+            if mem.emotional_weight != 0
         ]
         if not emotions:
             return {}
         return {"average_emotion": sum(emotions) / len(emotions)}
 
-    def _analyze_activity_cycles(self, memories: List[MemoryItem]) -> Dict[str, Any]:
+    def _analyze_activity_cycles(
+        self, memories: List[MemoryItem]
+    ) -> Dict[str, Any]:
         """Analyzes activity cycles in a list of memories."""
         hourly_activity = defaultdict(int)
         for mem in memories:
             hourly_activity[mem.timestamp.hour] += 1
         return {"hourly_activity": dict(hourly_activity)}
 
-    def _analyze_general_patterns(self, memories: List[MemoryItem]) -> Dict[str, Any]:
+    def _analyze_general_patterns(
+        self, memories: List[MemoryItem]
+    ) -> Dict[str, Any]:
         """Analyzes general patterns in a list of memories."""
         type_counts = defaultdict(int)
         for mem in memories:
             type_counts[mem.memory_type.value] += 1
         return {"memory_type_distribution": dict(type_counts)}
 
-    def _generate_cache_key(self, query_text: str, context: QueryContext) -> str:
+    def _generate_cache_key(
+        self, query_text: str, context: QueryContext
+    ) -> str:
         """Generates a cache key for a query and its context."""
-        context_str = f"{context.current_situation}|{context.active_participants}"
+        context_str = (
+            f"{context.current_situation}|{context.active_participants}"
+        )
         return str(hash(f"{query_text}|{context_str}"))
 
     def _cleanup_expired_cache(self):
         """Removes expired entries from the query cache."""
-        expiry_limit = datetime.now() - timedelta(minutes=self.cache_expiry_minutes)
+        expiry_limit = datetime.now() - timedelta(
+            minutes=self.cache_expiry_minutes
+        )
         expired_keys = [
             k for k, (ts, _) in self._query_cache.items() if ts < expiry_limit
         ]
         for key in expired_keys:
             del self._query_cache[key]
 
-    def _update_query_statistics(self, query_type: QueryType, metrics: QueryMetrics):
+    def _update_query_statistics(
+        self, query_type: QueryType, metrics: QueryMetrics
+    ):
         """Updates query statistics."""
         self._query_statistics["total_queries"] += 1
         self._query_statistics[f"{query_type.value}_queries"] += 1
-        self._query_statistics["total_duration_ms"] += metrics.query_duration_ms
+        self._query_statistics[
+            "total_duration_ms"
+        ] += metrics.query_duration_ms
         total_queries = self._query_statistics["total_queries"]
         total_duration = self._query_statistics["total_duration_ms"]
         self._query_statistics["average_query_time"] = (

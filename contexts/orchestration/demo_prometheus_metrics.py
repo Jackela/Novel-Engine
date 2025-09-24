@@ -73,11 +73,17 @@ def demonstrate_core_kpis():
     turn_1_duration = 18.5
 
     llm_cost_per_request.labels(
-        phase="total", model_type="gpt-4", success="true", narrative_depth="detailed"
+        phase="total",
+        model_type="gpt-4",
+        success="true",
+        narrative_depth="detailed",
     ).set(float(turn_1_cost))
 
     turn_duration_seconds.labels(
-        phase="complete", participants_count="2-3", ai_enabled="true", success="true"
+        phase="complete",
+        participants_count="2-3",
+        ai_enabled="true",
+        success="true",
     ).observe(turn_1_duration)
 
     turns_total.labels(
@@ -103,43 +109,61 @@ def demonstrate_core_kpis():
                 provider="openai", model="gpt-4", phase=phase_name
             ).inc(cost)
 
-    print(f"   Turn 1: ${turn_1_cost}, {turn_1_duration}s, 3 participants, SUCCESS")
+    print(
+        f"   Turn 1: ${turn_1_cost}, {turn_1_duration}s, 3 participants, SUCCESS"
+    )
 
     # Simulation 2: Another successful turn
     turn_2_cost = Decimal("1.85")
     turn_2_duration = 15.2
 
     llm_cost_per_request.labels(
-        phase="total", model_type="gpt-4", success="true", narrative_depth="standard"
+        phase="total",
+        model_type="gpt-4",
+        success="true",
+        narrative_depth="standard",
     ).set(float(turn_2_cost))
 
     turn_duration_seconds.labels(
-        phase="complete", participants_count="1", ai_enabled="true", success="true"
+        phase="complete",
+        participants_count="1",
+        ai_enabled="true",
+        success="true",
     ).observe(turn_2_duration)
 
     turns_total.labels(
         status="success", participants_range="1", ai_enabled="true"
     ).inc()
 
-    print(f"   Turn 2: ${turn_2_cost}, {turn_2_duration}s, 1 participant, SUCCESS")
+    print(
+        f"   Turn 2: ${turn_2_cost}, {turn_2_duration}s, 1 participant, SUCCESS"
+    )
 
     # Simulation 3: Failed turn
     turn_3_cost = Decimal("0.45")  # Partial cost due to failure
     turn_3_duration = 8.1
 
     llm_cost_per_request.labels(
-        phase="total", model_type="gpt-4", success="false", narrative_depth="standard"
+        phase="total",
+        model_type="gpt-4",
+        success="false",
+        narrative_depth="standard",
     ).set(float(turn_3_cost))
 
     turn_duration_seconds.labels(
-        phase="complete", participants_count="4-5", ai_enabled="true", success="false"
+        phase="complete",
+        participants_count="4-5",
+        ai_enabled="true",
+        success="false",
     ).observe(turn_3_duration)
 
     turns_total.labels(
         status="error", participants_range="4-5", ai_enabled="true"
     ).inc()
 
-    print(f"   Turn 3: ${turn_3_cost}, {turn_3_duration}s, 4 participants, FAILED")
+    print(
+        f"   Turn 3: ${turn_3_cost}, {turn_3_duration}s, 4 participants, FAILED"
+    )
 
     # Generate metrics output
     print("\n📈 Generating Prometheus metrics...")
@@ -147,10 +171,13 @@ def demonstrate_core_kpis():
 
     # Verify core KPIs are present
     core_kpi_checks = {
-        "llm_cost_metric": "novel_engine_llm_cost_per_request_dollars" in metrics_data,
-        "turn_duration_metric": "novel_engine_turn_duration_seconds" in metrics_data,
+        "llm_cost_metric": "novel_engine_llm_cost_per_request_dollars"
+        in metrics_data,
+        "turn_duration_metric": "novel_engine_turn_duration_seconds"
+        in metrics_data,
         "turns_total_metric": "novel_engine_turns_total" in metrics_data,
-        "phase_duration_metric": "novel_engine_phase_duration_seconds" in metrics_data,
+        "phase_duration_metric": "novel_engine_phase_duration_seconds"
+        in metrics_data,
         "ai_cost_metric": "novel_engine_ai_cost_total_dollars" in metrics_data,
     }
 
@@ -249,7 +276,9 @@ if __name__ == "__main__":
         print("✅ Multi-dimensional labeling working")
         print("✅ Histogram buckets configured for performance analysis")
         print("\n🚀 Ready for /metrics endpoint integration!")
-        print("🚀 Ready to proceed to Wave 3: OpenTelemetry Distributed Tracing")
+        print(
+            "🚀 Ready to proceed to Wave 3: OpenTelemetry Distributed Tracing"
+        )
     else:
         print("\n❌ Some metrics validation checks failed")
         print("🔧 Review implementation before proceeding")

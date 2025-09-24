@@ -8,7 +8,7 @@ Integrates with Novel Engine distributed tracing system.
 
 import logging
 import time
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, Optional
 from uuid import uuid4
 
 from fastapi import Request, Response
@@ -73,7 +73,9 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
             "OpenTelemetryMiddleware initialized with Novel Engine tracer integration"
         )
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable
+    ) -> Response:
         """
         Process HTTP request with distributed tracing.
 
@@ -100,6 +102,11 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
 
         span_name = f"{request.method} {self._get_route_pattern(request)}"
 
+        if otel_tracer is None:
+            # If tracer is not available, continue without tracing
+            response = await call_next(request)
+            return response
+
         with otel_tracer.start_as_current_span(
             name=span_name, kind=trace.SpanKind.SERVER
         ) as span:
@@ -121,13 +128,15 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
                 # Set span status based on HTTP status code
                 if response.status_code >= 400:
                     span.set_status(
-                        Status(StatusCode.ERROR, f"HTTP {response.status_code}")
+                        Status(
+                            StatusCode.ERROR, f"HTTP {response.status_code}"
+                        )
                     )
                 else:
                     span.set_status(Status(StatusCode.OK))
 
                 # Inject trace context into response headers for downstream services
-                response_carrier = {}
+                response_carrier: Dict[str, str] = {}
                 propagate.inject(response_carrier)
 
                 for key, value in response_carrier.items():
@@ -220,7 +229,9 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
         content_length = request.headers.get("content-length")
         if content_length:
             try:
-                span.set_attribute("http.request_content_length", int(content_length))
+                span.set_attribute(
+                    "http.request_content_length", int(content_length)
+                )
             except (ValueError, TypeError):
                 pass
 
@@ -249,7 +260,9 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
         content_length = response.headers.get("content-length")
         if content_length:
             try:
-                span.set_attribute("http.response_content_length", int(content_length))
+                span.set_attribute(
+                    "http.response_content_length", int(content_length)
+                )
             except (ValueError, TypeError):
                 pass
 
@@ -336,11 +349,14 @@ def setup_fastapi_tracing(
     # Enable automatic instrumentation if requested
     if enable_automatic_instrumentation:
         try:
+            # Convert list to comma-separated string for FastAPI instrumentation
+            excluded_urls_str = None
+            if excluded_urls is not None:
+                excluded_urls_str = ",".join(excluded_urls)
+
             FastAPIInstrumentor.instrument_app(
                 app,
-                excluded_urls=(
-                    get_excluded_urls() if excluded_urls is None else excluded_urls
-                ),
+                excluded_urls=excluded_urls_str,
             )
             logger.info("FastAPI automatic instrumentation enabled")
         except Exception as e:

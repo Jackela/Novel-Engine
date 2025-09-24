@@ -109,7 +109,9 @@ class TestSystemOrchestrator:
     @pytest.fixture
     def orchestrator(self, mock_event_bus, mock_database):
         """Create orchestrator instance for testing."""
-        return SystemOrchestrator(event_bus=mock_event_bus, database=mock_database)
+        return SystemOrchestrator(
+            event_bus=mock_event_bus, database=mock_database
+        )
 
     def test_orchestrator_initialization(self, orchestrator):
         """Test orchestrator initialization."""
@@ -124,7 +126,9 @@ class TestSystemOrchestrator:
         orchestrator.database.initialize_standard_temple = AsyncMock(
             return_value=Mock(success=True)
         )
-        orchestrator.database.health_check = AsyncMock(return_value={"healthy": True})
+        orchestrator.database.health_check = AsyncMock(
+            return_value={"healthy": True}
+        )
 
         result = await orchestrator.startup()
 
@@ -274,14 +278,20 @@ class TestPersonaAgent:
         return {
             "name": "Test Persona",
             "personality": "Analytical and methodical",
-            "decision_weights": {"curiosity": 0.8, "caution": 0.6, "aggression": 0.3},
+            "decision_weights": {
+                "curiosity": 0.8,
+                "caution": 0.6,
+                "aggression": 0.3,
+            },
             "skills": ["Investigation", "Analysis"],
         }
 
     @pytest.fixture
     def persona_agent(self, persona_config, mock_event_bus):
         """Create persona agent instance."""
-        return PersonaAgent(character_config=persona_config, event_bus=mock_event_bus)
+        return PersonaAgent(
+            character_config=persona_config, event_bus=mock_event_bus
+        )
 
     def test_persona_agent_initialization(self, persona_agent, persona_config):
         """Test persona agent initialization."""
@@ -353,7 +363,10 @@ class TestDirectorAgent:
         context = {
             "characters": ["Alice", "Bob"],
             "location": "Forest clearing",
-            "recent_actions": ["Alice investigated the tree", "Bob found a path"],
+            "recent_actions": [
+                "Alice investigated the tree",
+                "Bob found a path",
+            ],
         }
 
         with patch.object(
@@ -403,7 +416,9 @@ class TestIntegrationScenarios:
         database = Mock(spec=ContextDatabase)
         database.initialize = AsyncMock()
         database.close = AsyncMock()
-        database.initialize_standard_temple = AsyncMock(return_value=Mock(success=True))
+        database.initialize_standard_temple = AsyncMock(
+            return_value=Mock(success=True)
+        )
         database.close_standard_temple = AsyncMock()
         database.store_context = AsyncMock()
         database.get_context = AsyncMock(return_value={"context": "test"})
@@ -415,9 +430,13 @@ class TestIntegrationScenarios:
         mock_connection.commit = AsyncMock()
         mock_connection.__aenter__ = AsyncMock(return_value=mock_connection)
         mock_connection.__aexit__ = AsyncMock(return_value=None)
-        database.get_enhanced_connection = AsyncMock(return_value=mock_connection)
+        database.get_enhanced_connection = AsyncMock(
+            return_value=mock_connection
+        )
 
-        orchestrator = SystemOrchestrator(event_bus=event_bus, database=database)
+        orchestrator = SystemOrchestrator(
+            event_bus=event_bus, database=database
+        )
 
         return {
             "event_bus": event_bus,
@@ -482,7 +501,9 @@ class TestIntegrationScenarios:
         system["event_bus"].subscribe("interaction_result", capture_results)
 
         # Simulate interaction processing
-        await system["event_bus"].publish("character_interaction", interaction_data)
+        await system["event_bus"].publish(
+            "character_interaction", interaction_data
+        )
 
         # Allow event processing
         await asyncio.sleep(0.1)
@@ -506,7 +527,10 @@ class TestIntegrationScenarios:
                 "Apprentice noticed strange symbols",
             ],
             "mood": "mysterious",
-            "objectives": ["Decipher the symbols", "Understand the tome's purpose"],
+            "objectives": [
+                "Decipher the symbols",
+                "Understand the tome's purpose",
+            ],
         }
 
         # Test narrative generation event flow
@@ -518,7 +542,9 @@ class TestIntegrationScenarios:
         system["event_bus"].subscribe("narrative_generated", capture_narrative)
 
         # Trigger narrative generation
-        await system["event_bus"].publish("generate_narrative", narrative_context)
+        await system["event_bus"].publish(
+            "generate_narrative", narrative_context
+        )
 
         # Allow processing
         await asyncio.sleep(0.1)
@@ -694,7 +720,8 @@ class TestSecurityRequirements:
         for pattern in dangerous_patterns:
             # Should not find hardcoded credentials
             assert (
-                pattern.upper() not in source.upper() or "test" in source.lower()
+                pattern.upper() not in source.upper()
+                or "test" in source.lower()
             )  # Allow in test contexts
 
 

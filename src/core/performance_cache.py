@@ -70,7 +70,9 @@ class CacheBackend(ABC):
         pass
 
     @abstractmethod
-    async def set(self, key: str, value: Any, ttl: Optional[float] = None) -> bool:
+    async def set(
+        self, key: str, value: Any, ttl: Optional[float] = None
+    ) -> bool:
         """
         Store a value in the cache with optional TTL.
 
@@ -161,7 +163,11 @@ class MemoryCache(CacheBackend):
 
             # Create and store entry
             entry = CacheEntry(
-                key=key, value=value, ttl=ttl, level=level, memory_size=memory_size
+                key=key,
+                value=value,
+                ttl=ttl,
+                level=level,
+                memory_size=memory_size,
             )
 
             self.entries[key] = entry
@@ -197,7 +203,6 @@ class MemoryCache(CacheBackend):
             self.memory_usage + required_memory > self.max_memory_bytes
             or len(self.entries) >= self.max_size
         ):
-
             if not self.entries:
                 break
 
@@ -269,7 +274,9 @@ class MemoryCache(CacheBackend):
     async def get_stats(self) -> Dict[str, Any]:
         """Get cache performance statistics."""
         total_requests = self.hit_count + self.miss_count
-        hit_rate = (self.hit_count / total_requests) if total_requests > 0 else 0
+        hit_rate = (
+            (self.hit_count / total_requests) if total_requests > 0 else 0
+        )
 
         return {
             "entries": len(self.entries),
@@ -286,7 +293,9 @@ class MemoryCache(CacheBackend):
 class PerformanceCache:
     """Main performance cache system with multiple backends and intelligent routing."""
 
-    def __init__(self, memory_cache_size: int = 10000, memory_limit_mb: int = 500):
+    def __init__(
+        self, memory_cache_size: int = 10000, memory_limit_mb: int = 500
+    ):
         self.memory_cache = MemoryCache(memory_cache_size, memory_limit_mb)
         self.cache_stats = {
             "character_hits": 0,
@@ -335,10 +344,14 @@ class PerformanceCache:
             await self.memory_cache.delete(key)
 
         if expired_keys:
-            logger.debug(f"Cleaned up {len(expired_keys)} expired cache entries")
+            logger.debug(
+                f"Cleaned up {len(expired_keys)} expired cache entries"
+            )
 
     # Character Caching Methods
-    async def get_character(self, character_id: str) -> Optional[Dict[str, Any]]:
+    async def get_character(
+        self, character_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Get character data from cache."""
         key = f"character:{character_id}"
         result = await self.memory_cache.get(key)
@@ -403,7 +416,10 @@ class PerformanceCache:
         return result
 
     async def set_template(
-        self, template_key: str, template_content: str, ttl: Optional[float] = None
+        self,
+        template_key: str,
+        template_content: str,
+        ttl: Optional[float] = None,
     ) -> bool:
         """Cache template with no expiration (templates rarely change)."""
         key = f"template:{template_key}"
@@ -433,11 +449,15 @@ class PerformanceCache:
 
         # Calculate domain-specific hit rates
         char_total = (
-            self.cache_stats["character_hits"] + self.cache_stats["character_misses"]
+            self.cache_stats["character_hits"]
+            + self.cache_stats["character_misses"]
         )
-        story_total = self.cache_stats["story_hits"] + self.cache_stats["story_misses"]
+        story_total = (
+            self.cache_stats["story_hits"] + self.cache_stats["story_misses"]
+        )
         template_total = (
-            self.cache_stats["template_hits"] + self.cache_stats["template_misses"]
+            self.cache_stats["template_hits"]
+            + self.cache_stats["template_misses"]
         )
 
         return {
@@ -446,12 +466,14 @@ class PerformanceCache:
                 "character": {
                     "hits": self.cache_stats["character_hits"],
                     "misses": self.cache_stats["character_misses"],
-                    "hit_rate": self.cache_stats["character_hits"] / max(char_total, 1),
+                    "hit_rate": self.cache_stats["character_hits"]
+                    / max(char_total, 1),
                 },
                 "story": {
                     "hits": self.cache_stats["story_hits"],
                     "misses": self.cache_stats["story_misses"],
-                    "hit_rate": self.cache_stats["story_hits"] / max(story_total, 1),
+                    "hit_rate": self.cache_stats["story_hits"]
+                    / max(story_total, 1),
                 },
                 "template": {
                     "hits": self.cache_stats["template_hits"],
@@ -469,7 +491,9 @@ class PerformanceCache:
         logger.info("Cache warming initiated")
 
         if character_ids:
-            logger.info(f"Pre-warming cache for {len(character_ids)} characters")
+            logger.info(
+                f"Pre-warming cache for {len(character_ids)} characters"
+            )
             # Would load character data here
 
         # Pre-load critical templates

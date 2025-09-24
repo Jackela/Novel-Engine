@@ -18,4 +18,6 @@ are fairly determined based on the participants' capabilities and positions.
 
 __version__ = "2.0.0"
 __context_name__ = "interactions"
-__description__ = "Interaction Bounded Context with Negotiation and Diplomatic Systems"
+__description__ = (
+    "Interaction Bounded Context with Negotiation and Diplomatic Systems"
+)

@@ -36,7 +36,10 @@ class MonitoringSystemValidator:
         logger.info("🚀 Starting Wave 5 Monitoring System Validation")
 
         validation_tests = [
-            ("Monitoring Directory Structure", self.validate_directory_structure),
+            (
+                "Monitoring Directory Structure",
+                self.validate_directory_structure,
+            ),
             ("Monitoring Module Imports", self.validate_monitoring_imports),
             ("Observability Server", self.validate_observability_server),
             ("Synthetic Monitoring", self.validate_synthetic_monitoring),
@@ -57,7 +60,9 @@ class MonitoringSystemValidator:
                 self.validation_results[test_name] = {
                     "status": "PASSED" if result else "FAILED",
                     "details": (
-                        result if isinstance(result, dict) else {"result": result}
+                        result
+                        if isinstance(result, dict)
+                        else {"result": result}
                     ),
                 }
 
@@ -85,7 +90,9 @@ class MonitoringSystemValidator:
             "passed_tests": len(self.passed_tests),
             "failed_tests": len(self.failed_tests),
             "success_rate": len(self.passed_tests) / len(validation_tests),
-            "overall_status": "PASSED" if len(self.failed_tests) == 0 else "FAILED",
+            "overall_status": "PASSED"
+            if len(self.failed_tests) == 0
+            else "FAILED",
             "test_results": self.validation_results,
             "failed_test_names": self.failed_tests,
             "passed_test_names": self.passed_tests,
@@ -125,7 +132,11 @@ class MonitoringSystemValidator:
             "ops/monitoring/opentelemetry_tracing.py",
         ]
 
-        structure_results = {"directories": {}, "files": {}, "all_present": True}
+        structure_results = {
+            "directories": {},
+            "files": {},
+            "all_present": True,
+        }
 
         # Check directories
         for dir_path in required_dirs:
@@ -214,7 +225,9 @@ class MonitoringSystemValidator:
                 "_setup_logging",
             ]
             for method_name in expected_methods:
-                results["server_methods"][method_name] = hasattr(server, method_name)
+                results["server_methods"][method_name] = hasattr(
+                    server, method_name
+                )
 
             # Test factory function
             server2 = create_observability_server({"environment": "test"})
@@ -255,14 +268,18 @@ class MonitoringSystemValidator:
                 "CheckResult",
             ]
             for class_name in classes_to_test:
-                results["classes_available"][class_name] = class_name in locals()
+                results["classes_available"][class_name] = (
+                    class_name in locals()
+                )
 
             # Test basic functionality
             monitor = SyntheticMonitor()
             results["functionality_test"] = monitor is not None
 
             # Test helper functions
-            http_check = create_http_check("test", "http://example.com", 200, 60.0)
+            http_check = create_http_check(
+                "test", "http://example.com", 200, 60.0
+            )
             api_check = create_api_health_check(
                 "test", "http://example.com", ["/health"], 120.0
             )
@@ -304,7 +321,9 @@ class MonitoringSystemValidator:
                 "MetricData",
             ]
             for class_name in classes_to_test:
-                results["classes_available"][class_name] = class_name in locals()
+                results["classes_available"][class_name] = (
+                    class_name in locals()
+                )
 
             # Test configuration
             config = DashboardConfig(
@@ -346,7 +365,9 @@ class MonitoringSystemValidator:
             # Test class availability
             classes_to_test = ["AlertManager", "NotificationConfig"]
             for class_name in classes_to_test:
-                results["classes_available"][class_name] = class_name in locals()
+                results["classes_available"][class_name] = (
+                    class_name in locals()
+                )
 
             # Test notification config
             config = NotificationConfig(
@@ -392,7 +413,9 @@ class MonitoringSystemValidator:
             # Test class availability
             classes_to_test = ["LoggingConfig"]
             for class_name in classes_to_test:
-                results["classes_available"][class_name] = class_name in locals()
+                results["classes_available"][class_name] = (
+                    class_name in locals()
+                )
 
             # Test logging config
             config = LoggingConfig(
@@ -443,7 +466,9 @@ class MonitoringSystemValidator:
                 "start_background_collection",
             ]
             for func_name in functions_to_test:
-                results["functions_available"][func_name] = func_name in locals()
+                results["functions_available"][func_name] = (
+                    func_name in locals()
+                )
 
             # Test metrics collector instance
             results["functionality_test"] = metrics_collector is not None
@@ -482,13 +507,17 @@ class MonitoringSystemValidator:
             # Test class availability
             classes_to_test = ["HealthCheckManager"]
             for class_name in classes_to_test:
-                results["classes_available"][class_name] = class_name in locals()
+                results["classes_available"][class_name] = (
+                    class_name in locals()
+                )
 
             # Test health manager instance
             results["functionality_test"] = health_manager is not None
 
             # Test functions
-            results["create_health_endpoint"] = callable(create_health_endpoint)
+            results["create_health_endpoint"] = callable(
+                create_health_endpoint
+            )
 
         except ImportError as e:
             results["import_error"] = str(e)
@@ -506,7 +535,9 @@ class MonitoringSystemValidator:
         }
 
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             loader = ConfigEnvironmentLoader()
 
@@ -523,7 +554,9 @@ class MonitoringSystemValidator:
             # Test if monitoring can use the configuration
             if config:
                 results["monitoring_config"] = (
-                    "monitoring" in config or "metrics" in config or "logs" in config
+                    "monitoring" in config
+                    or "metrics" in config
+                    or "logs" in config
                 )
 
         except Exception as e:
@@ -553,7 +586,9 @@ def main():
     print("🏁 Wave 5 Monitoring System Validation Results")
     print(f"{'='*80}")
     print(f"📊 Total Tests: {results['total_tests']}")
-    print(f"✅ Passed: {results['passed_tests']} ({results['success_rate']:.1%})")
+    print(
+        f"✅ Passed: {results['passed_tests']} ({results['success_rate']:.1%})"
+    )
     print(f"❌ Failed: {results['failed_tests']}")
     print(f"⏱️  Duration: {results['duration_seconds']:.2f} seconds")
     print(f"🎯 Overall Status: {results['overall_status']}")

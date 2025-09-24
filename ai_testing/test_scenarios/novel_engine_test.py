@@ -287,7 +287,6 @@ async def run_actual_tests():
     import httpx
 
     async with httpx.AsyncClient(timeout=120.0) as client:
-
         # 创建测试计划
         print("\n📋 创建测试计划...")
         response = await client.post(
@@ -338,8 +337,12 @@ async def run_actual_tests():
             print("\n📄 生成测试报告...")
             report = {
                 "test_framework_validation": {
-                    "framework_operational": result.get("overall_score", 0) > 0,
-                    "can_test_novel_engine": len(result.get("phase_results", [])) > 0,
+                    "framework_operational": result.get("overall_score", 0)
+                    > 0,
+                    "can_test_novel_engine": len(
+                        result.get("phase_results", [])
+                    )
+                    > 0,
                     "quality_assessment_working": any(
                         p.get("phase") == "ai_quality_assessment"
                         for p in result.get("phase_results", [])
@@ -370,7 +373,9 @@ async def run_actual_tests():
                 "ai_testing/validation_reports/novel_engine_test_report.json"
             )
             report_path.parent.mkdir(parents=True, exist_ok=True)
-            report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False))
+            report_path.write_text(
+                json.dumps(report, indent=2, ensure_ascii=False)
+            )
 
             print(f"\n💾 测试报告已保存至: {report_path}")
 

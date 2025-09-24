@@ -169,7 +169,9 @@ class SecurityLogger:
         # Log to main logger
         self.logger.log(getattr(logging, severity.value), log_entry.to_json())
 
-    def get_recent_security_events(self, limit: int = 100) -> List[StructuredLogEntry]:
+    def get_recent_security_events(
+        self, limit: int = 100
+    ) -> List[StructuredLogEntry]:
         """Get recent security events."""
         with self._lock:
             return list(self.security_events)[-limit:]
@@ -355,7 +357,9 @@ class StructuredLogger:
         """Log warning level message."""
         self.log(LogLevel.WARNING, message, **kwargs)
 
-    def error(self, message: str, exc_info: Optional[Exception] = None, **kwargs):
+    def error(
+        self, message: str, exc_info: Optional[Exception] = None, **kwargs
+    ):
         """Log error level message with optional exception info."""
 
         error_details = None
@@ -379,9 +383,13 @@ class StructuredLogger:
         else:
             log_message = message
 
-        self.logger.error(log_message, exc_info=exc_info if exc_info else False)
+        self.logger.error(
+            log_message, exc_info=exc_info if exc_info else False
+        )
 
-    def critical(self, message: str, exc_info: Optional[Exception] = None, **kwargs):
+    def critical(
+        self, message: str, exc_info: Optional[Exception] = None, **kwargs
+    ):
         """Log critical level message."""
         self.error(message, exc_info, **kwargs)
         self.log(LogLevel.CRITICAL, message, LogCategory.ERROR, **kwargs)
@@ -410,7 +418,9 @@ class StructuredLogger:
         if self.output_format == "json":
             log_message = log_entry.to_json()
         else:
-            log_message = f"Performance: {operation} completed in {duration_ms:.2f}ms"
+            log_message = (
+                f"Performance: {operation} completed in {duration_ms:.2f}ms"
+            )
 
         self.logger.info(log_message)
 
@@ -449,7 +459,9 @@ class StructuredLogger:
     ):
         """Log an audit event."""
         context = self.get_context()
-        self.audit_logger.log_audit_event(action, resource, context, outcome, details)
+        self.audit_logger.log_audit_event(
+            action, resource, context, outcome, details
+        )
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
@@ -578,7 +590,10 @@ def setup_logging(
     async def get_security_events(limit: int = 100):
         """Get recent security events."""
         events = logger.security_logger.get_recent_security_events(limit)
-        return {"events": [event.to_dict() for event in events], "count": len(events)}
+        return {
+            "events": [event.to_dict() for event in events],
+            "count": len(events),
+        }
 
     logger.info("Logging system initialized successfully")
     return logger

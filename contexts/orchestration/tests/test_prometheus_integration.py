@@ -6,15 +6,25 @@ Tests for M10 Prometheus metrics collection and endpoint functionality.
 Validates that core KPIs are properly collected and exposed.
 """
 
+# Add root directory to path for imports
+import sys
 from decimal import Decimal
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
 # Import the FastAPI app with M10 enhancements
-from ..api.turn_api import app, enhanced_performance_tracker
-from ..infrastructure.monitoring import PrometheusMetricsCollector
+from contexts.orchestration.api.turn_api import (
+    app,
+    enhanced_performance_tracker,
+)
+from contexts.orchestration.infrastructure.monitoring import (
+    PrometheusMetricsCollector,
+)
 
 
 class TestPrometheusIntegration:
@@ -203,7 +213,10 @@ class TestPrometheusIntegration:
 
         # Check for HTTP metrics from middleware
         assert "novel_engine_orchestration_http_requests_total" in content
-        assert "novel_engine_orchestration_http_request_duration_seconds" in content
+        assert (
+            "novel_engine_orchestration_http_request_duration_seconds"
+            in content
+        )
 
     def test_metrics_content_type(self, client):
         """Test that metrics endpoint returns correct content type."""

@@ -42,7 +42,9 @@ class TestCharacterLoading:
         for char_name in GENERIC_CHARACTERS:
             agent = factory.create_character(char_name)
             assert agent.character_directory_name == char_name
-            assert agent.character_name is not None  # Should have actual character name
+            assert (
+                agent.character_name is not None
+            )  # Should have actual character name
             assert agent.agent_id is not None
             assert hasattr(agent, "character_context")
 
@@ -50,7 +52,9 @@ class TestCharacterLoading:
         """Test that character directories have proper structure"""
         for char_name in GENERIC_CHARACTERS:
             char_dir = CHARACTER_DIR / char_name
-            assert char_dir.exists(), f"Character directory {char_name} does not exist"
+            assert (
+                char_dir.exists()
+            ), f"Character directory {char_name} does not exist"
 
             # Check required files
             md_file = char_dir / f"character_{char_name}.md"
@@ -90,7 +94,9 @@ class TestCharacterLoading:
                 assert (
                     field in char_info
                 ), f"Missing {field} in {char_name} character info"
-                assert char_info[field], f"Empty {field} in {char_name} character info"
+                assert char_info[
+                    field
+                ], f"Empty {field} in {char_name} character info"
 
     def test_no_branded_content_in_characters(self):
         """Test that no branded content exists in character files"""
@@ -146,7 +152,9 @@ class TestCharacterLoading:
         # Context is already loaded during initialization
 
         assert agent.character_context is not None
-        assert len(agent.character_context) > 100  # Should have substantial content
+        assert (
+            len(agent.character_context) > 100
+        )  # Should have substantial content
         assert "Alex Chen" in agent.character_context
         assert "Galactic Defense Force" in agent.character_context
 
@@ -238,7 +246,9 @@ class TestGenericCharacterProfiles:
 
         # Should have engineering equipment
         equipment = stats["equipment"]
-        assert any("tool" in item.lower() for item in equipment["special_gear"])
+        assert any(
+            "tool" in item.lower() for item in equipment["special_gear"]
+        )
 
     def test_test_character_profile(self):
         """Test test character profile for development purposes"""
@@ -257,7 +267,10 @@ class TestGenericCharacterProfiles:
 
         char_info = stats["character"]
         assert "Test" in char_info["name"]
-        assert "Test" in char_info["faction"] or "Development" in char_info["faction"]
+        assert (
+            "Test" in char_info["faction"]
+            or "Development" in char_info["faction"]
+        )
 
         # Test character should have balanced stats
         combat = stats["combat_stats"]
@@ -288,7 +301,9 @@ class TestCharacterStatistics:
             for stat in required_combat_stats:
                 assert stat in combat, f"Missing {stat} in {char_name}"
                 value = combat[stat]
-                assert 1 <= value <= 10, f"Invalid {stat} value {value} for {char_name}"
+                assert (
+                    1 <= value <= 10
+                ), f"Invalid {stat} value {value} for {char_name}"
 
     def test_psychological_profile_validity(self):
         """Test that psychological profiles are valid"""
@@ -311,7 +326,9 @@ class TestCharacterStatistics:
                     stat in psych
                 ), f"Missing {stat} in {char_name} psychological profile"
                 value = psych[stat]
-                assert 1 <= value <= 10, f"Invalid {stat} value {value} for {char_name}"
+                assert (
+                    1 <= value <= 10
+                ), f"Invalid {stat} value {value} for {char_name}"
 
     def test_equipment_completeness(self):
         """Test that character equipment is complete and appropriate"""
@@ -329,7 +346,9 @@ class TestCharacterStatistics:
             ]
 
             for item in required_equipment:
-                assert item in equipment, f"Missing {item} in {char_name} equipment"
+                assert (
+                    item in equipment
+                ), f"Missing {item} in {char_name} equipment"
 
             # Special gear should be a list
             assert isinstance(equipment["special_gear"], list)
@@ -530,7 +549,9 @@ class TestCharacterInteractions:
 
         assert len(director.agents) == 2
         assert pilot.agent_id in [agent.agent_id for agent in director.agents]
-        assert scientist.agent_id in [agent.agent_id for agent in director.agents]
+        assert scientist.agent_id in [
+            agent.agent_id for agent in director.agents
+        ]
 
 
 class TestPerformanceAndScalability:
@@ -548,7 +569,9 @@ class TestPerformanceAndScalability:
         end_time = time.time()
 
         loading_time = end_time - start_time
-        assert loading_time < 2.0, f"Character loading took too long: {loading_time}s"
+        assert (
+            loading_time < 2.0
+        ), f"Character loading took too long: {loading_time}s"
 
     def test_multiple_character_memory_usage(self):
         """Test memory usage with multiple characters"""
@@ -582,7 +605,9 @@ class TestPerformanceAndScalability:
                 executor.submit(load_character, char_name)
                 for char_name in GENERIC_CHARACTERS
             ]
-            agents = [f.result() for f in concurrent.futures.as_completed(futures)]
+            agents = [
+                f.result() for f in concurrent.futures.as_completed(futures)
+            ]
 
         assert len(agents) == len(GENERIC_CHARACTERS)
 
@@ -645,9 +670,13 @@ class TestCharacterValidation:
         # Characters should be reasonably balanced
         min_total = min(combat_totals.values())
         max_total = max(combat_totals.values())
-        balance_ratio = max_total / min_total if min_total > 0 else float("inf")
+        balance_ratio = (
+            max_total / min_total if min_total > 0 else float("inf")
+        )
 
-        assert balance_ratio <= 1.5, f"Characters are unbalanced: {combat_totals}"
+        assert (
+            balance_ratio <= 1.5
+        ), f"Characters are unbalanced: {combat_totals}"
 
     def test_sci_fi_theme_consistency(self):
         """Test that all characters maintain sci-fi theme consistency"""
@@ -676,8 +705,12 @@ class TestCharacterValidation:
                 md_content = f.read().lower()
 
             # Should contain sci-fi elements
-            has_sci_fi = any(keyword in md_content for keyword in sci_fi_keywords)
-            assert has_sci_fi, f"Character {char_name} lacks sci-fi theme elements"
+            has_sci_fi = any(
+                keyword in md_content for keyword in sci_fi_keywords
+            )
+            assert (
+                has_sci_fi
+            ), f"Character {char_name} lacks sci-fi theme elements"
 
 
 # Pytest configuration

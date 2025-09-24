@@ -3,16 +3,12 @@ import unittest
 from unittest.mock import Mock, mock_open, patch
 
 from shared_types import CharacterAction
-from src.agents.persona_agent.protocols import (
-    ThreatLevel,
-    WorldEvent,
-)
+from src.agents.persona_agent.protocols import ThreatLevel, WorldEvent
 from src.event_bus import EventBus
 from src.persona_agent import PersonaAgent
 
 
 class TestPersonaAgent(unittest.TestCase):
-
     def setUp(self):
         self.event_bus = Mock(spec=EventBus)
         # Mock the file system operations
@@ -37,7 +33,9 @@ class TestPersonaAgent(unittest.TestCase):
     def test_handle_turn_start_emits_action(self):
         """Test that handle_turn_start calls _make_decision and emits an AGENT_ACTION_COMPLETE event."""
         # Mock the _make_decision method to return a specific action
-        mock_action = CharacterAction(action_type="test", reasoning="test reasoning")
+        mock_action = CharacterAction(
+            action_type="test", reasoning="test reasoning"
+        )
         self.agent._make_decision = Mock(return_value=mock_action)
 
         world_state_update = {"current_turn": 1}
@@ -86,7 +84,9 @@ class TestPersonaAgentCharacterLoading(unittest.TestCase):
                     "mission_success": 0.9,
                 }
             },
-            "social_network": {"relationships": {"ally_1": 0.7, "enemy_1": -0.8}},
+            "social_network": {
+                "relationships": {"ally_1": 0.7, "enemy_1": -0.8}
+            },
         }
 
     def test_load_character_context_success(self):
@@ -103,12 +103,13 @@ psychological_profile:
 
         with patch("os.path.exists", return_value=True), patch(
             "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md", "stats.yaml"]), patch(
+        ), patch(
+            "os.listdir", return_value=["character.md", "stats.yaml"]
+        ), patch(
             "builtins.open", mock_open()
         ) as mock_file, patch(
             "yaml.safe_load", return_value=self.test_character_data
         ):
-
             # Configure mock_open to return different content based on filename
             def file_side_effect(*args, **kwargs):
                 if "character.md" in args[0]:
@@ -120,16 +121,19 @@ psychological_profile:
             mock_file.side_effect = file_side_effect
 
             # Mock the extract methods to avoid complex initialization
-            with patch.object(PersonaAgent, "_extract_core_identity"), patch.object(
+            with patch.object(
+                PersonaAgent, "_extract_core_identity"
+            ), patch.object(
                 PersonaAgent, "_extract_personality_traits"
-            ), patch.object(PersonaAgent, "_extract_decision_weights"), patch.object(
+            ), patch.object(
+                PersonaAgent, "_extract_decision_weights"
+            ), patch.object(
                 PersonaAgent, "_extract_relationships"
             ), patch.object(
                 PersonaAgent, "_extract_knowledge_domains"
             ), patch.object(
                 PersonaAgent, "_initialize_subjective_worldview"
             ):
-
                 agent = PersonaAgent(
                     character_directory_path="characters/test",
                     event_bus=self.event_bus,
@@ -173,7 +177,6 @@ psychological_profile:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/test_char",
                 event_bus=self.event_bus,
@@ -205,7 +208,6 @@ psychological_profile:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -235,7 +237,6 @@ psychological_profile:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/test_character",
                 event_bus=self.event_bus,
@@ -267,7 +268,6 @@ psychological_profile:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -318,7 +318,6 @@ psychological_profile:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -355,7 +354,6 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -380,13 +378,15 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         ) as mock_assess, patch.object(
             self.agent, "_identify_available_actions"
         ) as mock_actions:
-
             mock_action = CharacterAction(
-                action_type="tactical_move", reasoning="Strategic positioning required"
+                action_type="tactical_move",
+                reasoning="Strategic positioning required",
             )
             mock_llm.return_value = mock_action
             mock_assess.return_value = {"threat_level": "moderate"}
-            mock_actions.return_value = [{"action_type": "move", "target": "sector_7"}]
+            mock_actions.return_value = [
+                {"action_type": "move", "target": "sector_7"}
+            ]
 
             result = self.agent._make_decision(world_state)
 
@@ -402,7 +402,9 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
             self.agent,
             "_llm_enhanced_decision_making",
             side_effect=Exception("AI Error"),
-        ), patch.object(self.agent, "_process_world_state_update"), patch.object(
+        ), patch.object(
+            self.agent, "_process_world_state_update"
+        ), patch.object(
             self.agent,
             "_assess_current_situation",
             return_value={"threat_level": "low"},
@@ -413,9 +415,9 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         ), patch.object(
             self.agent, "_select_best_action"
         ) as mock_select:
-
             fallback_action = CharacterAction(
-                action_type="hold_position", reasoning="Maintaining defensive stance"
+                action_type="hold_position",
+                reasoning="Maintaining defensive stance",
             )
             mock_select.return_value = fallback_action
 
@@ -440,7 +442,9 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
                 "_assess_threat_from_description",
                 return_value=expected_level,
             ):
-                result = self.agent._assess_threat_from_description(description)
+                result = self.agent._assess_threat_from_description(
+                    description
+                )
                 self.assertEqual(result, expected_level)
 
     def test_decision_weight_application(self):
@@ -469,7 +473,6 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         ), patch.object(
             self.agent, "_select_best_action"
         ) as mock_select:
-
             mock_actions.return_value = [
                 {"action_type": "retreat", "target": "safe_zone"},
                 {"action_type": "attack", "target": "enemy"},
@@ -494,17 +497,20 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
             "_assess_overall_threat_level",
             return_value=ThreatLevel.MODERATE,
         ), patch.object(
-            self.agent, "_assess_available_resources", return_value={"energy": 80}
+            self.agent,
+            "_assess_available_resources",
+            return_value={"energy": 80},
         ), patch.object(
             self.agent, "_assess_social_obligations", return_value=[]
         ), patch.object(
-            self.agent, "_assess_mission_status", return_value={"status": "active"}
+            self.agent,
+            "_assess_mission_status",
+            return_value={"status": "active"},
         ), patch.object(
             self.agent,
             "_assess_environmental_factors",
             return_value={"weather": "clear"},
         ):
-
             result = self.agent._assess_current_situation()
             self.assertIsInstance(result, dict)
             self.assertIn("threat_level", result)
@@ -537,7 +543,9 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
             "available_resources": {"energy": 100},
         }
 
-        result = self.agent._evaluate_action_option(test_action, test_situation)
+        result = self.agent._evaluate_action_option(
+            test_action, test_situation
+        )
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0.0)
         self.assertLessEqual(result, 1.0)
@@ -579,7 +587,6 @@ class TestPersonaAgentWorldInterpretation(unittest.TestCase):
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -609,11 +616,15 @@ class TestPersonaAgentWorldInterpretation(unittest.TestCase):
             description="Major battle erupted in sector 7",
         )
 
-        with patch.object(self.agent, "_interpret_event_description") as mock_interpret:
+        with patch.object(
+            self.agent, "_interpret_event_description"
+        ) as mock_interpret:
             mock_interpret.return_value = "Enemy forces are advancing"
 
             # Test the actual method that exists for event interpretation
-            result = self.agent._interpret_event_description(test_event.__dict__)
+            result = self.agent._interpret_event_description(
+                test_event.__dict__
+            )
             self.assertEqual(result, "Enemy forces are advancing")
             mock_interpret.assert_called_once()
 
@@ -635,7 +646,9 @@ class TestPersonaAgentWorldInterpretation(unittest.TestCase):
         # Add to short-term memory
         self.agent.short_term_memory.append(test_memory)
         self.assertEqual(len(self.agent.short_term_memory), 1)
-        self.assertEqual(self.agent.short_term_memory[0]["event_id"], "test_001")
+        self.assertEqual(
+            self.agent.short_term_memory[0]["event_id"], "test_001"
+        )
 
 
 class TestPersonaAgentAIIntegration(unittest.TestCase):
@@ -661,7 +674,6 @@ class TestPersonaAgentAIIntegration(unittest.TestCase):
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -689,7 +701,9 @@ class TestPersonaAgentAIIntegration(unittest.TestCase):
             self.assertIsNone(api_key)
 
             # Test fallback behavior when no API key
-            with patch("src.persona_agent._validate_gemini_api_key", return_value=None):
+            with patch(
+                "src.persona_agent._validate_gemini_api_key", return_value=None
+            ):
                 result = self.agent._call_llm("Test prompt")
                 # Should return fallback response or handle gracefully
                 self.assertIsInstance(result, str)
@@ -731,7 +745,6 @@ class TestPersonaAgentMemoryAndEvolution(unittest.TestCase):
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -752,8 +765,12 @@ class TestPersonaAgentMemoryAndEvolution(unittest.TestCase):
         self.assertEqual(len(self.agent.short_term_memory), 5)
 
         # Test that memories are stored in order
-        self.assertEqual(self.agent.short_term_memory[0]["event_id"], "event_0")
-        self.assertEqual(self.agent.short_term_memory[-1]["event_id"], "event_4")
+        self.assertEqual(
+            self.agent.short_term_memory[0]["event_id"], "event_0"
+        )
+        self.assertEqual(
+            self.agent.short_term_memory[-1]["event_id"], "event_4"
+        )
 
     def test_long_term_memory_consolidation(self):
         """Test consolidation of important memories to long-term storage."""
@@ -766,7 +783,9 @@ class TestPersonaAgentMemoryAndEvolution(unittest.TestCase):
 
         # Mock consolidation process if it exists
         if hasattr(self.agent, "_consolidate_memories"):
-            with patch.object(self.agent, "_consolidate_memories") as mock_consolidate:
+            with patch.object(
+                self.agent, "_consolidate_memories"
+            ) as mock_consolidate:
                 self.agent.short_term_memory.append(important_memory)
                 self.agent._consolidate_memories()
                 mock_consolidate.assert_called_once()
@@ -781,9 +800,15 @@ class TestPersonaAgentMemoryAndEvolution(unittest.TestCase):
         relationship_change = 0.2
 
         if hasattr(self.agent, "_update_relationship"):
-            with patch.object(self.agent, "_update_relationship") as mock_update:
-                self.agent._update_relationship("test_entity", relationship_change)
-                mock_update.assert_called_once_with("test_entity", relationship_change)
+            with patch.object(
+                self.agent, "_update_relationship"
+            ) as mock_update:
+                self.agent._update_relationship(
+                    "test_entity", relationship_change
+                )
+                mock_update.assert_called_once_with(
+                    "test_entity", relationship_change
+                )
         else:
             # Direct update for testing
             self.agent.relationships["test_entity"] += relationship_change

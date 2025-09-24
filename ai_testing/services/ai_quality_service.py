@@ -10,6 +10,7 @@ import json
 import logging
 import time
 import uuid
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -57,7 +58,9 @@ class AssessmentStrategy(str, Enum):
     SINGLE_JUDGE = "single_judge"  # One model evaluates all aspects
     MULTI_JUDGE = "multi_judge"  # Multiple models evaluate independently
     ENSEMBLE = "ensemble"  # Combined scoring from multiple models
-    SPECIALIZED = "specialized"  # Different models for different quality aspects
+    SPECIALIZED = (
+        "specialized"  # Different models for different quality aspects
+    )
     COMPARATIVE = "comparative"  # Direct comparison between outputs
 
 
@@ -73,7 +76,9 @@ class QualityDimension:
 
     def __post_init__(self):
         if not 0.0 <= self.weight <= 1.0:
-            raise ValueError(f"Weight must be between 0.0 and 1.0, got {self.weight}")
+            raise ValueError(
+                f"Weight must be between 0.0 and 1.0, got {self.weight}"
+            )
         if not 0.0 <= self.threshold <= 1.0:
             raise ValueError(
                 f"Threshold must be between 0.0 and 1.0, got {self.threshold}"
@@ -134,7 +139,9 @@ class QualityAssessmentResult(BaseModel):
     overall_confidence: float = Field(..., ge=0.0, le=1.0)
 
     # Individual quality scores
-    quality_scores: Dict[QualityMetric, QualityScore] = Field(default_factory=dict)
+    quality_scores: Dict[QualityMetric, QualityScore] = Field(
+        default_factory=dict
+    )
 
     # Assessment metadata
     assessment_model: str
@@ -244,7 +251,9 @@ class LLMJudge:
                 confidence=0.1,  # Low confidence
                 reasoning=f"Assessment failed due to error: {str(e)}",
                 evidence=[],
-                improvement_suggestions=["Retry assessment with different model"],
+                improvement_suggestions=[
+                    "Retry assessment with different model"
+                ],
             )
 
     def _create_assessment_prompt(
@@ -334,7 +343,9 @@ ASSESSMENT CRITERIA for {metric.value.upper()}:
 
         # Add context if provided
         if context:
-            base_prompt += f"\nCONTEXT INFORMATION:\n{json.dumps(context, indent=2)}\n"
+            base_prompt += (
+                f"\nCONTEXT INFORMATION:\n{json.dumps(context, indent=2)}\n"
+            )
 
         # Assessment instructions
         base_prompt += f"""
@@ -373,7 +384,10 @@ Provide your assessment:
         payload = {
             "model": "gpt-4",
             "messages": [
-                {"role": "system", "content": "You are an expert AI quality assessor."},
+                {
+                    "role": "system",
+                    "content": "You are an expert AI quality assessor.",
+                },
                 {"role": "user", "content": prompt},
             ],
             "temperature": self.temperature,
@@ -386,7 +400,9 @@ Provide your assessment:
         }
 
         response = await self.http_client.post(
-            "https://api.openai.com/v1/chat/completions", json=payload, headers=headers
+            "https://api.openai.com/v1/chat/completions",
+            json=payload,
+            headers=headers,
         )
 
         if response.status_code != 200:
@@ -438,13 +454,17 @@ Provide your assessment:
 
             # Validate required fields
             required_fields = ["score", "confidence", "reasoning"]
-            for field in required_fields:
-                if field not in parsed:
-                    raise ValueError(f"Missing required field: {field}")
+            for required_field in required_fields:
+                if required_field not in parsed:
+                    raise ValueError(
+                        f"Missing required field: {required_field}"
+                    )
 
             # Ensure score and confidence are in valid range
             parsed["score"] = max(0.0, min(1.0, float(parsed["score"])))
-            parsed["confidence"] = max(0.0, min(1.0, float(parsed["confidence"])))
+            parsed["confidence"] = max(
+                0.0, min(1.0, float(parsed["confidence"]))
+            )
 
             return parsed
 
@@ -496,7 +516,8 @@ class AIQualityAssessmentService(IAIQualityAssessment):
     def _initialize_judges(self):
         """Initialize LLM judges"""
         available_models = self.config.get(
-            "assessment_models", [AssessmentModel.GPT_4, AssessmentModel.GEMINI_PRO]
+            "assessment_models",
+            [AssessmentModel.GPT_4, AssessmentModel.GEMINI_PRO],
         )
 
         for model in available_models:
@@ -505,9 +526,13 @@ class AIQualityAssessmentService(IAIQualityAssessment):
                 self.judges[model] = judge
                 logger.info(f"Judge initialized: {model.value}")
             except Exception as e:
-                logger.warning(f"Failed to initialize judge {model.value}: {e}")
+                logger.warning(
+                    f"Failed to initialize judge {model.value}: {e}"
+                )
 
-    def _load_quality_dimensions(self) -> Dict[QualityMetric, QualityDimension]:
+    def _load_quality_dimensions(
+        self,
+    ) -> Dict[QualityMetric, QualityDimension]:
         """Load quality dimension configurations"""
         dimensions = {}
 
@@ -523,7 +548,9 @@ class AIQualityAssessmentService(IAIQualityAssessment):
 
         for metric, config in default_config.items():
             dimensions[metric] = QualityDimension(
-                metric=metric, weight=config["weight"], threshold=config["threshold"]
+                metric=metric,
+                weight=config["weight"],
+                threshold=config["threshold"],
             )
 
         return dimensions
@@ -560,22 +587,30 @@ class AIQualityAssessmentService(IAIQualityAssessment):
                 assessment_id=assessment_id,
                 input_prompt=ai_spec.input_prompt,
                 ai_output=ai_spec.ai_output,
-                quality_dimensions=[m.value for m in ai_spec.assessment_criteria],
+                quality_dimensions=[
+                    m.value for m in ai_spec.assessment_criteria
+                ],
                 assessment_strategy=AssessmentStrategy.ENSEMBLE,
                 quality_thresholds=ai_spec.quality_thresholds,
             )
 
             # Perform comprehensive assessment
-            assessment_result = await self._perform_comprehensive_assessment(request)
+            assessment_result = await self._perform_comprehensive_assessment(
+                request
+            )
 
             # Calculate final result
             duration_ms = int((time.time() - start_time) * 1000)
-            overall_passed = assessment_result.overall_score >= ai_spec.minimum_score
+            overall_passed = (
+                assessment_result.overall_score >= ai_spec.minimum_score
+            )
 
             return TestResult(
                 execution_id=assessment_id,
                 scenario_id=context.session_id,
-                status=TestStatus.COMPLETED if overall_passed else TestStatus.FAILED,
+                status=TestStatus.COMPLETED
+                if overall_passed
+                else TestStatus.FAILED,
                 passed=overall_passed,
                 score=assessment_result.overall_score,
                 duration_ms=duration_ms,
@@ -681,7 +716,9 @@ class AIQualityAssessmentService(IAIQualityAssessment):
             if (
                 datetime.now(timezone.utc) - cached_result.timestamp
             ).seconds < self.cache_ttl_seconds:
-                logger.info(f"Returning cached assessment: {request.assessment_id}")
+                logger.info(
+                    f"Returning cached assessment: {request.assessment_id}"
+                )
                 return cached_result
 
         start_time = time.time()
@@ -703,11 +740,15 @@ class AIQualityAssessmentService(IAIQualityAssessment):
 
                         # Override weights if provided
                         if dimension_name in request.dimension_weights:
-                            dimension.weight = request.dimension_weights[dimension_name]
+                            dimension.weight = request.dimension_weights[
+                                dimension_name
+                            ]
 
                         dimensions_to_assess.append(dimension)
                 except ValueError:
-                    logger.warning(f"Unknown quality dimension: {dimension_name}")
+                    logger.warning(
+                        f"Unknown quality dimension: {dimension_name}"
+                    )
 
             if not dimensions_to_assess:
                 raise ValueError("No valid quality dimensions specified")
@@ -735,11 +776,17 @@ class AIQualityAssessmentService(IAIQualityAssessment):
             overall_score = self._calculate_weighted_score(
                 quality_scores, dimensions_to_assess
             )
-            overall_confidence = self._calculate_overall_confidence(quality_scores)
+            overall_confidence = self._calculate_overall_confidence(
+                quality_scores
+            )
 
             # Generate analysis and recommendations
-            strengths, weaknesses = self._analyze_strengths_weaknesses(quality_scores)
-            recommendations = self._generate_recommendations(quality_scores, request)
+            strengths, weaknesses = self._analyze_strengths_weaknesses(
+                quality_scores
+            )
+            recommendations = self._generate_recommendations(
+                quality_scores, request
+            )
             detailed_analysis = self._generate_detailed_analysis(
                 quality_scores, request
             )
@@ -778,7 +825,9 @@ class AIQualityAssessmentService(IAIQualityAssessment):
             raise
 
     async def _ensemble_assessment(
-        self, request: QualityAssessmentRequest, dimensions: List[QualityDimension]
+        self,
+        request: QualityAssessmentRequest,
+        dimensions: List[QualityDimension],
     ) -> Dict[QualityMetric, QualityScore]:
         """Perform ensemble assessment using multiple judges"""
 
@@ -821,7 +870,9 @@ class AIQualityAssessmentService(IAIQualityAssessment):
                     if total_confidence_weight > 0
                     else 0.0
                 )
-                ensemble_confidence = total_confidence_weight / len(judge_scores)
+                ensemble_confidence = total_confidence_weight / len(
+                    judge_scores
+                )
 
                 # Combine reasoning
                 reasoning_parts = [
@@ -849,13 +900,17 @@ class AIQualityAssessmentService(IAIQualityAssessment):
                     confidence=0.1,
                     reasoning="No judges were able to assess this dimension",
                     evidence=[],
-                    improvement_suggestions=["Verify assessment service configuration"],
+                    improvement_suggestions=[
+                        "Verify assessment service configuration"
+                    ],
                 )
 
         return quality_scores
 
     async def _multi_judge_assessment(
-        self, request: QualityAssessmentRequest, dimensions: List[QualityDimension]
+        self,
+        request: QualityAssessmentRequest,
+        dimensions: List[QualityDimension],
     ) -> Dict[QualityMetric, QualityScore]:
         """Perform multi-judge assessment with individual judge reporting"""
 
@@ -864,7 +919,9 @@ class AIQualityAssessmentService(IAIQualityAssessment):
         return await self._ensemble_assessment(request, dimensions)
 
     async def _specialized_assessment(
-        self, request: QualityAssessmentRequest, dimensions: List[QualityDimension]
+        self,
+        request: QualityAssessmentRequest,
+        dimensions: List[QualityDimension],
     ) -> Dict[QualityMetric, QualityScore]:
         """Perform specialized assessment with different judges for different dimensions"""
 
@@ -876,7 +933,10 @@ class AIQualityAssessmentService(IAIQualityAssessment):
         for dimension, judge in judge_assignments.items():
             try:
                 score = await judge.assess_quality(
-                    request.input_prompt, request.ai_output, dimension, request.context
+                    request.input_prompt,
+                    request.ai_output,
+                    dimension,
+                    request.context,
                 )
                 quality_scores[dimension.metric] = score
             except Exception as e:
@@ -895,7 +955,9 @@ class AIQualityAssessmentService(IAIQualityAssessment):
         return quality_scores
 
     async def _single_judge_assessment(
-        self, request: QualityAssessmentRequest, dimensions: List[QualityDimension]
+        self,
+        request: QualityAssessmentRequest,
+        dimensions: List[QualityDimension],
     ) -> Dict[QualityMetric, QualityScore]:
         """Perform assessment using a single judge"""
 
@@ -909,7 +971,10 @@ class AIQualityAssessmentService(IAIQualityAssessment):
         for dimension in dimensions:
             try:
                 score = await primary_judge.assess_quality(
-                    request.input_prompt, request.ai_output, dimension, request.context
+                    request.input_prompt,
+                    request.ai_output,
+                    dimension,
+                    request.context,
                 )
                 quality_scores[dimension.metric] = score
             except Exception as e:
@@ -991,9 +1056,13 @@ class AIQualityAssessmentService(IAIQualityAssessment):
 
         for metric, score in quality_scores.items():
             if score.score >= 0.8:
-                strengths.append(f"Strong {metric.value} (score: {score.score:.2f})")
+                strengths.append(
+                    f"Strong {metric.value} (score: {score.score:.2f})"
+                )
             elif score.score < 0.6:
-                weaknesses.append(f"Weak {metric.value} (score: {score.score:.2f})")
+                weaknesses.append(
+                    f"Weak {metric.value} (score: {score.score:.2f})"
+                )
 
         return strengths, weaknesses
 
@@ -1011,9 +1080,9 @@ class AIQualityAssessmentService(IAIQualityAssessment):
             recommendations.extend(score.improvement_suggestions)
 
         # Add overall recommendations
-        avg_score = sum(score.score for score in quality_scores.values()) / len(
-            quality_scores
-        )
+        avg_score = sum(
+            score.score for score in quality_scores.values()
+        ) / len(quality_scores)
 
         if avg_score < 0.6:
             recommendations.append(
@@ -1024,7 +1093,9 @@ class AIQualityAssessmentService(IAIQualityAssessment):
                 "Focus on specific weak areas identified in assessment"
             )
         else:
-            recommendations.append("Continue current approach with minor refinements")
+            recommendations.append(
+                "Continue current approach with minor refinements"
+            )
 
         return list(set(recommendations))  # Remove duplicates
 
@@ -1038,9 +1109,9 @@ class AIQualityAssessmentService(IAIQualityAssessment):
         analysis_parts = []
 
         # Overall summary
-        avg_score = sum(score.score for score in quality_scores.values()) / len(
-            quality_scores
-        )
+        avg_score = sum(
+            score.score for score in quality_scores.values()
+        ) / len(quality_scores)
         avg_confidence = sum(
             score.confidence for score in quality_scores.values()
         ) / len(quality_scores)
@@ -1052,10 +1123,14 @@ class AIQualityAssessmentService(IAIQualityAssessment):
 
         # Individual dimension analysis
         for metric, score in quality_scores.items():
-            analysis_parts.append(f"{metric.value.upper()} (Score: {score.score:.3f})")
+            analysis_parts.append(
+                f"{metric.value.upper()} (Score: {score.score:.3f})"
+            )
             analysis_parts.append(f"  Reasoning: {score.reasoning}")
             if score.evidence:
-                analysis_parts.append(f"  Evidence: {', '.join(score.evidence)}")
+                analysis_parts.append(
+                    f"  Evidence: {', '.join(score.evidence)}"
+                )
             analysis_parts.append("")
 
         return "\n".join(analysis_parts)
@@ -1075,10 +1150,7 @@ class AIQualityAssessmentService(IAIQualityAssessment):
 
     async def assess_quality(self, test_spec, context):
         """Assess AI output quality using LLM-as-Judge (Interface method)"""
-        from ..interfaces.service_contracts import (
-            TestResult,
-            TestStatus,
-        )
+        from ..interfaces.service_contracts import TestResult, TestStatus
 
         request = QualityAssessmentRequest(
             assessment_id=test_spec.quality_spec_id,
@@ -1179,8 +1251,6 @@ class AIQualityAssessmentService(IAIQualityAssessment):
 
 # === FastAPI Application ===
 
-from contextlib import asynccontextmanager
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -1228,7 +1298,9 @@ async def health_check():
     service: AIQualityAssessmentService = app.state.ai_quality_service
 
     judges_status = "connected" if service.judges else "disconnected"
-    active_assessments = len([t for t in asyncio.all_tasks() if "assess" in str(t)])
+    active_assessments = len(
+        [t for t in asyncio.all_tasks() if "assess" in str(t)]
+    )
 
     status = "healthy" if judges_status == "connected" else "degraded"
 
@@ -1271,10 +1343,13 @@ async def compare_outputs(
             quality_criteria.append(QualityMetric(criterion))
         except ValueError:
             raise HTTPException(
-                status_code=400, detail=f"Invalid quality criterion: {criterion}"
+                status_code=400,
+                detail=f"Invalid quality criterion: {criterion}",
             )
 
-    result = await service.compare_ai_outputs(outputs, quality_criteria, baseline)
+    result = await service.compare_ai_outputs(
+        outputs, quality_criteria, baseline
+    )
     return result
 
 

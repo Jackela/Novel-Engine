@@ -17,7 +17,9 @@ from ...domain.value_objects.character_profile import (
     CharacterClass,
     CharacterRace,
 )
-from ..commands.character_command_handlers import CharacterCommandHandlerRegistry
+from ..commands.character_command_handlers import (
+    CharacterCommandHandlerRegistry,
+)
 from ..commands.character_commands import (
     CreateCharacterCommand,
     DamageCharacterCommand,
@@ -42,7 +44,9 @@ class CharacterApplicationService:
 
     def __init__(self, character_repository: ICharacterRepository):
         self.repository = character_repository
-        self.command_handlers = CharacterCommandHandlerRegistry(character_repository)
+        self.command_handlers = CharacterCommandHandlerRegistry(
+            character_repository
+        )
         self.logger = logger.getChild(self.__class__.__name__)
 
     # ==================== Character Management Operations ====================
@@ -90,9 +94,13 @@ class CharacterApplicationService:
 
         try:
             # Check if character name is already taken
-            existing_characters = await self.repository.find_by_name(character_name)
+            existing_characters = await self.repository.find_by_name(
+                character_name
+            )
             if existing_characters:
-                raise ValueError(f"Character name '{character_name}' is already taken")
+                raise ValueError(
+                    f"Character name '{character_name}' is already taken"
+                )
 
             # Create command
             command = CreateCharacterCommand(
@@ -143,7 +151,9 @@ class CharacterApplicationService:
             self.logger.error(f"Error getting character {character_id}: {e}")
             raise
 
-    async def update_character_stats(self, character_id: str, **stat_updates) -> None:
+    async def update_character_stats(
+        self, character_id: str, **stat_updates
+    ) -> None:
         """
         Update character statistics.
 
@@ -194,7 +204,9 @@ class CharacterApplicationService:
             ValueError: If input data is invalid
             RepositoryException: If update fails
         """
-        self.logger.info(f"Updating skill '{skill_name}' for character: {character_id}")
+        self.logger.info(
+            f"Updating skill '{skill_name}' for character: {character_id}"
+        )
 
         try:
             command = UpdateCharacterSkillCommand(
@@ -350,14 +362,18 @@ class CharacterApplicationService:
         self.logger.info(f"Deleting character: {character_id}")
 
         try:
-            command = DeleteCharacterCommand(character_id=character_id, reason=reason)
+            command = DeleteCharacterCommand(
+                character_id=character_id, reason=reason
+            )
 
             deleted = await self.command_handlers.handle_command(command)
 
             if deleted:
                 self.logger.info(f"Character deleted: {character_id}")
             else:
-                self.logger.info(f"Character not found for deletion: {character_id}")
+                self.logger.info(
+                    f"Character not found for deletion: {character_id}"
+                )
 
             return deleted
 
@@ -372,10 +388,14 @@ class CharacterApplicationService:
         try:
             return await self.repository.find_by_name(name)
         except Exception as e:
-            self.logger.error(f"Error finding characters by name '{name}': {e}")
+            self.logger.error(
+                f"Error finding characters by name '{name}': {e}"
+            )
             raise
 
-    async def find_characters_by_class(self, character_class: str) -> List[Character]:
+    async def find_characters_by_class(
+        self, character_class: str
+    ) -> List[Character]:
         """Find characters by class."""
         try:
             char_class = CharacterClass(character_class.lower())
@@ -392,7 +412,9 @@ class CharacterApplicationService:
             char_race = CharacterRace(race.lower())
             return await self.repository.find_by_race(char_race)
         except Exception as e:
-            self.logger.error(f"Error finding characters by race '{race}': {e}")
+            self.logger.error(
+                f"Error finding characters by race '{race}': {e}"
+            )
             raise
 
     async def find_characters_by_level_range(
@@ -400,7 +422,9 @@ class CharacterApplicationService:
     ) -> List[Character]:
         """Find characters within a level range."""
         try:
-            return await self.repository.find_by_level_range(min_level, max_level)
+            return await self.repository.find_by_level_range(
+                min_level, max_level
+            )
         except Exception as e:
             self.logger.error(
                 f"Error finding characters by level range {min_level}-{max_level}: {e}"
@@ -424,16 +448,23 @@ class CharacterApplicationService:
             raise
 
     async def search_characters(
-        self, criteria: Dict[str, Any], limit: Optional[int] = None, offset: int = 0
+        self,
+        criteria: Dict[str, Any],
+        limit: Optional[int] = None,
+        offset: int = 0,
     ) -> List[Character]:
         """Search characters by multiple criteria."""
         try:
-            return await self.repository.find_by_criteria(criteria, limit, offset)
+            return await self.repository.find_by_criteria(
+                criteria, limit, offset
+            )
         except Exception as e:
             self.logger.error(f"Error searching characters: {e}")
             raise
 
-    async def count_characters_by_criteria(self, criteria: Dict[str, Any]) -> int:
+    async def count_characters_by_criteria(
+        self, criteria: Dict[str, Any]
+    ) -> int:
         """Count characters matching criteria."""
         try:
             return await self.repository.count_by_criteria(criteria)
@@ -449,7 +480,9 @@ class CharacterApplicationService:
             char_id = CharacterID.from_string(character_id)
             return await self.repository.exists(char_id)
         except Exception as e:
-            self.logger.error(f"Error checking character existence {character_id}: {e}")
+            self.logger.error(
+                f"Error checking character existence {character_id}: {e}"
+            )
             raise
 
     async def get_character_summary(
@@ -464,7 +497,9 @@ class CharacterApplicationService:
             return character.get_character_summary()
 
         except Exception as e:
-            self.logger.error(f"Error getting character summary {character_id}: {e}")
+            self.logger.error(
+                f"Error getting character summary {character_id}: {e}"
+            )
             raise
 
     async def validate_character_name_availability(self, name: str) -> bool:
@@ -489,7 +524,9 @@ class CharacterApplicationService:
                 character_id = await self.create_character(**character_data)
                 character_ids.append(character_id)
 
-            self.logger.info(f"Created {len(character_ids)} characters successfully")
+            self.logger.info(
+                f"Created {len(character_ids)} characters successfully"
+            )
             return character_ids
 
         except Exception as e:
@@ -509,7 +546,9 @@ class CharacterApplicationService:
                 if await self.delete_character(character_id, reason):
                     deleted_count += 1
 
-            self.logger.info(f"Deleted {deleted_count} characters successfully")
+            self.logger.info(
+                f"Deleted {deleted_count} characters successfully"
+            )
             return deleted_count
 
         except Exception as e:

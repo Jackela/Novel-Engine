@@ -17,6 +17,8 @@ external communications, and other infrastructure concerns.
 """
 
 # Conditional imports to handle platform naming conflict
+from typing import Any, Optional, Type
+
 try:
     from .persistence.character_models import (
         Base,
@@ -26,18 +28,20 @@ try:
         CharacterSkillsORM,
         CharacterStatsORM,
     )
-    from .repositories.character_repository import SQLAlchemyCharacterRepository
+    from .repositories.character_repository import (
+        SQLAlchemyCharacterRepository,
+    )
 
     _IMPORTS_AVAILABLE = True
 except ImportError:
     # Handle platform naming conflict gracefully
-    SQLAlchemyCharacterRepository = None
-    CharacterORM = None
-    CharacterProfileORM = None
-    CharacterStatsORM = None
-    CharacterSkillsORM = None
-    CharacterEventORM = None
-    Base = None
+    SQLAlchemyCharacterRepository: Optional[Type[Any]] = None  # type: ignore
+    CharacterORM: Optional[Type[Any]] = None  # type: ignore
+    CharacterProfileORM: Optional[Type[Any]] = None  # type: ignore
+    CharacterStatsORM: Optional[Type[Any]] = None  # type: ignore
+    CharacterSkillsORM: Optional[Type[Any]] = None  # type: ignore
+    CharacterEventORM: Optional[Type[Any]] = None  # type: ignore
+    Base: Optional[Type[Any]] = None  # type: ignore
     _IMPORTS_AVAILABLE = False
 
 __all__ = [

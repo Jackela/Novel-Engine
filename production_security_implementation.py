@@ -47,11 +47,11 @@ NGINX_SSL_CONFIG = """
 server {
     listen 443 ssl http2;
     server_name your-domain.com;
-    
+
     # SSL Certificate paths (update with your certificates)
     ssl_certificate /path/to/your/certificate.crt;
     ssl_certificate_key /path/to/your/private.key;
-    
+
     # SSL Configuration
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
@@ -59,18 +59,18 @@ server {
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 1d;
     ssl_session_tickets off;
-    
+
     # OCSP stapling
     ssl_stapling on;
     ssl_stapling_verify on;
-    
+
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
+
         # Rate limiting
         limit_req zone=api burst=20 nodelay;
     }
@@ -152,13 +152,13 @@ limiter = Limiter(key_func=get_remote_address)
 
 class SecurityHeaders:
     """Security headers middleware."""
-    
+
     def __init__(self, app: FastAPI):
         self.app = app
-    
+
     async def __call__(self, request: Request, call_next):
         response = await call_next(request)
-        
+
         # Security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -171,68 +171,68 @@ class SecurityHeaders:
             "img-src 'self' data: https:; "
             "font-src 'self'"
         )
-        
+
         # Remove server identification
         if "server" in response.headers:
             del response.headers["server"]
-        
+
         return response
 
 class InputValidator:
     """Enhanced input validation and sanitization."""
-    
+
     @staticmethod
     def sanitize_string(value: str, max_length: int = 1000) -> str:
         """Sanitize string input."""
         if not isinstance(value, str):
             raise ValueError("Input must be a string")
-        
+
         # Remove null bytes and control characters
         value = ''.join(char for char in value if ord(char) >= 32 or char in '\\t\\n\\r')
-        
+
         # Truncate if too long
         if len(value) > max_length:
             value = value[:max_length]
-        
+
         return value.strip()
-    
+
     @staticmethod
     def validate_character_names(names: List[str]) -> List[str]:
         """Validate character names with strict rules."""
         validated_names = []
-        
+
         for name in names:
             # Sanitize
             name = InputValidator.sanitize_string(name, 50)
-            
+
             # Validate format (alphanumeric + spaces + hyphens)
             if not name or len(name) < 2:
                 raise ValueError(f"Character name too short: {name}")
-            
+
             if not all(c.isalnum() or c in ' -_' for c in name):
                 raise ValueError(f"Invalid characters in name: {name}")
-            
+
             validated_names.append(name)
-        
+
         return validated_names
 
 class AuthenticationManager:
     """JWT-based authentication manager."""
-    
+
     @staticmethod
     def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         """Create JWT access token."""
         to_encode = data.copy()
-        
+
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
             expire = datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
-        
+
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
         return encoded_jwt
-    
+
     @staticmethod
     def verify_token(token: str) -> Dict[str, Any]:
         """Verify JWT token."""
@@ -254,7 +254,7 @@ class AuthenticationManager:
 class SimulationRequest(BaseModel):
     character_names: List[str] = Field(..., min_length=2, max_length=6)
     turns: Optional[int] = Field(None, ge=1, le=10)
-    
+
     @field_validator('character_names')
     @classmethod
     def validate_names(cls, v):
@@ -280,15 +280,15 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 async def lifespan(app: FastAPI):
     """FastAPI lifespan event handler with security checks."""
     logger.info("Starting production-hardened Novel Engine API server...")
-    
+
     # Validate environment
     required_env_vars = ["ENVIRONMENT", "SECRET_KEY"]
     missing_vars = [var for var in required_env_vars if not os.getenv(var)]
-    
+
     if missing_vars:
         logger.error(f"Missing required environment variables: {missing_vars}")
         raise RuntimeError("Security configuration incomplete")
-    
+
     # Validate configuration
     try:
         config = get_config()
@@ -296,7 +296,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Configuration error during startup: {e}")
         raise e
-    
+
     yield
     logger.info("Shutting down production-hardened Novel Engine API server.")
 
@@ -318,7 +318,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 # Trusted hosts (configure for your domain)
 if os.getenv("ENVIRONMENT") == "production":
     app.add_middleware(
-        TrustedHostMiddleware, 
+        TrustedHostMiddleware,
         allowed_hosts=["your-domain.com", "*.your-domain.com"]
     )
 
@@ -343,7 +343,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     # Log security-relevant errors
     if exc.status_code in [401, 403, 429]:
         logger.warning(f"Security event: {exc.status_code} from {request.client.host}")
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -376,13 +376,13 @@ async def login(request: Request, username: str, password: str) -> Dict[str, str
     """Authentication endpoint (implement your authentication logic)."""
     # TODO: Implement proper authentication against your user database
     # This is a placeholder implementation
-    
+
     if username == "admin" and password == os.getenv("ADMIN_PASSWORD"):
         access_token = AuthenticationManager.create_access_token(
             data={"sub": username}
         )
         return {"access_token": access_token, "token_type": "bearer"}
-    
+
     # Rate limit failed attempts more aggressively
     time.sleep(1)  # Prevent timing attacks
     raise HTTPException(
@@ -398,11 +398,11 @@ async def get_characters(request: Request, current_user: str = Depends(get_curre
         characters_path = "characters"
         if not os.path.isdir(characters_path):
             raise HTTPException(status_code=404, detail="Characters directory not found.")
-        
-        characters = sorted([d for d in os.listdir(characters_path) 
+
+        characters = sorted([d for d in os.listdir(characters_path)
                            if os.path.isdir(os.path.join(characters_path, d))])
         return {"characters": characters}
-    
+
     except Exception as e:
         logger.error(f"Error retrieving characters: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve characters.")
@@ -410,44 +410,44 @@ async def get_characters(request: Request, current_user: str = Depends(get_curre
 @app.post("/simulations")
 @limiter.limit("5/minute")
 async def run_simulation(
-    request: Request, 
+    request: Request,
     simulation_request: SimulationRequest,
     current_user: str = Depends(get_current_user)
 ) -> SimulationResponse:
     """Execute a character simulation (protected endpoint)."""
     start_time = time.time()
     request_id = secrets.token_hex(8)
-    
+
     logger.info(f"Simulation requested by {current_user}: {simulation_request.character_names} (ID: {request_id})")
-    
+
     try:
         config = get_config()
         turns_to_execute = simulation_request.turns or config.simulation.turns
-        
+
         # Input validation has already been performed by Pydantic
         character_names = simulation_request.character_names
-        
+
         # Create simulation with security context
         event_bus = EventBus()
         character_factory = CharacterFactory(event_bus)
         agents = [character_factory.create_character(name) for name in character_names]
-        
+
         log_path = f"simulation_{request_id}.md"
         director = DirectorAgent(event_bus, campaign_log_path=log_path)
-        
+
         for agent in agents:
             director.register_agent(agent)
-        
+
         for _ in range(turns_to_execute):
             director.run_turn()
-        
+
         chronicler = ChroniclerAgent(character_names=character_names)
         story = chronicler.transcribe_log(log_path)
-        
+
         # Clean up temporary files
         if os.path.exists(log_path):
             os.remove(log_path)
-        
+
         return SimulationResponse(
             story=story,
             participants=character_names,
@@ -455,7 +455,7 @@ async def run_simulation(
             duration_seconds=time.time() - start_time,
             request_id=request_id
         )
-    
+
     except Exception as e:
         logger.error(f"Simulation failed (ID: {request_id}): {e}")
         raise HTTPException(status_code=500, detail=f"Simulation execution failed: {request_id}")
@@ -471,7 +471,7 @@ def run_production_server(host: str = "127.0.0.1", port: int = 8000):
             os.getenv("SSL_CERT_PATH", "/path/to/cert.pem"),
             os.getenv("SSL_KEY_PATH", "/path/to/key.pem")
         )
-    
+
     uvicorn.run(
         "production_api_server:app",
         host=host,
@@ -564,7 +564,7 @@ logger = logging.getLogger(__name__)
 
 class SecurityEventLogger:
     """Log security events for monitoring and analysis."""
-    
+
     def __init__(self):
         self.security_logger = logging.getLogger("security")
         handler = logging.FileHandler("logs/security.log")
@@ -574,7 +574,7 @@ class SecurityEventLogger:
         handler.setFormatter(formatter)
         self.security_logger.addHandler(handler)
         self.security_logger.setLevel(logging.WARNING)
-    
+
     def log_event(self, event_type: str, client_ip: str, details: Dict[str, Any]):
         """Log a security event."""
         self.security_logger.warning(
@@ -583,32 +583,32 @@ class SecurityEventLogger:
 
 class IPBlocklist:
     """Manage IP address blocklist."""
-    
+
     def __init__(self):
         self.blocked_ips: Set[str] = set()
         self.temp_blocked: Dict[str, datetime] = {}
         self.block_duration = timedelta(minutes=15)
-    
+
     def is_blocked(self, ip: str) -> bool:
         """Check if IP is blocked."""
         # Check permanent blocks
         if ip in self.blocked_ips:
             return True
-        
+
         # Check temporary blocks
         if ip in self.temp_blocked:
             if datetime.now(timezone.utc) > self.temp_blocked[ip]:
                 del self.temp_blocked[ip]
                 return False
             return True
-        
+
         return False
-    
+
     def temp_block(self, ip: str):
         """Temporarily block an IP address."""
         self.temp_blocked[ip] = datetime.now(timezone.utc) + self.block_duration
         logger.warning(f"Temporarily blocked IP: {ip}")
-    
+
     def permanent_block(self, ip: str):
         """Permanently block an IP address."""
         self.blocked_ips.add(ip)
@@ -616,26 +616,26 @@ class IPBlocklist:
 
 class RequestAnalyzer:
     """Analyze requests for suspicious patterns."""
-    
+
     def __init__(self):
         self.request_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=100))
         self.failed_attempts: Dict[str, int] = defaultdict(int)
         self.security_logger = SecurityEventLogger()
-    
+
     def analyze_request(self, request: Request) -> bool:
         """Analyze request for suspicious patterns."""
         client_ip = self.get_client_ip(request)
-        
+
         # Track request history
         now = time.time()
         self.request_history[client_ip].append(now)
-        
+
         # Check for rapid requests (potential DoS)
         recent_requests = [
-            t for t in self.request_history[client_ip] 
+            t for t in self.request_history[client_ip]
             if now - t < 60  # Last minute
         ]
-        
+
         if len(recent_requests) > 30:  # More than 30 requests per minute
             self.security_logger.log_event(
                 "RAPID_REQUESTS",
@@ -643,7 +643,7 @@ class RequestAnalyzer:
                 {"requests_per_minute": len(recent_requests)}
             )
             return False
-        
+
         # Check for suspicious paths
         suspicious_patterns = [
             '/admin', '/wp-admin', '/.env', '/config',
@@ -652,10 +652,10 @@ class RequestAnalyzer:
             'SELECT ', 'UNION ', 'DROP ',
             '../', '..\\\\', '%2e%2e',
         ]
-        
+
         request_path = str(request.url.path).lower()
         request_query = str(request.url.query).lower()
-        
+
         for pattern in suspicious_patterns:
             if pattern.lower() in request_path or pattern.lower() in request_query:
                 self.security_logger.log_event(
@@ -664,36 +664,36 @@ class RequestAnalyzer:
                     {"pattern": pattern, "path": request_path, "query": request_query}
                 )
                 return False
-        
+
         return True
-    
+
     def get_client_ip(self, request: Request) -> str:
         """Get the real client IP address."""
         # Check X-Forwarded-For header (from reverse proxy)
         x_forwarded_for = request.headers.get("X-Forwarded-For")
         if x_forwarded_for:
             return x_forwarded_for.split(",")[0].strip()
-        
+
         # Check X-Real-IP header
         x_real_ip = request.headers.get("X-Real-IP")
         if x_real_ip:
             return x_real_ip
-        
+
         # Fall back to direct connection
         return request.client.host if request.client else "unknown"
 
 class SecurityMiddleware:
     """Comprehensive security middleware."""
-    
+
     def __init__(self):
         self.ip_blocklist = IPBlocklist()
         self.request_analyzer = RequestAnalyzer()
         self.security_logger = SecurityEventLogger()
-    
+
     async def __call__(self, request: Request, call_next):
         """Process request through security filters."""
         client_ip = self.request_analyzer.get_client_ip(request)
-        
+
         # Check IP blocklist
         if self.ip_blocklist.is_blocked(client_ip):
             self.security_logger.log_event(
@@ -705,7 +705,7 @@ class SecurityMiddleware:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied"
             )
-        
+
         # Analyze request for suspicious patterns
         if not self.request_analyzer.analyze_request(request):
             self.ip_blocklist.temp_block(client_ip)
@@ -713,12 +713,12 @@ class SecurityMiddleware:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Suspicious request detected"
             )
-        
+
         # Process request
         start_time = time.time()
         response = await call_next(request)
         process_time = time.time() - start_time
-        
+
         # Log slow requests (potential attacks)
         if process_time > 5.0:
             self.security_logger.log_event(
@@ -726,7 +726,7 @@ class SecurityMiddleware:
                 client_ip,
                 {"path": str(request.url.path), "duration": process_time}
             )
-        
+
         return response
 '''
 
@@ -744,10 +744,10 @@ def secure_database_permissions():
     """Set secure permissions on database files."""
     db_files = [
         "data/api_server.db",
-        "data/production.db", 
+        "data/production.db",
         "context.db"
     ]
-    
+
     for db_file in db_files:
         if os.path.exists(db_file):
             # Set read/write for owner only (600)
@@ -759,46 +759,46 @@ def create_secure_database_connection(db_path: str) -> sqlite3.Connection:
     # Ensure database directory exists with secure permissions
     db_dir = Path(db_path).parent
     db_dir.mkdir(mode=0o700, exist_ok=True)
-    
+
     # Create connection with security settings
     conn = sqlite3.connect(
         db_path,
         check_same_thread=False,
         isolation_level='IMMEDIATE'  # Prevent race conditions
     )
-    
+
     # Enable security features
     conn.execute("PRAGMA foreign_keys = ON")  # Enforce foreign key constraints
     conn.execute("PRAGMA secure_delete = ON")  # Securely delete data
     conn.execute("PRAGMA journal_mode = WAL")  # Write-ahead logging for integrity
-    
+
     return conn
 
 def hash_sensitive_data(data: str) -> str:
     """Hash sensitive data before storing in database."""
     import hashlib
     import secrets
-    
+
     # Generate a random salt
     salt = secrets.token_hex(16)
-    
+
     # Hash the data with salt
     hash_obj = hashlib.pbkdf2_hmac('sha256', data.encode(), salt.encode(), 100000)
-    
+
     # Return salt + hash
     return salt + hash_obj.hex()
 
 def verify_hashed_data(data: str, stored_hash: str) -> bool:
     """Verify hashed data."""
     import hashlib
-    
+
     # Extract salt (first 32 characters)
     salt = stored_hash[:32]
     original_hash = stored_hash[32:]
-    
+
     # Hash the input data with the same salt
     hash_obj = hashlib.pbkdf2_hmac('sha256', data.encode(), salt.encode(), 100000)
-    
+
     # Compare hashes
     return hash_obj.hex() == original_hash
 

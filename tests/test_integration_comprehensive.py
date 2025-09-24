@@ -74,17 +74,31 @@ class TestFullSystemIntegration:
 
         # Verify no branded content
         story_lower = story.lower()
-        banned_terms = ["emperor", "warhammer", "40k", "chaos", "grim darkness"]
+        banned_terms = [
+            "emperor",
+            "warhammer",
+            "40k",
+            "chaos",
+            "grim darkness",
+        ]
         for term in banned_terms:
             assert term not in story_lower, f"Found banned term: {term}"
 
         # Verify sci-fi content
-        sci_fi_terms = ["space", "research", "facility", "investigation", "discovery"]
+        sci_fi_terms = [
+            "space",
+            "research",
+            "facility",
+            "investigation",
+            "discovery",
+        ]
         has_sci_fi = any(term in story_lower for term in sci_fi_terms)
         assert has_sci_fi, "Story should contain sci-fi elements"
 
         # Verify character integration
-        assert sim_data["participants"] == SIMULATION_REQUEST["character_names"]
+        assert (
+            sim_data["participants"] == SIMULATION_REQUEST["character_names"]
+        )
         assert sim_data["turns_executed"] > 0
         assert sim_data["duration_seconds"] > 0
 
@@ -159,7 +173,9 @@ class TestFullSystemIntegration:
 
         # Run concurrent simulations
         with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = [executor.submit(run_simulation, req) for req in sim_requests]
+            futures = [
+                executor.submit(run_simulation, req) for req in sim_requests
+            ]
 
             responses = [future.result() for future in as_completed(futures)]
 
@@ -372,12 +388,16 @@ class TestStoryGenerationPipeline:
 
         # Story should integrate character context
         # (Note: Current implementation may show "Unknown" for characters)
-        assert len(story) > 50, "Story should be generated from character context"
+        assert (
+            len(story) > 50
+        ), "Story should be generated from character context"
 
     def test_narrative_style_story_consistency(self):
         """Test narrative style consistency across story generation"""
         # Create test simulation log
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write(
                 """
             Turn 1 - 2024-01-01 12:00:00
@@ -452,12 +472,22 @@ class TestMultiComponentWorkflows:
         story = chronicler.transcribe_log(director.campaign_log_file)
 
         # Validation phase
-        assert len(story) > 100, "End-to-end workflow should produce substantial story"
+        assert (
+            len(story) > 100
+        ), "End-to-end workflow should produce substantial story"
 
         # Verify story quality
         story_lower = story.lower()
-        sci_fi_indicators = ["space", "galaxy", "research", "technology", "discovery"]
-        has_sci_fi = any(indicator in story_lower for indicator in sci_fi_indicators)
+        sci_fi_indicators = [
+            "space",
+            "galaxy",
+            "research",
+            "technology",
+            "discovery",
+        ]
+        has_sci_fi = any(
+            indicator in story_lower for indicator in sci_fi_indicators
+        )
         assert has_sci_fi, "Workflow should maintain sci-fi theme throughout"
 
     def test_error_recovery_multi_component_workflow(self):
@@ -477,11 +507,15 @@ class TestMultiComponentWorkflows:
             if log_exists:
                 chronicler = ChroniclerAgent()
                 story = chronicler.transcribe_log(director.campaign_log_file)
-                assert isinstance(story, str), "Should recover and produce story"
+                assert isinstance(
+                    story, str
+                ), "Should recover and produce story"
 
         except Exception as e:
             # Should not crash entire system
-            assert isinstance(e, Exception), "Errors should be handled gracefully"
+            assert isinstance(
+                e, Exception
+            ), "Errors should be handled gracefully"
 
     def test_performance_multi_component_integration(self):
         """Test performance characteristics of integrated system"""
@@ -511,7 +545,9 @@ class TestMultiComponentWorkflows:
         assert (
             total_time < 10.0
         ), f"Full workflow should complete quickly: {total_time}s"
-        assert len(story) > 100, "Performance optimization should not sacrifice quality"
+        assert (
+            len(story) > 100
+        ), "Performance optimization should not sacrifice quality"
 
 
 class TestPerformanceIntegration:
@@ -532,7 +568,9 @@ class TestPerformanceIntegration:
 
             # Character requests
             for char_name in GENERIC_CHARACTERS:
-                futures.append(executor.submit(make_character_request, char_name))
+                futures.append(
+                    executor.submit(make_character_request, char_name)
+                )
 
             # Simulation requests
             for _ in range(3):
@@ -545,7 +583,9 @@ class TestPerformanceIntegration:
             responses = [future.result() for future in as_completed(futures)]
 
         # All should complete successfully
-        success_count = sum(1 for r in responses if r.status_code in [200, 201])
+        success_count = sum(
+            1 for r in responses if r.status_code in [200, 201]
+        )
         assert (
             success_count >= len(responses) * 0.9
         ), "Most concurrent requests should succeed"
@@ -600,7 +640,11 @@ class TestErrorPropagationAndRecovery:
     def test_simulation_error_recovery_integration(self):
         """Test simulation error recovery with story generation"""
         # Test with empty character list (should fail gracefully)
-        invalid_request = {"character_names": [], "setting": "test", "scenario": "test"}
+        invalid_request = {
+            "character_names": [],
+            "setting": "test",
+            "scenario": "test",
+        }
 
         response = client.post("/simulations", json=invalid_request)
         assert response.status_code == 422
@@ -615,7 +659,9 @@ class TestErrorPropagationAndRecovery:
     def test_story_generation_error_handling_integration(self):
         """Test story generation error handling in full pipeline"""
         # Create corrupted log scenario
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
             f.write("corrupted log data\nno proper format")
             corrupted_log_path = f.name
 

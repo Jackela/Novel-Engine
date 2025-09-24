@@ -135,8 +135,15 @@ class TestLLMExecutionResult:
         cost_entry = Mock(spec=CostEntry)
         cost_entry.total_cost = Decimal("0.05")
 
-        token_usage = {"input_tokens": 100, "output_tokens": 50, "total_tokens": 150}
-        execution_metadata = {"cache_version": "1.0", "execution_path": "primary"}
+        token_usage = {
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "total_tokens": 150,
+        }
+        execution_metadata = {
+            "cache_version": "1.0",
+            "execution_path": "primary",
+        }
 
         result = LLMExecutionResult(
             response=self.response,
@@ -170,7 +177,11 @@ class TestLLMExecutionResult:
 
     def test_total_tokens_property(self):
         """Test total_tokens property calculation."""
-        token_usage = {"input_tokens": 100, "output_tokens": 50, "total_tokens": 150}
+        token_usage = {
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "total_tokens": 150,
+        }
 
         result = LLMExecutionResult(
             response=self.response,
@@ -308,7 +319,9 @@ class TestProviderRouter:
         self.router.register_provider(self.mock_provider_1)
         self.router.register_provider(self.mock_provider_2)
 
-        preferred_providers = [self.provider_id_2.provider_name]  # Prefer Anthropic
+        preferred_providers = [
+            self.provider_id_2.provider_name
+        ]  # Prefer Anthropic
 
         provider = self.router.select_provider_for_model(
             model_name=self.model_id_2.model_name,
@@ -343,7 +356,8 @@ class TestProviderRouter:
         fallback_providers = [self.provider_id_1.provider_name]
 
         provider = self.router.select_provider_for_model(
-            model_name=self.model_id_1.model_name, fallback_providers=fallback_providers
+            model_name=self.model_id_1.model_name,
+            fallback_providers=fallback_providers,
         )
 
         # Should return provider even if unhealthy when used as fallback
@@ -356,7 +370,9 @@ class TestProviderRouter:
         # Mock that provider cannot handle the model
         self.mock_provider_1.get_model_info.return_value = None
 
-        provider = self.router.select_provider_for_model(model_name="unknown-model")
+        provider = self.router.select_provider_for_model(
+            model_name="unknown-model"
+        )
 
         assert provider is None
 
@@ -375,7 +391,9 @@ class TestProviderRouter:
         """Test _can_handle_model method when provider doesn't support model."""
         self.mock_provider_1.get_model_info.return_value = None
 
-        result = self.router._can_handle_model(self.mock_provider_1, "unknown-model")
+        result = self.router._can_handle_model(
+            self.mock_provider_1, "unknown-model"
+        )
 
         assert result is False
 
@@ -383,7 +401,9 @@ class TestProviderRouter:
         """Test _is_provider_healthy method for healthy provider."""
         self.router.register_provider(self.mock_provider_1)
 
-        is_healthy = self.router._is_provider_healthy(self.provider_id_1.provider_name)
+        is_healthy = self.router._is_provider_healthy(
+            self.provider_id_1.provider_name
+        )
 
         assert is_healthy is True
 
@@ -394,7 +414,9 @@ class TestProviderRouter:
             "available"
         ] = False
 
-        is_healthy = self.router._is_provider_healthy(self.provider_id_1.provider_name)
+        is_healthy = self.router._is_provider_healthy(
+            self.provider_id_1.provider_name
+        )
 
         assert is_healthy is False
 
@@ -405,7 +427,9 @@ class TestProviderRouter:
             "consecutive_failures"
         ] = 5
 
-        is_healthy = self.router._is_provider_healthy(self.provider_id_1.provider_name)
+        is_healthy = self.router._is_provider_healthy(
+            self.provider_id_1.provider_name
+        )
 
         assert is_healthy is False
 
@@ -463,7 +487,9 @@ class TestExecuteLLMServiceInitialization:
         service.register_provider(mock_provider)
 
         # Provider should be registered with the internal router
-        retrieved_provider = service._router.get_provider(provider_id.provider_name)
+        retrieved_provider = service._router.get_provider(
+            provider_id.provider_name
+        )
         assert retrieved_provider == mock_provider
 
 
@@ -521,7 +547,9 @@ class TestExecuteLLMServiceExecution:
 
         rate_limit_result = Mock()
         rate_limit_result.allowed = True
-        self.mock_rate_limiter.check_rate_limit_async.return_value = rate_limit_result
+        self.mock_rate_limiter.check_rate_limit_async.return_value = (
+            rate_limit_result
+        )
 
         self.mock_cost_tracker.check_budget_async.return_value = (True, Mock())
 
@@ -529,7 +557,9 @@ class TestExecuteLLMServiceExecution:
         retry_result.final_response = self.success_response
         retry_result.total_attempts = 1
         retry_result.success = True
-        self.mock_retry_policy.execute_with_retry_async.return_value = retry_result
+        self.mock_retry_policy.execute_with_retry_async.return_value = (
+            retry_result
+        )
 
         # Execute
         result = await self.service.execute_async(self.request, self.budget)
@@ -562,7 +592,9 @@ class TestExecuteLLMServiceExecution:
         config = LLMExecutionConfig(enable_caching=True, track_costs=True)
 
         # Execute
-        result = await self.service.execute_async(self.request, self.budget, config)
+        result = await self.service.execute_async(
+            self.request, self.budget, config
+        )
 
         # Verify result
         assert result.success is True
@@ -585,7 +617,9 @@ class TestExecuteLLMServiceExecution:
         rate_limit_result = Mock()
         rate_limit_result.allowed = False
         rate_limit_result.reason = "Rate limit exceeded"
-        self.mock_rate_limiter.check_rate_limit_async.return_value = rate_limit_result
+        self.mock_rate_limiter.check_rate_limit_async.return_value = (
+            rate_limit_result
+        )
 
         # Execute
         result = await self.service.execute_async(self.request, self.budget)
@@ -607,9 +641,14 @@ class TestExecuteLLMServiceExecution:
 
         rate_limit_result = Mock()
         rate_limit_result.allowed = True
-        self.mock_rate_limiter.check_rate_limit_async.return_value = rate_limit_result
+        self.mock_rate_limiter.check_rate_limit_async.return_value = (
+            rate_limit_result
+        )
 
-        self.mock_cost_tracker.check_budget_async.return_value = (False, Mock())
+        self.mock_cost_tracker.check_budget_async.return_value = (
+            False,
+            Mock(),
+        )
 
         # Execute
         result = await self.service.execute_async(self.request, self.budget)
@@ -633,7 +672,9 @@ class TestExecuteLLMServiceExecution:
 
         rate_limit_result = Mock()
         rate_limit_result.allowed = True
-        self.mock_rate_limiter.check_rate_limit_async.return_value = rate_limit_result
+        self.mock_rate_limiter.check_rate_limit_async.return_value = (
+            rate_limit_result
+        )
 
         self.mock_cost_tracker.check_budget_async.return_value = (True, Mock())
 
@@ -667,7 +708,9 @@ class TestExecuteLLMServiceExecution:
         assert result.retry_attempts == 0
 
         # Verify direct provider call
-        self.mock_provider.generate_async.assert_called_once_with(self.request, None)
+        self.mock_provider.generate_async.assert_called_once_with(
+            self.request, None
+        )
 
     @pytest.mark.asyncio
     async def test_execute_async_with_exception(self):
@@ -677,12 +720,14 @@ class TestExecuteLLMServiceExecution:
 
         rate_limit_result = Mock()
         rate_limit_result.allowed = True
-        self.mock_rate_limiter.check_rate_limit_async.return_value = rate_limit_result
+        self.mock_rate_limiter.check_rate_limit_async.return_value = (
+            rate_limit_result
+        )
 
         self.mock_cost_tracker.check_budget_async.return_value = (True, Mock())
 
-        self.mock_retry_policy.execute_with_retry_async.side_effect = RuntimeError(
-            "Provider error"
+        self.mock_retry_policy.execute_with_retry_async.side_effect = (
+            RuntimeError("Provider error")
         )
 
         # Execute
@@ -701,13 +746,17 @@ class TestExecuteLLMServiceExecution:
         # Setup successful execution
         rate_limit_result = Mock()
         rate_limit_result.allowed = True
-        self.mock_rate_limiter.check_rate_limit_async.return_value = rate_limit_result
+        self.mock_rate_limiter.check_rate_limit_async.return_value = (
+            rate_limit_result
+        )
 
         retry_result = Mock()
         retry_result.final_response = self.success_response
         retry_result.total_attempts = 1
         retry_result.success = True
-        self.mock_retry_policy.execute_with_retry_async.return_value = retry_result
+        self.mock_retry_policy.execute_with_retry_async.return_value = (
+            retry_result
+        )
 
         # Execute
         result = await self.service.execute_async(self.request, config=config)
@@ -730,7 +779,9 @@ class TestExecuteLLMServiceExecution:
         retry_result.final_response = self.success_response
         retry_result.total_attempts = 1
         retry_result.success = True
-        self.mock_retry_policy.execute_with_retry_async.return_value = retry_result
+        self.mock_retry_policy.execute_with_retry_async.return_value = (
+            retry_result
+        )
 
         # Execute
         result = await self.service.execute_async(self.request, config=config)
@@ -751,16 +802,22 @@ class TestExecuteLLMServiceExecution:
 
         rate_limit_result = Mock()
         rate_limit_result.allowed = True
-        self.mock_rate_limiter.check_rate_limit_async.return_value = rate_limit_result
+        self.mock_rate_limiter.check_rate_limit_async.return_value = (
+            rate_limit_result
+        )
 
         retry_result = Mock()
         retry_result.final_response = self.success_response
         retry_result.total_attempts = 1
         retry_result.success = True
-        self.mock_retry_policy.execute_with_retry_async.return_value = retry_result
+        self.mock_retry_policy.execute_with_retry_async.return_value = (
+            retry_result
+        )
 
         # Execute
-        result = await self.service.execute_async(self.request, self.budget, config)
+        result = await self.service.execute_async(
+            self.request, self.budget, config
+        )
 
         # Verify that budget wasn't checked
         self.mock_cost_tracker.check_budget_async.assert_not_called()
@@ -776,7 +833,9 @@ class TestExecuteLLMServiceExecution:
 
         rate_limit_result = Mock()
         rate_limit_result.allowed = True
-        self.mock_rate_limiter.check_rate_limit_async.return_value = rate_limit_result
+        self.mock_rate_limiter.check_rate_limit_async.return_value = (
+            rate_limit_result
+        )
 
         self.mock_cost_tracker.check_budget_async.return_value = (True, Mock())
 
@@ -784,14 +843,18 @@ class TestExecuteLLMServiceExecution:
         retry_result.final_response = self.success_response
         retry_result.total_attempts = 1
         retry_result.success = True
-        self.mock_retry_policy.execute_with_retry_async.return_value = retry_result
+        self.mock_retry_policy.execute_with_retry_async.return_value = (
+            retry_result
+        )
 
         config = LLMExecutionConfig(
             enable_caching=True, track_costs=True, cache_ttl_seconds=1800
         )
 
         # Execute
-        result = await self.service.execute_async(self.request, self.budget, config)
+        result = await self.service.execute_async(
+            self.request, self.budget, config
+        )
 
         # Verify post-execution processing
         assert result.success is True
@@ -842,7 +905,9 @@ class TestExecuteLLMServiceStreamingExecution:
         # Setup rate limiting
         rate_limit_result = Mock()
         rate_limit_result.allowed = True
-        self.mock_rate_limiter.check_rate_limit_async.return_value = rate_limit_result
+        self.mock_rate_limiter.check_rate_limit_async.return_value = (
+            rate_limit_result
+        )
 
         # Setup streaming response with proper async iterator
         class MockAsyncIterator:
@@ -868,7 +933,9 @@ class TestExecuteLLMServiceStreamingExecution:
 
         # Execute streaming
         chunks = []
-        async for chunk in self.service.execute_stream_async(self.request, self.budget):
+        async for chunk in self.service.execute_stream_async(
+            self.request, self.budget
+        ):
             chunks.append(chunk)
 
         # Verify chunks
@@ -886,11 +953,15 @@ class TestExecuteLLMServiceStreamingExecution:
         rate_limit_result = Mock()
         rate_limit_result.allowed = False
         rate_limit_result.reason = "Rate limit exceeded"
-        self.mock_rate_limiter.check_rate_limit_async.return_value = rate_limit_result
+        self.mock_rate_limiter.check_rate_limit_async.return_value = (
+            rate_limit_result
+        )
 
         # Execute streaming
         chunks = []
-        async for chunk in self.service.execute_stream_async(self.request, self.budget):
+        async for chunk in self.service.execute_stream_async(
+            self.request, self.budget
+        ):
             chunks.append(chunk)
 
         # Verify error was yielded
@@ -908,7 +979,9 @@ class TestExecuteLLMServiceStreamingExecution:
 
         # Execute streaming
         chunks = []
-        async for chunk in self.service.execute_stream_async(self.request, self.budget):
+        async for chunk in self.service.execute_stream_async(
+            self.request, self.budget
+        ):
             chunks.append(chunk)
 
         # Verify error was yielded
@@ -921,7 +994,9 @@ class TestExecuteLLMServiceStreamingExecution:
         # Setup rate limiting
         rate_limit_result = Mock()
         rate_limit_result.allowed = True
-        self.mock_rate_limiter.check_rate_limit_async.return_value = rate_limit_result
+        self.mock_rate_limiter.check_rate_limit_async.return_value = (
+            rate_limit_result
+        )
 
         # Setup provider exception by replacing the method entirely
         async def failing_stream(request, budget):
@@ -934,7 +1009,9 @@ class TestExecuteLLMServiceStreamingExecution:
 
         # Execute streaming
         chunks = []
-        async for chunk in self.service.execute_stream_async(self.request, self.budget):
+        async for chunk in self.service.execute_stream_async(
+            self.request, self.budget
+        ):
             chunks.append(chunk)
 
         # Verify error was yielded
@@ -944,7 +1021,9 @@ class TestExecuteLLMServiceStreamingExecution:
     @pytest.mark.asyncio
     async def test_execute_stream_async_rate_limiting_disabled(self):
         """Test streaming execution with rate limiting disabled."""
-        config = LLMExecutionConfig(enforce_rate_limits=False, enable_streaming=True)
+        config = LLMExecutionConfig(
+            enforce_rate_limits=False, enable_streaming=True
+        )
 
         # Setup streaming response with proper async generator
         async def mock_stream(request, budget):
@@ -1031,9 +1110,9 @@ class TestExecuteLLMServiceStatisticsAndMetrics:
         estimated_cost = self.service._estimate_request_cost(request)
 
         # Should estimate: 6 input tokens * 0.00003 + 100 output tokens * 0.00006
-        expected_cost = Decimal("6") * Decimal("0.00003") + Decimal("100") * Decimal(
-            "0.00006"
-        )
+        expected_cost = Decimal("6") * Decimal("0.00003") + Decimal(
+            "100"
+        ) * Decimal("0.00006")
         assert estimated_cost == expected_cost
 
     def test_estimate_request_cost_no_pricing(self):
@@ -1077,9 +1156,9 @@ class TestExecuteLLMServiceStatisticsAndMetrics:
 
         # Should use default 100 tokens for output
         input_tokens = len("Test prompt") // 4
-        expected_cost = Decimal(str(input_tokens)) * Decimal("0.00003") + Decimal(
-            "100"
-        ) * Decimal("0.00006")
+        expected_cost = Decimal(str(input_tokens)) * Decimal(
+            "0.00003"
+        ) + Decimal("100") * Decimal("0.00006")
         assert estimated_cost == expected_cost
 
     @pytest.mark.asyncio
@@ -1114,7 +1193,9 @@ class TestExecuteLLMServiceStatisticsAndMetrics:
         # Verify the cost entry has zero cost (cached)
         call_args = mock_cost_tracker.record_cost_async.call_args[0]
         cost_entry = call_args[0]
-        assert hasattr(cost_entry, "total_cost")  # Verify it's a cost entry-like object
+        assert hasattr(
+            cost_entry, "total_cost"
+        )  # Verify it's a cost entry-like object
 
 
 class TestExecuteLLMServiceIntegration:
@@ -1189,7 +1270,9 @@ class TestExecuteLLMServiceIntegration:
         )
 
         config = LLMExecutionConfig(
-            preferred_providers=[provider_id_2.provider_name]  # Prefer Anthropic
+            preferred_providers=[
+                provider_id_2.provider_name
+            ]  # Prefer Anthropic
         )
 
         # Setup response
@@ -1203,7 +1286,9 @@ class TestExecuteLLMServiceIntegration:
         mock_provider_2.generate_async.return_value = response
 
         # Execute
-        result = await self.service.execute_async(claude_request, config=config)
+        result = await self.service.execute_async(
+            claude_request, config=config
+        )
 
         # Verify correct provider was used
         assert result.success is True

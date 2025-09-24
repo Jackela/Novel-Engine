@@ -39,9 +39,9 @@ class BaseMetrics:
             self._timing_metrics[metric_name].append(duration_ms)
             # Keep only last 1000 measurements
             if len(self._timing_metrics[metric_name]) > 1000:
-                self._timing_metrics[metric_name] = self._timing_metrics[metric_name][
-                    -1000:
-                ]
+                self._timing_metrics[metric_name] = self._timing_metrics[
+                    metric_name
+                ][-1000:]
 
     def get_metric(self, metric_name: str) -> Any:
         """Get specific metric value."""
@@ -57,7 +57,9 @@ class BaseMetrics:
             timing_stats = {}
             for metric_name, timings in self._timing_metrics.items():
                 if timings:
-                    timing_stats[f"{metric_name}_avg"] = sum(timings) / len(timings)
+                    timing_stats[f"{metric_name}_avg"] = sum(timings) / len(
+                        timings
+                    )
                     timing_stats[f"{metric_name}_min"] = min(timings)
                     timing_stats[f"{metric_name}_max"] = max(timings)
                     timing_stats[f"{metric_name}_count"] = len(timings)
@@ -176,7 +178,9 @@ class EventBusMetrics(BaseMetrics):
         metrics = super().get_all_metrics()
 
         # Add event type breakdown
-        metrics["event_types"] = dict(self._event_type_counters.most_common(10))
+        metrics["event_types"] = dict(
+            self._event_type_counters.most_common(10)
+        )
         metrics["topics"] = dict(self._topic_counters.most_common(10))
 
         return metrics

@@ -120,7 +120,9 @@ class IWorldStateRepository(ABC):
     # Query Operations
 
     @abstractmethod
-    async def get_all(self, offset: int = 0, limit: int = 100) -> List[WorldState]:
+    async def get_all(
+        self, offset: int = 0, limit: int = 100
+    ) -> List[WorldState]:
         """
         Retrieve all WorldState aggregates with pagination.
 
@@ -192,7 +194,11 @@ class IWorldStateRepository(ABC):
 
     @abstractmethod
     async def find_entities_by_type(
-        self, world_state_id: str, entity_type: str, offset: int = 0, limit: int = 100
+        self,
+        world_state_id: str,
+        entity_type: str,
+        offset: int = 0,
+        limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """
         Find entities within a world state by their type.
@@ -238,7 +244,10 @@ class IWorldStateRepository(ABC):
 
     @abstractmethod
     async def find_entities_by_coordinates(
-        self, world_state_id: str, coordinates: Coordinates, tolerance: float = 0.0
+        self,
+        world_state_id: str,
+        coordinates: Coordinates,
+        tolerance: float = 0.0,
     ) -> List[Dict[str, Any]]:
         """
         Find entities at specific coordinates (with optional tolerance).
@@ -362,7 +371,9 @@ class IWorldStateRepository(ABC):
         pass
 
     @abstractmethod
-    async def list_snapshots(self, world_state_id: str) -> List[Dict[str, Any]]:
+    async def list_snapshots(
+        self, world_state_id: str
+    ) -> List[Dict[str, Any]]:
         """
         List all snapshots for a WorldState aggregate.
 
@@ -396,7 +407,9 @@ class IWorldStateRepository(ABC):
     # Batch Operations
 
     @abstractmethod
-    async def save_batch(self, world_states: List[WorldState]) -> List[WorldState]:
+    async def save_batch(
+        self, world_states: List[WorldState]
+    ) -> List[WorldState]:
         """
         Save multiple WorldState aggregates in a single transaction.
 
@@ -412,7 +425,9 @@ class IWorldStateRepository(ABC):
         pass
 
     @abstractmethod
-    async def delete_batch(self, world_state_ids: List[str]) -> Dict[str, bool]:
+    async def delete_batch(
+        self, world_state_ids: List[str]
+    ) -> Dict[str, bool]:
         """
         Delete multiple WorldState aggregates in a single transaction.
 
@@ -522,7 +537,9 @@ class EntityNotFoundException(RepositoryException):
 class ConcurrencyException(RepositoryException):
     """Raised when a concurrency conflict occurs during save operations."""
 
-    def __init__(self, message: str, expected_version: int, actual_version: int):
+    def __init__(
+        self, message: str, expected_version: int, actual_version: int
+    ):
         super().__init__(message)
         self.expected_version = expected_version
         self.actual_version = actual_version

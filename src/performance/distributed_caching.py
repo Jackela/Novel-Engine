@@ -25,6 +25,48 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+try:
+    import aioredis
+except ImportError:
+    # Mock aioredis for testing environments
+    class MockRedis:
+        async def get(self, *args, **kwargs):
+            return None
+
+        async def set(self, *args, **kwargs):
+            pass
+
+        async def delete(self, *args, **kwargs):
+            pass
+
+        async def exists(self, *args, **kwargs):
+            return False
+
+        async def publish(self, *args, **kwargs):
+            pass
+
+        async def subscribe(self, *args, **kwargs):
+            return MockPubSub()
+
+        def pubsub(self):
+            return MockPubSub()
+
+        async def close(self, *args, **kwargs):
+            pass
+
+    class MockPubSub:
+        async def subscribe(self, *args, **kwargs):
+            pass
+
+        async def get_message(self, *args, **kwargs):
+            return None
+
+    aioredis = type(
+        "MockAioredis",
+        (),
+        {"Redis": MockRedis, "from_url": lambda url: MockRedis()},
+    )()
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -115,7 +157,9 @@ class CacheInterface(ABC):
         pass
 
     @abstractmethod
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(
+        self, key: str, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """Set value in cache"""
         pass
 
@@ -185,7 +229,9 @@ class MemoryCache(CacheInterface):
 
             return entry.value
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(
+        self, key: str, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """Set value in memory cache"""
         async with self._lock:
             # Calculate entry size (rough estimation)
@@ -197,7 +243,10 @@ class MemoryCache(CacheInterface):
 
             # Create cache entry
             entry = CacheEntry(
-                key=key, value=value, ttl=ttl or self.default_ttl, size=entry_size
+                key=key,
+                value=value,
+                ttl=ttl or self.default_ttl,
+                size=entry_size,
             )
 
             self._cache[key] = entry
@@ -295,13 +344,7 @@ class RedisCache(CacheInterface):
     async def _get_redis(self):
         """Get Redis connection (lazy initialization)"""
         if self._redis is None:
-            try:
-                import aioredis
-
-                self._redis = aioredis.from_url(self.redis_url)
-            except ImportError:
-                logger.warning("aioredis not available, using mock Redis")
-                self._redis = MockRedis()
+            self._redis = aioredis.from_url(self.redis_url)
         return self._redis
 
     def _make_key(self, key: str) -> str:
@@ -337,7 +380,9 @@ class RedisCache(CacheInterface):
             self.metrics.misses += 1
             return None
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(
+        self, key: str, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """Set value in Redis cache"""
         try:
             redis = await self._get_redis()
@@ -472,7 +517,6 @@ class DistributedCache:
         enable_write_through: bool = True,
         enable_read_through: bool = True,
     ):
-
         self.l1_cache = l1_cache or MemoryCache()
         self.l2_cache = l2_cache or RedisCache()
         self.enable_write_through = enable_write_through
@@ -513,13 +557,17 @@ class DistributedCache:
                 # Populate both caches
                 await self.l1_cache.set(key, value)
                 await self.l2_cache.set(key, value)
-                self._update_combined_metrics("source_hit", time.time() - start_time)
+                self._update_combined_metrics(
+                    "source_hit", time.time() - start_time
+                )
                 return value
 
         self._update_combined_metrics("miss", time.time() - start_time)
         return None
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(
+        self, key: str, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """Set value in multi-tier cache"""
         results = []
 
@@ -618,7 +666,8 @@ class DistributedCache:
         # Update response time
         total = self.combined_metrics.hits + self.combined_metrics.misses
         self.combined_metrics.average_response_time = (
-            self.combined_metrics.average_response_time * (total - 1) + response_time
+            self.combined_metrics.average_response_time * (total - 1)
+            + response_time
         ) / total
 
     def get_comprehensive_metrics(self) -> Dict[str, CacheMetrics]:
@@ -641,7 +690,9 @@ class CharacterCache:
 
         # Register cache loaders
         self.cache.register_cache_loader("character:", self._load_character)
-        self.cache.register_cache_loader("character_list", self._load_character_list)
+        self.cache.register_cache_loader(
+            "character_list", self._load_character_list
+        )
 
     async def get_character(self, character_id: str) -> Optional[Dict]:
         """Get character data with caching"""
@@ -678,7 +729,10 @@ class CharacterCache:
     async def _load_character_list(self, key: str) -> Optional[List[Dict]]:
         """Load character list from database"""
         logger.debug("Loading character list from database")
-        return [{"id": "1", "name": "Character 1"}, {"id": "2", "name": "Character 2"}]
+        return [
+            {"id": "1", "name": "Character 1"},
+            {"id": "2", "name": "Character 2"},
+        ]
 
 
 # Example usage and testing

@@ -20,7 +20,9 @@ def get_project_root() -> Path:
     return Path(__file__).parent.parent
 
 
-def validate_environment_variables(required_vars: List[str]) -> Dict[str, bool]:
+def validate_environment_variables(
+    required_vars: List[str],
+) -> Dict[str, bool]:
     """Validate that required environment variables are set."""
     results = {}
     for var in required_vars:
@@ -48,7 +50,12 @@ def check_deployment_prerequisites() -> Dict[str, bool]:
     project_root = get_project_root()
 
     # Check required directories
-    required_dirs = ["configs/environments", "configs/security", "staging", "data"]
+    required_dirs = [
+        "configs/environments",
+        "configs/security",
+        "staging",
+        "data",
+    ]
 
     for dir_name in required_dirs:
         dir_path = project_root / dir_name
@@ -97,7 +104,13 @@ def validate_python_environment() -> Dict[str, bool]:
     checks["python_version_ok"] = py_version >= (3, 9)
 
     # Check required modules
-    required_modules = ["yaml", "requests", "pathlib", "subprocess", "datetime"]
+    required_modules = [
+        "yaml",
+        "requests",
+        "pathlib",
+        "subprocess",
+        "datetime",
+    ]
 
     for module in required_modules:
         try:
@@ -154,7 +167,9 @@ def print_deployment_status(
             all_passed = False
 
     print(f"{'='*60}")
-    overall_status = "✅ ALL CHECKS PASSED" if all_passed else "❌ SOME CHECKS FAILED"
+    overall_status = (
+        "✅ ALL CHECKS PASSED" if all_passed else "❌ SOME CHECKS FAILED"
+    )
     print(f" Overall Status: {overall_status}")
     print(f"{'='*60}\n")
 
@@ -169,13 +184,17 @@ def main():
         description="Deployment utilities for Novel Engine"
     )
     parser.add_argument(
-        "--check", action="store_true", help="Run deployment prerequisite checks"
+        "--check",
+        action="store_true",
+        help="Run deployment prerequisite checks",
     )
     parser.add_argument(
         "--info", action="store_true", help="Show deployment information"
     )
     parser.add_argument(
-        "--validate-config", type=str, help="Validate a specific configuration file"
+        "--validate-config",
+        type=str,
+        help="Validate a specific configuration file",
     )
 
     args = parser.parse_args()
@@ -203,7 +222,9 @@ def main():
             print(f"❌ Failed to load configuration: {args.validate_config}")
             sys.exit(1)
         else:
-            print(f"✅ Configuration loaded successfully: {args.validate_config}")
+            print(
+                f"✅ Configuration loaded successfully: {args.validate_config}"
+            )
             print(f"   Keys found: {list(config.keys())}")
 
 

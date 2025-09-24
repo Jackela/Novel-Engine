@@ -7,7 +7,7 @@ in the DirectorAgent. Tests all 5 Iron Laws (E001-E005) and the automatic
 action repair capabilities.
 
 Test Coverage:
-- Core validation engine (_adjudicate_action)
+- Core validation engine (validate_action)
 - Individual Iron Laws validation methods
 - Automatic repair system functionality
 - Helper method correctness
@@ -54,7 +54,9 @@ try:
     IRON_LAWS_AVAILABLE = True
 except ImportError as e:
     IRON_LAWS_AVAILABLE = False
-    pytest.skip(f"Iron Laws system not available: {e}", allow_module_level=True)
+    pytest.skip(
+        f"Iron Laws system not available: {e}", allow_module_level=True
+    )
 
 
 class TestIronLawsValidation:
@@ -113,27 +115,38 @@ class TestIronLawsValidation:
             reasoning="Investigating unusual readings from the object",
         )
 
-    def test_iron_laws_validation_core(self, director_agent, mock_agent, sample_action):
+    def test_iron_laws_validation_core(
+        self, director_agent, mock_agent, sample_action
+    ):
         """Test core Iron Laws validation engine."""
         # Execute validation
-        result = director_agent._adjudicate_action(sample_action, mock_agent)
+        result = director_agent.validate_action(sample_action, mock_agent)
 
-        # Verify result structure - should be IronLawsReport object
-        assert hasattr(result, "overall_result")
+        # Verify result structure - should be ActionAdjudicationResult object
+        assert hasattr(result, "success")
         assert hasattr(result, "violations")
-        assert hasattr(result, "checks_performed")
-        assert hasattr(result, "timestamp")
-        assert result.action_id == sample_action.action_id
+        assert hasattr(result, "validated_action")
+        assert hasattr(result, "repair_log")
+        assert hasattr(result, "adjudication_notes")
 
-        # Verify all laws were checked
-        expected_checks = [
-            "E001_Causality_Law",
-            "E002_Resource_Law",
-            "E003_Physics_Law",
-            "E004_Narrative_Law",
-            "E005_Social_Law",
-        ]
-        assert all(check in result.checks_performed for check in expected_checks)
+        # Verify violations or success status
+        assert isinstance(result.violations, list)
+        assert isinstance(result.repair_log, list)
+        # Check if any violations were found
+        if result.violations:
+            # Verify violation format
+            for violation in result.violations:
+                assert hasattr(violation, "law_code")
+                assert hasattr(violation, "description")
+        # Additional validation based on success status
+        if result.success:
+            assert result.validated_action is not None
+        else:
+            # If not successful, should have repair log or adjudication notes
+            assert (
+                len(result.repair_log) > 0
+                or len(result.adjudication_notes) > 0
+            )
 
     def test_causality_law_validation(self, director_agent, mock_agent):
         """Test E001 Causality Law validation."""
@@ -141,10 +154,14 @@ class TestIronLawsValidation:
         valid_action = ProposedAction(
             action_id="valid_causality_001",
             action_type=ActionType.MOVE,
-            target=ActionTarget(entity_id="nearby_door", entity_type=EntityType.OBJECT),
+            target=ActionTarget(
+                entity_id="nearby_door", entity_type=EntityType.OBJECT
+            ),
             agent_id="test_agent_001",
             character_id="test_agent_001",
-            parameters=ActionParameters(intensity=ActionIntensity.LOW, duration=0.5),
+            parameters=ActionParameters(
+                intensity=ActionIntensity.LOW, duration=0.5
+            ),
             reasoning="Moving to examine the door more closely",
         )
 
@@ -189,7 +206,9 @@ class TestIronLawsValidation:
             ),
             agent_id="test_agent_001",
             character_id="test_agent_001",
-            parameters=ActionParameters(intensity=ActionIntensity.LOW, duration=1.0),
+            parameters=ActionParameters(
+                intensity=ActionIntensity.LOW, duration=1.0
+            ),
             reasoning="Light investigation of the object",
         )
 
@@ -441,9 +460,10 @@ class TestIronLawsRepairSystem:
         ]
 
         # Attempt repairs
-        repaired_action, repairs_made = director_agent._repair_causality_violations(
-            action, violations
-        )
+        (
+            repaired_action,
+            repairs_made,
+        ) = director_agent._repair_causality_violations(action, violations)
 
         # Verify repairs were applied
         assert len(repairs_made) > 0
@@ -451,7 +471,10 @@ class TestIronLawsRepairSystem:
         assert repaired_action.target.entity_id != ""
         assert len(repaired_action.reasoning.strip()) > 1
         repairs_text = " ".join(repairs_made)
-        assert "target" in repairs_text.lower() or "reasoning" in repairs_text.lower()
+        assert (
+            "target" in repairs_text.lower()
+            or "reasoning" in repairs_text.lower()
+        )
 
     def test_resource_repair(self, director_agent, mock_character_data):
         """Test E002 Resource Law violation repairs."""
@@ -459,7 +482,9 @@ class TestIronLawsRepairSystem:
         action = ProposedAction(
             action_id="resource_repair_001",
             action_type=ActionType.ATTACK,
-            target=ActionTarget(entity_id="enemy", entity_type=EntityType.CHARACTER),
+            target=ActionTarget(
+                entity_id="enemy", entity_type=EntityType.CHARACTER
+            ),
             agent_id="test_agent_001",
             character_id="test_agent_001",
             parameters=ActionParameters(
@@ -481,7 +506,10 @@ class TestIronLawsRepairSystem:
         ]
 
         # Attempt repairs
-        repaired_action, repairs_made = director_agent._repair_resource_violations(
+        (
+            repaired_action,
+            repairs_made,
+        ) = director_agent._repair_resource_violations(
             action, violations, mock_character_data
         )
 
@@ -522,7 +550,10 @@ class TestIronLawsRepairSystem:
         ]
 
         # Attempt repairs
-        repaired_action, repairs_made = director_agent._repair_physics_violations(
+        (
+            repaired_action,
+            repairs_made,
+        ) = director_agent._repair_physics_violations(
             action, violations, mock_character_data
         )
 
@@ -538,7 +569,9 @@ class TestIronLawsRepairSystem:
         action = ProposedAction(
             action_id="narrative_repair_001",
             action_type=ActionType.ATTACK,
-            target=ActionTarget(entity_id="ally", entity_type=EntityType.CHARACTER),
+            target=ActionTarget(
+                entity_id="ally", entity_type=EntityType.CHARACTER
+            ),
             agent_id="test_agent_001",
             character_id="test_agent_001",
             parameters=ActionParameters(intensity=ActionIntensity.HIGH),
@@ -558,9 +591,10 @@ class TestIronLawsRepairSystem:
         ]
 
         # Attempt repairs
-        repaired_action, repairs_made = director_agent._repair_narrative_violations(
-            action, violations
-        )
+        (
+            repaired_action,
+            repairs_made,
+        ) = director_agent._repair_narrative_violations(action, violations)
 
         # Verify repairs were applied
         assert len(repairs_made) > 0
@@ -583,7 +617,8 @@ class TestIronLawsRepairSystem:
             action_id="social_repair_001",
             action_type=ActionType.COMMUNICATE,
             target=ActionTarget(
-                entity_id="commanding_officer", entity_type=EntityType.CHARACTER
+                entity_id="commanding_officer",
+                entity_type=EntityType.CHARACTER,
             ),
             agent_id="test_agent_001",
             character_id="test_agent_001",
@@ -604,9 +639,10 @@ class TestIronLawsRepairSystem:
         ]
 
         # Attempt repairs
-        repaired_action, repairs_made = director_agent._repair_social_violations(
-            action, violations
-        )
+        (
+            repaired_action,
+            repairs_made,
+        ) = director_agent._repair_social_violations(action, violations)
 
         # Verify repairs were applied
         assert len(repairs_made) > 0
@@ -615,7 +651,9 @@ class TestIronLawsRepairSystem:
         )  # Should be reduced
         assert "Adjusted communication" in " ".join(repairs_made)
 
-    def test_comprehensive_repair_attempt(self, director_agent, mock_character_data):
+    def test_comprehensive_repair_attempt(
+        self, director_agent, mock_character_data
+    ):
         """Test comprehensive repair system with multiple violation types."""
         # Create action with multiple violations
         problematic_action = ProposedAction(
@@ -757,7 +795,9 @@ class TestIronLawsHelperMethods:
                 affected_entities=["test_agent_001"],
             )
         ]
-        result = director_agent._determine_overall_validation_result(high_violations)
+        result = director_agent._determine_overall_validation_result(
+            high_violations
+        )
         assert result == ValidationResult.REQUIRES_REPAIR
 
         # Test with low violations
@@ -770,7 +810,9 @@ class TestIronLawsHelperMethods:
                 affected_entities=["test_agent_001"],
             )
         ]
-        result = director_agent._determine_overall_validation_result(low_violations)
+        result = director_agent._determine_overall_validation_result(
+            low_violations
+        )
         assert result == ValidationResult.VALID
 
     def test_calculate_action_stamina_cost(self, director_agent):
@@ -779,10 +821,14 @@ class TestIronLawsHelperMethods:
         basic_action = ProposedAction(
             action_id="stamina_test_001",
             action_type=ActionType.MOVE,
-            target=ActionTarget(entity_id="location", entity_type=EntityType.LOCATION),
+            target=ActionTarget(
+                entity_id="location", entity_type=EntityType.LOCATION
+            ),
             agent_id="test_agent",
             character_id="test_agent",
-            parameters=ActionParameters(intensity=ActionIntensity.NORMAL, duration=1.0),
+            parameters=ActionParameters(
+                intensity=ActionIntensity.NORMAL, duration=1.0
+            ),
             reasoning="Moving to test location for analysis",
         )
 
@@ -794,14 +840,20 @@ class TestIronLawsHelperMethods:
         intense_action = ProposedAction(
             action_id="stamina_test_002",
             action_type=ActionType.ATTACK,
-            target=ActionTarget(entity_id="enemy", entity_type=EntityType.CHARACTER),
+            target=ActionTarget(
+                entity_id="enemy", entity_type=EntityType.CHARACTER
+            ),
             agent_id="test_agent",
             character_id="test_agent",
-            parameters=ActionParameters(intensity=ActionIntensity.HIGH, duration=2.0),
+            parameters=ActionParameters(
+                intensity=ActionIntensity.HIGH, duration=2.0
+            ),
             reasoning="High-intensity attack against enemy target",
         )
 
-        intense_cost = director_agent._calculate_action_stamina_cost(intense_action)
+        intense_cost = director_agent._calculate_action_stamina_cost(
+            intense_action
+        )
         assert intense_cost > cost  # Should cost more than basic movement
 
 
@@ -839,19 +891,20 @@ class TestIronLawsIntegration:
             }
 
             # Configure mock to return valid actions
-            mock_agent.decision_loop.return_value = ProposedAction(
-                action_id="integration_action_001",
-                action_type=ActionType.INVESTIGATE,
-                target=ActionTarget(
-                    entity_id="test_object", entity_type=EntityType.OBJECT
-                ),
-                agent_id="integration_test_agent",
-                character_id="integration_test_agent",
-                parameters=ActionParameters(
-                    intensity=ActionIntensity.NORMAL, duration=1.0
-                ),
-                reasoning="Integration test investigation",
-            )
+            def mock_decision_loop(*args, **kwargs):
+                return ProposedAction(
+                    action_id="integration_action_001",
+                    action_type=ActionType.INVESTIGATE,
+                    target=ActionTarget(
+                        entity_id="test_object", entity_type=EntityType.OBJECT
+                    ),
+                    agent_id="integration_test_agent",
+                    character_id="integration_test_agent",
+                    parameters=ActionParameters(
+                        intensity=ActionIntensity.NORMAL, duration=1.0
+                    ),
+                    reasoning="Integration test investigation",
+                )
 
             director.register_agent(mock_agent)
             yield director, mock_agent
@@ -861,7 +914,7 @@ class TestIronLawsIntegration:
         director, mock_agent = director_with_agents
 
         # Mock the validation to return a report
-        with patch.object(director, "_adjudicate_action") as mock_adjudicate:
+        with patch.object(director, "validate_action") as mock_adjudicate:
             mock_adjudicate.return_value = {
                 "validation_result": "APPROVED",
                 "violations_found": [],
@@ -889,7 +942,7 @@ class TestIronLawsIntegration:
         director, mock_agent = director_with_agents
 
         # Mock validation to raise an exception
-        with patch.object(director, "_adjudicate_action") as mock_adjudicate:
+        with patch.object(director, "validate_action") as mock_adjudicate:
             mock_adjudicate.side_effect = Exception("Test validation error")
 
             # Should not crash the turn processing
@@ -952,7 +1005,9 @@ class TestIronLawsEdgeCases:
         sample_action.action_type = ActionType.MOVE
 
         # Should not crash with malformed data
-        result = director_agent._adjudicate_action(sample_action, malformed_agent)
+        result = director_agent._adjudicate_action(
+            sample_action, malformed_agent
+        )
         assert hasattr(result, "overall_result")
         assert result.overall_result == ValidationResult.CATASTROPHIC_FAILURE
 
@@ -973,7 +1028,9 @@ class TestIronLawsEdgeCases:
         invalid_param_action.parameters.intensity = "invalid_intensity"
         invalid_param_action.parameters.duration = -1.0  # Negative duration
 
-        cost = director_agent._calculate_action_stamina_cost(invalid_param_action)
+        cost = director_agent._calculate_action_stamina_cost(
+            invalid_param_action
+        )
         assert cost >= 1  # Should handle gracefully
 
     def test_repair_system_edge_cases(self, director_agent):

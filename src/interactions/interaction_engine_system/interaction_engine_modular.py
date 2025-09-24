@@ -11,14 +11,13 @@ import logging
 from datetime import datetime
 
 # Import modular components
-from .core.types import (
-    InteractionEngineConfig,
-    InteractionOutcome,
-)
+from .core.types import InteractionEngineConfig, InteractionOutcome
 from .processing.interaction_processor import InteractionProcessor
 from .queue_management.queue_manager import QueueManager
 from .state_management.state_manager import StateManager
-from .type_processors.interaction_type_processors import InteractionTypeProcessorManager
+from .type_processors.interaction_type_processors import (
+    InteractionTypeProcessorManager,
+)
 from .validation.interaction_validator import InteractionValidator
 
 # Import enhanced core systems
@@ -107,11 +106,19 @@ class InteractionEngine:
         # Initialize modular components
         self.validator = InteractionValidator(self.config, self.logger)
         self.processor = InteractionProcessor(
-            self.config, self.memory_manager, self.character_manager, self.logger
+            self.config,
+            self.memory_manager,
+            self.character_manager,
+            self.logger,
         )
-        self.type_processors = InteractionTypeProcessorManager(self.config, self.logger)
+        self.type_processors = InteractionTypeProcessorManager(
+            self.config, self.logger
+        )
         self.state_manager = StateManager(
-            self.config, self.memory_manager, self.character_manager, self.logger
+            self.config,
+            self.memory_manager,
+            self.character_manager,
+            self.logger,
         )
         self.queue_manager = QueueManager(self.config, self.logger)
 
@@ -154,7 +161,9 @@ class InteractionEngine:
             if not self.is_initialized:
                 await self._initialize_engine()
 
-            self.logger.info(f"Processing interaction: {context.interaction_id}")
+            self.logger.info(
+                f"Processing interaction: {context.interaction_id}"
+            )
 
             if async_processing:
                 return await self._queue_interaction(context)
@@ -176,8 +185,8 @@ class InteractionEngine:
 
         try:
             # Phase 1: Validation
-            validation_result = await self.validator.validate_interaction_context(
-                context
+            validation_result = (
+                await self.validator.validate_interaction_context(context)
             )
             if not validation_result.success:
                 return InteractionOutcome(
@@ -190,8 +199,8 @@ class InteractionEngine:
                 )
 
             # Phase 2: Type-specific processing
-            type_processing_result = await self.type_processors.process_interaction(
-                context
+            type_processing_result = (
+                await self.type_processors.process_interaction(context)
             )
             if not type_processing_result.success:
                 return InteractionOutcome(
@@ -208,14 +217,20 @@ class InteractionEngine:
                 hasattr(self.config, "memory_integration_enabled")
                 and self.config.memory_integration_enabled
             ):
-                state_result = await self.state_manager.update_interaction_states(
-                    context, type_processing_result.data
+                state_result = (
+                    await self.state_manager.update_interaction_states(
+                        context, type_processing_result.data
+                    )
                 )
                 if not state_result.success:
-                    self.logger.warning(f"State update failed: {state_result.error}")
+                    self.logger.warning(
+                        f"State update failed: {state_result.error}"
+                    )
 
             # Create successful outcome
-            processing_time = (datetime.now() - processing_start).total_seconds()
+            processing_time = (
+                datetime.now() - processing_start
+            ).total_seconds()
 
             outcome = InteractionOutcome(
                 interaction_id=context.interaction_id,
@@ -230,13 +245,15 @@ class InteractionEngine:
             self._update_engine_stats(True, processing_time)
 
             self.logger.info(
-                f"Interaction completed successfully: {context.interaction_id} ({processing_time:.2f}s)"
+                f"Interaction completed successfully: {context.interaction_id}({processing_time:.2f}s)"
             )
 
             return outcome
 
         except Exception as e:
-            processing_time = (datetime.now() - processing_start).total_seconds()
+            processing_time = (
+                datetime.now() - processing_start
+            ).total_seconds()
             self._update_engine_stats(False, processing_time)
 
             self.logger.error(f"Synchronous processing failed: {e}")
@@ -267,7 +284,9 @@ class InteractionEngine:
     def get_engine_status(self):
         """Get comprehensive engine status."""
         current_time = datetime.now()
-        uptime = (current_time - self.engine_stats["startup_time"]).total_seconds()
+        uptime = (
+            current_time - self.engine_stats["startup_time"]
+        ).total_seconds()
 
         return {
             "engine_status": {
@@ -318,7 +337,9 @@ class InteractionEngine:
     def validate_interaction_context(self, context):
         """Validate interaction context without processing."""
         try:
-            return asyncio.run(self.validator.validate_interaction_context(context))
+            return asyncio.run(
+                self.validator.validate_interaction_context(context)
+            )
         except Exception as e:
             return StandardResponse(
                 success=False,
@@ -334,7 +355,11 @@ class InteractionEngine:
         try:
             return self.validator.calculate_risk_assessment(context)
         except Exception as e:
-            return {"risk_score": 0.5, "risk_level": "Unknown", "error": str(e)}
+            return {
+                "risk_score": 0.5,
+                "risk_level": "Unknown",
+                "error": str(e),
+            }
 
     def _update_engine_stats(self, success, processing_time):
         """Update engine processing statistics."""
@@ -355,7 +380,10 @@ class InteractionEngine:
 
 
 def create_interaction_engine(
-    config=None, memory_manager=None, character_manager=None, equipment_manager=None
+    config=None,
+    memory_manager=None,
+    character_manager=None,
+    equipment_manager=None,
 ):
     """Factory function to create interaction engine with optimal defaults."""
     if config is None:

@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="16" failures="34" skipped="15" tests="171" time="86.607" timestamp="2025-09-15T22:14:14.365633+10:00" hostname="Jackela"><testcase classname="tests.integration.api.test_fixed_api" name="test_minimal_api" time="8.065"><failure message="Failed: Root endpoint request failed: HTTPConnectionPool(host='127.0.0.1', port=8003): Max retries exceeded with url: / (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001DA54BD67B0&gt;: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))">C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\urllib3\connection.py:198: in _new_conn
+    sock = connection.create_connection(
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\urllib3\util\connection.py:85: in create_connection
+    raise err
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\urllib3\util\connection.py:73: in create_connection
+    sock.connect(sa)
+E   ConnectionRefusedError: [WinError 10061] 由于目标计算机积极拒绝，无法连接。
+
+The above exception was the direct cause of the following exception:
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\urllib3\connectionpool.py:787: in urlopen
+    response = self._make_request(
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\urllib3\connectionpool.py:493: in _make_request
+    conn.request(
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\urllib3\connection.py:494: in request
+    self.endheaders()
+C:\Python312\Lib\http\client.py:1331: in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+C:\Python312\Lib\http\client.py:1091: in _send_output
+    self.send(msg)
+C:\Python312\Lib\http\client.py:1035: in send
+    self.connect()
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\urllib3\connection.py:325: in connect
+    self.sock = self._new_conn()
+                ^^^^^^^^^^^^^^^^
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\urllib3\connection.py:213: in _new_conn
+    raise NewConnectionError(
+E   urllib3.exceptions.NewConnectionError: &lt;urllib3.connection.HTTPConnection object at 0x000001DA54BD67B0&gt;: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。
+
+The above exception was the direct cause of the following exception:
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\requests\adapters.py:667: in send
+    resp = conn.urlopen(
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\urllib3\connectionpool.py:841: in urlopen
+    retries = retries.increment(
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\urllib3\util\retry.py:519: in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='127.0.0.1', port=8003): Max retries exceeded with url: / (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001DA54BD67B0&gt;: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))
+
+During handling of the above exception, another exception occurred:
+tests\integration\api\test_fixed_api.py:180: in test_minimal_api
+    r = requests.get(f"{base_url}/", timeout=5)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\requests\api.py:73: in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\requests\api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\requests\sessions.py:589: in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\requests\sessions.py:703: in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\requests\adapters.py:700: in send
+    raise ConnectionError(e, request=request)
+E   requests.exceptions.ConnectionError: HTTPConnectionPool(host='127.0.0.1', port=8003): Max retries exceeded with url: / (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001DA54BD67B0&gt;: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))
+
+During handling of the above exception, another exception occurred:
+tests\integration\api\test_fixed_api.py:187: in test_minimal_api
+    pytest.fail(f"Root endpoint request failed: {e}")
+E   Failed: Root endpoint request failed: HTTPConnectionPool(host='127.0.0.1', port=8003): Max retries exceeded with url: / (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001DA54BD67B0&gt;: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))</failure></testcase><testcase classname="tests.integration.api.test_functionality" name="test_gemini_api_direct" time="1.031" /><testcase classname="tests.integration.api.test_functionality" name="test_api_endpoints" time="0.080" /><testcase classname="tests.integration.api.test_simple" name="test_gemini_direct" time="0.525" /><testcase classname="tests.integration.api.test_simple" name="test_api_server" time="5.028" /><testcase classname="tests.integration.bridges.test_components" name="test_bridge_infrastructure" time="0.004" /><testcase classname="tests.integration.bridges.test_components" name="test_system_integration" time="0.003" /><testcase classname="tests.integration.bridges.test_multi_agent" name="test_bridge_initialization" time="0.003" /><testcase classname="tests.integration.bridges.test_multi_agent" name="test_ai_systems_initialization" time="0.003" /><testcase classname="tests.integration.bridges.test_multi_agent" name="test_agent_registration" time="0.003" /><testcase classname="tests.integration.bridges.test_multi_agent" name="test_dialogue_management" time="0.003" /><testcase classname="tests.integration.bridges.test_multi_agent" name="test_enhanced_turn_execution" time="0.004" /><testcase classname="tests.integration.bridges.test_multi_agent" name="test_performance_tracking" time="0.004" /><testcase classname="tests.integration.bridges.test_multi_agent" name="test_cost_and_budget_management" time="0.003" /><testcase classname="tests.integration.bridges.test_multi_agent" name="test_component_integration" time="0.003" /><testcase classname="tests.integration.bridges.test_multi_agent" name="test_backward_compatibility" time="0.004" /><testcase classname="tests.integration.core.test_modular_components.TestPersonaAgentModularComponents" name="test_persona_agent_initialization" time="0.003"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:127: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestPersonaAgentModularComponents" name="test_decision_engine_component" time="0.003"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:150: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestPersonaAgentModularComponents" name="test_character_data_manager_component" time="0.003"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:173: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestPersonaAgentModularComponents" name="test_persona_memory_manager_component" time="0.002"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:189: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestPersonaAgentModularComponents" name="test_llm_client_component" time="0.003"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:207: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestInteractionEngineModularComponents" name="test_interaction_engine_initialization" time="0.002"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:231: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestInteractionEngineModularComponents" name="test_interaction_validator_component" time="0.003"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:249: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestInteractionEngineModularComponents" name="test_queue_manager_component" time="0.003"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:271: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestInteractionEngineModularComponents" name="test_interaction_processing_pipeline" time="0.003"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:296: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestMultiAgentBridgeModularComponents" name="test_enhanced_bridge_initialization" time="0.002" /><testcase classname="tests.integration.core.test_modular_components.TestMultiAgentBridgeModularComponents" name="test_dialogue_manager_component" time="0.002"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:336: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestMultiAgentBridgeModularComponents" name="test_llm_batch_processor_component" time="0.003"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:359: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestMultiAgentBridgeModularComponents" name="test_cost_tracker_component" time="0.002"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:379: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestMultiAgentBridgeModularComponents" name="test_bridge_agent_coordination" time="0.003" /><testcase classname="tests.integration.core.test_modular_components.TestModularComponentIntegration" name="test_persona_agent_with_interaction_engine" time="0.002"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:417: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestModularComponentIntegration" name="test_full_modular_system_coordination" time="0.002" /><testcase classname="tests.integration.core.test_modular_components.TestModularComponentPerformance" name="test_persona_agent_decision_performance" time="0.003"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:473: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_modular_components.TestModularComponentPerformance" name="test_interaction_engine_throughput" time="0.003"><skipped type="pytest.skip" message="Real components not available">D:\Code\Novel-Engine\tests\integration\core\test_modular_components.py:505: Real components not available</skipped></testcase><testcase classname="tests.integration.core.test_systems" name="test_logging_system" time="0.021" /><testcase classname="tests.integration.core.test_systems" name="test_error_handling_system" time="3.017" /><testcase classname="tests.integration.core.test_systems" name="test_integration" time="0.004" /><testcase classname="tests.integration.core.test_wave2_components" name="test_component_initialization" time="0.053" /><testcase classname="tests.integration.core.test_wave2_components" name="test_modular_director_agent" time="0.025" /><testcase classname="tests.integration.core.test_wave2_components" name="test_component_protocols" time="0.003" /><testcase classname="tests.integration.core.test_wave2_components" name="test_component_architecture" time="0.003" /><testcase classname="tests.integration.frontend.test_simple" name="test_frontend_basic" time="16.151" /><testcase classname="tests.integration.interactions.test_simple" name="test_engine_initialization" time="0.106" /><testcase classname="tests.integration.interactions.test_simple" name="test_dialogue_interaction" time="0.109" /><testcase classname="tests.integration.interactions.test_simple" name="test_cooperation_interaction" time="0.120" /><testcase classname="tests.integration.interactions.test_simple" name="test_engine_statistics" time="0.107" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_domain_model_creation" time="0.003" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_value_objects_validation" time="0.002" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_core_abilities_calculations" time="0.002" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_application_service_create_character" time="0.005" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_application_service_duplicate_name_validation" time="0.004" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_create_character_command_validation" time="0.003" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_stats_updates" time="0.004" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_level_up" time="0.005" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_healing_and_damage" time="0.004" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_query_operations" time="0.004" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_skills_system" time="0.002" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_domain_events" time="0.003" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_business_rules" time="0.003" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterContextIntegration" name="test_character_export_import_data" time="0.004"><failure message="AssertionError: assert 'name' in {'class': 'bard', 'created_at': '2025-09-15T22:14:55.319545', 'id': '1f966833-2252-491d-b768-0569db1058e0', 'is_alive': True, ...}">tests\integration\test_character_context_integration.py:482: in test_character_export_import_data
+    assert "name" in summary
+E   AssertionError: assert 'name' in {'class': 'bard', 'created_at': '2025-09-15T22:14:55.319545', 'id': '1f966833-2252-491d-b768-0569db1058e0', 'is_alive': True, ...}</failure></testcase><testcase classname="tests.integration.test_character_context_integration.TestCharacterRepositoryIntegration" name="test_character_orm_models_import" time="0.004" /><testcase classname="tests.integration.test_character_context_integration.TestCharacterRepositoryIntegration" name="test_sqlalchemy_character_repository_import" time="0.004" /><testcase classname="tests.integration.test_e2e_turn_orchestration.TestTurnOrchestrationE2E" name="test_complete_turn_orchestration_e2e" time="3.232"><failure message="AssertionError: Expected 200, got 500: {&quot;detail&quot;:&quot;Internal server error&quot;,&quot;error_type&quot;:&quot;internal_error&quot;}&#10;assert 500 == 200&#10; +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code">tests\integration\test_e2e_turn_orchestration.py:414: in test_complete_turn_orchestration_e2e
+    assert (
+E   AssertionError: Expected 200, got 500: {"detail":"Internal server error","error_type":"internal_error"}
+E   assert 500 == 200
+E    +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code</failure></testcase><testcase classname="tests.integration.test_e2e_turn_orchestration.TestTurnOrchestrationE2E" name="test_turn_orchestration_with_validation_errors" time="0.353"><failure message="AssertionError: Expected validation error, got 500&#10;assert 500 in [400, 422]&#10; +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code">tests\integration\test_e2e_turn_orchestration.py:462: in test_turn_orchestration_with_validation_errors
+    assert response.status_code in [
+E   AssertionError: Expected validation error, got 500
+E   assert 500 in [400, 422]
+E    +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code</failure></testcase><testcase classname="tests.integration.test_e2e_turn_orchestration.TestTurnOrchestrationE2E" name="test_turn_orchestration_async_execution" time="0.345"><failure message="AssertionError: Expected 200 or 202, got 500&#10;assert 500 in [200, 202]&#10; +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code">tests\integration\test_e2e_turn_orchestration.py:492: in test_turn_orchestration_async_execution
+    assert response.status_code in [
+E   AssertionError: Expected 200 or 202, got 500
+E   assert 500 in [200, 202]
+E    +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code</failure></testcase><testcase classname="tests.integration.test_e2e_turn_orchestration.TestTurnOrchestrationErrorHandling" name="test_database_connection_failure" time="0.004" /><testcase classname="tests.integration.test_e2e_turn_orchestration.TestTurnOrchestrationErrorHandling" name="test_invalid_character_references" time="0.005" /><testcase classname="tests.integration.test_e2e_turn_orchestration.TestTurnOrchestrationErrorHandling" name="test_concurrent_turn_execution" time="0.005" /><testcase classname="tests.integration.test_world_api_integration.TestWorldAPIIntegration" name="test_world_router_import" time="0.003" /><testcase classname="tests.integration.test_world_api_integration.TestWorldAPIIntegration" name="test_world_delta_endpoint_structure" time="0.024"><failure message="AssertionError: World delta endpoint should exist&#10;assert 404 != 404&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\integration\test_world_api_integration.py:88: in test_world_delta_endpoint_structure
+    assert response.status_code != 404, "World delta endpoint should exist"
+E   AssertionError: World delta endpoint should exist
+E   assert 404 != 404
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.integration.test_world_api_integration.TestWorldAPIIntegration" name="test_world_slice_endpoint_structure" time="0.018"><failure message="AssertionError: World slice endpoint should exist&#10;assert 404 != 404&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\integration\test_world_api_integration.py:107: in test_world_slice_endpoint_structure
+    assert response.status_code != 404, "World slice endpoint should exist"
+E   AssertionError: World slice endpoint should exist
+E   assert 404 != 404
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.integration.test_world_api_integration.TestWorldAPIIntegration" name="test_world_summary_endpoint_structure" time="0.017"><failure message="AssertionError: World summary endpoint should exist&#10;assert 404 != 404&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\integration\test_world_api_integration.py:127: in test_world_summary_endpoint_structure
+    assert response.status_code != 404, "World summary endpoint should exist"
+E   AssertionError: World summary endpoint should exist
+E   assert 404 != 404
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.integration.test_world_api_integration.TestWorldAPIIntegration" name="test_world_entities_endpoint_structure" time="0.023"><failure message="AssertionError: World entities endpoint should exist&#10;assert 404 != 404&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\integration\test_world_api_integration.py:139: in test_world_entities_endpoint_structure
+    assert response.status_code != 404, "World entities endpoint should exist"
+E   AssertionError: World entities endpoint should exist
+E   assert 404 != 404
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.integration.test_world_api_integration.TestWorldAPIIntegration" name="test_world_search_endpoint_structure" time="0.017"><failure message="AssertionError: World search endpoint should exist&#10;assert 404 != 404&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\integration\test_world_api_integration.py:155: in test_world_search_endpoint_structure
+    assert response.status_code != 404, "World search endpoint should exist"
+E   AssertionError: World search endpoint should exist
+E   assert 404 != 404
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.integration.test_world_api_integration.TestWorldAPIIntegration" name="test_world_id_parameter_validation" time="0.013" /><testcase classname="tests.integration.test_world_api_integration.TestWorldAPIIntegration" name="test_world_endpoints_http_methods" time="0.018"><failure message="AssertionError: Delta endpoint should reject GET&#10;assert 404 == 405&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\integration\test_world_api_integration.py:181: in test_world_endpoints_http_methods
+    assert response.status_code == 405, "Delta endpoint should reject GET"
+E   AssertionError: Delta endpoint should reject GET
+E   assert 404 == 405
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.integration.test_world_api_integration.TestAPIServerIntegration" name="test_api_server_world_router_integration" time="0.002" /><testcase classname="tests.performance.test_llm_performance" name="test_async_llm_client_performance" time="16.658" /><testcase classname="tests.performance.test_llm_performance" name="test_persona_agent_patch" time="10.988" /><testcase classname="tests.performance.test_llm_performance" name="test_concurrent_agent_performance" time="0.219" /><testcase classname="tests.security.test_comprehensive_security.TestAuthentication" name="test_jwt_token_validation" time="0.009"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:121: in security_suite
+    await suite.setup()
+tests\security\test_comprehensive_security.py:62: in setup
+    self.app = create_app()
+               ^^^^^^^^^^^^
+src\api\main_api_server.py:342: in create_app
+    rate_limit_strategy = RateLimitStrategy()
+                          ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestAuthentication" name="test_password_security_requirements" time="0.005"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:121: in security_suite
+    await suite.setup()
+tests\security\test_comprehensive_security.py:62: in setup
+    self.app = create_app()
+               ^^^^^^^^^^^^
+src\api\main_api_server.py:342: in create_app
+    rate_limit_strategy = RateLimitStrategy()
+                          ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestAuthentication" name="test_brute_force_protection" time="0.004"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:121: in security_suite
+    await suite.setup()
+tests\security\test_comprehensive_security.py:62: in setup
+    self.app = create_app()
+               ^^^^^^^^^^^^
+src\api\main_api_server.py:342: in create_app
+    rate_limit_strategy = RateLimitStrategy()
+                          ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestAuthentication" name="test_token_expiration" time="0.004"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:121: in security_suite
+    await suite.setup()
+tests\security\test_comprehensive_security.py:62: in setup
+    self.app = create_app()
+               ^^^^^^^^^^^^
+src\api\main_api_server.py:342: in create_app
+    rate_limit_strategy = RateLimitStrategy()
+                          ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestAuthorization" name="test_role_based_access_control" time="0.005"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:215: in security_suite
+    await suite.setup()
+tests\security\test_comprehensive_security.py:62: in setup
+    self.app = create_app()
+               ^^^^^^^^^^^^
+src\api\main_api_server.py:342: in create_app
+    rate_limit_strategy = RateLimitStrategy()
+                          ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestAuthorization" name="test_permission_escalation_prevention" time="0.005"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:215: in security_suite
+    await suite.setup()
+tests\security\test_comprehensive_security.py:62: in setup
+    self.app = create_app()
+               ^^^^^^^^^^^^
+src\api\main_api_server.py:342: in create_app
+    rate_limit_strategy = RateLimitStrategy()
+                          ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestInputValidation" name="test_sql_injection_detection" time="0.009" /><testcase classname="tests.security.test_comprehensive_security.TestInputValidation" name="test_xss_detection" time="0.006" /><testcase classname="tests.security.test_comprehensive_security.TestInputValidation" name="test_command_injection_detection" time="0.006" /><testcase classname="tests.security.test_comprehensive_security.TestInputValidation" name="test_input_sanitization" time="0.005" /><testcase classname="tests.security.test_comprehensive_security.TestRateLimiting" name="test_rate_limit_enforcement" time="0.005"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:348: in rate_limiter
+    strategy = RateLimitStrategy()
+               ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestRateLimiting" name="test_ddos_detection" time="0.008"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:348: in rate_limiter
+    strategy = RateLimitStrategy()
+               ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestRateLimiting" name="test_ip_whitelist" time="0.008"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:348: in rate_limiter
+    strategy = RateLimitStrategy()
+               ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestSecurityHeaders" name="test_security_headers_configuration" time="0.007"><failure message="AttributeError: 'SecurityHeaders' object has no attribute 'get_header'">tests\security\test_comprehensive_security.py:412: in test_security_headers_configuration
+    csp_header = headers.get_header("Content-Security-Policy")
+                 ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'SecurityHeaders' object has no attribute 'get_header'</failure></testcase><testcase classname="tests.security.test_comprehensive_security.TestVulnerabilityAssessment" name="test_owasp_top_10_protection" time="0.006"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:435: in security_suite
+    await suite.setup()
+tests\security\test_comprehensive_security.py:62: in setup
+    self.app = create_app()
+               ^^^^^^^^^^^^
+src\api\main_api_server.py:342: in create_app
+    rate_limit_strategy = RateLimitStrategy()
+                          ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestVulnerabilityAssessment" name="test_information_disclosure_prevention" time="0.006"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:435: in security_suite
+    await suite.setup()
+tests\security\test_comprehensive_security.py:62: in setup
+    self.app = create_app()
+               ^^^^^^^^^^^^
+src\api\main_api_server.py:342: in create_app
+    rate_limit_strategy = RateLimitStrategy()
+                          ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestVulnerabilityAssessment" name="test_session_security" time="0.009"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:435: in security_suite
+    await suite.setup()
+tests\security\test_comprehensive_security.py:62: in setup
+    self.app = create_app()
+               ^^^^^^^^^^^^
+src\api\main_api_server.py:342: in create_app
+    rate_limit_strategy = RateLimitStrategy()
+                          ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.security.test_comprehensive_security.TestSecurityMonitoring" name="test_security_event_logging" time="0.008" /><testcase classname="tests.security.test_comprehensive_security.TestSecurityMonitoring" name="test_audit_trail" time="0.007" /><testcase classname="tests.security.test_comprehensive_security.TestSecurityPerformance" name="test_rate_limiting_performance" time="0.009"><failure message="ImportError: cannot import name 'RateLimit' from 'src.security.rate_limiting' (D:\Code\Novel-Engine\src\security\rate_limiting.py)">tests\security\test_comprehensive_security.py:535: in test_rate_limiting_performance
+    from src.security.rate_limiting import RateLimit
+E   ImportError: cannot import name 'RateLimit' from 'src.security.rate_limiting' (D:\Code\Novel-Engine\src\security\rate_limiting.py)</failure></testcase><testcase classname="tests.security.test_comprehensive_security.TestSecurityPerformance" name="test_input_validation_performance" time="0.274" /><testcase classname="tests.security.test_comprehensive_security.TestSecurityIntegration" name="test_end_to_end_security_flow" time="0.014"><error message="failed on setup with &quot;TypeError: EnumType.__call__() missing 1 required positional argument: 'value'&quot;">tests\security\test_comprehensive_security.py:585: in security_suite
+    await suite.setup()
+tests\security\test_comprehensive_security.py:62: in setup
+    self.app = create_app()
+               ^^^^^^^^^^^^
+src\api\main_api_server.py:342: in create_app
+    rate_limit_strategy = RateLimitStrategy()
+                          ^^^^^^^^^^^^^^^^^^^
+E   TypeError: EnumType.__call__() missing 1 required positional argument: 'value'</error></testcase><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_integration_startup_success" time="0.859" /><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_integration_startup_traditional_only" time="0.490" /><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_integration_shutdown" time="0.529" /><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_character_action_processing_traditional" time="0.846"><failure message="assert False&#10; +  where False = StandardResponse(success=False, data=None, error=ErrorInfo(code='AGENT_CONTEXT_CREATION_FAILED', message='Agent context creation failed', details={'agent_id': 'test_agent', 'exception': &quot;CharacterPersona.__init__() got an unexpected keyword argument 'character_name'&quot;}, recoverable=True, standard_guidance=None), metadata={}, timestamp=datetime.datetime(2025, 9, 15, 22, 15, 30, 610346)).success">tests\test_ai_intelligence_integration.py:173: in test_character_action_processing_traditional
+    assert result.success
+E   assert False
+E    +  where False = StandardResponse(success=False, data=None, error=ErrorInfo(code='AGENT_CONTEXT_CREATION_FAILED', message='Agent context creation failed', details={'agent_id': 'test_agent', 'exception': "CharacterPersona.__init__() got an unexpected keyword argument 'character_name'"}, recoverable=True, standard_guidance=None), metadata={}, timestamp=datetime.datetime(2025, 9, 15, 22, 15, 30, 610346)).success</failure></testcase><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_character_action_processing_ai_enhanced" time="0.729"><failure message="AttributeError: &lt;src.ai_intelligence.agent_coordination_engine.AgentCoordinationEngine object at 0x000001DA570C0C80&gt; does not have the attribute 'coordinate_agent_action'">tests\test_ai_intelligence_integration.py:184: in test_character_action_processing_ai_enhanced
+    with patch.object(
+C:\Python312\Lib\unittest\mock.py:1461: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+C:\Python312\Lib\unittest\mock.py:1434: in get_original
+    raise AttributeError(
+E   AttributeError: &lt;src.ai_intelligence.agent_coordination_engine.AgentCoordinationEngine object at 0x000001DA570C0C80&gt; does not have the attribute 'coordinate_agent_action'</failure></testcase><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_character_action_fallback_mechanism" time="0.671"><failure message="AttributeError: &lt;src.ai_intelligence.agent_coordination_engine.AgentCoordinationEngine object at 0x000001DA57197680&gt; does not have the attribute 'coordinate_agent_action'">tests\test_ai_intelligence_integration.py:208: in test_character_action_fallback_mechanism
+    with patch.object(
+C:\Python312\Lib\unittest\mock.py:1461: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+C:\Python312\Lib\unittest\mock.py:1434: in get_original
+    raise AttributeError(
+E   AttributeError: &lt;src.ai_intelligence.agent_coordination_engine.AgentCoordinationEngine object at 0x000001DA57197680&gt; does not have the attribute 'coordinate_agent_action'</failure></testcase><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_story_generation_traditional" time="0.696"><failure message="assert False&#10; +  where False = StandardResponse(success=False, data=None, error=ErrorInfo(code='STORY_GENERATION_ERROR', message='Story generation failed', details={'prompt': 'Generate a science fiction story', 'exception': &quot;'AIIntelligenceOrchestrator' object has no attribute 'story_quality_engine'&quot;}, recoverable=True, standard_guidance=None), metadata={}, timestamp=datetime.datetime(2025, 9, 15, 22, 15, 32, 869680)).success">tests\test_ai_intelligence_integration.py:240: in test_story_generation_traditional
+    assert result.success
+E   assert False
+E    +  where False = StandardResponse(success=False, data=None, error=ErrorInfo(code='STORY_GENERATION_ERROR', message='Story generation failed', details={'prompt': 'Generate a science fiction story', 'exception': "'AIIntelligenceOrchestrator' object has no attribute 'story_quality_engine'"}, recoverable=True, standard_guidance=None), metadata={}, timestamp=datetime.datetime(2025, 9, 15, 22, 15, 32, 869680)).success</failure></testcase><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_story_generation_ai_enhanced" time="0.677"><failure message="AttributeError: 'AIIntelligenceOrchestrator' object has no attribute 'story_quality_engine'">tests\test_ai_intelligence_integration.py:251: in test_story_generation_ai_enhanced
+    integration_orchestrator.ai_orchestrator.story_quality_engine,
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'AIIntelligenceOrchestrator' object has no attribute 'story_quality_engine'</failure></testcase><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_system_status_retrieval" time="0.666" /><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_performance_tracking" time="0.670" /><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_error_handling_and_recovery" time="0.659" /><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_feature_gate_functionality" time="0.280" /><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_cross_system_event_coordination" time="0.671" /><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_integration_mode_switching" time="0.423" /><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_timeout_handling" time="0.652"><failure message="assert False&#10; +  where False = StandardResponse(success=False, data=None, error=ErrorInfo(code='AGENT_CONTEXT_CREATION_FAILED', message='Agent context creation failed', details={'agent_id': 'timeout_test', 'exception': &quot;CharacterPersona.__init__() got an unexpected keyword argument 'character_name'&quot;}, recoverable=True, standard_guidance=None), metadata={}, timestamp=datetime.datetime(2025, 9, 15, 22, 15, 37, 600497)).success">tests\test_ai_intelligence_integration.py:429: in test_timeout_handling
+    assert result.success
+E   assert False
+E    +  where False = StandardResponse(success=False, data=None, error=ErrorInfo(code='AGENT_CONTEXT_CREATION_FAILED', message='Agent context creation failed', details={'agent_id': 'timeout_test', 'exception': "CharacterPersona.__init__() got an unexpected keyword argument 'character_name'"}, recoverable=True, standard_guidance=None), metadata={}, timestamp=datetime.datetime(2025, 9, 15, 22, 15, 37, 600497)).success</failure></testcase><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_analytics_integration" time="0.684"><failure message="AttributeError: 'AIIntelligenceOrchestrator' object has no attribute 'analytics_platform'">tests\test_ai_intelligence_integration.py:437: in test_analytics_integration
+    integration_orchestrator.ai_orchestrator.analytics_platform,
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'AIIntelligenceOrchestrator' object has no attribute 'analytics_platform'</failure></testcase><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_concurrent_operations" time="0.865"><failure message="assert False&#10; +  where False = all(&lt;generator object TestAIIntelligenceIntegration.test_concurrent_operations.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001DA57295C00&gt;)">tests\test_ai_intelligence_integration.py:471: in test_concurrent_operations
+    assert all(result.success for result in results)
+E   assert False
+E    +  where False = all(&lt;generator object TestAIIntelligenceIntegration.test_concurrent_operations.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001DA57295C00&gt;)</failure></testcase><testcase classname="tests.test_ai_intelligence_integration.TestAIIntelligenceIntegration" name="test_memory_and_cleanup" time="0.662"><failure message="assert 0 &gt; 0&#10; +  where 0 = len([])&#10; +    where [] = &lt;src.ai_intelligence.integration_orchestrator.IntegrationOrchestrator object at 0x000001DA57292090&gt;.metrics_history">tests\test_ai_intelligence_integration.py:487: in test_memory_and_cleanup
+    assert len(integration_orchestrator.metrics_history) &gt; 0
+E   assert 0 &gt; 0
+E    +  where 0 = len([])
+E    +    where [] = &lt;src.ai_intelligence.integration_orchestrator.IntegrationOrchestrator object at 0x000001DA57292090&gt;.metrics_history</failure></testcase><testcase classname="tests.test_ai_intelligence_integration.TestPerformanceValidation" name="test_response_time_requirements" time="0.002"><error message="failed on setup with &quot;file D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py, line 502&#10;      @pytest.mark.asyncio&#10;      async def test_response_time_requirements(self, temp_database):&#10;          &quot;&quot;&quot;Test that response times meet performance requirements.&quot;&quot;&quot;&#10;          config = IntegrationConfig(&#10;              integration_mode=IntegrationMode.AI_ENHANCED,&#10;              performance_threshold=2.0,  # 2 second threshold&#10;          )&#10;&#10;          orchestrator = IntegrationOrchestrator(&#10;              database_path=temp_database, integration_config=config&#10;          )&#10;&#10;          await orchestrator.startup()&#10;&#10;          start_time = datetime.now()&#10;          result = await orchestrator.process_character_action(&#10;              agent_id=&quot;performance_test&quot;, action=&quot;test_action&quot;&#10;          )&#10;          end_time = datetime.now()&#10;&#10;          response_time = (end_time - start_time).total_seconds()&#10;&#10;          assert result.success&#10;          assert response_time &lt; config.performance_threshold&#10;&#10;          await orchestrator.shutdown()&#10;E       fixture 'temp_database' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, characters_directory, class_mocker, clean_environment, cov, doctest_namespace, event_loop, event_loop_policy, mock_character_factory, mock_chronicler_agent, mock_config, mock_director_agent, mock_event_bus, mock_gemini_api_key, mock_gemini_response, mocker, module_mocker, monkeypatch, no_cover, package_mocker, project_root_path, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_api_response, sample_character_data, sample_characters_response, sample_simulation_request, sample_simulation_response, session_mocker, temp_dir, test_data_dir, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py:502&quot;">file D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py, line 502
+      @pytest.mark.asyncio
+      async def test_response_time_requirements(self, temp_database):
+          """Test that response times meet performance requirements."""
+          config = IntegrationConfig(
+              integration_mode=IntegrationMode.AI_ENHANCED,
+              performance_threshold=2.0,  # 2 second threshold
+          )
+
+          orchestrator = IntegrationOrchestrator(
+              database_path=temp_database, integration_config=config
+          )
+
+          await orchestrator.startup()
+
+          start_time = datetime.now()
+          result = await orchestrator.process_character_action(
+              agent_id="performance_test", action="test_action"
+          )
+          end_time = datetime.now()
+
+          response_time = (end_time - start_time).total_seconds()
+
+          assert result.success
+          assert response_time &lt; config.performance_threshold
+
+          await orchestrator.shutdown()
+E       fixture 'temp_database' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, characters_directory, class_mocker, clean_environment, cov, doctest_namespace, event_loop, event_loop_policy, mock_character_factory, mock_chronicler_agent, mock_config, mock_director_agent, mock_event_bus, mock_gemini_api_key, mock_gemini_response, mocker, module_mocker, monkeypatch, no_cover, package_mocker, project_root_path, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_api_response, sample_character_data, sample_characters_response, sample_simulation_request, sample_simulation_response, session_mocker, temp_dir, test_data_dir, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py:502</error></testcase><testcase classname="tests.test_ai_intelligence_integration.TestPerformanceValidation" name="test_throughput_capacity" time="0.002"><error message="failed on setup with &quot;file D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py, line 529&#10;      @pytest.mark.asyncio&#10;      async def test_throughput_capacity(self, temp_database):&#10;          &quot;&quot;&quot;Test system throughput capacity.&quot;&quot;&quot;&#10;          orchestrator = IntegrationOrchestrator(database_path=temp_database)&#10;          await orchestrator.startup()&#10;&#10;          # Measure throughput over time period&#10;          start_time = datetime.now()&#10;          operation_count = 0&#10;&#10;          # Run operations for 5 seconds&#10;          while (datetime.now() - start_time).total_seconds() &lt; 5:&#10;              await orchestrator.process_character_action(&#10;                  agent_id=f&quot;throughput_agent_{operation_count}&quot;, action=&quot;throughput_test&quot;&#10;              )&#10;              operation_count += 1&#10;&#10;          end_time = datetime.now()&#10;          duration = (end_time - start_time).total_seconds()&#10;          operations_per_second = operation_count / duration&#10;&#10;          # Should handle at least 1 operation per second&#10;          assert operations_per_second &gt;= 1.0&#10;&#10;          await orchestrator.shutdown()&#10;E       fixture 'temp_database' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, characters_directory, class_mocker, clean_environment, cov, doctest_namespace, event_loop, event_loop_policy, mock_character_factory, mock_chronicler_agent, mock_config, mock_director_agent, mock_event_bus, mock_gemini_api_key, mock_gemini_response, mocker, module_mocker, monkeypatch, no_cover, package_mocker, project_root_path, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_api_response, sample_character_data, sample_characters_response, sample_simulation_request, sample_simulation_response, session_mocker, temp_dir, test_data_dir, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py:529&quot;">file D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py, line 529
+      @pytest.mark.asyncio
+      async def test_throughput_capacity(self, temp_database):
+          """Test system throughput capacity."""
+          orchestrator = IntegrationOrchestrator(database_path=temp_database)
+          await orchestrator.startup()
+
+          # Measure throughput over time period
+          start_time = datetime.now()
+          operation_count = 0
+
+          # Run operations for 5 seconds
+          while (datetime.now() - start_time).total_seconds() &lt; 5:
+              await orchestrator.process_character_action(
+                  agent_id=f"throughput_agent_{operation_count}", action="throughput_test"
+              )
+              operation_count += 1
+
+          end_time = datetime.now()
+          duration = (end_time - start_time).total_seconds()
+          operations_per_second = operation_count / duration
+
+          # Should handle at least 1 operation per second
+          assert operations_per_second &gt;= 1.0
+
+          await orchestrator.shutdown()
+E       fixture 'temp_database' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, characters_directory, class_mocker, clean_environment, cov, doctest_namespace, event_loop, event_loop_policy, mock_character_factory, mock_chronicler_agent, mock_config, mock_director_agent, mock_event_bus, mock_gemini_api_key, mock_gemini_response, mocker, module_mocker, monkeypatch, no_cover, package_mocker, project_root_path, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_api_response, sample_character_data, sample_characters_response, sample_simulation_request, sample_simulation_response, session_mocker, temp_dir, test_data_dir, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py:529</error></testcase><testcase classname="tests.test_ai_intelligence_integration.TestPerformanceValidation" name="test_resource_utilization" time="0.002"><error message="failed on setup with &quot;file D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py, line 555&#10;      @pytest.mark.asyncio&#10;      async def test_resource_utilization(self, temp_database):&#10;          &quot;&quot;&quot;Test resource utilization under load.&quot;&quot;&quot;&#10;          orchestrator = IntegrationOrchestrator(database_path=temp_database)&#10;          await orchestrator.startup()&#10;&#10;          await orchestrator._generate_integration_metrics()&#10;&#10;          # Generate load&#10;          tasks = []&#10;          for i in range(50):&#10;              task = orchestrator.process_character_action(&#10;                  agent_id=f&quot;load_agent_{i}&quot;, action=&quot;load_test&quot;&#10;              )&#10;              tasks.append(task)&#10;&#10;          results = await asyncio.gather(*tasks)&#10;&#10;          final_metrics = await orchestrator._generate_integration_metrics()&#10;&#10;          # Verify all operations succeeded&#10;          assert all(result.success for result in results)&#10;&#10;          # Check that system health remained good&#10;          assert final_metrics.system_health_score &gt; 0.5&#10;&#10;          await orchestrator.shutdown()&#10;E       fixture 'temp_database' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, characters_directory, class_mocker, clean_environment, cov, doctest_namespace, event_loop, event_loop_policy, mock_character_factory, mock_chronicler_agent, mock_config, mock_director_agent, mock_event_bus, mock_gemini_api_key, mock_gemini_response, mocker, module_mocker, monkeypatch, no_cover, package_mocker, project_root_path, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_api_response, sample_character_data, sample_characters_response, sample_simulation_request, sample_simulation_response, session_mocker, temp_dir, test_data_dir, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py:555&quot;">file D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py, line 555
+      @pytest.mark.asyncio
+      async def test_resource_utilization(self, temp_database):
+          """Test resource utilization under load."""
+          orchestrator = IntegrationOrchestrator(database_path=temp_database)
+          await orchestrator.startup()
+
+          await orchestrator._generate_integration_metrics()
+
+          # Generate load
+          tasks = []
+          for i in range(50):
+              task = orchestrator.process_character_action(
+                  agent_id=f"load_agent_{i}", action="load_test"
+              )
+              tasks.append(task)
+
+          results = await asyncio.gather(*tasks)
+
+          final_metrics = await orchestrator._generate_integration_metrics()
+
+          # Verify all operations succeeded
+          assert all(result.success for result in results)
+
+          # Check that system health remained good
+          assert final_metrics.system_health_score &gt; 0.5
+
+          await orchestrator.shutdown()
+E       fixture 'temp_database' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, characters_directory, class_mocker, clean_environment, cov, doctest_namespace, event_loop, event_loop_policy, mock_character_factory, mock_chronicler_agent, mock_config, mock_director_agent, mock_event_bus, mock_gemini_api_key, mock_gemini_response, mocker, module_mocker, monkeypatch, no_cover, package_mocker, project_root_path, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_api_response, sample_character_data, sample_characters_response, sample_simulation_request, sample_simulation_response, session_mocker, temp_dir, test_data_dir, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+D:\Code\Novel-Engine\tests\test_ai_intelligence_integration.py:555</error></testcase><testcase classname="tests.test_api_endpoints_comprehensive.TestHealthEndpoints" name="test_root_endpoint_returns_storyforge_branding" time="0.005" /><testcase classname="tests.test_api_endpoints_comprehensive.TestHealthEndpoints" name="test_health_endpoint_basic_functionality" time="0.005" /><testcase classname="tests.test_api_endpoints_comprehensive.TestHealthEndpoints" name="test_system_status_endpoint" time="0.016" /><testcase classname="tests.test_api_endpoints_comprehensive.TestHealthEndpoints" name="test_policy_endpoint" time="0.006" /><testcase classname="tests.test_api_endpoints_comprehensive.TestCharacterEndpoints" name="test_characters_list_returns_generic_characters" time="0.006" /><testcase classname="tests.test_api_endpoints_comprehensive.TestCharacterEndpoints" name="test_character_detail_pilot" time="0.011" /><testcase classname="tests.test_api_endpoints_comprehensive.TestCharacterEndpoints" name="test_character_detail_scientist" time="0.010"><failure message="AssertionError: assert 'Xenobiology Research' in 'Dr. Maya Patel. Lead Xenobiologist. Scientific Research Institute'">tests\test_api_endpoints_comprehensive.py:118: in test_character_detail_scientist
+    assert "Xenobiology Research" in data["narrative_context"]
+E   AssertionError: assert 'Xenobiology Research' in 'Dr. Maya Patel. Lead Xenobiologist. Scientific Research Institute'</failure></testcase><testcase classname="tests.test_api_endpoints_comprehensive.TestCharacterEndpoints" name="test_character_detail_engineer" time="0.010" /><testcase classname="tests.test_api_endpoints_comprehensive.TestCharacterEndpoints" name="test_character_detail_nonexistent" time="0.006" /><testcase classname="tests.test_api_endpoints_comprehensive.TestCharacterEndpoints" name="test_character_detail_legacy_branded_characters" time="0.013" /><testcase classname="tests.test_api_endpoints_comprehensive.TestCharacterEndpoints" name="test_enhanced_character_endpoint" time="0.010"><failure message="AssertionError: assert 'enhanced_context' in {'backstory': '', 'description': 'Enhanced character profile for pilot', 'enhanced': True, 'goals': [], ...}">tests\test_api_endpoints_comprehensive.py:158: in test_enhanced_character_endpoint
+    assert "enhanced_context" in data
+E   AssertionError: assert 'enhanced_context' in {'backstory': '', 'description': 'Enhanced character profile for pilot', 'enhanced': True, 'goals': [], ...}</failure></testcase><testcase classname="tests.test_api_endpoints_comprehensive.TestSimulationEndpoints" name="test_simulation_with_generic_characters" time="0.054" /><testcase classname="tests.test_api_endpoints_comprehensive.TestSimulationEndpoints" name="test_simulation_minimum_characters_validation" time="0.006" /><testcase classname="tests.test_api_endpoints_comprehensive.TestSimulationEndpoints" name="test_simulation_maximum_characters_validation" time="0.006" /><testcase classname="tests.test_api_endpoints_comprehensive.TestSimulationEndpoints" name="test_simulation_with_all_generic_characters" time="0.046" /><testcase classname="tests.test_api_endpoints_comprehensive.TestSimulationEndpoints" name="test_simulation_story_quality" time="0.029" /><testcase classname="tests.test_api_endpoints_comprehensive.TestSimulationEndpoints" name="test_simulation_with_custom_setting_scenario" time="0.073" /><testcase classname="tests.test_api_endpoints_comprehensive.TestCampaignEndpoints" name="test_campaigns_list_endpoint" time="0.005" /><testcase classname="tests.test_api_endpoints_comprehensive.TestCampaignEndpoints" name="test_campaign_creation_with_generic_theme" time="0.007" /><testcase classname="tests.test_api_endpoints_comprehensive.TestErrorHandlingAndEdgeCases" name="test_invalid_json_request" time="0.004" /><testcase classname="tests.test_api_endpoints_comprehensive.TestErrorHandlingAndEdgeCases" name="test_missing_required_fields" time="0.004" /><testcase classname="tests.test_api_endpoints_comprehensive.TestErrorHandlingAndEdgeCases" name="test_empty_character_list" time="0.004" /><testcase classname="tests.test_api_endpoints_comprehensive.TestErrorHandlingAndEdgeCases" name="test_nonexistent_character_in_simulation" time="0.004" /><testcase classname="tests.test_api_endpoints_comprehensive.TestErrorHandlingAndEdgeCases" name="test_rate_limiting_compliance" time="0.012" /><testcase classname="tests.test_api_endpoints_comprehensive.TestErrorHandlingAndEdgeCases" name="test_cors_headers_present" time="0.004" /><testcase classname="tests.test_api_endpoints_comprehensive.TestSecurityAndValidation" name="test_input_sanitization" time="0.024" /><testcase classname="tests.test_api_endpoints_comprehensive.TestSecurityAndValidation" name="test_sql_injection_prevention" time="0.005" /><testcase classname="tests.test_api_endpoints_comprehensive.TestSecurityAndValidation" name="test_excessive_input_length_handling" time="0.026" /><testcase classname="tests.test_api_endpoints_comprehensive.TestPerformanceAndLoad" name="test_response_time_health_check" time="0.005" /><testcase classname="tests.test_api_endpoints_comprehensive.TestPerformanceAndLoad" name="test_response_time_character_list" time="0.005" /><testcase classname="tests.test_api_endpoints_comprehensive.TestPerformanceAndLoad" name="test_simulation_execution_time" time="0.028" /><testcase classname="tests.test_api_endpoints_comprehensive.TestPerformanceAndLoad" name="test_concurrent_requests_handling" time="0.029" /><testcase classname="tests.test_api_endpoints_comprehensive.TestAPIDocumentation" name="test_openapi_schema_accessibility" time="0.006" /><testcase classname="tests.test_api_endpoints_comprehensive.TestAPIDocumentation" name="test_redoc_documentation_accessibility" time="0.005" /><testcase classname="tests.test_character_system_comprehensive.TestCharacterLoading" name="test_all_generic_characters_loadable" time="0.015" /><testcase classname="tests.test_character_system_comprehensive.TestCharacterLoading" name="test_character_directory_structure" time="0.003"><failure message="AssertionError: Character directory pilot does not exist&#10;assert False&#10; +  where False = exists()&#10; +    where exists = WindowsPath('E:/Code/Novel-Engine/characters/pilot').exists">tests\test_character_system_comprehensive.py:53: in test_character_directory_structure
+    assert char_dir.exists(), f"Character directory {char_name} does not exist"
+E   AssertionError: Character directory pilot does not exist
+E   assert False
+E    +  where False = exists()
+E    +    where exists = WindowsPath('E:/Code/Novel-Engine/characters/pilot').exists</failure></testcase><testcase classname="tests.test_character_system_comprehensive.TestCharacterLoading" name="test_character_metadata_validation" time="0.002"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'">tests\test_character_system_comprehensive.py:68: in test_character_metadata_validation
+    with open(yaml_file, "r") as f:
+         ^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'</failure></testcase><testcase classname="tests.test_character_system_comprehensive.TestCharacterLoading" name="test_no_branded_content_in_characters" time="0.002" /><testcase classname="tests.test_character_system_comprehensive.TestCharacterLoading" name="test_character_load_error_handling" time="0.003" /><testcase classname="tests.test_character_system_comprehensive.TestCharacterLoading" name="test_character_context_loading" time="0.006" /><testcase classname="tests.test_character_system_comprehensive.TestGenericCharacterProfiles" name="test_pilot_character_profile" time="0.005"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'">tests\test_character_system_comprehensive.py:172: in test_pilot_character_profile
+    with open(stats_file, "r") as f:
+         ^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'</failure></testcase><testcase classname="tests.test_character_system_comprehensive.TestGenericCharacterProfiles" name="test_scientist_character_profile" time="0.005"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\scientist\\stats.yaml'">tests\test_character_system_comprehensive.py:199: in test_scientist_character_profile
+    with open(stats_file, "r") as f:
+         ^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\scientist\\stats.yaml'</failure></testcase><testcase classname="tests.test_character_system_comprehensive.TestGenericCharacterProfiles" name="test_engineer_character_profile" time="0.005"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\engineer\\stats.yaml'">tests\test_character_system_comprehensive.py:227: in test_engineer_character_profile
+    with open(stats_file, "r") as f:
+         ^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\engineer\\stats.yaml'</failure></testcase><testcase classname="tests.test_character_system_comprehensive.TestGenericCharacterProfiles" name="test_test_character_profile" time="0.005"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\test\\stats.yaml'">tests\test_character_system_comprehensive.py:255: in test_test_character_profile
+    with open(stats_file, "r") as f:
+         ^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\test\\stats.yaml'</failure></testcase><testcase classname="tests.test_character_system_comprehensive.TestCharacterStatistics" name="test_combat_stats_validity" time="0.002"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'">tests\test_character_system_comprehensive.py:275: in test_combat_stats_validity
+    with open(stats_file, "r") as f:
+         ^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'</failure></testcase><testcase classname="tests.test_character_system_comprehensive.TestCharacterStatistics" name="test_psychological_profile_validity" time="0.002"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'">tests\test_character_system_comprehensive.py:297: in test_psychological_profile_validity
+    with open(stats_file, "r") as f:
+         ^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'</failure></testcase><testcase classname="tests.test_character_system_comprehensive.TestCharacterStatistics" name="test_equipment_completeness" time="0.002"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'">tests\test_character_system_comprehensive.py:320: in test_equipment_completeness
+    with open(stats_file, "r") as f:
+         ^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'</failure></testcase><testcase classname="tests.test_character_system_comprehensive.TestCharacterStatistics" name="test_character_relationships" time="0.003"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'">tests\test_character_system_comprehensive.py:342: in test_character_relationships
+    with open(stats_file, "r") as f:
+         ^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\Novel-Engine\\characters\\pilot\\stats.yaml'</failure></testcase></testsuite></testsuites>

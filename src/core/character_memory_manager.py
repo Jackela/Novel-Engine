@@ -71,7 +71,9 @@ class MemoryManager:
         # Check if should move to long-term memory
         if self._should_store_in_long_term_memory(memory_entry):
             self.long_term_memory.append(memory_entry)
-            logger.debug(f"Agent {self.agent_id} stored important memory in long-term")
+            logger.debug(
+                f"Agent {self.agent_id} stored important memory in long-term"
+            )
 
         # Update indices
         self._update_memory_indices(memory_entry)
@@ -80,7 +82,7 @@ class MemoryManager:
         self._maintain_memory_limits()
 
         logger.debug(
-            f"Agent {self.agent_id} updated memory with {len(self.short_term_memory)} short-term items"
+            f"Agent {self.agent_id}updated memory with {len( self.short_term_memory)} short-term items"
         )
 
     def update_memory(self, event_string: str) -> None:
@@ -132,7 +134,10 @@ class MemoryManager:
         unique_memories = {id(mem): mem for mem in relevant_memories}.values()
         sorted_memories = sorted(
             unique_memories,
-            key=lambda m: (m.get("importance_score", 0), m.get("timestamp", 0)),
+            key=lambda m: (
+                m.get("importance_score", 0),
+                m.get("timestamp", 0),
+            ),
             reverse=True,
         )
 
@@ -149,7 +154,9 @@ class MemoryManager:
             "event_types_seen": len(self.memory_by_event_type),
         }
 
-    def _generate_personal_interpretation(self, log_entry: Dict[str, Any]) -> str:
+    def _generate_personal_interpretation(
+        self, log_entry: Dict[str, Any]
+    ) -> str:
         """Generate personal interpretation of log entry."""
         event_type = log_entry.get("type", "unknown")
         description = log_entry.get("description", "")
@@ -235,11 +242,14 @@ class MemoryManager:
         # Number of entities involved increases importance
         entities = self._extract_entities(log_entry)
         if len(entities) > 1:
-            importance += 0.1 * min(len(entities) - 1, 3)  # Cap bonus at 3 entities
+            # Cap bonus at 3 entities
+            importance += 0.1 * min(len(entities) - 1, 3)
 
         return max(0.0, min(1.0, importance))
 
-    def _should_store_in_long_term_memory(self, memory_entry: Dict[str, Any]) -> bool:
+    def _should_store_in_long_term_memory(
+        self, memory_entry: Dict[str, Any]
+    ) -> bool:
         """Determine if memory entry should be stored in long-term memory."""
         importance_threshold = 0.7
         emotional_threshold = 0.7

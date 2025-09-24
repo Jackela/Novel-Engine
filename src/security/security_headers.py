@@ -84,7 +84,8 @@ class SecurityHeadersConfig:
 
     # HTTPS/TLS related
     force_https: bool = True
-    enable_hpkp: bool = False  # HTTP Public Key Pinning (deprecated but available)
+    # HTTP Public Key Pinning (deprecated but available)
+    enable_hpkp: bool = False
     hpkp_pins: List[str] = None
 
     # Additional Security Headers
@@ -224,7 +225,9 @@ class SecurityHeaders:
             expect_ct_parts.append("enforce")
 
         if self.config.expect_ct_report_uri:
-            expect_ct_parts.append(f'report-uri="{self.config.expect_ct_report_uri}"')
+            expect_ct_parts.append(
+                f'report-uri="{self.config.expect_ct_report_uri}"'
+            )
 
         return ", ".join(expect_ct_parts)
 
@@ -243,7 +246,9 @@ class SecurityHeaders:
 
         # X-XSS-Protection
         if self.config.enable_xss_protection:
-            response.headers["X-XSS-Protection"] = self.config.xss_protection_value
+            response.headers[
+                "X-XSS-Protection"
+            ] = self.config.xss_protection_value
 
         # X-Content-Type-Options
         if self.config.enable_content_type_options:
@@ -251,11 +256,15 @@ class SecurityHeaders:
 
         # X-Frame-Options
         if self.config.enable_frame_options:
-            response.headers["X-Frame-Options"] = self.config.frame_options_value
+            response.headers[
+                "X-Frame-Options"
+            ] = self.config.frame_options_value
 
         # Referrer-Policy
         if self.config.enable_referrer_policy:
-            response.headers["Referrer-Policy"] = self.config.referrer_policy_value
+            response.headers[
+                "Referrer-Policy"
+            ] = self.config.referrer_policy_value
 
         # Permissions-Policy
         if self.config.enable_permissions_policy:
@@ -322,7 +331,10 @@ class SecurityHeaders:
             origin = request.headers.get("origin")
             request.headers.get("referer")
 
-            if self.config.enable_cors_security and self.config.allowed_origins:
+            if (
+                self.config.enable_cors_security
+                and self.config.allowed_origins
+            ):
                 if origin and origin not in self.config.allowed_origins:
                     logger.warning(
                         f"CORS VIOLATION: Origin {origin} not in allowed list | "
@@ -356,7 +368,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 from fastapi import HTTPException
 
                 raise HTTPException(
-                    status_code=400, detail="Request failed security validation"
+                    status_code=400,
+                    detail="Request failed security validation",
                 )
 
             # Process request
@@ -437,7 +450,11 @@ def get_development_security_config() -> SecurityHeadersConfig:
         # Relaxed CSP for development
         csp_directives={
             CSPDirective.DEFAULT_SRC: ["'self'"],
-            CSPDirective.SCRIPT_SRC: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+            CSPDirective.SCRIPT_SRC: [
+                "'self'",
+                "'unsafe-inline'",
+                "'unsafe-eval'",
+            ],
             CSPDirective.STYLE_SRC: ["'self'", "'unsafe-inline'"],
             CSPDirective.IMG_SRC: ["'self'", "data:", "https:"],
             CSPDirective.FONT_SRC: ["'self'", "https:"],

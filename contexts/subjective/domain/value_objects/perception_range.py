@@ -46,7 +46,9 @@ class PerceptionRange:
     base_range: float  # Base range in game units
     effective_range: float  # Current effective range (after modifiers)
     accuracy_modifier: float  # Perception accuracy (0.0-1.0)
-    environmental_modifiers: Dict[str, float]  # Environmental effects on perception
+    environmental_modifiers: Dict[
+        str, float
+    ]  # Environmental effects on perception
 
     def __post_init__(self):
         """Validate perception range parameters."""
@@ -61,7 +63,10 @@ class PerceptionRange:
 
         if self.environmental_modifiers:
             for modifier_name, value in self.environmental_modifiers.items():
-                if not isinstance(modifier_name, str) or not modifier_name.strip():
+                if (
+                    not isinstance(modifier_name, str)
+                    or not modifier_name.strip()
+                ):
                     raise ValueError(
                         "Environmental modifier names must be non-empty strings"
                     )
@@ -70,7 +75,9 @@ class PerceptionRange:
                         f"Environmental modifier '{modifier_name}' must be numeric"
                     )
 
-    def calculate_visibility_at_distance(self, distance: float) -> VisibilityLevel:
+    def calculate_visibility_at_distance(
+        self, distance: float
+    ) -> VisibilityLevel:
         """Calculate visibility level at a specific distance."""
         if distance <= 0:
             return VisibilityLevel.CLEAR
@@ -137,11 +144,16 @@ class PerceptionCapabilities:
         if not self.perception_ranges:
             raise ValueError("Entity must have at least one perception range")
 
-        for perception_type, perception_range in self.perception_ranges.items():
+        for (
+            perception_type,
+            perception_range,
+        ) in self.perception_ranges.items():
             if not isinstance(perception_type, PerceptionType):
                 raise ValueError(f"Invalid perception type: {perception_type}")
             if not isinstance(perception_range, PerceptionRange):
-                raise ValueError(f"Invalid perception range for {perception_type}")
+                raise ValueError(
+                    f"Invalid perception range for {perception_type}"
+                )
             if perception_range.perception_type != perception_type:
                 raise ValueError(
                     f"Perception range type mismatch for {perception_type}"
@@ -154,12 +166,17 @@ class PerceptionCapabilities:
             raise ValueError("Focused perception multiplier must be positive")
 
     def get_best_visibility_at_distance(
-        self, distance: float, focused_perception: Optional[PerceptionType] = None
+        self,
+        distance: float,
+        focused_perception: Optional[PerceptionType] = None,
     ) -> VisibilityLevel:
         """Get the best visibility level achievable at a given distance."""
         best_visibility = VisibilityLevel.INVISIBLE
 
-        for perception_type, perception_range in self.perception_ranges.items():
+        for (
+            perception_type,
+            perception_range,
+        ) in self.perception_ranges.items():
             # Apply focus modifier if this perception is being focused on
             effective_range = perception_range.effective_range
             if focused_perception == perception_type:
@@ -197,7 +214,9 @@ class PerceptionCapabilities:
         if not self.perception_ranges:
             return 0.0
 
-        return max(pr.effective_range for pr in self.perception_ranges.values())
+        return max(
+            pr.effective_range for pr in self.perception_ranges.values()
+        )
 
     def has_perception_type(self, perception_type: PerceptionType) -> bool:
         """Check if entity has a specific perception type."""

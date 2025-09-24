@@ -78,10 +78,14 @@ class TurnManager:
             return {"status": "empty_turn"}
 
         # Prepare a generic world state update for this turn
-        world_state_update = self._prepare_world_state_for_turn(world_state_data)
+        world_state_update = self._prepare_world_state_for_turn(
+            world_state_data
+        )
 
         # Emit the turn start event for all agents to hear
-        self.event_bus.emit("TURN_START", world_state_update=world_state_update)
+        self.event_bus.emit(
+            "TURN_START", world_state_update=world_state_update
+        )
 
         # The rest of the turn processing is now handled by event callbacks
         return {
@@ -109,7 +113,10 @@ class TurnManager:
         }
 
     def handle_agent_action(
-        self, agent: PersonaAgent, action: Optional[CharacterAction], log_event_callback
+        self,
+        agent: PersonaAgent,
+        action: Optional[CharacterAction],
+        log_event_callback,
     ) -> None:
         """
         Callback to handle an agent's action after they process a turn.
@@ -120,12 +127,12 @@ class TurnManager:
             log_event_callback: Callback function for logging events
         """
         if action:
-            logger.info(f"Received action from {agent.agent_id}: {action.action_type}")
+            logger.info(
+                f"Received action from {agent.agent_id}: {action.action_type}"
+            )
             # Process and log the action
             character_name = agent.character_data.get("name", "Unknown")
-            action_description = (
-                f"{character_name} ({agent.agent_id}) decided to {action.action_type}"
-            )
+            action_description = f"{character_name} ({agent.agent_id}) decided to {action.action_type}"
             if action.reasoning:
                 action_description += f": {action.reasoning}"
             log_event_callback(action_description)
@@ -176,7 +183,8 @@ class TurnManager:
                 }
             },
             "entity_updates": {
-                # Information about other agents/entities the agent might be aware of
+                # Information about other agents/entities the agent might be
+                # aware of
             },
             "faction_updates": {
                 "imperium": {"activity": "normal", "influence": 0.6},
@@ -222,16 +230,19 @@ class TurnManager:
             # Add the turn data to the history
             world_state_data["turn_history"].append(turn_summary)
 
-            # Implement memory management - keep only configured number of turns
+            # Implement memory management - keep only configured number of
+            # turns
             if len(world_state_data["turn_history"]) > self.max_turn_history:
-                world_state_data["turn_history"] = world_state_data["turn_history"][
-                    -self.max_turn_history :
-                ]
+                world_state_data["turn_history"] = world_state_data[
+                    "turn_history"
+                ][-self.max_turn_history :]
                 logger.info(
                     f"Turn history trimmed to last {self.max_turn_history} turns"
                 )
 
-            logger.debug(f"Turn {turn_summary['turn_number']} stored in history")
+            logger.debug(
+                f"Turn {turn_summary['turn_number']} stored in history"
+            )
 
         except Exception as e:
             logger.error(f"Failed to store turn in history: {str(e)}")

@@ -47,7 +47,9 @@ class EnhancedDecisionEngine(DecisionEngine):
             "emotional_drive": 0.15,
             "memory_influence": 0.1,
         }
-        logger.debug(f"Enhanced DecisionEngine initialized for {agent_core.agent_id}")
+        logger.debug(
+            f"Enhanced DecisionEngine initialized for {agent_core.agent_id}"
+        )
 
     def _evaluate_action_option(
         self, action: Dict[str, Any], situation: Dict[str, Any]
@@ -62,10 +64,11 @@ class EnhancedDecisionEngine(DecisionEngine):
             and hasattr(self.agent_core, "character_data")
             and "enhanced_context" in self.agent_core.character_data
         ):
-
-            context_score = self._apply_context_modifiers(base_score, action, situation)
+            context_score = self._apply_context_modifiers(
+                base_score, action, situation
+            )
             logger.debug(
-                f"Action {action.get('action_type', 'unknown')} enhanced: {base_score:.2f} → {context_score:.2f}"
+                f"Action {action.get( 'action_type', 'unknown')}enhanced: {base_score:.2f} → {context_score:.2f}"
             )
             return context_score
 
@@ -207,7 +210,11 @@ class EnhancedDecisionEngine(DecisionEngine):
                             modifier *= 1.4
                         elif "social" in response and any(
                             keyword in action_type
-                            for keyword in ["interact", "communicate", "negotiate"]
+                            for keyword in [
+                                "interact",
+                                "communicate",
+                                "negotiate",
+                            ]
                         ):
                             modifier *= 1.3
                         elif "defensive" in response and any(
@@ -219,10 +226,14 @@ class EnhancedDecisionEngine(DecisionEngine):
             return max(0.7, min(1.5, modifier))  # 30% penalty to 50% bonus
 
         except Exception as e:
-            logger.warning(f"Error calculating behavioral trigger modifier: {e}")
+            logger.warning(
+                f"Error calculating behavioral trigger modifier: {e}"
+            )
             return 1.0
 
-    def _get_relationship_modifier(self, action: Dict, relationships: Dict) -> float:
+    def _get_relationship_modifier(
+        self, action: Dict, relationships: Dict
+    ) -> float:
         """Calculate modifier based on relationship context."""
         try:
             target = action.get("target_character", "")
@@ -249,7 +260,8 @@ class EnhancedDecisionEngine(DecisionEngine):
                     (100 - trust_level) / 250.0
                 )  # Up to 40% bonus for low trust
             elif any(
-                keyword in action_type for keyword in ["negotiate", "trade", "discuss"]
+                keyword in action_type
+                for keyword in ["negotiate", "trade", "discuss"]
             ):
                 # Moderate trust levels favor negotiation
                 trust_factor = (
@@ -263,7 +275,9 @@ class EnhancedDecisionEngine(DecisionEngine):
             logger.warning(f"Error calculating relationship modifier: {e}")
             return 1.0
 
-    def _get_emotional_drive_modifier(self, action: Dict, drives: Dict) -> float:
+    def _get_emotional_drive_modifier(
+        self, action: Dict, drives: Dict
+    ) -> float:
         """Calculate modifier based on emotional drives."""
         try:
             modifier = 1.0
@@ -274,32 +288,62 @@ class EnhancedDecisionEngine(DecisionEngine):
                 drive_name_lower = drive_name.lower()
 
                 # Match drives to action types
-                if "security" in drive_name_lower or "safety" in drive_name_lower:
+                if (
+                    "security" in drive_name_lower
+                    or "safety" in drive_name_lower
+                ):
                     if any(
                         keyword in action_type
-                        for keyword in ["defend", "prepare", "fortify", "retreat"]
+                        for keyword in [
+                            "defend",
+                            "prepare",
+                            "fortify",
+                            "retreat",
+                        ]
                     ):
                         modifier *= 1.0 + (
                             weight * 0.4
                         )  # Up to 40% bonus for dominant drives
                 elif (
-                    "connection" in drive_name_lower or "belonging" in drive_name_lower
+                    "connection" in drive_name_lower
+                    or "belonging" in drive_name_lower
                 ):
                     if any(
                         keyword in action_type
-                        for keyword in ["interact", "help", "communicate", "join"]
+                        for keyword in [
+                            "interact",
+                            "help",
+                            "communicate",
+                            "join",
+                        ]
                     ):
                         modifier *= 1.0 + (weight * 0.4)
-                elif "purpose" in drive_name_lower or "achievement" in drive_name_lower:
+                elif (
+                    "purpose" in drive_name_lower
+                    or "achievement" in drive_name_lower
+                ):
                     if any(
                         keyword in action_type
-                        for keyword in ["objective", "mission", "accomplish", "achieve"]
+                        for keyword in [
+                            "objective",
+                            "mission",
+                            "accomplish",
+                            "achieve",
+                        ]
                     ):
                         modifier *= 1.0 + (weight * 0.4)
-                elif "autonomy" in drive_name_lower or "control" in drive_name_lower:
+                elif (
+                    "autonomy" in drive_name_lower
+                    or "control" in drive_name_lower
+                ):
                     if any(
                         keyword in action_type
-                        for keyword in ["lead", "command", "decide", "independent"]
+                        for keyword in [
+                            "lead",
+                            "command",
+                            "decide",
+                            "independent",
+                        ]
                     ):
                         modifier *= 1.0 + (weight * 0.4)
 
@@ -318,9 +362,12 @@ class EnhancedDecisionEngine(DecisionEngine):
             action_type = action.get("action_type", "").lower()
 
             for event_name, event_data in events.items():
-                # Check if any trigger phrases from memories match current situation
+                # Check if any trigger phrases from memories match current
+                # situation
                 for trigger_phrase in event_data.get("trigger_phrases", []):
-                    if self._phrase_matches_context(trigger_phrase, action, situation):
+                    if self._phrase_matches_context(
+                        trigger_phrase, action, situation
+                    ):
                         decision_influence = event_data.get(
                             "decision_influence", ""
                         ).lower()
@@ -341,7 +388,11 @@ class EnhancedDecisionEngine(DecisionEngine):
                         ):
                             if any(
                                 keyword in action_type
-                                for keyword in ["attack", "confront", "challenge"]
+                                for keyword in [
+                                    "attack",
+                                    "confront",
+                                    "challenge",
+                                ]
                             ):
                                 modifier *= 1.25
                         elif (
@@ -360,14 +411,18 @@ class EnhancedDecisionEngine(DecisionEngine):
             logger.warning(f"Error calculating memory influence modifier: {e}")
             return 1.0
 
-    def _condition_matches_situation(self, condition: str, situation: Dict) -> bool:
+    def _condition_matches_situation(
+        self, condition: str, situation: Dict
+    ) -> bool:
         """Check if a behavioral trigger condition matches the current situation."""
         try:
             condition_lower = condition.lower()
 
             # Simple keyword matching against situation data
             situation_text = " ".join(
-                str(v).lower() for v in situation.values() if isinstance(v, str)
+                str(v).lower()
+                for v in situation.values()
+                if isinstance(v, str)
             )
 
             return any(
@@ -393,7 +448,9 @@ class EnhancedDecisionEngine(DecisionEngine):
 
             # Check situation context
             situation_text = " ".join(
-                str(v).lower() for v in situation.values() if isinstance(v, str)
+                str(v).lower()
+                for v in situation.values()
+                if isinstance(v, str)
             )
 
             combined_context = f"{action_text} {situation_text}"
@@ -443,41 +500,41 @@ class EnhancedDecisionEngine(DecisionEngine):
 
             # Calculate individual modifiers for transparency
             if "active_objectives" in character_data:
-                summary["modifiers_applied"]["objective_alignment"] = (
-                    self._get_objective_alignment_modifier(
-                        action, character_data["active_objectives"]
-                    )
+                summary["modifiers_applied"][
+                    "objective_alignment"
+                ] = self._get_objective_alignment_modifier(
+                    action, character_data["active_objectives"]
                 )
 
             if "behavioral_triggers" in character_data:
-                summary["modifiers_applied"]["behavioral_trigger"] = (
-                    self._get_behavioral_trigger_modifier(
-                        action, situation, character_data["behavioral_triggers"]
-                    )
+                summary["modifiers_applied"][
+                    "behavioral_trigger"
+                ] = self._get_behavioral_trigger_modifier(
+                    action, situation, character_data["behavioral_triggers"]
                 )
 
             if (
                 "enhanced_relationships" in character_data
                 and "target_character" in action
             ):
-                summary["modifiers_applied"]["relationship_context"] = (
-                    self._get_relationship_modifier(
-                        action, character_data["enhanced_relationships"]
-                    )
+                summary["modifiers_applied"][
+                    "relationship_context"
+                ] = self._get_relationship_modifier(
+                    action, character_data["enhanced_relationships"]
                 )
 
             if "emotional_drives" in character_data:
-                summary["modifiers_applied"]["emotional_drive"] = (
-                    self._get_emotional_drive_modifier(
-                        action, character_data["emotional_drives"]
-                    )
+                summary["modifiers_applied"][
+                    "emotional_drive"
+                ] = self._get_emotional_drive_modifier(
+                    action, character_data["emotional_drives"]
                 )
 
             if "formative_events" in character_data:
-                summary["modifiers_applied"]["memory_influence"] = (
-                    self._get_memory_influence_modifier(
-                        action, situation, character_data["formative_events"]
-                    )
+                summary["modifiers_applied"][
+                    "memory_influence"
+                ] = self._get_memory_influence_modifier(
+                    action, situation, character_data["formative_events"]
                 )
 
             return summary

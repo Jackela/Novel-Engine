@@ -46,14 +46,27 @@ class TestCausalRelationTypeEnum:
         """Test that relation type enum values have correct string representations."""
         assert CausalRelationType.DIRECT_CAUSE.value == "direct_cause"
         assert CausalRelationType.INDIRECT_CAUSE.value == "indirect_cause"
-        assert CausalRelationType.NECESSARY_CONDITION.value == "necessary_condition"
-        assert CausalRelationType.SUFFICIENT_CONDITION.value == "sufficient_condition"
-        assert CausalRelationType.CONTRIBUTING_FACTOR.value == "contributing_factor"
-        assert CausalRelationType.PREVENTING_FACTOR.value == "preventing_factor"
+        assert (
+            CausalRelationType.NECESSARY_CONDITION.value
+            == "necessary_condition"
+        )
+        assert (
+            CausalRelationType.SUFFICIENT_CONDITION.value
+            == "sufficient_condition"
+        )
+        assert (
+            CausalRelationType.CONTRIBUTING_FACTOR.value
+            == "contributing_factor"
+        )
+        assert (
+            CausalRelationType.PREVENTING_FACTOR.value == "preventing_factor"
+        )
         assert CausalRelationType.CATALYST.value == "catalyst"
         assert CausalRelationType.INHIBITOR.value == "inhibitor"
         assert CausalRelationType.TRIGGER.value == "trigger"
-        assert CausalRelationType.ENABLING_CONDITION.value == "enabling_condition"
+        assert (
+            CausalRelationType.ENABLING_CONDITION.value == "enabling_condition"
+        )
         assert CausalRelationType.COINCIDENTAL.value == "coincidental"
         assert CausalRelationType.FEEDBACK_LOOP.value == "feedback_loop"
 
@@ -66,7 +79,9 @@ class TestCausalRelationTypeEnum:
         """Test relation type membership operations."""
         assert CausalRelationType.DIRECT_CAUSE in CausalRelationType
         assert "direct_cause" == CausalRelationType.DIRECT_CAUSE.value
-        assert CausalRelationType.DIRECT_CAUSE == CausalRelationType("direct_cause")
+        assert CausalRelationType.DIRECT_CAUSE == CausalRelationType(
+            "direct_cause"
+        )
 
 
 class TestCausalStrengthEnum:
@@ -149,7 +164,8 @@ class TestCausalNodeCreation:
     def test_create_causal_node_with_only_description(self):
         """Test creating causal node with only description (no title)."""
         node = CausalNode(
-            node_id="desc-only-node", description="A node described without a title"
+            node_id="desc-only-node",
+            description="A node described without a title",
         )
 
         assert node.node_id == "desc-only-node"
@@ -197,7 +213,10 @@ class TestCausalNodeCreation:
             tags={"pivotal", "character-development", "quest-beginning"},
             narrative_context="The call to adventure moment",
             creation_timestamp=creation_time,
-            metadata={"author_note": "Critical story turning point", "revision": 3},
+            metadata={
+                "author_note": "Critical story turning point",
+                "revision": 3,
+            },
         )
 
         assert node.node_id == "comprehensive-node"
@@ -205,7 +224,10 @@ class TestCausalNodeCreation:
         assert node.plot_point_id == "plot-point-456"
         assert node.character_id == char_id
         assert node.title == "Hero's Decision"
-        assert node.description == "The moment the hero decides to embark on the quest"
+        assert (
+            node.description
+            == "The moment the hero decides to embark on the quest"
+        )
         assert node.node_type == "decision"
         assert node.direct_causes == {"mentor-advice", "village-threat"}
         assert node.direct_effects == {"journey-start", "party-formation"}
@@ -226,7 +248,11 @@ class TestCausalNodeCreation:
         assert node.story_arc_impact == Decimal("9.5")
         assert node.prerequisite_conditions == {"hero-ready", "mentor-present"}
         assert node.blocking_conditions == {"hero-imprisoned"}
-        assert node.tags == {"pivotal", "character-development", "quest-beginning"}
+        assert node.tags == {
+            "pivotal",
+            "character-development",
+            "quest-beginning",
+        }
         assert node.narrative_context == "The call to adventure moment"
         assert node.creation_timestamp == creation_time
         assert node.metadata["author_note"] == "Critical story turning point"
@@ -301,17 +327,21 @@ class TestCausalNodeValidation:
     def test_missing_title_and_description_validation(self):
         """Test validation fails when both title and description are empty."""
         with pytest.raises(
-            ValueError, match="Causal node must have either title or description"
+            ValueError,
+            match="Causal node must have either title or description",
         ):
             CausalNode(node_id="no-content-test", title="", description="")
 
     def test_whitespace_only_title_and_description_validation(self):
         """Test validation fails when both title and description are whitespace only."""
         with pytest.raises(
-            ValueError, match="Causal node must have either title or description"
+            ValueError,
+            match="Causal node must have either title or description",
         ):
             CausalNode(
-                node_id="whitespace-content-test", title="   ", description="  \t\n  "
+                node_id="whitespace-content-test",
+                title="   ",
+                description="  \t\n  ",
             )
 
     def test_valid_with_only_title(self):
@@ -462,7 +492,9 @@ class TestCausalNodeValidation:
 
     def test_negative_sequence_order_validation(self):
         """Test validation fails with negative sequence order."""
-        with pytest.raises(ValueError, match="Sequence order must be non-negative"):
+        with pytest.raises(
+            ValueError, match="Sequence order must be non-negative"
+        ):
             CausalNode(
                 node_id="negative-seq-test",
                 title="Negative Sequence Test",
@@ -472,14 +504,18 @@ class TestCausalNodeValidation:
     def test_zero_sequence_order_allowed(self):
         """Test that zero sequence order is allowed."""
         node = CausalNode(
-            node_id="zero-seq-test", title="Zero Sequence Test", sequence_order=0
+            node_id="zero-seq-test",
+            title="Zero Sequence Test",
+            sequence_order=0,
         )
 
         assert node.sequence_order == 0
 
     def test_negative_temporal_delay_validation(self):
         """Test validation fails with negative temporal delay."""
-        with pytest.raises(ValueError, match="Temporal delay must be non-negative"):
+        with pytest.raises(
+            ValueError, match="Temporal delay must be non-negative"
+        ):
             CausalNode(
                 node_id="negative-delay-test",
                 title="Negative Delay Test",
@@ -489,7 +525,9 @@ class TestCausalNodeValidation:
     def test_zero_temporal_delay_allowed(self):
         """Test that zero temporal delay is allowed."""
         node = CausalNode(
-            node_id="zero-delay-test", title="Zero Delay Test", temporal_delay=0
+            node_id="zero-delay-test",
+            title="Zero Delay Test",
+            temporal_delay=0,
         )
 
         assert node.temporal_delay == 0
@@ -498,7 +536,9 @@ class TestCausalNodeValidation:
         """Test validation fails with zero duration."""
         with pytest.raises(ValueError, match="Duration must be positive"):
             CausalNode(
-                node_id="zero-duration-test", title="Zero Duration Test", duration=0
+                node_id="zero-duration-test",
+                title="Zero Duration Test",
+                duration=0,
             )
 
     def test_negative_duration_validation(self):
@@ -536,13 +576,18 @@ class TestCausalNodeValidation:
 
         # Description too long
         with pytest.raises(
-            ValueError, match="Node description too long \\(max 1000 characters\\)"
+            ValueError,
+            match="Node description too long \\(max 1000 characters\\)",
         ):
-            CausalNode(node_id="valid-id", title="Valid Title", description="x" * 1001)
+            CausalNode(
+                node_id="valid-id", title="Valid Title", description="x" * 1001
+            )
 
     def test_valid_string_length_boundaries(self):
         """Test that maximum string length boundaries are valid."""
-        node = CausalNode(node_id="x" * 100, title="x" * 200, description="x" * 1000)
+        node = CausalNode(
+            node_id="x" * 100, title="x" * 200, description="x" * 1000
+        )
 
         assert len(node.node_id) == 100
         assert len(node.title) == 200
@@ -741,7 +786,9 @@ class TestCausalComplexityScore:
 
     def test_complexity_isolated_node(self):
         """Test complexity score for isolated node with no connections."""
-        node = CausalNode(node_id="isolated-complexity-test", title="Isolated Node")
+        node = CausalNode(
+            node_id="isolated-complexity-test", title="Isolated Node"
+        )
 
         # Expected: 0 (no relationships) + 0 (no special types) + 0 (no conditions) = 0.0
         assert node.causal_complexity_score == Decimal("0.0")
@@ -908,7 +955,9 @@ class TestCausalNodeInstanceMethods:
 
     def test_get_relationship_info_non_existing(self):
         """Test get_relationship_info returns None for non-existing relationship."""
-        node = CausalNode(node_id="no-relationship-test", title="No Relationship Test")
+        node = CausalNode(
+            node_id="no-relationship-test", title="No Relationship Test"
+        )
 
         info = node.get_relationship_info("non_existing_node")
         assert info is None
@@ -919,7 +968,10 @@ class TestCausalNodeInstanceMethods:
             node_id="relationship-type-test",
             title="Relationship Type Test",
             causal_relationships={
-                "node1": {"relationship_type": "direct_cause", "strength": "strong"}
+                "node1": {
+                    "relationship_type": "direct_cause",
+                    "strength": "strong",
+                }
             },
         )
 
@@ -928,7 +980,9 @@ class TestCausalNodeInstanceMethods:
 
     def test_get_relationship_type_non_existing(self):
         """Test get_relationship_type returns None for non-existing relationship."""
-        node = CausalNode(node_id="no-rel-type-test", title="No Relationship Type Test")
+        node = CausalNode(
+            node_id="no-rel-type-test", title="No Relationship Type Test"
+        )
 
         rel_type = node.get_relationship_type("non_existing")
         assert rel_type is None
@@ -939,7 +993,10 @@ class TestCausalNodeInstanceMethods:
             node_id="relationship-strength-test",
             title="Relationship Strength Test",
             causal_relationships={
-                "node1": {"relationship_type": "catalyst", "strength": "very_strong"}
+                "node1": {
+                    "relationship_type": "catalyst",
+                    "strength": "very_strong",
+                }
             },
         )
 
@@ -949,7 +1006,8 @@ class TestCausalNodeInstanceMethods:
     def test_get_relationship_strength_non_existing(self):
         """Test get_relationship_strength returns None for non-existing relationship."""
         node = CausalNode(
-            node_id="no-rel-strength-test", title="No Relationship Strength Test"
+            node_id="no-rel-strength-test",
+            title="No Relationship Strength Test",
         )
 
         strength = node.get_relationship_strength("non_existing")
@@ -1052,10 +1110,14 @@ class TestCausalNodeFactoryMethods:
 
     def test_with_additional_cause_non_direct_relationship(self):
         """Test adding non-direct cause relationship."""
-        original = CausalNode(node_id="add-catalyst-test", title="Add Catalyst Test")
+        original = CausalNode(
+            node_id="add-catalyst-test", title="Add Catalyst Test"
+        )
 
         updated = original.with_additional_cause(
-            "catalyst_node", CausalRelationType.CATALYST, CausalStrength.MODERATE
+            "catalyst_node",
+            CausalRelationType.CATALYST,
+            CausalStrength.MODERATE,
         )
 
         # Direct causes should not be modified for non-direct relationships
@@ -1111,8 +1173,13 @@ class TestCausalNodeFactoryMethods:
         assert updated.tags == original.tags
         assert updated.tags is not original.tags
 
-        assert updated.prerequisite_conditions == original.prerequisite_conditions
-        assert updated.prerequisite_conditions is not original.prerequisite_conditions
+        assert (
+            updated.prerequisite_conditions == original.prerequisite_conditions
+        )
+        assert (
+            updated.prerequisite_conditions
+            is not original.prerequisite_conditions
+        )
 
         # Direct causes should be different (new cause added)
         assert updated.direct_causes != original.direct_causes
@@ -1364,7 +1431,10 @@ class TestCausalNodeEdgeCasesAndBoundaryConditions:
         assert node.metadata["causal_analysis"]["confidence_intervals"][
             "occurrence"
         ] == [0.7, 0.9]
-        assert node.metadata["unicode_metadata_🔬"]["researcher"] == "José García-López"
+        assert (
+            node.metadata["unicode_metadata_🔬"]["researcher"]
+            == "José García-López"
+        )
         assert "因果関係" in node.metadata["unicode_metadata_🔬"]["keywords"]
 
 
@@ -1392,7 +1462,9 @@ class TestCausalNodeCollectionsAndComparison:
                 direct_causes=set(f"cause_{j}" for j in range(causes)),
                 direct_effects=set(f"effect_{j}" for j in range(effects)),
                 is_branch_point=is_branch,
-                prerequisite_conditions=set(f"prereq_{j}" for j in range(prereqs)),
+                prerequisite_conditions=set(
+                    f"prereq_{j}" for j in range(prereqs)
+                ),
             )
             for i, (causes, effects, is_branch, prereqs) in enumerate(
                 [
@@ -1471,7 +1543,9 @@ class TestCausalNodeCollectionsAndComparison:
         node2 = CausalNode(node_id="set-test-2", title="Second Set Node")
 
         # Identical node
-        node1_duplicate = CausalNode(node_id="set-test-1", title="First Set Node")
+        node1_duplicate = CausalNode(
+            node_id="set-test-1", title="First Set Node"
+        )
 
         node_set = {node1, node2, node1_duplicate}
 
@@ -1493,7 +1567,9 @@ class TestCausalNodeCollectionsAndComparison:
         assert node_dict[node2] == "second_node_data"
 
         # Test with equivalent node
-        equivalent_node1 = CausalNode(node_id="dict-key-1", title="Key Node One")
+        equivalent_node1 = CausalNode(
+            node_id="dict-key-1", title="Key Node One"
+        )
 
         # Should find the same entry
         assert node_dict[equivalent_node1] == "first_node_data"

@@ -47,24 +47,47 @@ class TurnState(Enum):
 
     def is_terminal(self) -> bool:
         """Check if this is a terminal state."""
-        return self in {self.COMPLETED, self.FAILED, self.CANCELLED}
+        return self in {
+            TurnState.COMPLETED,
+            TurnState.FAILED,
+            TurnState.CANCELLED,
+        }
 
     def is_active(self) -> bool:
         """Check if turn is actively executing."""
-        return self in {self.PLANNING, self.EXECUTING, self.COMPENSATING}
+        return self in {
+            TurnState.PLANNING,
+            TurnState.EXECUTING,
+            TurnState.COMPENSATING,
+        }
 
     def can_transition_to(self, new_state: "TurnState") -> bool:
         """Check if transition to new state is valid."""
-        valid_transitions = {
-            self.CREATED: {self.PLANNING, self.CANCELLED},
-            self.PLANNING: {self.EXECUTING, self.FAILED, self.CANCELLED},
-            self.EXECUTING: {self.COMPLETED, self.COMPENSATING, self.FAILED},
-            self.COMPENSATING: {self.COMPLETED, self.FAILED},
-            self.COMPLETED: set(),  # Terminal
-            self.FAILED: set(),  # Terminal
-            self.CANCELLED: set(),  # Terminal
-        }
-        return new_state in valid_transitions.get(self, set())
+        # Use explicit enum type checking for MyPy compatibility
+        if self == TurnState.CREATED:
+            return new_state in {TurnState.PLANNING, TurnState.CANCELLED}
+        elif self == TurnState.PLANNING:
+            return new_state in {
+                TurnState.EXECUTING,
+                TurnState.FAILED,
+                TurnState.CANCELLED,
+            }
+        elif self == TurnState.EXECUTING:
+            return new_state in {
+                TurnState.COMPLETED,
+                TurnState.COMPENSATING,
+                TurnState.FAILED,
+            }
+        elif self == TurnState.COMPENSATING:
+            return new_state in {TurnState.COMPLETED, TurnState.FAILED}
+        elif self in {
+            TurnState.COMPLETED,
+            TurnState.FAILED,
+            TurnState.CANCELLED,
+        }:
+            return False  # Terminal states
+        else:
+            return False
 
 
 @dataclass
@@ -120,7 +143,9 @@ class Turn:
     current_phase: Optional[PhaseType] = None
 
     # Saga coordination
-    compensation_actions: List[CompensationAction] = field(default_factory=list)
+    compensation_actions: List[CompensationAction] = field(
+        default_factory=list
+    )
     saga_state: Dict[str, Any] = field(default_factory=dict)
     rollback_snapshots: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
@@ -142,7 +167,9 @@ class Turn:
         # Initialize phase statuses
         if not self.phase_statuses:
             for phase_type in PhaseType.get_all_phases_ordered():
-                self.phase_statuses[phase_type] = PhaseStatus.create_pending(phase_type)
+                self.phase_statuses[phase_type] = PhaseStatus.create_pending(
+                    phase_type
+                )
 
         # Initialize saga state
         if not self.saga_state:
@@ -207,7 +234,7 @@ class Turn:
                 "world_state": {},
                 "narrative_state": {},
                 "participant_states": {},
-                "event_log": [],
+                "event_log": {},
             }
 
         # Record state transition
@@ -226,7 +253,9 @@ class Turn:
             {
                 "turn_id": self.turn_id.turn_uuid,
                 "configuration": self.configuration.__dict__,
-                "estimated_duration_ms": self.execution_context["estimated_duration"],
+                "estimated_duration_ms": self.execution_context[
+                    "estimated_duration"
+                ],
             },
         )
 
@@ -287,8 +316,8 @@ class Turn:
         self,
         phase_type: PhaseType,
         events_processed: int = 0,
-        events_generated: List[UUID] = None,
-        artifacts_created: List[str] = None,
+        events_generated: Optional[List[UUID]] = None,
+        artifacts_created: Optional[List[str]] = None,
         performance_metrics: Optional[Dict[str, float]] = None,
         ai_usage: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
@@ -471,21 +500,32 @@ class Turn:
         # Create compensation actions for all committed phases
         committed_phases = self.saga_state["committed_phases"]
 
-        for phase_name in reversed(committed_phases):  # Reverse order compensation
+        for phase_name in reversed(
+            committed_phases
+        ):  # Reverse order compensation
             for compensation_type in compensation_types:
-                if self._should_apply_compensation(phase_name, compensation_type):
-                    compensation_action = CompensationAction.create_for_phase_failure(
-                        action_id=uuid4(),
-                        turn_id=self.turn_id.turn_uuid,
-                        failed_phase=phase_name,
-                        compensation_type=compensation_type,
-                        rollback_data=self.rollback_snapshots.get(phase_name, {}),
-                        affected_entities=self.configuration.participants,
-                        metadata={
-                            "original_failure": failed_phase.value,
-                            "error_context": error_context,
-                            "compensation_sequence": len(self.compensation_actions) + 1,
-                        },
+                if self._should_apply_compensation(
+                    phase_name, compensation_type
+                ):
+                    compensation_action = (
+                        CompensationAction.create_for_phase_failure(
+                            action_id=uuid4(),
+                            turn_id=self.turn_id.turn_uuid,
+                            failed_phase=phase_name,
+                            compensation_type=compensation_type,
+                            rollback_data=self.rollback_snapshots.get(
+                                phase_name, {}
+                            ),
+                            affected_entities=self.configuration.participants,
+                            metadata={
+                                "original_failure": failed_phase.value,
+                                "error_context": error_context,
+                                "compensation_sequence": len(
+                                    self.compensation_actions
+                                )
+                                + 1,
+                            },
+                        )
                     )
 
                     self.compensation_actions.append(compensation_action)
@@ -549,9 +589,9 @@ class Turn:
             raise ValueError(f"Compensation action not found: {action_id}")
 
         # Complete the action
-        completed_action = self.compensation_actions[action_index].complete_execution(
-            results=results, actual_cost=actual_cost
-        )
+        completed_action = self.compensation_actions[
+            action_index
+        ].complete_execution(results=results, actual_cost=actual_cost)
 
         self.compensation_actions[action_index] = completed_action
 
@@ -567,8 +607,9 @@ class Turn:
                 "compensation_type": completed_action.compensation_type.value,
                 "target_phase": completed_action.target_phase,
                 "execution_time_ms": (
-                    completed_action.get_execution_time().total_seconds() * 1000
-                    if completed_action.get_execution_time()
+                    exec_time.total_seconds() * 1000
+                    if (exec_time := completed_action.get_execution_time())
+                    is not None
                     else None
                 ),
                 "results_summary": results,
@@ -600,7 +641,11 @@ class Turn:
             {
                 "total_compensations": len(self.compensation_actions),
                 "successful_compensations": len(
-                    [a for a in self.compensation_actions if a.status == "completed"]
+                    [
+                        a
+                        for a in self.compensation_actions
+                        if a.status == "completed"
+                    ]
                 ),
                 "completed_at": self.completed_at.isoformat(),
             },
@@ -644,7 +689,9 @@ class Turn:
             )
             phase_results.append(phase_result)
 
-        total_execution_time = self.completed_at - self.started_at
+        total_execution_time = (self.completed_at or datetime.now()) - (
+            self.started_at or self.created_at
+        )
 
         self.pipeline_result = PipelineResult.create_successful(
             turn_id=self.turn_id.turn_uuid,
@@ -662,7 +709,8 @@ class Turn:
             "turn_completed_successfully",
             {
                 "completed_at": self.completed_at.isoformat(),
-                "total_execution_time_ms": total_execution_time.total_seconds() * 1000,
+                "total_execution_time_ms": total_execution_time.total_seconds()
+                * 1000,
                 "phases_completed": len(phase_results),
                 "performance_summary": self.pipeline_result.get_executive_summary(),
             },
@@ -683,7 +731,9 @@ class Turn:
         self.version += 1
 
     def _fail_turn_permanently(
-        self, error_message: str, error_details: Optional[Dict[str, Any]] = None
+        self,
+        error_message: str,
+        error_details: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Permanently fail turn without compensation."""
         # Transition to failed state
@@ -716,7 +766,9 @@ class Turn:
             "primary_error": error_message,
             "error_details": error_details or {},
             "failed_phases": [
-                r.phase_type.value for r in phase_results if not r.was_successful()
+                r.phase_type.value
+                for r in phase_results
+                if not r.was_successful()
             ],
         }
 
@@ -756,6 +808,81 @@ class Turn:
         self.updated_at = datetime.now()
         self.version += 1
 
+    # Application Service Interface Methods
+
+    @property
+    def participants(self) -> List[str]:
+        """Get list of participant agent IDs from configuration."""
+        return getattr(self.configuration, "participants", [])
+
+    def mark_phase_completed(
+        self, phase_type: PhaseType, success: bool
+    ) -> None:
+        """
+        Mark a phase as completed (application service convenience method).
+
+        Args:
+            phase_type: Phase that was completed
+            success: Whether phase completed successfully
+        """
+        if success:
+            if phase_type in self.phase_statuses:
+                self.phase_statuses[phase_type] = self.phase_statuses[
+                    phase_type
+                ].transition_to(PhaseStatusEnum.COMPLETED)
+        else:
+            if phase_type in self.phase_statuses:
+                self.phase_statuses[phase_type] = self.phase_statuses[
+                    phase_type
+                ].transition_to(
+                    PhaseStatusEnum.FAILED,
+                    error_message="Phase execution failed",
+                )
+
+        self.updated_at = datetime.now()
+        self.version += 1
+
+    def mark_completed(self) -> None:
+        """Mark turn as successfully completed (application service convenience method)."""
+        if self.state.can_transition_to(TurnState.COMPLETED):
+            self.state = TurnState.COMPLETED
+            self.completed_at = datetime.now()
+            self.updated_at = datetime.now()
+            self.version += 1
+
+    def mark_failed(self, error_message: str) -> None:
+        """
+        Mark turn as failed (application service convenience method).
+
+        Args:
+            error_message: Reason for failure
+        """
+        if self.state.can_transition_to(TurnState.FAILED):
+            self.state = TurnState.FAILED
+            self.completed_at = datetime.now()
+            self.updated_at = datetime.now()
+            self.version += 1
+
+            # Record error in history
+            self.error_history.append(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "error_message": error_message,
+                    "error_type": "turn_failure",
+                }
+            )
+
+    def add_compensation_action(self, action: CompensationAction) -> None:
+        """
+        Add compensation action to turn (application service convenience method).
+
+        Args:
+            action: Compensation action to add
+        """
+        self.compensation_actions.append(action)
+        self.updated_at = datetime.now()
+        self.version += 1
+
     # Helper methods
 
     def _validate_state_transition(self, new_state: TurnState) -> None:
@@ -773,9 +900,9 @@ class Turn:
         """Start execution of next pipeline phase."""
         self.current_phase = phase_type
 
-        self.phase_statuses[phase_type] = self.phase_statuses[phase_type].transition_to(
-            PhaseStatusEnum.RUNNING, started_at=datetime.now()
-        )
+        self.phase_statuses[phase_type] = self.phase_statuses[
+            phase_type
+        ].transition_to(PhaseStatusEnum.RUNNING, started_at=datetime.now())
 
         # Generate domain event
         self._generate_domain_event(
@@ -810,9 +937,9 @@ class Turn:
         """Update aggregate performance metrics."""
         # Store phase-specific metrics
         phase_key = f"phase_{phase_type.value}"
-        self.performance_metrics[f"{phase_key}_duration_ms"] = phase_metrics.get(
-            "duration_ms", 0
-        )
+        self.performance_metrics[
+            f"{phase_key}_duration_ms"
+        ] = phase_metrics.get("duration_ms", 0)
         self.performance_metrics[f"{phase_key}_events"] = phase_metrics.get(
             "events_processed", 0
         )
@@ -845,10 +972,13 @@ class Turn:
                 )
             phase_results.append(phase_result)
 
-        total_execution_time = self.completed_at - self.started_at
+        total_execution_time = (self.completed_at or datetime.now()) - (
+            self.started_at or self.created_at
+        )
 
         saga_actions = [
-            action.compensation_type.value for action in self.compensation_actions
+            action.compensation_type.value
+            for action in self.compensation_actions
         ]
 
         self.pipeline_result = PipelineResult.create_failed(
@@ -871,7 +1001,9 @@ class Turn:
             },
         )
 
-    def _record_audit_event(self, event_type: str, event_data: Dict[str, Any]) -> None:
+    def _record_audit_event(
+        self, event_type: str, event_data: Dict[str, Any]
+    ) -> None:
         """Record event in audit trail."""
         audit_event = {
             "timestamp": datetime.now().isoformat(),
@@ -925,7 +1057,9 @@ class Turn:
     def get_pending_compensations(self) -> List[CompensationAction]:
         """Get list of pending compensation actions."""
         return [
-            action for action in self.compensation_actions if action.status == "pending"
+            action
+            for action in self.compensation_actions
+            if action.status == "pending"
         ]
 
     def get_execution_time(self) -> Optional[timedelta]:
@@ -941,7 +1075,9 @@ class Turn:
             return False
 
         elapsed = datetime.now() - self.started_at
-        max_time = timedelta(milliseconds=self.configuration.max_execution_time_ms)
+        max_time = timedelta(
+            milliseconds=self.configuration.max_execution_time_ms
+        )
 
         return elapsed > max_time
 
@@ -969,11 +1105,57 @@ class Turn:
             "phases_completed": len(self.get_completed_phases()),
             "phases_failed": len(self.get_failed_phases()),
             "compensation_actions": len(self.compensation_actions),
-            "events_processed": self.performance_metrics.get("events_processed", 0),
-            "ai_operations": self.performance_metrics.get("ai_operations_count", 0),
-            "total_ai_cost": float(self.performance_metrics.get("total_ai_cost", 0)),
+            "events_processed": self.performance_metrics.get(
+                "events_processed", 0
+            ),
+            "ai_operations": self.performance_metrics.get(
+                "ai_operations_count", 0
+            ),
+            "total_ai_cost": float(
+                self.performance_metrics.get("total_ai_cost", 0)
+            ),
             "is_overdue": self.is_overdue(),
         }
+
+    @classmethod
+    def create(
+        cls,
+        turn_id: TurnId,
+        configuration: TurnConfiguration,
+        participants: List[str],
+    ) -> "Turn":
+        """
+        Create a new Turn with proper initialization.
+
+        Args:
+            turn_id: Unique turn identifier
+            configuration: Turn execution configuration
+            participants: List of participant agent IDs
+
+        Returns:
+            New Turn instance in CREATED state
+        """
+        # Create configuration with participants if not present
+        if (
+            not hasattr(configuration, "participants")
+            or not configuration.participants
+        ):
+            # Create new configuration with participants
+            configuration = TurnConfiguration(
+                **{
+                    field.name: getattr(configuration, field.name)
+                    for field in configuration.__dataclass_fields__.values()
+                },
+                participants=participants,
+            )
+
+        return cls(
+            turn_id=turn_id,
+            configuration=configuration,
+            state=TurnState.CREATED,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
 
     def __str__(self) -> str:
         """String representation for general use."""

@@ -107,7 +107,9 @@ class LintingGate(QualityGate):
 
     def __init__(self):
         super().__init__(
-            "Code Linting", "Ensure code follows style guidelines", required=True
+            "Code Linting",
+            "Ensure code follows style guidelines",
+            required=True,
         )
 
     def run(self) -> bool:
@@ -117,7 +119,15 @@ class LintingGate(QualityGate):
         # Black formatting check
         try:
             result = subprocess.run(
-                [sys.executable, "-m", "black", "--check", "--diff", "src", "tests"],
+                [
+                    sys.executable,
+                    "-m",
+                    "black",
+                    "--check",
+                    "--diff",
+                    "src",
+                    "tests",
+                ],
                 capture_output=True,
                 text=True,
             )
@@ -156,7 +166,12 @@ class LintingGate(QualityGate):
                 text=True,
             )
             checks.append(
-                ("Flake8", result.returncode == 0, result.stdout, result.stderr)
+                (
+                    "Flake8",
+                    result.returncode == 0,
+                    result.stdout,
+                    result.stderr,
+                )
             )
         except FileNotFoundError:
             checks.append(("Flake8", False, "", "flake8 not installed"))
@@ -164,7 +179,8 @@ class LintingGate(QualityGate):
         # Compile results
         self.passed = all(passed for _, passed, _, _ in checks)
         self.output = "\n".join(
-            f"{name}: {'✓' if passed else '✗'}" for name, passed, _, _ in checks
+            f"{name}: {'✓' if passed else '✗'}"
+            for name, passed, _, _ in checks
         )
         self.error = "\n".join(
             f"{name}: {stderr}"
@@ -189,7 +205,9 @@ class TypeCheckingGate(QualityGate):
         """Run MyPy type checking."""
         try:
             result = subprocess.run(
-                [sys.executable, "-m", "mypy", "src"], capture_output=True, text=True
+                [sys.executable, "-m", "mypy", "src"],
+                capture_output=True,
+                text=True,
             )
 
             self.passed = result.returncode == 0
@@ -240,7 +258,9 @@ class SecurityGate(QualityGate):
                         if issue.get("issue_severity") == "MEDIUM"
                     )
 
-                    bandit_passed = high_severity == 0  # No high severity issues
+                    bandit_passed = (
+                        high_severity == 0
+                    )  # No high severity issues
                     checks.append(
                         (
                             "Bandit",
@@ -295,14 +315,23 @@ class TestGate(QualityGate):
 
     def __init__(self):
         super().__init__(
-            "Test Execution", "Ensure all tests pass successfully", required=True
+            "Test Execution",
+            "Ensure all tests pass successfully",
+            required=True,
         )
 
     def run(self) -> bool:
         """Run test suite."""
         try:
             result = subprocess.run(
-                [sys.executable, "-m", "pytest", "--tb=short", "-v", "--maxfail=5"],
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "--tb=short",
+                    "-v",
+                    "--maxfail=5",
+                ],
                 capture_output=True,
                 text=True,
                 timeout=600,
@@ -317,7 +346,9 @@ class TestGate(QualityGate):
                 lines = result.stdout.split("\n")
                 failed_tests = [line for line in lines if "FAILED" in line]
                 if failed_tests:
-                    self.error += "\n\nFailed Tests:\n" + "\n".join(failed_tests[:10])
+                    self.error += "\n\nFailed Tests:\n" + "\n".join(
+                        failed_tests[:10]
+                    )
 
         except subprocess.TimeoutExpired:
             self.passed = False
@@ -409,7 +440,9 @@ class QualityGateRunner:
 
         return results["overall_passed"], results
 
-    def generate_report(self, results: Dict, output_file: str = "quality_report.json"):
+    def generate_report(
+        self, results: Dict, output_file: str = "quality_report.json"
+    ):
         """Generate detailed quality report."""
         with open(output_file, "w") as f:
             json.dump(results, f, indent=2)
@@ -418,9 +451,13 @@ class QualityGateRunner:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Run quality gates for Novel Engine")
+    parser = argparse.ArgumentParser(
+        description="Run quality gates for Novel Engine"
+    )
     parser.add_argument(
-        "--fail-fast", action="store_true", help="Stop on first required gate failure"
+        "--fail-fast",
+        action="store_true",
+        help="Stop on first required gate failure",
     )
     parser.add_argument(
         "--report",

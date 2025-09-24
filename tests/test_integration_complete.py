@@ -48,11 +48,17 @@ try:
     CORE_ENGINE_AVAILABLE = True
 except ImportError as e:
     CORE_ENGINE_AVAILABLE = False
-    pytest.skip(f"Core engine components not available: {e}", allow_module_level=True)
+    pytest.skip(
+        f"Core engine components not available: {e}", allow_module_level=True
+    )
 
 # Evaluation system imports
 try:
-    from evaluate_baseline import BaselineEvaluator, NovelEngineRunner, SeedLoader
+    from evaluate_baseline import (
+        BaselineEvaluator,
+        NovelEngineRunner,
+        SeedLoader,
+    )
 
     EVALUATION_SYSTEM_AVAILABLE = True
 except ImportError:
@@ -142,7 +148,9 @@ class TestCompleteSystemIntegration:
 
         return director
 
-    @pytest.mark.skipif(not CORE_ENGINE_AVAILABLE, reason="Core engine not available")
+    @pytest.mark.skipif(
+        not CORE_ENGINE_AVAILABLE, reason="Core engine not available"
+    )
     def test_iron_laws_integration(self, director_agent, mock_character_data):
         """Test Iron Laws integration with DirectorAgent."""
 
@@ -150,14 +158,18 @@ class TestCompleteSystemIntegration:
         proposed_action = ProposedAction(
             character_id=mock_character_data["character_id"],
             action_type=ActionType.INVESTIGATE,
-            target=ActionTarget(entity_type=EntityType.OBJECT, entity_id="test_object"),
+            target=ActionTarget(
+                entity_type=EntityType.OBJECT, entity_id="test_object"
+            ),
             parameters=ActionParameters(intensity=ActionIntensity.NORMAL),
             reasoning="Integration test investigation action",
         )
 
         # Test Iron Laws validation (need to get the agent from director)
         agent = director_agent.registered_agents[0]
-        validation_result = director_agent._adjudicate_action(proposed_action, agent)
+        validation_result = director_agent._adjudicate_action(
+            proposed_action, agent
+        )
 
         # Verify validation result structure
         assert validation_result is not None
@@ -179,7 +191,9 @@ class TestCompleteSystemIntegration:
     @pytest.mark.skipif(
         not CACHING_SYSTEM_AVAILABLE, reason="Caching system not available"
     )
-    def test_state_hashing_integration(self, mock_character_data, temp_directory):
+    def test_state_hashing_integration(
+        self, mock_character_data, temp_directory
+    ):
         """Test state hashing system integration."""
 
         # Initialize state hasher
@@ -191,11 +205,15 @@ class TestCompleteSystemIntegration:
         assert character_hash is not None
         assert character_hash.hash_value
         assert character_hash.component_type == "character_state"
-        assert character_hash.component_id == mock_character_data["character_id"]
+        assert (
+            character_hash.component_id == mock_character_data["character_id"]
+        )
 
         # Test world state hashing
         world_state = {
-            "characters": {mock_character_data["character_id"]: mock_character_data},
+            "characters": {
+                mock_character_data["character_id"]: mock_character_data
+            },
             "locations": [{"id": "test_loc", "name": "Test Location"}],
             "objects": [{"id": "test_obj", "name": "Test Object"}],
             "environment": {"time_of_day": "noon", "weather": "clear"},
@@ -378,7 +396,8 @@ class TestCompleteSystemIntegration:
         assert budget_config.persistence_file.exists()
 
     @pytest.mark.skipif(
-        not EVALUATION_SYSTEM_AVAILABLE, reason="Evaluation system not available"
+        not EVALUATION_SYSTEM_AVAILABLE,
+        reason="Evaluation system not available",
     )
     def test_evaluation_system_integration(self, temp_directory):
         """Test evaluation system integration."""
@@ -418,9 +437,21 @@ class TestCompleteSystemIntegration:
                         "charisma": 5,
                     },
                     "resources": {
-                        "health": {"current": 100, "maximum": 100, "minimum": 0},
-                        "stamina": {"current": 100, "maximum": 100, "minimum": 0},
-                        "morale": {"current": 100, "maximum": 100, "minimum": 0},
+                        "health": {
+                            "current": 100,
+                            "maximum": 100,
+                            "minimum": 0,
+                        },
+                        "stamina": {
+                            "current": 100,
+                            "maximum": 100,
+                            "minimum": 0,
+                        },
+                        "morale": {
+                            "current": 100,
+                            "maximum": 100,
+                            "minimum": 0,
+                        },
                     },
                 }
             ],
@@ -488,7 +519,8 @@ class TestCompleteSystemIntegration:
         # Semantic cache
         cache = SemanticCache(
             SemanticCacheConfig(
-                max_cache_size=50, persistence_file=temp_directory / "e2e_cache.json"
+                max_cache_size=50,
+                persistence_file=temp_directory / "e2e_cache.json",
             )
         )
 
@@ -535,7 +567,9 @@ class TestCompleteSystemIntegration:
         print("3. Testing state hashing...")
 
         world_state = {
-            "characters": {mock_character_data["character_id"]: mock_character_data},
+            "characters": {
+                mock_character_data["character_id"]: mock_character_data
+            },
             "environment": {"time": "noon", "turn": 1},
         }
 
@@ -545,7 +579,9 @@ class TestCompleteSystemIntegration:
         assert initial_hash.hash_value
         assert character_hash.hash_value
 
-        print(f"✅ State hashing complete - World: {initial_hash.hash_value[:16]}...")
+        print(
+            f"✅ State hashing complete - World: {initial_hash.hash_value[:16]}..."
+        )
 
         # Step 4: Test basic agent functionality
         print("4. Testing agent integration...")
@@ -604,7 +640,9 @@ class TestCompleteSystemIntegration:
         )
 
         # Get usage report
-        usage_report = budget_manager.get_usage_report(period=BudgetPeriod.DAILY)
+        usage_report = budget_manager.get_usage_report(
+            period=BudgetPeriod.DAILY
+        )
 
         assert usage_report["summary_metrics"]["total_operations"] == 1
         assert usage_report["summary_metrics"]["total_tokens"] == 150
@@ -671,7 +709,9 @@ class TestCompleteSystemIntegration:
                 "cache_operations": "functional",
                 "persistence": "functional",
                 "semantic_matching": (
-                    "available" if cache.config.enable_semantic_matching else "disabled"
+                    "available"
+                    if cache.config.enable_semantic_matching
+                    else "disabled"
                 ),
             },
             "budget_system": {
@@ -714,13 +754,16 @@ class TestCompleteSystemIntegration:
 
         cache = SemanticCache(
             SemanticCacheConfig(
-                max_cache_size=200, similarity_threshold=0.75, enable_clustering=True
+                max_cache_size=200,
+                similarity_threshold=0.75,
+                enable_clustering=True,
             )
         )
 
         budget_manager = TokenBudgetManager(
             TokenBudgetConfig(
-                enable_cache_integration=True, enable_automatic_optimization=True
+                enable_cache_integration=True,
+                enable_automatic_optimization=True,
             )
         )
 
@@ -761,7 +804,9 @@ class TestCompleteSystemIntegration:
 
         for i, char_data in enumerate(test_characters):
             cache_key = f"perf_test_{i}"
-            test_value = f"Performance test value for character {char_data['name']}"
+            test_value = (
+                f"Performance test value for character {char_data['name']}"
+            )
 
             cache.put(cache_key, test_value, content_type="performance_test")
             retrieved = cache.get(cache_key)
@@ -802,7 +847,8 @@ class TestCompleteSystemIntegration:
                 },
                 "environment": {"turn": i, "time": f"hour_{i}"},
                 "locations": [
-                    {"id": f"loc_{j}", "name": f"Location {j}"} for j in range(3)
+                    {"id": f"loc_{j}", "name": f"Location {j}"}
+                    for j in range(3)
                 ],
             }
             world_states.append(world_state)
@@ -826,7 +872,10 @@ class TestCompleteSystemIntegration:
                 {"current": current_hash}, {"previous": previous_hash}
             )
 
-            assert consistency_report["consistency_status"] in ["changed", "consistent"]
+            assert consistency_report["consistency_status"] in [
+                "changed",
+                "consistent",
+            ]
 
         combined_time = time.time() - start_time
         print(f"✅ Combined system: 5 world states in {combined_time:.3f}s")
@@ -841,7 +890,8 @@ class TestCompleteSystemIntegration:
                 "combined_system_time": combined_time,
             },
             "throughput_metrics": {
-                "characters_hashed_per_second": len(test_characters) / hashing_time,
+                "characters_hashed_per_second": len(test_characters)
+                / hashing_time,
                 "cache_operations_per_second": len(test_characters)
                 * 2
                 / caching_time,  # put + get
@@ -851,8 +901,10 @@ class TestCompleteSystemIntegration:
             "cache_stats": cache.get_stats(),
             "performance_acceptable": all(
                 [
-                    hashing_time < 1.0,  # Should hash 10 characters in under 1 second
-                    caching_time < 0.5,  # Should cache 10 items in under 0.5 seconds
+                    hashing_time
+                    < 1.0,  # Should hash 10 characters in under 1 second
+                    caching_time
+                    < 0.5,  # Should cache 10 items in under 0.5 seconds
                     budget_time
                     < 0.5,  # Should track 20 operations in under 0.5 seconds
                     combined_time

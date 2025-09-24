@@ -13,10 +13,23 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict
-from unittest.mock import mock_open, patch
+from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
 import yaml
-import pytest
+
+
+def async_mock_open(read_data=""):
+    """Create an async mock for aiofiles.open that supports async context manager protocol."""
+    mock_file = AsyncMock()
+    mock_file.read = AsyncMock(return_value=read_data)
+
+    # Create the async context manager
+    async_context = AsyncMock()
+    async_context.__aenter__ = AsyncMock(return_value=mock_file)
+    async_context.__aexit__ = AsyncMock(return_value=None)
+
+    return MagicMock(return_value=async_context)
+
 
 # Assuming the service is imported from the correct path
 from contexts.character.application.services.context_loader import (
@@ -63,7 +76,11 @@ class TestContextLoaderService(unittest.IsolatedAsyncioTestCase):
                 "specialization": "Testing",
             },
             "combat_stats": {"stealth": 8, "agility": 7, "melee": 6},
-            "psychological_profile": {"loyalty": 8, "aggression": 5, "caution": 9},
+            "psychological_profile": {
+                "loyalty": 8,
+                "aggression": 5,
+                "caution": 9,
+            },
             "equipment": {"primary_weapon": "Test Weapon"},
             "relationships": {
                 "allies": [
@@ -103,7 +120,7 @@ class TestContextLoaderService(unittest.IsolatedAsyncioTestCase):
 
 ## Strategic Objectives
 
-**Build Test Framework** 
+**Build Test Framework**
 - Description: Create robust testing infrastructure
 - Timeline: 6-8 months
 """
@@ -200,7 +217,9 @@ Developed expertise in systematic validation and quality assurance.
 
         # Verify file info
         self.assertEqual(len(result.loaded_files), 4)
-        successful_files = [f for f in result.loaded_files if f.loaded_successfully]
+        successful_files = [
+            f for f in result.loaded_files if f.loaded_successfully
+        ]
         self.assertEqual(len(successful_files), 4)
 
     async def test_load_partial_character_context(self):
@@ -208,7 +227,12 @@ Developed expertise in systematic validation and quality assurance.
         character_id = "partial_character"
         self.create_test_character_files(
             character_id,
-            {"memory": True, "stats": True, "objectives": False, "profile": False},
+            {
+                "memory": True,
+                "stats": True,
+                "objectives": False,
+                "profile": False,
+            },
         )
 
         result = await self.service.load_character_context(character_id)
@@ -225,8 +249,12 @@ Developed expertise in systematic validation and quality assurance.
 
         # Verify file info includes failed files
         self.assertEqual(len(result.loaded_files), 4)
-        successful_files = [f for f in result.loaded_files if f.loaded_successfully]
-        failed_files = [f for f in result.loaded_files if not f.loaded_successfully]
+        successful_files = [
+            f for f in result.loaded_files if f.loaded_successfully
+        ]
+        failed_files = [
+            f for f in result.loaded_files if not f.loaded_successfully
+        ]
         self.assertEqual(len(successful_files), 2)
         self.assertEqual(len(failed_files), 2)
 
@@ -241,7 +269,9 @@ Developed expertise in systematic validation and quality assurance.
         ]
 
         for input_id, expected in test_cases:
-            sanitized = await self.service._validate_character_identifier(input_id)
+            sanitized = await self.service._validate_character_identifier(
+                input_id
+            )
             self.assertEqual(sanitized, expected)
 
         # Invalid identifiers
@@ -256,7 +286,8 @@ Developed expertise in systematic validation and quality assurance.
     async def test_yaml_parsing_valid_data(self):
         """Test YAML file parsing with valid data."""
         with patch(
-            "aiofiles.open", mock_open(read_data=yaml.dump(self.sample_stats_data))
+            "aiofiles.open",
+            async_mock_open(read_data=yaml.dump(self.sample_stats_data)),
         ):
             with patch("pathlib.Path.stat") as mock_stat:
                 mock_stat.return_value.st_size = 1024
@@ -273,7 +304,7 @@ Developed expertise in systematic validation and quality assurance.
 
     async def test_yaml_parsing_empty_file(self):
         """Test YAML parsing with empty file."""
-        with patch("aiofiles.open", mock_open(read_data="")):
+        with patch("aiofiles.open", async_mock_open(read_data="")):
             with patch("pathlib.Path.stat") as mock_stat:
                 mock_stat.return_value.st_size = 0
 
@@ -289,7 +320,7 @@ Developed expertise in systematic validation and quality assurance.
         """Test YAML parsing with malformed YAML."""
         invalid_yaml = "invalid: yaml: content: [unclosed"
 
-        with patch("aiofiles.open", mock_open(read_data=invalid_yaml)):
+        with patch("aiofiles.open", async_mock_open(read_data=invalid_yaml)):
             with patch("pathlib.Path.stat") as mock_stat:
                 mock_stat.return_value.st_size = len(invalid_yaml)
 
@@ -303,9 +334,14 @@ Developed expertise in systematic validation and quality assurance.
 
     async def test_markdown_parsing_memory(self):
         """Test memory markdown parsing."""
-        with patch("aiofiles.open", mock_open(read_data=self.sample_memory_content)):
+        with patch(
+            "aiofiles.open",
+            async_mock_open(read_data=self.sample_memory_content),
+        ):
             with patch("pathlib.Path.stat") as mock_stat:
-                mock_stat.return_value.st_size = len(self.sample_memory_content)
+                mock_stat.return_value.st_size = len(
+                    self.sample_memory_content
+                )
 
                 result, file_info = await self.service._load_markdown_file(
                     Path("memory.md"), "memory"
@@ -318,10 +354,13 @@ Developed expertise in systematic validation and quality assurance.
     async def test_markdown_parsing_objectives(self):
         """Test objectives markdown parsing."""
         with patch(
-            "aiofiles.open", mock_open(read_data=self.sample_objectives_content)
+            "aiofiles.open",
+            async_mock_open(read_data=self.sample_objectives_content),
         ):
             with patch("pathlib.Path.stat") as mock_stat:
-                mock_stat.return_value.st_size = len(self.sample_objectives_content)
+                mock_stat.return_value.st_size = len(
+                    self.sample_objectives_content
+                )
 
                 result, file_info = await self.service._load_markdown_file(
                     Path("objectives.md"), "objectives"
@@ -333,9 +372,14 @@ Developed expertise in systematic validation and quality assurance.
 
     async def test_markdown_parsing_profile(self):
         """Test profile markdown parsing."""
-        with patch("aiofiles.open", mock_open(read_data=self.sample_profile_content)):
+        with patch(
+            "aiofiles.open",
+            async_mock_open(read_data=self.sample_profile_content),
+        ):
             with patch("pathlib.Path.stat") as mock_stat:
-                mock_stat.return_value.st_size = len(self.sample_profile_content)
+                mock_stat.return_value.st_size = len(
+                    self.sample_profile_content
+                )
 
                 result, file_info = await self.service._load_markdown_file(
                     Path("profile.md"), "profile"
@@ -353,7 +397,7 @@ Developed expertise in systematic validation and quality assurance.
         """Test that files exceeding size limits are rejected."""
         large_content = "x" * (2 * 1024 * 1024)  # 2MB content
 
-        with patch("aiofiles.open", mock_open(read_data=large_content)):
+        with patch("aiofiles.open", async_mock_open(read_data=large_content)):
             with patch("pathlib.Path.stat") as mock_stat:
                 mock_stat.return_value.st_size = len(large_content)
 
@@ -374,7 +418,7 @@ Developed expertise in systematic validation and quality assurance.
 
     async def test_invalid_context_type(self):
         """Test handling of invalid context type in markdown parsing."""
-        with patch("aiofiles.open", mock_open(read_data="test content")):
+        with patch("aiofiles.open", async_mock_open(read_data="test content")):
             with patch("pathlib.Path.stat") as mock_stat:
                 mock_stat.return_value.st_size = 100
 
@@ -384,7 +428,9 @@ Developed expertise in systematic validation and quality assurance.
 
                 self.assertIsNone(result)
                 self.assertFalse(file_info.loaded_successfully)
-                self.assertIn("unknown context type", file_info.error_message.lower())
+                self.assertIn(
+                    "unknown context type", file_info.error_message.lower()
+                )
 
     # ==================== Security Tests ====================
 
@@ -446,7 +492,8 @@ Developed expertise in systematic validation and quality assurance.
         """Test that cache entries expire correctly."""
         # Create service with very short cache TTL
         short_cache_service = ContextLoaderService(
-            base_characters_path=self.temp_dir, cache_ttl_minutes=0.01  # ~0.6 seconds
+            base_characters_path=self.temp_dir,
+            cache_ttl_minutes=0.01,  # ~0.6 seconds
         )
 
         character_id = "cache_expiry_test"
@@ -455,8 +502,8 @@ Developed expertise in systematic validation and quality assurance.
         # First load
         await short_cache_service.load_character_context(character_id)
 
-        # Wait for cache to expire
-        await asyncio.sleep(0.1)
+        # Wait for cache to expire (0.01 minutes = 0.6 seconds)
+        await asyncio.sleep(0.7)  # Wait longer than cache TTL
 
         # Second load should miss cache due to expiration
         await short_cache_service.load_character_context(character_id)
@@ -501,7 +548,9 @@ Developed expertise in systematic validation and quality assurance.
         """Test that circuit breaker blocks requests when open."""
         # Force circuit breaker open
         self.service._circuit_breaker["state"] = "OPEN"
-        self.service._circuit_breaker["last_failure_time"] = datetime.now(timezone.utc)
+        self.service._circuit_breaker["last_failure_time"] = datetime.now(
+            timezone.utc
+        )
 
         with self.assertRaises(ServiceUnavailableError):
             await self.service.load_character_context("test")
@@ -542,7 +591,9 @@ Developed expertise in systematic validation and quality assurance.
 
         # Some should complete successfully
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        successful_results = [r for r in results if isinstance(r, CharacterContext)]
+        successful_results = [
+            r for r in results if isinstance(r, CharacterContext)
+        ]
         self.assertTrue(len(successful_results) > 0)
 
     async def test_load_timeout_handling(self):
@@ -595,7 +646,9 @@ Developed expertise in systematic validation and quality assurance.
 
         # Create files with inconsistent ages
         inconsistent_stats = self.sample_stats_data.copy()
-        inconsistent_stats["character"]["age"] = 50  # Different from profile (25)
+        inconsistent_stats["character"][
+            "age"
+        ] = 50  # Different from profile (25)
 
         char_dir = Path(self.temp_dir) / character_id
         char_dir.mkdir(exist_ok=True)
@@ -611,7 +664,9 @@ Developed expertise in systematic validation and quality assurance.
         result = await self.service.load_character_context(character_id)
 
         # Should have validation warnings for age inconsistency
-        age_warnings = [w for w in result.validation_warnings if "age" in w.lower()]
+        age_warnings = [
+            w for w in result.validation_warnings if "age" in w.lower()
+        ]
         self.assertTrue(len(age_warnings) > 0)
 
     # ==================== Service Monitoring Tests ====================
@@ -622,8 +677,12 @@ Developed expertise in systematic validation and quality assurance.
         self.create_test_character_files(character_id)
 
         # Perform some operations
-        await self.service.load_character_context(character_id)  # Should hit cache miss
-        await self.service.load_character_context(character_id)  # Should hit cache
+        await self.service.load_character_context(
+            character_id
+        )  # Should hit cache miss
+        await self.service.load_character_context(
+            character_id
+        )  # Should hit cache
 
         stats = self.service.get_service_statistics()
 
@@ -657,12 +716,16 @@ Developed expertise in systematic validation and quality assurance.
 
         # Test circuit breaker half-open
         self.service._circuit_breaker["state"] = "HALF_OPEN"
-        self.assertEqual(self.service._get_service_health_status(), "recovering")
+        self.assertEqual(
+            self.service._get_service_health_status(), "recovering"
+        )
 
         # Reset and test security alert
         self.service._circuit_breaker["state"] = "CLOSED"
         self.service._load_stats["security_violations"] = 15
-        self.assertEqual(self.service._get_service_health_status(), "security_alert")
+        self.assertEqual(
+            self.service._get_service_health_status(), "security_alert"
+        )
 
     # ==================== Directory Structure Validation Tests ====================
 
@@ -671,7 +734,9 @@ Developed expertise in systematic validation and quality assurance.
         character_id = "validation_test"
         self.create_test_character_files(character_id)
 
-        result = await self.service.validate_character_directory_structure(character_id)
+        result = await self.service.validate_character_directory_structure(
+            character_id
+        )
 
         self.assertTrue(result["validation_success"])
         self.assertTrue(result["directory_exists"])
@@ -687,12 +752,21 @@ Developed expertise in systematic validation and quality assurance.
         character_id = "partial_validation_test"
         self.create_test_character_files(
             character_id,
-            {"memory": True, "stats": True, "objectives": False, "profile": False},
+            {
+                "memory": True,
+                "stats": True,
+                "objectives": False,
+                "profile": False,
+            },
         )
 
-        result = await self.service.validate_character_directory_structure(character_id)
+        result = await self.service.validate_character_directory_structure(
+            character_id
+        )
 
-        self.assertTrue(result["validation_success"])  # At least one file exists
+        self.assertTrue(
+            result["validation_success"]
+        )  # At least one file exists
         self.assertEqual(result["files_found"], 2)
         self.assertEqual(result["total_expected"], 4)
 
@@ -735,7 +809,9 @@ Developed expertise in systematic validation and quality assurance.
         # Create malformed markdown (should still parse something)
         profile_file = char_dir / f"{character_id}_profile.md"
         with open(profile_file, "w") as f:
-            f.write("This is not properly formatted markdown without proper headers")
+            f.write(
+                "This is not properly formatted markdown without proper headers"
+            )
 
         result = await self.service.load_character_context(character_id)
 
@@ -749,7 +825,7 @@ Developed expertise in systematic validation and quality assurance.
 
         # Create content with Unicode characters
         unicode_content = """
-# 测试角色 - Test Character 
+# 测试角色 - Test Character
 
 ## Core Identity
 - **Name**: Aeolus Çhäracter
@@ -855,7 +931,9 @@ Born in Crystal City's Shadow Quarter during civil unrest.
         # Verify stats data
         self.assertEqual(result.stats_context.name, "Aria Shadowbane")
         self.assertEqual(result.stats_context.age, 25)
-        self.assertEqual(result.stats_context.specialization, "Stealth Operations")
+        self.assertEqual(
+            result.stats_context.specialization, "Stealth Operations"
+        )
 
 
 # ==================== Performance Tests ====================
@@ -907,7 +985,8 @@ class TestContextLoaderPerformance(unittest.IsolatedAsyncioTestCase):
         start_time = time.time()
 
         tasks = [
-            self.service.load_character_context(char_id) for char_id in character_ids
+            self.service.load_character_context(char_id)
+            for char_id in character_ids
         ]
 
         results = await asyncio.gather(*tasks)
@@ -923,12 +1002,16 @@ class TestContextLoaderPerformance(unittest.IsolatedAsyncioTestCase):
         # Performance assertion (should complete in reasonable time)
         # This is a basic check - adjust threshold based on system capabilities
         self.assertLess(
-            duration, 10.0, f"Concurrent loading took {duration:.2f}s, expected <10s"
+            duration,
+            10.0,
+            f"Concurrent loading took {duration:.2f}s, expected <10s",
         )
 
         # Verify cache performance
         stats = self.service.get_service_statistics()
-        self.assertEqual(stats["load_statistics"]["total_attempts"], character_count)
+        self.assertEqual(
+            stats["load_statistics"]["total_attempts"], character_count
+        )
 
 
 if __name__ == "__main__":

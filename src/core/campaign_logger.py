@@ -34,7 +34,9 @@ class CampaignLogger:
         Args:
             campaign_log_path: Optional path to campaign log file
         """
-        self.campaign_log_path = campaign_log_path or get_campaign_log_filename()
+        self.campaign_log_path = (
+            campaign_log_path or get_campaign_log_filename()
+        )
         self.events_logged = 0
 
         self._initialize_campaign_log()
@@ -48,7 +50,9 @@ class CampaignLogger:
                 )
                 self._backup_existing_log()
             else:
-                logger.info(f"Creating new campaign log: {self.campaign_log_path}")
+                logger.info(
+                    f"Creating new campaign log: {self.campaign_log_path}"
+                )
                 self._create_new_campaign_log()
         except Exception as e:
             logger.error(f"Failed to initialize campaign log: {e}")
@@ -65,7 +69,9 @@ class CampaignLogger:
                 f.write(
                     f"**Campaign Started:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
                 )
-                f.write("**Simulation Mode:** Multi-Agent Interactive Narrative\n\n")
+                f.write(
+                    "**Simulation Mode:** Multi-Agent Interactive Narrative\n\n"
+                )
                 f.write("---\n\n")
                 f.write("## Campaign Events\n\n")
 
@@ -125,7 +131,9 @@ class CampaignLogger:
 
     def _log_to_fallback(self, event_description: str, timestamp: str) -> None:
         """Log to fallback file if main log fails."""
-        fallback_path = f"fallback_campaign_log_{datetime.now().strftime('%Y%m%d')}.md"
+        fallback_path = (
+            f"fallback_campaign_log_{datetime.now().strftime('%Y%m%d')}.md"
+        )
         try:
             with open(fallback_path, "a") as f:
                 f.write(f"**[{timestamp}]** {event_description.strip()}\n\n")
@@ -147,7 +155,9 @@ class CampaignLogger:
 
     def log_turn_start(self, turn_number: int, active_agents: int) -> None:
         """Log turn start event."""
-        self.log_event(f"🎯 **TURN {turn_number}** - {active_agents} agents active")
+        self.log_event(
+            f"🎯 **TURN {turn_number}** - {active_agents} agents active"
+        )
 
     def log_turn_end(self, turn_number: int, actions_processed: int) -> None:
         """Log turn end event."""
@@ -156,7 +166,11 @@ class CampaignLogger:
         )
 
     def log_agent_action(
-        self, agent_name: str, agent_id: str, action_type: str, reasoning: str = None
+        self,
+        agent_name: str,
+        agent_id: str,
+        action_type: str,
+        reasoning: str = None,
     ) -> None:
         """Log agent action with formatting."""
         action_description = (
@@ -168,11 +182,15 @@ class CampaignLogger:
 
     def log_agent_waiting(self, agent_name: str, agent_id: str) -> None:
         """Log agent waiting/observing."""
-        self.log_event(f"⏸️ **{agent_name}** ({agent_id}) is waiting and observing")
+        self.log_event(
+            f"⏸️ **{agent_name}** ({agent_id}) is waiting and observing"
+        )
 
     def log_narrative_event(self, event_type: str, description: str) -> None:
         """Log narrative event with special formatting."""
-        self.log_event(f"📖 **NARRATIVE EVENT - {event_type.upper()}**: {description}")
+        self.log_event(
+            f"📖 **NARRATIVE EVENT - {event_type.upper()}**: {description}"
+        )
 
     def log_world_state_change(self, change_description: str) -> None:
         """Log world state changes."""

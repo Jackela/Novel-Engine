@@ -47,8 +47,12 @@ class NarrativeEvent:
         default_factory=dict
     )  # Impact on specific characters
     environmental_change: str = ""  # How the environment changes
-    turn_activation: Optional[int] = None  # Specific turn to activate (optional)
-    probability: float = 1.0  # Probability of activation when conditions are met
+    turn_activation: Optional[
+        int
+    ] = None  # Specific turn to activate (optional)
+    probability: float = (
+        1.0  # Probability of activation when conditions are met
+    )
 
 
 @dataclass
@@ -103,7 +107,9 @@ class CampaignBriefLoader:
         file_path = Path(file_path)
 
         if not file_path.exists():
-            raise FileNotFoundError(f"Campaign brief file not found: {file_path}")
+            raise FileNotFoundError(
+                f"Campaign brief file not found: {file_path}"
+            )
 
         self.logger.info(f"Loading campaign brief from: {file_path}")
 
@@ -148,7 +154,9 @@ class CampaignBriefLoader:
                 data = yaml.safe_load(yaml_content)
 
                 # Extract additional content from markdown if needed
-                data = self._enhance_with_markdown_content(data, markdown_content)
+                data = self._enhance_with_markdown_content(
+                    data, markdown_content
+                )
 
             else:
                 # No frontmatter found, parse as structured markdown
@@ -159,7 +167,9 @@ class CampaignBriefLoader:
         except Exception as e:
             raise ValueError(f"Error parsing Markdown file {file_path}: {e}")
 
-    def _enhance_with_markdown_content(self, data: Dict, markdown_content: str) -> Dict:
+    def _enhance_with_markdown_content(
+        self, data: Dict, markdown_content: str
+    ) -> Dict:
         """Enhance YAML data with additional content from markdown body."""
         # Extract setting description if not in YAML
         if "setting" not in data and "setting" in markdown_content.lower():
@@ -211,10 +221,16 @@ class CampaignBriefLoader:
             for event_data in data["key_events"]:
                 if isinstance(event_data, dict):
                     event = NarrativeEvent(
-                        trigger_condition=event_data.get("trigger_condition", ""),
+                        trigger_condition=event_data.get(
+                            "trigger_condition", ""
+                        ),
                         description=event_data.get("description", ""),
-                        character_impact=event_data.get("character_impact", {}),
-                        environmental_change=event_data.get("environmental_change", ""),
+                        character_impact=event_data.get(
+                            "character_impact", {}
+                        ),
+                        environmental_change=event_data.get(
+                            "environmental_change", ""
+                        ),
                         turn_activation=event_data.get("turn_activation"),
                         probability=event_data.get("probability", 1.0),
                     )
@@ -228,14 +244,18 @@ class CampaignBriefLoader:
             key_events=key_events,
             character_ecology=data.get("character_ecology", {}),
             environmental_elements=data.get("environmental_elements", []),
-            story_progression_markers=data.get("story_progression_markers", []),
+            story_progression_markers=data.get(
+                "story_progression_markers", []
+            ),
             created_date=data.get("created_date"),
             author=data.get("author"),
             version=data.get("version", "1.0"),
             tags=data.get("tags", []),
         )
 
-        self.logger.info(f"Successfully parsed campaign brief: {campaign_brief.title}")
+        self.logger.info(
+            f"Successfully parsed campaign brief: {campaign_brief.title}"
+        )
         return campaign_brief
 
     def validate_campaign_brief(self, brief: CampaignBrief) -> bool:
@@ -264,7 +284,9 @@ class CampaignBriefLoader:
         # Validate narrative events
         for i, event in enumerate(brief.key_events):
             if not event.trigger_condition:
-                raise ValueError(f"Narrative event {i} missing trigger_condition")
+                raise ValueError(
+                    f"Narrative event {i} missing trigger_condition"
+                )
 
             if not event.description:
                 raise ValueError(f"Narrative event {i} missing description")
@@ -334,7 +356,11 @@ def create_sample_campaign_brief() -> CampaignBrief:
                 "Space Marines",
                 "Engineering Corps",
             ],
-            "npc_archetypes": ["Station Servitors", "Auto-systems", "Hidden Survivors"],
+            "npc_archetypes": [
+                "Station Servitors",
+                "Auto-systems",
+                "Hidden Survivors",
+            ],
             "relationship_dynamics": {
                 "imperial_unity": "Imperial forces must work together to uncover the truth",
                 "tech_mysteries": "Engineering agents seek to understand what happened to the station's automated systems",

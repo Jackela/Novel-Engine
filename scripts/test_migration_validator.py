@@ -76,7 +76,14 @@ class TestMigrationValidator:
             ),
             (
                 "unit",
-                ["python", "-m", "pytest", "--collect-only", "tests/unit/", "--quiet"],
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "--collect-only",
+                    "tests/unit/",
+                    "--quiet",
+                ],
             ),
             (
                 "performance",
@@ -89,13 +96,26 @@ class TestMigrationValidator:
                     "--quiet",
                 ],
             ),
-            ("all", ["python", "-m", "pytest", "--collect-only", "tests/", "--quiet"]),
+            (
+                "all",
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "--collect-only",
+                    "tests/",
+                    "--quiet",
+                ],
+            ),
         ]
 
         for test_type, command in test_commands:
             try:
                 result = subprocess.run(
-                    command, capture_output=True, text=True, cwd=self.project_root
+                    command,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
                 )
 
                 results[test_type] = {
@@ -202,7 +222,11 @@ class TestMigrationValidator:
             filename = test_file.name.lower()
 
             # Classify by filename patterns
-            if "api" in filename or "server" in filename or "endpoint" in filename:
+            if (
+                "api" in filename
+                or "server" in filename
+                or "endpoint" in filename
+            ):
                 distribution["api_tests"].append(rel_path)
             elif (
                 "director" in filename
@@ -211,11 +235,15 @@ class TestMigrationValidator:
             ):
                 distribution["core_tests"].append(rel_path)
             elif (
-                "bridge" in filename or "llm" in filename and "integration" in filename
+                "bridge" in filename
+                or "llm" in filename
+                and "integration" in filename
             ):
                 distribution["bridge_tests"].append(rel_path)
             elif (
-                "agent" in filename or "persona" in filename or "character" in filename
+                "agent" in filename
+                or "persona" in filename
+                or "character" in filename
             ):
                 distribution["agent_tests"].append(rel_path)
             elif "interaction" in filename or "equipment" in filename:
@@ -261,7 +289,9 @@ class TestMigrationValidator:
 
         # File counting
         print("📊 Counting test files...")
-        self.results["validation_results"]["test_file_counts"] = self.count_test_files()
+        self.results["validation_results"][
+            "test_file_counts"
+        ] = self.count_test_files()
 
         # Test distribution analysis
         print("🗂️ Analyzing test distribution...")
@@ -278,17 +308,23 @@ class TestMigrationValidator:
         """Determine overall migration readiness."""
         dir_issues = sum(
             1
-            for v in self.results["validation_results"]["directory_structure"].values()
+            for v in self.results["validation_results"][
+                "directory_structure"
+            ].values()
             if not v
         )
         pytest_issues = sum(
             1
-            for v in self.results["validation_results"]["pytest_discovery"].values()
+            for v in self.results["validation_results"][
+                "pytest_discovery"
+            ].values()
             if isinstance(v, dict) and v.get("return_code", 0) != 0
         )
         import_issues = sum(
             1
-            for v in self.results["validation_results"]["import_resolution"].values()
+            for v in self.results["validation_results"][
+                "import_resolution"
+            ].values()
             if isinstance(v, bool) and not v
         )
 
@@ -296,7 +332,9 @@ class TestMigrationValidator:
 
         if total_issues == 0:
             self.results["migration_status"] = "ready"
-            self.results["recommendations"] = ["✅ Structure is ready for migration"]
+            self.results["recommendations"] = [
+                "✅ Structure is ready for migration"
+            ]
         elif total_issues < 5:
             self.results["migration_status"] = "mostly_ready"
             self.results["recommendations"] = [

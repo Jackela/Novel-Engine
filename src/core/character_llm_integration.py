@@ -80,7 +80,9 @@ class LLMIntegration:
             llm_response = self._call_llm(prompt)
 
             # Parse LLM response into structured action
-            parsed_action = self._parse_llm_response(llm_response, available_actions)
+            parsed_action = self._parse_llm_response(
+                llm_response, available_actions
+            )
 
             if parsed_action:
                 logger.debug(
@@ -115,7 +117,9 @@ class LLMIntegration:
     ) -> str:
         """Construct character-specific prompt for LLM decision-making."""
         character_name = character_data.get("name", "Unknown Character")
-        primary_faction = subjective_worldview.get("primary_faction", "Unknown Faction")
+        primary_faction = subjective_worldview.get(
+            "primary_faction", "Unknown Faction"
+        )
 
         # Build all prompt sections using helper methods
         character_background = self._build_character_background_section(
@@ -125,7 +129,9 @@ class LLMIntegration:
             current_status,
             morale_level,
         )
-        personality_section = self._build_personality_section(personality_traits)
+        personality_section = self._build_personality_section(
+            personality_traits
+        )
         decision_weights_section = self._build_decision_weights_section(
             decision_weights
         )
@@ -135,12 +141,16 @@ class LLMIntegration:
             current_location,
             subjective_worldview,
         )
-        world_state_section = self._build_world_state_section(world_state_update)
+        world_state_section = self._build_world_state_section(
+            world_state_update
+        )
         narrative_section = self._build_narrative_section(subjective_worldview)
         action_history_section = self._build_action_history_section(
             world_state_update, morale_level
         )
-        relationships_section = self._build_relationships_section(relationships)
+        relationships_section = self._build_relationships_section(
+            relationships
+        )
         actions_section = self._build_actions_section(available_actions)
         decision_request = self._build_decision_request_section(
             character_name, primary_faction
@@ -186,7 +196,9 @@ Rank/Role: {character_data.get('rank_role', 'Unknown')}
 Current Status: {current_status}
 Morale Level: {morale_level:.2f} (-1.0 to 1.0 scale)"""
 
-    def _build_personality_section(self, personality_traits: Dict[str, float]) -> str:
+    def _build_personality_section(
+        self, personality_traits: Dict[str, float]
+    ) -> str:
         """Build the personality traits section of the prompt."""
         section = "PERSONALITY TRAITS:\\n"
         for trait, value in personality_traits.items():
@@ -228,7 +240,9 @@ Active Goals: {len(current_goals)} mission objectives
 Known Entities: {len(subjective_worldview.get('known_entities', {}))}
 Recent Events: {len(subjective_worldview.get('recent_events', []))}"""
 
-    def _build_world_state_section(self, world_state_update: Dict[str, Any]) -> str:
+    def _build_world_state_section(
+        self, world_state_update: Dict[str, Any]
+    ) -> str:
         """Build the world state update section of the prompt."""
         section = "WORLD STATE UPDATE:\\n"
 
@@ -250,7 +264,9 @@ Recent Events: {len(subjective_worldview.get('recent_events', []))}"""
 
         return section
 
-    def _build_narrative_section(self, subjective_worldview: Dict[str, Any]) -> str:
+    def _build_narrative_section(
+        self, subjective_worldview: Dict[str, Any]
+    ) -> str:
         """Build the narrative context section of the prompt."""
         narrative_state = subjective_worldview.get("narrative_state", {})
         if not narrative_state:
@@ -292,7 +308,9 @@ Agent State: Active and operational with current morale {morale_level:.2f}
 """
         return section
 
-    def _build_relationships_section(self, relationships: Dict[str, float]) -> str:
+    def _build_relationships_section(
+        self, relationships: Dict[str, float]
+    ) -> str:
         """Build the key relationships section of the prompt."""
         section = "KEY RELATIONSHIPS:\\n"
         important_relationships = {
@@ -302,7 +320,9 @@ Agent State: Active and operational with current morale {morale_level:.2f}
         if important_relationships:
             for entity, strength in important_relationships.items():
                 relationship_type = self._get_relationship_type(strength)
-                section += f"- {entity}: {relationship_type} ({strength:.2f})\\n"
+                section += (
+                    f"- {entity}: {relationship_type} ({strength:.2f})\\n"
+                )
         else:
             section += "No significant relationships recorded.\\n"
 
@@ -319,14 +339,18 @@ Agent State: Active and operational with current morale {morale_level:.2f}
         else:
             return "Neutral"
 
-    def _build_actions_section(self, available_actions: List[Dict[str, Any]]) -> str:
+    def _build_actions_section(
+        self, available_actions: List[Dict[str, Any]]
+    ) -> str:
         """Build the available actions section of the prompt."""
         section = "AVAILABLE ACTIONS:\\n"
         for i, action in enumerate(available_actions, 1):
             action_desc = action.get("description", "No description")
             if "narrative_type" in action:
                 action_desc += f" (Story Action: {action['narrative_type']})"
-            section += f"{i}. {action.get('type', 'unknown')}: {action_desc}\\n"
+            section += (
+                f"{i}. {action.get('type', 'unknown')}: {action_desc}\\n"
+            )
         return section
 
     def _build_decision_request_section(
@@ -372,8 +396,12 @@ REASONING: As a loyal servant of the Imperium, my duty requires me to engage thr
                 return None
 
             # Extract components using regex
-            action_match = re.search(r"ACTION:\s*(.+)", llm_response, re.IGNORECASE)
-            target_match = re.search(r"TARGET:\s*(.+)", llm_response, re.IGNORECASE)
+            action_match = re.search(
+                r"ACTION:\s*(.+)", llm_response, re.IGNORECASE
+            )
+            target_match = re.search(
+                r"TARGET:\s*(.+)", llm_response, re.IGNORECASE
+            )
             reasoning_match = re.search(
                 r"REASONING:\s*(.+)", llm_response, re.IGNORECASE | re.DOTALL
             )
@@ -385,7 +413,9 @@ REASONING: As a loyal servant of the Imperium, my duty requires me to engage thr
                 return None
 
             action_text = action_match.group(1).strip()
-            target_text = target_match.group(1).strip() if target_match else "none"
+            target_text = (
+                target_match.group(1).strip() if target_match else "none"
+            )
             reasoning_text = (
                 reasoning_match.group(1).strip()
                 if reasoning_match
@@ -401,7 +431,9 @@ REASONING: As a loyal servant of the Imperium, my duty requires me to engage thr
             if action_text.isdigit():
                 action_index = int(action_text) - 1  # Convert to 0-based index
                 if 0 <= action_index < len(available_actions):
-                    action_type = available_actions[action_index].get("type", "unknown")
+                    action_type = available_actions[action_index].get(
+                        "type", "unknown"
+                    )
             else:
                 # Direct action type specified
                 action_type = action_text.lower()
@@ -413,7 +445,9 @@ REASONING: As a loyal servant of the Imperium, my duty requires me to engage thr
                 return None
 
             # Determine priority based on action type and reasoning
-            priority = self._determine_llm_action_priority(action_type, reasoning_text)
+            priority = self._determine_llm_action_priority(
+                action_type, reasoning_text
+            )
 
             return CharacterAction(
                 agent_id=self.agent_id,
@@ -424,7 +458,9 @@ REASONING: As a loyal servant of the Imperium, my duty requires me to engage thr
             )
 
         except Exception as e:
-            logger.error(f"Failed to parse LLM response for agent {self.agent_id}: {e}")
+            logger.error(
+                f"Failed to parse LLM response for agent {self.agent_id}: {e}"
+            )
             return None
 
     def _is_valid_llm_response_format(self, response: str) -> bool:

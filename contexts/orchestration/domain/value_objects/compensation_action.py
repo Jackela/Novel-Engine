@@ -13,6 +13,11 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+# Import orchestration domain type safety patterns
+from ...infrastructure.orchestration_domain_types import (
+    OrchestrationDomainTyping,
+)
+
 
 class CompensationType(Enum):
     """
@@ -37,51 +42,53 @@ class CompensationType(Enum):
     def get_display_name(self) -> str:
         """Get human-readable compensation action name."""
         names = {
-            self.ROLLBACK_WORLD_STATE: "Rollback World State Changes",
-            self.INVALIDATE_SUBJECTIVE_BRIEFS: "Invalidate Subjective Briefs",
-            self.CANCEL_INTERACTIONS: "Cancel Active Interactions",
-            self.REMOVE_EVENTS: "Remove Generated Events",
-            self.REVERT_NARRATIVE_CHANGES: "Revert Narrative Modifications",
-            self.NOTIFY_PARTICIPANTS: "Notify Affected Participants",
-            self.LOG_FAILURE: "Log Failure Details",
-            self.TRIGGER_MANUAL_REVIEW: "Trigger Manual Review Process",
+            CompensationType.ROLLBACK_WORLD_STATE.value: "Rollback World State Changes",
+            CompensationType.INVALIDATE_SUBJECTIVE_BRIEFS.value: "Invalidate Subjective Briefs",
+            CompensationType.CANCEL_INTERACTIONS.value: "Cancel Active Interactions",
+            CompensationType.REMOVE_EVENTS.value: "Remove Generated Events",
+            CompensationType.REVERT_NARRATIVE_CHANGES.value: "Revert Narrative Modifications",
+            CompensationType.NOTIFY_PARTICIPANTS.value: "Notify Affected Participants",
+            CompensationType.LOG_FAILURE.value: "Log Failure Details",
+            CompensationType.TRIGGER_MANUAL_REVIEW.value: "Trigger Manual Review Process",
         }
-        return names[self]
+        return names.get(self.value, f"Unknown: {self.value}")
 
     def get_severity(self) -> str:
         """Get severity level of compensation action."""
         severity_map = {
-            self.ROLLBACK_WORLD_STATE: "critical",
-            self.INVALIDATE_SUBJECTIVE_BRIEFS: "high",
-            self.CANCEL_INTERACTIONS: "high",
-            self.REMOVE_EVENTS: "critical",
-            self.REVERT_NARRATIVE_CHANGES: "medium",
-            self.NOTIFY_PARTICIPANTS: "low",
-            self.LOG_FAILURE: "low",
-            self.TRIGGER_MANUAL_REVIEW: "medium",
+            CompensationType.ROLLBACK_WORLD_STATE.value: "critical",
+            CompensationType.INVALIDATE_SUBJECTIVE_BRIEFS.value: "high",
+            CompensationType.CANCEL_INTERACTIONS.value: "high",
+            CompensationType.REMOVE_EVENTS.value: "critical",
+            CompensationType.REVERT_NARRATIVE_CHANGES.value: "medium",
+            CompensationType.NOTIFY_PARTICIPANTS.value: "low",
+            CompensationType.LOG_FAILURE.value: "low",
+            CompensationType.TRIGGER_MANUAL_REVIEW.value: "medium",
         }
-        return severity_map[self]
+        return severity_map.get(self.value, "unknown")
 
     def is_destructive(self) -> bool:
         """Check if compensation action is destructive to game state."""
         destructive_actions = {
-            self.ROLLBACK_WORLD_STATE,
-            self.REMOVE_EVENTS,
-            self.CANCEL_INTERACTIONS,
+            CompensationType.ROLLBACK_WORLD_STATE,
+            CompensationType.REMOVE_EVENTS,
+            CompensationType.CANCEL_INTERACTIONS,
         }
         return self in destructive_actions
 
     def requires_confirmation(self) -> bool:
         """Check if action requires user confirmation."""
         confirmation_required = {
-            self.ROLLBACK_WORLD_STATE,
-            self.REMOVE_EVENTS,
-            self.TRIGGER_MANUAL_REVIEW,
+            CompensationType.ROLLBACK_WORLD_STATE,
+            CompensationType.REMOVE_EVENTS,
+            CompensationType.TRIGGER_MANUAL_REVIEW,
         }
         return self in confirmation_required
 
     @classmethod
-    def get_phase_compensations(cls, phase_name: str) -> List["CompensationType"]:
+    def get_phase_compensations(
+        cls, phase_name: str
+    ) -> List["CompensationType"]:
         """Get appropriate compensations for failed phase."""
         phase_compensations = {
             "world_update": [
@@ -89,7 +96,10 @@ class CompensationType(Enum):
                 cls.LOG_FAILURE,
                 cls.NOTIFY_PARTICIPANTS,
             ],
-            "subjective_brief": [cls.INVALIDATE_SUBJECTIVE_BRIEFS, cls.LOG_FAILURE],
+            "subjective_brief": [
+                cls.INVALIDATE_SUBJECTIVE_BRIEFS,
+                cls.LOG_FAILURE,
+            ],
             "interaction_orchestration": [
                 cls.CANCEL_INTERACTIONS,
                 cls.NOTIFY_PARTICIPANTS,
@@ -100,7 +110,10 @@ class CompensationType(Enum):
                 cls.ROLLBACK_WORLD_STATE,
                 cls.LOG_FAILURE,
             ],
-            "narrative_integration": [cls.REVERT_NARRATIVE_CHANGES, cls.LOG_FAILURE],
+            "narrative_integration": [
+                cls.REVERT_NARRATIVE_CHANGES,
+                cls.LOG_FAILURE,
+            ],
         }
         return phase_compensations.get(phase_name, [cls.LOG_FAILURE])
 
@@ -240,9 +253,16 @@ class CompensationAction:
 
         # Set priority based on compensation severity
         if self.priority == 5:  # Default priority
-            severity_priorities = {"critical": 9, "high": 7, "medium": 5, "low": 3}
+            severity_priorities = {
+                "critical": 9,
+                "high": 7,
+                "medium": 5,
+                "low": 3,
+            }
             severity = self.compensation_type.get_severity()
-            object.__setattr__(self, "priority", severity_priorities.get(severity, 5))
+            object.__setattr__(
+                self, "priority", severity_priorities.get(severity, 5)
+            )
 
     @classmethod
     def create_for_phase_failure(
@@ -315,7 +335,9 @@ class CompensationAction:
             requires_manual_approval=True,
         )
 
-    def start_execution(self, executor: Optional[str] = None) -> "CompensationAction":
+    def start_execution(
+        self, executor: Optional[str] = None
+    ) -> "CompensationAction":
         """
         Mark compensation as started.
 
@@ -326,7 +348,9 @@ class CompensationAction:
             New CompensationAction in executing state
         """
         if self.status != "pending":
-            raise ValueError(f"Cannot start execution from status: {self.status}")
+            raise ValueError(
+                f"Cannot start execution from status: {self.status}"
+            )
 
         metadata = {**self.metadata}
         if executor:
@@ -554,9 +578,13 @@ class CompensationAction:
 
         if self.is_terminal():
             duration = self.get_execution_time()
-            duration_str = f" ({duration.total_seconds():.1f}s)" if duration else ""
+            duration_str = (
+                f" ({duration.total_seconds():.1f}s)" if duration else ""
+            )
             return f"{action_name}: {status}{duration_str}"
-        elif self.requires_manual_approval and self.approval_granted_at is None:
+        elif (
+            self.requires_manual_approval and self.approval_granted_at is None
+        ):
             return f"{action_name}: Awaiting Approval"
         else:
             return f"{action_name}: {status}"

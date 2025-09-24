@@ -128,7 +128,9 @@ class IntegrationTestFramework:
             print("\n❌ Failed Tests:")
             for result in self.test_results:
                 if not result.success:
-                    print(f"   - {result.scenario_name}: {result.error_message}")
+                    print(
+                        f"   - {result.scenario_name}: {result.error_message}"
+                    )
 
         return report
 
@@ -249,7 +251,9 @@ class IntegrationTestFramework:
 
             # Test version header handling
             headers = {"X-API-Version": "1.0"}
-            versioned_response = await client.get(f"{self.base_url}/", headers=headers)
+            versioned_response = await client.get(
+                f"{self.base_url}/", headers=headers
+            )
 
             if "X-API-Version" not in versioned_response.headers:
                 return TestResult(
@@ -307,7 +311,9 @@ class IntegrationTestFramework:
                 )
 
             # List characters
-            list_response = await client.get(f"{self.base_url}/api/v1/characters")
+            list_response = await client.get(
+                f"{self.base_url}/api/v1/characters"
+            )
 
             if list_response.status_code != 200:
                 return TestResult(
@@ -320,7 +326,8 @@ class IntegrationTestFramework:
             # Update character
             update_data = {"name": "Updated Test Character"}
             update_response = await client.put(
-                f"{self.base_url}/api/v1/characters/{character_id}", json=update_data
+                f"{self.base_url}/api/v1/characters/{character_id}",
+                json=update_data,
             )
 
             if update_response.status_code != 200:
@@ -335,7 +342,8 @@ class IntegrationTestFramework:
                 scenario_name="character_crud",
                 success=True,
                 status_code=200,
-                response_time_ms=create_response.elapsed.total_seconds() * 1000,
+                response_time_ms=create_response.elapsed.total_seconds()
+                * 1000,
             )
 
     async def _test_story_generation(self) -> TestResult:
@@ -403,7 +411,8 @@ class IntegrationTestFramework:
                 scenario_name="story_generation",
                 success=True,
                 status_code=generation_response.status_code,
-                response_time_ms=generation_response.elapsed.total_seconds() * 1000,
+                response_time_ms=generation_response.elapsed.total_seconds()
+                * 1000,
             )
 
     async def _test_websocket_connectivity(self) -> TestResult:
@@ -515,13 +524,15 @@ class IntegrationTestFramework:
 
             # Check if any requests failed
             failed_requests = [r for r in responses if r.status_code != 200]
-            success_rate = (len(responses) - len(failed_requests)) / len(responses)
+            success_rate = (len(responses) - len(failed_requests)) / len(
+                responses
+            )
 
             if success_rate < expectations.min_success_rate:
                 return TestResult(
                     scenario_name="performance_baseline",
                     success=False,
-                    error_message=f"Success rate {success_rate:.2f} below threshold {expectations.min_success_rate}",
+                    error_message=f"Success rate {success_rate:.2f}below threshold {expectations.min_success_rate}",
                 )
 
             if avg_response_time > expectations.max_response_time_ms:
@@ -610,7 +621,8 @@ class IntegrationTestFramework:
                 f"{self.base_url}/api/v1/characters/{malicious_id}"
             )
 
-            # Should return 404 or 400, not 500 (which might indicate SQL injection vulnerability)
+            # Should return 404 or 400, not 500 (which might indicate SQL
+            # injection vulnerability)
             if response.status_code == 500:
                 return TestResult(
                     scenario_name="security_validation",
@@ -650,12 +662,16 @@ class IntegrationTestFramework:
         total_tests = len(self.test_results)
         passed_tests = len([r for r in self.test_results if r.success])
         failed_tests = total_tests - passed_tests
-        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        success_rate = (
+            (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        )
 
         avg_response_time = 0
         if self.test_results:
             response_times = [
-                r.response_time_ms for r in self.test_results if r.response_time_ms
+                r.response_time_ms
+                for r in self.test_results
+                if r.response_time_ms
             ]
             if response_times:
                 avg_response_time = sum(response_times) / len(response_times)

@@ -3,13 +3,12 @@
 Test Wave 3 Improvements - Content Generation Variety
 """
 
+import json
 import sys
+from collections import Counter
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent))
-
-import json
-from collections import Counter
 
 from complete_workflow_test import CompleteNovelWorkflow
 
@@ -113,7 +112,9 @@ def test_content_variety():
 
     total_char_events = sum(character_counter.values())
     for char_name, count in character_counter.most_common():
-        percentage = (count / total_char_events) * 100 if total_char_events > 0 else 0
+        percentage = (
+            (count / total_char_events) * 100 if total_char_events > 0 else 0
+        )
         print(f"  {char_name}: {count} events ({percentage:.1f}%)")
 
     # Check balance
@@ -162,7 +163,9 @@ def test_content_variety():
     print(
         f"  Repetition Ratio: {evaluation['enhanced_metrics']['repetition_ratio']:.1%}"
     )
-    print(f"  Event Types: {evaluation['enhanced_metrics']['unique_event_types']}")
+    print(
+        f"  Event Types: {evaluation['enhanced_metrics']['unique_event_types']}"
+    )
 
     # Final verdict
     print("\n" + "=" * 80)

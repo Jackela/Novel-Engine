@@ -55,7 +55,9 @@ class OutboxPublisher:
         self.batch_size = self.config.get("batch_size", 100)
         self.max_retries = self.config.get("max_retries", 3)
         self.retry_delay = self.config.get("retry_delay", 30.0)  # seconds
-        self.cleanup_interval = self.config.get("cleanup_interval", 3600.0)  # 1 hour
+        self.cleanup_interval = self.config.get(
+            "cleanup_interval", 3600.0
+        )  # 1 hour
         self.cleanup_age = self.config.get("cleanup_age_hours", 24)  # hours
 
     async def start(self) -> None:
@@ -179,7 +181,9 @@ class OutboxPublisher:
         except Exception as e:
             self._metrics.record_outbox_batch_store_failed()
             logger.error(f"Failed to store event batch in outbox: {e}")
-            raise OutboxException(f"Failed to store event batch in outbox: {e}")
+            raise OutboxException(
+                f"Failed to store event batch in outbox: {e}"
+            )
 
     async def _publisher_loop(self) -> None:
         """Main publisher loop that processes outbox events."""
@@ -227,22 +231,30 @@ class OutboxPublisher:
                 for topic, topic_events in events_by_topic.items():
                     try:
                         await self._publish_topic_events(topic_events)
-                        published_event_ids.extend([e.id for e in topic_events])
+                        published_event_ids.extend(
+                            [e.id for e in topic_events]
+                        )
 
                     except Exception as e:
-                        logger.error(f"Failed to publish events to topic {topic}: {e}")
+                        logger.error(
+                            f"Failed to publish events to topic {topic}: {e}"
+                        )
                         failed_event_ids.extend([e.id for e in topic_events])
 
                 # Update event statuses
                 if published_event_ids:
-                    await self._mark_events_published(session, published_event_ids)
+                    await self._mark_events_published(
+                        session, published_event_ids
+                    )
                     self._metrics.record_outbox_events_published(
                         len(published_event_ids)
                     )
 
                 if failed_event_ids:
                     await self._handle_failed_events(session, failed_event_ids)
-                    self._metrics.record_outbox_events_failed(len(failed_event_ids))
+                    self._metrics.record_outbox_events_failed(
+                        len(failed_event_ids)
+                    )
 
                 await session.commit()
 
@@ -250,10 +262,14 @@ class OutboxPublisher:
             logger.error(f"Failed to process outbox events: {e}")
             self._metrics.record_outbox_processing_error()
 
-    async def _get_unpublished_events(self, session: AsyncSession) -> List[OutboxEvent]:
+    async def _get_unpublished_events(
+        self, session: AsyncSession
+    ) -> List[OutboxEvent]:
         """Get unpublished events from the outbox."""
         # Calculate retry cutoff time
-        retry_cutoff = datetime.now(timezone.utc) - timedelta(seconds=self.retry_delay)
+        retry_cutoff = datetime.now(timezone.utc) - timedelta(
+            seconds=self.retry_delay
+        )
 
         stmt = (
             select(OutboxEvent)
@@ -299,7 +315,9 @@ class OutboxPublisher:
                     "event_version": event.event_version,
                     "aggregate_type": event.aggregate_type,
                     "correlation_id": (
-                        str(event.correlation_id) if event.correlation_id else None
+                        str(event.correlation_id)
+                        if event.correlation_id
+                        else None
                     ),
                     "causation_id": (
                         str(event.causation_id) if event.causation_id else None
@@ -361,7 +379,9 @@ class OutboxPublisher:
     async def _cleanup_processed_events(self) -> None:
         """Clean up old processed events."""
         try:
-            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=self.cleanup_age)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(
+                hours=self.cleanup_age
+            )
 
             async with get_async_db_session() as session:
                 stmt = delete(OutboxEvent).where(
@@ -377,7 +397,9 @@ class OutboxPublisher:
 
                 if deleted_count > 0:
                     self._metrics.record_outbox_events_cleaned(deleted_count)
-                    logger.info(f"Cleaned up {deleted_count} processed outbox events")
+                    logger.info(
+                        f"Cleaned up {deleted_count} processed outbox events"
+                    )
 
         except Exception as e:
             logger.error(f"Failed to cleanup processed events: {e}")
@@ -387,7 +409,9 @@ class OutboxPublisher:
         try:
             async with get_async_db_session() as session:
                 # Count pending events
-                pending_stmt = select(OutboxEvent).where(OutboxEvent.processed is False)
+                pending_stmt = select(OutboxEvent).where(
+                    OutboxEvent.processed is False
+                )
                 pending_result = await session.execute(pending_stmt)
                 pending_count = len(pending_result.scalars().all())
 
@@ -481,7 +505,9 @@ async def transactional_outbox(outbox_publisher: OutboxPublisher):
             # Convert async session to sync for outbox method
             # This is a simplification - in production you'd want async throughout
             with get_db_session() as sync_session:
-                await outbox_publisher.publish_with_transaction(sync_session, event)
+                await outbox_publisher.publish_with_transaction(
+                    sync_session, event
+                )
 
         try:
             yield session, publish_event

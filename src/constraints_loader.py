@@ -34,7 +34,9 @@ class ConstraintsLoader:
             with open(CONSTRAINTS_FILE, "r", encoding="utf-8") as f:
                 cls._constraints = json.load(f)
         except FileNotFoundError:
-            raise FileNotFoundError(f"Constraints file not found at {CONSTRAINTS_FILE}")
+            raise FileNotFoundError(
+                f"Constraints file not found at {CONSTRAINTS_FILE}"
+            )
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in constraints file: {e}")
 
@@ -110,7 +112,10 @@ def validate_character_name(name: str) -> tuple[bool, Optional[str]]:
 
     constraints = get_character_name_constraints()
 
-    if len(name) < constraints["minLength"] or len(name) > constraints["maxLength"]:
+    if (
+        len(name) < constraints["minLength"]
+        or len(name) > constraints["maxLength"]
+    ):
         return (
             False,
             f"Character name must be {constraints['minLength']}-{constraints['maxLength']} characters",
@@ -120,7 +125,9 @@ def validate_character_name(name: str) -> tuple[bool, Optional[str]]:
     return True, None
 
 
-def validate_character_description(description: str) -> tuple[bool, Optional[str]]:
+def validate_character_description(
+    description: str,
+) -> tuple[bool, Optional[str]]:
     """
     Validate character description according to centralized constraints
 
@@ -146,12 +153,17 @@ def validate_character_description(description: str) -> tuple[bool, Optional[str
 
     word_count = len(description.strip().split())
     if word_count < constraints["minWords"]:
-        return False, f"Description needs at least {constraints['minWords']} words"
+        return (
+            False,
+            f"Description needs at least {constraints['minWords']} words",
+        )
 
     return True, None
 
 
-def validate_file_upload(file_size: int, filename: str) -> tuple[bool, Optional[str]]:
+def validate_file_upload(
+    file_size: int, filename: str
+) -> tuple[bool, Optional[str]]:
     """
     Validate file upload according to centralized constraints
 

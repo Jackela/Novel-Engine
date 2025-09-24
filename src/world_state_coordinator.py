@@ -73,7 +73,9 @@ class WorldStateCoordinator:
             OSError: If file operations fail
         """
         if not self.world_state_file_path:
-            logger.info("No world state file provided, using default empty state")
+            logger.info(
+                "No world state file provided, using default empty state"
+            )
             self._initialize_default_world_state()
             return
 
@@ -88,7 +90,9 @@ class WorldStateCoordinator:
                 self.save_world_state()
                 return
 
-            logger.info(f"Loading world state from: {self.world_state_file_path}")
+            logger.info(
+                f"Loading world state from: {self.world_state_file_path}"
+            )
 
             with open(world_state_path, "r", encoding="utf-8") as file:
                 loaded_state = json.load(file)
@@ -99,12 +103,14 @@ class WorldStateCoordinator:
 
             self.world_state_data = loaded_state
             logger.info(
-                f"World state loaded successfully ({len(self.world_state_data)} keys)"
+                f"World state loaded successfully ({len( self.world_state_data)} keys)"
             )
 
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in world state file: {str(e)}")
-            raise ValueError(f"World state file contains invalid JSON: {str(e)}")
+            raise ValueError(
+                f"World state file contains invalid JSON: {str(e)}"
+            )
         except Exception as e:
             logger.error(f"Failed to load world state: {str(e)}")
             raise OSError(f"World state loading failed: {str(e)}")
@@ -176,7 +182,9 @@ class WorldStateCoordinator:
             return world_state_update
 
         except Exception as e:
-            logger.error(f"Error preparing world state for agent {agent_id}: {str(e)}")
+            logger.error(
+                f"Error preparing world state for agent {agent_id}: {str(e)}"
+            )
             return {
                 "current_turn": current_turn,
                 "simulation_time": datetime.now().isoformat(),
@@ -206,8 +214,12 @@ class WorldStateCoordinator:
             "current_area": {
                 "name": first_location.get("name", "Unknown Area"),
                 "threat_level": first_location.get("threat_level", "moderate"),
-                "faction_presence": first_location.get("faction_control", "contested"),
-                "resources_available": bool(first_location.get("resources", [])),
+                "faction_presence": first_location.get(
+                    "faction_control", "contested"
+                ),
+                "resources_available": bool(
+                    first_location.get("resources", [])
+                ),
                 "strategic_importance": "normal",
             }
         }
@@ -234,14 +246,18 @@ class WorldStateCoordinator:
 
     def _get_environmental_updates(self) -> Dict[str, Any]:
         """Get environmental status updates."""
-        environmental_state = self.world_state_data.get("environmental_state", {})
+        environmental_state = self.world_state_data.get(
+            "environmental_state", {}
+        )
 
         if not environmental_state:
             return {"weather": "stable", "visibility": "normal", "hazards": []}
 
         return environmental_state.copy()
 
-    def generate_world_state_feedback(self, agent_id: str) -> Optional[Dict[str, Any]]:
+    def generate_world_state_feedback(
+        self, agent_id: str
+    ) -> Optional[Dict[str, Any]]:
         """
         Generate dynamic world state feedback based on agent discoveries.
 
@@ -259,20 +275,24 @@ class WorldStateCoordinator:
 
         try:
             # Generate feedback on personal discoveries
-            personal_discoveries = self._get_agent_discoveries_feedback(agent_id)
+            personal_discoveries = self._get_agent_discoveries_feedback(
+                agent_id
+            )
             if personal_discoveries:
                 feedback["personal_discoveries"] = personal_discoveries
                 has_feedback = True
 
             # Generate feedback on environmental changes
-            environmental_changes = self._get_environmental_changes_feedback(agent_id)
+            environmental_changes = self._get_environmental_changes_feedback(
+                agent_id
+            )
             if environmental_changes:
                 feedback["environmental_changes"] = environmental_changes
                 has_feedback = True
 
             # Generate feedback on other agents' activities
-            other_agent_activities = self._get_other_agents_activities_feedback(
-                agent_id
+            other_agent_activities = (
+                self._get_other_agents_activities_feedback(agent_id)
             )
             if other_agent_activities:
                 feedback["other_agent_activities"] = other_agent_activities
@@ -302,9 +322,9 @@ class WorldStateCoordinator:
         Returns:
             List of discovery feedback messages
         """
-        discovered_clues = self.world_state_tracker.get("discovered_clues", {}).get(
-            agent_id, []
-        )
+        discovered_clues = self.world_state_tracker.get(
+            "discovered_clues", {}
+        ).get(agent_id, [])
 
         if not discovered_clues:
             return []
@@ -332,11 +352,15 @@ class WorldStateCoordinator:
         feedback = []
         for location, changes in environmental_changes.items():
             for change in changes[-2:]:  # Most recent 2 changes per location
-                feedback.append(f"Environmental change in {location}: {change}")
+                feedback.append(
+                    f"Environmental change in {location}: {change}"
+                )
 
         return feedback
 
-    def _get_other_agents_activities_feedback(self, agent_id: str) -> List[str]:
+    def _get_other_agents_activities_feedback(
+        self, agent_id: str
+    ) -> List[str]:
         """
         Get feedback about other agents' visible activities.
 
@@ -363,7 +387,9 @@ class WorldStateCoordinator:
                 "major_factions_active": len(
                     self.world_state_data.get("faction_status", {})
                 ),
-                "known_locations": len(self.world_state_data.get("locations", {})),
+                "known_locations": len(
+                    self.world_state_data.get("locations", {})
+                ),
                 "recent_events_count": len(
                     self.world_state_data.get("global_events", [])
                 ),
@@ -390,21 +416,28 @@ class WorldStateCoordinator:
             # Add to agent's personal discoveries
             if agent_id not in self.world_state_tracker["discovered_clues"]:
                 self.world_state_tracker["discovered_clues"][agent_id] = []
-            self.world_state_tracker["discovered_clues"][agent_id].append(discovery)
+            self.world_state_tracker["discovered_clues"][agent_id].append(
+                discovery
+            )
 
             # Add to turn-based discovery tracking
-            if turn_number not in self.world_state_tracker["agent_discoveries"]:
+            if (
+                turn_number
+                not in self.world_state_tracker["agent_discoveries"]
+            ):
                 self.world_state_tracker["agent_discoveries"][turn_number] = {}
             if (
                 agent_id
-                not in self.world_state_tracker["agent_discoveries"][turn_number]
+                not in self.world_state_tracker["agent_discoveries"][
+                    turn_number
+                ]
             ):
                 self.world_state_tracker["agent_discoveries"][turn_number][
                     agent_id
                 ] = []
-            self.world_state_tracker["agent_discoveries"][turn_number][agent_id].append(
-                discovery
-            )
+            self.world_state_tracker["agent_discoveries"][turn_number][
+                agent_id
+            ].append(discovery)
 
             # Add to investigation history
             investigation_entry = {
@@ -431,10 +464,17 @@ class WorldStateCoordinator:
             change: Description of the environmental change
         """
         try:
-            if location not in self.world_state_tracker["environmental_changes"]:
-                self.world_state_tracker["environmental_changes"][location] = []
+            if (
+                location
+                not in self.world_state_tracker["environmental_changes"]
+            ):
+                self.world_state_tracker["environmental_changes"][
+                    location
+                ] = []
 
-            self.world_state_tracker["environmental_changes"][location].append(change)
+            self.world_state_tracker["environmental_changes"][location].append(
+                change
+            )
 
             # Add temporal marker
             timestamp = datetime.now().isoformat()
@@ -444,7 +484,9 @@ class WorldStateCoordinator:
                 "change": change,
             }
 
-            logger.info(f"Recorded environmental change in {location}: {change}")
+            logger.info(
+                f"Recorded environmental change in {location}: {change}"
+            )
 
         except Exception as e:
             logger.error(f"Error recording environmental change: {str(e)}")
@@ -461,7 +503,9 @@ class WorldStateCoordinator:
         """
         try:
             save_path = (
-                file_path or self.world_state_file_path or "world_state_backup.json"
+                file_path
+                or self.world_state_file_path
+                or "world_state_backup.json"
             )
 
             # Prepare world state data for saving
@@ -490,7 +534,9 @@ class WorldStateCoordinator:
         try:
             return {
                 "world_state_file": self.world_state_file_path,
-                "locations_count": len(self.world_state_data.get("locations", {})),
+                "locations_count": len(
+                    self.world_state_data.get("locations", {})
+                ),
                 "global_events_count": len(
                     self.world_state_data.get("global_events", [])
                 ),

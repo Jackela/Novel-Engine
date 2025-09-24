@@ -110,7 +110,8 @@ class EquipmentMaintenance:
     condition_after: EquipmentCondition = EquipmentCondition.GOOD
     next_maintenance_due: Optional[datetime] = None
     notes: str = ""
-    machine_spirit_response: str = "responsive"  # "responsive", "agitated", "dormant"
+    # "responsive", "agitated", "dormant"
+    machine_spirit_response: str = "responsive"
 
 
 @dataclass
@@ -127,7 +128,9 @@ class DynamicEquipment:
     usage_statistics: Dict[str, int] = field(default_factory=dict)
     performance_metrics: Dict[str, float] = field(default_factory=dict)
     modifications: List[EquipmentModification] = field(default_factory=list)
-    maintenance_history: List[EquipmentMaintenance] = field(default_factory=list)
+    maintenance_history: List[EquipmentMaintenance] = field(
+        default_factory=list
+    )
     last_used: Optional[datetime] = None
     current_user: Optional[str] = None
     location_history: List[Tuple[datetime, str]] = field(default_factory=list)
@@ -188,11 +191,12 @@ class DynamicEquipmentSystem:
 
         # Sacred equipment tracking
         self._equipment_registry: Dict[str, DynamicEquipment] = {}
-        self._agent_equipment: Dict[str, List[str]] = {}  # agent_id -> equipment_ids
+        # agent_id -> equipment_ids
+        self._agent_equipment: Dict[str, List[str]] = {}
         self._equipment_templates: Dict[str, Dict[str, Any]] = {}
-        self._maintenance_queue: List[Tuple[datetime, str]] = (
-            []
-        )  # scheduled maintenance
+        self._maintenance_queue: List[
+            Tuple[datetime, str]
+        ] = []  # scheduled maintenance
 
         # Blessed equipment processors
         self._category_processors = {
@@ -226,7 +230,9 @@ class DynamicEquipmentSystem:
         # Sacred processing lock
         self._processing_lock = asyncio.Lock()
 
-        logger.info("DYNAMIC EQUIPMENT SYSTEM INITIALIZED WITH ENHANCED PROTOCOLS")
+        logger.info(
+            "DYNAMIC EQUIPMENT SYSTEM INITIALIZED WITH ENHANCED PROTOCOLS"
+        )
 
     async def register_equipment(
         self,
@@ -251,23 +257,29 @@ class DynamicEquipmentSystem:
 
                 # Initialize enhanced location history
                 dynamic_equipment.location_history.append(
-                    (datetime.now(), equipment_item.current_location or "Unknown")
+                    (
+                        datetime.now(),
+                        equipment_item.current_location or "Unknown",
+                    )
                 )
 
                 # Register enhanced equipment
-                self._equipment_registry[equipment_item.equipment_id] = (
-                    dynamic_equipment
-                )
+                self._equipment_registry[
+                    equipment_item.equipment_id
+                ] = dynamic_equipment
 
                 # Associate enhanced equipment with agent
                 if agent_id not in self._agent_equipment:
                     self._agent_equipment[agent_id] = []
-                self._agent_equipment[agent_id].append(equipment_item.equipment_id)
+                self._agent_equipment[agent_id].append(
+                    equipment_item.equipment_id
+                )
 
                 # Schedule enhanced initial maintenance if applicable
-                if self.auto_maintenance and equipment_item.category.value not in [
-                    "consumable"
-                ]:
+                if (
+                    self.auto_maintenance
+                    and equipment_item.category.value not in ["consumable"]
+                ):
                     next_maintenance = datetime.now() + timedelta(
                         hours=self.maintenance_interval_hours
                     )
@@ -286,7 +298,8 @@ class DynamicEquipmentSystem:
                     self.system_metrics["active_equipment"] += 1
 
                 logger.info(
-                    f"EQUIPMENT REGISTERED: {equipment_item.equipment_id} for {agent_id}"
+                    f"EQUIPMENT REGISTERED: "
+                    f"{equipment_item.equipment_id} for {agent_id}"
                 )
 
                 return StandardResponse(
@@ -296,7 +309,9 @@ class DynamicEquipmentSystem:
                         "agent_id": agent_id,
                         "initial_status": initial_status.value,
                         "template_applied": (
-                            template_result.success if template_result else False
+                            template_result.success
+                            if template_result
+                            else False
                         ),
                         "maintenance_scheduled": self.auto_maintenance,
                     },
@@ -311,7 +326,9 @@ class DynamicEquipmentSystem:
                     code="EQUIPMENT_REGISTRATION_FAILED",
                     message=f"Equipment registration failed: {str(e)}",
                     recoverable=True,
-                    standard_guidance="Check equipment data format and system state",
+                    standard_guidance=(
+                        "Check equipment data format and system state"
+                    ),
                 ),
             )
 
@@ -337,7 +354,9 @@ class DynamicEquipmentSystem:
                         success=False,
                         error=ErrorInfo(
                             code="EQUIPMENT_NOT_FOUND",
-                            message=f"Equipment '{equipment_id}' not found in registry",
+                            message=(
+                                f"Equipment '{equipment_id}' not found in registry"
+                            ),
                         ),
                     )
 
@@ -351,17 +370,26 @@ class DynamicEquipmentSystem:
                         success=False,
                         error=ErrorInfo(
                             code="EQUIPMENT_USAGE_UNAUTHORIZED",
-                            message=f"Equipment '{equipment_id}' not available for use by {agent_id}",
+                            message=(
+                                f"Equipment '{equipment_id}' not available "
+                                f"for use by {agent_id}"
+                            ),
                         ),
                     )
 
                 # Check enhanced equipment condition
-                if equipment.base_equipment.condition == EquipmentCondition.BROKEN:
+                if (
+                    equipment.base_equipment.condition
+                    == EquipmentCondition.BROKEN
+                ):
                     return StandardResponse(
                         success=False,
                         error=ErrorInfo(
                             code="EQUIPMENT_BROKEN",
-                            message=f"Equipment '{equipment_id}' is broken and cannot be used",
+                            message=(
+                                f"Equipment '{equipment_id}' is broken "
+                                f"and cannot be used"
+                            ),
                         ),
                     )
 
@@ -420,7 +448,9 @@ class DynamicEquipmentSystem:
 
                 # Apply enhanced blessing effects if applicable
                 if usage_context.get("enhanced_usage", False):
-                    equipment.blessing_level = min(1.2, equipment.blessing_level + 0.05)
+                    equipment.blessing_level = min(
+                        1.2, equipment.blessing_level + 0.05
+                    )
                     equipment.standard_rites_performed += 1
                     self.system_metrics["standard_rites_performed"] += 1
 
@@ -433,8 +463,12 @@ class DynamicEquipmentSystem:
 
                 usage_duration = (datetime.now() - usage_start).total_seconds()
 
+                success_status = (
+                    "SUCCESS" if usage_result["success"] else "FAILED"
+                )
                 logger.info(
-                    f"EQUIPMENT USED: {equipment_id} by {agent_id} ({'SUCCESS' if usage_result['success'] else 'FAILED'})"
+                    f"EQUIPMENT USED: {equipment_id} by {agent_id} "
+                    f"({success_status})"
                 )
 
                 return StandardResponse(
@@ -484,7 +518,10 @@ class DynamicEquipmentSystem:
                         success=False,
                         error=ErrorInfo(
                             code="EQUIPMENT_NOT_FOUND",
-                            message=f"Equipment '{equipment_id}' not found for maintenance",
+                            message=(
+                                f"Equipment '{equipment_id}' not found "
+                                f"for maintenance"
+                            ),
                         ),
                     )
 
@@ -497,8 +534,9 @@ class DynamicEquipmentSystem:
                 equipment.current_status = EquipmentStatus.MAINTENANCE
 
                 # Create enhanced maintenance record
+                timestamp_str = maintenance_start.strftime("%Y%m%d_%H%M%S")
                 maintenance_record = EquipmentMaintenance(
-                    maintenance_id=f"{equipment_id}_maintenance_{maintenance_start.strftime('%Y%m%d_%H%M%S')}",
+                    maintenance_id=f"{equipment_id}_maintenance_{timestamp_str}",
                     equipment_id=equipment_id,
                     maintenance_type=maintenance_type,
                     performed_by=performed_by,
@@ -507,8 +545,10 @@ class DynamicEquipmentSystem:
                 )
 
                 # Perform enhanced maintenance procedures
-                maintenance_effects = await self._execute_maintenance_procedures(
-                    equipment, maintenance_type, maintenance_record
+                maintenance_effects = (
+                    await self._execute_maintenance_procedures(
+                        equipment, maintenance_type, maintenance_record
+                    )
                 )
 
                 # Calculate enhanced maintenance duration
@@ -538,16 +578,18 @@ class DynamicEquipmentSystem:
                 )
 
                 # Improve enhanced performance metrics
-                self._apply_maintenance_performance_boost(equipment, maintenance_type)
+                self._apply_maintenance_performance_boost(
+                    equipment, maintenance_type
+                )
 
                 # Appease enhanced machine spirit
                 spirit_improvement = self._appease_machine_spirit(
                     equipment, maintenance_type
                 )
                 equipment.machine_spirit_mood = spirit_improvement["new_mood"]
-                maintenance_record.machine_spirit_response = spirit_improvement[
-                    "response"
-                ]
+                maintenance_record.machine_spirit_response = (
+                    spirit_improvement["response"]
+                )
 
                 # Schedule enhanced next maintenance
                 if self.auto_maintenance:
@@ -566,7 +608,9 @@ class DynamicEquipmentSystem:
                         for time, eq_id in self._maintenance_queue
                         if eq_id != equipment_id
                     ]
-                    self._maintenance_queue.append((next_maintenance, equipment_id))
+                    self._maintenance_queue.append(
+                        (next_maintenance, equipment_id)
+                    )
                     self._maintenance_queue.sort(key=lambda x: x[0])
 
                 # Add enhanced maintenance record to history
@@ -582,7 +626,8 @@ class DynamicEquipmentSystem:
                     self.system_metrics["equipment_repairs"] += 1
 
                 logger.info(
-                    f"MAINTENANCE COMPLETED: {equipment_id} ({maintenance_type}) - {condition_before.value} -> {new_condition.value}"
+                    f"MAINTENANCE COMPLETED: {equipment_id} ({maintenance_type}) - "
+                    f"{condition_before.value} -> {new_condition.value}"
                 )
 
                 return StandardResponse(
@@ -597,13 +642,17 @@ class DynamicEquipmentSystem:
                         "performance_boost": maintenance_effects.get(
                             "performance_boost", 0.0
                         ),
-                        "machine_spirit_response": spirit_improvement["response"],
+                        "machine_spirit_response": (
+                            spirit_improvement["response"]
+                        ),
                         "next_maintenance_due": (
                             next_maintenance.isoformat()
                             if self.auto_maintenance
                             else None
                         ),
-                        "procedures_completed": maintenance_record.procedures_completed,
+                        "procedures_completed": (
+                            maintenance_record.procedures_completed
+                        ),
                     },
                     metadata={"blessing": "maintenance_ritual_completed"},
                 )
@@ -620,7 +669,10 @@ class DynamicEquipmentSystem:
             )
 
     async def apply_modification(
-        self, equipment_id: str, modification: EquipmentModification, installer: str
+        self,
+        equipment_id: str,
+        modification: EquipmentModification,
+        installer: str,
     ) -> StandardResponse:
         """
         STANDARD MODIFICATION RITUAL ENHANCED BY TECHNOLOGICAL ENHANCEMENT
@@ -637,17 +689,26 @@ class DynamicEquipmentSystem:
                         success=False,
                         error=ErrorInfo(
                             code="EQUIPMENT_NOT_FOUND",
-                            message=f"Equipment '{equipment_id}' not found for modification",
+                            message=(
+                                f"Equipment '{equipment_id}' not found "
+                                f"for modification"
+                            ),
                         ),
                     )
 
                 # Validate enhanced equipment condition
-                if equipment.base_equipment.condition == EquipmentCondition.BROKEN:
+                if (
+                    equipment.base_equipment.condition
+                    == EquipmentCondition.BROKEN
+                ):
                     return StandardResponse(
                         success=False,
                         error=ErrorInfo(
                             code="EQUIPMENT_TOO_DAMAGED",
-                            message="Cannot modify broken equipment - repair required first",
+                            message=(
+                                "Cannot modify broken equipment - "
+                                "repair required first"
+                            ),
                         ),
                     )
 
@@ -660,7 +721,10 @@ class DynamicEquipmentSystem:
                         success=False,
                         error=ErrorInfo(
                             code="MODIFICATION_INCOMPATIBLE",
-                            message=f"Modification incompatible: {compatibility_check['reason']}",
+                            message=(
+                                f"Modification incompatible: "
+                                f"{compatibility_check['reason']}"
+                            ),
                         ),
                     )
 
@@ -683,17 +747,24 @@ class DynamicEquipmentSystem:
                     equipment.modifications.append(modification)
 
                     # Apply enhanced performance impacts
-                    for metric, impact in modification.performance_impact.items():
+                    for (
+                        metric,
+                        impact,
+                    ) in modification.performance_impact.items():
                         if metric in equipment.performance_metrics:
                             equipment.performance_metrics[metric] = max(
                                 0.1,
                                 min(
-                                    2.0, equipment.performance_metrics[metric] + impact
+                                    2.0,
+                                    equipment.performance_metrics[metric]
+                                    + impact,
                                 ),
                             )
 
                     # Evaluate enhanced machine spirit compatibility
-                    spirit_compatibility = modification.machine_spirit_compatibility
+                    spirit_compatibility = (
+                        modification.machine_spirit_compatibility
+                    )
                     if spirit_compatibility < 0.8:
                         equipment.machine_spirit_mood = "agitated"
                         equipment.performance_metrics["reliability"] *= 0.95
@@ -708,7 +779,8 @@ class DynamicEquipmentSystem:
                     equipment.current_status = EquipmentStatus.READY
 
                     logger.info(
-                        f"MODIFICATION APPLIED: {modification.modification_name} to {equipment_id}"
+                        f"MODIFICATION APPLIED: "
+                        f"{modification.modification_name} to {equipment_id}"
                     )
 
                     return StandardResponse(
@@ -720,10 +792,14 @@ class DynamicEquipmentSystem:
                             "performance_impacts": modification.performance_impact,
                             "stability_rating": modification.stability_rating,
                             "machine_spirit_compatibility": spirit_compatibility,
-                            "installation_effects": installation_effects["effects"],
+                            "installation_effects": installation_effects[
+                                "effects"
+                            ],
                             "new_performance_metrics": equipment.performance_metrics,
                         },
-                        metadata={"blessing": "modification_successfully_applied"},
+                        metadata={
+                            "blessing": "modification_successfully_applied"
+                        },
                     )
                 else:
                     # Blessed modification failed
@@ -734,7 +810,10 @@ class DynamicEquipmentSystem:
                         success=False,
                         error=ErrorInfo(
                             code="MODIFICATION_INSTALLATION_FAILED",
-                            message=f"Modification installation failed: {installation_effects['error']}",
+                            message=(
+                                f"Modification installation failed: "
+                                f"{installation_effects['error']}"
+                            ),
                         ),
                     )
 
@@ -749,7 +828,9 @@ class DynamicEquipmentSystem:
                 ),
             )
 
-    async def get_equipment_status(self, equipment_id: str) -> StandardResponse:
+    async def get_equipment_status(
+        self, equipment_id: str
+    ) -> StandardResponse:
         """
         STANDARD EQUIPMENT STATUS QUERY ENHANCED BY COMPREHENSIVE AWARENESS
 
@@ -763,7 +844,9 @@ class DynamicEquipmentSystem:
                     success=False,
                     error=ErrorInfo(
                         code="EQUIPMENT_NOT_FOUND",
-                        message=f"Equipment '{equipment_id}' not found in registry",
+                        message=(
+                            f"Equipment '{equipment_id}' not found in registry"
+                        ),
                     ),
                 )
 
@@ -781,7 +864,9 @@ class DynamicEquipmentSystem:
                 "current_user": equipment.current_user,
                 "location": equipment.base_equipment.current_location,
                 "last_used": (
-                    equipment.last_used.isoformat() if equipment.last_used else None
+                    equipment.last_used.isoformat()
+                    if equipment.last_used
+                    else None
                 ),
                 "wear_accumulation": equipment.wear_accumulation,
                 "performance_metrics": equipment.performance_metrics,
@@ -791,7 +876,9 @@ class DynamicEquipmentSystem:
                 "modifications_count": len(equipment.modifications),
                 "maintenance_cycles": len(equipment.maintenance_history),
                 "predicted_failure_risk": predicted_failure["risk_score"],
-                "predicted_failure_timeframe": predicted_failure["timeframe_days"],
+                "predicted_failure_timeframe": (
+                    predicted_failure["timeframe_days"]
+                ),
                 "next_maintenance_due": (
                     next_maintenance.isoformat() if next_maintenance else None
                 ),
@@ -808,7 +895,9 @@ class DynamicEquipmentSystem:
             logger.error(f"EQUIPMENT STATUS QUERY FAILED: {e}")
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="EQUIPMENT_STATUS_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="EQUIPMENT_STATUS_FAILED", message=str(e)
+                ),
             )
 
     async def get_agent_equipment(
@@ -843,11 +932,15 @@ class DynamicEquipmentSystem:
                 if equipment:
                     # Count enhanced categories
                     category = equipment.base_equipment.category.value
-                    category_counts[category] = category_counts.get(category, 0) + 1
+                    category_counts[category] = (
+                        category_counts.get(category, 0) + 1
+                    )
 
                     if include_details:
                         # Get enhanced detailed status
-                        status_result = await self.get_equipment_status(equipment_id)
+                        status_result = await self.get_equipment_status(
+                            equipment_id
+                        )
                         if status_result.success:
                             equipment_list.append(status_result.data)
                     else:
@@ -857,9 +950,13 @@ class DynamicEquipmentSystem:
                                 "equipment_id": equipment_id,
                                 "name": equipment.base_equipment.name,
                                 "category": category,
-                                "condition": equipment.base_equipment.condition.value,
+                                "condition": (
+                                    equipment.base_equipment.condition.value
+                                ),
                                 "status": equipment.current_status.value,
-                                "wear_accumulation": equipment.wear_accumulation,
+                                "wear_accumulation": (
+                                    equipment.wear_accumulation
+                                ),
                             }
                         )
 
@@ -871,7 +968,11 @@ class DynamicEquipmentSystem:
                     "equipment_count": len(equipment_list),
                     "categories": category_counts,
                     "active_equipment": len(
-                        [eq for eq in equipment_list if eq.get("status") == "active"]
+                        [
+                            eq
+                            for eq in equipment_list
+                            if eq.get("status") == "active"
+                        ]
                     ),
                     "damaged_equipment": len(
                         [
@@ -894,13 +995,18 @@ class DynamicEquipmentSystem:
     # Blessed category-specific processors (simplified implementations)
 
     async def _process_weapon_usage(
-        self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int
+        self,
+        equipment: DynamicEquipment,
+        usage_context: Dict[str, Any],
+        duration: int,
     ) -> StandardResponse:
         """Process enhanced weapon usage with combat effectiveness analysis"""
         effects = []
 
         # Simulate enhanced weapon effects
-        weapon_type = equipment.base_equipment.properties.get("weapon_type", "melee")
+        weapon_type = equipment.base_equipment.properties.get(
+            "weapon_type", "melee"
+        )
         if weapon_type == "ranged":
             ammo_used = usage_context.get("shots_fired", 10)
             effects.append(f"Ammunition consumed: {ammo_used} rounds")
@@ -932,15 +1038,18 @@ class DynamicEquipmentSystem:
             success=True,
             data={
                 "effects": effects,
-                "weapon_effectiveness": equipment.performance_metrics.get(
-                    "effectiveness", 1.0
+                "weapon_effectiveness": (
+                    equipment.performance_metrics.get("effectiveness", 1.0)
                 ),
             },
             metadata={"blessing": "weapon_usage_processed"},
         )
 
     async def _process_armor_usage(
-        self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int
+        self,
+        equipment: DynamicEquipment,
+        usage_context: Dict[str, Any],
+        duration: int,
     ) -> StandardResponse:
         """Process enhanced armor usage with protection analysis"""
         effects = []
@@ -968,7 +1077,10 @@ class DynamicEquipmentSystem:
         )
 
     async def _process_tool_usage(
-        self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int
+        self,
+        equipment: DynamicEquipment,
+        usage_context: Dict[str, Any],
+        duration: int,
     ) -> StandardResponse:
         """Process enhanced tool usage with efficiency analysis"""
         effects = []
@@ -998,14 +1110,17 @@ class DynamicEquipmentSystem:
         )
 
     # Placeholder implementations for other categories
-    async def _process_consumable_usage(self, equipment, usage_context, duration):
+    async def _process_consumable_usage(
+        self, equipment, usage_context, duration
+    ):
         """Process enhanced consumable usage with depletion tracking"""
         quantity_used = usage_context.get("quantity_used", 1)
         effects = [f"Consumable used: {quantity_used} units"]
 
         # Blessed consumable depletion
         remaining = (
-            equipment.base_equipment.properties.get("quantity", 1) - quantity_used
+            equipment.base_equipment.properties.get("quantity", 1)
+            - quantity_used
         )
         if remaining <= 0:
             equipment.current_status = EquipmentStatus.DESTROYED  # Consumed
@@ -1013,7 +1128,9 @@ class DynamicEquipmentSystem:
 
         return StandardResponse(success=True, data={"effects": effects})
 
-    async def _process_augmetic_usage(self, equipment, usage_context, duration):
+    async def _process_augmetic_usage(
+        self, equipment, usage_context, duration
+    ):
         return StandardResponse(
             success=True, data={"effects": ["Augmetic function optimal"]}
         )
@@ -1021,15 +1138,21 @@ class DynamicEquipmentSystem:
     async def _process_relic_usage(self, equipment, usage_context, duration):
         return StandardResponse(
             success=True,
-            data={"effects": ["Sacred relic activated", "Machine spirit pleased"]},
+            data={
+                "effects": ["Sacred relic activated", "Machine spirit pleased"]
+            },
         )
 
-    async def _process_transport_usage(self, equipment, usage_context, duration):
+    async def _process_transport_usage(
+        self, equipment, usage_context, duration
+    ):
         return StandardResponse(
             success=True, data={"effects": ["Transport operational"]}
         )
 
-    async def _process_communication_usage(self, equipment, usage_context, duration):
+    async def _process_communication_usage(
+        self, equipment, usage_context, duration
+    ):
         return StandardResponse(
             success=True, data={"effects": ["Communication established"]}
         )
@@ -1045,7 +1168,10 @@ class DynamicEquipmentSystem:
         )
 
     def _calculate_wear_factor(
-        self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int
+        self,
+        equipment: DynamicEquipment,
+        usage_context: Dict[str, Any],
+        duration: int,
     ) -> float:
         """Calculate enhanced wear factor for equipment usage"""
         base_wear = 0.001  # Base wear per use
@@ -1122,7 +1248,8 @@ class DynamicEquipmentSystem:
                 "agitated": maintenance_overdue or not respectful_usage,
                 "content": True,  # Default
             },
-            "pleased": {"content": not enhanced_usage, "pleased": True},  # Maintain
+            # Maintain
+            "pleased": {"content": not enhanced_usage, "pleased": True},
             "agitated": {
                 "content": enhanced_usage
                 and respectful_usage
@@ -1149,10 +1276,14 @@ class DynamicEquipmentSystem:
 
         return {
             "mood": new_mood,
-            "response": responses.get(new_mood, "Machine spirit status unknown"),
+            "response": responses.get(
+                new_mood, "Machine spirit status unknown"
+            ),
         }
 
-    def _predict_equipment_failure(self, equipment: DynamicEquipment) -> Dict[str, Any]:
+    def _predict_equipment_failure(
+        self, equipment: DynamicEquipment
+    ) -> Dict[str, Any]:
         """Predict enhanced equipment failure probability and timeline"""
         # Blessed failure risk calculation
         base_risk = equipment.wear_accumulation * 0.5
@@ -1166,12 +1297,14 @@ class DynamicEquipmentSystem:
             EquipmentCondition.DAMAGED: 0.9,
             EquipmentCondition.BROKEN: 1.0,
         }
-        condition_risk = condition_risks.get(equipment.base_equipment.condition, 0.5)
+        condition_risk = condition_risks.get(
+            equipment.base_equipment.condition, 0.5
+        )
 
         # Blessed usage intensity factor
-        usage_intensity = equipment.usage_statistics.get("total_uses", 0) / max(
-            1, len(equipment.maintenance_history)
-        )
+        usage_intensity = equipment.usage_statistics.get(
+            "total_uses", 0
+        ) / max(1, len(equipment.maintenance_history))
         intensity_risk = min(0.3, usage_intensity * 0.01)
 
         # Blessed maintenance factor
@@ -1183,7 +1316,12 @@ class DynamicEquipmentSystem:
         maintenance_risk = min(0.4, days_since_maintenance / 100.0)
 
         # Blessed machine spirit factor
-        spirit_risks = {"pleased": -0.1, "content": 0.0, "agitated": 0.1, "angry": 0.3}
+        spirit_risks = {
+            "pleased": -0.1,
+            "content": 0.0,
+            "agitated": 0.1,
+            "angry": 0.3,
+        }
         spirit_risk = spirit_risks.get(equipment.machine_spirit_mood, 0.0)
 
         total_risk = min(
@@ -1214,12 +1352,16 @@ class DynamicEquipmentSystem:
                 else (
                     "High"
                     if total_risk > 0.5
-                    else "Medium" if total_risk > 0.2 else "Low"
+                    else "Medium"
+                    if total_risk > 0.2
+                    else "Low"
                 )
             ),
         }
 
-    def _get_next_maintenance_due(self, equipment_id: str) -> Optional[datetime]:
+    def _get_next_maintenance_due(
+        self, equipment_id: str
+    ) -> Optional[datetime]:
         """Get enhanced next scheduled maintenance date"""
         for maintenance_time, eq_id in self._maintenance_queue:
             if eq_id == equipment_id:
@@ -1237,7 +1379,9 @@ class DynamicEquipmentSystem:
             if template:
                 # Apply enhanced template properties
                 if "performance_modifiers" in template:
-                    for metric, modifier in template["performance_modifiers"].items():
+                    for metric, modifier in template[
+                        "performance_modifiers"
+                    ].items():
                         if metric in equipment.performance_metrics:
                             equipment.performance_metrics[metric] *= modifier
 
@@ -1257,7 +1401,9 @@ class DynamicEquipmentSystem:
         except Exception as e:
             return StandardResponse(
                 success=False,
-                error=ErrorInfo(code="TEMPLATE_APPLICATION_FAILED", message=str(e)),
+                error=ErrorInfo(
+                    code="TEMPLATE_APPLICATION_FAILED", message=str(e)
+                ),
             )
 
     async def _execute_maintenance_procedures(
@@ -1400,7 +1546,9 @@ class DynamicEquipmentSystem:
         }
 
         improvements = mood_improvements.get(maintenance_type, {})
-        new_mood = improvements.get(current_mood, improvements.get("any", current_mood))
+        new_mood = improvements.get(
+            current_mood, improvements.get("any", current_mood)
+        )
 
         responses = {
             "pleased": "joyfully responsive",
@@ -1427,17 +1575,29 @@ class DynamicEquipmentSystem:
             "tool_upgrade": [EquipmentCategory.TOOL],
         }
 
-        required_categories = compatible_categories.get(modification.category, [])
-        equipment_category = EquipmentCategory(equipment.base_equipment.category.value)
+        required_categories = compatible_categories.get(
+            modification.category, []
+        )
+        equipment_category = EquipmentCategory(
+            equipment.base_equipment.category.value
+        )
 
-        if required_categories and equipment_category not in required_categories:
+        if (
+            required_categories
+            and equipment_category not in required_categories
+        ):
             return {
                 "compatible": False,
-                "reason": f"Modification '{modification.category}' not compatible with {equipment_category.value}",
+                "reason": (
+                    f"Modification '{modification.category}' "
+                    f"not compatible with {equipment_category.value}"
+                ),
             }
 
         # Check enhanced modification conflicts
-        existing_modifications = [mod.category for mod in equipment.modifications]
+        existing_modifications = [
+            mod.category for mod in equipment.modifications
+        ]
         conflicting_modifications = {
             "weapon_sight": ["weapon_sight"],  # Can't have multiple sights
             "armor_plating": ["armor_plating"],  # Can't stack armor
@@ -1448,11 +1608,15 @@ class DynamicEquipmentSystem:
             if conflict in existing_modifications:
                 return {
                     "compatible": False,
-                    "reason": f"Conflicts with existing {conflict} modification",
+                    "reason": (
+                        f"Conflicts with existing {conflict} modification"
+                    ),
                 }
 
         # Check enhanced stability requirements
-        total_stability = sum(mod.stability_rating for mod in equipment.modifications)
+        total_stability = sum(
+            mod.stability_rating for mod in equipment.modifications
+        )
         if total_stability + modification.stability_rating > 3.0:
             return {
                 "compatible": False,
@@ -1489,7 +1653,10 @@ class DynamicEquipmentSystem:
         )  # Higher stability = easier to install
 
         success_rate = (
-            base_success_rate * installer_skill * condition_factor * complexity_factor
+            base_success_rate
+            * installer_skill
+            * condition_factor
+            * complexity_factor
         )
 
         # Simulate enhanced installation
@@ -1506,7 +1673,10 @@ class DynamicEquipmentSystem:
         else:
             return {
                 "success": False,
-                "error": f"Installation failed - success rate too low ({success_rate:.1%})",
+                "error": (
+                    f"Installation failed - success rate too low "
+                    f"({success_rate:.1%})"
+                ),
             }
 
     def _load_equipment_templates(self):
@@ -1515,7 +1685,10 @@ class DynamicEquipmentSystem:
         # For now, we'll define some basic templates
         self._equipment_templates = {
             "bolter": {
-                "performance_modifiers": {"effectiveness": 1.1, "reliability": 1.05},
+                "performance_modifiers": {
+                    "effectiveness": 1.1,
+                    "reliability": 1.05,
+                },
                 "maintenance_interval_override": 120,  # 5 days
             },
             "power_armor": {
@@ -1526,7 +1699,10 @@ class DynamicEquipmentSystem:
                 "maintenance_interval_override": 240,  # 10 days
             },
             "chain_sword": {
-                "performance_modifiers": {"effectiveness": 1.15, "responsiveness": 1.1}
+                "performance_modifiers": {
+                    "effectiveness": 1.15,
+                    "responsiveness": 1.1,
+                }
             },
         }
 
@@ -1538,9 +1714,9 @@ class DynamicEquipmentSystem:
                 eq.performance_metrics.get("reliability", 0.9)
                 for eq in self._equipment_registry.values()
             )
-            self.system_metrics["average_equipment_reliability"] = (
-                total_reliability / len(self._equipment_registry)
-            )
+            self.system_metrics[
+                "average_equipment_reliability"
+            ] = total_reliability / len(self._equipment_registry)
 
         return {
             **self.system_metrics,
@@ -1573,7 +1749,8 @@ async def test_standard_dynamic_equipment_system():
     test_bolter = EquipmentItem(
         equipment_id="bolter_001",
         name="Sacred Bolter",
-        category=EquipmentCondition.WEAPON,  # This should be EquipmentCategory.WEAPON but using available enum
+        # This should be EquipmentCategory.WEAPON but using available enum
+        category=EquipmentCondition.WEAPON,
         condition=EquipmentCondition.GOOD,
         properties={
             "weapon_type": "ranged",
@@ -1587,9 +1764,14 @@ async def test_standard_dynamic_equipment_system():
     test_armor = EquipmentItem(
         equipment_id="armor_001",
         name="Power Armor Mk VII",
-        category=EquipmentCondition.ARMOR,  # This should be EquipmentCategory.ARMOR
+        # This should be EquipmentCategory.ARMOR
+        category=EquipmentCondition.ARMOR,
         condition=EquipmentCondition.EXCELLENT,
-        properties={"armor_type": "power_armor", "protection": 12, "mobility": -1},
+        properties={
+            "armor_type": "power_armor",
+            "protection": 12,
+            "mobility": -1,
+        },
         current_location="Armory Delta-7",
     )
 
@@ -1600,9 +1782,14 @@ async def test_standard_dynamic_equipment_system():
     print(f"BOLTER REGISTRATION: {bolter_reg.success}")
     if bolter_reg.success:
         print(f"Equipment ID: {bolter_reg.data['equipment_id']}")
-        print(f"Maintenance scheduled: {bolter_reg.data['maintenance_scheduled']}")
+        print(
+            f"Maintenance scheduled: "
+            f"{bolter_reg.data['maintenance_scheduled']}"
+        )
 
-    armor_reg = await equipment_system.register_equipment(test_armor, "test_agent_001")
+    armor_reg = await equipment_system.register_equipment(
+        test_armor, "test_agent_001"
+    )
     print(f"ARMOR REGISTRATION: {armor_reg.success}")
 
     # Test enhanced equipment usage
@@ -1620,8 +1807,12 @@ async def test_standard_dynamic_equipment_system():
     print(f"BOLTER USAGE: {bolter_usage.success}")
     if bolter_usage.success:
         print(f"Usage effects: {len(bolter_usage.data['usage_effects'])}")
-        print(f"Wear accumulation: {bolter_usage.data['wear_accumulation']:.3f}")
-        print(f"Machine spirit mood: {bolter_usage.data['machine_spirit_mood']}")
+        print(
+            f"Wear accumulation: {bolter_usage.data['wear_accumulation']:.3f}"
+        )
+        print(
+            f"Machine spirit mood: {bolter_usage.data['machine_spirit_mood']}"
+        )
 
     # Test enhanced equipment status query
     status_result = await equipment_system.get_equipment_status("bolter_001")
@@ -1633,7 +1824,9 @@ async def test_standard_dynamic_equipment_system():
         print(
             f"Performance reliability: {status['performance_metrics']['reliability']:.2f}"
         )
-        print(f"Predicted failure risk: {status['predicted_failure_risk']:.1%}")
+        print(
+            f"Predicted failure risk: {status['predicted_failure_risk']:.1%}"
+        )
 
     # Test enhanced maintenance
     maintenance_result = await equipment_system.perform_maintenance(
@@ -1641,9 +1834,11 @@ async def test_standard_dynamic_equipment_system():
     )
     print(f"MAINTENANCE: {maintenance_result.success}")
     if maintenance_result.success:
-        print(f"Maintenance type: {maintenance_result.data['maintenance_type']}")
         print(
-            f"Condition change: {maintenance_result.data['condition_before']} -> {maintenance_result.data['condition_after']}"
+            f"Maintenance type: {maintenance_result.data['maintenance_type']}"
+        )
+        print(
+            f"Condition change: {maintenance_result.data['condition_before']}-> {maintenance_result.data['condition_after']}"
         )
         print(
             f"Machine spirit response: {maintenance_result.data['machine_spirit_response']}"
@@ -1706,4 +1901,7 @@ if __name__ == "__main__":
     # Run enhanced async testing
     asyncio.run(test_standard_dynamic_equipment_system())
 
-    print("ALL STANDARD DYNAMIC EQUIPMENT SYSTEM OPERATIONS ENHANCED AND FUNCTIONAL")
+    print(
+        "ALL STANDARD DYNAMIC EQUIPMENT SYSTEM OPERATIONS "
+        "ENHANCED AND FUNCTIONAL"
+    )

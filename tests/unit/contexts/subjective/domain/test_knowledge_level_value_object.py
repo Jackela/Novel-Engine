@@ -89,7 +89,11 @@ class TestKnowledgeItemCreation:
     def test_tags_list_conversion(self):
         """Test that tag lists are converted to sets."""
         acquired_time = datetime.now()
-        tags_list = ["combat", "urgent", "combat"]  # Duplicate to test set conversion
+        tags_list = [
+            "combat",
+            "urgent",
+            "combat",
+        ]  # Duplicate to test set conversion
 
         item = KnowledgeItem(
             subject="test_subject",
@@ -112,7 +116,9 @@ class TestKnowledgeItemValidation:
         """Test validation fails with empty subject."""
         acquired_time = datetime.now()
 
-        with pytest.raises(ValueError, match="Knowledge subject cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Knowledge subject cannot be empty"
+        ):
             KnowledgeItem(
                 subject="",
                 information="test_info",
@@ -126,7 +132,9 @@ class TestKnowledgeItemValidation:
         """Test validation fails with whitespace-only subject."""
         acquired_time = datetime.now()
 
-        with pytest.raises(ValueError, match="Knowledge subject cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Knowledge subject cannot be empty"
+        ):
             KnowledgeItem(
                 subject="   \t\n  ",
                 information="test_info",
@@ -140,7 +148,9 @@ class TestKnowledgeItemValidation:
         """Test validation fails with empty information."""
         acquired_time = datetime.now()
 
-        with pytest.raises(ValueError, match="Knowledge information cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Knowledge information cannot be empty"
+        ):
             KnowledgeItem(
                 subject="test_subject",
                 information="",
@@ -154,7 +164,9 @@ class TestKnowledgeItemValidation:
         """Test validation fails with whitespace-only information."""
         acquired_time = datetime.now()
 
-        with pytest.raises(ValueError, match="Knowledge information cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Knowledge information cannot be empty"
+        ):
             KnowledgeItem(
                 subject="test_subject",
                 information="   \t\n  ",
@@ -422,7 +434,9 @@ class TestKnowledgeItemImmutableOperations:
 
         # New instance has changes
         assert updated.certainty_level == CertaintyLevel.HIGH
-        assert updated.source == KnowledgeSource.REPORTED_BY_NEUTRAL  # Unchanged
+        assert (
+            updated.source == KnowledgeSource.REPORTED_BY_NEUTRAL
+        )  # Unchanged
         assert updated.subject == original.subject  # Other fields unchanged
         assert updated.information == original.information
         assert updated.knowledge_type == original.knowledge_type
@@ -505,7 +519,9 @@ class TestKnowledgeBaseValidation:
 
     def test_invalid_knowledge_items_type(self):
         """Test validation fails with non-dict knowledge_items."""
-        with pytest.raises(ValueError, match="Knowledge items must be a dictionary"):
+        with pytest.raises(
+            ValueError, match="Knowledge items must be a dictionary"
+        ):
             KnowledgeBase(knowledge_items="invalid")
 
     def test_invalid_subject_items_type(self):
@@ -517,7 +533,9 @@ class TestKnowledgeBaseValidation:
 
     def test_invalid_knowledge_item_type(self):
         """Test validation fails with invalid knowledge item type."""
-        with pytest.raises(ValueError, match="Invalid knowledge item for subject"):
+        with pytest.raises(
+            ValueError, match="Invalid knowledge item for subject"
+        ):
             KnowledgeBase(knowledge_items={"test_subject": ["invalid_item"]})
 
     def test_knowledge_item_subject_mismatch(self):
@@ -533,7 +551,9 @@ class TestKnowledgeBaseValidation:
             acquired_at=acquired_time,
         )
 
-        with pytest.raises(ValueError, match="Knowledge item subject mismatch"):
+        with pytest.raises(
+            ValueError, match="Knowledge item subject mismatch"
+        ):
             KnowledgeBase(knowledge_items={"wrong_subject": [item]})
 
 
@@ -603,12 +623,18 @@ class TestKnowledgeBaseQuerying:
         assert knowledge[0].information == "Enemy at north gate"
         assert knowledge[0].certainty_level == CertaintyLevel.ABSOLUTE
 
-    def test_get_knowledge_about_nonexistent_subject(self, sample_knowledge_base):
+    def test_get_knowledge_about_nonexistent_subject(
+        self, sample_knowledge_base
+    ):
         """Test getting knowledge about a non-existent subject."""
-        knowledge = sample_knowledge_base.get_knowledge_about("nonexistent_subject")
+        knowledge = sample_knowledge_base.get_knowledge_about(
+            "nonexistent_subject"
+        )
         assert knowledge == []
 
-    def test_get_knowledge_about_with_min_reliability(self, sample_knowledge_base):
+    def test_get_knowledge_about_with_min_reliability(
+        self, sample_knowledge_base
+    ):
         """Test getting knowledge with minimum reliability threshold."""
         # High reliability threshold should exclude speculative knowledge
         knowledge = sample_knowledge_base.get_knowledge_about(
@@ -629,7 +655,8 @@ class TestKnowledgeBaseQuerying:
         assert len(knowledge) == 2
         # First item should have higher reliability
         assert (
-            knowledge[0].get_reliability_score() > knowledge[1].get_reliability_score()
+            knowledge[0].get_reliability_score()
+            > knowledge[1].get_reliability_score()
         )
 
     def test_get_most_reliable_knowledge_existing(self, sample_knowledge_base):
@@ -642,12 +669,18 @@ class TestKnowledgeBaseQuerying:
         assert most_reliable.information == "Guards change every 4 hours"
         assert most_reliable.certainty_level == CertaintyLevel.HIGH
 
-    def test_get_most_reliable_knowledge_nonexistent(self, sample_knowledge_base):
+    def test_get_most_reliable_knowledge_nonexistent(
+        self, sample_knowledge_base
+    ):
         """Test getting most reliable knowledge for non-existent subject."""
-        most_reliable = sample_knowledge_base.get_most_reliable_knowledge("nonexistent")
+        most_reliable = sample_knowledge_base.get_most_reliable_knowledge(
+            "nonexistent"
+        )
         assert most_reliable is None
 
-    def test_has_knowledge_about_with_sufficient_certainty(self, sample_knowledge_base):
+    def test_has_knowledge_about_with_sufficient_certainty(
+        self, sample_knowledge_base
+    ):
         """Test has_knowledge_about with sufficient certainty."""
         # Should have knowledge about enemy position with high certainty
         assert sample_knowledge_base.has_knowledge_about(
@@ -659,12 +692,18 @@ class TestKnowledgeBaseQuerying:
             "guard_patrol", CertaintyLevel.MINIMAL
         )
 
-    def test_has_knowledge_about_insufficient_certainty(self, sample_knowledge_base):
+    def test_has_knowledge_about_insufficient_certainty(
+        self, sample_knowledge_base
+    ):
         """Test has_knowledge_about with insufficient certainty."""
         # Guard patrol knowledge might not meet absolute certainty requirement
-        guard_knowledge = sample_knowledge_base.get_knowledge_about("guard_patrol")
+        guard_knowledge = sample_knowledge_base.get_knowledge_about(
+            "guard_patrol"
+        )
         absolute_knowledge = [
-            k for k in guard_knowledge if k.certainty_level == CertaintyLevel.ABSOLUTE
+            k
+            for k in guard_knowledge
+            if k.certainty_level == CertaintyLevel.ABSOLUTE
         ]
 
         if not absolute_knowledge:
@@ -758,7 +797,9 @@ class TestKnowledgeBaseFiltering:
 
     def test_get_subjects_by_tag(self, diverse_knowledge_base):
         """Test filtering subjects by tag."""
-        security_subjects = diverse_knowledge_base.get_subjects_by_tag("security")
+        security_subjects = diverse_knowledge_base.get_subjects_by_tag(
+            "security"
+        )
         assert security_subjects == ["location_a"]
 
         combat_subjects = diverse_knowledge_base.get_subjects_by_tag("combat")
@@ -785,8 +826,10 @@ class TestKnowledgeBaseFiltering:
         assert len(historical_knowledge) == 1
         assert "character_x" in historical_knowledge
 
-        nonexistent_source_knowledge = diverse_knowledge_base.get_knowledge_by_source(
-            KnowledgeSource.PSYCHIC_READING
+        nonexistent_source_knowledge = (
+            diverse_knowledge_base.get_knowledge_by_source(
+                KnowledgeSource.PSYCHIC_READING
+            )
         )
         assert nonexistent_source_knowledge == {}
 
@@ -814,7 +857,10 @@ class TestKnowledgeBaseFiltering:
             expires_at=now - timedelta(minutes=30),  # Expired
         )
 
-        knowledge_items = {"current_info": [current_item], "stale_info": [stale_item]}
+        knowledge_items = {
+            "current_info": [current_item],
+            "stale_info": [stale_item],
+        }
 
         kb = KnowledgeBase(knowledge_items=knowledge_items)
         stale_knowledge = kb.get_stale_knowledge(now)
@@ -888,7 +934,9 @@ class TestKnowledgeBaseImmutableOperations:
             acquired_at=now,
         )
 
-        original_kb = KnowledgeBase(knowledge_items={"test_subject": [original_item]})
+        original_kb = KnowledgeBase(
+            knowledge_items={"test_subject": [original_item]}
+        )
         updated_kb = original_kb.add_knowledge(additional_item)
 
         # Should have both items for the same subject
@@ -925,7 +973,9 @@ class TestKnowledgeBaseImmutableOperations:
             acquired_at=now,
         )
 
-        original_kb = KnowledgeBase(knowledge_items={"test_subject": [original_item]})
+        original_kb = KnowledgeBase(
+            knowledge_items={"test_subject": [original_item]}
+        )
         updated_kb = original_kb.update_knowledge("test_subject", updated_item)
 
         # Should add the updated item (not replace)
@@ -1075,7 +1125,8 @@ class TestComplexScenarios:
             certainty_level=CertaintyLevel.ABSOLUTE,
             source=KnowledgeSource.DIRECT_OBSERVATION,
             acquired_at=now,
-            expires_at=now + timedelta(hours=12),  # Tactical info becomes stale
+            expires_at=now
+            + timedelta(hours=12),  # Tactical info becomes stale
             tags={"confirmed", "tactical", "current"},
         )
 
@@ -1098,7 +1149,9 @@ class TestComplexScenarios:
         assert current_subjects == ["enemy_base"]
 
         # Knowledge should be sorted by reliability
-        all_knowledge = kb.get_knowledge_about("enemy_base", min_reliability=0.0)
+        all_knowledge = kb.get_knowledge_about(
+            "enemy_base", min_reliability=0.0
+        )
         assert len(all_knowledge) == 3
         assert all_knowledge[0] == direct_observation  # Highest reliability
         assert (

@@ -9,8 +9,10 @@ import time
 from pathlib import Path
 
 import httpx
+import pytest
 
 
+@pytest.mark.asyncio
 async def test_framework_effectiveness():
     """测试框架有效性验证"""
 
@@ -25,7 +27,6 @@ async def test_framework_effectiveness():
     }
 
     async with httpx.AsyncClient(timeout=60.0) as client:
-
         # Test 1: 测试框架自身健康检查
         print("\n1️⃣ 测试框架健康检查...")
         try:
@@ -74,7 +75,9 @@ async def test_framework_effectiveness():
             if test_response.status_code == 200:
                 result_data = test_response.json()
                 # 即使passed是false，如果能返回结果就说明测试功能工作
-                test_working = "status" in result_data and "score" in result_data
+                test_working = (
+                    "status" in result_data and "score" in result_data
+                )
                 print(
                     f"   {'✅' if test_working else '❌'} API测试服务: {'工作中' if test_working else '未工作'}"
                 )
@@ -108,7 +111,9 @@ async def test_framework_effectiveness():
         # Test 3: 服务发现能力
         print("\n3️⃣ 服务发现能力验证...")
         try:
-            response = await client.get("http://localhost:8000/services/health")
+            response = await client.get(
+                "http://localhost:8000/services/health"
+            )
             if response.status_code == 200:
                 services = response.json()
                 service_count = len(services)
@@ -124,7 +129,9 @@ async def test_framework_effectiveness():
                     icon = (
                         "✅"
                         if status in ["healthy", "ready"]
-                        else "⚠️" if status == "degraded" else "❌"
+                        else "⚠️"
+                        if status == "degraded"
+                        else "❌"
                     )
                     print(f"      {icon} {name}: {status}")
 
@@ -172,7 +179,11 @@ async def test_framework_effectiveness():
                 result = response.json()
                 has_results = all(
                     key in result
-                    for key in ["overall_passed", "overall_score", "phase_results"]
+                    for key in [
+                        "overall_passed",
+                        "overall_score",
+                        "phase_results",
+                    ]
                 )
                 print(
                     f"   {'✅' if has_results else '❌'} 综合测试: {'可执行' if has_results else '不可执行'}"
@@ -180,7 +191,9 @@ async def test_framework_effectiveness():
                 if has_results:
                     print(f"      - 总体通过: {result.get('overall_passed')}")
                     print(f"      - 总体分数: {result.get('overall_score'):.2f}")
-                    print(f"      - 执行阶段: {len(result.get('phase_results', []))}")
+                    print(
+                        f"      - 执行阶段: {len(result.get('phase_results', []))}"
+                    )
 
                 results["tests"].append(
                     {
@@ -241,7 +254,9 @@ async def test_framework_effectiveness():
                     {
                         "name": "错误检测能力",
                         "passed": True,
-                        "details": {"error_response": test_response.status_code},
+                        "details": {
+                            "error_response": test_response.status_code
+                        },
                     }
                 )
         except Exception as e:

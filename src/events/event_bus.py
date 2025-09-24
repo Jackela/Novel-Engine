@@ -22,7 +22,47 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 from uuid import uuid4
 
-import aioredis
+try:
+    import aioredis
+except ImportError:
+    # Mock aioredis for testing environments
+    class MockRedis:
+        async def get(self, *args, **kwargs):
+            return None
+
+        async def set(self, *args, **kwargs):
+            pass
+
+        async def delete(self, *args, **kwargs):
+            pass
+
+        async def exists(self, *args, **kwargs):
+            return False
+
+        async def publish(self, *args, **kwargs):
+            pass
+
+        async def subscribe(self, *args, **kwargs):
+            return MockPubSub()
+
+        def pubsub(self):
+            return MockPubSub()
+
+        async def close(self, *args, **kwargs):
+            pass
+
+    class MockPubSub:
+        async def subscribe(self, *args, **kwargs):
+            pass
+
+        async def get_message(self, *args, **kwargs):
+            return None
+
+    aioredis = type(
+        "MockAioredis",
+        (),
+        {"Redis": MockRedis, "from_url": lambda url: MockRedis()},
+    )()
 
 logger = logging.getLogger(__name__)
 
@@ -299,7 +339,8 @@ class EventMetrics:
             "events_processed": self.events_processed,
             "events_failed": self.events_failed,
             "events_dead_letter": self.events_dead_letter,
-            "success_rate": self.events_processed / max(self.events_published, 1),
+            "success_rate": self.events_processed
+            / max(self.events_published, 1),
             "failure_rate": self.events_failed / max(self.events_published, 1),
             "average_processing_time_ms": avg_processing_time * 1000,
             "events_per_second": self.events_processed / max(uptime, 1),
@@ -337,7 +378,9 @@ class EventBus:
         self.redis: Optional[aioredis.Redis] = None
         self.event_store: List[Event] = []  # In-memory fallback
         self.dead_letter_queue: List[Event] = []
-        self.processing_semaphore = asyncio.Semaphore(self.config.max_concurrent_events)
+        self.processing_semaphore = asyncio.Semaphore(
+            self.config.max_concurrent_events
+        )
         self._shutdown_event = asyncio.Event()
         self._background_tasks: List[asyncio.Task] = []
 
@@ -420,7 +463,9 @@ class EventBus:
             if self.metrics:
                 self.metrics.record_event_published()
 
-            logger.debug(f"Published event {event.event_id} of type {event.event_type}")
+            logger.debug(
+                f"Published event {event.event_id} of type {event.event_type}"
+            )
             return event.event_id
 
         except Exception as e:
@@ -452,32 +497,38 @@ class EventBus:
 
             for handler in handlers:
                 try:
-                    if self.circuit_breaker and self.config.circuit_breaker_enabled:
-                        success = await self.circuit_breaker.call(handler.handle, event)
+                    if (
+                        self.circuit_breaker
+                        and self.config.circuit_breaker_enabled
+                    ):
+                        success = await self.circuit_breaker.call(
+                            handler.handle, event
+                        )
                     else:
                         success = await asyncio.wait_for(
-                            handler.handle(event), timeout=event.timeout_seconds
+                            handler.handle(event),
+                            timeout=event.timeout_seconds,
                         )
 
                     if success:
                         success_count += 1
                         logger.debug(
-                            f"Handler {handler.handler_id} processed event {event.event_id}"
+                            f"Handler {handler.handler_id}processed event {event.event_id}"
                         )
                     else:
                         logger.warning(
-                            f"Handler {handler.handler_id} failed to process event {event.event_id}"
+                            f"Handler {handler.handler_id}failed to process event {event.event_id}"
                         )
 
                 except asyncio.TimeoutError:
                     logger.error(
-                        f"Handler {handler.handler_id} timed out processing event {event.event_id}"
+                        f"Handler {handler.handler_id}timed out processing event {event.event_id}"
                     )
                     await self._handle_retry_or_dead_letter(event)
 
                 except Exception as e:
                     logger.error(
-                        f"Handler {handler.handler_id} error processing event {event.event_id}: {e}"
+                        f"Handler {handler.handler_id}error processing event {event.event_id}: {e}"
                     )
                     await self._handle_retry_or_dead_letter(event)
 
@@ -504,7 +555,7 @@ class EventBus:
             # Exponential backoff
             delay = min(2**event.retry_count, 60)
             logger.info(
-                f"Retrying event {event.event_id} in {delay} seconds (attempt {event.retry_count})"
+                f"Retrying event {event.event_id}in {delay} seconds (attempt {event.retry_count})"
             )
 
             asyncio.create_task(self._retry_event_after_delay(event, delay))
@@ -517,7 +568,7 @@ class EventBus:
                     self.metrics.record_dead_letter()
 
                 logger.warning(
-                    f"Event {event.event_id} moved to dead letter queue after {event.retry_count} attempts"
+                    f"Event {event.event_id}moved to dead letter queue after {event.retry_count} attempts"
                 )
 
     async def _retry_event_after_delay(self, event: Event, delay: int):
@@ -529,14 +580,17 @@ class EventBus:
         """Store event for persistence."""
         if self.redis:
             key = f"{self.config.redis_key_prefix}:events:{event.event_id}"
-            await self.redis.setex(key, 86400, json.dumps(event.to_dict()))  # 24h TTL
+            # 24h TTL
+            await self.redis.setex(key, 86400, json.dumps(event.to_dict()))
         else:
             self.event_store.append(event)
 
     async def _publish_to_redis(self, event: Event):
         """Publish event to Redis pub/sub for distributed processing."""
         if self.redis:
-            channel = f"{self.config.redis_key_prefix}:channel:{event.event_type}"
+            channel = (
+                f"{self.config.redis_key_prefix}:channel:{event.event_type}"
+            )
             await self.redis.publish(channel, json.dumps(event.to_dict()))
 
     async def _batch_processing_loop(self):
@@ -579,7 +633,6 @@ class EventBus:
             if from_time <= event.timestamp <= to_time and (
                 not event_types or event.event_type in event_types
             ):
-
                 event.status = EventStatus.REPLAYING
                 await self._process_event(event)
                 replayed_count += 1
@@ -590,7 +643,9 @@ class EventBus:
             # For now, we'll log that Redis replay is not implemented
             logger.info("Redis event replay not implemented in this version")
 
-        logger.info(f"Replayed {replayed_count} events from {from_time} to {to_time}")
+        logger.info(
+            f"Replayed {replayed_count} events from {from_time} to {to_time}"
+        )
         return replayed_count
 
     def get_metrics(self) -> Optional[Dict[str, Any]]:
@@ -615,7 +670,8 @@ class EventBus:
             "status": "healthy",
             "redis_connected": False,
             "active_handlers": sum(
-                len(handlers) for handlers in self.handler_registry.handlers.values()
+                len(handlers)
+                for handlers in self.handler_registry.handlers.values()
             ),
             "dead_letter_queue_size": len(self.dead_letter_queue),
             "background_tasks_running": len(

@@ -41,7 +41,8 @@ class MemoryInterface:
 
         Args:
             agent_core: Reference to the PersonaAgentCore instance
-            character_directory_path: Path to character directory for persistent memory
+            character_directory_path: Path to character directory for
+                persistent memory
         """
         self.agent_core = agent_core
         self.character_directory_path = character_directory_path
@@ -52,20 +53,26 @@ class MemoryInterface:
         self.significance_threshold = 0.6
 
         # Memory persistence
-        self.memory_log_path = os.path.join(character_directory_path, "memory.log")
+        self.memory_log_path = os.path.join(
+            character_directory_path, "memory.log"
+        )
 
         # Experience processing counters
         self.experiences_processed = 0
         self.significant_experiences = 0
 
-        logger.info(f"MemoryInterface initialized for agent {self.agent_core.agent_id}")
+        logger.info(
+            f"MemoryInterface initialized for agent "
+            f"{self.agent_core.agent_id}"
+        )
 
     def update_internal_memory(self, new_log: Dict[str, Any]) -> None:
         """
         Update the character's internal memory system with new experiences.
 
         This method simulates how characters learn and adapt from experiences,
-        updating their knowledge, relationships, and behavioral patterns over time.
+        updating their knowledge, relationships, and behavioral patterns
+        over time.
 
         The memory system manages:
         - Short-term memory: Recent events and observations (limited capacity)
@@ -77,25 +84,29 @@ class MemoryInterface:
             new_log: Dictionary containing new experience/event information
                     Expected format:
                     {
-                        'event_type': str,  # e.g., 'combat', 'dialogue', 'discovery'
+                        'event_type': str,  # e.g., 'combat', 'dialogue',
+                        # 'discovery'
                         'description': str,  # Human-readable description
                         'participants': List[str],  # Other entities involved
                         'outcome': str,  # Result of the event
                         'location': str,  # Where it happened
                         'timestamp': float,  # When it occurred
                         'significance': float,  # 0.0-1.0 importance level
-                        'emotional_impact': str,  # Character's emotional response
+                        'emotional_impact': str,  # Character's emotional
+                        # response
                     }
         """
         try:
             logger.info(
-                f"Agent {self.agent_core.agent_id} updating internal memory with new experience"
+                f"Agent {self.agent_core.agent_id} updating "
+                f"internal memory with new experience"
             )
 
             # Validate input format
             if not isinstance(new_log, dict):
                 logger.warning(
-                    f"Invalid memory log format for agent {self.agent_core.agent_id}"
+                    f"Invalid memory log format for agent "
+                    f"{self.agent_core.agent_id}"
                 )
                 return
 
@@ -109,13 +120,15 @@ class MemoryInterface:
 
             # Create memory entry
             memory_entry = {
-                "timestamp": new_log.get("timestamp", datetime.now().timestamp()),
+                "timestamp": new_log.get(
+                    "timestamp", datetime.now().timestamp()
+                ),
                 "event_type": event_type,
                 "description": description,
                 "participants": participants,
                 "outcome": outcome,
-                "personal_interpretation": self._generate_personal_interpretation(
-                    new_log
+                "personal_interpretation": (
+                    self._generate_personal_interpretation(new_log)
                 ),
                 "emotional_response": emotional_impact,
                 "significance": significance,
@@ -132,7 +145,8 @@ class MemoryInterface:
                 self.significant_experiences += 1
                 self._manage_long_term_memory_capacity()
                 logger.info(
-                    f"Storing significant event in long-term memory for {self.agent_core.agent_id}"
+                    f"Storing significant event in long-term memory for "
+                    f"{self.agent_core.agent_id}"
                 )
 
             # Update relationships based on the experience
@@ -150,20 +164,25 @@ class MemoryInterface:
 
             # Log the memory update
             logger.info(
-                f"Memory updated for {self.agent_core.agent_id}: {event_type} - {description[:50]}..."
+                f"Memory updated for {self.agent_core.agent_id}: "
+                f"{event_type} - {description[:50]}..."
             )
 
         except Exception as e:
             logger.error(
-                f"Error updating internal memory for agent {self.agent_core.agent_id}: {str(e)}"
+                f"Error updating internal memory for agent "
+                f"{self.agent_core.agent_id}: {str(e)}"
             )
 
     def update_memory(self, event_string: str) -> None:
         """
-        Append a new event string to the memory.log file within the agent's directory.
+        Append a new event string to the memory.log file within the
+        agent's directory.
 
-        This method provides persistent memory logging by writing events to a memory.log
-        file in the character's directory for long-term memory persistence across sessions.
+        This method provides persistent memory logging by writing events to
+        a memory.log
+        file in the character's directory for long-term memory persistence
+        across sessions.
 
         Args:
             event_string: String describing the event to be logged
@@ -173,24 +192,29 @@ class MemoryInterface:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # Format the log entry
-            log_entry = f"[{timestamp}] {event_string}\\n"
+            log_entry = f"[{timestamp}] {event_string}\n"
 
             # Append to memory.log file
             with open(self.memory_log_path, "a", encoding="utf-8") as file:
                 file.write(log_entry)
 
             logger.debug(
-                f"Persistent memory updated for {self.agent_core.agent_id}: {event_string[:50]}..."
+                f"Persistent memory updated for {self.agent_core.agent_id}: "
+                f"{event_string[:50]}..."
             )
 
         except Exception as e:
             logger.error(
-                f"Error updating persistent memory for agent {self.agent_core.agent_id}: {str(e)}"
+                f"Error updating persistent memory for agent "
+                f"{self.agent_core.agent_id}: {str(e)}"
             )
 
-    def _generate_personal_interpretation(self, experience: Dict[str, Any]) -> str:
+    def _generate_personal_interpretation(
+        self, experience: Dict[str, Any]
+    ) -> str:
         """
-        Generate personal interpretation of an experience based on character traits.
+        Generate personal interpretation of an experience based on character
+        traits.
 
         Args:
             experience: Experience data to interpret
@@ -220,19 +244,28 @@ class MemoryInterface:
 
                 if "success" in outcome.lower():
                     if "chaos" in faction.lower():
-                        interpretation += ", viewing this success as another step toward glorious chaos"
+                        interpretation += (
+                            ", viewing this success as another step toward "
+                            "glorious chaos"
+                        )
                     elif "imperium" in faction.lower():
                         interpretation += (
                             ", seeing this success as service to the Emperor"
                         )
                     else:
-                        interpretation += ", considering this a positive outcome"
+                        interpretation += (
+                            ", considering this a positive outcome"
+                        )
 
                 elif "failure" in outcome.lower():
                     if self.agent_core.morale_level > 0.5:
-                        interpretation += ", but remains determined despite the setback"
+                        interpretation += (
+                            ", but remains determined despite the setback"
+                        )
                     else:
-                        interpretation += ", feeling discouraged by this failure"
+                        interpretation += (
+                            ", feeling discouraged by this failure"
+                        )
 
             # Add character-specific perspective
             if description:
@@ -244,7 +277,9 @@ class MemoryInterface:
                         ". The combat experience reinforced their resolve."
                     )
                 elif "dialogue" in event_type.lower():
-                    interpretation += ". The conversation provided valuable insights."
+                    interpretation += (
+                        ". The conversation provided valuable insights."
+                    )
                 elif "discovery" in event_type.lower():
                     interpretation += ". This discovery could prove useful."
 
@@ -252,9 +287,14 @@ class MemoryInterface:
 
         except Exception as e:
             logger.error(f"Error generating personal interpretation: {str(e)}")
-            return f"Character processed an experience of type {experience.get('event_type', 'unknown')}"
+            return (
+                f"Character processed an experience of type "
+                f"{experience.get('event_type', 'unknown')}"
+            )
 
-    def _should_store_in_long_term_memory(self, memory_entry: Dict[str, Any]) -> bool:
+    def _should_store_in_long_term_memory(
+        self, memory_entry: Dict[str, Any]
+    ) -> bool:
         """
         Determine if a memory entry should be stored in long-term memory.
 
@@ -267,7 +307,9 @@ class MemoryInterface:
         try:
             significance = memory_entry.get("significance", 0.0)
             event_type = memory_entry.get("event_type", "")
-            emotional_response = memory_entry.get("emotional_response", "neutral")
+            emotional_response = memory_entry.get(
+                "emotional_response", "neutral"
+            )
             participants = memory_entry.get("participants", [])
 
             # High significance events always go to long-term memory
@@ -275,12 +317,25 @@ class MemoryInterface:
                 return True
 
             # Events with strong emotional responses
-            strong_emotions = ["fear", "anger", "joy", "triumph", "betrayal", "loyalty"]
+            strong_emotions = [
+                "fear",
+                "anger",
+                "joy",
+                "triumph",
+                "betrayal",
+                "loyalty",
+            ]
             if emotional_response.lower() in strong_emotions:
                 return True
 
             # Combat and critical events
-            critical_events = ["combat", "betrayal", "alliance", "discovery", "death"]
+            critical_events = [
+                "combat",
+                "betrayal",
+                "alliance",
+                "discovery",
+                "death",
+            ]
             if event_type.lower() in critical_events:
                 return True
 
@@ -292,36 +347,51 @@ class MemoryInterface:
             return False
 
         except Exception as e:
-            logger.error(f"Error determining long-term memory storage: {str(e)}")
+            logger.error(
+                f"Error determining long-term memory storage: {str(e)}"
+            )
             return False
 
     def _manage_short_term_memory_capacity(self) -> None:
         """Manage short-term memory capacity by removing oldest entries."""
         try:
-            while len(self.agent_core.short_term_memory) > self.short_term_memory_limit:
+            while (
+                len(self.agent_core.short_term_memory)
+                > self.short_term_memory_limit
+            ):
                 removed_entry = self.agent_core.short_term_memory.pop(0)
                 logger.debug(
-                    f"Removed old short-term memory entry: {removed_entry.get('event_type', 'unknown')}"
+                    f"Removed old short-term memory entry: "
+                    f"{removed_entry.get('event_type', 'unknown')}"
                 )
         except Exception as e:
-            logger.error(f"Error managing short-term memory capacity: {str(e)}")
+            logger.error(
+                f"Error managing short-term memory capacity: {str(e)}"
+            )
 
     def _manage_long_term_memory_capacity(self) -> None:
-        """Manage long-term memory capacity by removing less significant entries."""
+        """Manage long-term memory capacity by removing less
+        significant entries."""
         try:
-            while len(self.agent_core.long_term_memory) > self.long_term_memory_limit:
+            while (
+                len(self.agent_core.long_term_memory)
+                > self.long_term_memory_limit
+            ):
                 # Sort by significance and remove lowest
                 self.agent_core.long_term_memory.sort(
                     key=lambda x: x.get("significance", 0.0), reverse=True
                 )
                 removed_entry = self.agent_core.long_term_memory.pop(-1)
                 logger.debug(
-                    f"Removed low-significance long-term memory entry: {removed_entry.get('event_type', 'unknown')}"
+                    f"Removed low-significance long-term memory entry: "
+                    f"{removed_entry.get('event_type', 'unknown')}"
                 )
         except Exception as e:
             logger.error(f"Error managing long-term memory capacity: {str(e)}")
 
-    def _update_relationships_from_experience(self, experience: Dict[str, Any]) -> None:
+    def _update_relationships_from_experience(
+        self, experience: Dict[str, Any]
+    ) -> None:
         """
         Update character relationships based on experience.
 
@@ -339,23 +409,34 @@ class MemoryInterface:
                 if participant == self.agent_core.agent_id:
                     continue  # Skip self
 
-                current_relationship = self.agent_core.get_relationship_strength(
-                    participant
+                current_relationship = (
+                    self.agent_core.get_relationship_strength(participant)
                 )
                 relationship_change = 0.0
 
                 # Determine relationship change based on event type
                 if event_type.lower() == "combat":
-                    if "victory" in outcome.lower() or "success" in outcome.lower():
+                    if (
+                        "victory" in outcome.lower()
+                        or "success" in outcome.lower()
+                    ):
                         # Combat ally - strengthen bond
                         relationship_change = 0.1
                     elif "betrayal" in outcome.lower():
                         relationship_change = -0.5
 
                 elif event_type.lower() == "dialogue":
-                    if emotional_impact in ["positive", "agreement", "cooperation"]:
+                    if emotional_impact in [
+                        "positive",
+                        "agreement",
+                        "cooperation",
+                    ]:
                         relationship_change = 0.15
-                    elif emotional_impact in ["negative", "conflict", "disagreement"]:
+                    elif emotional_impact in [
+                        "negative",
+                        "conflict",
+                        "disagreement",
+                    ]:
                         relationship_change = -0.1
 
                 elif event_type.lower() == "betrayal":
@@ -370,18 +451,26 @@ class MemoryInterface:
                 # Apply relationship change
                 if relationship_change != 0.0:
                     new_relationship = max(
-                        -1.0, min(1.0, current_relationship + relationship_change)
+                        -1.0,
+                        min(1.0, current_relationship + relationship_change),
                     )
-                    self.agent_core.add_relationship(participant, new_relationship)
+                    self.agent_core.add_relationship(
+                        participant, new_relationship
+                    )
 
                     logger.debug(
-                        f"Relationship with {participant} changed by {relationship_change} to {new_relationship}"
+                        f"Relationship with {participant} changed by "
+                        f"{relationship_change} to {new_relationship}"
                     )
 
         except Exception as e:
-            logger.error(f"Error updating relationships from experience: {str(e)}")
+            logger.error(
+                f"Error updating relationships from experience: {str(e)}"
+            )
 
-    def _update_worldview_from_experience(self, experience: Dict[str, Any]) -> None:
+    def _update_worldview_from_experience(
+        self, experience: Dict[str, Any]
+    ) -> None:
         """
         Update character's worldview based on experience.
 
@@ -398,8 +487,10 @@ class MemoryInterface:
                 location_info = {
                     "last_visited": datetime.now().isoformat(),
                     "experiences": [event_type],
-                    "threat_level": self._assess_location_threat_from_experience(
-                        experience
+                    "threat_level": (
+                        self._assess_location_threat_from_experience(
+                            experience
+                        )
                     ),
                 }
 
@@ -427,7 +518,10 @@ class MemoryInterface:
                 if participant != self.agent_core.agent_id:
                     # Try to infer faction relationships
                     if "chaos" in participant.lower():
-                        faction_info = {"activity": "active", "threat_level": "high"}
+                        faction_info = {
+                            "activity": "active",
+                            "threat_level": "high",
+                        }
                         self.agent_core.add_to_subjective_worldview(
                             "faction_relationships", "chaos", faction_info
                         )
@@ -466,7 +560,10 @@ class MemoryInterface:
             if event_type.lower() in ["combat", "ambush", "attack"]:
                 if significance > 0.7:
                     return "high"
-                elif "failure" in outcome.lower() or "retreat" in outcome.lower():
+                elif (
+                    "failure" in outcome.lower()
+                    or "retreat" in outcome.lower()
+                ):
                     return "high"
                 else:
                     return "moderate"
@@ -480,7 +577,9 @@ class MemoryInterface:
         except Exception:
             return "unknown"
 
-    def _update_personality_from_experience(self, experience: Dict[str, Any]) -> None:
+    def _update_personality_from_experience(
+        self, experience: Dict[str, Any]
+    ) -> None:
         """
         Update personality traits based on significant experiences.
 
@@ -498,8 +597,10 @@ class MemoryInterface:
             if event_type.lower() == "combat":
                 if "victory" in outcome.lower():
                     # Increase confidence/aggression slightly
-                    current_aggression = self.agent_core.behavioral_modifiers.get(
-                        "aggression", 0.5
+                    current_aggression = (
+                        self.agent_core.behavioral_modifiers.get(
+                            "aggression", 0.5
+                        )
                     )
                     self.agent_core.behavioral_modifiers["aggression"] = min(
                         1.0, current_aggression + adjustment_factor
@@ -525,15 +626,19 @@ class MemoryInterface:
             elif event_type.lower() == "cooperation":
                 if emotional_impact in ["positive", "success"]:
                     # Increase trust/cooperation tendency
-                    current_cooperation = self.agent_core.behavioral_modifiers.get(
-                        "cooperation", 0.5
+                    current_cooperation = (
+                        self.agent_core.behavioral_modifiers.get(
+                            "cooperation", 0.5
+                        )
                     )
                     self.agent_core.behavioral_modifiers["cooperation"] = min(
                         1.0, current_cooperation + adjustment_factor
                     )
 
         except Exception as e:
-            logger.error(f"Error updating personality from experience: {str(e)}")
+            logger.error(
+                f"Error updating personality from experience: {str(e)}"
+            )
 
     def get_recent_memories(self, count: int = 5) -> List[Dict[str, Any]]:
         """
@@ -556,7 +661,9 @@ class MemoryInterface:
             logger.error(f"Error getting recent memories: {str(e)}")
             return []
 
-    def get_significant_memories(self, count: int = 10) -> List[Dict[str, Any]]:
+    def get_significant_memories(
+        self, count: int = 10
+    ) -> List[Dict[str, Any]]:
         """
         Get most significant memories from long-term memory.
 
@@ -632,8 +739,12 @@ class MemoryInterface:
         """
         try:
             return {
-                "short_term_memory_count": len(self.agent_core.short_term_memory),
-                "long_term_memory_count": len(self.agent_core.long_term_memory),
+                "short_term_memory_count": len(
+                    self.agent_core.short_term_memory
+                ),
+                "long_term_memory_count": len(
+                    self.agent_core.long_term_memory
+                ),
                 "short_term_memory_limit": self.short_term_memory_limit,
                 "long_term_memory_limit": self.long_term_memory_limit,
                 "experiences_processed": self.experiences_processed,
@@ -663,7 +774,8 @@ class MemoryInterface:
             # Clean up memory lines
             memories = [line.strip() for line in memory_lines if line.strip()]
             logger.info(
-                f"Loaded {len(memories)} persistent memories for {self.agent_core.agent_id}"
+                f"Loaded {len(memories)} persistent memories for "
+                f"{self.agent_core.agent_id}"
             )
 
             return memories
@@ -677,14 +789,16 @@ class MemoryInterface:
             count = len(self.agent_core.short_term_memory)
             self.agent_core.short_term_memory.clear()
             logger.info(
-                f"Cleared {count} short-term memory entries for {self.agent_core.agent_id}"
+                f"Cleared {count} short-term memory entries for "
+                f"{self.agent_core.agent_id}"
             )
         except Exception as e:
             logger.error(f"Error clearing short-term memory: {str(e)}")
 
     def consolidate_memories(self) -> int:
         """
-        Consolidate memories by promoting important short-term memories to long-term.
+        Consolidate memories by promoting important short-term memories
+        to long-term.
 
         Returns:
             Number of memories consolidated
@@ -694,10 +808,10 @@ class MemoryInterface:
 
             for memory in self.agent_core.short_term_memory.copy():
                 if (
-                    memory.get("significance", 0.0) >= self.significance_threshold
+                    memory.get("significance", 0.0)
+                    >= self.significance_threshold
                     and memory not in self.agent_core.long_term_memory
                 ):
-
                     self.agent_core.long_term_memory.append(memory)
                     consolidated_count += 1
 
@@ -705,7 +819,8 @@ class MemoryInterface:
             self._manage_long_term_memory_capacity()
 
             logger.info(
-                f"Consolidated {consolidated_count} memories to long-term for {self.agent_core.agent_id}"
+                f"Consolidated {consolidated_count} memories to long-term for "
+                f"{self.agent_core.agent_id}"
             )
             return consolidated_count
 

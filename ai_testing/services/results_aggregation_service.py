@@ -1,8 +1,9 @@
 """
 Results Aggregation Service
 
-Comprehensive test results aggregation and analysis service for Novel-Engine AI acceptance testing.
-Collects, analyzes, and reports results from all testing services with intelligent insights.
+Comprehensive test results aggregation and analysis service for
+Novel-Engine AI acceptance testing. Collects, analyzes, and reports
+results from all testing services with intelligent insights.
 """
 
 import json
@@ -10,6 +11,7 @@ import logging
 import statistics
 import time
 import uuid
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
@@ -159,7 +161,9 @@ class AggregatedResults(BaseModel):
     overall_summary: TestSummary
 
     # Test type breakdowns
-    test_type_summaries: Dict[TestType, TestSummary] = Field(default_factory=dict)
+    test_type_summaries: Dict[TestType, TestSummary] = Field(
+        default_factory=dict
+    )
 
     # Service-specific results
     service_summaries: Dict[str, TestSummary] = Field(default_factory=dict)
@@ -232,7 +236,9 @@ class ResultsAnalyzer:
         self.config = config
 
         # Analysis thresholds
-        self.trend_detection_window = config.get("trend_detection_window_days", 7)
+        self.trend_detection_window = config.get(
+            "trend_detection_window_days", 7
+        )
         self.anomaly_threshold = config.get(
             "anomaly_threshold", 2.0
         )  # Standard deviations
@@ -249,7 +255,8 @@ class ResultsAnalyzer:
 
         if len(results) < self.min_data_points:
             logger.warning(
-                f"Insufficient data points for trend analysis: {len(results)}"
+                "Insufficient data points for trend analysis: "
+                f"{len(results)}"
             )
             return trends
 
@@ -277,7 +284,9 @@ class ResultsAnalyzer:
         return trends
 
     def detect_quality_insights(
-        self, results: List[TestResult], historical_results: List[TestResult] = None
+        self,
+        results: List[TestResult],
+        historical_results: List[TestResult] = None,
     ) -> List[QualityInsight]:
         """Detect quality insights and patterns"""
 
@@ -310,7 +319,9 @@ class ResultsAnalyzer:
         """Create time series data from results"""
 
         # Filter to time window
-        cutoff_time = datetime.now(timezone.utc) - timedelta(days=time_window_days)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(
+            days=time_window_days
+        )
         recent_results = [
             r for r in results if r.timestamp and r.timestamp >= cutoff_time
         ]
@@ -348,7 +359,9 @@ class ResultsAnalyzer:
                     statistics.mean(data["scores"]) if data["scores"] else 0.0
                 ),
                 "duration_ms": (
-                    statistics.mean(data["durations"]) if data["durations"] else 0.0
+                    statistics.mean(data["durations"])
+                    if data["durations"]
+                    else 0.0
                 ),
                 "success_rate": (
                     data["success_count"] / data["total_count"]
@@ -375,7 +388,9 @@ class ResultsAnalyzer:
         values = [time_series_data[ts][metric_key] for ts in timestamps]
 
         # Calculate linear regression
-        slope, correlation = self._calculate_linear_regression(timestamps, values)
+        slope, correlation = self._calculate_linear_regression(
+            timestamps, values
+        )
 
         # Determine trend direction
         if abs(correlation) < 0.3:  # Weak correlation
@@ -456,7 +471,9 @@ class ResultsAnalyzer:
             values = [dp[1] for dp in data_points]
 
             # Calculate trend
-            slope, correlation = self._calculate_linear_regression(timestamps, values)
+            slope, correlation = self._calculate_linear_regression(
+                timestamps, values
+            )
 
             trend_direction = TrendDirection.STABLE
             confidence = abs(correlation)
@@ -483,7 +500,9 @@ class ResultsAnalyzer:
                 values=values,
                 linear_regression_slope=slope,
                 correlation_coefficient=correlation,
-                variance=statistics.variance(values) if len(values) > 1 else 0.0,
+                variance=(
+                    statistics.variance(values) if len(values) > 1 else 0.0
+                ),
                 insights=insights,
                 recommendations=recommendations,
             )
@@ -507,7 +526,9 @@ class ResultsAnalyzer:
         older_results = results[:-10] if len(results) > 10 else []
 
         if older_results:
-            recent_avg_score = statistics.mean([r.score for r in recent_results])
+            recent_avg_score = statistics.mean(
+                [r.score for r in recent_results]
+            )
             older_avg_score = statistics.mean([r.score for r in older_results])
 
             score_change = recent_avg_score - older_avg_score
@@ -518,7 +539,10 @@ class ResultsAnalyzer:
                         insight_type="improvement",
                         confidence=min(abs(score_change) * 2, 1.0),
                         title="Recent Quality Improvement",
-                        description=f"Quality scores have improved by {score_change:.2f} in recent tests",
+                        description=(
+                            f"Quality scores have improved by "
+                            f"{score_change:.2f} in recent tests"
+                        ),
                         time_period="recent",
                         evidence=[
                             f"Recent average: {recent_avg_score:.3f}",
@@ -537,7 +561,10 @@ class ResultsAnalyzer:
                         insight_type="regression",
                         confidence=min(abs(score_change) * 2, 1.0),
                         title="Recent Quality Regression",
-                        description=f"Quality scores have declined by {abs(score_change):.2f} in recent tests",
+                        description=(
+                            f"Quality scores have declined by "
+                            f"{abs(score_change):.2f} in recent tests"
+                        ),
                         time_period="recent",
                         evidence=[
                             f"Recent average: {recent_avg_score:.3f}",
@@ -548,7 +575,9 @@ class ResultsAnalyzer:
                             "Investigate quality degradation",
                             "Consider rollback if severe",
                         ],
-                        priority="high" if abs(score_change) > 0.2 else "medium",
+                        priority=(
+                            "high" if abs(score_change) > 0.2 else "medium"
+                        ),
                     )
                 )
 
@@ -586,7 +615,10 @@ class ResultsAnalyzer:
                         insight_type="pattern",
                         confidence=0.8,
                         title=f"Consistent High {metric.value}",
-                        description=f"{metric.value} shows consistent high quality (σ={std_dev:.3f})",
+                        description=(
+                            f"{metric.value} shows consistent high quality "
+                            f"(σ={std_dev:.3f})"
+                        ),
                         affected_metrics=[metric],
                         evidence=[
                             f"Average: {avg_score:.3f}",
@@ -604,7 +636,10 @@ class ResultsAnalyzer:
                         insight_type="pattern",
                         confidence=0.7,
                         title=f"Variable {metric.value} Quality",
-                        description=f"{metric.value} shows high variability (σ={std_dev:.3f})",
+                        description=(
+                            f"{metric.value} shows high variability "
+                            f"(σ={std_dev:.3f})"
+                        ),
                         affected_metrics=[metric],
                         evidence=[
                             f"Average: {avg_score:.3f}",
@@ -621,7 +656,9 @@ class ResultsAnalyzer:
         return insights
 
     def _compare_with_historical(
-        self, current_results: List[TestResult], historical_results: List[TestResult]
+        self,
+        current_results: List[TestResult],
+        historical_results: List[TestResult],
     ) -> List[QualityInsight]:
         """Compare current results with historical baseline"""
 
@@ -643,7 +680,10 @@ class ResultsAnalyzer:
                         insight_type="improvement",
                         confidence=min(abs(score_change) * 5, 1.0),
                         title="Quality Improvement vs Historical",
-                        description=f"Current quality ({current_avg:.3f}) exceeds historical baseline ({historical_avg:.3f})",
+                        description=(
+                            f"Current quality ({current_avg:.3f}) exceeds "
+                            f"historical baseline ({historical_avg:.3f})"
+                        ),
                         evidence=[f"Improvement: +{score_change:.3f}"],
                         recommendations=[
                             "Document successful changes",
@@ -658,7 +698,10 @@ class ResultsAnalyzer:
                         insight_type="regression",
                         confidence=min(abs(score_change) * 5, 1.0),
                         title="Quality Regression vs Historical",
-                        description=f"Current quality ({current_avg:.3f}) below historical baseline ({historical_avg:.3f})",
+                        description=(
+                            f"Current quality ({current_avg:.3f}) below "
+                            f"historical baseline ({historical_avg:.3f})"
+                        ),
                         evidence=[f"Decline: {score_change:.3f}"],
                         recommendations=[
                             "Investigate regression causes",
@@ -670,7 +713,9 @@ class ResultsAnalyzer:
 
         return insights
 
-    def _detect_anomalies(self, results: List[TestResult]) -> List[QualityInsight]:
+    def _detect_anomalies(
+        self, results: List[TestResult]
+    ) -> List[QualityInsight]:
         """Detect anomalous test results"""
 
         insights = []
@@ -689,7 +734,10 @@ class ResultsAnalyzer:
             anomalous_scores = [
                 (i, score)
                 for i, score in enumerate(scores)
-                if abs(score - score_mean) > self.anomaly_threshold * score_std
+                if (
+                    abs(score - score_mean)
+                    > self.anomaly_threshold * score_std
+                )
             ]
 
             if anomalous_scores:
@@ -698,8 +746,13 @@ class ResultsAnalyzer:
                         insight_type="anomaly",
                         confidence=0.8,
                         title="Anomalous Quality Scores Detected",
-                        description=f"Found {len(anomalous_scores)} tests with unusual quality scores",
-                        evidence=[f"Mean±2σ: {score_mean:.3f}±{2*score_std:.3f}"],
+                        description=(
+                            f"Found {len(anomalous_scores)} tests with "
+                            "unusual quality scores"
+                        ),
+                        evidence=[
+                            f"Mean±2σ: {score_mean:.3f}±{2*score_std:.3f}"
+                        ],
                         recommendations=[
                             "Investigate anomalous test results",
                             "Check for test environment issues",
@@ -716,7 +769,10 @@ class ResultsAnalyzer:
             anomalous_durations = [
                 (i, duration)
                 for i, duration in enumerate(durations)
-                if abs(duration - duration_mean) > self.anomaly_threshold * duration_std
+                if (
+                    abs(duration - duration_mean)
+                    > self.anomaly_threshold * duration_std
+                )
             ]
 
             if anomalous_durations:
@@ -725,7 +781,10 @@ class ResultsAnalyzer:
                         insight_type="anomaly",
                         confidence=0.7,
                         title="Anomalous Test Durations Detected",
-                        description=f"Found {len(anomalous_durations)} tests with unusual execution times",
+                        description=(
+                            f"Found {len(anomalous_durations)} tests with "
+                            "unusual execution times"
+                        ),
                         evidence=[
                             f"Mean±2σ: {duration_mean:.1f}±{2*duration_std:.1f}ms"
                         ],
@@ -750,7 +809,8 @@ class ResultsAnalyzer:
         # Convert timestamps to numeric values (days since first timestamp)
         first_timestamp = timestamps[0]
         x_values = [
-            (ts - first_timestamp).total_seconds() / (24 * 3600) for ts in timestamps
+            (ts - first_timestamp).total_seconds() / (24 * 3600)
+            for ts in timestamps
         ]
 
         len(x_values)
@@ -758,7 +818,9 @@ class ResultsAnalyzer:
         y_mean = statistics.mean(values)
 
         # Calculate slope and correlation
-        numerator = sum((x - x_mean) * (y - y_mean) for x, y in zip(x_values, values))
+        numerator = sum(
+            (x - x_mean) * (y - y_mean) for x, y in zip(x_values, values)
+        )
         x_variance = sum((x - x_mean) ** 2 for x in x_values)
         y_variance = sum((y - y_mean) ** 2 for y in values)
 
@@ -857,7 +919,9 @@ class ResultsAnalyzer:
                     f"Excellent {metric_name.lower()} performance maintained"
                 )
             elif avg_value < 0.6:
-                insights.append(f"{metric_name} performance below acceptable threshold")
+                insights.append(
+                    f"{metric_name} performance below acceptable threshold"
+                )
 
         return insights
 
@@ -880,7 +944,9 @@ class ResultsAnalyzer:
                 recommendations.append("Review prompt engineering")
                 recommendations.append("Enhance logical flow validation")
             else:
-                recommendations.append(f"Focus on improving {metric_name.lower()}")
+                recommendations.append(
+                    f"Focus on improving {metric_name.lower()}"
+                )
 
         return recommendations
 
@@ -954,11 +1020,14 @@ class ResultsAggregationService(IResultsAggregation):
                 )
                 all_results.extend(service_results)
                 logger.info(
-                    f"Collected {len(service_results)} results from {service_name}"
+                    f"Collected {len(service_results)} results from "
+                    f"{service_name}"
                 )
 
             except Exception as e:
-                logger.error(f"Failed to collect results from {service_name}: {e}")
+                logger.error(
+                    f"Failed to collect results from {service_name}: {e}"
+                )
 
         # Store collected results
         self.all_results.extend(all_results)
@@ -1009,10 +1078,14 @@ class ResultsAggregationService(IResultsAggregation):
             overall_summary = self._generate_overall_summary(filtered_results)
 
             # Generate test type summaries
-            test_type_summaries = self._generate_test_type_summaries(filtered_results)
+            test_type_summaries = self._generate_test_type_summaries(
+                filtered_results
+            )
 
             # Generate service summaries
-            service_summaries = self._generate_service_summaries(filtered_results)
+            service_summaries = self._generate_service_summaries(
+                filtered_results
+            )
 
             # Generate trends analysis
             trends = []
@@ -1107,7 +1180,9 @@ class ResultsAggregationService(IResultsAggregation):
 
         endpoint = self.service_endpoints.get(service_name)
         if not endpoint:
-            logger.warning(f"No endpoint configured for service: {service_name}")
+            logger.warning(
+                f"No endpoint configured for service: {service_name}"
+            )
             return []
 
         try:
@@ -1134,7 +1209,9 @@ class ResultsAggregationService(IResultsAggregation):
             logger.error(f"Error collecting from {service_name}: {e}")
             return []
 
-    def _deduplicate_results(self, results: List[TestResult]) -> List[TestResult]:
+    def _deduplicate_results(
+        self, results: List[TestResult]
+    ) -> List[TestResult]:
         """Remove duplicate results and sort by timestamp"""
 
         # Remove duplicates based on execution_id
@@ -1147,7 +1224,9 @@ class ResultsAggregationService(IResultsAggregation):
                 unique_results.append(result)
 
         # Sort by timestamp (newest first)
-        unique_results.sort(key=lambda r: r.timestamp or datetime.min, reverse=True)
+        unique_results.sort(
+            key=lambda r: r.timestamp or datetime.min, reverse=True
+        )
 
         return unique_results
 
@@ -1182,7 +1261,9 @@ class ResultsAggregationService(IResultsAggregation):
 
         return filtered
 
-    def _generate_overall_summary(self, results: List[TestResult]) -> TestSummary:
+    def _generate_overall_summary(
+        self, results: List[TestResult]
+    ) -> TestSummary:
         """Generate overall summary statistics"""
 
         if not results:
@@ -1223,9 +1304,13 @@ class ResultsAggregationService(IResultsAggregation):
                     result.performance_metrics["avg_response_time_ms"]
                 )
 
-        avg_response_time = statistics.mean(response_times) if response_times else 0.0
+        avg_response_time = (
+            statistics.mean(response_times) if response_times else 0.0
+        )
         p95_response_time = (
-            self._calculate_percentile(response_times, 95) if response_times else 0.0
+            self._calculate_percentile(response_times, 95)
+            if response_times
+            else 0.0
         )
 
         success_rate = passed_tests / total_tests if total_tests > 0 else 0.0
@@ -1295,7 +1380,9 @@ class ResultsAggregationService(IResultsAggregation):
             summary["avg_duration_ms"] = statistics.mean(durations)
             summary["max_duration_ms"] = max(durations)
             summary["min_duration_ms"] = min(durations)
-            summary["p95_duration_ms"] = self._calculate_percentile(durations, 95)
+            summary["p95_duration_ms"] = self._calculate_percentile(
+                durations, 95
+            )
 
         if scores:
             summary["avg_score"] = statistics.mean(scores)
@@ -1306,7 +1393,9 @@ class ResultsAggregationService(IResultsAggregation):
         if results and results[0].timestamp and results[-1].timestamp:
             time_span = results[0].timestamp - results[-1].timestamp
             if time_span.total_seconds() > 0:
-                tests_per_hour = len(results) * 3600 / time_span.total_seconds()
+                tests_per_hour = (
+                    len(results) * 3600 / time_span.total_seconds()
+                )
                 summary["tests_per_hour"] = tests_per_hour
 
         return summary
@@ -1346,7 +1435,9 @@ class ResultsAggregationService(IResultsAggregation):
             recommendations.append("Address declining trends in key metrics")
 
         # Based on quality insights
-        high_priority_insights = [i for i in quality_insights if i.priority == "high"]
+        high_priority_insights = [
+            i for i in quality_insights if i.priority == "high"
+        ]
         if high_priority_insights:
             recommendations.append("Address high-priority quality issues")
 
@@ -1358,7 +1449,9 @@ class ResultsAggregationService(IResultsAggregation):
 
         return list(set(recommendations))  # Remove duplicates
 
-    def _identify_top_failures(self, results: List[TestResult]) -> List[Dict[str, Any]]:
+    def _identify_top_failures(
+        self, results: List[TestResult]
+    ) -> List[Dict[str, Any]]:
         """Identify top failing test scenarios"""
 
         failures = [r for r in results if not r.passed]
@@ -1377,12 +1470,16 @@ class ResultsAggregationService(IResultsAggregation):
 
             failure_counts[scenario_id]["failure_count"] += 1
             if failure.error_message:
-                failure_counts[scenario_id]["latest_error"] = failure.error_message
+                failure_counts[scenario_id][
+                    "latest_error"
+                ] = failure.error_message
 
         # Calculate average scores for failing scenarios
         for scenario_data in failure_counts.values():
             scenario_failures = [
-                f for f in failures if f.scenario_id == scenario_data["scenario_id"]
+                f
+                for f in failures
+                if f.scenario_id == scenario_data["scenario_id"]
             ]
             if scenario_failures:
                 scenario_data["avg_score"] = statistics.mean(
@@ -1391,7 +1488,9 @@ class ResultsAggregationService(IResultsAggregation):
 
         # Sort by failure count and return top 5
         top_failures = sorted(
-            failure_counts.values(), key=lambda x: x["failure_count"], reverse=True
+            failure_counts.values(),
+            key=lambda x: x["failure_count"],
+            reverse=True,
         )[:5]
 
         return top_failures
@@ -1417,22 +1516,26 @@ class ResultsAggregationService(IResultsAggregation):
 
             performance_data[scenario_id]["success_count"] += 1
             performance_data[scenario_id]["scores"].append(success.score)
-            performance_data[scenario_id]["durations"].append(success.duration_ms)
+            performance_data[scenario_id]["durations"].append(
+                success.duration_ms
+            )
 
         # Calculate performance metrics
         for scenario_data in performance_data.values():
             scores = scenario_data["scores"]
             durations = scenario_data["durations"]
 
-            scenario_data["avg_score"] = statistics.mean(scores) if scores else 0.0
+            scenario_data["avg_score"] = (
+                statistics.mean(scores) if scores else 0.0
+            )
             scenario_data["avg_duration_ms"] = (
                 statistics.mean(durations) if durations else 0.0
             )
 
             # Calculate performance index (higher score, lower duration = better)
-            scenario_data["performance_index"] = scenario_data["avg_score"] / max(
-                scenario_data["avg_duration_ms"] / 1000, 0.1
-            )
+            scenario_data["performance_index"] = scenario_data[
+                "avg_score"
+            ] / max(scenario_data["avg_duration_ms"] / 1000, 0.1)
 
         # Sort by performance index and return top 5
         top_performers = sorted(
@@ -1454,16 +1557,22 @@ class ResultsAggregationService(IResultsAggregation):
         # Calculate expected vs actual data points
         # This is a simplified calculation
         expected_tests_per_hour = 10  # Configurable
-        expected_total = expected_tests_per_hour * (time_period.total_seconds() / 3600)
+        expected_total = expected_tests_per_hour * (
+            time_period.total_seconds() / 3600
+        )
 
         actual_total = len(results)
         completeness = (
-            min(actual_total / expected_total, 1.0) if expected_total > 0 else 1.0
+            min(actual_total / expected_total, 1.0)
+            if expected_total > 0
+            else 1.0
         )
 
         return completeness
 
-    def _calculate_percentile(self, values: List[float], percentile: int) -> float:
+    def _calculate_percentile(
+        self, values: List[float], percentile: int
+    ) -> float:
         """Calculate percentile value"""
         if not values:
             return 0.0
@@ -1494,7 +1603,9 @@ class ResultsAggregationService(IResultsAggregation):
 
         # Header
         md_content.append("# Test Results Report")
-        md_content.append(f"**Period:** {report.start_time} to {report.end_time}")
+        md_content.append(
+            f"**Period:** {report.start_time} to {report.end_time}"
+        )
         md_content.append(f"**Generated:** {report.generation_time}")
         md_content.append("")
 
@@ -1513,7 +1624,9 @@ class ResultsAggregationService(IResultsAggregation):
             md_content.append("## Trends")
             for trend in report.trends:
                 md_content.append(f"### {trend.metric_name}")
-                md_content.append(f"- **Direction:** {trend.trend_direction.value}")
+                md_content.append(
+                    f"- **Direction:** {trend.trend_direction.value}"
+                )
                 md_content.append(f"- **Confidence:** {trend.confidence:.2f}")
                 for insight in trend.insights:
                     md_content.append(f"- {insight}")
@@ -1578,7 +1691,9 @@ class ResultsAggregationService(IResultsAggregation):
             results = [r for r in results if r.status == filters["status"]]
 
         if "session_id" in filters:
-            results = [r for r in results if r.scenario_id == filters["session_id"]]
+            results = [
+                r for r in results if r.scenario_id == filters["session_id"]
+            ]
 
         if "test_type" in filters:
             # Filter by test type if available in metadata
@@ -1589,7 +1704,10 @@ class ResultsAggregationService(IResultsAggregation):
                 if (
                     (test_type == "ui" and r.ui_results is not None)
                     or (test_type == "api" and r.api_results is not None)
-                    or (test_type == "ai_quality" and r.ai_quality_results is not None)
+                    or (
+                        test_type == "ai_quality"
+                        and r.ai_quality_results is not None
+                    )
                 )
             ]
 
@@ -1629,15 +1747,21 @@ class ResultsAggregationService(IResultsAggregation):
         failed_tests = total_tests - passed_tests
 
         # Calculate averages
-        avg_score = statistics.mean([r.score for r in results]) if results else 0.0
+        avg_score = (
+            statistics.mean([r.score for r in results]) if results else 0.0
+        )
         avg_duration = (
-            statistics.mean([r.duration_ms for r in results]) if results else 0.0
+            statistics.mean([r.duration_ms for r in results])
+            if results
+            else 0.0
         )
 
         # Test type distribution
         ui_tests = len([r for r in results if r.ui_results is not None])
         api_tests = len([r for r in results if r.api_results is not None])
-        ai_quality_tests = len([r for r in results if r.ai_quality_results is not None])
+        ai_quality_tests = len(
+            [r for r in results if r.ai_quality_results is not None]
+        )
 
         return {
             "time_range": {
@@ -1649,7 +1773,9 @@ class ResultsAggregationService(IResultsAggregation):
                 "total_tests": total_tests,
                 "passed_tests": passed_tests,
                 "failed_tests": failed_tests,
-                "pass_rate": passed_tests / total_tests if total_tests > 0 else 0.0,
+                "pass_rate": passed_tests / total_tests
+                if total_tests > 0
+                else 0.0,
                 "average_score": avg_score,
                 "average_duration_ms": avg_duration,
             },
@@ -1665,7 +1791,9 @@ class ResultsAggregationService(IResultsAggregation):
             },
         }
 
-    async def create_dashboard_data(self, dashboard_type: str) -> Dict[str, Any]:
+    async def create_dashboard_data(
+        self, dashboard_type: str
+    ) -> Dict[str, Any]:
         """Create real-time dashboard data"""
         if not hasattr(self, "_stored_results"):
             results = []
@@ -1694,20 +1822,34 @@ class ResultsAggregationService(IResultsAggregation):
                         else 0.0
                     ),
                     "average_duration": (
-                        statistics.mean([r.duration_ms for r in recent_results])
+                        statistics.mean(
+                            [r.duration_ms for r in recent_results]
+                        )
                         if recent_results
                         else 0.0
                     ),
                 },
                 "status_distribution": {
                     "completed": len(
-                        [r for r in recent_results if r.status == TestStatus.COMPLETED]
+                        [
+                            r
+                            for r in recent_results
+                            if r.status == TestStatus.COMPLETED
+                        ]
                     ),
                     "failed": len(
-                        [r for r in recent_results if r.status == TestStatus.FAILED]
+                        [
+                            r
+                            for r in recent_results
+                            if r.status == TestStatus.FAILED
+                        ]
                     ),
                     "running": len(
-                        [r for r in recent_results if r.status == TestStatus.RUNNING]
+                        [
+                            r
+                            for r in recent_results
+                            if r.status == TestStatus.RUNNING
+                        ]
                     ),
                 },
             }
@@ -1717,9 +1859,13 @@ class ResultsAggregationService(IResultsAggregation):
                 "dashboard_type": "performance",
                 "last_updated": datetime.now().isoformat(),
                 "metrics": {
-                    "response_times": [r.duration_ms for r in recent_results[-10:]],
+                    "response_times": [
+                        r.duration_ms for r in recent_results[-10:]
+                    ],
                     "scores": [r.score for r in recent_results[-10:]],
-                    "test_counts_by_hour": self._get_hourly_test_counts(recent_results),
+                    "test_counts_by_hour": self._get_hourly_test_counts(
+                        recent_results
+                    ),
                 },
             }
 
@@ -1749,7 +1895,11 @@ class ResultsAggregationService(IResultsAggregation):
                     ),
                     "ai_quality": (
                         statistics.mean(
-                            [r.score for r in recent_results if r.ai_quality_results]
+                            [
+                                r.score
+                                for r in recent_results
+                                if r.ai_quality_results
+                            ]
                         )
                         if recent_results
                         else 0.0
@@ -1760,7 +1910,9 @@ class ResultsAggregationService(IResultsAggregation):
         else:
             return {"error": f"Unknown dashboard type: {dashboard_type}"}
 
-    def _get_hourly_test_counts(self, results: List[TestResult]) -> Dict[str, int]:
+    def _get_hourly_test_counts(
+        self, results: List[TestResult]
+    ) -> Dict[str, int]:
         """Get test counts grouped by hour"""
         hourly_counts = {}
 
@@ -1773,8 +1925,6 @@ class ResultsAggregationService(IResultsAggregation):
 
 
 # === FastAPI Application ===
-
-from contextlib import asynccontextmanager
 
 
 @asynccontextmanager
@@ -1875,7 +2025,9 @@ async def get_report(report_id: str):
 
 
 @app.get("/export/{report_id}")
-async def export_report(report_id: str, format: ReportFormat = ReportFormat.JSON):
+async def export_report(
+    report_id: str, format: ReportFormat = ReportFormat.JSON
+):
     """Export report in specified format"""
     service: ResultsAggregationService = app.state.aggregation_service
 
@@ -1899,7 +2051,9 @@ async def get_trends(time_window_days: int = 7):
     # Get recent results
     cutoff_time = datetime.now(timezone.utc) - timedelta(days=time_window_days)
     recent_results = [
-        r for r in service.all_results if r.timestamp and r.timestamp >= cutoff_time
+        r
+        for r in service.all_results
+        if r.timestamp and r.timestamp >= cutoff_time
     ]
 
     trends = service.analyzer.analyze_trends(recent_results, time_window_days)
@@ -1914,7 +2068,9 @@ async def get_quality_insights():
     # Get recent results (last 24 hours)
     cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
     recent_results = [
-        r for r in service.all_results if r.timestamp and r.timestamp >= cutoff_time
+        r
+        for r in service.all_results
+        if r.timestamp and r.timestamp >= cutoff_time
     ]
 
     insights = service.analyzer.detect_quality_insights(recent_results)

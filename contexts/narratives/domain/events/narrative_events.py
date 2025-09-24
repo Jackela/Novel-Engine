@@ -146,9 +146,9 @@ class PlotPointRemoved(NarrativeEvent):
 
     plot_point_id: str = ""
     removal_reason: str = ""
-    sequence_adjustments: Dict[str, int] = (
-        None  # Other plot points that need resequencing
-    )
+    sequence_adjustments: Dict[
+        str, int
+    ] = None  # Other plot points that need resequencing
 
     def __post_init__(self):
         """Initialize default values for mutable fields."""
@@ -206,7 +206,9 @@ class ThemeResolved(NarrativeEvent):
     """
 
     theme_id: str = ""
-    resolution_type: str = "complete"  # complete, partial, open-ended, subverted
+    resolution_type: str = (
+        "complete"  # complete, partial, open-ended, subverted
+    )
     resolution_sequence: int = 0
     narrative_impact: str = ""
     related_plot_points: List[str] = None
@@ -258,7 +260,9 @@ class NarrativeFlowChanged(NarrativeEvent):
     """
 
     affected_sequence_range: List[int] = None  # [start, end]
-    flow_change_type: str = "restructure"  # restructure, reorder, insert, delete
+    flow_change_type: str = (
+        "restructure"  # restructure, reorder, insert, delete
+    )
     previous_flow_state: Dict[str, Any] = None
     new_flow_state: Dict[str, Any] = None
     change_rationale: str = ""

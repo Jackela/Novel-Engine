@@ -20,7 +20,9 @@ class AgentState:
 
     agent_id: str
     current_location: Optional[str] = None
-    current_status: str = "active"  # active, injured, unconscious, dead, resting
+    current_status: str = (
+        "active"  # active, injured, unconscious, dead, resting
+    )
     morale_level: float = 1.0  # -1.0 (broken) to 1.0 (fanatic)
     health_status: str = "healthy"  # healthy, injured, critical, dead
     last_action: Optional[str] = None
@@ -29,7 +31,9 @@ class AgentState:
     current_priorities: Dict[str, float] = field(default_factory=dict)
     temporary_modifiers: Dict[str, Any] = field(default_factory=dict)
     state_history: List[Dict[str, Any]] = field(default_factory=list)
-    last_updated: str = field(default_factory=lambda: datetime.now().isoformat())
+    last_updated: str = field(
+        default_factory=lambda: datetime.now().isoformat()
+    )
 
 
 class AgentStateManager:
@@ -89,7 +93,10 @@ class AgentStateManager:
             for key, value in state_updates.items():
                 if hasattr(self._state, key):
                     # Validate specific fields
-                    if key == "current_status" and value not in self._valid_statuses:
+                    if (
+                        key == "current_status"
+                        and value not in self._valid_statuses
+                    ):
                         self.logger.warning(
                             f"Invalid status '{value}', using current status"
                         )
@@ -111,7 +118,9 @@ class AgentStateManager:
                     # Update the state
                     setattr(self._state, key, value)
 
-                    self.logger.debug(f"Updated {key}: {old_state.get(key)} -> {value}")
+                    self.logger.debug(
+                        f"Updated {key}: {old_state.get(key)} -> {value}"
+                    )
                 else:
                     self.logger.warning(f"Unknown state field: {key}")
 
@@ -126,7 +135,9 @@ class AgentStateManager:
             # Notify callbacks
             await self._notify_state_change(state_updates)
 
-            self.logger.info(f"Agent {self.agent_id} state updated successfully")
+            self.logger.info(
+                f"Agent {self.agent_id} state updated successfully"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to update agent state: {e}")
@@ -275,7 +286,7 @@ class AgentStateManager:
         )
 
         self.logger.info(
-            f"Morale adjusted by {adjustment:+.2f} ({reason}): {new_morale:.2f}"
+            f"Morale adjusted by {adjustment:+.2f}({reason}): {new_morale:.2f}"
         )
 
     async def set_health_status(self, health_status: str) -> None:
@@ -309,7 +320,9 @@ class AgentStateManager:
             new_goals = [g for g in self._state.active_goals if g != goal]
             await self.update_state({"active_goals": new_goals})
 
-    async def set_priority(self, priority_name: str, priority_value: float) -> None:
+    async def set_priority(
+        self, priority_name: str, priority_value: float
+    ) -> None:
         """Set a priority value."""
         new_priorities = {
             **self._state.current_priorities,
@@ -318,10 +331,16 @@ class AgentStateManager:
         await self.update_state({"current_priorities": new_priorities})
 
     async def add_temporary_modifier(
-        self, modifier_name: str, modifier_data: Any, duration: Optional[int] = None
+        self,
+        modifier_name: str,
+        modifier_data: Any,
+        duration: Optional[int] = None,
     ) -> None:
         """Add a temporary modifier."""
-        modifier_info = {"data": modifier_data, "added_at": datetime.now().isoformat()}
+        modifier_info = {
+            "data": modifier_data,
+            "added_at": datetime.now().isoformat(),
+        }
 
         if duration:
             modifier_info["expires_at"] = datetime.now().timestamp() + duration
@@ -375,8 +394,12 @@ class AgentStateManager:
             change_record = {
                 "timestamp": datetime.now().isoformat(),
                 "updates": updates,
-                "old_values": {key: old_state.get(key) for key in updates.keys()},
-                "new_values": {key: new_state.get(key) for key in updates.keys()},
+                "old_values": {
+                    key: old_state.get(key) for key in updates.keys()
+                },
+                "new_values": {
+                    key: new_state.get(key) for key in updates.keys()
+                },
             }
 
             # Limit history size
@@ -392,7 +415,9 @@ class AgentStateManager:
         for callback in self._state_change_callbacks:
             try:
                 if callable(callback):
-                    if hasattr(callback, "__call__") and hasattr(callback, "__code__"):
+                    if hasattr(callback, "__call__") and hasattr(
+                        callback, "__code__"
+                    ):
                         # Check if callback is async
                         import inspect
 
@@ -405,4 +430,8 @@ class AgentStateManager:
 
     def get_state_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent state change history."""
-        return self._state.state_history[-limit:] if self._state.state_history else []
+        return (
+            self._state.state_history[-limit:]
+            if self._state.state_history
+            else []
+        )

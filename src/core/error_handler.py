@@ -172,7 +172,8 @@ class CentralizedErrorHandler:
             # Generate unique error ID
             error_id = str(uuid.uuid4())
 
-            # Auto-detect severity, category, and recovery strategy if not provided
+            # Auto-detect severity, category, and recovery strategy if not
+            # provided
             if severity is None:
                 severity = self._detect_error_severity(error, context)
 
@@ -228,7 +229,8 @@ class CentralizedErrorHandler:
                     "timestamp": error_record.last_occurrence.isoformat(),
                     "severity": error_record.severity.value,
                     "category": error_record.category.value,
-                    "message": error_record.message[:200],  # Truncated for storage
+                    # Truncated for storage
+                    "message": error_record.message[:200],
                 }
             )
 
@@ -276,7 +278,8 @@ class CentralizedErrorHandler:
         self, error: Exception, context: ErrorContext
     ) -> ErrorCategory:
         """Auto-detect error category based on error type and context."""
-        # Network errors (check before OSError since ConnectionError is a subclass of OSError)
+        # Network errors (check before OSError since ConnectionError is a
+        # subclass of OSError)
         if isinstance(error, (ConnectionError, TimeoutError)):
             return ErrorCategory.NETWORK
 
@@ -302,7 +305,10 @@ class CentralizedErrorHandler:
             return ErrorCategory.BUSINESS_LOGIC
 
     def _select_recovery_strategy(
-        self, error: Exception, severity: ErrorSeverity, category: ErrorCategory
+        self,
+        error: Exception,
+        severity: ErrorSeverity,
+        category: ErrorCategory,
     ) -> RecoveryStrategy:
         """Select appropriate recovery strategy."""
         # Critical errors need user intervention
@@ -336,8 +342,9 @@ class CentralizedErrorHandler:
 
             if error_signature == existing_signature:
                 # Check if within time window (1 hour)
-                if datetime.now() - existing_record.last_occurrence < timedelta(
-                    hours=1
+                if (
+                    datetime.now() - existing_record.last_occurrence
+                    < timedelta(hours=1)
                 ):
                     return existing_id
 
@@ -414,13 +421,19 @@ class CentralizedErrorHandler:
 
         return False
 
-    async def _handle_fallback_recovery(self, error_record: ErrorRecord) -> bool:
+    async def _handle_fallback_recovery(
+        self, error_record: ErrorRecord
+    ) -> bool:
         """Handle fallback recovery strategy."""
         # Implement fallback mechanism (placeholder)
-        self.logger.info(f"Activating fallback for {error_record.context.component}")
+        self.logger.info(
+            f"Activating fallback for {error_record.context.component}"
+        )
         return True
 
-    async def _handle_circuit_breaker_recovery(self, error_record: ErrorRecord) -> bool:
+    async def _handle_circuit_breaker_recovery(
+        self, error_record: ErrorRecord
+    ) -> bool:
         """Handle circuit breaker recovery strategy."""
         component = error_record.context.component
 
@@ -446,21 +459,27 @@ class CentralizedErrorHandler:
 
         return False  # Circuit breaker opened
 
-    async def _handle_graceful_degradation(self, error_record: ErrorRecord) -> bool:
+    async def _handle_graceful_degradation(
+        self, error_record: ErrorRecord
+    ) -> bool:
         """Handle graceful degradation recovery."""
         self.logger.info(
             f"Activating graceful degradation for {error_record.context.component}"
         )
         return True
 
-    async def _handle_restart_component(self, error_record: ErrorRecord) -> bool:
+    async def _handle_restart_component(
+        self, error_record: ErrorRecord
+    ) -> bool:
         """Handle component restart recovery."""
         self.logger.warning(
             f"Component restart recommended for {error_record.context.component}"
         )
         return False  # Manual intervention required
 
-    async def _handle_user_intervention(self, error_record: ErrorRecord) -> bool:
+    async def _handle_user_intervention(
+        self, error_record: ErrorRecord
+    ) -> bool:
         """Handle user intervention recovery."""
         self.logger.critical(
             f"User intervention required for error {error_record.error_id}"
@@ -490,12 +509,15 @@ class CentralizedErrorHandler:
             self.performance_metrics["critical_errors_24h"] = sum(
                 1
                 for r in self.error_records.values()
-                if r.severity == ErrorSeverity.CRITICAL and r.last_occurrence >= cutoff
+                if r.severity == ErrorSeverity.CRITICAL
+                and r.last_occurrence >= cutoff
             )
 
     async def _check_alert_thresholds(self, error_record: ErrorRecord) -> None:
         """Check if error should trigger alerts."""
-        threshold = self.alert_thresholds.get(error_record.severity, float("inf"))
+        threshold = self.alert_thresholds.get(
+            error_record.severity, float("inf")
+        )
 
         if error_record.occurrence_count >= threshold:
             await self._trigger_alert(error_record)
@@ -553,7 +575,9 @@ class CentralizedErrorHandler:
 
     def _get_recovery_statistics(self) -> Dict[str, Any]:
         """Get recovery attempt statistics."""
-        attempted = sum(1 for r in self.error_records.values() if r.recovery_attempted)
+        attempted = sum(
+            1 for r in self.error_records.values() if r.recovery_attempted
+        )
         successful = sum(
             1 for r in self.error_records.values() if r.recovery_successful
         )
@@ -584,7 +608,9 @@ class CentralizedErrorHandler:
                     }
                 )
 
-        return sorted(critical_errors, key=lambda x: x["timestamp"], reverse=True)
+        return sorted(
+            critical_errors, key=lambda x: x["timestamp"], reverse=True
+        )
 
 
 # Global error handler instance
@@ -623,7 +649,9 @@ async def handle_error(
     else:
         metadata = kwargs
 
-    context = ErrorContext(component=component, operation=operation, metadata=metadata)
+    context = ErrorContext(
+        component=component, operation=operation, metadata=metadata
+    )
 
     handler = get_error_handler()
     return await handler.handle_error(error, context)

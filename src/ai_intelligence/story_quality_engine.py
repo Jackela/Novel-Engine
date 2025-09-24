@@ -89,7 +89,9 @@ class StoryQualityReport:
     story_id: str
     overall_score: float
     quality_level: QualityLevel
-    dimension_scores: Dict[QualityDimension, QualityScore] = field(default_factory=dict)
+    dimension_scores: Dict[QualityDimension, QualityScore] = field(
+        default_factory=dict
+    )
     genre: Optional[StoryGenre] = None
     genre_compliance: float = 0.0
     strengths: List[str] = field(default_factory=list)
@@ -127,7 +129,9 @@ class StoryQualityEngine:
         """Initialize the Story Quality Engine."""
         # Quality analysis components
         self.genre_templates: Dict[StoryGenre, GenreTemplate] = {}
-        self.quality_history: Dict[str, List[StoryQualityReport]] = defaultdict(list)
+        self.quality_history: Dict[
+            str, List[StoryQualityReport]
+        ] = defaultdict(list)
         self.improvement_patterns: Dict[str, List[str]] = defaultdict(list)
 
         # Analysis caches for performance
@@ -168,14 +172,25 @@ class StoryQualityEngine:
                 "scientific_plausibility": 0.7,
             },
             style_guidelines={"pacing": "moderate", "complexity": "high"},
-            common_patterns=["exploration", "discovery", "technological_conflict"],
-            genre_specific_metrics={"tech_density": 0.3, "future_elements": 0.6},
+            common_patterns=[
+                "exploration",
+                "discovery",
+                "technological_conflict",
+            ],
+            genre_specific_metrics={
+                "tech_density": 0.3,
+                "future_elements": 0.6,
+            },
         )
 
         # Fantasy template
         self.genre_templates[StoryGenre.FANTASY] = GenreTemplate(
             genre=StoryGenre.FANTASY,
-            required_elements=["magical_system", "world_building", "hero_journey"],
+            required_elements=[
+                "magical_system",
+                "world_building",
+                "hero_journey",
+            ],
             dimension_weights={
                 QualityDimension.WORLD_BUILDING: 1.3,
                 QualityDimension.CHARACTER_DEVELOPMENT: 1.1,
@@ -186,13 +201,20 @@ class StoryQualityEngine:
             quality_thresholds={"magic_consistency": 0.8, "world_depth": 0.7},
             style_guidelines={"pacing": "epic", "complexity": "moderate"},
             common_patterns=["quest", "transformation", "good_vs_evil"],
-            genre_specific_metrics={"magic_density": 0.4, "mythic_elements": 0.5},
+            genre_specific_metrics={
+                "magic_density": 0.4,
+                "mythic_elements": 0.5,
+            },
         )
 
         # Horror template
         self.genre_templates[StoryGenre.HORROR] = GenreTemplate(
             genre=StoryGenre.HORROR,
-            required_elements=["suspense_building", "fear_elements", "atmosphere"],
+            required_elements=[
+                "suspense_building",
+                "fear_elements",
+                "atmosphere",
+            ],
             dimension_weights={
                 QualityDimension.EMOTIONAL_IMPACT: 1.3,
                 QualityDimension.PACING: 1.2,
@@ -200,10 +222,19 @@ class StoryQualityEngine:
                 QualityDimension.CHARACTER_DEVELOPMENT: 0.9,
                 QualityDimension.DIALOGUE_QUALITY: 0.8,
             },
-            quality_thresholds={"tension_buildup": 0.8, "fear_effectiveness": 0.7},
-            style_guidelines={"pacing": "variable", "complexity": "psychological"},
+            quality_thresholds={
+                "tension_buildup": 0.8,
+                "fear_effectiveness": 0.7,
+            },
+            style_guidelines={
+                "pacing": "variable",
+                "complexity": "psychological",
+            },
             common_patterns=["escalating_threat", "isolation", "revelation"],
-            genre_specific_metrics={"fear_density": 0.5, "suspense_curve": 0.7},
+            genre_specific_metrics={
+                "fear_density": 0.5,
+                "suspense_curve": 0.7,
+            },
         )
 
         # Add more genres as needed
@@ -296,11 +327,17 @@ class StoryQualityEngine:
             character_score = await self._analyze_character_development(
                 story_text, genre
             )
-            dimension_scores[QualityDimension.CHARACTER_DEVELOPMENT] = character_score
+            dimension_scores[
+                QualityDimension.CHARACTER_DEVELOPMENT
+            ] = character_score
 
             # Dialogue quality analysis
-            dialogue_score = await self._analyze_dialogue_quality(story_text, genre)
-            dimension_scores[QualityDimension.DIALOGUE_QUALITY] = dialogue_score
+            dialogue_score = await self._analyze_dialogue_quality(
+                story_text, genre
+            )
+            dimension_scores[
+                QualityDimension.DIALOGUE_QUALITY
+            ] = dialogue_score
 
             # Pacing analysis
             pacing_score = await self._analyze_pacing(story_text, genre)
@@ -311,25 +348,31 @@ class StoryQualityEngine:
             dimension_scores[QualityDimension.WORLD_BUILDING] = world_score
 
             # Emotional impact analysis
-            emotion_score = await self._analyze_emotional_impact(story_text, genre)
+            emotion_score = await self._analyze_emotional_impact(
+                story_text, genre
+            )
             dimension_scores[QualityDimension.EMOTIONAL_IMPACT] = emotion_score
 
             # Additional analyses
-            originality_score = await self._analyze_originality(story_text, genre)
+            originality_score = await self._analyze_originality(
+                story_text, genre
+            )
             dimension_scores[QualityDimension.ORIGINALITY] = originality_score
 
             genre_consistency_score = await self._analyze_genre_consistency(
                 story_text, genre
             )
-            dimension_scores[QualityDimension.GENRE_CONSISTENCY] = (
-                genre_consistency_score
-            )
+            dimension_scores[
+                QualityDimension.GENRE_CONSISTENCY
+            ] = genre_consistency_score
 
             # Store dimension scores
             report.dimension_scores = dimension_scores
 
             # Calculate overall score using genre-specific weights
-            overall_score = await self._calculate_overall_score(dimension_scores, genre)
+            overall_score = await self._calculate_overall_score(
+                dimension_scores, genre
+            )
             report.overall_score = overall_score
 
             # Determine quality level
@@ -338,15 +381,23 @@ class StoryQualityEngine:
             # Generate insights and recommendations
             report.strengths = self._identify_strengths(dimension_scores)
             report.weaknesses = self._identify_weaknesses(dimension_scores)
-            report.improvement_recommendations = await self._generate_recommendations(
-                dimension_scores, genre, story_text
+            report.improvement_recommendations = (
+                await self._generate_recommendations(
+                    dimension_scores, genre, story_text
+                )
             )
 
             # Additional analyses
             report.reading_level = self._analyze_reading_level(story_text)
-            report.sentiment_analysis = await self._analyze_sentiment(story_text)
-            report.character_analysis = await self._analyze_characters(story_text)
-            report.plot_analysis = await self._analyze_plot_structure(story_text)
+            report.sentiment_analysis = await self._analyze_sentiment(
+                story_text
+            )
+            report.character_analysis = await self._analyze_characters(
+                story_text
+            )
+            report.plot_analysis = await self._analyze_plot_structure(
+                story_text
+            )
 
             # Genre compliance
             if genre and genre in self.genre_templates:
@@ -376,7 +427,9 @@ class StoryQualityEngine:
                 overall_score=0.0,
                 quality_level=QualityLevel.VERY_POOR,
                 weaknesses=["Analysis failed"],
-                improvement_recommendations=["Retry analysis with valid input"],
+                improvement_recommendations=[
+                    "Retry analysis with valid input"
+                ],
             )
 
     async def detect_genre(self, story_text: str) -> Optional[StoryGenre]:
@@ -463,10 +516,14 @@ class StoryQualityEngine:
             # Calculate genre scores
             genre_scores = {}
             for genre, keywords in genre_keywords.items():
-                score = sum(word_frequencies.get(keyword, 0) for keyword in keywords)
+                score = sum(
+                    word_frequencies.get(keyword, 0) for keyword in keywords
+                )
                 # Normalize by text length
                 genre_scores[genre] = (
-                    score / len(story_text.split()) if story_text.split() else 0
+                    score / len(story_text.split())
+                    if story_text.split()
+                    else 0
                 )
 
             # Find the highest scoring genre
@@ -504,16 +561,21 @@ class StoryQualityEngine:
             timestamps = [report.analysis_timestamp for report in history]
 
             # Overall trend
-            trend_direction = "improving" if scores[-1] > scores[0] else "declining"
+            trend_direction = (
+                "improving" if scores[-1] > scores[0] else "declining"
+            )
             if abs(scores[-1] - scores[0]) < 0.05:
                 trend_direction = "stable"
 
             # Dimension trends
             dimension_trends = {}
             for dimension in QualityDimension:
-                if all(dimension in report.dimension_scores for report in history):
+                if all(
+                    dimension in report.dimension_scores for report in history
+                ):
                     dim_scores = [
-                        report.dimension_scores[dimension].score for report in history
+                        report.dimension_scores[dimension].score
+                        for report in history
                     ]
                     if dim_scores[-1] > dim_scores[0]:
                         dimension_trends[dimension.value] = "improving"
@@ -531,7 +593,10 @@ class StoryQualityEngine:
                 "latest_score": scores[-1],
                 "best_score": max(scores),
                 "average_score": sum(scores) / len(scores),
-                "analysis_period": {"start": timestamps[0], "end": timestamps[-1]},
+                "analysis_period": {
+                    "start": timestamps[0],
+                    "end": timestamps[-1],
+                },
             }
 
         except Exception as e:
@@ -573,14 +638,17 @@ class StoryQualityEngine:
                     )
 
             # Sort by priority
-            improvement_priorities.sort(key=lambda x: x["priority"], reverse=True)
+            improvement_priorities.sort(
+                key=lambda x: x["priority"], reverse=True
+            )
 
             # Generate actionable plan
             plan = {
                 "story_id": story_id,
                 "current_overall_score": latest_report.overall_score,
                 "target_score": min(latest_report.overall_score + 0.2, 1.0),
-                "improvement_areas": improvement_priorities[:5],  # Top 5 priorities
+                # Top 5 priorities
+                "improvement_areas": improvement_priorities[:5],
                 "quick_wins": [],
                 "major_improvements": [],
                 "estimated_timeline": "2-4 weeks",
@@ -637,7 +705,9 @@ class StoryQualityEngine:
             transition_count = sum(
                 story_text.lower().count(word) for word in transition_words
             )
-            transition_score = min(transition_count / (len(paragraphs) * 0.5), 1.0)
+            transition_score = min(
+                transition_count / (len(paragraphs) * 0.5), 1.0
+            )
 
             # Overall plot coherence
             plot_score = structure_score * 0.6 + transition_score * 0.4
@@ -650,7 +720,9 @@ class StoryQualityEngine:
                     "Strengthen story structure with clear beginning, middle, and end"
                 )
             if transition_score < 0.5:
-                suggestions.append("Add more transitional elements between scenes")
+                suggestions.append(
+                    "Add more transitional elements between scenes"
+                )
 
             if plot_score > 0.8:
                 evidence.append("Strong narrative structure and flow")
@@ -671,7 +743,9 @@ class StoryQualityEngine:
         except Exception as e:
             logger.error(f"Plot coherence analysis failed: {e}")
             return QualityScore(
-                dimension=QualityDimension.PLOT_COHERENCE, score=0.5, confidence=0.1
+                dimension=QualityDimension.PLOT_COHERENCE,
+                score=0.5,
+                confidence=0.1,
             )
 
     async def _analyze_character_development(
@@ -679,7 +753,8 @@ class StoryQualityEngine:
     ) -> QualityScore:
         """Analyze character development and depth."""
         try:
-            # Extract potential character names (capitalized words not at sentence start)
+            # Extract potential character names (capitalized words not at
+            # sentence start)
             import re
 
             character_pattern = r"\b[A-Z][a-z]+\b"
@@ -688,7 +763,9 @@ class StoryQualityEngine:
 
             # Filter to likely character names (appear multiple times)
             main_characters = [
-                name for name, count in character_frequency.items() if count >= 3
+                name
+                for name, count in character_frequency.items()
+                if count >= 3
             ]
 
             # Character development indicators
@@ -752,7 +829,9 @@ class StoryQualityEngine:
                 )
 
             if interaction_density < 0.5:
-                suggestions.append("Include more character dialogue and interactions")
+                suggestions.append(
+                    "Include more character dialogue and interactions"
+                )
 
             return QualityScore(
                 dimension=QualityDimension.CHARACTER_DEVELOPMENT,
@@ -799,7 +878,9 @@ class StoryQualityEngine:
             avg_dialogue_length = sum(len(d.split()) for d in dialogues) / len(
                 dialogues
             )
-            dialogue_variety = len(set(dialogues)) / len(dialogues)  # Uniqueness ratio
+            dialogue_variety = len(set(dialogues)) / len(
+                dialogues
+            )  # Uniqueness ratio
 
             # Check for dialogue tags and variety
             dialogue_tags = [
@@ -820,9 +901,12 @@ class StoryQualityEngine:
                 abs(avg_dialogue_length - 8) / 8, 1.0
             )  # Ideal: ~8 words
             variety_score = dialogue_variety
-            tag_score = min(tag_variety / 4, 1.0)  # Use variety of dialogue tags
+            # Use variety of dialogue tags
+            tag_score = min(tag_variety / 4, 1.0)
 
-            overall_score = length_score * 0.3 + variety_score * 0.4 + tag_score * 0.3
+            overall_score = (
+                length_score * 0.3 + variety_score * 0.4 + tag_score * 0.3
+            )
 
             evidence = []
             suggestions = []
@@ -830,7 +914,9 @@ class StoryQualityEngine:
             if dialogue_variety > 0.8:
                 evidence.append("Good dialogue variety and uniqueness")
             else:
-                suggestions.append("Make dialogue more distinct between characters")
+                suggestions.append(
+                    "Make dialogue more distinct between characters"
+                )
 
             if tag_variety < 3:
                 suggestions.append(
@@ -857,7 +943,9 @@ class StoryQualityEngine:
         except Exception as e:
             logger.error(f"Dialogue quality analysis failed: {e}")
             return QualityScore(
-                dimension=QualityDimension.DIALOGUE_QUALITY, score=0.5, confidence=0.1
+                dimension=QualityDimension.DIALOGUE_QUALITY,
+                score=0.5,
+                confidence=0.1,
             )
 
     async def _analyze_pacing(
@@ -866,17 +954,23 @@ class StoryQualityEngine:
         """Analyze story pacing and rhythm."""
         try:
             sentences = [s.strip() for s in story_text.split(".") if s.strip()]
-            paragraphs = [p.strip() for p in story_text.split("\n\n") if p.strip()]
+            paragraphs = [
+                p.strip() for p in story_text.split("\n\n") if p.strip()
+            ]
 
             if not sentences:
                 return QualityScore(
-                    dimension=QualityDimension.PACING, score=0.2, confidence=0.8
+                    dimension=QualityDimension.PACING,
+                    score=0.2,
+                    confidence=0.8,
                 )
 
             # Sentence length analysis
             sentence_lengths = [len(s.split()) for s in sentences]
             avg_sentence_length = sum(sentence_lengths) / len(sentence_lengths)
-            sentence_variety = len(set(sentence_lengths)) / len(sentence_lengths)
+            sentence_variety = len(set(sentence_lengths)) / len(
+                sentence_lengths
+            )
 
             # Paragraph length analysis
             paragraph_lengths = [len(p.split()) for p in paragraphs]
@@ -887,13 +981,28 @@ class StoryQualityEngine:
             )
 
             # Pacing indicators
-            action_words = ["ran", "jumped", "fought", "rushed", "quickly", "suddenly"]
+            action_words = [
+                "ran",
+                "jumped",
+                "fought",
+                "rushed",
+                "quickly",
+                "suddenly",
+            ]
             action_density = sum(
                 story_text.lower().count(word) for word in action_words
             )
 
-            slow_words = ["slowly", "carefully", "thoughtfully", "peacefully", "gently"]
-            slow_density = sum(story_text.lower().count(word) for word in slow_words)
+            slow_words = [
+                "slowly",
+                "carefully",
+                "thoughtfully",
+                "peacefully",
+                "gently",
+            ]
+            slow_density = sum(
+                story_text.lower().count(word) for word in slow_words
+            )
 
             # Calculate pacing score
             length_score = 1.0 - min(
@@ -901,7 +1010,9 @@ class StoryQualityEngine:
             )  # Ideal: ~12 words
             variety_score = sentence_variety
             rhythm_score = min(
-                (action_density + slow_density) / (len(story_text.split()) * 0.01), 1.0
+                (action_density + slow_density)
+                / (len(story_text.split()) * 0.01),
+                1.0,
             )
 
             overall_score = (
@@ -912,14 +1023,22 @@ class StoryQualityEngine:
             suggestions = []
 
             if sentence_variety > 0.5:
-                evidence.append("Good sentence length variety creates natural rhythm")
+                evidence.append(
+                    "Good sentence length variety creates natural rhythm"
+                )
             else:
-                suggestions.append("Vary sentence lengths to improve pacing and flow")
+                suggestions.append(
+                    "Vary sentence lengths to improve pacing and flow"
+                )
 
             if avg_sentence_length > 20:
-                suggestions.append("Consider shorter sentences for better readability")
+                suggestions.append(
+                    "Consider shorter sentences for better readability"
+                )
             elif avg_sentence_length < 8:
-                suggestions.append("Mix in some longer sentences for better flow")
+                suggestions.append(
+                    "Mix in some longer sentences for better flow"
+                )
 
             return QualityScore(
                 dimension=QualityDimension.PACING,
@@ -983,7 +1102,9 @@ class StoryQualityEngine:
                 "bright",
                 "dim",
             ]
-            detail_count = sum(story_text.lower().count(word) for word in detail_words)
+            detail_count = sum(
+                story_text.lower().count(word) for word in detail_words
+            )
 
             # Calculate world building score
             word_count = len(story_text.split())
@@ -1036,7 +1157,9 @@ class StoryQualityEngine:
         except Exception as e:
             logger.error(f"World building analysis failed: {e}")
             return QualityScore(
-                dimension=QualityDimension.WORLD_BUILDING, score=0.5, confidence=0.1
+                dimension=QualityDimension.WORLD_BUILDING,
+                score=0.5,
+                confidence=0.1,
             )
 
     async def _analyze_emotional_impact(
@@ -1090,10 +1213,13 @@ class StoryQualityEngine:
 
             # Calculate emotional impact score
             emotional_variety = min(
-                (positive_count + negative_count + intense_count) / (word_count * 0.02),
+                (positive_count + negative_count + intense_count)
+                / (word_count * 0.02),
                 1.0,
             )
-            emotional_intensity = min(intense_count / (word_count * 0.005), 1.0)
+            emotional_intensity = min(
+                intense_count / (word_count * 0.005), 1.0
+            )
             punctuation_impact = min(
                 (exclamations + questions) / (word_count * 0.01), 1.0
             )
@@ -1108,7 +1234,9 @@ class StoryQualityEngine:
             suggestions = []
 
             if emotional_variety > 0.7:
-                evidence.append("Good emotional range creates engaging narrative")
+                evidence.append(
+                    "Good emotional range creates engaging narrative"
+                )
             else:
                 suggestions.append("Include more emotional depth and variety")
 
@@ -1116,7 +1244,9 @@ class StoryQualityEngine:
                 suggestions.append("Add moments of high emotional intensity")
 
             if exclamations + questions < 3:
-                suggestions.append("Use punctuation to enhance emotional expression")
+                suggestions.append(
+                    "Use punctuation to enhance emotional expression"
+                )
 
             return QualityScore(
                 dimension=QualityDimension.EMOTIONAL_IMPACT,
@@ -1137,7 +1267,9 @@ class StoryQualityEngine:
         except Exception as e:
             logger.error(f"Emotional impact analysis failed: {e}")
             return QualityScore(
-                dimension=QualityDimension.EMOTIONAL_IMPACT, score=0.5, confidence=0.1
+                dimension=QualityDimension.EMOTIONAL_IMPACT,
+                score=0.5,
+                confidence=0.1,
             )
 
     async def _analyze_originality(
@@ -1146,7 +1278,8 @@ class StoryQualityEngine:
         """Analyze story originality and uniqueness."""
         try:
             # This is a simplified originality analysis
-            # In a real implementation, this would check against a database of existing stories
+            # In a real implementation, this would check against a database of
+            # existing stories
 
             # Check for clichés and overused phrases
             common_cliches = [
@@ -1183,7 +1316,9 @@ class StoryQualityEngine:
             if word_variety > 0.6:
                 evidence.append("Rich vocabulary demonstrates originality")
             else:
-                suggestions.append("Use more varied vocabulary and expressions")
+                suggestions.append(
+                    "Use more varied vocabulary and expressions"
+                )
 
             return QualityScore(
                 dimension=QualityDimension.ORIGINALITY,
@@ -1202,7 +1337,9 @@ class StoryQualityEngine:
         except Exception as e:
             logger.error(f"Originality analysis failed: {e}")
             return QualityScore(
-                dimension=QualityDimension.ORIGINALITY, score=0.5, confidence=0.1
+                dimension=QualityDimension.ORIGINALITY,
+                score=0.5,
+                confidence=0.1,
             )
 
     async def _analyze_genre_consistency(
@@ -1215,7 +1352,9 @@ class StoryQualityEngine:
                     dimension=QualityDimension.GENRE_CONSISTENCY,
                     score=0.5,
                     confidence=0.1,
-                    suggestions=["Genre not specified or template not available"],
+                    suggestions=[
+                        "Genre not specified or template not available"
+                    ],
                 )
 
             template = self.genre_templates[genre]
@@ -1226,7 +1365,8 @@ class StoryQualityEngine:
             missing_elements = []
 
             for element in template.required_elements:
-                # Simple keyword check (would be more sophisticated in practice)
+                # Simple keyword check (would be more sophisticated in
+                # practice)
                 if element.replace("_", " ") in text_lower:
                     elements_present += 1
                 else:
@@ -1236,13 +1376,18 @@ class StoryQualityEngine:
 
             # Check genre-specific metrics if available
             metric_scores = []
-            for metric_name, expected_value in template.genre_specific_metrics.items():
+            for (
+                metric_name,
+                expected_value,
+            ) in template.genre_specific_metrics.items():
                 # This would be calculated based on actual content analysis
                 # For now, use a placeholder
                 metric_scores.append(0.7)
 
             avg_metric_score = (
-                sum(metric_scores) / len(metric_scores) if metric_scores else 0.5
+                sum(metric_scores) / len(metric_scores)
+                if metric_scores
+                else 0.5
             )
 
             overall_score = element_score * 0.7 + avg_metric_score * 0.3
@@ -1251,10 +1396,12 @@ class StoryQualityEngine:
             suggestions = []
 
             if element_score > 0.8:
-                evidence.append(f"Contains most required {genre.value} elements")
+                evidence.append(
+                    f"Contains most required {genre.value} elements"
+                )
             else:
                 suggestions.append(
-                    f"Include more {genre.value} genre elements: {', '.join(missing_elements)}"
+                    f"Include more {genre.value}genre elements: {', '.join(missing_elements)}"
                 )
 
             return QualityScore(
@@ -1275,7 +1422,9 @@ class StoryQualityEngine:
         except Exception as e:
             logger.error(f"Genre consistency analysis failed: {e}")
             return QualityScore(
-                dimension=QualityDimension.GENRE_CONSISTENCY, score=0.5, confidence=0.1
+                dimension=QualityDimension.GENRE_CONSISTENCY,
+                score=0.5,
+                confidence=0.1,
             )
 
     # Helper methods
@@ -1400,7 +1549,15 @@ class StoryQualityEngine:
             "love",
             "happy",
         ]
-        negative_words = ["bad", "terrible", "awful", "horrible", "ugly", "hate", "sad"]
+        negative_words = [
+            "bad",
+            "terrible",
+            "awful",
+            "horrible",
+            "ugly",
+            "hate",
+            "sad",
+        ]
 
         text_lower = story_text.lower()
         positive_count = sum(text_lower.count(word) for word in positive_words)
@@ -1489,7 +1646,9 @@ class StoryQualityEngine:
             presence_score = sum(
                 1 for keyword in element_keywords if keyword in text_lower
             )
-            compliance_scores.append(min(presence_score / len(element_keywords), 1.0))
+            compliance_scores.append(
+                min(presence_score / len(element_keywords), 1.0)
+            )
 
         # Check genre-specific patterns
         for pattern in template.common_patterns:
@@ -1497,7 +1656,9 @@ class StoryQualityEngine:
             presence_score = sum(
                 1 for keyword in pattern_keywords if keyword in text_lower
             )
-            compliance_scores.append(min(presence_score / len(pattern_keywords), 1.0))
+            compliance_scores.append(
+                min(presence_score / len(pattern_keywords), 1.0)
+            )
 
         return (
             sum(compliance_scores) / len(compliance_scores)

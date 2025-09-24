@@ -59,7 +59,9 @@ class EntitySummary:
         }
 
     @classmethod
-    def from_world_entity(cls, world_entity: Dict[str, Any]) -> "EntitySummary":
+    def from_world_entity(
+        cls, world_entity: Dict[str, Any]
+    ) -> "EntitySummary":
         """Create EntitySummary from WorldEntity dict."""
         coords = world_entity["coordinates"]
 
@@ -99,7 +101,9 @@ class WorldSliceReadModel(BaseModel):
     __tablename__ = "world_slice_read_model"
 
     # World identification
-    world_state_id = Column(UUID(as_uuid=True), nullable=False, unique=True, index=True)
+    world_state_id = Column(
+        UUID(as_uuid=True), nullable=False, unique=True, index=True
+    )
     world_name = Column(String(255), nullable=False, index=True)
     world_description = Column(Text, nullable=True)
 
@@ -135,7 +139,9 @@ class WorldSliceReadModel(BaseModel):
     entities_by_location = Column(
         JSON, nullable=False, default=dict
     )  # Spatial grid index
-    all_entities = Column(JSON, nullable=False, default=dict)  # Complete entity data
+    all_entities = Column(
+        JSON, nullable=False, default=dict
+    )  # Complete entity data
 
     # Environment and world properties
     environment_summary = Column(JSON, nullable=False, default=dict)
@@ -145,7 +151,9 @@ class WorldSliceReadModel(BaseModel):
     active_entity_ids = Column(
         ARRAY(String), nullable=False, default=list
     )  # For fast ID lookups
-    searchable_content = Column(Text, nullable=True, index=True)  # For text search
+    searchable_content = Column(
+        Text, nullable=True, index=True
+    )  # For text search
 
     # Performance indexes
     __table_args__ = (
@@ -161,7 +169,9 @@ class WorldSliceReadModel(BaseModel):
         Index("idx_world_slice_spatial_z", "min_z", "max_z"),
         # Entity count indexes for filtering
         Index("idx_world_slice_entity_count", "total_entities"),
-        Index("idx_world_slice_version", "world_version", "projection_version"),
+        Index(
+            "idx_world_slice_version", "world_version", "projection_version"
+        ),
         # Search optimization
         Index("idx_world_slice_search", "searchable_content"),
         # Compound indexes for common query patterns
@@ -241,7 +251,10 @@ class WorldSliceReadModel(BaseModel):
         Returns:
             List of entities of the specified type
         """
-        if not self.entities_by_type or entity_type not in self.entities_by_type:
+        if (
+            not self.entities_by_type
+            or entity_type not in self.entities_by_type
+        ):
             return []
 
         entities = self.entities_by_type[entity_type]
@@ -318,7 +331,9 @@ class WorldSliceReadModel(BaseModel):
             "name": self.world_name,
             "description": self.world_description,
             "status": self.status,
-            "world_time": self.world_time.isoformat() if self.world_time else None,
+            "world_time": self.world_time.isoformat()
+            if self.world_time
+            else None,
             "total_entities": self.total_entities,
             "entity_types": self.entity_type_counts,
             "spatial_bounds": (
@@ -425,7 +440,9 @@ class WorldSliceReadModel(BaseModel):
         # Extract environment summary (first 5 keys to avoid bloat)
         environment_data = world_state_data.get("environment", {})
         environment_summary = (
-            dict(list(environment_data.items())[:5]) if environment_data else {}
+            dict(list(environment_data.items())[:5])
+            if environment_data
+            else {}
         )
 
         return cls(
@@ -563,9 +580,9 @@ class WorldSliceReadModel(BaseModel):
                 self.min_z = min(c[2] for c in coordinates)
                 self.max_z = max(c[2] for c in coordinates)
             else:
-                self.min_x = self.max_x = self.min_y = self.max_y = self.min_z = (
-                    self.max_z
-                ) = None
+                self.min_x = (
+                    self.max_x
+                ) = self.min_y = self.max_y = self.min_z = self.max_z = None
 
         # Update timestamps
         self.last_event_timestamp = datetime.now()

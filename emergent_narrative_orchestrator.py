@@ -3,8 +3,10 @@
 Emergent Narrative AI Orchestrator
 ==================================
 
-Wave 4 Implementation: Advanced narrative intelligence system that enables emergent
-storytelling through real-time narrative analysis, dynamic relationship evolution,
+Wave 4 Implementation: Advanced narrative intelligence system that enables
+emergent
+storytelling through real-time narrative analysis, dynamic relationship
+evolution,
 and story-driven agent behavior modification for the Novel Engine.
 
 Features:
@@ -30,7 +32,6 @@ from typing import Any, Dict, List, Optional
 from chronicler_agent import ChroniclerAgent
 from enhanced_multi_agent_bridge import EnhancedMultiAgentBridge
 from parallel_agent_coordinator import ParallelAgentCoordinator
-
 
 # Import Novel Engine components
 from src.event_bus import EventBus
@@ -145,8 +146,10 @@ class StoryMoment:
 
 class EmergentNarrativeOrchestrator:
     """
-    Advanced narrative intelligence system that creates emergent storytelling through
-    real-time analysis, dynamic relationship evolution, and story-driven behavior influence.
+    Advanced narrative intelligence system that creates emergent
+    storytelling through
+    real-time analysis, dynamic relationship evolution, and story-driven
+    behavior influence.
     """
 
     def __init__(
@@ -179,14 +182,16 @@ class EmergentNarrativeOrchestrator:
         # Dynamic story elements
         self.active_plot_threads: Dict[str, PlotThread] = {}
         self.relationship_evolutions: Dict[str, RelationshipEvolution] = {}
-        self.narrative_influences: Dict[str, List[NarrativeInfluence]] = defaultdict(
-            list
-        )
+        self.narrative_influences: Dict[
+            str, List[NarrativeInfluence]
+        ] = defaultdict(list)
 
         # Story history and analysis
         self.story_moments: List[StoryMoment] = []
         self.narrative_patterns: Dict[str, Any] = {}
-        self.character_arc_progressions: Dict[str, Dict[str, float]] = defaultdict(dict)
+        self.character_arc_progressions: Dict[
+            str, Dict[str, float]
+        ] = defaultdict(dict)
 
         # Emergent narrative metrics
         self.emergence_metrics = {
@@ -209,11 +214,15 @@ class EmergentNarrativeOrchestrator:
         self._initialize_narrative_templates()
 
         logger.info(
-            "Emergent Narrative Orchestrator initialized with advanced storytelling AI"
+            "Emergent Narrative Orchestrator initialized with advanced "
+            "storytelling AI"
         )
 
     async def orchestrate_emergent_turn(
-        self, turn_number: int, agents: List[PersonaAgent], world_state: Dict[str, Any]
+        self,
+        turn_number: int,
+        agents: List[PersonaAgent],
+        world_state: Dict[str, Any],
     ) -> Dict[str, Any]:
         """
         Orchestrate an emergent narrative turn with story-driven coordination.
@@ -252,17 +261,21 @@ class EmergentNarrativeOrchestrator:
             )
 
             # Phase 5: Apply story-driven behavior modifications
-            await self._apply_narrative_influences(agents, narrative_influences)
+            await self._apply_narrative_influences(
+                agents, narrative_influences
+            )
 
             # Phase 6: Execute enhanced turn with narrative awareness
-            enhanced_turn_result = await self.enhanced_bridge.enhanced_run_turn(
-                {
-                    "turn_number": turn_number,
-                    "narrative_state": self.current_narrative_state.value,
-                    "active_plot_threads": len(self.active_plot_threads),
-                    "dramatic_tension": self.dramatic_tension_level,
-                    "narrative_influences": len(narrative_influences),
-                }
+            enhanced_turn_result = (
+                await self.enhanced_bridge.enhanced_run_turn(
+                    {
+                        "turn_number": turn_number,
+                        "narrative_state": self.current_narrative_state.value,
+                        "active_plot_threads": len(self.active_plot_threads),
+                        "dramatic_tension": self.dramatic_tension_level,
+                        "narrative_influences": len(narrative_influences),
+                    }
+                )
             )
 
             # Phase 7: Analyze emergent story moments
@@ -279,7 +292,9 @@ class EmergentNarrativeOrchestrator:
             )
 
             # Phase 9: Adjust narrative state and pacing
-            await self._update_narrative_state(narrative_analysis, story_moments)
+            await self._update_narrative_state(
+                narrative_analysis, story_moments
+            )
 
             execution_time = (datetime.now() - turn_start_time).total_seconds()
 
@@ -292,7 +307,8 @@ class EmergentNarrativeOrchestrator:
             )
 
             logger.info(
-                f"Emergent narrative turn {turn_number} completed in {execution_time:.2f}s"
+                f"Emergent narrative turn {turn_number} completed in "
+                f"{execution_time:.2f}s"
             )
 
             return {
@@ -360,7 +376,9 @@ class EmergentNarrativeOrchestrator:
     ) -> PlotThread:
         """Create a new emergent plot thread based on agent interactions."""
         try:
-            thread_id = f"plot_{thread_type.value}_{datetime.now().strftime('%H%M%S')}"
+            thread_id = (
+                f"plot_{thread_type.value}_{datetime.now().strftime('%H%M%S')}"
+            )
 
             # Analyze participant relationships and context
             central_tension = await self._generate_plot_tension(
@@ -390,7 +408,8 @@ class EmergentNarrativeOrchestrator:
             self.emergence_metrics["plot_threads_created"] += 1
 
             logger.info(
-                f"Created emergent plot thread: {thread_id} ({thread_type.value})"
+                f"Created emergent plot thread: {thread_id} "
+                f"({thread_type.value})"
             )
 
             # Emit event for other systems
@@ -411,12 +430,18 @@ class EmergentNarrativeOrchestrator:
             raise
 
     async def evolve_relationship_dynamic(
-        self, character_a: str, character_b: str, interaction_context: Dict[str, Any]
+        self,
+        character_a: str,
+        character_b: str,
+        interaction_context: Dict[str, Any],
     ) -> RelationshipEvolution:
-        """Evolve the dynamic between two characters based on their interaction."""
+        """
+        Evolve the dynamic between two characters based on their interaction.
+        """
         try:
             relationship_id = (
-                f"rel_{min(character_a, character_b)}_{max(character_a, character_b)}"
+                f"rel_{min(character_a, character_b)}_"
+                f"{max(character_a, character_b)}"
             )
 
             # Get or create relationship evolution
@@ -471,7 +496,8 @@ class EmergentNarrativeOrchestrator:
             self.emergence_metrics["relationship_evolutions"] += 1
 
             logger.info(
-                f"Evolved relationship {relationship_id}: {relationship.current_dynamic.value} "
+                f"Evolved relationship {relationship_id}: "
+                f"{relationship.current_dynamic.value} "
                 f"(strength: {relationship.relationship_strength:.2f})"
             )
 
@@ -482,7 +508,9 @@ class EmergentNarrativeOrchestrator:
                     "relationship_id": relationship_id,
                     "characters": [character_a, character_b],
                     "new_dynamic": relationship.current_dynamic.value,
-                    "strength_change": interaction_analysis.get("strength_change", 0.0),
+                    "strength_change": interaction_analysis.get(
+                        "strength_change", 0.0
+                    ),
                 },
             )
 
@@ -505,7 +533,9 @@ class EmergentNarrativeOrchestrator:
                 },
                 "emergent_elements": {
                     "active_plot_threads": len(self.active_plot_threads),
-                    "evolving_relationships": len(self.relationship_evolutions),
+                    "evolving_relationships": len(
+                        self.relationship_evolutions
+                    ),
                     "narrative_influences": sum(
                         len(influences)
                         for influences in self.narrative_influences.values()
@@ -565,7 +595,9 @@ class EmergentNarrativeOrchestrator:
                             for thread in self.active_plot_threads.values()
                         )
                     ),
-                    "relationship_complexity": len(self.relationship_evolutions),
+                    "relationship_complexity": len(
+                        self.relationship_evolutions
+                    ),
                     "story_coherence": self.narrative_coherence_score,
                     "emergence_velocity": sum(self.emergence_metrics.values())
                     / max(len(self.story_moments), 1),
@@ -575,47 +607,84 @@ class EmergentNarrativeOrchestrator:
             return dashboard
 
         except Exception as e:
-            logger.error(f"Failed to generate narrative intelligence dashboard: {e}")
+            logger.error(
+                f"Failed to generate narrative intelligence dashboard: {e}"
+            )
             return {"error": str(e), "timestamp": datetime.now()}
 
     # Private helper methods
 
     def _setup_narrative_event_handlers(self):
         """Setup event handlers for narrative intelligence."""
-        self.event_bus.subscribe("AGENT_INTERACTION", self._handle_agent_interaction)
-        self.event_bus.subscribe("PLOT_DEVELOPMENT", self._handle_plot_development)
+        self.event_bus.subscribe(
+            "AGENT_INTERACTION", self._handle_agent_interaction
+        )
+        self.event_bus.subscribe(
+            "PLOT_DEVELOPMENT", self._handle_plot_development
+        )
         self.event_bus.subscribe(
             "RELATIONSHIP_CHANGE", self._handle_relationship_change
         )
-        self.event_bus.subscribe("NARRATIVE_MOMENT", self._handle_narrative_moment)
+        self.event_bus.subscribe(
+            "NARRATIVE_MOMENT", self._handle_narrative_moment
+        )
 
     def _initialize_narrative_templates(self):
         """Initialize templates for narrative generation."""
         self.narrative_templates = {
             "plot_tensions": {
-                PlotThreadType.CHARACTER_CONFLICT: "tension between {} and {} over {}",
-                PlotThreadType.MYSTERY: "mysterious circumstances surrounding {}",
-                PlotThreadType.ROMANCE: "growing connection between {} and {}",
-                PlotThreadType.QUEST: "shared goal of {} driving {} forward",
-                PlotThreadType.BETRAYAL: "trust breaking down between {} and {}",
-                PlotThreadType.REDEMPTION: "{} seeking to make amends for {}",
-                PlotThreadType.ALLIANCE: "strategic partnership forming between {}",
-                PlotThreadType.REVELATION: "hidden truth about {} coming to light",
+                PlotThreadType.CHARACTER_CONFLICT: (
+                    "tension between {} and {} over {}"
+                ),
+                PlotThreadType.MYSTERY: (
+                    "mysterious circumstances surrounding {}"
+                ),
+                PlotThreadType.ROMANCE: (
+                    "growing connection between {} and {}"
+                ),
+                PlotThreadType.QUEST: ("shared goal of {} driving {} forward"),
+                PlotThreadType.BETRAYAL: (
+                    "trust breaking down between {} and {}"
+                ),
+                PlotThreadType.REDEMPTION: (
+                    "{} seeking to make amends for {}"
+                ),
+                PlotThreadType.ALLIANCE: (
+                    "strategic partnership forming between {}"
+                ),
+                PlotThreadType.REVELATION: (
+                    "hidden truth about {} coming to light"
+                ),
             },
             "relationship_dynamics": {
-                RelationshipDynamics.BONDING: "growing closer through shared experiences",
-                RelationshipDynamics.CONFLICT: "tensions escalating between characters",
+                RelationshipDynamics.BONDING: (
+                    "growing closer through shared experiences"
+                ),
+                RelationshipDynamics.CONFLICT: (
+                    "tensions escalating between characters"
+                ),
                 RelationshipDynamics.BETRAYAL: "trust fundamentally broken",
-                RelationshipDynamics.RECONCILIATION: "healing and forgiveness",
-                RelationshipDynamics.MENTORSHIP: "guidance and learning relationship",
-                RelationshipDynamics.RIVALRY: "competitive dynamic driving both forward",
-                RelationshipDynamics.ALLIANCE: "strategic partnership for mutual benefit",
+                RelationshipDynamics.RECONCILIATION: (
+                    "healing and forgiveness"
+                ),
+                RelationshipDynamics.MENTORSHIP: (
+                    "guidance and learning relationship"
+                ),
+                RelationshipDynamics.RIVALRY: (
+                    "competitive dynamic driving both forward"
+                ),
+                RelationshipDynamics.ALLIANCE: (
+                    "strategic partnership for mutual benefit"
+                ),
                 RelationshipDynamics.ROMANCE: "romantic feelings developing",
             },
         }
 
     async def _analyze_narrative_state(
-        self, turn_number: int, agents: List[PersonaAgent], world_state: Dict[str, Any]
+        self,
+        turn_number: int,
+        agents: List[PersonaAgent],
+        world_state: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Analyze current narrative state and progression."""
         analysis = {
@@ -650,12 +719,16 @@ class EmergentNarrativeOrchestrator:
         recent_moments = self.story_moments[-5:] if self.story_moments else []
         analysis["pacing_analysis"] = {
             "recent_moments_count": len(recent_moments),
-            "average_significance": sum(m.significance_score for m in recent_moments)
-            / max(len(recent_moments), 1),
+            "average_significance": (
+                sum(m.significance_score for m in recent_moments)
+                / max(len(recent_moments), 1)
+            ),
             "tension_trend": (
                 "rising" if self.dramatic_tension_level > 0.6 else "stable"
             ),
-            "pacing_recommendation": await self._analyze_pacing_needs(recent_moments),
+            "pacing_recommendation": await self._analyze_pacing_needs(
+                recent_moments
+            ),
         }
 
         # Analyze character development
@@ -664,7 +737,9 @@ class EmergentNarrativeOrchestrator:
             arc_data = self.character_arc_progressions.get(agent_id, {})
             analysis["character_development"][agent_id] = {
                 "arc_progression": arc_data,
-                "development_stage": self._assess_character_development_stage(arc_data),
+                "development_stage": (
+                    self._assess_character_development_stage(arc_data)
+                ),
                 "growth_opportunities": await self._identify_growth_opportunities(
                     agent, arc_data
                 ),
@@ -720,7 +795,9 @@ class EmergentNarrativeOrchestrator:
         return updates
 
     async def _evolve_relationships(
-        self, agents: List[PersonaAgent], narrative_analysis: Dict[str, Any]
+        self,
+        agents: List[PersonaAgent],
+        narrative_analysis: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Evolve character relationships based on interactions."""
         updates = []
@@ -729,29 +806,46 @@ class EmergentNarrativeOrchestrator:
         for i, agent_a in enumerate(agents):
             for agent_b in agents[i + 1 :]:
                 # Analyze potential interaction between these agents
-                interaction_potential = await self._assess_interaction_potential(
-                    agent_a, agent_b, narrative_analysis
+                interaction_potential = (
+                    await self._assess_interaction_potential(
+                        agent_a, agent_b, narrative_analysis
+                    )
                 )
 
-                if interaction_potential > self.relationship_evolution_threshold:
+                if (
+                    interaction_potential
+                    > self.relationship_evolution_threshold
+                ):
                     # Evolve relationship
                     interaction_context = {
                         "agents": [agent_a.agent_id, agent_b.agent_id],
                         "potential": interaction_potential,
                         "narrative_context": narrative_analysis,
-                        "description": f"Potential interaction between {agent_a.character_data.get('name', agent_a.agent_id)} and {agent_b.character_data.get('name', agent_b.agent_id)}",
+                        "description": (
+                            f"Potential interaction between "
+                            f"{agent_a.character_data.get('name', agent_a.agent_id)} "
+                            f"and {agent_b.character_data.get('name', agent_b.agent_id)}"
+                        ),
                     }
 
-                    evolved_relationship = await self.evolve_relationship_dynamic(
-                        agent_a.agent_id, agent_b.agent_id, interaction_context
+                    evolved_relationship = (
+                        await self.evolve_relationship_dynamic(
+                            agent_a.agent_id,
+                            agent_b.agent_id,
+                            interaction_context,
+                        )
                     )
 
                     updates.append(
                         {
                             "relationship_id": evolved_relationship.relationship_id,
                             "characters": [agent_a.agent_id, agent_b.agent_id],
-                            "new_dynamic": evolved_relationship.current_dynamic.value,
-                            "strength": evolved_relationship.relationship_strength,
+                            "new_dynamic": (
+                                evolved_relationship.current_dynamic.value
+                            ),
+                            "strength": (
+                                evolved_relationship.relationship_strength
+                            ),
                             "change_reason": "narrative_driven_evolution",
                         }
                     )
@@ -759,13 +853,14 @@ class EmergentNarrativeOrchestrator:
         return updates
 
     async def _generate_narrative_influences(
-        self, agents: List[PersonaAgent], narrative_analysis: Dict[str, Any]
+        self,
+        agents: List[PersonaAgent],
+        narrative_analysis: Dict[str, Any],
     ) -> List[NarrativeInfluence]:
         """Generate narrative influences to guide agent behavior."""
         influences = []
 
         for agent in agents:
-
             # Analyze agent's current state and story role
             story_role_analysis = await self._analyze_agent_story_role(
                 agent, narrative_analysis
@@ -773,7 +868,9 @@ class EmergentNarrativeOrchestrator:
 
             # Check if narrative influence is needed
             if story_role_analysis.get("influence_needed", False):
-                influence_strength = story_role_analysis.get("influence_strength", 0.5)
+                influence_strength = story_role_analysis.get(
+                    "influence_strength", 0.5
+                )
 
                 if influence_strength > self.narrative_influence_threshold:
                     # Generate specific narrative influence
@@ -785,13 +882,17 @@ class EmergentNarrativeOrchestrator:
         return influences
 
     async def _apply_narrative_influences(
-        self, agents: List[PersonaAgent], narrative_influences: List[NarrativeInfluence]
+        self,
+        agents: List[PersonaAgent],
+        narrative_influences: List[NarrativeInfluence],
     ) -> Dict[str, Any]:
         """Apply narrative influences to modify agent behavior."""
         modifications = {}
 
         for influence in narrative_influences:
-            agent = next((a for a in agents if a.agent_id == influence.agent_id), None)
+            agent = next(
+                (a for a in agents if a.agent_id == influence.agent_id), None
+            )
             if agent:
                 # Apply influence to agent
                 modification_result = await self._apply_single_influence(
@@ -817,7 +918,10 @@ class EmergentNarrativeOrchestrator:
 
         # Analyze turn for significant moments
         moment_candidates = await self._identify_story_moment_candidates(
-            turn_number, enhanced_turn_result, plot_updates, relationship_updates
+            turn_number,
+            enhanced_turn_result,
+            plot_updates,
+            relationship_updates,
         )
 
         for candidate in moment_candidates:
@@ -833,7 +937,9 @@ class EmergentNarrativeOrchestrator:
                     participants=candidate["participants"],
                     narrative_description=candidate["description"],
                     plot_thread_impacts=candidate.get("plot_impacts", {}),
-                    relationship_impacts=candidate.get("relationship_impacts", {}),
+                    relationship_impacts=candidate.get(
+                        "relationship_impacts", {}
+                    ),
                     story_state_changes=candidate.get("state_changes", {}),
                 )
 
@@ -844,7 +950,9 @@ class EmergentNarrativeOrchestrator:
         return moments
 
     async def _update_character_arcs(
-        self, agents: List[PersonaAgent], story_moments: List[StoryMoment]
+        self,
+        agents: List[PersonaAgent],
+        story_moments: List[StoryMoment],
     ) -> Dict[str, Dict[str, float]]:
         """Update character arc progressions based on story moments."""
         updates = {}
@@ -853,7 +961,9 @@ class EmergentNarrativeOrchestrator:
             agent_id = agent.agent_id
 
             # Analyze agent's involvement in story moments
-            agent_moments = [m for m in story_moments if agent_id in m.participants]
+            agent_moments = [
+                m for m in story_moments if agent_id in m.participants
+            ]
 
             if agent_moments:
                 # Update character arc progression
@@ -866,7 +976,9 @@ class EmergentNarrativeOrchestrator:
                     self.character_arc_progressions[agent_id] = {}
 
                 for arc_type, progression in arc_updates.items():
-                    self.character_arc_progressions[agent_id][arc_type] = progression
+                    self.character_arc_progressions[agent_id][
+                        arc_type
+                    ] = progression
 
                 updates[agent_id] = arc_updates
 
@@ -876,7 +988,9 @@ class EmergentNarrativeOrchestrator:
         return updates
 
     async def _update_narrative_state(
-        self, narrative_analysis: Dict[str, Any], story_moments: List[StoryMoment]
+        self,
+        narrative_analysis: Dict[str, Any],
+        story_moments: List[StoryMoment],
     ) -> Dict[str, Any]:
         """Update overall narrative state and progression."""
         updates = {}
@@ -1003,7 +1117,9 @@ class EmergentNarrativeOrchestrator:
         ]
 
     async def _analyze_interaction_impact(
-        self, relationship: RelationshipEvolution, interaction_context: Dict[str, Any]
+        self,
+        relationship: RelationshipEvolution,
+        interaction_context: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Analyze how an interaction impacts a relationship."""
         return {
@@ -1014,24 +1130,31 @@ class EmergentNarrativeOrchestrator:
         }
 
     async def _apply_relationship_changes(
-        self, relationship: RelationshipEvolution, changes: Dict[str, Any]
+        self,
+        relationship: RelationshipEvolution,
+        changes: Dict[str, Any],
     ) -> RelationshipEvolution:
         """Apply calculated changes to a relationship."""
         relationship.relationship_strength = max(
             -1.0,
             min(
                 1.0,
-                relationship.relationship_strength + changes.get("strength_change", 0),
+                relationship.relationship_strength
+                + changes.get("strength_change", 0),
             ),
         )
         relationship.trust_level = max(
-            0.0, min(1.0, relationship.trust_level + changes.get("trust_change", 0))
+            0.0,
+            min(
+                1.0, relationship.trust_level + changes.get("trust_change", 0)
+            ),
         )
         relationship.emotional_intensity = max(
             0.0,
             min(
                 1.0,
-                relationship.emotional_intensity + changes.get("intensity_change", 0),
+                relationship.emotional_intensity
+                + changes.get("intensity_change", 0),
             ),
         )
 
@@ -1088,13 +1211,17 @@ class EmergentNarrativeOrchestrator:
         return 0.5
 
     async def _analyze_agent_story_role(
-        self, agent: PersonaAgent, narrative_analysis: Dict[str, Any]
+        self,
+        agent: PersonaAgent,
+        narrative_analysis: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Analyze agent's current role in the story."""
         return {"influence_needed": False, "influence_strength": 0.3}
 
     async def _create_narrative_influence(
-        self, agent: PersonaAgent, story_role_analysis: Dict[str, Any]
+        self,
+        agent: PersonaAgent,
+        story_role_analysis: Dict[str, Any],
     ) -> NarrativeInfluence:
         """Create a narrative influence for an agent."""
         return NarrativeInfluence(
@@ -1102,13 +1229,15 @@ class EmergentNarrativeOrchestrator:
             influence_type="story_guidance",
             influence_strength=0.5,
             motivation_shift={"narrative_engagement": 0.2},
-            behavior_suggestion="engage more actively with other characters",
-            narrative_justification="story needs more character interaction",
+            behavior_suggestion=("engage more actively with other characters"),
+            narrative_justification=("story needs more character interaction"),
             duration=timedelta(hours=1),
         )
 
     async def _apply_single_influence(
-        self, agent: PersonaAgent, influence: NarrativeInfluence
+        self,
+        agent: PersonaAgent,
+        influence: NarrativeInfluence,
     ) -> Dict[str, Any]:
         """Apply a single narrative influence to an agent."""
         return {"agent_id": agent.agent_id, "influence_applied": True}
@@ -1124,19 +1253,25 @@ class EmergentNarrativeOrchestrator:
         return []
 
     async def _calculate_character_arc_progression(
-        self, agent: PersonaAgent, agent_moments: List[StoryMoment]
+        self,
+        agent: PersonaAgent,
+        agent_moments: List[StoryMoment],
     ) -> Dict[str, float]:
         """Calculate character arc progression."""
         return {"growth": 0.1, "conflict_resolution": 0.05}
 
     async def _calculate_story_progression(
-        self, narrative_analysis: Dict[str, Any], story_moments: List[StoryMoment]
+        self,
+        narrative_analysis: Dict[str, Any],
+        story_moments: List[StoryMoment],
     ) -> float:
         """Calculate story progression delta."""
         return 0.05
 
     async def _calculate_tension_change(
-        self, narrative_analysis: Dict[str, Any], story_moments: List[StoryMoment]
+        self,
+        narrative_analysis: Dict[str, Any],
+        story_moments: List[StoryMoment],
     ) -> float:
         """Calculate dramatic tension change."""
         return 0.02
@@ -1152,28 +1287,38 @@ class EmergentNarrativeOrchestrator:
         return current_state
 
     async def _calculate_coherence_change(
-        self, narrative_analysis: Dict[str, Any], story_moments: List[StoryMoment]
+        self,
+        narrative_analysis: Dict[str, Any],
+        story_moments: List[StoryMoment],
     ) -> float:
         """Calculate narrative coherence change."""
         return 0.0
 
-    async def _analyze_pacing_needs(self, recent_moments: List[StoryMoment]) -> str:
+    async def _analyze_pacing_needs(
+        self, recent_moments: List[StoryMoment]
+    ) -> str:
         """Analyze story pacing needs."""
         return "maintain current pace"
 
-    def _assess_character_development_stage(self, arc_data: Dict[str, float]) -> str:
+    def _assess_character_development_stage(
+        self, arc_data: Dict[str, float]
+    ) -> str:
         """Assess character development stage."""
         return "early_development"
 
     async def _identify_growth_opportunities(
-        self, agent: PersonaAgent, arc_data: Dict[str, float]
+        self,
+        agent: PersonaAgent,
+        arc_data: Dict[str, float],
     ) -> List[str]:
         """Identify character growth opportunities."""
         return ["relationship building", "conflict resolution"]
 
     # Event handlers
 
-    async def _handle_agent_interaction(self, interaction_data: Dict[str, Any]):
+    async def _handle_agent_interaction(
+        self, interaction_data: Dict[str, Any]
+    ):
         """Handle agent interaction events."""
         pass
 
@@ -1181,7 +1326,9 @@ class EmergentNarrativeOrchestrator:
         """Handle plot development events."""
         pass
 
-    async def _handle_relationship_change(self, relationship_data: Dict[str, Any]):
+    async def _handle_relationship_change(
+        self, relationship_data: Dict[str, Any]
+    ):
         """Handle relationship change events."""
         pass
 
@@ -1210,7 +1357,10 @@ def create_emergent_narrative_orchestrator(
         Configured EmergentNarrativeOrchestrator instance
     """
     orchestrator = EmergentNarrativeOrchestrator(
-        event_bus, enhanced_bridge, parallel_coordinator, chronicler_agent
+        event_bus,
+        enhanced_bridge,
+        parallel_coordinator,
+        chronicler_agent,
     )
     logger.info("Emergent Narrative Orchestrator created and configured")
     return orchestrator

@@ -127,7 +127,9 @@ class PerformanceTracker:
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Context manager exit."""
         # Get logger from thread local or create new one
-        logger = getattr(threading.current_thread(), "_structured_logger", None)
+        logger = getattr(
+            threading.current_thread(), "_structured_logger", None
+        )
         if logger:
             self.finish(logger)
 
@@ -152,7 +154,9 @@ class StructuredLogger:
 
         # Core logger
         self._logger = logging.getLogger(name)
-        self._logger.setLevel(getattr(logging, self.config.get("level", "INFO")))
+        self._logger.setLevel(
+            getattr(logging, self.config.get("level", "INFO"))
+        )
 
         # Context management
         self._context_stack: List[LogContext] = []
@@ -190,7 +194,9 @@ class StructuredLogger:
 
         file_handler = logging.handlers.RotatingFileHandler(
             log_dir / f"{self.name}.jsonl",
-            maxBytes=self.config.get("max_file_size", 10 * 1024 * 1024),  # 10MB
+            maxBytes=self.config.get(
+                "max_file_size", 10 * 1024 * 1024
+            ),  # 10MB
             backupCount=self.config.get("backup_count", 5),
         )
 
@@ -297,7 +303,9 @@ class StructuredLogger:
         """Log warning message."""
         self._log(LogLevel.WARNING, message, **kwargs)
 
-    def error(self, message: str, error: Optional[Exception] = None, **kwargs) -> None:
+    def error(
+        self, message: str, error: Optional[Exception] = None, **kwargs
+    ) -> None:
         """Log error message with optional exception details."""
         error_details = None
         if error:
@@ -307,7 +315,9 @@ class StructuredLogger:
                 "args": error.args,
             }
 
-        self._log(LogLevel.ERROR, message, error_details=error_details, **kwargs)
+        self._log(
+            LogLevel.ERROR, message, error_details=error_details, **kwargs
+        )
 
     def critical(
         self, message: str, error: Optional[Exception] = None, **kwargs
@@ -321,7 +331,9 @@ class StructuredLogger:
                 "args": error.args,
             }
 
-        self._log(LogLevel.CRITICAL, message, error_details=error_details, **kwargs)
+        self._log(
+            LogLevel.CRITICAL, message, error_details=error_details, **kwargs
+        )
 
     def audit(self, message: str, **kwargs) -> None:
         """Log audit trail message."""
@@ -344,9 +356,13 @@ class StructuredLogger:
         self, operation: str, context: Optional[LogContext] = None
     ) -> PerformanceTracker:
         """Create performance tracker for operation."""
-        return PerformanceTracker(operation, context or self.get_current_context())
+        return PerformanceTracker(
+            operation, context or self.get_current_context()
+        )
 
-    def time_operation(self, operation: str, context: Optional[LogContext] = None):
+    def time_operation(
+        self, operation: str, context: Optional[LogContext] = None
+    ):
         """Decorator/context manager for timing operations."""
 
         def decorator(func):
@@ -358,7 +374,11 @@ class StructuredLogger:
                 with self.track_performance(operation, context):
                     return func(*args, **kwargs)
 
-            return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+            return (
+                async_wrapper
+                if asyncio.iscoroutinefunction(func)
+                else sync_wrapper
+            )
 
         return decorator
 
@@ -423,13 +443,19 @@ class StructuredFormatter(logging.Formatter):
                 data = record.structured_data
                 timestamp = data.get("timestamp", "")
                 level = data.get("level", "")
-                component = data.get("context", {}).get("component") or "unknown"
+                component = (
+                    data.get("context", {}).get("component") or "unknown"
+                )
                 message = data.get("message", "")
 
                 # Ensure component is a string for formatting
-                component_str = str(component) if component is not None else "unknown"
+                component_str = (
+                    str(component) if component is not None else "unknown"
+                )
 
-                base_msg = f"[{timestamp}] {level:12} {component_str:15} {message}"
+                base_msg = (
+                    f"[{timestamp}] {level:12} {component_str:15} {message}"
+                )
 
                 # Add duration if available
                 if data.get("duration_ms"):
@@ -448,7 +474,9 @@ class AuditFilter(logging.Filter):
         """Filter audit records."""
         if hasattr(record, "structured_data"):
             data = record.structured_data
-            return data.get("level") == "AUDIT" or data.get("category") == "audit"
+            return (
+                data.get("level") == "AUDIT" or data.get("category") == "audit"
+            )
         return False
 
 
@@ -510,7 +538,9 @@ class LoggingContext:
 
 
 # Convenience functions
-def get_logger(name: str, config: Optional[Dict[str, Any]] = None) -> StructuredLogger:
+def get_logger(
+    name: str, config: Optional[Dict[str, Any]] = None
+) -> StructuredLogger:
     """Get structured logger instance."""
     return LoggerFactory.get_logger(name, config)
 

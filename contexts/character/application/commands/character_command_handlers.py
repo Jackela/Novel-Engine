@@ -8,7 +8,7 @@ between the domain layer and infrastructure services.
 """
 
 import logging
-from typing import Any
+from typing import Any, Dict, Protocol, Type
 
 from ...domain.aggregates.character import Character
 from ...domain.repositories.character_repository import ICharacterRepository
@@ -46,6 +46,14 @@ from .character_commands import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class CommandHandler(Protocol):
+    """Protocol for command handlers."""
+
+    async def handle(self, command: Any) -> Any:
+        """Handle a command."""
+        ...
 
 
 class CreateCharacterCommandHandler:
@@ -87,7 +95,9 @@ class CreateCharacterCommandHandler:
                 name=command.character_name,
                 gender=Gender(command.gender.lower()),
                 race=CharacterRace(command.race.lower()),
-                character_class=CharacterClass(command.character_class.lower()),
+                character_class=CharacterClass(
+                    command.character_class.lower()
+                ),
                 age=command.age,
                 core_abilities=core_abilities,
             )
@@ -109,7 +119,6 @@ class CreateCharacterCommandHandler:
                     command.education,
                 ]
             ):
-
                 # Create updated physical traits
                 physical_traits = PhysicalTraits(
                     height_cm=command.height_cm,
@@ -137,7 +146,9 @@ class CreateCharacterCommandHandler:
                     name=command.character_name,
                     gender=Gender(command.gender.lower()),
                     race=CharacterRace(command.race.lower()),
-                    character_class=CharacterClass(command.character_class.lower()),
+                    character_class=CharacterClass(
+                        command.character_class.lower()
+                    ),
                     age=command.age,
                     level=1,
                     physical_traits=physical_traits,
@@ -202,7 +213,8 @@ class UpdateCharacterStatsCommandHandler:
             # Create updated vital stats
             current_vital_stats = character.stats.vital_stats
             new_vital_stats = VitalStats(
-                max_health=command.max_health or current_vital_stats.max_health,
+                max_health=command.max_health
+                or current_vital_stats.max_health,
                 current_health=(
                     command.current_health
                     if command.current_health is not None
@@ -214,13 +226,15 @@ class UpdateCharacterStatsCommandHandler:
                     if command.current_mana is not None
                     else current_vital_stats.current_mana
                 ),
-                max_stamina=command.max_stamina or current_vital_stats.max_stamina,
+                max_stamina=command.max_stamina
+                or current_vital_stats.max_stamina,
                 current_stamina=(
                     command.current_stamina
                     if command.current_stamina is not None
                     else current_vital_stats.current_stamina
                 ),
-                armor_class=command.armor_class or current_vital_stats.armor_class,
+                armor_class=command.armor_class
+                or current_vital_stats.armor_class,
                 speed=command.speed or current_vital_stats.speed,
             )
 
@@ -244,7 +258,8 @@ class UpdateCharacterStatsCommandHandler:
                 combat_stats=new_combat_stats,
                 experience_points=command.experience_points
                 or character.stats.experience_points,
-                skill_points=command.skill_points or character.stats.skill_points,
+                skill_points=command.skill_points
+                or character.stats.skill_points,
             )
 
             # Update character
@@ -253,7 +268,9 @@ class UpdateCharacterStatsCommandHandler:
             # Save character
             await self.repository.save(character)
 
-            self.logger.info(f"Character stats updated successfully: {character_id}")
+            self.logger.info(
+                f"Character stats updated successfully: {character_id}"
+            )
 
         except Exception as e:
             self.logger.error(f"Error updating character stats: {e}")
@@ -302,7 +319,9 @@ class UpdateCharacterSkillCommandHandler:
             new_skill = Skill(
                 name=command.skill_name,
                 category=SkillCategory(command.skill_category.lower()),
-                proficiency_level=ProficiencyLevel(int(command.new_proficiency_level)),
+                proficiency_level=ProficiencyLevel(
+                    int(command.new_proficiency_level)
+                ),
                 modifier=command.modifier,
                 description=command.description,
             )
@@ -348,7 +367,9 @@ class UpdateCharacterSkillCommandHandler:
             # Save character
             await self.repository.save(character)
 
-            self.logger.info(f"Character skill updated successfully: {character_id}")
+            self.logger.info(
+                f"Character skill updated successfully: {character_id}"
+            )
 
         except Exception as e:
             self.logger.error(f"Error updating character skill: {e}")
@@ -413,7 +434,9 @@ class LevelUpCharacterCommandHandler:
             # Save character
             await self.repository.save(character)
 
-            self.logger.info(f"Character leveled up successfully: {character_id}")
+            self.logger.info(
+                f"Character leveled up successfully: {character_id}"
+            )
 
         except Exception as e:
             self.logger.error(f"Error leveling up character: {e}")
@@ -449,7 +472,9 @@ class DeleteCharacterCommandHandler:
             # Check if character exists first
             character = await self.repository.get_by_id(character_id)
             if not character:
-                self.logger.warning(f"Character not found for deletion: {character_id}")
+                self.logger.warning(
+                    f"Character not found for deletion: {character_id}"
+                )
                 return False
 
             # TODO: Raise CharacterDeleted domain event before deletion
@@ -459,9 +484,13 @@ class DeleteCharacterCommandHandler:
             deleted = await self.repository.delete(character_id)
 
             if deleted:
-                self.logger.info(f"Character deleted successfully: {character_id}")
+                self.logger.info(
+                    f"Character deleted successfully: {character_id}"
+                )
             else:
-                self.logger.warning(f"Character deletion failed: {character_id}")
+                self.logger.warning(
+                    f"Character deletion failed: {character_id}"
+                )
 
             return deleted
 
@@ -560,8 +589,10 @@ class CharacterCommandHandlerRegistry:
     """Registry for character command handlers."""
 
     def __init__(self, character_repository: ICharacterRepository):
-        self.handlers = {
-            CreateCharacterCommand: CreateCharacterCommandHandler(character_repository),
+        self.handlers: Dict[Type[Any], CommandHandler] = {
+            CreateCharacterCommand: CreateCharacterCommandHandler(
+                character_repository
+            ),
             UpdateCharacterStatsCommand: UpdateCharacterStatsCommandHandler(
                 character_repository
             ),
@@ -571,9 +602,15 @@ class CharacterCommandHandlerRegistry:
             LevelUpCharacterCommand: LevelUpCharacterCommandHandler(
                 character_repository
             ),
-            DeleteCharacterCommand: DeleteCharacterCommandHandler(character_repository),
-            HealCharacterCommand: HealCharacterCommandHandler(character_repository),
-            DamageCharacterCommand: DamageCharacterCommandHandler(character_repository),
+            DeleteCharacterCommand: DeleteCharacterCommandHandler(
+                character_repository
+            ),
+            HealCharacterCommand: HealCharacterCommandHandler(
+                character_repository
+            ),
+            DamageCharacterCommand: DamageCharacterCommandHandler(
+                character_repository
+            ),
         }
 
     async def handle_command(self, command) -> Any:
@@ -593,6 +630,8 @@ class CharacterCommandHandlerRegistry:
         handler = self.handlers.get(command_type)
 
         if not handler:
-            raise ValueError(f"No handler registered for command type: {command_type}")
+            raise ValueError(
+                f"No handler registered for command type: {command_type}"
+            )
 
         return await handler.handle(command)

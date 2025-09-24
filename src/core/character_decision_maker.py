@@ -114,15 +114,19 @@ class DecisionMaker:
             "available_resources": self._assess_available_resources(
                 character_data, subjective_worldview
             ),
-            "social_obligations": self._assess_social_obligations(subjective_worldview),
-            "mission_status": self._assess_mission_status(subjective_worldview),
+            "social_obligations": self._assess_social_obligations(
+                subjective_worldview
+            ),
+            "mission_status": self._assess_mission_status(
+                subjective_worldview
+            ),
             "environmental_factors": self._assess_environmental_factors(
                 world_state_update
             ),
         }
 
         logger.debug(
-            f"Agent {self.agent_id} situation assessment: {assessment['threat_level']}"
+            f"Agent {self.agent_id}situation assessment: {assessment['threat_level']}"
         )
         return assessment
 
@@ -164,7 +168,10 @@ class DecisionMaker:
                     "description": "Attempt communication with nearby entities",
                 },
                 {"type": "negotiate", "description": "Engage in negotiation"},
-                {"type": "assist", "description": "Offer assistance to allies"},
+                {
+                    "type": "assist",
+                    "description": "Offer assistance to allies",
+                },
             ]
             available_actions.extend(social_actions)
 
@@ -224,7 +231,7 @@ class DecisionMaker:
 
         if best_score < action_threshold:
             logger.debug(
-                f"Agent {self.agent_id} best action score {best_score:.2f} below threshold {action_threshold:.2f}"
+                f"Agent {self.agent_id}best action score {best_score:.2f} below threshold {action_threshold:.2f}"
             )
             return None
 
@@ -251,7 +258,9 @@ class DecisionMaker:
         )
 
     def _assess_overall_threat_level(
-        self, world_state_update: Dict[str, Any], subjective_worldview: Dict[str, Any]
+        self,
+        world_state_update: Dict[str, Any],
+        subjective_worldview: Dict[str, Any],
     ) -> ThreatLevel:
         """Assess overall threat level in current situation."""
         # Check for explicit threats in world state
@@ -285,7 +294,9 @@ class DecisionMaker:
             return ThreatLevel.LOW
 
     def _get_current_goals(
-        self, character_data: Dict[str, Any], subjective_worldview: Dict[str, Any]
+        self,
+        character_data: Dict[str, Any],
+        subjective_worldview: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Get current character goals."""
         goals = []
@@ -331,7 +342,9 @@ class DecisionMaker:
         return goals
 
     def _assess_available_resources(
-        self, character_data: Dict[str, Any], subjective_worldview: Dict[str, Any]
+        self,
+        character_data: Dict[str, Any],
+        subjective_worldview: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Assess resources available to the character."""
         return {
@@ -380,7 +393,9 @@ class DecisionMaker:
             "visibility": world_state_update.get("visibility", "normal"),
         }
 
-    def _character_has_combat_capability(self, character_data: Dict[str, Any]) -> bool:
+    def _character_has_combat_capability(
+        self, character_data: Dict[str, Any]
+    ) -> bool:
         """Check if character has combat capabilities."""
         capabilities = character_data.get("capabilities", {})
         combat_skills = ["combat", "weapons", "tactics", "martial_arts"]
@@ -397,21 +412,36 @@ class DecisionMaker:
         if "tech" in profession or "engineer" in profession:
             profession_actions.extend(
                 [
-                    {"type": "repair", "description": "Repair damaged equipment"},
-                    {"type": "analyze", "description": "Analyze technical systems"},
+                    {
+                        "type": "repair",
+                        "description": "Repair damaged equipment",
+                    },
+                    {
+                        "type": "analyze",
+                        "description": "Analyze technical systems",
+                    },
                 ]
             )
         elif "medic" in profession or "apothecary" in profession:
             profession_actions.extend(
                 [
-                    {"type": "heal", "description": "Provide medical assistance"},
-                    {"type": "diagnose", "description": "Diagnose medical conditions"},
+                    {
+                        "type": "heal",
+                        "description": "Provide medical assistance",
+                    },
+                    {
+                        "type": "diagnose",
+                        "description": "Diagnose medical conditions",
+                    },
                 ]
             )
         elif "scout" in profession or "ranger" in profession:
             profession_actions.extend(
                 [
-                    {"type": "scout", "description": "Scout ahead for threats"},
+                    {
+                        "type": "scout",
+                        "description": "Scout ahead for threats",
+                    },
                     {"type": "track", "description": "Track enemy movements"},
                 ]
             )
@@ -419,7 +449,10 @@ class DecisionMaker:
         return profession_actions
 
     def _apply_personality_modifiers(
-        self, base_score: float, action_type: str, personality_traits: Dict[str, float]
+        self,
+        base_score: float,
+        action_type: str,
+        personality_traits: Dict[str, float],
     ) -> float:
         """Apply personality trait modifiers to action score."""
         modifier = 0.0
@@ -438,7 +471,8 @@ class DecisionMaker:
         if action_type in ["assist", "protect", "support"]:
             modifier += personality_traits.get("loyal", 0.5) - 0.5
 
-        return base_score + (modifier * 0.3)  # Cap personality influence at 30%
+        # Cap personality influence at 30%
+        return base_score + (modifier * 0.3)
 
     def _apply_situational_modifiers(
         self,
@@ -467,13 +501,18 @@ class DecisionMaker:
         return base_score + modifier
 
     def _apply_profession_modifiers(
-        self, base_score: float, action_type: str, subjective_worldview: Dict[str, Any]
+        self,
+        base_score: float,
+        action_type: str,
+        subjective_worldview: Dict[str, Any],
     ) -> float:
         """Apply profession-specific modifiers to action score."""
         # This would be expanded based on specific profession logic
         return base_score
 
-    def _get_character_action_threshold(self, character_data: Dict[str, Any]) -> float:
+    def _get_character_action_threshold(
+        self, character_data: Dict[str, Any]
+    ) -> float:
         """Get the action threshold for this character."""
         # More decisive characters have lower thresholds
         decisiveness = (
@@ -483,7 +522,9 @@ class DecisionMaker:
         )
         return 0.6 - (decisiveness * 0.2)  # Range: 0.4 to 0.6
 
-    def _generate_action_reasoning(self, action: Dict[str, Any], score: float) -> str:
+    def _generate_action_reasoning(
+        self, action: Dict[str, Any], score: float
+    ) -> str:
         """Generate reasoning for the selected action."""
         action_type = action.get("type", "unknown")
         return f"Selected {action_type} with confidence {score:.2f} based on current situation assessment."

@@ -72,7 +72,13 @@ class TestThemeIntensityEnum:
 
     def test_all_intensity_levels_exist(self):
         """Test that all expected intensity levels are defined."""
-        expected_levels = {"SUBTLE", "MODERATE", "PROMINENT", "CENTRAL", "OVERWHELMING"}
+        expected_levels = {
+            "SUBTLE",
+            "MODERATE",
+            "PROMINENT",
+            "CENTRAL",
+            "OVERWHELMING",
+        }
         actual_levels = {item.name for item in ThemeIntensity}
         assert actual_levels == expected_levels
 
@@ -177,7 +183,11 @@ class TestNarrativeThemeCreation:
         assert theme.theme_type == ThemeType.MORAL
         assert theme.intensity == ThemeIntensity.CENTRAL
         assert theme.symbolic_elements == {"light", "darkness", "phoenix"}
-        assert theme.related_motifs == {"rebirth", "sacrifice", "transformation"}
+        assert theme.related_motifs == {
+            "rebirth",
+            "sacrifice",
+            "transformation",
+        }
         assert theme.character_archetypes == {
             "fallen_hero",
             "mentor",
@@ -187,7 +197,8 @@ class TestNarrativeThemeCreation:
         assert theme.resolution_sequence == 95
         assert theme.peak_intensity_sequence == 75
         assert (
-            theme.development_trajectory == "Gradual buildup to climactic realization"
+            theme.development_trajectory
+            == "Gradual buildup to climactic realization"
         )
         assert theme.conflicts_with_themes == {"vengeance", "nihilism"}
         assert theme.reinforces_themes == {"love", "forgiveness"}
@@ -201,7 +212,10 @@ class TestNarrativeThemeCreation:
         assert theme.target_audience_relevance["adults"] == Decimal("9.0")
         assert theme.tags == {"classic", "universal", "christian_undertones"}
         assert theme.creation_timestamp == creation_time
-        assert theme.metadata["author_intent"] == "explore human capacity for change"
+        assert (
+            theme.metadata["author_intent"]
+            == "explore human capacity for change"
+        )
 
     def test_default_values_initialization(self):
         """Test that default values are properly initialized."""
@@ -291,7 +305,9 @@ class TestNarrativeThemeValidation:
 
     def test_empty_description_validation(self):
         """Test validation fails with empty description."""
-        with pytest.raises(ValueError, match="Theme description cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Theme description cannot be empty"
+        ):
             NarrativeTheme(
                 theme_id="empty-desc-test",
                 theme_type=ThemeType.ENVIRONMENTAL,
@@ -302,7 +318,9 @@ class TestNarrativeThemeValidation:
 
     def test_whitespace_only_description_validation(self):
         """Test validation fails with whitespace-only description."""
-        with pytest.raises(ValueError, match="Theme description cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Theme description cannot be empty"
+        ):
             NarrativeTheme(
                 theme_id="whitespace-desc-test",
                 theme_type=ThemeType.ENVIRONMENTAL,
@@ -466,7 +484,8 @@ class TestNarrativeThemeValidation:
     def test_audience_relevance_boundary_validation(self):
         """Test audience relevance value validation."""
         with pytest.raises(
-            ValueError, match="Audience relevance for 'teens' must be between 0 and 10"
+            ValueError,
+            match="Audience relevance for 'teens' must be between 0 and 10",
         ):
             NarrativeTheme(
                 theme_id="invalid-audience-test",
@@ -478,7 +497,8 @@ class TestNarrativeThemeValidation:
             )
 
         with pytest.raises(
-            ValueError, match="Audience relevance for 'adults' must be between 0 and 10"
+            ValueError,
+            match="Audience relevance for 'adults' must be between 0 and 10",
         ):
             NarrativeTheme(
                 theme_id="invalid-audience-high-test",
@@ -505,7 +525,9 @@ class TestNarrativeThemeValidation:
         )
 
         assert theme.target_audience_relevance["children"] == Decimal("0.0")
-        assert theme.target_audience_relevance["tech_workers"] == Decimal("10.0")
+        assert theme.target_audience_relevance["tech_workers"] == Decimal(
+            "10.0"
+        )
         assert theme.target_audience_relevance["elderly"] == Decimal("3.5")
 
     def test_string_length_validations(self):
@@ -536,7 +558,8 @@ class TestNarrativeThemeValidation:
 
         # Description too long
         with pytest.raises(
-            ValueError, match="Theme description too long \\(max 1000 characters\\)"
+            ValueError,
+            match="Theme description too long \\(max 1000 characters\\)",
         ):
             NarrativeTheme(
                 theme_id="valid-id",
@@ -871,7 +894,13 @@ class TestThematicComplexityScore:
             expressed_through_setting=True,
             expressed_through_character_arc=True,
             conflicts_with_themes={"materialism", "atheism", "cynicism"},
-            reinforces_themes={"faith", "hope", "transcendence", "mystery", "awe"},
+            reinforces_themes={
+                "faith",
+                "hope",
+                "transcendence",
+                "mystery",
+                "awe",
+            },
         )
 
         # Would be: 9.0 + (5 * 0.5) + ((3 + 5) * 0.3) = 9.0 + 2.5 + 2.4 = 13.9
@@ -1092,7 +1121,9 @@ class TestNarrativeThemeInstanceMethods:
 
         # Should return default 5.0 for non-existing audience
         assert theme.get_audience_relevance("international") == Decimal("5.0")
-        assert theme.get_audience_relevance("local_community") == Decimal("8.0")
+        assert theme.get_audience_relevance("local_community") == Decimal(
+            "8.0"
+        )
 
     def test_get_thematic_context(self):
         """Test get_thematic_context returns comprehensive context dict."""
@@ -1209,7 +1240,9 @@ class TestNarrativeThemeFactoryMethods:
         assert updated.symbolic_elements is not original.symbolic_elements
 
         assert updated.conflicts_with_themes == original.conflicts_with_themes
-        assert updated.conflicts_with_themes is not original.conflicts_with_themes
+        assert (
+            updated.conflicts_with_themes is not original.conflicts_with_themes
+        )
 
         assert updated.reinforces_themes == original.reinforces_themes
         assert updated.reinforces_themes is not original.reinforces_themes
@@ -1437,8 +1470,13 @@ class TestNarrativeThemeEdgeCasesAndBoundaryConditions:
             "Campbell",
             "Vogler",
         ]
-        assert theme.metadata["unicode_metadata_🔍"]["global_appeal"] == "универсальный"
-        assert "中式" in theme.metadata["unicode_metadata_🔍"]["cultural_variants"]
+        assert (
+            theme.metadata["unicode_metadata_🔍"]["global_appeal"]
+            == "универсальный"
+        )
+        assert (
+            "中式" in theme.metadata["unicode_metadata_🔍"]["cultural_variants"]
+        )
 
 
 class TestNarrativeThemeCollectionsAndComparison:

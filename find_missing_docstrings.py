@@ -130,7 +130,10 @@ def categorize_missing_docstrings(
             categories["security_components"].append(item)
         elif "/memory/" in filepath or "/caching/" in filepath:
             categories["memory_caching"].append(item)
-        elif "persona_agent.py" in filepath or "system_orchestrator.py" in filepath:
+        elif (
+            "persona_agent.py" in filepath
+            or "system_orchestrator.py" in filepath
+        ):
             categories["main_application"].append(item)
         else:
             categories["utility_support"].append(item)
@@ -171,7 +174,9 @@ def main():
     print(f"Total Python files analyzed: {len(python_files)}")
     print(f"Total functions: {total_stats['total_functions']}")
     print(f"Total classes: {total_stats['total_classes']}")
-    print(f"Functions with docstrings: {total_stats['functions_with_docstrings']}")
+    print(
+        f"Functions with docstrings: {total_stats['functions_with_docstrings']}"
+    )
     print(f"Classes with docstrings: {total_stats['classes_with_docstrings']}")
     print(f"Total missing docstrings: {len(all_missing)}")
     print("=" * 60)
@@ -202,7 +207,9 @@ def main():
             for filepath, file_items in sorted(by_file.items()):
                 print(f"\nFile: {filepath}")
                 for item in file_items:
-                    print(f"  Line {item['line']}: {item['type']} '{item['name']}'")
+                    print(
+                        f"  Line {item['line']}: {item['type']} '{item['name']}'"
+                    )
 
     # Summary recommendations
     print("\n" + "=" * 60)
@@ -223,7 +230,8 @@ def main():
         / max(total_stats["total_functions"], 1)
     ) * 100
     class_coverage = (
-        total_stats["classes_with_docstrings"] / max(total_stats["total_classes"], 1)
+        total_stats["classes_with_docstrings"]
+        / max(total_stats["total_classes"], 1)
     ) * 100
 
     print(f"Current function docstring coverage: {func_coverage:.1f}%")

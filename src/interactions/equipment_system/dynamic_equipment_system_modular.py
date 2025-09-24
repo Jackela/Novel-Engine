@@ -214,7 +214,8 @@ class DynamicEquipmentSystem:
                 # Auto-schedule maintenance if needed
                 if (
                     self.config.auto_maintenance
-                    and equipment.wear_accumulation >= self.config.wear_threshold
+                    and equipment.wear_accumulation
+                    >= self.config.wear_threshold
                 ):
                     await self.maintenance_system.schedule_maintenance(
                         equipment, "routine"
@@ -292,7 +293,9 @@ class DynamicEquipmentSystem:
                 )
 
             result = await self.modification_system.install_modification(
-                equipment=equipment, modification=modification, installer=installer
+                equipment=equipment,
+                modification=modification,
+                installer=installer,
             )
 
             if result.get("success"):
@@ -311,7 +314,9 @@ class DynamicEquipmentSystem:
                 ),
             )
 
-    async def get_equipment_status(self, equipment_id: str) -> StandardResponse:
+    async def get_equipment_status(
+        self, equipment_id: str
+    ) -> StandardResponse:
         """Get comprehensive equipment status."""
         try:
             equipment = await self.registry.get_equipment(equipment_id)
@@ -325,23 +330,25 @@ class DynamicEquipmentSystem:
                 )
 
             # Get performance metrics
-            performance_data = self.performance_monitor.get_performance_metrics(
-                equipment
+            performance_data = (
+                self.performance_monitor.get_performance_metrics(equipment)
             )
 
             # Get failure prediction
-            failure_prediction = self.performance_monitor.predict_equipment_failure(
-                equipment
+            failure_prediction = (
+                self.performance_monitor.predict_equipment_failure(equipment)
             )
 
             # Get maintenance status
-            maintenance_status = await self.maintenance_system.get_maintenance_due(
-                equipment
+            maintenance_status = (
+                await self.maintenance_system.get_maintenance_due(equipment)
             )
 
             # Get optimization recommendations
-            recommendations = self.performance_monitor.get_optimization_recommendations(
-                equipment
+            recommendations = (
+                self.performance_monitor.get_optimization_recommendations(
+                    equipment
+                )
             )
 
             return StandardResponse(
@@ -350,7 +357,9 @@ class DynamicEquipmentSystem:
                     "equipment_id": equipment_id,
                     "basic_info": {
                         "name": equipment.base_equipment.name,
-                        "category": self._determine_equipment_category(equipment).value,
+                        "category": self._determine_equipment_category(
+                            equipment
+                        ).value,
                         "status": equipment.current_status.value,
                         "condition": getattr(
                             equipment.base_equipment, "condition", "unknown"
@@ -376,7 +385,9 @@ class DynamicEquipmentSystem:
                             if equipment.next_maintenance_due
                             else None
                         ),
-                        "maintenance_history_count": len(equipment.maintenance_history),
+                        "maintenance_history_count": len(
+                            equipment.maintenance_history
+                        ),
                         "maintenance_status": maintenance_status,
                     },
                     "modifications": [
@@ -416,7 +427,9 @@ class DynamicEquipmentSystem:
         """Get equipment assigned to a specific agent."""
         try:
             result = await self.registry.get_agent_equipment(
-                agent_id=agent_id, category=category, status_filter=status_filter
+                agent_id=agent_id,
+                category=category,
+                status_filter=status_filter,
             )
 
             return StandardResponse(
@@ -460,7 +473,9 @@ class DynamicEquipmentSystem:
                 "equipment_statistics": {
                     "total_registered": self.registry.get_equipment_count(),
                     "by_category": category_counts,
-                    "total_usage_sessions": self._system_stats["total_usage_sessions"],
+                    "total_usage_sessions": self._system_stats[
+                        "total_usage_sessions"
+                    ],
                     "total_maintenance_performed": self._system_stats[
                         "total_maintenance_performed"
                     ],
@@ -505,7 +520,9 @@ class DynamicEquipmentSystem:
             if self.config.equipment_template_path:
                 template_path = Path(self.config.equipment_template_path)
                 if template_path.exists():
-                    self.logger.info(f"Equipment templates loaded from {template_path}")
+                    self.logger.info(
+                        f"Equipment templates loaded from {template_path}"
+                    )
                 else:
                     self.logger.warning(
                         f"Equipment template path not found: {template_path}"
@@ -526,7 +543,9 @@ class DynamicEquipmentSystem:
         }
 
         if name in legacy_mappings:
-            self.logger.debug(f"Legacy method call: {name} -> {legacy_mappings[name]}")
+            self.logger.debug(
+                f"Legacy method call: {name} -> {legacy_mappings[name]}"
+            )
             component_name, method_name = legacy_mappings[name].split(".", 1)
             component = getattr(self, component_name)
             return getattr(component, method_name)

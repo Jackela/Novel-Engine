@@ -123,14 +123,20 @@ class SecurityAuditor:
             end_time=end_time,
             findings=self.findings,
             total_tests=len(self.test_results),
-            passed_tests=sum(1 for result in self.test_results.values() if result),
-            failed_tests=sum(1 for result in self.test_results.values() if not result),
+            passed_tests=sum(
+                1 for result in self.test_results.values() if result
+            ),
+            failed_tests=sum(
+                1 for result in self.test_results.values() if not result
+            ),
             overall_security_score=overall_score,
             compliance_status=compliance_status,
             recommendations=recommendations,
         )
 
-        logger.info(f"Security audit complete: {overall_score:.1f}% security score")
+        logger.info(
+            f"Security audit complete: {overall_score:.1f}% security score"
+        )
 
         return report
 
@@ -205,7 +211,9 @@ class SecurityAuditor:
 
         # Check if security middleware is properly implemented
         try:
-            from src.security.enhanced_security import EnhancedSecurityMiddleware
+            from src.security.enhanced_security import (
+                EnhancedSecurityMiddleware,
+            )
 
             # Simulate testing various unauthorized access attempts
             test_endpoints = [
@@ -260,7 +268,9 @@ class SecurityAuditor:
             r"/config/",
         ]
 
-        return any(re.search(pattern, endpoint) for pattern in vulnerable_patterns)
+        return any(
+            re.search(pattern, endpoint) for pattern in vulnerable_patterns
+        )
 
     async def _test_privilege_escalation(self) -> Optional[SecurityFinding]:
         """Test for privilege escalation vulnerabilities"""
@@ -350,7 +360,9 @@ class SecurityAuditor:
                 self._test_key_management(),
             ]
 
-            results = await asyncio.gather(*crypto_tests, return_exceptions=True)
+            results = await asyncio.gather(
+                *crypto_tests, return_exceptions=True
+            )
 
             vulnerabilities_found = sum(
                 1 for result in results if isinstance(result, SecurityFinding)
@@ -418,7 +430,9 @@ class SecurityAuditor:
                 self._test_command_injection(),
             ]
 
-            results = await asyncio.gather(*injection_tests, return_exceptions=True)
+            results = await asyncio.gather(
+                *injection_tests, return_exceptions=True
+            )
 
             vulnerabilities_found = sum(
                 1 for result in results if isinstance(result, SecurityFinding)
@@ -439,7 +453,9 @@ class SecurityAuditor:
 
         # Check if input validation protects against SQL injection
         try:
-            from src.security.enhanced_security import EnhancedSecurityMiddleware
+            from src.security.enhanced_security import (
+                EnhancedSecurityMiddleware,
+            )
 
             # Enhanced security middleware includes SQL injection protection
             return None
@@ -487,7 +503,9 @@ class SecurityAuditor:
                 self._test_security_requirements(),
             ]
 
-            results = await asyncio.gather(*design_tests, return_exceptions=True)
+            results = await asyncio.gather(
+                *design_tests, return_exceptions=True
+            )
 
             vulnerabilities_found = sum(
                 1 for result in results if isinstance(result, SecurityFinding)
@@ -523,9 +541,9 @@ class SecurityAuditor:
     async def _test_security_misconfiguration(self):
         """Test for security misconfigurations"""
         test_name = "security_misconfiguration"
-        self.test_results[test_name] = (
-            True  # Security configuration is properly implemented
-        )
+        self.test_results[
+            test_name
+        ] = True  # Security configuration is properly implemented
 
     async def _test_vulnerable_components(self):
         """Test for vulnerable components"""
@@ -535,12 +553,16 @@ class SecurityAuditor:
     async def _test_auth_failures(self):
         """Test for authentication failures"""
         test_name = "auth_failures"
-        self.test_results[test_name] = True  # Authentication is properly implemented
+        self.test_results[
+            test_name
+        ] = True  # Authentication is properly implemented
 
     async def _test_integrity_failures(self):
         """Test for integrity failures"""
         test_name = "integrity_failures"
-        self.test_results[test_name] = True  # Integrity protection is implemented
+        self.test_results[
+            test_name
+        ] = True  # Integrity protection is implemented
 
     async def _test_logging_failures(self):
         """Test for logging and monitoring failures"""
@@ -645,14 +667,20 @@ class SecurityAuditor:
         if not self.test_results:
             return 0.0
 
-        passed_tests = sum(1 for result in self.test_results.values() if result)
+        passed_tests = sum(
+            1 for result in self.test_results.values() if result
+        )
         total_tests = len(self.test_results)
 
         base_score = (passed_tests / total_tests) * 100
 
         # Deduct points for critical findings
         critical_findings = len(
-            [f for f in self.findings if f.threat_level == ThreatLevel.CRITICAL]
+            [
+                f
+                for f in self.findings
+                if f.threat_level == ThreatLevel.CRITICAL
+            ]
         )
         high_findings = len(
             [f for f in self.findings if f.threat_level == ThreatLevel.HIGH]
@@ -670,7 +698,10 @@ class SecurityAuditor:
 
         # Based on findings
         for finding in self.findings:
-            if finding.threat_level in [ThreatLevel.CRITICAL, ThreatLevel.HIGH]:
+            if finding.threat_level in [
+                ThreatLevel.CRITICAL,
+                ThreatLevel.HIGH,
+            ]:
                 recommendations.append(
                     f"URGENT: {finding.remediation} (affects {finding.affected_component})"
                 )
@@ -697,7 +728,9 @@ class SecurityAuditor:
 # Main execution
 async def main():
     """Run comprehensive security audit"""
-    logger.info("Starting Novel Engine Security Audit & Penetration Testing Simulation")
+    logger.info(
+        "Starting Novel Engine Security Audit & Penetration Testing Simulation"
+    )
 
     auditor = SecurityAuditor()
     report = await auditor.run_comprehensive_security_audit()

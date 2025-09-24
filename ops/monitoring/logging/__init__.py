@@ -82,7 +82,9 @@ def configure_logging(
     """
     # Configure root logger
     logging.basicConfig(
-        level=getattr(logging, log_level.upper()), format="%(message)s", handlers=[]
+        level=getattr(logging, log_level.upper()),
+        format="%(message)s",
+        handlers=[],
     )
 
     # Remove default handlers
@@ -99,7 +101,9 @@ def configure_logging(
         "novel-engine": log_level,
         "uvicorn.access": "WARNING" if environment == "production" else "INFO",
         "uvicorn.error": "INFO",
-        "sqlalchemy.engine": "WARNING" if environment == "production" else "INFO",
+        "sqlalchemy.engine": "WARNING"
+        if environment == "production"
+        else "INFO",
     }
 
     for logger_name, level in loggers_config.items():
@@ -184,7 +188,9 @@ def setup_log_aggregation(config: Dict[str, Any]) -> Dict[str, Any]:
         "elasticsearch_cluster": config.get(
             "elasticsearch_url", "http://elasticsearch:9200"
         ),
-        "logstash_endpoints": config.get("logstash_endpoints", ["logstash:5044"]),
+        "logstash_endpoints": config.get(
+            "logstash_endpoints", ["logstash:5044"]
+        ),
         "index_pattern": config.get("index_pattern", "novel-engine-logs-*"),
         "retention_days": config.get("retention_days", 90),
         "shards_per_index": config.get("shards_per_index", 1),

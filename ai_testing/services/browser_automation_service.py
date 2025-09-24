@@ -18,8 +18,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Playwright imports
-from playwright.async_api import Browser, BrowserContext
-from playwright.async_api import Page, Playwright, async_playwright
+from playwright.async_api import (
+    Browser,
+    BrowserContext,
+    Page,
+    Playwright,
+    async_playwright,
+)
 from pydantic import BaseModel, Field
 
 # Import Novel-Engine patterns
@@ -59,7 +64,9 @@ logger = logging.getLogger(__name__)
 class BrowserConfig(BaseModel):
     """Browser configuration for testing"""
 
-    browser_type: str = Field(default="chromium", pattern="^(chromium|firefox|webkit)$")
+    browser_type: str = Field(
+        default="chromium", pattern="^(chromium|firefox|webkit)$"
+    )
     headless: bool = True
     viewport: Dict[str, int] = Field(default={"width": 1280, "height": 720})
     device_type: Optional[str] = None  # "mobile", "tablet", "desktop"
@@ -166,7 +173,9 @@ class BrowserManager:
         self.active_contexts: Dict[str, BrowserContext] = {}
 
         # Configuration
-        self.max_concurrent_contexts = config.get("max_concurrent_contexts", 10)
+        self.max_concurrent_contexts = config.get(
+            "max_concurrent_contexts", 10
+        )
         self.default_timeout_ms = config.get("default_timeout_ms", 30000)
         self.screenshots_dir = Path(
             config.get("screenshots_dir", "ai_testing/screenshots")
@@ -189,7 +198,9 @@ class BrowserManager:
             for browser_type in browser_types:
                 await self._launch_browser(browser_type)
 
-            logger.info(f"Browser Manager ready with {len(self.browsers)} browsers")
+            logger.info(
+                f"Browser Manager ready with {len(self.browsers)} browsers"
+            )
 
         except Exception as e:
             logger.error(f"Browser Manager initialization failed: {e}")
@@ -227,9 +238,13 @@ class BrowserManager:
             }
 
             if browser_type == "chromium":
-                browser = await self.playwright.chromium.launch(**browser_config)
+                browser = await self.playwright.chromium.launch(
+                    **browser_config
+                )
             elif browser_type == "firefox":
-                browser = await self.playwright.firefox.launch(**browser_config)
+                browser = await self.playwright.firefox.launch(
+                    **browser_config
+                )
             elif browser_type == "webkit":
                 browser = await self.playwright.webkit.launch(**browser_config)
             else:
@@ -256,7 +271,9 @@ class BrowserManager:
 
         browser = self.browsers.get(browser_config.browser_type)
         if not browser:
-            raise ValueError(f"Browser {browser_config.browser_type} not available")
+            raise ValueError(
+                f"Browser {browser_config.browser_type} not available"
+            )
 
         # Context configuration
         context_options = {
@@ -275,14 +292,18 @@ class BrowserManager:
             context_options["record_video_dir"] = str(self.videos_dir)
 
         if browser_config.record_trace:
-            context_options["record_trace_dir"] = str(self.videos_dir / "traces")
+            context_options["record_trace_dir"] = str(
+                self.videos_dir / "traces"
+            )
 
         # Create context
         context = await browser.new_context(**context_options)
 
         # Set timeouts
         context.set_default_timeout(browser_config.timeout_ms)
-        context.set_default_navigation_timeout(browser_config.navigation_timeout_ms)
+        context.set_default_navigation_timeout(
+            browser_config.navigation_timeout_ms
+        )
 
         self.active_contexts[context_id] = context
 
@@ -331,7 +352,9 @@ class BrowserAutomationService(IBrowserAutomation):
 
         # Testing configuration
         self.visual_threshold = config.get("visual_threshold", 0.1)
-        self.accessibility_standards = config.get("accessibility_standards", ["WCAG2A"])
+        self.accessibility_standards = config.get(
+            "accessibility_standards", ["WCAG2A"]
+        )
         self.performance_thresholds = config.get(
             "performance_thresholds",
             {"load_time_ms": 3000, "fcp_ms": 1800, "lcp_ms": 2500, "cls": 0.1},
@@ -375,8 +398,12 @@ class BrowserAutomationService(IBrowserAutomation):
             )
 
             # Create browser context
-            context_id = await self.browser_manager.create_context(browser_config)
-            browser_context = await self.browser_manager.get_context(context_id)
+            context_id = await self.browser_manager.create_context(
+                browser_config
+            )
+            browser_context = await self.browser_manager.get_context(
+                context_id
+            )
 
             # Create page
             page = await browser_context.new_page()
@@ -401,7 +428,9 @@ class BrowserAutomationService(IBrowserAutomation):
                     execution_id=test_id,
                     scenario_id=context.session_id,
                     status=(
-                        TestStatus.COMPLETED if overall_passed else TestStatus.FAILED
+                        TestStatus.COMPLETED
+                        if overall_passed
+                        else TestStatus.FAILED
                     ),
                     passed=overall_passed,
                     score=test_results.get("score", 0.0),
@@ -428,17 +457,24 @@ class BrowserAutomationService(IBrowserAutomation):
                 duration_ms=duration_ms,
                 error_type=type(e).__name__,
                 error_message=str(e),
-                recommendations=["Check page URL accessibility", "Verify UI selectors"],
+                recommendations=[
+                    "Check page URL accessibility",
+                    "Verify UI selectors",
+                ],
             )
 
-    async def capture_screenshot(self, page_url: str, viewport: Dict[str, int]) -> str:
+    async def capture_screenshot(
+        self, page_url: str, viewport: Dict[str, int]
+    ) -> str:
         """Capture page screenshot"""
 
         browser_config = BrowserConfig(viewport=viewport)
         context_id = await self.browser_manager.create_context(browser_config)
 
         try:
-            browser_context = await self.browser_manager.get_context(context_id)
+            browser_context = await self.browser_manager.get_context(
+                context_id
+            )
             page = await browser_context.new_page()
 
             await page.goto(page_url)
@@ -461,7 +497,9 @@ class BrowserAutomationService(IBrowserAutomation):
         context_id = await self.browser_manager.create_context(browser_config)
 
         try:
-            browser_context = await self.browser_manager.get_context(context_id)
+            browser_context = await self.browser_manager.get_context(
+                context_id
+            )
             page = await browser_context.new_page()
 
             await page.goto(page_url)
@@ -483,11 +521,15 @@ class BrowserAutomationService(IBrowserAutomation):
         context_id = await self.browser_manager.create_context(browser_config)
 
         try:
-            browser_context = await self.browser_manager.get_context(context_id)
+            browser_context = await self.browser_manager.get_context(
+                context_id
+            )
             page = await browser_context.new_page()
 
             # Measure performance
-            performance_metrics = await self._measure_performance(page, page_url)
+            performance_metrics = await self._measure_performance(
+                page, page_url
+            )
 
             await page.close()
             return performance_metrics.model_dump()
@@ -536,7 +578,9 @@ class BrowserAutomationService(IBrowserAutomation):
             # Execute assertions
             for i, assertion in enumerate(test_spec.assertions):
                 try:
-                    assertion_passed = await self._execute_ui_assertion(page, assertion)
+                    assertion_passed = await self._execute_ui_assertion(
+                        page, assertion
+                    )
                     if assertion_passed:
                         results["assertions_passed"] += 1
                 except Exception as e:
@@ -547,12 +591,18 @@ class BrowserAutomationService(IBrowserAutomation):
                 performance_metrics = await self._measure_performance(
                     page, test_spec.page_url
                 )
-                results["performance_metrics"] = performance_metrics.model_dump()
+                results[
+                    "performance_metrics"
+                ] = performance_metrics.model_dump()
 
             # Accessibility testing
             if test_spec.accessibility_standards:
-                accessibility_results = await self._run_accessibility_tests(page)
-                results["accessibility_results"] = accessibility_results.model_dump()
+                accessibility_results = await self._run_accessibility_tests(
+                    page
+                )
+                results[
+                    "accessibility_results"
+                ] = accessibility_results.model_dump()
 
             # Visual regression testing
             if test_spec.screenshot_comparison:
@@ -569,7 +619,9 @@ class BrowserAutomationService(IBrowserAutomation):
                 results["total_assertions"], 1
             )
 
-            overall_score = (actions_success_rate + assertions_success_rate) / 2
+            overall_score = (
+                actions_success_rate + assertions_success_rate
+            ) / 2
 
             # Performance score
             if results["performance_metrics"]:
@@ -584,14 +636,18 @@ class BrowserAutomationService(IBrowserAutomation):
 
             # Accessibility score
             if results["accessibility_results"]:
-                accessibility_score = results["accessibility_results"].get("score", 1.0)
+                accessibility_score = results["accessibility_results"].get(
+                    "score", 1.0
+                )
                 overall_score = (overall_score + accessibility_score) / 2
 
             results["overall_passed"] = overall_score >= 0.8
             results["score"] = overall_score
 
             # Generate recommendations
-            results["recommendations"] = self._generate_ui_recommendations(results)
+            results["recommendations"] = self._generate_ui_recommendations(
+                results
+            )
 
             return results
 
@@ -633,9 +689,13 @@ class BrowserAutomationService(IBrowserAutomation):
 
         elif action.action_type == "scroll":
             if action.selector:
-                await page.locator(action.selector).scroll_into_view_if_needed()
+                await page.locator(
+                    action.selector
+                ).scroll_into_view_if_needed()
             else:
-                await page.evaluate(f"window.scrollBy(0, {action.value or 100})")
+                await page.evaluate(
+                    f"window.scrollBy(0, {action.value or 100})"
+                )
 
         elif action.action_type == "press":
             await page.keyboard.press(action.value or "Enter")
@@ -646,7 +706,9 @@ class BrowserAutomationService(IBrowserAutomation):
         # Brief pause after action
         await asyncio.sleep(0.1)
 
-    async def _execute_ui_assertion(self, page: Page, assertion: UIAssertion) -> bool:
+    async def _execute_ui_assertion(
+        self, page: Page, assertion: UIAssertion
+    ) -> bool:
         """Execute a single UI assertion"""
 
         timeout = assertion.timeout_ms or 5000
@@ -655,7 +717,9 @@ class BrowserAutomationService(IBrowserAutomation):
             return await page.is_visible(assertion.selector, timeout=timeout)
 
         elif assertion.assertion_type == "hidden":
-            return not await page.is_visible(assertion.selector, timeout=timeout)
+            return not await page.is_visible(
+                assertion.selector, timeout=timeout
+            )
 
         elif assertion.assertion_type == "text":
             element = page.locator(assertion.selector)
@@ -684,7 +748,9 @@ class BrowserAutomationService(IBrowserAutomation):
             return assertion.expected_value in title
 
         else:
-            raise ValueError(f"Unsupported assertion type: {assertion.assertion_type}")
+            raise ValueError(
+                f"Unsupported assertion type: {assertion.assertion_type}"
+            )
 
     # === Performance Measurement ===
 
@@ -703,7 +769,7 @@ class BrowserAutomationService(IBrowserAutomation):
                 const timing = performance.timing;
                 const navigation = performance.getEntriesByType('navigation')[0];
                 const paint = performance.getEntriesByType('paint');
-                
+
                 return {
                     loadEventEnd: timing.loadEventEnd,
                     loadEventStart: timing.loadEventStart,
@@ -720,7 +786,8 @@ class BrowserAutomationService(IBrowserAutomation):
 
         # Calculate metrics
         load_time_ms = (
-            performance_timing["loadEventEnd"] - performance_timing["navigationStart"]
+            performance_timing["loadEventEnd"]
+            - performance_timing["navigationStart"]
         )
         dom_content_loaded_ms = (
             performance_timing["domContentLoadedEventEnd"]
@@ -735,7 +802,7 @@ class BrowserAutomationService(IBrowserAutomation):
                 const totalSize = resources.reduce((sum, resource) => {
                     return sum + (resource.transferSize || 0);
                 }, 0);
-                
+
                 return {
                     requestsCount: resources.length,
                     totalSizeBytes: totalSize,
@@ -761,9 +828,15 @@ class BrowserAutomationService(IBrowserAutomation):
         )
 
         return PerformanceMetrics(
-            first_contentful_paint=performance_timing.get("firstContentfulPaint"),
-            largest_contentful_paint=performance_timing.get("largestContentfulPaint"),
-            cumulative_layout_shift=performance_timing.get("cumulativeLayoutShift"),
+            first_contentful_paint=performance_timing.get(
+                "firstContentfulPaint"
+            ),
+            largest_contentful_paint=performance_timing.get(
+                "largestContentfulPaint"
+            ),
+            cumulative_layout_shift=performance_timing.get(
+                "cumulativeLayoutShift"
+            ),
             first_input_delay=performance_timing.get("firstInputDelay"),
             load_time_ms=max(load_time_ms, 0),
             dom_content_loaded_ms=max(dom_content_loaded_ms, 0),
@@ -776,11 +849,15 @@ class BrowserAutomationService(IBrowserAutomation):
 
     # === Accessibility Testing ===
 
-    async def _run_accessibility_tests(self, page: Page) -> AccessibilityResult:
+    async def _run_accessibility_tests(
+        self, page: Page
+    ) -> AccessibilityResult:
         """Run accessibility compliance tests"""
 
         # Inject axe-core for accessibility testing
-        await page.add_script_tag(url="https://unpkg.com/axe-core@latest/axe.min.js")
+        await page.add_script_tag(
+            url="https://unpkg.com/axe-core@latest/axe.min.js"
+        )
 
         # Run accessibility audit
         accessibility_results = await page.evaluate(
@@ -841,11 +918,14 @@ class BrowserAutomationService(IBrowserAutomation):
         screenshot_name = f"visual_test_{page_hash}"
 
         # Capture current screenshot
-        current_screenshot = await self._capture_screenshot(page, screenshot_name)
+        current_screenshot = await self._capture_screenshot(
+            page, screenshot_name
+        )
 
         # Look for baseline screenshot
         baseline_path = (
-            self.browser_manager.screenshots_dir / f"{screenshot_name}_baseline.png"
+            self.browser_manager.screenshots_dir
+            / f"{screenshot_name}_baseline.png"
         )
 
         if not baseline_path.exists():
@@ -895,12 +975,16 @@ class BrowserAutomationService(IBrowserAutomation):
         logger.info(f"Screenshot captured: {screenshot_path}")
         return str(screenshot_path)
 
-    def _generate_ui_recommendations(self, results: Dict[str, Any]) -> List[str]:
+    def _generate_ui_recommendations(
+        self, results: Dict[str, Any]
+    ) -> List[str]:
         """Generate UI test recommendations"""
         recommendations = []
 
         # Action completion recommendations
-        actions_rate = results["actions_completed"] / max(results["total_actions"], 1)
+        actions_rate = results["actions_completed"] / max(
+            results["total_actions"], 1
+        )
         if actions_rate < 0.8:
             recommendations.append(
                 "Some UI actions failed - check element selectors and timing"
@@ -937,10 +1021,14 @@ class BrowserAutomationService(IBrowserAutomation):
             violations = len(accessibility.get("violations", []))
 
             if violations > 0:
-                recommendations.append(f"{violations} accessibility violations found")
+                recommendations.append(
+                    f"{violations} accessibility violations found"
+                )
 
             if accessibility.get("score", 1.0) < 0.9:
-                recommendations.append("Consider improving accessibility compliance")
+                recommendations.append(
+                    "Consider improving accessibility compliance"
+                )
 
         # Visual regression recommendations
         if results.get("visual_results"):
@@ -1002,7 +1090,9 @@ async def health_check():
     """Service health check"""
     service: BrowserAutomationService = app.state.browser_service
 
-    browser_status = "connected" if service.browser_manager.browsers else "disconnected"
+    browser_status = (
+        "connected" if service.browser_manager.browsers else "disconnected"
+    )
     active_contexts = len(service.browser_manager.active_contexts)
 
     status = "healthy" if browser_status == "connected" else "unhealthy"
@@ -1025,7 +1115,9 @@ async def health_check():
 
 @app.post("/execute", response_model=TestResult)
 async def execute_ui_test(
-    scenario: Dict[str, Any], execution: Dict[str, Any], context: Dict[str, Any]
+    scenario: Dict[str, Any],
+    execution: Dict[str, Any],
+    context: Dict[str, Any],
 ):
     """Execute UI test scenario"""
     service: BrowserAutomationService = app.state.browser_service

@@ -10,7 +10,7 @@ import asyncio
 import logging
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from ...domain.entities import Turn
 from ...domain.services import (
@@ -27,6 +27,14 @@ from ...domain.value_objects import (
 from ...infrastructure.monitoring import (
     NovelEngineTracingConfig,
     initialize_tracing,
+)
+
+# Import orchestration domain type safety patterns
+from ...infrastructure.orchestration_domain_types import (
+    OrchestrationDomainTyping,
+    ValueObjectFactory,
+    ensure_not_none,
+    ensure_uuid,
 )
 from ...infrastructure.pipeline_phases import (
     BasePhaseImplementation,
@@ -90,7 +98,9 @@ class TurnOrchestrator:
         self.pipeline_orchestrator = PipelineOrchestrator()
 
         # Initialize enhanced performance tracker with Prometheus integration
-        self.performance_tracker = EnhancedPerformanceTracker(prometheus_collector)
+        self.performance_tracker = EnhancedPerformanceTracker(
+            prometheus_collector
+        )
 
         # Initialize distributed tracing
         tracing_config = NovelEngineTracingConfig(
@@ -103,7 +113,9 @@ class TurnOrchestrator:
         self.tracer = initialize_tracing(tracing_config)
 
         # Phase implementations
-        self.phase_implementations: Dict[PhaseType, BasePhaseImplementation] = {
+        self.phase_implementations: Dict[
+            PhaseType, BasePhaseImplementation
+        ] = {
             PhaseType.WORLD_UPDATE: WorldUpdatePhase(),
             PhaseType.SUBJECTIVE_BRIEF: SubjectiveBriefPhase(),
             PhaseType.INTERACTION_ORCHESTRATION: InteractionOrchestrationPhase(),
@@ -152,7 +164,9 @@ class TurnOrchestrator:
 
         # Create turn entity
         turn = Turn.create(
-            turn_id=turn_id, configuration=configuration, participants=participants
+            turn_id=turn_id,
+            configuration=configuration,
+            participants=participants,
         )
 
         # Start root span for complete turn execution flow (M10 requirement)
@@ -168,7 +182,9 @@ class TurnOrchestrator:
                 },
                 user_context=user_context,
             )
-            logger.debug(f"Started distributed tracing root span for turn {turn_id}")
+            logger.debug(
+                f"Started distributed tracing root span for turn {turn_id}"
+            )
 
         execution_start = datetime.now()
         phase_results: Dict[PhaseType, PhaseResult] = {}
@@ -213,15 +229,21 @@ class TurnOrchestrator:
 
                         # Execute saga compensation if enabled
                         if self.saga_enabled:
-                            compensation_result = await self._execute_saga_compensation(
-                                turn, phases_completed, phase_results
+                            compensation_result = (
+                                await self._execute_saga_compensation(
+                                    turn, phases_completed, phase_results
+                                )
                             )
                             compensation_actions.extend(
                                 compensation_result.compensation_actions
                             )
 
                         # Fail fast or continue based on configuration
-                        if configuration.fail_fast_on_phase_failure:
+                        # Use type-safe attribute access with fallback
+                        fail_fast = getattr(
+                            configuration, "fail_fast_on_phase_failure", True
+                        )
+                        if fail_fast:
                             break
 
                     logger.debug(
@@ -234,20 +256,28 @@ class TurnOrchestrator:
                     )
 
                     # Record phase failure
-                    phase_results[phase_type] = self._create_phase_failure_result(
+                    phase_results[
+                        phase_type
+                    ] = self._create_phase_failure_result(
                         phase_type, str(e), turn
                     )
 
                     # Execute compensation
                     if self.saga_enabled:
-                        compensation_result = await self._execute_saga_compensation(
-                            turn, phases_completed, phase_results
+                        compensation_result = (
+                            await self._execute_saga_compensation(
+                                turn, phases_completed, phase_results
+                            )
                         )
                         compensation_actions.extend(
                             compensation_result.compensation_actions
                         )
 
-                    if configuration.fail_fast_on_phase_failure:
+                    # Use type-safe attribute access with fallback
+                    fail_fast = getattr(
+                        configuration, "fail_fast_on_phase_failure", True
+                    )
+                    if fail_fast:
                         break
 
             # Calculate execution metrics
@@ -256,10 +286,12 @@ class TurnOrchestrator:
             ).total_seconds() * 1000
 
             # Determine overall success
-            successful_phases = len([r for r in phase_results.values() if r.success])
-            overall_success = successful_phases == len(pipeline_phases) and len(
-                phases_completed
-            ) == len(pipeline_phases)
+            successful_phases = len(
+                [r for r in phase_results.values() if r.success]
+            )
+            overall_success = successful_phases == len(
+                pipeline_phases
+            ) and len(phases_completed) == len(pipeline_phases)
 
             # Finalize turn state
             if overall_success:
@@ -284,7 +316,9 @@ class TurnOrchestrator:
             if self.tracer and turn_span:
                 total_ai_cost = sum(
                     [
-                        result.ai_usage.get("total_cost", 0) if result.ai_usage else 0
+                        result.ai_usage.get("total_cost", 0)
+                        if result.ai_usage
+                        else 0
                         for result in phase_results.values()
                     ]
                 )
@@ -294,7 +328,9 @@ class TurnOrchestrator:
                     success=overall_success,
                     execution_time_seconds=execution_time_ms / 1000.0,
                     total_ai_cost=float(total_ai_cost),
-                    phases_completed=[phase.value for phase in phases_completed],
+                    phases_completed=[
+                        phase.value for phase in phases_completed
+                    ],
                     error_details=None,
                 )
 
@@ -315,7 +351,9 @@ class TurnOrchestrator:
             )
 
         except Exception as e:
-            logger.error(f"Critical turn execution error for turn {turn_id}: {e}")
+            logger.error(
+                f"Critical turn execution error for turn {turn_id}: {e}"
+            )
 
             # Record error in distributed tracing span
             if self.tracer and turn_span:
@@ -324,7 +362,9 @@ class TurnOrchestrator:
                 ).total_seconds() * 1000
                 total_ai_cost = sum(
                     [
-                        result.ai_usage.get("total_cost", 0) if result.ai_usage else 0
+                        result.ai_usage.get("total_cost", 0)
+                        if result.ai_usage
+                        else 0
                         for result in phase_results.values()
                     ]
                 )
@@ -334,7 +374,9 @@ class TurnOrchestrator:
                     success=False,
                     execution_time_seconds=execution_time_ms / 1000.0,
                     total_ai_cost=float(total_ai_cost),
-                    phases_completed=[phase.value for phase in phases_completed],
+                    phases_completed=[
+                        phase.value for phase in phases_completed
+                    ],
                     error_details=f"Critical error: {str(e)}",
                 )
 
@@ -347,8 +389,10 @@ class TurnOrchestrator:
             # Emergency compensation
             if self.saga_enabled and phases_completed:
                 try:
-                    compensation_result = await self._execute_saga_compensation(
-                        turn, phases_completed, phase_results
+                    compensation_result = (
+                        await self._execute_saga_compensation(
+                            turn, phases_completed, phase_results
+                        )
                     )
                     compensation_actions.extend(
                         compensation_result.compensation_actions
@@ -411,7 +455,9 @@ class TurnOrchestrator:
         # Start phase-level span as child of root turn span
         phase_span = None
         if self.tracer and parent_span:
-            phase_order = list(self.phase_implementations.keys()).index(phase_type) + 1
+            phase_order = (
+                list(self.phase_implementations.keys()).index(phase_type) + 1
+            )
             phase_span = self.tracer.start_phase_span(
                 phase_name=phase_type.value,
                 turn_id=turn.turn_id.turn_uuid,
@@ -438,11 +484,17 @@ class TurnOrchestrator:
         try:
             phase_result = await asyncio.wait_for(
                 phase_implementation.execute(context),
-                timeout=turn.configuration.get_phase_timeout(phase_type.value) / 1000.0,
+                timeout=cast(
+                    float,
+                    turn.configuration.get_phase_timeout(phase_type.value),
+                )
+                / 1000.0,
             )
 
             # Record phase execution metrics
-            self._record_phase_metrics(turn.turn_id, phase_type, phase_result, context)
+            self._record_phase_metrics(
+                turn.turn_id, phase_type, phase_result, context
+            )
 
             # Record phase results in distributed tracing span
             if self.tracer and phase_span:
@@ -471,7 +523,9 @@ class TurnOrchestrator:
             logger.warning(
                 f"Phase {phase_type.value} timed out for turn {turn.turn_id}"
             )
-            timeout_result = self._create_phase_timeout_result(phase_type, turn)
+            timeout_result = self._create_phase_timeout_result(
+                phase_type, turn
+            )
 
             # Record timeout in distributed tracing span
             if self.tracer and phase_span:
@@ -492,7 +546,9 @@ class TurnOrchestrator:
             logger.error(
                 f"Phase {phase_type.value} failed for turn {turn.turn_id}: {e}"
             )
-            failure_result = self._create_phase_failure_result(phase_type, str(e), turn)
+            failure_result = self._create_phase_failure_result(
+                phase_type, str(e), turn
+            )
 
             # Record failure in distributed tracing span
             if self.tracer and phase_span:
@@ -590,10 +646,12 @@ class TurnOrchestrator:
 
             # Basic phase metrics
             metrics[f"{phase_prefix}_success"] = 1.0 if result.success else 0.0
-            metrics[f"{phase_prefix}_execution_time_ms"] = (
-                result.performance_metrics.get("execution_time_ms", 0.0)
+            metrics[
+                f"{phase_prefix}_execution_time_ms"
+            ] = result.performance_metrics.get("execution_time_ms", 0.0)
+            metrics[f"{phase_prefix}_events_processed"] = float(
+                result.events_processed
             )
-            metrics[f"{phase_prefix}_events_processed"] = float(result.events_processed)
             metrics[f"{phase_prefix}_events_generated"] = float(
                 len(result.events_generated)
             )
@@ -648,9 +706,9 @@ class TurnOrchestrator:
             if phase_type == PhaseType.INTERACTION_ORCHESTRATION:
                 # Extract interaction session results for event integration
                 if "interaction_summary" in result.metadata:
-                    metadata[phase_type.value]["session_results"] = result.metadata[
-                        "interaction_summary"
-                    ]
+                    metadata[phase_type.value][
+                        "session_results"
+                    ] = result.metadata["interaction_summary"]
 
         return metadata
 
@@ -736,10 +794,15 @@ class TurnOrchestrator:
         # Validate participants
         if not participants:
             errors.append("At least one participant is required")
-        elif len(participants) > configuration.max_participants:
-            errors.append(
-                f"Too many participants: {len(participants)} > {configuration.max_participants}"
+        else:
+            # Use type-safe attribute access with fallback
+            max_participants = getattr(
+                configuration, "max_participants", len(participants) or 10
             )
+            if len(participants) > max_participants:
+                errors.append(
+                    f"Too many participants: {len(participants)} > {max_participants}"
+                )
 
         # Validate configuration
         if configuration.world_time_advance <= 0:
@@ -753,11 +816,15 @@ class TurnOrchestrator:
         for phase_type in PhaseType:
             timeout = configuration.get_phase_timeout(phase_type.value)
             if timeout <= 0:
-                errors.append(f"Phase timeout for {phase_type.value} must be positive")
+                errors.append(
+                    f"Phase timeout for {phase_type.value} must be positive"
+                )
 
         return len(errors) == 0, errors
 
-    async def get_turn_status(self, turn_id: TurnId) -> Optional[Dict[str, Any]]:
+    async def get_turn_status(
+        self, turn_id: TurnId
+    ) -> Optional[Dict[str, Any]]:
         """
         Get current status of a turn execution.
 

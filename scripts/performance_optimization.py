@@ -86,7 +86,9 @@ class PerformanceMonitor:
             "system_cpu_usage", "CPU usage percentage", registry=self.registry
         )
         self.memory_gauge = Gauge(
-            "system_memory_usage", "Memory usage percentage", registry=self.registry
+            "system_memory_usage",
+            "Memory usage percentage",
+            registry=self.registry,
         )
         self.response_time_histogram = Histogram(
             "response_time_seconds",
@@ -95,7 +97,10 @@ class PerformanceMonitor:
             registry=self.registry,
         )
         self.error_counter = Counter(
-            "errors_total", "Total number of errors", ["type"], registry=self.registry
+            "errors_total",
+            "Total number of errors",
+            ["type"],
+            registry=self.registry,
         )
         self.throughput_gauge = Gauge(
             "throughput_requests_per_second",
@@ -112,10 +117,14 @@ class PerformanceMonitor:
         cpu_usage = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
         disk_io = (
-            psutil.disk_io_counters()._asdict() if psutil.disk_io_counters() else {}
+            psutil.disk_io_counters()._asdict()
+            if psutil.disk_io_counters()
+            else {}
         )
         network_io = (
-            psutil.net_io_counters()._asdict() if psutil.net_io_counters() else {}
+            psutil.net_io_counters()._asdict()
+            if psutil.net_io_counters()
+            else {}
         )
 
         # Application metrics
@@ -182,9 +191,13 @@ class PerformanceMonitor:
                 if response.status_code == 200:
                     response_times[endpoint] = (end_time - start_time) * 1000
                 else:
-                    self.error_counter.labels(type=f"http_{response.status_code}").inc()
+                    self.error_counter.labels(
+                        type=f"http_{response.status_code}"
+                    ).inc()
             except Exception as e:
-                logger.warning(f"Failed to collect response time for {endpoint}: {e}")
+                logger.warning(
+                    f"Failed to collect response time for {endpoint}: {e}"
+                )
                 self.error_counter.labels(type="timeout").inc()
 
         return response_times
@@ -234,8 +247,12 @@ class PerformanceMonitor:
 
         # Get recent metrics
         recent_metrics = self.metrics_history[-10:]
-        avg_cpu = sum(m.cpu_usage for m in recent_metrics) / len(recent_metrics)
-        avg_memory = sum(m.memory_usage for m in recent_metrics) / len(recent_metrics)
+        avg_cpu = sum(m.cpu_usage for m in recent_metrics) / len(
+            recent_metrics
+        )
+        avg_memory = sum(m.memory_usage for m in recent_metrics) / len(
+            recent_metrics
+        )
 
         # CPU optimization recommendations
         if avg_cpu > 80:
@@ -246,7 +263,10 @@ class PerformanceMonitor:
                     description="High CPU usage detected. Consider scaling horizontally or optimizing CPU-intensive operations.",
                     impact_estimate="20-30% CPU reduction",
                     implementation_effort="medium",
-                    estimated_improvement={"cpu_usage": -25.0, "response_time": -15.0},
+                    estimated_improvement={
+                        "cpu_usage": -25.0,
+                        "response_time": -15.0,
+                    },
                     commands=[
                         "kubectl scale deployment novel-engine-api --replicas=6",
                         "kubectl apply -f k8s/autoscaling.yaml",
@@ -309,7 +329,9 @@ class PerformanceMonitor:
         self.optimization_history.extend(recommendations)
         return recommendations
 
-    def _analyze_database_performance(self) -> List[OptimizationRecommendation]:
+    def _analyze_database_performance(
+        self,
+    ) -> List[OptimizationRecommendation]:
         """Analyze database performance and provide recommendations."""
         recommendations = []
 
@@ -346,7 +368,10 @@ class PerformanceMonitor:
                 description="Redis memory optimization and key expiration tuning recommended.",
                 impact_estimate="5-10% cache hit rate improvement",
                 implementation_effort="low",
-                estimated_improvement={"cache_hit_rate": 8.0, "memory_usage": -5.0},
+                estimated_improvement={
+                    "cache_hit_rate": 8.0,
+                    "memory_usage": -5.0,
+                },
                 commands=[
                     "redis-cli config set maxmemory 2gb",
                     "redis-cli config set maxmemory-policy volatile-lru",
@@ -374,7 +399,9 @@ class PerformanceMonitor:
                     stdout, stderr = await process.communicate()
 
                     if process.returncode != 0:
-                        logger.error(f"Kubernetes command failed: {stderr.decode()}")
+                        logger.error(
+                            f"Kubernetes command failed: {stderr.decode()}"
+                        )
                         return False
 
                 elif command.startswith("python"):
@@ -387,7 +414,9 @@ class PerformanceMonitor:
                     stdout, stderr = await process.communicate()
 
                     if process.returncode != 0:
-                        logger.error(f"Python script failed: {stderr.decode()}")
+                        logger.error(
+                            f"Python script failed: {stderr.decode()}"
+                        )
                         return False
 
                 elif command.startswith("redis-cli"):
@@ -419,8 +448,12 @@ class PerformanceMonitor:
         recent_metrics = self.metrics_history[-24:]  # Last 24 data points
 
         # Calculate averages and trends
-        avg_cpu = sum(m.cpu_usage for m in recent_metrics) / len(recent_metrics)
-        avg_memory = sum(m.memory_usage for m in recent_metrics) / len(recent_metrics)
+        avg_cpu = sum(m.cpu_usage for m in recent_metrics) / len(
+            recent_metrics
+        )
+        avg_memory = sum(m.memory_usage for m in recent_metrics) / len(
+            recent_metrics
+        )
         avg_response_time = sum(
             sum(m.response_times.values()) / len(m.response_times)
             for m in recent_metrics
@@ -433,7 +466,9 @@ class PerformanceMonitor:
 
         if len(recent_metrics) >= 12:
             first_half_cpu = sum(m.cpu_usage for m in recent_metrics[:12]) / 12
-            second_half_cpu = sum(m.cpu_usage for m in recent_metrics[12:]) / 12
+            second_half_cpu = (
+                sum(m.cpu_usage for m in recent_metrics[12:]) / 12
+            )
 
             if second_half_cpu > first_half_cpu * 1.1:
                 cpu_trend = "increasing"
@@ -443,7 +478,9 @@ class PerformanceMonitor:
         report = {
             "timestamp": datetime.now().isoformat(),
             "summary": {
-                "status": "healthy" if avg_cpu < 70 and avg_memory < 80 else "warning",
+                "status": "healthy"
+                if avg_cpu < 70 and avg_memory < 80
+                else "warning",
                 "avg_cpu_usage": round(avg_cpu, 2),
                 "avg_memory_usage": round(avg_memory, 2),
                 "avg_response_time_ms": round(avg_response_time, 2),
@@ -456,7 +493,9 @@ class PerformanceMonitor:
                     "memory_usage": [m.memory_usage for m in recent_metrics],
                 },
                 "application": {
-                    "concurrent_users": [m.concurrent_users for m in recent_metrics],
+                    "concurrent_users": [
+                        m.concurrent_users for m in recent_metrics
+                    ],
                     "active_agents": [m.active_agents for m in recent_metrics],
                     "narrative_generation_rate": [
                         m.narrative_generation_rate for m in recent_metrics
@@ -497,7 +536,9 @@ class AutoOptimizer:
     def __init__(self, monitor: PerformanceMonitor, config: Dict[str, Any]):
         self.monitor = monitor
         self.config = config
-        self.auto_optimization_enabled = config.get("auto_optimization_enabled", False)
+        self.auto_optimization_enabled = config.get(
+            "auto_optimization_enabled", False
+        )
         self.optimization_cooldown = timedelta(
             minutes=config.get("optimization_cooldown_minutes", 30)
         )
@@ -520,7 +561,9 @@ class AutoOptimizer:
             ]
 
             for recommendation in critical_recommendations:
-                success = await self.monitor.implement_optimization(recommendation)
+                success = await self.monitor.implement_optimization(
+                    recommendation
+                )
                 if success:
                     self.last_optimization = datetime.now()
                     logger.info(
@@ -548,7 +591,10 @@ class AutoOptimizer:
         if self.last_optimization is None:
             return True
 
-        return datetime.now() - self.last_optimization > self.optimization_cooldown
+        return (
+            datetime.now() - self.last_optimization
+            > self.optimization_cooldown
+        )
 
 
 async def main():
@@ -568,10 +614,15 @@ async def main():
         help="Operation mode",
     )
     parser.add_argument(
-        "--auto-optimize", action="store_true", help="Enable automatic optimization"
+        "--auto-optimize",
+        action="store_true",
+        help="Enable automatic optimization",
     )
     parser.add_argument(
-        "--interval", type=int, default=60, help="Monitoring interval in seconds"
+        "--interval",
+        type=int,
+        default=60,
+        help="Monitoring interval in seconds",
     )
     args = parser.parse_args()
 
@@ -596,7 +647,9 @@ async def main():
     optimizer = AutoOptimizer(monitor, config)
 
     if args.mode == "monitor":
-        logger.info(f"Starting continuous monitoring (interval: {args.interval}s)")
+        logger.info(
+            f"Starting continuous monitoring (interval: {args.interval}s)"
+        )
         while True:
             try:
                 await optimizer.run_optimization_cycle()

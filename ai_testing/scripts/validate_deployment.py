@@ -2,8 +2,9 @@
 """
 AI Testing Framework Deployment Validation Script
 
-Comprehensive validation script to verify complete system deployment and integration.
-Tests all services, validates communication, and ensures the framework is ready for production use.
+Comprehensive validation script to verify complete system deployment and
+integration. Tests all services, validates communication, and ensures
+the framework is ready for production use.
 """
 
 import asyncio
@@ -79,9 +80,14 @@ class DeploymentValidator:
             ServiceConfig(
                 "Browser Automation", f"{base_url}:8001", 8001, required=True
             ),
-            ServiceConfig("API Testing", f"{base_url}:8002", 8002, required=True),
             ServiceConfig(
-                "AI Quality Assessment", f"{base_url}:8003", 8003, required=True
+                "API Testing", f"{base_url}:8002", 8002, required=True
+            ),
+            ServiceConfig(
+                "AI Quality Assessment",
+                f"{base_url}:8003",
+                8003,
+                required=True,
             ),
             ServiceConfig(
                 "Results Aggregation", f"{base_url}:8004", 8004, required=True
@@ -99,7 +105,8 @@ class DeploymentValidator:
 
         console.print(
             Panel.fit(
-                "[bold blue]AI Testing Framework Deployment Validation[/bold blue]\n"
+                "[bold blue]AI Testing Framework Deployment "
+                "Validation[/bold blue]\n"
                 f"Validating deployment at: {self.base_url}\n"
                 f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
                 title="🚀 Deployment Validation",
@@ -133,7 +140,10 @@ class DeploymentValidator:
     async def _validate_service_health(self):
         """Validate individual service health"""
 
-        console.print("\n[bold yellow]Phase 1: Service Health Validation[/bold yellow]")
+        console.print(
+            "\n[bold yellow]Phase 1: Service Health "
+            "Validation[/bold yellow]"
+        )
 
         with Progress(
             SpinnerColumn(),
@@ -142,7 +152,6 @@ class DeploymentValidator:
             TimeElapsedColumn(),
             console=console,
         ) as progress:
-
             task = progress.add_task(
                 "Checking service health...", total=len(self.services)
             )
@@ -152,7 +161,9 @@ class DeploymentValidator:
                     start_time = time.time()
 
                     try:
-                        progress.update(task, description=f"Checking {service.name}...")
+                        progress.update(
+                            task, description=f"Checking {service.name}..."
+                        )
 
                         response = await client.get(f"{service.url}/health")
                         duration_ms = int((time.time() - start_time) * 1000)
@@ -164,27 +175,35 @@ class DeploymentValidator:
                             if status in ["healthy", "ready"]:
                                 self.validation_results.append(
                                     ValidationResult(
-                                        test_name=f"{service.name} Health Check",
+                                        test_name=(
+                                            f"{service.name} Health Check"
+                                        ),
                                         passed=True,
                                         duration_ms=duration_ms,
                                         details=health_data,
                                     )
                                 )
                                 console.print(
-                                    f"  ✅ {service.name}: [green]{status}[/green] ({duration_ms}ms)"
+                                    f"  ✅ {service.name}: [green]{status}"
+                                    f"[/green] ({duration_ms}ms)"
                                 )
                             else:
                                 self.validation_results.append(
                                     ValidationResult(
-                                        test_name=f"{service.name} Health Check",
+                                        test_name=(
+                                            f"{service.name} Health Check"
+                                        ),
                                         passed=False,
                                         duration_ms=duration_ms,
                                         details=health_data,
-                                        error_message=f"Service status: {status}",
+                                        error_message=(
+                                            f"Service status: {status}"
+                                        ),
                                     )
                                 )
                                 console.print(
-                                    f"  ⚠️  {service.name}: [yellow]{status}[/yellow] ({duration_ms}ms)"
+                                    f"  ⚠️  {service.name}: [yellow]{status}"
+                                    f"[/yellow] ({duration_ms}ms)"
                                 )
                         else:
                             self.validation_results.append(
@@ -192,12 +211,18 @@ class DeploymentValidator:
                                     test_name=f"{service.name} Health Check",
                                     passed=False,
                                     duration_ms=duration_ms,
-                                    details={"status_code": response.status_code},
-                                    error_message=f"HTTP {response.status_code}",
+                                    details={
+                                        "status_code": response.status_code
+                                    },
+                                    error_message=(
+                                        f"HTTP {response.status_code}"
+                                    ),
                                 )
                             )
                             console.print(
-                                f"  ❌ {service.name}: [red]HTTP {response.status_code}[/red] ({duration_ms}ms)"
+                                f"  ❌ {service.name}: [red]HTTP "
+                                f"{response.status_code}[/red] "
+                                f"({duration_ms}ms)"
                             )
 
                     except Exception as e:
@@ -212,7 +237,8 @@ class DeploymentValidator:
                             )
                         )
                         console.print(
-                            f"  ❌ {service.name}: [red]Connection failed - {str(e)}[/red]"
+                            f"  ❌ {service.name}: [red]Connection "
+                            f"failed - {str(e)}[/red]"
                         )
 
                     progress.advance(task)
@@ -221,11 +247,11 @@ class DeploymentValidator:
         """Validate service integration and communication"""
 
         console.print(
-            "\n[bold yellow]Phase 2: Service Integration Validation[/bold yellow]"
+            "\n[bold yellow]Phase 2: Service Integration "
+            "Validation[/bold yellow]"
         )
 
         async with httpx.AsyncClient(timeout=60.0) as client:
-
             # Test 1: Orchestrator can reach all services
             await self._test_orchestrator_service_discovery(client)
 
@@ -238,7 +264,9 @@ class DeploymentValidator:
             # Test 4: Notification Service basic functionality
             await self._test_notification_service(client)
 
-    async def _test_orchestrator_service_discovery(self, client: httpx.AsyncClient):
+    async def _test_orchestrator_service_discovery(
+        self, client: httpx.AsyncClient
+    ):
         """Test orchestrator service discovery"""
 
         start_time = time.time()
@@ -246,7 +274,9 @@ class DeploymentValidator:
         try:
             console.print("  🔍 Testing orchestrator service discovery...")
 
-            response = await client.get(f"{self.base_url}:8000/services/health")
+            response = await client.get(
+                f"{self.base_url}:8000/services/health"
+            )
             duration_ms = int((time.time() - start_time) * 1000)
 
             if response.status_code == 200:
@@ -263,7 +293,8 @@ class DeploymentValidator:
                 ]
 
                 all_discovered = all(
-                    service in discovered_services for service in expected_services
+                    service in discovered_services
+                    for service in expected_services
                 )
 
                 self.validation_results.append(
@@ -279,18 +310,21 @@ class DeploymentValidator:
                         error_message=(
                             None
                             if all_discovered
-                            else f"Missing services: {set(expected_services) - set(discovered_services)}"
+                            else f"Missing services: "
+                            f"{set(expected_services) - set(discovered_services)}"
                         ),
                     )
                 )
 
                 if all_discovered:
                     console.print(
-                        f"    ✅ Service discovery: [green]All services discovered[/green] ({duration_ms}ms)"
+                        f"    ✅ Service discovery: [green]All services "
+                        f"discovered[/green] ({duration_ms}ms)"
                     )
                 else:
                     console.print(
-                        f"    ⚠️  Service discovery: [yellow]Some services missing[/yellow] ({duration_ms}ms)"
+                        f"    ⚠️  Service discovery: [yellow]Some "
+                        f"services missing[/yellow] ({duration_ms}ms)"
                     )
             else:
                 self.validation_results.append(
@@ -303,7 +337,8 @@ class DeploymentValidator:
                     )
                 )
                 console.print(
-                    f"    ❌ Service discovery: [red]Failed with HTTP {response.status_code}[/red]"
+                    f"    ❌ Service discovery: [red]Failed with HTTP "
+                    f"{response.status_code}[/red]"
                 )
 
         except Exception as e:
@@ -317,7 +352,9 @@ class DeploymentValidator:
                     error_message=str(e),
                 )
             )
-            console.print(f"    ❌ Service discovery: [red]Error - {str(e)}[/red]")
+            console.print(
+                f"    ❌ Service discovery: [red]Error - {str(e)}[/red]"
+            )
 
     async def _test_api_testing_service(self, client: httpx.AsyncClient):
         """Test API Testing Service functionality"""
@@ -341,7 +378,8 @@ class DeploymentValidator:
 
             if response.status_code == 200:
                 result_data = response.json()
-                # Special handling for health endpoint tests - always pass if they respond
+                # Special handling for health endpoint tests -
+                # always pass if they respond
                 if "health" in test_params.get("endpoint_url", "").lower():
                     test_passed = True
                 else:
@@ -354,18 +392,22 @@ class DeploymentValidator:
                         duration_ms=duration_ms,
                         details=result_data,
                         error_message=(
-                            None if test_passed else "API test execution failed"
+                            None
+                            if test_passed
+                            else "API test execution failed"
                         ),
                     )
                 )
 
                 if test_passed:
                     console.print(
-                        f"    ✅ API Testing: [green]Working correctly[/green] ({duration_ms}ms)"
+                        f"    ✅ API Testing: [green]Working correctly"
+                        f"[/green] ({duration_ms}ms)"
                     )
                 else:
                     console.print(
-                        f"    ⚠️  API Testing: [yellow]Test failed[/yellow] ({duration_ms}ms)"
+                        f"    ⚠️  API Testing: [yellow]Test failed"
+                        f"[/yellow] ({duration_ms}ms)"
                     )
             else:
                 self.validation_results.append(
@@ -378,7 +420,8 @@ class DeploymentValidator:
                     )
                 )
                 console.print(
-                    f"    ❌ API Testing: [red]Failed with HTTP {response.status_code}[/red]"
+                    f"    ❌ API Testing: [red]Failed with HTTP "
+                    f"{response.status_code}[/red]"
                 )
 
         except Exception as e:
@@ -394,7 +437,9 @@ class DeploymentValidator:
             )
             console.print(f"    ❌ API Testing: [red]Error - {str(e)}[/red]")
 
-    async def _test_browser_automation_service(self, client: httpx.AsyncClient):
+    async def _test_browser_automation_service(
+        self, client: httpx.AsyncClient
+    ):
         """Test Browser Automation Service basic functionality"""
 
         start_time = time.time()
@@ -402,7 +447,8 @@ class DeploymentValidator:
         try:
             console.print("  🌐 Testing Browser Automation Service...")
 
-            # Simple health check - browser automation requires more setup for full testing
+            # Simple health check - browser automation requires more
+            # setup for full testing
             response = await client.get(f"{self.base_url}:8001/health")
             duration_ms = int((time.time() - start_time) * 1000)
 
@@ -457,7 +503,9 @@ class DeploymentValidator:
                     error_message=str(e),
                 )
             )
-            console.print(f"    ❌ Browser Automation: [red]Error - {str(e)}[/red]")
+            console.print(
+                f"    ❌ Browser Automation: [red]Error - {str(e)}[/red]"
+            )
 
     async def _test_notification_service(self, client: httpx.AsyncClient):
         """Test Notification Service basic functionality"""
@@ -521,7 +569,9 @@ class DeploymentValidator:
                     error_message=str(e),
                 )
             )
-            console.print(f"    ❌ Notification Service: [red]Error - {str(e)}[/red]")
+            console.print(
+                f"    ❌ Notification Service: [red]Error - {str(e)}[/red]"
+            )
 
     async def _validate_end_to_end_workflows(self):
         """Validate end-to-end workflow execution"""
@@ -533,7 +583,9 @@ class DeploymentValidator:
         async with httpx.AsyncClient(timeout=120.0) as client:
             await self._test_minimal_comprehensive_workflow(client)
 
-    async def _test_minimal_comprehensive_workflow(self, client: httpx.AsyncClient):
+    async def _test_minimal_comprehensive_workflow(
+        self, client: httpx.AsyncClient
+    ):
         """Test minimal comprehensive workflow"""
 
         start_time = time.time()
@@ -587,11 +639,17 @@ class DeploymentValidator:
                         details={
                             "overall_score": overall_score,
                             "phases_executed": len(phase_results),
-                            "test_session_id": result_data.get("test_session_id"),
-                            "total_tests": result_data.get("total_tests_executed", 0),
+                            "test_session_id": result_data.get(
+                                "test_session_id"
+                            ),
+                            "total_tests": result_data.get(
+                                "total_tests_executed", 0
+                            ),
                         },
                         error_message=(
-                            None if overall_passed else "Workflow execution failed"
+                            None
+                            if overall_passed
+                            else "Workflow execution failed"
                         ),
                     )
                 )
@@ -634,10 +692,11 @@ class DeploymentValidator:
     async def _validate_performance(self):
         """Validate system performance characteristics"""
 
-        console.print("\n[bold yellow]Phase 4: Performance Validation[/bold yellow]")
+        console.print(
+            "\n[bold yellow]Phase 4: Performance Validation[/bold yellow]"
+        )
 
         async with httpx.AsyncClient(timeout=60.0) as client:
-
             # Test 1: Response time validation
             await self._test_response_times(client)
 
@@ -673,7 +732,9 @@ class DeploymentValidator:
                     )
 
             except Exception as e:
-                console.print(f"    ❌ {service.name}: [red]Error - {str(e)}[/red]")
+                console.print(
+                    f"    ❌ {service.name}: [red]Error - {str(e)}[/red]"
+                )
 
         if response_times:
             avg_response_time = sum(response_times) / len(response_times)
@@ -697,7 +758,9 @@ class DeploymentValidator:
                 )
             )
 
-            console.print(f"    📊 Average response time: {avg_response_time:.1f}ms")
+            console.print(
+                f"    📊 Average response time: {avg_response_time:.1f}ms"
+            )
 
     async def _test_concurrent_requests(self, client: httpx.AsyncClient):
         """Test concurrent request handling"""
@@ -762,7 +825,9 @@ class DeploymentValidator:
                     error_message=str(e),
                 )
             )
-            console.print(f"    ❌ Concurrent handling: [red]Error - {str(e)}[/red]")
+            console.print(
+                f"    ❌ Concurrent handling: [red]Error - {str(e)}[/red]"
+            )
 
     async def _validate_security_configuration(self):
         """Validate security configuration"""
@@ -772,7 +837,6 @@ class DeploymentValidator:
         )
 
         async with httpx.AsyncClient(timeout=30.0) as client:
-
             # Test 1: Check for exposed sensitive information
             await self._test_information_exposure(client)
 
@@ -874,7 +938,9 @@ class DeploymentValidator:
                     error_message=str(e),
                 )
             )
-            console.print(f"    ❌ Information exposure: [red]Error - {str(e)}[/red]")
+            console.print(
+                f"    ❌ Information exposure: [red]Error - {str(e)}[/red]"
+            )
 
     async def _test_cors_configuration(self, client: httpx.AsyncClient):
         """Test CORS configuration"""
@@ -913,7 +979,10 @@ class DeploymentValidator:
                     test_name="CORS Configuration",
                     passed=cors_properly_configured,
                     duration_ms=duration_ms,
-                    details={"cors_headers": cors_headers, "cors_issues": cors_issues},
+                    details={
+                        "cors_headers": cors_headers,
+                        "cors_issues": cors_issues,
+                    },
                     error_message=(
                         None
                         if cors_properly_configured
@@ -931,7 +1000,9 @@ class DeploymentValidator:
                     f"    ⚠️  CORS configuration: [yellow]Warnings: {', '.join(cors_issues)}[/yellow]"
                 )
             else:
-                console.print("    ❌ CORS configuration: [red]Issues found[/red]")
+                console.print(
+                    "    ❌ CORS configuration: [red]Issues found[/red]"
+                )
 
         except Exception as e:
             duration_ms = int((time.time() - start_time) * 1000)
@@ -944,7 +1015,9 @@ class DeploymentValidator:
                     error_message=str(e),
                 )
             )
-            console.print(f"    ❌ CORS configuration: [red]Error - {str(e)}[/red]")
+            console.print(
+                f"    ❌ CORS configuration: [red]Error - {str(e)}[/red]"
+            )
 
     def _generate_validation_report(self) -> bool:
         """Generate comprehensive validation report"""
@@ -1013,7 +1086,9 @@ class DeploymentValidator:
 
         return validation_passed
 
-    def _save_validation_results(self, total_duration: int, success_rate: float):
+    def _save_validation_results(
+        self, total_duration: int, success_rate: float
+    ):
         """Save detailed validation results to file"""
 
         try:
@@ -1071,7 +1146,9 @@ async def main():
         default="http://localhost",
         help="Base URL for services (default: http://localhost)",
     )
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "--verbose", action="store_true", help="Enable verbose logging"
+    )
 
     args = parser.parse_args()
 

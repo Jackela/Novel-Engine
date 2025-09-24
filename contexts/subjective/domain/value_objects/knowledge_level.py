@@ -156,7 +156,9 @@ class KnowledgeBase:
     methods for querying, filtering, and analyzing available information.
     """
 
-    knowledge_items: Dict[str, List[KnowledgeItem]]  # subject -> knowledge items
+    knowledge_items: Dict[
+        str, List[KnowledgeItem]
+    ]  # subject -> knowledge items
 
     def __post_init__(self):
         """Validate and organize knowledge base."""
@@ -172,7 +174,9 @@ class KnowledgeBase:
 
             for item in items:
                 if not isinstance(item, KnowledgeItem):
-                    raise ValueError(f"Invalid knowledge item for subject '{subject}'")
+                    raise ValueError(
+                        f"Invalid knowledge item for subject '{subject}'"
+                    )
                 if item.subject != subject:
                     raise ValueError(
                         f"Knowledge item subject mismatch: expected '{subject}', got '{item.subject}'"
@@ -213,7 +217,9 @@ class KnowledgeBase:
         return knowledge[0] if knowledge else None
 
     def has_knowledge_about(
-        self, subject: str, min_certainty: CertaintyLevel = CertaintyLevel.MINIMAL
+        self,
+        subject: str,
+        min_certainty: CertaintyLevel = CertaintyLevel.MINIMAL,
     ) -> bool:
         """Check if entity has any knowledge about a subject (including expired knowledge)."""
         if subject not in self.knowledge_items:
@@ -231,7 +237,10 @@ class KnowledgeBase:
 
         min_level = certainty_order[min_certainty]
         items = self.knowledge_items[subject]
-        return any(certainty_order[item.certainty_level] >= min_level for item in items)
+        return any(
+            certainty_order[item.certainty_level] >= min_level
+            for item in items
+        )
 
     def get_subjects_by_type(self, knowledge_type: KnowledgeType) -> List[str]:
         """Get all subjects that have knowledge of a specific type."""
@@ -257,7 +266,9 @@ class KnowledgeBase:
         stale_knowledge = {}
 
         for subject, items in self.knowledge_items.items():
-            stale_items = [item for item in items if not item.is_current(check_time)]
+            stale_items = [
+                item for item in items if not item.is_current(check_time)
+            ]
             if stale_items:
                 stale_knowledge[subject] = stale_items
 

@@ -95,7 +95,11 @@ class OptimizedAgentRegistry:
 
     def get_other_agents(self, exclude_agent_id: str) -> List[Any]:
         """Get all agents except specified one - optimized for common use case."""
-        return [agent for agent in self._agents if agent.agent_id != exclude_agent_id]
+        return [
+            agent
+            for agent in self._agents
+            if agent.agent_id != exclude_agent_id
+        ]
 
     def remove_agent(self, agent_id: str) -> bool:
         """Remove agent while maintaining index integrity."""
@@ -153,7 +157,9 @@ class OptimizedWorldStateTracker:
             f"OptimizedWorldStateTracker initialized with {max_history_turns} turn history"
         )
 
-    def add_discovery(self, agent_id: str, turn_number: int, clue_content: str) -> None:
+    def add_discovery(
+        self, agent_id: str, turn_number: int, clue_content: str
+    ) -> None:
         """Add discovery with O(1) complexity."""
         # Update primary storage
         self.agent_discoveries[turn_number][agent_id].append(clue_content)
@@ -219,7 +225,9 @@ class OptimizedWorldStateTracker:
 
         for turn in turn_range:
             if turn in self.agent_discoveries:
-                for agent_id, discoveries in self.agent_discoveries[turn].items():
+                for agent_id, discoveries in self.agent_discoveries[
+                    turn
+                ].items():
                     if agent_id != requesting_agent_id:
                         if agent_id not in feedback["other_agent_discoveries"]:
                             feedback["other_agent_discoveries"][agent_id] = []
@@ -238,7 +246,9 @@ class OptimizedWorldStateTracker:
                 feedback["shared_clues"].append(
                     {
                         "clue": clue,
-                        "agents": list(other_agents_with_clue - {requesting_agent_id}),
+                        "agents": list(
+                            other_agents_with_clue - {requesting_agent_id}
+                        ),
                     }
                 )
 
@@ -268,7 +278,9 @@ class OptimizedWorldStateTracker:
         for turn in list(self.agent_discoveries.keys()):
             if turn < cutoff_turn:
                 # Move to archive
-                self.archived_discoveries[turn] = self.agent_discoveries.pop(turn)
+                self.archived_discoveries[turn] = self.agent_discoveries.pop(
+                    turn
+                )
                 archived_count += 1
 
         # Clear old caches
@@ -293,7 +305,9 @@ class OptimizedWorldStateTracker:
             "cache_hit_rate": f"{cache_hit_rate:.1f}%",
             "active_turns": len(self.agent_discoveries),
             "archived_turns": len(self.archived_discoveries),
-            "memory_usage_mb": psutil.Process().memory_info().rss / 1024 / 1024,
+            "memory_usage_mb": psutil.Process().memory_info().rss
+            / 1024
+            / 1024,
         }
 
 
@@ -385,14 +399,18 @@ class AsyncCampaignLogger:
     async def _write_batch(self, events: List[str]) -> None:
         """Write batch of events to file."""
         try:
-            async with aiofiles.open(self.log_path, "a", encoding="utf-8") as f:
+            async with aiofiles.open(
+                self.log_path, "a", encoding="utf-8"
+            ) as f:
                 await f.write("\n".join(events) + "\n")
                 await f.flush()
 
             self.total_events_logged += len(events)
             self.batch_count += 1
 
-            logger.debug(f"Wrote batch of {len(events)} events to campaign log")
+            logger.debug(
+                f"Wrote batch of {len(events)} events to campaign log"
+            )
 
         except Exception as e:
             logger.error(f"Failed to write log batch: {e}")
@@ -441,12 +459,16 @@ class DirectorAgentPerformanceOptimizer:
 
         try:
             # Capture before metrics
-            optimization_results["before_metrics"] = (
-                DirectorAgentPerformanceOptimizer._capture_metrics(director_instance)
+            optimization_results[
+                "before_metrics"
+            ] = DirectorAgentPerformanceOptimizer._capture_metrics(
+                director_instance
             )
 
             # Optimization 1: Replace agent registry with optimized version
-            original_agents = getattr(director_instance, "registered_agents", [])
+            original_agents = getattr(
+                director_instance, "registered_agents", []
+            )
             optimized_registry = OptimizedAgentRegistry()
 
             for agent in original_agents:
@@ -455,7 +477,9 @@ class DirectorAgentPerformanceOptimizer:
             # Replace agent lookup methods
             director_instance._optimized_agent_registry = optimized_registry
             director_instance.find_agent = optimized_registry.find_agent
-            director_instance.get_all_agents = optimized_registry.get_all_agents
+            director_instance.get_all_agents = (
+                optimized_registry.get_all_agents
+            )
 
             optimization_results["optimizations_applied"].append(
                 "optimized_agent_registry"
@@ -470,7 +494,9 @@ class DirectorAgentPerformanceOptimizer:
                     director_instance.world_state_tracker, optimized_tracker
                 )
 
-                director_instance._optimized_world_state_tracker = optimized_tracker
+                director_instance._optimized_world_state_tracker = (
+                    optimized_tracker
+                )
                 director_instance.get_world_state_feedback = (
                     optimized_tracker.get_world_state_feedback
                 )
@@ -481,11 +507,15 @@ class DirectorAgentPerformanceOptimizer:
 
             # Optimization 3: Replace campaign logger with async version
             if hasattr(director_instance, "campaign_log_path"):
-                async_logger = AsyncCampaignLogger(director_instance.campaign_log_path)
+                async_logger = AsyncCampaignLogger(
+                    director_instance.campaign_log_path
+                )
                 director_instance._async_campaign_logger = async_logger
 
                 # Replace synchronous log_event with async version
-                original_log_event = getattr(director_instance, "log_event", None)
+                original_log_event = getattr(
+                    director_instance, "log_event", None
+                )
 
                 def optimized_log_event(event_description: str):
                     """Optimized non-blocking log event."""
@@ -517,20 +547,22 @@ class DirectorAgentPerformanceOptimizer:
             )
 
             # Capture after metrics
-            optimization_results["after_metrics"] = (
-                DirectorAgentPerformanceOptimizer._capture_metrics(director_instance)
+            optimization_results[
+                "after_metrics"
+            ] = DirectorAgentPerformanceOptimizer._capture_metrics(
+                director_instance
             )
 
             # Calculate performance improvements
-            optimization_results["performance_improvements"] = (
-                DirectorAgentPerformanceOptimizer._calculate_improvements(
-                    optimization_results["before_metrics"],
-                    optimization_results["after_metrics"],
-                )
+            optimization_results[
+                "performance_improvements"
+            ] = DirectorAgentPerformanceOptimizer._calculate_improvements(
+                optimization_results["before_metrics"],
+                optimization_results["after_metrics"],
             )
 
             logger.info(
-                f"DirectorAgent optimization completed - {len(optimization_results['optimizations_applied'])} optimizations applied"
+                f"DirectorAgent optimization completed - {len( optimization_results['optimizations_applied'])} optimizations applied"
             )
 
         except Exception as e:
@@ -547,7 +579,9 @@ class DirectorAgentPerformanceOptimizer:
             process = psutil.Process()
 
             return {
-                "agent_count": len(getattr(director_instance, "registered_agents", [])),
+                "agent_count": len(
+                    getattr(director_instance, "registered_agents", [])
+                ),
                 "memory_usage_mb": process.memory_info().rss / 1024 / 1024,
                 "cpu_percent": process.cpu_percent(),
                 "world_state_size": len(
@@ -579,9 +613,9 @@ class DirectorAgentPerformanceOptimizer:
                 ) * 100
                 improvements["memory_reduction"] = f"{memory_improvement:.1f}%"
 
-            improvements["optimizations_active"] = (
-                "Hash-based lookups, async I/O, intelligent caching"
-            )
+            improvements[
+                "optimizations_active"
+            ] = "Hash-based lookups, async I/O, intelligent caching"
             improvements["expected_response_time_improvement"] = "85%+"
             improvements["expected_complexity_reduction"] = "O(n³) → O(n)"
 
@@ -596,20 +630,32 @@ class DirectorAgentPerformanceOptimizer:
     ) -> None:
         """Migrate data from old world state tracker to optimized version."""
         try:
-            if hasattr(old_tracker, "get") and "agent_discoveries" in old_tracker:
+            if (
+                hasattr(old_tracker, "get")
+                and "agent_discoveries" in old_tracker
+            ):
                 # Handle dict-like old tracker
-                for turn, agent_discoveries in old_tracker["agent_discoveries"].items():
+                for turn, agent_discoveries in old_tracker[
+                    "agent_discoveries"
+                ].items():
                     for agent_id, discoveries in agent_discoveries.items():
                         for discovery in discoveries:
-                            new_tracker.add_discovery(agent_id, turn, discovery)
+                            new_tracker.add_discovery(
+                                agent_id, turn, discovery
+                            )
             elif hasattr(old_tracker, "__dict__") and hasattr(
                 old_tracker, "agent_discoveries"
             ):
                 # Handle object-like old tracker
-                for turn, agent_discoveries in old_tracker.agent_discoveries.items():
+                for (
+                    turn,
+                    agent_discoveries,
+                ) in old_tracker.agent_discoveries.items():
                     for agent_id, discoveries in agent_discoveries.items():
                         for discovery in discoveries:
-                            new_tracker.add_discovery(agent_id, turn, discovery)
+                            new_tracker.add_discovery(
+                                agent_id, turn, discovery
+                            )
 
             logger.debug("World state data migration completed")
 
@@ -625,7 +671,9 @@ class PerformanceMonitor:
         self.operation_times = defaultdict(list)
         self.start_time = time.time()
 
-    def record_operation(self, operation_name: str, duration: float, **kwargs) -> None:
+    def record_operation(
+        self, operation_name: str, duration: float, **kwargs
+    ) -> None:
         """Record performance metrics for an operation."""
         metric = PerformanceMetrics(
             operation_name=operation_name,
@@ -640,9 +688,9 @@ class PerformanceMonitor:
         # Alert on performance regression
         if len(self.operation_times[operation_name]) > 10:
             recent_avg = sum(self.operation_times[operation_name][-10:]) / 10
-            historical_avg = sum(self.operation_times[operation_name][:-10]) / max(
-                1, len(self.operation_times[operation_name]) - 10
-            )
+            historical_avg = sum(
+                self.operation_times[operation_name][:-10]
+            ) / max(1, len(self.operation_times[operation_name]) - 10)
 
             if recent_avg > historical_avg * 2:  # 100% performance regression
                 logger.warning(
@@ -668,9 +716,13 @@ class PerformanceMonitor:
         return {
             "uptime_seconds": uptime,
             "total_operations": total_operations,
-            "operations_per_second": total_operations / uptime if uptime > 0 else 0,
+            "operations_per_second": total_operations / uptime
+            if uptime > 0
+            else 0,
             "operation_breakdown": operation_stats,
-            "memory_usage_mb": psutil.Process().memory_info().rss / 1024 / 1024,
+            "memory_usage_mb": psutil.Process().memory_info().rss
+            / 1024
+            / 1024,
             "optimization_status": "Active - Hash lookups, async I/O, intelligent caching",
         }
 

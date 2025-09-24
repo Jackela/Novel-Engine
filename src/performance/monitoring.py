@@ -127,7 +127,9 @@ class SystemResourceMonitor:
         return {
             "cpu_usage_percent": psutil.cpu_percent(interval=None),
             "cpu_count": psutil.cpu_count(),
-            "cpu_freq_mhz": psutil.cpu_freq().current if psutil.cpu_freq() else 0,
+            "cpu_freq_mhz": psutil.cpu_freq().current
+            if psutil.cpu_freq()
+            else 0,
             "process_cpu_percent": self.process.cpu_percent(),
             "load_average_1m": (
                 psutil.getloadavg()[0] if hasattr(psutil, "getloadavg") else 0
@@ -295,7 +297,9 @@ class PerformanceMonitor:
             # Collect network metrics
             network_metrics = self.system_monitor.get_network_metrics()
             for name, value in network_metrics.items():
-                self.record_metric(name, value, MetricType.COUNTER, current_time)
+                self.record_metric(
+                    name, value, MetricType.COUNTER, current_time
+                )
 
         except Exception as e:
             logger.error(f"Error collecting system metrics: {e}")
@@ -345,8 +349,12 @@ class PerformanceMonitor:
         endpoint_stats = self.endpoint_metrics[endpoint]
         endpoint_stats["count"] += 1
         endpoint_stats["total_time"] += duration_ms
-        endpoint_stats["min_time"] = min(endpoint_stats["min_time"], duration_ms)
-        endpoint_stats["max_time"] = max(endpoint_stats["max_time"], duration_ms)
+        endpoint_stats["min_time"] = min(
+            endpoint_stats["min_time"], duration_ms
+        )
+        endpoint_stats["max_time"] = max(
+            endpoint_stats["max_time"], duration_ms
+        )
 
         if status_code >= 400 or error:
             endpoint_stats["errors"] += 1
@@ -360,9 +368,15 @@ class PerformanceMonitor:
             )
 
         # Calculate error rate
-        total_requests = sum(stats["count"] for stats in self.endpoint_metrics.values())
-        total_errors = sum(stats["errors"] for stats in self.endpoint_metrics.values())
-        error_rate = (total_errors / total_requests * 100) if total_requests > 0 else 0
+        total_requests = sum(
+            stats["count"] for stats in self.endpoint_metrics.values()
+        )
+        total_errors = sum(
+            stats["errors"] for stats in self.endpoint_metrics.values()
+        )
+        error_rate = (
+            (total_errors / total_requests * 100) if total_requests > 0 else 0
+        )
         self.record_metric(
             "error_rate_percent", error_rate, MetricType.GAUGE, current_time
         )
@@ -382,21 +396,35 @@ class PerformanceMonitor:
             tags["table"] = table
 
         self.record_metric(
-            "database_query_time_ms", duration_ms, MetricType.TIMER, current_time, tags
+            "database_query_time_ms",
+            duration_ms,
+            MetricType.TIMER,
+            current_time,
+            tags,
         )
 
         if error:
             self.record_metric(
-                "database_error_count", 1, MetricType.COUNTER, current_time, tags
+                "database_error_count",
+                1,
+                MetricType.COUNTER,
+                current_time,
+                tags,
             )
 
-    def record_cache_operation(self, operation: str, hit: bool, duration_ms: float):
+    def record_cache_operation(
+        self, operation: str, hit: bool, duration_ms: float
+    ):
         """Record cache operation performance and hit rate metrics."""
         current_time = time.time()
         tags = {"operation": operation}
 
         self.record_metric(
-            "cache_operation_time_ms", duration_ms, MetricType.TIMER, current_time, tags
+            "cache_operation_time_ms",
+            duration_ms,
+            MetricType.TIMER,
+            current_time,
+            tags,
         )
 
         if hit:
@@ -424,7 +452,11 @@ class PerformanceMonitor:
         total_misses = sum(m.value for m in miss_metrics)
         total_operations = total_hits + total_misses
 
-        hit_rate = (total_hits / total_operations * 100) if total_operations > 0 else 0
+        hit_rate = (
+            (total_hits / total_operations * 100)
+            if total_operations > 0
+            else 0
+        )
         self.record_metric(
             "cache_hit_rate_percent", hit_rate, MetricType.GAUGE, current_time
         )
@@ -446,7 +478,9 @@ class PerformanceMonitor:
 
             # Get recent metrics (last 5 minutes)
             recent_metrics = [
-                m for m in self.metrics[metric_name] if m.timestamp > current_time - 300
+                m
+                for m in self.metrics[metric_name]
+                if m.timestamp > current_time - 300
             ]
 
             if not recent_metrics:
@@ -533,7 +567,10 @@ class PerformanceMonitor:
         cutoff_time = time.time() - 86400  # Keep alerts for 24 hours
 
         # Clean up alert history
-        while self.alert_history and self.alert_history[0].timestamp < cutoff_time:
+        while (
+            self.alert_history
+            and self.alert_history[0].timestamp < cutoff_time
+        ):
             self.alert_history.popleft()
 
     async def _export_metrics(self):
@@ -543,7 +580,9 @@ class PerformanceMonitor:
             export_data = {
                 "timestamp": current_time,
                 "metrics": {},
-                "alerts": [alert.__dict__ for alert in self.active_alerts.values()],
+                "alerts": [
+                    alert.__dict__ for alert in self.active_alerts.values()
+                ],
                 "summary": self.get_performance_summary(),
             }
 
@@ -589,7 +628,9 @@ class PerformanceMonitor:
 
         cutoff_time = time.time() - time_range_seconds
         recent_metrics = [
-            m.value for m in self.metrics[metric_name] if m.timestamp > cutoff_time
+            m.value
+            for m in self.metrics[metric_name]
+            if m.timestamp > cutoff_time
         ]
 
         if not recent_metrics:
@@ -602,7 +643,9 @@ class PerformanceMonitor:
             "mean": statistics.mean(recent_metrics),
             "median": statistics.median(recent_metrics),
             "std_dev": (
-                statistics.stdev(recent_metrics) if len(recent_metrics) > 1 else 0
+                statistics.stdev(recent_metrics)
+                if len(recent_metrics) > 1
+                else 0
             ),
             "percentile_95": (
                 statistics.quantiles(recent_metrics, n=20)[18]
@@ -624,11 +667,15 @@ class PerformanceMonitor:
             if metrics["count"] > 0:
                 stats[endpoint] = {
                     "request_count": metrics["count"],
-                    "avg_response_time_ms": metrics["total_time"] / metrics["count"],
+                    "avg_response_time_ms": metrics["total_time"]
+                    / metrics["count"],
                     "min_response_time_ms": metrics["min_time"],
                     "max_response_time_ms": metrics["max_time"],
                     "error_count": metrics["errors"],
-                    "error_rate_percent": (metrics["errors"] / metrics["count"]) * 100,
+                    "error_rate_percent": (
+                        metrics["errors"] / metrics["count"]
+                    )
+                    * 100,
                 }
 
         return stats
@@ -658,7 +705,9 @@ class PerformanceMonitor:
                 stats["errors"] for stats in self.endpoint_metrics.values()
             ),
             "avg_response_time_ms": (
-                statistics.mean(recent_response_times) if recent_response_times else 0
+                statistics.mean(recent_response_times)
+                if recent_response_times
+                else 0
             ),
             "endpoint_count": len(self.endpoint_metrics),
             "metric_types_tracked": len(self.metrics),
@@ -675,7 +724,9 @@ class PerformanceMonitor:
 
         return summary
 
-    def get_alerts(self, include_resolved: bool = False) -> List[Dict[str, Any]]:
+    def get_alerts(
+        self, include_resolved: bool = False
+    ) -> List[Dict[str, Any]]:
         """Get list of active and optionally resolved alerts."""
         alerts = []
 
@@ -747,12 +798,16 @@ def measure_performance(metric_name: str = None):
                 )
 
                 if error:
-                    monitor.record_metric(f"{name}_error_count", 1, MetricType.COUNTER)
+                    monitor.record_metric(
+                        f"{name}_error_count", 1, MetricType.COUNTER
+                    )
 
         return (
             async_wrapper
             if asyncio.iscoroutinefunction(func)
-            else lambda *args, **kwargs: asyncio.run(async_wrapper(*args, **kwargs))
+            else lambda *args, **kwargs: asyncio.run(
+                async_wrapper(*args, **kwargs)
+            )
         )
 
     return decorator

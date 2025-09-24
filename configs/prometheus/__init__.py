@@ -45,7 +45,9 @@ def load_prometheus_config(env: str = "production") -> Dict[str, Any]:
     return {
         "global": {"scrape_interval": "15s", "evaluation_interval": "15s"},
         "alerting": {
-            "alertmanagers": [{"static_configs": [{"targets": ["alertmanager:9093"]}]}]
+            "alertmanagers": [
+                {"static_configs": [{"targets": ["alertmanager:9093"]}]}
+            ]
         },
         "rule_files": ["rules/*.yml"],
         "scrape_configs": generate_scrape_configs(env),
@@ -65,7 +67,9 @@ def generate_scrape_configs(env: str) -> List[Dict[str, Any]]:
     base_configs = [
         {
             "job_name": "novel-engine-api",
-            "static_configs": [{"targets": ["localhost:8000", "localhost:8001"]}],
+            "static_configs": [
+                {"targets": ["localhost:8000", "localhost:8001"]}
+            ],
             "metrics_path": "/metrics",
             "scrape_interval": "10s",
         },
@@ -86,7 +90,9 @@ def generate_scrape_configs(env: str) -> List[Dict[str, Any]]:
             [
                 {
                     "job_name": "novel-engine-database",
-                    "static_configs": [{"targets": ["postgres-exporter:9187"]}],
+                    "static_configs": [
+                        {"targets": ["postgres-exporter:9187"]}
+                    ],
                 },
                 {
                     "job_name": "novel-engine-redis",

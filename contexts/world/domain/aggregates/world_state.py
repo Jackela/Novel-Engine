@@ -169,7 +169,9 @@ class WorldState(Entity):
         # Validate entity consistency
         for entity_id, entity in self.entities.items():
             if entity.id != entity_id:
-                errors.append(f"Entity ID mismatch: {entity.id} != {entity_id}")
+                errors.append(
+                    f"Entity ID mismatch: {entity.id} != {entity_id}"
+                )
 
         # Validate world time
         if self.world_time > datetime.now():
@@ -260,7 +262,9 @@ class WorldState(Entity):
             ValueError: If entity already exists or validation fails
         """
         if entity_id in self.entities:
-            raise ValueError(f"Entity with ID {entity_id} already exists in world")
+            raise ValueError(
+                f"Entity with ID {entity_id} already exists in world"
+            )
 
         if len(self.entities) >= self.max_entities:
             raise ValueError(
@@ -340,7 +344,10 @@ class WorldState(Entity):
         return entity
 
     def move_entity(
-        self, entity_id: str, new_coordinates: Coordinates, reason: Optional[str] = None
+        self,
+        entity_id: str,
+        new_coordinates: Coordinates,
+        reason: Optional[str] = None,
     ) -> bool:
         """
         Move an entity to new coordinates.
@@ -373,7 +380,8 @@ class WorldState(Entity):
                 entity_type=entity.entity_type.value,
                 previous_position=previous_coordinates.to_dict(),
                 new_position=new_coordinates.to_dict(),
-                reason=reason or f"Moved {entity.entity_type.value} '{entity.name}'",
+                reason=reason
+                or f"Moved {entity.entity_type.value} '{entity.name}'",
             )
         )
 
@@ -436,7 +444,8 @@ class WorldState(Entity):
                     "metadata": entity.metadata,
                 },
                 changed_fields=changed_fields,
-                reason=reason or f"Updated {entity.entity_type.value} '{entity.name}'",
+                reason=reason
+                or f"Updated {entity.entity_type.value} '{entity.name}'",
             )
         )
 
@@ -446,7 +455,9 @@ class WorldState(Entity):
         """Get an entity by its ID."""
         return self.entities.get(entity_id)
 
-    def get_entities_by_type(self, entity_type: EntityType) -> List[WorldEntity]:
+    def get_entities_by_type(
+        self, entity_type: EntityType
+    ) -> List[WorldEntity]:
         """Get all entities of a specific type."""
         return [
             entity
@@ -474,7 +485,9 @@ class WorldState(Entity):
         matching_entities = []
 
         # Get candidate entities from spatial index
-        candidate_entity_ids = self._get_entities_from_spatial_index(center, radius)
+        candidate_entity_ids = self._get_entities_from_spatial_index(
+            center, radius
+        )
 
         for entity_id in candidate_entity_ids:
             entity = self.entities.get(entity_id)
@@ -504,7 +517,9 @@ class WorldState(Entity):
         """
         return self.get_entities_in_area(coordinates, tolerance)
 
-    def advance_time(self, new_time: datetime, reason: Optional[str] = None) -> None:
+    def advance_time(
+        self, new_time: datetime, reason: Optional[str] = None
+    ) -> None:
         """
         Advance the world time.
 
@@ -579,12 +594,16 @@ class WorldState(Entity):
 
         # Raise domain event
         self.raise_domain_event(
-            WorldStateChanged.state_snapshot(snapshot_data=snapshot_data, reason=reason)
+            WorldStateChanged.state_snapshot(
+                snapshot_data=snapshot_data, reason=reason
+            )
         )
 
         return snapshot_data
 
-    def reset_state(self, reason: str, preserve_entities: bool = False) -> None:
+    def reset_state(
+        self, reason: str, preserve_entities: bool = False
+    ) -> None:
         """
         Reset the world state to initial conditions.
 
@@ -605,7 +624,9 @@ class WorldState(Entity):
 
         # Raise domain event
         self.raise_domain_event(
-            WorldStateChanged.state_reset(reason=reason, previous_state=previous_state)
+            WorldStateChanged.state_reset(
+                reason=reason, previous_state=previous_state
+            )
         )
 
         # Reactivate if appropriate
@@ -617,7 +638,9 @@ class WorldState(Entity):
         entity_type_counts = {}
         for entity in self.entities.values():
             entity_type = entity.entity_type.value
-            entity_type_counts[entity_type] = entity_type_counts.get(entity_type, 0) + 1
+            entity_type_counts[entity_type] = (
+                entity_type_counts.get(entity_type, 0) + 1
+            )
 
         return {
             "id": self.id,
@@ -641,7 +664,9 @@ class WorldState(Entity):
         grid_y = int(coordinates.y // self.spatial_grid_size)
         return f"{grid_x},{grid_y}"
 
-    def _add_to_spatial_index(self, entity_id: str, coordinates: Coordinates) -> None:
+    def _add_to_spatial_index(
+        self, entity_id: str, coordinates: Coordinates
+    ) -> None:
         """Add entity to spatial index."""
         grid_key = self._get_spatial_grid_key(coordinates)
         if grid_key not in self.spatial_index:

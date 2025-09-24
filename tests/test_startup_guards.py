@@ -58,7 +58,10 @@ class TestStartupGuard:
         if content is None:
             content = {
                 "system": {"name": "Novel Engine", "version": "1.0.0"},
-                "legal": {"enable_safeguards": True, "compliance_mode": "standard"},
+                "legal": {
+                    "enable_safeguards": True,
+                    "compliance_mode": "standard",
+                },
                 "api": {"host": "localhost", "port": 8000},
                 "storage": {"kb_path": "private/knowledge_base/"},
                 "ai": {"provider": "openai"},
@@ -148,7 +151,8 @@ Pydantic - MIT License
 
         assert result is False
         assert any(
-            "Invalid YAML syntax" in error for error in self.startup_guard.errors
+            "Invalid YAML syntax" in error
+            for error in self.startup_guard.errors
         )
 
     def test_validate_configuration_missing_sections(self):
@@ -211,7 +215,8 @@ Pydantic - MIT License
 
         assert result is False
         assert any(
-            "LEGAL.md file not found" in error for error in self.startup_guard.errors
+            "LEGAL.md file not found" in error
+            for error in self.startup_guard.errors
         )
 
     def test_validate_legal_compliance_missing_notice_file(self):
@@ -225,7 +230,8 @@ Pydantic - MIT License
 
         assert result is False
         assert any(
-            "NOTICE file not found" in error for error in self.startup_guard.errors
+            "NOTICE file not found" in error
+            for error in self.startup_guard.errors
         )
 
     def test_validate_legal_compliance_fan_mode_registry_creation(self):
@@ -280,7 +286,9 @@ Pydantic - MIT License
             "evaluation",
         ]
         for dir_path in required_dirs:
-            assert Path(dir_path).exists(), f"Directory {dir_path} should exist"
+            assert Path(
+                dir_path
+            ).exists(), f"Directory {dir_path} should exist"
 
     def test_validate_file_structure_missing_required_files(self):
         """Test file structure validation fails with missing required files."""
@@ -292,7 +300,8 @@ Pydantic - MIT License
 
         assert result is False
         assert any(
-            "Required file not found" in error for error in self.startup_guard.errors
+            "Required file not found" in error
+            for error in self.startup_guard.errors
         )
 
     def test_validate_file_structure_creates_private_gitignore(self):
@@ -317,7 +326,9 @@ Pydantic - MIT License
         assert "!.gitignore" in content  # Except .gitignore itself
 
     @patch("scripts.build_kb.__import__")
-    def test_validate_external_dependencies_missing_packages(self, mock_import):
+    def test_validate_external_dependencies_missing_packages(
+        self, mock_import
+    ):
         """Test external dependencies validation fails with missing packages."""
 
         # Mock missing packages
@@ -332,7 +343,8 @@ Pydantic - MIT License
 
         assert result is False
         assert any(
-            "Missing Python packages" in error for error in self.startup_guard.errors
+            "Missing Python packages" in error
+            for error in self.startup_guard.errors
         )
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test_key"})
@@ -362,7 +374,9 @@ Pydantic - MIT License
         kb_subdirs = ["characters", "worlds", "rules", "templates"]
         for subdir in kb_subdirs:
             subdir_path = kb_path / subdir
-            assert subdir_path.exists(), f"KB subdirectory {subdir} should exist"
+            assert (
+                subdir_path.exists()
+            ), f"KB subdirectory {subdir} should exist"
             assert (
                 subdir_path / "README.md"
             ).exists(), f"README should exist in {subdir}"
@@ -505,7 +519,9 @@ class TestKnowledgeBaseBuilder:
                 if subitem.endswith(".yaml"):
                     # Check YAML files exist
                     subitem_path = item_path / subitem
-                    assert subitem_path.exists(), f"KB file {subitem} should exist"
+                    assert (
+                        subitem_path.exists()
+                    ), f"KB file {subitem} should exist"
                 else:
                     # Check subdirectories exist
                     subitem_path = item_path / subitem
@@ -668,7 +684,9 @@ Pydantic - MIT License
         with open("settings.yaml", "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
-        config["legal"]["enable_safeguards"] = False  # This should generate a warning
+        config["legal"][
+            "enable_safeguards"
+        ] = False  # This should generate a warning
 
         with open("settings.yaml", "w", encoding="utf-8") as f:
             yaml.dump(config, f)

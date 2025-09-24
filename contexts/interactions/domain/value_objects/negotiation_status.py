@@ -80,21 +80,32 @@ class NegotiationStatus:
 
         # Validate logical consistency
         if self.started_at > self.last_activity_at:
-            raise ValueError("started_at cannot be later than last_activity_at")
+            raise ValueError(
+                "started_at cannot be later than last_activity_at"
+            )
 
         if (
             self.expected_completion_at
             and self.started_at > self.expected_completion_at
         ):
-            raise ValueError("started_at cannot be later than expected_completion_at")
+            raise ValueError(
+                "started_at cannot be later than expected_completion_at"
+            )
 
-        if self.actual_completion_at and self.started_at > self.actual_completion_at:
-            raise ValueError("started_at cannot be later than actual_completion_at")
+        if (
+            self.actual_completion_at
+            and self.started_at > self.actual_completion_at
+        ):
+            raise ValueError(
+                "started_at cannot be later than actual_completion_at"
+            )
 
         # Validate outcome-phase consistency
         if self.phase == NegotiationPhase.TERMINATED:
             if self.outcome == NegotiationOutcome.PENDING:
-                raise ValueError("Terminated negotiations cannot have pending outcome")
+                raise ValueError(
+                    "Terminated negotiations cannot have pending outcome"
+                )
             if not self.termination_reason:
                 raise ValueError(
                     "Terminated negotiations must have a termination reason"
@@ -137,7 +148,9 @@ class NegotiationStatus:
         )
 
     def advance_to_phase(
-        self, new_phase: NegotiationPhase, activity_time: Optional[datetime] = None
+        self,
+        new_phase: NegotiationPhase,
+        activity_time: Optional[datetime] = None,
     ) -> "NegotiationStatus":
         """Advance negotiation to a new phase."""
         if not self._is_valid_phase_transition(self.phase, new_phase):
@@ -221,7 +234,13 @@ class NegotiationStatus:
             NegotiationPhase.TERMINATED: [],  # Terminal state
         }
 
-        return to_phase in valid_transitions.get(from_phase, [])
+        # P3 Sprint 2 Pattern: Explicit type cast for operator compatibility
+        from typing import List, cast
+
+        allowed_phases = cast(
+            List[NegotiationPhase], valid_transitions.get(from_phase, [])
+        )
+        return to_phase in allowed_phases
 
     @property
     def is_active(self) -> bool:
@@ -237,7 +256,9 @@ class NegotiationStatus:
     def duration(self) -> Optional[int]:
         """Get negotiation duration in seconds."""
         if self.actual_completion_at:
-            return int((self.actual_completion_at - self.started_at).total_seconds())
+            return int(
+                (self.actual_completion_at - self.started_at).total_seconds()
+            )
         return None
 
     @property
@@ -262,6 +283,4 @@ class NegotiationStatus:
 
     def __str__(self) -> str:
         """Return string representation of negotiation status."""
-        return (
-            f"NegotiationStatus(phase={self.phase.value}, outcome={self.outcome.value})"
-        )
+        return f"NegotiationStatus(phase={self.phase.value}, outcome={self.outcome.value})"

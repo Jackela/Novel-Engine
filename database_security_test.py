@@ -56,10 +56,14 @@ class DatabaseSecurityTester:
             # Check if file is world-readable (security risk)
             file_mode = oct(db_path.stat().st_mode)[-3:]
             if file_mode[2] in ["4", "5", "6", "7"]:  # Others can read
-                result["vulnerabilities"].append("World-readable database file")
+                result["vulnerabilities"].append(
+                    "World-readable database file"
+                )
 
             if file_mode[2] in ["2", "3", "6", "7"]:  # Others can write
-                result["vulnerabilities"].append("World-writable database file")
+                result["vulnerabilities"].append(
+                    "World-writable database file"
+                )
 
         except Exception as e:
             result["error"] = str(e)
@@ -80,7 +84,9 @@ class DatabaseSecurityTester:
                 cursor = conn.cursor()
 
                 # Get all table names
-                cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                cursor.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
                 tables = cursor.fetchall()
                 result["tables"] = [table[0] for table in tables]
 
@@ -163,7 +169,11 @@ class DatabaseSecurityTester:
 
     def test_sql_injection_vectors(self, db_path: Path) -> Dict[str, Any]:
         """Test potential SQL injection attack vectors."""
-        result = {"file": str(db_path), "injection_tests": [], "vulnerabilities": []}
+        result = {
+            "file": str(db_path),
+            "injection_tests": [],
+            "vulnerabilities": [],
+        }
 
         try:
             with sqlite3.connect(db_path) as conn:
@@ -187,8 +197,12 @@ class DatabaseSecurityTester:
                     try:
                         # This is a safe test - we're just checking if the database
                         # would be vulnerable to these patterns
-                        cursor.execute("SELECT 1 WHERE ? = ?", (payload, payload))
-                        test_result["vulnerable"] = False  # Parameterized query is safe
+                        cursor.execute(
+                            "SELECT 1 WHERE ? = ?", (payload, payload)
+                        )
+                        test_result[
+                            "vulnerable"
+                        ] = False  # Parameterized query is safe
                     except sqlite3.Error as e:
                         test_result["error"] = str(e)
                         # If error contains specific patterns, it might indicate vulnerability
@@ -237,13 +251,19 @@ class DatabaseSecurityTester:
 
             # Assess risk level
             vulnerabilities = []
-            vulnerabilities.extend(db_result["permissions"].get("vulnerabilities", []))
-            vulnerabilities.extend(db_result["content"].get("vulnerabilities", []))
+            vulnerabilities.extend(
+                db_result["permissions"].get("vulnerabilities", [])
+            )
+            vulnerabilities.extend(
+                db_result["content"].get("vulnerabilities", [])
+            )
 
             if vulnerabilities:
                 results["security_summary"]["vulnerable_databases"] += 1
 
-                if any("cleartext password" in v.lower() for v in vulnerabilities):
+                if any(
+                    "cleartext password" in v.lower() for v in vulnerabilities
+                ):
                     db_result["risk_level"] = "CRITICAL"
                     results["security_summary"]["critical_issues"] += 1
                 elif any("world-" in v.lower() for v in vulnerabilities):
@@ -311,7 +331,9 @@ def main():
     print("\\n" + "=" * 60)
     print("DATABASE SECURITY ASSESSMENT RESULTS")
     print("=" * 60)
-    print(f"Total databases found: {results['security_summary']['total_databases']}")
+    print(
+        f"Total databases found: {results['security_summary']['total_databases']}"
+    )
     print(
         f"Vulnerable databases: {results['security_summary']['vulnerable_databases']}"
     )

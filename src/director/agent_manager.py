@@ -36,7 +36,9 @@ class AgentLifecycleManager:
             self._initialized = True
             return True
         except Exception as e:
-            self.logger.error(f"AgentLifecycleManager initialization failed: {e}")
+            self.logger.error(
+                f"AgentLifecycleManager initialization failed: {e}"
+            )
             return False
 
     async def register_agent(self, agent: Any) -> bool:
@@ -57,7 +59,9 @@ class AgentLifecycleManager:
             agent_id = agent.agent_id
 
             if agent_id in self.agents:
-                self.logger.warning(f"Agent {agent_id} already registered, replacing")
+                self.logger.warning(
+                    f"Agent {agent_id} already registered, replacing"
+                )
 
             self.agents[agent_id] = agent
             self.agent_metadata[agent_id] = {

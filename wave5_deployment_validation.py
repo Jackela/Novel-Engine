@@ -42,7 +42,10 @@ class DeploymentSystemValidator:
             ("Python Module Structure", self.validate_python_modules),
             ("Deployment Script Imports", self.validate_deployment_imports),
             ("Staging Deployment Script", self.validate_staging_deployment),
-            ("Production Deployment Script", self.validate_production_deployment),
+            (
+                "Production Deployment Script",
+                self.validate_production_deployment,
+            ),
             ("Security Deployment Script", self.validate_security_deployment),
             ("Deployment Utils", self.validate_deployment_utils),
             ("Config Integration", self.validate_config_integration),
@@ -59,7 +62,9 @@ class DeploymentSystemValidator:
                 self.validation_results[test_name] = {
                     "status": "PASSED" if result else "FAILED",
                     "details": (
-                        result if isinstance(result, dict) else {"result": result}
+                        result
+                        if isinstance(result, dict)
+                        else {"result": result}
                     ),
                 }
 
@@ -87,7 +92,9 @@ class DeploymentSystemValidator:
             "passed_tests": len(self.passed_tests),
             "failed_tests": len(self.failed_tests),
             "success_rate": len(self.passed_tests) / len(validation_tests),
-            "overall_status": "PASSED" if len(self.failed_tests) == 0 else "FAILED",
+            "overall_status": "PASSED"
+            if len(self.failed_tests) == 0
+            else "FAILED",
             "test_results": self.validation_results,
             "failed_test_names": self.failed_tests,
             "passed_test_names": self.passed_tests,
@@ -116,7 +123,11 @@ class DeploymentSystemValidator:
             "deploy/security/deploy.py",
         ]
 
-        structure_results = {"directories": {}, "files": {}, "all_present": True}
+        structure_results = {
+            "directories": {},
+            "files": {},
+            "all_present": True,
+        }
 
         # Check directories
         for dir_path in required_dirs:
@@ -137,7 +148,9 @@ class DeploymentSystemValidator:
                 "exists": exists,
                 "path": str(full_path),
                 "size": full_path.stat().st_size if exists else 0,
-                "executable": self._is_executable(full_path) if exists else False,
+                "executable": self._is_executable(full_path)
+                if exists
+                else False,
             }
             if not exists:
                 structure_results["all_present"] = False
@@ -265,9 +278,9 @@ class DeploymentSystemValidator:
 
         results["script_exists"] = staging_script.exists()
         if staging_script.exists():
-            results["script_readable"] = staging_script.is_file() and os.access(
-                staging_script, os.R_OK
-            )
+            results[
+                "script_readable"
+            ] = staging_script.is_file() and os.access(staging_script, os.R_OK)
 
             # Test class instantiation
             try:
@@ -310,7 +323,9 @@ class DeploymentSystemValidator:
             try:
                 with open(prod_script, "r") as f:
                     content = f.read()
-                    results["syntax_valid"] = content.strip() != "" and "#!/" in content
+                    results["syntax_valid"] = (
+                        content.strip() != "" and "#!/" in content
+                    )
                     results["has_shebang"] = content.startswith("#!")
                     results["content_size"] = len(content)
 
@@ -328,11 +343,15 @@ class DeploymentSystemValidator:
             "methods_available": {},
         }
 
-        security_script = self.project_root / "deploy" / "security" / "deploy.py"
+        security_script = (
+            self.project_root / "deploy" / "security" / "deploy.py"
+        )
 
         results["script_exists"] = security_script.exists()
         if security_script.exists():
-            results["script_readable"] = security_script.is_file() and os.access(
+            results[
+                "script_readable"
+            ] = security_script.is_file() and os.access(
                 security_script, os.R_OK
             )
 
@@ -411,7 +430,9 @@ class DeploymentSystemValidator:
 
         try:
             # Test if deployment scripts can load configurations
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
             from deploy.staging.deploy import StagingDeployment
 
             loader = ConfigEnvironmentLoader()
@@ -436,7 +457,9 @@ class DeploymentSystemValidator:
                     deployment.load_configuration(config)
                     results["integration_working"] = True
                 else:
-                    results["integration_working"] = True  # Assume working if no errors
+                    results[
+                        "integration_working"
+                    ] = True  # Assume working if no errors
             except Exception as e:
                 results["integration_error"] = str(e)
 
@@ -472,7 +495,9 @@ class DeploymentSystemValidator:
                     and (is_executable == should_be_executable),
                 }
 
-                if not (is_readable and (is_executable == should_be_executable)):
+                if not (
+                    is_readable and (is_executable == should_be_executable)
+                ):
                     results["all_permissions_correct"] = False
             else:
                 results["script_permissions"][script_name] = {
@@ -516,7 +541,10 @@ class DeploymentSystemValidator:
         for dep_name, dep_command in system_deps:
             try:
                 result = subprocess.run(
-                    dep_command.split(), capture_output=True, text=True, timeout=10
+                    dep_command.split(),
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
                 )
                 results["system_dependencies"][dep_name] = {
                     "available": result.returncode == 0,
@@ -583,7 +611,9 @@ def main():
     print("🏁 Wave 5 Deployment System Validation Results")
     print(f"{'='*80}")
     print(f"📊 Total Tests: {results['total_tests']}")
-    print(f"✅ Passed: {results['passed_tests']} ({results['success_rate']:.1%})")
+    print(
+        f"✅ Passed: {results['passed_tests']} ({results['success_rate']:.1%})"
+    )
     print(f"❌ Failed: {results['failed_tests']}")
     print(f"⏱️  Duration: {results['duration_seconds']:.2f} seconds")
     print(f"🎯 Overall Status: {results['overall_status']}")

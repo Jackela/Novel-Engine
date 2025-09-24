@@ -34,7 +34,9 @@ def test_directory_rename():
     expected_dirs = ["persistence", "messaging", "monitoring", "config"]
     for expected_dir in expected_dirs:
         if not (project_root / "core_platform" / expected_dir).exists():
-            print(f"❌ Missing expected directory: core_platform/{expected_dir}")
+            print(
+                f"❌ Missing expected directory: core_platform/{expected_dir}"
+            )
             return False
 
     print("✅ Directory rename successful")
@@ -127,7 +129,9 @@ def test_no_import_conflicts():
             importlib.util.module_from_spec(spec)
             # Note: We don't execute the module since it has dependencies,
             # but we can verify the spec was created successfully
-            print("✅ Module spec creation successful - no import syntax errors")
+            print(
+                "✅ Module spec creation successful - no import syntax errors"
+            )
             return True
         else:
             print("❌ Could not create module spec")
@@ -173,7 +177,9 @@ def run_m45_validation():
     if passed == total:
         print("\n🎉 M4.5 PLATFORM FIX SUCCESSFUL!")
         print("\n✅ Platform directory renamed to core_platform")
-        print("✅ All import statements updated from 'platform.' to 'core_platform.'")
+        print(
+            "✅ All import statements updated from 'platform.' to 'core_platform.'"
+        )
         print("✅ Python's built-in platform module is now accessible")
         print("✅ No import conflicts or syntax errors")
         print("\n🚀 The platform naming conflict has been RESOLVED!")

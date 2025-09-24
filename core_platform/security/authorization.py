@@ -16,13 +16,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..persistence.database import get_db_session
-from .authentication import (
-    Permission,
-    Role,
-    RolePermission,
-    User,
-    UserRole,
-)
+from .authentication import Permission, Role, RolePermission, User, UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -123,12 +117,19 @@ class PermissionManager:
         """
         try:
             # Check if permission already exists
-            existing = session.query(Permission).filter(Permission.name == name).first()
+            existing = (
+                session.query(Permission)
+                .filter(Permission.name == name)
+                .first()
+            )
             if existing:
                 return existing
 
             permission = Permission(
-                name=name, resource=resource, action=action, description=description
+                name=name,
+                resource=resource,
+                action=action,
+                description=description,
             )
 
             session.add(permission)
@@ -168,7 +169,9 @@ class PermissionManager:
                 return existing
 
             role = Role(
-                name=name, description=description, is_system_role=is_system_role
+                name=name,
+                description=description,
+                is_system_role=is_system_role,
             )
 
             session.add(role)
@@ -243,7 +246,9 @@ class PermissionManager:
             # Clear cache
             self._clear_role_cache(role_name)
 
-            logger.info(f"Assigned permission {permission_name} to role {role_name}")
+            logger.info(
+                f"Assigned permission {permission_name} to role {role_name}"
+            )
 
         except Exception as e:
             logger.error(
@@ -295,7 +300,9 @@ class PermissionManager:
             )
 
             if existing:
-                logger.debug(f"Role {role_name} already assigned to user {user_id}")
+                logger.debug(
+                    f"Role {role_name} already assigned to user {user_id}"
+                )
                 return
 
             # Create assignment
@@ -315,7 +322,9 @@ class PermissionManager:
             logger.info(f"Assigned role {role_name} to user {user_id}")
 
         except Exception as e:
-            logger.error(f"Failed to assign role {role_name} to user {user_id}: {e}")
+            logger.error(
+                f"Failed to assign role {role_name} to user {user_id}: {e}"
+            )
             session.rollback()
             raise
 
@@ -372,7 +381,9 @@ class PermissionManager:
             # Check cache first
             if use_cache and user_id in self._permission_cache:
                 user_permissions = self._permission_cache[user_id]
-                return any(perm in user_permissions for perm in permission_names)
+                return any(
+                    perm in user_permissions for perm in permission_names
+                )
 
             with get_db_session() as session:
                 # Get user permissions
@@ -390,7 +401,9 @@ class PermissionManager:
             )
             return False
 
-    def has_role(self, user_id: str, role_name: str, use_cache: bool = True) -> bool:
+    def has_role(
+        self, user_id: str, role_name: str, use_cache: bool = True
+    ) -> bool:
         """
         Check if user has a specific role.
 
@@ -431,7 +444,9 @@ class PermissionManager:
                 return role_name in roles
 
         except Exception as e:
-            logger.error(f"Failed to check role {role_name} for user {user_id}: {e}")
+            logger.error(
+                f"Failed to check role {role_name} for user {user_id}: {e}"
+            )
             return False
 
     def get_user_permissions(self, user_id: str) -> Set[str]:
@@ -443,7 +458,9 @@ class PermissionManager:
             logger.error(f"Failed to get permissions for user {user_id}: {e}")
             return set()
 
-    def _get_user_permissions(self, session: Session, user_id: str) -> Set[str]:
+    def _get_user_permissions(
+        self, session: Session, user_id: str
+    ) -> Set[str]:
         """Internal method to get user permissions from database."""
         permissions = set()
 
@@ -636,7 +653,9 @@ class PermissionManager:
                 ]
 
                 for name, resource, action, description in default_permissions:
-                    self.create_permission(session, name, resource, action, description)
+                    self.create_permission(
+                        session, name, resource, action, description
+                    )
 
                 # Create default roles
                 default_roles = [
@@ -660,7 +679,11 @@ class PermissionManager:
                         "Regular user with basic permissions",
                         True,
                     ),
-                    (SystemRole.GUEST.value, "Guest with read-only permissions", True),
+                    (
+                        SystemRole.GUEST.value,
+                        "Guest with read-only permissions",
+                        True,
+                    ),
                 ]
 
                 for name, description, is_system in default_roles:
@@ -763,9 +786,13 @@ class AuthorizationService:
                 # Extract user from request context
                 user_id = self._get_current_user_id()
                 if not user_id:
-                    raise InsufficientPermissionsException("Authentication required")
+                    raise InsufficientPermissionsException(
+                        "Authentication required"
+                    )
 
-                if not self.permission_manager.has_permission(user_id, permission_name):
+                if not self.permission_manager.has_permission(
+                    user_id, permission_name
+                ):
                     raise InsufficientPermissionsException(
                         f"Permission '{permission_name}' required"
                     )
@@ -795,7 +822,9 @@ class AuthorizationService:
                 # Extract user from request context
                 user_id = self._get_current_user_id()
                 if not user_id:
-                    raise InsufficientPermissionsException("Authentication required")
+                    raise InsufficientPermissionsException(
+                        "Authentication required"
+                    )
 
                 if not self.permission_manager.has_role(user_id, role_name):
                     raise InsufficientPermissionsException(
@@ -827,7 +856,9 @@ class AuthorizationService:
                 # Extract user from request context
                 user_id = self._get_current_user_id()
                 if not user_id:
-                    raise InsufficientPermissionsException("Authentication required")
+                    raise InsufficientPermissionsException(
+                        "Authentication required"
+                    )
 
                 if not self.permission_manager.has_any_permission(
                     user_id, permission_names

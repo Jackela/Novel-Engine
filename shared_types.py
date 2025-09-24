@@ -13,13 +13,7 @@ Development Phase: Phase 1 Validation - Import Compatibility
 try:
     # Import from the main shared types module
     # Also import from the core types module to get CharacterAction
-    from src.core.types.shared_types import (
-        ActionPriority,
-    )
-    from src.core.types.shared_types import ActionType as CoreActionType
-    from src.core.types.shared_types import (
-        CharacterAction,
-    )
+    from src.core.types.shared_types import ActionPriority, CharacterAction
     from src.shared_types import *  # noqa: F403
 
     # Handle potential naming conflicts by keeping both available

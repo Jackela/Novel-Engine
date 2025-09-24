@@ -10,7 +10,11 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from ...domain.value_objects import PhaseType
-from .base_phase import BasePhaseImplementation, PhaseExecutionContext, PhaseResult
+from .base_phase import (
+    BasePhaseImplementation,
+    PhaseExecutionContext,
+    PhaseResult,
+)
 
 
 class WorldUpdatePhase(BasePhaseImplementation):
@@ -58,14 +62,19 @@ class WorldUpdatePhase(BasePhaseImplementation):
             entities_updated = await self._update_entity_states(context)
 
             # Step 4: Process environment changes
-            environment_changes = await self._process_environment_changes(context)
+            environment_changes = await self._process_environment_changes(
+                context
+            )
 
             # Step 5: Validate world state consistency
             await self._validate_world_consistency(context)
 
             # Step 6: Generate world update events
             world_events = await self._generate_world_events(
-                context, entities_updated, time_advanced_seconds, environment_changes
+                context,
+                entities_updated,
+                time_advanced_seconds,
+                environment_changes,
             )
 
             # Record performance metrics
@@ -164,7 +173,9 @@ class WorldUpdatePhase(BasePhaseImplementation):
         snapshot_data = {
             "current_time": world_state_response.get("current_time"),
             "entity_states": world_state_response.get("entity_states", {}),
-            "environment_state": world_state_response.get("environment_state", {}),
+            "environment_state": world_state_response.get(
+                "environment_state", {}
+            ),
             "world_metadata": world_state_response.get("metadata", {}),
             "participant_positions": world_state_response.get(
                 "participant_positions", {}
@@ -207,7 +218,9 @@ class WorldUpdatePhase(BasePhaseImplementation):
         )
 
         if not response.get("success"):
-            raise RuntimeError(f"Failed to advance world time: {response.get('error')}")
+            raise RuntimeError(
+                f"Failed to advance world time: {response.get('error')}"
+            )
 
         # Record time advancement event
         self._record_event_generation(
@@ -222,7 +235,9 @@ class WorldUpdatePhase(BasePhaseImplementation):
 
         return time_advance_seconds
 
-    async def _update_entity_states(self, context: PhaseExecutionContext) -> int:
+    async def _update_entity_states(
+        self, context: PhaseExecutionContext
+    ) -> int:
         """
         Update entity states for all participants.
 
@@ -288,12 +303,17 @@ class WorldUpdatePhase(BasePhaseImplementation):
                 # Log entity update failure but continue with others
                 context.record_performance_metric(
                     "entity_update_failures",
-                    context.performance_metrics.get("entity_update_failures", 0) + 1,
+                    context.performance_metrics.get(
+                        "entity_update_failures", 0
+                    )
+                    + 1,
                 )
 
         return entities_updated
 
-    async def _process_environment_changes(self, context: PhaseExecutionContext) -> int:
+    async def _process_environment_changes(
+        self, context: PhaseExecutionContext
+    ) -> int:
         """
         Process environment changes based on time advancement.
 
@@ -310,7 +330,9 @@ class WorldUpdatePhase(BasePhaseImplementation):
             "get_pending_environment_changes",
             {
                 "time_advanced": context.configuration.world_time_advance,
-                "affected_areas": self._get_participant_areas(context.participants),
+                "affected_areas": self._get_participant_areas(
+                    context.participants
+                ),
             },
         )
 
@@ -349,13 +371,17 @@ class WorldUpdatePhase(BasePhaseImplementation):
                 # Log environment change failure but continue
                 context.record_performance_metric(
                     "environment_change_failures",
-                    context.performance_metrics.get("environment_change_failures", 0)
+                    context.performance_metrics.get(
+                        "environment_change_failures", 0
+                    )
                     + 1,
                 )
 
         return changes_processed
 
-    async def _validate_world_consistency(self, context: PhaseExecutionContext) -> None:
+    async def _validate_world_consistency(
+        self, context: PhaseExecutionContext
+    ) -> None:
         """
         Validate world state consistency after updates.
 
@@ -470,7 +496,7 @@ class WorldUpdatePhase(BasePhaseImplementation):
         Returns:
             Dictionary of updates to apply
         """
-        updates = {}
+        updates: Dict[str, Any] = {}
 
         # Example entity update calculations
         # In a real implementation, this would use game-specific logic
@@ -491,7 +517,9 @@ class WorldUpdatePhase(BasePhaseImplementation):
         if status_effects:
             updated_effects = []
             for effect in status_effects:
-                remaining_duration = effect.get("duration", 0) - time_advanced_seconds
+                remaining_duration = (
+                    effect.get("duration", 0) - time_advanced_seconds
+                )
                 if remaining_duration > 0:
                     effect["duration"] = remaining_duration
                     updated_effects.append(effect)
@@ -508,7 +536,9 @@ class WorldUpdatePhase(BasePhaseImplementation):
                 if regen_rate > 0:
                     new_value = min(
                         resource_value + (regen_rate * time_advanced_seconds),
-                        entity_data.get(f"{resource_name}_max", resource_value),
+                        entity_data.get(
+                            f"{resource_name}_max", resource_value
+                        ),
                     )
                     if new_value != resource_value:
                         resource_updates[resource_name] = new_value

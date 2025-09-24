@@ -156,7 +156,9 @@ class AsyncEventBus:
                 else:
                     # Run sync callbacks in thread pool
                     tasks.append(
-                        asyncio.get_event_loop().run_in_executor(None, callback, data)
+                        asyncio.get_event_loop().run_in_executor(
+                            None, callback, data
+                        )
                     )
 
             if tasks:
@@ -224,7 +226,9 @@ class PerformanceOptimizer:
 
             # Keep only last 100 measurements
             if len(self._metrics[operation_name]) > 100:
-                self._metrics[operation_name] = self._metrics[operation_name][-100:]
+                self._metrics[operation_name] = self._metrics[operation_name][
+                    -100:
+                ]
 
     def get_performance_stats(self) -> Dict[str, Dict[str, float]]:
         """Get performance statistics."""
@@ -263,7 +267,9 @@ async def optimize_character_loading(character_factory, character_name: str):
         )
         return agent
 
-    return await performance_optimizer.cached_operation(cache_key, load_character)
+    return await performance_optimizer.cached_operation(
+        cache_key, load_character
+    )
 
 
 async def optimize_simulation_execution(director, turns: int):
@@ -276,7 +282,9 @@ async def optimize_simulation_execution(director, turns: int):
         # Execute turn (wrap synchronous operation)
         await asyncio.get_event_loop().run_in_executor(None, director.run_turn)
 
-        await performance_optimizer.event_bus.emit("turn_complete", turn_number)
+        await performance_optimizer.event_bus.emit(
+            "turn_complete", turn_number
+        )
 
     # Execute turns with controlled concurrency
     semaphore = asyncio.Semaphore(3)  # Limit concurrent turns
@@ -357,7 +365,9 @@ class AsyncSimulationManager:
             # Generate story
             from chronicler_agent import ChroniclerAgent
 
-            chronicler = ChroniclerAgent(event_bus, character_names=character_names)
+            chronicler = ChroniclerAgent(
+                event_bus, character_names=character_names
+            )
             story = chronicler.transcribe_log(log_path)
 
             # Clean up

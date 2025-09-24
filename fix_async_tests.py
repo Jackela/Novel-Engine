@@ -3,7 +3,6 @@
 Fix async test functions by adding @pytest.mark.asyncio decorators
 """
 
-import os
 import re
 from pathlib import Path
 
@@ -19,7 +18,7 @@ def fix_async_test_file(file_path):
 
     # Check if file has async def test_ functions
     if "async def test_" not in content:
-        print(f"  No async test functions found")
+        print("  No async test functions found")
         return False
 
     # Add pytest import if not present
@@ -32,8 +31,10 @@ def fix_async_test_file(file_path):
             # Add after the last import
             last_import = matches[-1]
             insert_pos = last_import.end()
-            content = content[:insert_pos] + "import pytest\n" + content[insert_pos:]
-            print(f"  Added pytest import")
+            content = (
+                content[:insert_pos] + "import pytest\n" + content[insert_pos:]
+            )
+            print("  Added pytest import")
         else:
             # Add at the beginning after any docstrings or comments
             lines = content.split("\n")
@@ -75,7 +76,7 @@ def fix_async_test_file(file_path):
         print(f"  Fixed {fixed_count} async test functions")
         return True
     else:
-        print(f"  No changes needed")
+        print("  No changes needed")
         return False
 
 

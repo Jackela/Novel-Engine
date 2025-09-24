@@ -10,7 +10,7 @@ Immutable value objects for turn orchestration including:
 """
 
 from .compensation_action import CompensationAction, CompensationType
-from .phase_status import PhaseStatus, PhaseType
+from .phase_status import PhaseStatus, PhaseStatusEnum, PhaseType
 from .pipeline_result import PhaseResult, PipelineResult
 from .turn_configuration import TurnConfiguration
 from .turn_id import TurnId
@@ -18,6 +18,7 @@ from .turn_id import TurnId
 __all__ = [
     "TurnId",
     "PhaseStatus",
+    "PhaseStatusEnum",
     "PhaseType",
     "TurnConfiguration",
     "PipelineResult",

@@ -188,7 +188,9 @@ class ExportIntegrationEngine:
     """
 
     def __init__(
-        self, storage_path: str = "exports", max_file_size: int = 100 * 1024 * 1024
+        self,
+        storage_path: str = "exports",
+        max_file_size: int = 100 * 1024 * 1024,
     ):
         """
         Initialize the Export Integration Engine.
@@ -361,7 +363,9 @@ class ExportIntegrationEngine:
             if cache_key in self.export_cache:
                 cached_result = self.export_cache[cache_key]
                 if self._is_cache_valid(cached_result):
-                    logger.info(f"Returning cached export for {request.export_id}")
+                    logger.info(
+                        f"Returning cached export for {request.export_id}"
+                    )
                     return cached_result
 
             # Apply template if specified
@@ -398,7 +402,11 @@ class ExportIntegrationEngine:
 
             # Calculate metrics
             export_time = (datetime.now() - start_time).total_seconds()
-            file_size = len(export_data) if isinstance(export_data, (bytes, str)) else 0
+            file_size = (
+                len(export_data)
+                if isinstance(export_data, (bytes, str))
+                else 0
+            )
 
             # Create result
             result = ExportResult(
@@ -409,8 +417,11 @@ class ExportIntegrationEngine:
                 file_data=export_data if not file_path else None,
                 file_size=file_size,
                 export_time=export_time,
-                metadata=await self._generate_export_metadata(story_data, request),
-                expires_at=datetime.now() + timedelta(days=7),  # Default 7-day expiry
+                metadata=await self._generate_export_metadata(
+                    story_data, request
+                ),
+                expires_at=datetime.now()
+                + timedelta(days=7),  # Default 7-day expiry
             )
 
             # Store result and cache
@@ -418,7 +429,7 @@ class ExportIntegrationEngine:
             self.export_cache[cache_key] = result
 
             logger.info(
-                f"Successfully exported story {request.story_id} to {request.format.value}"
+                f"Successfully exported story {request.story_id}to {request.format.value}"
             )
             return result
 
@@ -497,16 +508,25 @@ class ExportIntegrationEngine:
         """
         try:
             if share_id not in self.active_shares:
-                return {"success": False, "error": "Share not found or expired"}
+                return {
+                    "success": False,
+                    "error": "Share not found or expired",
+                }
 
             share_config = self.active_shares[share_id]
 
             # Check expiry
-            if share_config.expiry_date and datetime.now() > share_config.expiry_date:
+            if (
+                share_config.expiry_date
+                and datetime.now() > share_config.expiry_date
+            ):
                 return {"success": False, "error": "Share has expired"}
 
             # Validate access token
-            if share_config.access_token and access_token != share_config.access_token:
+            if (
+                share_config.access_token
+                and access_token != share_config.access_token
+            ):
                 return {"success": False, "error": "Invalid access token"}
 
             # Check password
@@ -571,7 +591,7 @@ class ExportIntegrationEngine:
         """
         try:
             # Generate version ID and number
-            version_id = f"{story_id}_v_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+            version_id = f"{story_id}_v_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[ :8]}"
 
             # Get existing versions for this story
             existing_versions = self.story_versions.get(story_id, [])
@@ -583,10 +603,14 @@ class ExportIntegrationEngine:
             else:
                 # Find latest version in branch
                 branch_versions = [
-                    v for v in existing_versions if v.branch_name == branch_name
+                    v
+                    for v in existing_versions
+                    if v.branch_name == branch_name
                 ]
                 if branch_versions:
-                    latest_version = max(branch_versions, key=lambda x: x.created_at)
+                    latest_version = max(
+                        branch_versions, key=lambda x: x.created_at
+                    )
                     parent_version = latest_version.version_id
                     version_number = self._increment_version_number(
                         latest_version.version_number, action
@@ -644,7 +668,9 @@ class ExportIntegrationEngine:
             # Cache latest version
             self.version_cache[f"{story_id}:{branch_name}:latest"] = version
 
-            logger.info(f"Created version {version_number} for story {story_id}")
+            logger.info(
+                f"Created version {version_number} for story {story_id}"
+            )
             return version
 
         except Exception as e:
@@ -673,7 +699,9 @@ class ExportIntegrationEngine:
 
             # Filter by branch if specified
             if branch_name:
-                versions = [v for v in versions if v.branch_name == branch_name]
+                versions = [
+                    v for v in versions if v.branch_name == branch_name
+                ]
 
             # Sort by creation time (newest first) and limit
             versions.sort(key=lambda x: x.created_at, reverse=True)
@@ -763,7 +791,10 @@ class ExportIntegrationEngine:
             self.integration_connections[connection.connection_id] = connection
 
             # Set up sync if configured
-            if connection.sync_frequency and connection.sync_frequency != "manual":
+            if (
+                connection.sync_frequency
+                and connection.sync_frequency != "manual"
+            ):
                 await self._schedule_integration_sync(connection)
 
             result = {
@@ -775,7 +806,7 @@ class ExportIntegrationEngine:
             }
 
             logger.info(
-                f"Created integration {connection.connection_id} for {connection.platform_name}"
+                f"Created integration {connection.connection_id}for {connection.platform_name}"
             )
             return result
 
@@ -798,12 +829,17 @@ class ExportIntegrationEngine:
         """
         try:
             if connection_id not in self.integration_connections:
-                return {"success": False, "error": "Integration connection not found"}
+                return {
+                    "success": False,
+                    "error": "Integration connection not found",
+                }
 
             connection = self.integration_connections[connection_id]
 
             # Get integration handler
-            handler = self.integration_handlers.get(connection.integration_type)
+            handler = self.integration_handlers.get(
+                connection.integration_type
+            )
             if not handler:
                 return {
                     "success": False,
@@ -845,7 +881,7 @@ class ExportIntegrationEngine:
             Batch export result
         """
         try:
-            batch_id = f"batch_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+            batch_id = f"batch_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[ :8]}"
             export_results = []
 
             for story_id in story_ids:
@@ -879,8 +915,12 @@ class ExportIntegrationEngine:
                 "success": True,
                 "batch_id": batch_id,
                 "total_stories": len(story_ids),
-                "successful_exports": len([r for r in export_results if r["success"]]),
-                "failed_exports": len([r for r in export_results if not r["success"]]),
+                "successful_exports": len(
+                    [r for r in export_results if r["success"]]
+                ),
+                "failed_exports": len(
+                    [r for r in export_results if not r["success"]]
+                ),
                 "export_results": export_results,
                 "archive_path": archive_path,
             }
@@ -920,7 +960,9 @@ class ExportIntegrationEngine:
             if not include_metadata:
                 export_data = story_data
 
-            json_str = json.dumps(export_data, indent=indent, ensure_ascii=False)
+            json_str = json.dumps(
+                export_data, indent=indent, ensure_ascii=False
+            )
             return json_str.encode("utf-8")
 
         except Exception as e:
@@ -985,7 +1027,9 @@ class ExportIntegrationEngine:
             # Prepare content
             content = story_data.get("content", "")
             if isinstance(content, list):
-                content = "\n".join(f"<p>{paragraph}</p>" for paragraph in content)
+                content = "\n".join(
+                    f"<p>{paragraph}</p>" for paragraph in content
+                )
             elif isinstance(content, str):
                 # Convert line breaks to paragraphs
                 paragraphs = content.split("\n\n")
@@ -1097,13 +1141,17 @@ class ExportIntegrationEngine:
 
             # Export metadata
             export_elem = ET.SubElement(root, "export_info")
-            ET.SubElement(export_elem, "exported_at").text = datetime.now().isoformat()
+            ET.SubElement(
+                export_elem, "exported_at"
+            ).text = datetime.now().isoformat()
             ET.SubElement(export_elem, "format").text = "xml"
             ET.SubElement(export_elem, "generator").text = "Novel Engine"
 
             # Convert to string
             xml_str = ET.tostring(root, encoding="unicode", method="xml")
-            return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode("utf-8")
+            return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode(
+                "utf-8"
+            )
 
         except Exception as e:
             logger.error(f"XML export failed: {e}")
@@ -1151,7 +1199,9 @@ class ExportIntegrationEngine:
 
     # Helper methods
 
-    async def _validate_export_request(self, request: ExportRequest) -> Dict[str, Any]:
+    async def _validate_export_request(
+        self, request: ExportRequest
+    ) -> Dict[str, Any]:
         """Validate export request."""
         if not request.story_id:
             return {"valid": False, "error": "Story ID is required"}
@@ -1196,12 +1246,18 @@ class ExportIntegrationEngine:
 
     def _is_cache_valid(self, cached_result: ExportResult) -> bool:
         """Check if cached export result is still valid."""
-        if cached_result.expires_at and datetime.now() > cached_result.expires_at:
+        if (
+            cached_result.expires_at
+            and datetime.now() > cached_result.expires_at
+        ):
             return False
         return True
 
     async def _apply_export_template(
-        self, story_data: Dict[str, Any], template_name: str, options: Dict[str, Any]
+        self,
+        story_data: Dict[str, Any],
+        template_name: str,
+        options: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Apply export template to story data."""
         # This would apply template transformations
@@ -1241,11 +1297,15 @@ class ExportIntegrationEngine:
 
     def _generate_access_token(self) -> str:
         """Generate secure access token."""
-        return base64.urlsafe_b64encode(uuid.uuid4().bytes).decode().rstrip("=")
+        return (
+            base64.urlsafe_b64encode(uuid.uuid4().bytes).decode().rstrip("=")
+        )
 
     def _generate_share_url(self, share_config: ShareConfiguration) -> str:
         """Generate share URL."""
-        base_url = "https://novelengine.com/share"  # This would be configurable
+        base_url = (
+            "https://novelengine.com/share"  # This would be configurable
+        )
         return f"{base_url}/{share_config.share_id}?token={share_config.access_token}"
 
     async def _setup_share_analytics(self, share_config: ShareConfiguration):
@@ -1301,7 +1361,10 @@ class ExportIntegrationEngine:
         }
 
     async def _create_batch_archive(
-        self, batch_id: str, export_results: List[Dict[str, Any]], format: ExportFormat
+        self,
+        batch_id: str,
+        export_results: List[Dict[str, Any]],
+        format: ExportFormat,
     ) -> str:
         """Create archive of batch exported files."""
         archive_path = self.storage_path / f"{batch_id}_archive.zip"
@@ -1336,7 +1399,9 @@ class ExportIntegrationEngine:
         # This would test the actual connection
         return {"success": True}
 
-    async def _schedule_integration_sync(self, connection: IntegrationConnection):
+    async def _schedule_integration_sync(
+        self, connection: IntegrationConnection
+    ):
         """Schedule automatic sync for integration."""
         # This would set up scheduled sync
         pass
@@ -1345,31 +1410,46 @@ class ExportIntegrationEngine:
         self, connection: IntegrationConnection, operation: str
     ) -> Dict[str, Any]:
         """Handle publishing platform integration."""
-        return {"success": True, "message": "Publishing integration placeholder"}
+        return {
+            "success": True,
+            "message": "Publishing integration placeholder",
+        }
 
     async def _handle_cloud_storage_integration(
         self, connection: IntegrationConnection, operation: str
     ) -> Dict[str, Any]:
         """Handle cloud storage integration."""
-        return {"success": True, "message": "Cloud storage integration placeholder"}
+        return {
+            "success": True,
+            "message": "Cloud storage integration placeholder",
+        }
 
     async def _handle_social_media_integration(
         self, connection: IntegrationConnection, operation: str
     ) -> Dict[str, Any]:
         """Handle social media integration."""
-        return {"success": True, "message": "Social media integration placeholder"}
+        return {
+            "success": True,
+            "message": "Social media integration placeholder",
+        }
 
     async def _handle_version_control_integration(
         self, connection: IntegrationConnection, operation: str
     ) -> Dict[str, Any]:
         """Handle version control integration."""
-        return {"success": True, "message": "Version control integration placeholder"}
+        return {
+            "success": True,
+            "message": "Version control integration placeholder",
+        }
 
     async def _handle_collaboration_integration(
         self, connection: IntegrationConnection, operation: str
     ) -> Dict[str, Any]:
         """Handle collaboration platform integration."""
-        return {"success": True, "message": "Collaboration integration placeholder"}
+        return {
+            "success": True,
+            "message": "Collaboration integration placeholder",
+        }
 
 
 def create_export_integration_engine(

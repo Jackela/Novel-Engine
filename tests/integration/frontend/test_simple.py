@@ -65,7 +65,10 @@ def test_frontend_basic():
         response = requests.get("http://localhost:5173", timeout=5)
         if response.status_code == 200:
             print("OK: 主页可访问")
-            results["homepage"] = {"success": True, "status": response.status_code}
+            results["homepage"] = {
+                "success": True,
+                "status": response.status_code,
+            }
 
             # 检查HTML内容
             html_content = response.text
@@ -77,7 +80,10 @@ def test_frontend_basic():
                 results["content"] = {"success": False, "has_content": False}
         else:
             print(f"WARN: 主页返回状态码 {response.status_code}")
-            results["homepage"] = {"success": False, "status": response.status_code}
+            results["homepage"] = {
+                "success": False,
+                "status": response.status_code,
+            }
     except Exception as e:
         print(f"ERROR: 无法访问主页: {e}")
         results["homepage"] = {"success": False, "error": str(e)}
@@ -132,10 +138,10 @@ test('简单页面测试', async ({ page }) => {
     await page.goto('http://localhost:5173', { timeout: 10000 });
     const title = await page.title();
     console.log('页面标题:', title);
-    
+
     // 截图
     await page.screenshot({ path: 'simple-test-screenshot.png' });
-    
+
     expect(title).toBeTruthy();
   } catch (error) {
     console.log('测试警告:', error.message);
@@ -150,7 +156,13 @@ test('简单页面测试', async ({ page }) => {
     # 运行测试
     try:
         result = subprocess.run(
-            ["npx", "playwright", "test", "simple-test.spec.js", "--reporter=line"],
+            [
+                "npx",
+                "playwright",
+                "test",
+                "simple-test.spec.js",
+                "--reporter=line",
+            ],
             cwd=frontend_dir,
             capture_output=True,
             text=True,
@@ -172,7 +184,11 @@ test('简单页面测试', async ({ page }) => {
             print("WARN: Playwright测试失败")
             print("输出:", result.stdout[-200:])
             print("错误:", result.stderr[-200:])
-            return {"success": False, "stdout": result.stdout, "stderr": result.stderr}
+            return {
+                "success": False,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+            }
 
     except subprocess.TimeoutExpired:
         print("WARN: Playwright测试超时")
@@ -221,7 +237,9 @@ def main():
                         if result.get("success", False):
                             total_success += 1
 
-        success_rate = (total_success / total_tests * 100) if total_tests > 0 else 0
+        success_rate = (
+            (total_success / total_tests * 100) if total_tests > 0 else 0
+        )
 
         print("\\n=== 测试结果摘要 ===")
         print(f"总测试数: {total_tests}")
@@ -240,7 +258,9 @@ def main():
             "results": all_results,
         }
 
-        report_file = f"ui_simple_test_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        report_file = (
+            f"ui_simple_test_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
         with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 

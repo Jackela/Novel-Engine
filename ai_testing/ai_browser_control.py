@@ -49,13 +49,17 @@ class AIBrowserController:
         logger.info("🌐 Navigating to Novel-Engine...")
         try:
             # Try frontend first
-            await self.page.goto("http://localhost:5173", wait_until="networkidle")
+            await self.page.goto(
+                "http://localhost:5173", wait_until="networkidle"
+            )
             logger.info("✅ Connected to frontend")
             return "frontend"
         except Exception:
             try:
                 # Fallback to API
-                await self.page.goto("http://localhost:8000", wait_until="networkidle")
+                await self.page.goto(
+                    "http://localhost:8000", wait_until="networkidle"
+                )
                 logger.info("✅ Connected to API")
                 return "api"
             except Exception as e:
@@ -119,39 +123,45 @@ class AIBrowserController:
                 # AI decision: Choose interesting button
                 if "Create" in " ".join(button_texts):
                     decision["action"] = "click_create"
-                    decision["reasoning"] = (
-                        "Found 'Create' button - will test character creation"
-                    )
+                    decision[
+                        "reasoning"
+                    ] = "Found 'Create' button - will test character creation"
                 elif "Generate" in " ".join(button_texts):
                     decision["action"] = "click_generate"
-                    decision["reasoning"] = (
-                        "Found 'Generate' button - will test story generation"
-                    )
+                    decision[
+                        "reasoning"
+                    ] = "Found 'Generate' button - will test story generation"
                 elif "Start" in " ".join(button_texts):
                     decision["action"] = "click_start"
-                    decision["reasoning"] = (
-                        "Found 'Start' button - will begin interaction"
-                    )
+                    decision[
+                        "reasoning"
+                    ] = "Found 'Start' button - will begin interaction"
                 else:
                     decision["action"] = "click_first_button"
-                    decision["reasoning"] = (
-                        f"Found buttons: {button_texts[:3]} - will explore"
-                    )
+                    decision[
+                        "reasoning"
+                    ] = f"Found buttons: {button_texts[:3]} - will explore"
 
         elif context.get("elements", {}).get("inputs", 0) > 0:
             # If we see input fields, decide what to type
             decision["action"] = "fill_inputs"
-            decision["reasoning"] = "Found input fields - will create custom character"
+            decision[
+                "reasoning"
+            ] = "Found input fields - will create custom character"
 
         elif context.get("elements", {}).get("links", 0) > 0:
             # If we see links, explore navigation
             decision["action"] = "explore_links"
-            decision["reasoning"] = "Found navigation links - will explore features"
+            decision[
+                "reasoning"
+            ] = "Found navigation links - will explore features"
 
         else:
             # Default: Try API interaction
             decision["action"] = "api_test"
-            decision["reasoning"] = "No UI elements found - will test API directly"
+            decision[
+                "reasoning"
+            ] = "No UI elements found - will test API directly"
 
         self.decisions_made.append(decision)
         logger.info(f"   Decision: {decision['action']}")
@@ -163,12 +173,18 @@ class AIBrowserController:
         """Execute the AI's decision"""
         logger.info(f"⚡ Executing action: {decision['action']}")
 
-        result = {"action": decision["action"], "success": False, "details": {}}
+        result = {
+            "action": decision["action"],
+            "success": False,
+            "details": {},
+        }
 
         try:
             if decision["action"] == "click_create":
                 # Find and click Create button
-                create_btn = await self.page.query_selector("button:has-text('Create')")
+                create_btn = await self.page.query_selector(
+                    "button:has-text('Create')"
+                )
                 if create_btn:
                     await create_btn.click()
                     await self.page.wait_for_load_state("networkidle")
@@ -180,23 +196,36 @@ class AIBrowserController:
                 inputs = await self.page.query_selector_all("input")
                 character_data = self.generate_character_data()
 
-                for i, input_elem in enumerate(inputs[:3]):  # Fill first 3 inputs
-                    placeholder = await input_elem.get_attribute("placeholder") or ""
-                    name = await input_elem.get_attribute("name") or f"field_{i}"
+                for i, input_elem in enumerate(
+                    inputs[:3]
+                ):  # Fill first 3 inputs
+                    placeholder = (
+                        await input_elem.get_attribute("placeholder") or ""
+                    )
+                    name = (
+                        await input_elem.get_attribute("name") or f"field_{i}"
+                    )
 
                     if "name" in placeholder.lower() or "name" in name.lower():
                         await input_elem.fill(character_data["name"])
-                        result["details"]["filled_name"] = character_data["name"]
-                    elif "desc" in placeholder.lower() or "desc" in name.lower():
-                        await input_elem.fill(character_data["description"])
-                        result["details"]["filled_description"] = character_data[
-                            "description"
+                        result["details"]["filled_name"] = character_data[
+                            "name"
                         ]
                     elif (
-                        "trait" in placeholder.lower() or "personality" in name.lower()
+                        "desc" in placeholder.lower() or "desc" in name.lower()
+                    ):
+                        await input_elem.fill(character_data["description"])
+                        result["details"][
+                            "filled_description"
+                        ] = character_data["description"]
+                    elif (
+                        "trait" in placeholder.lower()
+                        or "personality" in name.lower()
                     ):
                         await input_elem.fill(character_data["traits"])
-                        result["details"]["filled_traits"] = character_data["traits"]
+                        result["details"]["filled_traits"] = character_data[
+                            "traits"
+                        ]
                     else:
                         await input_elem.fill(f"AI Test Input {i+1}")
 
@@ -204,10 +233,14 @@ class AIBrowserController:
 
             elif decision["action"] == "click_generate":
                 # Click Generate button
-                gen_btn = await self.page.query_selector("button:has-text('Generate')")
+                gen_btn = await self.page.query_selector(
+                    "button:has-text('Generate')"
+                )
                 if gen_btn:
                     await gen_btn.click()
-                    await self.page.wait_for_timeout(2000)  # Wait for generation
+                    await self.page.wait_for_timeout(
+                        2000
+                    )  # Wait for generation
                     result["success"] = True
                     result["details"]["clicked"] = "Generate button"
 
@@ -311,7 +344,9 @@ class AIBrowserController:
         logger.info("🔌 Testing API directly...")
 
         # Navigate to API documentation
-        await self.page.goto("http://localhost:8000/docs", wait_until="networkidle")
+        await self.page.goto(
+            "http://localhost:8000/docs", wait_until="networkidle"
+        )
         await self.page.wait_for_timeout(1000)
 
         # Try to interact with API documentation
@@ -339,7 +374,9 @@ class AIBrowserController:
 
     async def run_interactive_test(self, duration_seconds: int = 30):
         """Run interactive test for specified duration"""
-        logger.info(f"🎮 Starting {duration_seconds}-second interactive test...")
+        logger.info(
+            f"🎮 Starting {duration_seconds}-second interactive test..."
+        )
         start_time = time.time()
         interaction_count = 0
 
@@ -369,7 +406,8 @@ class AIBrowserController:
             await self.page.wait_for_timeout(2000)
 
         logger.info(
-            f"✅ Test completed: {interaction_count} interactions in {duration_seconds}s"
+            f"✅ Test completed: {interaction_count} interactions "
+            f"in {duration_seconds}s"
         )
 
     async def generate_report(self) -> Dict[str, Any]:
@@ -380,10 +418,14 @@ class AIBrowserController:
             "test_summary": {
                 "total_interactions": len(self.test_results["interactions"]),
                 "successful_actions": sum(
-                    1 for i in self.test_results["interactions"] if i["success"]
+                    1
+                    for i in self.test_results["interactions"]
+                    if i["success"]
                 ),
                 "errors_encountered": len(self.test_results["errors"]),
-                "quality_assessments": len(self.test_results["quality_assessments"]),
+                "quality_assessments": len(
+                    self.test_results["quality_assessments"]
+                ),
                 "decisions_made": len(self.decisions_made),
             },
             "ai_decisions": self.decisions_made,
@@ -450,10 +492,22 @@ async def main():
             print("=" * 60)
             print("📊 Test Results")
             print("=" * 60)
-            print(f"Total Interactions: {report['test_summary']['total_interactions']}")
-            print(f"Successful Actions: {report['test_summary']['successful_actions']}")
-            print(f"Errors Encountered: {report['test_summary']['errors_encountered']}")
-            print(f"AI Decisions Made: {report['test_summary']['decisions_made']}")
+            print(
+                f"Total Interactions: "
+                f"{report['test_summary']['total_interactions']}"
+            )
+            print(
+                f"Successful Actions: "
+                f"{report['test_summary']['successful_actions']}"
+            )
+            print(
+                f"Errors Encountered: "
+                f"{report['test_summary']['errors_encountered']}"
+            )
+            print(
+                f"AI Decisions Made: "
+                f"{report['test_summary']['decisions_made']}"
+            )
             print()
 
             if report.get("quality_scores"):
@@ -471,9 +525,13 @@ async def main():
             import json
             from pathlib import Path
 
-            report_path = Path("ai_testing/validation_reports/ai_browser_test.json")
+            report_path = Path(
+                "ai_testing/validation_reports/ai_browser_test.json"
+            )
             report_path.parent.mkdir(parents=True, exist_ok=True)
-            report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False))
+            report_path.write_text(
+                json.dumps(report, indent=2, ensure_ascii=False)
+            )
             print()
             print(f"📄 Full report saved to: {report_path}")
 

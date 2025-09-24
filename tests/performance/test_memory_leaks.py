@@ -62,7 +62,8 @@ class MockPersonaAgent:
                 * 20,  # Make it memory-heavy
                 "world_state": f"World state at decision {i}",
                 "character_context": {"mood": "active", "energy": 100 - i},
-                "llm_response": f"LLM generated response {i} with lots of text " * 15,
+                "llm_response": f"LLM generated response {i} with lots of text "
+                * 15,
             }
             self.decision_history.append(decision)
 
@@ -135,7 +136,9 @@ class MemoryLeakFixTest:
 
         # Compile results
         test_results["total_tests"] = len(self.test_results)
-        test_results["passed_tests"] = sum(1 for r in self.test_results if r["success"])
+        test_results["passed_tests"] = sum(
+            1 for r in self.test_results if r["success"]
+        )
         test_results["failed_tests"] = sum(
             1 for r in self.test_results if not r["success"]
         )
@@ -173,7 +176,9 @@ class MemoryLeakFixTest:
             agent = MockPersonaAgent("test_agent_1")
 
             # Simulate the memory leak - accumulate 5000 decisions
-            logger.info("Simulating decision history memory leak (5000 decisions)...")
+            logger.info(
+                "Simulating decision history memory leak (5000 decisions)..."
+            )
             agent.simulate_decision_accumulation(5000)
 
             # Measure memory before fix
@@ -186,7 +191,9 @@ class MemoryLeakFixTest:
             )
 
             # Apply memory leak fixes
-            fix_result = PersonaAgentMemoryFixer.fix_persona_agent_memory_leaks(agent)
+            fix_result = (
+                PersonaAgentMemoryFixer.fix_persona_agent_memory_leaks(agent)
+            )
 
             if not fix_result["success"]:
                 raise Exception(f"Memory fix failed: {fix_result['errors']}")
@@ -201,7 +208,9 @@ class MemoryLeakFixTest:
             # Calculate improvements
             memory_improvement = memory_before - memory_after
             memory_improvement_percent = (
-                (memory_improvement / memory_before) * 100 if memory_before > 0 else 0
+                (memory_improvement / memory_before) * 100
+                if memory_before > 0
+                else 0
             )
 
             decisions_reduced = (
@@ -216,8 +225,10 @@ class MemoryLeakFixTest:
 
             # Verify fix effectiveness
             success = (
-                footprint_after["decision_history"] <= 500  # Should be capped at 500
-                and "decision_history_sliding_window" in fix_result["fixes_applied"]
+                footprint_after["decision_history"]
+                <= 500  # Should be capped at 500
+                and "decision_history_sliding_window"
+                in fix_result["fixes_applied"]
                 and fix_result["items_archived"]["decision_history"] > 0
             )
 
@@ -371,7 +382,9 @@ class MemoryLeakFixTest:
                 and setup_result is not None
             )
 
-            logger.info(f"System memory status: {comprehensive_report['status']}")
+            logger.info(
+                f"System memory status: {comprehensive_report['status']}"
+            )
             logger.info(
                 f"Current memory: {comprehensive_report['system_memory']['current_memory_mb']:.1f}MB"
             )
@@ -402,7 +415,9 @@ class MemoryLeakFixTest:
             agents = []
             for i in range(10):
                 agent = MockPersonaAgent(f"load_test_agent_{i}")
-                agent.simulate_decision_accumulation(1000)  # 1000 decisions each
+                agent.simulate_decision_accumulation(
+                    1000
+                )  # 1000 decisions each
                 agents.append(agent)
 
             # Measure memory before fixes
@@ -435,11 +450,15 @@ class MemoryLeakFixTest:
 
             # Measure memory after fixes
             memory_after = self.process.memory_info().rss / 1024 / 1024
-            total_decisions_after = sum(len(agent.decision_history) for agent in agents)
+            total_decisions_after = sum(
+                len(agent.decision_history) for agent in agents
+            )
 
             memory_improvement = memory_before - memory_after
             memory_improvement_percent = (
-                (memory_improvement / memory_before) * 100 if memory_before > 0 else 0
+                (memory_improvement / memory_before) * 100
+                if memory_before > 0
+                else 0
             )
 
             logger.info(
@@ -462,7 +481,8 @@ class MemoryLeakFixTest:
                 "fixes_applied": fixes_applied,
                 "decisions_before": total_decisions_before,
                 "decisions_after": total_decisions_after,
-                "decisions_reduced": total_decisions_before - total_decisions_after,
+                "decisions_reduced": total_decisions_before
+                - total_decisions_after,
                 "memory_before_mb": memory_before,
                 "memory_after_mb": memory_after,
                 "memory_improvement_mb": memory_improvement,
@@ -521,7 +541,7 @@ CRITICAL FIXES VERIFIED:
                     report += f"""
 🔥 CRITICAL: PersonaAgent Decision History Memory Leak
    ✅ Before: {result.get('decisions_before', 'N/A')} decisions
-   ✅ After: {result.get('decisions_after', 'N/A')} decisions  
+   ✅ After: {result.get('decisions_after', 'N/A')} decisions
    ✅ Memory Saved: {result.get('memory_improvement_mb', 0):.1f}MB
    ✅ Decisions Archived: {result.get('decisions_reduced', 0)}
    ✅ Fixes Applied: {', '.join(result.get('fixes_applied', []))}
@@ -535,7 +555,7 @@ CRITICAL FIXES VERIFIED:
 """
                 elif "Load" in result["test_name"]:
                     report += f"""
-🚀 Load Test - Multi-Agent Memory Management  
+🚀 Load Test - Multi-Agent Memory Management
    ✅ Agents Tested: {result.get('agents_tested', 'N/A')}
    ✅ Total Decisions: {result.get('decisions_before', 'N/A')} → {result.get('decisions_after', 'N/A')}
    ✅ Memory Saved: {result.get('memory_improvement_mb', 0):.1f}MB ({result.get('memory_improvement_percent', 0):.1f}%)
@@ -564,7 +584,7 @@ FAILED TESTS ({len(failed_tests)}):
 
 MEMORY LEAK ANALYSIS:
 - PersonaAgent Decision History: UNLIMITED → SLIDING WINDOW (500 max) ✅
-- Context History Accumulation: UNLIMITED → MANAGED (100 max) ✅  
+- Context History Accumulation: UNLIMITED → MANAGED (100 max) ✅
 - LLM Response Cache: UNLIMITED → CAPPED (100 entries) ✅
 - System Memory Monitoring: NONE → ACTIVE MONITORING ✅
 - Memory Cleanup Automation: NONE → AUTOMATED CLEANUP ✅
@@ -582,7 +602,7 @@ RECOMMENDATION:
 🧠 MEMORY MANAGEMENT: PRODUCTION READY
    Expected memory usage reduction: 38%+
    System stability: 99.5%+
-   
+
 ═══════════════════════════════════════════════════════════════
 """
 

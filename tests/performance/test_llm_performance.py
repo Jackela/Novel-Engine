@@ -10,6 +10,7 @@ import asyncio
 import logging
 import time
 from datetime import datetime
+
 import pytest
 
 # Configure logging for performance testing
@@ -23,7 +24,9 @@ async def test_async_llm_client_performance():
     print("🚀 Testing AsyncLLMClient Performance...")
 
     try:
-        from src.performance_optimizations.async_llm_integration import AsyncLLMClient
+        from src.performance_optimizations.async_llm_integration import (
+            AsyncLLMClient,
+        )
 
         # Create test client
         async with AsyncLLMClient(
@@ -31,14 +34,16 @@ async def test_async_llm_client_performance():
             cache_ttl_seconds=300,
             request_timeout_seconds=5,  # Reduced from 30s
         ) as client:
-
             # Test single request performance
             start_time = time.perf_counter()
 
             test_context = {
                 "personality_traits": {"aggressiveness": 0.7, "loyalty": 0.9},
                 "decision_weights": {"mission_priority": 0.8},
-                "recent_events": ["battle_event_001", "communication_event_002"],
+                "recent_events": [
+                    "battle_event_001",
+                    "communication_event_002",
+                ],
                 "faction": "imperium",
             }
 
@@ -80,7 +85,9 @@ async def test_async_llm_client_performance():
             stats = client.get_performance_stats()
 
             print("✅ AsyncLLMClient Performance Results:")
-            print(f"   • Single request time: {single_request_time:.3f}s (was ~30s)")
+            print(
+                f"   • Single request time: {single_request_time:.3f}s (was ~30s)"
+            )
             print(
                 f"   • Cache hit time: {cache_request_time:.6f}s ({cache_request_time/single_request_time:.1%} of original)"
             )
@@ -90,7 +97,9 @@ async def test_async_llm_client_performance():
             )
             print(f"   • Cache hit rate: {stats['cache_hit_rate']}")
             print(f"   • Total requests processed: {stats['total_requests']}")
-            print(f"   • Estimated cost reduction: {stats['estimated_cost_reduction']}")
+            print(
+                f"   • Estimated cost reduction: {stats['estimated_cost_reduction']}"
+            )
 
             return {
                 "single_request_time": single_request_time,
@@ -116,19 +125,28 @@ def test_persona_agent_patch():
         class MockPersonaAgent:
             def __init__(self, agent_id):
                 self.agent_id = agent_id
-                self.personality_traits = {"aggressiveness": 0.6, "loyalty": 0.8}
+                self.personality_traits = {
+                    "aggressiveness": 0.6,
+                    "loyalty": 0.8,
+                }
                 self.decision_weights = {"mission_priority": 0.9}
-                self.subjective_worldview = {"recent_events": ["test_event_001"]}
+                self.subjective_worldview = {
+                    "recent_events": ["test_event_001"]
+                }
                 self.character_data = {"faction": "test_faction"}
 
             def _call_llm(self, prompt):
                 # Simulate original blocking behavior
-                time.sleep(0.1)  # Simulate delay (much less than real 30s for testing)
+                time.sleep(
+                    0.1
+                )  # Simulate delay (much less than real 30s for testing)
                 return "ACTION: test\nTARGET: enemy\nREASONING: Test response."
 
             def _make_algorithmic_decision(self, available_actions):
                 return type(
-                    "Decision", (), {"action_type": "observe", "target": "area"}
+                    "Decision",
+                    (),
+                    {"action_type": "observe", "target": "area"},
                 )()
 
         # Create test agent
@@ -144,7 +162,9 @@ def test_persona_agent_patch():
             PersonaAgentAsyncPatch,
         )
 
-        patch_result = PersonaAgentAsyncPatch.apply_full_performance_patch(test_agent)
+        patch_result = PersonaAgentAsyncPatch.apply_full_performance_patch(
+            test_agent
+        )
 
         # Measure patched performance
         patched_start = time.perf_counter()
@@ -153,7 +173,9 @@ def test_persona_agent_patch():
 
         # Calculate improvement
         improvement_ratio = original_time / max(patched_time, 0.001)
-        improvement_percentage = ((original_time - patched_time) / original_time) * 100
+        improvement_percentage = (
+            (original_time - patched_time) / original_time
+        ) * 100
 
         print("✅ PersonaAgent Patch Results:")
         print(f"   • Original call time: {original_time:.3f}s")
@@ -221,7 +243,9 @@ async def test_concurrent_agent_performance():
         sequential_time = time.perf_counter() - sequential_start
 
         # Apply optimizations
-        optimization_result = apply_async_optimization_to_agent_collection(agents)
+        optimization_result = apply_async_optimization_to_agent_collection(
+            agents
+        )
 
         # Test optimized performance (with caching benefits)
         optimized_start = time.perf_counter()
@@ -238,7 +262,9 @@ async def test_concurrent_agent_performance():
         print("✅ Concurrent Agent Performance Results:")
         print(f"   • Sequential processing time: {sequential_time:.3f}s")
         print(f"   • Optimized processing time: {optimized_time:.3f}s")
-        print(f"   • Concurrent improvement: {concurrent_improvement:.1f}x faster")
+        print(
+            f"   • Concurrent improvement: {concurrent_improvement:.1f}x faster"
+        )
         print(f"   • Time reduction: {concurrent_improvement_pct:.1f}%")
         print(
             f"   • Successfully optimized agents: {optimization_result['successfully_patched']}/10"
@@ -271,7 +297,9 @@ async def run_comprehensive_performance_tests():
     test_results = {}
 
     # Test 1: Async LLM Client
-    test_results["async_llm_client"] = await test_async_llm_client_performance()
+    test_results[
+        "async_llm_client"
+    ] = await test_async_llm_client_performance()
     print()
 
     # Test 2: PersonaAgent Patch
@@ -279,14 +307,18 @@ async def run_comprehensive_performance_tests():
     print()
 
     # Test 3: Concurrent Performance
-    test_results["concurrent_agents"] = await test_concurrent_agent_performance()
+    test_results[
+        "concurrent_agents"
+    ] = await test_concurrent_agent_performance()
     print()
 
     # Generate summary
     print("📊 PERFORMANCE TESTING SUMMARY")
     print("-" * 50)
 
-    successful_tests = sum(1 for result in test_results.values() if result["success"])
+    successful_tests = sum(
+        1 for result in test_results.values() if result["success"]
+    )
     total_tests = len(test_results)
 
     print(f"✅ Successful Tests: {successful_tests}/{total_tests}")
@@ -302,11 +334,17 @@ async def run_comprehensive_performance_tests():
         )
 
     if test_results["persona_agent_patch"]["success"]:
-        improvement = test_results["persona_agent_patch"]["improvement_percentage"]
-        print(f"🤖 Agent Patch Improvement: {improvement:.1f}% faster response times")
+        improvement = test_results["persona_agent_patch"][
+            "improvement_percentage"
+        ]
+        print(
+            f"🤖 Agent Patch Improvement: {improvement:.1f}% faster response times"
+        )
 
     if test_results["concurrent_agents"]["success"]:
-        concurrent_improvement = test_results["concurrent_agents"]["improvement_ratio"]
+        concurrent_improvement = test_results["concurrent_agents"][
+            "improvement_ratio"
+        ]
         print(
             f"🏭 Concurrent Processing: {concurrent_improvement:.1f}x faster for multiple agents"
         )

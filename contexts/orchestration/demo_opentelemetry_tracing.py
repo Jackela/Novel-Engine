@@ -15,13 +15,12 @@ from infrastructure.monitoring.tracing import (
     NovelEngineTracingConfig,
     initialize_tracing,
 )
-from infrastructure.monitoring.tracing_middleware import (
-    TracingDependency,
-)
+from infrastructure.monitoring.tracing_middleware import TracingDependency
 
 # Configure logging for demo
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -60,7 +59,10 @@ async def demonstrate_turn_tracing():
         "narrative_analysis_depth": "detailed",
         "max_execution_time_ms": 60000,
     }
-    user_context_1 = {"user_id": "demo_user_001", "roles": ["player", "participant"]}
+    user_context_1 = {
+        "user_id": "demo_user_001",
+        "roles": ["player", "participant"],
+    }
 
     print("\n📊 Test 1: Successful Turn Execution")
     print(f"   Turn ID: {turn_id_1}")
@@ -168,7 +170,9 @@ async def demonstrate_turn_tracing():
 
     # Start root span for failed turn
     turn_span_2 = tracer.start_turn_span(
-        turn_id=turn_id_2, participants=participants_2, configuration=configuration_2
+        turn_id=turn_id_2,
+        participants=participants_2,
+        configuration=configuration_2,
     )
 
     print("✅ Root span started for failed turn execution flow")
@@ -229,7 +233,9 @@ async def demonstrate_turn_tracing():
             failed_completed_phases.append(phase_name)
             print(f"     ✅ Phase completed: {duration_sec}s, ${ai_cost}")
         else:
-            print(f"     ❌ Phase failed: {duration_sec}s, ${ai_cost} (partial cost)")
+            print(
+                f"     ❌ Phase failed: {duration_sec}s, ${ai_cost} (partial cost)"
+            )
             break
 
     # Record failed turn execution result
@@ -249,7 +255,9 @@ async def demonstrate_turn_tracing():
     print(
         f"❌ Root span completed for failed turn: {failed_execution_time}s, ${failed_total_cost}"
     )
-    print(f"   Phases completed: {len(failed_completed_phases)}/4 (before failure)")
+    print(
+        f"   Phases completed: {len(failed_completed_phases)}/4 (before failure)"
+    )
     print("   Root span captured complete failure flow for analysis")
 
     # Test 3: Cross-context service calls
@@ -271,7 +279,12 @@ async def demonstrate_turn_tracing():
     cross_context_calls = [
         ("world_context", "get_current_state", True, 0.2),
         ("narrative_context", "generate_content", True, 1.8),
-        ("character_context", "update_attributes", False, 0.5),  # This call fails
+        (
+            "character_context",
+            "update_attributes",
+            False,
+            0.5,
+        ),  # This call fails
         ("event_context", "record_interactions", True, 0.3),
     ]
 
@@ -328,7 +341,9 @@ def demonstrate_tracing_middleware():
         tracer = initialize_tracing()
 
         # Add tracing middleware
-        from infrastructure.monitoring.tracing_middleware import setup_fastapi_tracing
+        from infrastructure.monitoring.tracing_middleware import (
+            setup_fastapi_tracing,
+        )
 
         setup_fastapi_tracing(
             app=demo_app,
@@ -354,7 +369,9 @@ def demonstrate_tracing_middleware():
         # Demonstrate utility functions
         print("✅ Tracing utility functions available:")
         print("   - get_trace_context(request): Get current span")
-        print("   - add_trace_attributes(request, **attrs): Add span attributes")
+        print(
+            "   - add_trace_attributes(request, **attrs): Add span attributes"
+        )
         print("   - Trace context propagation helpers")
 
         return True
@@ -423,7 +440,9 @@ def demonstrate_intelligent_sampling():
         )
 
         sample_decision = (
-            "SAMPLE" if decision.decision.name == "RECORD_AND_SAMPLE" else "DROP"
+            "SAMPLE"
+            if decision.decision.name == "RECORD_AND_SAMPLE"
+            else "DROP"
         )
         print(f"   {scenario_name}: {sample_decision}")
         print(f"     Attributes: {attributes}")
@@ -492,7 +511,9 @@ async def main():
         print("✅ Intelligent sampling for optimal trace collection")
         print("✅ Error tracking and failure analysis capabilities")
         print("✅ User context integration for security tracing")
-        print("\n🚀 Ready to proceed to Wave 4: Security Framework Implementation")
+        print(
+            "\n🚀 Ready to proceed to Wave 4: Security Framework Implementation"
+        )
         return True
     else:
         print(f"\n❌ M10 WAVE 3: {total_tests - passed_tests} tests failed")

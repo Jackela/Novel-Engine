@@ -9,6 +9,7 @@ import asyncio
 import logging
 import time
 import uuid
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
@@ -72,7 +73,9 @@ class OrchestrationStrategy(str, Enum):
     PARALLEL = "parallel"  # Execute compatible phases in parallel
     ADAPTIVE = "adaptive"  # Dynamically adjust based on results
     FAIL_FAST = "fail_fast"  # Stop on first critical failure
-    COMPREHENSIVE = "comprehensive"  # Complete all phases regardless of failures
+    COMPREHENSIVE = (
+        "comprehensive"  # Complete all phases regardless of failures
+    )
 
 
 @dataclass
@@ -198,7 +201,9 @@ class ServiceHealthMonitor:
         self.circuit_breakers: Dict[str, int] = {}
 
         # Health monitoring configuration
-        self.health_check_interval = config.get("health_check_interval_seconds", 30)
+        self.health_check_interval = config.get(
+            "health_check_interval_seconds", 30
+        )
         self.health_cache_ttl = config.get("health_cache_ttl_seconds", 60)
 
         self._register_default_services()
@@ -234,7 +239,9 @@ class ServiceHealthMonitor:
         """Register a testing service"""
         self.services[service.name] = service
         self.circuit_breakers[service.name] = 0
-        logger.info(f"Registered service: {service.name} at {service.base_url}")
+        logger.info(
+            f"Registered service: {service.name} at {service.base_url}"
+        )
 
     async def check_service_health(self, service_name: str) -> Dict[str, Any]:
         """Check health of a specific service"""
@@ -244,18 +251,26 @@ class ServiceHealthMonitor:
         service = self.services[service_name]
 
         # Check circuit breaker
-        if self.circuit_breakers[service_name] >= service.circuit_breaker_threshold:
+        if (
+            self.circuit_breakers[service_name]
+            >= service.circuit_breaker_threshold
+        ):
             return {"status": "circuit_open", "error": "Circuit breaker open"}
 
         # Check cache
         cache_key = f"{service_name}_health"
         if cache_key in self.health_cache:
             cached_result = self.health_cache[cache_key]
-            if time.time() - cached_result.get("timestamp", 0) < self.health_cache_ttl:
+            if (
+                time.time() - cached_result.get("timestamp", 0)
+                < self.health_cache_ttl
+            ):
                 return cached_result["data"]
 
         try:
-            async with httpx.AsyncClient(timeout=service.timeout_seconds) as client:
+            async with httpx.AsyncClient(
+                timeout=service.timeout_seconds
+            ) as client:
                 response = await client.get(
                     f"{service.base_url}{service.health_endpoint}"
                 )
@@ -307,7 +322,10 @@ class ServiceHealthMonitor:
 
         for service_name, result in zip(filtered_services, results):
             if isinstance(result, Exception):
-                health_results[service_name] = {"status": "error", "error": str(result)}
+                health_results[service_name] = {
+                    "status": "error",
+                    "error": str(result),
+                }
             else:
                 health_results[service_name] = result
 
@@ -334,7 +352,9 @@ class ServiceHealthMonitor:
                     break
 
             if all_ready:
-                logger.info(f"All required services ready: {required_services}")
+                logger.info(
+                    f"All required services ready: {required_services}"
+                )
                 return True
 
             await asyncio.sleep(5)  # Wait 5 seconds before next check
@@ -357,7 +377,9 @@ class TestPhaseExecutor:
     - Performance monitoring
     """
 
-    def __init__(self, health_monitor: ServiceHealthMonitor, config: Dict[str, Any]):
+    def __init__(
+        self, health_monitor: ServiceHealthMonitor, config: Dict[str, Any]
+    ):
         self.health_monitor = health_monitor
         self.config = config
         self.http_client: Optional[httpx.AsyncClient] = None
@@ -412,8 +434,12 @@ class TestPhaseExecutor:
             duration_ms = self._calculate_duration_ms(start_time)
 
             passed_results = [r for r in results if r.passed]
-            overall_passed = len(passed_results) == len(results) if results else True
-            overall_score = len(passed_results) / len(results) if results else 1.0
+            overall_passed = (
+                len(passed_results) == len(results) if results else True
+            )
+            overall_score = (
+                len(passed_results) / len(results) if results else 1.0
+            )
 
             # Extract critical issues and recommendations
             critical_issues = []
@@ -430,7 +456,9 @@ class TestPhaseExecutor:
 
             return TestPhaseResult(
                 phase=phase,
-                status=TestStatus.COMPLETED if overall_passed else TestStatus.FAILED,
+                status=TestStatus.COMPLETED
+                if overall_passed
+                else TestStatus.FAILED,
                 started_at=started_at,
                 completed_at=completed_at,
                 duration_ms=duration_ms,
@@ -668,15 +696,21 @@ class TestPhaseExecutor:
 
         # Consider integration healthy if at least 60% of services are operational
         all_services_healthy = (
-            (healthy_services / total_services) >= 0.6 if total_services > 0 else True
+            (healthy_services / total_services) >= 0.6
+            if total_services > 0
+            else True
         )
 
         integration_result = TestResult(
             execution_id=f"integration_{int(time.time())}",
             scenario_id=context.session_id,
-            status=TestStatus.COMPLETED if all_services_healthy else TestStatus.FAILED,
+            status=TestStatus.COMPLETED
+            if all_services_healthy
+            else TestStatus.FAILED,
             passed=all_services_healthy,
-            score=1.0 if all_services_healthy else (healthy_services / total_services),
+            score=1.0
+            if all_services_healthy
+            else (healthy_services / total_services),
             duration_ms=100,  # Add required duration_ms field
             integration_results=health_results,
         )
@@ -864,7 +898,9 @@ class MasterOrchestrator:
                 if (
                     phase != TestingPhase.INTEGRATION_VALIDATION
                 ):  # Integration runs last
-                    task = self.phase_executor.execute_phase(phase, test_specs, context)
+                    task = self.phase_executor.execute_phase(
+                        phase, test_specs, context
+                    )
                     phase_tasks.append(task)
 
             # Execute parallel phases
@@ -885,7 +921,9 @@ class MasterOrchestrator:
                             duration_ms=0,
                             passed=False,
                             score=0.0,
-                            critical_issues=[f"Phase execution error: {str(result)}"],
+                            critical_issues=[
+                                f"Phase execution error: {str(result)}"
+                            ],
                         )
                         phase_results.append(error_phase_result)
                     else:
@@ -895,7 +933,9 @@ class MasterOrchestrator:
                 if request.fail_fast:
                     failed_phases = [r for r in phase_results if not r.passed]
                     if failed_phases:
-                        logger.warning("Fail-fast triggered, stopping execution")
+                        logger.warning(
+                            "Fail-fast triggered, stopping execution"
+                        )
                         return phase_results
 
             # Always run integration validation last
@@ -920,7 +960,9 @@ class MasterOrchestrator:
 
                 # Check fail_fast condition
                 if request.fail_fast and not result.passed:
-                    logger.warning(f"Fail-fast triggered on phase: {phase.value}")
+                    logger.warning(
+                        f"Fail-fast triggered on phase: {phase.value}"
+                    )
                     break
 
         return phase_results
@@ -942,7 +984,9 @@ class MasterOrchestrator:
         total_tests_passed = sum(r.tests_passed for r in phase_results)
         total_tests_failed = sum(r.tests_failed for r in phase_results)
 
-        overall_passed = all(r.passed for r in phase_results) if phase_results else True
+        overall_passed = (
+            all(r.passed for r in phase_results) if phase_results else True
+        )
         overall_score = (
             sum(r.score for r in phase_results) / len(phase_results)
             if phase_results
@@ -965,7 +1009,9 @@ class MasterOrchestrator:
                         quality_dimensions.update(test_result.quality_scores)
 
         # Get service health snapshot
-        service_health_snapshot = await self.health_monitor.check_all_services_health()
+        service_health_snapshot = (
+            await self.health_monitor.check_all_services_health()
+        )
         service_health_status = {
             name: health.get("status", "unknown")
             for name, health in service_health_snapshot.items()
@@ -998,7 +1044,9 @@ class MasterOrchestrator:
         )
 
     async def _send_completion_notification(
-        self, result: ComprehensiveTestResult, notification_config: Dict[str, Any]
+        self,
+        result: ComprehensiveTestResult,
+        notification_config: Dict[str, Any],
     ):
         """Send test completion notification"""
 
@@ -1021,21 +1069,24 @@ class MasterOrchestrator:
             # Send notification via service
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
-                    f"{service.base_url}/notify/test-completion", json=notification_data
+                    f"{service.base_url}/notify/test-completion",
+                    json=notification_data,
                 )
 
                 if response.status_code == 200:
-                    logger.info(f"Notification sent for test: {result.test_session_id}")
+                    logger.info(
+                        f"Notification sent for test: {result.test_session_id}"
+                    )
                 else:
-                    logger.warning(f"Notification failed: {response.status_code}")
+                    logger.warning(
+                        f"Notification failed: {response.status_code}"
+                    )
 
         except Exception as e:
             logger.error(f"Failed to send notification: {e}")
 
 
 # === FastAPI Application ===
-
-from contextlib import asynccontextmanager
 
 
 @asynccontextmanager
@@ -1083,7 +1134,9 @@ async def health_check():
         orchestrator: MasterOrchestrator = app.state.orchestrator
 
         # Get system health excluding self to avoid recursion
-        service_health = await orchestrator.health_monitor.check_all_services_health()
+        service_health = (
+            await orchestrator.health_monitor.check_all_services_health()
+        )
 
         # Filter out orchestrator service to avoid recursive health checks
         filtered_health = {
@@ -1097,8 +1150,10 @@ async def health_check():
             # Force a health check of all services
             for service_name in orchestrator.health_monitor.services:
                 if service_name != "orchestrator":
-                    health = await orchestrator.health_monitor.check_service_health(
-                        service_name
+                    health = (
+                        await orchestrator.health_monitor.check_service_health(
+                            service_name
+                        )
                     )
                     filtered_health[service_name] = health
 
@@ -1124,7 +1179,8 @@ async def health_check():
             database_status="not_applicable",
             message_queue_status="connected",
             external_dependencies={
-                k: v.get("status", "unknown") for k, v in filtered_health.items()
+                k: v.get("status", "unknown")
+                for k, v in filtered_health.items()
             },
             response_time_ms=15.0,
             memory_usage_mb=250.0,
@@ -1200,7 +1256,9 @@ async def get_services_health():
     """Get health status of all services"""
     orchestrator: MasterOrchestrator = app.state.orchestrator
 
-    health_results = await orchestrator.health_monitor.check_all_services_health()
+    health_results = (
+        await orchestrator.health_monitor.check_all_services_health()
+    )
     return health_results
 
 

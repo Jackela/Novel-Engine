@@ -34,7 +34,14 @@ def run_integration_tests():
     """Run integration tests."""
     print("🔗 Running Integration Tests...")
 
-    args = ["tests/", "-v", "--tb=short", "-m", "integration", "--durations=10"]
+    args = [
+        "tests/",
+        "-v",
+        "--tb=short",
+        "-m",
+        "integration",
+        "--durations=10",
+    ]
 
     result = pytest.main(args)
     return result == 0
@@ -63,7 +70,9 @@ def run_performance_tests():
 def main():
     """Main test runner."""
     if len(sys.argv) < 2:
-        print("Usage: python test_runner.py [unit|integration|all|performance]")
+        print(
+            "Usage: python test_runner.py [unit|integration|all|performance]"
+        )
         sys.exit(1)
 
     test_type = sys.argv[1].lower()

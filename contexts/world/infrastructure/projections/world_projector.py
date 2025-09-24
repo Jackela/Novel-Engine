@@ -96,7 +96,9 @@ class WorldProjector:
 
         except Exception as e:
             self.logger.error(f"Failed to start world projector: {e}")
-            raise WorldProjectorException(f"Failed to start world projector: {e}")
+            raise WorldProjectorException(
+                f"Failed to start world projector: {e}"
+            )
 
     async def stop(self) -> None:
         """Stop the world projector service."""
@@ -145,7 +147,9 @@ class WorldProjector:
             # Extract change type
             change_type_str = event.payload.get("change_type")
             if not change_type_str:
-                self.logger.warning(f"Event {event.event_id} missing change_type")
+                self.logger.warning(
+                    f"Event {event.event_id} missing change_type"
+                )
                 return
 
             try:
@@ -157,7 +161,9 @@ class WorldProjector:
             # Route to specific handler
             handler = self._event_handlers.get(change_type)
             if not handler:
-                self.logger.warning(f"No handler for change type: {change_type}")
+                self.logger.warning(
+                    f"No handler for change type: {change_type}"
+                )
                 return
 
             # Process the event
@@ -216,7 +222,9 @@ class WorldProjector:
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error handling entity_added: {e}")
-            raise WorldProjectorException(f"Failed to handle entity_added: {e}")
+            raise WorldProjectorException(
+                f"Failed to handle entity_added: {e}"
+            )
 
     async def _handle_entity_removed(self, event: WorldStateChanged) -> None:
         """Handle entity removed events."""
@@ -226,7 +234,10 @@ class WorldProjector:
             with get_db_session() as session:
                 read_model = (
                     session.query(WorldSliceReadModel)
-                    .filter(WorldSliceReadModel.world_state_id == UUID(world_state_id))
+                    .filter(
+                        WorldSliceReadModel.world_state_id
+                        == UUID(world_state_id)
+                    )
                     .first()
                 )
 
@@ -241,7 +252,9 @@ class WorldProjector:
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error handling entity_removed: {e}")
-            raise WorldProjectorException(f"Failed to handle entity_removed: {e}")
+            raise WorldProjectorException(
+                f"Failed to handle entity_removed: {e}"
+            )
 
     async def _handle_entity_moved(self, event: WorldStateChanged) -> None:
         """Handle entity moved events."""
@@ -251,7 +264,10 @@ class WorldProjector:
             with get_db_session() as session:
                 read_model = (
                     session.query(WorldSliceReadModel)
-                    .filter(WorldSliceReadModel.world_state_id == UUID(world_state_id))
+                    .filter(
+                        WorldSliceReadModel.world_state_id
+                        == UUID(world_state_id)
+                    )
                     .first()
                 )
 
@@ -266,7 +282,9 @@ class WorldProjector:
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error handling entity_moved: {e}")
-            raise WorldProjectorException(f"Failed to handle entity_moved: {e}")
+            raise WorldProjectorException(
+                f"Failed to handle entity_moved: {e}"
+            )
 
     async def _handle_entity_updated(self, event: WorldStateChanged) -> None:
         """Handle entity updated events."""
@@ -276,7 +294,10 @@ class WorldProjector:
             with get_db_session() as session:
                 read_model = (
                     session.query(WorldSliceReadModel)
-                    .filter(WorldSliceReadModel.world_state_id == UUID(world_state_id))
+                    .filter(
+                        WorldSliceReadModel.world_state_id
+                        == UUID(world_state_id)
+                    )
                     .first()
                 )
 
@@ -291,7 +312,9 @@ class WorldProjector:
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error handling entity_updated: {e}")
-            raise WorldProjectorException(f"Failed to handle entity_updated: {e}")
+            raise WorldProjectorException(
+                f"Failed to handle entity_updated: {e}"
+            )
 
     async def _handle_state_snapshot(self, event: WorldStateChanged) -> None:
         """Handle complete world state snapshots."""
@@ -312,7 +335,9 @@ class WorldProjector:
                 ).delete()
 
                 # Create new read model from snapshot
-                read_model = WorldSliceReadModel.create_from_world_state(snapshot_data)
+                read_model = WorldSliceReadModel.create_from_world_state(
+                    snapshot_data
+                )
                 session.add(read_model)
                 session.commit()
 
@@ -322,7 +347,9 @@ class WorldProjector:
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error handling state_snapshot: {e}")
-            raise WorldProjectorException(f"Failed to handle state_snapshot: {e}")
+            raise WorldProjectorException(
+                f"Failed to handle state_snapshot: {e}"
+            )
 
     async def _handle_state_reset(self, event: WorldStateChanged) -> None:
         """Handle world state reset events."""
@@ -333,7 +360,10 @@ class WorldProjector:
                 # Delete the read model for this world
                 deleted_count = (
                     session.query(WorldSliceReadModel)
-                    .filter(WorldSliceReadModel.world_state_id == UUID(world_state_id))
+                    .filter(
+                        WorldSliceReadModel.world_state_id
+                        == UUID(world_state_id)
+                    )
                     .delete()
                 )
 
@@ -348,7 +378,9 @@ class WorldProjector:
             self.logger.error(f"Database error handling state_reset: {e}")
             raise WorldProjectorException(f"Failed to handle state_reset: {e}")
 
-    async def _handle_environment_changed(self, event: WorldStateChanged) -> None:
+    async def _handle_environment_changed(
+        self, event: WorldStateChanged
+    ) -> None:
         """Handle environment change events."""
         world_state_id = event.aggregate_id
         environment_changes = event.payload.get("new_state")
@@ -357,7 +389,10 @@ class WorldProjector:
             with get_db_session() as session:
                 read_model = (
                     session.query(WorldSliceReadModel)
-                    .filter(WorldSliceReadModel.world_state_id == UUID(world_state_id))
+                    .filter(
+                        WorldSliceReadModel.world_state_id
+                        == UUID(world_state_id)
+                    )
                     .first()
                 )
 
@@ -370,7 +405,9 @@ class WorldProjector:
 
                     # Keep only first 5 keys to prevent bloat
                     if len(read_model.environment_summary) > 5:
-                        items = list(read_model.environment_summary.items())[:5]
+                        items = list(read_model.environment_summary.items())[
+                            :5
+                        ]
                         read_model.environment_summary = dict(items)
 
                     read_model.last_event_timestamp = datetime.now()
@@ -378,11 +415,17 @@ class WorldProjector:
 
                     session.commit()
 
-                    self.logger.debug(f"Updated environment for world {world_state_id}")
+                    self.logger.debug(
+                        f"Updated environment for world {world_state_id}"
+                    )
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Database error handling environment_changed: {e}")
-            raise WorldProjectorException(f"Failed to handle environment_changed: {e}")
+            self.logger.error(
+                f"Database error handling environment_changed: {e}"
+            )
+            raise WorldProjectorException(
+                f"Failed to handle environment_changed: {e}"
+            )
 
     async def _handle_time_advanced(self, event: WorldStateChanged) -> None:
         """Handle world time advancement events."""
@@ -400,7 +443,10 @@ class WorldProjector:
             with get_db_session() as session:
                 read_model = (
                     session.query(WorldSliceReadModel)
-                    .filter(WorldSliceReadModel.world_state_id == UUID(world_state_id))
+                    .filter(
+                        WorldSliceReadModel.world_state_id
+                        == UUID(world_state_id)
+                    )
                     .first()
                 )
 
@@ -422,7 +468,9 @@ class WorldProjector:
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error handling time_advanced: {e}")
-            raise WorldProjectorException(f"Failed to handle time_advanced: {e}")
+            raise WorldProjectorException(
+                f"Failed to handle time_advanced: {e}"
+            )
 
     async def _get_or_create_read_model(
         self, session: Session, world_state_id: str
@@ -444,7 +492,9 @@ class WorldProjector:
             # Try to get existing read model
             read_model = (
                 session.query(WorldSliceReadModel)
-                .filter(WorldSliceReadModel.world_state_id == UUID(world_state_id))
+                .filter(
+                    WorldSliceReadModel.world_state_id == UUID(world_state_id)
+                )
                 .first()
             )
 
@@ -455,7 +505,9 @@ class WorldProjector:
             # This would typically involve calling the domain repository
             # For now, create an empty read model that will be populated by subsequent events
 
-            self.logger.info(f"Creating new read model for world {world_state_id}")
+            self.logger.info(
+                f"Creating new read model for world {world_state_id}"
+            )
 
             read_model = WorldSliceReadModel(
                 world_state_id=UUID(world_state_id),
@@ -523,7 +575,9 @@ class WorldProjector:
             True if rebuild was successful, False otherwise
         """
         try:
-            self.logger.info(f"Rebuilding read model for world {world_state_id}")
+            self.logger.info(
+                f"Rebuilding read model for world {world_state_id}"
+            )
 
             # This would typically:
             # 1. Query the domain repository for current world state

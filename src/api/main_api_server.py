@@ -63,14 +63,12 @@ from src.core.system_orchestrator import (
 
 # Import security systems (if available)
 try:
-    from src.security.auth_system import (
-        AuthenticationManager,
-        Permission,
-        get_current_user,
-        require_permission,
-    )
+    from src.security.auth_system import AuthenticationManager
     from src.security.enhanced_security import EnhancedSecurityMiddleware
-    from src.security.input_validation import ValidationMiddleware, get_input_validator
+    from src.security.input_validation import (
+        ValidationMiddleware,
+        get_input_validator,
+    )
     from src.security.rate_limiting import (
         InMemoryRateLimitBackend,
         RateLimitMiddleware,
@@ -79,10 +77,8 @@ try:
     from src.security.security_headers import (
         SecurityHeaders,
         SecurityHeadersMiddleware,
-        get_development_security_config,
         get_production_security_config,
     )
-    from src.security.ssl_config import setup_development_ssl, setup_production_ssl
 
     SECURITY_AVAILABLE = True
 except ImportError:
@@ -91,7 +87,8 @@ except ImportError:
 
 # Initialize basic logging (will be enhanced during app startup)
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -112,7 +109,6 @@ class OptimizedJSONResponse(JSONResponse):
         cache_control: Optional[str] = None,
         max_age: Optional[int] = None,
     ):
-
         # Add performance headers
         if headers is None:
             headers = {}
@@ -129,7 +125,9 @@ class OptimizedJSONResponse(JSONResponse):
         headers["X-API-Version"] = "1.0.0"
         headers["Server-Timing"] = "api;dur=0"
 
-        super().__init__(content=content, status_code=status_code, headers=headers)
+        super().__init__(
+            content=content, status_code=status_code, headers=headers
+        )
 
 
 class APIServerConfig:
@@ -144,12 +142,18 @@ class APIServerConfig:
         )  # Default to debug mode
         self.enable_docs = os.getenv("ENABLE_DOCS", "true").lower() == "true"
         self.cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
-        self.max_concurrent_agents = int(os.getenv("MAX_CONCURRENT_AGENTS", "20"))
-        self.enable_metrics = os.getenv("ENABLE_METRICS", "true").lower() == "true"
+        self.max_concurrent_agents = int(
+            os.getenv("MAX_CONCURRENT_AGENTS", "20")
+        )
+        self.enable_metrics = (
+            os.getenv("ENABLE_METRICS", "true").lower() == "true"
+        )
         self.log_level = os.getenv("LOG_LEVEL", "INFO")
 
         # Security configurations
-        self.enable_https = os.getenv("ENABLE_HTTPS", "false").lower() == "true"
+        self.enable_https = (
+            os.getenv("ENABLE_HTTPS", "false").lower() == "true"
+        )
         self.ssl_cert_file = os.getenv("SSL_CERT_FILE")
         self.ssl_key_file = os.getenv("SSL_KEY_FILE")
         self.jwt_secret = os.getenv("JWT_SECRET", secrets.token_urlsafe(32))
@@ -179,7 +183,8 @@ async def lifespan(app: FastAPI):
         )
 
         global_structured_logger.info(
-            "Starting Enhanced Novel Engine API Server", category=LogCategory.SYSTEM
+            "Starting Enhanced Novel Engine API Server",
+            category=LogCategory.SYSTEM,
         )
 
         # Initialize health monitoring
@@ -213,7 +218,8 @@ async def lifespan(app: FastAPI):
 
         app.state.orchestrator = global_orchestrator
         global_structured_logger.info(
-            "System Orchestrator started successfully", category=LogCategory.SYSTEM
+            "System Orchestrator started successfully",
+            category=LogCategory.SYSTEM,
         )
 
         # Register health checks
@@ -234,18 +240,22 @@ async def lifespan(app: FastAPI):
         if hasattr(app.state, "emergent_narrative_api"):
             app.state.emergent_narrative_api.orchestrator = global_orchestrator
         if hasattr(app.state, "context7_integration_api"):
-            app.state.context7_integration_api.orchestrator = global_orchestrator
+            app.state.context7_integration_api.orchestrator = (
+                global_orchestrator
+            )
 
         # Initialize authentication system if enabled and available
         if config.enable_auth and SECURITY_AVAILABLE:
             try:
                 auth_manager = AuthenticationManager(
-                    database_path=config.database_path, jwt_secret=config.jwt_secret
+                    database_path=config.database_path,
+                    jwt_secret=config.jwt_secret,
                 )
                 await auth_manager.initialize()
                 app.state.auth_manager = auth_manager
                 global_structured_logger.info(
-                    "Authentication system initialized", category=LogCategory.SECURITY
+                    "Authentication system initialized",
+                    category=LogCategory.SECURITY,
                 )
             except Exception as e:
                 global_structured_logger.error(
@@ -254,7 +264,8 @@ async def lifespan(app: FastAPI):
                 )
 
         global_structured_logger.info(
-            "All API components initialized successfully", category=LogCategory.SYSTEM
+            "All API components initialized successfully",
+            category=LogCategory.SYSTEM,
         )
 
         # Perform initial health check
@@ -284,11 +295,13 @@ async def lifespan(app: FastAPI):
             try:
                 await app.state.story_api.stop_background_tasks()
                 global_structured_logger.info(
-                    "Story API background tasks stopped", category=LogCategory.SYSTEM
+                    "Story API background tasks stopped",
+                    category=LogCategory.SYSTEM,
                 )
             except Exception as e:
                 global_structured_logger.error(
-                    f"Error stopping story API tasks: {e}", category=LogCategory.ERROR
+                    f"Error stopping story API tasks: {e}",
+                    category=LogCategory.ERROR,
                 )
 
         # Shutdown orchestrator
@@ -296,7 +309,8 @@ async def lifespan(app: FastAPI):
             try:
                 await global_orchestrator.shutdown()
                 global_structured_logger.info(
-                    "System Orchestrator shutdown complete", category=LogCategory.SYSTEM
+                    "System Orchestrator shutdown complete",
+                    category=LogCategory.SYSTEM,
                 )
             except Exception as e:
                 global_structured_logger.error(
@@ -329,7 +343,9 @@ def create_app() -> FastAPI:
     setup_versioning(app)
 
     # 3. Monitoring and metrics
-    monitoring_components = setup_monitoring(app, enable_alerts=not config.debug)
+    monitoring_components = setup_monitoring(
+        app, enable_alerts=not config.debug
+    )
     app.state.metrics_collector = monitoring_components["metrics_collector"]
     app.state.alert_manager = monitoring_components["alert_manager"]
 
@@ -339,7 +355,8 @@ def create_app() -> FastAPI:
     # Add middleware (order matters - last added = first executed)
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    # Add security middleware stack if available (order matters - first added = last executed)
+    # Add security middleware stack if available (order matters - first added
+    # = last executed)
     if SECURITY_AVAILABLE:
         # 1. Rate limiting middleware (first line of defense)
         if config.enable_rate_limiting:
@@ -360,7 +377,8 @@ def create_app() -> FastAPI:
 
             # 3. Enhanced security middleware (threat detection and protection)
             app.add_middleware(
-                EnhancedSecurityMiddleware, config={"strict_mode": not config.debug}
+                EnhancedSecurityMiddleware,
+                config={"strict_mode": not config.debug},
             )
             logger.info("Enhanced security middleware enabled")
 
@@ -397,7 +415,12 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=cors_origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE"],  # Specific methods only
+        allow_methods=[
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+        ],  # Specific methods only
         allow_headers=[
             "Authorization",
             "Content-Type",
@@ -426,7 +449,9 @@ def create_app() -> FastAPI:
         health_status = "unknown"
         if health_monitor:
             try:
-                cached_health = health_monitor.get_cached_health(max_age_seconds=60)
+                cached_health = health_monitor.get_cached_health(
+                    max_age_seconds=60
+                )
                 if cached_health:
                     health_status = cached_health.status.value
             except Exception:
@@ -524,7 +549,9 @@ def create_app() -> FastAPI:
             response_time = (time.time() - start_time) * 1000
 
             metadata = APIMetadata(
-                timestamp=datetime.now(), api_version="1.1", server_time=response_time
+                timestamp=datetime.now(),
+                api_version="1.1",
+                server_time=response_time,
             )
 
             # Determine HTTP status code based on health
@@ -540,7 +567,9 @@ def create_app() -> FastAPI:
             return JSONResponse(
                 content=response.model_dump(),
                 status_code=status_code,
-                headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+                headers={
+                    "Cache-Control": "no-cache, no-store, must-revalidate"
+                },
             )
 
         except Exception as e:
@@ -559,10 +588,14 @@ def create_app() -> FastAPI:
             )
 
             metadata = APIMetadata(
-                timestamp=datetime.now(), api_version="1.1", server_time=response_time
+                timestamp=datetime.now(),
+                api_version="1.1",
+                server_time=response_time,
             )
 
-            response = HealthCheckResponse(data=fallback_data, metadata=metadata)
+            response = HealthCheckResponse(
+                data=fallback_data, metadata=metadata
+            )
 
             return JSONResponse(
                 content=response.model_dump(),
@@ -610,7 +643,9 @@ def _register_api_routes(app: FastAPI):
     enhanced_docs.setup_routes(app)
     app.state.enhanced_docs = enhanced_docs
 
-    logger.info("API routes registered successfully with Context7 integration.")
+    logger.info(
+        "API routes registered successfully with Context7 integration."
+    )
 
 
 def _register_legacy_routes(app: FastAPI):
@@ -638,7 +673,9 @@ def _register_legacy_routes(app: FastAPI):
             return {"characters": characters}
         except Exception as e:
             logger.error(f"Error in legacy characters endpoint: {e}")
-            raise HTTPException(status_code=500, detail="Failed to retrieve characters")
+            raise HTTPException(
+                status_code=500, detail="Failed to retrieve characters"
+            )
 
     @app.get("/characters/{character_id}", response_model=dict)
     async def legacy_get_character_detail(character_id: str):
@@ -649,7 +686,8 @@ def _register_legacy_routes(app: FastAPI):
 
             if not os.path.isdir(character_path):
                 raise HTTPException(
-                    status_code=404, detail=f"Character '{character_id}' not found"
+                    status_code=404,
+                    detail=f"Character '{character_id}' not found",
                 )
 
             # Read character data from file system
@@ -686,7 +724,9 @@ def _register_legacy_routes(app: FastAPI):
                                 "background" in line.lower()
                                 or "summary" in line.lower()
                             ):
-                                character_data["background_summary"] = line.strip()
+                                character_data[
+                                    "background_summary"
+                                ] = line.strip()
                 except Exception as e:
                     logger.warning(
                         f"Could not read character file for {character_id}: {e}"
@@ -701,9 +741,13 @@ def _register_legacy_routes(app: FastAPI):
                         stats = yaml.safe_load(f)
                         if isinstance(stats, dict):
                             character_data["skills"] = stats.get("skills", {})
-                            character_data["metadata"].update(stats.get("metadata", {}))
+                            character_data["metadata"].update(
+                                stats.get("metadata", {})
+                            )
                 except Exception as e:
-                    logger.warning(f"Could not read stats file for {character_id}: {e}")
+                    logger.warning(
+                        f"Could not read stats file for {character_id}: {e}"
+                    )
 
             logger.info(
                 f"Legacy character detail endpoint returned data for {character_id}"
@@ -731,7 +775,8 @@ def _register_legacy_routes(app: FastAPI):
 
             if not character_names:
                 raise HTTPException(
-                    status_code=400, detail="At least one character name is required"
+                    status_code=400,
+                    detail="At least one character name is required",
                 )
 
             # Validate characters exist
@@ -752,7 +797,8 @@ def _register_legacy_routes(app: FastAPI):
             orchestrator = getattr(app.state, "orchestrator", None)
             if not orchestrator:
                 raise HTTPException(
-                    status_code=503, detail="System not ready. Please try again."
+                    status_code=503,
+                    detail="System not ready. Please try again.",
                 )
 
             # Create characters in the system if they don't exist
@@ -769,7 +815,9 @@ def _register_legacy_routes(app: FastAPI):
                     # Create character identity
                     character_identity = CharacterIdentity(
                         name=char_name.replace("_", " ").title(),
-                        personality_traits=[f"Dynamic personality for {char_name}"],
+                        personality_traits=[
+                            f"Dynamic personality for {char_name}"
+                        ],
                         core_beliefs=["Engage in meaningful interactions"],
                         motivations=["Participate in story generation"],
                     )
@@ -838,7 +886,9 @@ def _register_legacy_routes(app: FastAPI):
                     return response
 
                 except Exception as e:
-                    logger.error(f"Story generation failed in legacy simulation: {e}")
+                    logger.error(
+                        f"Story generation failed in legacy simulation: {e}"
+                    )
                     # Fallback response
                     return {
                         "story": f"A story featuring {', '.join(character_names)} was generated through the legacy simulation system.",
@@ -860,7 +910,8 @@ def _register_legacy_routes(app: FastAPI):
         except Exception as e:
             logger.error(f"Error in legacy simulation endpoint: {e}")
             raise HTTPException(
-                status_code=500, detail=f"Simulation execution failed: {str(e)}"
+                status_code=500,
+                detail=f"Simulation execution failed: {str(e)}",
             )
 
     logger.info("Legacy routes registered successfully.")

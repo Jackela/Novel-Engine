@@ -54,8 +54,8 @@ class TestWorldAPIIntegration:
             "/{world_id}/delta",
             "/{world_id}/slice",
             "/{world_id}/summary",
-            "/{world_id}/history",
-            "/{world_id}/validate",
+            "/{world_id}/entities",
+            "/search",
         ]
 
         for expected_path in expected_paths:
@@ -124,37 +124,41 @@ class TestWorldAPIIntegration:
         response = client.get(f"/api/v1/{world_id}/summary")
 
         # Endpoint should exist (not 404)
-        assert response.status_code != 404, "World summary endpoint should exist"
-
-    def test_world_history_endpoint_structure(self, client):
-        """Test the world history endpoint structure."""
-        if not WORLD_ROUTER_AVAILABLE:
-            pytest.skip("World router not available")
-
-        world_id = "test-world-123"
-
-        response = client.get(f"/api/v1/{world_id}/history")
-
-        # Endpoint should exist (not 404)
-        assert response.status_code != 404, "World history endpoint should exist"
-
-        # Test with query parameters
-        response = client.get(f"/api/v1/{world_id}/history?limit=10&offset=0")
         assert (
             response.status_code != 404
-        ), "World history endpoint with params should exist"
+        ), "World summary endpoint should exist"
 
-    def test_world_validate_endpoint_structure(self, client):
-        """Test the world validate endpoint structure."""
+    def test_world_entities_endpoint_structure(self, client):
+        """Test the world entities endpoint structure."""
         if not WORLD_ROUTER_AVAILABLE:
             pytest.skip("World router not available")
 
         world_id = "test-world-123"
 
-        response = client.get(f"/api/v1/{world_id}/validate")
+        response = client.get(f"/api/v1/{world_id}/entities")
 
         # Endpoint should exist (not 404)
-        assert response.status_code != 404, "World validate endpoint should exist"
+        assert (
+            response.status_code != 404
+        ), "World entities endpoint should exist"
+
+        # Test with query parameters
+        response = client.get(f"/api/v1/{world_id}/entities?x=0&y=0&radius=10")
+        assert (
+            response.status_code != 404
+        ), "World entities endpoint with params should exist"
+
+    def test_world_search_endpoint_structure(self, client):
+        """Test the world search endpoint structure."""
+        if not WORLD_ROUTER_AVAILABLE:
+            pytest.skip("World router not available")
+
+        response = client.get("/api/v1/search")
+
+        # Endpoint should exist (not 404)
+        assert (
+            response.status_code != 404
+        ), "World search endpoint should exist"
 
     def test_world_id_parameter_validation(self, client):
         """Test world ID parameter validation."""
@@ -162,10 +166,15 @@ class TestWorldAPIIntegration:
             pytest.skip("World router not available")
 
         # Test with empty world ID (should be handled by FastAPI)
-        response = client.get("/api/v1//slice")  # Double slash creates empty world_id
+        response = client.get(
+            "/api/v1//slice"
+        )  # Double slash creates empty world_id
 
         # This should either be 404 (route not matched) or 422 (validation error)
-        assert response.status_code in [404, 422], "Empty world ID should be rejected"
+        assert response.status_code in [
+            404,
+            422,
+        ], "Empty world ID should be rejected"
 
     def test_world_endpoints_http_methods(self, client):
         """Test that World endpoints respond to correct HTTP methods."""
@@ -188,15 +197,19 @@ class TestWorldAPIIntegration:
 
         # Summary endpoint should accept GET
         response = client.get(f"/api/v1/{world_id}/summary")
-        assert response.status_code != 405, "Summary endpoint should accept GET"
+        assert (
+            response.status_code != 405
+        ), "Summary endpoint should accept GET"
 
-        # History endpoint should accept GET
-        response = client.get(f"/api/v1/{world_id}/history")
-        assert response.status_code != 405, "History endpoint should accept GET"
+        # Entities endpoint should accept GET
+        response = client.get(f"/api/v1/{world_id}/entities")
+        assert (
+            response.status_code != 405
+        ), "Entities endpoint should accept GET"
 
-        # Validate endpoint should accept GET
-        response = client.get(f"/api/v1/{world_id}/validate")
-        assert response.status_code != 405, "Validate endpoint should accept GET"
+        # Search endpoint should accept GET
+        response = client.get("/api/v1/search")
+        assert response.status_code != 405, "Search endpoint should accept GET"
 
 
 class TestAPIServerIntegration:
@@ -260,11 +273,21 @@ def run_world_api_integration_tests():
 
             # Check expected routes exist
             route_paths = [route.path for route in world_router.routes]
-            expected_endpoints = ["delta", "slice", "summary", "history", "validate"]
+            expected_endpoints = [
+                "delta",
+                "slice",
+                "summary",
+                "entities",
+                "search",
+            ]
 
             for endpoint in expected_endpoints:
-                matching_routes = [path for path in route_paths if endpoint in path]
-                assert len(matching_routes) > 0, f"Missing endpoint: {endpoint}"
+                matching_routes = [
+                    path for path in route_paths if endpoint in path
+                ]
+                assert (
+                    len(matching_routes) > 0
+                ), f"Missing endpoint: {endpoint}"
 
             print("✅ All expected World router endpoints found")
         else:
@@ -290,7 +313,9 @@ def run_world_api_integration_tests():
                         and "/api/v1/" in getattr(route, "path", "")
                     ]
                     if world_routes:
-                        print(f"✅ World routes integrated: {len(world_routes)} routes")
+                        print(
+                            f"✅ World routes integrated: {len(world_routes)} routes"
+                        )
                     else:
                         print("⚠️  No World routes found in main API server")
 

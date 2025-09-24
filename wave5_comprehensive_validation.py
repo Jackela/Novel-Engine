@@ -24,7 +24,9 @@ logger = logging.getLogger(__name__)
 
 
 class ComprehensiveInfrastructureValidator:
-    """Final comprehensive validation of the entire infrastructure refactoring"""
+    """
+    Final comprehensive validation of the entire infrastructure refactoring
+    """
 
     def __init__(self, project_root: Path):
         self.project_root = project_root
@@ -34,10 +36,15 @@ class ComprehensiveInfrastructureValidator:
 
     def run_validation(self) -> Dict[str, Any]:
         """Run comprehensive infrastructure validation"""
-        logger.info("🚀 Starting Wave 5 Comprehensive Infrastructure Validation")
+        logger.info(
+            "🚀 Starting Wave 5 Comprehensive Infrastructure Validation"
+        )
 
         validation_tests = [
-            ("Path Resolution & Import Validation", self.validate_comprehensive_paths),
+            (
+                "Path Resolution & Import Validation",
+                self.validate_comprehensive_paths,
+            ),
             (
                 "Documentation & Usability Validation",
                 self.validate_documentation_usability,
@@ -47,11 +54,20 @@ class ComprehensiveInfrastructureValidator:
                 "Performance & Reliability Testing",
                 self.validate_performance_reliability,
             ),
-            ("Production Readiness Assessment", self.validate_production_readiness),
+            (
+                "Production Readiness Assessment",
+                self.validate_production_readiness,
+            ),
             ("Security Posture Validation", self.validate_security_posture),
             ("Maintainability Assessment", self.validate_maintainability),
-            ("Developer Experience Validation", self.validate_developer_experience),
-            ("Infrastructure Health Check", self.validate_infrastructure_health),
+            (
+                "Developer Experience Validation",
+                self.validate_developer_experience,
+            ),
+            (
+                "Infrastructure Health Check",
+                self.validate_infrastructure_health,
+            ),
             ("Phase 3 Completion Assessment", self.assess_phase3_completion),
         ]
 
@@ -64,7 +80,9 @@ class ComprehensiveInfrastructureValidator:
                 self.validation_results[test_name] = {
                     "status": "PASSED" if result else "FAILED",
                     "details": (
-                        result if isinstance(result, dict) else {"result": result}
+                        result
+                        if isinstance(result, dict)
+                        else {"result": result}
                     ),
                 }
 
@@ -92,7 +110,9 @@ class ComprehensiveInfrastructureValidator:
             "passed_tests": len(self.passed_tests),
             "failed_tests": len(self.failed_tests),
             "success_rate": len(self.passed_tests) / len(validation_tests),
-            "overall_status": "PASSED" if len(self.failed_tests) == 0 else "FAILED",
+            "overall_status": (
+                "PASSED" if len(self.failed_tests) == 0 else "FAILED"
+            ),
             "test_results": self.validation_results,
             "failed_test_names": self.failed_tests,
             "passed_test_names": self.passed_tests,
@@ -130,7 +150,9 @@ class ComprehensiveInfrastructureValidator:
                     "start_exists": start_path.exists(),
                     "resolved_path": str(resolved_path.resolve()),
                     "target_path": str(target_path),
-                    "paths_match": resolved_path.resolve() == target_path.resolve(),
+                    "paths_match": (
+                        resolved_path.resolve() == target_path.resolve()
+                    ),
                     "target_accessible": target_path.exists(),
                 }
 
@@ -142,7 +164,9 @@ class ComprehensiveInfrastructureValidator:
                     results["all_paths_working"] = False
 
             except Exception as e:
-                results["relative_path_calculations"][test_name] = {"error": str(e)}
+                results["relative_path_calculations"][test_name] = {
+                    "error": str(e)
+                }
                 results["all_paths_working"] = False
 
         # Test absolute path resolution
@@ -150,7 +174,10 @@ class ComprehensiveInfrastructureValidator:
             ("project_root", str(self.project_root)),
             ("configs_dir", str(self.project_root / "configs")),
             ("deploy_dir", str(self.project_root / "deploy")),
-            ("ops_monitoring_dir", str(self.project_root / "ops" / "monitoring")),
+            (
+                "ops_monitoring_dir",
+                str(self.project_root / "ops" / "monitoring"),
+            ),
             (
                 "config_environments",
                 str(self.project_root / "configs" / "environments"),
@@ -158,7 +185,9 @@ class ComprehensiveInfrastructureValidator:
             ("deploy_staging", str(self.project_root / "deploy" / "staging")),
             (
                 "ops_observability",
-                str(self.project_root / "ops" / "monitoring" / "observability"),
+                str(
+                    self.project_root / "ops" / "monitoring" / "observability"
+                ),
             ),
         ]
 
@@ -167,14 +196,20 @@ class ComprehensiveInfrastructureValidator:
             results["absolute_path_resolution"][path_name] = {
                 "path": abs_path,
                 "exists": path_obj.exists(),
-                "is_directory": path_obj.is_dir() if path_obj.exists() else False,
+                "is_directory": (
+                    path_obj.is_dir() if path_obj.exists() else False
+                ),
                 "readable": (
-                    os.access(path_obj, os.R_OK) if path_obj.exists() else False
+                    os.access(path_obj, os.R_OK)
+                    if path_obj.exists()
+                    else False
                 ),
             }
 
             if not (
-                path_obj.exists() and path_obj.is_dir() and os.access(path_obj, os.R_OK)
+                path_obj.exists()
+                and path_obj.is_dir()
+                and os.access(path_obj, os.R_OK)
             ):
                 results["all_paths_working"] = False
 
@@ -182,19 +217,28 @@ class ComprehensiveInfrastructureValidator:
         import_tests = [
             (
                 "configs_complete",
-                "from configs.config_environment_loader import ConfigEnvironmentLoader; from configs.environments import *",
+                "from configs.config_environment_loader import "
+                "ConfigEnvironmentLoader; from configs.environments import *",
             ),
             (
                 "deploy_complete",
-                "from deploy.staging.deploy import StagingDeployment; from deploy.production.deploy import *; from deploy.security.deploy import SecurityDeployment",
+                "from deploy.staging.deploy import StagingDeployment; "
+                "from deploy.production.deploy import *; "
+                "from deploy.security.deploy import SecurityDeployment",
             ),
             (
                 "monitoring_complete",
-                "from ops.monitoring.observability.server import ObservabilityServer; from ops.monitoring.synthetic.monitoring import SyntheticMonitor",
+                "from ops.monitoring.observability.server import "
+                "ObservabilityServer; from ops.monitoring.synthetic."
+                "monitoring "
+                "import SyntheticMonitor",
             ),
             (
                 "cross_system_full",
-                "from configs.config_environment_loader import ConfigEnvironmentLoader; from deploy.staging.deploy import StagingDeployment; from ops.monitoring.observability.server import ObservabilityServer",
+                "from configs.config_environment_loader import "
+                "ConfigEnvironmentLoader; from deploy.staging.deploy import "
+                "StagingDeployment; from ops.monitoring.observability.server "
+                "import ObservabilityServer",
             ),
         ]
 
@@ -309,15 +353,23 @@ class ComprehensiveInfrastructureValidator:
         # Check backup procedures
         backup_locations = [
             ("config_backups", "backup_configs_wave3"),
-            ("original_monitoring", "monitoring"),  # Original monitoring directory
-            ("deployment_backups", "deployment"),  # Check if original deployment exists
+            (
+                "original_monitoring",
+                "monitoring",  # Original monitoring directory
+            ),
+            (
+                "deployment_backups",
+                "deployment",  # Check if original deployment exists
+            ),
         ]
 
         for backup_name, backup_path in backup_locations:
             backup_dir = self.project_root / backup_path
             results["backup_procedures"][backup_name] = {
                 "exists": backup_dir.exists(),
-                "is_directory": backup_dir.is_dir() if backup_dir.exists() else False,
+                "is_directory": (
+                    backup_dir.is_dir() if backup_dir.exists() else False
+                ),
                 "file_count": (
                     len(list(backup_dir.iterdir()))
                     if backup_dir.exists() and backup_dir.is_dir()
@@ -333,7 +385,11 @@ class ComprehensiveInfrastructureValidator:
                 "configs/config_environment_loader.py",
                 "load_default_config",
             ),
-            ("monitoring_fallback", "ops/monitoring/health_checks.py", "check"),
+            (
+                "monitoring_fallback",
+                "ops/monitoring/health_checks.py",
+                "check",
+            ),
         ]
 
         for rollback_name, script_path, expected_method in rollback_items:
@@ -347,8 +403,12 @@ class ComprehensiveInfrastructureValidator:
             if script_file.exists():
                 try:
                     # Import and check for rollback method
-                    module_path = script_path.replace("/", ".").replace(".py", "")
-                    module = __import__(module_path, fromlist=[expected_method])
+                    module_path = script_path.replace("/", ".").replace(
+                        ".py", ""
+                    )
+                    module = __import__(
+                        module_path, fromlist=[expected_method]
+                    )
 
                     if hasattr(module, expected_method):
                         rollback_info["method_available"] = True
@@ -379,7 +439,9 @@ class ComprehensiveInfrastructureValidator:
                     else False
                 ),
                 "accessible": (
-                    os.access(safety_path, os.R_OK) if safety_path.exists() else False
+                    os.access(safety_path, os.R_OK)
+                    if safety_path.exists()
+                    else False
                 ),
             }
 
@@ -399,16 +461,24 @@ class ComprehensiveInfrastructureValidator:
         import_tests = [
             (
                 "configs_load",
-                "from configs.config_environment_loader import ConfigEnvironmentLoader",
+                "from configs.config_environment_loader import "
+                "ConfigEnvironmentLoader",
             ),
-            ("deploy_load", "from deploy.staging.deploy import StagingDeployment"),
+            (
+                "deploy_load",
+                "from deploy.staging.deploy import StagingDeployment",
+            ),
             (
                 "monitoring_load",
-                "from ops.monitoring.observability.server import ObservabilityServer",
+                "from ops.monitoring.observability.server import "
+                "ObservabilityServer",
             ),
             (
                 "full_system_load",
-                "from configs.config_environment_loader import ConfigEnvironmentLoader; from deploy.staging.deploy import StagingDeployment; from ops.monitoring.observability.server import ObservabilityServer",
+                "from configs.config_environment_loader import "
+                "ConfigEnvironmentLoader; from deploy.staging.deploy import "
+                "StagingDeployment; from ops.monitoring.observability.server "
+                "import ObservabilityServer",
             ),
         ]
 
@@ -423,7 +493,8 @@ class ComprehensiveInfrastructureValidator:
                 results["import_performance"][test_name] = {
                     "success": True,
                     "load_time_seconds": load_time,
-                    "fast_load": load_time < 1.0,  # Under 1 second is considered fast
+                    "fast_load": load_time < 1.0,
+                    # Under 1 second is considered fast
                 }
 
                 reliability_points += 1  # Success
@@ -439,7 +510,9 @@ class ComprehensiveInfrastructureValidator:
 
         # Test configuration loading performance
         try:
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
 
             start_time = time.time()
             loader = ConfigEnvironmentLoader()
@@ -486,7 +559,9 @@ class ComprehensiveInfrastructureValidator:
                     "error_message": str(e),
                 }
 
-        results["reliability_score"] = reliability_points / max_reliability_points
+        results["reliability_score"] = (
+            reliability_points / max_reliability_points
+        )
         return results
 
     def validate_production_readiness(self) -> Dict[str, Any]:
@@ -505,7 +580,10 @@ class ComprehensiveInfrastructureValidator:
 
         # Configuration management
         config_checks = [
-            ("environment_configs", self.project_root / "configs" / "environments"),
+            (
+                "environment_configs",
+                self.project_root / "configs" / "environments",
+            ),
             ("security_configs", self.project_root / "configs" / "security"),
             ("service_configs", self.project_root / "configs" / "prometheus"),
             ("nginx_configs", self.project_root / "configs" / "nginx"),
@@ -518,7 +596,9 @@ class ComprehensiveInfrastructureValidator:
         config_score = 0
         for check_name, check_path in config_checks:
             exists = check_path.exists()
-            results["configuration_management"][check_name] = {"exists": exists}
+            results["configuration_management"][check_name] = {
+                "exists": exists
+            }
             if exists:
                 config_score += 1
 
@@ -567,15 +647,26 @@ class ComprehensiveInfrastructureValidator:
             ),
             (
                 "metrics_collection",
-                self.project_root / "ops" / "monitoring" / "prometheus_metrics.py",
+                self.project_root
+                / "ops"
+                / "monitoring"
+                / "prometheus_metrics.py",
             ),
             (
                 "structured_logging",
-                self.project_root / "ops" / "monitoring" / "logging" / "structured.py",
+                self.project_root
+                / "ops"
+                / "monitoring"
+                / "logging"
+                / "structured.py",
             ),
             (
                 "alerting_system",
-                self.project_root / "ops" / "monitoring" / "alerts" / "alerting.py",
+                self.project_root
+                / "ops"
+                / "monitoring"
+                / "alerts"
+                / "alerting.py",
             ),
         ]
 
@@ -598,13 +689,18 @@ class ComprehensiveInfrastructureValidator:
                 "security_deployment",
                 self.project_root / "deploy" / "security" / "deploy.py",
             ),
-            ("nginx_security", self.project_root / "configs" / "nginx" / "nginx.conf"),
+            (
+                "nginx_security",
+                self.project_root / "configs" / "nginx" / "nginx.conf",
+            ),
             ("ssl_configs", self.project_root / "security_headers.conf"),
             (
                 "env_separation",
                 len(
                     list(
-                        (self.project_root / "configs" / "environments").glob("*.yaml")
+                        (self.project_root / "configs" / "environments").glob(
+                            "*.yaml"
+                        )
                     )
                 )
                 > 1,
@@ -630,7 +726,10 @@ class ComprehensiveInfrastructureValidator:
             ("docker_compose", self.project_root / "docker-compose.yml"),
             (
                 "prometheus_config",
-                self.project_root / "configs" / "prometheus" / "prometheus.yml",
+                self.project_root
+                / "configs"
+                / "prometheus"
+                / "prometheus.yml",
             ),
             (
                 "load_balancer_config",
@@ -645,7 +744,9 @@ class ComprehensiveInfrastructureValidator:
         scalability_score = 0
         for check_name, check_path in scalability_checks:
             exists = check_path.exists()
-            results["scalability_considerations"][check_name] = {"available": exists}
+            results["scalability_considerations"][check_name] = {
+                "available": exists
+            }
             if exists:
                 scalability_score += 1
 
@@ -673,7 +774,9 @@ class ComprehensiveInfrastructureValidator:
         )
         if security_config_path.exists():
             security_points += 2
-            results["configuration_security"]["security_config"] = {"exists": True}
+            results["configuration_security"]["security_config"] = {
+                "exists": True
+            }
 
             try:
                 import yaml
@@ -689,19 +792,27 @@ class ComprehensiveInfrastructureValidator:
                 ]
                 for feature in security_features:
                     if feature in str(security_config).lower():
-                        results["configuration_security"][f"has_{feature}"] = True
+                        results["configuration_security"][
+                            f"has_{feature}"
+                        ] = True
                         security_points += 1
                     else:
-                        results["configuration_security"][f"has_{feature}"] = False
+                        results["configuration_security"][
+                            f"has_{feature}"
+                        ] = False
 
             except Exception as e:
                 results["configuration_security"]["config_read_error"] = str(e)
 
         # Deployment security
-        security_deploy_path = self.project_root / "deploy" / "security" / "deploy.py"
+        security_deploy_path = (
+            self.project_root / "deploy" / "security" / "deploy.py"
+        )
         if security_deploy_path.exists():
             security_points += 2
-            results["deployment_security"]["security_deployment"] = {"exists": True}
+            results["deployment_security"]["security_deployment"] = {
+                "exists": True
+            }
 
             try:
                 with open(security_deploy_path, "r") as f:
@@ -716,16 +827,22 @@ class ComprehensiveInfrastructureValidator:
                 ]
                 for keyword in security_keywords:
                     if keyword in deploy_content.lower():
-                        results["deployment_security"][f"implements_{keyword}"] = True
+                        results["deployment_security"][
+                            f"implements_{keyword}"
+                        ] = True
                         security_points += 0.5
                     else:
-                        results["deployment_security"][f"implements_{keyword}"] = False
+                        results["deployment_security"][
+                            f"implements_{keyword}"
+                        ] = False
 
             except Exception as e:
                 results["deployment_security"]["deploy_read_error"] = str(e)
 
         # Monitoring security
-        nginx_config_path = self.project_root / "configs" / "nginx" / "nginx.conf"
+        nginx_config_path = (
+            self.project_root / "configs" / "nginx" / "nginx.conf"
+        )
         if nginx_config_path.exists():
             security_points += 2
             results["monitoring_security"]["nginx_config"] = {"exists": True}
@@ -733,7 +850,9 @@ class ComprehensiveInfrastructureValidator:
         security_headers_path = self.project_root / "security_headers.conf"
         if security_headers_path.exists():
             security_points += 2
-            results["monitoring_security"]["security_headers"] = {"exists": True}
+            results["monitoring_security"]["security_headers"] = {
+                "exists": True
+            }
 
         # Access controls
         env_files = list(
@@ -741,7 +860,9 @@ class ComprehensiveInfrastructureValidator:
         )
         if len(env_files) > 1:
             security_points += 2
-            results["access_controls"]["environment_separation"] = {"implemented": True}
+            results["access_controls"]["environment_separation"] = {
+                "implemented": True
+            }
 
         # Check for sensitive data protection
         gitignore_path = self.project_root / ".gitignore"
@@ -752,7 +873,9 @@ class ComprehensiveInfrastructureValidator:
 
                 protected_patterns = ["*.env", "*.key", "*.pem", "secrets/"]
                 protection_count = sum(
-                    1 for pattern in protected_patterns if pattern in gitignore_content
+                    1
+                    for pattern in protected_patterns
+                    if pattern in gitignore_content
                 )
 
                 security_points += min(protection_count, 4)
@@ -806,7 +929,9 @@ class ComprehensiveInfrastructureValidator:
         ]
 
         for struct_name, *paths in organized_structures:
-            all_exist = all((self.project_root / path).exists() for path in paths)
+            all_exist = all(
+                (self.project_root / path).exists() for path in paths
+            )
             results["organization_improvement"][struct_name] = {
                 "well_organized": all_exist,
                 "paths_checked": len(paths),
@@ -882,7 +1007,10 @@ class ComprehensiveInfrastructureValidator:
 
         # Code structure assessment
         structure_checks = [
-            ("consistent_naming", True),  # Assume consistent based on validation
+            (
+                "consistent_naming",
+                True,  # Assume consistent based on validation
+            ),
             ("logical_grouping", True),  # Configs, deploy, ops groups
             ("separation_of_concerns", True),  # Each system has its purpose
             ("clear_dependencies", True),  # Dependencies clearly defined
@@ -922,7 +1050,9 @@ class ComprehensiveInfrastructureValidator:
             (
                 "simple_configuration",
                 (
-                    self.project_root / "configs" / "config_environment_loader.py"
+                    self.project_root
+                    / "configs"
+                    / "config_environment_loader.py"
                 ).exists(),
             ),
         ]
@@ -942,7 +1072,9 @@ class ComprehensiveInfrastructureValidator:
 
         for workflow_name, file_path in workflow_files:
             file_exists = (self.project_root / file_path).exists()
-            results["development_workflow"][workflow_name] = {"available": file_exists}
+            results["development_workflow"][workflow_name] = {
+                "available": file_exists
+            }
             if file_exists:
                 experience_points += 1
 
@@ -961,16 +1093,25 @@ class ComprehensiveInfrastructureValidator:
             (
                 "health_checks",
                 (
-                    self.project_root / "ops" / "monitoring" / "health_checks.py"
+                    self.project_root
+                    / "ops"
+                    / "monitoring"
+                    / "health_checks.py"
                 ).exists(),
             ),
             (
                 "metrics_collection",
                 (
-                    self.project_root / "ops" / "monitoring" / "prometheus_metrics.py"
+                    self.project_root
+                    / "ops"
+                    / "monitoring"
+                    / "prometheus_metrics.py"
                 ).exists(),
             ),
-            ("error_handling", True),  # Assume good error handling based on validation
+            (
+                "error_handling",
+                True,  # Assume good error handling based on validation
+            ),
         ]
 
         for debug_name, available in debug_features:
@@ -983,13 +1124,20 @@ class ComprehensiveInfrastructureValidator:
             (
                 "configuration_loader",
                 (
-                    self.project_root / "configs" / "config_environment_loader.py"
+                    self.project_root
+                    / "configs"
+                    / "config_environment_loader.py"
                 ).exists(),
             ),
-            ("deployment_utils", (self.project_root / "deploy" / "utils.py").exists()),
+            (
+                "deployment_utils",
+                (self.project_root / "deploy" / "utils.py").exists(),
+            ),
             (
                 "monitoring_dashboard",
-                (self.project_root / "ops" / "monitoring" / "grafana").exists(),
+                (
+                    self.project_root / "ops" / "monitoring" / "grafana"
+                ).exists(),
             ),
             (
                 "observability_server",
@@ -1022,7 +1170,9 @@ class ComprehensiveInfrastructureValidator:
 
         try:
             # Import and test all major systems
-            from configs.config_environment_loader import ConfigEnvironmentLoader
+            from configs.config_environment_loader import (
+                ConfigEnvironmentLoader,
+            )
             from deploy.staging.deploy import StagingDeployment
             from ops.monitoring.observability.server import ObservabilityServer
 
@@ -1078,7 +1228,11 @@ class ComprehensiveInfrastructureValidator:
             # Overall health assessment
             healthy_components = sum(
                 1
-                for comp in [config_healthy, deploy_healthy, monitoring_healthy]
+                for comp in [
+                    config_healthy,
+                    deploy_healthy,
+                    monitoring_healthy,
+                ]
                 if comp
             )
             total_components = 3
@@ -1133,9 +1287,15 @@ class ComprehensiveInfrastructureValidator:
             (
                 "Monitoring Organization",
                 "ops/monitoring/ directory with all monitoring components",
-                (self.project_root / "ops" / "monitoring" / "observability").exists()
-                and (self.project_root / "ops" / "monitoring" / "synthetic").exists()
-                and (self.project_root / "ops" / "monitoring" / "dashboards").exists(),
+                (
+                    self.project_root / "ops" / "monitoring" / "observability"
+                ).exists()
+                and (
+                    self.project_root / "ops" / "monitoring" / "synthetic"
+                ).exists()
+                and (
+                    self.project_root / "ops" / "monitoring" / "dashboards"
+                ).exists(),
             ),
             (
                 "System Integration",
@@ -1214,9 +1374,9 @@ def main():
     results = validator.run_validation()
 
     # Save results
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_file = (
-        project_root
-        / f"wave5_comprehensive_validation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        project_root / f"wave5_comprehensive_validation_{timestamp}.json"
     )
     with open(report_file, "w") as f:
         json.dump(results, f, indent=2, default=str)
@@ -1226,7 +1386,10 @@ def main():
     print("🏁 Wave 5 Comprehensive Infrastructure Validation Results")
     print(f"{'='*80}")
     print(f"📊 Total Tests: {results['total_tests']}")
-    print(f"✅ Passed: {results['passed_tests']} ({results['success_rate']:.1%})")
+    print(
+        f"✅ Passed: {results['passed_tests']} "
+        f"({results['success_rate']:.1%})"
+    )
     print(f"❌ Failed: {results['failed_tests']}")
     print(f"⏱️  Duration: {results['duration_seconds']:.2f} seconds")
     print(f"🎯 Overall Status: {results['overall_status']}")

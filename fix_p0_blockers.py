@@ -4,11 +4,10 @@ Comprehensive P0 Blocker Fix Script
 Addresses all 16 failing backend tests identified in FINAL_QA_PIPELINE_REPORT.md
 """
 
-import os
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
+# from typing import List, Tuple  # Removed unused imports
 
 # Color codes for terminal output
 GREEN = "\033[92m"
@@ -111,7 +110,8 @@ class P0BlockerFixer:
 
                             # Replace utcnow() calls
                             content = content.replace(
-                                "datetime.utcnow()", "datetime.now(timezone.utc)"
+                                "datetime.utcnow()",
+                                "datetime.now(timezone.utc)",
                             )
                             content = content.replace(
                                 "datetime.datetime.utcnow()",
@@ -127,7 +127,9 @@ class P0BlockerFixer:
                     except Exception as e:
                         self.errors.append(f"Error fixing {file_path}: {e}")
 
-        print_status(f"Fixed datetime deprecations in {fixed_count} files", "success")
+        print_status(
+            f"Fixed datetime deprecations in {fixed_count} files", "success"
+        )
 
     def fix_async_patterns(self):
         """Fix async/await patterns in API and director."""
@@ -139,12 +141,12 @@ class P0BlockerFixer:
 
         if api_file.exists():
             try:
-                content = api_file.read_text(encoding="utf-8")
-
                 # The director.run_turn() call is correct as-is since it handles async internally
                 # Just ensure we're not missing any await keywords elsewhere
 
-                self.fixes_applied.append("Verified async patterns in api_server.py")
+                self.fixes_applied.append(
+                    "Verified async patterns in api_server.py"
+                )
                 print_status("Async patterns verified", "success")
             except Exception as e:
                 self.errors.append(f"Error checking async patterns: {e}")
@@ -197,12 +199,12 @@ async def root():
 async def health_check():
     """Health check endpoint with detailed status."""
     from time import time
-    
+
     if not hasattr(app.state, 'startup_time'):
         app.state.startup_time = time()
-    
+
     uptime = time() - app.state.startup_time
-    
+
     return {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -304,12 +306,12 @@ async def get_enhanced_character(character_id: str):
         "scientist": {"name": "Dr. Sarah Kim", "role": "scientist"},
         "engineer": {"name": "Marcus Johnson", "role": "engineer"}
     }
-    
+
     if character_id not in character_map:
         raise HTTPException(status_code=404, detail=f"Character {character_id} not found")
-    
+
     char_info = character_map[character_id]
-    
+
     return {
         "id": character_id,
         "character_name": char_info["name"],
@@ -362,7 +364,7 @@ logger = logging.getLogger(__name__)
 
 class CentralizedErrorHandler:
     """Centralized error handling with recovery strategies."""
-    
+
     def __init__(self):
         self.error_history = []
         self.recovery_strategies = {
@@ -371,12 +373,12 @@ class CentralizedErrorHandler:
             "validation": self._recover_validation_error,
             "llm": self._recover_llm_error,
         }
-    
+
     def detect_category(self, error: Exception) -> str:
         """Detect error category from exception."""
         error_str = str(error).lower()
         error_type = type(error).__name__
-        
+
         if "connection" in error_str or "network" in error_str or "timeout" in error_str:
             return "network"
         elif "database" in error_str or "sql" in error_str or "db" in error_str:
@@ -387,11 +389,11 @@ class CentralizedErrorHandler:
             return "llm"
         else:
             return "unknown"
-    
+
     def handle_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Handle error with categorization and recovery."""
         category = self.detect_category(error)
-        
+
         error_record = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "category": category,
@@ -400,20 +402,20 @@ class CentralizedErrorHandler:
             "context": context or {},
             "traceback": traceback.format_exc()
         }
-        
+
         self.error_history.append(error_record)
         logger.error(f"Error handled: {category} - {error}")
-        
+
         # Attempt recovery
         recovery_result = self.attempt_recovery(category, error, context)
-        
+
         return {
             "error": error_record,
             "recovery_attempted": recovery_result["attempted"],
             "recovery_successful": recovery_result["success"],
             "recovery_action": recovery_result["action"]
         }
-    
+
     def attempt_recovery(self, category: str, error: Exception, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Attempt to recover from error based on category."""
         if category in self.recovery_strategies:
@@ -432,41 +434,41 @@ class CentralizedErrorHandler:
                     "success": False,
                     "action": "recovery_failed"
                 }
-        
+
         return {
             "attempted": False,
             "success": False,
             "action": "no_strategy"
         }
-    
+
     def _recover_network_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Recover from network errors."""
         return {
             "success": True,
             "action": "retry_with_backoff"
         }
-    
+
     def _recover_database_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Recover from database errors."""
         return {
             "success": True,
             "action": "reconnect_database"
         }
-    
+
     def _recover_validation_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Recover from validation errors."""
         return {
             "success": False,
             "action": "return_validation_errors"
         }
-    
+
     def _recover_llm_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Recover from LLM errors."""
         return {
             "success": True,
             "action": "fallback_to_cached_response"
         }
-    
+
     def get_error_stats(self) -> Dict[str, Any]:
         """Get error statistics."""
         if not self.error_history:
@@ -475,12 +477,12 @@ class CentralizedErrorHandler:
                 "categories": {},
                 "recent_errors": []
             }
-        
+
         categories = {}
         for error in self.error_history:
             cat = error["category"]
             categories[cat] = categories.get(cat, 0) + 1
-        
+
         return {
             "total_errors": len(self.error_history),
             "categories": categories,
@@ -544,7 +546,9 @@ app.add_middleware(
                         # Find the end of FastAPI initialization
                         start = content.find(app_creation)
                         end = content.find("\n\n", start)
-                        content = content[:end] + "\n" + cors_config + content[end:]
+                        content = (
+                            content[:end] + "\n" + cors_config + content[end:]
+                        )
 
                     api_file.write_text(content, encoding="utf-8")
                     self.fixes_applied.append("Added CORS configuration")
@@ -560,7 +564,8 @@ app.add_middleware(
 
         if self.fixes_applied:
             print_status(
-                f"\nSuccessfully applied {len(self.fixes_applied)} fixes:", "success"
+                f"\nSuccessfully applied {len(self.fixes_applied)} fixes:",
+                "success",
             )
             for fix in self.fixes_applied:
                 print(f"  ✅ {fix}")
@@ -575,7 +580,8 @@ app.add_middleware(
             print_status("Ready for regression testing", "success")
         else:
             print_status(
-                "\n⚠️  Some fixes failed. Manual intervention required.", "warning"
+                "\n⚠️  Some fixes failed. Manual intervention required.",
+                "warning",
             )
 
 
@@ -585,13 +591,18 @@ def main():
     success = fixer.fix_all()
 
     if success:
-        print_status("\n✨ P0 Blocker Fix Operation Completed Successfully!", "success")
         print_status(
-            "Next step: Run regression tests with 'python -m pytest tests/'", "info"
+            "\n✨ P0 Blocker Fix Operation Completed Successfully!", "success"
+        )
+        print_status(
+            "Next step: Run regression tests with 'python -m pytest tests/'",
+            "info",
         )
         return 0
     else:
-        print_status("\n❌ P0 Blocker Fix Operation Completed with Errors", "error")
+        print_status(
+            "\n❌ P0 Blocker Fix Operation Completed with Errors", "error"
+        )
         return 1
 
 

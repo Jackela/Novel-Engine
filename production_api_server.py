@@ -24,7 +24,6 @@ from chronicler_agent import ChroniclerAgent
 # Import existing modules
 from config_loader import get_config
 from director_agent import DirectorAgent
-from src.event_bus import EventBus
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -36,6 +35,8 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
+
+from src.event_bus import EventBus
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -92,7 +93,9 @@ class InputValidator:
             raise ValueError("Input must be a string")
 
         # Remove null bytes and control characters
-        value = "".join(char for char in value if ord(char) >= 32 or char in "\t\n\r")
+        value = "".join(
+            char for char in value if ord(char) >= 32 or char in "\t\n\r"
+        )
 
         # Truncate if too long
         if len(value) > max_length:
@@ -125,32 +128,42 @@ class AuthenticationManager:
     """JWT-based authentication manager."""
 
     @staticmethod
-    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    def create_access_token(
+        data: dict, expires_delta: Optional[timedelta] = None
+    ):
         """Create JWT access token."""
         to_encode = data.copy()
 
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
+            expire = datetime.now(timezone.utc) + timedelta(
+                hours=JWT_EXPIRATION_HOURS
+            )
 
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+        encoded_jwt = jwt.encode(
+            to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
+        )
         return encoded_jwt
 
     @staticmethod
     def verify_token(token: str) -> Dict[str, Any]:
         """Verify JWT token."""
         try:
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+            payload = jwt.decode(
+                token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM]
+            )
             return payload
         except jwt.ExpiredSignatureError:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token expired",
             )
         except jwt.JWTError:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
             )
 
 
@@ -234,12 +247,15 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 # Trusted hosts (configure for your domain)
 if os.getenv("ENVIRONMENT") == "production":
     app.add_middleware(
-        TrustedHostMiddleware, allowed_hosts=["your-domain.com", "*.your-domain.com"]
+        TrustedHostMiddleware,
+        allowed_hosts=["your-domain.com", "*.your-domain.com"],
     )
 
 # CORS with restricted origins for production
 allowed_origins = (
-    ["https://your-domain.com"] if os.getenv("ENVIRONMENT") == "production" else ["*"]
+    ["https://your-domain.com"]
+    if os.getenv("ENVIRONMENT") == "production"
+    else ["*"]
 )
 
 app.add_middleware(
@@ -260,7 +276,9 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     """Custom HTTP exception handler."""
     # Log security-relevant errors
     if exc.status_code in [401, 403, 429]:
-        logger.warning(f"Security event: {exc.status_code} from {request.client.host}")
+        logger.warning(
+            f"Security event: {exc.status_code} from {request.client.host}"
+        )
 
     return JSONResponse(
         status_code=exc.status_code,
@@ -293,7 +311,9 @@ async def health_check(request: Request) -> Dict[str, Any]:
 
 @app.post("/auth/token")
 @limiter.limit("5/minute")
-async def login(request: Request, username: str, password: str) -> Dict[str, str]:
+async def login(
+    request: Request, username: str, password: str
+) -> Dict[str, str]:
     """Authentication endpoint (implement your authentication logic)."""
     # TODO: Implement proper authentication against your user database
     # This is a placeholder implementation
@@ -309,7 +329,9 @@ async def login(request: Request, username: str, password: str) -> Dict[str, str
         )
 
     if username == admin_username and password == admin_password:
-        access_token = AuthenticationManager.create_access_token(data={"sub": username})
+        access_token = AuthenticationManager.create_access_token(
+            data={"sub": username}
+        )
         return {"access_token": access_token, "token_type": "bearer"}
 
     # Rate limit failed attempts more aggressively
@@ -343,7 +365,9 @@ async def get_characters(
 
     except Exception as e:
         logger.error(f"Error retrieving characters: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve characters.")
+        raise HTTPException(
+            status_code=500, detail="Failed to retrieve characters."
+        )
 
 
 @app.post("/simulations")
@@ -371,7 +395,10 @@ async def run_simulation(
         # Create simulation with security context
         event_bus = EventBus()
         character_factory = CharacterFactory(event_bus)
-        agents = [character_factory.create_character(name) for name in character_names]
+        agents = [
+            character_factory.create_character(name)
+            for name in character_names
+        ]
 
         log_path = f"simulation_{request_id}.md"
         director = DirectorAgent(event_bus, campaign_log_path=log_path)
@@ -400,7 +427,8 @@ async def run_simulation(
     except Exception as e:
         logger.error(f"Simulation failed (ID: {request_id}): {e}")
         raise HTTPException(
-            status_code=500, detail=f"Simulation execution failed: {request_id}"
+            status_code=500,
+            detail=f"Simulation execution failed: {request_id}",
         )
 
 

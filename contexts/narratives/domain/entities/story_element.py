@@ -29,8 +29,12 @@ class StoryElement:
     description: str = ""
 
     # Identity and lifecycle
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
     version: int = 1
 
     # Element state

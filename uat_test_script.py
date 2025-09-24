@@ -41,7 +41,9 @@ class UATestResult:
 class StoryForgeUATester:
     """User Acceptance Testing suite for StoryForge AI."""
 
-    def __init__(self, base_url: str = "http://127.0.0.1:8000", verbose: bool = False):
+    def __init__(
+        self, base_url: str = "http://127.0.0.1:8000", verbose: bool = False
+    ):
         self.base_url = base_url
         self.verbose = verbose
         self.results: List[UATestResult] = []
@@ -52,7 +54,9 @@ class StoryForgeUATester:
         if self.verbose:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] {message}")
 
-    def make_request(self, method: str, endpoint: str, **kwargs) -> requests.Response:
+    def make_request(
+        self, method: str, endpoint: str, **kwargs
+    ) -> requests.Response:
         """Make HTTP request with error handling."""
         url = f"{self.base_url}{endpoint}"
         self.log(f"{method} {url}")
@@ -82,9 +86,7 @@ class StoryForgeUATester:
                 error_message = None
             else:
                 status = "FAIL"
-                error_message = (
-                    f"Expected status {expected_status}, got {response.status_code}"
-                )
+                error_message = f"Expected status {expected_status}, got {response.status_code}"
 
             # Parse response data
             try:
@@ -123,7 +125,9 @@ class StoryForgeUATester:
             )
 
         self.results.append(result)
-        self.log(f"Test {test_id}: {result.status} ({result.execution_time_ms}ms)")
+        self.log(
+            f"Test {test_id}: {result.status} ({result.execution_time_ms}ms)"
+        )
         return result
 
     def run_happy_path_tests(self) -> None:
@@ -260,7 +264,11 @@ class StoryForgeUATester:
             422,
             "POST",
             "/simulations",
-            json={"character_names": ["pilot"], "turns": 3, "narrative_style": "epic"},
+            json={
+                "character_names": ["pilot"],
+                "turns": 3,
+                "narrative_style": "epic",
+            },
             headers={"Content-Type": "application/json"},
         )
 
@@ -446,12 +454,17 @@ class StoryForgeUATester:
 
 def main():
     """Main entry point for UAT script."""
-    parser = argparse.ArgumentParser(description="StoryForge AI UAT Test Runner")
+    parser = argparse.ArgumentParser(
+        description="StoryForge AI UAT Test Runner"
+    )
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="Enable verbose logging"
     )
     parser.add_argument(
-        "--report-file", "-r", type=str, help="Save detailed report to JSON file"
+        "--report-file",
+        "-r",
+        type=str,
+        help="Save detailed report to JSON file",
     )
     parser.add_argument(
         "--base-url",

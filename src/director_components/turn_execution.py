@@ -120,22 +120,28 @@ class TurnExecutionEngine:
             self.logger.info(f"=== Starting Turn {self._turn_counter} ===")
 
             # Phase 1: Preparation
-            prep_result = await self._execute_preparation_phase(context, turn_data)
+            prep_result = await self._execute_preparation_phase(
+                context, turn_data
+            )
             if not prep_result["success"]:
-                turn_result["error"] = f"Preparation failed: {prep_result['error']}"
+                turn_result[
+                    "error"
+                ] = f"Preparation failed: {prep_result['error']}"
                 return turn_result
 
             # Phase 2: Agent Decisions
             decision_result = await self._execute_decision_phase(context)
             if not decision_result["success"]:
-                turn_result["error"] = (
-                    f"Decision phase failed: {decision_result['error']}"
-                )
+                turn_result[
+                    "error"
+                ] = f"Decision phase failed: {decision_result['error']}"
                 return turn_result
 
             # Phase 3: Conflict Resolution
             if self._config["enable_conflict_resolution"]:
-                conflict_result = await self._execute_conflict_resolution_phase(context)
+                conflict_result = (
+                    await self._execute_conflict_resolution_phase(context)
+                )
                 if not conflict_result["success"]:
                     self.logger.warning(
                         f"Conflict resolution issues: {conflict_result['error']}"
@@ -144,13 +150,17 @@ class TurnExecutionEngine:
             # Phase 4: State Update
             state_result = await self._execute_state_update_phase(context)
             if not state_result["success"]:
-                turn_result["error"] = f"State update failed: {state_result['error']}"
+                turn_result[
+                    "error"
+                ] = f"State update failed: {state_result['error']}"
                 return turn_result
 
             # Phase 5: Finalization
             final_result = await self._execute_finalization_phase(context)
             if not final_result["success"]:
-                self.logger.warning(f"Finalization issues: {final_result['error']}")
+                self.logger.warning(
+                    f"Finalization issues: {final_result['error']}"
+                )
 
             # Compile results
             turn_duration = time.time() - turn_start_time
@@ -169,7 +179,9 @@ class TurnExecutionEngine:
             # Record metrics
             metrics = TurnMetrics(
                 total_duration=turn_duration,
-                phase_durations=context.execution_metrics.get("phase_durations", {}),
+                phase_durations=context.execution_metrics.get(
+                    "phase_durations", {}
+                ),
                 agent_response_times=context.execution_metrics.get(
                     "agent_response_times", {}
                 ),
@@ -191,7 +203,10 @@ class TurnExecutionEngine:
             turn_result.update(
                 {
                     "error": str(e),
-                    "metrics": {"total_duration": turn_duration, "error_count": 1},
+                    "metrics": {
+                        "total_duration": turn_duration,
+                        "error_count": 1,
+                    },
                 }
             )
 
@@ -234,14 +249,18 @@ class TurnExecutionEngine:
             phase_duration = time.time() - phase_start
             if "phase_durations" not in context.execution_metrics:
                 context.execution_metrics["phase_durations"] = {}
-            context.execution_metrics["phase_durations"]["preparation"] = phase_duration
+            context.execution_metrics["phase_durations"][
+                "preparation"
+            ] = phase_duration
 
             return {"success": True}
 
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    async def _execute_decision_phase(self, context: TurnContext) -> Dict[str, Any]:
+    async def _execute_decision_phase(
+        self, context: TurnContext
+    ) -> Dict[str, Any]:
         """Execute agent decision phase with parallel processing."""
         phase_start = time.time()
         context.phase = TurnPhase.AGENT_DECISIONS
@@ -251,7 +270,10 @@ class TurnExecutionEngine:
 
             agents = await self.agent_manager.list_agents()
             if not agents:
-                return {"success": False, "error": "No agents available for decisions"}
+                return {
+                    "success": False,
+                    "error": "No agents available for decisions",
+                }
 
             # Execute agent decisions
             if self._config["enable_parallel_execution"] and len(agents) > 1:
@@ -267,7 +289,9 @@ class TurnExecutionEngine:
             successful_decisions = 0
             for agent_id, result in decision_results.items():
                 if result.get("success", False):
-                    context.agent_decisions[agent_id] = result.get("decision", {})
+                    context.agent_decisions[agent_id] = result.get(
+                        "decision", {}
+                    )
                     successful_decisions += 1
 
                     # Update agent activity metrics
@@ -281,15 +305,25 @@ class TurnExecutionEngine:
                     )
 
             if successful_decisions == 0:
-                return {"success": False, "error": "No successful agent decisions"}
+                return {
+                    "success": False,
+                    "error": "No successful agent decisions",
+                }
 
             # Record metrics
             phase_duration = time.time() - phase_start
-            context.execution_metrics["phase_durations"]["decisions"] = phase_duration
-            context.execution_metrics["successful_decisions"] = successful_decisions
+            context.execution_metrics["phase_durations"][
+                "decisions"
+            ] = phase_duration
+            context.execution_metrics[
+                "successful_decisions"
+            ] = successful_decisions
             context.execution_metrics["total_agents"] = len(agents)
 
-            return {"success": True, "successful_decisions": successful_decisions}
+            return {
+                "success": True,
+                "successful_decisions": successful_decisions,
+            }
 
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -314,8 +348,12 @@ class TurnExecutionEngine:
         if len(decision_tasks) > self._max_concurrent_agents:
             # Process in batches
             results = {}
-            for i in range(0, len(decision_tasks), self._max_concurrent_agents):
-                batch_tasks = decision_tasks[i : i + self._max_concurrent_agents]
+            for i in range(
+                0, len(decision_tasks), self._max_concurrent_agents
+            ):
+                batch_tasks = decision_tasks[
+                    i : i + self._max_concurrent_agents
+                ]
                 batch_ids = agent_ids[i : i + self._max_concurrent_agents]
 
                 batch_results = await asyncio.gather(
@@ -324,19 +362,27 @@ class TurnExecutionEngine:
 
                 for agent_id, result in zip(batch_ids, batch_results):
                     if isinstance(result, Exception):
-                        results[agent_id] = {"success": False, "error": str(result)}
+                        results[agent_id] = {
+                            "success": False,
+                            "error": str(result),
+                        }
                     else:
                         results[agent_id] = result
 
             return results
         else:
             # Process all at once
-            results_list = await asyncio.gather(*decision_tasks, return_exceptions=True)
+            results_list = await asyncio.gather(
+                *decision_tasks, return_exceptions=True
+            )
 
             results = {}
             for agent_id, result in zip(agent_ids, results_list):
                 if isinstance(result, Exception):
-                    results[agent_id] = {"success": False, "error": str(result)}
+                    results[agent_id] = {
+                        "success": False,
+                        "error": str(result),
+                    }
                 else:
                     results[agent_id] = result
 
@@ -356,7 +402,9 @@ class TurnExecutionEngine:
 
         return results
 
-    async def _execute_single_agent_decision(self, agent: Any) -> Dict[str, Any]:
+    async def _execute_single_agent_decision(
+        self, agent: Any
+    ) -> Dict[str, Any]:
         """Execute decision for a single agent with timeout and error handling."""
         agent_id = getattr(agent, "agent_id", "unknown")
         decision_start = time.time()
@@ -391,7 +439,11 @@ class TurnExecutionEngine:
             self.logger.error(
                 f"Agent {agent_id} decision error after {response_time:.2f}s: {e}"
             )
-            return {"success": False, "error": str(e), "response_time": response_time}
+            return {
+                "success": False,
+                "error": str(e),
+                "response_time": response_time,
+            }
 
     async def _execute_conflict_resolution_phase(
         self, context: TurnContext
@@ -401,18 +453,24 @@ class TurnExecutionEngine:
         context.phase = TurnPhase.CONFLICT_RESOLUTION
 
         try:
-            self.logger.debug(f"Turn {context.turn_number}: Conflict resolution phase")
+            self.logger.debug(
+                f"Turn {context.turn_number}: Conflict resolution phase"
+            )
 
             # Identify conflicts between agent decisions
             conflicts = await self._identify_conflicts(context.agent_decisions)
             context.conflicts = conflicts
 
             if conflicts:
-                self.logger.info(f"Found {len(conflicts)} conflicts to resolve")
+                self.logger.info(
+                    f"Found {len(conflicts)} conflicts to resolve"
+                )
 
                 # Resolve conflicts
                 for conflict in conflicts:
-                    resolution = await self._resolve_conflict(conflict, context)
+                    resolution = await self._resolve_conflict(
+                        conflict, context
+                    )
                     if resolution.get("success"):
                         # Apply conflict resolution
                         self._apply_conflict_resolution(resolution, context)
@@ -432,18 +490,25 @@ class TurnExecutionEngine:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    async def _execute_state_update_phase(self, context: TurnContext) -> Dict[str, Any]:
+    async def _execute_state_update_phase(
+        self, context: TurnContext
+    ) -> Dict[str, Any]:
         """Execute world state update phase."""
         phase_start = time.time()
         context.phase = TurnPhase.STATE_UPDATE
 
         try:
-            self.logger.debug(f"Turn {context.turn_number}: State update phase")
+            self.logger.debug(
+                f"Turn {context.turn_number}: State update phase"
+            )
 
             # Aggregate state changes from agent decisions
             state_changes = {}
             for agent_id, decision in context.agent_decisions.items():
-                if isinstance(decision, dict) and "world_state_changes" in decision:
+                if (
+                    isinstance(decision, dict)
+                    and "world_state_changes" in decision
+                ):
                     agent_changes = decision["world_state_changes"]
                     if isinstance(agent_changes, dict):
                         state_changes.update(agent_changes)
@@ -456,28 +521,38 @@ class TurnExecutionEngine:
             context.execution_metrics["phase_durations"][
                 "state_update"
             ] = phase_duration
-            context.execution_metrics["state_changes_count"] = len(state_changes)
+            context.execution_metrics["state_changes_count"] = len(
+                state_changes
+            )
 
             return {"success": True, "state_changes": len(state_changes)}
 
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    async def _execute_finalization_phase(self, context: TurnContext) -> Dict[str, Any]:
+    async def _execute_finalization_phase(
+        self, context: TurnContext
+    ) -> Dict[str, Any]:
         """Execute turn finalization phase."""
         phase_start = time.time()
         context.phase = TurnPhase.FINALIZATION
 
         try:
-            self.logger.debug(f"Turn {context.turn_number}: Finalization phase")
+            self.logger.debug(
+                f"Turn {context.turn_number}: Finalization phase"
+            )
 
             # Generate narrative events if enabled
             if self._config["enable_narrative_events"]:
-                narrative_events = await self._generate_narrative_events(context)
+                narrative_events = await self._generate_narrative_events(
+                    context
+                )
                 context.narrative_events = narrative_events
 
             # Finalize turn context
-            context.execution_metrics["finalized_at"] = datetime.now().isoformat()
+            context.execution_metrics[
+                "finalized_at"
+            ] = datetime.now().isoformat()
 
             phase_duration = time.time() - phase_start
             context.execution_metrics["phase_durations"][
@@ -563,7 +638,9 @@ class TurnExecutionEngine:
 
         # Generate events for successful decisions
         for agent_id, decision in context.agent_decisions.items():
-            if isinstance(decision, dict) and not decision.get("overridden", False):
+            if isinstance(decision, dict) and not decision.get(
+                "overridden", False
+            ):
                 event = {
                     "type": "agent_action",
                     "agent_id": agent_id,
@@ -592,7 +669,9 @@ class TurnExecutionEngine:
 
     async def get_turn_metrics(self, last_n: int = 10) -> Dict[str, Any]:
         """Get turn execution metrics."""
-        recent_metrics = self._turn_metrics[-last_n:] if self._turn_metrics else []
+        recent_metrics = (
+            self._turn_metrics[-last_n:] if self._turn_metrics else []
+        )
 
         if not recent_metrics:
             return {"error": "No metrics available"}

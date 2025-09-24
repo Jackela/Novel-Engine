@@ -92,34 +92,46 @@ class TestCentralizedErrorHandler:
         """Test automatic error severity detection."""
         # Critical errors
         critical_error = SystemExit("System exit")
-        severity = error_handler._detect_error_severity(critical_error, error_context)
+        severity = error_handler._detect_error_severity(
+            critical_error, error_context
+        )
         assert severity == ErrorSeverity.CRITICAL
 
         # High severity errors
         system_error = SystemError("System failure")
-        severity = error_handler._detect_error_severity(system_error, error_context)
+        severity = error_handler._detect_error_severity(
+            system_error, error_context
+        )
         assert severity == ErrorSeverity.HIGH
 
         # Medium severity errors
         value_error = ValueError("Invalid value")
-        severity = error_handler._detect_error_severity(value_error, error_context)
+        severity = error_handler._detect_error_severity(
+            value_error, error_context
+        )
         assert severity == ErrorSeverity.MEDIUM
 
     def test_error_category_detection(self, error_handler, error_context):
         """Test automatic error category detection."""
         # System errors
         system_error = SystemError("System failure")
-        category = error_handler._detect_error_category(system_error, error_context)
+        category = error_handler._detect_error_category(
+            system_error, error_context
+        )
         assert category == ErrorCategory.SYSTEM
 
         # Network errors
         network_error = ConnectionError("Connection failed")
-        category = error_handler._detect_error_category(network_error, error_context)
+        category = error_handler._detect_error_category(
+            network_error, error_context
+        )
         assert category == ErrorCategory.NETWORK
 
         # Validation errors
         validation_error = ValueError("Invalid input")
-        category = error_handler._detect_error_category(validation_error, error_context)
+        category = error_handler._detect_error_category(
+            validation_error, error_context
+        )
         assert category == ErrorCategory.VALIDATION
 
     def test_recovery_strategy_selection(self, error_handler):
@@ -149,7 +161,9 @@ class TestCentralizedErrorHandler:
         """Test retry recovery mechanism."""
         test_error = ConnectionError("Network timeout")
 
-        error_record = await error_handler.handle_error(test_error, error_context)
+        error_record = await error_handler.handle_error(
+            test_error, error_context
+        )
 
         assert error_record.recovery_attempted is True
         assert error_record.recovery_strategy == RecoveryStrategy.RETRY
@@ -160,8 +174,12 @@ class TestCentralizedErrorHandler:
         test_error = ValueError("Duplicate error")
 
         # Handle same error twice
-        error_record1 = await error_handler.handle_error(test_error, error_context)
-        error_record2 = await error_handler.handle_error(test_error, error_context)
+        error_record1 = await error_handler.handle_error(
+            test_error, error_context
+        )
+        error_record2 = await error_handler.handle_error(
+            test_error, error_context
+        )
 
         # Should be same error record with increased count
         assert error_record1.error_id == error_record2.error_id

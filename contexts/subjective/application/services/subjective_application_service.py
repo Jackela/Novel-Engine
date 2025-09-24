@@ -111,7 +111,9 @@ class SubjectiveApplicationService:
 
         return self.command_handlers.handle_create_turn_brief(command)
 
-    def get_turn_brief_by_entity_id(self, entity_id: str) -> Optional[TurnBrief]:
+    def get_turn_brief_by_entity_id(
+        self, entity_id: str
+    ) -> Optional[TurnBrief]:
         """
         Get the TurnBrief for a specific entity.
 
@@ -300,7 +302,10 @@ class SubjectiveApplicationService:
     # Knowledge Operations
 
     def reveal_knowledge(
-        self, entity_id: str, knowledge_item: KnowledgeItem, revelation_method: str
+        self,
+        entity_id: str,
+        knowledge_item: KnowledgeItem,
+        revelation_method: str,
     ) -> None:
         """
         Reveal new knowledge to an entity.
@@ -483,7 +488,9 @@ class SubjectiveApplicationService:
                 f"Cleaned up stale knowledge for entity {entity_id}: {stale_subjects}"
             )
 
-    def cleanup_expired_turn_briefs(self, expiration_hours: float = 168.0) -> int:
+    def cleanup_expired_turn_briefs(
+        self, expiration_hours: float = 168.0
+    ) -> int:
         """
         Clean up expired TurnBriefs.
 
@@ -499,7 +506,9 @@ class SubjectiveApplicationService:
     # Query Operations
 
     def get_entities_with_knowledge_about(
-        self, subject: str, min_certainty: CertaintyLevel = CertaintyLevel.MINIMAL
+        self,
+        subject: str,
+        min_certainty: CertaintyLevel = CertaintyLevel.MINIMAL,
     ) -> List[str]:
         """
         Get all entities that have knowledge about a specific subject.
@@ -516,7 +525,9 @@ class SubjectiveApplicationService:
         )
 
     def get_entities_that_can_perceive_location(
-        self, location_id: str, perception_type: Optional[PerceptionType] = None
+        self,
+        location_id: str,
+        perception_type: Optional[PerceptionType] = None,
     ) -> List[str]:
         """
         Get entities that can perceive a specific location.
@@ -568,6 +579,8 @@ class SubjectiveApplicationService:
             "active_turn_briefs": active_turn_briefs,
             "inactive_turn_briefs": total_turn_briefs - active_turn_briefs,
             "activity_rate": (
-                active_turn_briefs / total_turn_briefs if total_turn_briefs > 0 else 0.0
+                active_turn_briefs / total_turn_briefs
+                if total_turn_briefs > 0
+                else 0.0
             ),
         }

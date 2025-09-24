@@ -131,7 +131,9 @@ class AgentCoordinationEngine:
         self.consistency_violations: List[Dict[str, Any]] = []
 
         # Narrative coherence tracking
-        self.narrative_threads: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        self.narrative_threads: Dict[str, List[Dict[str, Any]]] = defaultdict(
+            list
+        )
         self.coherence_scores: Dict[str, float] = {}
 
         # Performance optimization
@@ -147,15 +149,23 @@ class AgentCoordinationEngine:
 
     def _setup_event_handlers(self):
         """Setup event handlers for agent coordination."""
-        self.event_bus.subscribe("AGENT_ACTION_REQUEST", self.handle_action_request)
-        self.event_bus.subscribe("AGENT_STATE_CHANGE", self.handle_state_change)
+        self.event_bus.subscribe(
+            "AGENT_ACTION_REQUEST", self.handle_action_request
+        )
+        self.event_bus.subscribe(
+            "AGENT_STATE_CHANGE", self.handle_state_change
+        )
         self.event_bus.subscribe(
             "COORDINATION_REQUEST", self.handle_coordination_request
         )
-        self.event_bus.subscribe("CONSISTENCY_CHECK", self.handle_consistency_check)
+        self.event_bus.subscribe(
+            "CONSISTENCY_CHECK", self.handle_consistency_check
+        )
 
     async def register_agent(
-        self, agent: PersonaAgent, initial_context: Optional[Dict[str, Any]] = None
+        self,
+        agent: PersonaAgent,
+        initial_context: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Register an agent with the coordination engine.
@@ -169,7 +179,9 @@ class AgentCoordinationEngine:
         """
         try:
             if len(self.agent_contexts) >= self.max_agents:
-                logger.warning(f"Maximum agent limit ({self.max_agents}) reached")
+                logger.warning(
+                    f"Maximum agent limit ({self.max_agents}) reached"
+                )
                 return False
 
             agent_id = agent.agent_id
@@ -179,7 +191,9 @@ class AgentCoordinationEngine:
                 agent_id=agent_id,
                 current_state="registered",
                 intentions=(
-                    initial_context.get("intentions", []) if initial_context else []
+                    initial_context.get("intentions", [])
+                    if initial_context
+                    else []
                 ),
                 memory_weight=(
                     initial_context.get("memory_weight", 1.0)
@@ -193,7 +207,9 @@ class AgentCoordinationEngine:
             # Initialize character profile
             character_data = getattr(agent, "character_data", {})
             self.character_profiles[agent_id] = {
-                "personality_traits": character_data.get("personality_traits", []),
+                "personality_traits": character_data.get(
+                    "personality_traits", []
+                ),
                 "background": character_data.get("background", ""),
                 "motivations": character_data.get("motivations", []),
                 "behavioral_patterns": [],
@@ -238,13 +254,13 @@ class AgentCoordinationEngine:
             Dict containing coordination results and metrics
         """
         try:
-            coordination_id = (
-                f"coord_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(agent_ids)}a"
-            )
+            coordination_id = f"coord_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(agent_ids)}a"
             start_time = datetime.now()
 
             # Validate agents
-            valid_agents = [aid for aid in agent_ids if aid in self.agent_contexts]
+            valid_agents = [
+                aid for aid in agent_ids if aid in self.agent_contexts
+            ]
             if len(valid_agents) != len(agent_ids):
                 missing = set(agent_ids) - set(valid_agents)
                 logger.warning(
@@ -263,7 +279,9 @@ class AgentCoordinationEngine:
                 task_type=coordination_type,
                 priority=CoordinationPriority.HIGH,
                 participants=valid_agents,
-                required_actions=self._determine_required_actions(coordination_type),
+                required_actions=self._determine_required_actions(
+                    coordination_type
+                ),
                 context_data=context or {},
                 deadline=datetime.now() + timedelta(minutes=10),
             )
@@ -296,7 +314,9 @@ class AgentCoordinationEngine:
         """
         try:
             if agent_id not in self.character_profiles:
-                logger.warning(f"No character profile found for agent {agent_id}")
+                logger.warning(
+                    f"No character profile found for agent {agent_id}"
+                )
                 return True, 1.0, []
 
             profile = self.character_profiles[agent_id]
@@ -304,14 +324,19 @@ class AgentCoordinationEngine:
             consistency_factors = []
 
             # Check personality trait consistency
-            if "personality_traits" in profile and profile["personality_traits"]:
+            if (
+                "personality_traits" in profile
+                and profile["personality_traits"]
+            ):
                 trait_consistency = self._check_trait_consistency(
                     profile["personality_traits"], proposed_action
                 )
                 consistency_factors.append(trait_consistency)
 
                 if trait_consistency < 0.5:
-                    violations.append("Action conflicts with personality traits")
+                    violations.append(
+                        "Action conflicts with personality traits"
+                    )
 
             # Check motivational consistency
             if "motivations" in profile and profile["motivations"]:
@@ -321,7 +346,9 @@ class AgentCoordinationEngine:
                 consistency_factors.append(motivation_consistency)
 
                 if motivation_consistency < 0.5:
-                    violations.append("Action conflicts with character motivations")
+                    violations.append(
+                        "Action conflicts with character motivations"
+                    )
 
             # Check behavioral pattern consistency
             if profile.get("behavioral_patterns"):
@@ -331,7 +358,9 @@ class AgentCoordinationEngine:
                 consistency_factors.append(pattern_consistency)
 
                 if pattern_consistency < 0.4:
-                    violations.append("Action breaks established behavioral patterns")
+                    violations.append(
+                        "Action breaks established behavioral patterns"
+                    )
 
             # Calculate overall consistency score
             overall_consistency = (
@@ -344,7 +373,9 @@ class AgentCoordinationEngine:
             if overall_consistency > 0.6:
                 self._update_behavioral_patterns(agent_id, proposed_action)
 
-            is_consistent = overall_consistency >= 0.65 and len(violations) == 0
+            is_consistent = (
+                overall_consistency >= 0.65 and len(violations) == 0
+            )
 
             # Log consistency check
             self.consistency_violations.append(
@@ -423,7 +454,9 @@ class AgentCoordinationEngine:
                 recommendations.append("Strengthen narrative causality")
 
             # Calculate overall coherence
-            overall_coherence = sum(coherence_factors.values()) / len(coherence_factors)
+            overall_coherence = sum(coherence_factors.values()) / len(
+                coherence_factors
+            )
 
             # Determine coherence level
             if overall_coherence >= 0.9:
@@ -491,7 +524,9 @@ class AgentCoordinationEngine:
             context.memory_weight = min(context.memory_weight * 1.1, 2.0)
             context.last_update = datetime.now()
 
-            optimization_time = (datetime.now() - optimization_start).total_seconds()
+            optimization_time = (
+                datetime.now() - optimization_start
+            ).total_seconds()
 
             result = {
                 "success": True,
@@ -506,13 +541,19 @@ class AgentCoordinationEngine:
 
             # Add to optimization queue for monitoring
             self.memory_optimization_queue.append(
-                {"agent_id": agent_id, "result": result, "timestamp": datetime.now()}
+                {
+                    "agent_id": agent_id,
+                    "result": result,
+                    "timestamp": datetime.now(),
+                }
             )
 
             return result
 
         except Exception as e:
-            logger.error(f"Memory optimization failed for agent {agent_id}: {e}")
+            logger.error(
+                f"Memory optimization failed for agent {agent_id}: {e}"
+            )
             return {"success": False, "error": str(e)}
 
     def get_coordination_metrics(self) -> CoordinationMetrics:
@@ -540,7 +581,9 @@ class AgentCoordinationEngine:
 
     # Private helper methods
 
-    async def _execute_coordination(self, task: CoordinationTask) -> Dict[str, Any]:
+    async def _execute_coordination(
+        self, task: CoordinationTask
+    ) -> Dict[str, Any]:
         """Execute a coordination task."""
         try:
             # Implementation of coordination execution
@@ -574,15 +617,25 @@ class AgentCoordinationEngine:
                 "exchange_information",
                 "resolve_conflicts",
             ],
-            "collaboration": ["align_goals", "distribute_tasks", "synchronize_actions"],
+            "collaboration": [
+                "align_goals",
+                "distribute_tasks",
+                "synchronize_actions",
+            ],
             "conflict": [
                 "assess_situation",
                 "negotiate_resolution",
                 "implement_solution",
             ],
-            "narrative": ["establish_scene", "coordinate_roles", "ensure_consistency"],
+            "narrative": [
+                "establish_scene",
+                "coordinate_roles",
+                "ensure_consistency",
+            ],
         }
-        return action_map.get(coordination_type, ["coordinate", "validate", "resolve"])
+        return action_map.get(
+            coordination_type, ["coordinate", "validate", "resolve"]
+        )
 
     def _check_trait_consistency(
         self, traits: List[str], action: CharacterAction
@@ -604,7 +657,9 @@ class AgentCoordinationEngine:
         """Check consistency with established behavioral patterns."""
         return 0.8
 
-    def _update_behavioral_patterns(self, agent_id: str, action: CharacterAction):
+    def _update_behavioral_patterns(
+        self, agent_id: str, action: CharacterAction
+    ):
         """Update behavioral patterns based on consistent actions."""
         if agent_id in self.character_profiles:
             profile = self.character_profiles[agent_id]
@@ -639,7 +694,9 @@ class AgentCoordinationEngine:
         """Consolidate agent memories for optimization."""
         return []
 
-    async def _score_context_relevance(self, agent_id: str) -> Dict[str, float]:
+    async def _score_context_relevance(
+        self, agent_id: str
+    ) -> Dict[str, float]:
         """Score context relevance for memory optimization."""
         return {}
 
@@ -703,7 +760,9 @@ class AgentCoordinationEngine:
         # Process coordination requests
         pass
 
-    def handle_consistency_check(self, agent_id: str, action_data: Dict[str, Any]):
+    def handle_consistency_check(
+        self, agent_id: str, action_data: Dict[str, Any]
+    ):
         """Handle consistency check requests."""
         # Perform consistency validation
         pass

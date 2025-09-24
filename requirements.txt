@@ -15,7 +15,7 @@ python-multipart>=0.0.6
 # Async utilities
 asyncio-mqtt>=0.16.0
 asyncio-throttle>=1.0.2
-aioredis>=2.0.0
+redis>=4.5.0
 
 # Data processing
 pandas>=1.5.0; python_version>="3.9"
@@ -35,3 +35,11 @@ PyYAML>=6.0.1
 
 # Environment and configuration
 python-dotenv>=1.0.0
+
+aiohttp
+PyJWT
+networkx
+requests
+psutil
+aiosqlite
+SQLAlchemy

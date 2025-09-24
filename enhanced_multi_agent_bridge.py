@@ -30,7 +30,6 @@ from typing import Any, Dict, List, Optional
 
 from director_agent import DirectorAgent
 
-
 # Import advanced AI intelligence systems
 from src.ai_intelligence.ai_orchestrator import (
     AIIntelligenceOrchestrator,
@@ -42,11 +41,7 @@ from src.ai_intelligence.ai_orchestrator import (
 from src.event_bus import EventBus
 
 # Import unified LLM service for smart coordination
-from src.llm_service import (
-    CostControl,
-    LLMRequest,
-    get_llm_service,
-)
+from src.llm_service import CostControl, LLMRequest, get_llm_service
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +108,9 @@ class LLMCoordinationConfig:
     dialogue_generation_budget: float = 2.0  # USD per hour
     coordination_temperature: float = 0.8
     max_turn_time_seconds: float = 5.0  # Performance budget
-    batch_priority_threshold: float = 0.7  # High priority requests bypass batching
+    batch_priority_threshold: float = (
+        0.7  # High priority requests bypass batching
+    )
     cost_alert_threshold: float = 0.8  # Alert when 80% of budget used
 
 
@@ -366,7 +363,9 @@ class EnhancedMultiAgentBridge:
     ) -> Dict[str, Any]:
         """Queue an LLM request with smart batching and priority handling."""
         try:
-            request_id = f"{request_type}_{datetime.now().strftime('%H%M%S%f')}"
+            request_id = (
+                f"{request_type}_{datetime.now().strftime('%H%M%S%f')}"
+            )
 
             # Estimate cost and tokens
             estimated_tokens = len(prompt.split()) * 1.3  # Rough estimate
@@ -396,7 +395,8 @@ class EnhancedMultiAgentBridge:
             # Handle high priority requests immediately
             if (
                 priority in [RequestPriority.CRITICAL, RequestPriority.HIGH]
-                and priority.value / 5.0 <= self.llm_config.batch_priority_threshold
+                and priority.value / 5.0
+                <= self.llm_config.batch_priority_threshold
             ):
                 self.coordination_stats["priority_bypasses"] += 1
                 return await self._process_immediate_request(batch_request)
@@ -410,7 +410,9 @@ class EnhancedMultiAgentBridge:
                     await self._start_batch_processor()
 
             # Wait for batch processing with timeout
-            return await self._wait_for_batch_result(request_id, timeout_seconds)
+            return await self._wait_for_batch_result(
+                request_id, timeout_seconds
+            )
 
         except Exception as e:
             logger.error(f"Failed to queue LLM request: {e}")
@@ -419,10 +421,12 @@ class EnhancedMultiAgentBridge:
     async def _check_budget_availability(self, estimated_cost: float) -> bool:
         """Check if request can proceed within budget constraints."""
         current_hour_remaining = (
-            self.cost_tracker.hourly_budget - self.cost_tracker.current_hour_spend
+            self.cost_tracker.hourly_budget
+            - self.cost_tracker.current_hour_spend
         )
         current_day_remaining = (
-            self.cost_tracker.daily_budget - self.cost_tracker.current_day_spend
+            self.cost_tracker.daily_budget
+            - self.cost_tracker.current_day_spend
         )
 
         return (
@@ -444,10 +448,13 @@ class EnhancedMultiAgentBridge:
             "daily_usage_percent": min(100, day_usage * 100),
             "remaining_hourly_budget": max(
                 0,
-                self.cost_tracker.hourly_budget - self.cost_tracker.current_hour_spend,
+                self.cost_tracker.hourly_budget
+                - self.cost_tracker.current_hour_spend,
             ),
             "remaining_daily_budget": max(
-                0, self.cost_tracker.daily_budget - self.cost_tracker.current_day_spend
+                0,
+                self.cost_tracker.daily_budget
+                - self.cost_tracker.current_day_spend,
             ),
             "total_requests_today": self.cost_tracker.total_requests,
             "average_cost_per_request": self.cost_tracker.average_cost_per_request,
@@ -501,9 +508,9 @@ class EnhancedMultiAgentBridge:
 
             # Update stats
             self.coordination_stats["total_llm_calls"] += 1
-            self.coordination_stats["cost_per_request"] = (
-                self.cost_tracker.average_cost_per_request
-            )
+            self.coordination_stats[
+                "cost_per_request"
+            ] = self.cost_tracker.average_cost_per_request
 
             # Calculate cost savings from not using individual requests
             estimated_individual_cost = (
@@ -536,7 +543,9 @@ class EnhancedMultiAgentBridge:
             return
 
         self._batch_processor_running = True
-        self._batch_processor_task = asyncio.create_task(self._batch_processor())
+        self._batch_processor_task = asyncio.create_task(
+            self._batch_processor()
+        )
 
     async def _batch_processor(self):
         """Main batch processing loop."""
@@ -570,7 +579,9 @@ class EnhancedMultiAgentBridge:
                     if self.llm_request_queue
                     else time.time()
                 )
-                wait_time = (time.time() - oldest_request_time) * 1000  # Convert to ms
+                wait_time = (
+                    time.time() - oldest_request_time
+                ) * 1000  # Convert to ms
 
                 # If we haven't waited long enough and have performance budget, wait
                 if (
@@ -582,7 +593,9 @@ class EnhancedMultiAgentBridge:
             # Extract batch
             for _ in range(batch_size):
                 if self.llm_request_queue:
-                    batch_requests.append(heapq.heappop(self.llm_request_queue))
+                    batch_requests.append(
+                        heapq.heappop(self.llm_request_queue)
+                    )
 
         if not batch_requests:
             return
@@ -599,11 +612,13 @@ class EnhancedMultiAgentBridge:
         total_batches = self.coordination_stats["batched_requests"] / max(
             1, len(batch_requests)
         )
-        self.coordination_stats["average_batch_size"] = self.coordination_stats[
-            "batched_requests"
-        ] / max(1, total_batches)
+        self.coordination_stats[
+            "average_batch_size"
+        ] = self.coordination_stats["batched_requests"] / max(1, total_batches)
 
-    async def _process_request_batch(self, batch_requests: List[LLMBatchRequest]):
+    async def _process_request_batch(
+        self, batch_requests: List[LLMBatchRequest]
+    ):
         """Process a batch of LLM requests efficiently."""
         try:
             # Group requests by type for better batching efficiency
@@ -643,7 +658,9 @@ class EnhancedMultiAgentBridge:
             response = await self.llm_service.generate_response(llm_request)
 
             # Parse and distribute results
-            batch_results = self._parse_batch_response(response.content, requests)
+            batch_results = self._parse_batch_response(
+                response.content, requests
+            )
 
             # Update cost tracking
             total_cost = (
@@ -657,7 +674,9 @@ class EnhancedMultiAgentBridge:
                 else sum(req.tokens_estimate for req in requests)
             )
 
-            self.cost_tracker.update_cost(request_type, total_cost, total_tokens)
+            self.cost_tracker.update_cost(
+                request_type, total_cost, total_tokens
+            )
 
             # Complete individual requests
             for req, result in zip(requests, batch_results):
@@ -687,9 +706,13 @@ class EnhancedMultiAgentBridge:
         else:
             return self._create_generic_batch_prompt(requests)
 
-    def _create_dialogue_batch_prompt(self, requests: List[LLMBatchRequest]) -> str:
+    def _create_dialogue_batch_prompt(
+        self, requests: List[LLMBatchRequest]
+    ) -> str:
         """Create batch prompt for dialogue generation."""
-        prompt_parts = ["Generate character dialogues for the following scenarios:"]
+        prompt_parts = [
+            "Generate character dialogues for the following scenarios:"
+        ]
 
         for i, req in enumerate(requests):
             participants = req.context.get(
@@ -708,7 +731,9 @@ class EnhancedMultiAgentBridge:
         )
         return "\n".join(prompt_parts)
 
-    def _create_coordination_batch_prompt(self, requests: List[LLMBatchRequest]) -> str:
+    def _create_coordination_batch_prompt(
+        self, requests: List[LLMBatchRequest]
+    ) -> str:
         """Create batch prompt for agent coordination."""
         prompt_parts = [
             "Provide agent coordination analysis for the following situations:"
@@ -729,7 +754,9 @@ class EnhancedMultiAgentBridge:
         )
         return "\n".join(prompt_parts)
 
-    def _create_generic_batch_prompt(self, requests: List[LLMBatchRequest]) -> str:
+    def _create_generic_batch_prompt(
+        self, requests: List[LLMBatchRequest]
+    ) -> str:
         """Create generic batch prompt."""
         prompt_parts = [f"Process the following {len(requests)} requests:"]
 
@@ -760,7 +787,11 @@ class EnhancedMultiAgentBridge:
                 line.strip().startswith(marker) for marker in response_markers
             )
 
-            if is_marker and current_response and response_index < len(requests):
+            if (
+                is_marker
+                and current_response
+                and response_index < len(requests)
+            ):
                 # Complete previous response
                 results.append(
                     {
@@ -771,7 +802,9 @@ class EnhancedMultiAgentBridge:
                     }
                 )
                 response_index += 1
-                current_response = line.split(":", 1)[-1].strip() if ":" in line else ""
+                current_response = (
+                    line.split(":", 1)[-1].strip() if ":" in line else ""
+                )
             elif current_response is not None:
                 current_response += line + "\n"
 
@@ -834,7 +867,11 @@ class EnhancedMultiAgentBridge:
             await asyncio.sleep(0.05)  # 50ms polling
 
         # Timeout
-        return {"success": False, "request_id": request_id, "error": "Request timeout"}
+        return {
+            "success": False,
+            "request_id": request_id,
+            "error": "Request timeout",
+        }
 
     async def initialize_ai_systems(self) -> Dict[str, Any]:
         """Initialize all AI intelligence systems."""
@@ -852,7 +889,9 @@ class EnhancedMultiAgentBridge:
 
                 return {
                     "success": True,
-                    "ai_systems_initialized": init_result["initialized_systems"],
+                    "ai_systems_initialized": init_result[
+                        "initialized_systems"
+                    ],
                     "coordination_enabled": True,
                     "dialogue_system_ready": True,
                 }
@@ -868,12 +907,12 @@ class EnhancedMultiAgentBridge:
         budget_status = self._get_budget_status()
 
         # Calculate performance scores
-        avg_batch_time = sum(self.performance_budget.batch_timings[-10:]) / max(
-            1, len(self.performance_budget.batch_timings[-10:])
-        )
-        avg_llm_time = sum(self.performance_budget.llm_call_timings[-10:]) / max(
-            1, len(self.performance_budget.llm_call_timings[-10:])
-        )
+        avg_batch_time = sum(
+            self.performance_budget.batch_timings[-10:]
+        ) / max(1, len(self.performance_budget.batch_timings[-10:]))
+        avg_llm_time = sum(
+            self.performance_budget.llm_call_timings[-10:]
+        ) / max(1, len(self.performance_budget.llm_call_timings[-10:]))
 
         performance_score = 1.0
         if avg_batch_time > self.performance_budget.max_batch_time:
@@ -910,7 +949,10 @@ class EnhancedMultiAgentBridge:
                 "cost_per_quality_point": self.coordination_stats.get(
                     "cost_per_request", 0
                 )
-                / max(0.1, self.coordination_stats.get("dialogue_quality_score", 0.1)),
+                / max(
+                    0.1,
+                    self.coordination_stats.get("dialogue_quality_score", 0.1),
+                ),
             },
         }
 
@@ -933,7 +975,9 @@ class EnhancedMultiAgentBridge:
                 )
                 remaining_requests = []
                 while self.llm_request_queue:
-                    remaining_requests.append(heapq.heappop(self.llm_request_queue))
+                    remaining_requests.append(
+                        heapq.heappop(self.llm_request_queue)
+                    )
 
                 if remaining_requests:
                     await self._process_request_batch(remaining_requests)
@@ -965,11 +1009,15 @@ class EnhancedMultiAgentBridge:
             pre_turn_analysis = await self._analyze_pre_turn_state()
 
             # Phase 2: Enhanced world state preparation
-            enhanced_world_state = await self._prepare_enhanced_world_state(turn_number)
+            enhanced_world_state = await self._prepare_enhanced_world_state(
+                turn_number
+            )
             self.enhanced_world_state = enhanced_world_state
 
             # Phase 3: Agent dialogue initiation opportunities
-            dialogue_opportunities = await self._identify_dialogue_opportunities()
+            dialogue_opportunities = (
+                await self._identify_dialogue_opportunities()
+            )
 
             # Phase 4: Execute dialogues if any are initiated (with performance budgets)
             dialogue_results = []
@@ -983,7 +1031,9 @@ class EnhancedMultiAgentBridge:
                     )
                     break
 
-                if opportunity["probability"] > 0.7:  # High probability threshold
+                if (
+                    opportunity["probability"] > 0.7
+                ):  # High probability threshold
                     dialogue_result = await self._initiate_agent_dialogue(
                         participants=opportunity["participants"],
                         communication_type=opportunity["type"],
@@ -992,7 +1042,9 @@ class EnhancedMultiAgentBridge:
                     dialogue_results.append(dialogue_result)
 
                     # Quick check for time after each dialogue
-                    remaining_time = self.performance_budget.get_remaining_time()
+                    remaining_time = (
+                        self.performance_budget.get_remaining_time()
+                    )
                     if remaining_time < 1.0:  # Less than 1 second remaining
                         logger.info(
                             f"Limited time remaining ({remaining_time:.1f}s), prioritizing turn completion"
@@ -1022,7 +1074,9 @@ class EnhancedMultiAgentBridge:
 
             # Phase 8: Generate turn summary with AI insights (performance-aware)
             remaining_time = self.performance_budget.get_remaining_time()
-            if remaining_time > 0.5:  # Only generate detailed summary if we have time
+            if (
+                remaining_time > 0.5
+            ):  # Only generate detailed summary if we have time
                 turn_summary = await self._generate_enhanced_turn_summary(
                     turn_number,
                     base_turn_result,
@@ -1039,7 +1093,9 @@ class EnhancedMultiAgentBridge:
             execution_time = (datetime.now() - turn_start_time).total_seconds()
 
             # Update metrics
-            await self._update_communication_metrics(dialogue_results, execution_time)
+            await self._update_communication_metrics(
+                dialogue_results, execution_time
+            )
 
             logger.info(
                 f"Enhanced turn {turn_number} completed in {execution_time:.2f}s"
@@ -1061,7 +1117,11 @@ class EnhancedMultiAgentBridge:
                 "enhanced_features": {
                     "dialogues_executed": len(dialogue_results),
                     "relationship_changes": len(
-                        [d for d in dialogue_results if d.get("relationship_impact")]
+                        [
+                            d
+                            for d in dialogue_results
+                            if d.get("relationship_impact")
+                        ]
                     ),
                     "narrative_developments": len(
                         post_turn_analysis.get("narrative_insights", [])
@@ -1148,7 +1208,11 @@ class EnhancedMultiAgentBridge:
 
         except Exception as e:
             logger.error(f"Agent dialogue initiation failed: {e}")
-            return {"success": False, "dialogue_id": dialogue_id, "error": str(e)}
+            return {
+                "success": False,
+                "dialogue_id": dialogue_id,
+                "error": str(e),
+            }
 
     async def get_enhanced_agent_status(self, agent_id: str) -> Dict[str, Any]:
         """Get enhanced status information for an agent including AI insights."""
@@ -1171,7 +1235,9 @@ class EnhancedMultiAgentBridge:
                             "type": dialogue.communication_type.value,
                             "state": dialogue.state.value,
                             "other_participants": [
-                                p for p in dialogue.participants if p != agent_id
+                                p
+                                for p in dialogue.participants
+                                if p != agent_id
                             ],
                         }
                     )
@@ -1187,7 +1253,9 @@ class EnhancedMultiAgentBridge:
             # Get AI coordination status
             if self.ai_orchestrator.agent_coordination:
                 coordination_status = (
-                    self.ai_orchestrator.agent_coordination.get_agent_status(agent_id)
+                    self.ai_orchestrator.agent_coordination.get_agent_status(
+                        agent_id
+                    )
                 )
                 status["coordination_status"] = coordination_status
 
@@ -1211,10 +1279,14 @@ class EnhancedMultiAgentBridge:
                 ],
                 "communication_success_rate": (
                     self.communication_metrics["successful_dialogues"]
-                    / max(self.communication_metrics["total_communications"], 1)
+                    / max(
+                        self.communication_metrics["total_communications"], 1
+                    )
                 ),
                 "relationship_networks": len(self.agent_relationships),
-                "narrative_intelligence_active": bool(self.narrative_intelligence),
+                "narrative_intelligence_active": bool(
+                    self.narrative_intelligence
+                ),
             }
 
             # Combine dashboards
@@ -1258,7 +1330,9 @@ class EnhancedMultiAgentBridge:
         self.event_bus.subscribe(
             "NARRATIVE_PRESSURE_CHANGE", self._handle_narrative_pressure
         )
-        self.event_bus.subscribe("AI_INSIGHT_GENERATED", self._handle_ai_insight)
+        self.event_bus.subscribe(
+            "AI_INSIGHT_GENERATED", self._handle_ai_insight
+        )
 
     async def _setup_enhanced_coordination(self):
         """Setup enhanced coordination between systems."""
@@ -1344,7 +1418,9 @@ class EnhancedMultiAgentBridge:
                             "participants": [agent_id, other_agent],
                             "type": CommunicationType.NEGOTIATION,
                             "probability": min(abs(relationship_value), 0.9),
-                            "context": {"relationship_tension": relationship_value},
+                            "context": {
+                                "relationship_tension": relationship_value
+                            },
                         }
                     )
 
@@ -1355,7 +1431,9 @@ class EnhancedMultiAgentBridge:
                             "participants": [agent_id, other_agent],
                             "type": CommunicationType.COLLABORATION,
                             "probability": min(relationship_value * 0.8, 0.8),
-                            "context": {"relationship_strength": relationship_value},
+                            "context": {
+                                "relationship_strength": relationship_value
+                            },
                         }
                     )
 
@@ -1396,7 +1474,9 @@ class EnhancedMultiAgentBridge:
             context=context,
         )
 
-    async def _execute_dialogue(self, dialogue: AgentDialogue) -> Dict[str, Any]:
+    async def _execute_dialogue(
+        self, dialogue: AgentDialogue
+    ) -> Dict[str, Any]:
         """Execute a dialogue between agents using AI coordination with performance budgets."""
         try:
             dialogue.state = DialogueState.ACTIVE
@@ -1446,8 +1526,12 @@ class EnhancedMultiAgentBridge:
                 dialogue_outcome["quality_score"] = quality_score
 
                 # Update coordination stats
-                current_avg = self.coordination_stats.get("dialogue_quality_score", 0.0)
-                total_dialogues = self.coordination_stats.get("total_llm_calls", 0) + 1
+                current_avg = self.coordination_stats.get(
+                    "dialogue_quality_score", 0.0
+                )
+                total_dialogues = (
+                    self.coordination_stats.get("total_llm_calls", 0) + 1
+                )
                 self.coordination_stats["dialogue_quality_score"] = (
                     current_avg * (total_dialogues - 1) + quality_score
                 ) / total_dialogues
@@ -1463,7 +1547,9 @@ class EnhancedMultiAgentBridge:
             logger.error(f"Dialogue execution failed: {e}")
             return {"success": False, "error": str(e)}
 
-    def _determine_dialogue_priority(self, dialogue: AgentDialogue) -> RequestPriority:
+    def _determine_dialogue_priority(
+        self, dialogue: AgentDialogue
+    ) -> RequestPriority:
         """Determine priority for dialogue based on type and context."""
         # Critical dialogues that must complete
         if dialogue.communication_type in [CommunicationType.NEGOTIATION]:
@@ -1474,7 +1560,9 @@ class EnhancedMultiAgentBridge:
             return RequestPriority.HIGH
 
         # Relationship-driven dialogues
-        relationship_tension = abs(dialogue.context.get("relationship_tension", 0))
+        relationship_tension = abs(
+            dialogue.context.get("relationship_tension", 0)
+        )
         if relationship_tension > 0.7:
             return RequestPriority.HIGH
         elif relationship_tension > 0.4:
@@ -1509,7 +1597,9 @@ class EnhancedMultiAgentBridge:
 
         # Add narrative context
         if context.get("narrative_requirement"):
-            prompt_parts.append("This dialogue is important for story progression.")
+            prompt_parts.append(
+                "This dialogue is important for story progression."
+            )
 
         # Add dialogue type specific guidance
         if dialogue.communication_type == CommunicationType.NEGOTIATION:
@@ -1517,9 +1607,13 @@ class EnhancedMultiAgentBridge:
         elif dialogue.communication_type == CommunicationType.COLLABORATION:
             prompt_parts.append("Focus on teamwork and shared goals.")
         elif dialogue.communication_type == CommunicationType.EMOTIONAL:
-            prompt_parts.append("Focus on emotional expression and connection.")
+            prompt_parts.append(
+                "Focus on emotional expression and connection."
+            )
 
-        prompt_parts.append("Provide realistic, character-appropriate dialogue.")
+        prompt_parts.append(
+            "Provide realistic, character-appropriate dialogue."
+        )
 
         return "\n".join(prompt_parts)
 
@@ -1624,9 +1718,9 @@ class EnhancedMultiAgentBridge:
 
         # Relationship impact factor (meaningful interactions)
         relationship_impact = dialogue_outcome.get("relationship_impact", {})
-        avg_impact = sum(abs(impact) for impact in relationship_impact.values()) / max(
-            1, len(relationship_impact)
-        )
+        avg_impact = sum(
+            abs(impact) for impact in relationship_impact.values()
+        ) / max(1, len(relationship_impact))
         if avg_impact > 0.1:
             quality_factors.append(0.8)
         elif avg_impact > 0.05:
@@ -1668,11 +1762,20 @@ class EnhancedMultiAgentBridge:
             for j, other_agent in enumerate(dialogue.participants):
                 if i != j:
                     # Calculate relationship change
-                    if dialogue.communication_type == CommunicationType.COLLABORATION:
+                    if (
+                        dialogue.communication_type
+                        == CommunicationType.COLLABORATION
+                    ):
                         relationship_change = quality_score * 0.2
-                    elif dialogue.communication_type == CommunicationType.NEGOTIATION:
+                    elif (
+                        dialogue.communication_type
+                        == CommunicationType.NEGOTIATION
+                    ):
                         relationship_change = (quality_score - 0.5) * 0.3
-                    elif dialogue.communication_type == CommunicationType.DIALOGUE:
+                    elif (
+                        dialogue.communication_type
+                        == CommunicationType.DIALOGUE
+                    ):
                         relationship_change = quality_score * 0.1
                     else:
                         relationship_change = quality_score * 0.05
@@ -1727,7 +1830,9 @@ class EnhancedMultiAgentBridge:
         }
 
     async def _analyze_post_turn_results(
-        self, base_turn_result: Dict[str, Any], dialogue_results: List[Dict[str, Any]]
+        self,
+        base_turn_result: Dict[str, Any],
+        dialogue_results: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
         """Analyze results after turn execution."""
         analysis = {
@@ -1749,7 +1854,9 @@ class EnhancedMultiAgentBridge:
                             "change": value,
                             "source": "dialogue",
                         }
-                        for key, value in dialogue_result["relationship_impact"].items()
+                        for key, value in dialogue_result[
+                            "relationship_impact"
+                        ].items()
                     ]
                 )
 
@@ -1776,7 +1883,9 @@ class EnhancedMultiAgentBridge:
             "turn_number": turn_number,
             "timestamp": datetime.now().isoformat(),
             "summary_type": "fast",
-            "base_simulation": {"status": base_turn_result.get("status", "completed")},
+            "base_simulation": {
+                "status": base_turn_result.get("status", "completed")
+            },
             "enhanced_features": {
                 "dialogues_executed": len(dialogue_results),
                 "successful_dialogues": len(
@@ -1793,7 +1902,9 @@ class EnhancedMultiAgentBridge:
             },
         }
 
-    async def _update_agent_relationships(self, dialogue_results: List[Dict[str, Any]]):
+    async def _update_agent_relationships(
+        self, dialogue_results: List[Dict[str, Any]]
+    ):
         """Update agent relationships based on dialogue results."""
         for dialogue_result in dialogue_results:
             if dialogue_result.get("relationship_impact"):
@@ -1807,29 +1918,34 @@ class EnhancedMultiAgentBridge:
                         self.agent_relationships[agent_a] = {}
 
                     # Update relationship
-                    current_value = self.agent_relationships[agent_a].get(agent_b, 0.0)
+                    current_value = self.agent_relationships[agent_a].get(
+                        agent_b, 0.0
+                    )
                     new_value = max(-1.0, min(1.0, current_value + change))
                     self.agent_relationships[agent_a][agent_b] = new_value
 
                     self.communication_metrics["relationship_changes"] += 1
 
-    async def _update_narrative_intelligence(self, post_turn_analysis: Dict[str, Any]):
+    async def _update_narrative_intelligence(
+        self, post_turn_analysis: Dict[str, Any]
+    ):
         """Update narrative intelligence based on turn analysis."""
         # Update narrative intelligence state
         if post_turn_analysis.get("narrative_insights"):
             self.narrative_intelligence["last_insights"] = post_turn_analysis[
                 "narrative_insights"
             ]
-            self.narrative_intelligence["insight_count"] = (
-                self.narrative_intelligence.get("insight_count", 0)
-                + len(post_turn_analysis["narrative_insights"])
+            self.narrative_intelligence[
+                "insight_count"
+            ] = self.narrative_intelligence.get("insight_count", 0) + len(
+                post_turn_analysis["narrative_insights"]
             )
 
         # Update story progression tracking
         if post_turn_analysis.get("story_progression"):
-            self.narrative_intelligence["story_progression"] = post_turn_analysis[
+            self.narrative_intelligence[
                 "story_progression"
-            ]
+            ] = post_turn_analysis["story_progression"]
 
     async def _generate_enhanced_turn_summary(
         self,
@@ -1863,8 +1979,12 @@ class EnhancedMultiAgentBridge:
                 "pre_turn_opportunities": len(
                     pre_turn_analysis.get("dialogue_opportunities", [])
                 ),
-                "ai_insights_generated": len(post_turn_analysis.get("ai_insights", [])),
-                "coordination_quality": "high" if dialogue_results else "standard",
+                "ai_insights_generated": len(
+                    post_turn_analysis.get("ai_insights", [])
+                ),
+                "coordination_quality": "high"
+                if dialogue_results
+                else "standard",
             },
             "story_development": {
                 "progression_score": 0.8 if dialogue_results else 0.5,
@@ -1879,10 +1999,16 @@ class EnhancedMultiAgentBridge:
         self, dialogue_results: List[Dict[str, Any]], execution_time: float
     ):
         """Update communication performance metrics."""
-        self.communication_metrics["total_communications"] += len(dialogue_results)
+        self.communication_metrics["total_communications"] += len(
+            dialogue_results
+        )
 
-        successful_dialogues = len([d for d in dialogue_results if d.get("success")])
-        self.communication_metrics["successful_dialogues"] += successful_dialogues
+        successful_dialogues = len(
+            [d for d in dialogue_results if d.get("success")]
+        )
+        self.communication_metrics[
+            "successful_dialogues"
+        ] += successful_dialogues
         self.communication_metrics["failed_dialogues"] += (
             len(dialogue_results) - successful_dialogues
         )
@@ -1937,7 +2063,9 @@ class EnhancedMultiAgentBridge:
         try:
             initiator = request_data.get("initiator")
             target = request_data.get("target")
-            communication_type = CommunicationType(request_data.get("type", "dialogue"))
+            communication_type = CommunicationType(
+                request_data.get("type", "dialogue")
+            )
             context = request_data.get("context", {})
 
             if initiator and target:
@@ -1948,7 +2076,10 @@ class EnhancedMultiAgentBridge:
                 # Emit result back to requestor
                 self.event_bus.emit(
                     "DIALOGUE_RESULT",
-                    {"request_id": request_data.get("request_id"), "result": result},
+                    {
+                        "request_id": request_data.get("request_id"),
+                        "result": result,
+                    },
                 )
 
         except Exception as e:
@@ -2125,7 +2256,9 @@ def create_enhanced_multi_agent_bridge(
     bridge = EnhancedMultiAgentBridge(
         event_bus, director_agent, llm_coordination_config
     )
-    logger.info("Enhanced Multi-Agent Bridge created with advanced LLM coordination")
+    logger.info(
+        "Enhanced Multi-Agent Bridge created with advanced LLM coordination"
+    )
     return bridge
 
 

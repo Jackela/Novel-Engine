@@ -60,7 +60,9 @@ class UpdateWorldStateResult:
         """Convert result to dictionary representation."""
         return {
             "success": self.success,
-            "world_state_id": self.world_state.id if self.world_state else None,
+            "world_state_id": self.world_state.id
+            if self.world_state
+            else None,
             "world_state_version": (
                 self.world_state.version if self.world_state else None
             ),
@@ -106,7 +108,9 @@ class UpdateWorldStateUC:
             WorldOperationType.MOVE_ENTITY: self._apply_move_entity,
         }
 
-    async def execute(self, command: ApplyWorldDelta) -> UpdateWorldStateResult:
+    async def execute(
+        self, command: ApplyWorldDelta
+    ) -> UpdateWorldStateResult:
         """
         Execute the use case to apply world state delta changes.
 
@@ -156,7 +160,9 @@ class UpdateWorldStateUC:
                 operations_applied += 1
 
             if command.time_operation:
-                await self._apply_time_operation(world_state, command.time_operation)
+                await self._apply_time_operation(
+                    world_state, command.time_operation
+                )
                 operations_applied += 1
 
             if command.snapshot_operation:
@@ -166,7 +172,9 @@ class UpdateWorldStateUC:
                 operations_applied += 1
 
             if command.reset_operation:
-                await self._apply_reset_operation(world_state, command.reset_operation)
+                await self._apply_reset_operation(
+                    world_state, command.reset_operation
+                )
                 operations_applied += 1
 
             # Phase 5: Save the updated world state
@@ -179,7 +187,9 @@ class UpdateWorldStateUC:
             # Clear events from aggregate (they should be handled by infrastructure)
             updated_world_state.clear_domain_events()
 
-            execution_time = (datetime.now() - start_time).total_seconds() * 1000
+            execution_time = (
+                datetime.now() - start_time
+            ).total_seconds() * 1000
 
             logger.info(
                 f"Successfully applied {operations_applied} operations to world {command.world_state_id}"
@@ -198,8 +208,12 @@ class UpdateWorldStateUC:
             )
 
         except ConcurrencyException as e:
-            execution_time = (datetime.now() - start_time).total_seconds() * 1000
-            error_msg = f"Concurrency conflict in world delta application: {str(e)}"
+            execution_time = (
+                datetime.now() - start_time
+            ).total_seconds() * 1000
+            error_msg = (
+                f"Concurrency conflict in world delta application: {str(e)}"
+            )
             logger.warning(error_msg)
 
             return UpdateWorldStateResult(
@@ -210,7 +224,9 @@ class UpdateWorldStateUC:
             )
 
         except EntityNotFoundException as e:
-            execution_time = (datetime.now() - start_time).total_seconds() * 1000
+            execution_time = (
+                datetime.now() - start_time
+            ).total_seconds() * 1000
             error_msg = f"World state not found: {str(e)}"
             logger.error(error_msg)
 
@@ -222,8 +238,12 @@ class UpdateWorldStateUC:
             )
 
         except ValueError as e:
-            execution_time = (datetime.now() - start_time).total_seconds() * 1000
-            error_msg = f"Validation error in world delta application: {str(e)}"
+            execution_time = (
+                datetime.now() - start_time
+            ).total_seconds() * 1000
+            error_msg = (
+                f"Validation error in world delta application: {str(e)}"
+            )
             logger.error(error_msg)
 
             return UpdateWorldStateResult(
@@ -234,8 +254,12 @@ class UpdateWorldStateUC:
             )
 
         except Exception as e:
-            execution_time = (datetime.now() - start_time).total_seconds() * 1000
-            error_msg = f"Unexpected error in world delta application: {str(e)}"
+            execution_time = (
+                datetime.now() - start_time
+            ).total_seconds() * 1000
+            error_msg = (
+                f"Unexpected error in world delta application: {str(e)}"
+            )
             logger.exception(error_msg)
 
             return UpdateWorldStateResult(
@@ -271,7 +295,9 @@ class UpdateWorldStateUC:
         for op in command.entity_operations:
             if op.operation_type == WorldOperationType.ADD_ENTITY:
                 if op.entity_id in entity_ids_being_added:
-                    raise ValueError(f"Duplicate entity addition: {op.entity_id}")
+                    raise ValueError(
+                        f"Duplicate entity addition: {op.entity_id}"
+                    )
                 entity_ids_being_added.add(op.entity_id)
             elif op.entity_id:
                 if op.entity_id in entity_ids_being_modified:
@@ -281,13 +307,17 @@ class UpdateWorldStateUC:
                 entity_ids_being_modified.add(op.entity_id)
 
         # Validate that entities being modified don't conflict with entities being added
-        conflicts = entity_ids_being_added.intersection(entity_ids_being_modified)
+        conflicts = entity_ids_being_added.intersection(
+            entity_ids_being_modified
+        )
         if conflicts:
             raise ValueError(
                 f"Cannot add and modify same entities in one command: {conflicts}"
             )
 
-    async def _retrieve_world_state(self, command: ApplyWorldDelta) -> WorldState:
+    async def _retrieve_world_state(
+        self, command: ApplyWorldDelta
+    ) -> WorldState:
         """
         Retrieve the world state aggregate for modification.
 
@@ -300,7 +330,9 @@ class UpdateWorldStateUC:
         Raises:
             EntityNotFoundException: If world state not found
         """
-        world_state = await self.world_repository.get_by_id(command.world_state_id)
+        world_state = await self.world_repository.get_by_id(
+            command.world_state_id
+        )
         if not world_state:
             raise EntityNotFoundException(
                 f"World state {command.world_state_id} not found"
@@ -325,7 +357,9 @@ class UpdateWorldStateUC:
 
         for operation in operations:
             try:
-                handler = self._operation_handlers.get(operation.operation_type)
+                handler = self._operation_handlers.get(
+                    operation.operation_type
+                )
                 if handler:
                     await handler(world_state, operation)
                     operations_applied += 1
@@ -362,7 +396,9 @@ class UpdateWorldStateUC:
             entity_id=operation.entity_id, reason=operation.reason
         )
         if not removed_entity:
-            logger.warning(f"Entity {operation.entity_id} not found for removal")
+            logger.warning(
+                f"Entity {operation.entity_id} not found for removal"
+            )
 
     async def _apply_update_entity(
         self, world_state: WorldState, operation: EntityOperation
@@ -375,7 +411,9 @@ class UpdateWorldStateUC:
             reason=operation.reason,
         )
         if not success:
-            logger.warning(f"Entity {operation.entity_id} not found for update")
+            logger.warning(
+                f"Entity {operation.entity_id} not found for update"
+            )
 
     async def _apply_move_entity(
         self, world_state: WorldState, operation: EntityOperation
@@ -387,7 +425,9 @@ class UpdateWorldStateUC:
             reason=operation.reason,
         )
         if not success:
-            logger.warning(f"Entity {operation.entity_id} not found for movement")
+            logger.warning(
+                f"Entity {operation.entity_id} not found for movement"
+            )
 
     async def _apply_environment_operation(
         self, world_state: WorldState, operation: EnvironmentOperation
@@ -400,7 +440,8 @@ class UpdateWorldStateUC:
             operation: Environment operation to apply
         """
         world_state.update_environment(
-            environment_changes=operation.environment_changes, reason=operation.reason
+            environment_changes=operation.environment_changes,
+            reason=operation.reason,
         )
 
     async def _apply_time_operation(
@@ -413,7 +454,9 @@ class UpdateWorldStateUC:
             world_state: World state aggregate to modify
             operation: Time operation to apply
         """
-        world_state.advance_time(new_time=operation.new_time, reason=operation.reason)
+        world_state.advance_time(
+            new_time=operation.new_time, reason=operation.reason
+        )
 
     async def _apply_snapshot_operation(
         self, world_state: WorldState, operation: SnapshotOperation
@@ -438,7 +481,8 @@ class UpdateWorldStateUC:
             operation: Reset operation to apply
         """
         world_state.reset_state(
-            reason=operation.reason, preserve_entities=operation.preserve_entities
+            reason=operation.reason,
+            preserve_entities=operation.preserve_entities,
         )
 
     async def retry_with_latest_version(
@@ -456,7 +500,9 @@ class UpdateWorldStateUC:
         """
         for attempt in range(max_retries + 1):
             # Get the latest version of the world state
-            world_state = await self.world_repository.get_by_id(command.world_state_id)
+            world_state = await self.world_repository.get_by_id(
+                command.world_state_id
+            )
             if not world_state:
                 return UpdateWorldStateResult(
                     success=False,

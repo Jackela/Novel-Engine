@@ -42,7 +42,9 @@ class TestProficiencyLevel:
     def test_proficiency_level_ordering(self):
         """Test that proficiency levels can be compared."""
         assert ProficiencyLevel.UNTRAINED.value < ProficiencyLevel.NOVICE.value
-        assert ProficiencyLevel.EXPERT.value > ProficiencyLevel.JOURNEYMAN.value
+        assert (
+            ProficiencyLevel.EXPERT.value > ProficiencyLevel.JOURNEYMAN.value
+        )
         assert ProficiencyLevel.LEGENDARY.value > ProficiencyLevel.MASTER.value
 
 
@@ -152,7 +154,9 @@ class TestSkill:
                 proficiency_level=ProficiencyLevel.NOVICE,
                 modifier=-11,  # Too low
             )
-        assert "Skill modifier must be between -10 and 20" in str(exc_info.value)
+        assert "Skill modifier must be between -10 and 20" in str(
+            exc_info.value
+        )
 
     def test_skill_modifier_too_high_fails(self):
         """Test skill validation fails with modifier too high."""
@@ -163,7 +167,9 @@ class TestSkill:
                 proficiency_level=ProficiencyLevel.NOVICE,
                 modifier=21,  # Too high
             )
-        assert "Skill modifier must be between -10 and 20" in str(exc_info.value)
+        assert "Skill modifier must be between -10 and 20" in str(
+            exc_info.value
+        )
 
     def test_skill_description_too_long_fails(self):
         """Test skill validation fails with description too long."""
@@ -176,7 +182,9 @@ class TestSkill:
                 modifier=0,
                 description=long_description,
             )
-        assert "Skill description cannot exceed 500 characters" in str(exc_info.value)
+        assert "Skill description cannot exceed 500 characters" in str(
+            exc_info.value
+        )
 
     def test_skill_boundary_values(self):
         """Test skill creation at boundary values."""
@@ -331,7 +339,10 @@ class TestSkill:
             (ProficiencyLevel.EXPERT, "Highly skilled professional"),
             (ProficiencyLevel.MASTER, "Acknowledged master of the art"),
             (ProficiencyLevel.GRANDMASTER, "Among the greatest practitioners"),
-            (ProficiencyLevel.LEGENDARY, "Legendary skill transcending normal limits"),
+            (
+                ProficiencyLevel.LEGENDARY,
+                "Legendary skill transcending normal limits",
+            ),
         ]
 
         for proficiency, expected_description in skill_levels:
@@ -353,10 +364,16 @@ class TestSkillGroup:
         """Create sample combat skills for testing."""
         return {
             "melee_combat": Skill(
-                "Melee Combat", SkillCategory.COMBAT, ProficiencyLevel.EXPERT, 2
+                "Melee Combat",
+                SkillCategory.COMBAT,
+                ProficiencyLevel.EXPERT,
+                2,
             ),
             "ranged_combat": Skill(
-                "Ranged Combat", SkillCategory.COMBAT, ProficiencyLevel.JOURNEYMAN, 1
+                "Ranged Combat",
+                SkillCategory.COMBAT,
+                ProficiencyLevel.JOURNEYMAN,
+                1,
             ),
             "dodge": Skill(
                 "Dodge", SkillCategory.COMBAT, ProficiencyLevel.APPRENTICE, 0
@@ -403,7 +420,9 @@ class TestSkillGroup:
             )
         assert "Skill group name cannot be empty" in str(exc_info.value)
 
-    def test_skill_group_base_modifier_too_low_fails(self, sample_combat_skills):
+    def test_skill_group_base_modifier_too_low_fails(
+        self, sample_combat_skills
+    ):
         """Test skill group validation fails with base modifier too low."""
         with pytest.raises(ValueError) as exc_info:
             SkillGroup(
@@ -414,7 +433,9 @@ class TestSkillGroup:
             )
         assert "Base modifier must be between -5 and 10" in str(exc_info.value)
 
-    def test_skill_group_base_modifier_too_high_fails(self, sample_combat_skills):
+    def test_skill_group_base_modifier_too_high_fails(
+        self, sample_combat_skills
+    ):
         """Test skill group validation fails with base modifier too high."""
         with pytest.raises(ValueError) as exc_info:
             SkillGroup(
@@ -434,13 +455,18 @@ class TestSkillGroup:
                 base_modifier=0,
                 skills={},  # Empty skills
             )
-        assert "Skill group must contain at least one skill" in str(exc_info.value)
+        assert "Skill group must contain at least one skill" in str(
+            exc_info.value
+        )
 
     def test_skill_group_mismatched_category_fails(self):
         """Test skill group validation fails with mismatched skill categories."""
         mismatched_skills = {
             "melee_combat": Skill(
-                "Melee Combat", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0
+                "Melee Combat",
+                SkillCategory.COMBAT,
+                ProficiencyLevel.NOVICE,
+                0,
             ),
             "persuasion": Skill(
                 "Persuasion", SkillCategory.SOCIAL, ProficiencyLevel.NOVICE, 0
@@ -454,7 +480,9 @@ class TestSkillGroup:
                 base_modifier=0,
                 skills=mismatched_skills,
             )
-        assert "All skills in group must match category combat" in str(exc_info.value)
+        assert "All skills in group must match category combat" in str(
+            exc_info.value
+        )
 
     # ==================== Method Tests ====================
 
@@ -499,7 +527,9 @@ class TestSkillGroup:
         # This test is theoretical since empty groups fail validation
         # but tests the method logic
         skills = {
-            "test": Skill("Test", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0)
+            "test": Skill(
+                "Test", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0
+            )
         }
         group = SkillGroup("Test", SkillCategory.COMBAT, 0, skills)
 
@@ -530,7 +560,10 @@ class TestSkillGroup:
                 "Trained", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0
             ),
             "untrained": Skill(
-                "Untrained", SkillCategory.COMBAT, ProficiencyLevel.UNTRAINED, 0
+                "Untrained",
+                SkillCategory.COMBAT,
+                ProficiencyLevel.UNTRAINED,
+                0,
             ),
         }
 
@@ -553,16 +586,25 @@ class TestSkills:
         """Create sample skill groups for testing."""
         combat_skills = {
             "melee_combat": Skill(
-                "Melee Combat", SkillCategory.COMBAT, ProficiencyLevel.EXPERT, 2
+                "Melee Combat",
+                SkillCategory.COMBAT,
+                ProficiencyLevel.EXPERT,
+                2,
             ),
             "ranged_combat": Skill(
-                "Ranged Combat", SkillCategory.COMBAT, ProficiencyLevel.JOURNEYMAN, 1
+                "Ranged Combat",
+                SkillCategory.COMBAT,
+                ProficiencyLevel.JOURNEYMAN,
+                1,
             ),
         }
 
         social_skills = {
             "persuasion": Skill(
-                "Persuasion", SkillCategory.SOCIAL, ProficiencyLevel.APPRENTICE, 1
+                "Persuasion",
+                SkillCategory.SOCIAL,
+                ProficiencyLevel.APPRENTICE,
+                1,
             ),
             "deception": Skill(
                 "Deception", SkillCategory.SOCIAL, ProficiencyLevel.NOVICE, 0
@@ -604,7 +646,9 @@ class TestSkills:
     def test_skills_creation_minimal(self, sample_skill_groups):
         """Test Skills creation with minimal data."""
         skills = Skills(
-            skill_groups=sample_skill_groups, languages=set(), specializations={}
+            skill_groups=sample_skill_groups,
+            languages=set(),
+            specializations={},
         )
 
         assert len(skills.skill_groups) == 2
@@ -616,8 +660,12 @@ class TestSkills:
     def test_skills_empty_skill_groups_fails(self):
         """Test Skills validation fails with empty skill groups."""
         with pytest.raises(ValueError) as exc_info:
-            Skills(skill_groups={}, languages={"Common"}, specializations={})  # Empty
-        assert "Character must have at least one skill group" in str(exc_info.value)
+            Skills(
+                skill_groups={}, languages={"Common"}, specializations={}
+            )  # Empty
+        assert "Character must have at least one skill group" in str(
+            exc_info.value
+        )
 
     def test_skills_empty_language_name_fails(self, sample_skill_groups):
         """Test Skills validation fails with empty language name."""
@@ -638,7 +686,9 @@ class TestSkills:
                 languages={"Common", long_language},
                 specializations={},
             )
-        assert "Language names cannot exceed 30 characters" in str(exc_info.value)
+        assert "Language names cannot exceed 30 characters" in str(
+            exc_info.value
+        )
 
     def test_skills_empty_specialization_name_fails(self, sample_skill_groups):
         """Test Skills validation fails with empty specialization name."""
@@ -650,7 +700,9 @@ class TestSkills:
             )
         assert "Specialization names cannot be empty" in str(exc_info.value)
 
-    def test_skills_specialization_bonus_too_low_fails(self, sample_skill_groups):
+    def test_skills_specialization_bonus_too_low_fails(
+        self, sample_skill_groups
+    ):
         """Test Skills validation fails with specialization bonus too low."""
         with pytest.raises(ValueError) as exc_info:
             Skills(
@@ -658,9 +710,13 @@ class TestSkills:
                 languages={"Common"},
                 specializations={"test_skill": -6},  # Too low
             )
-        assert "Specialization bonus must be between -5 and 15" in str(exc_info.value)
+        assert "Specialization bonus must be between -5 and 15" in str(
+            exc_info.value
+        )
 
-    def test_skills_specialization_bonus_too_high_fails(self, sample_skill_groups):
+    def test_skills_specialization_bonus_too_high_fails(
+        self, sample_skill_groups
+    ):
         """Test Skills validation fails with specialization bonus too high."""
         with pytest.raises(ValueError) as exc_info:
             Skills(
@@ -668,7 +724,9 @@ class TestSkills:
                 languages={"Common"},
                 specializations={"test_skill": 16},  # Too high
             )
-        assert "Specialization bonus must be between -5 and 15" in str(exc_info.value)
+        assert "Specialization bonus must be between -5 and 15" in str(
+            exc_info.value
+        )
 
     # ==================== Skill Lookup Tests ====================
 
@@ -709,14 +767,23 @@ class TestSkills:
 
     def test_has_skill_sufficient_proficiency(self, sample_skills):
         """Test has_skill returns True with sufficient proficiency."""
-        assert sample_skills.has_skill("melee_combat", ProficiencyLevel.EXPERT) is True
         assert (
-            sample_skills.has_skill("melee_combat", ProficiencyLevel.JOURNEYMAN) is True
+            sample_skills.has_skill("melee_combat", ProficiencyLevel.EXPERT)
+            is True
+        )
+        assert (
+            sample_skills.has_skill(
+                "melee_combat", ProficiencyLevel.JOURNEYMAN
+            )
+            is True
         )
 
     def test_has_skill_insufficient_proficiency(self, sample_skills):
         """Test has_skill returns False with insufficient proficiency."""
-        assert sample_skills.has_skill("persuasion", ProficiencyLevel.EXPERT) is False
+        assert (
+            sample_skills.has_skill("persuasion", ProficiencyLevel.EXPERT)
+            is False
+        )
 
     def test_has_skill_default_proficiency(self, sample_skills):
         """Test has_skill with default minimum proficiency."""
@@ -765,7 +832,9 @@ class TestSkills:
 
     def test_get_skills_by_category_existing(self, sample_skills):
         """Test getting skills by existing category."""
-        combat_skills = sample_skills.get_skills_by_category(SkillCategory.COMBAT)
+        combat_skills = sample_skills.get_skills_by_category(
+            SkillCategory.COMBAT
+        )
 
         assert len(combat_skills) == 2
         skill_names = [skill.name for skill in combat_skills]
@@ -774,7 +843,9 @@ class TestSkills:
 
     def test_get_skills_by_category_nonexistent(self, sample_skills):
         """Test getting skills by non-existent category returns empty list."""
-        magical_skills = sample_skills.get_skills_by_category(SkillCategory.MAGICAL)
+        magical_skills = sample_skills.get_skills_by_category(
+            SkillCategory.MAGICAL
+        )
 
         assert magical_skills == []
 
@@ -838,7 +909,9 @@ class TestSkills:
     def test_get_strongest_category_empty_skills(self):
         """Test strongest category with minimal skills."""
         minimal_skills = {
-            "test": Skill("Test", SkillCategory.PHYSICAL, ProficiencyLevel.NOVICE, 0)
+            "test": Skill(
+                "Test", SkillCategory.PHYSICAL, ProficiencyLevel.NOVICE, 0
+            )
         }
 
         skill_groups = {
@@ -847,7 +920,9 @@ class TestSkills:
             )
         }
 
-        skills = Skills(skill_groups=skill_groups, languages=set(), specializations={})
+        skills = Skills(
+            skill_groups=skill_groups, languages=set(), specializations={}
+        )
 
         strongest = skills.get_strongest_category()
         assert strongest == SkillCategory.PHYSICAL
@@ -857,12 +932,20 @@ class TestSkills:
         # Add more expert combat skills to test
         additional_combat_skills = {
             "melee_combat": Skill(
-                "Melee Combat", SkillCategory.COMBAT, ProficiencyLevel.EXPERT, 2
+                "Melee Combat",
+                SkillCategory.COMBAT,
+                ProficiencyLevel.EXPERT,
+                2,
             ),
             "ranged_combat": Skill(
-                "Ranged Combat", SkillCategory.COMBAT, ProficiencyLevel.EXPERT, 1
+                "Ranged Combat",
+                SkillCategory.COMBAT,
+                ProficiencyLevel.EXPERT,
+                1,
             ),
-            "dodge": Skill("Dodge", SkillCategory.COMBAT, ProficiencyLevel.EXPERT, 0),
+            "dodge": Skill(
+                "Dodge", SkillCategory.COMBAT, ProficiencyLevel.EXPERT, 0
+            ),
         }
 
         skill_groups = {
@@ -871,32 +954,47 @@ class TestSkills:
             )
         }
 
-        skills = Skills(skill_groups=skill_groups, languages=set(), specializations={})
+        skills = Skills(
+            skill_groups=skill_groups, languages=set(), specializations={}
+        )
 
-        assert skills.is_specialist(SkillCategory.COMBAT, min_expert_skills=3) is True
+        assert (
+            skills.is_specialist(SkillCategory.COMBAT, min_expert_skills=3)
+            is True
+        )
 
     def test_is_specialist_false(self, sample_skills):
         """Test is_specialist returns False when not meeting criteria."""
         assert (
-            sample_skills.is_specialist(SkillCategory.COMBAT, min_expert_skills=3)
+            sample_skills.is_specialist(
+                SkillCategory.COMBAT, min_expert_skills=3
+            )
             is False
         )
 
     def test_can_perform_action_success(self, sample_skills):
         """Test can_perform_action returns True for achievable actions."""
         # Melee Combat modifier is 6 (or 8 with specialization), + 10 base = 16/18
-        assert sample_skills.can_perform_action("melee_combat", difficulty=15) is True
+        assert (
+            sample_skills.can_perform_action("melee_combat", difficulty=15)
+            is True
+        )
 
     def test_can_perform_action_failure(self, sample_skills):
         """Test can_perform_action returns False for difficult actions."""
         # Deception modifier is 1, + 10 base = 11
-        assert sample_skills.can_perform_action("deception", difficulty=20) is False
+        assert (
+            sample_skills.can_perform_action("deception", difficulty=20)
+            is False
+        )
 
     def test_can_perform_action_nonexistent_skill(self, sample_skills):
         """Test can_perform_action with non-existent skill."""
         # Non-existent skill has 0 modifier, + 10 base = 10
         assert (
-            sample_skills.can_perform_action("nonexistent_skill", difficulty=15)
+            sample_skills.can_perform_action(
+                "nonexistent_skill", difficulty=15
+            )
             is False
         )
 
@@ -980,7 +1078,9 @@ class TestSkills:
     def test_skill_group_immutability(self):
         """Test that SkillGroup is immutable."""
         skills_dict = {
-            "test": Skill("Test", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0)
+            "test": Skill(
+                "Test", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0
+            )
         }
         group = SkillGroup("Test", SkillCategory.COMBAT, 0, skills_dict)
 
@@ -989,7 +1089,9 @@ class TestSkills:
 
     # ==================== Edge Cases and Integration Tests ====================
 
-    def test_skills_with_overlapping_specializations(self, sample_skill_groups):
+    def test_skills_with_overlapping_specializations(
+        self, sample_skill_groups
+    ):
         """Test skills with specializations for non-existent skills."""
         skills = Skills(
             skill_groups=sample_skill_groups,
@@ -1002,7 +1104,9 @@ class TestSkills:
 
         # Should work with existing skill
         modifier_existing = skills.get_skill_modifier("melee_combat")
-        assert modifier_existing == 9  # EXPERT(4) + modifier(2) + specialization(3)
+        assert (
+            modifier_existing == 9
+        )  # EXPERT(4) + modifier(2) + specialization(3)
 
         # Should return 0 for non-existent skill
         modifier_nonexistent = skills.get_skill_modifier("nonexistent_skill")
@@ -1043,8 +1147,12 @@ class TestSkills:
 
         # Test maximum modifier calculation
         max_modifier = skills.get_skill_modifier("max_skill")
-        assert max_modifier == 42  # LEGENDARY(7) + modifier(20) + specialization(15)
+        assert (
+            max_modifier == 42
+        )  # LEGENDARY(7) + modifier(20) + specialization(15)
 
         # Test minimum modifier calculation
         min_modifier = skills.get_skill_modifier("min_skill")
-        assert min_modifier == -15  # UNTRAINED(0) + modifier(-10) + specialization(-5)
+        assert (
+            min_modifier == -15
+        )  # UNTRAINED(0) + modifier(-10) + specialization(-5)

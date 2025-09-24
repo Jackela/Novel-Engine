@@ -10,7 +10,7 @@ bounded context.
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from ..events.interaction_events import (
     NegotiationCompleted,
@@ -97,10 +97,12 @@ class NegotiationSession:
         if self.created_at.tzinfo is None:
             raise ValueError("created_at must be timezone-aware")
 
-        # Add creation event
+        # Add creation event - P3 Sprint 2 Pattern: Include required positional arguments
         self._add_domain_event(
             NegotiationSessionCreated(
                 session_id=self.session_id.value,
+                occurred_at=datetime.now(timezone.utc),
+                event_id=uuid4(),
                 session_name=self.session_name,
                 session_type=self.session_type,
                 created_by=self.created_by,
@@ -127,7 +129,8 @@ class NegotiationSession:
 
         status = NegotiationStatus.create_initial(
             started_at=now,
-            expected_completion_at=now + timedelta(hours=session_timeout_hours),
+            expected_completion_at=now
+            + timedelta(hours=session_timeout_hours),
         )
 
         return cls(
@@ -154,7 +157,9 @@ class NegotiationSession:
             )
 
         if not self.status.is_active:
-            raise ValueError("Cannot add party to inactive negotiation session")
+            raise ValueError(
+                "Cannot add party to inactive negotiation session"
+            )
 
         # Check if party is compatible with existing parties
         for existing_party in self.parties.values():
@@ -166,7 +171,9 @@ class NegotiationSession:
         # Validate role constraints
         if party.role == PartyRole.MEDIATOR:
             existing_mediators = [
-                p for p in self.parties.values() if p.role == PartyRole.MEDIATOR
+                p
+                for p in self.parties.values()
+                if p.role == PartyRole.MEDIATOR
             ]
             if existing_mediators:
                 raise ValueError("Session can only have one mediator")
@@ -179,9 +186,12 @@ class NegotiationSession:
         self.status = self.status.update_last_activity()
         self._increment_version()
 
+        # P3 Sprint 2 Pattern: Include required positional arguments
         self._add_domain_event(
             PartyJoinedNegotiation(
                 session_id=self.session_id.value,
+                occurred_at=datetime.now(timezone.utc),
+                event_id=uuid4(),
                 party_id=party.party_id,
                 party_name=party.party_name,
                 party_role=party.role.value,
@@ -189,7 +199,9 @@ class NegotiationSession:
             )
         )
 
-    def remove_party(self, party_id: UUID, reason: Optional[str] = None) -> None:
+    def remove_party(
+        self, party_id: UUID, reason: Optional[str] = None
+    ) -> None:
         """Remove a party from the negotiation session."""
         if party_id not in self.parties:
             raise ValueError(f"Party {party_id} not in session")
@@ -220,9 +232,12 @@ class NegotiationSession:
         self.status = self.status.update_last_activity()
         self._increment_version()
 
+        # P3 Sprint 2 Pattern: Include required positional arguments
         self._add_domain_event(
             PartyLeftNegotiation(
                 session_id=self.session_id.value,
+                occurred_at=datetime.now(timezone.utc),
+                event_id=uuid4(),
                 party_id=party_id,
                 party_name=party.party_name,
                 left_at=datetime.now(timezone.utc),
@@ -230,14 +245,18 @@ class NegotiationSession:
             )
         )
 
-    def submit_proposal(self, proposal: ProposalTerms, submitted_by: UUID) -> None:
+    def submit_proposal(
+        self, proposal: ProposalTerms, submitted_by: UUID
+    ) -> None:
         """Submit a new proposal to the negotiation."""
         if submitted_by not in self.parties:
             raise ValueError(f"Party {submitted_by} not in session")
 
         submitting_party = self.parties[submitted_by]
         if not submitting_party.can_make_binding_decisions():
-            raise ValueError("Party does not have authority to submit proposals")
+            raise ValueError(
+                "Party does not have authority to submit proposals"
+            )
 
         if not self.status.is_active:
             raise ValueError("Cannot submit proposal to inactive session")
@@ -271,9 +290,12 @@ class NegotiationSession:
         self.status = self.status.update_last_activity()
         self._increment_version()
 
+        # P3 Sprint 2 Pattern: Include required positional arguments
         self._add_domain_event(
             ProposalSubmitted(
                 session_id=self.session_id.value,
+                occurred_at=datetime.now(timezone.utc),
+                event_id=uuid4(),
                 proposal_id=proposal.proposal_id,
                 proposal_type=proposal.proposal_type.value,
                 submitted_by=submitted_by,
@@ -297,13 +319,17 @@ class NegotiationSession:
 
         responding_party = self.parties[response.responding_party_id]
         if not responding_party.can_make_binding_decisions():
-            raise ValueError("Party does not have authority to respond to proposals")
+            raise ValueError(
+                "Party does not have authority to respond to proposals"
+            )
 
         if not self.status.is_active:
             raise ValueError("Cannot submit response to inactive session")
 
         # Check for duplicate responses
-        existing_responses = self.responses.get(response.responding_party_id, [])
+        existing_responses = self.responses.get(
+            response.responding_party_id, []
+        )
         for existing in existing_responses:
             if existing.proposal_id == response.proposal_id:
                 raise ValueError("Party already responded to this proposal")
@@ -315,9 +341,12 @@ class NegotiationSession:
         self.status = self.status.update_last_activity()
         self._increment_version()
 
+        # P3 Sprint 2 Pattern: Include required positional arguments
         self._add_domain_event(
             ProposalResponseReceived(
                 session_id=self.session_id.value,
+                occurred_at=datetime.now(timezone.utc),
+                event_id=uuid4(),
                 proposal_id=response.proposal_id,
                 responding_party_id=response.responding_party_id,
                 response_type=response.overall_response.value,
@@ -379,9 +408,12 @@ class NegotiationSession:
             NegotiationOutcome.AGREEMENT_REACHED,
             NegotiationOutcome.PARTIAL_AGREEMENT,
         ]:
+            # P3 Sprint 2 Pattern: Include required positional arguments
             self._add_domain_event(
                 NegotiationCompleted(
                     session_id=self.session_id.value,
+                    occurred_at=datetime.now(timezone.utc),
+                    event_id=uuid4(),
                     outcome=outcome.value,
                     completed_at=completion_time,
                     final_proposals=list(self.active_proposals.keys()),
@@ -390,9 +422,12 @@ class NegotiationSession:
                 )
             )
         else:
+            # P3 Sprint 2 Pattern: Include required positional arguments
             self._add_domain_event(
                 NegotiationTerminated(
                     session_id=self.session_id.value,
+                    occurred_at=datetime.now(timezone.utc),
+                    event_id=uuid4(),
                     outcome=outcome.value,
                     termination_reason=termination_reason.value,
                     terminated_by=terminated_by,
@@ -401,7 +436,9 @@ class NegotiationSession:
                 )
             )
 
-    def get_proposal_responses(self, proposal_id: UUID) -> List[ProposalResponse]:
+    def get_proposal_responses(
+        self, proposal_id: UUID
+    ) -> List[ProposalResponse]:
         """Get all responses for a specific proposal."""
         responses = []
         for party_responses in self.responses.values():
@@ -416,7 +453,9 @@ class NegotiationSession:
 
     def get_decision_makers(self) -> List[NegotiationParty]:
         """Get all parties that can make binding decisions."""
-        return [party for party in self.parties.values() if party.is_decision_maker]
+        return [
+            party for party in self.parties.values() if party.is_decision_maker
+        ]
 
     def get_parties_by_role(self, role: PartyRole) -> List[NegotiationParty]:
         """Get all parties with specified role."""
@@ -478,13 +517,18 @@ class NegotiationSession:
 
         # Check for timeout warning
         if self.is_timeout_approaching():
+            # P3 Sprint 2 Pattern: Include required positional arguments
             self._add_domain_event(
                 SessionTimeoutWarning(
                     session_id=self.session_id.value,
+                    occurred_at=datetime.now(timezone.utc),
+                    event_id=uuid4(),
                     warning_at=now,
                     expires_at=self.status.expected_completion_at,
                     time_remaining=int(
-                        (self.status.expected_completion_at - now).total_seconds()
+                        (
+                            self.status.expected_completion_at - now
+                        ).total_seconds()
                     ),
                 )
             )
@@ -510,9 +554,12 @@ class NegotiationSession:
         self.status = self.status.advance_to_phase(target_phase)
         self._increment_version()
 
+        # P3 Sprint 2 Pattern: Include required positional arguments
         self._add_domain_event(
             NegotiationPhaseAdvanced(
                 session_id=self.session_id.value,
+                occurred_at=datetime.now(timezone.utc),
+                event_id=uuid4(),
                 from_phase=old_phase.value,
                 to_phase=target_phase.value,
                 advanced_at=datetime.now(timezone.utc),
@@ -532,7 +579,8 @@ class NegotiationSession:
 
         elif target_phase == NegotiationPhase.CLOSING:
             return any(
-                self._has_responses_for_proposal(pid) for pid in self.active_proposals
+                self._has_responses_for_proposal(pid)
+                for pid in self.active_proposals
             )
 
         elif target_phase == NegotiationPhase.IMPLEMENTATION:

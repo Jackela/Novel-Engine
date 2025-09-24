@@ -107,7 +107,9 @@ class TestCharacterFactory:
                     assert isinstance(data, dict)
                 else:
                     # 如果没有直接的加载方法，通过创建角色来间接测试
-                    with patch("character_factory.PersonaAgent") as mock_persona:
+                    with patch(
+                        "character_factory.PersonaAgent"
+                    ) as mock_persona:
                         mock_agent = Mock()
                         mock_persona.return_value = mock_agent
 
@@ -115,7 +117,9 @@ class TestCharacterFactory:
                         assert agent is not None
             except Exception as e:
                 # 如果方法不存在或有其他问题，跳过测试
-                pytest.skip(f"Character data loading method not accessible: {e}")
+                pytest.skip(
+                    f"Character data loading method not accessible: {e}"
+                )
 
     @pytest.mark.unit
     def test_validate_character_directory_success(self, characters_directory):
@@ -126,7 +130,9 @@ class TestCharacterFactory:
         ):
             # 测试验证方法是否存在
             if hasattr(self.factory, "_validate_character_directory"):
-                is_valid = self.factory._validate_character_directory("engineer")
+                is_valid = self.factory._validate_character_directory(
+                    "engineer"
+                )
                 assert is_valid is True
             else:
                 # 间接测试：创建角色不应该抛出目录相关错误
@@ -146,7 +152,9 @@ class TestCharacterFactory:
             return_value=str(temp_dir),
         ):
             if hasattr(self.factory, "_validate_character_directory"):
-                is_valid = self.factory._validate_character_directory("nonexistent")
+                is_valid = self.factory._validate_character_directory(
+                    "nonexistent"
+                )
                 assert is_valid is False
             else:
                 # 间接测试：尝试创建不存在的角色应该失败
@@ -181,8 +189,8 @@ class TestCharacterFactory:
                     mock_agent.character.name = name
                     return mock_agent
 
-                mock_persona.side_effect = lambda *args, **kwargs: create_mock_agent(
-                    "test"
+                mock_persona.side_effect = (
+                    lambda *args, **kwargs: create_mock_agent("test")
                 )
 
                 characters_to_create = ["engineer", "pilot", "scientist"]
@@ -235,7 +243,9 @@ class TestCharacterFactoryConfiguration:
             char_dir.mkdir()
 
             # 创建基本的角色文件
-            (char_dir / "character_test_character.md").write_text("# Test Character\n")
+            (char_dir / "character_test_character.md").write_text(
+                "# Test Character\n"
+            )
 
             try:
                 # 尝试创建角色（可能会失败，但不应该是路径问题）
@@ -247,7 +257,10 @@ class TestCharacterFactoryConfiguration:
                     assert agent is not None
             except Exception as e:
                 # 如果创建失败，确保不是因为路径问题
-                assert "path" not in str(e).lower() or "directory" not in str(e).lower()
+                assert (
+                    "path" not in str(e).lower()
+                    or "directory" not in str(e).lower()
+                )
 
 
 @pytest.mark.skipif(

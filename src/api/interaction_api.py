@@ -117,7 +117,8 @@ class InteractionAPI:
             """Initiates a new character interaction."""
             if not self.orchestrator:
                 raise HTTPException(
-                    status_code=503, detail="System not ready. Please try again."
+                    status_code=503,
+                    detail="System not ready. Please try again.",
                 )
 
             try:
@@ -148,7 +149,9 @@ class InteractionAPI:
                     "created_at": datetime.now(),
                 }
 
-                asyncio.create_task(self._process_interaction_async(interaction_id))
+                asyncio.create_task(
+                    self._process_interaction_async(interaction_id)
+                )
 
                 return InteractionResponse(
                     interaction_id=interaction_id,
@@ -159,14 +162,17 @@ class InteractionAPI:
                 raise
             except Exception as e:
                 logger.error(f"Error creating interaction: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error.")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error."
+                )
 
         @app.get("/api/v1/interactions", response_model=dict)
         async def list_interactions():
             """List all active interactions."""
             if not self.orchestrator:
                 raise HTTPException(
-                    status_code=503, detail="System not ready. Please try again."
+                    status_code=503,
+                    detail="System not ready. Please try again.",
                 )
 
             try:
@@ -177,29 +183,39 @@ class InteractionAPI:
                             "interaction_id": interaction_id,
                             "status": data["status"],
                             "participants": data["context"].participants,
-                            "interaction_type": data["context"].interaction_type.value,
+                            "interaction_type": data[
+                                "context"
+                            ].interaction_type.value,
                             "created_at": data.get(
                                 "created_at", datetime.now()
                             ).isoformat(),
                         }
                     )
 
-                return {"interactions": interactions, "total": len(interactions)}
+                return {
+                    "interactions": interactions,
+                    "total": len(interactions),
+                }
             except Exception as e:
                 logger.error(f"Error listing interactions: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error.")
+                raise HTTPException(
+                    status_code=500, detail="Internal server error."
+                )
 
         @app.get("/api/v1/interactions/{interaction_id}", response_model=dict)
         async def get_interaction(interaction_id: str):
             """Get detailed interaction information."""
             if not self.orchestrator:
                 raise HTTPException(
-                    status_code=503, detail="System not ready. Please try again."
+                    status_code=503,
+                    detail="System not ready. Please try again.",
                 )
 
             try:
                 if interaction_id not in self.active_interactions:
-                    raise HTTPException(status_code=404, detail="Interaction not found")
+                    raise HTTPException(
+                        status_code=404, detail="Interaction not found"
+                    )
 
                 data = self.active_interactions[interaction_id]
                 return {
@@ -207,17 +223,25 @@ class InteractionAPI:
                     "status": data["status"],
                     "context": {
                         "participants": data["context"].participants,
-                        "interaction_type": data["context"].interaction_type.value,
+                        "interaction_type": data[
+                            "context"
+                        ].interaction_type.value,
                         "priority": data["context"].priority.value,
                         "metadata": data["context"].metadata,
                     },
-                    "created_at": data.get("created_at", datetime.now()).isoformat(),
+                    "created_at": data.get(
+                        "created_at", datetime.now()
+                    ).isoformat(),
                 }
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting interaction {interaction_id}: {e}")
-                raise HTTPException(status_code=500, detail="Internal server error.")
+                logger.error(
+                    f"Error getting interaction {interaction_id}: {e}"
+                )
+                raise HTTPException(
+                    status_code=500, detail="Internal server error."
+                )
 
     async def _process_interaction_async(self, interaction_id: str):
         """Processes an interaction asynchronously."""
@@ -227,7 +251,9 @@ class InteractionAPI:
                     f"No orchestrator available for interaction {interaction_id}"
                 )
                 if interaction_id in self.active_interactions:
-                    self.active_interactions[interaction_id]["status"] = "error"
+                    self.active_interactions[interaction_id][
+                        "status"
+                    ] = "error"
                 return
 
             state = self.active_interactions[interaction_id]
@@ -244,7 +270,9 @@ class InteractionAPI:
                 state["status"] = "completed"
                 state["completed_at"] = datetime.now()
 
-                logger.info(f"Interaction {interaction_id} completed successfully")
+                logger.info(
+                    f"Interaction {interaction_id} completed successfully"
+                )
             except Exception as process_error:
                 logger.error(
                     f"Interaction processing failed for {interaction_id}: {process_error}"

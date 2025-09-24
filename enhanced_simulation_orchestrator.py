@@ -43,14 +43,14 @@ from enterprise_multi_agent_orchestrator import (
     create_enterprise_orchestrator,
 )
 
-
 # Import existing Novel Engine components
 from src.event_bus import EventBus
 from src.persona_agent import PersonaAgent
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -126,7 +126,9 @@ class EnhancedSimulationOrchestrator:
         self.character_factory: Optional[CharacterFactory] = None
 
         # Initialize enhanced multi-agent system (5 waves)
-        self.enterprise_orchestrator: Optional[EnterpriseMultiAgentOrchestrator] = None
+        self.enterprise_orchestrator: Optional[
+            EnterpriseMultiAgentOrchestrator
+        ] = None
         self.agents: List[PersonaAgent] = []
 
         # Simulation state tracking
@@ -140,7 +142,9 @@ class EnhancedSimulationOrchestrator:
             self.novel_engine_config = get_config()
             logger.info("Novel Engine configuration loaded successfully")
         except Exception as e:
-            logger.warning(f"Could not load Novel Engine config, using defaults: {e}")
+            logger.warning(
+                f"Could not load Novel Engine config, using defaults: {e}"
+            )
             self.novel_engine_config = None
 
         logger.info(
@@ -166,7 +170,9 @@ class EnhancedSimulationOrchestrator:
                 core_init["components"]
             )
             if core_init.get("warnings"):
-                initialization_results["warnings"].extend(core_init["warnings"])
+                initialization_results["warnings"].extend(
+                    core_init["warnings"]
+                )
 
             # Phase 2: Initialize enterprise multi-agent system (all 5 waves)
             if self.config.mode in [
@@ -184,7 +190,9 @@ class EnhancedSimulationOrchestrator:
 
             # Phase 3: Establish integration between systems
             integration_result = await self._establish_system_integration()
-            initialization_results["integration_status"].update(integration_result)
+            initialization_results["integration_status"].update(
+                integration_result
+            )
 
             # Phase 4: Validate system compatibility
             if self.config.integration_level in [
@@ -201,7 +209,10 @@ class EnhancedSimulationOrchestrator:
             initialization_results["performance_baseline"] = baseline
 
             # Phase 6: Start enterprise monitoring if enabled
-            if self.config.enable_real_time_monitoring and self.enterprise_orchestrator:
+            if (
+                self.config.enable_real_time_monitoring
+                and self.enterprise_orchestrator
+            ):
                 await self.enterprise_orchestrator.start_monitoring()
                 initialization_results["components_initialized"].append(
                     "Enterprise Monitoring"
@@ -235,7 +246,9 @@ class EnhancedSimulationOrchestrator:
             )
 
             # Initialize agents
-            agents_result = await self._initialize_simulation_agents(character_sheets)
+            agents_result = await self._initialize_simulation_agents(
+                character_sheets
+            )
             if not agents_result["success"]:
                 return {
                     "success": False,
@@ -244,7 +257,9 @@ class EnhancedSimulationOrchestrator:
                 }
 
             # Load campaign brief if provided
-            campaign_context = await self._load_campaign_context(campaign_brief)
+            campaign_context = await self._load_campaign_context(
+                campaign_brief
+            )
 
             # Execute simulation turns with full enhancement
             simulation_results = {
@@ -287,7 +302,10 @@ class EnhancedSimulationOrchestrator:
                         break
 
                 # Collect performance metrics
-                if self.enterprise_orchestrator and self.config.enable_monitoring:
+                if (
+                    self.enterprise_orchestrator
+                    and self.config.enable_monitoring
+                ):
                     dashboard = (
                         await self.enterprise_orchestrator.get_enterprise_dashboard()
                     )
@@ -303,18 +321,24 @@ class EnhancedSimulationOrchestrator:
                 await asyncio.sleep(0.5)
 
             # Generate comprehensive simulation report
-            execution_time = (datetime.now() - simulation_start).total_seconds()
+            execution_time = (
+                datetime.now() - simulation_start
+            ).total_seconds()
             simulation_results["execution_time"] = execution_time
-            simulation_results["summary"] = await self._generate_simulation_summary(
-                simulation_results
-            )
+            simulation_results[
+                "summary"
+            ] = await self._generate_simulation_summary(simulation_results)
 
             # Save results if configured
             if self.config.generate_comprehensive_reports:
-                report_path = await self._save_simulation_report(simulation_results)
+                report_path = await self._save_simulation_report(
+                    simulation_results
+                )
                 simulation_results["report_path"] = report_path
 
-            logger.info(f"Enhanced simulation completed in {execution_time:.2f}s")
+            logger.info(
+                f"Enhanced simulation completed in {execution_time:.2f}s"
+            )
 
             return simulation_results
 
@@ -347,18 +371,24 @@ class EnhancedSimulationOrchestrator:
 
             # Test 1: Core component compatibility
             core_compatibility = await self._test_core_compatibility()
-            test_results["components_tested"].extend(core_compatibility["components"])
+            test_results["components_tested"].extend(
+                core_compatibility["components"]
+            )
             test_results["compatibility_issues"].extend(
                 core_compatibility.get("issues", [])
             )
 
             # Test 2: DirectorAgent integration
             await self._test_director_integration()
-            test_results["components_tested"].append("DirectorAgent Integration")
+            test_results["components_tested"].append(
+                "DirectorAgent Integration"
+            )
 
             # Test 3: ChroniclerAgent integration
             await self._test_chronicler_integration()
-            test_results["components_tested"].append("ChroniclerAgent Integration")
+            test_results["components_tested"].append(
+                "ChroniclerAgent Integration"
+            )
 
             # Test 4: Event bus compatibility
             await self._test_event_bus_compatibility()
@@ -376,7 +406,9 @@ class EnhancedSimulationOrchestrator:
             )
 
             # Performance impact assessment
-            test_results["performance_impact"] = await self._assess_performance_impact()
+            test_results[
+                "performance_impact"
+            ] = await self._assess_performance_impact()
 
             logger.info(
                 f"Compatibility test completed: {test_results['compatibility_score']:.2%} compatible"
@@ -386,7 +418,11 @@ class EnhancedSimulationOrchestrator:
 
         except Exception as e:
             logger.error(f"Compatibility test failed: {e}")
-            return {"success": False, "error": str(e), "compatibility_score": 0.0}
+            return {
+                "success": False,
+                "error": str(e),
+                "compatibility_score": 0.0,
+            }
 
     # Private implementation methods
 
@@ -400,7 +436,9 @@ class EnhancedSimulationOrchestrator:
             try:
                 self.director_agent = DirectorAgent(
                     event_bus=self.event_bus,
-                    campaign_log_path=str(self.output_path / "campaign_log.md"),
+                    campaign_log_path=str(
+                        self.output_path / "campaign_log.md"
+                    ),
                 )
                 components.append("DirectorAgent")
                 logger.info("DirectorAgent initialized successfully")
@@ -411,13 +449,16 @@ class EnhancedSimulationOrchestrator:
             # Initialize ChroniclerAgent
             try:
                 self.chronicler_agent = ChroniclerAgent(
-                    event_bus=self.event_bus, output_directory=str(self.output_path)
+                    event_bus=self.event_bus,
+                    output_directory=str(self.output_path),
                 )
                 components.append("ChroniclerAgent")
                 logger.info("ChroniclerAgent initialized successfully")
             except Exception as e:
                 warnings.append(f"ChroniclerAgent initialization warning: {e}")
-                logger.warning(f"ChroniclerAgent initialization had issues: {e}")
+                logger.warning(
+                    f"ChroniclerAgent initialization had issues: {e}"
+                )
 
             # Initialize CharacterFactory
             try:
@@ -425,10 +466,18 @@ class EnhancedSimulationOrchestrator:
                 components.append("CharacterFactory")
                 logger.info("CharacterFactory initialized successfully")
             except Exception as e:
-                warnings.append(f"CharacterFactory initialization warning: {e}")
-                logger.warning(f"CharacterFactory initialization had issues: {e}")
+                warnings.append(
+                    f"CharacterFactory initialization warning: {e}"
+                )
+                logger.warning(
+                    f"CharacterFactory initialization had issues: {e}"
+                )
 
-            return {"success": True, "components": components, "warnings": warnings}
+            return {
+                "success": True,
+                "components": components,
+                "warnings": warnings,
+            }
 
         except Exception as e:
             logger.error(f"Core component initialization failed: {e}")
@@ -455,7 +504,9 @@ class EnhancedSimulationOrchestrator:
                 await self.enterprise_orchestrator.ai_orchestrator.initialize_systems()
             )
             if ai_init_result.get("success"):
-                components.extend(ai_init_result.get("initialized_systems", []))
+                components.extend(
+                    ai_init_result.get("initialized_systems", [])
+                )
 
             # Initialize enhanced bridge AI systems
             bridge_init_result = (
@@ -500,7 +551,9 @@ class EnhancedSimulationOrchestrator:
             integration_status["chronicler_narrative"] = "Integrated"
 
         # Event bus integration
-        integration_status["event_bus"] = "Fully integrated across all components"
+        integration_status[
+            "event_bus"
+        ] = "Fully integrated across all components"
 
         # Configuration compatibility
         integration_status["configuration"] = "Novel Engine config compatible"
@@ -510,8 +563,10 @@ class EnhancedSimulationOrchestrator:
     async def _validate_system_integration(self) -> Dict[str, Any]:
         """Validate the integration between systems."""
         if self.enterprise_orchestrator:
-            validation_result = await self.enterprise_orchestrator.validate_system(
-                validation_level=self.config.validation_level
+            validation_result = (
+                await self.enterprise_orchestrator.validate_system(
+                    validation_level=self.config.validation_level
+                )
             )
             return {
                 "validation_passed": validation_result.passed,
@@ -527,7 +582,9 @@ class EnhancedSimulationOrchestrator:
             "timestamp": datetime.now(),
             "memory_usage_mb": 0.0,  # Would be actual metrics in production
             "cpu_usage_percent": 0.0,
-            "initialization_time": (datetime.now() - self.start_time).total_seconds(),
+            "initialization_time": (
+                datetime.now() - self.start_time
+            ).total_seconds(),
             "components_active": 5
             + (3 if self.director_agent else 0),  # 5 waves + Novel Engine
         }
@@ -557,8 +614,10 @@ class EnhancedSimulationOrchestrator:
                 try:
                     if self.character_factory:
                         # Use existing character factory
-                        character_data = self.character_factory.load_character_sheet(
-                            sheet_name
+                        character_data = (
+                            self.character_factory.load_character_sheet(
+                                sheet_name
+                            )
                         )
                         agent = PersonaAgent(
                             agent_id=sheet_name.replace(".yaml", "").replace(
@@ -579,7 +638,9 @@ class EnhancedSimulationOrchestrator:
                         self.director_agent.register_agent(agent)
 
                 except Exception as e:
-                    logger.warning(f"Could not create agent from {sheet_name}: {e}")
+                    logger.warning(
+                        f"Could not create agent from {sheet_name}: {e}"
+                    )
                     # Create fallback demo agent
                     demo_agent = self._create_demo_agent(sheet_name)
                     self.agents.append(demo_agent)
@@ -619,7 +680,9 @@ class EnhancedSimulationOrchestrator:
                     "motivations": ["complete mission", "work with team"],
                 }
 
-        return MockPersonaAgent(identifier.replace(".yaml", "").replace(".json", ""))
+        return MockPersonaAgent(
+            identifier.replace(".yaml", "").replace(".json", "")
+        )
 
     async def _load_campaign_context(
         self, campaign_brief: Optional[str]
@@ -662,7 +725,9 @@ class EnhancedSimulationOrchestrator:
             # Execute turn based on simulation mode
             if self.config.mode == SimulationMode.CLASSIC:
                 # Classic DirectorAgent turn
-                turn_result = await self._execute_classic_turn(turn, world_state)
+                turn_result = await self._execute_classic_turn(
+                    turn, world_state
+                )
             elif self.config.mode == SimulationMode.ENTERPRISE:
                 # Full enterprise orchestration
                 turn_result = await self._execute_enterprise_turn(
@@ -670,7 +735,9 @@ class EnhancedSimulationOrchestrator:
                 )
             else:
                 # Hybrid or enhanced mode
-                turn_result = await self._execute_hybrid_turn(turn, agents, world_state)
+                turn_result = await self._execute_hybrid_turn(
+                    turn, agents, world_state
+                )
 
             execution_time = (datetime.now() - turn_start).total_seconds()
             turn_result["execution_time"] = execution_time
@@ -729,7 +796,10 @@ class EnhancedSimulationOrchestrator:
             )
             return result
         else:
-            return {"success": False, "error": "Enterprise orchestrator not available"}
+            return {
+                "success": False,
+                "error": "Enterprise orchestrator not available",
+            }
 
     async def _execute_hybrid_turn(
         self, turn: int, agents: List[Any], world_state: Dict[str, Any]
@@ -761,11 +831,16 @@ class EnhancedSimulationOrchestrator:
             "turns_completed": simulation_results["turns_executed"],
             "agents_participated": simulation_results["agents_participated"],
             "success_rate": len(
-                [r for r in simulation_results["turn_results"] if r.get("success")]
+                [
+                    r
+                    for r in simulation_results["turn_results"]
+                    if r.get("success")
+                ]
             )
             / max(len(simulation_results["turn_results"]), 1),
             "average_turn_time": sum(
-                r.get("execution_time", 0) for r in simulation_results["turn_results"]
+                r.get("execution_time", 0)
+                for r in simulation_results["turn_results"]
             )
             / max(len(simulation_results["turn_results"]), 1),
             "total_execution_time": simulation_results["execution_time"],
@@ -782,7 +857,9 @@ class EnhancedSimulationOrchestrator:
             ),
         }
 
-    async def _save_simulation_report(self, simulation_results: Dict[str, Any]) -> str:
+    async def _save_simulation_report(
+        self, simulation_results: Dict[str, Any]
+    ) -> str:
         """Save comprehensive simulation report."""
         try:
             report_path = (
@@ -919,7 +996,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--turns", type=int, default=10, help="Number of simulation turns"
     )
-    parser.add_argument("--characters", nargs="*", help="Character sheet files to use")
+    parser.add_argument(
+        "--characters", nargs="*", help="Character sheet files to use"
+    )
     parser.add_argument("--campaign", help="Campaign brief file")
     parser.add_argument(
         "--compatibility-test",
@@ -935,7 +1014,9 @@ if __name__ == "__main__":
             orchestrator = EnhancedSimulationOrchestrator()
             await orchestrator.initialize_integrated_system()
             result = await orchestrator.run_compatibility_test()
-            print(f"Compatibility Test Result: {result['compatibility_score']:.2%}")
+            print(
+                f"Compatibility Test Result: {result['compatibility_score']:.2%}"
+            )
             return
 
         # Run simulation

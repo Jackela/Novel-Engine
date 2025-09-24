@@ -19,7 +19,9 @@ except ImportError:
     app = None
 
 
-@pytest.mark.skipif(not API_SERVER_AVAILABLE, reason="API server not available")
+@pytest.mark.skipif(
+    not API_SERVER_AVAILABLE, reason="API server not available"
+)
 class TestAPIServerEndpoints:
     """API服务器端点测试"""
 
@@ -72,7 +74,8 @@ class TestAPIServerEndpoints:
         chars_dir.mkdir()
 
         with patch(
-            "api_server._get_characters_directory_path", return_value=str(chars_dir)
+            "api_server._get_characters_directory_path",
+            return_value=str(chars_dir),
         ):
             response = self.client.get("/characters")
 
@@ -82,7 +85,9 @@ class TestAPIServerEndpoints:
             assert data["characters"] == []
 
     @pytest.mark.api
-    def test_characters_endpoint_populated_directory(self, characters_directory):
+    def test_characters_endpoint_populated_directory(
+        self, characters_directory
+    ):
         """测试角色列表端点 - 有角色数据"""
         with patch(
             "api_server._get_characters_directory_path",
@@ -124,10 +129,9 @@ class TestAPIServerEndpoints:
             with patch("api_server.EventBus"), patch(
                 "api_server.CharacterFactory"
             ) as mock_factory:
-
                 # 模拟CharacterFactory失败，但仍应返回基础信息
-                mock_factory.return_value.create_character.side_effect = Exception(
-                    "Factory error"
+                mock_factory.return_value.create_character.side_effect = (
+                    Exception("Factory error")
                 )
 
                 response = self.client.get("/characters/engineer")
@@ -168,11 +172,12 @@ class TestAPIServerEndpoints:
             ) as mock_factory, patch("api_server.DirectorAgent"), patch(
                 "api_server.ChroniclerAgent"
             ) as mock_chronicler:
-
                 # 模拟成功的组件创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
-                mock_factory.return_value.create_character.return_value = mock_agent
+                mock_factory.return_value.create_character.return_value = (
+                    mock_agent
+                )
 
                 mock_chronicler_instance = Mock()
                 mock_chronicler_instance.transcribe_log.return_value = (
@@ -191,7 +196,8 @@ class TestAPIServerEndpoints:
                 assert "turns_executed" in data
                 assert "duration_seconds" in data
                 assert (
-                    data["participants"] == sample_simulation_request["character_names"]
+                    data["participants"]
+                    == sample_simulation_request["character_names"]
                 )
 
     @pytest.mark.api
@@ -227,7 +233,8 @@ class TestAPIServerEndpoints:
     def test_simulations_endpoint_character_not_found(self, temp_dir):
         """测试模拟端点 - 角色不存在"""
         with patch(
-            "api_server._get_characters_directory_path", return_value=str(temp_dir)
+            "api_server._get_characters_directory_path",
+            return_value=str(temp_dir),
         ):
             # 创建一个存在的角色目录
             char1_dir = temp_dir / "valid_char1"
@@ -299,11 +306,14 @@ class TestAPIServerEndpoints:
     def test_characters_endpoint_permission_error(self):
         """测试角色列表端点 - 权限错误"""
         with patch(
-            "api_server._get_characters_directory_path", return_value="/restricted/path"
+            "api_server._get_characters_directory_path",
+            return_value="/restricted/path",
         ):
             with patch("os.path.isdir", return_value=True):  # 让目录存在检查通过
                 with patch("os.listdir") as mock_listdir:
-                    mock_listdir.side_effect = PermissionError("Permission denied")
+                    mock_listdir.side_effect = PermissionError(
+                        "Permission denied"
+                    )
 
                     response = self.client.get("/characters")
 
@@ -316,11 +326,14 @@ class TestAPIServerEndpoints:
     def test_characters_endpoint_unexpected_error(self):
         """测试角色列表端点 - 意外错误"""
         with patch(
-            "api_server._get_characters_directory_path", return_value="/valid/path"
+            "api_server._get_characters_directory_path",
+            return_value="/valid/path",
         ):
             with patch("os.path.isdir", return_value=True):  # 让目录存在检查通过
                 with patch("os.listdir") as mock_listdir:
-                    mock_listdir.side_effect = Exception("Unexpected file system error")
+                    mock_listdir.side_effect = Exception(
+                        "Unexpected file system error"
+                    )
 
                     response = self.client.get("/characters")
 
@@ -343,7 +356,8 @@ class TestAPIServerEndpoints:
     def test_simulations_endpoint_character_loading_failure(self, temp_dir):
         """测试模拟端点 - 角色加载失败"""
         with patch(
-            "api_server._get_characters_directory_path", return_value=str(temp_dir)
+            "api_server._get_characters_directory_path",
+            return_value=str(temp_dir),
         ):
             # 创建角色目录
             char_dir = temp_dir / "test_char1"
@@ -352,8 +366,8 @@ class TestAPIServerEndpoints:
             char_dir2.mkdir()
 
             with patch("api_server.CharacterFactory") as mock_factory:
-                mock_factory.return_value.create_character.side_effect = Exception(
-                    "Character loading failed"
+                mock_factory.return_value.create_character.side_effect = (
+                    Exception("Character loading failed")
                 )
 
                 request_data = {
@@ -372,7 +386,9 @@ class TestAPIServerEndpoints:
                 assert "Failed to load character" in data["detail"]
 
     @pytest.mark.api
-    def test_simulations_endpoint_director_turn_failure(self, characters_directory):
+    def test_simulations_endpoint_director_turn_failure(
+        self, characters_directory
+    ):
         """测试模拟端点 - 导演回合执行失败"""
         with patch(
             "api_server._get_characters_directory_path",
@@ -385,11 +401,12 @@ class TestAPIServerEndpoints:
             ) as mock_director, patch(
                 "api_server.ChroniclerAgent"
             ) as mock_chronicler:
-
                 # 设置成功的角色创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
-                mock_factory.return_value.create_character.return_value = mock_agent
+                mock_factory.return_value.create_character.return_value = (
+                    mock_agent
+                )
 
                 # 设置导演回合失败
                 mock_director_instance = mock_director.return_value
@@ -399,7 +416,9 @@ class TestAPIServerEndpoints:
 
                 # 设置成功的故事生成
                 mock_chronicler_instance = Mock()
-                mock_chronicler_instance.transcribe_log.return_value = "Test story"
+                mock_chronicler_instance.transcribe_log.return_value = (
+                    "Test story"
+                )
                 mock_chronicler.return_value = mock_chronicler_instance
 
                 request_data = {
@@ -415,7 +434,9 @@ class TestAPIServerEndpoints:
                 assert "story" in data
 
     @pytest.mark.api
-    def test_simulations_endpoint_story_generation_failure(self, characters_directory):
+    def test_simulations_endpoint_story_generation_failure(
+        self, characters_directory
+    ):
         """测试模拟端点 - 故事生成失败回退"""
         with patch(
             "api_server._get_characters_directory_path",
@@ -426,16 +447,17 @@ class TestAPIServerEndpoints:
             ) as mock_factory, patch("api_server.DirectorAgent"), patch(
                 "api_server.ChroniclerAgent"
             ) as mock_chronicler:
-
                 # 设置成功的角色创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
-                mock_factory.return_value.create_character.return_value = mock_agent
+                mock_factory.return_value.create_character.return_value = (
+                    mock_agent
+                )
 
                 # 设置故事生成失败
                 mock_chronicler_instance = Mock()
-                mock_chronicler_instance.transcribe_log.side_effect = Exception(
-                    "Story generation failed"
+                mock_chronicler_instance.transcribe_log.side_effect = (
+                    Exception("Story generation failed")
                 )
                 mock_chronicler.return_value = mock_chronicler_instance
 
@@ -451,11 +473,14 @@ class TestAPIServerEndpoints:
                 data = response.json()
                 assert "story" in data
                 assert (
-                    "was generated, but detailed transcription failed" in data["story"]
+                    "was generated, but detailed transcription failed"
+                    in data["story"]
                 )
 
     @pytest.mark.api
-    def test_character_detail_endpoint_unexpected_error(self, characters_directory):
+    def test_character_detail_endpoint_unexpected_error(
+        self, characters_directory
+    ):
         """测试角色详情端点 - 意外错误"""
         with patch(
             "api_server._get_characters_directory_path",
@@ -464,9 +489,8 @@ class TestAPIServerEndpoints:
             with patch("api_server.EventBus"), patch(
                 "api_server.CharacterFactory"
             ) as mock_factory:
-
-                mock_factory.return_value.create_character.side_effect = Exception(
-                    "Unexpected character error"
+                mock_factory.return_value.create_character.side_effect = (
+                    Exception("Unexpected character error")
                 )
 
                 response = self.client.get("/characters/engineer")
@@ -496,7 +520,6 @@ class TestAPIServerEndpoints:
     def test_create_campaign_endpoint_file_creation_failure(self):
         """测试创建活动端点 - 文件创建失败"""
         with patch("os.makedirs"), patch("builtins.open") as mock_open:
-
             mock_open.side_effect = Exception("Failed to create campaign file")
 
             campaign_data = {
@@ -513,7 +536,9 @@ class TestAPIServerEndpoints:
             assert "Failed to create campaign" in data["detail"]
 
 
-@pytest.mark.skipif(not API_SERVER_AVAILABLE, reason="API server not available")
+@pytest.mark.skipif(
+    not API_SERVER_AVAILABLE, reason="API server not available"
+)
 class TestAPIServerErrorHandling:
     """API服务器错误处理测试"""
 
@@ -548,7 +573,9 @@ class TestAPIServerErrorHandling:
         assert response.status_code == 422
 
 
-@pytest.mark.skipif(not API_SERVER_AVAILABLE, reason="API server not available")
+@pytest.mark.skipif(
+    not API_SERVER_AVAILABLE, reason="API server not available"
+)
 class TestAPIServerSecurity:
     """API服务器安全测试"""
 
@@ -608,7 +635,10 @@ class TestAPIServerSecurity:
     @pytest.mark.security
     def test_large_payload_handling(self):
         """测试大载荷处理"""
-        large_payload = {"character_names": ["test"] * 1000, "turns": 10}  # 大量角色名
+        large_payload = {
+            "character_names": ["test"] * 1000,
+            "turns": 10,
+        }  # 大量角色名
 
         response = self.client.post("/simulations", json=large_payload)
 
@@ -616,7 +646,9 @@ class TestAPIServerSecurity:
         assert response.status_code == 422
 
 
-@pytest.mark.skipif(not API_SERVER_AVAILABLE, reason="API server not available")
+@pytest.mark.skipif(
+    not API_SERVER_AVAILABLE, reason="API server not available"
+)
 class TestAPIServerPerformance:
     """API服务器性能测试"""
 
@@ -692,7 +724,16 @@ def run_api_tests():
 
     # 运行API相关的测试
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", "-v", "-m", "api", "--tb=short", __file__],
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-v",
+            "-m",
+            "api",
+            "--tb=short",
+            __file__,
+        ],
         capture_output=True,
         text=True,
     )

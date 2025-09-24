@@ -19,7 +19,11 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .alerting import AlertManager, NotificationConfig, create_default_alert_rules
+from .alerting import (
+    AlertManager,
+    NotificationConfig,
+    create_default_alert_rules,
+)
 from .dashboard_data import (
     DashboardConfig,
     DashboardDataCollector,
@@ -27,7 +31,11 @@ from .dashboard_data import (
     initialize_dashboard_collector,
 )
 from .health_checks import create_health_endpoint
-from .opentelemetry_tracing import TracingConfig, get_tracing_health, setup_tracing
+from .opentelemetry_tracing import (
+    TracingConfig,
+    get_tracing_health,
+    setup_tracing,
+)
 
 # Import monitoring components
 from .prometheus_metrics import (
@@ -35,10 +43,7 @@ from .prometheus_metrics import (
     setup_prometheus_endpoint,
     start_background_collection,
 )
-from .structured_logging import (
-    LoggingConfig,
-    setup_structured_logging,
-)
+from .structured_logging import LoggingConfig, setup_structured_logging
 from .synthetic_monitoring import (
     SyntheticMonitor,
     create_api_health_check,
@@ -114,7 +119,9 @@ class ObservabilityServer:
             enable_file=True,
             enable_json=True,
             log_directory=self.config.get("log_directory", "logs"),
-            enable_remote_logging=self.config.get("enable_remote_logging", False),
+            enable_remote_logging=self.config.get(
+                "enable_remote_logging", False
+            ),
             remote_endpoint=self.config.get("logging_remote_endpoint"),
         )
 
@@ -143,7 +150,9 @@ class ObservabilityServer:
             email_recipients=self.config.get("email_recipients", []),
             slack_webhook_url=self.config.get("slack_webhook_url"),
             webhook_urls=self.config.get("webhook_urls", []),
-            pagerduty_integration_key=self.config.get("pagerduty_integration_key"),
+            pagerduty_integration_key=self.config.get(
+                "pagerduty_integration_key"
+            ),
         )
 
         self.alert_manager = AlertManager(notification_config)
@@ -158,7 +167,9 @@ class ObservabilityServer:
     def _setup_dashboard_data(self):
         """Setup dashboard data collector"""
         dashboard_config = DashboardConfig(
-            data_retention_hours=self.config.get("dashboard_retention_hours", 168),
+            data_retention_hours=self.config.get(
+                "dashboard_retention_hours", 168
+            ),
             enable_real_time=True,
             export_enabled=self.config.get("dashboard_export_enabled", False),
             export_path=self.config.get(
@@ -166,7 +177,9 @@ class ObservabilityServer:
             ),
         )
 
-        self.dashboard_collector = initialize_dashboard_collector(dashboard_config)
+        self.dashboard_collector = initialize_dashboard_collector(
+            dashboard_config
+        )
         logger.info("Dashboard data collector configured")
 
     def _setup_synthetic_monitoring(self):
@@ -253,7 +266,9 @@ class ObservabilityServer:
                     status_code=503, detail="Alert manager not available"
                 )
 
-            success = await self.alert_manager.acknowledge_alert(alert_id, user)
+            success = await self.alert_manager.acknowledge_alert(
+                alert_id, user
+            )
             if success:
                 return {"message": "Alert acknowledged", "alert_id": alert_id}
             else:
@@ -301,9 +316,13 @@ class ObservabilityServer:
                     status_code=503, detail="Dashboard collector not available"
                 )
 
-            dashboard_data = self.dashboard_collector.get_dashboard_data(dashboard_id)
+            dashboard_data = self.dashboard_collector.get_dashboard_data(
+                dashboard_id
+            )
             if not dashboard_data:
-                raise HTTPException(status_code=404, detail="Dashboard not found")
+                raise HTTPException(
+                    status_code=404, detail="Dashboard not found"
+                )
 
             return dashboard_data
 
@@ -315,7 +334,9 @@ class ObservabilityServer:
                     status_code=503, detail="Dashboard collector not available"
                 )
 
-            filepath = self.dashboard_collector.export_dashboard_data(dashboard_id)
+            filepath = self.dashboard_collector.export_dashboard_data(
+                dashboard_id
+            )
             if filepath:
                 return {"message": "Dashboard exported", "filepath": filepath}
             else:
@@ -342,7 +363,9 @@ class ObservabilityServer:
 
             checks = []
             for check_name, check in self.synthetic_monitor.checks.items():
-                stats = self.synthetic_monitor.get_check_statistics(check_name, 24)
+                stats = self.synthetic_monitor.get_check_statistics(
+                    check_name, 24
+                )
                 checks.append(
                     {
                         "name": check.name,
@@ -365,7 +388,9 @@ class ObservabilityServer:
                     status_code=503, detail="Synthetic monitor not available"
                 )
 
-            results = self.synthetic_monitor.get_check_results(check_name, limit)
+            results = self.synthetic_monitor.get_check_results(
+                check_name, limit
+            )
             return {
                 "check_name": check_name,
                 "results": [
@@ -403,29 +428,38 @@ class ObservabilityServer:
                     },
                     "tracing": get_tracing_health(),
                     "logging": {
-                        "status": "healthy" if self.structured_logger else "unavailable"
+                        "status": "healthy"
+                        if self.structured_logger
+                        else "unavailable"
                     },
                     "health_checks": {
                         "status": "healthy",
                         "details": "Health endpoints active",
                     },
                     "alerting": {
-                        "status": "healthy" if self.alert_manager else "unavailable"
+                        "status": "healthy"
+                        if self.alert_manager
+                        else "unavailable"
                     },
                     "dashboards": {
                         "status": (
-                            "healthy" if self.dashboard_collector else "unavailable"
+                            "healthy"
+                            if self.dashboard_collector
+                            else "unavailable"
                         )
                     },
                     "synthetic": {
-                        "status": "healthy" if self.synthetic_monitor else "unavailable"
+                        "status": "healthy"
+                        if self.synthetic_monitor
+                        else "unavailable"
                     },
                 },
             }
 
             # Determine overall status
             component_statuses = [
-                comp.get("status", "unknown") for comp in status["components"].values()
+                comp.get("status", "unknown")
+                for comp in status["components"].values()
             ]
             if "unavailable" in component_statuses:
                 status["overall_status"] = "degraded"
@@ -459,7 +493,9 @@ class ObservabilityServer:
         self.background_tasks.append(dashboard_task)
 
         # Start the server
-        config = uvicorn.Config(app=self.app, host=host, port=port, log_level="info")
+        config = uvicorn.Config(
+            app=self.app, host=host, port=port, log_level="info"
+        )
         server = uvicorn.Server(config)
         await server.serve()
 
@@ -472,7 +508,9 @@ class ObservabilityServer:
             task.cancel()
 
         if self.background_tasks:
-            await asyncio.gather(*self.background_tasks, return_exceptions=True)
+            await asyncio.gather(
+                *self.background_tasks, return_exceptions=True
+            )
 
         # Stop components
         if self.alert_manager:
@@ -509,7 +547,9 @@ class ObservabilityServer:
                                 description=f"Metric: {metric_name}",
                             )
 
-                            self.dashboard_collector.add_metric_data(metric_data)
+                            self.dashboard_collector.add_metric_data(
+                                metric_data
+                            )
 
                     # Feed metrics to alert manager
                     if self.alert_manager:
@@ -542,9 +582,13 @@ async def main():
     """Main entry point for running observability server"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Novel Engine Observability Server")
+    parser = argparse.ArgumentParser(
+        description="Novel Engine Observability Server"
+    )
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
-    parser.add_argument("--port", type=int, default=9090, help="Port to bind to")
+    parser.add_argument(
+        "--port", type=int, default=9090, help="Port to bind to"
+    )
     parser.add_argument("--config", help="Configuration file path")
 
     args = parser.parse_args()

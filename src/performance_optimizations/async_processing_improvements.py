@@ -96,7 +96,6 @@ class AsyncTaskScheduler:
         max_queue_size: int = 1000,
         enable_metrics: bool = True,
     ):
-
         self.max_concurrent_tasks = max_concurrent_tasks
         self.max_queue_size = max_queue_size
         self.enable_metrics = enable_metrics
@@ -116,7 +115,8 @@ class AsyncTaskScheduler:
 
         # Performance metrics
         self.metrics = ProcessingMetrics()
-        self.processing_times = deque(maxlen=1000)  # Keep last 1000 processing times
+        # Keep last 1000 processing times
+        self.processing_times = deque(maxlen=1000)
 
         # Resource monitoring
         self.resource_monitor_active = True
@@ -146,7 +146,9 @@ class AsyncTaskScheduler:
             self.scheduler_tasks.append(task)
 
         # Start resource monitor
-        self.resource_monitor_task = asyncio.create_task(self._resource_monitor())
+        self.resource_monitor_task = asyncio.create_task(
+            self._resource_monitor()
+        )
 
         logger.info("AsyncTaskScheduler started")
 
@@ -169,7 +171,9 @@ class AsyncTaskScheduler:
 
         # Wait for graceful shutdown
         if self.running_tasks:
-            await asyncio.gather(*self.running_tasks.values(), return_exceptions=True)
+            await asyncio.gather(
+                *self.running_tasks.values(), return_exceptions=True
+            )
 
         logger.info("AsyncTaskScheduler stopped")
 
@@ -180,21 +184,27 @@ class AsyncTaskScheduler:
             await queue.put(task)
 
             self.metrics.total_tasks += 1
-            current_queue_size = sum(q.qsize() for q in self.priority_queues.values())
+            current_queue_size = sum(
+                q.qsize() for q in self.priority_queues.values()
+            )
             self.metrics.queue_size_peak = max(
                 self.metrics.queue_size_peak, current_queue_size
             )
 
             logger.debug(
-                f"Task submitted: {task.task_id} (priority: {task.priority.name})"
+                f"Task submitted: {task.task_id}(priority: {task.priority.name})"
             )
             return task.task_id
 
         except asyncio.QueueFull:
             logger.error(f"Task queue full for priority {task.priority.name}")
-            raise Exception(f"Task queue full for priority {task.priority.name}")
+            raise Exception(
+                f"Task queue full for priority {task.priority.name}"
+            )
 
-    async def get_task_result(self, task_id: str, timeout: float = 60.0) -> Any:
+    async def get_task_result(
+        self, task_id: str, timeout: float = 60.0
+    ) -> Any:
         """Get result of completed task."""
         start_time = time.time()
 
@@ -216,7 +226,9 @@ class AsyncTaskScheduler:
             # Task not found
             await asyncio.sleep(0.1)
 
-        raise asyncio.TimeoutError(f"Task {task_id} result timeout after {timeout}s")
+        raise asyncio.TimeoutError(
+            f"Task {task_id} result timeout after {timeout}s"
+        )
 
     async def _process_priority_queue(self, priority: TaskPriority):
         """Process tasks from a specific priority queue."""
@@ -245,7 +257,9 @@ class AsyncTaskScheduler:
                 )
 
             except Exception as e:
-                logger.error(f"Priority queue {priority.name} processing error: {e}")
+                logger.error(
+                    f"Priority queue {priority.name} processing error: {e}"
+                )
                 await asyncio.sleep(1.0)  # Brief pause on error
 
     async def _execute_task(self, task: AsyncTask):
@@ -268,11 +282,13 @@ class AsyncTaskScheduler:
 
             # Update average processing time
             if self.processing_times:
-                self.metrics.avg_processing_time = sum(self.processing_times) / len(
+                self.metrics.avg_processing_time = sum(
                     self.processing_times
-                )
+                ) / len(self.processing_times)
 
-            logger.debug(f"Task completed: {task.task_id} in {processing_time:.3f}s")
+            logger.debug(
+                f"Task completed: {task.task_id} in {processing_time:.3f}s"
+            )
 
         except asyncio.TimeoutError:
             logger.warning(
@@ -282,14 +298,16 @@ class AsyncTaskScheduler:
             # Retry if under limit
             if task.retry_count < task.max_retries:
                 task.retry_count += 1
-                await asyncio.sleep(2**task.retry_count)  # Exponential backoff
+                await asyncio.sleep(
+                    2**task.retry_count
+                )  # Exponential backoff
                 await self.submit_task(task)
                 logger.info(
-                    f"Task retrying: {task.task_id} (attempt {task.retry_count + 1})"
+                    f"Task retrying: {task.task_id}(attempt {task.retry_count + 1})"
                 )
             else:
                 self.task_errors[task.task_id] = asyncio.TimeoutError(
-                    f"Task {task.task_id} timeout after {task.max_retries} retries"
+                    f"Task {task.task_id}timeout after {task.max_retries} retries"
                 )
                 self.metrics.timeout_tasks += 1
 
@@ -302,7 +320,7 @@ class AsyncTaskScheduler:
                 await asyncio.sleep(2**task.retry_count)
                 await self.submit_task(task)
                 logger.info(
-                    f"Task retrying: {task.task_id} (attempt {task.retry_count + 1})"
+                    f"Task retrying: {task.task_id}(attempt {task.retry_count + 1})"
                 )
             else:
                 self.task_errors[task.task_id] = e
@@ -325,7 +343,9 @@ class AsyncTaskScheduler:
                 # Adjust concurrency based on resources
                 if memory_percent > 80 or cpu_percent > 90:
                     # Reduce concurrency under high resource usage
-                    self.max_concurrent_tasks = max(10, self.max_concurrent_tasks - 5)
+                    self.max_concurrent_tasks = max(
+                        10, self.max_concurrent_tasks - 5
+                    )
                     logger.warning(
                         f"High resource usage: CPU={cpu_percent:.1f}%, "
                         f"Memory={memory_percent:.1f}%, reducing concurrency to {self.max_concurrent_tasks}"
@@ -360,7 +380,8 @@ class AsyncTaskScheduler:
                 "failed_tasks": self.metrics.failed_tasks,
                 "timeout_tasks": self.metrics.timeout_tasks,
                 "success_rate_percent": self.metrics.calculate_success_rate(),
-                "avg_processing_time_ms": self.metrics.avg_processing_time * 1000,
+                "avg_processing_time_ms": self.metrics.avg_processing_time
+                * 1000,
                 "concurrent_peak": self.metrics.concurrent_peak,
                 "queue_size_peak": self.metrics.queue_size_peak,
             },
@@ -381,7 +402,6 @@ class AsyncHttpClient:
         connection_timeout: float = 10.0,
         request_timeout: float = 30.0,
     ):
-
         self.max_connections = max_connections
         self.max_connections_per_host = max_connections_per_host
         self.connection_timeout = connection_timeout
@@ -470,7 +490,6 @@ class AsyncHttpClient:
                     headers=headers,
                     timeout=aiohttp.ClientTimeout(total=timeout),
                 ) as response:
-
                     response_time = time.time() - start_time
                     self.request_count += 1
                     self.total_response_time += response_time
@@ -531,16 +550,19 @@ class AsyncHttpClient:
 
             try:
                 async with self.session.get(
-                    url, headers=headers, timeout=aiohttp.ClientTimeout(total=timeout)
+                    url,
+                    headers=headers,
+                    timeout=aiohttp.ClientTimeout(total=timeout),
                 ) as response:
-
                     response_time = time.time() - start_time
                     self.request_count += 1
                     self.total_response_time += response_time
 
                     if response.status == 200:
                         result = await response.json()
-                        logger.debug(f"HTTP GET success: {url} in {response_time:.3f}s")
+                        logger.debug(
+                            f"HTTP GET success: {url} in {response_time:.3f}s"
+                        )
                         return result
                     else:
                         error_text = await response.text()
@@ -687,7 +709,10 @@ class AsyncFileOperations:
     @staticmethod
     async def batch_read_json(file_paths: List[str]) -> List[Dict[str, Any]]:
         """Batch read multiple JSON files concurrently."""
-        tasks = [AsyncFileOperations.read_json(file_path) for file_path in file_paths]
+        tasks = [
+            AsyncFileOperations.read_json(file_path)
+            for file_path in file_paths
+        ]
         return await asyncio.gather(*tasks, return_exceptions=True)
 
 
@@ -743,7 +768,9 @@ class ConcurrentAgentProcessor:
             ]
 
             # Execute with progress tracking
-            results = await asyncio.gather(*processing_tasks, return_exceptions=True)
+            results = await asyncio.gather(
+                *processing_tasks, return_exceptions=True
+            )
 
             # Process results
             processed_results = []
@@ -751,7 +778,9 @@ class ConcurrentAgentProcessor:
                 if isinstance(result, Exception):
                     processed_results.append(
                         {
-                            "agent_id": agent_tasks[i].get("agent_id", "unknown"),
+                            "agent_id": agent_tasks[i].get(
+                                "agent_id", "unknown"
+                            ),
                             "success": False,
                             "error": str(result),
                         }
@@ -768,12 +797,15 @@ class ConcurrentAgentProcessor:
         finally:
             await self.http_client.close()
 
-    async def _process_single_agent(self, agent_task: Dict[str, Any]) -> Dict[str, Any]:
+    async def _process_single_agent(
+        self, agent_task: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Process a single agent task with resource management."""
         async with self.semaphore:
             self.current_processing += 1
             self.processing_stats["concurrent_peak"] = max(
-                self.processing_stats["concurrent_peak"], self.current_processing
+                self.processing_stats["concurrent_peak"],
+                self.current_processing,
             )
 
             start_time = time.time()
@@ -822,7 +854,9 @@ class ConcurrentAgentProcessor:
             finally:
                 self.current_processing -= 1
 
-    async def _process_llm_decision(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def _process_llm_decision(
+        self, task: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Process LLM decision task (optimized async version)."""
         # Simulate async LLM API call
         await asyncio.sleep(0.01)  # Simulate network latency
@@ -834,7 +868,9 @@ class ConcurrentAgentProcessor:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def _process_world_state_update(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def _process_world_state_update(
+        self, task: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Process world state update task."""
         # Simulate async database operation
         await asyncio.sleep(0.005)
@@ -845,7 +881,9 @@ class ConcurrentAgentProcessor:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def _process_interaction(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def _process_interaction(
+        self, task: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Process agent interaction task."""
         # Simulate async interaction processing
         await asyncio.sleep(0.008)
@@ -856,11 +894,16 @@ class ConcurrentAgentProcessor:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def _process_generic_operation(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def _process_generic_operation(
+        self, task: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Process generic agent operation."""
         await asyncio.sleep(0.003)
 
-        return {"operation_completed": True, "timestamp": datetime.now().isoformat()}
+        return {
+            "operation_completed": True,
+            "timestamp": datetime.now().isoformat(),
+        }
 
     def get_processing_stats(self) -> Dict[str, Any]:
         """Get concurrent processing statistics."""
@@ -874,7 +917,9 @@ class ConcurrentAgentProcessor:
         return {
             **self.processing_stats,
             "success_rate_percent": success_rate,
-            "avg_processing_time_ms": self.processing_stats["avg_processing_time"]
+            "avg_processing_time_ms": self.processing_stats[
+                "avg_processing_time"
+            ]
             * 1000,
             "current_processing": self.current_processing,
             "max_concurrent": self.max_concurrent_agents,
@@ -943,7 +988,9 @@ async def get_async_processing_report() -> Dict[str, Any]:
 
     # Agent processor stats
     if _global_agent_processor:
-        report["agent_processor"] = _global_agent_processor.get_processing_stats()
+        report[
+            "agent_processor"
+        ] = _global_agent_processor.get_processing_stats()
 
     # System resources
     process = psutil.Process()

@@ -90,7 +90,9 @@ class TestIPViolation:
 
         assert violation.term == "Space Marine"
         assert violation.violation_type == ViolationType.CHARACTER_NAME
-        assert violation.context == "The Space Marine advanced through the ruins"
+        assert (
+            violation.context == "The Space Marine advanced through the ruins"
+        )
         assert violation.position == (4, 15)
         assert violation.confidence == 0.9
         assert violation.suggested_replacement == "Imperial Warrior"
@@ -134,7 +136,9 @@ class TestTermGuard:
             }
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             yaml.dump(config_data, f)
             temp_path = Path(f.name)
 
@@ -167,21 +171,30 @@ class TestTermGuard:
         """Test basic content analysis functionality."""
         guard = TermGuard(config_path=temp_config)
 
-        content = "The Space Marine fought valiantly against the Warhammer forces."
+        content = (
+            "The Space Marine fought valiantly against the Warhammer forces."
+        )
         violations = guard.analyze_content(content)
 
         # Should detect both Space Marine and Warhammer
         assert len(violations) >= 2
 
         # Check Space Marine detection
-        space_marine_violations = [v for v in violations if v.term == "Space Marine"]
+        space_marine_violations = [
+            v for v in violations if v.term == "Space Marine"
+        ]
         assert len(space_marine_violations) == 1
-        assert space_marine_violations[0].violation_type == ViolationType.CHARACTER_NAME
+        assert (
+            space_marine_violations[0].violation_type
+            == ViolationType.CHARACTER_NAME
+        )
 
         # Check Warhammer detection
         warhammer_violations = [v for v in violations if v.term == "Warhammer"]
         assert len(warhammer_violations) == 1
-        assert warhammer_violations[0].violation_type == ViolationType.TRADEMARK
+        assert (
+            warhammer_violations[0].violation_type == ViolationType.TRADEMARK
+        )
 
     def test_analyze_content_whitelist(self, temp_config):
         """Test content analysis respects whitelist."""
@@ -206,7 +219,10 @@ class TestTermGuard:
         assert "Imperial Marine" in cleaned_content
         assert len(report.violations_found) >= 1
         assert len(report.actions_taken) >= 1
-        assert "Replaced 'Space Marine' with 'Imperial Marine'" in report.actions_taken
+        assert (
+            "Replaced 'Space Marine' with 'Imperial Marine'"
+            in report.actions_taken
+        )
 
     def test_clean_content_block(self, temp_config):
         """Test content cleaning with block action."""
@@ -218,14 +234,18 @@ class TestTermGuard:
         assert "Warhammer" not in cleaned_content
         assert "[CONTENT_FILTERED]" in cleaned_content
         assert len(report.violations_found) >= 1
-        assert any("Blocked 'Warhammer'" in action for action in report.actions_taken)
+        assert any(
+            "Blocked 'Warhammer'" in action for action in report.actions_taken
+        )
 
     def test_clean_content_analyze_only(self, temp_config):
         """Test content analysis without applying fixes."""
         guard = TermGuard(config_path=temp_config)
 
         content = "The Space Marine fought against Warhammer enemies."
-        cleaned_content, report = guard.clean_content(content, apply_fixes=False)
+        cleaned_content, report = guard.clean_content(
+            content, apply_fixes=False
+        )
 
         # Content should be unchanged
         assert cleaned_content == content
@@ -339,14 +359,17 @@ class TestTermGuardIntegration:
         ]
         if high_confidence_violations:
             # Ensure critical violations were handled
-            assert not report.safe_for_use or len(high_confidence_violations) == 0
+            assert (
+                not report.safe_for_use or len(high_confidence_violations) == 0
+            )
 
     def test_configuration_error_handling(self):
         """Test Term Guard handles configuration errors gracefully."""
         # Test with invalid configuration file
         with patch("pathlib.Path.exists", return_value=True):
             with patch(
-                "builtins.open", mock_open(read_data="invalid: yaml: content: [")
+                "builtins.open",
+                mock_open(read_data="invalid: yaml: content: ["),
             ):
                 guard = TermGuard(config_path=Path("invalid.yaml"))
 
@@ -382,7 +405,9 @@ class TestTermGuardCLI:
         """Create temporary input file for CLI testing."""
         content = "The Space Marine fought against the Warhammer enemies in the grim darkness."
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".txt", delete=False
+        ) as f:
             f.write(content)
             temp_path = Path(f.name)
 
@@ -396,7 +421,12 @@ class TestTermGuardCLI:
         # Mock command line arguments
         with patch(
             "sys.argv",
-            ["term_guard.py", "--input", str(temp_input_file), "--analyze-only"],
+            [
+                "term_guard.py",
+                "--input",
+                str(temp_input_file),
+                "--analyze-only",
+            ],
         ):
             result = main()
 
@@ -462,7 +492,9 @@ class TestTermGuardCLI:
         """Test CLI behavior with non-existent input file."""
         from scripts.term_guard import main
 
-        with patch("sys.argv", ["term_guard.py", "--input", "nonexistent_file.txt"]):
+        with patch(
+            "sys.argv", ["term_guard.py", "--input", "nonexistent_file.txt"]
+        ):
             result = main()
 
         assert result == 1  # Error

@@ -108,7 +108,9 @@ class LayeredMemorySystem:
         self.agent_id = agent_id
         self.database = database
 
-        self.working_memory = WorkingMemory(agent_id, capacity=working_capacity)
+        self.working_memory = WorkingMemory(
+            agent_id, capacity=working_capacity
+        )
         self.episodic_memory = EpisodicMemory(
             agent_id, database, max_episodes=episodic_max
         )
@@ -120,7 +122,9 @@ class LayeredMemorySystem:
         )
 
         self._memory_coordination_lock = asyncio.Lock()
-        self._cross_layer_associations: Dict[str, List[str]] = defaultdict(list)
+        self._cross_layer_associations: Dict[str, List[str]] = defaultdict(
+            list
+        )
         self._global_memory_index: Dict[str, str] = {}
 
         self.total_queries = 0
@@ -149,7 +153,9 @@ class LayeredMemorySystem:
                 storage_results = []
                 stored_layers = []
 
-                target_layers = self._determine_storage_layers(memory, force_layer)
+                target_layers = self._determine_storage_layers(
+                    memory, force_layer
+                )
 
                 if "working" in target_layers:
                     working_result = self.working_memory.add_memory(memory)
@@ -159,22 +165,33 @@ class LayeredMemorySystem:
                         self._global_memory_index[memory.memory_id] = "working"
 
                 if "episodic" in target_layers:
-                    episodic_result = await self.episodic_memory.store_episode(memory)
+                    episodic_result = await self.episodic_memory.store_episode(
+                        memory
+                    )
                     storage_results.append(episodic_result)
                     if episodic_result.success:
                         stored_layers.append("episodic")
-                        self._global_memory_index[memory.memory_id] = "episodic"
+                        self._global_memory_index[
+                            memory.memory_id
+                        ] = "episodic"
 
                 if "semantic" in target_layers:
                     semantic_result = (
-                        await self.semantic_memory.extract_and_store_knowledge(memory)
+                        await self.semantic_memory.extract_and_store_knowledge(
+                            memory
+                        )
                     )
                     storage_results.append(semantic_result)
                     if semantic_result.success:
                         stored_layers.append("semantic")
 
-                if "emotional" in target_layers and memory.emotional_weight != 0:
-                    valence = max(-1.0, min(1.0, memory.emotional_weight / 10.0))
+                if (
+                    "emotional" in target_layers
+                    and memory.emotional_weight != 0
+                ):
+                    valence = max(
+                        -1.0, min(1.0, memory.emotional_weight / 10.0)
+                    )
                     arousal = abs(memory.emotional_weight) / 10.0
                     emotional_result = (
                         await self.emotional_memory.store_emotional_experience(
@@ -192,7 +209,9 @@ class LayeredMemorySystem:
 
                 self.total_storage_operations += 1
 
-                success_count = sum(1 for result in storage_results if result.success)
+                success_count = sum(
+                    1 for result in storage_results if result.success
+                )
                 overall_success = success_count > 0
 
                 logger.info(
@@ -206,7 +225,9 @@ class LayeredMemorySystem:
                         "success_count": success_count,
                         "total_layers_attempted": len(target_layers),
                         "cross_layer_associations": len(
-                            self._cross_layer_associations.get(memory.memory_id, [])
+                            self._cross_layer_associations.get(
+                                memory.memory_id, []
+                            )
                         ),
                     },
                 )
@@ -255,7 +276,8 @@ class LayeredMemorySystem:
                     query_request.include_emotional_context
                     or MemoryType.EMOTIONAL in query_request.memory_types
                 ):
-                    # This part remains tricky to fully parallelize due to its logic
+                    # This part remains tricky to fully parallelize due to its
+                    # logic
                     pass
 
                 # Simplified query execution for now
@@ -269,7 +291,9 @@ class LayeredMemorySystem:
                     not query_request.memory_types
                     or MemoryType.EPISODIC in query_request.memory_types
                 ):
-                    m, s, src = await self._query_episodic_memory(query_request)
+                    m, s, src = await self._query_episodic_memory(
+                        query_request
+                    )
                     all_memories.extend(m)
                     all_scores.extend(s)
                     all_sources.extend(src)
@@ -278,7 +302,9 @@ class LayeredMemorySystem:
                     not query_request.memory_types
                     or MemoryType.SEMANTIC in query_request.memory_types
                 ):
-                    m, s, src = await self._query_semantic_memory(query_request)
+                    m, s, src = await self._query_semantic_memory(
+                        query_request
+                    )
                     all_memories.extend(m)
                     all_scores.extend(s)
                     all_sources.extend(src)
@@ -290,10 +316,12 @@ class LayeredMemorySystem:
                     # all_memories.extend(m); all_scores.extend(s); all_sources.extend(src)
                     pass
 
-                filtered_memories, filtered_scores, filtered_sources = (
-                    self._filter_and_rank_results(
-                        all_memories, all_scores, all_sources, query_request
-                    )
+                (
+                    filtered_memories,
+                    filtered_scores,
+                    filtered_sources,
+                ) = self._filter_and_rank_results(
+                    all_memories, all_scores, all_sources, query_request
                 )
 
                 query_duration_ms = (
@@ -312,14 +340,18 @@ class LayeredMemorySystem:
                     query_duration_ms=query_duration_ms,
                     # emotional_context=self.emotional_memory.get_current_emotional_state(),
                     working_memory_state=self.working_memory.get_memory_statistics(),
-                    consolidated_insights=self._generate_insights(filtered_memories),
+                    consolidated_insights=self._generate_insights(
+                        filtered_memories
+                    ),
                 )
 
                 logger.info(
-                    f"Unified memory query complete: {len(result.memories)} results"
+                    f"Unified memory query complete: {len( result.memories)} results"
                 )
 
-                return StandardResponse(success=True, data={"query_result": result})
+                return StandardResponse(
+                    success=True, data={"query_result": result}
+                )
 
         except Exception as e:
             logger.error(f"Unified memory query failed: {e}", exc_info=True)
@@ -349,7 +381,9 @@ class LayeredMemorySystem:
                 episodic_consolidation = (
                     await self.episodic_memory._perform_consolidation()
                 )
-                consolidation_results["episodic"] = episodic_consolidation.success
+                consolidation_results[
+                    "episodic"
+                ] = episodic_consolidation.success
 
                 # Semantic and emotional consolidation are simplified here
                 consolidation_results["semantic"] = True
@@ -359,17 +393,25 @@ class LayeredMemorySystem:
                     cross_layer_optimized = (
                         await self._optimize_cross_layer_associations()
                     )
-                    consolidation_results["cross_layer"] = cross_layer_optimized
+                    consolidation_results[
+                        "cross_layer"
+                    ] = cross_layer_optimized
 
                 self.last_consolidation = consolidation_start
-                duration = (datetime.now() - consolidation_start).total_seconds()
+                duration = (
+                    datetime.now() - consolidation_start
+                ).total_seconds()
 
                 success_count = sum(
                     1 for success in consolidation_results.values() if success
                 )
-                overall_success = success_count >= len(consolidation_results) * 0.75
+                overall_success = (
+                    success_count >= len(consolidation_results) * 0.75
+                )
 
-                logger.info(f"Layered memory consolidation complete ({duration:.2f}s)")
+                logger.info(
+                    f"Layered memory consolidation complete ({duration:.2f}s)"
+                )
 
                 return StandardResponse(
                     success=overall_success,
@@ -381,7 +423,9 @@ class LayeredMemorySystem:
                 )
 
         except Exception as e:
-            logger.error(f"Layered memory consolidation failed: {e}", exc_info=True)
+            logger.error(
+                f"Layered memory consolidation failed: {e}", exc_info=True
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -404,7 +448,9 @@ class LayeredMemorySystem:
             "coordination_stats": {
                 "total_queries": self.total_queries,
                 "total_storage_operations": self.total_storage_operations,
-                "cross_layer_associations": len(self._cross_layer_associations),
+                "cross_layer_associations": len(
+                    self._cross_layer_associations
+                ),
                 "global_memory_index_size": len(self._global_memory_index),
                 "last_consolidation": self.last_consolidation.isoformat(),
             },
@@ -427,7 +473,10 @@ class LayeredMemorySystem:
         ):
             layers.append("episodic")
 
-        if memory.memory_type == MemoryType.SEMANTIC or " is " in content_lower:
+        if (
+            memory.memory_type == MemoryType.SEMANTIC
+            or " is " in content_lower
+        ):
             layers.append("semantic")
 
         if (
@@ -445,7 +494,9 @@ class LayeredMemorySystem:
         for i, layer1 in enumerate(stored_layers):
             for layer2 in stored_layers[i + 1 :]:
                 association_key = f"{layer1}:{layer2}:{memory_id}"
-                self._cross_layer_associations[memory_id].append(association_key)
+                self._cross_layer_associations[memory_id].append(
+                    association_key
+                )
 
         self.performance_metrics["cross_layer_connections"] = len(
             self._cross_layer_associations
@@ -470,7 +521,9 @@ class LayeredMemorySystem:
             return True
 
         except Exception as e:
-            logger.error(f"Cross-layer optimization failed: {e}", exc_info=True)
+            logger.error(
+                f"Cross-layer optimization failed: {e}", exc_info=True
+            )
             return False
 
     def _calculate_relevance(
@@ -481,7 +534,9 @@ class LayeredMemorySystem:
         if query.query_text.lower() in memory.content.lower():
             score += 0.5
 
-        participant_overlap = set(memory.participants) & set(query.participants)
+        participant_overlap = set(memory.participants) & set(
+            query.participants
+        )
         score += len(participant_overlap) * 0.1
 
         return min(1.0, score + memory.relevance_score * 0.5)
@@ -490,7 +545,9 @@ class LayeredMemorySystem:
         self, query: MemoryQueryRequest
     ) -> Tuple[List[MemoryItem], List[float], List[str]]:
         """Synchronous version for querying working memory."""
-        memories = self.working_memory.get_active_memories(limit=query.max_results)
+        memories = self.working_memory.get_active_memories(
+            limit=query.max_results
+        )
         scores = [self._calculate_relevance(mem, query) for mem in memories]
         sources = ["working"] * len(memories)
         return memories, scores, sources
@@ -514,7 +571,9 @@ class LayeredMemorySystem:
             if result.success:
                 m = result.data.get("episodes", [])
                 memories.extend(m)
-                scores.extend([self._calculate_relevance(mem, query) for mem in m])
+                scores.extend(
+                    [self._calculate_relevance(mem, query) for mem in m]
+                )
                 sources.extend(["episodic"] * len(m))
         return memories, scores, sources
 
@@ -530,7 +589,9 @@ class LayeredMemorySystem:
                 facts = result.data.get("facts", [])
                 m = self._convert_facts_to_memories(facts, term)
                 memories.extend(m)
-                scores.extend([self._calculate_relevance(mem, query) for mem in m])
+                scores.extend(
+                    [self._calculate_relevance(mem, query) for mem in m]
+                )
                 sources.extend(["semantic"] * len(m))
         return memories, scores, sources
 
@@ -596,11 +657,15 @@ class LayeredMemorySystem:
 
         if type_counts:
             dominant_type = max(type_counts, key=type_counts.get)
-            insights.append(f"Dominant memory type in results: {dominant_type.value}")
+            insights.append(
+                f"Dominant memory type in results: {dominant_type.value}"
+            )
 
         return insights
 
-    def _update_performance_metrics(self, query_duration_ms: float, result_count: int):
+    def _update_performance_metrics(
+        self, query_duration_ms: float, result_count: int
+    ):
         """Updates performance metrics after a query."""
         total = self.total_queries
         avg_time = self.performance_metrics["average_query_time"]
@@ -655,7 +720,7 @@ async def test_layered_memory():
     for memory in test_memories:
         storage_result = await layered_memory.store_memory(memory)
         print(
-            f"Layered Storage: {storage_result.success}, Layers: {storage_result.data.get('stored_layers', [])}"
+            f"Layered Storage: {storage_result.success}, Layers: {storage_result.data.get( 'stored_layers', [])}"
         )
 
     query_request = MemoryQueryRequest(
@@ -666,7 +731,7 @@ async def test_layered_memory():
     if query_result.success:
         result_data = query_result.data["query_result"]
         print(
-            f"Unified Query: {len(result_data.memories)} results in {result_data.query_duration_ms:.2f}ms"
+            f"Unified Query: {len( result_data.memories)}results in {result_data.query_duration_ms:.2f}ms"
         )
         if result_data.memory_sources:
             print(f"Query Sources: {set(result_data.memory_sources)}")

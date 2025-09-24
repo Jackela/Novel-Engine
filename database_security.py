@@ -34,7 +34,9 @@ def create_secure_database_connection(db_path: str) -> sqlite3.Connection:
     # Enable security features
     conn.execute("PRAGMA foreign_keys = ON")  # Enforce foreign key constraints
     conn.execute("PRAGMA secure_delete = ON")  # Securely delete data
-    conn.execute("PRAGMA journal_mode = WAL")  # Write-ahead logging for integrity
+    conn.execute(
+        "PRAGMA journal_mode = WAL"
+    )  # Write-ahead logging for integrity
 
     return conn
 
@@ -48,7 +50,9 @@ def hash_sensitive_data(data: str) -> str:
     salt = secrets.token_hex(16)
 
     # Hash the data with salt
-    hash_obj = hashlib.pbkdf2_hmac("sha256", data.encode(), salt.encode(), 100000)
+    hash_obj = hashlib.pbkdf2_hmac(
+        "sha256", data.encode(), salt.encode(), 100000
+    )
 
     # Return salt + hash
     return salt + hash_obj.hex()
@@ -63,7 +67,9 @@ def verify_hashed_data(data: str, stored_hash: str) -> bool:
     original_hash = stored_hash[32:]
 
     # Hash the input data with the same salt
-    hash_obj = hashlib.pbkdf2_hmac("sha256", data.encode(), salt.encode(), 100000)
+    hash_obj = hashlib.pbkdf2_hmac(
+        "sha256", data.encode(), salt.encode(), 100000
+    )
 
     # Compare hashes
     return hash_obj.hex() == original_hash

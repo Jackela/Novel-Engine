@@ -183,7 +183,9 @@ class ThreatIntelligence:
 class SecurityLogger:
     """STANDARD SECURITY LOGGER ENHANCED BY THE SYSTEM"""
 
-    def __init__(self, database_path: str, log_directory: str = "data/security_logs"):
+    def __init__(
+        self, database_path: str, log_directory: str = "data/security_logs"
+    ):
         self.database_path = database_path
         self.log_directory = Path(log_directory)
         self.log_directory.mkdir(parents=True, exist_ok=True)
@@ -234,8 +236,12 @@ class SecurityLogger:
         """STANDARD BACKGROUND TASKS"""
         try:
             loop = asyncio.get_event_loop()
-            self._log_rotation_task = loop.create_task(self._log_rotation_loop())
-            self._threat_analysis_task = loop.create_task(self._threat_analysis_loop())
+            self._log_rotation_task = loop.create_task(
+                self._log_rotation_loop()
+            )
+            self._threat_analysis_task = loop.create_task(
+                self._threat_analysis_loop()
+            )
         except RuntimeError:
             # No event loop running yet
             pass
@@ -374,7 +380,9 @@ class SecurityLogger:
                         event.message,
                         json.dumps(event.details) if event.details else None,
                         event.threat_level.value,
-                        json.dumps(event.geolocation) if event.geolocation else None,
+                        json.dumps(event.geolocation)
+                        if event.geolocation
+                        else None,
                         event.session_id,
                         event.request_id,
                         json.dumps(event.tags) if event.tags else None,
@@ -536,7 +544,9 @@ class SecurityLogger:
             "block_duration": 3600,  # 1 hour
         }
 
-        logger.warning(f"IP AUTO-BLOCKED: {ip_address} | Risk Score: {risk_score:.2f}")
+        logger.warning(
+            f"IP AUTO-BLOCKED: {ip_address} | Risk Score: {risk_score:.2f}"
+        )
 
     async def _update_session_tracking(self, event: SecurityEvent):
         """STANDARD SESSION TRACKING UPDATE"""
@@ -561,7 +571,10 @@ class SecurityLogger:
                     new_risk = (
                         min(current_risk + 0.1, 1.0)
                         if event.severity
-                        in [SecurityEventSeverity.HIGH, SecurityEventSeverity.CRITICAL]
+                        in [
+                            SecurityEventSeverity.HIGH,
+                            SecurityEventSeverity.CRITICAL,
+                        ]
                         else current_risk
                     )
 
@@ -571,7 +584,12 @@ class SecurityLogger:
                         SET last_activity = ?, events_count = ?, risk_score = ?
                         WHERE session_id = ?
                     """,
-                        (event.timestamp, events_count + 1, new_risk, event.session_id),
+                        (
+                            event.timestamp,
+                            events_count + 1,
+                            new_risk,
+                            event.session_id,
+                        ),
                     )
                 else:
                     # Create new session
@@ -630,7 +648,9 @@ class SecurityLogger:
             # Rotate security log
             security_log = self.log_directory / "security.log"
             if security_log.exists():
-                rotated_log = self.log_directory / f"security_{current_date}.log"
+                rotated_log = (
+                    self.log_directory / f"security_{current_date}.log"
+                )
 
                 # Compress old log
                 with open(security_log, "rb") as f_in:
@@ -753,7 +773,9 @@ class SecurityLogger:
                 rows = await cursor.fetchall()
 
                 # Convert to dictionaries
-                columns = [description[0] for description in cursor.description]
+                columns = [
+                    description[0] for description in cursor.description
+                ]
                 events = []
 
                 for row in rows:
@@ -761,7 +783,9 @@ class SecurityLogger:
 
                     # Parse JSON fields
                     if event_dict["details"]:
-                        event_dict["details"] = json.loads(event_dict["details"])
+                        event_dict["details"] = json.loads(
+                            event_dict["details"]
+                        )
                     if event_dict["geolocation"]:
                         event_dict["geolocation"] = json.loads(
                             event_dict["geolocation"]
@@ -782,7 +806,9 @@ class SecurityLogger:
     ) -> Dict[str, Any]:
         """STANDARD SECURITY STATISTICS"""
         try:
-            start_time = datetime.now(timezone.utc) - timedelta(hours=time_range_hours)
+            start_time = datetime.now(timezone.utc) - timedelta(
+                hours=time_range_hours
+            )
 
             async with aiosqlite.connect(self.database_path) as conn:
                 # Event counts by type
@@ -795,7 +821,9 @@ class SecurityLogger:
                 """,
                     (start_time,),
                 )
-                event_counts = {row[0]: row[1] for row in await cursor.fetchall()}
+                event_counts = {
+                    row[0]: row[1] for row in await cursor.fetchall()
+                }
 
                 # Events by severity
                 cursor = await conn.execute(
@@ -807,7 +835,9 @@ class SecurityLogger:
                 """,
                     (start_time,),
                 )
-                severity_counts = {row[0]: row[1] for row in await cursor.fetchall()}
+                severity_counts = {
+                    row[0]: row[1] for row in await cursor.fetchall()
+                }
 
                 # Top source IPs
                 cursor = await conn.execute(
@@ -833,7 +863,9 @@ class SecurityLogger:
                 """,
                     (start_time,),
                 )
-                threat_counts = {row[0]: row[1] for row in await cursor.fetchall()}
+                threat_counts = {
+                    row[0]: row[1] for row in await cursor.fetchall()
+                }
 
                 return {
                     "time_range_hours": time_range_hours,

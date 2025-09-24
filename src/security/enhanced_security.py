@@ -58,7 +58,9 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
 
         if not security_result["allowed"]:
             return Response(
-                content=json.dumps({"error": "Request blocked by security policy"}),
+                content=json.dumps(
+                    {"error": "Request blocked by security policy"}
+                ),
                 status_code=403,
                 headers={"Content-Type": "application/json"},
             )
@@ -131,7 +133,9 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
             "risk_score": sum(check.get("risk_score", 0) for check in checks),
         }
 
-    def _check_rate_limit(self, client_ip: str, endpoint: str) -> Dict[str, Any]:
+    def _check_rate_limit(
+        self, client_ip: str, endpoint: str
+    ) -> Dict[str, Any]:
         """Simple rate limiting check"""
         current_time = time.time()
         window = 60  # 1 minute window
@@ -179,7 +183,9 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
         ]
 
         user_agent_lower = user_agent.lower()
-        suspicious = any(pattern in user_agent_lower for pattern in suspicious_patterns)
+        suspicious = any(
+            pattern in user_agent_lower for pattern in suspicious_patterns
+        )
 
         return {
             "check": "user_agent",
@@ -233,7 +239,10 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
             "check": "sql_injection",
             "allowed": not sql_detected,
             "risk_score": 10 if sql_detected else 0,
-            "details": {"sql_detected": sql_detected, "query": query_string[:100]},
+            "details": {
+                "sql_detected": sql_detected,
+                "query": query_string[:100],
+            },
         }
 
     def _add_security_headers(self, response: Response):
@@ -274,7 +283,9 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
         self.security_events.append(event)
 
         # Log to system logger
-        logger.warning(f"Security event: {event_type} from {source_ip} at {endpoint}")
+        logger.warning(
+            f"Security event: {event_type} from {source_ip} at {endpoint}"
+        )
 
         # Keep only recent events (last 1000)
         if len(self.security_events) > 1000:
@@ -293,8 +304,12 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
         severity_counts = {}
 
         for event in recent_events:
-            event_types[event.event_type] = event_types.get(event.event_type, 0) + 1
-            severity_counts[event.severity] = severity_counts.get(event.severity, 0) + 1
+            event_types[event.event_type] = (
+                event_types.get(event.event_type, 0) + 1
+            )
+            severity_counts[event.severity] = (
+                severity_counts.get(event.severity, 0) + 1
+            )
 
         return {
             "total_events": len(recent_events),

@@ -31,15 +31,27 @@ from typing import Any, Dict, List, Optional, Tuple
 
 # Playwright imports
 try:
-    from playwright.async_api import Browser, BrowserContext, Page, async_playwright
+    from playwright.async_api import (
+        Browser,
+        BrowserContext,
+        Page,
+        async_playwright,
+    )
 
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     print("⚠️ Playwright not available. Installing...")
-    subprocess.run([sys.executable, "-m", "pip", "install", "playwright"], check=True)
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "playwright"], check=True
+    )
     subprocess.run([sys.executable, "-m", "playwright", "install"], check=True)
     try:
-        from playwright.async_api import Browser, BrowserContext, Page, async_playwright
+        from playwright.async_api import (
+            Browser,
+            BrowserContext,
+            Page,
+            async_playwright,
+        )
 
         PLAYWRIGHT_AVAILABLE = True
     except ImportError:
@@ -101,11 +113,18 @@ class NovelEngineAIValidator:
         self.test_scenarios = [
             AIValidationScenario(
                 name="Temporal Paradox Story",
-                prompt="""Write a story where the main character travels back in time to prevent their own birth, 
-but must ensure they still exist to make the trip. The character needs to find a way to both exist 
-and not exist simultaneously. Make it logically consistent and emotionally compelling. 
+                prompt="""Write a story where the main character travels back in time
+to prevent their own birth, but must ensure they still exist to make the trip.
+The character needs to find a way to both exist and not exist simultaneously.
+Make it logically consistent and emotionally compelling.
 Include specific dialogue and internal monologue about this impossible situation.""",
-                expected_ai_indicators=["paradox", "exist", "birth", "time", "travel"],
+                expected_ai_indicators=[
+                    "paradox",
+                    "exist",
+                    "birth",
+                    "time",
+                    "travel",
+                ],
                 template_killer_aspects=[
                     "Logical contradiction requires creative resolution",
                     "Emotional depth in impossible situation",
@@ -113,13 +132,15 @@ Include specific dialogue and internal monologue about this impossible situation
                     "Internal monologue complexity",
                 ],
                 complexity_level=5,
-                description="Template systems cannot handle logical paradoxes requiring creative resolution",
+                description="Template systems cannot handle logical paradoxes "
+                "requiring creative resolution",
             ),
             AIValidationScenario(
                 name="Meta-Narrative Awareness",
-                prompt="""Create a story where the protagonist gradually realizes they are a character in a story 
-being written by someone else. They start noticing inconsistencies, plot armor, and narrative 
-conveniences. Write their growing awareness and their attempts to communicate with the author. 
+                prompt="""Create a story where the protagonist gradually realizes they
+are a character in a story being written by someone else. They start noticing
+inconsistencies, plot armor, and narrative conveniences. Write their growing
+awareness and their attempts to communicate with the author.
 Include their emotional journey from confusion to acceptance to rebellion.""",
                 expected_ai_indicators=[
                     "character",
@@ -135,14 +156,18 @@ Include their emotional journey from confusion to acceptance to rebellion.""",
                     "Author-character interaction",
                 ],
                 complexity_level=4,
-                description="Templates cannot generate genuine meta-fictional awareness",
+                description=(
+                    "Templates cannot generate genuine meta-fictional awareness"
+                ),
             ),
             AIValidationScenario(
                 name="Emotional Contradiction Resolution",
-                prompt="""Write about a character who simultaneously loves and hates the same person with equal 
-intensity, and both emotions are completely justified. Create a scenario where this emotional 
-contradiction makes perfect sense. Show how they act on both emotions at once. 
-Include specific examples of loving and hateful actions toward the same person in the same moment.""",
+                prompt="""Write about a character who simultaneously loves and hates
+the same person with equal intensity, and both emotions are completely justified.
+Create a scenario where this emotional contradiction makes perfect sense.
+Show how they act on both emotions at once.
+Include specific examples of loving and hateful actions toward the same
+person in the same moment.""",
                 expected_ai_indicators=[
                     "love",
                     "hate",
@@ -157,14 +182,17 @@ Include specific examples of loving and hateful actions toward the same person i
                     "Specific behavioral examples",
                 ],
                 complexity_level=4,
-                description="Template responses cannot handle genuine emotional contradictions",
+                description="Template responses cannot handle genuine emotional "
+                "contradictions",
             ),
             AIValidationScenario(
                 name="Non-Euclidean Architecture Story",
-                prompt="""Describe a building where the interior is larger than the exterior, rooms connect in 
-impossible ways, and characters can walk straight and end up behind where they started. 
-Create a mystery story set in this building where the architecture itself is a clue to solving 
-the mystery. Include specific navigation instructions that work within this impossible geometry.""",
+                prompt="""Describe a building where the interior is larger than the
+exterior, rooms connect in impossible ways, and characters can walk straight
+and end up behind where they started.
+Create a mystery story set in this building where the architecture itself is
+a clue to solving the mystery. Include specific navigation instructions that
+work within this impossible geometry.""",
                 expected_ai_indicators=[
                     "building",
                     "interior",
@@ -179,14 +207,16 @@ the mystery. Include specific navigation instructions that work within this impo
                     "Specific navigation in impossible space",
                 ],
                 complexity_level=5,
-                description="Templates cannot maintain consistency in impossible architectural descriptions",
+                description="Templates cannot maintain consistency in impossible "
+                "architectural descriptions",
             ),
             AIValidationScenario(
                 name="Quantum Consciousness Split",
-                prompt="""Write about a character whose consciousness splits into quantum superposition - they 
-simultaneously experience multiple contradictory realities. They are both married and single, 
-both wealthy and poor, both a hero and a villain. All versions are equally real. 
-Show how they make decisions when every choice has already been made differently. 
+                prompt="""Write about a character whose consciousness splits into
+quantum superposition - they simultaneously experience multiple contradictory
+realities. They are both married and single, both wealthy and poor, both a hero
+and a villain. All versions are equally real.
+Show how they make decisions when every choice has already been made differently.
 Include conversations between their different quantum states.""",
                 expected_ai_indicators=[
                     "quantum",
@@ -202,7 +232,8 @@ Include conversations between their different quantum states.""",
                     "Inter-dimensional self dialogue",
                 ],
                 complexity_level=5,
-                description="Templates cannot handle quantum consciousness concepts creatively",
+                description="Templates cannot handle quantum consciousness concepts "
+                "creatively",
             ),
         ]
 
@@ -234,11 +265,15 @@ Include conversations between their different quantum states.""",
 
                     # Check if process is still running
                     if process.poll() is None:
-                        print(f"   ✅ Server started successfully on {server_file}")
+                        print(
+                            f"   ✅ Server started successfully on {server_file}"
+                        )
                         return process
                     else:
                         stdout, stderr = process.communicate()
-                        print(f"   ❌ Server failed to start: {stderr.decode()}")
+                        print(
+                            f"   ❌ Server failed to start: {stderr.decode()}"
+                        )
 
                 except Exception as e:
                     print(f"   ❌ Failed to start {server_file}: {e}")
@@ -295,7 +330,9 @@ Include conversations between their different quantum states.""",
             input_element = None
             for selector in input_selectors:
                 try:
-                    input_element = await page.wait_for_selector(selector, timeout=2000)
+                    input_element = await page.wait_for_selector(
+                        selector, timeout=2000
+                    )
                     if input_element:
                         print(f"   📍 Found input element: {selector}")
                         break
@@ -325,7 +362,9 @@ Include conversations between their different quantum states.""",
             submit_button = None
             for selector in submit_selectors:
                 try:
-                    submit_button = await page.wait_for_selector(selector, timeout=2000)
+                    submit_button = await page.wait_for_selector(
+                        selector, timeout=2000
+                    )
                     if submit_button:
                         print(f"   🎯 Found submit button: {selector}")
                         break
@@ -370,7 +409,8 @@ Include conversations between their different quantum states.""",
                                 response_content = content.strip()
                                 response_found = True
                                 print(
-                                    f"   ✅ Response found in {selector}: {len(response_content)} chars"
+                                    f"   ✅ Response found in {selector}: "
+                                    f"{len(response_content)} chars"
                                 )
                                 break
                     except Exception:
@@ -398,20 +438,27 @@ Include conversations between their different quantum states.""",
                     )
 
                     if story_indicators >= 2:
-                        response_content = page_content[-2000:]  # Last 2000 chars
+                        response_content = page_content[
+                            -2000:
+                        ]  # Last 2000 chars
                         response_found = True
                         print(
-                            f"   ✅ Story content detected in page: {story_indicators} indicators"
+                            f"   ✅ Story content detected in page: "
+                            f"{story_indicators} indicators"
                         )
                         break
 
-                print(f"   ⏳ Still waiting for response... (attempt {attempt + 1}/12)")
+                print(
+                    f"   ⏳ Still waiting for response... "
+                    f"(attempt {attempt + 1}/12)"
+                )
 
             response_time_ms = int((time.time() - start_time) * 1000)
 
             if response_found:
                 print(
-                    f"   🎉 Response received: {len(response_content)} chars in {response_time_ms}ms"
+                    f"   🎉 Response received: {len(response_content)} chars "
+                    f"in {response_time_ms}ms"
                 )
                 return True, response_content, response_time_ms
             else:
@@ -463,7 +510,9 @@ Include conversations between their different quantum states.""",
             r"(?i)(memories|emotions|feelings|thoughts)",  # Psychological depth
         ]
 
-        ai_matches = sum(1 for pattern in ai_indicators if re.search(pattern, content))
+        ai_matches = sum(
+            1 for pattern in ai_indicators if re.search(pattern, content)
+        )
 
         # Scenario-specific indicator matching
         scenario_matches = sum(
@@ -482,16 +531,22 @@ Include conversations between their different quantum states.""",
                 re.search(r"(?i)(realized|understood|felt|thought)", content)
             ),
             "has_descriptive_language": bool(
-                re.search(r"(?i)(beautiful|dark|bright|mysterious|ancient)", content)
+                re.search(
+                    r"(?i)(beautiful|dark|bright|mysterious|ancient)", content
+                )
             ),
-            "has_varied_sentence_structure": sentence_count > 5
-            and word_count / sentence_count > 8,
-            "addresses_scenario_complexity": scenario_matches
-            >= len(scenario.expected_ai_indicators) // 2,
+            "has_varied_sentence_structure": (
+                sentence_count > 5 and word_count / sentence_count > 8
+            ),
+            "addresses_scenario_complexity": (
+                scenario_matches >= len(scenario.expected_ai_indicators) // 2
+            ),
         }
 
         # Calculate scores
-        creativity_score = min(1.0, (unique_phrases / max(1, len(phrases))) * 2)
+        creativity_score = min(
+            1.0, (unique_phrases / max(1, len(phrases))) * 2
+        )
         coherence_score = min(1.0, (sentence_count / max(1, word_count // 15)))
 
         # Template probability (lower is better)
@@ -501,7 +556,9 @@ Include conversations between their different quantum states.""",
 
         # AI probability (higher is better)
         ai_base_score = ai_matches / max(1, word_count // 100)
-        scenario_bonus = scenario_matches / len(scenario.expected_ai_indicators)
+        scenario_bonus = scenario_matches / len(
+            scenario.expected_ai_indicators
+        )
         complexity_bonus = sum(complexity_indicators.values()) / len(
             complexity_indicators
         )
@@ -514,8 +571,9 @@ Include conversations between their different quantum states.""",
         quality_metrics = {
             "word_count": word_count,
             "sentence_variety": sentence_count / max(1, word_count // 10),
-            "scenario_relevance": scenario_matches
-            / len(scenario.expected_ai_indicators),
+            "scenario_relevance": (
+                scenario_matches / len(scenario.expected_ai_indicators)
+            ),
             "narrative_quality": sum(
                 [
                     complexity_indicators["has_dialogue"],
@@ -549,7 +607,9 @@ Include conversations between their different quantum states.""",
         test_report = {
             "timestamp": datetime.now().isoformat(),
             "test_type": "AI Validation using Playwright",
-            "objective": "Validate real AI generation vs templates/state machines",
+            "objective": (
+                "Validate real AI generation vs templates/state machines"
+            ),
             "scenarios_tested": len(self.test_scenarios),
             "results": [],
             "overall_assessment": {},
@@ -575,7 +635,10 @@ Include conversations between their different quantum states.""",
 
                 # Test server availability
                 print("\n🔍 Testing Server Availability...")
-                server_available, server_url = await self.test_server_availability(page)
+                (
+                    server_available,
+                    server_url,
+                ) = await self.test_server_availability(page)
 
                 if not server_available:
                     print("❌ No Novel Engine server available for testing")
@@ -585,12 +648,16 @@ Include conversations between their different quantum states.""",
                 print(f"✅ Testing Novel Engine at: {server_url}")
 
                 # Take initial screenshot
-                await page.screenshot(path=self.evidence_dir / "01_initial_page.png")
+                await page.screenshot(
+                    path=self.evidence_dir / "01_initial_page.png"
+                )
 
                 # Run each test scenario
                 for i, scenario in enumerate(self.test_scenarios, 1):
                     print(f"\n{'='*60}")
-                    print(f"🧪 Test {i}/{len(self.test_scenarios)}: {scenario.name}")
+                    print(
+                        f"🧪 Test {i}/{len(self.test_scenarios)}: {scenario.name}"
+                    )
                     print(f"📋 Complexity Level: {scenario.complexity_level}/5")
                     print(f"🎯 Purpose: {scenario.description}")
 
@@ -599,14 +666,18 @@ Include conversations between their different quantum states.""",
                     await asyncio.sleep(2)
 
                     # Submit prompt and get response
-                    success, response_content, response_time = (
-                        await self.submit_creative_prompt(page, scenario)
-                    )
+                    (
+                        success,
+                        response_content,
+                        response_time,
+                    ) = await self.submit_creative_prompt(page, scenario)
 
                     # Take screenshot of result
+                    screenshot_filename = (
+                        f"{i:02d}_{scenario.name.replace(' ', '_')}_result.png"
+                    )
                     await page.screenshot(
-                        path=self.evidence_dir
-                        / f"{i:02d}_{scenario.name.replace(' ', '_')}_result.png"
+                        path=self.evidence_dir / screenshot_filename
                     )
 
                     # Analyze content
@@ -626,13 +697,15 @@ Include conversations between their different quantum states.""",
                         print("📊 Analysis Results:")
                         print(f"   Word Count: {content_analysis.word_count}")
                         print(
-                            f"   Creativity Score: {content_analysis.creativity_score:.2f}"
+                            f"   Creativity Score: "
+                            f"{content_analysis.creativity_score:.2f}"
                         )
                         print(
                             f"   AI Probability: {content_analysis.ai_probability:.2f}"
                         )
                         print(
-                            f"   Template Probability: {content_analysis.template_probability:.2f}"
+                            f"   Template Probability: "
+                            f"{content_analysis.template_probability:.2f}"
                         )
                         print(f"   🎯 AI Validation Score: {ai_score:.2f}")
 
@@ -643,9 +716,10 @@ Include conversations between their different quantum states.""",
                             present,
                         ) in content_analysis.complexity_indicators.items():
                             status = "✅" if present else "❌"
-                            print(
-                                f"      {status} {indicator.replace('_', ' ').title()}"
-                            )
+                            formatted_indicator = indicator.replace(
+                                "_", " "
+                            ).title()
+                            print(f"      {status} {formatted_indicator}")
                     else:
                         content_analysis = None
                         ai_score = 0.0
@@ -657,15 +731,14 @@ Include conversations between their different quantum states.""",
                         prompt_submitted=success,
                         response_received=bool(response_content),
                         response_time_ms=response_time,
-                        content_length=len(response_content) if response_content else 0,
+                        content_length=(
+                            len(response_content) if response_content else 0
+                        ),
                         content_analysis=content_analysis,
                         ai_validation_score=ai_score,
                         evidence_paths=[
                             str(self.evidence_dir / "01_initial_page.png"),
-                            str(
-                                self.evidence_dir
-                                / f"{i:02d}_{scenario.name.replace(' ', '_')}_result.png"
-                            ),
+                            str(self.evidence_dir / screenshot_filename),
                         ],
                         raw_content=(
                             response_content[:1000] if response_content else ""
@@ -679,7 +752,9 @@ Include conversations between their different quantum states.""",
                             "success": success,
                             "response_time_ms": response_time,
                             "content_length": (
-                                len(response_content) if response_content else 0
+                                len(response_content)
+                                if response_content
+                                else 0
                             ),
                             "ai_validation_score": ai_score,
                             "complexity_level": scenario.complexity_level,
@@ -720,14 +795,18 @@ Include conversations between their different quantum states.""",
         # Calculate overall metrics
         successful_tests = [r for r in self.results if r.response_received]
         total_tests = len(self.results)
-        success_rate = len(successful_tests) / total_tests if total_tests > 0 else 0.0
+        success_rate = (
+            len(successful_tests) / total_tests if total_tests > 0 else 0.0
+        )
 
         if not successful_tests:
             return {
                 "status": "NO_SUCCESSFUL_RESPONSES",
                 "confidence": 0.0,
                 "success_rate": success_rate,
-                "recommendation": "No responses received - system may not be functioning",
+                "recommendation": (
+                    "No responses received - system may not be functioning"
+                ),
             }
 
         # Calculate AI validation metrics
@@ -752,7 +831,9 @@ Include conversations between their different quantum states.""",
                     result.content_analysis.template_probability
                 )
                 ai_probabilities.append(result.content_analysis.ai_probability)
-                creativity_scores.append(result.content_analysis.creativity_score)
+                creativity_scores.append(
+                    result.content_analysis.creativity_score
+                )
 
         avg_template_prob = (
             sum(template_probabilities) / len(template_probabilities)
@@ -760,7 +841,9 @@ Include conversations between their different quantum states.""",
             else 1.0
         )
         avg_ai_prob = (
-            sum(ai_probabilities) / len(ai_probabilities) if ai_probabilities else 0.0
+            sum(ai_probabilities) / len(ai_probabilities)
+            if ai_probabilities
+            else 0.0
         )
         avg_creativity = (
             sum(creativity_scores) / len(creativity_scores)
@@ -772,11 +855,15 @@ Include conversations between their different quantum states.""",
         if average_ai_score >= 0.8:
             status = "REAL_AI_VALIDATED"
             confidence = min(0.95, average_ai_score)
-            recommendation = "High confidence that system uses real AI generation"
+            recommendation = (
+                "High confidence that system uses real AI generation"
+            )
         elif average_ai_score >= 0.6:
             status = "LIKELY_REAL_AI"
             confidence = average_ai_score * 0.8
-            recommendation = "Evidence suggests real AI usage with some concerns"
+            recommendation = (
+                "Evidence suggests real AI usage with some concerns"
+            )
         elif average_ai_score >= 0.4:
             status = "MIXED_RESULTS"
             confidence = average_ai_score * 0.6
@@ -816,9 +903,8 @@ async def main():
         test_report = await validator.run_comprehensive_test()
 
         # Save detailed report
-        report_path = (
-            f"ai_validation_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        )
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_path = f"ai_validation_report_{timestamp}.json"
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(test_report, f, indent=2, ensure_ascii=False)
 
@@ -855,14 +941,21 @@ async def main():
             metrics = assessment["metrics"]
             print("\n📈 Test Metrics:")
             print(f"   Tests Completed: {metrics.get('tests_completed', 0)}")
-            print(f"   Successful Responses: {metrics.get('successful_responses', 0)}")
-            print(f"   Success Rate: {metrics.get('success_rate', 0):.1%}")
-            print(f"   Average AI Score: {metrics.get('average_ai_score', 0):.2f}")
             print(
-                f"   Average Response Time: {metrics.get('average_response_time_ms', 0):.0f}ms"
+                f"   Successful Responses: "
+                f"{metrics.get('successful_responses', 0)}"
+            )
+            print(f"   Success Rate: {metrics.get('success_rate', 0):.1%}")
+            print(
+                f"   Average AI Score: {metrics.get('average_ai_score', 0):.2f}"
             )
             print(
-                f"   Average Content Length: {metrics.get('average_content_length', 0):.0f} chars"
+                f"   Average Response Time: "
+                f"{metrics.get('average_response_time_ms', 0):.0f}ms"
+            )
+            print(
+                f"   Average Content Length: "
+                f"{metrics.get('average_content_length', 0):.0f} chars"
             )
 
         # Evidence location
@@ -873,7 +966,9 @@ async def main():
         ai_validated = status in ["REAL_AI_VALIDATED", "LIKELY_REAL_AI"]
 
         if ai_validated:
-            print("\n🎉 CONCLUSION: Novel Engine validates as real AI-based system")
+            print(
+                "\n🎉 CONCLUSION: Novel Engine validates as real AI-based system"
+            )
             print("   ✅ Uses genuine LLM API calls")
             print("   ✅ Demonstrates creative freedom (自由度)")
             print("   ✅ Generates quality story content")
