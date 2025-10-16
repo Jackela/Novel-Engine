@@ -219,11 +219,11 @@ class MemoryInterface:
                 faction = getattr(self.agent_core, "faction", "Unknown")
 
                 if "success" in outcome.lower():
-                    if "chaos" in faction.lower():
-                        interpretation += ", viewing this success as another step toward glorious chaos"
-                    elif "imperium" in faction.lower():
+                    if "entropy_cult" in faction.lower():
+                        interpretation += ", viewing this success as another step toward greater entropy alignment"
+                    elif "alliance_network" in faction.lower():
                         interpretation += (
-                            ", seeing this success as service to the Emperor"
+                            ", seeing this success as service to the Founders' Council"
                         )
                     else:
                         interpretation += ", considering this a positive outcome"
@@ -428,21 +428,21 @@ class MemoryInterface:
             for participant in participants:
                 if participant != self.agent_core.agent_id:
                     # Try to infer faction relationships
-                    if "chaos" in participant.lower():
+                    if "entropy_cult" in participant.lower():
                         faction_info = {"activity": "active", "threat_level": "high"}
                         self.agent_core.add_to_subjective_worldview(
-                            "faction_relationships", "chaos", faction_info
+                            "faction_relationships", "entropy_cult", faction_info
                         )
                     elif (
-                        "imperial" in participant.lower()
-                        or "imperium" in participant.lower()
+                        "alliance_network" in participant.lower()
+                        or "alliance_network" in participant.lower()
                     ):
                         faction_info = {
                             "activity": "active",
                             "threat_level": "variable",
                         }
                         self.agent_core.add_to_subjective_worldview(
-                            "faction_relationships", "imperium", faction_info
+                            "faction_relationships", "alliance_network", faction_info
                         )
 
         except Exception as e:

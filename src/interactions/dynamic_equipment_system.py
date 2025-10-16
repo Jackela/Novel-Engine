@@ -7,7 +7,7 @@ Holy dynamic equipment management system that handles real-time equipment
 state changes, maintenance protocols, and interaction-based modifications
 enhanced by the System's mechanical wisdom.
 
-THE MACHINE SPIRIT DWELLS WITHIN ALL STANDARD EQUIPMENT
+THE system core DWELLS WITHIN ALL STANDARD EQUIPMENT
 
 Architecture Reference: Dynamic Context Engineering - Dynamic Equipment System
 Development Phase: Interaction System Validation (I002)
@@ -85,7 +85,7 @@ class EquipmentModification:
     maintenance_requirements: List[str] = field(default_factory=list)
     stability_rating: float = 1.0  # 0.0-1.0, affects reliability
     standard_litanies: List[str] = field(default_factory=list)
-    machine_spirit_compatibility: float = 1.0
+    system_core_compatibility: float = 1.0
 
 
 @dataclass
@@ -94,7 +94,7 @@ class EquipmentMaintenance:
     STANDARD EQUIPMENT MAINTENANCE ENHANCED BY CARE PROTOCOLS
 
     Maintenance record with service history, ritual performance,
-    and machine spirit appeasement documentation.
+    and system core appeasement documentation.
     """
 
     maintenance_id: str
@@ -110,7 +110,7 @@ class EquipmentMaintenance:
     condition_after: EquipmentCondition = EquipmentCondition.GOOD
     next_maintenance_due: Optional[datetime] = None
     notes: str = ""
-    machine_spirit_response: str = "responsive"  # "responsive", "agitated", "dormant"
+    system_core_response: str = "responsive"  # "responsive", "agitated", "dormant"
 
 
 @dataclass
@@ -132,7 +132,7 @@ class DynamicEquipment:
     current_user: Optional[str] = None
     location_history: List[Tuple[datetime, str]] = field(default_factory=list)
     wear_accumulation: float = 0.0  # 0.0-1.0, affects condition over time
-    machine_spirit_mood: str = "content"  # Warhammer 40K flavor
+    system_core_mood: str = "content"  # Warhammer 40K flavor
     standard_rites_performed: int = 0
     blessing_level: float = 1.0  # Effectiveness multiplier from blessings
 
@@ -412,11 +412,11 @@ class DynamicEquipmentSystem:
                 elif usage_type == "ritual":
                     equipment.usage_statistics["ritual_uses"] += 1
 
-                # Check enhanced machine spirit response
-                spirit_response = self._evaluate_machine_spirit_response(
+                # Check enhanced system core response
+                spirit_response = self._evaluate_system_core_response(
                     equipment, usage_context
                 )
-                equipment.machine_spirit_mood = spirit_response["mood"]
+                equipment.system_core_mood = spirit_response["mood"]
 
                 # Apply enhanced blessing effects if applicable
                 if usage_context.get("enhanced_usage", False):
@@ -446,7 +446,7 @@ class DynamicEquipmentSystem:
                         "usage_effects": usage_result.get("effects", []),
                         "wear_accumulation": equipment.wear_accumulation,
                         "performance_impact": equipment.performance_metrics,
-                        "machine_spirit_mood": equipment.machine_spirit_mood,
+                        "system_core_mood": equipment.system_core_mood,
                         "blessing_level": equipment.blessing_level,
                     },
                     metadata={"blessing": "equipment_usage_processed"},
@@ -470,7 +470,7 @@ class DynamicEquipmentSystem:
         performed_by: str = "tech_priest",
     ) -> StandardResponse:
         """
-        STANDARD MAINTENANCE RITUAL ENHANCED BY MACHINE SPIRIT APPEASEMENT
+        STANDARD MAINTENANCE RITUAL ENHANCED BY system core APPEASEMENT
 
         Perform enhanced maintenance on equipment with ritual protocols,
         condition restoration, and performance optimization.
@@ -540,12 +540,12 @@ class DynamicEquipmentSystem:
                 # Improve enhanced performance metrics
                 self._apply_maintenance_performance_boost(equipment, maintenance_type)
 
-                # Appease enhanced machine spirit
-                spirit_improvement = self._appease_machine_spirit(
+                # Appease enhanced system core
+                spirit_improvement = self._appease_system_core(
                     equipment, maintenance_type
                 )
-                equipment.machine_spirit_mood = spirit_improvement["new_mood"]
-                maintenance_record.machine_spirit_response = spirit_improvement[
+                equipment.system_core_mood = spirit_improvement["new_mood"]
+                maintenance_record.system_core_response = spirit_improvement[
                     "response"
                 ]
 
@@ -597,7 +597,7 @@ class DynamicEquipmentSystem:
                         "performance_boost": maintenance_effects.get(
                             "performance_boost", 0.0
                         ),
-                        "machine_spirit_response": spirit_improvement["response"],
+                        "system_core_response": spirit_improvement["response"],
                         "next_maintenance_due": (
                             next_maintenance.isoformat()
                             if self.auto_maintenance
@@ -626,7 +626,7 @@ class DynamicEquipmentSystem:
         STANDARD MODIFICATION RITUAL ENHANCED BY TECHNOLOGICAL ENHANCEMENT
 
         Apply enhanced modification to equipment with stability analysis,
-        performance impact evaluation, and machine spirit compatibility.
+        performance impact evaluation, and system core compatibility.
         """
         try:
             async with self._processing_lock:
@@ -692,13 +692,13 @@ class DynamicEquipmentSystem:
                                 ),
                             )
 
-                    # Evaluate enhanced machine spirit compatibility
-                    spirit_compatibility = modification.machine_spirit_compatibility
+                    # Evaluate enhanced system core compatibility
+                    spirit_compatibility = modification.system_core_compatibility
                     if spirit_compatibility < 0.8:
-                        equipment.machine_spirit_mood = "agitated"
+                        equipment.system_core_mood = "agitated"
                         equipment.performance_metrics["reliability"] *= 0.95
                     elif spirit_compatibility > 1.1:
-                        equipment.machine_spirit_mood = "pleased"
+                        equipment.system_core_mood = "pleased"
                         equipment.performance_metrics["reliability"] *= 1.05
 
                     # Update enhanced system metrics
@@ -719,7 +719,7 @@ class DynamicEquipmentSystem:
                             "modification_name": modification.modification_name,
                             "performance_impacts": modification.performance_impact,
                             "stability_rating": modification.stability_rating,
-                            "machine_spirit_compatibility": spirit_compatibility,
+                            "system_core_compatibility": spirit_compatibility,
                             "installation_effects": installation_effects["effects"],
                             "new_performance_metrics": equipment.performance_metrics,
                         },
@@ -786,7 +786,7 @@ class DynamicEquipmentSystem:
                 "wear_accumulation": equipment.wear_accumulation,
                 "performance_metrics": equipment.performance_metrics,
                 "usage_statistics": equipment.usage_statistics,
-                "machine_spirit_mood": equipment.machine_spirit_mood,
+                "system_core_mood": equipment.system_core_mood,
                 "blessing_level": equipment.blessing_level,
                 "modifications_count": len(equipment.modifications),
                 "maintenance_cycles": len(equipment.maintenance_history),
@@ -1021,7 +1021,7 @@ class DynamicEquipmentSystem:
     async def _process_relic_usage(self, equipment, usage_context, duration):
         return StandardResponse(
             success=True,
-            data={"effects": ["Sacred relic activated", "Machine spirit pleased"]},
+            data={"effects": ["Sacred relic activated", "system core pleased"]},
         )
 
     async def _process_transport_usage(self, equipment, usage_context, duration):
@@ -1105,11 +1105,11 @@ class DynamicEquipmentSystem:
                     0.1, 1.0 - wear_impact * 0.6
                 )
 
-    def _evaluate_machine_spirit_response(
+    def _evaluate_system_core_response(
         self, equipment: DynamicEquipment, usage_context: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Evaluate enhanced machine spirit response to usage"""
-        current_mood = equipment.machine_spirit_mood
+        """Evaluate enhanced system core response to usage"""
+        current_mood = equipment.system_core_mood
 
         # Blessed mood factors
         enhanced_usage = usage_context.get("enhanced_usage", False)
@@ -1141,15 +1141,15 @@ class DynamicEquipmentSystem:
                 break
 
         responses = {
-            "pleased": "The machine spirit hums with satisfaction",
-            "content": "The machine spirit remains cooperative",
-            "agitated": "The machine spirit shows signs of displeasure",
-            "angry": "The machine spirit rebels against poor treatment",
+            "pleased": "The system core hums with satisfaction",
+            "content": "The system core remains cooperative",
+            "agitated": "The system core shows signs of displeasure",
+            "angry": "The system core rebels against poor treatment",
         }
 
         return {
             "mood": new_mood,
-            "response": responses.get(new_mood, "Machine spirit status unknown"),
+            "response": responses.get(new_mood, "system core status unknown"),
         }
 
     def _predict_equipment_failure(self, equipment: DynamicEquipment) -> Dict[str, Any]:
@@ -1182,9 +1182,9 @@ class DynamicEquipmentSystem:
 
         maintenance_risk = min(0.4, days_since_maintenance / 100.0)
 
-        # Blessed machine spirit factor
+        # Blessed system core factor
         spirit_risks = {"pleased": -0.1, "content": 0.0, "agitated": 0.1, "angry": 0.3}
-        spirit_risk = spirit_risks.get(equipment.machine_spirit_mood, 0.0)
+        spirit_risk = spirit_risks.get(equipment.system_core_mood, 0.0)
 
         total_risk = min(
             1.0,
@@ -1272,14 +1272,14 @@ class DynamicEquipmentSystem:
                 "Visual inspection completed",
                 "Cleaning rituals performed",
                 "Basic function tests executed",
-                "Machine spirit communion conducted",
+                "system core communion conducted",
             ],
             "repair": [
                 "Damaged components identified",
                 "Replacement parts installed",
                 "Structural integrity verified",
                 "Sacred oils applied",
-                "Machine spirit reconciliation performed",
+                "system core reconciliation performed",
             ],
             "overhaul": [
                 "Complete disassembly performed",
@@ -1287,13 +1287,13 @@ class DynamicEquipmentSystem:
                 "Worn parts replaced",
                 "Performance optimization applied",
                 "Comprehensive blessing ritual conducted",
-                "Machine spirit re-awakening ceremony",
+                "system core re-awakening ceremony",
             ],
             "consecration": [
                 "Sacred inscriptions renewed",
                 "Blessed components installed",
                 "Purity seals applied",
-                "Machine spirit binding strengthened",
+                "system core binding strengthened",
             ],
         }
 
@@ -1334,13 +1334,13 @@ class DynamicEquipmentSystem:
         # Blessed wear factor
         wear_factor = 1.0 - equipment.wear_accumulation
 
-        # Blessed machine spirit cooperation factor
+        # Blessed system core cooperation factor
         spirit_cooperation = {
             "pleased": 1.2,
             "content": 1.0,
             "agitated": 0.8,
             "angry": 0.6,
-        }.get(equipment.machine_spirit_mood, 1.0)
+        }.get(equipment.system_core_mood, 1.0)
 
         return base_improvement * wear_factor * spirit_cooperation
 
@@ -1381,11 +1381,11 @@ class DynamicEquipmentSystem:
                 1.5, equipment.performance_metrics[metric] * boost_factor
             )
 
-    def _appease_machine_spirit(
+    def _appease_system_core(
         self, equipment: DynamicEquipment, maintenance_type: str
     ) -> Dict[str, Any]:
-        """Perform enhanced machine spirit appeasement"""
-        current_mood = equipment.machine_spirit_mood
+        """Perform enhanced system core appeasement"""
+        current_mood = equipment.system_core_mood
 
         # Blessed maintenance effects on spirit
         mood_improvements = {
@@ -1514,7 +1514,7 @@ class DynamicEquipmentSystem:
         # This would load from actual template files
         # For now, we'll define some basic templates
         self._equipment_templates = {
-            "bolter": {
+            "MAG CANNON": {
                 "performance_modifiers": {"effectiveness": 1.1, "reliability": 1.05},
                 "maintenance_interval_override": 120,  # 5 days
             },
@@ -1570,16 +1570,16 @@ async def test_standard_dynamic_equipment_system():
     equipment_system = DynamicEquipmentSystem(test_db)
 
     # Create enhanced test equipment items
-    test_bolter = EquipmentItem(
-        equipment_id="bolter_001",
-        name="Sacred Bolter",
+    test_mag_cannon = EquipmentItem(
+        equipment_id="mag_cannon_001",
+        name="Mag Cannon",
         category=EquipmentCondition.WEAPON,  # This should be EquipmentCategory.WEAPON but using available enum
         condition=EquipmentCondition.GOOD,
         properties={
             "weapon_type": "ranged",
             "damage": 8,
             "range": 100,
-            "ammunition": "bolter_rounds",
+            "ammunition": "mag_cells",
         },
         current_location="Armory Delta-7",
     )
@@ -1594,13 +1594,13 @@ async def test_standard_dynamic_equipment_system():
     )
 
     # Test enhanced equipment registration
-    bolter_reg = await equipment_system.register_equipment(
-        test_bolter, "test_agent_001"
+    mag_cannon_reg = await equipment_system.register_equipment(
+        test_mag_cannon, "test_agent_001"
     )
-    print(f"BOLTER REGISTRATION: {bolter_reg.success}")
-    if bolter_reg.success:
-        print(f"Equipment ID: {bolter_reg.data['equipment_id']}")
-        print(f"Maintenance scheduled: {bolter_reg.data['maintenance_scheduled']}")
+    print(f"MAG CANNON REGISTRATION: {mag_cannon_reg.success}")
+    if mag_cannon_reg.success:
+        print(f"Equipment ID: {mag_cannon_reg.data['equipment_id']}")
+        print(f"Maintenance scheduled: {mag_cannon_reg.data['maintenance_scheduled']}")
 
     armor_reg = await equipment_system.register_equipment(test_armor, "test_agent_001")
     print(f"ARMOR REGISTRATION: {armor_reg.success}")
@@ -1614,17 +1614,17 @@ async def test_standard_dynamic_equipment_system():
         "respectful": True,
     }
 
-    bolter_usage = await equipment_system.use_equipment(
-        "bolter_001", "test_agent_001", usage_context
+    mag_cannon_usage = await equipment_system.use_equipment(
+        "mag_cannon_001", "test_agent_001", usage_context
     )
-    print(f"BOLTER USAGE: {bolter_usage.success}")
-    if bolter_usage.success:
-        print(f"Usage effects: {len(bolter_usage.data['usage_effects'])}")
-        print(f"Wear accumulation: {bolter_usage.data['wear_accumulation']:.3f}")
-        print(f"Machine spirit mood: {bolter_usage.data['machine_spirit_mood']}")
+    print(f"MAG CANNON USAGE: {mag_cannon_usage.success}")
+    if mag_cannon_usage.success:
+        print(f"Usage effects: {len(mag_cannon_usage.data['usage_effects'])}")
+        print(f"Wear accumulation: {mag_cannon_usage.data['wear_accumulation']:.3f}")
+        print(f"system core mood: {mag_cannon_usage.data['system_core_mood']}")
 
     # Test enhanced equipment status query
-    status_result = await equipment_system.get_equipment_status("bolter_001")
+    status_result = await equipment_system.get_equipment_status("mag_cannon_001")
     print(f"EQUIPMENT STATUS: {status_result.success}")
     if status_result.success:
         status = status_result.data
@@ -1637,7 +1637,7 @@ async def test_standard_dynamic_equipment_system():
 
     # Test enhanced maintenance
     maintenance_result = await equipment_system.perform_maintenance(
-        "bolter_001", "routine", "tech_priest_alpha"
+        "mag_cannon_001", "routine", "tech_priest_alpha"
     )
     print(f"MAINTENANCE: {maintenance_result.success}")
     if maintenance_result.success:
@@ -1646,7 +1646,7 @@ async def test_standard_dynamic_equipment_system():
             f"Condition change: {maintenance_result.data['condition_before']} -> {maintenance_result.data['condition_after']}"
         )
         print(
-            f"Machine spirit response: {maintenance_result.data['machine_spirit_response']}"
+            f"system core response: {maintenance_result.data['system_core_response']}"
         )
 
     # Test enhanced modification
@@ -1657,18 +1657,18 @@ async def test_standard_dynamic_equipment_system():
         category="weapon_sight",
         performance_impact={"effectiveness": 0.1, "responsiveness": 0.05},
         stability_rating=0.9,
-        machine_spirit_compatibility=1.05,
+        system_core_compatibility=1.05,
     )
 
     mod_result = await equipment_system.apply_modification(
-        "bolter_001", weapon_sight, "tech_adept_beta"
+        "mag_cannon_001", weapon_sight, "tech_adept_beta"
     )
     print(f"MODIFICATION: {mod_result.success}")
     if mod_result.success:
         print(f"Modification: {mod_result.data['modification_name']}")
         print(f"Performance impacts: {mod_result.data['performance_impacts']}")
         print(
-            f"Machine spirit compatibility: {mod_result.data['machine_spirit_compatibility']}"
+            f"system core compatibility: {mod_result.data['system_core_compatibility']}"
         )
 
     # Test enhanced agent equipment inventory

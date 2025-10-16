@@ -215,9 +215,9 @@ class TurnOrchestrator:
                 # Information about other agents/entities the agent might be aware of
             },
             "faction_updates": {
-                "imperium": {"activity": "normal", "influence": 0.6},
-                "chaos": {"activity": "low", "influence": 0.2},
-                "ork": {"activity": "moderate", "influence": 0.2},
+                "alliance_network": {"activity": "normal", "influence": 0.6},
+                "entropy_cult": {"activity": "low", "influence": 0.2},
+                "freewind_collective": {"activity": "moderate", "influence": 0.2},
             },
         }
 

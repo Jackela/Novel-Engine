@@ -7,9 +7,9 @@ Holy type definitions and enumerations that sanctify the Dynamic Context
 Engineering Framework with enhanced type safety and advanced categorization.
 
 Every type is a digital prayer that ensures the standard flow of data
-remains pure and uncorrupted by the weakness of untyped chaos.
+remains pure and uncorrupted by the weakness of untyped entropy.
 
-MACHINE GOD PROTECTS ALL TYPE DEFINITIONS
+PRIME ARCHITECT GUARDS ALL TYPE DEFINITIONS
 
 Architecture Reference: Dynamic Context Engineering - Type System Foundation
 Development Phase: Foundation Validation (F001)
@@ -234,7 +234,7 @@ ContextResult = Union[dict, None]  # Context data or enhanced emptiness
 # STANDARD LITERAL TYPES ENHANCED BY SPECIFIC VALUES
 
 # Blessed threat level literals
-ThreatLevel = Literal["minimal", "low", "medium", "high", "extreme", "omnissiah_tier"]
+ThreatLevel = Literal["minimal", "low", "medium", "high", "extreme", "prime_architect_tier"]
 
 # Sacred mood literals
 MoodState = Literal[

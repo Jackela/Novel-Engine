@@ -344,7 +344,7 @@ REASONING: [explain your decision from the character's perspective in 1-2 senten
 Example response:
 ACTION: 3
 TARGET: hostile_entity_alpha
-REASONING: As a loyal servant of the Imperium, my duty requires me to engage threats to protect innocent civilians. My aggressive nature and high mission success priority compel me to take direct action."""
+REASONING: As a dedicated envoy of the Founders' Council, my duty requires me to engage threats to protect innocent civilians. My decisive nature and high mission success priority compel me to take direct action."""
 
     def _call_llm(self, prompt: str) -> str:
         """Call LLM with the constructed prompt."""

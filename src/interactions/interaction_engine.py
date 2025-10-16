@@ -1410,7 +1410,7 @@ async def test_standard_interaction_engine():
             interaction_id="test_combat_001",
             interaction_type=InteractionType.COMBAT,
             priority=InteractionPriority.HIGH,
-            participants=["test_agent_001", "chaos_cultist_001"],
+            participants=["test_agent_001", "entropy_adherent_001"],
             initiator="test_agent_001",
             location="Abandoned Hive Sector",
             environment_state={"danger_level": "high", "visibility": "poor"},

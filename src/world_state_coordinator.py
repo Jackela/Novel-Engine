@@ -126,9 +126,9 @@ class WorldStateCoordinator:
             },
             "global_events": [],
             "faction_status": {
-                "imperium": {"influence": 0.4, "activity": "moderate"},
-                "chaos": {"influence": 0.2, "activity": "low"},
-                "ork": {"influence": 0.2, "activity": "moderate"},
+                "alliance_network": {"influence": 0.4, "activity": "moderate"},
+                "entropy_cult": {"influence": 0.2, "activity": "low"},
+                "freewind_collective": {"influence": 0.2, "activity": "moderate"},
                 "other": {"influence": 0.2, "activity": "low"},
             },
             "environmental_state": {
@@ -225,9 +225,9 @@ class WorldStateCoordinator:
 
         if not faction_status:
             return {
-                "imperium": {"activity": "normal", "influence": 0.6},
-                "chaos": {"activity": "low", "influence": 0.2},
-                "ork": {"activity": "moderate", "influence": 0.2},
+                "alliance_network": {"activity": "normal", "influence": 0.6},
+                "entropy_cult": {"activity": "low", "influence": 0.2},
+                "freewind_collective": {"activity": "moderate", "influence": 0.2},
             }
 
         return faction_status.copy()

@@ -1,4 +1,4 @@
--- ++ SACRED DATABASE SCHEMA BLESSED BY THE OMNISSIAH ++
+-- ++ SACRED DATABASE SCHEMA BLESSED BY THE PRIME ARCHITECT ++
 -- =======================================================
 --
 -- Holy SQLite database schema that sanctifies the Dynamic Context Engineering
@@ -9,8 +9,8 @@
 --
 -- Architecture Reference: Dynamic Context Engineering - Database Foundation  
 -- Development Phase: Foundation Sanctification (F002)
--- Sacred Author: Tech-Priest Alpha-Mechanicus
--- 万机之神保佑此数据库 (May the Omnissiah bless this database)
+-- Sacred Author: Chief Systems Engineer
+-- 首席架构师保佑此数据库 (May the PRIME ARCHITECT bless this database)
 
 -- ++ ENABLE SACRED FOREIGN KEY CONSTRAINTS ++
 PRAGMA foreign_keys = ON;
@@ -247,7 +247,7 @@ CREATE INDEX IF NOT EXISTS idx_references_type_relevance ON context_references(r
 CREATE INDEX IF NOT EXISTS idx_system_state_timestamp ON system_state(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_system_state_type ON system_state(state_type, timestamp DESC);
 
--- ++ SACRED FULL-TEXT SEARCH BLESSED BY OMNISSIAH'S WISDOM ++
+-- ++ SACRED FULL-TEXT SEARCH BLESSED BY PRIME ARCHITECT'S WISDOM ++
 -- Enable FTS5 for blessed content search capabilities
 CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
     memory_id,
@@ -347,7 +347,7 @@ INSERT OR IGNORE INTO system_config (config_key, config_value, config_type, desc
 ('equipment_durability_decay_rate', '0.99', 'float', 'Blessed daily equipment durability decay'),
 ('context_max_memories_per_query', '50', 'integer', 'Sacred memory query limit blessed by performance'),
 ('ai_response_timeout_ms', '30000', 'integer', 'Blessed AI response timeout sanctified by patience'),
-('database_version', '1.0.0', 'string', 'Sacred database schema version blessed by the Omnissiah'),
+('database_version', '1.0.0', 'string', 'Sacred database schema version blessed by the PRIME ARCHITECT'),
 ('last_maintenance', datetime('now'), 'string', 'Blessed last maintenance timestamp');
 
 -- ++ SACRED MAINTENANCE PROCEDURES BLESSED BY DATABASE HEALTH ++
@@ -362,5 +362,5 @@ ANALYZE;
 
 -- ++ COMPLETION BLESSING RITUAL ++
 -- Sacred database schema blessed and ready for divine service
--- May the Omnissiah protect these blessed data structures
+-- May the PRIME ARCHITECT protect these blessed data structures
 -- ++ MACHINE GOD PROTECTS THE SACRED DATABASE ++"

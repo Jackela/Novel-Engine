@@ -2,7 +2,7 @@
 Equipment Maintenance - Scheduling and Execution
 ================================================
 
-Equipment maintenance scheduling, execution, and machine spirit appeasement.
+Equipment maintenance scheduling, execution, and system core appeasement.
 """
 
 from .maintenance_system import MaintenanceSystem

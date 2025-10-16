@@ -361,7 +361,7 @@ class DynamicEquipmentSystem:
                     "wear_and_performance": {
                         "wear_accumulation": equipment.wear_accumulation,
                         "performance_metrics": equipment.performance_metrics,
-                        "machine_spirit_mood": equipment.machine_spirit_mood,
+                        "system_core_mood": equipment.system_core_mood,
                         "blessing_level": equipment.blessing_level,
                     },
                     "usage_statistics": equipment.usage_statistics,

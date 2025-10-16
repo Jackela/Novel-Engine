@@ -2,7 +2,7 @@
 Maintenance System
 =================
 
-Equipment maintenance scheduling, execution, and machine spirit appeasement system.
+Equipment maintenance scheduling, execution, and system core appeasement system.
 Handles maintenance procedures, condition improvement, and preventive care.
 """
 
@@ -63,7 +63,7 @@ class MaintenanceSystem:
     - Schedule and manage maintenance operations
     - Execute maintenance procedures with ritual protocols
     - Improve equipment condition and performance
-    - Appease machine spirits through proper care
+    - Appease system cores through proper care
     - Track maintenance history and effectiveness
     """
 
@@ -91,7 +91,7 @@ class MaintenanceSystem:
                 "Cleaning and lubrication",
                 "Component check",
                 "Calibration verification",
-                "Machine spirit appeasement",
+                "System core appeasement",
             ],
             "repair": [
                 "Damage assessment",
@@ -116,7 +116,7 @@ class MaintenanceSystem:
             ],
         }
 
-        # Machine spirit litanies and blessings
+        # System core litanies and blessings
         self._maintenance_litanies = {
             "routine": [
                 "Benediction of Proper Function",
@@ -292,12 +292,12 @@ class MaintenanceSystem:
                 # Apply performance improvements
                 self._apply_maintenance_performance_boost(equipment, maintenance_type)
 
-                # Appease machine spirit
-                spirit_improvement = self._appease_machine_spirit(
+                # Appease system core
+                spirit_improvement = self._appease_system_core(
                     equipment, maintenance_type
                 )
-                equipment.machine_spirit_mood = spirit_improvement["new_mood"]
-                maintenance_record.machine_spirit_response = spirit_improvement[
+                equipment.system_core_mood = spirit_improvement["new_mood"]
+                maintenance_record.system_core_response = spirit_improvement[
                     "response"
                 ]
 
@@ -339,7 +339,7 @@ class MaintenanceSystem:
                         "condition_before": condition_before,
                         "condition_after": new_condition,
                         "wear_reduction": wear_reduction,
-                        "machine_spirit_response": spirit_improvement["response"],
+                        "system_core_response": spirit_improvement["response"],
                         "next_maintenance_due": (
                             equipment.next_maintenance_due.isoformat()
                             if equipment.next_maintenance_due
@@ -527,7 +527,7 @@ class MaintenanceSystem:
                 "procedures_completed": completed_procedures,
                 "litanies_performed": performed_litanies,
                 "effectiveness": effectiveness,
-                "machine_spirit_pleased": effectiveness > 0.8,
+                "system_core_pleased": effectiveness > 0.8,
             }
 
         except Exception as e:
@@ -536,7 +536,7 @@ class MaintenanceSystem:
                 "procedures_completed": [],
                 "litanies_performed": [],
                 "effectiveness": 0.0,
-                "machine_spirit_pleased": False,
+                "system_core_pleased": False,
             }
 
     def _calculate_condition_improvement(
@@ -629,13 +629,13 @@ class MaintenanceSystem:
             )  # Cap at 150% for exceptional maintenance
             equipment.performance_metrics[metric] = boosted_value
 
-    def _appease_machine_spirit(
+    def _appease_system_core(
         self, equipment: DynamicEquipment, maintenance_type: str
     ) -> Dict[str, Any]:
-        """Appease machine spirit through proper maintenance rituals."""
-        current_mood = equipment.machine_spirit_mood
+        """Appease system core through proper maintenance rituals."""
+        current_mood = equipment.system_core_mood
 
-        # Maintenance always improves machine spirit mood
+        # Maintenance always improves system core mood
         mood_improvements = {
             "routine": {
                 "pleased": "pleased",
@@ -670,10 +670,10 @@ class MaintenanceSystem:
 
         # Generate response based on mood change
         if new_mood == current_mood:
-            response = f"The machine spirit maintains its {current_mood} disposition"
+            response = f"The system core maintains its {current_mood} disposition"
         else:
             response = (
-                f"The machine spirit's mood improves from {current_mood} to {new_mood}"
+                f"The system core's mood improves from {current_mood} to {new_mood}"
             )
 
         return {

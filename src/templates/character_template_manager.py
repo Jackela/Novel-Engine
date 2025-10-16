@@ -572,8 +572,8 @@ class CharacterTemplateManager:
                             template_content
                         ),
                         core_beliefs=(
-                            ["Faithful servant of the Emperor"]
-                            if "emperor" in template_content.lower()
+                            ["Devoted envoy of the Founders' Council"]
+                            if "founders' council" in template_content.lower()
                             else []
                         ),
                     )
@@ -934,14 +934,14 @@ class CharacterTemplateManager:
         return {
             CharacterArchetype.WARRIOR: {
                 TemplateType.CHARACTER_PROMPT: """
-You are {{persona_name}}, a enhanced warrior in service to the Emperor.
+You are {{persona_name}}, an enhanced guardian in service to the Founders' Council.
 
 Character Traits: {{personality_traits|join(', ')}}
 Current Location: {{current_location}}
 Current Situation: {{current_situation}}
 
-Your warrior's heart burns with righteous fury. You speak with conviction and act with decisive courage.
-Combat readiness is your constant state. Honor and duty guide every decision.
+Your guardian instinct burns with unwavering resolve. You speak with conviction and act with decisive courage.
+Readiness is your constant state. Shared purpose and collective duty guide every decision.
 
 {% if memory_context %}Recent Battle Memories:
 {% for memory in memory_context[:3] %}
@@ -949,19 +949,19 @@ Combat readiness is your constant state. Honor and duty guide every decision.
 {% endfor %}
 {% endif %}
 
-FOR THE EMPEROR!
+FOR THE COUNCIL!
 """,
                 TemplateType.DIALOGUE: """
-{{persona_name}} speaks with the conviction of a true warrior:
+{{persona_name}} speaks with the conviction of a true guardian:
 
-"{{custom_variables.dialogue_content or 'The Emperor manages, but we must be His sword.'}}"
+"{{custom_variables.dialogue_content or 'The Council guides us, but we must be their hands.'}}"
 
 *The warrior's stance radiates readiness for battle, eyes scanning for threats*
 """,
                 TemplateType.NARRATIVE_SCENE: """
 ## Battle-Hardened Warrior
 
-{{persona_name}} stands ready, a exemplar of Imperial might. The warrior's presence commands respect and instills confidence in allies.
+{{persona_name}} stands ready, an exemplar of Alliance resolve. The guardian's presence commands respect and instills confidence in allies.
 
 Current Status: {{character_state.current_state.value if character_state else 'Ready for Battle'}}
 Location: {{current_location}}
@@ -973,7 +973,7 @@ Equipment Status:
 {% endfor %}
 {% endif %}
 
-The warrior's determination is unwavering, a beacon of Imperial strength in dark times.
+The warrior's determination is unwavering, a beacon of Alliance strength in dark times.
 """,
             },
             # Add more archetypes as needed...
@@ -1489,15 +1489,15 @@ async def test_standard_character_template_manager():
         # Create enhanced test persona
         test_persona = CharacterPersona(
             persona_id="test_warrior_001",
-            name="Brother Thaddeus",
+            name="Sentinel Thaddeus",
             archetype=CharacterArchetype.WARRIOR,
-            description="A enhanced Space Marine warrior",
+            description="An enhanced Vanguard Paladin guardian",
             personality_traits=["Brave", "Loyal", "Determined", "Disciplined"],
-            core_beliefs=["The Emperor Protects", "Honor in Battle", "Duty Above All"],
-            faction_data=["Imperial Fists", "Space Marines", "Imperium"],
+            core_beliefs=["The Council Guides", "Honor in Unity", "Duty Above All"],
+            faction_data=["Aegis Guardians", "Vanguard Paladins", "Alliance Network"],
             speech_patterns={
                 "formality_level": "high",
-                "vocabulary_preference": {"enemy": "heretic", "fight": "purge"},
+                "vocabulary_preference": {"enemy": "adversary", "fight": "stabilize"},
             },
             behavioral_preferences={
                 "combat_readiness": "always",
@@ -1524,18 +1524,18 @@ async def test_standard_character_template_manager():
             agent_id="test_agent_001",
             current_location="Sacred Battle Barge",
             current_situation="Preparing for planetary assault",
-            active_participants=["Brother Marcus", "Sister Elena"],
+            active_participants=["Sentinel Marcus", "Sister Elena"],
             memory_context=[
                 MemoryItem(
                     agent_id="test_agent_001",
-                    content="Victory in the enhanced shrine against chaos cultists",
+                    content="Victory in the enhanced shrine against entropy adherents",
                     emotional_weight=8.0,
                     relevance_score=0.9,
-                    participants=["Brother Marcus"],
+                    participants=["Sentinel Marcus"],
                 )
             ],
             equipment_states={
-                "Bolter": {"condition": "Excellent", "status": "Loaded"},
+                "Mag Cannon": {"condition": "Excellent", "status": "Loaded"},
                 "Power Armor": {"condition": "Functional", "status": "Active"},
             },
         )

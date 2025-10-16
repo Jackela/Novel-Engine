@@ -230,19 +230,20 @@ class NarrativeProcessor:
         base_context = f"As {character_name} of {faction}, you find yourself in this unfolding story."
 
         # Add faction-specific narrative perspective
-        if "imperial" in faction.lower():
-            imperial_context = (
-                " Your duty to the Emperor guides your perception of these events."
+        faction_lower = faction.lower()
+        if any(keyword in faction_lower for keyword in ("alliance network", "coalition")):
+            alliance_context = (
+                " Your duty to the Founders' Council guides your perception of these events."
             )
-            base_context += imperial_context
-        elif "ork" in faction.lower():
-            ork_context = (
-                " Your ork instincts tell you there's a good fight brewing here."
+            base_context += alliance_context
+        elif "freewind" in faction_lower:
+            freewind_context = (
+                " Your freewind instincts tell you there's a decisive opportunity emerging here."
             )
-            base_context += ork_context
-        elif "mechanicus" in faction.lower():
-            mechanicus_context = " Your augmetic senses detect deeper mysteries in the system processes here."
-            base_context += mechanicus_context
+            base_context += freewind_context
+        elif "engineering collective" in faction_lower:
+            engineering_context = " Your engineered senses detect deeper mysteries in the system processes here."
+            base_context += engineering_context
 
         # Add context based on the current story phase
         if self.story_state["current_phase"] == "investigation":

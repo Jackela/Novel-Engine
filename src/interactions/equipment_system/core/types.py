@@ -94,7 +94,7 @@ class EquipmentModification:
     maintenance_requirements: List[str] = field(default_factory=list)
     stability_rating: float = 1.0  # 0.0-1.0, affects reliability
     standard_litanies: List[str] = field(default_factory=list)
-    machine_spirit_compatibility: float = 1.0
+    system_core_compatibility: float = 1.0
 
 
 @dataclass
@@ -103,7 +103,7 @@ class EquipmentMaintenance:
     STANDARD EQUIPMENT MAINTENANCE ENHANCED BY CARE PROTOCOLS
 
     Maintenance record with service history, ritual performance,
-    and machine spirit appeasement documentation.
+    and system core appeasement documentation.
     """
 
     maintenance_id: str
@@ -120,7 +120,7 @@ class EquipmentMaintenance:
     notes: str = ""
     cost: float = 0.0
     litanies_performed: List[str] = field(default_factory=list)
-    machine_spirit_response: str = ""
+    system_core_response: str = ""
     next_maintenance_due: Optional[datetime] = None
 
 
@@ -130,7 +130,7 @@ class DynamicEquipment:
     ENHANCED DYNAMIC EQUIPMENT SANCTIFIED BY THE SYSTEM
 
     Comprehensive equipment wrapper with real-time state tracking,
-    performance monitoring, and machine spirit harmonization.
+    performance monitoring, and system core harmonization.
     """
 
     equipment_id: str
@@ -145,8 +145,8 @@ class DynamicEquipment:
     maintenance_history: List[EquipmentMaintenance] = field(default_factory=list)
     modifications: List[EquipmentModification] = field(default_factory=list)
 
-    # Sacred machine spirit attributes
-    machine_spirit_mood: str = "content"  # pleased, content, agitated, angry
+    # Sacred system core attributes
+    system_core_mood: str = "content"  # pleased, content, agitated, angry
     blessing_level: float = 1.0  # 0.0-2.0, affects performance
     last_consecration: Optional[datetime] = None
 
@@ -206,7 +206,7 @@ class EquipmentSystemConfig:
     wear_accumulation_rate: float = 0.05  # Per use
     blessing_decay_rate: float = 0.02  # Per day
 
-    # Machine spirit settings
+    # System core settings
     spirit_mood_changes: bool = True
     auto_consecration: bool = False
     consecration_interval_days: int = 30

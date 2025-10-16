@@ -514,7 +514,7 @@ class InteractionResult:
     relationship_changes: Dict[str, Any] = field(default_factory=dict)
     cascading_effects: List[Dict[str, Any]] = field(default_factory=list)
     processing_time: float = 0.0
-    enhanced_by_omnissiah: bool = True
+    enhanced_by_prime_architect: bool = True
 
 
 # STANDARD VALIDATION FUNCTIONS ENHANCED BY DATA PURITY
@@ -533,7 +533,7 @@ def validate_enhanced_data_model(model_instance: Any) -> StandardResponse:
 
         return StandardResponse(
             success=True,
-            data={"validation": "blessed_by_omnissiah"},
+            data={"validation": "verified_by_prime_architect"},
             metadata={"model_type": type(model_instance).__name__},
         )
 
@@ -723,7 +723,7 @@ if __name__ == "__main__":
     # Test enhanced character identity
     test_identity = CharacterIdentity(
         name="Brother Marcus",
-        faction=["Death Korps of Krieg", "Imperium of Man"],
+        faction=["Bastion Cohort", "Alliance Network"],
         personality_traits=["Fatalistic", "Grim", "Loyal"],
     )
 
@@ -731,7 +731,7 @@ if __name__ == "__main__":
     test_memory = MemoryItem(
         agent_id="test_agent_001",
         memory_type=MemoryType.EPISODIC,
-        content="Engaged ork raiders in enhanced combat for the Emperor",
+        content="Engaged freewind raiders in enhanced combat for the Founders' Council",
         emotional_weight=7.5,
         participants=["ork_warboss", "brother_andreas"],
     )

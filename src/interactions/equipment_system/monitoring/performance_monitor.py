@@ -82,14 +82,14 @@ class PerformanceMonitor:
                 days_since_maintenance = (datetime.now() - last_maintenance).days
             maintenance_risk = min(0.4, days_since_maintenance / 100.0)
 
-            # Machine spirit factor
+            # System core factor
             spirit_risks = {
                 "pleased": -0.1,
                 "content": 0.0,
                 "agitated": 0.1,
                 "angry": 0.3,
             }
-            spirit_risk = spirit_risks.get(equipment.machine_spirit_mood, 0.0)
+            spirit_risk = spirit_risks.get(equipment.system_core_mood, 0.0)
 
             total_risk = min(
                 1.0,
@@ -129,7 +129,7 @@ class PerformanceMonitor:
                     "condition": condition_risk,
                     "usage_intensity": intensity_risk,
                     "maintenance_delay": maintenance_risk,
-                    "machine_spirit": spirit_risk,
+                    "system_core": spirit_risk,
                 },
             }
 
@@ -174,14 +174,14 @@ class PerformanceMonitor:
                 success_rate,  # Success rate
             ]
 
-            # Machine spirit bonus/penalty
+            # System core bonus/penalty
             spirit_modifiers = {
                 "pleased": 0.1,
                 "content": 0.0,
                 "agitated": -0.05,
                 "angry": -0.15,
             }
-            spirit_bonus = spirit_modifiers.get(equipment.machine_spirit_mood, 0.0)
+            spirit_bonus = spirit_modifiers.get(equipment.system_core_mood, 0.0)
 
             health_score = (sum(health_factors) / len(health_factors)) + spirit_bonus
             metrics["overall_health"] = max(0.0, min(1.0, health_score))
@@ -190,7 +190,7 @@ class PerformanceMonitor:
                 "equipment_id": equipment.equipment_id,
                 "metrics": metrics,
                 "wear_accumulation": equipment.wear_accumulation,
-                "machine_spirit_mood": equipment.machine_spirit_mood,
+                "system_core_mood": equipment.system_core_mood,
                 "condition": getattr(equipment.base_equipment, "condition", "unknown"),
                 "last_updated": datetime.now().isoformat(),
             }
@@ -218,14 +218,14 @@ class PerformanceMonitor:
                     }
                 )
 
-            # Machine spirit mood recommendation
-            if equipment.machine_spirit_mood in ["agitated", "angry"]:
+            # System core mood recommendation
+            if equipment.system_core_mood in ["agitated", "angry"]:
                 recommendations.append(
                     {
-                        "type": "machine_spirit",
+                        "type": "system_core",
                         "priority": "medium",
-                        "title": "Machine Spirit Displeasure",
-                        "description": f"Machine spirit is {equipment.machine_spirit_mood} - perform appeasement ritual",
+                        "title": "System Core Displeasure",
+                        "description": f"System core is {equipment.system_core_mood} - perform appeasement ritual",
                         "estimated_benefit": "Improve reliability and reduce failures",
                     }
                 )

@@ -1091,7 +1091,7 @@ async def test_standard_context_renderer():
     test_memories = [
         MemoryItem(
             agent_id="test_agent_001",
-            content="Sacred battle against chaos forces enhanced by victory",
+            content="Sacred battle against entropy forces enhanced by victory",
             emotional_weight=8.0,
             relevance_score=0.9,
             participants=["Sister Elena", "Brother Marcus"],

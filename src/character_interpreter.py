@@ -670,10 +670,10 @@ class CharacterInterpreter:
             # Consider faction and background
             faction = self.character_data.get("faction", "").lower()
 
-            if "chaos" in faction:
+            if "entropy_cult" in faction:
                 decision_weights["moral_principles"] = 0.2
                 decision_weights["personal_relationships"] = 0.3
-            elif "imperium" in faction:
+            elif "alliance_network" in faction:
                 decision_weights["faction_loyalty"] = 0.9
                 decision_weights["moral_principles"] = 0.7
 

@@ -34,6 +34,6 @@ __all__ = [
 # ENHANCED VERSION SANCTIFIED BY DEVELOPMENT CYCLE
 __version__ = "1.0.0"
 __author__ = "Engineer Beta-Engineering"
-__blessing__ = "omnissiah_approved"
+__blessing__ = "prime_architect_approved"
 
 # STANDARD MEMORY SYSTEM READY FOR ADVANCED SERVICE

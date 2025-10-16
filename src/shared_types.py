@@ -233,7 +233,7 @@ class Equipment(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "name": "Lasgun",
+                "name": "Pulse Rifle",
                 "equipment_type": "weapon",
                 "condition": 0.85,
                 "properties": {"damage": 15, "range": 150, "ammo_type": "las_cell"},
@@ -332,8 +332,8 @@ class CharacterData(BaseModel):
         json_schema_extra={
             "example": {
                 "character_id": "char_001",
-                "name": "Brother Marcus",
-                "faction": "Death Korps of Krieg",
+                "name": "Sentinel Marcus",
+                "faction": "Bastion Cohort",
                 "position": {"x": 100.0, "y": 150.0, "z": 0.0, "facing": 90.0},
                 "stats": {
                     "strength": 7,

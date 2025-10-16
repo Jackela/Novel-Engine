@@ -224,7 +224,7 @@ class ContextDatabase:
                     "initialized": True,
                     "secure": True,
                 },
-                metadata={"blessing": "omnissiah_approved", "security": "enhanced"},
+                metadata={"blessing": "prime_architect_approved", "security": "enhanced"},
             )
 
         except Exception as e:
@@ -963,7 +963,7 @@ async def test_standard_database_operations():
     agent_result = await test_db.register_enhanced_agent(
         "test_agent_001",
         "Brother Marcus Test",
-        ["Death Korps of Krieg"],
+        ["Bastion Cohort"],
         ["Loyal", "Disciplined"],
     )
     print(f"AGENT REGISTRATION: {agent_result.success}")

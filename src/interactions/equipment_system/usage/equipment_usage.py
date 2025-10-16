@@ -3,7 +3,7 @@ Equipment Usage Processor
 ========================
 
 Equipment usage processing, wear calculation, and performance degradation system.
-Handles category-specific usage patterns and machine spirit interactions.
+Handles category-specific usage patterns and system core interactions.
 """
 
 import asyncio
@@ -66,7 +66,7 @@ class EquipmentUsageProcessor:
     - Calculate wear accumulation and performance degradation
     - Handle category-specific usage effects
     - Track usage statistics and patterns
-    - Manage machine spirit responses to usage
+    - Manage system core responses to usage
     """
 
     def __init__(
@@ -167,11 +167,11 @@ class EquipmentUsageProcessor:
                 # Update usage statistics
                 self._update_usage_statistics(equipment, duration_seconds, usage_result)
 
-                # Handle machine spirit response
-                spirit_response = self._evaluate_machine_spirit_response(
+                # Handle system core response
+                spirit_response = self._evaluate_system_core_response(
                     equipment, usage_context
                 )
-                equipment.machine_spirit_mood = spirit_response["mood"]
+                equipment.system_core_mood = spirit_response["mood"]
 
                 # Update timestamps
                 equipment.last_used = usage_start
@@ -198,7 +198,7 @@ class EquipmentUsageProcessor:
                         "usage_effects": usage_result.get("effects", []),
                         "wear_accumulation": equipment.wear_accumulation,
                         "performance_impact": equipment.performance_metrics,
-                        "machine_spirit_mood": equipment.machine_spirit_mood,
+                        "system_core_mood": equipment.system_core_mood,
                         "new_status": equipment.current_status.value,
                     },
                     metadata={"blessing": "equipment_usage_processed"},
@@ -531,14 +531,14 @@ class EquipmentUsageProcessor:
             condition = condition.value
         condition_factor = condition_multipliers.get(condition, 1.0)
 
-        # Machine spirit mood factor
+        # System core mood factor
         mood_multipliers = {
             "pleased": 0.8,
             "content": 1.0,
             "agitated": 1.2,
             "angry": 1.5,
         }
-        mood_factor = mood_multipliers.get(equipment.machine_spirit_mood, 1.0)
+        mood_factor = mood_multipliers.get(equipment.system_core_mood, 1.0)
 
         total_wear = (
             base_wear
@@ -590,11 +590,11 @@ class EquipmentUsageProcessor:
             if len(stats["usage_intervals"]) > 10:
                 stats["usage_intervals"] = stats["usage_intervals"][-10:]
 
-    def _evaluate_machine_spirit_response(
+    def _evaluate_system_core_response(
         self, equipment: DynamicEquipment, usage_context: Dict[str, Any]
     ) -> Dict[str, str]:
-        """Evaluate machine spirit mood changes."""
-        current_mood = equipment.machine_spirit_mood
+        """Evaluate system core mood changes."""
+        current_mood = equipment.system_core_mood
 
         # Mood transition logic
         usage_care = usage_context.get(
@@ -621,15 +621,15 @@ class EquipmentUsageProcessor:
                 break
 
         responses = {
-            "pleased": "The machine spirit hums with satisfaction",
-            "content": "The machine spirit remains cooperative",
-            "agitated": "The machine spirit shows signs of displeasure",
-            "angry": "The machine spirit rebels against poor treatment",
+            "pleased": "The system core hums with satisfaction",
+            "content": "The system core remains cooperative",
+            "agitated": "The system core shows signs of displeasure",
+            "angry": "The system core rebels against poor treatment",
         }
 
         return {
             "mood": new_mood,
-            "response": responses.get(new_mood, "Machine spirit status unknown"),
+            "response": responses.get(new_mood, "System core status unknown"),
         }
 
     def _determine_equipment_category(
