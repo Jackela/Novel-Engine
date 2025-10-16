@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-++ SACRED COMPREHENSIVE SECURITY TEST SUITE BLESSED BY THE OMNISSIAH ++
+++ SACRED COMPREHENSIVE SECURITY TEST SUITE BLESSED BY THE PRIME ARCHITECT ++
 ========================================================================
 
 Comprehensive security testing suite covering all aspects of the Novel Engine
@@ -11,8 +11,8 @@ rate limiting, and vulnerability assessments.
 
 Architecture: Multi-layer security testing with automated vulnerability detection
 Security Level: Enterprise Grade with OWASP Top 10 Coverage
-Sacred Author: Tech-Priest Security-Testing-Mechanicus
-万机之神保佑此安全测试套件 (May the Omnissiah bless this security test suite)
+Sacred Author: Chief Systems Engineer Security-Testing
+万机之神保佑此安全测试套件 (May the Prime Architect bless this security test suite)
 """
 
 import asyncio

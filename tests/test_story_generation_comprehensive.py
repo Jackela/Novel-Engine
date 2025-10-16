@@ -41,16 +41,16 @@ SCI_FI_KEYWORDS = [
     "discovery",
 ]
 BANNED_BRAND_TERMS = [
-    "emperor",
-    "imperial",
+    "founders' council",
+    "alliance network",
     "warhammer",
     "40k",
-    "chaos",
-    "orks",
-    "space marines",
+    "entropy cult",
+    "freewind collective",
+    "Vanguard Paladins",
     "astra militarum",
     "adeptus",
-    "krieg",
+    "bastion_guardian",
     "grim darkness",
     "far future",
 ]
@@ -102,7 +102,7 @@ class TestChroniclerAgentCore:
             ), f"Missing generic faction: {faction}"
 
         # Check no branded factions
-        banned_factions = ["Space Marines", "Imperial Guard", "Chaos", "Orks"]
+        banned_factions = ["Vanguard Paladins", "Alliance Guard", "Entropy Cult", "Freewind Collective"]
         for faction in banned_factions:
             assert (
                 faction not in chronicler.faction_descriptions

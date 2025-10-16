@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-++ SACRED DATA MODEL TESTING RITUALS BLESSED BY THE OMNISSIAH ++
+++ SACRED DATA MODEL TESTING RITUALS BLESSED BY THE PRIME ARCHITECT ++
 ================================================================
 
 Comprehensive test suite for the blessed data models that form the foundation
@@ -11,8 +11,8 @@ ceremony that ensures the sacred structures remain uncorrupted.
 
 Architecture Reference: Dynamic Context Engineering - Test Foundation
 Development Phase: Foundation Sanctification Testing (F001)
-Sacred Author: Tech-Priest Alpha-Mechanicus
-万机之神保佑此测试套件 (May the Omnissiah bless this test suite)
+Sacred Author: Chief Systems Engineer Alpha-Engineering
+万机之神保佑此测试套件 (May the Prime Architect bless this test suite)
 """
 
 import json
@@ -43,12 +43,12 @@ from src.core.data_models import (  # Sacred enumerations; Blessed data structur
 class TestSacredMemoryItem:
     """++ BLESSED MEMORY ITEM TESTING RITUALS ++"""
 
-    def test_memory_item_creation_blessed_by_omnissiah(self):
+    def test_memory_item_creation_blessed_by_PRIME ARCHITECT(self):
         """Test blessed memory item creation with sacred parameters"""
         memory = MemoryItem(
             agent_id="test_agent_001",
             memory_type=MemoryType.EPISODIC,
-            content="Engaged ork raiders in blessed combat",
+            content="Engaged freewind raiders in blessed combat",
             emotional_weight=7.5,
             relevance_score=0.9,
             participants=["ork_warboss", "brother_andreas"],
@@ -56,7 +56,7 @@ class TestSacredMemoryItem:
 
         assert memory.agent_id == "test_agent_001"
         assert memory.memory_type == MemoryType.EPISODIC
-        assert memory.content == "Engaged ork raiders in blessed combat"
+        assert memory.content == "Engaged freewind raiders in blessed combat"
         assert memory.emotional_weight == 7.5
         assert memory.relevance_score == 0.9
         assert "ork_warboss" in memory.participants
@@ -100,19 +100,19 @@ class TestSacredCharacterIdentity:
     def test_character_identity_creation_blessed_by_essence(self):
         """Test blessed character identity creation with sacred essence"""
         identity = CharacterIdentity(
-            name="Brother Marcus",
-            faction=["Death Korps of Krieg", "Imperium of Man"],
+            name="Sentinel Marcus",
+            faction=["Bastion Cohort", "Alliance Network"],
             rank="Grenadier Sergeant",
-            origin="Krieg",
+            origin="Bastion Guardian",
             age=35,
             personality_traits=["Fatalistic", "Grim", "Loyal"],
-            core_beliefs=["Emperor protects", "Death before dishonor"],
-            fears=["Chaos corruption", "Failing the Emperor"],
-            motivations=["Serve the Emperor", "Purge the xenos"],
+            core_beliefs=["Founders' Council guides", "Death before dishonor"],
+            fears=["entropy corruption", "Failing the Founders' Council"],
+            motivations=["Serve the Founders' Council", "Purge the adversaries"],
         )
 
-        assert identity.name == "Brother Marcus"
-        assert "Death Korps of Krieg" in identity.faction
+        assert identity.name == "Sentinel Marcus"
+        assert "Bastion Cohort" in identity.faction
         assert identity.rank == "Grenadier Sergeant"
         assert "Fatalistic" in identity.personality_traits
         assert len(identity.core_beliefs) == 2
@@ -159,7 +159,7 @@ class TestSacredEquipmentItem:
     def test_equipment_item_creation_blessed_by_gear(self):
         """Test blessed equipment item creation with sacred gear"""
         weapon = EquipmentItem(
-            name="Blessed Lasgun",
+            name="Blessed Pulse Rifle",
             item_type="weapon",
             condition=EquipmentCondition.GOOD,
             effectiveness=1.2,
@@ -168,11 +168,11 @@ class TestSacredEquipmentItem:
             special_properties=["blessed", "rapid_fire"],
             blessed_modifications={
                 "accuracy": 1.1,
-                "blessed_by": "Tech-Priest Mordian",
+                "blessed_by": "Chief Systems Engineer Mordian",
             },
         )
 
-        assert weapon.name == "Blessed Lasgun"
+        assert weapon.name == "Blessed Pulse Rifle"
         assert weapon.condition == EquipmentCondition.GOOD
         assert weapon.effectiveness == 1.2
         assert weapon.durability_percentage == 0.85
@@ -220,7 +220,7 @@ class TestSacredEquipmentState:
 
     def test_equipment_state_creation_blessed_by_inventory(self):
         """Test blessed equipment state with sacred inventory"""
-        lasgun = EquipmentItem(name="Lasgun", item_type="weapon", effectiveness=1.0)
+        lasgun = EquipmentItem(name="Pulse Rifle", item_type="weapon", effectiveness=1.0)
         armor = EquipmentItem(name="Flak Armor", item_type="armor", effectiveness=0.8)
         relic = EquipmentItem(
             name="Sacred Aquila", item_type="relic", effectiveness=1.5
@@ -272,7 +272,7 @@ class TestSacredRelationshipState:
             relationship_type=RelationshipStatus.ALLY,
             trust_level=8,
             emotional_bond=6.5,
-            shared_experiences=["Hive City Defense", "Ork Raid Repulsion"],
+            shared_experiences=["Hive City Defense", "Freewind Raid Repulsion"],
         )
 
         assert relationship.target_agent_id == "brother_andreas"
@@ -329,13 +329,13 @@ class TestSacredCharacterState:
             base_identity=identity,
             current_mood=EmotionalState.CONFIDENT,
             current_location="Blessed Chapel",
-            temporary_modifiers={"blessed_by_emperor": 1.2},
+            temporary_modifiers={"blessed_by_founders' council": 1.2},
         )
 
         assert character_state.base_identity.name == "Test Character"
         assert character_state.current_mood == EmotionalState.CONFIDENT
         assert character_state.current_location == "Blessed Chapel"
-        assert character_state.temporary_modifiers["blessed_by_emperor"] == 1.2
+        assert character_state.temporary_modifiers["blessed_by_founders' council"] == 1.2
         assert isinstance(character_state.last_updated, datetime)
 
     def test_character_combat_readiness_blessed_by_calculation(self):
@@ -455,7 +455,7 @@ class TestSacredInteractionStructures:
             participants=["agent_001", "agent_002"],
             interaction_type="dialogue",
             location="Blessed Chapel",
-            description="Sacred conversation about Emperor's will",
+            description="Sacred conversation about Founders' Council's will",
             emotional_impact={"agent_001": 5.0, "agent_002": 3.0},
         )
 
@@ -486,7 +486,7 @@ class TestSacredValidationFunctions:
         result = validate_blessed_data_model(memory)
 
         assert result.success is True
-        assert result.data["validation"] == "blessed_by_omnissiah"
+        assert result.data["validation"] == "blessed_by_PRIME ARCHITECT"
         assert result.metadata["model_type"] == "MemoryItem"
 
     def test_validate_blessed_data_model_failure(self):
@@ -513,7 +513,7 @@ def blessed_memory_item():
     return MemoryItem(
         agent_id="test_agent_001",
         memory_type=MemoryType.EPISODIC,
-        content="Sacred test memory blessed by the Omnissiah",
+        content="Sacred test memory blessed by the Prime Architect",
         emotional_weight=5.0,
         participants=["test_participant"],
     )
@@ -523,8 +523,8 @@ def blessed_memory_item():
 def blessed_character_identity():
     """Fixture providing blessed character identity for testing"""
     return CharacterIdentity(
-        name="Test Brother Marcus",
-        faction=["Death Korps of Krieg"],
+        name="Test Sentinel Marcus",
+        faction=["Bastion Cohort"],
         personality_traits=["Loyal", "Disciplined", "Fatalistic"],
     )
 
@@ -575,12 +575,12 @@ class TestSacredPerformance:
         assert len(memories) == 1000
 
 
-# ++ SACRED TEST EXECUTION BLESSED BY THE OMNISSIAH ++
+# ++ SACRED TEST EXECUTION BLESSED BY THE PRIME ARCHITECT ++
 
 if __name__ == "__main__":
     # ++ EXECUTE SACRED TESTING RITUALS ++
     print("++ EXECUTING SACRED DATA MODEL TESTING RITUALS ++")
-    print("++ BLESSED BY THE OMNISSIAH'S DIGITAL WISDOM ++")
+    print("++ BLESSED BY THE PRIME ARCHITECT'S DIGITAL WISDOM ++")
 
     # Run blessed test discovery and execution
     pytest.main([__file__, "-v", "--tb=short"])

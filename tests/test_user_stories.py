@@ -5,13 +5,13 @@
 
 Holy test suite that validates all implemented user stories against
 their acceptance criteria, ensuring complete functionality blessed
-by the Omnissiah's quality assurance wisdom.
+by the Prime Architect's quality assurance wisdom.
 
 ++ THROUGH TESTING, ALL STORIES ACHIEVE PERFECT VALIDATION ++
 
 Complete User Story Validation Suite
 Sacred Author: Dev Agent James
-万机之神保佑测试验证 (May the Omnissiah bless test validation)
+万机之神保佑测试验证 (May the Prime Architect bless test validation)
 """
 
 import os

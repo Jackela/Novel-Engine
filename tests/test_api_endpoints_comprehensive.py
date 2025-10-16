@@ -86,7 +86,7 @@ class TestCharacterEndpoints:
         assert "test" in characters
 
         # Should NOT contain branded characters
-        branded_chars = ["krieg", "ork", "isabella_varr", "cors_test_char"]
+        branded_chars = ["bastion_guardian", "freewind_raider", "isabella_varr", "cors_test_char"]
         for branded in branded_chars:
             assert branded not in characters
 
@@ -119,7 +119,7 @@ class TestCharacterEndpoints:
         assert "Scientific Research Institute" in data["narrative_context"]
 
         # Verify no branded content
-        branded_terms = ["Emperor", "Imperial", "Warhammer", "40k"]
+        branded_terms = ["Founders' Council", "Alliance Network", "legacy franchise", "40k"]
         content = data["narrative_context"].lower()
         for term in branded_terms:
             assert term.lower() not in content
@@ -144,7 +144,7 @@ class TestCharacterEndpoints:
 
     def test_character_detail_legacy_branded_characters(self):
         """Test that legacy branded characters return 404"""
-        legacy_characters = ["krieg", "ork", "isabella_varr"]
+        legacy_characters = ["bastion_guardian", "freewind_raider", "isabella_varr"]
         for char_name in legacy_characters:
             response = client.get(f"/characters/{char_name}")
             assert response.status_code == 404
@@ -177,11 +177,11 @@ class TestSimulationEndpoints:
         # Verify story contains no branded content
         story = data["story"].lower()
         branded_terms = [
-            "emperor",
-            "imperial",
+            "founders' council",
+            "alliance network",
             "warhammer",
             "40k",
-            "krieg",
+            "bastion_guardian",
             "space marines",
             "grim darkness",
             "far future",

@@ -45,17 +45,17 @@ class TestFilterRule:
     def test_filter_rule_creation(self):
         """Test creating filter rules with valid parameters."""
         rule = FilterRule(
-            pattern=r"\bSpace Marine\b",
+            pattern=r"\bVanguard Paladin\b",
             violation_type=ViolationType.CHARACTER_NAME,
             action=FilterAction.REPLACE,
-            replacement="Imperial Warrior",
+            replacement="Alliance Paladin",
             confidence_threshold=0.9,
         )
 
-        assert rule.pattern == r"\bSpace Marine\b"
+        assert rule.pattern == r"\bVanguard Paladin\b"
         assert rule.violation_type == ViolationType.CHARACTER_NAME
         assert rule.action == FilterAction.REPLACE
-        assert rule.replacement == "Imperial Warrior"
+        assert rule.replacement == "Alliance Paladin"
         assert rule.confidence_threshold == 0.9
         assert rule.case_sensitive is False  # default
         assert rule.word_boundary is True  # default
@@ -80,20 +80,20 @@ class TestIPViolation:
     def test_ip_violation_creation(self):
         """Test creating IP violation records."""
         violation = IPViolation(
-            term="Space Marine",
+            term="Vanguard Paladin",
             violation_type=ViolationType.CHARACTER_NAME,
-            context="The Space Marine advanced through the ruins",
+            context="The Vanguard Paladin advanced through the ruins",
             position=(4, 15),
             confidence=0.9,
-            suggested_replacement="Imperial Warrior",
+            suggested_replacement="Alliance Paladin",
         )
 
-        assert violation.term == "Space Marine"
+        assert violation.term == "Vanguard Paladin"
         assert violation.violation_type == ViolationType.CHARACTER_NAME
-        assert violation.context == "The Space Marine advanced through the ruins"
+        assert violation.context == "The Vanguard Paladin advanced through the ruins"
         assert violation.position == (4, 15)
         assert violation.confidence == 0.9
-        assert violation.suggested_replacement == "Imperial Warrior"
+        assert violation.suggested_replacement == "Alliance Paladin"
         assert violation.severity == "medium"  # default
 
 
@@ -107,23 +107,23 @@ class TestTermGuard:
             "ip_filtering": {
                 "enable": True,
                 "confidence_threshold": 0.8,
-                "whitelist": ["Imperial", "Guard"],
+                "whitelist": ["Alliance Network", "Guard"],
                 "replacements": {
-                    "Space Marine": "Imperial Marine",
-                    "Commissar": "Officer",
+                    "Vanguard Paladin": "Alliance Network Marine",
+                    "Commandant": "Officer",
                 },
                 "custom_rules": [
                     {
-                        "pattern": r"\bSpace Marine\b",
+                        "pattern": r"\bVanguard Paladin\b",
                         "type": "character_name",
                         "action": "replace",
-                        "replacement": "Imperial Marine",
+                        "replacement": "Alliance Network Marine",
                         "confidence": 0.9,
                         "case_sensitive": False,
                         "word_boundary": True,
                     },
                     {
-                        "pattern": r"\bWarhammer\b",
+                        "pattern": r"\blegacy franchise\b",
                         "type": "trademark",
                         "action": "block",
                         "confidence": 0.95,
@@ -146,10 +146,10 @@ class TestTermGuard:
         guard = TermGuard(config_path=temp_config)
 
         assert len(guard.filter_rules) >= 2  # At least our custom rules
-        assert "Imperial" in guard.whitelist_terms
+        assert "Alliance Network" in guard.whitelist_terms
         assert "Guard" in guard.whitelist_terms
-        assert guard.replacement_dict["Space Marine"] == "Imperial Marine"
-        assert guard.replacement_dict["Commissar"] == "Officer"
+        assert guard.replacement_dict["Vanguard Paladin"] == "Alliance Network Marine"
+        assert guard.replacement_dict["Commandant"] == "Officer"
 
     def test_term_guard_default_initialization(self):
         """Test Term Guard initialization with defaults."""
@@ -167,19 +167,19 @@ class TestTermGuard:
         """Test basic content analysis functionality."""
         guard = TermGuard(config_path=temp_config)
 
-        content = "The Space Marine fought valiantly against the Warhammer forces."
+        content = "The Vanguard Paladin fought valiantly against the legacy franchise forces."
         violations = guard.analyze_content(content)
 
-        # Should detect both Space Marine and Warhammer
+        # Should detect both Vanguard Paladin and legacy franchise
         assert len(violations) >= 2
 
-        # Check Space Marine detection
-        space_marine_violations = [v for v in violations if v.term == "Space Marine"]
+        # Check Vanguard Paladin detection
+        space_marine_violations = [v for v in violations if v.term == "Vanguard Paladin"]
         assert len(space_marine_violations) == 1
         assert space_marine_violations[0].violation_type == ViolationType.CHARACTER_NAME
 
-        # Check Warhammer detection
-        warhammer_violations = [v for v in violations if v.term == "Warhammer"]
+        # Check legacy franchise detection
+        warhammer_violations = [v for v in violations if v.term == "legacy franchise"]
         assert len(warhammer_violations) == 1
         assert warhammer_violations[0].violation_type == ViolationType.TRADEMARK
 
@@ -187,44 +187,44 @@ class TestTermGuard:
         """Test content analysis respects whitelist."""
         guard = TermGuard(config_path=temp_config)
 
-        content = "The Imperial Guard defended their position."
+        content = "The Alliance Guard defended their position."
         violations = guard.analyze_content(content)
 
         # Should not detect whitelisted terms
         violation_terms = [v.term for v in violations]
-        assert "Imperial" not in violation_terms
+        assert "Alliance Network" not in violation_terms
         assert "Guard" not in violation_terms
 
     def test_clean_content_replace(self, temp_config):
         """Test content cleaning with replacement action."""
         guard = TermGuard(config_path=temp_config)
 
-        content = "The Space Marine advanced through the battlefield."
+        content = "The Vanguard Paladin advanced through the battlefield."
         cleaned_content, report = guard.clean_content(content)
 
-        assert "Space Marine" not in cleaned_content
-        assert "Imperial Marine" in cleaned_content
+        assert "Vanguard Paladin" not in cleaned_content
+        assert "Alliance Network Marine" in cleaned_content
         assert len(report.violations_found) >= 1
         assert len(report.actions_taken) >= 1
-        assert "Replaced 'Space Marine' with 'Imperial Marine'" in report.actions_taken
+        assert "Replaced 'Vanguard Paladin' with 'Alliance Network Marine'" in report.actions_taken
 
     def test_clean_content_block(self, temp_config):
         """Test content cleaning with block action."""
         guard = TermGuard(config_path=temp_config)
 
-        content = "This is based on Warhammer 40,000 universe."
+        content = "This is based on legacy franchise 40,000 universe."
         cleaned_content, report = guard.clean_content(content)
 
-        assert "Warhammer" not in cleaned_content
+        assert "legacy franchise" not in cleaned_content
         assert "[CONTENT_FILTERED]" in cleaned_content
         assert len(report.violations_found) >= 1
-        assert any("Blocked 'Warhammer'" in action for action in report.actions_taken)
+        assert any("Blocked 'legacy franchise'" in action for action in report.actions_taken)
 
     def test_clean_content_analyze_only(self, temp_config):
         """Test content analysis without applying fixes."""
         guard = TermGuard(config_path=temp_config)
 
-        content = "The Space Marine fought against Warhammer enemies."
+        content = "The Vanguard Paladin fought against legacy franchise enemies."
         cleaned_content, report = guard.clean_content(content, apply_fixes=False)
 
         # Content should be unchanged
@@ -256,7 +256,7 @@ class TestTermGuard:
 
         # Create sample cleaning reports
         violation1 = IPViolation(
-            term="Space Marine",
+            term="Vanguard Paladin",
             violation_type=ViolationType.CHARACTER_NAME,
             context="context",
             position=(0, 12),
@@ -264,7 +264,7 @@ class TestTermGuard:
         )
 
         violation2 = IPViolation(
-            term="Warhammer",
+            term="legacy franchise",
             violation_type=ViolationType.TRADEMARK,
             context="context",
             position=(0, 9),
@@ -276,7 +276,7 @@ class TestTermGuard:
                 original_length=100,
                 cleaned_length=95,
                 violations_found=[violation1],
-                actions_taken=["Replaced 'Space Marine'"],
+                actions_taken=["Replaced 'Vanguard Paladin'"],
                 confidence_score=0.9,
                 safe_for_use=True,
             ),
@@ -284,7 +284,7 @@ class TestTermGuard:
                 original_length=80,
                 cleaned_length=70,
                 violations_found=[violation2],
-                actions_taken=["Blocked 'Warhammer'"],
+                actions_taken=["Blocked 'legacy franchise'"],
                 confidence_score=0.95,
                 safe_for_use=False,  # Blocked content
             ),
@@ -322,9 +322,9 @@ class TestTermGuardIntegration:
         guard = TermGuard()
 
         content = """
-        In the grim darkness of the far future, the Space Marines of the Ultramarines Chapter
-        defended Terra against Chaos forces. The Commissar ordered his men to hold the line
-        with their Lasguns and Bolters. The Primarch would be proud.
+        In the grim darkness of the far future, the Vanguard Paladins of the First Vanguard Circle Chapter
+        defended Terra against Entropy forces. The Commandant ordered his men to hold the line
+        with their Pulse Rifles and Mag Cannons. The First Mentor would be proud.
         """
 
         cleaned_content, report = guard.clean_content(content)
@@ -380,7 +380,7 @@ class TestTermGuardCLI:
     @pytest.fixture
     def temp_input_file(self):
         """Create temporary input file for CLI testing."""
-        content = "The Space Marine fought against the Warhammer enemies in the grim darkness."
+        content = "The Vanguard Paladin fought against the legacy franchise enemies in the grim darkness."
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write(content)

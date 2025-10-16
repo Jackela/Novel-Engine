@@ -16,7 +16,7 @@ import { TestHelpers, API_CONFIG } from './test-utils.js';
 const SACRED_TEST_DATA = {
   validCharacter: {
     name: 'test_warrior',
-    description: 'In the grim darkness of the far future, Brother-Captain Aureus of the Ultramarines stands as a beacon of honor and tactical brilliance. Forged in the crucible of the Horus Heresy, this Space Marine has witnessed the birth of the Imperium and carries the wisdom of ten thousand years of warfare. His power armor bears the scars of countless battles against the forces of Chaos, each mark a testament to his unwavering loyalty to the Emperor.'
+    description: 'In the deep frontier of the outer rim, Vanguard Captain Aureus of the First Vanguard Circle stands as a beacon of honor and tactical brilliance. Forged in the crucible of the Unity Wars, this Vanguard Paladin has witnessed the birth of the Alliance Network and carries the wisdom of ten thousand years of warfare. His power armor bears the scars of countless battles against the forces of Entropy Cult, each mark a testament to his unwavering loyalty to the Founders' Council.'
   },
   invalidCharacters: {
     shortName: 'ab',
@@ -34,7 +34,7 @@ const SACRED_TEST_DATA = {
     },
     {
       name: 'character_data.yaml',
-      content: 'name: Test Warrior\nfaction: Space Marines\n',
+      content: 'name: Test Warrior\nfaction: Vanguard Paladins\n',
       type: 'application/yaml',
       size: 512
     }
@@ -77,7 +77,7 @@ const CREATION_SELECTORS = {
   FORGING_RITUAL_CONTAINER: '[data-testid="forging-ritual-container"]',
   COGITATOR_SPINNER: '[data-testid="cogitator-spinner"]',
   FORGING_PROGRESS_BAR: '[data-testid="forging-progress-bar"]',
-  MECHANICUS_PRAYER_TEXT: '[data-testid="mechanicus-prayer-text"]',
+  ENGINEERING_COLLECTIVE_PRAYER_TEXT: '[data-testid="engineering-collective-prayer-text"]',
   FORGING_PHASE_INDICATORS: '[data-testid="forging-phase-indicators"]',
   
   // Success state
@@ -108,7 +108,7 @@ const MOCK_API_RESPONSES = {
     detail: 'Character designation already exists in the Codex'
   },
   error500: {
-    detail: 'AI Scribe enhancement failed - The Omnissiah tests our resolve'
+    detail: 'AI Scribe enhancement failed - The Prime Architect tests our resolve'
   }
 };
 
@@ -163,7 +163,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
       await expect(page.locator(CREATION_SELECTORS.FORGE_CHARACTER_BUTTON)).toBeDisabled();
     });
 
-    test('should display proper placeholder guidance from the Machine God', async ({ page }) => {
+    test('should display proper placeholder guidance from the Prime Architect', async ({ page }) => {
       // Verify character name field has appropriate guidance
       await expect(page.locator(CREATION_SELECTORS.CHARACTER_NAME_INPUT))
         .toHaveAttribute('placeholder', 'Enter the sacred name of your character');
@@ -185,9 +185,9 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
     });
   });
 
-  test.describe('Input Validation - The Emperor\'s Standards', () => {
+  test.describe("Input Validation - Founders' Council Protocols", () => {
     
-    test('should validate character name according to the Codex Astartes', async ({ page }) => {
+    test('should validate character name according to the Creation Codex', async ({ page }) => {
       const nameInput = page.locator(CREATION_SELECTORS.CHARACTER_NAME_INPUT);
       
       // Test minimum length requirement
@@ -213,7 +213,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
       await expect(page.locator(CREATION_SELECTORS.NAME_VALIDATION_ERROR)).not.toBeVisible();
     });
 
-    test('should validate description according to Imperial doctrine', async ({ page }) => {
+    test('should validate description according to Alliance Network doctrine', async ({ page }) => {
       const descriptionArea = page.locator(CREATION_SELECTORS.CHARACTER_DESCRIPTION_AREA);
       
       // Test minimum length requirement
@@ -275,7 +275,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
       }
     });
 
-    test('should validate file types according to Imperial standards', async ({ page }) => {
+    test('should validate file types according to Alliance Network standards', async ({ page }) => {
       // Test invalid file type using Playwright's setInputFiles
       const fileInput = page.locator('input[type="file"]');
       
@@ -294,7 +294,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
         .toContainText('unsupported type');
     });
 
-    test('should enforce file size limits blessed by the Omnissiah', async ({ page }) => {
+    test('should enforce file size limits blessed by the Prime Architect', async ({ page }) => {
       // Test oversized file using Playwright's setInputFiles
       const fileInput = page.locator('input[type="file"]');
       
@@ -367,7 +367,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
       // Verify loading state manifests
       await expect(page.locator(CREATION_SELECTORS.FORGING_RITUAL_CONTAINER)).toBeVisible();
       await expect(page.locator(CREATION_SELECTORS.COGITATOR_SPINNER)).toBeVisible();
-      await expect(page.locator(CREATION_SELECTORS.MECHANICUS_PRAYER_TEXT)).toBeVisible();
+      await expect(page.locator(CREATION_SELECTORS.ENGINEERING_COLLECTIVE_PRAYER_TEXT)).toBeVisible();
       
       // Wait for success ceremony
       await expect(page.locator(CREATION_SELECTORS.COMPLETION_CEREMONY)).toBeVisible({ timeout: 30000 });
@@ -423,7 +423,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
       expect(formDataValidated).toBe(true);
     });
 
-    test('should handle API errors with Imperial grace', async ({ page }) => {
+    test('should handle API errors with Alliance Network grace', async ({ page }) => {
       // Mock server error
       await page.route(`${API_CONFIG.BASE_URL}/characters`, async route => {
         if (route.request().method() === 'POST') {
@@ -462,7 +462,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
       
       // Fill form with existing character name
       await page.locator(CREATION_SELECTORS.CHARACTER_NAME_INPUT)
-        .fill('krieg'); // Existing character
+        .fill('bastion_guardian'); // Existing character
       await page.locator(CREATION_SELECTORS.CHARACTER_DESCRIPTION_AREA)
         .fill(SACRED_TEST_DATA.validCharacter.description);
       
@@ -530,7 +530,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
       
       // Mock character selection API with new character
       await TestHelpers.mockCharactersAPI(page, {
-        characters: ['krieg', 'ork', 'test', 'test_warrior']
+        characters: ['bastion_guardian', 'freewind_raider', 'test', 'test_warrior']
       });
       
       // Mock character selection page
@@ -540,8 +540,8 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
           contentType: 'text/html',
           body: `
             <div data-testid="character-selection-container">
-              <div data-testid="character-card-krieg">Krieg</div>
-              <div data-testid="character-card-ork">Ork</div>
+              <div data-testid="character-card-bastion_guardian">Bastion Guardian</div>
+              <div data-testid="character-card-freewind_raider">Freewind Raider</div>
               <div data-testid="character-card-test">Test</div>
               <div data-testid="character-card-test_warrior">Test Warrior</div>
             </div>
@@ -565,7 +565,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
     });
   });
 
-  test.describe('Sacred Loading States - The Mechanicus Rituals', () => {
+  test.describe('Sacred Loading States - The Engineering Collective Rituals', () => {
     
     test('should display proper loading progression during forging', async ({ page }) => {
       // Mock delayed API response to observe loading states
@@ -599,8 +599,8 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
       // Verify progress indication system
       await expect(page.locator(CREATION_SELECTORS.FORGING_PROGRESS_BAR)).toBeVisible();
       
-      // Check Mechanicus prayer text displays
-      await expect(page.locator(CREATION_SELECTORS.MECHANICUS_PRAYER_TEXT)).toBeVisible();
+      // Check Engineering Collective prayer text displays
+      await expect(page.locator(CREATION_SELECTORS.ENGINEERING_COLLECTIVE_PRAYER_TEXT)).toBeVisible();
       
       // Wait for completion
       await expect(page.locator(CREATION_SELECTORS.COMPLETION_CEREMONY)).toBeVisible({ timeout: 10000 });
@@ -643,7 +643,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
       let phaseFound = false;
       for (const text of phaseTexts) {
         try {
-          await expect(page.locator(CREATION_SELECTORS.MECHANICUS_PRAYER_TEXT))
+          await expect(page.locator(CREATION_SELECTORS.ENGINEERING_COLLECTIVE_PRAYER_TEXT))
             .toContainText(text, { timeout: 1000 });
           phaseFound = true;
           break;
@@ -697,7 +697,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
       }
     });
 
-    test('should handle timeout errors with Imperial patience', async ({ page }) => {
+    test('should handle timeout errors with Alliance Network patience', async ({ page }) => {
       // Mock timeout scenario
       await page.route(`${API_CONFIG.BASE_URL}/characters`, async route => {
         if (route.request().method() === 'POST') {
@@ -716,11 +716,11 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
       
       // Should show timeout error
       await expect(page.locator(CREATION_SELECTORS.GLOBAL_ERROR_MESSAGE))
-        .toContainText('machine spirits require more time', { timeout: 70000 });
+        .toContainText('system cores require more time', { timeout: 70000 });
     });
   });
 
-  test.describe('Accessibility - For All Servants of the Emperor', () => {
+  test.describe("Accessibility - For All Servants of the Founders' Council", () => {
     
     test('should support keyboard navigation through the sacred interface', async ({ page }) => {
       // Fill form first to ensure all elements are enabled
@@ -800,7 +800,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
  * as sacred blueprints, guiding the implementation towards perfection.
  * 
  * When the component is finally forged according to these specifications,
- * the tests shall pass, and the Machine God shall be pleased.
+ * the tests shall pass, and the Prime Architect shall be pleased.
  * 
- * The Omnissiah protects.
+ * The Prime Architect protects.
  */
