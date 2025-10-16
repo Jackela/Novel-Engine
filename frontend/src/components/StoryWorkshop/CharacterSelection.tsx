@@ -45,20 +45,20 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
 }) => {
   // Mock character data - in a real app, this would come from character details
   const mockData = {
-    faction: characterName.includes('krieg') ? 'Death Korps of Krieg' : 
-             characterName.includes('ork') ? 'Ork' : 
-             characterName.includes('chaos') ? 'Chaos' : 'Imperial',
-    role: characterName.includes('krieg') ? 'Guardsman' : 
-          characterName.includes('ork') ? 'Warboss' : 
-          characterName.includes('chaos') ? 'Chaos Marine' : 'Character',
+    faction: characterName.includes('bastion_guardian') ? 'Bastion Cohort' : 
+             characterName.includes('freewind_raider') ? 'Freewind Collective' : 
+             characterName.includes('entropy_adept') ? 'Entropy Cult' : 'Alliance Network',
+    role: characterName.includes('bastion_guardian') ? 'Sentinel' : 
+          characterName.includes('freewind_raider') ? 'Collective Captain' : 
+          characterName.includes('entropy_adept') ? 'Entropy Paladin' : 'Character',
   };
 
   const getFactionColor = (faction: string) => {
     const colors: Record<string, string> = {
-      'Imperial': '#4169E1',
-      'Chaos': '#DC143C',
-      'Ork': '#228B22',
-      'Death Korps of Krieg': '#8B4513',
+      'Alliance Network': '#4169E1',
+      'Entropy Cult': '#DC143C',
+      'Freewind Collective': '#228B22',
+      'Bastion Cohort': '#8B4513',
       'Other': '#696969',
     };
     return colors[faction] || '#696969';
@@ -195,9 +195,9 @@ export default function CharacterSelection({
     if (factionFilter) {
       filtered = filtered.filter(character => {
         // Mock faction detection - in real app, this would come from character data
-        const faction = character.includes('krieg') ? 'Death Korps of Krieg' : 
-                       character.includes('ork') ? 'Ork' : 
-                       character.includes('chaos') ? 'Chaos' : 'Imperial';
+        const faction = character.includes('bastion_guardian') ? 'Bastion Cohort' : 
+                       character.includes('freewind_raider') ? 'Freewind Collective' : 
+                       character.includes('entropy_adept') ? 'Entropy Cult' : 'Alliance Network';
         return faction === factionFilter;
       });
     }
@@ -214,9 +214,9 @@ export default function CharacterSelection({
   const availableFactions = useMemo(() => {
     const factions = new Set<string>();
     characters.forEach(character => {
-      const faction = character.includes('krieg') ? 'Death Korps of Krieg' : 
-                     character.includes('ork') ? 'Ork' : 
-                     character.includes('chaos') ? 'Chaos' : 'Imperial';
+      const faction = character.includes('bastion_guardian') ? 'Bastion Cohort' : 
+                     character.includes('freewind_raider') ? 'Freewind Collective' : 
+                     character.includes('entropy_adept') ? 'Entropy Cult' : 'Alliance Network';
       factions.add(faction);
     });
     return Array.from(factions).sort();

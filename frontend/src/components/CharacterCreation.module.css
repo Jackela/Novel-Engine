@@ -32,7 +32,7 @@
   z-index: var(--z-behind);
 }
 
-/* 🎭 SANCTUM HEADER - Imperial Crown */
+/* 🎭 SANCTUM HEADER - Alliance Network Crown */
 .sanctumHeader {
   text-align: center;
   margin-bottom: var(--spacing-5xl);
@@ -122,7 +122,7 @@
   box-shadow: var(--shadow-glow-orange);
 }
 
-/* ✨ SUCCESS CEREMONY - Emperor's Blessing */
+/* ✨ SUCCESS CEREMONY - Founders' Council's Blessing */
 .successCeremony {
   position: fixed;
   top: 0;

@@ -17,7 +17,7 @@
   overflow-x: hidden;
 }
 
-/* 🎭 SELECTION HEADER - Imperial Crown */
+/* 🎭 SELECTION HEADER - Alliance Network Crown */
 .selection-header {
   text-align: center;
   margin-bottom: var(--spacing-5xl);
@@ -142,7 +142,7 @@
   line-height: var(--line-height-normal);
 }
 
-/* ❌ ERROR STATE - Imperial Warnings */
+/* ❌ ERROR STATE - Alliance Network Warnings */
 .error-container {
   display: flex;
   flex-direction: column;
@@ -430,7 +430,7 @@
   background: var(--color-error-bg);
 }
 
-/* ⚠️ VALIDATION ERROR MESSAGE - Imperial Alert */
+/* ⚠️ VALIDATION ERROR MESSAGE - Alliance Network Alert */
 .validation-error {
   color: var(--color-error);
   font-size: var(--font-size-base);
@@ -1315,7 +1315,7 @@
   }
 }
 
-/* 🎨 ACCESSIBILITY ENHANCEMENTS - Imperial Inclusion */
+/* 🎨 ACCESSIBILITY ENHANCEMENTS - Alliance Network Inclusion */
 @media (prefers-reduced-motion: reduce) {
   .character-card,
   .confirm-button,

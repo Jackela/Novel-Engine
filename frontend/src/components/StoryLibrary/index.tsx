@@ -56,8 +56,8 @@ const MOCK_STORIES: StoryProject[] = [
   {
     id: 'story_1',
     title: 'The Last Stand of Cadia',
-    description: 'A heroic tale of Imperial Guards defending against Chaos forces',
-    characters: ['krieg', 'ork_warboss'],
+    description: 'A heroic tale of Alliance Network Guards defending against Entropy forces',
+    characters: ['bastion_guardian', 'freewind_captain'],
     settings: {
       turns: 5,
       narrativeStyle: 'action',
@@ -107,7 +107,7 @@ const MOCK_STORIES: StoryProject[] = [
     id: 'story_3',
     title: 'Brothers in Arms',
     description: 'A tale of camaraderie between unlikely allies',
-    characters: ['krieg', 'test_character'],
+    characters: ['bastion_guardian', 'test_character'],
     settings: {
       turns: 6,
       narrativeStyle: 'dialogue',

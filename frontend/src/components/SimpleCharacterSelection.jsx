@@ -599,9 +599,9 @@ const SimpleCharacterSelection = () => {
                   </div>
                   <div className="character-info">
                     <div className="character-description">
-                      {character === 'krieg' && 'Death Korps of Krieg - Fearless Imperial Guard'}
-                      {character === 'ork' && 'WAAAGH! Brutal Green-skinned Warrior'}
-                      {character === 'isabella_varr' && 'Imperial Noble - Tactical Commander'}
+                      {character === 'bastion_guardian' && 'Bastion Cohort - Fearless Alliance Guard'}
+                      {character === 'freewind_raider' && 'Freewind Collective - Unpredictable Raider'}
+                      {character === 'isabella_varr' && 'Alliance Network Noble - Tactical Commander'}
                       {character === 'cors_test_char' && 'Test Character - Development Unit'}
                       {character === 'test' && 'Experimental Subject - Combat Testing'}
                     </div>

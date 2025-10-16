@@ -393,7 +393,7 @@ const CharacterCreation = () => {
           <div className={styles.forgingCeremony} data-testid="forging-ritual-container" aria-live="polite" aria-busy="true">
             <div className={styles.forgingIcon} data-testid="cogitator-spinner">🔥</div>
             <h2 className={styles.forgingTitle}>{t('characterCreation.ceremony')}</h2>
-            <p className={styles.forgingPhase} data-testid="mechanicus-prayer-text">
+            <p className={styles.forgingPhase} data-testid="engineering-collective-prayer-text">
               {forgePhases[forgingPhase]}
             </p>
             <div className={styles.forgingProgress} data-testid="forging-progress-bar">

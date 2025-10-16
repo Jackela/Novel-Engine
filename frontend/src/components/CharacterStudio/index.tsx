@@ -60,10 +60,10 @@ const CharacterStudio: React.FC = () => {
 
   const getFactionColor = (faction: string) => {
     const factionColors: Record<string, string> = {
-      'Death Korps of Krieg': '#8B4513',
-      'Ork': '#228B22',
-      'Imperial': '#4169E1',
-      'Chaos': '#DC143C',
+      'Bastion Cohort': '#8B4513',
+      'Freewind Collective': '#228B22',
+      'Alliance Network': '#4169E1',
+      'Entropy Cult': '#DC143C',
       'Unknown': '#696969',
     };
     return factionColors[faction] || '#696969';
@@ -203,10 +203,10 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
 
   // Mock data - in real app, this would come from character details
   const mockData = {
-    faction: characterName.includes('krieg') ? 'Death Korps of Krieg' : 
-             characterName.includes('ork') ? 'Ork' : 'Imperial',
-    role: characterName.includes('krieg') ? 'Guardsman' : 
-          characterName.includes('ork') ? 'Warboss' : 'Character',
+    faction: characterName.includes('bastion_guardian') ? 'Bastion Cohort' : 
+             characterName.includes('freewind_raider') ? 'Freewind Collective' : 'Alliance Network',
+    role: characterName.includes('bastion_guardian') ? 'Sentinel' : 
+          characterName.includes('freewind_raider') ? 'Collective Captain' : 'Character',
     stats: { strength: 7, intelligence: 6, charisma: 5 },
   };
 

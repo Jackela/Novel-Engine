@@ -184,14 +184,14 @@ export default function CharacterDetailsDialog({
 
   const getFactionColor = (faction: string) => {
     const colors: Record<string, string> = {
-      'Imperial': '#4169E1',
-      'Chaos': '#DC143C',
-      'Ork': '#228B22',
-      'Death Korps of Krieg': '#8B4513',
-      'Aeldari': '#9370DB',
-      'T\'au Empire': '#FF6347',
-      'Necrons': '#708090',
-      'Tyranids': '#8B008B',
+      'Alliance Network': '#4169E1',
+      'Entropy Cult': '#DC143C',
+      'Freewind Collective': '#228B22',
+      'Bastion Cohort': '#8B4513',
+      'Starborne Conclave': '#9370DB',
+      'Harmonic Assembly': '#FF6347',
+      'Synthetic Vanguard': '#708090',
+      'Adaptive Swarm': '#8B008B',
       'Other': '#696969',
     };
     return colors[faction] || '#696969';

@@ -49,27 +49,27 @@ interface ValidationErrors {
 }
 
 const FACTIONS = [
-  'Imperial',
-  'Chaos',
-  'Ork',
-  'Death Korps of Krieg',
-  'Aeldari',
-  'T\'au Empire',
-  'Necrons',
-  'Tyranids',
+  'Alliance Network',
+  'Entropy Cult',
+  'Freewind Collective',
+  'Bastion Cohort',
+  'Starborne Conclave',
+  'Harmonic Assembly',
+  'Synthetic Vanguard',
+  'Adaptive Swarm',
   'Other',
 ];
 
 const ROLES = [
-  'Guardsman',
-  'Space Marine',
-  'Tech-Priest',
-  'Commissar',
-  'Psyker',
-  'Warboss',
-  'Ork Boy',
-  'Chaos Marine',
-  'Cultist',
+  'Sentinel',
+  'Vanguard Paladin',
+  'Systems Architect',
+  'Commandant',
+  'Visionary Adept',
+  'Collective Captain',
+  'Freewind Initiate',
+  'Entropy Paladin',
+  'Entropy Acolyte',
   'Civilian',
   'Other',
 ];
@@ -395,7 +395,7 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 error={!!validationErrors.role}
                 helperText={validationErrors.role}
-                placeholder="e.g., Guardsman, Warboss"
+                placeholder="e.g., Sentinel, Collective Captain"
                 disabled={createCharacter.isLoading}
               />
             </Grid>

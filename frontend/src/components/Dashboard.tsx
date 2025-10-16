@@ -63,7 +63,7 @@ const Dashboard: React.FC = () => {
       id: '1',
       title: 'The Last Stand of Cadia',
       status: 'completed',
-      characters: ['krieg', 'ork'],
+      characters: ['bastion_guardian', 'freewind_raider'],
       createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
       wordCount: 1250,
     },
@@ -79,7 +79,7 @@ const Dashboard: React.FC = () => {
       id: '3',
       title: 'Brothers in Arms',
       status: 'generating',
-      characters: ['krieg', 'test'],
+      characters: ['bastion_guardian', 'test'],
       createdAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
       wordCount: 0,
     },
