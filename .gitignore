@@ -301,3 +301,29 @@ platform/temp/
 
 # Caching System (Legacy - Remove after refactoring)
 /src/caching/
+
+# BMAD and Tool-Specific Directories
+.bmad-core/
+.claude/commands/
+.cursor/rules/bmad/
+web-bundles/
+
+# Generated Data and Artifacts
+personas/
+quality/
+data/backups/
+campaigns/
+
+# Analysis and Test Reports
+*_ANALYSIS.md
+PYTEST_*.txt
+PYTEST_*.md
+test_campaign.md
+AGENTS.md
+
+# Temporary and Generated Files
+world_state_backup.json
+aioredis.py
+
+# Test Logs
+logs/test_logger*.jsonl
