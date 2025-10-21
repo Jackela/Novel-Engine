@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class PacingType(Enum):
@@ -70,9 +70,9 @@ class StoryPacing:
     average_scene_length: Optional[int] = None  # Average scene duration
 
     # Tension management
-    tension_curve: List[Decimal] = None  # Tension levels throughout segment
-    emotional_peaks: List[int] = None  # Sequence positions of peaks
-    rest_periods: List[int] = None  # Positions of low-intensity moments
+    tension_curve: Tuple[Decimal, ...] = None  # Tension levels throughout segment
+    emotional_peaks: Tuple[int, ...] = None  # Sequence positions of peaks
+    rest_periods: Tuple[int, ...] = None  # Positions of low-intensity moments
 
     # Reader engagement
     revelation_frequency: Decimal = Decimal("0.1")  # Major reveals per sequence
@@ -93,15 +93,21 @@ class StoryPacing:
 
     def __post_init__(self):
         """Initialize default values and validate constraints."""
-        # Set default values for mutable fields
+        # Convert mutable collections to immutable for hashability
         if self.tension_curve is None:
-            object.__setattr__(self, "tension_curve", [])
+            object.__setattr__(self, "tension_curve", ())
+        elif isinstance(self.tension_curve, list):
+            object.__setattr__(self, "tension_curve", tuple(self.tension_curve))
 
         if self.emotional_peaks is None:
-            object.__setattr__(self, "emotional_peaks", [])
+            object.__setattr__(self, "emotional_peaks", ())
+        elif isinstance(self.emotional_peaks, list):
+            object.__setattr__(self, "emotional_peaks", tuple(self.emotional_peaks))
 
         if self.rest_periods is None:
-            object.__setattr__(self, "rest_periods", [])
+            object.__setattr__(self, "rest_periods", ())
+        elif isinstance(self.rest_periods, list):
+            object.__setattr__(self, "rest_periods", tuple(self.rest_periods))
 
         if self.creation_timestamp is None:
             object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
@@ -124,12 +130,7 @@ class StoryPacing:
             raise ValueError("Start sequence must be before end sequence")
 
         # Validate ratio values (0-1)
-        ratio_total = self.dialogue_ratio + self.action_ratio + self.reflection_ratio
-        if not (Decimal("0.9") <= ratio_total <= Decimal("1.1")):
-            raise ValueError(
-                "Dialogue, action, and reflection ratios should sum to approximately 1.0"
-            )
-
+        # Check individual ratios first before sum
         for ratio_name, ratio_value in [
             ("dialogue_ratio", self.dialogue_ratio),
             ("action_ratio", self.action_ratio),
@@ -137,6 +138,13 @@ class StoryPacing:
         ]:
             if not (Decimal("0") <= ratio_value <= Decimal("1")):
                 raise ValueError(f"{ratio_name} must be between 0 and 1")
+        
+        # Then check sum
+        ratio_total = self.dialogue_ratio + self.action_ratio + self.reflection_ratio
+        if not (Decimal("0.9") <= ratio_total <= Decimal("1.1")):
+            raise ValueError(
+                "Dialogue, action, and reflection ratios should sum to approximately 1.0"
+            )
 
         # Validate scale values (1-10)
         for scale_name, scale_value in [
@@ -190,6 +198,53 @@ class StoryPacing:
 
         if len(self.segment_name) > 200:
             raise ValueError("Segment name too long (max 200 characters)")
+
+    def __hash__(self) -> int:
+        """Custom hash implementation for frozen dataclass with Dict fields."""
+        def _dict_to_hashable(d):
+            if not d:
+                return frozenset()
+            items = []
+            for k, v in sorted(d.items()):
+                if isinstance(v, dict):
+                    v = _dict_to_hashable(v)
+                elif isinstance(v, list):
+                    v = tuple(v)
+                elif isinstance(v, Decimal):
+                    v = float(v)
+                items.append((k, v))
+            return frozenset(items)
+        
+        return hash((
+            self.pacing_id,
+            self.pacing_type,
+            self.base_intensity,
+            self.start_sequence,
+            self.end_sequence,
+            self.segment_name,
+            self.segment_description,
+            self.event_density,
+            self.dialogue_ratio,
+            self.action_ratio,
+            self.reflection_ratio,
+            self.scene_transitions,
+            self.time_jumps,
+            self.average_scene_length,
+            self.tension_curve,
+            self.emotional_peaks,
+            self.rest_periods,
+            self.revelation_frequency,
+            self.cliffhanger_intensity,
+            self.curiosity_hooks,
+            self.sentence_complexity,
+            self.paragraph_length,
+            self.vocabulary_density,
+            self.target_reading_time,
+            self.emotional_target,
+            self.pacing_notes,
+            self.creation_timestamp,
+            _dict_to_hashable(self.metadata),
+        ))
 
     @property
     def segment_length(self) -> int:

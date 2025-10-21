@@ -498,6 +498,128 @@ class TestAIIntelligenceIntegration:
 
 
 @pytest.mark.asyncio
+class TestNarrativeEngineV2Integration:
+    """Test suite for V2 Narrative Engine integration with AI intelligence systems."""
+
+    @pytest.fixture
+    def temp_database(self):
+        """Create temporary database for testing."""
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
+            db_path = f.name
+        yield db_path
+        import time
+
+        for attempt in range(5):
+            try:
+                Path(db_path).unlink(missing_ok=True)
+                break
+            except PermissionError:
+                if attempt < 4:
+                    time.sleep(0.1)
+
+    @pytest.mark.asyncio
+    async def test_narrative_engine_initialization(self, temp_database):
+        """Test that V2 Narrative Engine initializes correctly with IntegrationOrchestrator."""
+        orchestrator = IntegrationOrchestrator(database_path=temp_database)
+
+        assert hasattr(orchestrator, "narrative_engine_v2")
+        assert hasattr(orchestrator, "current_arc_state")
+        assert orchestrator.current_arc_state.current_phase.value == "exposition"
+        assert orchestrator.current_arc_state.turn_number == 0
+
+    @pytest.mark.asyncio
+    async def test_get_narrative_guidance(self, temp_database):
+        """Test retrieving narrative guidance from V2 engine."""
+        orchestrator = IntegrationOrchestrator(database_path=temp_database)
+
+        guidance = orchestrator.get_narrative_guidance()
+
+        assert "primary_goal" in guidance
+        assert "secondary_goals" in guidance
+        assert "target_tension" in guidance
+        assert "pacing_intensity" in guidance
+        assert "narrative_tone" in guidance
+        assert "phase" in guidance
+        assert "phase_progress" in guidance
+        assert "overall_progress" in guidance
+
+        assert guidance["phase"] == "exposition"
+        assert isinstance(guidance["target_tension"], float)
+        assert isinstance(guidance["phase_progress"], float)
+
+    @pytest.mark.asyncio
+    async def test_narrative_guidance_integration_in_story_generation(self, temp_database):
+        """Test that narrative guidance is integrated into story content generation."""
+        orchestrator = IntegrationOrchestrator(database_path=temp_database)
+        await orchestrator.startup()
+
+        result = await orchestrator.generate_story_content(
+            prompt="A hero begins their journey",
+            user_id="test_user_v2_narrative",
+            preferences={"style": "epic"},
+        )
+
+        assert result.success
+        assert "narrative_guidance" in result.data
+        assert "primary_goal" in result.data["narrative_guidance"]
+        assert "target_tension" in result.data["narrative_guidance"]
+        assert "current_phase" in result.data["narrative_guidance"]
+
+        await orchestrator.shutdown()
+
+    @pytest.mark.asyncio
+    async def test_turn_completion_updates_arc_state(self, temp_database):
+        """Test that turn completion properly updates the story arc state."""
+        orchestrator = IntegrationOrchestrator(database_path=temp_database)
+        await orchestrator.startup()
+
+        initial_turn = orchestrator.current_arc_state.turn_number
+        initial_progress = float(orchestrator.current_arc_state.phase_progress)
+
+        result = await orchestrator.generate_story_content(
+            prompt="The adventure continues",
+            user_id="test_user_turn_completion",
+        )
+
+        assert result.success
+
+        updated_turn = orchestrator.current_arc_state.turn_number
+        updated_progress = float(orchestrator.current_arc_state.phase_progress)
+
+        assert updated_turn == initial_turn + 1
+        assert updated_progress > initial_progress
+
+        await orchestrator.shutdown()
+
+    @pytest.mark.asyncio
+    async def test_narrative_progression_through_multiple_turns(self, temp_database):
+        """Test narrative state progression through multiple turn completions."""
+        orchestrator = IntegrationOrchestrator(database_path=temp_database)
+        await orchestrator.startup()
+
+        turn_states = []
+
+        for i in range(5):
+            turn_states.append(
+                {
+                    "turn": orchestrator.current_arc_state.turn_number,
+                    "progress": float(orchestrator.current_arc_state.phase_progress),
+                    "phase": orchestrator.current_arc_state.current_phase.value,
+                }
+            )
+
+            await orchestrator.generate_story_content(
+                prompt=f"Turn {i+1} narrative", user_id=f"test_user_{i}"
+            )
+
+        for i in range(1, len(turn_states)):
+            assert turn_states[i]["turn"] > turn_states[i - 1]["turn"]
+            assert turn_states[i]["progress"] >= turn_states[i - 1]["progress"]
+
+        await orchestrator.shutdown()
+
+
+@pytest.mark.asyncio
 class TestPerformanceValidation:
     """Performance validation tests for AI intelligence integration."""
 

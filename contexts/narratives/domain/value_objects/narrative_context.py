@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, FrozenSet, List, Optional
 from uuid import UUID
 
 
@@ -62,13 +62,13 @@ class NarrativeContext:
     is_persistent: bool = True
 
     # Spatial information
-    locations: Set[str] = None
-    affected_regions: Set[str] = None
+    locations: FrozenSet[str] = None
+    affected_regions: FrozenSet[str] = None
     geographical_scope: Optional[str] = None
 
     # Character context
-    affected_characters: Set[UUID] = None
-    character_knowledge_required: Set[UUID] = (
+    affected_characters: FrozenSet[UUID] = None
+    character_knowledge_required: FrozenSet[UUID] = (
         None  # Characters who must know this context
     )
     character_reactions: Dict[UUID, str] = None  # Expected character reactions
@@ -89,9 +89,9 @@ class NarrativeContext:
     pacing_effects: Dict[str, Decimal] = None  # Pacing influences (aspect -> effect)
 
     # Relationship to other contexts
-    prerequisite_contexts: Set[str] = None  # Required preceding contexts
-    conflicting_contexts: Set[str] = None  # Mutually exclusive contexts
-    reinforcing_contexts: Set[str] = None  # Contexts that strengthen this one
+    prerequisite_contexts: FrozenSet[str] = None  # Required preceding contexts
+    conflicting_contexts: FrozenSet[str] = None  # Mutually exclusive contexts
+    reinforcing_contexts: FrozenSet[str] = None  # Contexts that strengthen this one
 
     # Importance and priority
     narrative_importance: Decimal = Decimal("5.0")  # 1-10, how critical this context is
@@ -103,7 +103,7 @@ class NarrativeContext:
     stability: Decimal = Decimal("1.0")  # How stable context is (0-1)
 
     # Metadata
-    tags: Set[str] = None
+    tags: FrozenSet[str] = None
     source_material: Optional[str] = None
     research_notes: str = ""
     creation_timestamp: datetime = None
@@ -111,18 +111,26 @@ class NarrativeContext:
 
     def __post_init__(self):
         """Initialize default values and validate constraints."""
-        # Set default values for mutable fields
+        # Convert mutable collections to immutable for hashability
         if self.locations is None:
-            object.__setattr__(self, "locations", set())
+            object.__setattr__(self, "locations", frozenset())
+        elif isinstance(self.locations, set):
+            object.__setattr__(self, "locations", frozenset(self.locations))
 
         if self.affected_regions is None:
-            object.__setattr__(self, "affected_regions", set())
+            object.__setattr__(self, "affected_regions", frozenset())
+        elif isinstance(self.affected_regions, set):
+            object.__setattr__(self, "affected_regions", frozenset(self.affected_regions))
 
         if self.affected_characters is None:
-            object.__setattr__(self, "affected_characters", set())
+            object.__setattr__(self, "affected_characters", frozenset())
+        elif isinstance(self.affected_characters, set):
+            object.__setattr__(self, "affected_characters", frozenset(self.affected_characters))
 
         if self.character_knowledge_required is None:
-            object.__setattr__(self, "character_knowledge_required", set())
+            object.__setattr__(self, "character_knowledge_required", frozenset())
+        elif isinstance(self.character_knowledge_required, set):
+            object.__setattr__(self, "character_knowledge_required", frozenset(self.character_knowledge_required))
 
         if self.character_reactions is None:
             object.__setattr__(self, "character_reactions", {})
@@ -155,16 +163,24 @@ class NarrativeContext:
             object.__setattr__(self, "pacing_effects", {})
 
         if self.prerequisite_contexts is None:
-            object.__setattr__(self, "prerequisite_contexts", set())
+            object.__setattr__(self, "prerequisite_contexts", frozenset())
+        elif isinstance(self.prerequisite_contexts, set):
+            object.__setattr__(self, "prerequisite_contexts", frozenset(self.prerequisite_contexts))
 
         if self.conflicting_contexts is None:
-            object.__setattr__(self, "conflicting_contexts", set())
+            object.__setattr__(self, "conflicting_contexts", frozenset())
+        elif isinstance(self.conflicting_contexts, set):
+            object.__setattr__(self, "conflicting_contexts", frozenset(self.conflicting_contexts))
 
         if self.reinforcing_contexts is None:
-            object.__setattr__(self, "reinforcing_contexts", set())
+            object.__setattr__(self, "reinforcing_contexts", frozenset())
+        elif isinstance(self.reinforcing_contexts, set):
+            object.__setattr__(self, "reinforcing_contexts", frozenset(self.reinforcing_contexts))
 
         if self.tags is None:
-            object.__setattr__(self, "tags", set())
+            object.__setattr__(self, "tags", frozenset())
+        elif isinstance(self.tags, set):
+            object.__setattr__(self, "tags", frozenset(self.tags))
 
         if self.creation_timestamp is None:
             object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
@@ -231,6 +247,63 @@ class NarrativeContext:
 
         if len(self.description) > 2000:
             raise ValueError("Context description too long (max 2000 characters)")
+
+    def __hash__(self) -> int:
+        """Custom hash implementation for frozen dataclass with Dict fields."""
+        def _dict_to_hashable(d):
+            if not d:
+                return frozenset()
+            items = []
+            for k, v in sorted(d.items(), key=lambda x: (str(x[0]), str(x[1]))):
+                # Convert UUID keys to strings for hashing
+                k_hash = str(k) if isinstance(k, UUID) else k
+                if isinstance(v, dict):
+                    v = _dict_to_hashable(v)
+                elif isinstance(v, list):
+                    v = tuple(v)
+                elif isinstance(v, Decimal):
+                    v = float(v)
+                items.append((k_hash, v))
+            return frozenset(items)
+        
+        return hash((
+            self.context_id,
+            self.context_type,
+            self.scope,
+            self.name,
+            self.description,
+            self.applies_from_sequence,
+            self.applies_to_sequence,
+            self.is_persistent,
+            self.locations,
+            self.affected_regions,
+            self.geographical_scope,
+            self.affected_characters,
+            self.character_knowledge_required,
+            _dict_to_hashable(self.character_reactions),
+            tuple(self.key_facts) if self.key_facts else (),
+            tuple(self.implicit_knowledge) if self.implicit_knowledge else (),
+            tuple(self.hidden_information) if self.hidden_information else (),
+            tuple(self.narrative_constraints) if self.narrative_constraints else (),
+            tuple(self.behavioral_influences) if self.behavioral_influences else (),
+            tuple(self.plot_implications) if self.plot_implications else (),
+            _dict_to_hashable(self.mood_influences),
+            _dict_to_hashable(self.tension_modifiers),
+            _dict_to_hashable(self.pacing_effects),
+            self.prerequisite_contexts,
+            self.conflicting_contexts,
+            self.reinforcing_contexts,
+            self.narrative_importance,
+            self.visibility_level,
+            self.complexity_level,
+            self.evolution_rate,
+            self.stability,
+            self.tags,
+            self.source_material,
+            self.research_notes,
+            self.creation_timestamp,
+            _dict_to_hashable(self.metadata),
+        ))
 
     @property
     def has_sequence_range(self) -> bool:

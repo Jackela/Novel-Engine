@@ -795,8 +795,8 @@ class TestPlotPointOverallImpactScore:
             story_significance=Decimal("2.0"),
         )
 
-        # Expected: (4.0 * 0.4 + 2.0 * 0.4 + 3.0 * 0.2) * 0.2 = 0.64
-        expected_score = Decimal("0.64")
+        # Expected: (4.0 * 0.4 + 2.0 * 0.4 + 3.0 * 0.2) * 0.2 = (1.6 + 0.8 + 0.6) * 0.2 = 0.6
+        expected_score = Decimal("0.6")
         assert plot_point.overall_impact_score == expected_score
 
     def test_impact_score_boundary_values(self):

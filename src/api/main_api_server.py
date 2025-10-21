@@ -65,12 +65,7 @@ from src.core.system_orchestrator import (
 
 # Import security systems (if available)
 try:
-    from src.security.auth_system import (
-        AuthenticationManager,
-        Permission,
-        get_current_user,
-        require_permission,
-    )
+    from src.security.auth_system import AuthenticationManager
     from src.security.enhanced_security import EnhancedSecurityMiddleware
     from src.security.input_validation import ValidationMiddleware, get_input_validator
     from src.security.rate_limiting import (
@@ -81,10 +76,8 @@ try:
     from src.security.security_headers import (
         SecurityHeaders,
         SecurityHeadersMiddleware,
-        get_development_security_config,
         get_production_security_config,
     )
-    from src.security.ssl_config import setup_development_ssl, setup_production_ssl
 
     SECURITY_AVAILABLE = True
 except ImportError:

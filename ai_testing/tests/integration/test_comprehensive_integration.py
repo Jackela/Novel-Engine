@@ -3,12 +3,18 @@ Comprehensive Integration Tests
 
 End-to-end integration testing for the AI Testing Framework.
 Validates complete system integration and orchestration.
+
+NOTE: All tests in this module require external services to be running.
+      Run services before executing these tests or use: pytest -m "not requires_services"
 """
 
 import asyncio
 
 import httpx
 import pytest
+
+# Mark all tests in this module as requiring services
+pytestmark = pytest.mark.requires_services
 
 # Test configuration
 TEST_BASE_URL = "http://localhost:8000"

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, FrozenSet, Optional
 
 
 class ThemeType(Enum):
@@ -56,9 +56,9 @@ class NarrativeTheme:
     description: str
 
     # Thematic details
-    symbolic_elements: Set[str] = None
-    related_motifs: Set[str] = None
-    character_archetypes: Set[str] = None
+    symbolic_elements: FrozenSet[str] = None
+    related_motifs: FrozenSet[str] = None
+    character_archetypes: FrozenSet[str] = None
 
     # Narrative presence
     introduction_sequence: Optional[int] = None
@@ -67,8 +67,8 @@ class NarrativeTheme:
 
     # Thematic development
     development_trajectory: str = ""  # How theme evolves
-    conflicts_with_themes: Set[str] = None
-    reinforces_themes: Set[str] = None
+    conflicts_with_themes: FrozenSet[str] = None
+    reinforces_themes: FrozenSet[str] = None
 
     # Emotional and moral dimensions
     moral_complexity: Decimal = Decimal("5.0")  # 1-10, higher = more complex
@@ -86,33 +86,45 @@ class NarrativeTheme:
     cultural_context: Optional[str] = None
     historical_context: Optional[str] = None
     target_audience_relevance: Dict[str, Decimal] = None
-    tags: Set[str] = None
+    tags: FrozenSet[str] = None
     creation_timestamp: datetime = None
     metadata: Dict[str, Any] = None
 
     def __post_init__(self):
         """Initialize default values and validate constraints."""
-        # Set default values for mutable fields
+        # Convert mutable collections to immutable for hashability
         if self.symbolic_elements is None:
-            object.__setattr__(self, "symbolic_elements", set())
+            object.__setattr__(self, "symbolic_elements", frozenset())
+        elif isinstance(self.symbolic_elements, set):
+            object.__setattr__(self, "symbolic_elements", frozenset(self.symbolic_elements))
 
         if self.related_motifs is None:
-            object.__setattr__(self, "related_motifs", set())
+            object.__setattr__(self, "related_motifs", frozenset())
+        elif isinstance(self.related_motifs, set):
+            object.__setattr__(self, "related_motifs", frozenset(self.related_motifs))
 
         if self.character_archetypes is None:
-            object.__setattr__(self, "character_archetypes", set())
+            object.__setattr__(self, "character_archetypes", frozenset())
+        elif isinstance(self.character_archetypes, set):
+            object.__setattr__(self, "character_archetypes", frozenset(self.character_archetypes))
 
         if self.conflicts_with_themes is None:
-            object.__setattr__(self, "conflicts_with_themes", set())
+            object.__setattr__(self, "conflicts_with_themes", frozenset())
+        elif isinstance(self.conflicts_with_themes, set):
+            object.__setattr__(self, "conflicts_with_themes", frozenset(self.conflicts_with_themes))
 
         if self.reinforces_themes is None:
-            object.__setattr__(self, "reinforces_themes", set())
+            object.__setattr__(self, "reinforces_themes", frozenset())
+        elif isinstance(self.reinforces_themes, set):
+            object.__setattr__(self, "reinforces_themes", frozenset(self.reinforces_themes))
 
         if self.target_audience_relevance is None:
             object.__setattr__(self, "target_audience_relevance", {})
 
         if self.tags is None:
-            object.__setattr__(self, "tags", set())
+            object.__setattr__(self, "tags", frozenset())
+        elif isinstance(self.tags, set):
+            object.__setattr__(self, "tags", frozenset(self.tags))
 
         if self.creation_timestamp is None:
             object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
@@ -165,6 +177,53 @@ class NarrativeTheme:
 
         if len(self.description) > 1000:
             raise ValueError("Theme description too long (max 1000 characters)")
+
+    def __hash__(self) -> int:
+        """Custom hash implementation for frozen dataclass with Dict fields."""
+        def _dict_to_hashable(d):
+            if not d:
+                return frozenset()
+            items = []
+            for k, v in sorted(d.items()):
+                if isinstance(v, dict):
+                    v = _dict_to_hashable(v)
+                elif isinstance(v, list):
+                    v = tuple(v)
+                elif isinstance(v, Decimal):
+                    v = float(v)
+                items.append((k, v))
+            return frozenset(items)
+        
+        return hash((
+            self.theme_id,
+            self.theme_type,
+            self.intensity,
+            self.name,
+            self.description,
+            self.symbolic_elements,
+            self.related_motifs,
+            self.character_archetypes,
+            self.introduction_sequence,
+            self.resolution_sequence,
+            self.peak_intensity_sequence,
+            self.development_trajectory,
+            self.conflicts_with_themes,
+            self.reinforces_themes,
+            self.moral_complexity,
+            self.emotional_resonance,
+            self.universal_appeal,
+            self.expressed_through_dialogue,
+            self.expressed_through_action,
+            self.expressed_through_symbolism,
+            self.expressed_through_setting,
+            self.expressed_through_character_arc,
+            self.cultural_context,
+            self.historical_context,
+            _dict_to_hashable(self.target_audience_relevance),
+            self.tags,
+            self.creation_timestamp,
+            _dict_to_hashable(self.metadata),
+        ))
 
     @property
     def is_major_theme(self) -> bool:
@@ -248,7 +307,7 @@ class NarrativeTheme:
         base_score = (
             (self.emotional_resonance * Decimal("0.4"))
             + (self.universal_appeal * Decimal("0.3"))
-            + (self.thematic_complexity_score * Decimal("0.3"))
+            + (self.moral_complexity * Decimal("0.3"))
         )
 
         return base_score * intensity_weight[self.intensity]
@@ -327,15 +386,15 @@ class NarrativeTheme:
             intensity=new_intensity,
             name=self.name,
             description=self.description,
-            symbolic_elements=self.symbolic_elements.copy(),
-            related_motifs=self.related_motifs.copy(),
-            character_archetypes=self.character_archetypes.copy(),
+            symbolic_elements=self.symbolic_elements,
+            related_motifs=self.related_motifs,
+            character_archetypes=self.character_archetypes,
             introduction_sequence=self.introduction_sequence,
             resolution_sequence=self.resolution_sequence,
             peak_intensity_sequence=self.peak_intensity_sequence,
             development_trajectory=self.development_trajectory,
-            conflicts_with_themes=self.conflicts_with_themes.copy(),
-            reinforces_themes=self.reinforces_themes.copy(),
+            conflicts_with_themes=self.conflicts_with_themes,
+            reinforces_themes=self.reinforces_themes,
             moral_complexity=self.moral_complexity,
             emotional_resonance=self.emotional_resonance,
             universal_appeal=self.universal_appeal,
@@ -347,7 +406,7 @@ class NarrativeTheme:
             cultural_context=self.cultural_context,
             historical_context=self.historical_context,
             target_audience_relevance=self.target_audience_relevance.copy(),
-            tags=self.tags.copy(),
+            tags=self.tags,
             creation_timestamp=self.creation_timestamp,
             metadata=self.metadata.copy(),
         )

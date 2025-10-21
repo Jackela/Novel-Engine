@@ -15,22 +15,12 @@ from src.persona_agent import PersonaAgent
 # Try to import Iron Laws types
 try:
     from src.shared_types import (
-        ActionIntensity,
-        ActionParameters,
-        ActionTarget,
-        ActionType,
-        CharacterData,
-        CharacterResources,
-        CharacterStats,
-        EntityType,
         IronLawsReport,
         IronLawsViolation,
         Position,
         ProposedAction,
         ResourceValue,
-        ValidatedAction,
         ValidationResult,
-        ValidationStatus,
     )
 
     IRON_LAWS_AVAILABLE = True

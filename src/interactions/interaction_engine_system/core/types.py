@@ -17,7 +17,6 @@ try:
         CharacterInteraction,
         CharacterState,
         EmotionalState,
-        EquipmentItem,
         ErrorInfo,
         InteractionResult,
         MemoryItem,

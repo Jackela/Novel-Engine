@@ -25,6 +25,7 @@ from pathlib import Path
 import httpx
 import jwt
 import pytest
+import pytest_asyncio
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -114,7 +115,7 @@ class SecurityTestSuite:
 class TestAuthentication:
     """++ SACRED AUTHENTICATION SECURITY TESTS ++"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_suite(self):
         suite = SecurityTestSuite()
         await suite.setup()
@@ -208,7 +209,7 @@ class TestAuthentication:
 class TestAuthorization:
     """++ SACRED AUTHORIZATION SECURITY TESTS ++"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_suite(self):
         suite = SecurityTestSuite()
         await suite.setup()
@@ -257,7 +258,6 @@ class TestAuthorization:
         )
 
 
-@pytest.mark.asyncio
 class TestInputValidation:
     """++ SACRED INPUT VALIDATION SECURITY TESTS ++"""
 
@@ -341,7 +341,7 @@ class TestInputValidation:
 class TestRateLimiting:
     """++ SACRED RATE LIMITING SECURITY TESTS ++"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def rate_limiter(self):
         backend = InMemoryRateLimitBackend()
         strategy = RateLimitStrategy()
@@ -398,7 +398,6 @@ class TestRateLimiting:
         assert not whitelist.is_whitelisted("1.1.1.1")
 
 
-@pytest.mark.asyncio
 class TestSecurityHeaders:
     """++ SACRED SECURITY HEADERS TESTS ++"""
 
@@ -428,7 +427,7 @@ class TestSecurityHeaders:
 class TestVulnerabilityAssessment:
     """++ SACRED VULNERABILITY ASSESSMENT TESTS ++"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_suite(self):
         suite = SecurityTestSuite()
         await suite.setup()
@@ -579,7 +578,7 @@ class TestSecurityPerformance:
 class TestSecurityIntegration:
     """++ SACRED SECURITY INTEGRATION TESTS ++"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_suite(self):
         suite = SecurityTestSuite()
         await suite.setup()

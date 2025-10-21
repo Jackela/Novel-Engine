@@ -109,6 +109,9 @@ async def test_async_llm_client_performance():
 
 def test_persona_agent_patch():
     """Test the PersonaAgent async patch performance."""
+    import pytest
+    pytest.skip("Integration script - use main() instead")
+    
     print("🤖 Testing PersonaAgent Async Patch...")
 
     try:

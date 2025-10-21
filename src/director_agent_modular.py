@@ -55,33 +55,6 @@ from director_components import (
     WorldStateManager,
 )
 
-# Try to import Iron Laws types
-try:
-    from src.shared_types import (
-        ActionIntensity,
-        ActionParameters,
-        ActionTarget,
-        ActionType,
-        CharacterData,
-        CharacterResources,
-        CharacterStats,
-        EntityType,
-        IronLawsReport,
-        IronLawsViolation,
-        Position,
-        ProposedAction,
-        ResourceValue,
-        ValidatedAction,
-        ValidationResult,
-        ValidationStatus,
-    )
-
-    IRON_LAWS_AVAILABLE = True
-except ImportError as e:
-    temp_logger = logging.getLogger(__name__)
-    temp_logger.warning(f"Iron Laws types not available: {e}")
-    IRON_LAWS_AVAILABLE = False
-
 # Import configuration and narrative components with error handling
 try:
     from config_loader import get_campaign_log_filename, get_config

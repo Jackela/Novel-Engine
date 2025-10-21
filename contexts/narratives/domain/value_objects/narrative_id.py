@@ -6,6 +6,7 @@ This module defines the NarrativeId value object, which serves as the
 unique identifier for narrative elements within the Narrative domain.
 """
 
+import re
 from dataclasses import dataclass
 from typing import ClassVar
 from uuid import UUID, uuid4
@@ -56,10 +57,33 @@ class NarrativeId:
         Raises:
             ValueError: If the string is not a valid UUID format
         """
+        # Validate input before attempting UUID conversion
+        if not id_string:
+            raise ValueError(f"Invalid UUID format for NarrativeId: {id_string}")
+        
+        if not isinstance(id_string, str):
+            raise ValueError(f"Invalid UUID format for NarrativeId: {id_string}")
+        
+        # Check for whitespace issues
+        if id_string != id_string.strip():
+            raise ValueError(f"Invalid UUID format for NarrativeId: {id_string}")
+        
+        # Validate UUID format with regex (with or without hyphens)
+        uuid_with_dashes = re.compile(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+            re.IGNORECASE
+        )
+        uuid_without_dashes = re.compile(
+            r'^[0-9a-f]{32}$',
+            re.IGNORECASE
+        )
+        if not (uuid_with_dashes.match(id_string) or uuid_without_dashes.match(id_string)):
+            raise ValueError(f"Invalid UUID format for NarrativeId: {id_string}")
+        
         try:
             uuid_value = UUID(id_string)
             return cls(uuid_value)
-        except ValueError as e:
+        except (ValueError, TypeError, AttributeError) as e:
             raise ValueError(f"Invalid UUID format for NarrativeId: {id_string}") from e
 
     def to_string(self) -> str:

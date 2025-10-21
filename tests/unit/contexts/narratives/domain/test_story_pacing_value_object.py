@@ -156,9 +156,9 @@ class TestStoryPacingCreation:
         assert pacing.scene_transitions == 0
         assert pacing.time_jumps == 0
         assert pacing.average_scene_length is None
-        assert pacing.tension_curve == []
-        assert pacing.emotional_peaks == []
-        assert pacing.rest_periods == []
+        assert pacing.tension_curve == ()
+        assert pacing.emotional_peaks == ()
+        assert pacing.rest_periods == ()
         assert pacing.revelation_frequency == Decimal("0.1")
         assert pacing.cliffhanger_intensity == Decimal("0.0")
         assert pacing.curiosity_hooks == 0
@@ -173,9 +173,9 @@ class TestStoryPacingCreation:
 
     def test_create_full_story_pacing(self):
         """Test creating story pacing with all fields specified."""
-        tension_curve = [Decimal("2.0"), Decimal("5.0"), Decimal("8.0"), Decimal("3.0")]
-        emotional_peaks = [3, 7]
-        rest_periods = [1, 9]
+        tension_curve = (Decimal("2.0"), Decimal("5.0"), Decimal("8.0"), Decimal("3.0"))
+        emotional_peaks = (3, 7)
+        rest_periods = (1, 9)
         metadata = {"author": "test", "version": "1.0"}
         timestamp = datetime.now(timezone.utc)
 
@@ -880,10 +880,19 @@ class TestStoryPacingMethods:
         # Last value
         assert pacing.get_tension_at_sequence(20) == Decimal("4.0")
 
-        # Interpolated values should be between curve points
-        middle_tension = pacing.get_tension_at_sequence(15)
-        assert middle_tension is not None
-        assert Decimal("2.0") < middle_tension < Decimal("8.0")
+        # Interpolated values - sequence 13 should interpolate between curve[0] and curve[1]
+        # relative_pos=3, curve_pos=(3/10)*2=0.6, index=0, weight=0.6
+        # result = 2.0*(1-0.6) + 8.0*0.6 = 0.8 + 4.8 = 5.6
+        tension_13 = pacing.get_tension_at_sequence(13)
+        assert tension_13 is not None
+        assert Decimal("2.0") < tension_13 < Decimal("8.0")
+        
+        # Sequence 17 should interpolate between curve[1] and curve[2]
+        # relative_pos=7, curve_pos=(7/10)*2=1.4, index=1, weight=0.4
+        # result = 8.0*(1-0.4) + 4.0*0.4 = 4.8 + 1.6 = 6.4
+        tension_17 = pacing.get_tension_at_sequence(17)
+        assert tension_17 is not None
+        assert Decimal("4.0") < tension_17 < Decimal("8.0")
 
     def test_is_emotional_peak(self):
         """Test is_emotional_peak method."""

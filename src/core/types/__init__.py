@@ -11,9 +11,6 @@ __version__ = "1.0.0"
 import importlib.util
 import os
 
-# Import from the main types module
-import sys
-
 # Export shared types from this package
 from .shared_types import ActionPriority, ActionType
 

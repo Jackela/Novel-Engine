@@ -46,7 +46,6 @@ try:
         Counter,
         Gauge,
         Histogram,
-        Info,
         generate_latest,
     )
 
@@ -55,9 +54,8 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
 
 try:
-    from opentelemetry import metrics, trace
+    from opentelemetry import trace
     from opentelemetry.exporter.jaeger.thrift import JaegerExporter
-    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
@@ -67,7 +65,7 @@ except ImportError:
 
 # FastAPI for metrics endpoint
 try:
-    from fastapi import Depends, FastAPI, HTTPException, Request, Response
+    from fastapi import FastAPI, HTTPException, Request
     from fastapi.responses import JSONResponse, PlainTextResponse
 
     FASTAPI_AVAILABLE = True

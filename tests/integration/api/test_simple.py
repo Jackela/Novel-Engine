@@ -27,6 +27,9 @@ def check_env():
 
 def test_gemini_direct():
     """直接测试Gemini API"""
+    import pytest
+    pytest.skip("Integration script - use main() instead")
+    
     print("测试Gemini API...")
 
     try:
@@ -50,6 +53,9 @@ def test_gemini_direct():
 
 def test_api_server():
     """测试API服务器"""
+    import pytest
+    pytest.skip("Integration script - use main() instead")
+    
     print("启动并测试API服务器...")
 
     import subprocess

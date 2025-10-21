@@ -1110,7 +1110,9 @@ class TestNarrativeThemeInstanceMethods:
             conflicts_with_themes={"ignorance"},
             reinforces_themes={"wisdom", "enlightenment"},
             expressed_through_dialogue=True,
+            expressed_through_action=False,
             expressed_through_symbolism=True,
+            expressed_through_setting=False,
             expressed_through_character_arc=True,
         )
 
@@ -1204,18 +1206,11 @@ class TestNarrativeThemeFactoryMethods:
 
         updated = original.with_updated_intensity(ThemeIntensity.CENTRAL)
 
-        # Collections should be equal but different objects
+        # Verify collections have correct values (identity not checked for immutable frozensets)
         assert updated.symbolic_elements == original.symbolic_elements
-        assert updated.symbolic_elements is not original.symbolic_elements
-
         assert updated.conflicts_with_themes == original.conflicts_with_themes
-        assert updated.conflicts_with_themes is not original.conflicts_with_themes
-
         assert updated.reinforces_themes == original.reinforces_themes
-        assert updated.reinforces_themes is not original.reinforces_themes
-
         assert updated.tags == original.tags
-        assert updated.tags is not original.tags
 
     def test_with_updated_intensity_preserves_metadata(self):
         """Test that metadata and timestamps are preserved."""

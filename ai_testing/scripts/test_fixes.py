@@ -9,7 +9,7 @@ from datetime import datetime
 import httpx
 
 
-async def test_fixes():
+async def validate_deployment_fixes():
     """Test the deployment fixes"""
     
     print("=" * 60)
@@ -185,7 +185,7 @@ async def test_fixes():
 
 if __name__ == "__main__":
     try:
-        success = asyncio.run(test_fixes())
+        success = asyncio.run(validate_deployment_fixes())
         exit(0 if success else 1)
     except KeyboardInterrupt:
         print("\n\nTest interrupted by user")

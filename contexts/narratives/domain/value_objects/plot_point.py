@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, FrozenSet, List, Optional, Set
 from uuid import UUID
 
 
@@ -66,8 +66,8 @@ class PlotPoint:
     estimated_duration: Optional[int] = None  # In narrative time units
 
     # Story context
-    involved_characters: Set[UUID] = None
-    affected_themes: Set[str] = None
+    involved_characters: FrozenSet[UUID] = None
+    affected_themes: FrozenSet[str] = None
     location_context: Optional[str] = None
 
     # Emotional and dramatic context
@@ -86,19 +86,23 @@ class PlotPoint:
     advances_subplot: bool = False
 
     # Metadata
-    tags: Set[str] = None
+    tags: FrozenSet[str] = None
     narrative_notes: str = ""
     creation_timestamp: datetime = None
     metadata: Dict[str, Any] = None
 
     def __post_init__(self):
         """Initialize default values and validate constraints."""
-        # Set default values for mutable fields
+        # Convert mutable collections to immutable for hashability
         if self.involved_characters is None:
-            object.__setattr__(self, "involved_characters", set())
+            object.__setattr__(self, "involved_characters", frozenset())
+        elif isinstance(self.involved_characters, set):
+            object.__setattr__(self, "involved_characters", frozenset(self.involved_characters))
 
         if self.affected_themes is None:
-            object.__setattr__(self, "affected_themes", set())
+            object.__setattr__(self, "affected_themes", frozenset())
+        elif isinstance(self.affected_themes, set):
+            object.__setattr__(self, "affected_themes", frozenset(self.affected_themes))
 
         if self.prerequisite_events is None:
             object.__setattr__(self, "prerequisite_events", [])
@@ -107,7 +111,9 @@ class PlotPoint:
             object.__setattr__(self, "triggered_consequences", [])
 
         if self.tags is None:
-            object.__setattr__(self, "tags", set())
+            object.__setattr__(self, "tags", frozenset())
+        elif isinstance(self.tags, set):
+            object.__setattr__(self, "tags", frozenset(self.tags))
 
         if self.creation_timestamp is None:
             object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
@@ -149,6 +155,48 @@ class PlotPoint:
 
         if len(self.description) > 2000:
             raise ValueError("Plot point description too long (max 2000 characters)")
+
+    def __hash__(self) -> int:
+        """Custom hash implementation for frozen dataclass with Dict and List fields."""
+        def _dict_to_hashable(d):
+            if not d:
+                return frozenset()
+            items = []
+            for k, v in sorted(d.items()):
+                if isinstance(v, dict):
+                    v = _dict_to_hashable(v)
+                elif isinstance(v, list):
+                    v = tuple(v)
+                elif isinstance(v, Decimal):
+                    v = float(v)
+                items.append((k, v))
+            return frozenset(items)
+        
+        return hash((
+            self.plot_point_id,
+            self.plot_point_type,
+            self.importance,
+            self.title,
+            self.description,
+            self.sequence_order,
+            self.estimated_duration,
+            self.involved_characters,
+            self.affected_themes,
+            self.location_context,
+            self.emotional_intensity,
+            self.dramatic_tension,
+            self.story_significance,
+            tuple(self.prerequisite_events) if self.prerequisite_events else (),
+            tuple(self.triggered_consequences) if self.triggered_consequences else (),
+            self.reveals_information,
+            self.changes_character_relationships,
+            self.advances_main_plot,
+            self.advances_subplot,
+            self.tags,
+            self.narrative_notes,
+            self.creation_timestamp,
+            _dict_to_hashable(self.metadata),
+        ))
 
     @property
     def is_major_plot_point(self) -> bool:
@@ -314,7 +362,7 @@ class PlotPoint:
             sequence_order=self.sequence_order,
             estimated_duration=self.estimated_duration,
             involved_characters=updated_characters,
-            affected_themes=self.affected_themes.copy(),
+            affected_themes=self.affected_themes,
             location_context=self.location_context,
             emotional_intensity=self.emotional_intensity,
             dramatic_tension=self.dramatic_tension,
@@ -325,7 +373,7 @@ class PlotPoint:
             changes_character_relationships=self.changes_character_relationships,
             advances_main_plot=self.advances_main_plot,
             advances_subplot=self.advances_subplot,
-            tags=self.tags.copy(),
+            tags=self.tags,
             narrative_notes=self.narrative_notes,
             creation_timestamp=self.creation_timestamp,
             metadata=self.metadata.copy(),

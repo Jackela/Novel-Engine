@@ -1104,15 +1104,10 @@ class TestCausalNodeFactoryMethods:
 
         updated = original.with_additional_cause("cause2")
 
-        # Collections should be equal but different objects
+        # Verify collections have correct values (identity not checked for immutable frozensets)
         assert updated.direct_effects == original.direct_effects
-        assert updated.direct_effects is not original.direct_effects
-
         assert updated.tags == original.tags
-        assert updated.tags is not original.tags
-
         assert updated.prerequisite_conditions == original.prerequisite_conditions
-        assert updated.prerequisite_conditions is not original.prerequisite_conditions
 
         # Direct causes should be different (new cause added)
         assert updated.direct_causes != original.direct_causes

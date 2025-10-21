@@ -21,11 +21,11 @@ from uuid import uuid4
 
 # Import existing types for compatibility
 try:
-    from shared_types import ActionType, ProposedAction, WorldState
+    from shared_types import WorldState
 except ImportError:
     try:
         # Try src.shared_types
-        from src.shared_types import ActionType, ProposedAction, WorldState
+        from src.shared_types import WorldState
     except ImportError:
         # Try relative import as last resort
         from ..shared_types import WorldState

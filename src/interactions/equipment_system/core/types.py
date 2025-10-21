@@ -14,13 +14,8 @@ from typing import Any, Dict, List, Optional, Set
 # Import enhanced core systems
 try:
     from src.core.data_models import (
-        CharacterState,
         EquipmentCondition,
         EquipmentItem,
-        ErrorInfo,
-        MemoryItem,
-        MemoryType,
-        StandardResponse,
     )
     from src.core.types import AgentID
 except ImportError:
