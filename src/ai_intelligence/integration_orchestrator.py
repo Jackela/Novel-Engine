@@ -3,17 +3,35 @@
 AI Intelligence Integration Orchestrator
 ========================================
 
-Integration orchestrator that connects Novel Engine's AI intelligence systems
-with the existing system orchestrator and provides unified coordination
-between traditional and AI-enhanced capabilities.
+Lightweight coordinator that delegates specialized responsibilities to dedicated
+coordinators following the Single Responsibility Principle.
+
+Architecture:
+    This class follows the Extract Class refactoring pattern, having been
+    decomposed from a God Class (917 lines) into a focused orchestrator (679 lines)
+    that delegates to specialized coordinators:
+    
+    - AISubsystemCoordinator: AI system lifecycle and narrative engine management
+    - TraditionalSystemCoordinator: Traditional Novel Engine system coordination
+    - MetricsCoordinator: Performance tracking and health monitoring
+    - EventCoordinator: Cross-system event management
+    - ContentGenerationCoordinator: Story content generation and enhancement
+    - CharacterActionProcessor: Character action processing logic
+
+Responsibilities:
+    - High-level integration coordination and lifecycle management
+    - Integration mode configuration and routing decisions
+    - Coordinator initialization and dependency injection
+    - Backward-compatible API access via property delegation
+    - System status aggregation across all coordinators
 
 Features:
-- Seamless integration with SystemOrchestrator
-- Unified AI intelligence lifecycle management
-- Cross-system event coordination
-- Performance monitoring and optimization
-- Backward compatibility with existing systems
-- Progressive AI feature activation
+    - Seamless integration between traditional and AI systems
+    - Multiple integration modes (traditional, AI-enhanced, AI-first, full AI)
+    - Progressive AI feature activation with feature gates
+    - Graceful fallback between system modes
+    - Comprehensive performance monitoring
+    - Event-driven cross-system coordination
 """
 
 import asyncio
@@ -31,10 +49,10 @@ from src.core.data_models import (
 )
 
 # Import Novel Engine core systems
-from src.core.system_orchestrator import (
-    OrchestratorConfig,
-    SystemOrchestrator,
-)
+from src.core.event_coordinator import EventCoordinator
+from src.core.metrics_coordinator import IntegrationMetrics, MetricsCoordinator
+from src.core.system_orchestrator import OrchestratorConfig, SystemOrchestrator
+from src.core.traditional_system_coordinator import TraditionalSystemCoordinator
 from src.event_bus import EventBus
 
 from .agent_coordination_engine import AgentContext
@@ -45,7 +63,10 @@ from .ai_orchestrator import (
     AISystemConfig,
     IntelligenceLevel,
 )
+from .ai_subsystem_coordinator import AISubsystemCoordinator
 from .analytics_platform import AnalyticsEvent
+from .character_action_processor import CharacterActionProcessor
+from .content_generation_coordinator import ContentGenerationCoordinator
 from .recommendation_engine import UserProfile
 
 logger = logging.getLogger(__name__)
@@ -95,30 +116,44 @@ class IntegrationConfig:
     performance_threshold: float = 2.0  # Response time threshold (seconds)
 
 
-@dataclass
-class IntegrationMetrics:
-    """Metrics for system integration performance."""
-
-    timestamp: datetime = field(default_factory=datetime.now)
-    traditional_operations: int = 0
-    ai_enhanced_operations: int = 0
-    fallback_activations: int = 0
-    integration_errors: int = 0
-    average_response_time: float = 0.0
-    ai_enhancement_rate: float = 0.0  # Percentage of operations using AI
-    system_health_score: float = 1.0  # Overall integration health (0.0-1.0)
-    cross_system_events: int = 0
-    performance_improvements: Dict[str, float] = field(default_factory=dict)
-
-
 class IntegrationOrchestrator:
     """
-    Master integration orchestrator that coordinates between traditional
-    Novel Engine systems and new AI intelligence capabilities.
+    Lightweight integration orchestrator coordinating specialized subsystem coordinators.
 
-    This orchestrator ensures seamless operation, performance optimization,
-    and graceful fallback between system modes while providing unified
-    access to all engine capabilities.
+    This class serves as the high-level coordinator following the Facade pattern,
+    delegating specific responsibilities to specialized coordinators while maintaining
+    a unified interface for backward compatibility.
+
+    Architecture Pattern:
+        Follows the Extract Class refactoring pattern to eliminate God Class anti-pattern.
+        Original class (917 lines) decomposed into focused coordinators with clear
+        separation of concerns.
+
+    Coordinators:
+        - event_coordinator: Cross-system event management (EventCoordinator)
+        - metrics_coordinator: Performance tracking and health (MetricsCoordinator)
+        - traditional_coordinator: Traditional system orchestration (TraditionalSystemCoordinator)
+        - ai_coordinator: AI system lifecycle management (AISubsystemCoordinator)
+        - action_processor: Character action processing (CharacterActionProcessor)
+        - content_coordinator: Story content generation (ContentGenerationCoordinator)
+
+    Integration Modes:
+        TRADITIONAL_ONLY: Use only traditional Novel Engine systems
+        AI_ENHANCED: AI enhancements with traditional fallback (default)
+        AI_FIRST: AI systems primary with traditional support
+        FULL_AI: Complete AI intelligence mode
+        EXPERIMENTAL: Experimental AI features enabled
+
+    Attributes:
+        config (IntegrationConfig): Integration configuration and feature gates
+        integration_active (bool): Whether integration is currently active
+
+    Example:
+        >>> config = IntegrationConfig(integration_mode=IntegrationMode.AI_ENHANCED)
+        >>> orchestrator = IntegrationOrchestrator(integration_config=config)
+        >>> await orchestrator.startup()
+        >>> result = await orchestrator.generate_story_content("Epic quest", "user123")
+        >>> await orchestrator.shutdown()
     """
 
     def __init__(
@@ -127,23 +162,50 @@ class IntegrationOrchestrator:
         orchestrator_config: Optional[OrchestratorConfig] = None,
         integration_config: Optional[IntegrationConfig] = None,
     ):
-        """Initialize the integration orchestrator with both system types."""
+        """
+        Initialize the integration orchestrator and all subsystem coordinators.
+
+        Creates and wires all specialized coordinators with proper dependency injection,
+        establishing the integration architecture with event bus sharing and configuration
+        propagation.
+
+        Args:
+            database_path: Path to the Novel Engine database file.
+            orchestrator_config: Configuration for traditional SystemOrchestrator.
+                                If None, default configuration will be used.
+            integration_config: Integration configuration including mode and feature gates.
+                               If None, defaults to AI_ENHANCED mode with all features enabled.
+
+        Coordinators Initialized:
+            1. EventCoordinator: Manages cross-system event bus and subscriptions
+            2. MetricsCoordinator: Tracks performance metrics and system health
+            3. TraditionalSystemCoordinator: Manages traditional Novel Engine systems
+            4. AISubsystemCoordinator: Manages AI intelligence systems and narrative engine
+            5. CharacterActionProcessor: Processes character actions with fallback logic
+            6. ContentGenerationCoordinator: Generates and enhances story content
+
+        Note:
+            All coordinators share the same event bus instance for cross-system coordination.
+            Configuration is propagated to coordinators that need access to integration settings.
+        """
         self.config = integration_config or IntegrationConfig()
-        self.startup_time = datetime.now()
-        self.operation_count = 0
-        self.error_count = 0
 
-        # Integration state and event bus
+        # Integration state
         self.integration_active = False
-        self.metrics_history: List[IntegrationMetrics] = []
-        self.event_bus = EventBus()
 
-        # Initialize traditional system orchestrator
-        self.system_orchestrator = SystemOrchestrator(
-            database_path, orchestrator_config
+        # Initialize event coordinator (Extract Class pattern)
+        self.event_coordinator = EventCoordinator()
+
+        # Initialize metrics coordinator (Extract Class pattern)
+        self.metrics_coordinator = MetricsCoordinator()
+
+        # Initialize traditional system coordinator (Extract Class pattern)
+        self.traditional_coordinator = TraditionalSystemCoordinator(
+            database_path=database_path,
+            orchestrator_config=orchestrator_config,
         )
 
-        # Initialize AI intelligence orchestrator
+        # Initialize AI subsystem coordinator (Extract Class pattern)
         ai_config = AISystemConfig(
             intelligence_level=self._map_integration_to_intelligence_level(),
             enable_agent_coordination=self.config.ai_feature_gates.get(
@@ -160,99 +222,250 @@ class IntegrationOrchestrator:
                 "export_integration", True
             ),
         )
-        self.ai_orchestrator = AIIntelligenceOrchestrator(self.event_bus, ai_config)
+        self.ai_coordinator = AISubsystemCoordinator(
+            event_bus=self.event_coordinator.get_event_bus(),
+            ai_config=ai_config,
+            ai_feature_gates=self.config.ai_feature_gates,
+        )
 
-        # Performance tracking
-        self.response_times: List[float] = []
-        self.error_rates: List[float] = []
+        # Initialize character action processor (Extract Class pattern)
+        self.action_processor = CharacterActionProcessor(
+            system_orchestrator=self.traditional_coordinator.system_orchestrator,
+            ai_orchestrator=self.ai_coordinator.ai_orchestrator,
+            config=self.config,
+        )
+
+        # Initialize content generation coordinator (Extract Class pattern)
+        self.content_coordinator = ContentGenerationCoordinator(
+            ai_coordinator=self.ai_coordinator,
+            config=self.config,
+        )
 
         logger.info("Integration Orchestrator initialized successfully")
+
+    # ===================================================================
+    # Property Methods for AI Subsystem Availability (Delegated)
+    # ===================================================================
+
+    @property
+    def has_recommendation_engine(self) -> bool:
+        """Check if recommendation engine is available (delegated to coordinator)."""
+        return self.ai_coordinator.has_recommendation_engine
+
+    @property
+    def has_story_quality_engine(self) -> bool:
+        """Check if story quality engine is available (delegated to coordinator)."""
+        return self.ai_coordinator.has_story_quality_engine
+
+    @property
+    def has_analytics_platform(self) -> bool:
+        """Check if analytics platform is available (delegated to coordinator)."""
+        return self.ai_coordinator.has_analytics_platform
+
+    @property
+    def narrative_engine_v2(self):
+        """Access to narrative engine V2 (delegated to coordinator)."""
+        return self.ai_coordinator.narrative_engine_v2
+
+    @property
+    def current_arc_state(self):
+        """Access to current arc state (delegated to coordinator)."""
+        return self.ai_coordinator.current_arc_state
+
+    @property
+    def system_orchestrator(self):
+        """Access to traditional system orchestrator (delegated to coordinator)."""
+        return self.traditional_coordinator.system_orchestrator
+
+    @property
+    def startup_time(self):
+        """Access to startup time (delegated to metrics coordinator)."""
+        return self.metrics_coordinator.startup_time
+
+    @property
+    def operation_count(self):
+        """Access to operation count (delegated to metrics coordinator)."""
+        return self.metrics_coordinator.operation_count
+
+    @property
+    def error_count(self):
+        """Access to error count (delegated to metrics coordinator)."""
+        return self.metrics_coordinator.error_count
+
+    @property
+    def response_times(self):
+        """Access to response times (delegated to metrics coordinator)."""
+        return self.metrics_coordinator.response_times
+
+    @property
+    def metrics_history(self):
+        """Access to metrics history (delegated to metrics coordinator)."""
+        return self.metrics_coordinator.metrics_history
+
+    @property
+    def event_bus(self):
+        """Access to event bus (delegated to event coordinator)."""
+        return self.event_coordinator.get_event_bus()
+
+    # ===================================================================
+    # Startup Helper Methods (Extract Method Pattern)
+    # ===================================================================
+    # These methods break down the complex startup() logic into smaller,
+    # focused methods following Single Responsibility Principle.
+    # ===================================================================
+
+    async def _startup_traditional_systems(self) -> StandardResponse:
+        """
+        Start traditional system orchestrator (delegated to coordinator).
+
+        Returns:
+            StandardResponse: Result of traditional system startup
+        """
+        return await self.traditional_coordinator.startup_traditional_systems()
+
+    async def _startup_ai_systems(self) -> StandardResponse:
+        """
+        Start AI intelligence orchestrator (delegated to coordinator).
+
+        Returns:
+            StandardResponse: Result of AI system startup
+        """
+        return await self.ai_coordinator.startup_ai_systems()
+
+    def _evaluate_integration_success(
+        self, traditional_result: StandardResponse, ai_result: StandardResponse
+    ) -> tuple[bool, bool]:
+        """
+        Determine integration success based on integration mode.
+
+        Args:
+            traditional_result: Result from traditional system startup
+            ai_result: Result from AI system startup
+
+        Returns:
+            tuple[bool, bool]: (integration_success, ai_available)
+        """
+        if self.config.integration_mode == IntegrationMode.TRADITIONAL_ONLY:
+            # Traditional only mode - AI failure is acceptable
+            integration_success = traditional_result.success
+            ai_available = ai_result.success
+
+        elif self.config.integration_mode in [
+            IntegrationMode.AI_FIRST,
+            IntegrationMode.FULL_AI,
+        ]:
+            # AI-first modes - both must succeed
+            integration_success = traditional_result.success and ai_result.success
+            ai_available = ai_result.success
+
+        else:
+            # AI-enhanced mode - traditional must succeed, AI failure triggers fallback
+            integration_success = traditional_result.success
+            ai_available = ai_result.success
+
+            if not ai_result.success:
+                logger.warning(
+                    "AI systems failed to start, operating in traditional mode"
+                )
+
+        return integration_success, ai_available
+
+    async def _finalize_startup(self) -> None:
+        """
+        Finalize startup by setting up coordination and monitoring.
+
+        Sets integration_active flag and starts monitoring systems.
+        """
+        self.integration_active = True
+
+        # Set up cross-system event coordination (delegated to coordinator)
+        await self.event_coordinator.setup_event_coordination(
+            character_state_handler=self.event_coordinator.handle_character_state_change,
+            story_generation_handler=self.event_coordinator.handle_story_generation,
+            user_interaction_handler=self.event_coordinator.handle_user_interaction,
+        )
+
+        # Start integration monitoring
+        await self._start_integration_monitoring()
+
+        logger.info("Integration Orchestrator startup completed successfully")
+
+    def _build_startup_success_response(self, ai_available: bool) -> StandardResponse:
+        """
+        Build successful startup response with system status.
+
+        Args:
+            ai_available: Whether AI systems are available
+
+        Returns:
+            StandardResponse: Success response with startup details
+        """
+        return StandardResponse(
+            success=True,
+            data={
+                "integration_mode": self.config.integration_mode.value,
+                "traditional_available": True,
+                "ai_available": ai_available,
+                "integration_level": self.config.integration_level.value,
+                "startup_time": self.startup_time,
+                "feature_gates": self.config.ai_feature_gates,
+            },
+        )
+
+    def _build_startup_failure_response(
+        self, traditional_success: bool, ai_success: bool
+    ) -> StandardResponse:
+        """
+        Build failure response when integration startup fails.
+
+        Args:
+            traditional_success: Whether traditional system started
+            ai_success: Whether AI system started
+
+        Returns:
+            StandardResponse: Failure response with error details
+        """
+        return StandardResponse(
+            success=False,
+            error=ErrorInfo(
+                code="INTEGRATION_STARTUP_FAILED",
+                message="Integration orchestrator startup failed",
+                details={
+                    "traditional_success": traditional_success,
+                    "ai_success": ai_success,
+                },
+            ),
+        )
+
+    # ===================================================================
+    # System Lifecycle Methods
+    # ===================================================================
 
     async def startup(self) -> StandardResponse:
         """Start both traditional and AI systems with integration coordination."""
         try:
             logger.info("Starting Integration Orchestrator startup sequence")
 
-            # Start traditional system orchestrator
-            traditional_result = await self.system_orchestrator.startup()
+            # Start traditional systems
+            traditional_result = await self._startup_traditional_systems()
             if not traditional_result.success:
-                return StandardResponse(
-                    success=False,
-                    error=ErrorInfo(
-                        code="TRADITIONAL_STARTUP_FAILED",
-                        message="Traditional system startup failed",
-                        details={
-                            "traditional_error": (
-                                traditional_result.error.message
-                                if traditional_result.error
-                                else "Unknown"
-                            )
-                        },
-                    ),
-                )
+                return traditional_result
 
-            # Start AI intelligence orchestrator
-            ai_result = await self.ai_orchestrator.initialize_systems()
-            # Convert to StandardResponse format
+            # Start AI systems
+            ai_result = await self._startup_ai_systems()
 
-            ai_response = StandardResponse(
-                success=ai_result.get("success", True), data=ai_result
+            # Evaluate integration success based on mode
+            integration_success, ai_available = self._evaluate_integration_success(
+                traditional_result, ai_result
             )
 
-            # Determine integration success based on mode
-            if self.config.integration_mode == IntegrationMode.TRADITIONAL_ONLY:
-                # Traditional only mode - AI failure is acceptable
-                integration_success = traditional_result.success
-                ai_available = ai_response.success
-            elif self.config.integration_mode in [
-                IntegrationMode.AI_FIRST,
-                IntegrationMode.FULL_AI,
-            ]:
-                # AI-first modes - both must succeed
-                integration_success = traditional_result.success and ai_response.success
-                ai_available = ai_response.success
-            else:
-                # AI-enhanced mode - traditional must succeed, AI failure triggers fallback
-                integration_success = traditional_result.success
-                ai_available = ai_response.success
-                if not ai_response.success:
-                    logger.warning(
-                        "AI systems failed to start, operating in traditional mode"
-                    )
-
+            # Finalize and return response
             if integration_success:
-                self.integration_active = True
-
-                # Set up cross-system event coordination
-                await self._setup_event_coordination()
-
-                # Start integration monitoring
-                await self._start_integration_monitoring()
-
-                logger.info("Integration Orchestrator startup completed successfully")
-
-                return StandardResponse(
-                    success=True,
-                    data={
-                        "integration_mode": self.config.integration_mode.value,
-                        "traditional_available": traditional_result.success,
-                        "ai_available": ai_available,
-                        "integration_level": self.config.integration_level.value,
-                        "startup_time": self.startup_time,
-                        "feature_gates": self.config.ai_feature_gates,
-                    },
-                )
+                await self._finalize_startup()
+                return self._build_startup_success_response(ai_available)
             else:
-                return StandardResponse(
-                    success=False,
-                    error=ErrorInfo(
-                        code="INTEGRATION_STARTUP_FAILED",
-                        message="Integration orchestrator startup failed",
-                        details={
-                            "traditional_success": traditional_result.success,
-                            "ai_success": ai_response.success,
-                        },
-                    ),
+                return self._build_startup_failure_response(
+                    traditional_result.success, ai_result.success
                 )
 
         except Exception as e:
@@ -274,15 +487,13 @@ class IntegrationOrchestrator:
             # Stop integration monitoring
             self.integration_active = False
 
-            # Shutdown AI systems first
-            ai_result = await self.ai_orchestrator.shutdown_systems()
-            # Convert to StandardResponse format
-            ai_shutdown_response = StandardResponse(
-                success=ai_result.get("success", True), data=ai_result
-            )
+            # Shutdown AI systems first (delegated to coordinator)
+            ai_shutdown_response = await self.ai_coordinator.shutdown_ai_systems()
 
-            # Shutdown traditional systems
-            traditional_result = await self.system_orchestrator.shutdown()
+            # Shutdown traditional systems (delegated to coordinator)
+            traditional_result = (
+                await self.traditional_coordinator.shutdown_traditional_systems()
+            )
 
             # Generate final integration metrics
             final_metrics = await self._generate_integration_metrics()
@@ -293,10 +504,8 @@ class IntegrationOrchestrator:
                 success=True,
                 data={
                     "shutdown_time": datetime.now(),
-                    "uptime_seconds": (
-                        datetime.now() - self.startup_time
-                    ).total_seconds(),
-                    "total_operations": self.operation_count,
+                    "uptime_seconds": self.metrics_coordinator.get_uptime_seconds(),
+                    "total_operations": self.metrics_coordinator.operation_count,
                     "ai_shutdown": ai_shutdown_response.success,
                     "traditional_shutdown": traditional_result.success,
                     "final_metrics": final_metrics,
@@ -320,32 +529,32 @@ class IntegrationOrchestrator:
         """
         Process character action with AI enhancement and fallback coordination.
 
-        This method demonstrates the integration between traditional and AI systems
-        by routing character actions through appropriate processing pipelines.
+        Delegates to CharacterActionProcessor for actual processing logic.
         """
         try:
             start_time = datetime.now()
-            self.operation_count += 1
 
-            # Determine processing strategy based on integration mode
+            # Delegate to action processor based on integration mode
             if self.config.integration_mode == IntegrationMode.TRADITIONAL_ONLY:
-                result = await self._process_traditional_action(
+                result = await self.action_processor.process_traditional_action(
                     agent_id, action, context
                 )
             elif self.config.integration_mode == IntegrationMode.FULL_AI:
-                result = await self._process_ai_enhanced_action(
+                result = await self.action_processor.process_ai_enhanced_action(
                     agent_id, action, context
                 )
             else:
                 # AI_ENHANCED or AI_FIRST - try AI first with fallback
-                result = await self._process_hybrid_action(agent_id, action, context)
+                result = await self.action_processor.process_hybrid_action(
+                    agent_id, action, context
+                )
 
-            # Track performance
+            # Track performance (delegated to metrics coordinator)
             response_time = (datetime.now() - start_time).total_seconds()
-            self.response_times.append(response_time)
+            self.metrics_coordinator.record_operation(response_time, result.success)
 
-            # Emit integration event
-            await self._emit_integration_event(
+            # Emit integration event (delegated to coordinator)
+            await self.event_coordinator.emit_integration_event(
                 "character_action_processed",
                 {
                     "agent_id": agent_id,
@@ -360,7 +569,7 @@ class IntegrationOrchestrator:
 
         except Exception as e:
             logger.error(f"Error processing character action for {agent_id}: {str(e)}")
-            self.error_count += 1
+            self.metrics_coordinator.record_error()
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -374,6 +583,15 @@ class IntegrationOrchestrator:
                 ),
             )
 
+    def get_narrative_guidance(self) -> Dict[str, Any]:
+        """
+        Get current narrative guidance from the V2 Narrative Engine (delegated to coordinator).
+
+        Returns:
+            Dictionary containing narrative objectives, tension targets, and pacing info
+        """
+        return self.ai_coordinator.get_narrative_guidance()
+
     async def generate_story_content(
         self, prompt: str, user_id: str, preferences: Optional[Dict[str, Any]] = None
     ) -> StandardResponse:
@@ -381,41 +599,58 @@ class IntegrationOrchestrator:
         Generate story content with AI quality analysis and recommendations.
 
         Demonstrates integration between story generation, quality analysis,
-        and user preference systems.
+        and user preference systems. Delegates to ContentGenerationCoordinator.
         """
         try:
             start_time = datetime.now()
-            self.operation_count += 1
 
-            # Generate base content using traditional or AI systems
+            # Get narrative guidance from V2 engine
+            narrative_guidance = self.get_narrative_guidance()
+
+            # Generate base content using traditional or AI systems (delegated to coordinator)
             if self.config.integration_mode == IntegrationMode.TRADITIONAL_ONLY:
-                content_result = await self._generate_traditional_content(
-                    prompt, user_id
+                content_result = (
+                    await self.content_coordinator.generate_traditional_content(
+                        prompt, user_id
+                    )
                 )
             else:
-                content_result = await self._generate_ai_enhanced_content(
-                    prompt, user_id, preferences
+                content_result = (
+                    await self.content_coordinator.generate_ai_enhanced_content(
+                        prompt, user_id, preferences, narrative_guidance
+                    )
                 )
 
             if not content_result.success:
                 return content_result
 
-            # Apply AI enhancements if available
-            enhanced_result = await self._apply_ai_enhancements(
+            # Apply AI enhancements if available (delegated to coordinator)
+            enhanced_result = await self.content_coordinator.apply_ai_enhancements(
                 content_result.data, user_id, preferences
             )
 
             # Track performance and analytics
             response_time = (datetime.now() - start_time).total_seconds()
-            await self._track_story_generation_analytics(
+            self.metrics_coordinator.record_operation(
+                response_time, enhanced_result.success
+            )
+            await self.content_coordinator.track_story_generation_analytics(
                 user_id, prompt, response_time, enhanced_result.success
             )
+
+            # Update narrative state after turn completion (delegated to coordinator)
+            turn_outcome = {
+                "success": enhanced_result.success,
+                "response_time": response_time,
+                "content_length": len(content_result.data.get("content", "")),
+            }
+            self.ai_coordinator.report_turn_completion(turn_outcome=turn_outcome)
 
             return enhanced_result
 
         except Exception as e:
             logger.error(f"Error generating story content: {str(e)}")
-            self.error_count += 1
+            self.metrics_coordinator.record_error()
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -428,16 +663,22 @@ class IntegrationOrchestrator:
     async def get_system_status(self) -> StandardResponse:
         """Get comprehensive status of both traditional and AI systems."""
         try:
-            # Get traditional system metrics
-            traditional_metrics = await self.system_orchestrator.get_system_metrics()
+            # Get traditional system metrics (delegated to coordinator)
+            traditional_metrics = (
+                await self.traditional_coordinator.get_traditional_system_metrics()
+            )
 
-            # Get AI system status
-            ai_dashboard = await self.ai_orchestrator.get_system_dashboard()
-            # Convert to StandardResponse format
+            # Get AI system status (delegated to coordinator)
+            ai_dashboard = await self.ai_coordinator.get_system_dashboard()
             ai_status = StandardResponse(success=True, data=ai_dashboard)
 
-            # Generate integration metrics
-            integration_metrics = await self._generate_integration_metrics()
+            # Generate integration metrics (delegated to coordinator)
+            integration_metrics = (
+                await self.metrics_coordinator.generate_integration_metrics(
+                    integration_mode=self.config.integration_mode.value
+                )
+            )
+            metrics_summary = self.metrics_coordinator.get_metrics_summary()
 
             return StandardResponse(
                 success=True,
@@ -454,11 +695,7 @@ class IntegrationOrchestrator:
                     ),
                     "ai_system": ai_status.data if ai_status.success else None,
                     "integration_metrics": integration_metrics,
-                    "uptime_seconds": (
-                        datetime.now() - self.startup_time
-                    ).total_seconds(),
-                    "total_operations": self.operation_count,
-                    "error_rate": self.error_count / max(self.operation_count, 1),
+                    **metrics_summary,
                 },
             )
 
@@ -475,215 +712,13 @@ class IntegrationOrchestrator:
 
     # Private methods for system coordination and integration
 
-    async def _process_traditional_action(
-        self, agent_id: str, action: str, context: Optional[Dict[str, Any]]
-    ) -> StandardResponse:
-        """Process action using only traditional systems."""
-        # Create character state for traditional processing
-        from src.core.data_models import CharacterIdentity
-
-        character_identity = CharacterIdentity(
-            name=agent_id,
-            faction="Unknown",
-            personality_traits=["default"],
-            core_beliefs=["adaptive"],
-        )
-        character_state = CharacterState(base_identity=character_identity)
-
-        # Create dynamic context
-        dynamic_context = DynamicContext(
-            agent_id=agent_id,
-            character_state=character_state,
-            situation_description=f"Processing action: {action}",
-        )
-
-        return await self.system_orchestrator.process_dynamic_context(dynamic_context)
-
-    async def _process_ai_enhanced_action(
-        self, agent_id: str, action: str, context: Optional[Dict[str, Any]]
-    ) -> StandardResponse:
-        """Process action using AI-enhanced systems."""
-        # Create agent context for AI processing
-        agent_context = AgentContext(
-            agent_id=agent_id,
-            current_state="active_character",
-            intentions=["perform_action"],
-            dependencies=set(),
-        )
-
-        # Process through AI coordination engine
-        coordination_result = (
-            await self.ai_orchestrator.agent_coordination.coordinate_agent_action(
-                agent_context, action
-            )
-        )
-
-        if coordination_result.success:
-            # Also process through traditional system for consistency
-            traditional_result = await self._process_traditional_action(
-                agent_id, action, context
-            )
-
-            # Merge results
-            return StandardResponse(
-                success=True,
-                data={
-                    "ai_processing": coordination_result.data,
-                    "traditional_processing": (
-                        traditional_result.data if traditional_result.success else None
-                    ),
-                    "processing_mode": "ai_enhanced",
-                },
-            )
-        else:
-            # Fallback to traditional processing
-            return await self._process_traditional_action(agent_id, action, context)
-
-    async def _process_hybrid_action(
-        self, agent_id: str, action: str, context: Optional[Dict[str, Any]]
-    ) -> StandardResponse:
-        """Process action using hybrid AI + traditional approach with fallback."""
-        try:
-            # Try AI processing first
-            ai_result = await asyncio.wait_for(
-                self._process_ai_enhanced_action(agent_id, action, context),
-                timeout=self.config.ai_system_timeout,
-            )
-
-            if ai_result.success:
-                return ai_result
-            else:
-                # Fallback to traditional
-                logger.warning(
-                    f"AI processing failed for {agent_id}, falling back to traditional"
-                )
-                return await self._process_traditional_action(agent_id, action, context)
-
-        except asyncio.TimeoutError:
-            logger.warning(
-                f"AI processing timeout for {agent_id}, falling back to traditional"
-            )
-            return await self._process_traditional_action(agent_id, action, context)
-        except Exception as e:
-            logger.error(f"Hybrid processing error for {agent_id}: {str(e)}")
-            return await self._process_traditional_action(agent_id, action, context)
-
-    async def _generate_traditional_content(
-        self, prompt: str, user_id: str
-    ) -> StandardResponse:
-        """Generate content using traditional Novel Engine systems."""
-        # Use traditional template system and character generation
-        return StandardResponse(
-            success=True,
-            data={
-                "content": f"Traditional story content based on: {prompt}",
-                "generation_method": "traditional",
-                "user_id": user_id,
-                "timestamp": datetime.now(),
-            },
-        )
-
-    async def _generate_ai_enhanced_content(
-        self, prompt: str, user_id: str, preferences: Optional[Dict[str, Any]]
-    ) -> StandardResponse:
-        """Generate content using AI-enhanced systems with recommendations."""
-        # Get user preferences for personalization
-        if preferences and self.ai_orchestrator.recommendation_engine:
-            user_profile = UserProfile(
-                user_id=user_id,
-                preferences={},
-                behavior_patterns={},
-                preference_history=[],
-            )
-
-            # Get recommendations for story elements
-            await self.ai_orchestrator.recommendation_engine.get_personalized_recommendations(
-                user_profile, limit=5
-            )
-
-        return StandardResponse(
-            success=True,
-            data={
-                "content": f"AI-enhanced story content based on: {prompt}",
-                "generation_method": "ai_enhanced",
-                "user_id": user_id,
-                "personalization_applied": preferences is not None,
-                "timestamp": datetime.now(),
-            },
-        )
-
-    async def _apply_ai_enhancements(
-        self,
-        content_data: Dict[str, Any],
-        user_id: str,
-        preferences: Optional[Dict[str, Any]],
-    ) -> StandardResponse:
-        """Apply AI enhancements like quality analysis and analytics tracking."""
-        enhanced_data = content_data.copy()
-
-        # Apply story quality analysis if available
-        if (
-            self.ai_orchestrator.story_quality_engine
-            and self.config.ai_feature_gates.get("story_quality", False)
-        ):
-
-            quality_report = await self.ai_orchestrator.story_quality_engine.analyze_story_quality(
-                content_data.get("content", ""),
-                story_id=f"story_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            )
-
-            if quality_report.success:
-                enhanced_data["quality_analysis"] = quality_report.data
-
-        # Track analytics if available
-        if (
-            self.ai_orchestrator.analytics_platform
-            and self.config.ai_feature_gates.get("analytics", False)
-        ):
-
-            analytics_event = AnalyticsEvent(
-                event_id=f"content_gen_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                event_type="story_generation",
-                user_id=user_id,
-                properties={"content_length": len(content_data.get("content", ""))},
-            )
-
-            await self.ai_orchestrator.analytics_platform.track_event(analytics_event)
-            enhanced_data["analytics_tracked"] = True
-
-        return StandardResponse(success=True, data=enhanced_data)
-
-    async def _track_story_generation_analytics(
-        self, user_id: str, prompt: str, response_time: float, success: bool
-    ):
-        """Track story generation analytics."""
-        if (
-            self.ai_orchestrator.analytics_platform
-            and self.config.ai_feature_gates.get("analytics", False)
-        ):
-
-            analytics_event = AnalyticsEvent(
-                event_id=f"gen_analytics_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                event_type="story_generation_complete",
-                user_id=user_id,
-                properties={
-                    "prompt_length": len(prompt),
-                    "response_time": response_time,
-                    "success": success,
-                },
-                metrics={"response_time": response_time},
-            )
-
-            await self.ai_orchestrator.analytics_platform.track_event(analytics_event)
-
     async def _setup_event_coordination(self):
-        """Set up event coordination between traditional and AI systems."""
-        # Register event handlers for cross-system coordination
-        self.event_bus.subscribe(
-            "character_state_changed", self._handle_character_state_change
+        """Set up event coordination between traditional and AI systems (delegated to coordinator)."""
+        await self.event_coordinator.setup_event_coordination(
+            character_state_handler=self.event_coordinator.handle_character_state_change,
+            story_generation_handler=self.event_coordinator.handle_story_generation,
+            user_interaction_handler=self.event_coordinator.handle_user_interaction,
         )
-        self.event_bus.subscribe("story_generated", self._handle_story_generation)
-        self.event_bus.subscribe("user_interaction", self._handle_user_interaction)
 
     async def _start_integration_monitoring(self):
         """Start background monitoring of integration performance."""
@@ -691,50 +726,14 @@ class IntegrationOrchestrator:
         pass
 
     async def _generate_integration_metrics(self) -> IntegrationMetrics:
-        """Generate current integration performance metrics."""
-        current_time = datetime.now()
-        (current_time - self.startup_time).total_seconds()
-
-        # Calculate averages
-        avg_response_time = (
-            sum(self.response_times[-100:]) / len(self.response_times[-100:])
-            if self.response_times
-            else 0.0
+        """Generate current integration performance metrics (delegated to coordinator)."""
+        return await self.metrics_coordinator.generate_integration_metrics(
+            integration_mode=self.config.integration_mode.value
         )
-        error_rate = self.error_count / max(self.operation_count, 1)
-
-        metrics = IntegrationMetrics(
-            timestamp=current_time,
-            traditional_operations=self.operation_count // 2,  # Approximate
-            ai_enhanced_operations=self.operation_count // 2,  # Approximate
-            average_response_time=avg_response_time,
-            ai_enhancement_rate=(
-                0.8
-                if self.config.integration_mode != IntegrationMode.TRADITIONAL_ONLY
-                else 0.0
-            ),
-            system_health_score=1.0
-            - min(error_rate * 10, 1.0),  # Convert error rate to health score
-        )
-
-        self.metrics_history.append(metrics)
-        return metrics
 
     async def _emit_integration_event(self, event_type: str, data: Dict[str, Any]):
-        """Emit integration event for monitoring and coordination."""
-        self.event_bus.emit(event_type, data)
-
-    async def _handle_character_state_change(self, event_data: Dict[str, Any]):
-        """Handle character state change events."""
-        pass
-
-    async def _handle_story_generation(self, event_data: Dict[str, Any]):
-        """Handle story generation events."""
-        pass
-
-    async def _handle_user_interaction(self, event_data: Dict[str, Any]):
-        """Handle user interaction events."""
-        pass
+        """Emit integration event for monitoring and coordination (delegated to coordinator)."""
+        await self.event_coordinator.emit_integration_event(event_type, data)
 
     def _map_integration_to_intelligence_level(self) -> IntelligenceLevel:
         """Map integration mode to AI intelligence level."""

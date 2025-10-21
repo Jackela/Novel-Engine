@@ -250,6 +250,25 @@ Caching Strategy:
   Character Cache: Character data optimization
   Story Cache: Generated content storage
   Performance Cache: Metrics and analytics
+
+Integration Layer (Coordinator Pattern):
+  IntegrationOrchestrator: High-level coordinator (679 lines)
+    - Integration mode configuration and routing
+    - Coordinator initialization and dependency injection
+    - Backward-compatible API via property delegation
+    - System status aggregation across coordinators
+    
+  Specialized Coordinators:
+    - AISubsystemCoordinator (259 lines): AI system lifecycle management
+    - TraditionalSystemCoordinator (107 lines): Traditional system coordination
+    - MetricsCoordinator (196 lines): Performance tracking and health monitoring
+    - EventCoordinator (170 lines): Cross-system event management
+    - ContentGenerationCoordinator (236 lines): Story content generation
+    - CharacterActionProcessor (180 lines): Character action processing
+  
+  Design Pattern: Extract Class refactoring pattern
+  Architecture: Facade pattern with delegation
+  SOLID Compliance: Single Responsibility, Open/Closed, Dependency Inversion
 ```
 
 ## 💾 Data Architecture
