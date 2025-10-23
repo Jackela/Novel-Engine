@@ -5,9 +5,8 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-  schedule:
-    # Run quality checks daily at 2 AM UTC
-    - cron: '0 2 * * *'
+  # ✅ Removed daily schedule to reduce email notifications
+  # Only runs on push/PR events now
   workflow_dispatch:
     # Allow manual trigger
 
