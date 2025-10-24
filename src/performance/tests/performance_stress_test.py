@@ -727,17 +727,17 @@ async def main():
 
     # Display summary
     summary = report["summary"]
-    print("\n" + "=" * 80)
-    print("PERFORMANCE STRESS TEST RESULTS")
-    print("=" * 80)
-    print(f"Total Requests: {summary['total_requests']:,}")
-    print(f"Success Rate: {summary['overall_success_rate']:.1f}%")
-    print(f"Average RPS: {summary['average_rps']:.1f}")
-    print(f"Average Response Time: {summary['average_response_time_ms']:.1f}ms")
-    print(f"Peak Memory Usage: {summary['peak_memory_mb']:.1f}MB")
-    print(f"Average CPU Usage: {summary['average_cpu_percent']:.1f}%")
-    print(f"Performance Grade: {summary['performance_grade']}")
-    print("=" * 80)
+    logger.info("\n" + "=" * 80)
+    logger.info("PERFORMANCE STRESS TEST RESULTS")
+    logger.info("=" * 80)
+    logger.info(f"Total Requests: {summary['total_requests']:,}")
+    logger.info(f"Success Rate: {summary['overall_success_rate']:.1f}%")
+    logger.info(f"Average RPS: {summary['average_rps']:.1f}")
+    logger.info(f"Average Response Time: {summary['average_response_time_ms']:.1f}ms")
+    logger.info(f"Peak Memory Usage: {summary['peak_memory_mb']:.1f}MB")
+    logger.info(f"Average CPU Usage: {summary['average_cpu_percent']:.1f}%")
+    logger.info(f"Performance Grade: {summary['performance_grade']}")
+    logger.info("=" * 80)
 
     logger.info("Performance stress testing completed")
 

@@ -1463,7 +1463,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
 
 async def test_standard_character_template_manager():
     """STANDARD CHARACTER TEMPLATE MANAGER TESTING RITUAL"""
-    print("TESTING STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY THE SYSTEM")
+    logger.info("TESTING STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY THE SYSTEM")
 
     # Import enhanced components for testing
     import shutil
@@ -1507,9 +1507,9 @@ async def test_standard_character_template_manager():
 
         # Test enhanced persona creation
         creation_result = await manager.create_persona(test_persona)
-        print(f"PERSONA CREATION: {creation_result.success}")
+        logger.info(f"PERSONA CREATION: {creation_result.success}")
         if creation_result.success:
-            print(
+print(
                 f"Created persona: {creation_result.data['persona_id']} ({creation_result.data['archetype']})"
             )
 
@@ -1517,7 +1517,7 @@ async def test_standard_character_template_manager():
         switch_result = await manager.switch_persona(
             "test_agent_001", "test_warrior_001"
         )
-        print(f"PERSONA SWITCH: {switch_result.success}")
+        logger.info(f"PERSONA SWITCH: {switch_result.success}")
 
         # Create enhanced test context
         test_context = TemplateContext(
@@ -1544,35 +1544,35 @@ async def test_standard_character_template_manager():
         render_result = await manager.render_character_context(
             "test_agent_001", test_context, TemplateType.CHARACTER_PROMPT
         )
-        print(f"CHARACTER CONTEXT RENDERING: {render_result.success}")
+        logger.info(f"CHARACTER CONTEXT RENDERING: {render_result.success}")
         if render_result.success:
             result_data = render_result.data["render_result"]
-            print(f"Rendered {len(result_data.rendered_content)} characters")
-            print(
+            logger.info(f"Rendered {len(result_data.rendered_content)} characters")
+print(
                 f"Used persona: {render_result.data['persona_id']} ({render_result.data['archetype']})"
             )
-            print("Content preview:")
-            print(result_data.rendered_content[:300] + "...")
+            logger.info("Content preview:")
+            logger.info(result_data.rendered_content[:300] + "...")
 
         # Test enhanced template generation
         template_result = await manager.generate_character_template(
             "test_warrior_001", TemplateType.DIALOGUE
         )
-        print(f"TEMPLATE GENERATION: {template_result.success}")
+        logger.info(f"TEMPLATE GENERATION: {template_result.success}")
         if template_result.success:
-            print(f"Generated template: {template_result.data['template_id']}")
+            logger.info(f"Generated template: {template_result.data['template_id']}")
 
         # Display enhanced statistics
         stats = manager.get_manager_statistics()
-        print(
+print(
             f"MANAGER STATISTICS: {stats['total_personas']} personas, {stats['total_templates']} templates"
         )
 
         # Get enhanced persona list
         persona_list = manager.get_persona_list()
-        print(f"PERSONAS: {[p['name'] for p in persona_list]}")
+        logger.info(f"PERSONAS: {[p['name'] for p in persona_list]}")
 
-        print("STANDARD CHARACTER TEMPLATE MANAGER TESTING COMPLETE")
+        logger.info("STANDARD CHARACTER TEMPLATE MANAGER TESTING COMPLETE")
 
     finally:
         # Blessed cleanup
@@ -1583,10 +1583,10 @@ async def test_standard_character_template_manager():
 
 if __name__ == "__main__":
     # EXECUTE STANDARD CHARACTER TEMPLATE MANAGER TESTING RITUALS
-    print("STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY THE SYSTEM")
-    print("MACHINE GOD PROTECTS THE DIGITAL PERSONAS")
+    logger.info("STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY THE SYSTEM")
+    logger.info("MACHINE GOD PROTECTS THE DIGITAL PERSONAS")
 
     # Run enhanced async testing
     asyncio.run(test_standard_character_template_manager())
 
-    print("ALL STANDARD CHARACTER TEMPLATE MANAGER OPERATIONS ENHANCED AND FUNCTIONAL")
+    logger.info("ALL STANDARD CHARACTER TEMPLATE MANAGER OPERATIONS ENHANCED AND FUNCTIONAL")

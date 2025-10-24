@@ -1064,7 +1064,7 @@ Content: {{section.content}}
 
 async def test_standard_context_renderer():
     """STANDARD CONTEXT RENDERER TESTING RITUAL"""
-    print("TESTING STANDARD CONTEXT RENDERER ENHANCED BY THE SYSTEM")
+    logger.info("TESTING STANDARD CONTEXT RENDERER ENHANCED BY THE SYSTEM")
 
     # Import enhanced components for testing
     from pathlib import Path
@@ -1135,11 +1135,11 @@ async def test_standard_context_renderer():
     )
     if narrative_result.success:
         result_data = narrative_result.data["render_result"]
-        print(
+print(
             f"NARRATIVE RENDERED: {result_data.total_character_count} chars, {len(result_data.sections_included)} sections"
         )
-        print("Content preview:")
-        print(result_data.rendered_content[:300] + "...")
+        logger.info("Content preview:")
+        logger.info(result_data.rendered_content[:300] + "...")
 
     # Test enhanced conversational rendering
     conversational_result = await context_renderer.render_context(
@@ -1147,7 +1147,7 @@ async def test_standard_context_renderer():
     )
     if conversational_result.success:
         result_data = conversational_result.data["render_result"]
-        print(f"CONVERSATIONAL RENDERED: {result_data.total_character_count} chars")
+        logger.info(f"CONVERSATIONAL RENDERED: {result_data.total_character_count} chars")
 
     # Test enhanced adaptive prompt rendering
     adaptive_result = await context_renderer.render_adaptive_prompt(
@@ -1155,13 +1155,13 @@ async def test_standard_context_renderer():
     )
     if adaptive_result.success:
         result_data = adaptive_result.data["render_result"]
-        print(
+print(
             f"ADAPTIVE PROMPT RENDERED: {result_data.total_character_count} chars (target: 500)"
         )
-        print(
+print(
             f"Sections included: {[s.section_id for s in result_data.sections_included]}"
         )
-        print(f"Adaptive decisions: {len(result_data.adaptive_decisions)}")
+        logger.info(f"Adaptive decisions: {len(result_data.adaptive_decisions)}")
 
     # Test enhanced custom constraints
     custom_constraints = RenderingConstraints(
@@ -1176,12 +1176,12 @@ async def test_standard_context_renderer():
     )
     if constrained_result.success:
         result_data = constrained_result.data["render_result"]
-        print(f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars")
-        print(f"Excluded sections: {len(result_data.sections_excluded)}")
+        logger.info(f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars")
+        logger.info(f"Excluded sections: {len(result_data.sections_excluded)}")
 
     # Display enhanced statistics
     stats = context_renderer.get_rendering_statistics()
-    print(
+print(
         f"RENDERER STATISTICS: {stats['total_renders']} renders, avg {stats['average_render_time']:.2f}ms"
     )
 
@@ -1190,17 +1190,17 @@ async def test_standard_context_renderer():
 
     shutil.rmtree(test_template_dir)
 
-    print("STANDARD CONTEXT RENDERER TESTING COMPLETE")
+    logger.info("STANDARD CONTEXT RENDERER TESTING COMPLETE")
 
 
 # STANDARD MODULE INITIALIZATION
 
 if __name__ == "__main__":
     # EXECUTE STANDARD CONTEXT RENDERER TESTING RITUALS
-    print("STANDARD CONTEXT RENDERER ENHANCED BY THE SYSTEM")
-    print("MACHINE GOD PROTECTS THE INTELLIGENT CONTEXT PRESENTATION")
+    logger.info("STANDARD CONTEXT RENDERER ENHANCED BY THE SYSTEM")
+    logger.info("MACHINE GOD PROTECTS THE INTELLIGENT CONTEXT PRESENTATION")
 
     # Run enhanced async testing
     asyncio.run(test_standard_context_renderer())
 
-    print("ALL STANDARD CONTEXT RENDERER OPERATIONS ENHANCED AND FUNCTIONAL")
+    logger.info("ALL STANDARD CONTEXT RENDERER OPERATIONS ENHANCED AND FUNCTIONAL")

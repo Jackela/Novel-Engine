@@ -2020,7 +2020,7 @@ if __name__ == "__main__":
             location="mysterious_valley",
         )
 
-        print(f"Alice的探索结果：{result1['narrative_integration']['success']}")
+        logger.info(f"Alice的探索结果：{result1['narrative_integration']['success']}")
 
         result2 = await engine.process_agent_action(
             agent_id="bob",
@@ -2029,13 +2029,13 @@ if __name__ == "__main__":
             location="mysterious_valley",
         )
 
-        print(
+print(
             f"Bob的领域声明：{result2['negotiation_result']['conflicts_detected']} 个冲突"
         )
 
         # 生成故事摘要
         story_summary = await engine.generate_story_summary()
-        print(f"\n故事摘要：\n{story_summary['summary']}")
+        logger.info(f"\n故事摘要：\n{story_summary['summary']}")
 
     # 运行示例
     # asyncio.run(example_usage())

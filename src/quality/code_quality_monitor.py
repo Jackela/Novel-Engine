@@ -781,7 +781,7 @@ async def main():
 
     # Generate and display report
     console_report = monitor.generate_report(project_report, "console")
-    print(console_report)
+    logger.info(console_report)
 
     # Save JSON report
     json_report = monitor.generate_report(project_report, "json")

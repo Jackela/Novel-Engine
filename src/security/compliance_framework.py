@@ -775,7 +775,7 @@ async def main():
 
     # Generate and display report
     console_report = engine.generate_compliance_report(report, "console")
-    print(console_report)
+    logger.info(console_report)
 
     # Log some security events
     event_monitor = engine.event_monitor

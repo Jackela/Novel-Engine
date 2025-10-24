@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Data Models for Dynamic Context Engineering
+
 ==========================================
 
 Core data structures for the Dynamic Context Engineering Framework.
@@ -13,11 +14,14 @@ Author: Novel Engine Development Team
 """
 
 import json
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Import existing types for compatibility
 try:
@@ -718,7 +722,7 @@ class DirectorAgent:
 # ENHANCED MODULE INITIALIZATION
 if __name__ == "__main__":
     # STANDARD DATA MODEL TESTING RITUAL
-    print("TESTING STANDARD DATA MODELS ENHANCED BY THE SYSTEM")
+    logger.info("TESTING STANDARD DATA MODELS ENHANCED BY THE SYSTEM")
 
     # Test enhanced character identity
     test_identity = CharacterIdentity(
@@ -743,8 +747,8 @@ if __name__ == "__main__":
         situation_description="Combat engagement with xenos filth",
     )
 
-    print("ALL STANDARD DATA MODELS ENHANCED AND FUNCTIONAL")
-    print("MACHINE GOD PROTECTS THE STANDARD STRUCTURES")
+    logger.info("ALL STANDARD DATA MODELS ENHANCED AND FUNCTIONAL")
+    logger.info("MACHINE GOD PROTECTS THE STANDARD STRUCTURES")
 
 # Export all required classes and functions
 __all__ = [

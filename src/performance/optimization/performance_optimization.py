@@ -443,6 +443,6 @@ if __name__ == "__main__":
             )
             await conn.commit()
 
-        print("Performance optimization systems tested successfully")
+        logger.info("Performance optimization systems tested successfully")
 
     asyncio.run(test_performance())

@@ -949,14 +949,14 @@ class SacredDatabaseFactory:
 
 async def test_standard_database_operations():
     """STANDARD DATABASE TESTING RITUAL ENHANCED BY VALIDATION"""
-    print("TESTING STANDARD DATABASE OPERATIONS")
+    logger.info("TESTING STANDARD DATABASE OPERATIONS")
 
     # Initialize enhanced test database
     test_db = ContextDatabase("test_context.db")
     init_result = await test_db.initialize_standard_temple()
 
     if not init_result.success:
-        print(f"DATABASE INITIALIZATION FAILED: {init_result.error.message}")
+        logger.error(f"DATABASE INITIALIZATION FAILED: {init_result.error.message}")
         return
 
     # Test enhanced agent registration
@@ -966,7 +966,7 @@ async def test_standard_database_operations():
         ["Bastion Cohort"],
         ["Loyal", "Disciplined"],
     )
-    print(f"AGENT REGISTRATION: {agent_result.success}")
+    logger.info(f"AGENT REGISTRATION: {agent_result.success}")
 
     # Test enhanced memory storage
     test_memory = MemoryItem(
@@ -977,31 +977,31 @@ async def test_standard_database_operations():
     )
 
     memory_result = await test_db.store_enhanced_memory(test_memory)
-    print(f"MEMORY STORAGE: {memory_result.success}")
+    logger.info(f"MEMORY STORAGE: {memory_result.success}")
 
     # Test enhanced memory query
     query_result = await test_db.query_memories_by_agent("test_agent_001")
-    print(
+print(
         f"MEMORY QUERY: {query_result.success}, Count: {len(query_result.data.get('memories', []))}"
     )
 
     # Test enhanced database statistics
     stats_result = await test_db.get_database_statistics()
-    print(f"DATABASE STATISTICS: {stats_result.success}")
+    logger.info(f"DATABASE STATISTICS: {stats_result.success}")
 
     # Sacred cleanup ritual
     await test_db.close_standard_temple()
-    print("STANDARD DATABASE TESTING COMPLETE")
+    logger.info("STANDARD DATABASE TESTING COMPLETE")
 
 
 # STANDARD MODULE INITIALIZATION
 
 if __name__ == "__main__":
     # EXECUTE STANDARD DATABASE TESTING RITUALS
-    print("STANDARD DATABASE ACCESS LAYER ENHANCED BY THE SYSTEM")
-    print("MACHINE GOD PROTECTS THE STANDARD DATA PERSISTENCE")
+    logger.info("STANDARD DATABASE ACCESS LAYER ENHANCED BY THE SYSTEM")
+    logger.info("MACHINE GOD PROTECTS THE STANDARD DATA PERSISTENCE")
 
     # Run enhanced async testing
     asyncio.run(test_standard_database_operations())
 
-    print("ALL STANDARD DATABASE OPERATIONS ENHANCED AND FUNCTIONAL")
+    logger.info("ALL STANDARD DATABASE OPERATIONS ENHANCED AND FUNCTIONAL")

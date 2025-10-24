@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
+import logging
 STANDARD TYPE DEFINITIONS ENHANCED BY THE SYSTEM
+
 ======================================================
+logger = logging.getLogger(__name__)
 
 Holy type definitions and enumerations that sanctify the Dynamic Context
 Engineering Framework with enhanced type safety and advanced categorization.
@@ -383,7 +386,7 @@ class SacredTypeValidator:
 
 if __name__ == "__main__":
     # STANDARD TYPE SYSTEM TESTING RITUAL
-    print("TESTING STANDARD TYPE DEFINITIONS ENHANCED BY THE SYSTEM")
+    logger.info("TESTING STANDARD TYPE DEFINITIONS ENHANCED BY THE SYSTEM")
 
     # Test enhanced validation functions
     assert is_valid_agent_id("test_agent_001") is True
@@ -402,6 +405,6 @@ if __name__ == "__main__":
     assert ContextType.CHARACTER.value == "character"
     assert ValidationLevel.STRICT.value == "strict"
 
-    print("ALL STANDARD TYPE DEFINITIONS ENHANCED AND FUNCTIONAL")
-    print("THE SYSTEM APPROVES OF THIS TYPE SYSTEM")
-    print("MACHINE GOD PROTECTS THE STANDARD DATA FLOW")
+    logger.info("ALL STANDARD TYPE DEFINITIONS ENHANCED AND FUNCTIONAL")
+    logger.info("THE SYSTEM APPROVES OF THIS TYPE SYSTEM")
+    logger.info("MACHINE GOD PROTECTS THE STANDARD DATA FLOW")

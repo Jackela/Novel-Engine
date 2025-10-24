@@ -7,6 +7,7 @@ and system integration scenarios with performance and reliability validation.
 """
 
 import asyncio
+import logging
 import time
 import uuid
 from dataclasses import dataclass
@@ -17,6 +18,7 @@ import httpx
 import pytest
 import websockets
 
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -70,8 +72,8 @@ class IntegrationTestFramework:
     async def run_test_suite(self) -> Dict[str, Any]:
         """Run complete integration test suite."""
 
-        print("🚀 Starting Novel Engine API Integration Tests")
-        print("=" * 60)
+        logger.info("🚀 Starting Novel Engine API Integration Tests")
+        logger.info("=" * 60)
 
         suite_start_time = time.time()
 
@@ -90,17 +92,17 @@ class IntegrationTestFramework:
 
         # Execute test scenarios
         for scenario in scenarios:
-            print(f"\n📋 Running: {scenario.name}")
-            print(f"   Description: {scenario.description}")
+            logger.info(f"\n📋 Running: {scenario.name}")
+            logger.info(f"   Description: {scenario.description}")
 
             try:
                 result = await self._execute_scenario(scenario)
                 self.test_results.append(result)
 
                 if result.success:
-                    print(f"   ✅ PASSED ({result.duration_ms:.1f}ms)")
+                    logger.info(f"   ✅ PASSED ({result.duration_ms:.1f}ms)")
                 else:
-                    print(f"   ❌ FAILED: {result.error_message}")
+                    logger.error(f"   ❌ FAILED: {result.error_message}")
 
             except Exception as e:
                 error_result = TestResult(
@@ -110,26 +112,26 @@ class IntegrationTestFramework:
                     error_message=str(e),
                 )
                 self.test_results.append(error_result)
-                print(f"   ❌ ERROR: {str(e)}")
+                logger.error(f"   ❌ ERROR: {str(e)}")
 
         # Generate test report
         suite_duration = time.time() - suite_start_time
         report = self._generate_test_report(suite_duration)
 
-        print("\n" + "=" * 60)
-        print("📊 Test Suite Summary")
-        print("=" * 60)
-        print(f"Total Tests: {report['total_tests']}")
-        print(f"Passed: {report['passed_tests']} ✅")
-        print(f"Failed: {report['failed_tests']} ❌")
-        print(f"Success Rate: {report['success_rate']:.1f}%")
-        print(f"Total Duration: {suite_duration:.1f}s")
+        logger.info("\n" + "=" * 60)
+        logger.info("📊 Test Suite Summary")
+        logger.info("=" * 60)
+        logger.info(f"Total Tests: {report['total_tests']}")
+        logger.info(f"Passed: {report['passed_tests']} ✅")
+        logger.error(f"Failed: {report['failed_tests']} ❌")
+        logger.info(f"Success Rate: {report['success_rate']:.1f}%")
+        logger.info(f"Total Duration: {suite_duration:.1f}s")
 
         if report["failed_tests"] > 0:
-            print("\n❌ Failed Tests:")
+            logger.error("\n❌ Failed Tests:")
             for result in self.test_results:
                 if not result.success:
-                    print(f"   - {result.scenario_name}: {result.error_message}")
+                    logger.error(f"   - {result.scenario_name}: {result.error_message}")
 
         return report
 

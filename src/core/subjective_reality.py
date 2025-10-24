@@ -836,10 +836,10 @@ if __name__ == "__main__":
             agent_id="test_agent", turn_number=1, global_world_state=global_world_state
         )
 
-        print("生成的个性化简报：")
-        print(f"叙事背景：{brief.narrative_context}")
-        print(f"推荐行动：{brief.recommended_actions}")
-        print(f"可信度：{brief.confidence_levels}")
+        logger.info("生成的个性化简报：")
+        logger.info(f"叙事背景：{brief.narrative_context}")
+        logger.info(f"推荐行动：{brief.recommended_actions}")
+        logger.info(f"可信度：{brief.confidence_levels}")
 
     # 运行示例
     # asyncio.run(example_usage())

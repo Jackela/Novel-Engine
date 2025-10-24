@@ -817,17 +817,17 @@ def example_usage():
 
     Demonstrates how to use the ConfigLoader and access configuration values.
     """
-    print("Configuration System Example Usage:")
-    print("==================================")
+    logger.info("Configuration System Example Usage:")
+    logger.info("==================================")
 
     try:
         # Get configuration loader instance
         config_loader = ConfigLoader.get_instance()
-        print("✓ ConfigLoader singleton created")
+        logger.info("✓ ConfigLoader singleton created")
 
         # Load configuration
         config_loader.load_config()
-        print("✓ Configuration loaded successfully")
+        logger.info("✓ Configuration loaded successfully")
 
         # Access configuration values using convenience methods
         turns = config_loader.get_simulation_turns()
@@ -835,28 +835,28 @@ def example_usage():
         output_dir = config_loader.get_output_directory()
         char_sheets = config_loader.get_default_character_sheets()
 
-        print(f"✓ Simulation turns: {turns}")
-        print(f"✓ Log file path: {log_path}")
-        print(f"✓ Output directory: {output_dir}")
-        print(f"✓ Character sheets: {char_sheets}")
+        logger.info(f"✓ Simulation turns: {turns}")
+        logger.info(f"✓ Log file path: {log_path}")
+        logger.info(f"✓ Output directory: {output_dir}")
+        logger.info(f"✓ Character sheets: {char_sheets}")
 
         # Access full configuration object
         full_config = config_loader.get_config()
-        print(f"✓ Max agents: {full_config.simulation.max_agents}")
-        print(f"✓ API timeout: {full_config.simulation.api_timeout}")
-        print(f"✓ Narrative style: {full_config.chronicler.narrative_style}")
+        logger.info(f"✓ Max agents: {full_config.simulation.max_agents}")
+        logger.info(f"✓ API timeout: {full_config.simulation.api_timeout}")
+        logger.info(f"✓ Narrative style: {full_config.chronicler.narrative_style}")
 
         # Test global convenience functions
         global_turns = get_simulation_turns()
         global_log_path = get_log_file_path()
 
-        print(f"✓ Global function - turns: {global_turns}")
-        print(f"✓ Global function - log path: {global_log_path}")
+        logger.info(f"✓ Global function - turns: {global_turns}")
+        logger.info(f"✓ Global function - log path: {global_log_path}")
 
-        print("\nConfiguration system is ready for use!")
+        logger.info("\nConfiguration system is ready for use!")
 
     except Exception as e:
-        print(f"✗ Configuration example failed: {e}")
+        logger.error(f"✗ Configuration example failed: {e}")
 
 
 if __name__ == "__main__":
