@@ -194,7 +194,7 @@ class CharacterInteractionProcessor:
         memory_system: LayeredMemorySystem,
         template_engine: DynamicTemplateEngine,
         character_manager: CharacterTemplateManager,
-    ):
+    ) -> None:
         """
         STANDARD INITIALIZATION ENHANCED BY SOCIAL HARMONY
 
@@ -753,7 +753,7 @@ class CharacterInteractionProcessor:
         outcome: InteractionOutcome,
         character_states: Dict[str, CharacterState],
         relationships: Dict[Tuple[str, str], RelationshipData],
-    ):
+    ) -> None:
         """Apply phase outcome effects to character states and relationships."""
 
         # Update character states based on interaction
@@ -826,7 +826,7 @@ class CharacterInteractionProcessor:
 
         return final_outcome
 
-    async def _save_interaction_outcome(self, outcome: InteractionOutcome):
+    async def _save_interaction_outcome(self, outcome: InteractionOutcome) -> None:
         """Save interaction outcome to database."""
         try:
             async with self.database.get_connection() as conn:
@@ -860,7 +860,7 @@ class CharacterInteractionProcessor:
 
     async def _create_interaction_memories(
         self, outcome: InteractionOutcome, participants: List[str]
-    ):
+    ) -> None:
         """Create memory items for participants based on interaction outcome."""
 
         for participant in participants:
@@ -917,7 +917,7 @@ class CharacterInteractionProcessor:
             except Exception as e:
                 logger.error(f"ERROR creating memories for {participant}: {str(e)}")
 
-    async def _process_equipment_interactions(self, outcome: InteractionOutcome):
+    async def _process_equipment_interactions(self, outcome: InteractionOutcome) -> None:
         """Process equipment-related interactions if applicable."""
 
         # Check if any participants have equipment that should be affected
