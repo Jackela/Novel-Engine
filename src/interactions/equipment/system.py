@@ -15,6 +15,7 @@ from src.core.data_models import (
     ErrorInfo,
     StandardResponse,
 )
+from src.core.utils import ResponseBuilder
 from src.database.context_db import ContextDatabase
 
 from .analytics import EquipmentAnalyzer
@@ -29,6 +30,7 @@ from .models import (
 from .modifications import ModificationEngine
 from .processors import EquipmentProcessorRegistry
 from .templates import TemplateManager
+from .validators import EquipmentValidator
 
 logger = logging.getLogger(__name__)
 
@@ -208,15 +210,11 @@ class DynamicEquipmentSystem:
         try:
             async with self._processing_lock:
                 # Retrieve enhanced equipment
-                equipment = self._equipment_registry.get(equipment_id)
-                if not equipment:
-                    return StandardResponse(
-                        success=False,
-                        error=ErrorInfo(
-                            code="EQUIPMENT_NOT_FOUND",
-                            message=f"Equipment '{equipment_id}' not found in registry",
-                        ),
-                    )
+                equipment, error = EquipmentValidator.validate_exists(
+                    self._equipment_registry, equipment_id, "in registry"
+                )
+                if error:
+                    return error
 
                 # Validate enhanced usage authorization
                 if (
@@ -355,15 +353,11 @@ class DynamicEquipmentSystem:
         try:
             async with self._processing_lock:
                 # Retrieve enhanced equipment
-                equipment = self._equipment_registry.get(equipment_id)
-                if not equipment:
-                    return StandardResponse(
-                        success=False,
-                        error=ErrorInfo(
-                            code="EQUIPMENT_NOT_FOUND",
-                            message=f"Equipment '{equipment_id}' not found for maintenance",
-                        ),
-                    )
+                equipment, error = EquipmentValidator.validate_exists(
+                    self._equipment_registry, equipment_id, "for maintenance"
+                )
+                if error:
+                    return error
 
                 maintenance_start = datetime.now()
 
@@ -508,15 +502,11 @@ class DynamicEquipmentSystem:
         try:
             async with self._processing_lock:
                 # Retrieve enhanced equipment
-                equipment = self._equipment_registry.get(equipment_id)
-                if not equipment:
-                    return StandardResponse(
-                        success=False,
-                        error=ErrorInfo(
-                            code="EQUIPMENT_NOT_FOUND",
-                            message=f"Equipment '{equipment_id}' not found for modification",
-                        ),
-                    )
+                equipment, error = EquipmentValidator.validate_exists(
+                    self._equipment_registry, equipment_id, "for modification"
+                )
+                if error:
+                    return error
 
                 # Validate enhanced equipment condition
                 if equipment.base_equipment.condition == EquipmentCondition.BROKEN:
@@ -634,15 +624,11 @@ class DynamicEquipmentSystem:
         metrics, condition assessment, and predictive analysis.
         """
         try:
-            equipment = self._equipment_registry.get(equipment_id)
-            if not equipment:
-                return StandardResponse(
-                    success=False,
-                    error=ErrorInfo(
-                        code="EQUIPMENT_NOT_FOUND",
-                        message=f"Equipment '{equipment_id}' not found in registry",
-                    ),
-                )
+            equipment, error = EquipmentValidator.validate_exists(
+                self._equipment_registry, equipment_id, "in registry"
+            )
+            if error:
+                return error
 
             # Calculate enhanced predictive metrics
             predicted_failure = self._predict_equipment_failure(equipment)
