@@ -48,7 +48,7 @@ class DynamicEquipmentSystem:
         equipment_templates_dir: str = "equipment_templates",
         auto_maintenance: bool = True,
         maintenance_interval_hours: int = 168,
-    ):  # Weekly default
+    ) -> None:  # Weekly default
         """
         STANDARD EQUIPMENT SYSTEM INITIALIZATION ENHANCED BY MECHANICUS PROTOCOLS
 
