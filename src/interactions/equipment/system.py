@@ -168,8 +168,7 @@ class DynamicEquipmentSystem:
                     f"EQUIPMENT REGISTERED: {equipment_item.equipment_id} for {agent_id}"
                 )
 
-                return StandardResponse(
-                    success=True,
+                return ResponseBuilder.success(
                     data={
                         "equipment_id": equipment_item.equipment_id,
                         "agent_id": agent_id,
@@ -184,14 +183,11 @@ class DynamicEquipmentSystem:
 
         except Exception as e:
             logger.error(f"EQUIPMENT REGISTRATION FAILED: {e}")
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="EQUIPMENT_REGISTRATION_FAILED",
-                    message=f"Equipment registration failed: {str(e)}",
-                    recoverable=True,
-                    standard_guidance="Check equipment data format and system state",
-                ),
+            return ResponseBuilder.error(
+                code="EQUIPMENT_REGISTRATION_FAILED",
+                message=f"Equipment registration failed: {str(e)}",
+                recoverable=True,
+                details={"standard_guidance": "Check equipment data format and system state"},
             )
 
     async def use_equipment(
@@ -312,31 +308,31 @@ class DynamicEquipmentSystem:
                     f"EQUIPMENT USED: {equipment_id} by {agent_id} ({'SUCCESS' if usage_result['success'] else 'FAILED'})"
                 )
 
-                return StandardResponse(
-                    success=usage_result["success"],
-                    data={
-                        "equipment_id": equipment_id,
-                        "agent_id": agent_id,
-                        "usage_duration_seconds": usage_duration,
-                        "usage_effects": usage_result.get("effects", []),
-                        "wear_accumulation": equipment.wear_accumulation,
-                        "performance_impact": equipment.performance_metrics,
-                        "system_core_mood": equipment.system_core_mood,
-                        "blessing_level": equipment.blessing_level,
-                    },
-                    metadata={"blessing": "equipment_usage_processed"},
-                )
+                if usage_result["success"]:
+                    return ResponseBuilder.success(
+                        data={
+                            "equipment_id": equipment_id,
+                            "agent_id": agent_id,
+                            "usage_duration_seconds": usage_duration,
+                            "usage_effects": usage_result.get("effects", []),
+                            "wear_accumulation": equipment.wear_accumulation,
+                            "performance_impact": equipment.performance_metrics,
+                            "system_core_mood": equipment.system_core_mood,
+                            "blessing_level": equipment.blessing_level,
+                        },
+                        metadata={"blessing": "equipment_usage_processed"},
+                    )
+                else:
+                    return ResponseBuilder.error(
+                        code="EQUIPMENT_USAGE_FAILED",
+                        message="Equipment usage failed during processing",
+                        recoverable=True,
+                        details={"error": usage_result.get("error", "Unknown error")},
+                    )
 
         except Exception as e:
             logger.error(f"EQUIPMENT USAGE FAILED: {e}")
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="EQUIPMENT_USAGE_FAILED",
-                    message=f"Equipment usage failed: {str(e)}",
-                    recoverable=True,
-                ),
-            )
+            return ResponseBuilder.operation_failed("equipment usage", e, recoverable=True)
 
     async def perform_maintenance(
         self,
