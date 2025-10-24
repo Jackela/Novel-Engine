@@ -44,7 +44,7 @@ from src.templates.dynamic_template_engine import (
     TemplateContext,
 )
 
-from .dynamic_equipment_system import DynamicEquipmentSystem
+from .equipment import DynamicEquipmentSystem
 
 # Import enhanced interaction systems
 from .interaction_engine import (

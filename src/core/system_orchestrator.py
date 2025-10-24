@@ -40,7 +40,7 @@ from src.database.context_db import ContextDatabase
 from src.interactions.character_interaction_processor import (
     CharacterInteractionProcessor,
 )
-from src.interactions.dynamic_equipment_system import DynamicEquipmentSystem
+from src.interactions.equipment import DynamicEquipmentSystem
 from src.interactions.interaction_engine import (
     InteractionContext,
     InteractionEngine,
