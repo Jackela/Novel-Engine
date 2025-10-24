@@ -6,12 +6,13 @@ Main emergent narrative engine orchestrating all subsystems.
 自然涌现出连贯的叙事，而非预设剧本。
 """
 
+import json
 import logging
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
-from src.llm_service import LLMRequest, ResponseFormat, get_llm_service
+from src.llm_service import LLMRequest, LLMService, ResponseFormat, get_llm_service
 
 from .causal_graph import CausalGraph
 from .narrative_coherence import NarrativeCoherenceEngine
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 class EmergentNarrativeEngine:
     """涌现式叙事引擎 - 主引擎类"""
 
-    def __init__(self, llm_service=None):
+    def __init__(self, llm_service: Optional[LLMService] = None) -> None:
         self.causal_graph = CausalGraph()
         self.negotiation_engine = AgentNegotiationEngine(llm_service)
         self.coherence_engine = NarrativeCoherenceEngine(self.causal_graph, llm_service)
@@ -37,10 +38,10 @@ class EmergentNarrativeEngine:
 
         logger.info("涌现式叙事引擎初始化完成")
 
-    def _register_default_consistency_rules(self):
+    def _register_default_consistency_rules(self) -> None:
         """注册默认的一致性规则"""
 
-        def basic_causality_rule(data: Dict) -> bool:
+        def basic_causality_rule(data: Dict[str, Any]) -> bool:
             """基础因果逻辑规则"""
             event = data["event"]
             context = data["context"]
@@ -63,7 +64,7 @@ class EmergentNarrativeEngine:
 
             return True
 
-        def temporal_logic_rule(data: Dict) -> bool:
+        def temporal_logic_rule(data: Dict[str, Any]) -> bool:
             """时间逻辑规则"""
             event = data["event"]
 
@@ -76,8 +77,8 @@ class EmergentNarrativeEngine:
     async def initialize_agent(
         self,
         agent_id: str,
-        negotiation_style: Dict[str, float] = None,
-        priorities: List[str] = None,
+        negotiation_style: Optional[Dict[str, float]] = None,
+        priorities: Optional[List[str]] = None,
     ) -> bool:
         """初始化Agent"""
 
@@ -98,8 +99,8 @@ class EmergentNarrativeEngine:
         agent_id: str,
         action_type: str,
         action_data: Dict[str, Any],
-        location: str = None,
-        participants: List[str] = None,
+        location: Optional[str] = None,
+        participants: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """处理Agent行动并生成叙事"""
 
@@ -142,7 +143,7 @@ class EmergentNarrativeEngine:
             ),
         }
 
-    async def _analyze_and_add_causal_relations(self, event_node: CausalNode):
+    async def _analyze_and_add_causal_relations(self, event_node: CausalNode) -> None:
         """分析并添加因果关系"""
 
         # 查找可能的因果前因
@@ -621,8 +622,8 @@ class EmergentNarrativeEngine:
 
     async def generate_story_summary(
         self,
-        time_range: Tuple[datetime, datetime] = None,
-        agent_focus: List[str] = None,
+        time_range: Optional[Tuple[datetime, datetime]] = None,
+        agent_focus: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """生成故事摘要"""
 
@@ -722,7 +723,7 @@ class EmergentNarrativeEngine:
 
 
 # Factory function
-def create_emergent_narrative_engine(llm_service=None) -> EmergentNarrativeEngine:
+def create_emergent_narrative_engine(llm_service: Optional[LLMService] = None) -> EmergentNarrativeEngine:
     """创建涌现式叙事引擎实例"""
     return EmergentNarrativeEngine(llm_service)
 
