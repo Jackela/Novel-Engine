@@ -15,6 +15,7 @@ from src.core.data_models import (
     ErrorInfo,
     StandardResponse,
 )
+from src.core.utils import ResponseBuilder
 from src.database.context_db import ContextDatabase
 
 from .analytics import EquipmentAnalyzer
@@ -29,6 +30,7 @@ from .models import (
 from .modifications import ModificationEngine
 from .processors import EquipmentProcessorRegistry
 from .templates import TemplateManager
+from .validators import EquipmentValidator
 
 logger = logging.getLogger(__name__)
 
@@ -166,8 +168,7 @@ class DynamicEquipmentSystem:
                     f"EQUIPMENT REGISTERED: {equipment_item.equipment_id} for {agent_id}"
                 )
 
-                return StandardResponse(
-                    success=True,
+                return ResponseBuilder.success(
                     data={
                         "equipment_id": equipment_item.equipment_id,
                         "agent_id": agent_id,
@@ -182,14 +183,11 @@ class DynamicEquipmentSystem:
 
         except Exception as e:
             logger.error(f"EQUIPMENT REGISTRATION FAILED: {e}")
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="EQUIPMENT_REGISTRATION_FAILED",
-                    message=f"Equipment registration failed: {str(e)}",
-                    recoverable=True,
-                    standard_guidance="Check equipment data format and system state",
-                ),
+            return ResponseBuilder.error(
+                code="EQUIPMENT_REGISTRATION_FAILED",
+                message=f"Equipment registration failed: {str(e)}",
+                recoverable=True,
+                details={"standard_guidance": "Check equipment data format and system state"},
             )
 
     async def use_equipment(
@@ -208,15 +206,11 @@ class DynamicEquipmentSystem:
         try:
             async with self._processing_lock:
                 # Retrieve enhanced equipment
-                equipment = self._equipment_registry.get(equipment_id)
-                if not equipment:
-                    return StandardResponse(
-                        success=False,
-                        error=ErrorInfo(
-                            code="EQUIPMENT_NOT_FOUND",
-                            message=f"Equipment '{equipment_id}' not found in registry",
-                        ),
-                    )
+                equipment, error = EquipmentValidator.validate_exists(
+                    self._equipment_registry, equipment_id, "in registry"
+                )
+                if error:
+                    return error
 
                 # Validate enhanced usage authorization
                 if (
@@ -314,31 +308,31 @@ class DynamicEquipmentSystem:
                     f"EQUIPMENT USED: {equipment_id} by {agent_id} ({'SUCCESS' if usage_result['success'] else 'FAILED'})"
                 )
 
-                return StandardResponse(
-                    success=usage_result["success"],
-                    data={
-                        "equipment_id": equipment_id,
-                        "agent_id": agent_id,
-                        "usage_duration_seconds": usage_duration,
-                        "usage_effects": usage_result.get("effects", []),
-                        "wear_accumulation": equipment.wear_accumulation,
-                        "performance_impact": equipment.performance_metrics,
-                        "system_core_mood": equipment.system_core_mood,
-                        "blessing_level": equipment.blessing_level,
-                    },
-                    metadata={"blessing": "equipment_usage_processed"},
-                )
+                if usage_result["success"]:
+                    return ResponseBuilder.success(
+                        data={
+                            "equipment_id": equipment_id,
+                            "agent_id": agent_id,
+                            "usage_duration_seconds": usage_duration,
+                            "usage_effects": usage_result.get("effects", []),
+                            "wear_accumulation": equipment.wear_accumulation,
+                            "performance_impact": equipment.performance_metrics,
+                            "system_core_mood": equipment.system_core_mood,
+                            "blessing_level": equipment.blessing_level,
+                        },
+                        metadata={"blessing": "equipment_usage_processed"},
+                    )
+                else:
+                    return ResponseBuilder.error(
+                        code="EQUIPMENT_USAGE_FAILED",
+                        message="Equipment usage failed during processing",
+                        recoverable=True,
+                        details={"error": usage_result.get("error", "Unknown error")},
+                    )
 
         except Exception as e:
             logger.error(f"EQUIPMENT USAGE FAILED: {e}")
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="EQUIPMENT_USAGE_FAILED",
-                    message=f"Equipment usage failed: {str(e)}",
-                    recoverable=True,
-                ),
-            )
+            return ResponseBuilder.operation_failed("equipment usage", e, recoverable=True)
 
     async def perform_maintenance(
         self,
@@ -355,15 +349,11 @@ class DynamicEquipmentSystem:
         try:
             async with self._processing_lock:
                 # Retrieve enhanced equipment
-                equipment = self._equipment_registry.get(equipment_id)
-                if not equipment:
-                    return StandardResponse(
-                        success=False,
-                        error=ErrorInfo(
-                            code="EQUIPMENT_NOT_FOUND",
-                            message=f"Equipment '{equipment_id}' not found for maintenance",
-                        ),
-                    )
+                equipment, error = EquipmentValidator.validate_exists(
+                    self._equipment_registry, equipment_id, "for maintenance"
+                )
+                if error:
+                    return error
 
                 maintenance_start = datetime.now()
 
@@ -508,15 +498,11 @@ class DynamicEquipmentSystem:
         try:
             async with self._processing_lock:
                 # Retrieve enhanced equipment
-                equipment = self._equipment_registry.get(equipment_id)
-                if not equipment:
-                    return StandardResponse(
-                        success=False,
-                        error=ErrorInfo(
-                            code="EQUIPMENT_NOT_FOUND",
-                            message=f"Equipment '{equipment_id}' not found for modification",
-                        ),
-                    )
+                equipment, error = EquipmentValidator.validate_exists(
+                    self._equipment_registry, equipment_id, "for modification"
+                )
+                if error:
+                    return error
 
                 # Validate enhanced equipment condition
                 if equipment.base_equipment.condition == EquipmentCondition.BROKEN:
@@ -634,15 +620,11 @@ class DynamicEquipmentSystem:
         metrics, condition assessment, and predictive analysis.
         """
         try:
-            equipment = self._equipment_registry.get(equipment_id)
-            if not equipment:
-                return StandardResponse(
-                    success=False,
-                    error=ErrorInfo(
-                        code="EQUIPMENT_NOT_FOUND",
-                        message=f"Equipment '{equipment_id}' not found in registry",
-                    ),
-                )
+            equipment, error = EquipmentValidator.validate_exists(
+                self._equipment_registry, equipment_id, "in registry"
+            )
+            if error:
+                return error
 
             # Calculate enhanced predictive metrics
             predicted_failure = self._predict_equipment_failure(equipment)

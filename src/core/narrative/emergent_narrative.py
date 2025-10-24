@@ -12,7 +12,10 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
-from src.llm_service import LLMRequest, LLMService, ResponseFormat, get_llm_service
+from src.llm_service import LLMRequest, ResponseFormat, UnifiedLLMService, get_llm_service
+
+# Type alias for compatibility
+LLMService = UnifiedLLMService
 
 from .causal_graph import CausalGraph
 from .narrative_coherence import NarrativeCoherenceEngine
