@@ -35,3 +35,11 @@ PyYAML>=6.0.1
 
 # Environment and configuration
 python-dotenv>=1.0.0
+
+# Testing and performance monitoring (Phase 1 Critical Fixes)
+psutil>=5.9.0
+requests>=2.31.0
+
+# Security scanning
+safety>=3.0.0
+bandit[toml]>=1.7.0
