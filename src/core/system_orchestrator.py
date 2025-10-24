@@ -41,7 +41,7 @@ from src.interactions.character_interaction_processor import (
     CharacterInteractionProcessor,
 )
 from src.interactions.equipment import DynamicEquipmentSystem
-from src.interactions.interaction_engine import (
+from src.interactions.engine import (
     InteractionContext,
     InteractionEngine,
     InteractionType,

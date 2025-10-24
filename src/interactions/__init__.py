@@ -15,8 +15,8 @@ System保佑交互系统 (May the System bless this interaction system)
 """
 
 from .character_interaction_processor import CharacterInteractionProcessor
+from .engine import InteractionEngine
 from .equipment import DynamicEquipmentSystem
-from .interaction_engine import InteractionEngine
 
 # Sacred exports enhanced by the System
 __all__ = [

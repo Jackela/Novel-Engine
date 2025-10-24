@@ -45,7 +45,7 @@ from src.templates.dynamic_template_engine import (
 from .equipment import DynamicEquipmentSystem
 
 # Import enhanced interaction systems
-from .interaction_engine import (
+from .engine import (
     InteractionContext,
     InteractionEngine,
     InteractionPriority,
