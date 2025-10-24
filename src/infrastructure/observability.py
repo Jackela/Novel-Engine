@@ -1146,15 +1146,15 @@ if __name__ == "__main__":
 
         # Check health
         health = await obs_manager.health_monitor.run_health_checks()
-        print(f"System healthy: {health['overall_healthy']}")
+        logger.info(f"System healthy: {health['overall_healthy']}")
 
         # Get performance stats
         perf_stats = obs_manager.profiler.get_performance_stats()
-        print(f"Performance stats: {perf_stats}")
+        logger.info(f"Performance stats: {perf_stats}")
 
         # Get metrics
         metrics_summary = obs_manager.metrics.get_metrics_summary()
-        print(f"Metrics available: {len(metrics_summary['metrics'])}")
+        logger.info(f"Metrics available: {len(metrics_summary['metrics'])}")
 
         # Log security event
         obs_manager.auditor.log_authentication_event(
@@ -1164,7 +1164,7 @@ if __name__ == "__main__":
             details={"source_ip": "192.168.1.1"},
         )
 
-        print("Example completed successfully")
+        logger.info("Example completed successfully")
 
     # Run example
     asyncio.run(example_usage())

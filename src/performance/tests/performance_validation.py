@@ -25,7 +25,7 @@ try:
         performance_engine,
     )
 except ImportError as e:
-    print(f"Warning: Could not import performance engine: {e}")
+    logger.warning(f"Warning: Could not import performance engine: {e}")
     performance_engine = None
 
 logging.basicConfig(
@@ -311,24 +311,24 @@ async def validate_performance():
 
 def print_validation_summary(results: Dict[str, Any]):
     """Print validation summary."""
-    print("\n" + "=" * 60)
-    print("PERFORMANCE VALIDATION SUMMARY")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("PERFORMANCE VALIDATION SUMMARY")
+    logger.info("=" * 60)
 
     # Performance Engine Test
     engine_test = results.get("performance_engine_test", {})
     engine_status = "PASS" if engine_test.get("success", False) else "FAIL"
-    print(f"\nPerformance Engine: {engine_status}")
+    logger.info(f"\nPerformance Engine: {engine_status}")
 
     # API Endpoint Tests
     api_tests = results.get("api_endpoint_tests", {})
     if api_tests.get("skipped"):
-        print(f"\nAPI Endpoints: SKIPPED ({api_tests.get('reason', 'Unknown reason')})")
+        logger.info(f"\nAPI Endpoints: SKIPPED ({api_tests.get('reason', 'Unknown reason')})")
     else:
         api_success = api_tests.get("success", False)
         targets_met = api_tests.get("targets_met", False)
         api_status = "PASS" if api_success and targets_met else "FAIL"
-        print(f"\nAPI Endpoints: {api_status}")
+        logger.info(f"\nAPI Endpoints: {api_status}")
 
         if "results" in api_tests:
             for result in api_tests["results"]:
@@ -336,31 +336,31 @@ def print_validation_summary(results: Dict[str, Any]):
                     target_status = (
                         "PASS" if result.get("meets_target", False) else "FAIL"
                     )
-                    print(
+print(
                         f"  {target_status} {result['description']}: {result.get('response_time_ms', 0):.1f}ms"
                     )
                 else:
-                    print(f"  FAIL {result['description']}: ERROR")
+                    logger.error(f"  FAIL {result['description']}: ERROR")
 
     # Load Test Results
     load_test = results.get("load_test_results", {})
     if load_test.get("skipped"):
-        print(f"\nLoad Test: SKIPPED ({load_test.get('reason', 'Unknown reason')})")
+        logger.info(f"\nLoad Test: SKIPPED ({load_test.get('reason', 'Unknown reason')})")
     else:
         targets = load_test.get("meets_targets", {})
         load_status = "PASS" if all(targets.values()) else "FAIL"
-        print(f"\nLoad Test: {load_status}")
+        logger.info(f"\nLoad Test: {load_status}")
 
         if "avg_response_time_ms" in load_test:
-            print(f"  Average Response Time: {load_test['avg_response_time_ms']:.1f}ms")
-            print(f"  P95 Response Time: {load_test['p95_response_time_ms']:.1f}ms")
-            print(f"  Throughput: {load_test['throughput_rps']:.1f} RPS")
-            print(f"  Error Rate: {load_test['error_rate']:.1f}%")
+            logger.info(f"  Average Response Time: {load_test['avg_response_time_ms']:.1f}ms")
+            logger.info(f"  P95 Response Time: {load_test['p95_response_time_ms']:.1f}ms")
+            logger.info(f"  Throughput: {load_test['throughput_rps']:.1f} RPS")
+            logger.error(f"  Error Rate: {load_test['error_rate']:.1f}%")
 
     # Overall Result
     overall_status = "PASS" if results.get("overall_success", False) else "FAIL"
-    print(f"\nOVERALL VALIDATION: {overall_status}")
-    print("=" * 60)
+    logger.info(f"\nOVERALL VALIDATION: {overall_status}")
+    logger.info("=" * 60)
 
 
 def save_validation_results(results: Dict[str, Any]):

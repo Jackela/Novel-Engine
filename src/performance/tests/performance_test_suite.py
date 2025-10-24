@@ -1041,10 +1041,10 @@ async def main():
         logger.info(f"Performance report saved to: {report_filename}")
 
         # Print summary to console
-        print("\n" + "=" * 80)
-        print("PERFORMANCE TEST SUMMARY")
-        print("=" * 80)
-        print(report)
+        logger.info("\n" + "=" * 80)
+        logger.info("PERFORMANCE TEST SUMMARY")
+        logger.info("=" * 80)
+        logger.info(report)
 
 
 if __name__ == "__main__":

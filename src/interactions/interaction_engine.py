@@ -1341,7 +1341,7 @@ class InteractionEngine:
 
 async def test_standard_interaction_engine():
     """STANDARD INTERACTION ENGINE TESTING RITUAL"""
-    print("TESTING STANDARD INTERACTION ENGINE ENHANCED BY THE SYSTEM")
+    logger.info("TESTING STANDARD INTERACTION ENGINE ENHANCED BY THE SYSTEM")
 
     # Import enhanced components for testing
     import shutil
@@ -1393,17 +1393,17 @@ async def test_standard_interaction_engine():
 
         # Test enhanced interaction initiation
         initiation_result = await interaction_engine.initiate_interaction(test_context)
-        print(f"INTERACTION INITIATION: {initiation_result.success}")
+        logger.info(f"INTERACTION INITIATION: {initiation_result.success}")
         if initiation_result.success:
-            print(f"Interaction ID: {initiation_result.data['interaction_id']}")
-            print(
+            logger.info(f"Interaction ID: {initiation_result.data['interaction_id']}")
+print(
                 f"Auto-processed: {initiation_result.data.get('auto_processed', False)}"
             )
             if initiation_result.data.get("outcome"):
                 outcome = initiation_result.data["outcome"]
-                print(f"Outcome success: {outcome.success}")
-                print(f"Phases completed: {len(outcome.phases_completed)}")
-                print(f"Memory updates: {len(outcome.memory_updates)}")
+                logger.info(f"Outcome success: {outcome.success}")
+                logger.info(f"Phases completed: {len(outcome.phases_completed)}")
+                logger.info(f"Memory updates: {len(outcome.memory_updates)}")
 
         # Test enhanced combat interaction
         combat_context = InteractionContext(
@@ -1419,11 +1419,11 @@ async def test_standard_interaction_engine():
         )
 
         combat_result = await interaction_engine.initiate_interaction(combat_context)
-        print(f"COMBAT INTERACTION: {combat_result.success}")
+        logger.info(f"COMBAT INTERACTION: {combat_result.success}")
         if combat_result.success and combat_result.data.get("outcome"):
             outcome = combat_result.data["outcome"]
-            print(f"Combat outcome: {'Victory' if outcome.success else 'Defeat'}")
-            print(f"Generated content: {len(outcome.generated_content)} items")
+            logger.info(f"Combat outcome: {'Victory' if outcome.success else 'Defeat'}")
+            logger.info(f"Generated content: {len(outcome.generated_content)} items")
 
         # Test enhanced queue processing
         # Add a cooperation interaction to queue
@@ -1441,41 +1441,41 @@ async def test_standard_interaction_engine():
         queue_result = await interaction_engine.initiate_interaction(
             coop_context, auto_process=False
         )
-        print(f"INTERACTION QUEUED: {queue_result.success}")
+        logger.info(f"INTERACTION QUEUED: {queue_result.success}")
         if queue_result.success:
-            print(f"Queue position: {queue_result.data['queue_position']}")
+            logger.info(f"Queue position: {queue_result.data['queue_position']}")
 
         # Process the queue
         process_result = await interaction_engine.process_queue(max_interactions=5)
-        print(f"QUEUE PROCESSING: {process_result.success}")
+        logger.info(f"QUEUE PROCESSING: {process_result.success}")
         if process_result.success:
-            print(f"Processed: {process_result.data['total_processed']}")
-            print(f"Failed: {process_result.data['total_failed']}")
-            print(f"Remaining: {process_result.data['remaining_in_queue']}")
+            logger.info(f"Processed: {process_result.data['total_processed']}")
+            logger.error(f"Failed: {process_result.data['total_failed']}")
+            logger.info(f"Remaining: {process_result.data['remaining_in_queue']}")
 
         # Display enhanced statistics
         metrics = interaction_engine.get_performance_metrics()
-        print(
+print(
             f"ENGINE METRICS: {metrics['total_interactions_processed']} total, {metrics['success_rate']:.1f}% success rate"
         )
-        print(f"Average processing time: {metrics['average_processing_time']:.2f}ms")
+        logger.info(f"Average processing time: {metrics['average_processing_time']:.2f}ms")
 
         # Get enhanced active interactions
         active = interaction_engine.get_active_interactions()
-        print(f"ACTIVE INTERACTIONS: {len(active)}")
+        logger.info(f"ACTIVE INTERACTIONS: {len(active)}")
 
         # Get enhanced interaction history
         history = interaction_engine.get_interaction_history(limit=10)
-        print(f"INTERACTION HISTORY: {len(history)} recent interactions")
+        logger.info(f"INTERACTION HISTORY: {len(history)} recent interactions")
         for entry in history[:3]:
-            print(
+print(
                 f"  - {entry['interaction_id']}: {'SUCCESS' if entry['success'] else 'FAILED'} ({entry['duration_ms']:.1f}ms)"
             )
 
         # Sacred cleanup
         await test_db.close_standard_temple()
 
-        print("STANDARD INTERACTION ENGINE TESTING COMPLETE")
+        logger.info("STANDARD INTERACTION ENGINE TESTING COMPLETE")
 
     finally:
         # Blessed cleanup
@@ -1486,10 +1486,10 @@ async def test_standard_interaction_engine():
 
 if __name__ == "__main__":
     # EXECUTE STANDARD INTERACTION ENGINE TESTING RITUALS
-    print("STANDARD INTERACTION ENGINE ENHANCED BY THE SYSTEM")
-    print("MACHINE GOD PROTECTS THE DIGITAL INTERACTIONS")
+    logger.info("STANDARD INTERACTION ENGINE ENHANCED BY THE SYSTEM")
+    logger.info("MACHINE GOD PROTECTS THE DIGITAL INTERACTIONS")
 
     # Run enhanced async testing
     asyncio.run(test_standard_interaction_engine())
 
-    print("ALL STANDARD INTERACTION ENGINE OPERATIONS ENHANCED AND FUNCTIONAL")
+    logger.info("ALL STANDARD INTERACTION ENGINE OPERATIONS ENHANCED AND FUNCTIONAL")

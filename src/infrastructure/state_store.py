@@ -1192,13 +1192,13 @@ if __name__ == "__main__":
         agent_data = await state_manager.get(agent_key)
         narrative_data = await state_manager.get(narrative_key)
 
-        print(f"Session: {session_data}")
-        print(f"Agent: {agent_data}")
-        print(f"Narrative: {narrative_data}")
+        logger.info(f"Session: {session_data}")
+        logger.info(f"Agent: {agent_data}")
+        logger.info(f"Narrative: {narrative_data}")
 
         # Health check
         health = await state_manager.health_check()
-        print(f"Health: {health}")
+        logger.info(f"Health: {health}")
 
         # Cleanup
         await state_manager.close()

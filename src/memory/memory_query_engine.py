@@ -580,7 +580,7 @@ class MemoryQueryEngine:
 
 async def test_memory_query_engine():
     """Tests the MemoryQueryEngine."""
-    print("Testing Memory Query Engine...")
+    logger.info("Testing Memory Query Engine...")
 
     db = ContextDatabase(":memory:")
     await db.initialize()
@@ -600,17 +600,17 @@ async def test_memory_query_engine():
 
     if result.success:
         query_result = result.data["query_result"]
-        print(f"Query '{query}' found {len(query_result.memories)} results.")
+        logger.info(f"Query '{query}' found {len(query_result.memories)} results.")
         assert len(query_result.memories) > 0
     else:
-        print(f"Query failed: {result.error.message}")
+        logger.error(f"Query failed: {result.error.message}")
         assert False
 
     stats = query_engine.get_query_statistics()
-    print(f"Query Engine Stats: {stats}")
+    logger.info(f"Query Engine Stats: {stats}")
 
     await db.close()
-    print("Memory Query Engine testing complete.")
+    logger.info("Memory Query Engine testing complete.")
 
 
 if __name__ == "__main__":

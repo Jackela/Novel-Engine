@@ -209,11 +209,11 @@ async def main():
     async with httpx.AsyncClient() as client:
         # Get API status
         response = await client.get("http://localhost:8000/")
-        print("API Status:", response.json())
+        logger.info("API Status:", response.json())
         
         # Get health check
         health = await client.get("http://localhost:8000/health")
-        print("Health:", health.json())
+        logger.info("Health:", health.json())
 
 if __name__ == "__main__":
     asyncio.run(main())</code></pre>
@@ -304,7 +304,7 @@ async def story_examples(client: NovelEngineClient):
             f"{client.base_url}/api/v1/stories/generate/{generation_id}/progress",
             headers=headers
         )
-        print("Progress:", progress_response.json())</code></pre>
+print("Progress:", progress_response.json())</code></pre>
                 </div>
             </div>
         </div>
@@ -529,7 +529,7 @@ novel-engine stories generate --title "My Story"</code></pre>
             {
                 "format": "python",
                 "language": "python",
-                "code": f'import httpx\nresponse = await httpx.get("http://localhost:8000{endpoint_path}")\nprint(response.json())',
+"code": f'import httpx\nresponse = await httpx.get("http://localhost:8000{endpoint_path}")\nprint(response.json())',
                 "explanation": "Basic Python example using httpx",
             },
             {

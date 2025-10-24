@@ -303,7 +303,7 @@ class WorkingMemory:
 
 
 if __name__ == "__main__":
-    print("Testing Working Memory...")
+    logger.info("Testing Working Memory...")
 
     working_memory = WorkingMemory("test_agent", capacity=7)
 
@@ -314,20 +314,20 @@ if __name__ == "__main__":
             relevance_score=0.5 + (i * 0.05),
         )
         result = working_memory.add_memory(test_memory)
-        print(f"Added memory {i}: {result.success}")
+        logger.info(f"Added memory {i}: {result.success}")
 
     active_memories = working_memory.get_active_memories(limit=5)
-    print(f"Retrieved {len(active_memories)} active memories.")
+    logger.info(f"Retrieved {len(active_memories)} active memories.")
     assert len(active_memories) == 5
 
     if active_memories:
         focus_result = working_memory.focus_on_memory(active_memories[0].memory_id)
-        print(f"Focusing on memory: {focus_result.success}")
+        logger.info(f"Focusing on memory: {focus_result.success}")
 
     maintenance_result = working_memory.perform_maintenance()
-    print(f"Maintenance complete: {maintenance_result.success}")
+    logger.info(f"Maintenance complete: {maintenance_result.success}")
 
     stats = working_memory.get_memory_statistics()
-    print(f"Working Memory Statistics: {stats}")
+    logger.info(f"Working Memory Statistics: {stats}")
 
-    print("Working Memory testing complete.")
+    logger.info("Working Memory testing complete.")

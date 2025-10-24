@@ -1557,7 +1557,7 @@ class DynamicEquipmentSystem:
 
 async def test_standard_dynamic_equipment_system():
     """STANDARD DYNAMIC EQUIPMENT SYSTEM TESTING RITUAL"""
-    print("TESTING STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY THE SYSTEM")
+    logger.info("TESTING STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY THE SYSTEM")
 
     # Import enhanced components for testing
     from src.database.context_db import ContextDatabase
@@ -1597,13 +1597,13 @@ async def test_standard_dynamic_equipment_system():
     mag_cannon_reg = await equipment_system.register_equipment(
         test_mag_cannon, "test_agent_001"
     )
-    print(f"MAG CANNON REGISTRATION: {mag_cannon_reg.success}")
+    logger.info(f"MAG CANNON REGISTRATION: {mag_cannon_reg.success}")
     if mag_cannon_reg.success:
-        print(f"Equipment ID: {mag_cannon_reg.data['equipment_id']}")
-        print(f"Maintenance scheduled: {mag_cannon_reg.data['maintenance_scheduled']}")
+        logger.info(f"Equipment ID: {mag_cannon_reg.data['equipment_id']}")
+        logger.info(f"Maintenance scheduled: {mag_cannon_reg.data['maintenance_scheduled']}")
 
     armor_reg = await equipment_system.register_equipment(test_armor, "test_agent_001")
-    print(f"ARMOR REGISTRATION: {armor_reg.success}")
+    logger.info(f"ARMOR REGISTRATION: {armor_reg.success}")
 
     # Test enhanced equipment usage
     usage_context = {
@@ -1617,35 +1617,35 @@ async def test_standard_dynamic_equipment_system():
     mag_cannon_usage = await equipment_system.use_equipment(
         "mag_cannon_001", "test_agent_001", usage_context
     )
-    print(f"MAG CANNON USAGE: {mag_cannon_usage.success}")
+    logger.info(f"MAG CANNON USAGE: {mag_cannon_usage.success}")
     if mag_cannon_usage.success:
-        print(f"Usage effects: {len(mag_cannon_usage.data['usage_effects'])}")
-        print(f"Wear accumulation: {mag_cannon_usage.data['wear_accumulation']:.3f}")
-        print(f"system core mood: {mag_cannon_usage.data['system_core_mood']}")
+        logger.info(f"Usage effects: {len(mag_cannon_usage.data['usage_effects'])}")
+        logger.info(f"Wear accumulation: {mag_cannon_usage.data['wear_accumulation']:.3f}")
+        logger.info(f"system core mood: {mag_cannon_usage.data['system_core_mood']}")
 
     # Test enhanced equipment status query
     status_result = await equipment_system.get_equipment_status("mag_cannon_001")
-    print(f"EQUIPMENT STATUS: {status_result.success}")
+    logger.info(f"EQUIPMENT STATUS: {status_result.success}")
     if status_result.success:
         status = status_result.data
-        print(f"Condition: {status['condition']}")
-        print(f"Status: {status['status']}")
-        print(
+        logger.info(f"Condition: {status['condition']}")
+        logger.info(f"Status: {status['status']}")
+print(
             f"Performance reliability: {status['performance_metrics']['reliability']:.2f}"
         )
-        print(f"Predicted failure risk: {status['predicted_failure_risk']:.1%}")
+        logger.error(f"Predicted failure risk: {status['predicted_failure_risk']:.1%}")
 
     # Test enhanced maintenance
     maintenance_result = await equipment_system.perform_maintenance(
         "mag_cannon_001", "routine", "tech_priest_alpha"
     )
-    print(f"MAINTENANCE: {maintenance_result.success}")
+    logger.info(f"MAINTENANCE: {maintenance_result.success}")
     if maintenance_result.success:
-        print(f"Maintenance type: {maintenance_result.data['maintenance_type']}")
-        print(
+        logger.info(f"Maintenance type: {maintenance_result.data['maintenance_type']}")
+print(
             f"Condition change: {maintenance_result.data['condition_before']} -> {maintenance_result.data['condition_after']}"
         )
-        print(
+print(
             f"system core response: {maintenance_result.data['system_core_response']}"
         )
 
@@ -1663,11 +1663,11 @@ async def test_standard_dynamic_equipment_system():
     mod_result = await equipment_system.apply_modification(
         "mag_cannon_001", weapon_sight, "tech_adept_beta"
     )
-    print(f"MODIFICATION: {mod_result.success}")
+    logger.info(f"MODIFICATION: {mod_result.success}")
     if mod_result.success:
-        print(f"Modification: {mod_result.data['modification_name']}")
-        print(f"Performance impacts: {mod_result.data['performance_impacts']}")
-        print(
+        logger.info(f"Modification: {mod_result.data['modification_name']}")
+        logger.info(f"Performance impacts: {mod_result.data['performance_impacts']}")
+print(
             f"system core compatibility: {mod_result.data['system_core_compatibility']}"
         )
 
@@ -1675,35 +1675,35 @@ async def test_standard_dynamic_equipment_system():
     inventory_result = await equipment_system.get_agent_equipment(
         "test_agent_001", include_details=True
     )
-    print(f"AGENT INVENTORY: {inventory_result.success}")
+    logger.info(f"AGENT INVENTORY: {inventory_result.success}")
     if inventory_result.success:
         inventory = inventory_result.data
-        print(f"Equipment count: {inventory['equipment_count']}")
-        print(f"Active equipment: {inventory['active_equipment']}")
-        print(f"Categories: {inventory['categories']}")
+        logger.info(f"Equipment count: {inventory['equipment_count']}")
+        logger.info(f"Active equipment: {inventory['active_equipment']}")
+        logger.info(f"Categories: {inventory['categories']}")
 
     # Display enhanced system statistics
     stats = equipment_system.get_system_statistics()
-    print("SYSTEM STATISTICS")
-    print(f"Total equipment: {stats['registered_equipment']}")
-    print(f"Average reliability: {stats['average_equipment_reliability']:.1%}")
-    print(f"Maintenance operations: {stats['maintenance_operations']}")
-    print(f"Sacred rites performed: {stats['standard_rites_performed']}")
+    logger.info("SYSTEM STATISTICS")
+    logger.info(f"Total equipment: {stats['registered_equipment']}")
+    logger.info(f"Average reliability: {stats['average_equipment_reliability']:.1%}")
+    logger.info(f"Maintenance operations: {stats['maintenance_operations']}")
+    logger.info(f"Sacred rites performed: {stats['standard_rites_performed']}")
 
     # Sacred cleanup
     await test_db.close_standard_temple()
 
-    print("STANDARD DYNAMIC EQUIPMENT SYSTEM TESTING COMPLETE")
+    logger.info("STANDARD DYNAMIC EQUIPMENT SYSTEM TESTING COMPLETE")
 
 
 # STANDARD MODULE INITIALIZATION
 
 if __name__ == "__main__":
     # EXECUTE STANDARD DYNAMIC EQUIPMENT SYSTEM TESTING RITUALS
-    print("STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY THE SYSTEM")
-    print("MACHINE GOD PROTECTS THE STANDARD EQUIPMENT")
+    logger.info("STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY THE SYSTEM")
+    logger.info("MACHINE GOD PROTECTS THE STANDARD EQUIPMENT")
 
     # Run enhanced async testing
     asyncio.run(test_standard_dynamic_equipment_system())
 
-    print("ALL STANDARD DYNAMIC EQUIPMENT SYSTEM OPERATIONS ENHANCED AND FUNCTIONAL")
+    logger.info("ALL STANDARD DYNAMIC EQUIPMENT SYSTEM OPERATIONS ENHANCED AND FUNCTIONAL")

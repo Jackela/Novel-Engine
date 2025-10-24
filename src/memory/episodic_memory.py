@@ -468,7 +468,7 @@ class EpisodicMemory:
 
 async def test_episodic_memory():
     """Tests the episodic memory system."""
-    print("Testing Episodic Memory System...")
+    logger.info("Testing Episodic Memory System...")
 
     db = ContextDatabase(":memory:")
     await db.initialize()
@@ -487,7 +487,7 @@ async def test_episodic_memory():
         )
         test_memories.append(memory)
         result = await episodic_memory.store_episode(memory)
-        print(f"Stored episode {i}: {result.success}")
+        logger.info(f"Stored episode {i}: {result.success}")
 
     start_time = datetime.now() - timedelta(hours=1)
     end_time = datetime.now() + timedelta(hours=1)
@@ -495,27 +495,27 @@ async def test_episodic_memory():
     temporal_result = await episodic_memory.retrieve_episodes_by_timeframe(
         start_time, end_time
     )
-    print(
+print(
         f"Temporal Retrieval: {temporal_result.success}, Count: {len(temporal_result.data.get('episodes', []))}"
     )
 
     participant_result = await episodic_memory.retrieve_episodes_by_participants(
         ["enemy_a"]
     )
-    print(
+print(
         f"Participant Retrieval: {participant_result.success}, Count: {len(participant_result.data.get('episodes', []))}"
     )
 
     theme_result = await episodic_memory.retrieve_episodes_by_theme(["combat"])
-    print(
+print(
         f"Thematic Retrieval: {theme_result.success}, Count: {len(theme_result.data.get('episodes', []))}"
     )
 
     stats = episodic_memory.get_memory_statistics()
-    print(f"Episodic Memory Statistics: {stats}")
+    logger.info(f"Episodic Memory Statistics: {stats}")
 
     await db.close()
-    print("Episodic Memory testing complete.")
+    logger.info("Episodic Memory testing complete.")
 
 
 if __name__ == "__main__":

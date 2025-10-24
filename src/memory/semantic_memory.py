@@ -374,7 +374,7 @@ class SemanticMemory:
 
 async def test_semantic_memory():
     """Tests the SemanticMemory system."""
-    print("Testing Semantic Memory...")
+    logger.info("Testing Semantic Memory...")
 
     db = ContextDatabase(":memory:")
     await db.initialize()
@@ -389,25 +389,25 @@ async def test_semantic_memory():
     )
 
     result = await semantic_memory.extract_and_store_knowledge(test_memory)
-    print(
+print(
         f"Knowledge extraction successful: {result.success}, Facts extracted: {result.data.get('facts_extracted')}"
     )
 
     facts_result = await semantic_memory.query_facts_by_subject("sky")
-    print(
+print(
         f"Query for 'sky' facts successful: {facts_result.success}, Facts: {facts_result.data.get('facts')}"
     )
     assert "sky is blue" in facts_result.data.get("facts", [])
 
     concept_result = await semantic_memory.get_concept_knowledge("sky")
-    print(f"Query for 'sky' concept successful: {concept_result.success}")
+    logger.info(f"Query for 'sky' concept successful: {concept_result.success}")
     assert "sky is blue" in concept_result.data.get("associated_facts", [])
 
     stats = semantic_memory.get_memory_statistics()
-    print(f"Semantic Memory Stats: {stats}")
+    logger.info(f"Semantic Memory Stats: {stats}")
 
     await db.close()
-    print("Semantic Memory testing complete.")
+    logger.info("Semantic Memory testing complete.")
 
 
 if __name__ == "__main__":

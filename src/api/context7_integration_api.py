@@ -329,13 +329,13 @@ async def call_novel_engine_api():
             response.raise_for_status()
             return response.json()
         except httpx.HTTPError as e:
-            print(f"HTTP error occurred: {{e}}")
+            logger.error(f"HTTP error occurred: {{e}}")
             return None
 
 # Usage
 if __name__ == "__main__":
     result = asyncio.run(call_novel_engine_api())
-    print(result)
+    logger.info(result)
 '''
         elif format_type == "curl":
             return f'curl -X GET "http://localhost:8000{endpoint}" -H "Content-Type: application/json"'

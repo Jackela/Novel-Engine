@@ -880,12 +880,12 @@ if __name__ == "__main__":
 
         # Get dashboard data
         dashboard = performance_monitor.get_dashboard_data()
-        print(f"Dashboard data: {json.dumps(dashboard, indent=2, default=str)}")
+        logger.info(f"Dashboard data: {json.dumps(dashboard, indent=2, default=str)}")
 
         # Test alert functionality
-        print("\nActive alerts:")
+        logger.info("\nActive alerts:")
         for alert in performance_monitor.alert_manager.get_active_alerts():
-            print(f"- {alert.level.name}: {alert.message}")
+            logger.info(f"- {alert.level.name}: {alert.message}")
 
         await shutdown_performance_monitoring()
 

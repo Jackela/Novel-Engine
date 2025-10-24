@@ -620,7 +620,7 @@ class LayeredMemorySystem:
 
 async def test_layered_memory():
     """Tests the LayeredMemorySystem."""
-    print("Testing Layered Memory System...")
+    logger.info("Testing Layered Memory System...")
 
     db = ContextDatabase(":memory:")
     await db.initialize()
@@ -654,7 +654,7 @@ async def test_layered_memory():
 
     for memory in test_memories:
         storage_result = await layered_memory.store_memory(memory)
-        print(
+print(
             f"Layered Storage: {storage_result.success}, Layers: {storage_result.data.get('stored_layers', [])}"
         )
 
@@ -665,20 +665,20 @@ async def test_layered_memory():
     query_result = await layered_memory.query_memories(query_request)
     if query_result.success:
         result_data = query_result.data["query_result"]
-        print(
+print(
             f"Unified Query: {len(result_data.memories)} results in {result_data.query_duration_ms:.2f}ms"
         )
         if result_data.memory_sources:
-            print(f"Query Sources: {set(result_data.memory_sources)}")
+            logger.info(f"Query Sources: {set(result_data.memory_sources)}")
 
     consolidation_result = await layered_memory.consolidate_memories()
-    print(f"Consolidation: {consolidation_result.success}")
+    logger.info(f"Consolidation: {consolidation_result.success}")
 
     stats = layered_memory.get_unified_statistics()
-    print(f"Unified Statistics: {stats['coordination_stats']}")
+    logger.info(f"Unified Statistics: {stats['coordination_stats']}")
 
     await db.close()
-    print("Layered Memory System testing complete.")
+    logger.info("Layered Memory System testing complete.")
 
 
 if __name__ == "__main__":

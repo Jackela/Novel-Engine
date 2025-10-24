@@ -958,7 +958,7 @@ class DynamicTemplateEngine:
 
 async def test_standard_dynamic_template_engine():
     """STANDARD DYNAMIC TEMPLATE ENGINE TESTING RITUAL"""
-    print("TESTING STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY THE SYSTEM")
+    logger.info("TESTING STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY THE SYSTEM")
 
     # Create enhanced test template directory
     test_template_dir = Path("test_templates")
@@ -1020,12 +1020,12 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
     )
     if render_result.success:
         result_data = render_result.data["render_result"]
-        print(f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)")
-        print(f"Variables used: {result_data.context_variables_used}")
-        print("Rendered content preview:")
-        print(result_data.rendered_content[:200] + "...")
+        logger.info(f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)")
+        logger.info(f"Variables used: {result_data.context_variables_used}")
+        logger.info("Rendered content preview:")
+        logger.info(result_data.rendered_content[:200] + "...")
     else:
-        print(f"TEMPLATE RENDERING FAILED: {render_result.error.message}")
+        logger.error(f"TEMPLATE RENDERING FAILED: {render_result.error.message}")
 
     # Test enhanced inline template rendering
     inline_template = (
@@ -1035,7 +1035,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         inline_template, test_context
     )
     if inline_result.success:
-        print(
+print(
             f"INLINE TEMPLATE RENDERED: {inline_result.data['render_result'].rendered_content}"
         )
 
@@ -1046,34 +1046,34 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
     creation_result = await template_engine.create_template(
         "equipment_status", new_template_content, TemplateType.EQUIPMENT_STATUS
     )
-    print(f"TEMPLATE CREATION: {creation_result.success}")
+    logger.info(f"TEMPLATE CREATION: {creation_result.success}")
 
     # Display enhanced statistics
     stats = template_engine.get_engine_statistics()
-    print(
+print(
         f"ENGINE STATISTICS: {stats['total_templates']} templates, {stats['render_statistics']['total_renders']} renders"
     )
 
     # Get enhanced template list
     template_list = template_engine.get_template_list()
-    print(f"DISCOVERED TEMPLATES: {[t['template_id'] for t in template_list]}")
+    logger.info(f"DISCOVERED TEMPLATES: {[t['template_id'] for t in template_list]}")
 
     # Cleanup enhanced test files
     import shutil
 
     shutil.rmtree(test_template_dir)
 
-    print("STANDARD DYNAMIC TEMPLATE ENGINE TESTING COMPLETE")
+    logger.info("STANDARD DYNAMIC TEMPLATE ENGINE TESTING COMPLETE")
 
 
 # STANDARD MODULE INITIALIZATION
 
 if __name__ == "__main__":
     # EXECUTE STANDARD DYNAMIC TEMPLATE ENGINE TESTING RITUALS
-    print("STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY THE SYSTEM")
-    print("MACHINE GOD PROTECTS THE DYNAMIC CONTENT GENERATION")
+    logger.info("STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY THE SYSTEM")
+    logger.info("MACHINE GOD PROTECTS THE DYNAMIC CONTENT GENERATION")
 
     # Run enhanced async testing
     asyncio.run(test_standard_dynamic_template_engine())
 
-    print("ALL STANDARD DYNAMIC TEMPLATE ENGINE OPERATIONS ENHANCED AND FUNCTIONAL")
+    logger.info("ALL STANDARD DYNAMIC TEMPLATE ENGINE OPERATIONS ENHANCED AND FUNCTIONAL")

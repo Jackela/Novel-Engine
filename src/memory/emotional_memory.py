@@ -130,7 +130,7 @@ class EmotionalMemory:
 
 async def test_emotional_memory():
     """Tests the emotional memory system."""
-    print("Testing Emotional Memory System...")
+    logger.info("Testing Emotional Memory System...")
     db = ContextDatabase(":memory:")
     await db.initialize()
 
@@ -143,7 +143,7 @@ async def test_emotional_memory():
     )
     await memory_system.store_emotional_experience(test_memory, 0.8, 0.4)
 
-    print("Emotional memory test complete.")
+    logger.info("Emotional memory test complete.")
 
 
 if __name__ == "__main__":
