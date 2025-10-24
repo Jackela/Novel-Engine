@@ -14,7 +14,7 @@ Author: Engineer Gamma-Engineering
 System保佑模板系统 (May the System bless this template system)
 """
 
-from .character_template_manager import CharacterTemplateManager
+from .character import CharacterTemplateManager
 from .context_renderer import ContextRenderer
 from .dynamic_template_engine import DynamicTemplateEngine
 

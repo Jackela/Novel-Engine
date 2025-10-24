@@ -36,18 +36,16 @@ from src.database.context_db import ContextDatabase
 
 # Import enhanced memory and template systems
 from src.memory.layered_memory import LayeredMemorySystem
-from src.templates.character_template_manager import (
-    CharacterTemplateManager,
-)
+from src.templates.character import CharacterTemplateManager
 from src.templates.dynamic_template_engine import (
     DynamicTemplateEngine,
     TemplateContext,
 )
 
-from .dynamic_equipment_system import DynamicEquipmentSystem
+from .equipment import DynamicEquipmentSystem
 
 # Import enhanced interaction systems
-from .interaction_engine import (
+from .engine import (
     InteractionContext,
     InteractionEngine,
     InteractionPriority,

@@ -40,8 +40,8 @@ from src.database.context_db import ContextDatabase
 from src.interactions.character_interaction_processor import (
     CharacterInteractionProcessor,
 )
-from src.interactions.dynamic_equipment_system import DynamicEquipmentSystem
-from src.interactions.interaction_engine import (
+from src.interactions.equipment import DynamicEquipmentSystem
+from src.interactions.engine import (
     InteractionContext,
     InteractionEngine,
     InteractionType,
@@ -50,9 +50,7 @@ from src.interactions.interaction_engine import (
 # Import all subsystems
 from src.memory.layered_memory import LayeredMemorySystem
 from src.memory.memory_query_engine import MemoryQueryEngine
-from src.templates.character_template_manager import (
-    CharacterTemplateManager,
-)
+from src.templates.character import CharacterTemplateManager
 from src.templates.dynamic_template_engine import (
     DynamicTemplateEngine,
     TemplateContext,
