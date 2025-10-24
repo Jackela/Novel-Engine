@@ -50,9 +50,7 @@ from src.interactions.interaction_engine import (
 # Import all subsystems
 from src.memory.layered_memory import LayeredMemorySystem
 from src.memory.memory_query_engine import MemoryQueryEngine
-from src.templates.character_template_manager import (
-    CharacterTemplateManager,
-)
+from src.templates.character import CharacterTemplateManager
 from src.templates.dynamic_template_engine import (
     DynamicTemplateEngine,
     TemplateContext,

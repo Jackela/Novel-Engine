@@ -36,9 +36,7 @@ from src.database.context_db import ContextDatabase
 
 # Import enhanced memory and template systems
 from src.memory.layered_memory import LayeredMemorySystem
-from src.templates.character_template_manager import (
-    CharacterTemplateManager,
-)
+from src.templates.character import CharacterTemplateManager
 from src.templates.dynamic_template_engine import (
     DynamicTemplateEngine,
     TemplateContext,

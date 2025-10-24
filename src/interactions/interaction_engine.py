@@ -37,7 +37,7 @@ from src.database.context_db import ContextDatabase
 
 # Import enhanced memory and template systems
 from src.memory.layered_memory import LayeredMemorySystem
-from src.templates.character_template_manager import CharacterTemplateManager
+from src.templates.character import CharacterTemplateManager
 from src.templates.context_renderer import ContextRenderer, RenderFormat
 from src.templates.dynamic_template_engine import (
     DynamicTemplateEngine,
@@ -1350,7 +1350,7 @@ async def test_standard_interaction_engine():
 
     from src.database.context_db import ContextDatabase
     from src.memory.layered_memory import LayeredMemorySystem
-    from src.templates.character_template_manager import CharacterTemplateManager
+    from src.templates.character import CharacterTemplateManager
     from src.templates.context_renderer import ContextRenderer
 
     # Create enhanced temporary directories
@@ -1396,7 +1396,7 @@ async def test_standard_interaction_engine():
         logger.info(f"INTERACTION INITIATION: {initiation_result.success}")
         if initiation_result.success:
             logger.info(f"Interaction ID: {initiation_result.data['interaction_id']}")
-print(
+            logger.info(
                 f"Auto-processed: {initiation_result.data.get('auto_processed', False)}"
             )
             if initiation_result.data.get("outcome"):
@@ -1455,7 +1455,7 @@ print(
 
         # Display enhanced statistics
         metrics = interaction_engine.get_performance_metrics()
-print(
+        logger.info(
             f"ENGINE METRICS: {metrics['total_interactions_processed']} total, {metrics['success_rate']:.1f}% success rate"
         )
         logger.info(f"Average processing time: {metrics['average_processing_time']:.2f}ms")
@@ -1468,7 +1468,7 @@ print(
         history = interaction_engine.get_interaction_history(limit=10)
         logger.info(f"INTERACTION HISTORY: {len(history)} recent interactions")
         for entry in history[:3]:
-print(
+            logger.info(
                 f"  - {entry['interaction_id']}: {'SUCCESS' if entry['success'] else 'FAILED'} ({entry['duration_ms']:.1f}ms)"
             )
 
