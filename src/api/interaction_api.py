@@ -16,7 +16,7 @@ from fastapi import FastAPI, HTTPException, WebSocket
 from pydantic import BaseModel, Field, field_validator
 
 from src.core.system_orchestrator import SystemOrchestrator
-from src.interactions.engine.models.interaction_models import (
+from src.interactions.interaction_engine import (
     InteractionContext,
     InteractionPriority,
     InteractionType,

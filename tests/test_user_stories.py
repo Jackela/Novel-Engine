@@ -31,7 +31,7 @@ from src.core.system_orchestrator import (
     OrchestratorMode,
     SystemOrchestrator,
 )
-from src.interactions.engine.models.interaction_models import InteractionType
+from src.interactions.interaction_engine import InteractionType
 
 
 class TestUserStories:

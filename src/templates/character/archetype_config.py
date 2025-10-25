@@ -7,7 +7,6 @@ import logging
 from typing import Dict, List
 
 from src.templates.context_renderer import RenderFormat, RenderingConstraints
-from src.templates.dynamic_template_engine import TemplateType
 
 from .persona_models import CharacterArchetype, CharacterPersona
 

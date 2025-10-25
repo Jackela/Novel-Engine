@@ -5,12 +5,11 @@ Speech and format adaptation for personas.
 
 import logging
 import re
-from typing import Any, Dict
+from typing import Dict
 
 from src.templates.context_renderer import RenderFormat
-from src.templates.dynamic_template_engine import TemplateContext
 
-from .persona_models import CharacterArchetype, CharacterPersona
+from .persona_models import CharacterPersona
 
 logger = logging.getLogger(__name__)
 

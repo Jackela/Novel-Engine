@@ -6,9 +6,9 @@ Equipment data models and enums.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-from src.core.data_models import EquipmentCondition, EquipmentItem
+from src.core.data_models import EquipmentItem
 
 class EquipmentCategory(Enum):
     """ENHANCED EQUIPMENT CATEGORIES SANCTIFIED BY CLASSIFICATION"""

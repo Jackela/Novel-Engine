@@ -654,7 +654,7 @@ async def test_layered_memory():
 
     for memory in test_memories:
         storage_result = await layered_memory.store_memory(memory)
-        logger.info(
+print(
             f"Layered Storage: {storage_result.success}, Layers: {storage_result.data.get('stored_layers', [])}"
         )
 
@@ -665,7 +665,7 @@ async def test_layered_memory():
     query_result = await layered_memory.query_memories(query_request)
     if query_result.success:
         result_data = query_result.data["query_result"]
-        logger.info(
+print(
             f"Unified Query: {len(result_data.memories)} results in {result_data.query_duration_ms:.2f}ms"
         )
         if result_data.memory_sources:

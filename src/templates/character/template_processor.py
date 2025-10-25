@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Set
 
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
 
-from .persona_models import CharacterArchetype, CharacterPersona, CharacterTemplate
+from .persona_models import CharacterPersona, CharacterTemplate
 
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from src.core.data_models import CharacterState, EmotionalState
 from src.core.system_orchestrator import SystemOrchestrator
-from src.templates.character.persona_models import CharacterArchetype
+from src.templates.character_template_manager import CharacterArchetype
 
 logger = logging.getLogger(__name__)
 

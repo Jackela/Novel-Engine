@@ -6,9 +6,7 @@ Equipment maintenance system.
 import logging
 import random
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Tuple
-
-from src.core.data_models import EquipmentCondition
+from typing import Dict, List, Tuple
 
 from .models import DynamicEquipment, EquipmentMaintenance
 

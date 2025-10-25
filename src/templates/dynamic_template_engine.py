@@ -1035,7 +1035,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         inline_template, test_context
     )
     if inline_result.success:
-        logger.info(
+print(
             f"INLINE TEMPLATE RENDERED: {inline_result.data['render_result'].rendered_content}"
         )
 
@@ -1050,7 +1050,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
 
     # Display enhanced statistics
     stats = template_engine.get_engine_statistics()
-    logger.info(
+print(
         f"ENGINE STATISTICS: {stats['total_templates']} templates, {stats['render_statistics']['total_renders']} renders"
     )
 
