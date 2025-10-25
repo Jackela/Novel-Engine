@@ -6,7 +6,9 @@ Equipment analytics and performance calculations.
 import logging
 import random
 from datetime import datetime, timedelta
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
+
+from src.core.data_models import EquipmentCondition
 
 from .models import DynamicEquipment, EquipmentCategory
 

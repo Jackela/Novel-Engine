@@ -495,19 +495,19 @@ async def test_episodic_memory():
     temporal_result = await episodic_memory.retrieve_episodes_by_timeframe(
         start_time, end_time
     )
-print(
+    logger.info(
         f"Temporal Retrieval: {temporal_result.success}, Count: {len(temporal_result.data.get('episodes', []))}"
     )
 
     participant_result = await episodic_memory.retrieve_episodes_by_participants(
         ["enemy_a"]
     )
-print(
+    logger.info(
         f"Participant Retrieval: {participant_result.success}, Count: {len(participant_result.data.get('episodes', []))}"
     )
 
     theme_result = await episodic_memory.retrieve_episodes_by_theme(["combat"])
-print(
+    logger.info(
         f"Thematic Retrieval: {theme_result.success}, Count: {len(theme_result.data.get('episodes', []))}"
     )
 

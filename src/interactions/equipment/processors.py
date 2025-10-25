@@ -4,11 +4,11 @@ Equipment category processors for usage tracking.
 """
 
 import logging
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 
 from src.core.data_models import StandardResponse
 
-from .models import DynamicEquipment, EquipmentCategory
+from .models import DynamicEquipment, EquipmentCategory, EquipmentStatus
 
 logger = logging.getLogger(__name__)
 

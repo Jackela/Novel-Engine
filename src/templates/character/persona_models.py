@@ -6,9 +6,10 @@ Character persona data models and enums.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.templates.dynamic_template_engine import TemplateMetadata, TemplateType
+from src.templates.context_renderer import RenderFormat
 
 class CharacterArchetype(Enum):
     """ENHANCED CHARACTER ARCHETYPES SANCTIFIED BY PERSONALITY CLASSIFICATION"""

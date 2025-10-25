@@ -1135,7 +1135,7 @@ async def test_standard_context_renderer():
     )
     if narrative_result.success:
         result_data = narrative_result.data["render_result"]
-print(
+        logger.info(
             f"NARRATIVE RENDERED: {result_data.total_character_count} chars, {len(result_data.sections_included)} sections"
         )
         logger.info("Content preview:")
@@ -1155,10 +1155,10 @@ print(
     )
     if adaptive_result.success:
         result_data = adaptive_result.data["render_result"]
-print(
+        logger.info(
             f"ADAPTIVE PROMPT RENDERED: {result_data.total_character_count} chars (target: 500)"
         )
-print(
+        logger.info(
             f"Sections included: {[s.section_id for s in result_data.sections_included]}"
         )
         logger.info(f"Adaptive decisions: {len(result_data.adaptive_decisions)}")
@@ -1181,7 +1181,7 @@ print(
 
     # Display enhanced statistics
     stats = context_renderer.get_rendering_statistics()
-print(
+    logger.info(
         f"RENDERER STATISTICS: {stats['total_renders']} renders, avg {stats['average_render_time']:.2f}ms"
     )
 

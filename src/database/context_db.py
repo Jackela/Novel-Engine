@@ -981,7 +981,7 @@ async def test_standard_database_operations():
 
     # Test enhanced memory query
     query_result = await test_db.query_memories_by_agent("test_agent_001")
-print(
+    logger.info(
         f"MEMORY QUERY: {query_result.success}, Count: {len(query_result.data.get('memories', []))}"
     )
 
