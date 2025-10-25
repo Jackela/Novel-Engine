@@ -134,7 +134,6 @@ jobs:
           --cov-fail-under=70 \
           --junitxml=test-results.xml \
           --continue-on-collection-errors \
-          --maxfail=10 \
           -v \
           --tb=short \
           --durations=10

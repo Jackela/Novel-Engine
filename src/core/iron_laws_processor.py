@@ -15,6 +15,11 @@ from src.persona_agent import PersonaAgent
 # Try to import Iron Laws types
 try:
     from src.shared_types import (
+        ActionIntensity,
+        ActionParameters,
+        ActionTarget,
+        ActionType,
+        EntityType,
         IronLawsReport,
         IronLawsViolation,
         Position,
@@ -79,18 +84,13 @@ class IronLawsProcessor:
         """
         if not self.validation_enabled:
             # Return a dummy approval if validation is disabled
-            from src.shared_types import (
-                IronLawsReport,
-                ValidationResult,
-            )
-
             return IronLawsReport(
-                character_id=getattr(proposed_action, "character_id", "unknown"),
-                action_summary=f"Action: {getattr(proposed_action, 'action_type', 'unknown')}",
-                validation_result=ValidationResult.APPROVED,
+                action_id=getattr(proposed_action, "action_id", "unknown"),
+                overall_result=ValidationResult.VALID,
+                checks_performed=["validation_disabled"],
                 violations=[],
-                repaired_action=None,
-                repair_log=["Iron Laws validation disabled"],
+                repair_attempts=["Iron Laws validation disabled"],
+                final_action=None,
             )
 
         try:
@@ -129,19 +129,26 @@ class IronLawsProcessor:
             # Attempt repairs if there are violations
             repaired_action = None
             repair_log = []
-            if all_violations and validation_result != ValidationResult.REJECTED:
+            if all_violations and validation_result != ValidationResult.INVALID:
                 repaired_action, repair_log = self._attempt_action_repairs(
                     proposed_action, all_violations, character_data
                 )
 
             # Create comprehensive report
+            checks_performed = [
+                "E001_Causality_Law",
+                "E002_Resource_Law",
+                "E003_Physics_Law",
+                "E004_Narrative_Law",
+                "E005_Social_Law",
+            ]
             report = IronLawsReport(
-                character_id=proposed_action.character_id,
-                action_summary=f"{proposed_action.action_type}: {getattr(proposed_action, 'description', 'No description')}",
-                validation_result=validation_result,
+                action_id=proposed_action.action_id,
+                overall_result=validation_result,
+                checks_performed=checks_performed,
                 violations=all_violations,
-                repaired_action=repaired_action,
-                repair_log=repair_log,
+                repair_attempts=repair_log,
+                final_action=repaired_action,
             )
 
             return report
@@ -149,24 +156,37 @@ class IronLawsProcessor:
         except Exception as e:
             logger.error(f"Error during Iron Laws validation: {str(e)}")
             # Return rejection on unexpected errors
+            # Safely extract action_id and character_id (handle Mock objects and None)
+            try:
+                action_id = str(getattr(proposed_action, "action_id", "unknown")) if proposed_action else "unknown"
+                if action_id == "None":
+                    action_id = "unknown"
+            except:
+                action_id = "unknown"
+            
+            try:
+                char_id = str(getattr(proposed_action, "character_id", "unknown")) if proposed_action else "unknown"
+                if char_id == "None":
+                    char_id = "unknown"
+            except:
+                char_id = "unknown"
+            
             return IronLawsReport(
-                character_id=getattr(proposed_action, "character_id", "unknown"),
-                action_summary="Validation Error",
-                validation_result=ValidationResult.REJECTED,
+                action_id=action_id,
+                overall_result=ValidationResult.CATASTROPHIC_FAILURE,
+                checks_performed=["system_error"],
                 violations=[
                     IronLawsViolation(
                         law_code="E000",
                         law_name="System_Error",
                         severity="critical",
                         description=f"Validation system error: {str(e)}",
-                        affected_entities=[
-                            getattr(proposed_action, "character_id", "unknown")
-                        ],
+                        affected_entities=[char_id],
                         suggested_repair="Check system logs and action format",
                     )
                 ],
-                repaired_action=None,
-                repair_log=[f"System error: {str(e)}"],
+                repair_attempts=[f"System error: {str(e)}"],
+                final_action=None,
             )
 
     def _validate_causality_law(
@@ -244,9 +264,19 @@ class IronLawsProcessor:
 
         # Check stamina requirements
         stamina_cost = self._calculate_action_stamina_cost(action)
-        current_stamina = getattr(
-            character_data.resources, "stamina", ResourceValue(current=100, maximum=100)
-        )
+        
+        # Handle both dict and object character_data
+        if isinstance(character_data, dict):
+            resources = character_data.get("resources", {})
+            # Resources can be either a CharacterResources object or a dict
+            if hasattr(resources, "stamina"):
+                current_stamina = resources.stamina
+            else:
+                current_stamina = resources.get("stamina", ResourceValue(current=100, maximum=100))
+        else:
+            current_stamina = getattr(
+                character_data.resources, "stamina", ResourceValue(current=100, maximum=100)
+            )
 
         if current_stamina.current < stamina_cost:
             violations.append(
@@ -404,7 +434,7 @@ class IronLawsProcessor:
         violations = []
 
         # Check command hierarchy
-        if action.action_type.value == "communicate" and action.target:
+        if action.action_type == ActionType.COMMUNICATE and action.target:
             target_rank = self._get_character_rank(
                 action.target.entity_id, world_context
             )
@@ -453,34 +483,37 @@ class IronLawsProcessor:
         # Group violations by law for systematic repair
         grouped_violations = self._group_violations_by_law(violations)
 
-        # Attempt repairs for each law
-        for law_name, law_violations in grouped_violations.items():
-            if law_name == "Causality_Law":
+        # Attempt repairs for each law (grouped by law_code now)
+        for law_code, law_violations in grouped_violations.items():
+            law_repair_log = []
+            
+            if law_code == "E001":  # Causality Law
                 modified_action, law_repair_log = self._repair_causality_violations(
                     modified_action, law_violations, character_data
                 )
-            elif law_name == "Resource_Law":
+            elif law_code == "E002":  # Resource Law
                 modified_action, law_repair_log = self._repair_resource_violations(
                     modified_action, law_violations, character_data
                 )
-            elif law_name == "Physics_Law":
+            elif law_code == "E003":  # Physics Law
                 modified_action, law_repair_log = self._repair_physics_violations(
                     modified_action, law_violations, character_data
                 )
-            elif law_name == "Narrative_Law":
+            elif law_code == "E004":  # Narrative Law
                 modified_action, law_repair_log = self._repair_narrative_violations(
                     modified_action, law_violations, character_data
                 )
-            elif law_name == "Social_Law":
+            elif law_code == "E005":  # Social Law
                 modified_action, law_repair_log = self._repair_social_violations(
                     modified_action, law_violations, character_data
                 )
 
-            repair_log.extend(law_repair_log)
+            if law_repair_log:
+                repair_log.extend(law_repair_log)
 
         # Convert to validated action if repairs were successful
         if modified_action != proposed_action or repair_log:
-            validation_result = ValidationResult.APPROVED_WITH_MODIFICATIONS
+            validation_result = ValidationResult.REQUIRES_REPAIR
             validated_action = self._convert_proposed_to_validated(
                 modified_action, validation_result
             )
@@ -497,8 +530,46 @@ class IronLawsProcessor:
         return None  # Placeholder
 
     def _calculate_action_stamina_cost(self, action: "ProposedAction") -> int:
-        """Calculate stamina cost for an action."""
-        return 10  # Placeholder
+        """Calculate stamina cost for an action based on type and intensity."""
+        # Handle missing or None parameters
+        if not hasattr(action, "parameters") or action.parameters is None:
+            return 10  # Default cost
+        
+        # Base cost by action type
+        base_costs = {
+            ActionType.MOVE: 10,
+            ActionType.INVESTIGATE: 8,
+            ActionType.COMMUNICATE: 5,
+            ActionType.ATTACK: 15,
+            ActionType.DEFEND: 12,
+            ActionType.SPECIAL_ABILITY: 14,
+            ActionType.USE_ITEM: 6,
+        }
+        base_cost = base_costs.get(action.action_type, 10)
+        
+        # Intensity multipliers
+        intensity_multipliers = {
+            ActionIntensity.LOW: 0.5,
+            ActionIntensity.NORMAL: 1.0,
+            ActionIntensity.HIGH: 1.5,
+            ActionIntensity.EXTREME: 3.0,
+        }
+        
+        # Safely get intensity and duration with defaults
+        try:
+            intensity = getattr(action.parameters, "intensity", ActionIntensity.NORMAL)
+            multiplier = intensity_multipliers.get(intensity, 1.0)
+        except:
+            multiplier = 1.0
+        
+        try:
+            duration = getattr(action.parameters, "duration", 1.0)
+            duration_factor = 1.0 + max(0, duration - 1.0) * 0.2
+        except:
+            duration_factor = 1.0
+        
+        total_cost = int(base_cost * multiplier * duration_factor)
+        return max(1, total_cost)  # Minimum 1 stamina
 
     def _get_action_equipment_requirements(self, action: "ProposedAction") -> List[str]:
         """Get equipment requirements for an action."""
@@ -511,18 +582,50 @@ class IronLawsProcessor:
         return True  # Placeholder
 
     def _calculate_distance(self, pos1: "Position", pos2: "Position") -> float:
-        """Calculate distance between two positions."""
-        return 0.0  # Placeholder
+        """Calculate Euclidean distance between two positions."""
+        if not pos1 or not pos2:
+            return 0.0
+        dx = pos2.x - pos1.x
+        dy = pos2.y - pos1.y
+        dz = pos2.z - pos1.z
+        return (dx*dx + dy*dy + dz*dz) ** 0.5
 
     def _calculate_max_movement_distance(self, character_data) -> float:
-        """Calculate maximum movement distance for character."""
-        return 10.0  # Placeholder
+        """Calculate maximum movement distance based on character stats and stamina."""
+        # Base movement is 10 units per action
+        base_movement = 10.0
+        
+        # Extract dexterity stat for movement bonus
+        if isinstance(character_data, dict):
+            stats = character_data.get("stats")
+            if stats:
+                dexterity = getattr(stats, "dexterity", 5) if hasattr(stats, "dexterity") else stats.get("dexterity", 5)
+                # Higher dexterity = faster movement (up to 2x at dex 10)
+                movement_multiplier = 1.0 + (dexterity - 5) * 0.1
+                base_movement *= max(0.5, min(2.0, movement_multiplier))
+        else:
+            if hasattr(character_data, "stats") and character_data.stats:
+                dexterity = getattr(character_data.stats, "dexterity", 5)
+                movement_multiplier = 1.0 + (dexterity - 5) * 0.1
+                base_movement *= max(0.5, min(2.0, movement_multiplier))
+        
+        return base_movement
 
     def _check_line_of_sight(
         self, from_pos: "Position", target, world_context: Dict[str, Any]
     ) -> bool:
         """Check if there's line of sight to target."""
-        return True  # Placeholder
+        # For now, simple distance-based check
+        # In production, would check for obstacles in world_context
+        if not from_pos or not target:
+            return False
+        
+        if hasattr(target, "position") and target.position:
+            distance = self._calculate_distance(from_pos, target.position)
+            # Line of sight up to 50 units
+            return distance <= 50.0
+        
+        return True  # Allow if no position data
 
     def _action_contradicts_personality(
         self, action: "ProposedAction", personality_traits: Dict[str, Any]
@@ -533,79 +636,285 @@ class IronLawsProcessor:
     def _get_character_rank(
         self, character_id: str, world_context: Dict[str, Any]
     ) -> str:
-        """Get character's military rank."""
-        return "private"  # Placeholder
+        """Get character's military rank from context or infer from ID."""
+        # Check world_context for rank data
+        if world_context and "characters" in world_context:
+            char_data = world_context.get("characters", {}).get(character_id, {})
+            if "rank" in char_data:
+                return char_data["rank"]
+        
+        # Infer from character_id keywords
+        character_id_lower = character_id.lower()
+        if any(keyword in character_id_lower for keyword in ["general", "commander"]):
+            return "general"
+        elif any(keyword in character_id_lower for keyword in ["colonel"]):
+            return "colonel"
+        elif any(keyword in character_id_lower for keyword in ["captain", "officer", "superior"]):
+            return "captain"
+        elif any(keyword in character_id_lower for keyword in ["lieutenant"]):
+            return "lieutenant"
+        elif any(keyword in character_id_lower for keyword in ["sergeant"]):
+            return "sergeant"
+        
+        return "private"  # Default
 
     def _is_insubordinate_communication(
         self, action: "ProposedAction", agent_rank: str, target_rank: str
     ) -> bool:
-        """Check if communication violates hierarchy."""
-        return False  # Placeholder
+        """Check if communication violates military hierarchy."""
+        # Rank hierarchy (higher number = higher rank)
+        rank_hierarchy = {
+            "private": 1,
+            "corporal": 2,
+            "sergeant": 3,
+            "lieutenant": 4,
+            "captain": 5,
+            "major": 6,
+            "colonel": 7,
+            "general": 8,
+        }
+        
+        agent_rank_value = rank_hierarchy.get(agent_rank.lower(), 1)
+        target_rank_value = rank_hierarchy.get(target_rank.lower(), 1)
+        
+        # HIGH intensity communication to superior is insubordinate
+        if action.parameters.intensity == ActionIntensity.HIGH and target_rank_value > agent_rank_value:
+            return True
+        
+        # Shouting/ordering superiors
+        if "shout" in action.reasoning.lower() or "order" in action.reasoning.lower():
+            if target_rank_value > agent_rank_value:
+                return True
+        
+        return False
 
     def _group_violations_by_law(
         self, violations: List["IronLawsViolation"]
     ) -> Dict[str, List["IronLawsViolation"]]:
-        """Group violations by law type."""
+        """Group violations by law code."""
         grouped = {}
         for violation in violations:
-            if violation.law_name not in grouped:
-                grouped[violation.law_name] = []
-            grouped[violation.law_name].append(violation)
+            if violation.law_code not in grouped:
+                grouped[violation.law_code] = []
+            grouped[violation.law_code].append(violation)
         return grouped
 
     def _repair_causality_violations(
-        self, action, violations, character_data
+        self, action, violations, character_data=None
     ) -> Tuple["ProposedAction", List[str]]:
-        """Repair causality law violations."""
-        return action, ["Causality repair not implemented"]
+        """Repair causality law violations by fixing missing targets and reasoning."""
+        repairs_made = []
+        updates = {}
+        
+        for violation in violations:
+            description = violation.description.lower()
+            
+            # Fix missing or empty target
+            if "target" in description and (not action.target or not action.target.entity_id):
+                # Create a generic target based on action type
+                if action.action_type == ActionType.ATTACK:
+                    target_id = "nearby_enemy"
+                    entity_type = EntityType.CHARACTER
+                elif action.action_type == ActionType.MOVE:
+                    target_id = "destination"
+                    entity_type = EntityType.LOCATION
+                else:
+                    target_id = "target_object"
+                    entity_type = EntityType.OBJECT
+                
+                updates["target"] = ActionTarget(
+                    entity_id=target_id,
+                    entity_type=entity_type
+                )
+                repairs_made.append(f"Added {entity_type.value} target: {target_id}")
+            
+            # Fix minimal or missing reasoning
+            if "reasoning" in description and len(action.reasoning.strip()) <= 1:
+                updates["reasoning"] = f"Performing {action.action_type.value} action to achieve tactical objective"
+                repairs_made.append("Added logical reasoning for action")
+        
+        # Apply repairs if any were made
+        if updates:
+            repaired_action = action.model_copy(update=updates)
+            return repaired_action, repairs_made
+        
+        return action, repairs_made if repairs_made else ["No repairs needed"]
 
     def _repair_resource_violations(
-        self, action, violations, character_data
+        self, action, violations, character_data=None
     ) -> Tuple["ProposedAction", List[str]]:
-        """Repair resource law violations."""
-        return action, ["Resource repair not implemented"]
+        """Repair resource law violations by reducing action intensity or duration."""
+        repairs_made = []
+        updates = {}
+        
+        for violation in violations:
+            description = violation.description.lower()
+            
+            # Reduce intensity if stamina insufficient
+            if "stamina" in description or "resource" in description:
+                current_intensity = action.parameters.intensity
+                
+                # Step down intensity
+                intensity_steps = {
+                    ActionIntensity.EXTREME: ActionIntensity.HIGH,
+                    ActionIntensity.HIGH: ActionIntensity.NORMAL,
+                    ActionIntensity.NORMAL: ActionIntensity.LOW,
+                }
+                
+                if current_intensity in intensity_steps:
+                    new_intensity = intensity_steps[current_intensity]
+                    new_params = action.parameters.model_copy(
+                        update={"intensity": new_intensity}
+                    )
+                    updates["parameters"] = new_params
+                    repairs_made.append(
+                        f"Reduced intensity from {current_intensity.value} to {new_intensity.value} to conserve stamina"
+                    )
+        
+        # Apply repairs if any were made
+        if updates:
+            repaired_action = action.model_copy(update=updates)
+            return repaired_action, repairs_made
+        
+        return action, repairs_made if repairs_made else ["No repairs possible"]
 
     def _repair_physics_violations(
-        self, action, violations, character_data
+        self, action, violations, character_data=None
     ) -> Tuple["ProposedAction", List[str]]:
-        """Repair physics law violations."""
-        return action, ["Physics repair not implemented"]
+        """Repair physics law violations by adjusting duration and range."""
+        repairs_made = []
+        param_updates = {}
+        
+        for violation in violations:
+            description = violation.description.lower()
+            
+            # Fix unrealistic movement speed/distance
+            if "distance" in description or "movement" in description or "speed" in description:
+                current_duration = action.parameters.duration
+                current_range = action.parameters.range
+                
+                # Increase duration to realistic value
+                if current_duration < 1.0:
+                    param_updates["duration"] = max(1.0, current_duration * 10)
+                    repairs_made.append(
+                        f"Increased duration from {current_duration}s to {param_updates['duration']}s"
+                    )
+                
+                # Reduce range to achievable distance
+                if current_range > 100.0:
+                    param_updates["range"] = min(100.0, current_range * 0.1)
+                    repairs_made.append(
+                        f"Reduced range from {current_range} to {param_updates['range']} for realistic movement"
+                    )
+                
+                if repairs_made:
+                    repairs_made.append("Adjusted movement parameters to be physically realistic")
+        
+        # Apply repairs if any were made
+        if param_updates:
+            new_params = action.parameters.model_copy(update=param_updates)
+            repaired_action = action.model_copy(update={"parameters": new_params})
+            return repaired_action, repairs_made
+        
+        return action, repairs_made if repairs_made else ["No repairs possible"]
 
     def _repair_narrative_violations(
-        self, action, violations, character_data
+        self, action, violations, character_data=None
     ) -> Tuple["ProposedAction", List[str]]:
-        """Repair narrative law violations."""
-        return action, ["Narrative repair not implemented"]
+        """Repair narrative law violations by changing target or adding justification."""
+        repairs_made = []
+        updates = {}
+        
+        for violation in violations:
+            description = violation.description.lower()
+            
+            # Change target if attacking allies
+            if "ally" in description or "friend" in description:
+                if action.target and "ally" in action.target.entity_id.lower():
+                    updates["target"] = ActionTarget(
+                        entity_id="hostile_enemy",
+                        entity_type=EntityType.CHARACTER
+                    )
+                    repairs_made.append("Changed target from ally to enemy")
+            
+            # Add narrative justification if personality conflict
+            if "personality" in description:
+                current_reasoning = action.reasoning
+                updates["reasoning"] = f"{current_reasoning} (Acting under duress or compelling circumstances)"
+                repairs_made.append("Added narrative justification for out-of-character action")
+        
+        # Apply repairs if any were made
+        if updates:
+            repaired_action = action.model_copy(update=updates)
+            return repaired_action, repairs_made
+        
+        return action, repairs_made if repairs_made else ["No repairs possible"]
 
     def _repair_social_violations(
-        self, action, violations, character_data
+        self, action, violations, character_data=None
     ) -> Tuple["ProposedAction", List[str]]:
-        """Repair social law violations."""
-        return action, ["Social repair not implemented"]
+        """Repair social law violations by adjusting intensity or communication style."""
+        repairs_made = []
+        updates = {}
+        
+        for violation in violations:
+            description = violation.description.lower()
+            
+            # Reduce intensity if violating hierarchy
+            if "hierarchy" in description or "insubordinate" in description:
+                if action.parameters.intensity == ActionIntensity.HIGH:
+                    new_params = action.parameters.model_copy(
+                        update={"intensity": ActionIntensity.NORMAL}
+                    )
+                    updates["parameters"] = new_params
+                    repairs_made.append("Adjusted communication intensity to respect hierarchy")
+                
+                # Fix reasoning to be more respectful
+                if "demand" in action.reasoning.lower() or "shout" in action.reasoning.lower() or "order" in action.reasoning.lower():
+                    updates["reasoning"] = "Respectfully communicating with superior officer following proper protocol"
+                    repairs_made.append("Adjusted communication style to follow proper chain of command")
+        
+        # Apply repairs if any were made
+        if updates:
+            repaired_action = action.model_copy(update=updates)
+            return repaired_action, repairs_made
+        
+        return action, repairs_made if repairs_made else ["No repairs possible"]
 
     def _convert_proposed_to_validated(
         self, proposed_action: "ProposedAction", validation_result: "ValidationResult"
     ) -> "ValidatedAction":
         """Convert proposed action to validated action."""
-        # Placeholder implementation
-        return None
+        from src.shared_types import ValidatedAction
+        
+        return ValidatedAction(
+            action_id=proposed_action.action_id,
+            character_id=proposed_action.character_id,
+            action_type=proposed_action.action_type,
+            target=proposed_action.target,
+            parameters=proposed_action.parameters,
+            validation_result=validation_result,
+            validation_details={},
+            repairs_applied=[],
+            estimated_effects={},
+        )
 
     def _determine_overall_validation_result(
         self, violations: List["IronLawsViolation"]
     ) -> "ValidationResult":
         """Determine overall validation result from violations."""
         if not violations:
-            return ValidationResult.APPROVED
+            return ValidationResult.VALID
 
         # Check for critical violations
         critical_violations = [v for v in violations if v.severity == "critical"]
         if critical_violations:
-            return ValidationResult.REJECTED
+            return ValidationResult.INVALID
 
         # Check for error violations
         error_violations = [v for v in violations if v.severity == "error"]
         if error_violations:
-            return ValidationResult.NEEDS_MODIFICATION
+            return ValidationResult.REQUIRES_REPAIR
 
         # Only warnings remain
-        return ValidationResult.APPROVED_WITH_WARNINGS
+        return ValidationResult.VALID

@@ -7,9 +7,10 @@ import logging
 from datetime import datetime
 from typing import Any, Dict
 
+from src.core.data_models import CharacterInteraction
 from src.database.context_db import ContextDatabase
 
-from ..models.interaction_models import InteractionOutcome
+from ..models.interaction_models import InteractionOutcome, InteractionContext
 
 logger = logging.getLogger(__name__)
 

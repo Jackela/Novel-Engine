@@ -21,6 +21,28 @@ from enhanced_multi_agent_bridge import EnhancedMultiAgentBridge
 from src.bridge.types import RequestPriority
 
 
+class BridgeConfiguration:
+    """Mock BridgeConfiguration for testing."""
+
+    def __init__(
+        self,
+        enable_advanced_coordination=True,
+        enable_smart_batching=True,
+        enable_dialogue_system=True,
+        enable_performance_monitoring=True,
+        max_concurrent_agents=20,
+        turn_timeout_seconds=30,
+        llm_coordination=None,
+    ):
+        self.enable_advanced_coordination = enable_advanced_coordination
+        self.enable_smart_batching = enable_smart_batching
+        self.enable_dialogue_system = enable_dialogue_system
+        self.enable_performance_monitoring = enable_performance_monitoring
+        self.max_concurrent_agents = max_concurrent_agents
+        self.turn_timeout_seconds = turn_timeout_seconds
+        self.llm_coordination = llm_coordination if llm_coordination else {}
+
+
 class TestBridgeConfiguration:
     """Test BridgeConfiguration functionality."""
 

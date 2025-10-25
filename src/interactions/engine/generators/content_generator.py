@@ -6,11 +6,11 @@ Content generation for interactions.
 import logging
 from typing import Any, Dict, List, Optional
 
-from src.core.data_models import CharacterState, MemoryItem
+from src.core.data_models import CharacterState, MemoryItem, StandardResponse, ErrorInfo
 from src.templates.context_renderer import ContextRenderer, RenderFormat
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
 
-from ..models.interaction_models import InteractionContext, InteractionType
+from ..models.interaction_models import InteractionContext, InteractionType, InteractionOutcome, InteractionPriority
 
 logger = logging.getLogger(__name__)
 

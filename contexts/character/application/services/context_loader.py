@@ -832,12 +832,24 @@ class ContextLoaderService:
             contexts = context_data["contexts"]
             loaded_files = context_data["loaded_files"]
 
-            # Determine character name from available contexts
+            # Determine character name from available contexts with type safety
             character_name = character_id
-            if contexts.get("profile") and hasattr(contexts["profile"], "name"):
-                character_name = contexts["profile"].name
-            elif contexts.get("stats") and hasattr(contexts["stats"], "name"):
-                character_name = contexts["stats"].name
+            profile = contexts.get("profile")
+            stats = contexts.get("stats")
+
+            # Handle profile name extraction (supports both objects and dicts)
+            if profile:
+                if hasattr(profile, "name"):
+                    character_name = profile.name
+                elif isinstance(profile, dict) and "name" in profile:
+                    character_name = profile["name"]
+
+            # Fallback to stats if profile didn't provide name
+            if character_name == character_id and stats:
+                if hasattr(stats, "name"):
+                    character_name = stats.name
+                elif isinstance(stats, dict) and "name" in stats:
+                    character_name = stats["name"]
 
             # Create consolidated context
             character_context = CharacterContext(

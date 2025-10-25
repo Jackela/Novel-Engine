@@ -6,9 +6,9 @@ Equipment maintenance system.
 import logging
 import random
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
-from .models import DynamicEquipment, EquipmentMaintenance
+from .models import DynamicEquipment, EquipmentMaintenance, EquipmentCondition
 
 logger = logging.getLogger(__name__)
 

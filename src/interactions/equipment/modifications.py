@@ -5,9 +5,9 @@ Equipment modification system.
 
 import logging
 from datetime import datetime
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 
-from .models import DynamicEquipment, EquipmentModification
+from .models import DynamicEquipment, EquipmentModification, EquipmentCategory, EquipmentCondition
 
 logger = logging.getLogger(__name__)
 

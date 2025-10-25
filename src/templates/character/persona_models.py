@@ -3,10 +3,12 @@
 Character persona data models and enums.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.templates.dynamic_template_engine import TemplateMetadata, TemplateType
 
@@ -89,7 +91,7 @@ class CharacterContextProfile:
     """
 
     persona_id: str
-    preferred_formats: Dict[RenderFormat, float] = field(default_factory=dict)
+    preferred_formats: Dict["RenderFormat", float] = field(default_factory=dict)
     context_emphasis: Dict[str, float] = field(
         default_factory=dict
     )  # memory, emotion, relationship, etc.
