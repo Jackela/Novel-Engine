@@ -389,12 +389,12 @@ async def test_semantic_memory():
     )
 
     result = await semantic_memory.extract_and_store_knowledge(test_memory)
-print(
+    logger.info(
         f"Knowledge extraction successful: {result.success}, Facts extracted: {result.data.get('facts_extracted')}"
     )
 
     facts_result = await semantic_memory.query_facts_by_subject("sky")
-print(
+    logger.info(
         f"Query for 'sky' facts successful: {facts_result.success}, Facts: {facts_result.data.get('facts')}"
     )
     assert "sky is blue" in facts_result.data.get("facts", [])
