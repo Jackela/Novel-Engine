@@ -1,4 +1,3 @@
-import pytest
 import unittest
 from unittest.mock import Mock
 
@@ -10,7 +9,6 @@ from src.persona_agent import PersonaAgent
 
 
 
-pytestmark = pytest.mark.skip(reason="Skipped: imports temporary root-level files deleted in .gitignore cleanup")
 
 class TestDirectorAgent(unittest.TestCase):
 

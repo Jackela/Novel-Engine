@@ -19,8 +19,8 @@ Test Categories:
 import tempfile
 from pathlib import Path
 
-import pytest
 import yaml
+import pytest
 from character_factory import CharacterFactory
 from director_agent import DirectorAgent
 
@@ -32,7 +32,6 @@ CHARACTER_DIR = Path("E:/Code/Novel-Engine/characters")
 
 
 
-pytestmark = pytest.mark.skip(reason="Skipped: imports temporary root-level files deleted in .gitignore cleanup")
 
 class TestCharacterLoading:
     """Test character loading and validation systems"""

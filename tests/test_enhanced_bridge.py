@@ -12,9 +12,9 @@ import time
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
-import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+import pytest
 
 from enhanced_multi_agent_bridge import EnhancedMultiAgentBridge
 
@@ -22,7 +22,6 @@ from src.bridge.types import RequestPriority
 
 
 
-pytestmark = pytest.mark.skip(reason="Skipped: imports temporary root-level files deleted in .gitignore cleanup")
 
 class TestBridgeConfiguration:
     """Test BridgeConfiguration functionality."""

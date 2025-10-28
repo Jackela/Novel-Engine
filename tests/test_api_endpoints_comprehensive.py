@@ -17,8 +17,8 @@ Test Categories:
 """
 
 import time
-
 import pytest
+
 from api_server import app
 from fastapi.testclient import TestClient
 
@@ -34,7 +34,6 @@ SAMPLE_SIMULATION_REQUEST = {
 
 
 
-pytestmark = pytest.mark.skip(reason="Skipped: imports temporary root-level files deleted in .gitignore cleanup")
 
 class TestHealthEndpoints:
     """Test health check and system status endpoints"""
