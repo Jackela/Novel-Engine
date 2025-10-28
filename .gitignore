@@ -372,19 +372,19 @@ backup_configs_wave3/
 cleanup_project.sh
 ai_agent_story_server.py
 ai_enhancement_analysis.py
-api_server.py
+# api_server.py  # KEEP: Required by tests
 campaign_brief.py
-character_factory.py
+# character_factory.py  # KEEP: Backward compatibility interface, required by tests
 chronicler_agent.py
 component_integration_fix.py
 component_integration_test.py
 config_loader.py
 database_security.py
 database_security_test.py
-director_agent.py
-director_agent_integrated.py
+# director_agent.py  # KEEP: Backward compatibility interface, required by tests
+# director_agent_integrated.py  # KEEP: Required by director_agent.py
 emergent_narrative_orchestrator.py
-enhanced_multi_agent_bridge.py
+# enhanced_multi_agent_bridge.py  # KEEP: Required by tests
 enhanced_simulation_orchestrator.py
 enterprise_integration_fix.py
 enterprise_multi_agent_orchestrator.py
