@@ -48,6 +48,7 @@ safety>=3.0.0
 bandit[toml]>=1.7.0
 PyJWT>=2.8.0  # JWT token handling for security tests
 bcrypt>=4.0.0  # Password hashing for auth_system
+bleach>=6.0.0  # HTML sanitization for security_middleware
 networkx>=3.0  # Graph library for causal graph
 aiosqlite>=0.19.0  # Async SQLite for context database
 
