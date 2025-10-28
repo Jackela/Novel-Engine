@@ -15,7 +15,9 @@ python-multipart>=0.0.6
 # Async utilities
 asyncio-mqtt>=0.16.0
 asyncio-throttle>=1.0.2
-aioredis>=2.0.0
+# aioredis>=2.0.0  # DEPRECATED: Incompatible with Python 3.11+ (duplicate TimeoutError base class)
+redis[asyncio]>=5.0.0  # Official async Redis client for Python 3.11+
+aiohttp>=3.9.0  # Required by async_processing_improvements.py
 
 # Data processing
 pandas>=1.5.0; python_version>="3.9"
@@ -43,3 +45,4 @@ requests>=2.31.0
 # Security scanning
 safety>=3.0.0
 bandit[toml]>=1.7.0
+PyJWT>=2.8.0  # JWT token handling for security tests

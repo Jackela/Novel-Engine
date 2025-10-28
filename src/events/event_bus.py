@@ -23,7 +23,8 @@ from typing import Any, Callable, Dict, List, Optional, Set
 from uuid import uuid4
 
 try:
-    import aioredis
+    # Use redis[asyncio] instead of deprecated aioredis (Python 3.11+ compatible)
+    from redis import asyncio as aioredis
     AIOREDIS_AVAILABLE = True
 except ImportError:
     AIOREDIS_AVAILABLE = False
