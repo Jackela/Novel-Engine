@@ -118,7 +118,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-asyncio pytest-cov coverage httpx pytest-timeout
+        pip install pytest pytest-asyncio pytest-cov coverage httpx pytest-timeout pytest-html
         
     - name: Run tests with coverage
       run: |
