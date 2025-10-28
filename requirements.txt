@@ -45,4 +45,4 @@ requests>=2.31.0
 # Security scanning
 safety>=3.0.0
 bandit[toml]>=1.7.0
-PyJWT>=2.8.0  # JWT token handling for security tests
+PyJWT>=2.8.0  # JWT token handling for security testsnetworkx>=3.0
