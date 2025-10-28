@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class CharacterActionProcessor:
     """
     Processes character actions using traditional, AI-enhanced, or hybrid approaches.
-
+    
     This class encapsulates the logic for routing character actions through
     different processing pipelines based on integration mode, with automatic
     fallback for resilience.
@@ -49,7 +49,7 @@ class CharacterActionProcessor:
     ):
         """
         Initialize the character action processor.
-
+        
         Args:
             system_orchestrator: Traditional system orchestrator
             ai_orchestrator: AI intelligence orchestrator
@@ -64,12 +64,12 @@ class CharacterActionProcessor:
     ) -> StandardResponse:
         """
         Process action using only traditional systems.
-
+        
         Args:
             agent_id: Identifier for the agent/character
             action: Action to process
             context: Optional context data
-
+            
         Returns:
             StandardResponse with processing result
         """
@@ -94,14 +94,14 @@ class CharacterActionProcessor:
     ) -> StandardResponse:
         """
         Process action using AI-enhanced systems.
-
+        
         Combines AI coordination with traditional processing for consistency.
-
+        
         Args:
             agent_id: Identifier for the agent/character
             action: Action to process
             context: Optional context data
-
+            
         Returns:
             StandardResponse with AI-enhanced processing result
         """
@@ -141,15 +141,15 @@ class CharacterActionProcessor:
     ) -> StandardResponse:
         """
         Process action using hybrid AI + traditional approach with fallback.
-
+        
         Attempts AI processing first with timeout protection, falls back to
         traditional processing on failure or timeout.
-
+        
         Args:
             agent_id: Identifier for the agent/character
             action: Action to process
             context: Optional context data
-
+            
         Returns:
             StandardResponse with processing result
         """
@@ -172,19 +172,8 @@ class CharacterActionProcessor:
                 f"AI processing timeout for {agent_id}, falling back to traditional"
             )
             return await self.process_traditional_action(agent_id, action, context)
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid agent, action, or context data errors
-            logger.error(
-                f"Invalid data in hybrid processing for {agent_id}: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
-            return await self.process_traditional_action(agent_id, action, context)
-        except (ValueError, RuntimeError) as e:
-            # Hybrid processing execution errors
-            logger.error(
-                f"Hybrid processing error for {agent_id}: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Hybrid processing error for {agent_id}: {str(e)}")
             return await self.process_traditional_action(agent_id, action, context)
 
 

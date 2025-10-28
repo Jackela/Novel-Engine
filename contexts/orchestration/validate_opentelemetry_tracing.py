@@ -15,7 +15,9 @@ from uuid import uuid4
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -432,7 +434,9 @@ def main():
     # Run all tests
     test_results.append(("Tracing Infrastructure", test_tracing_infrastructure()))
     test_results.append(("Span Creation & Management", test_span_creation()))
-    test_results.append(("FastAPI Middleware Integration", test_middleware_integration()))
+    test_results.append(
+        ("FastAPI Middleware Integration", test_middleware_integration())
+    )
     test_results.append(("Cross-Context Service Calls", test_cross_context_tracing()))
     test_results.append(("M10 Requirements Compliance", test_requirements_compliance()))
 
@@ -454,9 +458,13 @@ def main():
     print(f"\nSUCCESS RATE: {passed_tests}/{total_tests} ({success_rate:.1%})")
 
     if passed_tests == total_tests:
-        print("\n🎉 M10 WAVE 3: OPENTELEMETRY DISTRIBUTED TRACING VALIDATION SUCCESSFUL!")
+        print(
+            "\n🎉 M10 WAVE 3: OPENTELEMETRY DISTRIBUTED TRACING VALIDATION SUCCESSFUL!"
+        )
         print("=" * 80)
-        print("✅ Root span coverage for complete run_turn orchestration flow implemented")
+        print(
+            "✅ Root span coverage for complete run_turn orchestration flow implemented"
+        )
         print("✅ Phase-level distributed tracing with parent-child relationships")
         print("✅ Cross-context service call instrumentation")
         print("✅ FastAPI middleware for HTTP request tracing")

@@ -290,12 +290,10 @@ class LayeredMemorySystem:
                     # all_memories.extend(m); all_scores.extend(s); all_sources.extend(src)
                     pass
 
-                (
-                    filtered_memories,
-                    filtered_scores,
-                    filtered_sources,
-                ) = self._filter_and_rank_results(
-                    all_memories, all_scores, all_sources, query_request
+                filtered_memories, filtered_scores, filtered_sources = (
+                    self._filter_and_rank_results(
+                        all_memories, all_scores, all_sources, query_request
+                    )
                 )
 
                 query_duration_ms = (

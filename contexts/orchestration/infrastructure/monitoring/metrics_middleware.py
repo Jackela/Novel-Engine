@@ -174,7 +174,11 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 
         # Extract request information
         method = request.method
-        path = self._get_grouped_path(request.url.path) if self.group_paths else request.url.path
+        path = (
+            self._get_grouped_path(request.url.path)
+            if self.group_paths
+            else request.url.path
+        )
 
         # Get request size
         request_size = 0
@@ -206,7 +210,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
                 except (ValueError, TypeError):
                     # Estimate size for chunked responses
                     response_size = (
-                        len(str(response.__dict__)) if hasattr(response, "__dict__") else 0
+                        len(str(response.__dict__))
+                        if hasattr(response, "__dict__")
+                        else 0
                     )
 
             # Record metrics
@@ -270,14 +276,18 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
             exception: Exception if one occurred
         """
         # Basic HTTP metrics
-        self.http_requests_total.labels(method=method, endpoint=path, status_code=status_code).inc()
+        self.http_requests_total.labels(
+            method=method, endpoint=path, status_code=status_code
+        ).inc()
 
         self.http_request_duration_seconds.labels(
             method=method, endpoint=path, status_code=status_code
         ).observe(duration)
 
         if request_size > 0:
-            self.http_request_size_bytes.labels(method=method, endpoint=path).observe(request_size)
+            self.http_request_size_bytes.labels(method=method, endpoint=path).observe(
+                request_size
+            )
 
         if response_size > 0:
             self.http_response_size_bytes.labels(
@@ -286,7 +296,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 
         # Error tracking
         if error_occurred:
-            error_type = "client_error" if status_code.startswith("4") else "server_error"
+            error_type = (
+                "client_error" if status_code.startswith("4") else "server_error"
+            )
             if exception:
                 error_type = f"{error_type}_{type(exception).__name__}"
 
@@ -376,7 +388,9 @@ class MetricsRegistry:
             self._collectors[name] = PrometheusMetricsCollector()
         return self._collectors[name]
 
-    def register_collector(self, name: str, collector: PrometheusMetricsCollector) -> None:
+    def register_collector(
+        self, name: str, collector: PrometheusMetricsCollector
+    ) -> None:
         """
         Register a metrics collector.
 

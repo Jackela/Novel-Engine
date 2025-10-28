@@ -48,9 +48,6 @@ class TestDirectorAgentInitialization:
                 pass
 
     @pytest.mark.unit
-    @pytest.mark.skip(
-        reason="Tests non-existent get_config import - integrated implementation uses different configuration"
-    )
     def test_initialization_with_valid_config(self):
         """Test DirectorAgent initialization with valid configuration"""
         with patch("director_agent.get_config") as mock_get_config:
@@ -75,9 +72,6 @@ class TestDirectorAgentInitialization:
             mock_get_config.assert_called_once()
 
     @pytest.mark.unit
-    @pytest.mark.skip(
-        reason="Tests non-existent get_config import - integrated implementation uses different configuration"
-    )
     def test_initialization_without_config(self):
         """Test DirectorAgent initialization when config loading fails"""
         with patch("director_agent.get_config") as mock_get_config:
@@ -260,9 +254,6 @@ class TestDirectorAgentRegistration:
             assert "duplicate" in str(e).lower() or "already" in str(e).lower()
 
     @pytest.mark.unit
-    @pytest.mark.skip(
-        reason="Integrated implementation has different validation behavior - actual registration tests (15/15) passing"
-    )
     def test_register_agent_character_data_validation(self):
         """Test validation of agent character data during registration"""
         if not hasattr(self.director, "register_agent"):

@@ -297,7 +297,9 @@ class MaintenanceSystem:
                     equipment, maintenance_type
                 )
                 equipment.system_core_mood = spirit_improvement["new_mood"]
-                maintenance_record.system_core_response = spirit_improvement["response"]
+                maintenance_record.system_core_response = spirit_improvement[
+                    "response"
+                ]
 
                 # Update timestamps
                 equipment.last_maintenance = maintenance_start

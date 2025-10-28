@@ -7,10 +7,7 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.data_models import ErrorInfo, StandardResponse
-from src.interactions.engine.models.interaction_models import (
-    InteractionContext,
-    InteractionType,
-)
+from src.interactions.interaction_engine_system.core.types import InteractionContext
 
 logger = logging.getLogger(__name__)
 

@@ -50,19 +50,8 @@ class CampaignLogger:
             else:
                 logger.info(f"Creating new campaign log: {self.campaign_log_path}")
                 self._create_new_campaign_log()
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors during log initialization
-            logger.error(
-                f"File system error initializing campaign log: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (ValueError, RuntimeError) as e:
-            # Configuration or log creation errors
-            logger.error(
-                f"Failed to initialize campaign log: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to initialize campaign log: {e}")
             raise
 
     def _create_new_campaign_log(self) -> None:
@@ -82,19 +71,8 @@ class CampaignLogger:
 
             logger.info(f"Created new campaign log: {self.campaign_log_path}")
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors creating campaign log
-            logger.error(
-                f"File system error creating campaign log: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            # Fallback to a default filename in current directory
-        except (ValueError, TypeError) as e:
-            # String formatting or datetime errors
-            logger.error(
-                f"Data formatting error creating campaign log: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to create campaign log: {e}")
             # Fallback to a default filename in current directory
             fallback_path = (
                 f"campaign_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
@@ -117,18 +95,8 @@ class CampaignLogger:
 
                 shutil.copy2(self.campaign_log_path, backup_path)
                 logger.info(f"Backed up existing log to: {backup_path}")
-            except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-                # File system errors during backup
-                logger.warning(
-                    f"File system error backing up log: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (ImportError, AttributeError) as e:
-                # Shutil import or copy errors
-                logger.warning(
-                    f"Backup operation error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.warning(f"Failed to backup existing log: {e}")
 
     def log_event(self, event_description: str) -> None:
         """
@@ -150,19 +118,8 @@ class CampaignLogger:
             self.events_logged += 1
             logger.debug(f"Logged event: {event_description[:50]}...")
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors during event logging
-            logger.error(
-                f"File system error logging event: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            # Try to log to a fallback file
-            self._log_to_fallback(event_description, timestamp)
-        except (ValueError, TypeError, AttributeError) as e:
-            # String formatting or data errors
-            logger.error(
-                f"Data error logging event: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            logger.error(f"Failed to log event: {e}")
             # Try to log to a fallback file
             self._log_to_fallback(event_description, timestamp)
 
@@ -173,18 +130,8 @@ class CampaignLogger:
             with open(fallback_path, "a") as f:
                 f.write(f"**[{timestamp}]** {event_description.strip()}\n\n")
             logger.info(f"Logged to fallback file: {fallback_path}")
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors in fallback logging
-            logger.error(
-                f"File system error in fallback logging: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, TypeError) as e:
-            # Data formatting errors in fallback
-            logger.error(
-                f"Data error in fallback logging: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Even fallback logging failed: {e}")
 
     def log_simulation_start(
         self, agent_count: int, simulation_config: dict = None
@@ -287,18 +234,8 @@ class CampaignLogger:
                 logger.info(f"Log rotated: {archive_path}")
                 return True
 
-            except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-                # File system errors during log rotation
-                logger.error(
-                    f"File system error rotating log: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                return False
-            except (ValueError, RuntimeError) as e:
-                # Rotation operation or initialization errors
-                logger.error(
-                    f"Log rotation error: {e}", extra={"error_type": type(e).__name__}
-                )
+            except Exception as e:
+                logger.error(f"Failed to rotate log: {e}")
                 return False
 
         return False

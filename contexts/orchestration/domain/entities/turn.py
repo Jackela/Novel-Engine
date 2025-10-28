@@ -253,9 +253,9 @@ class Turn:
         self.current_phase = first_phase
 
         # Update phase status to running
-        self.phase_statuses[first_phase] = self.phase_statuses[first_phase].transition_to(
-            PhaseStatusEnum.RUNNING, started_at=self.started_at
-        )
+        self.phase_statuses[first_phase] = self.phase_statuses[
+            first_phase
+        ].transition_to(PhaseStatusEnum.RUNNING, started_at=self.started_at)
 
         # Record execution start
         self._record_audit_event(
@@ -276,7 +276,9 @@ class Turn:
                 "first_phase": first_phase.value,
                 "estimated_completion": (
                     self.started_at
-                    + timedelta(milliseconds=self.configuration.get_total_phase_timeout())
+                    + timedelta(
+                        milliseconds=self.configuration.get_total_phase_timeout()
+                    )
                 ),
             },
         )
@@ -323,7 +325,9 @@ class Turn:
         self.phase_statuses[phase_type] = completed_status
 
         # Update performance metrics
-        self._update_performance_metrics(phase_type, performance_metrics or {}, ai_usage or {})
+        self._update_performance_metrics(
+            phase_type, performance_metrics or {}, ai_usage or {}
+        )
 
         # Create phase result
         phase_result = PhaseResult.create_successful(
@@ -430,7 +434,8 @@ class Turn:
                 "turn_id": self.turn_id.turn_uuid,
                 "phase_type": phase_type.value,
                 "error_message": error_message,
-                "compensation_required": can_compensate and self.configuration.rollback_enabled,
+                "compensation_required": can_compensate
+                and self.configuration.rollback_enabled,
             },
         )
 
@@ -459,7 +464,9 @@ class Turn:
         self.saga_state["compensation_required"] = True
 
         # Get appropriate compensation actions for the failed phase
-        compensation_types = CompensationType.get_phase_compensations(failed_phase.value)
+        compensation_types = CompensationType.get_phase_compensations(
+            failed_phase.value
+        )
 
         # Create compensation actions for all committed phases
         committed_phases = self.saga_state["committed_phases"]
@@ -608,7 +615,11 @@ class Turn:
                 "compensation_summary": {
                     "total_actions": len(self.compensation_actions),
                     "successful_actions": len(
-                        [a for a in self.compensation_actions if a.status == "completed"]
+                        [
+                            a
+                            for a in self.compensation_actions
+                            if a.status == "completed"
+                        ]
                     ),
                 },
             },
@@ -627,7 +638,9 @@ class Turn:
             phase_result = PhaseResult.create_successful(
                 phase_type=phase_type,
                 phase_status=phase_status,
-                performance_metrics=self.performance_metrics.get(f"phase_{phase_type.value}", {}),
+                performance_metrics=self.performance_metrics.get(
+                    f"phase_{phase_type.value}", {}
+                ),
             )
             phase_results.append(phase_result)
 
@@ -694,13 +707,17 @@ class Turn:
             phase_results.append(phase_result)
 
         total_execution_time = (
-            self.completed_at - self.started_at if self.started_at else timedelta(seconds=0)
+            self.completed_at - self.started_at
+            if self.started_at
+            else timedelta(seconds=0)
         )
 
         error_summary = {
             "primary_error": error_message,
             "error_details": error_details or {},
-            "failed_phases": [r.phase_type.value for r in phase_results if not r.was_successful()],
+            "failed_phases": [
+                r.phase_type.value for r in phase_results if not r.was_successful()
+            ],
         }
 
         self.pipeline_result = PipelineResult.create_failed(
@@ -744,7 +761,9 @@ class Turn:
     def _validate_state_transition(self, new_state: TurnState) -> None:
         """Validate state transition is allowed."""
         if not self.state.can_transition_to(new_state):
-            raise ValueError(f"Invalid state transition from {self.state} to {new_state}")
+            raise ValueError(
+                f"Invalid state transition from {self.state} to {new_state}"
+            )
 
     def _get_next_phase(self, current_phase: PhaseType) -> Optional[PhaseType]:
         """Get next phase in pipeline sequence."""
@@ -791,11 +810,17 @@ class Turn:
         """Update aggregate performance metrics."""
         # Store phase-specific metrics
         phase_key = f"phase_{phase_type.value}"
-        self.performance_metrics[f"{phase_key}_duration_ms"] = phase_metrics.get("duration_ms", 0)
-        self.performance_metrics[f"{phase_key}_events"] = phase_metrics.get("events_processed", 0)
+        self.performance_metrics[f"{phase_key}_duration_ms"] = phase_metrics.get(
+            "duration_ms", 0
+        )
+        self.performance_metrics[f"{phase_key}_events"] = phase_metrics.get(
+            "events_processed", 0
+        )
 
         # Update aggregate metrics
-        self.performance_metrics["events_processed"] += phase_metrics.get("events_processed", 0)
+        self.performance_metrics["events_processed"] += phase_metrics.get(
+            "events_processed", 0
+        )
 
         if ai_usage:
             self.performance_metrics["ai_operations_count"] += 1
@@ -822,7 +847,9 @@ class Turn:
 
         total_execution_time = self.completed_at - self.started_at
 
-        saga_actions = [action.compensation_type.value for action in self.compensation_actions]
+        saga_actions = [
+            action.compensation_type.value for action in self.compensation_actions
+        ]
 
         self.pipeline_result = PipelineResult.create_failed(
             turn_id=self.turn_id.turn_uuid,
@@ -834,7 +861,11 @@ class Turn:
                 "compensation_summary": {
                     "total_actions": len(self.compensation_actions),
                     "successful_actions": len(
-                        [a for a in self.compensation_actions if a.status == "completed"]
+                        [
+                            a
+                            for a in self.compensation_actions
+                            if a.status == "completed"
+                        ]
                     ),
                 }
             },
@@ -852,7 +883,9 @@ class Turn:
         }
         self.audit_trail.append(audit_event)
 
-    def _generate_domain_event(self, event_type: str, event_data: Dict[str, Any]) -> None:
+    def _generate_domain_event(
+        self, event_type: str, event_data: Dict[str, Any]
+    ) -> None:
         """Generate domain event for external consumption."""
         domain_event = {
             "event_id": str(uuid4()),
@@ -891,7 +924,9 @@ class Turn:
 
     def get_pending_compensations(self) -> List[CompensationAction]:
         """Get list of pending compensation actions."""
-        return [action for action in self.compensation_actions if action.status == "pending"]
+        return [
+            action for action in self.compensation_actions if action.status == "pending"
+        ]
 
     def get_execution_time(self) -> Optional[timedelta]:
         """Get current execution time."""
@@ -928,7 +963,9 @@ class Turn:
             "turn_id": str(self.turn_id.turn_uuid),
             "state": self.state.value,
             "completion_percentage": self.get_completion_percentage() * 100,
-            "execution_time_seconds": (execution_time.total_seconds() if execution_time else None),
+            "execution_time_seconds": (
+                execution_time.total_seconds() if execution_time else None
+            ),
             "phases_completed": len(self.get_completed_phases()),
             "phases_failed": len(self.get_failed_phases()),
             "compensation_actions": len(self.compensation_actions),

@@ -22,7 +22,12 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 from uuid import uuid4
 
-import redis.asyncio as redis
+try:
+    import aioredis
+    AIOREDIS_AVAILABLE = True
+except ImportError:
+    AIOREDIS_AVAILABLE = False
+    aioredis = None
 
 logger = logging.getLogger(__name__)
 
@@ -334,7 +339,7 @@ class EventBus:
         )
 
         self.metrics = EventMetrics() if self.config.metrics_enabled else None
-        self.redis: Optional[redis.Redis] = None
+        self.redis: Optional[aioredis.Redis] = None
         self.event_store: List[Event] = []  # In-memory fallback
         self.dead_letter_queue: List[Event] = []
         self.processing_semaphore = asyncio.Semaphore(self.config.max_concurrent_events)
@@ -348,9 +353,7 @@ class EventBus:
         try:
             # Initialize Redis connection if enabled
             if self.config.redis_url:
-                self.redis = redis.from_url(
-                    self.config.redis_url, decode_responses=True
-                )
+                self.redis = aioredis.from_url(self.config.redis_url)
                 await self.redis.ping()
                 logger.info("Redis connection established for event bus")
 
@@ -380,7 +383,7 @@ class EventBus:
 
         # Close Redis connection
         if self.redis:
-            await self.redis.aclose()
+            await self.redis.close()
 
         logger.info("EventBus shutdown completed")
 
@@ -581,6 +584,7 @@ class EventBus:
             if from_time <= event.timestamp <= to_time and (
                 not event_types or event.event_type in event_types
             ):
+
                 event.status = EventStatus.REPLAYING
                 await self._process_event(event)
                 replayed_count += 1

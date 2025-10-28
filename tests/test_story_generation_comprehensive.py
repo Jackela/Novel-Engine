@@ -20,7 +20,6 @@ Test Categories:
 import os
 import re
 import tempfile
-from unittest.mock import Mock
 
 import pytest
 from chronicler_agent import CampaignEvent, ChroniclerAgent, NarrativeSegment
@@ -57,45 +56,37 @@ BANNED_BRAND_TERMS = [
 ]
 
 
-@pytest.fixture
-def mock_event_bus():
-    """Create a mock event bus for testing"""
-    return Mock()
-
-
 class TestChroniclerAgentCore:
     """Test core ChroniclerAgent functionality"""
 
-    def test_chronicler_initialization(self, mock_event_bus):
+    def test_chronicler_initialization(self):
         """Test ChroniclerAgent initialization"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
         assert chronicler is not None
         assert hasattr(chronicler, "narrative_templates")
         assert hasattr(chronicler, "faction_descriptions")
 
-    def test_narrative_templates_debranded(self, mock_event_bus):
+    def test_narrative_templates_debranded(self):
         """Test that narrative templates contain no branded content"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Check all narrative templates
-        for template_name, template in chronicler.narrative_templates.items():
-            if isinstance(template, str):
+        for style, template_dict in chronicler.narrative_templates.items():
+            for template_name, template in template_dict.items():
                 template_lower = template.lower()
-            elif isinstance(template, dict):
-                # Handle nested structure if it exists
-                template_lower = str(template).lower()
-            else:
-                continue
 
-            for banned_term in BANNED_BRAND_TERMS:
-                assert (
-                    banned_term not in template_lower
-                ), f"Banned term '{banned_term}' found in template {template_name}"
+                for banned_term in BANNED_BRAND_TERMS:
+                    assert (
+                        banned_term not in template_lower
+                    ), f"Banned term '{banned_term}' found in template {style}:{template_name}"
 
-    @pytest.mark.skip(reason="Faction descriptions API changed - now only has 'Unknown' faction")
-    def test_faction_descriptions_generic(self, mock_event_bus):
+        # Verify sci_fi_dramatic style exists instead of grimdark_dramatic
+        assert "sci_fi_dramatic" in chronicler.narrative_templates
+        assert "grimdark_dramatic" not in chronicler.narrative_templates
+
+    def test_faction_descriptions_generic(self):
         """Test that faction descriptions are generic sci-fi"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         expected_factions = [
             "Galactic Defense Forces",
@@ -111,21 +102,15 @@ class TestChroniclerAgentCore:
             ), f"Missing generic faction: {faction}"
 
         # Check no branded factions
-        banned_factions = [
-            "Vanguard Paladins",
-            "Alliance Guard",
-            "Entropy Cult",
-            "Freewind Collective",
-        ]
+        banned_factions = ["Vanguard Paladins", "Alliance Guard", "Entropy Cult", "Freewind Collective"]
         for faction in banned_factions:
             assert (
                 faction not in chronicler.faction_descriptions
             ), f"Branded faction found: {faction}"
 
-    @pytest.mark.skip(reason="set_narrative_style method removed from ChroniclerAgent")
-    def test_narrative_style_management(self, mock_event_bus):
+    def test_narrative_style_management(self):
         """Test narrative style setting and validation"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Test valid style changes
         assert chronicler.set_narrative_style("tactical") is True
@@ -141,10 +126,9 @@ class TestChroniclerAgentCore:
         assert chronicler.set_narrative_style("grimdark_dramatic") is False
         assert chronicler.set_narrative_style("invalid_style") is False
 
-    @pytest.mark.skip(reason="_parse_campaign_log is private method, implementation details changed")
-    def test_campaign_log_parsing(self, mock_event_bus):
+    def test_campaign_log_parsing(self):
         """Test campaign log parsing functionality"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Create mock campaign log
         mock_log_content = """
@@ -180,10 +164,9 @@ class TestChroniclerAgentCore:
         finally:
             os.unlink(temp_log_path)
 
-    @pytest.mark.skip(reason="_generate_narrative_segments method removed from ChroniclerAgent")
-    def test_narrative_segment_generation(self, mock_event_bus):
+    def test_narrative_segment_generation(self):
         """Test narrative segment generation from events"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Create sample events
         events = [
@@ -237,9 +220,9 @@ class TestStoryContentQuality:
             yield f.name
         os.unlink(f.name)
 
-    def test_story_length_adequacy(self, sample_campaign_log, mock_event_bus):
+    def test_story_length_adequacy(self, sample_campaign_log):
         """Test that generated stories have adequate length"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
         story = chronicler.transcribe_log(sample_campaign_log)
 
         assert len(story) >= 200, "Story too short"
@@ -249,9 +232,9 @@ class TestStoryContentQuality:
         sentence_count = story.count(".") + story.count("!") + story.count("?")
         assert sentence_count >= 5, "Story should have multiple sentences"
 
-    def test_story_structure_coherence(self, sample_campaign_log, mock_event_bus):
+    def test_story_structure_coherence(self, sample_campaign_log):
         """Test story structure and coherence"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
         story = chronicler.transcribe_log(sample_campaign_log)
 
         # Should have opening, middle, and closing elements
@@ -267,9 +250,9 @@ class TestStoryContentQuality:
         has_closing = any(word in story_lower[-200:] for word in closing_words)
         assert has_closing, "Story should have conclusive ending"
 
-    def test_character_integration_in_stories(self, sample_campaign_log, mock_event_bus):
+    def test_character_integration_in_stories(self, sample_campaign_log):
         """Test that character names and actions are integrated properly"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
         story = chronicler.transcribe_log(sample_campaign_log)
 
         # Should reference character actions meaningfully
@@ -288,9 +271,9 @@ class TestStoryContentQuality:
         has_actions = any(word in story_lower for word in action_words)
         assert has_actions, "Story should integrate character actions"
 
-    def test_story_atmosphere_consistency(self, sample_campaign_log, mock_event_bus):
+    def test_story_atmosphere_consistency(self, sample_campaign_log):
         """Test that story maintains consistent sci-fi atmosphere"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
         story = chronicler.transcribe_log(sample_campaign_log)
 
         story_lower = story.lower()
@@ -314,9 +297,9 @@ class TestStoryContentQuality:
         has_drama = any(indicator in story_lower for indicator in dramatic_indicators)
         assert has_drama, "Story should maintain dramatic tone"
 
-    def test_story_readability(self, sample_campaign_log, mock_event_bus):
+    def test_story_readability(self, sample_campaign_log):
         """Test story readability and flow"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
         story = chronicler.transcribe_log(sample_campaign_log)
 
         # Check for reasonable sentence length variety
@@ -348,9 +331,9 @@ class TestStoryContentQuality:
 class TestDebrandingValidation:
     """Test comprehensive debranding validation"""
 
-    def test_no_branded_content_in_generated_stories(self, mock_event_bus):
+    def test_no_branded_content_in_generated_stories(self):
         """Test that generated stories contain no branded content"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Test with various scenarios
         test_scenarios = [
@@ -389,9 +372,9 @@ class TestDebrandingValidation:
             finally:
                 os.unlink(temp_path)
 
-    def test_generic_faction_usage_in_stories(self, mock_event_bus):
+    def test_generic_faction_usage_in_stories(self):
         """Test that stories use generic faction names"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Test faction description usage
         mock_log = """
@@ -418,9 +401,9 @@ class TestDebrandingValidation:
         finally:
             os.unlink(temp_path)
 
-    def test_sci_fi_theme_replacement(self, mock_event_bus):
+    def test_sci_fi_theme_replacement(self):
         """Test that sci-fi themes properly replace branded themes"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Generate story and check theme elements
         mock_log = """
@@ -465,9 +448,9 @@ class TestDebrandingValidation:
 class TestNarrativeStyleAndTone:
     """Test narrative style and tone management"""
 
-    def test_sci_fi_dramatic_style(self, mock_event_bus):
+    def test_sci_fi_dramatic_style(self):
         """Test sci_fi_dramatic narrative style"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
         chronicler.set_narrative_style("sci_fi_dramatic")
 
         # Generate story with sci_fi_dramatic style
@@ -504,9 +487,9 @@ class TestNarrativeStyleAndTone:
         finally:
             os.unlink(temp_path)
 
-    def test_tactical_style(self, mock_event_bus):
+    def test_tactical_style(self):
         """Test tactical narrative style"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
         chronicler.set_narrative_style("tactical")
 
         mock_log = """
@@ -532,9 +515,9 @@ class TestNarrativeStyleAndTone:
         finally:
             os.unlink(temp_path)
 
-    def test_philosophical_style(self, mock_event_bus):
+    def test_philosophical_style(self):
         """Test philosophical narrative style"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
         chronicler.set_narrative_style("philosophical")
 
         mock_log = """
@@ -562,9 +545,9 @@ class TestNarrativeStyleAndTone:
 class TestCharacterIntegration:
     """Test character integration in story generation"""
 
-    def test_multiple_character_story_generation(self, mock_event_bus):
+    def test_multiple_character_story_generation(self):
         """Test story generation with multiple characters"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Create log with all generic characters
         mock_log = """
@@ -610,9 +593,9 @@ class TestCharacterIntegration:
         finally:
             os.unlink(temp_path)
 
-    def test_character_faction_integration(self, mock_event_bus):
+    def test_character_faction_integration(self):
         """Test character faction integration in stories"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         mock_log = """
         Turn 1 - 2024-01-01 12:00:00
@@ -651,9 +634,9 @@ class TestCharacterIntegration:
 class TestTemplateAndPatternSystems:
     """Test template and pattern systems"""
 
-    def test_response_template_variety(self, mock_event_bus):
+    def test_response_template_variety(self):
         """Test variety in response templates"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Generate multiple stories to test template variety
         stories = []
@@ -680,9 +663,9 @@ class TestTemplateAndPatternSystems:
             len(unique_stories) >= 2
         ), "Stories should have some variation in templates"
 
-    def test_narrative_opening_templates(self, mock_event_bus):
+    def test_narrative_opening_templates(self):
         """Test narrative opening template functionality"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         mock_log = """
         Turn 1 - 2024-01-01 12:00:00
@@ -724,11 +707,11 @@ class TestTemplateAndPatternSystems:
 class TestPerformanceAndScalability:
     """Test performance and scalability of story generation"""
 
-    def test_story_generation_performance(self, mock_event_bus):
+    def test_story_generation_performance(self):
         """Test story generation performance"""
         import time
 
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Create moderately complex log
         mock_log = """
@@ -764,9 +747,9 @@ class TestPerformanceAndScalability:
         finally:
             os.unlink(temp_path)
 
-    def test_large_log_handling(self, mock_event_bus):
+    def test_large_log_handling(self):
         """Test handling of large campaign logs"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Create large log with many turns
         large_log_parts = []
@@ -802,9 +785,9 @@ class TestPerformanceAndScalability:
 class TestErrorHandlingAndEdgeCases:
     """Test error handling and edge cases"""
 
-    def test_empty_log_handling(self, mock_event_bus):
+    def test_empty_log_handling(self):
         """Test handling of empty campaign logs"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("")  # Empty log
@@ -820,9 +803,9 @@ class TestErrorHandlingAndEdgeCases:
         finally:
             os.unlink(temp_path)
 
-    def test_malformed_log_handling(self, mock_event_bus):
+    def test_malformed_log_handling(self):
         """Test handling of malformed campaign logs"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         malformed_log = """
         This is not a proper log format
@@ -844,17 +827,17 @@ class TestErrorHandlingAndEdgeCases:
         finally:
             os.unlink(temp_path)
 
-    def test_nonexistent_log_handling(self, mock_event_bus):
+    def test_nonexistent_log_handling(self):
         """Test handling of non-existent log files"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         # Try to transcribe non-existent file
         with pytest.raises((FileNotFoundError, IOError)):
             chronicler.transcribe_log("nonexistent_file.md")
 
-    def test_corrupted_log_recovery(self, mock_event_bus):
+    def test_corrupted_log_recovery(self):
         """Test recovery from corrupted log data"""
-        chronicler = ChroniclerAgent(event_bus=mock_event_bus)
+        chronicler = ChroniclerAgent()
 
         corrupted_log = """
         Turn 1 - INVALID_DATE
@@ -883,7 +866,7 @@ class TestErrorHandlingAndEdgeCases:
 @pytest.fixture
 def chronicler_agent():
     """Fixture providing ChroniclerAgent instance"""
-    return ChroniclerAgent(event_bus=mock_event_bus)
+    return ChroniclerAgent()
 
 
 @pytest.fixture

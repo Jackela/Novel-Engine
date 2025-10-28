@@ -109,6 +109,7 @@ class CreateCharacterCommandHandler:
                     command.education,
                 ]
             ):
+
                 # Create updated physical traits
                 physical_traits = PhysicalTraits(
                     height_cm=command.height_cm,
@@ -120,7 +121,9 @@ class CreateCharacterCommandHandler:
                 )
 
                 # Create updated personality traits
-                personality_traits = PersonalityTraits(traits=command.personality_traits)
+                personality_traits = PersonalityTraits(
+                    traits=command.personality_traits
+                )
 
                 # Create updated background
                 background = Background(
@@ -150,7 +153,9 @@ class CreateCharacterCommandHandler:
             # Save character to repository
             await self.repository.save(character)
 
-            self.logger.info(f"Character created successfully: {character.character_id}")
+            self.logger.info(
+                f"Character created successfully: {character.character_id}"
+            )
             return character.character_id
 
         except Exception as e:
@@ -186,7 +191,10 @@ class UpdateCharacterStatsCommandHandler:
                 raise ValueError(f"Character not found: {character_id}")
 
             # Check version for optimistic concurrency control
-            if command.expected_version and character.version != command.expected_version:
+            if (
+                command.expected_version
+                and character.version != command.expected_version
+            ):
                 raise ValueError(
                     f"Version conflict: expected {command.expected_version}, got {character.version}"
                 )
@@ -234,7 +242,8 @@ class UpdateCharacterStatsCommandHandler:
                 core_abilities=character.stats.core_abilities,
                 vital_stats=new_vital_stats,
                 combat_stats=new_combat_stats,
-                experience_points=command.experience_points or character.stats.experience_points,
+                experience_points=command.experience_points
+                or character.stats.experience_points,
                 skill_points=command.skill_points or character.stats.skill_points,
             )
 
@@ -270,7 +279,9 @@ class UpdateCharacterSkillCommandHandler:
             RepositoryException: If character not found or save fails
         """
         character_id = CharacterID.from_string(command.character_id)
-        self.logger.info(f"Updating skill '{command.skill_name}' for character: {character_id}")
+        self.logger.info(
+            f"Updating skill '{command.skill_name}' for character: {character_id}"
+        )
 
         try:
             # Load character from repository
@@ -279,7 +290,10 @@ class UpdateCharacterSkillCommandHandler:
                 raise ValueError(f"Character not found: {character_id}")
 
             # Check version for optimistic concurrency control
-            if command.expected_version and character.version != command.expected_version:
+            if (
+                command.expected_version
+                and character.version != command.expected_version
+            ):
                 raise ValueError(
                     f"Version conflict: expected {command.expected_version}, got {character.version}"
                 )
@@ -369,7 +383,10 @@ class LevelUpCharacterCommandHandler:
                 raise ValueError(f"Character not found: {character_id}")
 
             # Check version for optimistic concurrency control
-            if command.expected_version and character.version != command.expected_version:
+            if (
+                command.expected_version
+                and character.version != command.expected_version
+            ):
                 raise ValueError(
                     f"Version conflict: expected {command.expected_version}, got {character.version}"
                 )
@@ -388,7 +405,9 @@ class LevelUpCharacterCommandHandler:
 
             # Apply skill improvements if specified
             if command.skill_improvements:
-                self.logger.info(f"Skill improvements requested: {command.skill_improvements}")
+                self.logger.info(
+                    f"Skill improvements requested: {command.skill_improvements}"
+                )
                 # TODO: Implement skill improvements
 
             # Save character
@@ -422,7 +441,9 @@ class DeleteCharacterCommandHandler:
             RepositoryException: If deletion fails
         """
         character_id = CharacterID.from_string(command.character_id)
-        self.logger.info(f"Deleting character: {character_id}, reason: {command.reason}")
+        self.logger.info(
+            f"Deleting character: {character_id}, reason: {command.reason}"
+        )
 
         try:
             # Check if character exists first
@@ -526,7 +547,9 @@ class DamageCharacterCommandHandler:
             # Save character
             await self.repository.save(character)
 
-            self.logger.info(f"Damage applied successfully to character: {character_id}")
+            self.logger.info(
+                f"Damage applied successfully to character: {character_id}"
+            )
 
         except Exception as e:
             self.logger.error(f"Error applying damage to character: {e}")
@@ -539,9 +562,15 @@ class CharacterCommandHandlerRegistry:
     def __init__(self, character_repository: ICharacterRepository):
         self.handlers = {
             CreateCharacterCommand: CreateCharacterCommandHandler(character_repository),
-            UpdateCharacterStatsCommand: UpdateCharacterStatsCommandHandler(character_repository),
-            UpdateCharacterSkillCommand: UpdateCharacterSkillCommandHandler(character_repository),
-            LevelUpCharacterCommand: LevelUpCharacterCommandHandler(character_repository),
+            UpdateCharacterStatsCommand: UpdateCharacterStatsCommandHandler(
+                character_repository
+            ),
+            UpdateCharacterSkillCommand: UpdateCharacterSkillCommandHandler(
+                character_repository
+            ),
+            LevelUpCharacterCommand: LevelUpCharacterCommandHandler(
+                character_repository
+            ),
             DeleteCharacterCommand: DeleteCharacterCommandHandler(character_repository),
             HealCharacterCommand: HealCharacterCommandHandler(character_repository),
             DamageCharacterCommand: DamageCharacterCommandHandler(character_repository),

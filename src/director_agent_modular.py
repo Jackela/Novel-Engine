@@ -45,26 +45,15 @@ except ImportError:
 
 
 # Import our new modular components
-try:
-    from src.director_components import (
-        AgentLifecycleManager,
-        CampaignLoggingService,
-        ConfigurationService,
-        NarrativeOrchestrator,
-        SystemErrorHandler,
-        TurnExecutionEngine,
-        WorldStateManager,
-    )
-except ImportError:
-    from director_components import (
-        AgentLifecycleManager,
-        CampaignLoggingService,
-        ConfigurationService,
-        NarrativeOrchestrator,
-        SystemErrorHandler,
-        TurnExecutionEngine,
-        WorldStateManager,
-    )
+from director_components import (
+    AgentLifecycleManager,
+    CampaignLoggingService,
+    ConfigurationService,
+    NarrativeOrchestrator,
+    SystemErrorHandler,
+    TurnExecutionEngine,
+    WorldStateManager,
+)
 
 # Import configuration and narrative components with error handling
 try:
@@ -113,24 +102,15 @@ class DirectorAgent:
     - Component isolation and testing
     """
 
-    def __init__(
-        self,
-        config_file: str = "config.yaml",
-        world_state_file_path: Optional[str] = None,
-        campaign_log_path: Optional[str] = None,
-    ):
+    def __init__(self, config_file: str = "config.yaml"):
         """
         Initialize DirectorAgent with modular components.
 
         Args:
             config_file: Path to configuration file
-            world_state_file_path: Optional path to world state file (for backward compatibility)
-            campaign_log_path: Optional path to campaign log file (for backward compatibility)
         """
         # Core configuration
         self.config_file = config_file
-        self.world_state_file_path = world_state_file_path
-        self.campaign_log_path = campaign_log_path
         try:
             # get_config() takes no parameters and returns AppConfig object
             app_config = get_config()
@@ -190,11 +170,8 @@ class DirectorAgent:
             self.agent_manager = AgentLifecycleManager(logger=self.logger)
 
             # World state manager
-            state_file = self.world_state_file_path or self.config.get(
-                "world_state_file", "world_state.json"
-            )
             self.world_state_manager = WorldStateManager(
-                state_file=state_file,
+                state_file=self.config.get("world_state_file", "world_state.json"),
                 logger=self.logger,
             )
 
@@ -208,9 +185,6 @@ class DirectorAgent:
 
             # Campaign logging service
             log_dir = self.config.get("log_directory", "logs")
-            # Use campaign_log_path if provided
-            if self.campaign_log_path:
-                log_dir = str(Path(self.campaign_log_path).parent)
             self.campaign_logger = CampaignLoggingService(
                 log_dir=log_dir, logger=self.logger
             )
@@ -525,115 +499,25 @@ class DirectorAgent:
                 status["logging"] = await self.campaign_logger.get_statistics()
 
             if hasattr(self.error_handler, "get_error_statistics"):
-                status[
-                    "error_handling"
-                ] = await self.error_handler.get_error_statistics()
+                status["error_handling"] = (
+                    await self.error_handler.get_error_statistics()
+                )
 
             if hasattr(self.world_state_manager, "get_state_statistics"):
-                status[
-                    "world_state"
-                ] = await self.world_state_manager.get_state_statistics()
+                status["world_state"] = (
+                    await self.world_state_manager.get_state_statistics()
+                )
 
             if hasattr(self.narrative_orchestrator, "get_story_summary"):
-                status[
-                    "narrative"
-                ] = await self.narrative_orchestrator.get_story_summary()
+                status["narrative"] = (
+                    await self.narrative_orchestrator.get_story_summary()
+                )
 
             return status
 
         except Exception as e:
             self.logger.error(f"Failed to get system status: {e}")
             return {"error": str(e), "initialized": self._initialized}
-
-    def get_simulation_status(self) -> Dict[str, Any]:
-        """
-        Get simulation status (backward compatibility wrapper).
-
-        Returns:
-            Dict containing system status
-        """
-        try:
-            # Return synchronous status without full initialization
-            status = {
-                "is_initialized": self._initialized,
-                "turn_count": self.turn_count,
-                "agent_count": len(self.agents),
-                "shutdown_requested": self._shutdown_requested,
-                "components": {
-                    "config": hasattr(self, "config_service"),
-                    "world_state": hasattr(self, "world_state_manager"),
-                    "agent_lifecycle": hasattr(self, "agent_manager"),
-                    "turn_execution": hasattr(self, "turn_engine"),
-                    "narrative": hasattr(self, "narrative_orchestrator"),
-                    "logging": hasattr(self, "campaign_logger"),
-                    "error_handler": hasattr(self, "error_handler"),
-                },
-            }
-            return status
-        except Exception as e:
-            self.logger.error(f"Failed to get simulation status: {e}")
-            return {
-                "is_initialized": False,
-                "error": str(e),
-                "components": {},
-            }
-
-    async def remove_agent_async(self, agent_id: str) -> bool:
-        """
-        Remove an agent from the system (async version).
-
-        Args:
-            agent_id: ID of agent to remove
-
-        Returns:
-            bool: True if removal successful, False otherwise
-        """
-        try:
-            if not self._initialized:
-                await self.initialize()
-
-            # Use agent manager to remove
-            success = await self.agent_manager.remove_agent(agent_id)
-
-            if success:
-                # Update backward compatibility list
-                self.agents = [a for a in self.agents if a.agent_id != agent_id]
-
-                # Log removal
-                await self.campaign_logger.log_event(
-                    {
-                        "level": "info",
-                        "category": "agent",
-                        "message": f"Agent {agent_id} removed successfully",
-                        "metadata": {
-                            "agent_id": agent_id,
-                            "total_agents": len(self.agents),
-                        },
-                    }
-                )
-
-            return success
-
-        except Exception as e:
-            error_context = {
-                "operation": "agent_removal",
-                "agent_id": agent_id,
-                "component": "DirectorAgent",
-            }
-            await self.error_handler.handle_error(e, error_context)
-            return False
-
-    def remove_agent(self, agent_id: str) -> bool:
-        """
-        Remove an agent from the system (synchronous wrapper for backward compatibility).
-
-        Args:
-            agent_id: ID of agent to remove
-
-        Returns:
-            bool: True if removal successful, False otherwise
-        """
-        return asyncio.run(self.remove_agent_async(agent_id))
 
     async def _load_campaign_brief(self) -> None:
         """Load campaign brief if available."""
@@ -717,29 +601,10 @@ class DirectorAgent:
         """Legacy method to get campaign log."""
         return self.campaign_log_data.copy()
 
-    def save_world_state(self, file_path: Optional[str] = None) -> bool:
-        """
-        Legacy method to save world state.
-
-        Args:
-            file_path: Optional file path to save to (for backward compatibility)
-
-        Returns:
-            bool: True if save successful, False otherwise
-        """
+    def save_world_state(self) -> bool:
+        """Legacy method to save world state."""
         try:
-            if file_path:
-                # Save to custom path (may fail if invalid)
-                try:
-                    return asyncio.run(
-                        self.world_state_manager.save_world_state(file_path)
-                    )
-                except Exception:
-                    # Invalid path, return False without crashing
-                    return False
-            else:
-                # Save to default path
-                return asyncio.run(self.world_state_manager.save_world_state())
+            return asyncio.run(self.world_state_manager.save_world_state())
         except Exception as e:
             self.logger.error(f"World state save failed: {e}")
             return False

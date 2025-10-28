@@ -866,6 +866,7 @@ class ContextRenderer:
                     or focus_area.lower() in section.content.lower()
                     or focus_area.lower() in section.section_type.lower()
                 ):
+
                     # Boost enhanced relevance and priority
                     section.relevance_score = min(1.0, section.relevance_score + 0.2)
 
@@ -1134,7 +1135,7 @@ async def test_standard_context_renderer():
     )
     if narrative_result.success:
         result_data = narrative_result.data["render_result"]
-        print(
+        logger.info(
             f"NARRATIVE RENDERED: {result_data.total_character_count} chars, {len(result_data.sections_included)} sections"
         )
         logger.info("Content preview:")
@@ -1146,9 +1147,7 @@ async def test_standard_context_renderer():
     )
     if conversational_result.success:
         result_data = conversational_result.data["render_result"]
-        logger.info(
-            f"CONVERSATIONAL RENDERED: {result_data.total_character_count} chars"
-        )
+        logger.info(f"CONVERSATIONAL RENDERED: {result_data.total_character_count} chars")
 
     # Test enhanced adaptive prompt rendering
     adaptive_result = await context_renderer.render_adaptive_prompt(
@@ -1156,10 +1155,10 @@ async def test_standard_context_renderer():
     )
     if adaptive_result.success:
         result_data = adaptive_result.data["render_result"]
-        print(
+        logger.info(
             f"ADAPTIVE PROMPT RENDERED: {result_data.total_character_count} chars (target: 500)"
         )
-        print(
+        logger.info(
             f"Sections included: {[s.section_id for s in result_data.sections_included]}"
         )
         logger.info(f"Adaptive decisions: {len(result_data.adaptive_decisions)}")
@@ -1177,14 +1176,12 @@ async def test_standard_context_renderer():
     )
     if constrained_result.success:
         result_data = constrained_result.data["render_result"]
-        logger.info(
-            f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars"
-        )
+        logger.info(f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars")
         logger.info(f"Excluded sections: {len(result_data.sections_excluded)}")
 
     # Display enhanced statistics
     stats = context_renderer.get_rendering_statistics()
-    print(
+    logger.info(
         f"RENDERER STATISTICS: {stats['total_renders']} renders, avg {stats['average_render_time']:.2f}ms"
     )
 

@@ -199,9 +199,9 @@ class AIIntelligenceOrchestrator:
         self.optimization_suggestions: List[str] = []
 
         # Resource management
-        self.resource_allocation: Dict[
-            str, float
-        ] = self.config.resource_allocation.copy()
+        self.resource_allocation: Dict[str, float] = (
+            self.config.resource_allocation.copy()
+        )
         self.load_balancer: Dict[str, float] = defaultdict(float)
         self.performance_history: Dict[str, deque] = defaultdict(
             lambda: deque(maxlen=100)
@@ -292,21 +292,9 @@ class AIIntelligenceOrchestrator:
             )
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid configuration or system data errors
+        except Exception as e:
             self.status = OrchestratorStatus.ERROR
-            logger.error(
-                f"Invalid data initializing AI Intelligence Orchestrator: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e), "status": self.status.value}
-        except (ValueError, RuntimeError) as e:
-            # System initialization processing errors
-            self.status = OrchestratorStatus.ERROR
-            logger.error(
-                f"Failed to initialize AI Intelligence Orchestrator: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+            logger.error(f"Failed to initialize AI Intelligence Orchestrator: {e}")
             return {"success": False, "error": str(e), "status": self.status.value}
 
     async def shutdown_systems(self) -> Dict[str, Any]:
@@ -352,19 +340,8 @@ class AIIntelligenceOrchestrator:
             )
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid system state or shutdown data errors
-            logger.error(
-                f"Invalid data during AI Intelligence Orchestrator shutdown: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Shutdown processing errors
-            logger.error(
-                f"Error during AI Intelligence Orchestrator shutdown: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Error during AI Intelligence Orchestrator shutdown: {e}")
             return {"success": False, "error": str(e)}
 
     async def process_story_generation(
@@ -505,8 +482,8 @@ class AIIntelligenceOrchestrator:
             )
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story data or operation errors
+        except Exception as e:
+            # Handle operation failure
             if operation_id in self.active_operations:
                 operation = self.active_operations[operation_id]
                 operation.status = "failed"
@@ -515,26 +492,17 @@ class AIIntelligenceOrchestrator:
                 operation.processing_time = (
                     operation.completed_at - operation.started_at
                 ).total_seconds()
-            logger.error(
-                f"Invalid data in story generation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Story generation processing errors
-            if operation_id in self.active_operations:
-                operation = self.active_operations[operation_id]
-                operation.status = "failed"
-                operation.error_message = str(e)
-                operation.completed_at = datetime.now()
-                operation.processing_time = (
-                    operation.completed_at - operation.started_at
-                ).total_seconds()
-            logger.error(
-                f"Story generation processing failed: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
+
+                self.completed_operations.append(operation)
+                del self.active_operations[operation_id]
+
+            logger.error(f"Story generation processing failed: {e}")
+            return {
+                "operation_id": operation_id,
+                "success": False,
+                "error": str(e),
+                "story_data": story_data,
+            }
 
     async def enhance_user_experience(
         self, user_id: str, interaction_data: Dict[str, Any]
@@ -587,19 +555,8 @@ class AIIntelligenceOrchestrator:
             logger.info(f"Enhanced user experience for {user_id}")
             return enhancement_result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid user or enhancement data errors
-            logger.error(
-                f"Invalid data enhancing user experience: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"user_id": user_id, "success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # User experience enhancement processing errors
-            logger.error(
-                f"Failed to enhance user experience: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to enhance user experience: {e}")
             return {"user_id": user_id, "success": False, "error": str(e)}
 
     async def optimize_system_performance(self) -> Dict[str, Any]:
@@ -650,19 +607,8 @@ class AIIntelligenceOrchestrator:
             )
             return optimization_result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid system metrics or optimization data errors
-            logger.error(
-                f"Invalid data in system performance optimization: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Performance optimization processing errors
-            logger.error(
-                f"System performance optimization failed: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"System performance optimization failed: {e}")
             return {"success": False, "error": str(e)}
 
     async def get_system_dashboard(self) -> Dict[str, Any]:
@@ -736,19 +682,8 @@ class AIIntelligenceOrchestrator:
 
             return dashboard
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid system state or dashboard data errors
-            logger.error(
-                f"Invalid data generating system dashboard: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"error": str(e), "timestamp": datetime.now()}
-        except (ValueError, RuntimeError) as e:
-            # Dashboard generation processing errors
-            logger.error(
-                f"Failed to generate system dashboard: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to generate system dashboard: {e}")
             return {"error": str(e), "timestamp": datetime.now()}
 
     async def export_story_enhanced(
@@ -808,23 +743,8 @@ class AIIntelligenceOrchestrator:
 
             return export_result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid export request or data errors
-            logger.error(
-                f"Invalid data in enhanced export: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return ExportResult(
-                export_id=export_request.export_id,
-                success=False,
-                format=export_request.format,
-                error_message=str(e),
-            )
-        except (ValueError, RuntimeError) as e:
-            # Export processing errors
-            logger.error(
-                f"Enhanced export failed: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            logger.error(f"Enhanced export failed: {e}")
             return ExportResult(
                 export_id=export_request.export_id,
                 success=False,
@@ -890,19 +810,8 @@ class AIIntelligenceOrchestrator:
                 "quality_score": coordination_result.get("quality_score", 0.0),
             }
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid agent or coordination data errors
-            logger.error(
-                f"Invalid data in agent coordination: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"coordinated": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Agent coordination processing errors
-            logger.error(
-                f"Agent coordination failed: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Agent coordination failed: {e}")
             return {"coordinated": False, "error": str(e)}
 
     async def _generate_story_insights(
@@ -1106,18 +1015,8 @@ class AIIntelligenceOrchestrator:
 
             except asyncio.CancelledError:
                 break
-            except (AttributeError, KeyError, TypeError) as e:
-                # Invalid performance data or metrics errors
-                logger.error(
-                    f"Invalid data in performance monitoring: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (ValueError, RuntimeError) as e:
-                # Performance monitoring processing errors
-                logger.error(
-                    f"Performance monitoring error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Performance monitoring error: {e}")
 
     async def _insights_generation_loop(self):
         """Background insights generation loop."""
@@ -1131,18 +1030,8 @@ class AIIntelligenceOrchestrator:
 
             except asyncio.CancelledError:
                 break
-            except (AttributeError, KeyError, TypeError) as e:
-                # Invalid insights data or generation errors
-                logger.error(
-                    f"Invalid data in insights generation: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (ValueError, RuntimeError) as e:
-                # Insights generation processing errors
-                logger.error(
-                    f"Insights generation error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Insights generation error: {e}")
 
     async def _health_monitoring_loop(self):
         """Background health monitoring loop."""
@@ -1155,18 +1044,8 @@ class AIIntelligenceOrchestrator:
 
             except asyncio.CancelledError:
                 break
-            except (AttributeError, KeyError, TypeError) as e:
-                # Invalid health check data or monitoring errors
-                logger.error(
-                    f"Invalid data in health monitoring: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (ValueError, RuntimeError) as e:
-                # Health monitoring processing errors
-                logger.error(
-                    f"Health monitoring error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Health monitoring error: {e}")
 
     async def _optimization_loop(self):
         """Background optimization loop."""
@@ -1179,18 +1058,8 @@ class AIIntelligenceOrchestrator:
 
             except asyncio.CancelledError:
                 break
-            except (AttributeError, KeyError, TypeError) as e:
-                # Invalid optimization data or loop errors
-                logger.error(
-                    f"Invalid data in optimization loop: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (ValueError, RuntimeError) as e:
-                # Optimization loop processing errors
-                logger.error(
-                    f"Optimization loop error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Optimization loop error: {e}")
 
     async def _resource_balancing_loop(self):
         """Background resource balancing loop."""
@@ -1203,18 +1072,8 @@ class AIIntelligenceOrchestrator:
 
             except asyncio.CancelledError:
                 break
-            except (AttributeError, KeyError, TypeError) as e:
-                # Invalid resource data or balancing errors
-                logger.error(
-                    f"Invalid data in resource balancing: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (ValueError, RuntimeError) as e:
-                # Resource balancing processing errors
-                logger.error(
-                    f"Resource balancing error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Resource balancing error: {e}")
 
     # Event handlers
 

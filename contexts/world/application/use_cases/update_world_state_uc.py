@@ -61,7 +61,9 @@ class UpdateWorldStateResult:
         return {
             "success": self.success,
             "world_state_id": self.world_state.id if self.world_state else None,
-            "world_state_version": (self.world_state.version if self.world_state else None),
+            "world_state_version": (
+                self.world_state.version if self.world_state else None
+            ),
             "error_message": self.error_message,
             "operations_applied": self.operations_applied,
             "events_generated": self.events_generated,
@@ -122,7 +124,9 @@ class UpdateWorldStateUC:
         warnings = []
 
         try:
-            logger.info(f"Starting world delta application for command {command.command_id}")
+            logger.info(
+                f"Starting world delta application for command {command.command_id}"
+            )
             logger.debug(f"Command details: {command.get_operation_summary()}")
 
             # Phase 1: Validate command
@@ -146,7 +150,9 @@ class UpdateWorldStateUC:
             )
 
             if command.environment_operation:
-                await self._apply_environment_operation(world_state, command.environment_operation)
+                await self._apply_environment_operation(
+                    world_state, command.environment_operation
+                )
                 operations_applied += 1
 
             if command.time_operation:
@@ -154,7 +160,9 @@ class UpdateWorldStateUC:
                 operations_applied += 1
 
             if command.snapshot_operation:
-                await self._apply_snapshot_operation(world_state, command.snapshot_operation)
+                await self._apply_snapshot_operation(
+                    world_state, command.snapshot_operation
+                )
                 operations_applied += 1
 
             if command.reset_operation:
@@ -176,7 +184,9 @@ class UpdateWorldStateUC:
             logger.info(
                 f"Successfully applied {operations_applied} operations to world {command.world_state_id}"
             )
-            logger.debug(f"Generated {len(event_ids)} domain events in {execution_time:.2f}ms")
+            logger.debug(
+                f"Generated {len(event_ids)} domain events in {execution_time:.2f}ms"
+            )
 
             return UpdateWorldStateResult(
                 success=True,
@@ -250,7 +260,9 @@ class UpdateWorldStateUC:
 
         # Validate world state exists
         if not await self.world_repository.exists(command.world_state_id):
-            raise EntityNotFoundException(f"World state {command.world_state_id} not found")
+            raise EntityNotFoundException(
+                f"World state {command.world_state_id} not found"
+            )
 
         # Validate entity operations don't conflict
         entity_ids_being_added = set()
@@ -263,13 +275,17 @@ class UpdateWorldStateUC:
                 entity_ids_being_added.add(op.entity_id)
             elif op.entity_id:
                 if op.entity_id in entity_ids_being_modified:
-                    raise ValueError(f"Multiple operations on same entity: {op.entity_id}")
+                    raise ValueError(
+                        f"Multiple operations on same entity: {op.entity_id}"
+                    )
                 entity_ids_being_modified.add(op.entity_id)
 
         # Validate that entities being modified don't conflict with entities being added
         conflicts = entity_ids_being_added.intersection(entity_ids_being_modified)
         if conflicts:
-            raise ValueError(f"Cannot add and modify same entities in one command: {conflicts}")
+            raise ValueError(
+                f"Cannot add and modify same entities in one command: {conflicts}"
+            )
 
     async def _retrieve_world_state(self, command: ApplyWorldDelta) -> WorldState:
         """
@@ -286,7 +302,9 @@ class UpdateWorldStateUC:
         """
         world_state = await self.world_repository.get_by_id(command.world_state_id)
         if not world_state:
-            raise EntityNotFoundException(f"World state {command.world_state_id} not found")
+            raise EntityNotFoundException(
+                f"World state {command.world_state_id} not found"
+            )
 
         return world_state
 
@@ -312,14 +330,20 @@ class UpdateWorldStateUC:
                     await handler(world_state, operation)
                     operations_applied += 1
                 else:
-                    logger.warning(f"No handler for operation type: {operation.operation_type}")
+                    logger.warning(
+                        f"No handler for operation type: {operation.operation_type}"
+                    )
             except Exception as e:
-                logger.error(f"Failed to apply entity operation {operation.operation_type}: {e}")
+                logger.error(
+                    f"Failed to apply entity operation {operation.operation_type}: {e}"
+                )
                 raise
 
         return operations_applied
 
-    async def _apply_add_entity(self, world_state: WorldState, operation: EntityOperation) -> None:
+    async def _apply_add_entity(
+        self, world_state: WorldState, operation: EntityOperation
+    ) -> None:
         """Apply add entity operation."""
         world_state.add_entity(
             entity_id=operation.entity_id,
@@ -353,7 +377,9 @@ class UpdateWorldStateUC:
         if not success:
             logger.warning(f"Entity {operation.entity_id} not found for update")
 
-    async def _apply_move_entity(self, world_state: WorldState, operation: EntityOperation) -> None:
+    async def _apply_move_entity(
+        self, world_state: WorldState, operation: EntityOperation
+    ) -> None:
         """Apply move entity operation."""
         success = world_state.move_entity(
             entity_id=operation.entity_id,
@@ -443,7 +469,9 @@ class UpdateWorldStateUC:
             result = await self.execute(command)
 
             # If successful or not a concurrency issue, return result
-            if result.success or "Concurrency conflict" not in (result.error_message or ""):
+            if result.success or "Concurrency conflict" not in (
+                result.error_message or ""
+            ):
                 if attempt > 0:
                     logger.info(f"Command succeeded after {attempt} retries")
                 return result

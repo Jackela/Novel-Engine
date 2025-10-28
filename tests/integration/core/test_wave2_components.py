@@ -155,7 +155,6 @@ async def test_modular_director_agent():
     except Exception as e:
         print(f"❌ ModularDirectorAgent test failed: {e}")
         import traceback
-
         traceback.print_exc()
         return False
 

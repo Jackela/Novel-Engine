@@ -115,7 +115,9 @@ class ITurnBriefRepository(ABC):
         pass
 
     @abstractmethod
-    def find_by_world_state_version(self, world_state_version: int) -> List["TurnBrief"]:
+    def find_by_world_state_version(
+        self, world_state_version: int
+    ) -> List["TurnBrief"]:
         """
         Find all TurnBriefs associated with a specific world state version.
 
@@ -201,7 +203,9 @@ class ITurnBriefRepository(ABC):
         pass
 
     @abstractmethod
-    def find_entities_with_perception_type(self, perception_type: PerceptionType) -> List[str]:
+    def find_entities_with_perception_type(
+        self, perception_type: PerceptionType
+    ) -> List[str]:
         """
         Find all entities that have a specific type of perception.
 
@@ -286,7 +290,9 @@ class ITurnBriefRepository(ABC):
         pass
 
     @abstractmethod
-    def batch_update_world_state_version(self, entity_ids: List[str], new_version: int) -> int:
+    def batch_update_world_state_version(
+        self, entity_ids: List[str], new_version: int
+    ) -> int:
         """
         Update the world state version for multiple TurnBriefs in a batch operation.
 

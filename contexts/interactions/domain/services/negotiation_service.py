@@ -110,7 +110,9 @@ class NegotiationService:
                 party_analysis = self._analyze_party_proposal_fit(
                     proposal, party, negotiation_domain
                 )
-                analysis["party_specific_analysis"][str(party.party_id)] = party_analysis
+                analysis["party_specific_analysis"][
+                    str(party.party_id)
+                ] = party_analysis
                 party_scores.append(party_analysis["acceptance_score"])
 
         if party_scores:
@@ -129,7 +131,9 @@ class NegotiationService:
         )
 
         # Identify critical issues
-        analysis["critical_issues"] = self._identify_critical_proposal_issues(proposal, parties)
+        analysis["critical_issues"] = self._identify_critical_proposal_issues(
+            proposal, parties
+        )
 
         # Identify success factors
         analysis["success_factors"] = self._identify_success_factors(proposal, parties)
@@ -164,7 +168,9 @@ class NegotiationService:
         # Analyze party composition
         decision_makers = [p for p in parties if p.is_decision_maker]
         dominant_styles = self._analyze_dominant_negotiation_styles(parties)
-        power_balance = self._analyze_negotiation_power_balance(parties, negotiation_domain)
+        power_balance = self._analyze_negotiation_power_balance(
+            parties, negotiation_domain
+        )
 
         # Recommend overall approach
         strategy["recommended_approach"] = self._recommend_overall_approach(
@@ -182,10 +188,14 @@ class NegotiationService:
         )
 
         # Risk mitigation strategies
-        strategy["risk_mitigation"] = self._recommend_risk_mitigation(parties, dominant_styles)
+        strategy["risk_mitigation"] = self._recommend_risk_mitigation(
+            parties, dominant_styles
+        )
 
         # Success metrics
-        strategy["success_metrics"] = self._define_success_metrics(parties, target_outcome)
+        strategy["success_metrics"] = self._define_success_metrics(
+            parties, target_outcome
+        )
 
         # Timeline recommendations
         strategy["timeline_recommendations"] = self._recommend_timeline(
@@ -194,9 +204,11 @@ class NegotiationService:
 
         # Party-specific strategies
         for party in decision_makers:
-            strategy["party_specific_strategies"][
-                str(party.party_id)
-            ] = self._recommend_party_specific_strategy(party, parties, negotiation_domain)
+            strategy["party_specific_strategies"][str(party.party_id)] = (
+                self._recommend_party_specific_strategy(
+                    party, parties, negotiation_domain
+                )
+            )
 
         return strategy
 
@@ -266,10 +278,14 @@ class NegotiationService:
         momentum["momentum_score"] = sum(momentum_factors) / len(momentum_factors)
 
         # Determine direction
-        momentum["direction"] = self._determine_momentum_direction(acceptance_trend, responses)
+        momentum["direction"] = self._determine_momentum_direction(
+            acceptance_trend, responses
+        )
 
         # Determine velocity
-        momentum["velocity"] = self._determine_momentum_velocity(response_speed, engagement_level)
+        momentum["velocity"] = self._determine_momentum_velocity(
+            response_speed, engagement_level
+        )
 
         # Predict trajectory
         momentum["trajectory_prediction"] = self._predict_negotiation_trajectory(
@@ -324,13 +340,17 @@ class NegotiationService:
             if analysis["optimization_potential"] > Decimal("10"):
                 optimized_term = self._optimize_term(term, analysis, decision_makers)
                 optimized_terms.append(optimized_term)
-                optimization["optimization_rationale"][term.term_id] = analysis["reasoning"]
+                optimization["optimization_rationale"][term.term_id] = analysis[
+                    "reasoning"
+                ]
 
         optimization["optimized_terms"] = optimized_terms
 
         # Calculate expected improvement
         if optimized_terms:
-            current_acceptance = self._estimate_proposal_acceptance(proposal, decision_makers)
+            current_acceptance = self._estimate_proposal_acceptance(
+                proposal, decision_makers
+            )
             optimized_proposal = proposal
             for optimized_term in optimized_terms:
                 optimized_proposal = optimized_proposal.update_term(
@@ -339,14 +359,18 @@ class NegotiationService:
             optimized_acceptance = self._estimate_proposal_acceptance(
                 optimized_proposal, decision_makers
             )
-            optimization["expected_improvement"] = optimized_acceptance - current_acceptance
+            optimization["expected_improvement"] = (
+                optimized_acceptance - current_acceptance
+            )
 
         # Risk assessment
-        optimization["risk_assessment"] = self._assess_optimization_risks(optimized_terms, parties)
+        optimization["risk_assessment"] = self._assess_optimization_risks(
+            optimized_terms, parties
+        )
 
         # Implementation difficulty
-        optimization["implementation_difficulty"] = self._assess_implementation_difficulty(
-            optimized_terms
+        optimization["implementation_difficulty"] = (
+            self._assess_implementation_difficulty(optimized_terms)
         )
 
         return optimization
@@ -373,7 +397,9 @@ class NegotiationService:
 
         # Compatibility matrix for communication styles
         compatibility_matrix = {
-            (CommunicationPreference.DIRECT, CommunicationPreference.DIRECT): Decimal("90"),
+            (CommunicationPreference.DIRECT, CommunicationPreference.DIRECT): Decimal(
+                "90"
+            ),
             (
                 CommunicationPreference.DIRECT,
                 CommunicationPreference.DIPLOMATIC,
@@ -382,7 +408,9 @@ class NegotiationService:
                 CommunicationPreference.DIPLOMATIC,
                 CommunicationPreference.DIPLOMATIC,
             ): Decimal("85"),
-            (CommunicationPreference.FORMAL, CommunicationPreference.FORMAL): Decimal("80"),
+            (CommunicationPreference.FORMAL, CommunicationPreference.FORMAL): Decimal(
+                "80"
+            ),
             (
                 CommunicationPreference.INFORMAL,
                 CommunicationPreference.INFORMAL,
@@ -413,19 +441,32 @@ class NegotiationService:
         style2 = party2.preferences.negotiation_style
 
         # High compatibility pairs
-        if style1 == NegotiationStyle.COLLABORATIVE and style2 == NegotiationStyle.COLLABORATIVE:
+        if (
+            style1 == NegotiationStyle.COLLABORATIVE
+            and style2 == NegotiationStyle.COLLABORATIVE
+        ):
             return Decimal("95")
 
-        if style1 == NegotiationStyle.INTEGRATIVE and style2 == NegotiationStyle.INTEGRATIVE:
+        if (
+            style1 == NegotiationStyle.INTEGRATIVE
+            and style2 == NegotiationStyle.INTEGRATIVE
+        ):
             return Decimal("90")
 
         # Moderate compatibility
-        if style1 == NegotiationStyle.COMPROMISING or style2 == NegotiationStyle.COMPROMISING:
+        if (
+            style1 == NegotiationStyle.COMPROMISING
+            or style2 == NegotiationStyle.COMPROMISING
+        ):
             return Decimal("70")
 
         # Problematic combinations
-        if (style1 == NegotiationStyle.COMPETITIVE and style2 == NegotiationStyle.AVOIDING) or (
-            style1 == NegotiationStyle.AVOIDING and style2 == NegotiationStyle.COMPETITIVE
+        if (
+            style1 == NegotiationStyle.COMPETITIVE
+            and style2 == NegotiationStyle.AVOIDING
+        ) or (
+            style1 == NegotiationStyle.AVOIDING
+            and style2 == NegotiationStyle.COMPETITIVE
         ):
             return Decimal("20")
 
@@ -449,7 +490,9 @@ class NegotiationService:
         power2 = party2.get_negotiation_power(domain)
 
         power_ratio = (
-            min(power1, power2) / max(power1, power2) if max(power1, power2) > 0 else Decimal("0")
+            min(power1, power2) / max(power1, power2)
+            if max(power1, power2) > 0
+            else Decimal("0")
         )
 
         # More balanced power = better compatibility
@@ -464,12 +507,16 @@ class NegotiationService:
 
         # Check session duration compatibility
         if pref1.maximum_session_duration and pref2.maximum_session_duration:
-            min_duration = min(pref1.maximum_session_duration, pref2.maximum_session_duration)
+            min_duration = min(
+                pref1.maximum_session_duration, pref2.maximum_session_duration
+            )
             if min_duration < 30:  # Less than 30 minutes
                 return Decimal("30")
 
         # Check time pressure sensitivity
-        sensitivity_diff = abs(pref1.time_pressure_sensitivity - pref2.time_pressure_sensitivity)
+        sensitivity_diff = abs(
+            pref1.time_pressure_sensitivity - pref2.time_pressure_sensitivity
+        )
         if sensitivity_diff > 50:
             return Decimal("40")  # Very different sensitivities
 
@@ -490,14 +537,20 @@ class NegotiationService:
         # Analyze each term
         for term in proposal.terms:
             term_score = self._score_term_for_party(term, party, domain)
-            analysis["acceptance_score"] += (term_score - Decimal("50")) / len(proposal.terms)
+            analysis["acceptance_score"] += (term_score - Decimal("50")) / len(
+                proposal.terms
+            )
 
             if term_score < 20:
-                analysis["deal_breakers"].append(f"Term {term.term_id}: {term.description}")
+                analysis["deal_breakers"].append(
+                    f"Term {term.term_id}: {term.description}"
+                )
             elif term_score < 40:
                 analysis["concerns"].append(f"Term {term.term_id}: {term.description}")
             elif term_score > 70:
-                analysis["positive_factors"].append(f"Term {term.term_id}: {term.description}")
+                analysis["positive_factors"].append(
+                    f"Term {term.term_id}: {term.description}"
+                )
 
             if term.is_negotiable:
                 analysis["negotiable_items"].append(term.term_id)
@@ -536,7 +589,9 @@ class NegotiationService:
 
         # Authority factor
         if not party.can_make_binding_decisions() and not term.is_negotiable:
-            base_score -= Decimal("20")  # Non-negotiable terms harder for non-decision makers
+            base_score -= Decimal(
+                "20"
+            )  # Non-negotiable terms harder for non-decision makers
 
         return base_score * weight
 
@@ -557,7 +612,9 @@ class NegotiationService:
 
         critical_terms = proposal.get_critical_terms()
         if len(critical_terms) > 5:
-            base_probability *= Decimal("0.8")  # Too many critical terms reduce probability
+            base_probability *= Decimal(
+                "0.8"
+            )  # Too many critical terms reduce probability
 
         return min(Decimal("100"), base_probability)
 
@@ -578,7 +635,9 @@ class NegotiationService:
             risks.append("High proportion of non-negotiable terms")
 
         if proposal.total_terms_count > 10:
-            risks.append("Complex proposal with many terms may be difficult to evaluate")
+            risks.append(
+                "Complex proposal with many terms may be difficult to evaluate"
+            )
 
         return risks
 
@@ -625,7 +684,9 @@ class NegotiationService:
         # Check for deal-breaker terms
         critical_terms = proposal.get_critical_terms()
         if len(critical_terms) == proposal.total_terms_count:
-            issues.append("All terms are marked as critical - no negotiation flexibility")
+            issues.append(
+                "All terms are marked as critical - no negotiation flexibility"
+            )
 
         # Authority issues
         decision_makers = [p for p in parties if p.is_decision_maker]
@@ -797,7 +858,9 @@ class NegotiationService:
 
         return metrics
 
-    def _recommend_timeline(self, parties: List[NegotiationParty], approach: str) -> Dict[str, any]:
+    def _recommend_timeline(
+        self, parties: List[NegotiationParty], approach: str
+    ) -> Dict[str, any]:
         """Recommend timeline for negotiation phases."""
         timeline = {}
 
@@ -819,7 +882,9 @@ class NegotiationService:
             }
 
         # Adjust for party time sensitivities
-        high_pressure_parties = [p for p in parties if p.preferences.time_pressure_sensitivity > 70]
+        high_pressure_parties = [
+            p for p in parties if p.preferences.time_pressure_sensitivity > 70
+        ]
 
         if len(high_pressure_parties) > len(parties) // 2:
             timeline["note"] = "Accelerated timeline recommended due to time pressure"
@@ -860,7 +925,9 @@ class NegotiationService:
 
         # Authority-based concerns
         if not party.can_make_binding_decisions():
-            strategy["potential_concerns"].append("need for approval from higher authority")
+            strategy["potential_concerns"].append(
+                "need for approval from higher authority"
+            )
 
         # Domain expertise considerations
         if domain:
@@ -871,13 +938,17 @@ class NegotiationService:
 
         return strategy
 
-    def _detect_style_conflicts(self, parties: List[NegotiationParty]) -> List[Dict[str, any]]:
+    def _detect_style_conflicts(
+        self, parties: List[NegotiationParty]
+    ) -> List[Dict[str, any]]:
         """Detect negotiation style conflicts."""
         conflicts = []
 
         for i, party1 in enumerate(parties):
             for party2 in parties[i + 1 :]:
-                compatibility = self._assess_negotiation_style_compatibility(party1, party2)
+                compatibility = self._assess_negotiation_style_compatibility(
+                    party1, party2
+                )
                 if compatibility < 40:
                     conflicts.append(
                         {
@@ -895,7 +966,9 @@ class NegotiationService:
 
         return conflicts
 
-    def _detect_authority_conflicts(self, parties: List[NegotiationParty]) -> List[Dict[str, any]]:
+    def _detect_authority_conflicts(
+        self, parties: List[NegotiationParty]
+    ) -> List[Dict[str, any]]:
         """Detect authority-related conflicts."""
         conflicts = []
 
@@ -933,7 +1006,9 @@ class NegotiationService:
 
         return conflicts
 
-    def _detect_response_conflicts(self, responses: List[ProposalResponse]) -> List[Dict[str, any]]:
+    def _detect_response_conflicts(
+        self, responses: List[ProposalResponse]
+    ) -> List[Dict[str, any]]:
         """Detect conflicts in proposal responses."""
         conflicts = []
 
@@ -950,8 +1025,12 @@ class NegotiationService:
                 continue
 
             # Check for conflicting responses
-            acceptance_responses = [r for r in prop_responses if r.is_complete_acceptance()]
-            rejection_responses = [r for r in prop_responses if r.is_complete_rejection()]
+            acceptance_responses = [
+                r for r in prop_responses if r.is_complete_acceptance()
+            ]
+            rejection_responses = [
+                r for r in prop_responses if r.is_complete_rejection()
+            ]
 
             if len(acceptance_responses) > 0 and len(rejection_responses) > 0:
                 conflicts.append(
@@ -970,7 +1049,9 @@ class NegotiationService:
 
         return conflicts
 
-    def _detect_cultural_conflicts(self, parties: List[NegotiationParty]) -> List[Dict[str, any]]:
+    def _detect_cultural_conflicts(
+        self, parties: List[NegotiationParty]
+    ) -> List[Dict[str, any]]:
         """Detect cultural conflicts between parties."""
         conflicts = []
 
@@ -1011,7 +1092,9 @@ class NegotiationService:
 
         return conflicts
 
-    def _detect_time_conflicts(self, parties: List[NegotiationParty]) -> List[Dict[str, any]]:
+    def _detect_time_conflicts(
+        self, parties: List[NegotiationParty]
+    ) -> List[Dict[str, any]]:
         """Detect time-related conflicts."""
         conflicts = []
 
@@ -1032,7 +1115,8 @@ class NegotiationService:
                         "parties": [
                             p.party_id
                             for p in parties
-                            if p.preferences.maximum_session_duration == min_max_duration
+                            if p.preferences.maximum_session_duration
+                            == min_max_duration
                         ],
                         "description": f"Very short maximum session duration ({min_max_duration} minutes) may prevent meaningful negotiation",
                         "resolution_suggestions": [
@@ -1094,7 +1178,9 @@ class NegotiationService:
             return Decimal("50")
 
         # Simple metric based on response count and recency
-        recent_responses = [r for r in responses if r.age_in_seconds < 3600]  # Within last hour
+        recent_responses = [
+            r for r in responses if r.age_in_seconds < 3600  # Within last hour
+        ]
 
         speed_score = min(len(recent_responses) * 20, 100)
         return Decimal(str(speed_score))
@@ -1106,7 +1192,9 @@ class NegotiationService:
 
         # Factors that indicate engagement
         detailed_responses = [
-            r for r in responses if r.overall_comments or len(r.get_terms_with_modifications()) > 0
+            r
+            for r in responses
+            if r.overall_comments or len(r.get_terms_with_modifications()) > 0
         ]
 
         engagement_score = len(detailed_responses) / len(responses) * 100
@@ -1152,12 +1240,16 @@ class NegotiationService:
         else:
             return "uncertain"
 
-    def _identify_momentum_drivers(self, responses: List[ProposalResponse]) -> List[str]:
+    def _identify_momentum_drivers(
+        self, responses: List[ProposalResponse]
+    ) -> List[str]:
         """Identify factors driving momentum."""
         drivers = []
 
         if responses:
-            avg_acceptance = sum(r.get_acceptance_percentage() for r in responses) / len(responses)
+            avg_acceptance = sum(
+                r.get_acceptance_percentage() for r in responses
+            ) / len(responses)
             if avg_acceptance > 60:
                 drivers.append("High average acceptance rate")
 
@@ -1173,7 +1265,9 @@ class NegotiationService:
 
         return drivers
 
-    def _identify_momentum_inhibitors(self, responses: List[ProposalResponse]) -> List[str]:
+    def _identify_momentum_inhibitors(
+        self, responses: List[ProposalResponse]
+    ) -> List[str]:
         """Identify factors inhibiting momentum."""
         inhibitors = []
 
@@ -1229,8 +1323,12 @@ class NegotiationService:
 
         if term.priority == ProposalPriority.LOW and len(term.dependencies or []) > 0:
             analysis["optimization_potential"] = Decimal("20")
-            analysis["reasoning"] = "Low priority term with dependencies adds complexity"
-            analysis["suggested_changes"].append("Remove dependencies or increase priority")
+            analysis["reasoning"] = (
+                "Low priority term with dependencies adds complexity"
+            )
+            analysis["suggested_changes"].append(
+                "Remove dependencies or increase priority"
+            )
 
         return analysis
 
@@ -1286,12 +1384,16 @@ class NegotiationService:
 
         if len(optimized_terms) > 3:
             risks["risk_level"] = "medium"
-            risks["risk_factors"].append("Many simultaneous changes may confuse parties")
+            risks["risk_factors"].append(
+                "Many simultaneous changes may confuse parties"
+            )
             risks["mitigation_strategies"].append("Phase implementation of changes")
 
         return risks
 
-    def _assess_implementation_difficulty(self, optimized_terms: List[TermCondition]) -> str:
+    def _assess_implementation_difficulty(
+        self, optimized_terms: List[TermCondition]
+    ) -> str:
         """Assess difficulty of implementing optimizations."""
         if not optimized_terms:
             return "none"

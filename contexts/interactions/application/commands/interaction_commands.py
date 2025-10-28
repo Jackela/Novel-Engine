@@ -71,7 +71,9 @@ class CreateNegotiationSessionCommand(InteractionCommand):
         if self.session_timeout_hours <= 0:
             raise ValueError("session_timeout_hours must be positive")
         if self.priority_level not in ["low", "medium", "high", "critical"]:
-            raise ValueError("priority_level must be one of: low, medium, high, critical")
+            raise ValueError(
+                "priority_level must be one of: low, medium, high, critical"
+            )
         if self.confidentiality_level not in [
             "public",
             "standard",
@@ -140,13 +142,14 @@ class UpdateSessionConfigurationCommand(InteractionCommand):
             "high",
             "critical",
         ]:
-            raise ValueError("priority_level must be one of: low, medium, high, critical")
-        if self.confidentiality_level is not None and self.confidentiality_level not in [
-            "public",
-            "standard",
-            "confidential",
-            "secret",
-        ]:
+            raise ValueError(
+                "priority_level must be one of: low, medium, high, critical"
+            )
+        if (
+            self.confidentiality_level is not None
+            and self.confidentiality_level
+            not in ["public", "standard", "confidential", "secret"]
+        ):
             raise ValueError(
                 "confidentiality_level must be one of: public, standard, confidential, secret"
             )
@@ -367,7 +370,9 @@ class AnalyzeProposalViabilityCommand(InteractionCommand):
     def __post_init__(self):
         super().__post_init__()
         if self.analysis_depth not in ["basic", "standard", "comprehensive"]:
-            raise ValueError("analysis_depth must be one of: basic, standard, comprehensive")
+            raise ValueError(
+                "analysis_depth must be one of: basic, standard, comprehensive"
+            )
 
 
 @dataclass(frozen=True)
@@ -420,7 +425,9 @@ class DetectNegotiationConflictsCommand(InteractionCommand):
     def __post_init__(self):
         super().__post_init__()
         if self.severity_threshold not in ["low", "medium", "high", "critical"]:
-            raise ValueError("severity_threshold must be one of: low, medium, high, critical")
+            raise ValueError(
+                "severity_threshold must be one of: low, medium, high, critical"
+            )
 
 
 @dataclass(frozen=True)
@@ -500,7 +507,9 @@ class SynchronizeExternalDataCommand(InteractionCommand):
         if not self.data_sources:
             raise ValueError("data_sources cannot be empty")
         if self.sync_type not in ["full", "incremental", "differential"]:
-            raise ValueError("sync_type must be one of: full, incremental, differential")
+            raise ValueError(
+                "sync_type must be one of: full, incremental, differential"
+            )
         if self.conflict_resolution_strategy not in ["overwrite", "merge", "manual"]:
             raise ValueError(
                 "conflict_resolution_strategy must be one of: overwrite, merge, manual"
@@ -522,7 +531,9 @@ class ExportNegotiationDataCommand(InteractionCommand):
         if self.export_format not in ["json", "xml", "csv", "pdf"]:
             raise ValueError("export_format must be one of: json, xml, csv, pdf")
         if self.export_scope not in ["session", "proposals", "responses", "summary"]:
-            raise ValueError("export_scope must be one of: session, proposals, responses, summary")
+            raise ValueError(
+                "export_scope must be one of: session, proposals, responses, summary"
+            )
 
 
 # Monitoring Commands

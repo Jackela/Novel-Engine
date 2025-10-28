@@ -145,7 +145,9 @@ async def demonstrate_turn_tracing():
     # Close root span
     turn_span_1.end()
 
-    print(f"✅ Root span completed: {total_execution_time}s total, ${total_ai_cost} cost")
+    print(
+        f"✅ Root span completed: {total_execution_time}s total, ${total_ai_cost} cost"
+    )
     print(f"   Phases completed: {len(completed_phases)}/5")
     print("   Root span covered complete run_turn orchestration flow")
 
@@ -205,7 +207,9 @@ async def demonstrate_turn_tracing():
         await asyncio.sleep(0.1)
 
         # Record phase result (success or failure)
-        error_details = None if success else f"Phase {phase_name} failed: simulated error"
+        error_details = (
+            None if success else f"Phase {phase_name} failed: simulated error"
+        )
 
         tracer.record_phase_result(
             span=phase_span,
@@ -242,7 +246,9 @@ async def demonstrate_turn_tracing():
     # Close root span for failed turn
     turn_span_2.end()
 
-    print(f"❌ Root span completed for failed turn: {failed_execution_time}s, ${failed_total_cost}")
+    print(
+        f"❌ Root span completed for failed turn: {failed_execution_time}s, ${failed_total_cost}"
+    )
     print(f"   Phases completed: {len(failed_completed_phases)}/4 (before failure)")
     print("   Root span captured complete failure flow for analysis")
 
@@ -416,7 +422,9 @@ def demonstrate_intelligent_sampling():
             attributes=attributes,
         )
 
-        sample_decision = "SAMPLE" if decision.decision.name == "RECORD_AND_SAMPLE" else "DROP"
+        sample_decision = (
+            "SAMPLE" if decision.decision.name == "RECORD_AND_SAMPLE" else "DROP"
+        )
         print(f"   {scenario_name}: {sample_decision}")
         print(f"     Attributes: {attributes}")
         print(f"     Rationale: {description}")

@@ -296,11 +296,11 @@ class RedisCache(CacheInterface):
         """Get Redis connection (lazy initialization)"""
         if self._redis is None:
             try:
-                import redis.asyncio as redis
+                import aioredis
 
-                self._redis = redis.from_url(self.redis_url, decode_responses=True)
+                self._redis = aioredis.from_url(self.redis_url)
             except ImportError:
-                logger.warning("redis not available, using mock Redis")
+                logger.warning("aioredis not available, using mock Redis")
                 self._redis = MockRedis()
         return self._redis
 
@@ -472,6 +472,7 @@ class DistributedCache:
         enable_write_through: bool = True,
         enable_read_through: bool = True,
     ):
+
         self.l1_cache = l1_cache or MemoryCache()
         self.l2_cache = l2_cache or RedisCache()
         self.enable_write_through = enable_write_through

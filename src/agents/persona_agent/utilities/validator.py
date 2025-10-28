@@ -227,29 +227,8 @@ class Validator:
             await self._update_validation_stats(result)
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid character data structure or schema access errors
-            self.logger.error(
-                f"Invalid data during character data validation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return ValidationResult(
-                is_valid=False,
-                validation_type=ValidationType.CHARACTER_DATA,
-                issues=[
-                    ValidationIssue(
-                        severity=ValidationSeverity.CRITICAL,
-                        message=f"Validation system error: {str(e)}",
-                        code="VALIDATION_SYSTEM_ERROR",
-                    )
-                ],
-            )
-        except (ValueError, RuntimeError) as e:
-            # Score calculation or validation processing errors
-            self.logger.error(
-                f"Character data validation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Character data validation failed: {e}")
             return ValidationResult(
                 is_valid=False,
                 validation_type=ValidationType.CHARACTER_DATA,
@@ -352,29 +331,8 @@ class Validator:
             await self._update_validation_stats(result)
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid action data structure or schema access errors
-            self.logger.error(
-                f"Invalid data during action validation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return ValidationResult(
-                is_valid=False,
-                validation_type=ValidationType.ACTION,
-                issues=[
-                    ValidationIssue(
-                        severity=ValidationSeverity.CRITICAL,
-                        message=f"Action validation error: {str(e)}",
-                        code="ACTION_VALIDATION_ERROR",
-                    )
-                ],
-            )
-        except (ValueError, RuntimeError) as e:
-            # Score calculation or validation processing errors
-            self.logger.error(
-                f"Action validation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Action validation failed: {e}")
             return ValidationResult(
                 is_valid=False,
                 validation_type=ValidationType.ACTION,
@@ -508,29 +466,8 @@ class Validator:
             await self._update_validation_stats(result)
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid event data structure or field access errors
-            self.logger.error(
-                f"Invalid data during world event validation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return ValidationResult(
-                is_valid=False,
-                validation_type=ValidationType.WORLD_EVENT,
-                issues=[
-                    ValidationIssue(
-                        severity=ValidationSeverity.CRITICAL,
-                        message=f"Event validation error: {str(e)}",
-                        code="EVENT_VALIDATION_ERROR",
-                    )
-                ],
-            )
-        except (ValueError, RuntimeError) as e:
-            # Score calculation or validation processing errors
-            self.logger.error(
-                f"World event validation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"World event validation failed: {e}")
             return ValidationResult(
                 is_valid=False,
                 validation_type=ValidationType.WORLD_EVENT,
@@ -612,29 +549,8 @@ class Validator:
             await self._update_validation_stats(result)
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid system state structure or subsystem access errors
-            self.logger.error(
-                f"Invalid data during system state validation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return ValidationResult(
-                is_valid=False,
-                validation_type=ValidationType.SYSTEM_STATE,
-                issues=[
-                    ValidationIssue(
-                        severity=ValidationSeverity.CRITICAL,
-                        message=f"System state validation error: {str(e)}",
-                        code="SYSTEM_STATE_ERROR",
-                    )
-                ],
-            )
-        except (ValueError, RuntimeError) as e:
-            # Score calculation or validation processing errors
-            self.logger.error(
-                f"System state validation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"System state validation failed: {e}")
             return ValidationResult(
                 is_valid=False,
                 validation_type=ValidationType.SYSTEM_STATE,
@@ -659,12 +575,8 @@ class Validator:
             self._custom_rules[rule_name] = rule_function
             self.logger.info(f"Added custom validation rule: {rule_name}")
 
-        except (AttributeError, TypeError, ValueError) as e:
-            # Invalid rule function or name errors
-            self.logger.error(
-                f"Failed to add custom rule {rule_name}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to add custom rule {rule_name}: {e}")
 
     async def get_validation_statistics(self) -> Dict[str, Any]:
         """Get comprehensive validation statistics."""
@@ -684,19 +596,8 @@ class Validator:
                 "custom_rules_count": len(self._custom_rules),
             }
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid statistics data structure
-            self.logger.error(
-                f"Invalid data during statistics calculation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"error": str(e)}
-        except (ValueError, ZeroDivisionError) as e:
-            # Calculation or division errors
-            self.logger.error(
-                f"Statistics calculation error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Statistics calculation failed: {e}")
             return {"error": str(e)}
 
     # Private validation methods
@@ -1039,17 +940,7 @@ class Validator:
                         )
                     )
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid schema or data structure errors
-            issues.append(
-                ValidationIssue(
-                    severity=ValidationSeverity.ERROR,
-                    message=f"Schema validation error: {str(e)}",
-                    code="SCHEMA_VALIDATION_ERROR",
-                )
-            )
-        except (ValueError, RuntimeError) as e:
-            # Schema validation processing errors
+        except Exception as e:
             issues.append(
                 ValidationIssue(
                     severity=ValidationSeverity.ERROR,
@@ -1109,18 +1000,8 @@ class Validator:
             for issue in result.issues:
                 self._stats["issues_by_severity"][issue.severity.value] += 1
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid statistics or result data structure
-            self.logger.debug(
-                f"Statistics update data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, IndexError) as e:
-            # Statistics calculation or list operations errors
-            self.logger.debug(
-                f"Statistics update processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Statistics update failed: {e}")
 
     # Placeholder methods for system validation
 

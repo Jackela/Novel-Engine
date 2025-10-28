@@ -468,8 +468,12 @@ class PipelineResult:
 
         # Bonus for AI efficiency (more events per dollar spent)
         if self.total_ai_cost > 0:
-            events_per_dollar = float(self.total_events_processed) / float(self.total_ai_cost)
-            ai_efficiency = min(1.0, events_per_dollar / 100.0)  # Normalize to 100 events/$1
+            events_per_dollar = float(self.total_events_processed) / float(
+                self.total_ai_cost
+            )
+            ai_efficiency = min(
+                1.0, events_per_dollar / 100.0
+            )  # Normalize to 100 events/$1
             efficiency_score = (efficiency_score + ai_efficiency) / 2
 
         return efficiency_score

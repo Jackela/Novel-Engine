@@ -166,17 +166,9 @@ class ConfigurationManager:
                     if file_config:
                         self._merge_configurations(self.config_data, file_config)
                         logger.info(f"Loaded configuration from {config_path}")
-                except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-                    # File system errors loading config file
+                except Exception as e:
                     logger.warning(
-                        f"File error loading configuration from {config_path}: {e}",
-                        extra={"error_type": type(e).__name__},
-                    )
-                except (json.JSONDecodeError, yaml.YAMLError, ValueError) as e:
-                    # Config file parsing errors
-                    logger.warning(
-                        f"Parse error loading configuration from {config_path}: {e}",
-                        extra={"error_type": type(e).__name__},
+                        f"Failed to load configuration from {config_path}: {e}"
                     )
 
         # Apply environment variable overrides
@@ -198,19 +190,8 @@ class ConfigurationManager:
                         f"Unsupported configuration file format: {config_path}"
                     )
                     return None
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors reading config file
-            logger.error(
-                f"File error loading configuration file {config_path}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return None
-        except (json.JSONDecodeError, yaml.YAMLError, ValueError, TypeError) as e:
-            # Config file parsing or format errors
-            logger.error(
-                f"Parse error loading configuration file {config_path}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Error loading configuration file {config_path}: {e}")
             return None
 
     def _merge_configurations(
@@ -385,19 +366,8 @@ class ConfigurationManager:
 
             logger.info(f"Configuration saved to {file_path}")
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors saving config
-            logger.error(
-                f"File error saving configuration to {file_path}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (json.JSONEncodeError, yaml.YAMLError, TypeError, ValueError) as e:
-            # Config serialization errors
-            logger.error(
-                f"Serialization error saving configuration to {file_path}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to save configuration to {file_path}: {e}")
             raise
 
 

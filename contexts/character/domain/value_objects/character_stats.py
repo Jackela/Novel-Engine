@@ -47,7 +47,9 @@ class CoreAbilities:
 
         for ability in abilities:
             if not 1 <= ability <= 30:
-                raise ValueError(f"Ability scores must be between 1 and 30, got {ability}")
+                raise ValueError(
+                    f"Ability scores must be between 1 and 30, got {ability}"
+                )
 
     def get_ability_score(self, ability: AbilityScore) -> int:
         """Get the score for a specific ability."""
@@ -68,7 +70,10 @@ class CoreAbilities:
 
     def get_all_modifiers(self) -> Dict[str, int]:
         """Get all ability modifiers as a dictionary."""
-        return {ability.value: self.get_ability_modifier(ability) for ability in AbilityScore}
+        return {
+            ability.value: self.get_ability_modifier(ability)
+            for ability in AbilityScore
+        }
 
     def is_exceptional_ability(self, ability: AbilityScore) -> bool:
         """Check if an ability score is exceptional (18+)."""
@@ -76,12 +81,16 @@ class CoreAbilities:
 
     def get_strongest_ability(self) -> AbilityScore:
         """Get the character's highest ability score."""
-        scores = [(ability, self.get_ability_score(ability)) for ability in AbilityScore]
+        scores = [
+            (ability, self.get_ability_score(ability)) for ability in AbilityScore
+        ]
         return max(scores, key=lambda x: x[1])[0]
 
     def get_weakest_ability(self) -> AbilityScore:
         """Get the character's lowest ability score."""
-        scores = [(ability, self.get_ability_score(ability)) for ability in AbilityScore]
+        scores = [
+            (ability, self.get_ability_score(ability)) for ability in AbilityScore
+        ]
         return min(scores, key=lambda x: x[1])[0]
 
 
@@ -230,31 +239,23 @@ class CombatStats:
                 else (
                     "Skilled"
                     if self.base_attack_bonus > 10
-                    else "Average"
-                    if self.base_attack_bonus > 5
-                    else "Novice"
+                    else "Average" if self.base_attack_bonus > 5 else "Novice"
                 )
             ),
             "initiative": (
                 "Fast"
                 if self.initiative_modifier > 3
-                else "Average"
-                if self.initiative_modifier > -1
-                else "Slow"
+                else "Average" if self.initiative_modifier > -1 else "Slow"
             ),
             "durability": (
                 "Tough"
                 if self.damage_reduction > 5
-                else "Average"
-                if self.damage_reduction > 0
-                else "Fragile"
+                else "Average" if self.damage_reduction > 0 else "Fragile"
             ),
             "magic_resistance": (
                 "High"
                 if self.spell_resistance > 15
-                else "Some"
-                if self.spell_resistance > 0
-                else "None"
+                else "Some" if self.spell_resistance > 0 else "None"
             ),
         }
 

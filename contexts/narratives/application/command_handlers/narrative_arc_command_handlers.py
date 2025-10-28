@@ -196,7 +196,9 @@ class NarrativeArcCommandHandler:
                 )
                 self.causal_service.add_node(causal_node)
 
-            logger.info(f"Added plot point {command.plot_point_id} to arc {command.arc_id}")
+            logger.info(
+                f"Added plot point {command.plot_point_id} to arc {command.arc_id}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to add plot point: {str(e)}")
@@ -250,7 +252,11 @@ class NarrativeArcCommandHandler:
                 location=plot_point.location,
                 time_context=plot_point.time_context,
                 pov_character=plot_point.pov_character,
-                outcome=(command.outcome if command.outcome is not None else plot_point.outcome),
+                outcome=(
+                    command.outcome
+                    if command.outcome is not None
+                    else plot_point.outcome
+                ),
                 conflict_type=plot_point.conflict_type,
                 thematic_relevance=plot_point.thematic_relevance,
                 tags=plot_point.tags,
@@ -263,7 +269,9 @@ class NarrativeArcCommandHandler:
 
             self.repository.save(arc)
 
-            logger.info(f"Updated plot point {command.plot_point_id} in arc {command.arc_id}")
+            logger.info(
+                f"Updated plot point {command.plot_point_id} in arc {command.arc_id}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to update plot point: {str(e)}")
@@ -286,7 +294,9 @@ class NarrativeArcCommandHandler:
             if self.causal_service:
                 self.causal_service.remove_node(command.plot_point_id)
 
-            logger.info(f"Removed plot point {command.plot_point_id} from arc {command.arc_id}")
+            logger.info(
+                f"Removed plot point {command.plot_point_id} from arc {command.arc_id}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to remove plot point: {str(e)}")
@@ -336,7 +346,9 @@ class NarrativeArcCommandHandler:
             arc.develop_theme_at_sequence(command.theme_id, command.sequence)
             self.repository.save(arc)
 
-            logger.info(f"Developed theme {command.theme_id} at sequence {command.sequence}")
+            logger.info(
+                f"Developed theme {command.theme_id} at sequence {command.sequence}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to develop theme: {str(e)}")
@@ -371,7 +383,9 @@ class NarrativeArcCommandHandler:
             arc.add_pacing_segment(pacing)
             self.repository.save(arc)
 
-            logger.info(f"Added pacing segment {command.pacing_id} to arc {command.arc_id}")
+            logger.info(
+                f"Added pacing segment {command.pacing_id} to arc {command.arc_id}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to add pacing segment: {str(e)}")
@@ -424,7 +438,9 @@ class NarrativeArcCommandHandler:
             arc.activate_context(command.context_id)
             self.repository.save(arc)
 
-            logger.info(f"Activated context {command.context_id} in arc {command.arc_id}")
+            logger.info(
+                f"Activated context {command.context_id} in arc {command.arc_id}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to activate context: {str(e)}")
@@ -440,7 +456,9 @@ class NarrativeArcCommandHandler:
             arc.deactivate_context(command.context_id)
             self.repository.save(arc)
 
-            logger.info(f"Deactivated context {command.context_id} in arc {command.arc_id}")
+            logger.info(
+                f"Deactivated context {command.context_id} in arc {command.arc_id}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to deactivate context: {str(e)}")
@@ -492,7 +510,9 @@ class NarrativeArcCommandHandler:
             logger.error(f"Failed to start narrative arc: {str(e)}")
             raise
 
-    def handle_complete_narrative_arc(self, command: CompleteNarrativeArcCommand) -> None:
+    def handle_complete_narrative_arc(
+        self, command: CompleteNarrativeArcCommand
+    ) -> None:
         """Handle narrative arc completion."""
         try:
             arc = self.repository.get_by_id(NarrativeId(command.arc_id))
@@ -510,7 +530,9 @@ class NarrativeArcCommandHandler:
             logger.error(f"Failed to complete narrative arc: {str(e)}")
             raise
 
-    def handle_analyze_narrative_flow(self, command: AnalyzeNarrativeFlowCommand) -> Dict[str, Any]:
+    def handle_analyze_narrative_flow(
+        self, command: AnalyzeNarrativeFlowCommand
+    ) -> Dict[str, Any]:
         """Handle narrative flow analysis."""
         try:
             arc = self.repository.get_by_id(NarrativeId(command.arc_id))
@@ -539,7 +561,9 @@ class NarrativeArcCommandHandler:
             logger.error(f"Failed to analyze narrative flow: {str(e)}")
             raise
 
-    def handle_optimize_sequence(self, command: OptimizeSequenceCommand) -> Dict[str, Any]:
+    def handle_optimize_sequence(
+        self, command: OptimizeSequenceCommand
+    ) -> Dict[str, Any]:
         """Handle sequence optimization."""
         try:
             arc = self.repository.get_by_id(NarrativeId(command.arc_id))
@@ -589,7 +613,9 @@ class NarrativeArcCommandHandler:
             if not success:
                 raise ValueError("Failed to establish causal link")
 
-            logger.info(f"Established causal link: {command.cause_id} -> {command.effect_id}")
+            logger.info(
+                f"Established causal link: {command.cause_id} -> {command.effect_id}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to establish causal link: {str(e)}")
@@ -605,13 +631,17 @@ class NarrativeArcCommandHandler:
             if not success:
                 raise ValueError("Failed to remove causal link")
 
-            logger.info(f"Removed causal link: {command.cause_id} -> {command.effect_id}")
+            logger.info(
+                f"Removed causal link: {command.cause_id} -> {command.effect_id}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to remove causal link: {str(e)}")
             raise
 
-    def handle_analyze_causality(self, command: AnalyzeCausalityCommand) -> Dict[str, Any]:
+    def handle_analyze_causality(
+        self, command: AnalyzeCausalityCommand
+    ) -> Dict[str, Any]:
         """Handle causality analysis."""
         try:
             arc = self.repository.get_by_id(NarrativeId(command.arc_id))
@@ -650,7 +680,9 @@ class NarrativeArcCommandHandler:
                             "path_length": chain.path_length,
                             "total_strength": float(chain.total_strength),
                             "average_strength": float(chain.average_strength),
-                            "relationship_types": [rt.value for rt in chain.relationship_types],
+                            "relationship_types": [
+                                rt.value for rt in chain.relationship_types
+                            ],
                         }
                     )
                 result["longest_chains"] = longest_chains

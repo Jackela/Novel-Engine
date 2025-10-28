@@ -346,24 +346,8 @@ class ConfigLoader:
 
                 return config
 
-            except (AttributeError, KeyError, TypeError) as e:
-                # Invalid configuration data structure errors
-                logger.error(
-                    f"Invalid configuration data structure: {str(e)}",
-                    extra={"error_type": type(e).__name__},
-                )
-                logger.info("Falling back to default configuration")
-
-                # Return default configuration as fallback
-                default_config = self._create_default_config()
-                self._config = default_config
-                return default_config
-            except (ValueError, RuntimeError) as e:
-                # Configuration loading processing errors
-                logger.error(
-                    f"Failed to load configuration: {str(e)}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Failed to load configuration: {str(e)}")
                 logger.info("Falling back to default configuration")
 
                 # Return default configuration as fallback
@@ -427,19 +411,7 @@ class ConfigLoader:
             raise ConfigurationError(f"YAML parsing error: {str(e)}")
         except (OSError, IOError) as e:
             raise ConfigurationError(f"File reading error: {str(e)}")
-        except (AttributeError, TypeError) as e:
-            # Configuration data type errors
-            logger.error(
-                f"Invalid configuration data types: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise ConfigurationError(f"Configuration data type error: {str(e)}")
-        except (ValueError, RuntimeError) as e:
-            # Configuration processing errors
-            logger.error(
-                f"Unexpected error loading configuration: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
             raise ConfigurationError(
                 f"Unexpected error loading configuration: {str(e)}"
             )
@@ -883,18 +855,8 @@ def example_usage():
 
         logger.info("\nConfiguration system is ready for use!")
 
-    except (AttributeError, KeyError, TypeError) as e:
-        # Configuration example data structure errors
-        logger.error(
-            f"✗ Configuration example failed (invalid data): {e}",
-            extra={"error_type": type(e).__name__},
-        )
-    except (ValueError, RuntimeError) as e:
-        # Configuration example processing errors
-        logger.error(
-            f"✗ Configuration example failed: {e}",
-            extra={"error_type": type(e).__name__},
-        )
+    except Exception as e:
+        logger.error(f"✗ Configuration example failed: {e}")
 
 
 if __name__ == "__main__":

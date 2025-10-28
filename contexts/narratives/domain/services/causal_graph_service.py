@@ -125,7 +125,9 @@ class CausalGraphService:
             True if relationship was established successfully
         """
         if cause_id not in self.nodes or effect_id not in self.nodes:
-            logger.warning(f"Cannot establish link: nodes {cause_id} or {effect_id} not found")
+            logger.warning(
+                f"Cannot establish link: nodes {cause_id} or {effect_id} not found"
+            )
             return False
 
         if cause_id == effect_id:
@@ -283,7 +285,9 @@ class CausalGraphService:
             rel_type = CausalRelationType(rel_type_str)
 
             strength_str = rel_info.get("strength", "moderate")
-            strength_modifier = self._get_strength_modifier(CausalStrength(strength_str))
+            strength_modifier = self._get_strength_modifier(
+                CausalStrength(strength_str)
+            )
 
             new_strength = cumulative_strength * strength_modifier
             new_path = path + [next_node]
@@ -437,7 +441,9 @@ class CausalGraphService:
         all_chains = []
 
         # Start from root causes
-        root_causes = [node_id for node_id, node in self.nodes.items() if not node.has_causes]
+        root_causes = [
+            node_id for node_id, node in self.nodes.items() if not node.has_causes
+        ]
 
         for root in root_causes:
             chains = self._get_chains_from_node(root)
@@ -484,14 +490,17 @@ class CausalGraphService:
                     rel_type_str = rel_info.get("relationship_type", "direct_cause")
                     rel_type = CausalRelationType(rel_type_str)
                     strength_str = rel_info.get("strength", "moderate")
-                    strength_modifier = self._get_strength_modifier(CausalStrength(strength_str))
+                    strength_modifier = self._get_strength_modifier(
+                        CausalStrength(strength_str)
+                    )
 
                     for sub_chain in sub_chains:
                         extended_chain = CausalPath(
                             nodes=[start_node] + sub_chain.nodes,
                             total_strength=strength_modifier * sub_chain.total_strength,
                             path_length=sub_chain.path_length + 1,
-                            relationship_types=[rel_type] + sub_chain.relationship_types,
+                            relationship_types=[rel_type]
+                            + sub_chain.relationship_types,
                         )
                         chains.append(extended_chain)
 
@@ -522,11 +531,15 @@ class CausalGraphService:
 
         # Add complexity from special node types
         special_nodes = sum(
-            1 for node in self.nodes.values() if node.is_branch_point or node.is_convergence_point
+            1
+            for node in self.nodes.values()
+            if node.is_branch_point or node.is_convergence_point
         )
         special_complexity = Decimal(str(special_nodes * 0.5))
 
-        total_complexity = base_complexity + relationship_complexity + special_complexity
+        total_complexity = (
+            base_complexity + relationship_complexity + special_complexity
+        )
         return min(total_complexity, Decimal("10.0"))
 
     def _calculate_consistency_score(self) -> Decimal:
@@ -584,16 +597,20 @@ class CausalGraphService:
         flow_score = Decimal("5.0")
 
         # Reward clear progression from root causes to terminal effects
-        root_causes = [n for n in self.nodes.values() if not n.has_causes and n.has_effects]
-        terminal_effects = [n for n in self.nodes.values() if n.has_causes and not n.has_effects]
+        root_causes = [
+            n for n in self.nodes.values() if not n.has_causes and n.has_effects
+        ]
+        terminal_effects = [
+            n for n in self.nodes.values() if n.has_causes and not n.has_effects
+        ]
 
         if root_causes and terminal_effects:
             flow_score += Decimal("2.0")
 
         # Reward appropriate pacing (not too sparse, not too dense)
-        avg_connectivity = sum(n.total_causes + n.total_effects for n in self.nodes.values()) / len(
-            self.nodes
-        )
+        avg_connectivity = sum(
+            n.total_causes + n.total_effects for n in self.nodes.values()
+        ) / len(self.nodes)
         if 2.0 <= avg_connectivity <= 4.0:  # Sweet spot for narrative pacing
             flow_score += Decimal("1.5")
 
@@ -603,7 +620,9 @@ class CausalGraphService:
 
         # Reward balanced branching and convergence
         branch_points = sum(1 for n in self.nodes.values() if n.is_branch_point)
-        convergence_points = sum(1 for n in self.nodes.values() if n.is_convergence_point)
+        convergence_points = sum(
+            1 for n in self.nodes.values() if n.is_convergence_point
+        )
 
         if abs(branch_points - convergence_points) <= 2:  # Balanced
             flow_score += Decimal("1.0")
@@ -625,7 +644,9 @@ class CausalGraphService:
         base_influence = node.overall_impact_score
 
         # Add influence from connectivity
-        connectivity_bonus = Decimal(str((node.total_causes + node.total_effects) * 0.2))
+        connectivity_bonus = Decimal(
+            str((node.total_causes + node.total_effects) * 0.2)
+        )
 
         # Add influence from being a critical junction
         junction_bonus = Decimal("0")
@@ -635,7 +656,9 @@ class CausalGraphService:
             junction_bonus += Decimal("1.0")
 
         # Add influence from downstream effects
-        downstream_influence = self._calculate_downstream_influence(node_id, visited=set())
+        downstream_influence = self._calculate_downstream_influence(
+            node_id, visited=set()
+        )
 
         total_influence = (
             base_influence + connectivity_bonus + junction_bonus + downstream_influence
@@ -646,7 +669,9 @@ class CausalGraphService:
         self, node_id: str, visited: Set[str], depth: int = 0
     ) -> Decimal:
         """Calculate influence this node has on downstream nodes."""
-        if depth > 3 or node_id in visited or node_id not in self.nodes:  # Limit recursion depth
+        if (
+            depth > 3 or node_id in visited or node_id not in self.nodes
+        ):  # Limit recursion depth
             return Decimal("0")
 
         visited = visited.copy()
@@ -660,11 +685,15 @@ class CausalGraphService:
                 effect_node = self.nodes[effect_id]
                 rel_info = node.causal_relationships.get(effect_id, {})
                 strength_str = rel_info.get("strength", "moderate")
-                strength_modifier = self._get_strength_modifier(CausalStrength(strength_str))
+                strength_modifier = self._get_strength_modifier(
+                    CausalStrength(strength_str)
+                )
 
                 # Add weighted influence from this effect
                 effect_influence = effect_node.overall_impact_score * strength_modifier
-                downstream_influence += effect_influence * Decimal("0.5")  # Decay factor
+                downstream_influence += effect_influence * Decimal(
+                    "0.5"
+                )  # Decay factor
 
                 # Add recursive downstream influence (with decay)
                 recursive_influence = self._calculate_downstream_influence(
@@ -697,11 +726,15 @@ class CausalGraphService:
             "consistency_score": float(analysis.consistency_score),
             "narrative_flow_score": float(analysis.narrative_flow_score),
             "total_relationships": sum(
-                len(node.direct_causes) + len(node.direct_effects) for node in self.nodes.values()
+                len(node.direct_causes) + len(node.direct_effects)
+                for node in self.nodes.values()
             )
             // 2,
             "average_connectivity": (
-                sum(node.total_causes + node.total_effects for node in self.nodes.values())
+                sum(
+                    node.total_causes + node.total_effects
+                    for node in self.nodes.values()
+                )
                 / len(self.nodes)
                 if self.nodes
                 else 0

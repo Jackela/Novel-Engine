@@ -16,14 +16,24 @@ Provides a hybrid approach where:
 import logging
 from typing import Any, Dict
 
-# Import context models
-from contexts.character.domain.value_objects.context_models import (
-    CharacterContext,
-    MemoryContext,
-    ObjectivesContext,
-    ProfileContext,
-    StatsContext,
-)
+# Import context models - use try/except for compatibility when contexts module isn't in path
+try:
+    from contexts.character.domain.value_objects.context_models import (
+        CharacterContext,
+        MemoryContext,
+        ObjectivesContext,
+        ProfileContext,
+        StatsContext,
+    )
+    CONTEXT_MODELS_AVAILABLE = True
+except ImportError:
+    # Fallback when contexts module not available
+    CONTEXT_MODELS_AVAILABLE = False
+    CharacterContext = dict
+    MemoryContext = dict
+    ObjectivesContext = dict
+    ProfileContext = dict
+    StatsContext = dict
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -266,9 +276,9 @@ class ContextIntegrator:
                 hasattr(stats_context.combat_stats, "primary_stats")
                 and stats_context.combat_stats.primary_stats
             ):
-                merged_data[
-                    "enhanced_combat_stats"
-                ] = stats_context.combat_stats.primary_stats
+                merged_data["enhanced_combat_stats"] = (
+                    stats_context.combat_stats.primary_stats
+                )
 
             # Update psychological profile
             if (

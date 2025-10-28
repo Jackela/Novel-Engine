@@ -7,9 +7,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict
 
-from src.core.data_models import CharacterInteraction
 from src.database.context_db import ContextDatabase
-from src.interactions.engine.models.interaction_models import (
+from src.interactions.interaction_engine_system.core.types import (
     InteractionContext,
     InteractionOutcome,
 )

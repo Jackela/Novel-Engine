@@ -78,7 +78,9 @@ class TokenBucket:
     token bucket algorithm. Thread-safe and suitable for async usage.
     """
 
-    def __init__(self, capacity: int, refill_rate: float, initial_tokens: Optional[int] = None):
+    def __init__(
+        self, capacity: int, refill_rate: float, initial_tokens: Optional[int] = None
+    ):
         """
         Initialize token bucket.
 
@@ -283,7 +285,9 @@ class IRateLimiter(ABC):
         pass
 
     @abstractmethod
-    async def update_limits_async(self, provider_id: ProviderId, config: RateLimitConfig) -> None:
+    async def update_limits_async(
+        self, provider_id: ProviderId, config: RateLimitConfig
+    ) -> None:
         """
         Update rate limit configuration for provider.
 
@@ -327,7 +331,9 @@ class TokenBucketRateLimiter(IRateLimiter):
         config = await self._get_config_async(provider_key)
 
         # Get or create buckets and windows
-        request_bucket, token_bucket = await self._get_buckets_async(provider_key, config)
+        request_bucket, token_bucket = await self._get_buckets_async(
+            provider_key, config
+        )
         provider_window = await self._get_provider_window_async(provider_key)
 
         # Check token bucket limits (burst capacity)
@@ -380,8 +386,12 @@ class TokenBucketRateLimiter(IRateLimiter):
             allowed=True,
             current_requests=current_requests + 1,
             current_tokens=current_tokens + estimated_tokens,
-            remaining_requests=max(0, config.requests_per_minute - current_requests - 1),
-            remaining_tokens=max(0, config.tokens_per_minute - current_tokens - estimated_tokens),
+            remaining_requests=max(
+                0, config.requests_per_minute - current_requests - 1
+            ),
+            remaining_tokens=max(
+                0, config.tokens_per_minute - current_tokens - estimated_tokens
+            ),
             reset_time=datetime.now() + timedelta(seconds=config.window_seconds),
         )
 
@@ -408,7 +418,9 @@ class TokenBucketRateLimiter(IRateLimiter):
         provider_key = provider_id.provider_name
         return await self._get_config_async(provider_key)
 
-    async def update_limits_async(self, provider_id: ProviderId, config: RateLimitConfig) -> None:
+    async def update_limits_async(
+        self, provider_id: ProviderId, config: RateLimitConfig
+    ) -> None:
         """Update rate limit configuration and recreate buckets."""
         provider_key = provider_id.provider_name
 
@@ -444,12 +456,16 @@ class TokenBucketRateLimiter(IRateLimiter):
 
             return self._provider_buckets[provider_key]
 
-    async def _get_provider_window_async(self, provider_key: str) -> SlidingWindowCounter:
+    async def _get_provider_window_async(
+        self, provider_key: str
+    ) -> SlidingWindowCounter:
         """Get or create sliding window for provider."""
         async with self._lock:
             if provider_key not in self._provider_windows:
                 config = await self._get_config_async(provider_key)
-                self._provider_windows[provider_key] = SlidingWindowCounter(config.window_seconds)
+                self._provider_windows[provider_key] = SlidingWindowCounter(
+                    config.window_seconds
+                )
 
             return self._provider_windows[provider_key]
 
@@ -457,6 +473,8 @@ class TokenBucketRateLimiter(IRateLimiter):
         """Get or create sliding window for client."""
         async with self._lock:
             if client_id not in self._client_windows:
-                self._client_windows[client_id] = SlidingWindowCounter(60)  # 1 minute window
+                self._client_windows[client_id] = SlidingWindowCounter(
+                    60
+                )  # 1 minute window
 
             return self._client_windows[client_id]

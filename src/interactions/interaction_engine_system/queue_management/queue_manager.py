@@ -580,9 +580,9 @@ class QueueManager:
         except Exception as e:
             self.logger.error(f"Failed to process queued interaction: {e}")
             queued_interaction.status = QueueStatus.FAILED
-            self.failed_interactions[
-                queued_interaction.context.interaction_id
-            ] = queued_interaction
+            self.failed_interactions[queued_interaction.context.interaction_id] = (
+                queued_interaction
+            )
             self.queue_stats["total_failed"] += 1
 
         finally:

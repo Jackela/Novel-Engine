@@ -82,7 +82,10 @@ class NegotiationStatus:
         if self.started_at > self.last_activity_at:
             raise ValueError("started_at cannot be later than last_activity_at")
 
-        if self.expected_completion_at and self.started_at > self.expected_completion_at:
+        if (
+            self.expected_completion_at
+            and self.started_at > self.expected_completion_at
+        ):
             raise ValueError("started_at cannot be later than expected_completion_at")
 
         if self.actual_completion_at and self.started_at > self.actual_completion_at:
@@ -93,11 +96,18 @@ class NegotiationStatus:
             if self.outcome == NegotiationOutcome.PENDING:
                 raise ValueError("Terminated negotiations cannot have pending outcome")
             if not self.termination_reason:
-                raise ValueError("Terminated negotiations must have a termination reason")
+                raise ValueError(
+                    "Terminated negotiations must have a termination reason"
+                )
             if not self.actual_completion_at:
-                raise ValueError("Terminated negotiations must have actual completion time")
+                raise ValueError(
+                    "Terminated negotiations must have actual completion time"
+                )
 
-        if self.outcome != NegotiationOutcome.PENDING and self.phase != NegotiationPhase.TERMINATED:
+        if (
+            self.outcome != NegotiationOutcome.PENDING
+            and self.phase != NegotiationPhase.TERMINATED
+        ):
             if self.outcome in [
                 NegotiationOutcome.AGREEMENT_REACHED,
                 NegotiationOutcome.PARTIAL_AGREEMENT,
@@ -166,7 +176,9 @@ class NegotiationStatus:
             termination_reason=termination_reason,
         )
 
-    def update_last_activity(self, activity_time: Optional[datetime] = None) -> "NegotiationStatus":
+    def update_last_activity(
+        self, activity_time: Optional[datetime] = None
+    ) -> "NegotiationStatus":
         """Update last activity timestamp."""
         activity_time = activity_time or datetime.now(timezone.utc)
 
@@ -250,4 +262,6 @@ class NegotiationStatus:
 
     def __str__(self) -> str:
         """Return string representation of negotiation status."""
-        return f"NegotiationStatus(phase={self.phase.value}, outcome={self.outcome.value})"
+        return (
+            f"NegotiationStatus(phase={self.phase.value}, outcome={self.outcome.value})"
+        )

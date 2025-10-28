@@ -52,7 +52,9 @@ class EntityOperation:
     def __post_init__(self):
         """Validate entity operation data."""
         if self.operation_type == WorldOperationType.ADD_ENTITY:
-            if not all([self.entity_id, self.entity_type, self.entity_name, self.coordinates]):
+            if not all(
+                [self.entity_id, self.entity_type, self.entity_name, self.coordinates]
+            ):
                 raise ValueError(
                     "ADD_ENTITY requires entity_id, entity_type, entity_name, and coordinates"
                 )
@@ -65,7 +67,9 @@ class EntityOperation:
             if not self.entity_id:
                 raise ValueError("UPDATE_ENTITY requires entity_id")
             if not (self.properties or self.metadata):
-                raise ValueError("UPDATE_ENTITY requires properties or metadata to update")
+                raise ValueError(
+                    "UPDATE_ENTITY requires properties or metadata to update"
+                )
 
         elif self.operation_type == WorldOperationType.MOVE_ENTITY:
             if not all([self.entity_id, self.new_coordinates]):
@@ -106,7 +110,9 @@ class TimeOperation:
     def __post_init__(self):
         """Validate time operation data."""
         if self.new_time <= datetime.now():
-            raise ValueError("New time must be in the future for realistic world simulation")
+            raise ValueError(
+                "New time must be in the future for realistic world simulation"
+            )
 
 
 @dataclass
@@ -224,7 +230,9 @@ class ApplyWorldDelta:
 
         # Generate idempotency key if not provided
         if not self.idempotency_key:
-            self.idempotency_key = f"world_delta_{self.world_state_id}_{self.correlation_id}"
+            self.idempotency_key = (
+                f"world_delta_{self.world_state_id}_{self.correlation_id}"
+            )
 
     def _validate_command(self) -> None:
         """
@@ -257,7 +265,9 @@ class ApplyWorldDelta:
             errors.append("At least one operation must be specified")
 
         # Validate operation combinations
-        if self.reset_operation and (self.entity_operations or self.environment_operation):
+        if self.reset_operation and (
+            self.entity_operations or self.environment_operation
+        ):
             errors.append(
                 "Reset operation cannot be combined with entity or environment operations"
             )
@@ -322,7 +332,9 @@ class ApplyWorldDelta:
                 entity_counts[op_type] = entity_counts.get(op_type, 0) + 1
 
             for op_type, count in entity_counts.items():
-                summary_parts.append(f"{count} {op_type} operation{'s' if count > 1 else ''}")
+                summary_parts.append(
+                    f"{count} {op_type} operation{'s' if count > 1 else ''}"
+                )
 
         if self.environment_operation:
             summary_parts.append("environment update")

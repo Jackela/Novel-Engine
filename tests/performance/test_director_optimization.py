@@ -448,7 +448,9 @@ class DirectorAgentLoopOptimizationTest:
             for _ in range(50):
                 # Same operations with optimized director
                 agent_id = f"agent_{random.randint(0, agent_count-1)}"
-                mock_director.find_agent(agent_id)  # Now uses optimized registry
+                mock_director.find_agent(
+                    agent_id
+                )  # Now uses optimized registry
                 mock_director.get_world_state_feedback(
                     agent_id, 8
                 )  # Now uses optimized tracker
@@ -666,9 +668,7 @@ DETAILED RESULTS:
                 improvement_emoji = (
                     "🔥"
                     if result.improvement_percentage > 80
-                    else "⚡"
-                    if result.improvement_percentage > 50
-                    else "✅"
+                    else "⚡" if result.improvement_percentage > 50 else "✅"
                 )
 
                 report += f"""

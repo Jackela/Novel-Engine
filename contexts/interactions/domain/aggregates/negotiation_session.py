@@ -149,7 +149,9 @@ class NegotiationSession:
             raise ValueError(f"Party {party.party_id} already in session")
 
         if len(self.parties) >= self.max_parties:
-            raise ValueError(f"Session at maximum capacity ({self.max_parties} parties)")
+            raise ValueError(
+                f"Session at maximum capacity ({self.max_parties} parties)"
+            )
 
         if not self.status.is_active:
             raise ValueError("Cannot add party to inactive negotiation session")
@@ -163,7 +165,9 @@ class NegotiationSession:
 
         # Validate role constraints
         if party.role == PartyRole.MEDIATOR:
-            existing_mediators = [p for p in self.parties.values() if p.role == PartyRole.MEDIATOR]
+            existing_mediators = [
+                p for p in self.parties.values() if p.role == PartyRole.MEDIATOR
+            ]
             if existing_mediators:
                 raise ValueError("Session can only have one mediator")
 
@@ -199,9 +203,13 @@ class NegotiationSession:
         # Handle special roles
         if party.role == PartyRole.MEDIATOR:
             # Check if mediation is still needed
-            remaining_parties = [p for pid, p in self.parties.items() if pid != party_id]
+            remaining_parties = [
+                p for pid, p in self.parties.items() if pid != party_id
+            ]
             if any(not p.is_decision_maker for p in remaining_parties):
-                raise ValueError("Cannot remove mediator while non-decision makers remain")
+                raise ValueError(
+                    "Cannot remove mediator while non-decision makers remain"
+                )
 
         del self.parties[party_id]
         del self.party_roles[party_id]
@@ -240,7 +248,9 @@ class NegotiationSession:
             NegotiationPhase.BARGAINING,
             NegotiationPhase.CLOSING,
         ]:
-            raise ValueError(f"Cannot submit proposals in {self.status.phase.value} phase")
+            raise ValueError(
+                f"Cannot submit proposals in {self.status.phase.value} phase"
+            )
 
         # Validate proposal expiry
         if proposal.is_expired:
@@ -251,7 +261,10 @@ class NegotiationSession:
         self.proposal_history.append(proposal)
 
         # Auto-advance phase if appropriate
-        if self.auto_advance_phases and self.status.phase == NegotiationPhase.PREPARATION:
+        if (
+            self.auto_advance_phases
+            and self.status.phase == NegotiationPhase.PREPARATION
+        ):
             self._advance_to_phase(NegotiationPhase.OPENING)
 
         # Update status
@@ -273,10 +286,14 @@ class NegotiationSession:
     def submit_response(self, response: ProposalResponse) -> None:
         """Submit a response to a proposal."""
         if response.responding_party_id not in self.parties:
-            raise ValueError(f"Responding party {response.responding_party_id} not in session")
+            raise ValueError(
+                f"Responding party {response.responding_party_id} not in session"
+            )
 
         if response.proposal_id not in self.active_proposals:
-            raise ValueError(f"Proposal {response.proposal_id} not found or no longer active")
+            raise ValueError(
+                f"Proposal {response.proposal_id} not found or no longer active"
+            )
 
         responding_party = self.parties[response.responding_party_id]
         if not responding_party.can_make_binding_decisions():
@@ -312,7 +329,9 @@ class NegotiationSession:
         # Check for completion conditions
         self._check_completion_conditions(response.proposal_id)
 
-    def advance_phase(self, target_phase: NegotiationPhase, forced: bool = False) -> None:
+    def advance_phase(
+        self, target_phase: NegotiationPhase, forced: bool = False
+    ) -> None:
         """Manually advance negotiation to target phase."""
         if not forced and not self.auto_advance_phases:
             raise ValueError(
@@ -342,7 +361,9 @@ class NegotiationSession:
             NegotiationOutcome.PARTIAL_AGREEMENT,
         ]:
             if not self._has_sufficient_agreement():
-                raise ValueError("Insufficient agreement to complete with positive outcome")
+                raise ValueError(
+                    "Insufficient agreement to complete with positive outcome"
+                )
 
         completion_time = datetime.now(timezone.utc)
         self.status = self.status.complete_with_outcome(
@@ -407,7 +428,9 @@ class NegotiationSession:
             return False
 
         now = datetime.now(timezone.utc)
-        warning_time = self.status.expected_completion_at - timedelta(hours=warning_hours)
+        warning_time = self.status.expected_completion_at - timedelta(
+            hours=warning_hours
+        )
         return now >= warning_time and self.status.is_active
 
     def get_session_summary(self) -> Dict[str, Any]:
@@ -426,12 +449,17 @@ class NegotiationSession:
             "parties": {
                 "total_count": len(self.parties),
                 "decision_makers": len(self.get_decision_makers()),
-                "by_role": {role.value: len(self.get_parties_by_role(role)) for role in PartyRole},
+                "by_role": {
+                    role.value: len(self.get_parties_by_role(role))
+                    for role in PartyRole
+                },
             },
             "proposals": {
                 "active_count": len(self.active_proposals),
                 "total_submitted": len(self.proposal_history),
-                "response_count": sum(len(responses) for responses in self.responses.values()),
+                "response_count": sum(
+                    len(responses) for responses in self.responses.values()
+                ),
             },
             "configuration": {
                 "max_parties": self.max_parties,
@@ -455,7 +483,9 @@ class NegotiationSession:
                     session_id=self.session_id.value,
                     warning_at=now,
                     expires_at=self.status.expected_completion_at,
-                    time_remaining=int((self.status.expected_completion_at - now).total_seconds()),
+                    time_remaining=int(
+                        (self.status.expected_completion_at - now).total_seconds()
+                    ),
                 )
             )
 
@@ -467,10 +497,14 @@ class NegotiationSession:
                 terminated_by=self.created_by,
             )
 
-    def _advance_to_phase(self, target_phase: NegotiationPhase, forced: bool = False) -> None:
+    def _advance_to_phase(
+        self, target_phase: NegotiationPhase, forced: bool = False
+    ) -> None:
         """Internal method to advance negotiation phase."""
         if not forced and not self._can_advance_to_phase(target_phase):
-            raise ValueError(f"Cannot advance to phase {target_phase.value} - conditions not met")
+            raise ValueError(
+                f"Cannot advance to phase {target_phase.value} - conditions not met"
+            )
 
         old_phase = self.status.phase
         self.status = self.status.advance_to_phase(target_phase)
@@ -497,7 +531,9 @@ class NegotiationSession:
             return len(self.active_proposals) > 0
 
         elif target_phase == NegotiationPhase.CLOSING:
-            return any(self._has_responses_for_proposal(pid) for pid in self.active_proposals)
+            return any(
+                self._has_responses_for_proposal(pid) for pid in self.active_proposals
+            )
 
         elif target_phase == NegotiationPhase.IMPLEMENTATION:
             return self._has_sufficient_agreement()

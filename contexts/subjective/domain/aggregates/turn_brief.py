@@ -234,7 +234,10 @@ class TurnBrief:
             self._add_event(event)
 
         # Raise attention focus change event if needed
-        if old_focus != new_awareness.attention_focus or old_target != new_awareness.focus_target:
+        if (
+            old_focus != new_awareness.attention_focus
+            or old_target != new_awareness.focus_target
+        ):
             event = AttentionFocusChanged(
                 event_id=str(uuid4()),
                 occurred_at=self.updated_at,
@@ -269,7 +272,9 @@ class TurnBrief:
             additional_details: Additional perception details
         """
         # Update visible subjects
-        current_visibility = self.visible_subjects.get(subject, VisibilityLevel.INVISIBLE)
+        current_visibility = self.visible_subjects.get(
+            subject, VisibilityLevel.INVISIBLE
+        )
 
         # Choose the best visibility level
         visibility_order = [
@@ -280,7 +285,9 @@ class TurnBrief:
             VisibilityLevel.INVISIBLE,
         ]
 
-        if visibility_order.index(visibility_level) < visibility_order.index(current_visibility):
+        if visibility_order.index(visibility_level) < visibility_order.index(
+            current_visibility
+        ):
             self.visible_subjects[subject] = visibility_level
 
         self.last_perception_update = datetime.now()
@@ -303,7 +310,9 @@ class TurnBrief:
 
         self._add_update_event("perception", [subject])
 
-    def add_knowledge(self, knowledge_item: KnowledgeItem, revelation_method: str) -> None:
+    def add_knowledge(
+        self, knowledge_item: KnowledgeItem, revelation_method: str
+    ) -> None:
         """
         Add new knowledge to the TurnBrief.
 
@@ -311,7 +320,9 @@ class TurnBrief:
             knowledge_item: The knowledge to add
             revelation_method: How the knowledge was acquired
         """
-        existing_knowledge = self.knowledge_base.get_most_reliable_knowledge(knowledge_item.subject)
+        existing_knowledge = self.knowledge_base.get_most_reliable_knowledge(
+            knowledge_item.subject
+        )
 
         # Update knowledge base
         self.knowledge_base = self.knowledge_base.add_knowledge(knowledge_item)
@@ -397,7 +408,9 @@ class TurnBrief:
 
         self._add_update_event("threats", [threat_subject])
 
-    def lose_threat_tracking(self, threat_subject: str, loss_reason: str = "unknown") -> None:
+    def lose_threat_tracking(
+        self, threat_subject: str, loss_reason: str = "unknown"
+    ) -> None:
         """
         Mark a threat as lost/no longer tracked.
 
@@ -495,7 +508,9 @@ class TurnBrief:
         self.updated_at = self.last_world_update
         self.version += 1
 
-        self._add_update_event("world_state_version", [f"v{old_version}_to_v{new_version}"])
+        self._add_update_event(
+            "world_state_version", [f"v{old_version}_to_v{new_version}"]
+        )
 
     def can_perceive_at_distance(
         self, distance: float, perception_type: Optional[PerceptionType] = None
@@ -513,7 +528,9 @@ class TurnBrief:
         if perception_type:
             if perception_type not in self.perception_capabilities.perception_ranges:
                 return VisibilityLevel.INVISIBLE
-            perception_range = self.perception_capabilities.perception_ranges[perception_type]
+            perception_range = self.perception_capabilities.perception_ranges[
+                perception_type
+            ]
             return perception_range.calculate_visibility_at_distance(distance)
         else:
             # Get the best visibility from any perception type
@@ -612,7 +629,9 @@ class TurnBrief:
         """Add a domain event to the aggregate."""
         self._events.append(event)
 
-    def _add_update_event(self, update_reason: str, affected_subjects: List[str]) -> None:
+    def _add_update_event(
+        self, update_reason: str, affected_subjects: List[str]
+    ) -> None:
         """Add a generic update event."""
         event = TurnBriefUpdated(
             event_id=str(uuid4()),

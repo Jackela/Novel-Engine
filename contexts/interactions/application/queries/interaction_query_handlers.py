@@ -51,7 +51,9 @@ class InteractionQueryHandler:
         self, query: GetNegotiationSessionQuery
     ) -> Dict[str, Any]:
         """Handle retrieval of a specific negotiation session."""
-        session = await self.session_repository.get_by_id(InteractionId(query.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(query.session_id)
+        )
 
         if not session:
             return {
@@ -149,7 +151,9 @@ class InteractionQueryHandler:
                 {
                     "event_type": event.__class__.__name__,
                     "event_data": (
-                        str(event)[:200] + "..." if len(str(event)) > 200 else str(event)
+                        str(event)[:200] + "..."
+                        if len(str(event)) > 200
+                        else str(event)
                     ),
                 }
                 for event in session.get_uncommitted_events()
@@ -199,7 +203,8 @@ class InteractionQueryHandler:
                 if query.status_filter == "active" and not session.status.is_active:
                     continue
                 elif (
-                    query.status_filter == "completed" and session.status.outcome.value == "pending"
+                    query.status_filter == "completed"
+                    and session.status.outcome.value == "pending"
                 ):
                     continue
                 elif (
@@ -239,9 +244,13 @@ class InteractionQueryHandler:
             "status_filter": query.status_filter,
         }
 
-    async def handle_get_session_summary(self, query: GetSessionSummaryQuery) -> Dict[str, Any]:
+    async def handle_get_session_summary(
+        self, query: GetSessionSummaryQuery
+    ) -> Dict[str, Any]:
         """Handle generation of comprehensive session summary."""
-        session = await self.session_repository.get_by_id(InteractionId(query.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(query.session_id)
+        )
 
         if not session:
             return {
@@ -266,9 +275,9 @@ class InteractionQueryHandler:
                         score = self.negotiation_service.assess_party_compatibility(
                             party1, party2, session.negotiation_domain
                         )
-                        compatibility_scores[f"{party1.party_name}-{party2.party_name}"] = float(
-                            score
-                        )
+                        compatibility_scores[
+                            f"{party1.party_name}-{party2.party_name}"
+                        ] = float(score)
 
                 summary["analytics"] = {
                     "party_compatibility": compatibility_scores,
@@ -323,7 +332,9 @@ class InteractionQueryHandler:
                             ),
                         },
                         "negotiation_power": (
-                            float(party.get_negotiation_power(session.negotiation_domain))
+                            float(
+                                party.get_negotiation_power(session.negotiation_domain)
+                            )
                             if session.negotiation_domain
                             else 0
                         ),
@@ -374,9 +385,13 @@ class InteractionQueryHandler:
             "summary": summary,
         }
 
-    async def handle_get_session_timeline(self, query: GetSessionTimelineQuery) -> Dict[str, Any]:
+    async def handle_get_session_timeline(
+        self, query: GetSessionTimelineQuery
+    ) -> Dict[str, Any]:
         """Handle retrieval of session timeline."""
-        session = await self.session_repository.get_by_id(InteractionId(query.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(query.session_id)
+        )
 
         if not session:
             return {
@@ -456,14 +471,20 @@ class InteractionQueryHandler:
 
         # Filter events by date range
         if query.start_date:
-            timeline_events = [e for e in timeline_events if e["timestamp"] >= query.start_date]
+            timeline_events = [
+                e for e in timeline_events if e["timestamp"] >= query.start_date
+            ]
 
         if query.end_date:
-            timeline_events = [e for e in timeline_events if e["timestamp"] <= query.end_date]
+            timeline_events = [
+                e for e in timeline_events if e["timestamp"] <= query.end_date
+            ]
 
         # Filter by event types
         if query.event_types:
-            timeline_events = [e for e in timeline_events if e["event_type"] in query.event_types]
+            timeline_events = [
+                e for e in timeline_events if e["event_type"] in query.event_types
+            ]
 
         # Sort by timestamp
         timeline_events.sort(key=lambda x: x["timestamp"])
@@ -494,9 +515,13 @@ class InteractionQueryHandler:
 
     # Party Query Handlers
 
-    async def handle_get_session_parties(self, query: GetSessionPartiesQuery) -> Dict[str, Any]:
+    async def handle_get_session_parties(
+        self, query: GetSessionPartiesQuery
+    ) -> Dict[str, Any]:
         """Handle retrieval of session parties."""
-        session = await self.session_repository.get_by_id(InteractionId(query.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(query.session_id)
+        )
 
         if not session:
             return {
@@ -513,7 +538,10 @@ class InteractionQueryHandler:
                 continue
 
             # Apply authority filter
-            if query.authority_filter and party.authority_level.value != query.authority_filter:
+            if (
+                query.authority_filter
+                and party.authority_level.value != query.authority_filter
+            ):
                 continue
 
             party_data = {
@@ -545,7 +573,9 @@ class InteractionQueryHandler:
                     "negotiation_style": party.preferences.negotiation_style.value,
                     "communication_preference": party.preferences.communication_preference.value,
                     "risk_tolerance": float(party.preferences.risk_tolerance),
-                    "time_pressure_sensitivity": float(party.preferences.time_pressure_sensitivity),
+                    "time_pressure_sensitivity": float(
+                        party.preferences.time_pressure_sensitivity
+                    ),
                     "preferred_session_duration": party.preferences.preferred_session_duration,
                     "maximum_session_duration": party.preferences.maximum_session_duration,
                 }
@@ -583,7 +613,9 @@ class InteractionQueryHandler:
         self, query: GetPartyCompatibilityQuery
     ) -> Dict[str, Any]:
         """Handle party compatibility analysis."""
-        session = await self.session_repository.get_by_id(InteractionId(query.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(query.session_id)
+        )
 
         if not session:
             return {
@@ -615,8 +647,10 @@ class InteractionQueryHandler:
 
         for i, party1 in enumerate(parties):
             for j, party2 in enumerate(parties[i + 1 :], i + 1):
-                compatibility_score = self.negotiation_service.assess_party_compatibility(
-                    party1, party2, session.negotiation_domain
+                compatibility_score = (
+                    self.negotiation_service.assess_party_compatibility(
+                        party1, party2, session.negotiation_domain
+                    )
                 )
 
                 compatibility_data = {
@@ -632,7 +666,9 @@ class InteractionQueryHandler:
 
         # Calculate overall compatibility
         overall_compatibility = (
-            sum(compatibility_scores) / len(compatibility_scores) if compatibility_scores else 0
+            sum(compatibility_scores) / len(compatibility_scores)
+            if compatibility_scores
+            else 0
         )
 
         result = {
@@ -699,9 +735,13 @@ class InteractionQueryHandler:
 
     # Proposal Query Handlers
 
-    async def handle_get_session_proposals(self, query: GetSessionProposalsQuery) -> Dict[str, Any]:
+    async def handle_get_session_proposals(
+        self, query: GetSessionProposalsQuery
+    ) -> Dict[str, Any]:
         """Handle retrieval of session proposals."""
-        session = await self.session_repository.get_by_id(InteractionId(query.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(query.session_id)
+        )
 
         if not session:
             return {
@@ -727,7 +767,10 @@ class InteractionQueryHandler:
 
         for proposal in proposals_to_include:
             # Apply filters
-            if query.proposal_type and proposal.proposal_type.value != query.proposal_type:
+            if (
+                query.proposal_type
+                and proposal.proposal_type.value != query.proposal_type
+            ):
                 continue
 
             # Note: submitted_by would need to be tracked in proposal metadata
@@ -768,7 +811,9 @@ class InteractionQueryHandler:
                             proposal_responses.append(
                                 {
                                     "response_id": str(response.response_id),
-                                    "responding_party_id": str(response.responding_party_id),
+                                    "responding_party_id": str(
+                                        response.responding_party_id
+                                    ),
                                     "overall_response": response.overall_response.value,
                                     "acceptance_percentage": response.get_acceptance_percentage(),
                                     "response_timestamp": response.response_timestamp,
@@ -788,7 +833,9 @@ class InteractionQueryHandler:
                 )
 
                 proposal_data["viability_analysis"] = {
-                    "overall_viability_score": float(analysis["overall_viability_score"]),
+                    "overall_viability_score": float(
+                        analysis["overall_viability_score"]
+                    ),
                     "acceptance_probability": float(analysis["acceptance_probability"]),
                     "risk_factors_count": len(analysis["risk_factors"]),
                     "success_factors_count": len(analysis["success_factors"]),
@@ -806,9 +853,13 @@ class InteractionQueryHandler:
             "total_history_count": len(session.proposal_history),
         }
 
-    async def handle_get_proposal_details(self, query: GetProposalDetailsQuery) -> Dict[str, Any]:
+    async def handle_get_proposal_details(
+        self, query: GetProposalDetailsQuery
+    ) -> Dict[str, Any]:
         """Handle retrieval of detailed proposal information."""
-        session = await self.session_repository.get_by_id(InteractionId(query.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(query.session_id)
+        )
 
         if not session:
             return {
@@ -822,7 +873,11 @@ class InteractionQueryHandler:
         if not proposal:
             # Check proposal history
             proposal = next(
-                (p for p in session.proposal_history if p.proposal_id == query.proposal_id),
+                (
+                    p
+                    for p in session.proposal_history
+                    if p.proposal_id == query.proposal_id
+                ),
                 None,
             )
 
@@ -874,11 +929,17 @@ class InteractionQueryHandler:
             )
 
             # Convert Decimal values for JSON serialization
-            analysis["overall_viability_score"] = float(analysis["overall_viability_score"])
-            analysis["acceptance_probability"] = float(analysis["acceptance_probability"])
+            analysis["overall_viability_score"] = float(
+                analysis["overall_viability_score"]
+            )
+            analysis["acceptance_probability"] = float(
+                analysis["acceptance_probability"]
+            )
 
             for party_analysis in analysis["party_specific_analysis"].values():
-                party_analysis["acceptance_score"] = float(party_analysis["acceptance_score"])
+                party_analysis["acceptance_score"] = float(
+                    party_analysis["acceptance_score"]
+                )
 
             proposal_data["viability_analysis"] = analysis
 
@@ -906,8 +967,12 @@ class InteractionQueryHandler:
                     "complete_acceptances": len(
                         [r for r in responses if r.is_complete_acceptance()]
                     ),
-                    "complete_rejections": len([r for r in responses if r.is_complete_rejection()]),
-                    "requires_follow_up": len([r for r in responses if r.requires_negotiation()]),
+                    "complete_rejections": len(
+                        [r for r in responses if r.is_complete_rejection()]
+                    ),
+                    "requires_follow_up": len(
+                        [r for r in responses if r.requires_negotiation()]
+                    ),
                 }
             else:
                 proposal_data["response_summary"] = {
@@ -930,7 +995,9 @@ class InteractionQueryHandler:
             proposal_data["optimization_suggestions"] = {
                 "optimized_terms_count": len(optimization["optimized_terms"]),
                 "expected_improvement": float(optimization["expected_improvement"]),
-                "risk_level": optimization["risk_assessment"].get("risk_level", "unknown"),
+                "risk_level": optimization["risk_assessment"].get(
+                    "risk_level", "unknown"
+                ),
                 "implementation_difficulty": optimization["implementation_difficulty"],
                 "optimization_rationale": optimization["optimization_rationale"],
             }
@@ -945,9 +1012,13 @@ class InteractionQueryHandler:
     # Additional query handlers would continue here...
     # For brevity, I'll implement a few more key ones
 
-    async def handle_get_momentum_analysis(self, query: GetMomentumAnalysisQuery) -> Dict[str, Any]:
+    async def handle_get_momentum_analysis(
+        self, query: GetMomentumAnalysisQuery
+    ) -> Dict[str, Any]:
         """Handle momentum analysis query."""
-        session = await self.session_repository.get_by_id(InteractionId(query.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(query.session_id)
+        )
 
         if not session:
             return {

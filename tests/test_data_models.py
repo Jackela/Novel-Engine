@@ -220,9 +220,7 @@ class TestSacredEquipmentState:
 
     def test_equipment_state_creation_blessed_by_inventory(self):
         """Test blessed equipment state with sacred inventory"""
-        lasgun = EquipmentItem(
-            name="Pulse Rifle", item_type="weapon", effectiveness=1.0
-        )
+        lasgun = EquipmentItem(name="Pulse Rifle", item_type="weapon", effectiveness=1.0)
         armor = EquipmentItem(name="Flak Armor", item_type="armor", effectiveness=0.8)
         relic = EquipmentItem(
             name="Sacred Aquila", item_type="relic", effectiveness=1.5
@@ -337,9 +335,7 @@ class TestSacredCharacterState:
         assert character_state.base_identity.name == "Test Character"
         assert character_state.current_mood == EmotionalState.CONFIDENT
         assert character_state.current_location == "Blessed Chapel"
-        assert (
-            character_state.temporary_modifiers["blessed_by_founders' council"] == 1.2
-        )
+        assert character_state.temporary_modifiers["blessed_by_founders' council"] == 1.2
         assert isinstance(character_state.last_updated, datetime)
 
     def test_character_combat_readiness_blessed_by_calculation(self):

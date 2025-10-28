@@ -229,7 +229,9 @@ class CompensationAction:
 
         # Set default timeout if not provided
         if self.execution_timeout_ms == 10000:  # Default value
-            default_timeout = self.DEFAULT_TIMEOUTS.get(self.compensation_type.value, 10000)
+            default_timeout = self.DEFAULT_TIMEOUTS.get(
+                self.compensation_type.value, 10000
+            )
             object.__setattr__(self, "execution_timeout_ms", default_timeout)
 
         # Set manual approval requirement for destructive actions

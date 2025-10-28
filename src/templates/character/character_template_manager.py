@@ -34,7 +34,6 @@ from .template_selector import TemplateSelector
 
 logger = logging.getLogger(__name__)
 
-
 class CharacterTemplateManager:
     """
     STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY PERSONA ORCHESTRATION
@@ -71,9 +70,9 @@ class CharacterTemplateManager:
 
         # Sacred character management
         self._personas: Dict[str, CharacterPersona] = {}
-        self._character_templates: Dict[
-            str, Dict[str, CharacterTemplate]
-        ] = {}  # persona_id -> template_id -> template
+        self._character_templates: Dict[str, Dict[str, CharacterTemplate]] = (
+            {}
+        )  # persona_id -> template_id -> template
         self._context_profiles: Dict[str, CharacterContextProfile] = {}
         self._active_personas: Dict[str, str] = {}  # agent_id -> persona_id
 

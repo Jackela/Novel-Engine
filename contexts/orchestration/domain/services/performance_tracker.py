@@ -82,7 +82,9 @@ class PerformanceTracker:
                 "ai_enabled": turn.configuration.ai_integration_enabled,
                 "narrative_depth": turn.configuration.narrative_analysis_depth,
                 "timeout_ms": turn.configuration.max_execution_time_ms,
-                "estimated_cost": float(turn.configuration.get_estimated_ai_cost() or 0),
+                "estimated_cost": float(
+                    turn.configuration.get_estimated_ai_cost() or 0
+                ),
             },
             "resource_allocation": {
                 "memory_limit_mb": turn.configuration.max_memory_usage_mb,
@@ -109,7 +111,9 @@ class PerformanceTracker:
         )
         self.real_time_metrics["current_throughput"] = float(recent_starts)
 
-    def track_turn_completion(self, turn: Turn, pipeline_result: PipelineResult) -> Dict[str, Any]:
+    def track_turn_completion(
+        self, turn: Turn, pipeline_result: PipelineResult
+    ) -> Dict[str, Any]:
         """
         Track turn execution completion and analyze performance.
 
@@ -197,7 +201,9 @@ class PerformanceTracker:
             "performance_score": phase_metrics["performance_score"],
             "resource_efficiency": phase_metrics["resource_efficiency"],
             "error_details": (
-                phase_result.error_details if not phase_result.was_successful() else None
+                phase_result.error_details
+                if not phase_result.was_successful()
+                else None
             ),
         }
 
@@ -247,10 +253,15 @@ class PerformanceTracker:
             "successful_actions": successful_actions,
             "success_rate": successful_actions / max(1, total_actions),
             "total_time_ms": total_compensation_time,
-            "average_time_per_action_ms": total_compensation_time / max(1, total_actions),
+            "average_time_per_action_ms": total_compensation_time
+            / max(1, total_actions),
             "total_cost": total_compensation_cost,
-            "rollback_completeness": compensation_results.get("rollback_completeness", 0.0),
-            "data_consistency_maintained": compensation_results.get("overall_consistency", False),
+            "rollback_completeness": compensation_results.get(
+                "rollback_completeness", 0.0
+            ),
+            "data_consistency_maintained": compensation_results.get(
+                "overall_consistency", False
+            ),
             "compensation_types": [
                 action.compensation_type.value for action in compensation_actions
             ],
@@ -258,7 +269,9 @@ class PerformanceTracker:
 
         self.metrics_history.append(tracking_data)
 
-    def get_performance_summary(self, time_window: Optional[timedelta] = None) -> Dict[str, Any]:
+    def get_performance_summary(
+        self, time_window: Optional[timedelta] = None
+    ) -> Dict[str, Any]:
         """
         Get comprehensive performance summary.
 
@@ -282,7 +295,9 @@ class PerformanceTracker:
 
         # Calculate summary statistics
         turn_completions = [
-            entry for entry in recent_metrics if entry.get("event_type") == "turn_completed"
+            entry
+            for entry in recent_metrics
+            if entry.get("event_type") == "turn_completed"
         ]
 
         if not turn_completions:
@@ -295,11 +310,15 @@ class PerformanceTracker:
         max_execution_time = max(execution_times)
 
         # Success rate
-        successful_turns = len([entry for entry in turn_completions if entry.get("success", False)])
+        successful_turns = len(
+            [entry for entry in turn_completions if entry.get("success", False)]
+        )
         success_rate = successful_turns / len(turn_completions)
 
         # Throughput
-        throughput_per_hour = len(turn_completions) / (time_window.total_seconds() / 3600)
+        throughput_per_hour = len(turn_completions) / (
+            time_window.total_seconds() / 3600
+        )
 
         # Cost analysis
         cost_metrics = self._analyze_cost_efficiency(turn_completions)
@@ -339,7 +358,9 @@ class PerformanceTracker:
                 "cost_vs_target": cost_metrics.get("avg_cost_per_turn", 0)
                 / self.performance_baselines["target_cost_per_turn"],
             },
-            "recommendations": self._generate_performance_recommendations(turn_completions, trends),
+            "recommendations": self._generate_performance_recommendations(
+                turn_completions, trends
+            ),
         }
 
     def get_anomaly_alerts(self) -> List[Dict[str, Any]]:
@@ -372,7 +393,10 @@ class PerformanceTracker:
             avg_time = sum(execution_times) / len(execution_times)
             baseline_time = self.performance_baselines["target_execution_time_ms"]
 
-            if avg_time > baseline_time * self.anomaly_thresholds["execution_time_deviation"]:
+            if (
+                avg_time
+                > baseline_time * self.anomaly_thresholds["execution_time_deviation"]
+            ):
                 anomalies.append(
                     {
                         "type": "execution_time_anomaly",
@@ -391,7 +415,10 @@ class PerformanceTracker:
         success_rate = successful_turns / len(recent_completions)
         baseline_success_rate = self.performance_baselines["target_success_rate"]
 
-        if success_rate < baseline_success_rate - self.anomaly_thresholds["success_rate_drop"]:
+        if (
+            success_rate
+            < baseline_success_rate - self.anomaly_thresholds["success_rate_drop"]
+        ):
             anomalies.append(
                 {
                     "type": "success_rate_anomaly",
@@ -438,7 +465,9 @@ class PerformanceTracker:
             "resource_usage": {
                 "memory_peak_mb": turn.performance_metrics.get("memory_peak_mb", 0),
                 "cpu_time_ms": turn.performance_metrics.get("cpu_time_ms", 0),
-                "cross_context_calls": turn.performance_metrics.get("cross_context_calls", 0),
+                "cross_context_calls": turn.performance_metrics.get(
+                    "cross_context_calls", 0
+                ),
             },
             "quality_metrics": {
                 "completion_percentage": pipeline_result.get_completion_percentage(),
@@ -452,7 +481,9 @@ class PerformanceTracker:
     ) -> Dict[str, Any]:
         """Calculate phase-specific performance metrics."""
         execution_time = phase_result.get_execution_time()
-        execution_time_ms = execution_time.total_seconds() * 1000 if execution_time else 0
+        execution_time_ms = (
+            execution_time.total_seconds() * 1000 if execution_time else 0
+        )
 
         events_processed = len(phase_result.events_consumed)
 
@@ -508,7 +539,8 @@ class PerformanceTracker:
         alpha = 0.1  # Smoothing factor
 
         self.real_time_metrics["average_response_time_ms"] = (
-            alpha * current_time + (1 - alpha) * self.real_time_metrics["average_response_time_ms"]
+            alpha * current_time
+            + (1 - alpha) * self.real_time_metrics["average_response_time_ms"]
         )
 
         # Update success rate (last 100 turns)
@@ -519,8 +551,12 @@ class PerformanceTracker:
         ]
 
         if recent_completions:
-            successful = len([entry for entry in recent_completions if entry.get("success", False)])
-            self.real_time_metrics["success_rate"] = successful / len(recent_completions)
+            successful = len(
+                [entry for entry in recent_completions if entry.get("success", False)]
+            )
+            self.real_time_metrics["success_rate"] = successful / len(
+                recent_completions
+            )
 
     def _detect_performance_anomalies(
         self, performance_metrics: Dict[str, Any]
@@ -532,7 +568,10 @@ class PerformanceTracker:
         execution_time = performance_metrics["execution_time_ms"]
         baseline_time = self.performance_baselines["target_execution_time_ms"]
 
-        if execution_time > baseline_time * self.anomaly_thresholds["execution_time_deviation"]:
+        if (
+            execution_time
+            > baseline_time * self.anomaly_thresholds["execution_time_deviation"]
+        ):
             anomalies.append(
                 {
                     "type": "execution_time",
@@ -589,12 +628,18 @@ class PerformanceTracker:
             "performance_score", 1.0
         )
         if efficiency_score < 0.7:
-            recommendations.append("Optimize event processing algorithms to improve throughput")
-            recommendations.append("Consider parallel processing for independent operations")
+            recommendations.append(
+                "Optimize event processing algorithms to improve throughput"
+            )
+            recommendations.append(
+                "Consider parallel processing for independent operations"
+            )
 
         return recommendations
 
-    def _compare_to_baselines(self, performance_metrics: Dict[str, Any]) -> Dict[str, float]:
+    def _compare_to_baselines(
+        self, performance_metrics: Dict[str, Any]
+    ) -> Dict[str, float]:
         """Compare current metrics to performance baselines."""
         return {
             "execution_time_ratio": (
@@ -625,7 +670,9 @@ class PerformanceTracker:
             "recommendations": [],
         }
 
-    def _analyze_cost_efficiency(self, turn_completions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_cost_efficiency(
+        self, turn_completions: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Analyze cost efficiency from turn completions."""
         if not turn_completions:
             return {}
@@ -648,7 +695,9 @@ class PerformanceTracker:
             "cost_trend": "stable",  # Would calculate actual trend
         }
 
-    def _analyze_resource_utilization(self, recent_metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_resource_utilization(
+        self, recent_metrics: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Analyze resource utilization patterns."""
         return {
             "avg_memory_usage_mb": 128,  # Would calculate from actual data
@@ -658,34 +707,43 @@ class PerformanceTracker:
             "utilization_trend": "increasing",
         }
 
-    def _analyze_phase_performance(self, recent_metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_phase_performance(
+        self, recent_metrics: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Analyze performance by phase type."""
         phase_metrics = {}
 
         phase_entries = [
-            entry for entry in recent_metrics if entry.get("event_type") == "phase_executed"
+            entry
+            for entry in recent_metrics
+            if entry.get("event_type") == "phase_executed"
         ]
 
         for phase_type in PhaseType:
             phase_data = [
-                entry for entry in phase_entries if entry.get("phase_type") == phase_type.value
+                entry
+                for entry in phase_entries
+                if entry.get("phase_type") == phase_type.value
             ]
 
             if phase_data:
                 execution_times = [entry["execution_time_ms"] for entry in phase_data]
-                success_rate = len([e for e in phase_data if e.get("success", False)]) / len(
-                    phase_data
-                )
+                success_rate = len(
+                    [e for e in phase_data if e.get("success", False)]
+                ) / len(phase_data)
 
                 phase_metrics[phase_type.value] = {
-                    "avg_execution_time_ms": sum(execution_times) / len(execution_times),
+                    "avg_execution_time_ms": sum(execution_times)
+                    / len(execution_times),
                     "success_rate": success_rate,
                     "total_executions": len(phase_data),
                 }
 
         return phase_metrics
 
-    def _analyze_performance_trends(self, turn_completions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_performance_trends(
+        self, turn_completions: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Analyze performance trends over time."""
         return {
             "execution_time_trend": "stable",
@@ -704,7 +762,9 @@ class PerformanceTracker:
             return recommendations
 
         # Analyze success rate
-        successful_turns = len([entry for entry in turn_completions if entry.get("success", False)])
+        successful_turns = len(
+            [entry for entry in turn_completions if entry.get("success", False)]
+        )
         success_rate = successful_turns / len(turn_completions)
 
         if success_rate < 0.9:

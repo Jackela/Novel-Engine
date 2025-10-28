@@ -199,7 +199,9 @@ class NovelEngineTracer:
             from opentelemetry.exporter.console import ConsoleSpanExporter
 
             console_exporter = ConsoleSpanExporter()
-            self.tracer_provider.add_span_processor(SimpleSpanProcessor(console_exporter))
+            self.tracer_provider.add_span_processor(
+                SimpleSpanProcessor(console_exporter)
+            )
             logger.info("Console exporter enabled for debugging")
 
         # Set global tracer provider
@@ -237,7 +239,9 @@ class NovelEngineTracer:
         span.set_attribute("turn.id", str(turn_id))
         span.set_attribute("turn.participants.count", len(participants))
         span.set_attribute("turn.participants", ",".join(participants))
-        span.set_attribute("turn.ai_enabled", configuration.get("ai_integration_enabled", False))
+        span.set_attribute(
+            "turn.ai_enabled", configuration.get("ai_integration_enabled", False)
+        )
         span.set_attribute(
             "turn.narrative_depth",
             configuration.get("narrative_analysis_depth", "standard"),
@@ -284,7 +288,9 @@ class NovelEngineTracer:
         # Start span with parent context
         if parent_span:
             with trace.use_span(parent_span):
-                span = self.tracer.start_span(name=span_name, kind=trace.SpanKind.INTERNAL)
+                span = self.tracer.start_span(
+                    name=span_name, kind=trace.SpanKind.INTERNAL
+                )
         else:
             span = self.tracer.start_span(name=span_name, kind=trace.SpanKind.INTERNAL)
 
@@ -333,7 +339,9 @@ class NovelEngineTracer:
 
         if not success:
             span.set_status(
-                trace.Status(trace.StatusCode.ERROR, error_details or "Phase execution failed")
+                trace.Status(
+                    trace.StatusCode.ERROR, error_details or "Phase execution failed"
+                )
             )
             if error_details:
                 span.set_attribute("phase.error", error_details)
@@ -368,7 +376,9 @@ class NovelEngineTracer:
 
         if not success:
             span.set_status(
-                trace.Status(trace.StatusCode.ERROR, error_details or "Turn execution failed")
+                trace.Status(
+                    trace.StatusCode.ERROR, error_details or "Turn execution failed"
+                )
             )
             if error_details:
                 span.set_attribute("turn.error", error_details)
@@ -459,7 +469,9 @@ def trace_async_operation(operation_name: str, **span_attributes):
 
 
 @asynccontextmanager
-async def trace_context(operation_name: str, **attributes) -> AsyncGenerator[Span, None]:
+async def trace_context(
+    operation_name: str, **attributes
+) -> AsyncGenerator[Span, None]:
     """
     Async context manager for tracing operations.
 
@@ -472,7 +484,9 @@ async def trace_context(operation_name: str, **attributes) -> AsyncGenerator[Spa
     """
     tracer = trace.get_tracer(__name__)
 
-    with tracer.start_as_current_span(name=operation_name, attributes=attributes) as span:
+    with tracer.start_as_current_span(
+        name=operation_name, attributes=attributes
+    ) as span:
         try:
             yield span
             span.set_status(trace.Status(trace.StatusCode.OK))

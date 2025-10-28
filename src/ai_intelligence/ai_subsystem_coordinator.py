@@ -178,29 +178,8 @@ class AISubsystemCoordinator:
                 "overall_progress": float(self.current_arc_state.overall_progress),
             }
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid narrative state or guidance data errors
-            logger.warning(
-                f"Invalid data getting narrative guidance: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {
-                "primary_goal": "Maintain narrative continuity",
-                "secondary_goals": [],
-                "target_tension": 5.0,
-                "pacing_intensity": "moderate",
-                "narrative_tone": "balanced",
-                "themes_to_emphasize": [],
-                "phase": "exposition",
-                "phase_progress": 0.0,
-                "overall_progress": 0.0,
-            }
-        except (ValueError, RuntimeError) as e:
-            # Narrative guidance processing errors
-            logger.warning(
-                f"Failed to get narrative guidance: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.warning(f"Failed to get narrative guidance: {str(e)}")
             return {
                 "primary_goal": "Maintain narrative continuity",
                 "secondary_goals": [],

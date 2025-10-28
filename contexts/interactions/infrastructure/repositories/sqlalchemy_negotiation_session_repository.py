@@ -59,7 +59,9 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
         """
         try:
             # Check if session already exists
-            existing = await self.session.get(NegotiationSessionModel, session.session_id.value)
+            existing = await self.session.get(
+                NegotiationSessionModel, session.session_id.value
+            )
 
             if existing:
                 # Update existing session
@@ -74,7 +76,9 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             await self.session.flush()
 
         except IntegrityError as e:
-            logger.error(f"Integrity error saving negotiation session {session.session_id}: {e}")
+            logger.error(
+                f"Integrity error saving negotiation session {session.session_id}: {e}"
+            )
             await self.session.rollback()
             raise
         except Exception as e:
@@ -82,7 +86,9 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             await self.session.rollback()
             raise
 
-    async def get_by_id(self, session_id: InteractionId) -> Optional[NegotiationSession]:
+    async def get_by_id(
+        self, session_id: InteractionId
+    ) -> Optional[NegotiationSession]:
         """
         Retrieve a negotiation session by its unique identifier.
 
@@ -132,14 +138,19 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             conditions = []
 
             if "created_by" in filters:
-                conditions.append(NegotiationSessionModel.created_by == filters["created_by"])
+                conditions.append(
+                    NegotiationSessionModel.created_by == filters["created_by"]
+                )
 
             if "session_type" in filters:
-                conditions.append(NegotiationSessionModel.session_type == filters["session_type"])
+                conditions.append(
+                    NegotiationSessionModel.session_type == filters["session_type"]
+                )
 
             if "negotiation_domain" in filters:
                 conditions.append(
-                    NegotiationSessionModel.negotiation_domain == filters["negotiation_domain"]
+                    NegotiationSessionModel.negotiation_domain
+                    == filters["negotiation_domain"]
                 )
 
             if "priority_level" in filters:
@@ -155,23 +166,35 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
 
             # Date range filters
             if "created_after" in filters:
-                conditions.append(NegotiationSessionModel.created_at >= filters["created_after"])
+                conditions.append(
+                    NegotiationSessionModel.created_at >= filters["created_after"]
+                )
 
             if "created_before" in filters:
-                conditions.append(NegotiationSessionModel.created_at <= filters["created_before"])
+                conditions.append(
+                    NegotiationSessionModel.created_at <= filters["created_before"]
+                )
 
             if "updated_after" in filters:
-                conditions.append(NegotiationSessionModel.updated_at >= filters["updated_after"])
+                conditions.append(
+                    NegotiationSessionModel.updated_at >= filters["updated_after"]
+                )
 
             if "updated_before" in filters:
-                conditions.append(NegotiationSessionModel.updated_at <= filters["updated_before"])
+                conditions.append(
+                    NegotiationSessionModel.updated_at <= filters["updated_before"]
+                )
 
             # Numeric range filters
             if "min_parties" in filters:
-                conditions.append(NegotiationSessionModel.total_parties >= filters["min_parties"])
+                conditions.append(
+                    NegotiationSessionModel.total_parties >= filters["min_parties"]
+                )
 
             if "max_parties" in filters:
-                conditions.append(NegotiationSessionModel.total_parties <= filters["max_parties"])
+                conditions.append(
+                    NegotiationSessionModel.total_parties <= filters["max_parties"]
+                )
 
             if "min_proposals" in filters:
                 conditions.append(
@@ -193,7 +216,9 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
 
             if "outcome" in filters:
                 conditions.append(
-                    text("status->>'outcome' = :outcome").bindparam(outcome=filters["outcome"])
+                    text("status->>'outcome' = :outcome").bindparam(
+                        outcome=filters["outcome"]
+                    )
                 )
 
             # Apply all conditions
@@ -220,7 +245,9 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             return [model.to_domain_entity() for model in models]
 
         except Exception as e:
-            logger.error(f"Error finding negotiation sessions with filters {filters}: {e}")
+            logger.error(
+                f"Error finding negotiation sessions with filters {filters}: {e}"
+            )
             raise
 
     async def find_by_created_by(self, created_by: UUID) -> List[NegotiationSession]:
@@ -235,7 +262,9 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
         """
         return await self.find_by_filters({"created_by": created_by})
 
-    async def find_by_participant(self, participant_id: UUID) -> List[NegotiationSession]:
+    async def find_by_participant(
+        self, participant_id: UUID
+    ) -> List[NegotiationSession]:
         """
         Find all negotiation sessions where the specified entity is a participant.
 
@@ -250,7 +279,9 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             query = (
                 select(NegotiationSessionModel)
                 .where(
-                    text("parties ? :participant_id").bindparam(participant_id=str(participant_id))
+                    text("parties ? :participant_id").bindparam(
+                        participant_id=str(participant_id)
+                    )
                 )
                 .order_by(desc(NegotiationSessionModel.created_at))
             )
@@ -261,7 +292,9 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             return [model.to_domain_entity() for model in models]
 
         except Exception as e:
-            logger.error(f"Error finding sessions for participant {participant_id}: {e}")
+            logger.error(
+                f"Error finding sessions for participant {participant_id}: {e}"
+            )
             raise
 
     async def find_active_sessions(self) -> List[NegotiationSession]:
@@ -304,10 +337,14 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             conditions = []
 
             if phase:
-                conditions.append(text("status->>'phase' = :phase").bindparam(phase=phase))
+                conditions.append(
+                    text("status->>'phase' = :phase").bindparam(phase=phase)
+                )
 
             if outcome:
-                conditions.append(text("status->>'outcome' = :outcome").bindparam(outcome=outcome))
+                conditions.append(
+                    text("status->>'outcome' = :outcome").bindparam(outcome=outcome)
+                )
 
             if not conditions:
                 return []
@@ -341,7 +378,9 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
         """
         return await self.find_by_filters({"negotiation_domain": domain})
 
-    async def find_sessions_by_type(self, session_type: str) -> List[NegotiationSession]:
+    async def find_sessions_by_type(
+        self, session_type: str
+    ) -> List[NegotiationSession]:
         """
         Find negotiation sessions of a specific type.
 
@@ -366,7 +405,9 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             List of NegotiationSession objects requiring attention
         """
         try:
-            cutoff_time = datetime.now(timezone.utc) + timedelta(hours=hours_until_timeout)
+            cutoff_time = datetime.now(timezone.utc) + timedelta(
+                hours=hours_until_timeout
+            )
             stagnant_time = datetime.now(timezone.utc) - timedelta(
                 hours=48
             )  # No activity for 2 days
@@ -430,14 +471,19 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             conditions = []
 
             if "created_by" in filters:
-                conditions.append(NegotiationSessionModel.created_by == filters["created_by"])
+                conditions.append(
+                    NegotiationSessionModel.created_by == filters["created_by"]
+                )
 
             if "session_type" in filters:
-                conditions.append(NegotiationSessionModel.session_type == filters["session_type"])
+                conditions.append(
+                    NegotiationSessionModel.session_type == filters["session_type"]
+                )
 
             if "negotiation_domain" in filters:
                 conditions.append(
-                    NegotiationSessionModel.negotiation_domain == filters["negotiation_domain"]
+                    NegotiationSessionModel.negotiation_domain
+                    == filters["negotiation_domain"]
                 )
 
             if "is_active" in filters:
@@ -505,7 +551,9 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             return count > 0
 
         except Exception as e:
-            logger.error(f"Error checking existence of negotiation session {session_id}: {e}")
+            logger.error(
+                f"Error checking existence of negotiation session {session_id}: {e}"
+            )
             raise
 
     async def get_session_statistics(self) -> Dict[str, Any]:
@@ -549,8 +597,12 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             # Get average statistics
             avg_query = select(
                 func.avg(NegotiationSessionModel.total_parties).label("avg_parties"),
-                func.avg(NegotiationSessionModel.total_proposals).label("avg_proposals"),
-                func.avg(NegotiationSessionModel.total_responses).label("avg_responses"),
+                func.avg(NegotiationSessionModel.total_proposals).label(
+                    "avg_proposals"
+                ),
+                func.avg(NegotiationSessionModel.total_responses).label(
+                    "avg_responses"
+                ),
             )
 
             avg_result = await self.session.execute(avg_query)
@@ -596,9 +648,13 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
         else:
             raise ValueError(f"Unsupported date field: {date_field}")
 
-        return await self.find_by_filters(filters, limit=1000)  # Large limit for date ranges
+        return await self.find_by_filters(
+            filters, limit=1000
+        )  # Large limit for date ranges
 
-    async def batch_update_sessions(self, session_updates: List[Dict[str, Any]]) -> List[str]:
+    async def batch_update_sessions(
+        self, session_updates: List[Dict[str, Any]]
+    ) -> List[str]:
         """
         Perform batch updates on multiple sessions.
 

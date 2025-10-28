@@ -167,27 +167,8 @@ class AgentCoordinator:
                 else:
                     turn_summary["agents_waiting"] += 1
 
-            except (AttributeError, TypeError, KeyError) as e:
-                # Invalid agent or world state data errors
-                logger.error(
-                    f"Invalid data processing turn for agent {agent.agent_id}: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                # Record the error in turn summary
-                error_summary = {
-                    "agent_id": agent.agent_id,
-                    "character_name": agent.character_data.get("name", "Unknown"),
-                    "action_type": "ERROR",
-                    "error": str(e),
-                    "timestamp": datetime.now().isoformat(),
-                }
-                turn_summary["agent_actions"].append(error_summary)
-            except (ValueError, RuntimeError) as e:
-                # Agent processing or action handler errors
-                logger.error(
-                    f"Error processing turn for agent {agent.agent_id}: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Error processing turn for agent {agent.agent_id}: {e}")
                 # Record the error in turn summary
                 error_summary = {
                     "agent_id": agent.agent_id,

@@ -253,6 +253,28 @@ class SecurityEvent(BaseModel):
     details: Dict[str, Any]
 
 
+@dataclass
+class OperationError:
+    """STANDARD OPERATION ERROR"""
+    
+    message: str
+    code: Optional[str] = None
+    details: Optional[Dict[str, Any]] = None
+
+
+@dataclass
+class OperationResult:
+    """STANDARD OPERATION RESULT
+    
+    Generic result wrapper for operations that may succeed or fail.
+    Provides consistent interface for error handling and data access.
+    """
+    
+    success: bool
+    data: Optional[Dict[str, Any]] = None
+    error: Optional[OperationError] = None
+
+
 class AuthenticationError(Exception):
     """ENHANCED AUTHENTICATION EXCEPTION"""
 
@@ -454,6 +476,107 @@ class SecurityService:
                 raise AuthenticationError("Email already exists")
             else:
                 raise AuthenticationError("Registration failed")
+
+    async def create_user(
+        self,
+        username: str,
+        email: str,
+        password: str,
+        role: UserRole = UserRole.READER,
+    ) -> OperationResult:
+        """STANDARD USER CREATION WITH VALIDATION
+        
+        Test-friendly wrapper for user creation that validates password requirements
+        and returns OperationResult for easier testing.
+        
+        Args:
+            username: Unique username for the user
+            email: Valid email address
+            password: Password meeting security requirements
+            role: User role (defaults to READER)
+            
+        Returns:
+            OperationResult with success status and user data or error details
+        """
+        try:
+            # Validate password length (critical security requirement)
+            if len(password) < PASSWORD_MIN_LENGTH:
+                return OperationResult(
+                    success=False,
+                    error=OperationError(
+                        message=f"Password must be at least {PASSWORD_MIN_LENGTH} characters long",
+                        code="PASSWORD_TOO_SHORT",
+                        details={"min_length": PASSWORD_MIN_LENGTH, "actual_length": len(password)},
+                    ),
+                )
+            
+            # Validate password complexity (additional security requirements)
+            if password.lower() in ["password", "12345678", "qwerty", "admin"]:
+                return OperationResult(
+                    success=False,
+                    error=OperationError(
+                        message="Password is too common and easily guessable",
+                        code="PASSWORD_TOO_COMMON",
+                    ),
+                )
+            
+            # Check for minimum complexity (at least one number or special character)
+            has_number = any(c.isdigit() for c in password)
+            has_letter = any(c.isalpha() for c in password)
+            has_special = any(not c.isalnum() for c in password)
+            
+            if not (has_letter and (has_number or has_special)):
+                return OperationResult(
+                    success=False,
+                    error=OperationError(
+                        message="Password must contain letters and at least one number or special character",
+                        code="PASSWORD_TOO_SIMPLE",
+                    ),
+                )
+            
+            # Create user registration object
+            registration = UserRegistration(
+                username=username,
+                email=email,
+                password=password,
+                role=role,
+            )
+            
+            # Register the user
+            user = await self.register_user(
+                registration,
+                ip_address="127.0.0.1",  # Default for testing
+                user_agent="Test Client",
+            )
+            
+            # Return success result
+            return OperationResult(
+                success=True,
+                data={
+                    "user_id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "role": user.role.value,
+                },
+            )
+            
+        except AuthenticationError as e:
+            return OperationResult(
+                success=False,
+                error=OperationError(
+                    message=str(e),
+                    code="AUTHENTICATION_ERROR",
+                ),
+            )
+        except Exception as e:
+            logger.error(f"USER CREATION FAILED: {e}")
+            return OperationResult(
+                success=False,
+                error=OperationError(
+                    message=f"User creation failed: {str(e)}",
+                    code="CREATION_FAILED",
+                ),
+            )
 
     async def authenticate_user(
         self, login: UserLogin, ip_address: str, user_agent: str
@@ -859,19 +982,9 @@ async def get_current_user(
 
 
 def require_permission(permission: Permission):
-    """Standalone wrapper for requiring permission - lazy evaluation"""
-
-    def decorator(func):
-        # Delay service lookup until runtime, not at decoration time
-        def wrapper(*args, **kwargs):
-            service = get_security_service()
-            permission_decorator = service.require_permission(permission)
-            wrapped_func = permission_decorator(func)
-            return wrapped_func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
+    """Standalone wrapper for requiring permission"""
+    service = get_security_service()
+    return service.require_permission(permission)
 
 
 __all__ = [

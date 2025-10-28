@@ -146,7 +146,9 @@ def test_use_case_structure():
             async def count(self, criteria=None):
                 return 0
 
-            async def find_entities_by_type(self, world_state_id, entity_type, offset=0, limit=100):
+            async def find_entities_by_type(
+                self, world_state_id, entity_type, offset=0, limit=100
+            ):
                 return []
 
             async def find_entities_in_area(
@@ -168,7 +170,9 @@ def test_use_case_structure():
             async def rollback_to_version(self, world_state_id, version):
                 pass
 
-            async def create_snapshot(self, world_state_id, snapshot_name, metadata=None):
+            async def create_snapshot(
+                self, world_state_id, snapshot_name, metadata=None
+            ):
                 return "test-snapshot-id"
 
             async def restore_from_snapshot(self, world_state_id, snapshot_id):
@@ -246,12 +250,16 @@ def test_clean_architecture_compliance():
         print("✅ Use case depends on repository abstraction")
 
         # Verify commands are data structures (dataclasses)
-        assert hasattr(ApplyWorldDelta, "__dataclass_fields__"), "Commands should be dataclasses"
+        assert hasattr(
+            ApplyWorldDelta, "__dataclass_fields__"
+        ), "Commands should be dataclasses"
         print("✅ Commands are proper data structures")
 
         # Verify use cases orchestrate but don't contain business logic
         uc_methods = [m for m in dir(UpdateWorldStateUC) if not m.startswith("_")]
-        public_methods = [m for m in uc_methods if callable(getattr(UpdateWorldStateUC, m))]
+        public_methods = [
+            m for m in uc_methods if callable(getattr(UpdateWorldStateUC, m))
+        ]
 
         # Should have execute method as main entry point
         assert "execute" in public_methods, "Use case should have execute method"

@@ -165,7 +165,9 @@ class GetSessionProposalsQuery(InteractionQuery):
     def __post_init__(self):
         super().__post_init__()
         if self.proposal_status not in ["active", "withdrawn", "expired", "all"]:
-            raise ValueError("proposal_status must be one of: active, withdrawn, expired, all")
+            raise ValueError(
+                "proposal_status must be one of: active, withdrawn, expired, all"
+            )
 
 
 @dataclass(frozen=True)
@@ -182,7 +184,9 @@ class GetProposalDetailsQuery(InteractionQuery):
     def __post_init__(self):
         super().__post_init__()
         if self.analysis_depth not in ["basic", "standard", "comprehensive"]:
-            raise ValueError("analysis_depth must be one of: basic, standard, comprehensive")
+            raise ValueError(
+                "analysis_depth must be one of: basic, standard, comprehensive"
+            )
 
 
 @dataclass(frozen=True)
@@ -255,7 +259,9 @@ class GetConflictAnalysisQuery(InteractionQuery):
     def __post_init__(self):
         super().__post_init__()
         if self.severity_threshold not in ["low", "medium", "high", "critical"]:
-            raise ValueError("severity_threshold must be one of: low, medium, high, critical")
+            raise ValueError(
+                "severity_threshold must be one of: low, medium, high, critical"
+            )
 
 
 @dataclass(frozen=True)
@@ -290,7 +296,9 @@ class GetSessionPerformanceQuery(InteractionQuery):
     """Query to get performance metrics for a negotiation session."""
 
     session_id: UUID
-    metrics_types: List[str] = None  # efficiency, effectiveness, engagement, satisfaction
+    metrics_types: List[str] = (
+        None  # efficiency, effectiveness, engagement, satisfaction
+    )
     include_benchmarks: bool = True
     include_party_performance: bool = True
     performance_period: Optional[str] = None  # overall, recent, phase-specific
@@ -304,7 +312,9 @@ class GetSessionPerformanceQuery(InteractionQuery):
             "recent",
             "phase-specific",
         ]:
-            raise ValueError("performance_period must be one of: overall, recent, phase-specific")
+            raise ValueError(
+                "performance_period must be one of: overall, recent, phase-specific"
+            )
 
 
 @dataclass(frozen=True)
@@ -390,7 +400,9 @@ class SearchProposalsQuery(InteractionQuery):
             raise ValueError("limit must be between 1 and 1000")
         if self.offset < 0:
             raise ValueError("offset must be non-negative")
-        if self.viability_threshold is not None and not (0 <= self.viability_threshold <= 100):
+        if self.viability_threshold is not None and not (
+            0 <= self.viability_threshold <= 100
+        ):
             raise ValueError("viability_threshold must be between 0 and 100")
 
 
@@ -491,9 +503,13 @@ class GetSessionHealthQuery(InteractionQuery):
     def __post_init__(self):
         super().__post_init__()
         if self.health_check_depth not in ["basic", "standard", "comprehensive"]:
-            raise ValueError("health_check_depth must be one of: basic, standard, comprehensive")
+            raise ValueError(
+                "health_check_depth must be one of: basic, standard, comprehensive"
+            )
         if self.alert_threshold not in ["low", "medium", "high", "critical"]:
-            raise ValueError("alert_threshold must be one of: low, medium, high, critical")
+            raise ValueError(
+                "alert_threshold must be one of: low, medium, high, critical"
+            )
 
 
 @dataclass(frozen=True)
@@ -519,4 +535,6 @@ class GetNotificationsQuery(InteractionQuery):
             "high",
             "critical",
         ]:
-            raise ValueError("severity_filter must be one of: low, medium, high, critical")
+            raise ValueError(
+                "severity_filter must be one of: low, medium, high, critical"
+            )

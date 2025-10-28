@@ -263,7 +263,6 @@ coverage/
 screenshots/
 videos/
 test_artifacts/
-act-artifacts/
 
 # Backup Files
 *.bak
@@ -279,11 +278,8 @@ secrets/
 .secrets/
 vault/
 
-# ML and AI Models (exclude Python model packages)
-models/*.model
-models/*.pkl
-models/*.h5
-models/*.onnx
+# ML and AI Models
+models/
 *.model
 *.pkl
 *.h5
@@ -324,75 +320,117 @@ PYTEST_*.txt
 PYTEST_*.md
 test_campaign.md
 AGENTS.md
-*_SUMMARY.md
-*_REPORT.md
-*_STATUS.md
-*_RESOLUTION.md
-*_VALIDATION.md
-*_COMPLETE.md
-*_SUCCESS.md
-SESSION*.md
-ACT_*.md
-AIOREDIS_*.md
-DOCKER_*.md
-FIXES_*.md
-PROJECT_*.md
-TEST_*.md
 
 # Temporary and Generated Files
 world_state_backup.json
 aioredis.py
-nul
-test.md
-test_log.md
-campaign_log.md
 
 # Test Logs
 logs/test_logger*.jsonl
-logs/*_audit.jsonl
 
-# Act CI/CD Testing
-act_*.log
-act_*.txt
+# ===========================================
+# CI/CD Coverage Alignment Project - Temporary Files
+# ===========================================
+
+# Act CLI testing artifacts
+.env.act
+act_validation.log
 act-runner.sh
 act-runner.ps1
 act-artifacts/
 
-# Screenshots and Visual Test Artifacts
-*.png
-!docs/**/*.png
-!frontend/public/*.png
-aria-*.png
-desktop-*.png
-mobile-*.png
-tablet-*.png
-*-validation-*.png
-
-# Frontend Test Artifacts (in root)
-/*.js
-/*.html
-/*.json
-!package.json
-!package-lock.json
-!pyproject.toml
-/*.spec.js
-*-test.js
-*-validation.js
-
-# Backup Configurations
-backup_configs*/
-
-# Evaluation and Analysis Outputs
-evaluation/
-exports/
-final-validation-screenshots/
-
-# Cleanup Script
-cleanup_project.sh
-
-# Act CLI configuration and secrets
-.env.act
-.actrc
+# Sensitive information
 .secrets
-.actrc
-.actrc
+.secrets/
+
+# Temporary reports and documentation
+CLEANUP_COMPLETION_REPORT.md
+COMPREHENSIVE_STRESS_SCENARIO_TEST_REPORT.md
+DEPENDENCY_AUDIT_REPORT.md
+DOMAIN_PURITY_REPORT.md
+DYNAMIC_UAT_REPORT.md
+FINAL_ACCEPTANCE_RUN_REPORT.md
+FRONTEND_UI_REFACTORING_COMPLETE.md
+PYDANTIC_V2_MIGRATION_STATUS_REPORT.md
+REFACTORING_SUMMARY.md
+VISUAL_DESIGN_REFACTORING_COMPLIANCE_REPORT.md
+PRODUCTION_READINESS_SCORECARD.json
+database_security_assessment.json
+security_assessment_report.json
+security_audit_report.json
+security_implementation_report.json
+
+# Test screenshots and artifacts
+aria-*.png
+FrontEndDesign.png
+mobile-quickactions-fix-validation-*.png
+
+# Backup directories
+backup_configs_wave3/
+
+# Root-level temporary scripts (keep organized scripts in scripts/ dir)
+cleanup_project.sh
+ai_agent_story_server.py
+ai_enhancement_analysis.py
+api_server.py
+campaign_brief.py
+character_factory.py
+chronicler_agent.py
+component_integration_fix.py
+component_integration_test.py
+config_loader.py
+database_security.py
+database_security_test.py
+director_agent.py
+director_agent_integrated.py
+emergent_narrative_orchestrator.py
+enhanced_multi_agent_bridge.py
+enhanced_simulation_orchestrator.py
+enterprise_integration_fix.py
+enterprise_multi_agent_orchestrator.py
+evaluate_baseline.py
+final-dashboard-validation.js
+find_missing_docstrings.py
+fix_async_tests.py
+high_performance_concurrent_processor.py
+inspect-current-app*.js
+integration_compatibility_fix.py
+integration_test.py
+integration_validation_test.py
+m45_platform_fix_validation.py
+parallel_agent_coordinator.py
+performance_stability_validation.py
+performance_validation_test.py
+phase1_validation_test.py
+playwright_ai_validation_test.py
+production_*.py
+quality_gates.py
+quick_platform_validation.py
+scalability_framework.py
+security_*.py
+shared_types.py
+uat_test_script.py
+validate_platform.py
+validation_test.py
+wave*.py
+
+# Temporary data files
+world_state.json
+nonexistent_world_state.json
+aria_mission_report.json
+aria_shadowbane_autonomous_exploration.js
+quick_platform_validation_report.json
+final_integration_validation_report_*.json
+wave5_*_validation*.json
+
+# Debug scripts
+debug-frontend-issues.js
+
+# Third-party tool configurations
+.specify/
+
+# Evaluation artifacts
+evaluation/
+
+# Temporary package.json in root (if not a real Node.js project)
+# package.json

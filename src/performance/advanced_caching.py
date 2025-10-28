@@ -407,6 +407,7 @@ class IntelligentCacheManager:
             len(self.cache) > self.config.max_size
             or self.stats.total_size_bytes > max_memory_bytes
         ):
+
             if not self.cache:
                 break
 

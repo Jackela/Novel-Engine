@@ -196,7 +196,9 @@ class ProviderRouter:
     def _is_provider_healthy(self, provider_name: str) -> bool:
         """Check if provider is healthy."""
         health = self._provider_health.get(provider_name, {})
-        return health.get("available", False) and health.get("consecutive_failures", 0) < 3
+        return (
+            health.get("available", False) and health.get("consecutive_failures", 0) < 3
+        )
 
 
 class ExecuteLLMService:
@@ -298,9 +300,13 @@ class ExecuteLLMService:
 
                     # Still record usage for cached responses
                     if config.track_costs and self._cost_tracker:
-                        await self._record_cached_usage(request, cached_response, config)
+                        await self._record_cached_usage(
+                            request, cached_response, config
+                        )
 
-                    result.execution_time_seconds = asyncio.get_event_loop().time() - start_time
+                    result.execution_time_seconds = (
+                        asyncio.get_event_loop().time() - start_time
+                    )
                     return result
 
             # Step 2: Rate limiting check
@@ -336,7 +342,9 @@ class ExecuteLLMService:
                             error_details=rate_limit_result.reason,
                         )
 
-                        result.execution_time_seconds = asyncio.get_event_loop().time() - start_time
+                        result.execution_time_seconds = (
+                            asyncio.get_event_loop().time() - start_time
+                        )
                         return result
 
             # Step 3: Budget enforcement
@@ -358,7 +366,9 @@ class ExecuteLLMService:
                         error_details="Budget limit exceeded",
                     )
 
-                    result.execution_time_seconds = asyncio.get_event_loop().time() - start_time
+                    result.execution_time_seconds = (
+                        asyncio.get_event_loop().time() - start_time
+                    )
                     return result
 
             # Step 4: Provider selection and execution
@@ -375,7 +385,9 @@ class ExecuteLLMService:
                     status=LLMResponseStatus.MODEL_UNAVAILABLE,
                     error_details="No available provider for model",
                 )
-                result.execution_time_seconds = asyncio.get_event_loop().time() - start_time
+                result.execution_time_seconds = (
+                    asyncio.get_event_loop().time() - start_time
+                )
                 return result
 
             result.provider_used = provider.provider_id
@@ -399,7 +411,9 @@ class ExecuteLLMService:
                 result.response = await provider.generate_async(request, budget)
                 result.success = result.response.status == LLMResponseStatus.SUCCESS
 
-            result.provider_response_time = asyncio.get_event_loop().time() - provider_start
+            result.provider_response_time = (
+                asyncio.get_event_loop().time() - provider_start
+            )
 
             # Step 6: Post-execution processing
             if result.success:
@@ -521,12 +535,16 @@ class ExecuteLLMService:
         return {
             "total_requests": total_requests,
             "successful_requests": self._execution_stats["successful_requests"],
-            "success_rate": self._execution_stats["successful_requests"] / total_requests,
+            "success_rate": self._execution_stats["successful_requests"]
+            / total_requests,
             "cache_hits": self._execution_stats["cache_hits"],
             "cache_hit_rate": self._execution_stats["cache_hits"] / total_requests,
             "rate_limited_requests": self._execution_stats["rate_limited_requests"],
-            "rate_limit_rate": self._execution_stats["rate_limited_requests"] / total_requests,
-            "budget_exceeded_requests": self._execution_stats["budget_exceeded_requests"],
+            "rate_limit_rate": self._execution_stats["rate_limited_requests"]
+            / total_requests,
+            "budget_exceeded_requests": self._execution_stats[
+                "budget_exceeded_requests"
+            ],
             "budget_exceeded_rate": self._execution_stats["budget_exceeded_requests"]
             / total_requests,
         }
@@ -542,7 +560,9 @@ class ExecuteLLMService:
         estimated_input_tokens = len(request.prompt) // 4  # Rough estimation
         estimated_output_tokens = request.max_tokens or 100
 
-        input_cost = Decimal(str(estimated_input_tokens)) * model_id.cost_per_input_token
+        input_cost = (
+            Decimal(str(estimated_input_tokens)) * model_id.cost_per_input_token
+        )
         output_cost = Decimal(str(estimated_output_tokens)) * (
             model_id.cost_per_output_token or model_id.cost_per_input_token
         )

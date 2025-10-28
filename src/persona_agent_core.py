@@ -58,7 +58,6 @@ class PersonaAgentCore:
         character_directory_path: str,
         event_bus: EventBus,
         agent_id: Optional[str] = None,
-        auto_subscribe: bool = True,
     ):
         """
         Initialize the PersonaAgent core infrastructure.
@@ -70,7 +69,6 @@ class PersonaAgentCore:
             character_directory_path: Path to directory containing character files
             event_bus: EventBus instance for decoupled communication
             agent_id: Optional unique identifier for this agent
-            auto_subscribe: Whether to automatically subscribe to events (default True)
         """
         logger.info(
             f"Initializing PersonaAgent core infrastructure for path: {character_directory_path}"
@@ -82,7 +80,6 @@ class PersonaAgentCore:
             character_directory_path
         )
         self.event_bus = event_bus
-        self._auto_subscribe = auto_subscribe
 
         # Core character data container
         self.character_data: Dict[str, Any] = {}
@@ -190,12 +187,6 @@ class PersonaAgentCore:
 
     def _setup_event_handling(self) -> None:
         """Set up event system subscriptions."""
-        if not self._auto_subscribe:
-            logger.debug(
-                f"PersonaAgent '{self.agent_id}' skipping auto-subscription (will be handled by wrapper)"
-            )
-            return
-
         try:
             self.event_bus.subscribe("TURN_START", self.handle_turn_start)
             logger.info(
@@ -255,9 +246,9 @@ class PersonaAgentCore:
 
                 # Keep only recent events (last 10)
                 if len(self.subjective_worldview["recent_events"]) > 10:
-                    self.subjective_worldview[
-                        "recent_events"
-                    ] = self.subjective_worldview["recent_events"][-10:]
+                    self.subjective_worldview["recent_events"] = (
+                        self.subjective_worldview["recent_events"][-10:]
+                    )
 
                 logger.debug(
                     f"Agent {self.agent_id} processed world state update for turn {event_summary['turn_number']}"

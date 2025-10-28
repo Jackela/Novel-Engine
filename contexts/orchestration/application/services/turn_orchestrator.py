@@ -146,10 +146,14 @@ class TurnOrchestrator:
         if not configuration:
             configuration = TurnConfiguration.create_default()
 
-        logger.info(f"Starting turn execution for turn_id={turn_id}, participants={participants}")
+        logger.info(
+            f"Starting turn execution for turn_id={turn_id}, participants={participants}"
+        )
 
         # Create turn entity
-        turn = Turn.create(turn_id=turn_id, configuration=configuration, participants=participants)
+        turn = Turn.create(
+            turn_id=turn_id, configuration=configuration, participants=participants
+        )
 
         # Start root span for complete turn execution flow (M10 requirement)
         turn_span = None
@@ -187,7 +191,9 @@ class TurnOrchestrator:
 
             for phase_type in pipeline_phases:
                 try:
-                    logger.debug(f"Starting phase {phase_type.value} for turn {turn_id}")
+                    logger.debug(
+                        f"Starting phase {phase_type.value} for turn {turn_id}"
+                    )
 
                     # Execute phase with distributed tracing
                     phase_result = await self._execute_phase(
@@ -201,23 +207,31 @@ class TurnOrchestrator:
                     turn.mark_phase_completed(phase_type, phase_result.success)
 
                     if not phase_result.success:
-                        logger.warning(f"Phase {phase_type.value} failed for turn {turn_id}")
+                        logger.warning(
+                            f"Phase {phase_type.value} failed for turn {turn_id}"
+                        )
 
                         # Execute saga compensation if enabled
                         if self.saga_enabled:
                             compensation_result = await self._execute_saga_compensation(
                                 turn, phases_completed, phase_results
                             )
-                            compensation_actions.extend(compensation_result.compensation_actions)
+                            compensation_actions.extend(
+                                compensation_result.compensation_actions
+                            )
 
                         # Fail fast or continue based on configuration
                         if configuration.fail_fast_on_phase_failure:
                             break
 
-                    logger.debug(f"Completed phase {phase_type.value} for turn {turn_id}")
+                    logger.debug(
+                        f"Completed phase {phase_type.value} for turn {turn_id}"
+                    )
 
                 except Exception as e:
-                    logger.error(f"Phase {phase_type.value} exception for turn {turn_id}: {e}")
+                    logger.error(
+                        f"Phase {phase_type.value} exception for turn {turn_id}: {e}"
+                    )
 
                     # Record phase failure
                     phase_results[phase_type] = self._create_phase_failure_result(
@@ -229,13 +243,17 @@ class TurnOrchestrator:
                         compensation_result = await self._execute_saga_compensation(
                             turn, phases_completed, phase_results
                         )
-                        compensation_actions.extend(compensation_result.compensation_actions)
+                        compensation_actions.extend(
+                            compensation_result.compensation_actions
+                        )
 
                     if configuration.fail_fast_on_phase_failure:
                         break
 
             # Calculate execution metrics
-            execution_time_ms = (datetime.now() - execution_start).total_seconds() * 1000
+            execution_time_ms = (
+                datetime.now() - execution_start
+            ).total_seconds() * 1000
 
             # Determine overall success
             successful_phases = len([r for r in phase_results.values() if r.success])
@@ -246,9 +264,13 @@ class TurnOrchestrator:
             # Finalize turn state
             if overall_success:
                 turn.mark_completed()
-                logger.info(f"Turn {turn_id} completed successfully in {execution_time_ms:.1f}ms")
+                logger.info(
+                    f"Turn {turn_id} completed successfully in {execution_time_ms:.1f}ms"
+                )
             else:
-                turn.mark_failed(f"Completed {successful_phases}/{len(pipeline_phases)} phases")
+                turn.mark_failed(
+                    f"Completed {successful_phases}/{len(pipeline_phases)} phases"
+                )
                 logger.warning(
                     f"Turn {turn_id} completed with failures in {execution_time_ms:.1f}ms"
                 )
@@ -278,7 +300,9 @@ class TurnOrchestrator:
 
                 # Close the root span
                 turn_span.end()
-                logger.debug(f"Completed distributed tracing root span for turn {turn_id}")
+                logger.debug(
+                    f"Completed distributed tracing root span for turn {turn_id}"
+                )
 
             return TurnExecutionResult(
                 turn_id=turn_id,
@@ -295,7 +319,9 @@ class TurnOrchestrator:
 
             # Record error in distributed tracing span
             if self.tracer and turn_span:
-                execution_time_ms = (datetime.now() - execution_start).total_seconds() * 1000
+                execution_time_ms = (
+                    datetime.now() - execution_start
+                ).total_seconds() * 1000
                 total_ai_cost = sum(
                     [
                         result.ai_usage.get("total_cost", 0) if result.ai_usage else 0
@@ -314,7 +340,9 @@ class TurnOrchestrator:
 
                 # Close the root span with error
                 turn_span.end()
-                logger.debug(f"Completed distributed tracing root span for failed turn {turn_id}")
+                logger.debug(
+                    f"Completed distributed tracing root span for failed turn {turn_id}"
+                )
 
             # Emergency compensation
             if self.saga_enabled and phases_completed:
@@ -322,12 +350,18 @@ class TurnOrchestrator:
                     compensation_result = await self._execute_saga_compensation(
                         turn, phases_completed, phase_results
                     )
-                    compensation_actions.extend(compensation_result.compensation_actions)
+                    compensation_actions.extend(
+                        compensation_result.compensation_actions
+                    )
                 except Exception as comp_error:
-                    logger.error(f"Emergency compensation failed for turn {turn_id}: {comp_error}")
+                    logger.error(
+                        f"Emergency compensation failed for turn {turn_id}: {comp_error}"
+                    )
 
             # Create failure result
-            execution_time_ms = (datetime.now() - execution_start).total_seconds() * 1000
+            execution_time_ms = (
+                datetime.now() - execution_start
+            ).total_seconds() * 1000
             performance_metrics = await self._gather_performance_metrics(
                 turn_id, phase_results, execution_time_ms
             )
@@ -392,7 +426,9 @@ class TurnOrchestrator:
             configuration=turn.configuration,
             participants=turn.participants,
             execution_metadata={
-                "previous_phase_results": self._extract_phase_metadata(previous_results),
+                "previous_phase_results": self._extract_phase_metadata(
+                    previous_results
+                ),
                 "turn_state": turn.state.value,
                 "execution_start": datetime.now().isoformat(),
             },
@@ -432,7 +468,9 @@ class TurnOrchestrator:
             return phase_result
 
         except asyncio.TimeoutError:
-            logger.warning(f"Phase {phase_type.value} timed out for turn {turn.turn_id}")
+            logger.warning(
+                f"Phase {phase_type.value} timed out for turn {turn.turn_id}"
+            )
             timeout_result = self._create_phase_timeout_result(phase_type, turn)
 
             # Record timeout in distributed tracing span
@@ -451,7 +489,9 @@ class TurnOrchestrator:
             return timeout_result
 
         except Exception as e:
-            logger.error(f"Phase {phase_type.value} failed for turn {turn.turn_id}: {e}")
+            logger.error(
+                f"Phase {phase_type.value} failed for turn {turn.turn_id}: {e}"
+            )
             failure_result = self._create_phase_failure_result(phase_type, str(e), turn)
 
             # Record failure in distributed tracing span
@@ -532,8 +572,12 @@ class TurnOrchestrator:
         metrics = {
             "total_execution_time_ms": total_execution_time_ms,
             "phases_executed": float(len(phase_results)),
-            "successful_phases": float(len([r for r in phase_results.values() if r.success])),
-            "failed_phases": float(len([r for r in phase_results.values() if not r.success])),
+            "successful_phases": float(
+                len([r for r in phase_results.values() if r.success])
+            ),
+            "failed_phases": float(
+                len([r for r in phase_results.values() if not r.success])
+            ),
         }
 
         # Add phase-specific metrics
@@ -546,11 +590,13 @@ class TurnOrchestrator:
 
             # Basic phase metrics
             metrics[f"{phase_prefix}_success"] = 1.0 if result.success else 0.0
-            metrics[f"{phase_prefix}_execution_time_ms"] = result.performance_metrics.get(
-                "execution_time_ms", 0.0
+            metrics[f"{phase_prefix}_execution_time_ms"] = (
+                result.performance_metrics.get("execution_time_ms", 0.0)
             )
             metrics[f"{phase_prefix}_events_processed"] = float(result.events_processed)
-            metrics[f"{phase_prefix}_events_generated"] = float(len(result.events_generated))
+            metrics[f"{phase_prefix}_events_generated"] = float(
+                len(result.events_generated)
+            )
 
             # Aggregate metrics
             total_events_processed += result.events_processed
@@ -569,8 +615,12 @@ class TurnOrchestrator:
 
         # Performance ratios
         if total_execution_time_ms > 0:
-            metrics["events_per_second"] = (total_events_processed / total_execution_time_ms) * 1000
-            metrics["cost_per_second"] = float(total_ai_cost) / (total_execution_time_ms / 1000)
+            metrics["events_per_second"] = (
+                total_events_processed / total_execution_time_ms
+            ) * 1000
+            metrics["cost_per_second"] = float(total_ai_cost) / (
+                total_execution_time_ms / 1000
+            )
 
         # Add system performance metrics if available
         if self.performance_monitoring_enabled:
@@ -621,7 +671,9 @@ class TurnOrchestrator:
                 events_processed=phase_result.events_processed,
                 events_generated=len(phase_result.events_generated),
                 ai_cost=(
-                    phase_result.ai_usage.get("total_cost", 0) if phase_result.ai_usage else 0
+                    phase_result.ai_usage.get("total_cost", 0)
+                    if phase_result.ai_usage
+                    else 0
                 ),
             )
 
@@ -643,7 +695,9 @@ class TurnOrchestrator:
             },
         )
 
-    def _create_phase_timeout_result(self, phase_type: PhaseType, turn: Turn) -> PhaseResult:
+    def _create_phase_timeout_result(
+        self, phase_type: PhaseType, turn: Turn
+    ) -> PhaseResult:
         """Create standardized phase timeout result."""
         timeout_ms = turn.configuration.get_phase_timeout(phase_type.value)
 

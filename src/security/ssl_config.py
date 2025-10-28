@@ -212,7 +212,7 @@ class SSLCertificateManager:
                 "not_valid_after": cert.not_valid_after.isoformat(),
                 "signature_algorithm": cert.signature_algorithm_oid._name,
                 "version": cert.version.name,
-                "fingerprint_sha256": cert.fingerprint(hashes.SHA256()).hex(),
+"fingerprint_sha256": cert.fingerprint(hashes.SHA256()).hex(),
                 "public_key_size": cert.public_key().key_size,
                 "san_dns_names": [],
                 "san_ip_addresses": [],

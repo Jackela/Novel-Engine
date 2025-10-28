@@ -88,7 +88,9 @@ class Character:
             errors.append("Character level must be at least 1")
 
         # Validate health makes sense for constitution and level
-        expected_min_health = max(1, self.stats.core_abilities.constitution + self.profile.level)
+        expected_min_health = max(
+            1, self.stats.core_abilities.constitution + self.profile.level
+        )
         if self.stats.vital_stats.max_health < expected_min_health:
             errors.append(
                 f"Character health too low for constitution and level (minimum: {expected_min_health})"
@@ -154,7 +156,8 @@ class Character:
                     f"{self.profile.character_class.value.title()} should have {category.value} skills"
                 )
             elif not any(
-                skill.is_trained() for skill in self.skills.get_skills_by_category(category)
+                skill.is_trained()
+                for skill in self.skills.get_skills_by_category(category)
             ):
                 errors.append(
                     f"{self.profile.character_class.value.title()} should be trained in at least one {category.value} skill"
@@ -224,7 +227,8 @@ class Character:
         # Business rule: Cannot lose more than half health in one update
         if (
             new_stats.vital_stats.current_health < old_stats.vital_stats.current_health
-            and new_stats.vital_stats.current_health < old_stats.vital_stats.current_health / 2
+            and new_stats.vital_stats.current_health
+            < old_stats.vital_stats.current_health / 2
         ):
             raise ValueError("Cannot lose more than half health in a single update")
 
@@ -292,8 +296,14 @@ class Character:
             raise ValueError("Character is already at maximum level")
 
         # Calculate stat increases
-        new_health = self.stats.vital_stats.max_health + 10 + self.stats.core_abilities.constitution
-        new_mana = self.stats.vital_stats.max_mana + 5 + self.stats.core_abilities.intelligence
+        new_health = (
+            self.stats.vital_stats.max_health
+            + 10
+            + self.stats.core_abilities.constitution
+        )
+        new_mana = (
+            self.stats.vital_stats.max_mana + 5 + self.stats.core_abilities.intelligence
+        )
 
         # Create updated profile
         from ..value_objects.character_profile import CharacterProfile
@@ -530,13 +540,16 @@ class Character:
             current_mana=base_mana,
             max_stamina=15 + core_abilities.constitution,
             current_stamina=15 + core_abilities.constitution,
-            armor_class=10 + core_abilities.get_ability_modifier(AbilityScore.DEXTERITY),
+            armor_class=10
+            + core_abilities.get_ability_modifier(AbilityScore.DEXTERITY),
             speed=30,
         )
 
         combat_stats = CombatStats(
             base_attack_bonus=0,
-            initiative_modifier=core_abilities.get_ability_modifier(AbilityScore.DEXTERITY),
+            initiative_modifier=core_abilities.get_ability_modifier(
+                AbilityScore.DEXTERITY
+            ),
             damage_reduction=0,
             spell_resistance=0,
             critical_hit_chance=0.05,

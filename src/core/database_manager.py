@@ -104,19 +104,8 @@ class DatabaseConnection:
 
             logger.debug("Database connection initialized")
 
-        except (AttributeError, TypeError) as e:
-            # Invalid connection or config errors
-            logger.error(
-                f"Invalid data during connection initialization: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (RuntimeError, ValueError, OSError) as e:
-            # Task creation, SQLite setup, or file system errors
-            logger.error(
-                f"Connection initialization error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to initialize database connection: {e}")
             raise
 
     async def _initialize_sqlite(self) -> None:
@@ -136,18 +125,8 @@ class DatabaseConnection:
             try:
                 await self.connection.execute(setting)
                 logger.debug(f"Applied SQLite setting: {setting}")
-            except (aiosqlite.Error, ValueError) as e:
-                # SQLite execution or pragma value errors
-                logger.warning(
-                    f"Failed to apply SQLite setting {setting}: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (AttributeError, RuntimeError) as e:
-                # Connection or execution errors
-                logger.warning(
-                    f"SQLite setting application error {setting}: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.warning(f"Failed to apply SQLite setting {setting}: {e}")
 
         await self.connection.commit()
 
@@ -179,27 +158,15 @@ class DatabaseConnection:
 
                 return cursor
 
-            except (aiosqlite.Error, aiosqlite.OperationalError) as e:
-                # Database errors (locked, corrupt, constraint violations)
+            except Exception as e:
                 execution_time = time.time() - start_time
+
+                # Update error metrics
                 self.metrics.total_queries += 1
                 self.metrics.failed_queries += 1
                 self.metrics.last_error = str(e)
-                logger.error(
-                    f"Database error during query execution: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                raise
-            except (ValueError, TypeError, AttributeError) as e:
-                # Invalid query or parameters errors
-                execution_time = time.time() - start_time
-                self.metrics.total_queries += 1
-                self.metrics.failed_queries += 1
-                self.metrics.last_error = str(e)
-                logger.error(
-                    f"Invalid query parameters: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+
+                logger.error(f"Query execution failed: {e}")
                 raise
 
             finally:
@@ -239,27 +206,15 @@ class DatabaseConnection:
 
                 return cursor
 
-            except (aiosqlite.Error, aiosqlite.OperationalError) as e:
-                # Database errors (locked, corrupt, constraint violations)
+            except Exception as e:
                 batch_size = len(parameters)
+
+                # Update error metrics
                 self.metrics.total_queries += batch_size
                 self.metrics.failed_queries += batch_size
                 self.metrics.last_error = str(e)
-                logger.error(
-                    f"Database error during batch execution: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                raise
-            except (ValueError, TypeError, IndexError) as e:
-                # Invalid batch parameters or list errors
-                batch_size = len(parameters)
-                self.metrics.total_queries += batch_size
-                self.metrics.failed_queries += batch_size
-                self.metrics.last_error = str(e)
-                logger.error(
-                    f"Invalid batch parameters: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+
+                logger.error(f"Batch query execution failed: {e}")
                 raise
 
             finally:
@@ -305,22 +260,8 @@ class DatabaseConnection:
 
                 return True
 
-        except (aiosqlite.Error, aiosqlite.OperationalError) as e:
-            # Database connection or query errors
-            logger.warning(
-                f"Database error during health check: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            self.metrics.health_status = False
-            self.metrics.last_error = str(e)
-            self.state = ConnectionState.UNHEALTHY
-            return False
-        except (RuntimeError, AttributeError) as e:
-            # Connection or lock errors
-            logger.warning(
-                f"Connection health check error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.warning(f"Connection health check failed: {e}")
             self.metrics.health_status = False
             self.metrics.last_error = str(e)
             self.state = ConnectionState.UNHEALTHY
@@ -347,18 +288,8 @@ class DatabaseConnection:
 
             except asyncio.CancelledError:
                 break
-            except (AttributeError, TypeError, RuntimeError) as e:
-                # Connection or health check method errors
-                logger.error(
-                    f"Health check loop data error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (ValueError, OSError) as e:
-                # Calculation or file system errors
-                logger.error(
-                    f"Health check loop processing error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Health check loop error: {e}")
 
     @property
     def is_healthy(self) -> bool:
@@ -460,26 +391,8 @@ class DatabaseConnectionPool:
                     self._available_connections.append(connection)
                     self._pool_metrics["total_connections_created"] += 1
 
-                except (aiosqlite.Error, OSError, FileNotFoundError) as e:
-                    # Database connection or file system errors
-                    logger.error(
-                        f"Database or file error creating initial connection: {e}",
-                        extra={"error_type": type(e).__name__},
-                    )
-                    if self.error_handler:
-                        error_context = ErrorContext(
-                            component="DatabaseConnectionPool",
-                            operation="initialize",
-                            metadata={"database_type": self.config.database_type.value},
-                        )
-                        await self.error_handler.handle_error(e, error_context)
-                    raise
-                except (ValueError, TypeError, RuntimeError) as e:
-                    # Configuration or initialization errors
-                    logger.error(
-                        f"Connection creation error: {e}",
-                        extra={"error_type": type(e).__name__},
-                    )
+                except Exception as e:
+                    logger.error(f"Failed to create initial connection: {e}")
                     if self.error_handler:
                         error_context = ErrorContext(
                             component="DatabaseConnectionPool",
@@ -535,9 +448,9 @@ class DatabaseConnectionPool:
                     wait_time = time.time() - wait_start
                     self._pool_metrics["connection_wait_times"].append(wait_time)
                     if len(self._pool_metrics["connection_wait_times"]) > 1000:
-                        self._pool_metrics[
-                            "connection_wait_times"
-                        ] = self._pool_metrics["connection_wait_times"][-1000:]
+                        self._pool_metrics["connection_wait_times"] = (
+                            self._pool_metrics["connection_wait_times"][-1000:]
+                        )
 
                     return connection
                 else:
@@ -567,19 +480,8 @@ class DatabaseConnectionPool:
 
                     return connection
 
-                except (aiosqlite.Error, OSError, FileNotFoundError) as e:
-                    # Database connection or file system errors
-                    logger.error(
-                        f"Database or file error creating new connection: {e}",
-                        extra={"error_type": type(e).__name__},
-                    )
-                    raise
-                except (ValueError, TypeError, RuntimeError) as e:
-                    # Configuration or initialization errors
-                    logger.error(
-                        f"New connection creation error: {e}",
-                        extra={"error_type": type(e).__name__},
-                    )
+                except Exception as e:
+                    logger.error(f"Failed to create new connection: {e}")
                     raise
 
             # Pool exhausted, wait for connection to become available
@@ -643,18 +545,8 @@ class DatabaseConnectionPool:
             await connection.close()
             self._pool_metrics["total_connections_closed"] += 1
 
-        except (aiosqlite.Error, RuntimeError) as e:
-            # Database or connection close errors
-            logger.warning(
-                f"Database error during connection close: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (AttributeError, TypeError) as e:
-            # Invalid connection or method errors
-            logger.warning(
-                f"Connection close data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.warning(f"Error closing connection: {e}")
 
     async def close_pool(self) -> None:
         """Close all connections and shutdown pool."""
@@ -696,18 +588,8 @@ class DatabaseConnectionPool:
 
             except asyncio.CancelledError:
                 break
-            except (AttributeError, TypeError, RuntimeError) as e:
-                # Pool state or connection errors
-                logger.error(
-                    f"Pool maintenance data error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (ValueError, OSError) as e:
-                # Calculation or file system errors
-                logger.error(
-                    f"Pool maintenance processing error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Connection pool maintenance error: {e}")
 
     async def _perform_maintenance(self) -> None:
         """Perform connection pool maintenance."""
@@ -737,19 +619,8 @@ class DatabaseConnectionPool:
                         self._available_connections.append(connection)
                         self._pool_metrics["total_connections_created"] += 1
 
-                    except (aiosqlite.Error, OSError, FileNotFoundError) as e:
-                        # Database connection or file system errors
-                        logger.error(
-                            f"Database or file error creating maintenance connection: {e}",
-                            extra={"error_type": type(e).__name__},
-                        )
-                        break
-                    except (ValueError, TypeError, RuntimeError) as e:
-                        # Configuration or initialization errors
-                        logger.error(
-                            f"Maintenance connection creation error: {e}",
-                            extra={"error_type": type(e).__name__},
-                        )
+                    except Exception as e:
+                        logger.error(f"Failed to create maintenance connection: {e}")
                         break
 
             # Update pool utilization metrics
@@ -923,21 +794,9 @@ class DatabaseManager:
                 await conn.commit()
                 return True
 
-            except (aiosqlite.Error, aiosqlite.OperationalError) as e:
-                # Database errors (locked, corrupt, constraint violations)
+            except Exception as e:
                 await conn.rollback()
-                logger.error(
-                    f"Database error during transaction: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                raise
-            except (ValueError, TypeError, IndexError) as e:
-                # Invalid query list or parameters
-                await conn.rollback()
-                logger.error(
-                    f"Invalid transaction parameters: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+                logger.error(f"Transaction failed: {e}")
                 raise
 
     async def close_all_pools(self) -> None:
@@ -947,18 +806,8 @@ class DatabaseManager:
                 try:
                     await pool.close_pool()
                     logger.info(f"Closed database pool: {name}")
-                except (aiosqlite.Error, RuntimeError) as e:
-                    # Database or pool close errors
-                    logger.error(
-                        f"Database error closing pool {name}: {e}",
-                        extra={"error_type": type(e).__name__},
-                    )
-                except (AttributeError, TypeError) as e:
-                    # Invalid pool or method errors
-                    logger.error(
-                        f"Pool close data error for {name}: {e}",
-                        extra={"error_type": type(e).__name__},
-                    )
+                except Exception as e:
+                    logger.error(f"Error closing pool {name}: {e}")
 
             self._pools.clear()
             self._initialized = False
@@ -999,23 +848,7 @@ class DatabaseManager:
                     "metrics": pool.get_pool_metrics(),
                 }
 
-            except (aiosqlite.Error, RuntimeError) as e:
-                # Database connection or pool errors
-                logger.warning(
-                    f"Database error during health check for pool {name}: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                health_results[name] = {
-                    "healthy": False,
-                    "error": str(e),
-                    "status": pool.get_pool_status(),
-                }
-            except (AttributeError, TypeError, ValueError) as e:
-                # Pool access or health check errors
-                logger.warning(
-                    f"Health check error for pool {name}: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
                 health_results[name] = {
                     "healthy": False,
                     "error": str(e),

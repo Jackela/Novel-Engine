@@ -16,7 +16,6 @@ from .types import CausalEdge, CausalNode, CausalRelationType
 
 logger = logging.getLogger(__name__)
 
-
 class CausalGraph:
     """因果关系图 - 追踪事件间的因果链"""
 
@@ -187,3 +186,4 @@ class CausalGraph:
         # 按概率排序
         predictions.sort(key=lambda x: x["probability"], reverse=True)
         return predictions[:10]  # 返回前10个预测
+

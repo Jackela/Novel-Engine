@@ -51,20 +51,28 @@ class NarrativeArc:
 
     # Thematic elements
     themes: Dict[str, NarrativeTheme] = field(default_factory=dict)
-    theme_development: Dict[str, List[int]] = field(default_factory=dict)  # Theme -> sequences
+    theme_development: Dict[str, List[int]] = field(
+        default_factory=dict
+    )  # Theme -> sequences
 
     # Pacing and flow
     pacing_segments: Dict[str, StoryPacing] = field(default_factory=dict)
-    pacing_sequence: List[str] = field(default_factory=list)  # Ordered pacing segment IDs
+    pacing_sequence: List[str] = field(
+        default_factory=list
+    )  # Ordered pacing segment IDs
 
     # Context and setting
     narrative_contexts: Dict[str, NarrativeContext] = field(default_factory=dict)
-    active_contexts: Set[str] = field(default_factory=set)  # Currently active context IDs
+    active_contexts: Set[str] = field(
+        default_factory=set
+    )  # Currently active context IDs
 
     # Character involvement
     primary_characters: Set[UUID] = field(default_factory=set)
     supporting_characters: Set[UUID] = field(default_factory=set)
-    character_arcs: Dict[UUID, str] = field(default_factory=dict)  # Character -> arc notes
+    character_arcs: Dict[UUID, str] = field(
+        default_factory=dict
+    )  # Character -> arc notes
 
     # Arc metrics and properties
     target_length: Optional[int] = None  # Target number of sequences
@@ -79,13 +87,19 @@ class NarrativeArc:
 
     # Quality metrics
     narrative_coherence: Decimal = field(default_factory=lambda: Decimal("5.0"))  # 1-10
-    thematic_consistency: Decimal = field(default_factory=lambda: Decimal("5.0"))  # 1-10
-    pacing_effectiveness: Decimal = field(default_factory=lambda: Decimal("5.0"))  # 1-10
+    thematic_consistency: Decimal = field(
+        default_factory=lambda: Decimal("5.0")
+    )  # 1-10
+    pacing_effectiveness: Decimal = field(
+        default_factory=lambda: Decimal("5.0")
+    )  # 1-10
 
     # Relationships
     parent_arc_id: Optional[NarrativeId] = None
     child_arc_ids: Set[NarrativeId] = field(default_factory=set)
-    related_threads: Set[NarrativeId] = field(default_factory=set)  # NarrativeThread IDs
+    related_threads: Set[NarrativeId] = field(
+        default_factory=set
+    )  # NarrativeThread IDs
 
     # Metadata
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -96,7 +110,9 @@ class NarrativeArc:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     # Domain events
-    _uncommitted_events: List[NarrativeEvent] = field(default_factory=list, init=False, repr=False)
+    _uncommitted_events: List[NarrativeEvent] = field(
+        default_factory=list, init=False, repr=False
+    )
     _version: int = field(default=1, init=False)
 
     def __post_init__(self):
@@ -152,7 +168,9 @@ class NarrativeArc:
                 )
 
         self.plot_points[plot_point.plot_point_id] = plot_point
-        self._insert_plot_point_in_sequence(plot_point.plot_point_id, plot_point.sequence_order)
+        self._insert_plot_point_in_sequence(
+            plot_point.plot_point_id, plot_point.sequence_order
+        )
         self._update_arc_length()
         self._update_timestamp_and_version()
 
@@ -169,7 +187,9 @@ class NarrativeArc:
         )
         self._add_event(event)
 
-    def _insert_plot_point_in_sequence(self, plot_point_id: str, sequence_order: int) -> None:
+    def _insert_plot_point_in_sequence(
+        self, plot_point_id: str, sequence_order: int
+    ) -> None:
         """Insert plot point ID in correct sequence position."""
         # Find correct insertion position
         insert_pos = 0
@@ -249,8 +269,14 @@ class NarrativeArc:
 
             # Check if theme is active at this sequence
             is_active = False
-            if theme.introduction_sequence is not None and sequence >= theme.introduction_sequence:
-                if theme.resolution_sequence is None or sequence <= theme.resolution_sequence:
+            if (
+                theme.introduction_sequence is not None
+                and sequence >= theme.introduction_sequence
+            ):
+                if (
+                    theme.resolution_sequence is None
+                    or sequence <= theme.resolution_sequence
+                ):
                     is_active = True
             elif sequence in development_sequences:
                 is_active = True
@@ -286,7 +312,9 @@ class NarrativeArc:
             new_pacing_type=pacing.pacing_type.value,
             previous_intensity="moderate",
             new_intensity=pacing.base_intensity.value,
-            affected_sequences=list(range(pacing.start_sequence, pacing.end_sequence + 1)),
+            affected_sequences=list(
+                range(pacing.start_sequence, pacing.end_sequence + 1)
+            ),
         )
         self._add_event(event)
 
@@ -339,7 +367,9 @@ class NarrativeArc:
             return context.is_persistent
 
         # For now, assume current sequence is the latest plot point sequence
-        current_seq = max((pp.sequence_order for pp in self.plot_points.values()), default=0)
+        current_seq = max(
+            (pp.sequence_order for pp in self.plot_points.values()), default=0
+        )
         return context.applies_at_sequence(current_seq)
 
     def activate_context(self, context_id: str) -> None:
@@ -410,7 +440,8 @@ class NarrativeArc:
             if self.target_length and self.target_length > 0:
                 progress = min(
                     Decimal("1.0"),
-                    Decimal(str(self.current_length)) / Decimal(str(self.target_length)),
+                    Decimal(str(self.current_length))
+                    / Decimal(str(self.target_length)),
                 )
                 self.completion_percentage = progress
 

@@ -237,9 +237,7 @@ ContextResult = Union[dict, None]  # Context data or enhanced emptiness
 # STANDARD LITERAL TYPES ENHANCED BY SPECIFIC VALUES
 
 # Blessed threat level literals
-ThreatLevel = Literal[
-    "minimal", "low", "medium", "high", "extreme", "prime_architect_tier"
-]
+ThreatLevel = Literal["minimal", "low", "medium", "high", "extreme", "prime_architect_tier"]
 
 # Sacred mood literals
 MoodState = Literal[
@@ -375,8 +373,7 @@ class SacredTypeValidator:
             return isinstance(value, enum_class) or value in [
                 e.value for e in enum_class
             ]
-        except (AttributeError, TypeError, ValueError):
-            # Invalid enum class or value comparison errors
+        except Exception:
             return False
 
     @staticmethod

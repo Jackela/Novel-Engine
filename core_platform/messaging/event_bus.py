@@ -65,7 +65,9 @@ class DomainEvent:
 
         if not self.event_type:
             # Auto-generate event type from class name
-            self.event_type = f"{self.aggregate_type.lower()}.{self.__class__.__name__.lower()}"
+            self.event_type = (
+                f"{self.aggregate_type.lower()}.{self.__class__.__name__.lower()}"
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert event to dictionary representation."""
@@ -86,7 +88,9 @@ class EventHandler:
     def __init__(self, handler_func: Callable, event_type: str, handler_id: str = None):
         self.handler_func = handler_func
         self.event_type = event_type
-        self.handler_id = handler_id or f"{handler_func.__module__}.{handler_func.__name__}"
+        self.handler_id = (
+            handler_id or f"{handler_func.__module__}.{handler_func.__name__}"
+        )
         self.is_async = asyncio.iscoroutinefunction(handler_func)
 
     async def handle(self, event: DomainEvent, context: Dict[str, Any]) -> None:
@@ -97,7 +101,9 @@ class EventHandler:
             else:
                 self.handler_func(event, context)
         except Exception as e:
-            logger.error(f"Handler {self.handler_id} failed for event {event.event_type}: {e}")
+            logger.error(
+                f"Handler {self.handler_id} failed for event {event.event_type}: {e}"
+            )
             raise
 
 
@@ -150,7 +156,9 @@ class EventBus:
         self._is_initialized = False
         logger.info("Event Bus shutdown complete")
 
-    async def publish(self, event: DomainEvent, headers: Optional[Dict[str, str]] = None) -> None:
+    async def publish(
+        self, event: DomainEvent, headers: Optional[Dict[str, str]] = None
+    ) -> None:
         """
         Publish a domain event to the event bus.
 
@@ -285,7 +293,9 @@ class EventBus:
     def unsubscribe(self, handler_id: str) -> None:
         """Unsubscribe an event handler."""
         for event_type, handlers in self._handlers.items():
-            self._handlers[event_type] = [h for h in handlers if h.handler_id != handler_id]
+            self._handlers[event_type] = [
+                h for h in handlers if h.handler_id != handler_id
+            ]
 
         logger.info(f"Unsubscribed handler {handler_id}")
 
@@ -312,13 +322,17 @@ class EventBus:
             )
 
             self._consumer_groups.add(consumer_group)
-            logger.info(f"Started consumer group {consumer_group} for event type {event_type}")
+            logger.info(
+                f"Started consumer group {consumer_group} for event type {event_type}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to start consumer for group {consumer_group}: {e}")
             raise
 
-    async def _handle_message(self, message_data: Dict[str, Any], context: Dict[str, Any]) -> None:
+    async def _handle_message(
+        self, message_data: Dict[str, Any], context: Dict[str, Any]
+    ) -> None:
         """Handle received Kafka message."""
         try:
             # Extract event information
@@ -374,7 +388,9 @@ class EventBus:
         metrics = self._metrics.get_all_metrics()
         metrics.update(
             {
-                "registered_handlers": sum(len(handlers) for handlers in self._handlers.values()),
+                "registered_handlers": sum(
+                    len(handlers) for handlers in self._handlers.values()
+                ),
                 "active_consumers": len(self._consumer_groups),
                 "event_types": len(self._handlers),
             }

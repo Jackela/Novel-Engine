@@ -335,18 +335,8 @@ class RecommendationEngine:
                 f"Updated user preferences for {user_id} (completeness: {profile.profile_completeness:.2f})"
             )
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid interaction data or profile structure errors
-            logger.error(
-                f"Invalid data learning preferences for {user_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, RuntimeError) as e:
-            # Preference learning processing errors
-            logger.error(
-                f"Failed to learn user preferences for {user_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to learn user preferences for {user_id}: {e}")
 
     async def generate_recommendations(
         self,
@@ -417,19 +407,8 @@ class RecommendationEngine:
             )
             return final_recommendations
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context or profile data errors
-            logger.error(
-                f"Invalid data generating recommendations: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return []
-        except (ValueError, RuntimeError) as e:
-            # Recommendation generation processing errors
-            logger.error(
-                f"Failed to generate recommendations: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to generate recommendations: {e}")
             return []
 
     async def apply_recommendation_feedback(
@@ -481,18 +460,8 @@ class RecommendationEngine:
                 f"Applied feedback '{feedback}' for recommendation {recommendation_id}"
             )
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid feedback or recommendation data errors
-            logger.error(
-                f"Invalid data applying feedback for {recommendation_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, RuntimeError) as e:
-            # Feedback application processing errors
-            logger.error(
-                f"Failed to apply recommendation feedback: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to apply recommendation feedback: {e}")
 
     async def adapt_story_generation(
         self, user_id: str, story_context: Dict[str, Any]
@@ -521,9 +490,9 @@ class RecommendationEngine:
                     adapted_context["genre"] = preferred_genre
 
             # Adapt character preferences
-            adapted_context[
-                "character_suggestions"
-            ] = await self._get_preferred_characters(profile)
+            adapted_context["character_suggestions"] = (
+                await self._get_preferred_characters(profile)
+            )
 
             # Adapt writing style
             preferred_style = await self._get_preferred_style(profile)
@@ -556,19 +525,8 @@ class RecommendationEngine:
             logger.info(f"Adapted story generation for {user_id}")
             return adapted_context
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story context or profile data errors
-            logger.error(
-                f"Invalid data adapting story for {user_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return story_context
-        except (ValueError, RuntimeError) as e:
-            # Story adaptation processing errors
-            logger.error(
-                f"Failed to adapt story generation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to adapt story generation: {e}")
             return story_context
 
     async def get_user_insights(self, user_id: str) -> Dict[str, Any]:
@@ -622,19 +580,8 @@ class RecommendationEngine:
 
             return insights
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid profile or insights data errors
-            logger.error(
-                f"Invalid data getting insights for {user_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # User insights processing errors
-            logger.error(
-                f"Failed to get user insights: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to get user insights: {e}")
             return {"error": str(e)}
 
     async def update_preferences_batch(
@@ -659,18 +606,8 @@ class RecommendationEngine:
 
             logger.info(f"Batch updated preferences for {len(affected_users)} users")
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid preference update data errors
-            logger.error(
-                f"Invalid data in batch preference update: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, RuntimeError) as e:
-            # Batch update processing errors
-            logger.error(
-                f"Failed to batch update preferences: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to batch update preferences: {e}")
 
     # Private helper methods
 

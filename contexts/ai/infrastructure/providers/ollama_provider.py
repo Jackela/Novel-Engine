@@ -130,13 +130,16 @@ class OllamaProvider(ILLMProvider):
                 json=api_request,
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
+
                 if response.status == 200:
                     # Ollama streams by default, collect full response
                     full_response = await self._collect_full_response(response)
                     return self._parse_success_response(request, full_response)
                 else:
                     response_text = await response.text()
-                    return self._parse_error_response(request, response.status, response_text)
+                    return self._parse_error_response(
+                        request, response.status, response_text
+                    )
 
         except asyncio.TimeoutError:
             return LLMResponse.create_error(
@@ -185,6 +188,7 @@ class OllamaProvider(ILLMProvider):
                 json=api_request,
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
+
                 if response.status != 200:
                     yield f"Error: HTTP {response.status}"
                     return
@@ -284,6 +288,7 @@ class OllamaProvider(ILLMProvider):
             async with session.get(
                 f"{self._base_url}/api/tags", timeout=aiohttp.ClientTimeout(total=10)
             ) as response:
+
                 is_healthy = response.status == 200
 
                 if is_healthy:
@@ -336,6 +341,7 @@ class OllamaProvider(ILLMProvider):
             async with session.get(
                 f"{self._base_url}/api/tags", timeout=aiohttp.ClientTimeout(total=10)
             ) as response:
+
                 if response.status == 200:
                     data = await response.json()
                     models = data.get("models", [])
@@ -375,10 +381,15 @@ class OllamaProvider(ILLMProvider):
         capabilities = {ModelCapability.TEXT_GENERATION}
 
         # Common model patterns and their capabilities
-        if any(pattern in model_name.lower() for pattern in ["chat", "instruct", "vicuna"]):
+        if any(
+            pattern in model_name.lower() for pattern in ["chat", "instruct", "vicuna"]
+        ):
             capabilities.add(ModelCapability.CONVERSATION)
 
-        if any(pattern in model_name.lower() for pattern in ["code", "deepseek", "starcoder"]):
+        if any(
+            pattern in model_name.lower()
+            for pattern in ["code", "deepseek", "starcoder"]
+        ):
             capabilities.add(ModelCapability.CODE_GENERATION)
 
         # Estimate context window based on model name
@@ -410,7 +421,9 @@ class OllamaProvider(ILLMProvider):
                 self._session = aiohttp.ClientSession()
             return self._session
 
-    def _prepare_api_request(self, request: LLMRequest, stream: bool = False) -> Dict[str, Any]:
+    def _prepare_api_request(
+        self, request: LLMRequest, stream: bool = False
+    ) -> Dict[str, Any]:
         """
         Prepare Ollama API request from LLM request.
 
@@ -450,7 +463,9 @@ class OllamaProvider(ILLMProvider):
 
         return api_request
 
-    async def _collect_full_response(self, response: aiohttp.ClientResponse) -> Dict[str, Any]:
+    async def _collect_full_response(
+        self, response: aiohttp.ClientResponse
+    ) -> Dict[str, Any]:
         """
         Collect full response from Ollama streaming API.
 

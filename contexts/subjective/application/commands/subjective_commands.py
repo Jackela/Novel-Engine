@@ -69,7 +69,9 @@ class CreateTurnBriefCommand(SubjectiveCommand):
             raise ValueError("World state version cannot be negative")
 
         if not isinstance(self.perception_capabilities, PerceptionCapabilities):
-            raise ValueError("Perception capabilities must be a PerceptionCapabilities object")
+            raise ValueError(
+                "Perception capabilities must be a PerceptionCapabilities object"
+            )
 
         if not isinstance(self.initial_alertness, AlertnessLevel):
             raise ValueError("Initial alertness must be an AlertnessLevel")
@@ -97,7 +99,9 @@ class UpdatePerceptionCapabilitiesCommand(SubjectiveCommand):
             raise ValueError("Entity ID cannot be empty")
 
         if not isinstance(self.new_perception_capabilities, PerceptionCapabilities):
-            raise ValueError("New perception capabilities must be a PerceptionCapabilities object")
+            raise ValueError(
+                "New perception capabilities must be a PerceptionCapabilities object"
+            )
 
         if not self.change_reason or not self.change_reason.strip():
             raise ValueError("Change reason cannot be empty")
@@ -144,7 +148,10 @@ class UpdateAwarenessStateCommand(SubjectiveCommand):
         if self.stress_level is not None and not 0.0 <= self.stress_level <= 1.0:
             raise ValueError("Stress level must be between 0.0 and 1.0")
 
-        if self.new_attention_focus == AttentionFocus.TARGET_SPECIFIC and not self.new_focus_target:
+        if (
+            self.new_attention_focus == AttentionFocus.TARGET_SPECIFIC
+            and not self.new_focus_target
+        ):
             raise ValueError("Target-specific focus requires a focus target")
 
 
@@ -277,7 +284,9 @@ class DetectThreatCommand(SubjectiveCommand):
             raise ValueError("Threat type cannot be empty")
 
         if self.threat_level not in ["low", "medium", "high", "critical"]:
-            raise ValueError("Threat level must be 'low', 'medium', 'high', or 'critical'")
+            raise ValueError(
+                "Threat level must be 'low', 'medium', 'high', or 'critical'"
+            )
 
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError("Confidence must be between 0.0 and 1.0")
@@ -342,12 +351,16 @@ class UpdateFogOfWarCommand(SubjectiveCommand):
                 raise ValueError("Subject IDs must be non-empty strings")
 
             if not isinstance(position, (tuple, list)) or len(position) != 3:
-                raise ValueError(f"Position for {subject_id} must be a 3-tuple (x, y, z)")
+                raise ValueError(
+                    f"Position for {subject_id} must be a 3-tuple (x, y, z)"
+                )
 
             try:
                 float(position[0]), float(position[1]), float(position[2])
             except (ValueError, TypeError):
-                raise ValueError(f"Position coordinates for {subject_id} must be numeric")
+                raise ValueError(
+                    f"Position coordinates for {subject_id} must be numeric"
+                )
 
         if not isinstance(self.environmental_conditions, dict):
             raise ValueError("Environmental conditions must be a dictionary")

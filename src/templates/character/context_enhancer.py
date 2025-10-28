@@ -10,11 +10,7 @@ from src.memory.layered_memory import LayeredMemorySystem
 from src.templates.context_renderer import RenderFormat, RenderingConstraints
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
 
-from .persona_models import (
-    CharacterContextProfile,
-    CharacterPersona,
-    CharacterTemplate,
-)
+from .persona_models import CharacterContextProfile, CharacterPersona, CharacterTemplate
 
 logger = logging.getLogger(__name__)
 

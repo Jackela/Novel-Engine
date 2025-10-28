@@ -167,18 +167,14 @@ class TestTermGuard:
         """Test basic content analysis functionality."""
         guard = TermGuard(config_path=temp_config)
 
-        content = (
-            "The Vanguard Paladin fought valiantly against the legacy franchise forces."
-        )
+        content = "The Vanguard Paladin fought valiantly against the legacy franchise forces."
         violations = guard.analyze_content(content)
 
         # Should detect both Vanguard Paladin and legacy franchise
         assert len(violations) >= 2
 
         # Check Vanguard Paladin detection
-        space_marine_violations = [
-            v for v in violations if v.term == "Vanguard Paladin"
-        ]
+        space_marine_violations = [v for v in violations if v.term == "Vanguard Paladin"]
         assert len(space_marine_violations) == 1
         assert space_marine_violations[0].violation_type == ViolationType.CHARACTER_NAME
 
@@ -210,10 +206,7 @@ class TestTermGuard:
         assert "Alliance Network Marine" in cleaned_content
         assert len(report.violations_found) >= 1
         assert len(report.actions_taken) >= 1
-        assert (
-            "Replaced 'Vanguard Paladin' with 'Alliance Network Marine'"
-            in report.actions_taken
-        )
+        assert "Replaced 'Vanguard Paladin' with 'Alliance Network Marine'" in report.actions_taken
 
     def test_clean_content_block(self, temp_config):
         """Test content cleaning with block action."""
@@ -225,9 +218,7 @@ class TestTermGuard:
         assert "legacy franchise" not in cleaned_content
         assert "[CONTENT_FILTERED]" in cleaned_content
         assert len(report.violations_found) >= 1
-        assert any(
-            "Blocked 'legacy franchise'" in action for action in report.actions_taken
-        )
+        assert any("Blocked 'legacy franchise'" in action for action in report.actions_taken)
 
     def test_clean_content_analyze_only(self, temp_config):
         """Test content analysis without applying fixes."""

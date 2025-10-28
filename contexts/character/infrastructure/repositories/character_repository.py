@@ -189,7 +189,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         try:
             with self.session_factory() as session:
                 character_orms = (
-                    session.query(CharacterORM).filter(CharacterORM.name.ilike(f"%{name}%")).all()
+                    session.query(CharacterORM)
+                    .filter(CharacterORM.name.ilike(f"%{name}%"))
+                    .all()
                 )
 
                 return [self._map_orm_to_domain(orm) for orm in character_orms]
@@ -211,7 +213,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 return [self._map_orm_to_domain(orm) for orm in character_orms]
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Error finding characters by class {character_class}: {e}")
+            self.logger.error(
+                f"Error finding characters by class {character_class}: {e}"
+            )
             raise RepositoryException(f"Failed to find characters by class: {e}")
 
     async def find_by_race(self, race: CharacterRace) -> List[Character]:
@@ -219,7 +223,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         try:
             with self.session_factory() as session:
                 character_orms = (
-                    session.query(CharacterORM).filter(CharacterORM.race == race.value).all()
+                    session.query(CharacterORM)
+                    .filter(CharacterORM.race == race.value)
+                    .all()
                 )
 
                 return [self._map_orm_to_domain(orm) for orm in character_orms]
@@ -228,7 +234,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             self.logger.error(f"Error finding characters by race {race}: {e}")
             raise RepositoryException(f"Failed to find characters by race: {e}")
 
-    async def find_by_level_range(self, min_level: int, max_level: int) -> List[Character]:
+    async def find_by_level_range(
+        self, min_level: int, max_level: int
+    ) -> List[Character]:
         """Find characters within a level range."""
         try:
             with self.session_factory() as session:
@@ -256,7 +264,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         try:
             with self.session_factory() as session:
                 character_orms = (
-                    session.query(CharacterORM).filter(CharacterORM.is_alive is True).all()
+                    session.query(CharacterORM)
+                    .filter(CharacterORM.is_alive is True)
+                    .all()
                 )
 
                 return [self._map_orm_to_domain(orm) for orm in character_orms]
@@ -302,7 +312,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 for field, value in criteria.items():
                     if hasattr(CharacterORM, field):
                         if isinstance(value, list):
-                            query = query.filter(getattr(CharacterORM, field).in_(value))
+                            query = query.filter(
+                                getattr(CharacterORM, field).in_(value)
+                            )
                         else:
                             query = query.filter(getattr(CharacterORM, field) == value)
 
@@ -329,7 +341,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 for field, value in criteria.items():
                     if hasattr(CharacterORM, field):
                         if isinstance(value, list):
-                            query = query.filter(getattr(CharacterORM, field).in_(value))
+                            query = query.filter(
+                                getattr(CharacterORM, field).in_(value)
+                            )
                         else:
                             query = query.filter(getattr(CharacterORM, field) == value)
 
@@ -358,7 +372,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
                 # Characters by race
                 race_stats = (
-                    session.query(CharacterORM.race, func.count(CharacterORM.character_id))
+                    session.query(
+                        CharacterORM.race, func.count(CharacterORM.character_id)
+                    )
                     .group_by(CharacterORM.race)
                     .all()
                 )
@@ -366,14 +382,18 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 # Level statistics
                 avg_level = session.query(func.avg(CharacterORM.level)).scalar() or 0
                 level_distribution = (
-                    session.query(CharacterORM.level, func.count(CharacterORM.character_id))
+                    session.query(
+                        CharacterORM.level, func.count(CharacterORM.character_id)
+                    )
                     .group_by(CharacterORM.level)
                     .all()
                 )
 
                 # Alive characters
                 alive_characters = (
-                    session.query(CharacterORM).filter(CharacterORM.is_alive is True).count()
+                    session.query(CharacterORM)
+                    .filter(CharacterORM.is_alive is True)
+                    .count()
                 )
 
                 return {
@@ -399,7 +419,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                     # Check concurrency for existing characters
                     existing_orm = (
                         session.query(CharacterORM)
-                        .filter(CharacterORM.character_id == character.character_id.value)
+                        .filter(
+                            CharacterORM.character_id == character.character_id.value
+                        )
                         .first()
                     )
 
@@ -441,9 +463,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                     .count()
                 )
 
-                session.query(CharacterORM).filter(CharacterORM.character_id.in_(id_values)).delete(
-                    synchronize_session=False
-                )
+                session.query(CharacterORM).filter(
+                    CharacterORM.character_id.in_(id_values)
+                ).delete(synchronize_session=False)
 
                 session.commit()
                 return deleted_count
@@ -619,7 +641,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         profile.hair_color = character.profile.physical_traits.hair_color
         profile.eye_color = character.profile.physical_traits.eye_color
         profile.skin_tone = character.profile.physical_traits.skin_tone
-        profile.physical_description = character.profile.physical_traits.physical_description
+        profile.physical_description = (
+            character.profile.physical_traits.physical_description
+        )
         profile.personality_traits = character.profile.personality_traits.traits
         profile.backstory = character.profile.background.backstory
         profile.homeland = character.profile.background.homeland
@@ -650,7 +674,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         stats.damage_reduction = character.stats.combat_stats.damage_reduction
         stats.spell_resistance = character.stats.combat_stats.spell_resistance
         stats.critical_hit_chance = character.stats.combat_stats.critical_hit_chance
-        stats.critical_damage_multiplier = character.stats.combat_stats.critical_damage_multiplier
+        stats.critical_damage_multiplier = (
+            character.stats.combat_stats.critical_damage_multiplier
+        )
         stats.experience_points = character.stats.experience_points
         stats.skill_points = character.stats.skill_points
 
@@ -761,7 +787,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                     skill = Skill(
                         name=skill_name,
                         category=category,
-                        proficiency_level=ProficiencyLevel(skill_data["proficiency_level"]),
+                        proficiency_level=ProficiencyLevel(
+                            skill_data["proficiency_level"]
+                        ),
                         modifier=skill_data.get("modifier", 0),
                         description=skill_data.get("description"),
                     )

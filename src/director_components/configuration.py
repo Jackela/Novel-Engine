@@ -152,19 +152,8 @@ class ConfigurationService:
             )
             return True
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors during initialization
-            self.logger.error(
-                f"File system error during initialization: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (ValueError, TypeError, RuntimeError) as e:
-            # Configuration validation, schema, or setup errors
-            self.logger.error(
-                f"Configuration initialization error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Configuration service initialization failed: {e}")
             return False
 
     async def get_config(self) -> Dict[str, Any]:
@@ -187,19 +176,8 @@ class ConfigurationService:
             async with self._config_lock:
                 return self._get_nested_value(self._config_data, key, default)
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid key or data structure errors
-            self.logger.warning(
-                f"Invalid data getting config value for key '{key}': {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return default
-        except (ValueError, RuntimeError) as e:
-            # Value access or lock errors
-            self.logger.warning(
-                f"Config value retrieval error for key '{key}': {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.warning(f"Failed to get config value for key '{key}': {e}")
             return default
 
     async def update_config(self, updates: Dict[str, Any]) -> None:
@@ -247,19 +225,8 @@ class ConfigurationService:
 
                 self.logger.info(f"Configuration updated with {len(updates)} changes")
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid updates or data structure errors
-            self.logger.error(
-                f"Invalid data during configuration update: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (ValueError, RuntimeError) as e:
-            # Validation or configuration application errors
-            self.logger.error(
-                f"Configuration update error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Configuration update failed: {e}")
             raise
 
     async def reload_config(self) -> bool:
@@ -303,19 +270,8 @@ class ConfigurationService:
                 self.logger.info("Configuration reloaded successfully")
                 return True
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors during reload
-            self.logger.error(
-                f"File system error during config reload: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (ValueError, RuntimeError) as e:
-            # Configuration parsing or validation errors
-            self.logger.error(
-                f"Configuration reload error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Configuration reload failed: {e}")
             return False
 
     async def register_change_callback(self, callback: callable) -> None:
@@ -439,18 +395,8 @@ class ConfigurationService:
 
                     self.logger.debug(f"Loaded configuration from: {config_file}")
 
-                except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-                    # File system errors during file loading
-                    self.logger.error(
-                        f"File error loading config {config_file}: {e}",
-                        extra={"error_type": type(e).__name__},
-                    )
-                except (json.JSONDecodeError, ValueError, TypeError) as e:
-                    # File parsing or data format errors
-                    self.logger.error(
-                        f"Parse error loading config {config_file}: {e}",
-                        extra={"error_type": type(e).__name__},
-                    )
+                except Exception as e:
+                    self.logger.error(f"Failed to load config file {config_file}: {e}")
 
     async def _load_single_config_file(self, file_path: Path) -> Dict[str, Any]:
         """Load configuration from a single file."""
@@ -467,19 +413,8 @@ class ConfigurationService:
                 else:  # Assume JSON
                     return json.load(f) or {}
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors during file reading
-            self.logger.error(
-                f"File error parsing config {file_path}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {}
-        except (json.JSONDecodeError, ValueError, TypeError) as e:
-            # JSON/YAML parsing or data format errors
-            self.logger.error(
-                f"Parse error for config file {file_path}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to parse config file {file_path}: {e}")
             return {}
 
     async def _load_environment_config(self) -> None:
@@ -619,19 +554,8 @@ class ConfigurationService:
 
             return validation_result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid schema or data structure errors
-            self.logger.error(
-                f"Invalid data during validation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"valid": False, "errors": [str(e)], "warnings": []}
-        except (ValueError, RuntimeError) as e:
-            # Validation rule or type conversion errors
-            self.logger.error(
-                f"Validation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Configuration validation error: {e}")
             return {"valid": False, "errors": [str(e)], "warnings": []}
 
     async def _apply_validation_rule(self, key: str, value: Any, rule: str) -> bool:
@@ -653,19 +577,8 @@ class ConfigurationService:
                 self.logger.warning(f"Unknown validation rule: {rule}")
                 return True
 
-        except (AttributeError, TypeError, ValueError) as e:
-            # Invalid value type or comparison errors
-            self.logger.error(
-                f"Validation rule data error for '{key}': {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (RuntimeError, KeyError) as e:
-            # Rule application or value access errors
-            self.logger.error(
-                f"Validation rule processing error for '{key}': {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Validation rule error for '{key}': {e}")
             return False
 
     async def _setup_file_watching(self) -> None:
@@ -696,18 +609,8 @@ class ConfigurationService:
                 f"File watching started for {len(watched_dirs)} directories"
             )
 
-        except (AttributeError, TypeError, KeyError) as e:
-            # Invalid file paths or observer errors
-            self.logger.error(
-                f"File watching setup data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (RuntimeError, OSError, ImportError) as e:
-            # Observer creation or file system errors
-            self.logger.error(
-                f"File watching setup error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to setup file watching: {e}")
 
     async def _handle_file_change(self, file_path: str) -> None:
         """Handle configuration file change."""
@@ -723,18 +626,8 @@ class ConfigurationService:
             else:
                 self.logger.error("Configuration hot-reload failed")
 
-        except (AttributeError, TypeError) as e:
-            # Invalid file path or reload method errors
-            self.logger.error(
-                f"Config file change handler data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (RuntimeError, asyncio.CancelledError) as e:
-            # Async operation or reload errors
-            self.logger.error(
-                f"Config file change handler error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to handle config file change: {e}")
 
     async def _notify_config_changes(self, changes: Dict[str, Any]) -> None:
         """Notify registered callbacks about configuration changes."""
@@ -744,18 +637,8 @@ class ConfigurationService:
                     await callback(changes)
                 else:
                     callback(changes)
-            except (AttributeError, TypeError) as e:
-                # Invalid callback or changes data errors
-                self.logger.error(
-                    f"Config change callback data error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (ValueError, RuntimeError) as e:
-                # Callback execution errors
-                self.logger.error(
-                    f"Config change callback execution error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                self.logger.error(f"Configuration change callback failed: {e}")
 
     async def export_config(self, export_path: str, format: str = "json") -> bool:
         """Export current configuration to file."""
@@ -779,19 +662,8 @@ class ConfigurationService:
                 self.logger.info(f"Configuration exported to: {export_path}")
                 return True
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors during export
-            self.logger.error(
-                f"File error during config export: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (json.JSONEncodeError, TypeError, ValueError) as e:
-            # JSON/YAML serialization or data format errors
-            self.logger.error(
-                f"Serialization error during config export: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Configuration export failed: {e}")
             return False
 
     async def cleanup(self) -> None:
@@ -810,13 +682,5 @@ class ConfigurationService:
 
             self.logger.info("Configuration service cleanup completed")
 
-        except (AttributeError, TypeError) as e:
-            # Invalid observer or data structure errors
-            self.logger.error(
-                f"Cleanup data error: {e}", extra={"error_type": type(e).__name__}
-            )
-        except (RuntimeError, OSError) as e:
-            # Observer stop or thread join errors
-            self.logger.error(
-                f"Cleanup processing error: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            self.logger.error(f"Configuration cleanup error: {e}")

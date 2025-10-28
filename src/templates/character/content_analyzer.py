@@ -162,3 +162,4 @@ class ContentAnalyzer:
         else:
             # Default enhanced determination
             return TemplateType.CHARACTER_PROMPT
+

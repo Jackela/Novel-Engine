@@ -134,7 +134,9 @@ class TestLayeredMemorySystem:
 
     async def test_store_memory_force_layer(self, layered_memory, sample_memory):
         """Test forced layer storage."""
-        result = await layered_memory.store_memory(sample_memory, force_layer="working")
+        result = await layered_memory.store_memory(
+            sample_memory, force_layer="working"
+        )
 
         assert result.success is True
         assert result.data["stored_layers"] == ["working"]
@@ -148,7 +150,9 @@ class TestLayeredMemorySystem:
             emotional_weight=7.0,
         )
 
-        result = await layered_memory.store_memory(memory, cross_layer_linking=True)
+        result = await layered_memory.store_memory(
+            memory, cross_layer_linking=True
+        )
 
         assert result.success is True
         assert len(result.data["stored_layers"]) > 1
@@ -262,7 +266,9 @@ class TestLayeredMemorySystem:
         """Test full memory consolidation."""
         await layered_memory.store_memory(sample_memory)
 
-        result = await layered_memory.consolidate_memories(consolidation_type="full")
+        result = await layered_memory.consolidate_memories(
+            consolidation_type="full"
+        )
 
         assert result.success is True
         assert "consolidation_results" in result.data
@@ -273,7 +279,9 @@ class TestLayeredMemorySystem:
         """Test partial memory consolidation."""
         await layered_memory.store_memory(sample_memory)
 
-        result = await layered_memory.consolidate_memories(consolidation_type="partial")
+        result = await layered_memory.consolidate_memories(
+            consolidation_type="partial"
+        )
 
         assert result.success is True
         assert "consolidation_results" in result.data
@@ -416,7 +424,9 @@ class TestLayeredMemorySystem:
             emotional_weight=7.0,
         )
 
-        result = await layered_memory.store_memory(memory, cross_layer_linking=True)
+        result = await layered_memory.store_memory(
+            memory, cross_layer_linking=True
+        )
 
         assert result.success is True
         associations = layered_memory._cross_layer_associations

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
+
 @dataclass
 class AgentState:
     """Represents the current state of a PersonaAgent."""
@@ -128,19 +129,8 @@ class AgentStateManager:
 
             self.logger.info(f"Agent {self.agent_id} state updated successfully")
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid state updates or field access errors
-            self.logger.error(
-                f"Invalid data during state update: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (ValueError, RuntimeError) as e:
-            # State validation or callback notification errors
-            self.logger.error(
-                f"State update processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to update agent state: {e}")
             raise
 
     async def get_state(self) -> Dict[str, Any]:
@@ -179,19 +169,8 @@ class AgentStateManager:
             self.logger.info(f"Agent state saved to {file_path}")
             return True
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors during save
-            self.logger.error(
-                f"File system error during state save: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (json.JSONDecodeError, TypeError, ValueError) as e:
-            # JSON serialization or data conversion errors
-            self.logger.error(
-                f"Data serialization error during state save: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to save agent state: {e}")
             return False
 
     async def load_state(self, file_path: str) -> bool:
@@ -232,19 +211,8 @@ class AgentStateManager:
             self.logger.info(f"Agent state loaded from {file_path}")
             return True
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors during load
-            self.logger.error(
-                f"File system error during state load: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            # JSON parsing or data format errors
-            self.logger.error(
-                f"Data format error during state load: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to load agent state: {e}")
             return False
 
     def get_current_location(self) -> Optional[str]:
@@ -417,18 +385,8 @@ class AgentStateManager:
             if len(self._state.state_history) > 100:  # Keep last 100 changes
                 self._state.state_history = self._state.state_history[-100:]
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid state data or history structure errors
-            self.logger.debug(
-                f"State change recording data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, IndexError) as e:
-            # History list operations or data extraction errors
-            self.logger.debug(
-                f"State change recording processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Failed to record state change: {e}")
 
     async def _notify_state_change(self, updates: Dict[str, Any]) -> None:
         """Notify registered callbacks of state changes."""
@@ -443,18 +401,8 @@ class AgentStateManager:
                             await callback(self.agent_id, updates)
                         else:
                             callback(self.agent_id, updates)
-            except (AttributeError, TypeError) as e:
-                # Invalid callback function or signature errors
-                self.logger.warning(
-                    f"State change callback error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (ValueError, RuntimeError) as e:
-                # Callback execution or async handling errors
-                self.logger.warning(
-                    f"State change callback execution error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                self.logger.warning(f"State change callback failed: {e}")
 
     def get_state_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent state change history."""

@@ -236,7 +236,9 @@ class OutboxPublisher:
                 # Update event statuses
                 if published_event_ids:
                     await self._mark_events_published(session, published_event_ids)
-                    self._metrics.record_outbox_events_published(len(published_event_ids))
+                    self._metrics.record_outbox_events_published(
+                        len(published_event_ids)
+                    )
 
                 if failed_event_ids:
                     await self._handle_failed_events(session, failed_event_ids)
@@ -296,8 +298,12 @@ class OutboxPublisher:
                     "event_type": event.event_type,
                     "event_version": event.event_version,
                     "aggregate_type": event.aggregate_type,
-                    "correlation_id": (str(event.correlation_id) if event.correlation_id else None),
-                    "causation_id": (str(event.causation_id) if event.causation_id else None),
+                    "correlation_id": (
+                        str(event.correlation_id) if event.correlation_id else None
+                    ),
+                    "causation_id": (
+                        str(event.causation_id) if event.causation_id else None
+                    ),
                     "user_id": str(event.user_id) if event.user_id else None,
                 }
             )
@@ -309,7 +315,9 @@ class OutboxPublisher:
 
         logger.debug(f"Published {len(events)} events to topic {topic}")
 
-    async def _mark_events_published(self, session: AsyncSession, event_ids: List[str]) -> None:
+    async def _mark_events_published(
+        self, session: AsyncSession, event_ids: List[str]
+    ) -> None:
         """Mark events as successfully published."""
         stmt = (
             update(OutboxEvent)
@@ -319,7 +327,9 @@ class OutboxPublisher:
 
         await session.execute(stmt)
 
-    async def _handle_failed_events(self, session: AsyncSession, event_ids: List[str]) -> None:
+    async def _handle_failed_events(
+        self, session: AsyncSession, event_ids: List[str]
+    ) -> None:
         """Handle failed event publishing."""
         stmt = (
             update(OutboxEvent)
@@ -421,13 +431,17 @@ class OutboxPublisher:
             failed_count = status.get("failed_events", 0)
             if failed_count > 100:  # Configurable threshold
                 health_status["status"] = "degraded"
-                health_status["errors"].append(f"Too many failed events: {failed_count}")
+                health_status["errors"].append(
+                    f"Too many failed events: {failed_count}"
+                )
 
             # Check for excessive pending events
             pending_count = status.get("pending_events", 0)
             if pending_count > 1000:  # Configurable threshold
                 health_status["status"] = "degraded"
-                health_status["errors"].append(f"Too many pending events: {pending_count}")
+                health_status["errors"].append(
+                    f"Too many pending events: {pending_count}"
+                )
 
             health_status["pending_events"] = pending_count
             health_status["failed_events"] = failed_count

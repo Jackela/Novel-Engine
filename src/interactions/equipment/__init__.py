@@ -15,10 +15,10 @@ from .models import (
 from .system import DynamicEquipmentSystem
 
 __all__ = [
-    "DynamicEquipmentSystem",
-    "EquipmentCategory",
-    "EquipmentStatus",
-    "EquipmentModification",
-    "EquipmentMaintenance",
-    "DynamicEquipment",
+    'DynamicEquipmentSystem',
+    'EquipmentCategory',
+    'EquipmentStatus',
+    'EquipmentModification',
+    'EquipmentMaintenance',
+    'DynamicEquipment',
 ]

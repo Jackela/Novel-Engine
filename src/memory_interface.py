@@ -230,7 +230,9 @@ class MemoryInterface:
 
                 elif "failure" in outcome.lower():
                     if self.agent_core.morale_level > 0.5:
-                        interpretation += ", but remains determined despite the setback"
+                        interpretation += (
+                            ", but remains determined despite the setback"
+                        )
                     else:
                         interpretation += ", feeling discouraged by this failure"
 
@@ -697,6 +699,7 @@ class MemoryInterface:
                     memory.get("significance", 0.0) >= self.significance_threshold
                     and memory not in self.agent_core.long_term_memory
                 ):
+
                     self.agent_core.long_term_memory.append(memory)
                     consolidated_count += 1
 

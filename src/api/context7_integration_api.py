@@ -361,7 +361,7 @@ if (response.ok) {{
 
         @app.post(
             "/api/v1/context7/examples",
-            response_model=StandardResponse,
+            response_model=StandardResponse[CodeExampleResponse],
             summary="Generate Code Examples",
             description="Generate Context7-powered code examples for API endpoints",
         )
@@ -413,7 +413,7 @@ if (response.ok) {{
 
         @app.post(
             "/api/v1/context7/validate",
-            response_model=StandardResponse,
+            response_model=StandardResponse[PatternValidationResponse],
             summary="Validate API Patterns",
             description="Validate API code against Context7 framework patterns",
         )
@@ -466,7 +466,7 @@ if (response.ok) {{
 
         @app.post(
             "/api/v1/context7/documentation",
-            response_model=StandardResponse,
+            response_model=StandardResponse[EnhancedDocumentationResponse],
             summary="Generate Enhanced Documentation",
             description="Generate Context7-powered enhanced API documentation",
         )
@@ -540,7 +540,7 @@ if (response.ok) {{
 
         @app.get(
             "/api/v1/context7/best-practices/{framework}",
-            response_model=StandardResponse,
+            response_model=StandardResponse[BestPracticesResponse],
             summary="Get Framework Best Practices",
             description="Get Context7-powered framework best practices",
         )
@@ -593,7 +593,7 @@ if (response.ok) {{
 
         @app.get(
             "/api/v1/context7/status",
-            response_model=StandardResponse,
+            response_model=StandardResponse[Dict[str, Any]],
             summary="Get Context7 Status",
             description="Get Context7 MCP server status and capabilities",
         )

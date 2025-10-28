@@ -422,24 +422,8 @@ class ExportIntegrationEngine:
             )
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid export request or format data errors
-            logger.error(
-                f"Invalid data in export for {request.export_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return ExportResult(
-                export_id=request.export_id,
-                success=False,
-                format=request.format,
-                error_message=str(e),
-            )
-        except (ValueError, RuntimeError) as e:
-            # Export processing errors
-            logger.error(
-                f"Export failed for {request.export_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Export failed for {request.export_id}: {e}")
             return ExportResult(
                 export_id=request.export_id,
                 success=False,
@@ -490,19 +474,8 @@ class ExportIntegrationEngine:
             )
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story or share data errors
-            logger.error(
-                f"Invalid data creating story share: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Story share creation processing errors
-            logger.error(
-                f"Failed to create story share: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to create story share: {e}")
             return {"success": False, "error": str(e)}
 
     async def access_shared_story(
@@ -569,19 +542,8 @@ class ExportIntegrationEngine:
             logger.info(f"Story accessed via share {share_id}")
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid share token or story data errors
-            logger.error(
-                f"Invalid data accessing shared story: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Shared story access processing errors
-            logger.error(
-                f"Failed to access shared story: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to access shared story: {e}")
             return {"success": False, "error": str(e)}
 
     async def create_story_version(
@@ -685,19 +647,8 @@ class ExportIntegrationEngine:
             logger.info(f"Created version {version_number} for story {story_id}")
             return version
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story or version data errors
-            logger.error(
-                f"Invalid data creating story version: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (ValueError, RuntimeError) as e:
-            # Story version creation processing errors
-            logger.error(
-                f"Failed to create story version: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to create story version: {e}")
             raise
 
     async def get_story_versions(
@@ -728,19 +679,8 @@ class ExportIntegrationEngine:
             versions.sort(key=lambda x: x.created_at, reverse=True)
             return versions[:limit]
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story or version data errors
-            logger.error(
-                f"Invalid data getting story versions: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return []
-        except (ValueError, RuntimeError) as e:
-            # Story version retrieval processing errors
-            logger.error(
-                f"Failed to get story versions: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to get story versions: {e}")
             return []
 
     async def restore_story_version(
@@ -789,19 +729,8 @@ class ExportIntegrationEngine:
             )
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid version or story data errors
-            logger.error(
-                f"Invalid data restoring story version: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Story version restoration processing errors
-            logger.error(
-                f"Failed to restore story version: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to restore story version: {e}")
             return {"success": False, "error": str(e)}
 
     async def create_integration(
@@ -850,19 +779,8 @@ class ExportIntegrationEngine:
             )
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid integration config or data errors
-            logger.error(
-                f"Invalid data creating integration: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Integration creation processing errors
-            logger.error(
-                f"Failed to create integration: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to create integration: {e}")
             return {"success": False, "error": str(e)}
 
     async def sync_integration(
@@ -903,19 +821,8 @@ class ExportIntegrationEngine:
             )
             return sync_result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid integration or sync data errors
-            logger.error(
-                f"Invalid data syncing integration: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Integration sync processing errors
-            logger.error(
-                f"Failed to sync integration: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to sync integration: {e}")
             return {"success": False, "error": str(e)}
 
     async def batch_export_stories(
@@ -983,19 +890,8 @@ class ExportIntegrationEngine:
             )
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story or export data errors
-            logger.error(
-                f"Invalid data in batch export: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Batch export processing errors
-            logger.error(
-                f"Failed to batch export stories: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to batch export stories: {e}")
             return {"success": False, "error": str(e)}
 
     # Format-specific export handlers
@@ -1027,18 +923,8 @@ class ExportIntegrationEngine:
             json_str = json.dumps(export_data, indent=indent, ensure_ascii=False)
             return json_str.encode("utf-8")
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story data or JSON structure errors
-            logger.error(
-                f"Invalid data in JSON export: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (ValueError, RuntimeError) as e:
-            # JSON export processing errors
-            logger.error(
-                f"JSON export failed: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            logger.error(f"JSON export failed: {e}")
             raise
 
     async def _export_markdown(
@@ -1077,18 +963,8 @@ class ExportIntegrationEngine:
 
             return "\n".join(markdown_content).encode("utf-8")
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story data or markdown structure errors
-            logger.error(
-                f"Invalid data in Markdown export: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (ValueError, RuntimeError) as e:
-            # Markdown export processing errors
-            logger.error(
-                f"Markdown export failed: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            logger.error(f"Markdown export failed: {e}")
             raise
 
     async def _export_html(
@@ -1140,18 +1016,8 @@ class ExportIntegrationEngine:
 
             return html_content.encode("utf-8")
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story data or HTML structure errors
-            logger.error(
-                f"Invalid data in HTML export: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (ValueError, RuntimeError) as e:
-            # HTML export processing errors
-            logger.error(
-                f"HTML export failed: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            logger.error(f"HTML export failed: {e}")
             raise
 
     async def _export_txt(
@@ -1194,18 +1060,8 @@ class ExportIntegrationEngine:
 
             return line_ending.join(text_content).encode("utf-8")
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story data or text structure errors
-            logger.error(
-                f"Invalid data in TXT export: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (ValueError, RuntimeError) as e:
-            # TXT export processing errors
-            logger.error(
-                f"TXT export failed: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            logger.error(f"TXT export failed: {e}")
             raise
 
     async def _export_xml(
@@ -1249,18 +1105,8 @@ class ExportIntegrationEngine:
             xml_str = ET.tostring(root, encoding="unicode", method="xml")
             return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode("utf-8")
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story data or XML structure errors
-            logger.error(
-                f"Invalid data in XML export: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (ValueError, RuntimeError) as e:
-            # XML export processing errors
-            logger.error(
-                f"XML export failed: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            logger.error(f"XML export failed: {e}")
             raise
 
     # Placeholder implementations for advanced formats

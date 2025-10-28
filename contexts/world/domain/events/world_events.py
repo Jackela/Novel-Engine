@@ -147,7 +147,9 @@ class WorldStateChanged(Event):
         # Validate state data consistency
         if self.change_type == WorldChangeType.ENTITY_UPDATED:
             if self.previous_state is None and self.new_state is None:
-                errors.append("Either previous_state or new_state must be provided for updates")
+                errors.append(
+                    "Either previous_state or new_state must be provided for updates"
+                )
 
         if errors:
             raise ValueError(f"World event validation failed: {'; '.join(errors)}")
@@ -451,7 +453,9 @@ class WorldStateChanged(Event):
         base_summary = f"{self.change_type.value.replace('_', ' ').title()}"
 
         if self.affected_entity_type and self.affected_entity_id:
-            base_summary += f" - {self.affected_entity_type} {self.affected_entity_id[:8]}"
+            base_summary += (
+                f" - {self.affected_entity_type} {self.affected_entity_id[:8]}"
+            )
 
         if self.change_reason:
             base_summary += f" ({self.change_reason})"

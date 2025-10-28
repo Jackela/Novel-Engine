@@ -167,7 +167,9 @@ class PermissionManager:
             if existing:
                 return existing
 
-            role = Role(name=name, description=description, is_system_role=is_system_role)
+            role = Role(
+                name=name, description=description, is_system_role=is_system_role
+            )
 
             session.add(role)
             session.commit()
@@ -203,10 +205,14 @@ class PermissionManager:
                 raise RoleNotFoundException(f"Role {role_name} not found")
 
             permission = (
-                session.query(Permission).filter(Permission.name == permission_name).first()
+                session.query(Permission)
+                .filter(Permission.name == permission_name)
+                .first()
             )
             if not permission:
-                raise PermissionNotFoundException(f"Permission {permission_name} not found")
+                raise PermissionNotFoundException(
+                    f"Permission {permission_name} not found"
+                )
 
             # Check if assignment already exists
             existing = (
@@ -219,7 +225,9 @@ class PermissionManager:
             )
 
             if existing:
-                logger.debug(f"Permission {permission_name} already assigned to role {role_name}")
+                logger.debug(
+                    f"Permission {permission_name} already assigned to role {role_name}"
+                )
                 return
 
             # Create assignment
@@ -238,7 +246,9 @@ class PermissionManager:
             logger.info(f"Assigned permission {permission_name} to role {role_name}")
 
         except Exception as e:
-            logger.error(f"Failed to assign permission {permission_name} to role {role_name}: {e}")
+            logger.error(
+                f"Failed to assign permission {permission_name} to role {role_name}: {e}"
+            )
             session.rollback()
             raise
 
@@ -309,7 +319,9 @@ class PermissionManager:
             session.rollback()
             raise
 
-    def has_permission(self, user_id: str, permission_name: str, use_cache: bool = True) -> bool:
+    def has_permission(
+        self, user_id: str, permission_name: str, use_cache: bool = True
+    ) -> bool:
         """
         Check if user has a specific permission.
 
@@ -337,7 +349,9 @@ class PermissionManager:
                 return permission_name in permissions
 
         except Exception as e:
-            logger.error(f"Failed to check permission {permission_name} for user {user_id}: {e}")
+            logger.error(
+                f"Failed to check permission {permission_name} for user {user_id}: {e}"
+            )
             return False
 
     def has_any_permission(
@@ -371,7 +385,9 @@ class PermissionManager:
                 return any(perm in permissions for perm in permission_names)
 
         except Exception as e:
-            logger.error(f"Failed to check permissions {permission_names} for user {user_id}: {e}")
+            logger.error(
+                f"Failed to check permissions {permission_names} for user {user_id}: {e}"
+            )
             return False
 
     def has_role(self, user_id: str, role_name: str, use_cache: bool = True) -> bool:
@@ -701,7 +717,9 @@ class PermissionManager:
 
                 for role_name, permissions in role_permissions.items():
                     for permission_name in permissions:
-                        self.assign_permission_to_role(session, role_name, permission_name)
+                        self.assign_permission_to_role(
+                            session, role_name, permission_name
+                        )
 
                 logger.info("Initialized system permissions and roles")
 
@@ -780,7 +798,9 @@ class AuthorizationService:
                     raise InsufficientPermissionsException("Authentication required")
 
                 if not self.permission_manager.has_role(user_id, role_name):
-                    raise InsufficientPermissionsException(f"Role '{role_name}' required")
+                    raise InsufficientPermissionsException(
+                        f"Role '{role_name}' required"
+                    )
 
                 return await func(*args, **kwargs)
 
@@ -809,7 +829,9 @@ class AuthorizationService:
                 if not user_id:
                     raise InsufficientPermissionsException("Authentication required")
 
-                if not self.permission_manager.has_any_permission(user_id, permission_names):
+                if not self.permission_manager.has_any_permission(
+                    user_id, permission_names
+                ):
                     raise InsufficientPermissionsException(
                         f"One of permissions {permission_names} required"
                     )

@@ -62,7 +62,9 @@ class AwarenessState:
     current_alertness: AlertnessLevel
     attention_focus: AttentionFocus
     focus_target: Optional[str] = None  # What/who is being focused on
-    awareness_modifiers: Dict[AwarenessModifier, float] = None  # Modifier -> effect strength
+    awareness_modifiers: Dict[AwarenessModifier, float] = (
+        None  # Modifier -> effect strength
+    )
     fatigue_level: float = 0.0  # 0.0 = fresh, 1.0 = exhausted
     stress_level: float = 0.0  # 0.0 = calm, 1.0 = maximum stress
 
@@ -72,7 +74,9 @@ class AwarenessState:
         if self.awareness_modifiers is None:
             object.__setattr__(self, "awareness_modifiers", {})
         elif not isinstance(self.awareness_modifiers, dict):
-            object.__setattr__(self, "awareness_modifiers", dict(self.awareness_modifiers))
+            object.__setattr__(
+                self, "awareness_modifiers", dict(self.awareness_modifiers)
+            )
 
         # Validate modifier values
         for modifier, value in self.awareness_modifiers.items():
@@ -81,7 +85,9 @@ class AwarenessState:
             if not isinstance(value, (int, float)):
                 raise ValueError(f"Modifier value for {modifier} must be numeric")
             if not -1.0 <= value <= 1.0:
-                raise ValueError(f"Modifier value for {modifier} must be between -1.0 and 1.0")
+                raise ValueError(
+                    f"Modifier value for {modifier} must be between -1.0 and 1.0"
+                )
 
         # Validate levels
         if not 0.0 <= self.fatigue_level <= 1.0:
@@ -91,7 +97,10 @@ class AwarenessState:
             raise ValueError("Stress level must be between 0.0 and 1.0")
 
         # Validate focus target consistency
-        if self.attention_focus == AttentionFocus.TARGET_SPECIFIC and self.focus_target is None:
+        if (
+            self.attention_focus == AttentionFocus.TARGET_SPECIFIC
+            and self.focus_target is None
+        ):
             raise ValueError("Target-specific focus requires a focus target")
 
     def calculate_effective_alertness(self) -> AlertnessLevel:
@@ -129,13 +138,17 @@ class AwarenessState:
                 AwarenessModifier.MAGICAL_ENHANCEMENT,
             ]:
                 # Positive modifiers increase alertness (increased benefit for complex scenarios)
-                modified_value += abs(strength) * 1.8  # Increased from 1.5 to 1.8 (compromise)
+                modified_value += (
+                    abs(strength) * 1.8
+                )  # Increased from 1.5 to 1.8 (compromise)
             elif modifier == AwarenessModifier.FEAR:
                 # Fear can increase or decrease alertness depending on strength
                 if strength > 0:
                     modified_value += strength * 1.5  # Fear increases alertness
                 else:
-                    modified_value += strength * 2  # Overwhelming fear decreases alertness
+                    modified_value += (
+                        strength * 2
+                    )  # Overwhelming fear decreases alertness
 
         # Apply fatigue penalty
         modified_value -= self.fatigue_level * 2
@@ -205,7 +218,9 @@ class AwarenessState:
 
         # Apply fatigue and stress penalties to conscious states only
         fatigue_penalty = 1.0 + (self.fatigue_level * 2.0)
-        stress_modifier = 1.0 + (abs(self.stress_level - 0.0) * 0.5)  # Optimal stress is 0.0 (calm)
+        stress_modifier = 1.0 + (
+            abs(self.stress_level - 0.0) * 0.5
+        )  # Optimal stress is 0.0 (calm)
 
         # Round to avoid floating point precision issues
         return round(base_modifier * fatigue_penalty * stress_modifier, 10)
@@ -253,7 +268,9 @@ class AwarenessState:
         # Only drowsy entities are surprised when not task-focused
         return effective_alertness == AlertnessLevel.DROWSY
 
-    def with_modified_alertness(self, new_alertness: AlertnessLevel) -> "AwarenessState":
+    def with_modified_alertness(
+        self, new_alertness: AlertnessLevel
+    ) -> "AwarenessState":
         """Create a new awareness state with modified alertness level."""
         return AwarenessState(
             base_alertness=self.base_alertness,
@@ -279,7 +296,9 @@ class AwarenessState:
             stress_level=self.stress_level,
         )
 
-    def with_added_modifier(self, modifier: AwarenessModifier, strength: float) -> "AwarenessState":
+    def with_added_modifier(
+        self, modifier: AwarenessModifier, strength: float
+    ) -> "AwarenessState":
         """Create a new awareness state with an added modifier."""
         new_modifiers = dict(self.awareness_modifiers)
         new_modifiers[modifier] = strength

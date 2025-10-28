@@ -87,8 +87,7 @@ class TestPersonaCore:
         """Test PersonaCore initialization."""
         assert persona_core.identity.agent_id == "test_agent_001"
         assert (
-            persona_core.identity.character_directory.endswith("test_agent_001")
-            is False
+            persona_core.identity.character_directory.endswith("test_agent_001") is False
         )  # Uses provided path
         assert persona_core.is_active is False
         assert persona_core.memory is not None
