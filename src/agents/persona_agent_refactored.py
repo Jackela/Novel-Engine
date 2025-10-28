@@ -329,8 +329,9 @@ class PersonaAgent:
         """Destructor for cleanup."""
         try:
             self.cleanup()
-        except Exception:
-            pass  # Best effort cleanup
+        except (AttributeError, RuntimeError):
+            # Best effort cleanup - ignore errors during destructor
+            pass
 
 
 # Factory function for backward compatibility

@@ -56,9 +56,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
         self.active_turns_tracking: Dict[str, Dict[str, Any]] = {}
         self.recent_performance_data: List[Dict[str, Any]] = []
 
-        logger.info(
-            "EnhancedPerformanceTracker initialized with Prometheus integration"
-        )
+        logger.info("EnhancedPerformanceTracker initialized with Prometheus integration")
 
     def track_turn_start(self, turn: Turn) -> None:
         """
@@ -110,9 +108,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             f"Enhanced tracking started for turn {turn_id} with {participants_count} participants"
         )
 
-    def track_turn_completion(
-        self, turn: Turn, pipeline_result: PipelineResult
-    ) -> Dict[str, Any]:
+    def track_turn_completion(self, turn: Turn, pipeline_result: PipelineResult) -> Dict[str, Any]:
         """
         Track turn execution completion with comprehensive Prometheus metrics.
 
@@ -278,9 +274,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
 
         # Extract phase metrics
         success = (
-            phase_result.was_successful()
-            if hasattr(phase_result, "was_successful")
-            else False
+            phase_result.was_successful() if hasattr(phase_result, "was_successful") else False
         )
         execution_time = (
             phase_result.get_execution_time()
@@ -290,19 +284,13 @@ class EnhancedPerformanceTracker(PerformanceTracker):
         execution_time_seconds = execution_time.total_seconds() if execution_time else 0
 
         events_processed = (
-            len(phase_result.events_consumed)
-            if hasattr(phase_result, "events_consumed")
-            else 0
+            len(phase_result.events_consumed) if hasattr(phase_result, "events_consumed") else 0
         )
         events_generated = (
-            len(phase_result.events_generated)
-            if hasattr(phase_result, "events_generated")
-            else 0
+            len(phase_result.events_generated) if hasattr(phase_result, "events_generated") else 0
         )
         ai_cost = (
-            phase_result.get_ai_cost()
-            if hasattr(phase_result, "get_ai_cost")
-            else Decimal("0")
+            phase_result.get_ai_cost() if hasattr(phase_result, "get_ai_cost") else Decimal("0")
         )
 
         # Record enhanced phase metrics
@@ -343,9 +331,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             compensation_results: Results of compensation execution
         """
         # Call parent implementation
-        super().track_compensation_execution(
-            turn, compensation_actions, compensation_results
-        )
+        super().track_compensation_execution(turn, compensation_actions, compensation_results)
 
         # Enhanced Prometheus metrics for each compensation action
         for action in compensation_actions:
@@ -354,20 +340,14 @@ class EnhancedPerformanceTracker(PerformanceTracker):
                 if hasattr(action, "compensation_type")
                 else "unknown"
             )
-            success = (
-                action.status == "completed" if hasattr(action, "status") else False
-            )
+            success = action.status == "completed" if hasattr(action, "status") else False
             execution_time = (
                 action.get_execution_time()
                 if hasattr(action, "get_execution_time")
                 else timedelta(0)
             )
-            execution_time_seconds = (
-                execution_time.total_seconds() if execution_time else 0
-            )
-            rollback_reason = compensation_results.get(
-                "rollback_reason", "phase_failure"
-            )
+            execution_time_seconds = execution_time.total_seconds() if execution_time else 0
+            rollback_reason = compensation_results.get("rollback_reason", "phase_failure")
 
             self.prometheus_collector.record_compensation_execution(
                 compensation_type=compensation_type,
@@ -380,9 +360,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             f"Enhanced compensation tracking: {len(compensation_actions)} actions for turn {turn.turn_id}"
         )
 
-    def record_resource_usage(
-        self, component: str, memory_bytes: int, cpu_percent: float
-    ) -> None:
+    def record_resource_usage(self, component: str, memory_bytes: int, cpu_percent: float) -> None:
         """
         Record resource usage metrics.
 
@@ -438,9 +416,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
 
         # Filter recent data
         recent_data = [
-            entry
-            for entry in self.recent_performance_data
-            if entry["timestamp"] > cutoff_time
+            entry for entry in self.recent_performance_data if entry["timestamp"] > cutoff_time
         ]
 
         if not recent_data:
@@ -458,16 +434,10 @@ class EnhancedPerformanceTracker(PerformanceTracker):
         total_turns = len(recent_data)
         successful_turns = len([entry for entry in recent_data if entry["success"]])
 
-        avg_duration = (
-            sum(entry["execution_time_seconds"] for entry in recent_data) / total_turns
-        )
-        durations_sorted = sorted(
-            [entry["execution_time_seconds"] for entry in recent_data]
-        )
+        avg_duration = sum(entry["execution_time_seconds"] for entry in recent_data) / total_turns
+        durations_sorted = sorted([entry["execution_time_seconds"] for entry in recent_data])
         p95_duration = (
-            durations_sorted[int(0.95 * len(durations_sorted))]
-            if durations_sorted
-            else 0
+            durations_sorted[int(0.95 * len(durations_sorted))] if durations_sorted else 0
         )
 
         avg_cost = sum(entry["total_ai_cost"] for entry in recent_data) / total_turns
@@ -515,9 +485,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
         for window_name, window_duration in time_windows.items():
             cutoff_time = datetime.now() - window_duration
             recent_data = [
-                entry
-                for entry in self.recent_performance_data
-                if entry["timestamp"] > cutoff_time
+                entry for entry in self.recent_performance_data if entry["timestamp"] > cutoff_time
             ]
 
             if recent_data:
@@ -533,9 +501,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             Comprehensive health status
         """
         base_health = (
-            super().get_orchestrator_health()
-            if hasattr(super(), "get_orchestrator_health")
-            else {}
+            super().get_orchestrator_health() if hasattr(super(), "get_orchestrator_health") else {}
         )
 
         # Add Prometheus integration health

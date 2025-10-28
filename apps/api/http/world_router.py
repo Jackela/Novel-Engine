@@ -101,9 +101,7 @@ class EntityOperationRequest(BaseModel):
 class EnvironmentOperationRequest(BaseModel):
     """Request model for environment operations."""
 
-    environment_changes: Dict[str, Any] = Field(
-        ..., description="Environment changes to apply"
-    )
+    environment_changes: Dict[str, Any] = Field(..., description="Environment changes to apply")
     affected_area: Optional[Dict[str, Any]] = None
     reason: Optional[str] = None
 
@@ -342,9 +340,7 @@ async def apply_world_delta(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error applying world delta: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to apply world delta: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to apply world delta: {str(e)}")
 
 
 # ==================== QUERY ENDPOINTS (Read Operations) ====================
@@ -353,39 +349,21 @@ async def apply_world_delta(
 @router.get("/{world_id}/slice", response_model=WorldSliceResponse)
 async def get_world_slice(
     world_id: str = Path(..., description="ID of the world to query"),
-    center_x: Optional[float] = Query(
-        None, description="Center X coordinate for circular query"
-    ),
-    center_y: Optional[float] = Query(
-        None, description="Center Y coordinate for circular query"
-    ),
-    radius: Optional[float] = Query(
-        None, ge=0, description="Radius for circular query"
-    ),
-    min_x: Optional[float] = Query(
-        None, description="Minimum X coordinate for rectangular query"
-    ),
-    max_x: Optional[float] = Query(
-        None, description="Maximum X coordinate for rectangular query"
-    ),
-    min_y: Optional[float] = Query(
-        None, description="Minimum Y coordinate for rectangular query"
-    ),
-    max_y: Optional[float] = Query(
-        None, description="Maximum Y coordinate for rectangular query"
-    ),
+    center_x: Optional[float] = Query(None, description="Center X coordinate for circular query"),
+    center_y: Optional[float] = Query(None, description="Center Y coordinate for circular query"),
+    radius: Optional[float] = Query(None, ge=0, description="Radius for circular query"),
+    min_x: Optional[float] = Query(None, description="Minimum X coordinate for rectangular query"),
+    max_x: Optional[float] = Query(None, description="Maximum X coordinate for rectangular query"),
+    min_y: Optional[float] = Query(None, description="Minimum Y coordinate for rectangular query"),
+    max_y: Optional[float] = Query(None, description="Maximum Y coordinate for rectangular query"),
     min_z: Optional[float] = Query(None, description="Minimum Z coordinate"),
     max_z: Optional[float] = Query(None, description="Maximum Z coordinate"),
-    entity_types: Optional[List[str]] = Query(
-        None, description="Filter by entity types"
-    ),
+    entity_types: Optional[List[str]] = Query(None, description="Filter by entity types"),
     include_environment: bool = Query(True, description="Include environment data"),
     include_metadata: bool = Query(False, description="Include metadata"),
     include_world_summary: bool = Query(True, description="Include world summary"),
     include_spatial_index: bool = Query(False, description="Include spatial bounds"),
-    limit: Optional[int] = Query(
-        None, ge=1, le=1000, description="Maximum entities to return"
-    ),
+    limit: Optional[int] = Query(None, ge=1, le=1000, description="Maximum entities to return"),
     offset: int = Query(0, ge=0, description="Number of entities to skip"),
 ) -> WorldSliceResponse:
     """
@@ -421,9 +399,7 @@ async def get_world_slice(
         # Execute query
         result = await execute_query(query)
 
-        logger.info(
-            f"World slice query completed in {result.get('query_time_ms', 0):.1f}ms"
-        )
+        logger.info(f"World slice query completed in {result.get('query_time_ms', 0):.1f}ms")
 
         return WorldSliceResponse(**result)
 
@@ -483,12 +459,8 @@ async def get_entities_in_area(
     center_x: float = Query(..., description="Center X coordinate"),
     center_y: float = Query(..., description="Center Y coordinate"),
     radius: float = Query(..., ge=0, description="Search radius"),
-    entity_types: Optional[List[str]] = Query(
-        None, description="Filter by entity types"
-    ),
-    limit: Optional[int] = Query(
-        None, ge=1, le=1000, description="Maximum entities to return"
-    ),
+    entity_types: Optional[List[str]] = Query(None, description="Filter by entity types"),
+    limit: Optional[int] = Query(None, ge=1, le=1000, description="Maximum entities to return"),
     offset: int = Query(0, ge=0, description="Number of entities to skip"),
     include_distance: bool = Query(True, description="Include distance from center"),
 ) -> EntitiesInAreaResponse:
@@ -530,15 +502,11 @@ async def get_entities_in_area(
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 
-@router.get(
-    "/{world_id}/entities/type/{entity_type}", response_model=EntitiesByTypeResponse
-)
+@router.get("/{world_id}/entities/type/{entity_type}", response_model=EntitiesByTypeResponse)
 async def get_entities_by_type(
     world_id: str = Path(..., description="ID of the world to query"),
     entity_type: str = Path(..., description="Type of entities to retrieve"),
-    limit: Optional[int] = Query(
-        None, ge=1, le=1000, description="Maximum entities to return"
-    ),
+    limit: Optional[int] = Query(None, ge=1, le=1000, description="Maximum entities to return"),
     offset: int = Query(0, ge=0, description="Number of entities to skip"),
     include_coordinates: bool = Query(True, description="Include entity coordinates"),
 ) -> EntitiesByTypeResponse:
@@ -580,13 +548,9 @@ async def search_worlds(
     search_term: str = Query(
         ..., min_length=1, description="Search term for world names/descriptions"
     ),
-    limit: Optional[int] = Query(
-        50, ge=1, le=200, description="Maximum worlds to return"
-    ),
+    limit: Optional[int] = Query(50, ge=1, le=200, description="Maximum worlds to return"),
     offset: int = Query(0, ge=0, description="Number of worlds to skip"),
-    include_entity_counts: bool = Query(
-        True, description="Include entity count information"
-    ),
+    include_entity_counts: bool = Query(True, description="Include entity count information"),
     status_filter: Optional[str] = Query(None, description="Filter by world status"),
 ) -> SearchWorldsResponse:
     """
@@ -607,9 +571,7 @@ async def search_worlds(
         )
 
         result = await execute_query(query)
-        logger.info(
-            f"World search completed with {result.get('world_count', 0)} results"
-        )
+        logger.info(f"World search completed with {result.get('world_count', 0)} results")
 
         return SearchWorldsResponse(**result)
 

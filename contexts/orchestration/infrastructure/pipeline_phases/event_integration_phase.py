@@ -32,9 +32,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         self.world_service_endpoint = "world_context"
         self.event_service_endpoint = "event_context"
 
-    async def _execute_phase_implementation(
-        self, context: PhaseExecutionContext
-    ) -> PhaseResult:
+    async def _execute_phase_implementation(self, context: PhaseExecutionContext) -> PhaseResult:
         """
         Execute event integration for all interaction results.
 
@@ -58,9 +56,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
             world_events = []
             for result in interaction_results:
                 try:
-                    processed_events = await self._process_interaction_result(
-                        context, result
-                    )
+                    processed_events = await self._process_interaction_result(context, result)
                     world_events.extend(processed_events)
                     events_processed += 1
 
@@ -68,22 +64,17 @@ class EventIntegrationPhase(BasePhaseImplementation):
                     # Log individual result processing failure but continue
                     context.record_performance_metric(
                         "result_processing_failures",
-                        context.performance_metrics.get("result_processing_failures", 0)
-                        + 1,
+                        context.performance_metrics.get("result_processing_failures", 0) + 1,
                     )
 
             # Step 3: Apply world state changes
-            world_updates_applied = await self._apply_world_state_changes(
-                context, world_events
-            )
+            world_updates_applied = await self._apply_world_state_changes(context, world_events)
 
             # Step 4: Update entity states based on events
             entity_changes = await self._update_entity_states(context, world_events)
 
             # Step 5: Validate event consistency
-            consistency_violations = await self._validate_event_consistency(
-                context, world_events
-            )
+            consistency_violations = await self._validate_event_consistency(context, world_events)
 
             # Step 6: Generate integration summary events
             integration_events = await self._generate_integration_events(
@@ -91,26 +82,19 @@ class EventIntegrationPhase(BasePhaseImplementation):
             )
 
             # Record performance metrics
-            context.record_performance_metric(
-                "events_processed", float(events_processed)
-            )
-            context.record_performance_metric(
-                "world_updates_applied", float(world_updates_applied)
-            )
+            context.record_performance_metric("events_processed", float(events_processed))
+            context.record_performance_metric("world_updates_applied", float(world_updates_applied))
             context.record_performance_metric("entity_changes", float(entity_changes))
             context.record_performance_metric(
                 "consistency_violations", float(consistency_violations)
             )
 
             # Calculate success rate
-            success_rate = (events_processed - consistency_violations) / max(
-                1, events_processed
-            )
+            success_rate = (events_processed - consistency_violations) / max(1, events_processed)
 
             return PhaseResult(
                 success=success_rate > 0.7
-                and consistency_violations
-                == 0,  # Success if >70% processed and no violations
+                and consistency_violations == 0,  # Success if >70% processed and no violations
                 events_processed=events_processed,
                 events_generated=integration_events,
                 artifacts_created=[
@@ -184,9 +168,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
 
         # Check execution metadata for interaction results
         previous_results = context.execution_metadata.get("previous_phase_results", {})
-        interaction_phase_results = previous_results.get(
-            "interaction_orchestration", {}
-        )
+        interaction_phase_results = previous_results.get("interaction_orchestration", {})
 
         # Extract session results from interaction phase
         session_results = interaction_phase_results.get("session_results", {})
@@ -236,9 +218,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         # Process based on interaction type
         if interaction_type == "agent_interaction":
             events.extend(
-                await self._process_agent_interaction_result(
-                    context, participants, resolution
-                )
+                await self._process_agent_interaction_result(context, participants, resolution)
             )
         elif interaction_type == "environment_interaction":
             events.extend(
@@ -248,15 +228,11 @@ class EventIntegrationPhase(BasePhaseImplementation):
             )
         elif interaction_type == "npc_interaction":
             events.extend(
-                await self._process_npc_interaction_result(
-                    context, participants, resolution
-                )
+                await self._process_npc_interaction_result(context, participants, resolution)
             )
         elif interaction_type == "collaboration":
             events.extend(
-                await self._process_collaboration_result(
-                    context, participants, resolution
-                )
+                await self._process_collaboration_result(context, participants, resolution)
             )
         else:
             # Generic interaction processing
@@ -496,9 +472,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
                         {
                             "impact_type": impact_type,
                             "events_processed": len(events),
-                            "updates_applied": update_response.get(
-                                "updates_applied", 0
-                            ),
+                            "updates_applied": update_response.get("updates_applied", 0),
                         },
                     )
 
@@ -506,10 +480,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
                 # Log failure but continue with other event groups
                 context.record_performance_metric(
                     f"world_update_failures_{impact_type}",
-                    context.performance_metrics.get(
-                        f"world_update_failures_{impact_type}", 0
-                    )
-                    + 1,
+                    context.performance_metrics.get(f"world_update_failures_{impact_type}", 0) + 1,
                 )
 
         return updates_applied
@@ -604,9 +575,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         violations += self._check_logical_consistency(world_events)
 
         # Check for participant consistency
-        violations += self._check_participant_consistency(
-            world_events, context.participants
-        )
+        violations += self._check_participant_consistency(world_events, context.participants)
 
         # Validate with world context
         if world_events:
@@ -713,17 +682,13 @@ class EventIntegrationPhase(BasePhaseImplementation):
 
             elif event_type == "cooperation_success":
                 # Successful cooperation improves social skills and relationships
-                changes["cooperation_experience"] = (
-                    changes.get("cooperation_experience", 0) + 1
-                )
+                changes["cooperation_experience"] = changes.get("cooperation_experience", 0) + 1
                 changes["social_reputation"] = "improved"
 
             elif event_type == "environment_interaction":
                 # Environment interactions might change entity position or resources
                 changes["last_environment_interaction"] = event.get("timestamp")
-                changes["environment_experience"] = (
-                    changes.get("environment_experience", 0) + 1
-                )
+                changes["environment_experience"] = changes.get("environment_experience", 0) + 1
 
             elif event_type == "npc_interaction":
                 # NPC interactions might improve NPC relationships
@@ -744,15 +709,12 @@ class EventIntegrationPhase(BasePhaseImplementation):
                 violations += 1
 
         # Check for reasonable temporal ordering
-        timestamps = [
-            event.get("timestamp") for event in events if event.get("timestamp")
-        ]
+        timestamps = [event.get("timestamp") for event in events if event.get("timestamp")]
         if len(timestamps) > 1:
             try:
                 # Verify timestamps are within reasonable range
                 parsed_times = [
-                    datetime.fromisoformat(ts.replace("Z", "+00:00"))
-                    for ts in timestamps
+                    datetime.fromisoformat(ts.replace("Z", "+00:00")) for ts in timestamps
                 ]
                 time_range = max(parsed_times) - min(parsed_times)
 
@@ -775,21 +737,15 @@ class EventIntegrationPhase(BasePhaseImplementation):
         # Example: Can't have both agreement and conflict resolution for same participants
         if "agent_agreement" in event_types and "conflict_resolution" in event_types:
             # Check if same participants are involved in contradictory events
-            agreement_events = [
-                e for e in events if e.get("event_type") == "agent_agreement"
-            ]
-            conflict_events = [
-                e for e in events if e.get("event_type") == "conflict_resolution"
-            ]
+            agreement_events = [e for e in events if e.get("event_type") == "agent_agreement"]
+            conflict_events = [e for e in events if e.get("event_type") == "conflict_resolution"]
 
             for agreement in agreement_events:
                 for conflict in conflict_events:
                     agreement_participants = set(agreement.get("participants", []))
                     conflict_participants = set(conflict.get("participants", []))
 
-                    if (
-                        agreement_participants & conflict_participants
-                    ):  # Overlapping participants
+                    if agreement_participants & conflict_participants:  # Overlapping participants
                         violations += 1
 
         return violations

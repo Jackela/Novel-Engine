@@ -30,9 +30,7 @@ class WorldUpdatePhase(BasePhaseImplementation):
         self.execution_timeout_ms = 8000  # 8 seconds for world updates
         self.world_service_endpoint = "world_context"
 
-    async def _execute_phase_implementation(
-        self, context: PhaseExecutionContext
-    ) -> PhaseResult:
+    async def _execute_phase_implementation(self, context: PhaseExecutionContext) -> PhaseResult:
         """
         Execute world state update operations.
 
@@ -69,18 +67,10 @@ class WorldUpdatePhase(BasePhaseImplementation):
             )
 
             # Record performance metrics
-            context.record_performance_metric(
-                "entities_updated", float(entities_updated)
-            )
-            context.record_performance_metric(
-                "time_advanced_seconds", float(time_advanced_seconds)
-            )
-            context.record_performance_metric(
-                "environment_changes", float(environment_changes)
-            )
-            context.record_performance_metric(
-                "world_events_generated", float(len(world_events))
-            )
+            context.record_performance_metric("entities_updated", float(entities_updated))
+            context.record_performance_metric("time_advanced_seconds", float(time_advanced_seconds))
+            context.record_performance_metric("environment_changes", float(environment_changes))
+            context.record_performance_metric("world_events_generated", float(len(world_events)))
 
             return PhaseResult(
                 success=True,
@@ -139,9 +129,7 @@ class WorldUpdatePhase(BasePhaseImplementation):
             # No participants means no entities to update - this is valid but limited
             pass
 
-    async def _create_world_state_snapshot(
-        self, context: PhaseExecutionContext
-    ) -> None:
+    async def _create_world_state_snapshot(self, context: PhaseExecutionContext) -> None:
         """
         Create comprehensive world state snapshot for rollback.
 
@@ -166,18 +154,14 @@ class WorldUpdatePhase(BasePhaseImplementation):
             "entity_states": world_state_response.get("entity_states", {}),
             "environment_state": world_state_response.get("environment_state", {}),
             "world_metadata": world_state_response.get("metadata", {}),
-            "participant_positions": world_state_response.get(
-                "participant_positions", {}
-            ),
+            "participant_positions": world_state_response.get("participant_positions", {}),
             "snapshot_created_at": datetime.now().isoformat(),
         }
 
         # Store for rollback
         self._create_rollback_snapshot(context, "world_state", snapshot_data)
 
-        context.record_performance_metric(
-            "snapshot_size_kb", len(str(snapshot_data)) / 1024.0
-        )
+        context.record_performance_metric("snapshot_size_kb", len(str(snapshot_data)) / 1024.0)
 
     async def _advance_world_time(self, context: PhaseExecutionContext) -> int:
         """
@@ -349,8 +333,7 @@ class WorldUpdatePhase(BasePhaseImplementation):
                 # Log environment change failure but continue
                 context.record_performance_metric(
                     "environment_change_failures",
-                    context.performance_metrics.get("environment_change_failures", 0)
-                    + 1,
+                    context.performance_metrics.get("environment_change_failures", 0) + 1,
                 )
 
         return changes_processed
@@ -387,15 +370,11 @@ class WorldUpdatePhase(BasePhaseImplementation):
         if consistency_issues:
             # Log issues but determine if they're critical
             critical_issues = [
-                issue
-                for issue in consistency_issues
-                if issue.get("severity") == "critical"
+                issue for issue in consistency_issues if issue.get("severity") == "critical"
             ]
 
             if critical_issues:
-                raise RuntimeError(
-                    f"Critical world consistency issues found: {critical_issues}"
-                )
+                raise RuntimeError(f"Critical world consistency issues found: {critical_issues}")
 
         # Record consistency validation metrics
         context.record_performance_metric(

@@ -96,7 +96,6 @@ class AsyncTaskScheduler:
         max_queue_size: int = 1000,
         enable_metrics: bool = True,
     ):
-
         self.max_concurrent_tasks = max_concurrent_tasks
         self.max_queue_size = max_queue_size
         self.enable_metrics = enable_metrics
@@ -381,7 +380,6 @@ class AsyncHttpClient:
         connection_timeout: float = 10.0,
         request_timeout: float = 30.0,
     ):
-
         self.max_connections = max_connections
         self.max_connections_per_host = max_connections_per_host
         self.connection_timeout = connection_timeout
@@ -470,7 +468,6 @@ class AsyncHttpClient:
                     headers=headers,
                     timeout=aiohttp.ClientTimeout(total=timeout),
                 ) as response:
-
                     response_time = time.time() - start_time
                     self.request_count += 1
                     self.total_response_time += response_time
@@ -533,7 +530,6 @@ class AsyncHttpClient:
                 async with self.session.get(
                     url, headers=headers, timeout=aiohttp.ClientTimeout(total=timeout)
                 ) as response:
-
                     response_time = time.time() - start_time
                     self.request_count += 1
                     self.total_response_time += response_time

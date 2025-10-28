@@ -9,7 +9,6 @@ from src.persona_agent import PersonaAgent
 
 
 class TestDirectorAgent(unittest.TestCase):
-
     def setUp(self):
         self.event_bus = Mock(spec=EventBus)
         self.director = DirectorAgent(event_bus=self.event_bus)
@@ -50,6 +49,14 @@ class TestDirectorAgent(unittest.TestCase):
         # Mock the log_event method to prevent file I/O
         self.director.log_event = Mock()
 
+        # Initialize turn state to allow action processing
+        from datetime import datetime
+        from src.turn_orchestrator import TurnState
+
+        self.director.turn_orchestrator.current_turn_state = TurnState(
+            turn_number=1, start_time=datetime.now()
+        )
+
         # Call the handler
         self.director._handle_agent_action(mock_agent, mock_action)
 
@@ -64,6 +71,15 @@ class TestDirectorAgent(unittest.TestCase):
         mock_agent.character_data = {"name": "Test Agent"}
 
         self.director.log_event = Mock()
+
+        # Initialize turn state to allow action processing
+        from datetime import datetime
+        from src.turn_orchestrator import TurnState
+
+        self.director.turn_orchestrator.current_turn_state = TurnState(
+            turn_number=1, start_time=datetime.now()
+        )
+
         self.director._handle_agent_action(mock_agent, None)
         self.director.log_event.assert_called_once()
         self.assertEqual(self.director.total_actions_processed, 0)

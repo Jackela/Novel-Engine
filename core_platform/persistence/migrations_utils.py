@@ -79,9 +79,7 @@ class MigrationManager:
 
             if auto_generate:
                 # Auto-generate migration from model changes
-                revision = command.revision(
-                    self.alembic_config, message=message, autogenerate=True
-                )
+                revision = command.revision(self.alembic_config, message=message, autogenerate=True)
             else:
                 # Create empty migration template
                 revision = command.revision(self.alembic_config, message=message)

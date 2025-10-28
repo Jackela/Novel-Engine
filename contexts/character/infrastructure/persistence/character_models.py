@@ -62,9 +62,7 @@ class CharacterORM(Base):
 
     # Timestamps
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Domain events (JSON storage for simplicity)
     pending_events = Column(JSON, nullable=True)
@@ -147,9 +145,7 @@ class CharacterProfileORM(Base):
 
     # Timestamps
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationship back to character
     character = relationship("CharacterORM", back_populates="profile")
@@ -221,9 +217,7 @@ class CharacterStatsORM(Base):
 
     # Timestamps
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationship back to character
     character = relationship("CharacterORM", back_populates="stats")
@@ -231,9 +225,7 @@ class CharacterStatsORM(Base):
     def __repr__(self):
         return f"<CharacterStatsORM(character_id={self.character_id}, level={self.character.level if self.character else 'N/A'})>"
 
-    @validates(
-        "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"
-    )
+    @validates("strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma")
     def validate_ability_score(self, key, score):
         if not 1 <= score <= 30:
             raise ValueError(f"Ability score {key} must be between 1 and 30")
@@ -289,9 +281,7 @@ class CharacterSkillsORM(Base):
 
     # Timestamps
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationship back to character
     character = relationship("CharacterORM", back_populates="skills")

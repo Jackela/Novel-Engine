@@ -332,6 +332,21 @@ class CharacterState:
         emotional_impact = interaction_data.get("emotional_impact", 0.0)
         relationship.update_from_interaction(outcome, emotional_impact)
 
+    @property
+    def name(self) -> str:
+        """Convenience property to access character name."""
+        return self.base_identity.name
+
+    @property
+    def faction(self) -> List[str]:
+        """Convenience property to access character faction."""
+        return self.base_identity.faction
+
+    @property
+    def rank(self) -> Optional[str]:
+        """Convenience property to access character rank."""
+        return self.base_identity.rank
+
 
 @dataclass
 class EnvironmentalState:
@@ -393,9 +408,9 @@ class DynamicContext:
         relevant_relationships = {}
         for agent_id in target_agents:
             if agent_id in self.character_state.active_relationships:
-                relevant_relationships[agent_id] = (
-                    self.character_state.active_relationships[agent_id]
-                )
+                relevant_relationships[
+                    agent_id
+                ] = self.character_state.active_relationships[agent_id]
 
         return relevant_relationships
 
@@ -541,14 +556,28 @@ def validate_enhanced_data_model(model_instance: Any) -> StandardResponse:
             metadata={"model_type": type(model_instance).__name__},
         )
 
-    except Exception as e:
+    except (AttributeError, TypeError, ValueError) as e:
+        # Data validation or model field errors
         return StandardResponse(
             success=False,
             error=ErrorInfo(
                 code="VALIDATION_FAILED",
-                message=f"Sacred validation failed: {str(e)}",
+                message=f"Data validation failed: {str(e)}",
                 recoverable=True,
                 standard_guidance="Check data model fields for System compliance",
+                context={"error_type": type(e).__name__},
+            ),
+        )
+    except (RuntimeError, KeyError) as e:
+        # Model initialization or post_init errors
+        return StandardResponse(
+            success=False,
+            error=ErrorInfo(
+                code="VALIDATION_FAILED",
+                message=f"Model validation failed: {str(e)}",
+                recoverable=True,
+                standard_guidance="Check data model fields for System compliance",
+                context={"error_type": type(e).__name__},
             ),
         )
 

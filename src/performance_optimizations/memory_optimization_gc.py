@@ -209,7 +209,6 @@ class MemoryOptimizer:
         gc_threshold_multiplier: float = 1.5,
         monitoring_interval: float = 30.0,
     ):
-
         self.target_memory_percent = target_memory_percent
         self.gc_threshold_multiplier = gc_threshold_multiplier
         self.monitoring_interval = monitoring_interval
@@ -788,8 +787,6 @@ async def cleanup_memory_optimization():
     _director_optimizer = None
 
     logger.info("Memory optimization cleanup completed")
-
-
 
 
 @asynccontextmanager

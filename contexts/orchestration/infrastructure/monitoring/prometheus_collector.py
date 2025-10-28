@@ -53,9 +53,7 @@ class PrometheusMetricsCollector:
         self._initialize_business_metrics()
         self._initialize_operational_metrics()
 
-        logger.info(
-            "PrometheusMetricsCollector initialized with comprehensive metric suite"
-        )
+        logger.info("PrometheusMetricsCollector initialized with comprehensive metric suite")
 
     def _initialize_core_metrics(self) -> None:
         """Initialize core business metrics requested in M10 milestone."""
@@ -388,16 +386,14 @@ class PrometheusMetricsCollector:
 
         # AI metrics
         if ai_cost > 0:
-            self.ai_cost_total.labels(
-                provider="openai", model="gpt-4", phase=phase_name
-            ).inc(float(ai_cost))
+            self.ai_cost_total.labels(provider="openai", model="gpt-4", phase=phase_name).inc(
+                float(ai_cost)
+            )
 
             # AI efficiency calculation
             if events_processed > 0 and ai_cost > 0:
                 efficiency = events_processed / float(ai_cost)
-                self.ai_cost_efficiency.labels(phase=phase_name, model="gpt-4").set(
-                    efficiency
-                )
+                self.ai_cost_efficiency.labels(phase=phase_name, model="gpt-4").set(efficiency)
 
         if ai_requests > 0:
             self.ai_requests_total.labels(
@@ -434,9 +430,9 @@ class PrometheusMetricsCollector:
             rollback_reason=rollback_reason,
         ).inc()
 
-        self.compensation_duration_seconds.labels(
-            compensation_type=compensation_type
-        ).observe(execution_time_seconds)
+        self.compensation_duration_seconds.labels(compensation_type=compensation_type).observe(
+            execution_time_seconds
+        )
 
     def record_error(
         self,
@@ -467,9 +463,7 @@ class PrometheusMetricsCollector:
                 success=str(recovery_success).lower(),
             ).inc()
 
-    def record_resource_usage(
-        self, component: str, memory_bytes: int, cpu_percent: float
-    ) -> None:
+    def record_resource_usage(self, component: str, memory_bytes: int, cpu_percent: float) -> None:
         """
         Record resource utilization metrics.
 

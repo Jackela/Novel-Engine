@@ -17,6 +17,7 @@ from .types import CausalNode
 
 logger = logging.getLogger(__name__)
 
+
 class NarrativeCoherenceEngine:
     """叙事连贯性引擎 - 保证故事的一致性和连贯性"""
 
@@ -136,8 +137,18 @@ class NarrativeCoherenceEngine:
             try:
                 if not rule({"event": event, "context": context_events}):
                     issues.append(f"Failed consistency rule: {rule.__name__}")
-            except Exception as e:
-                logger.error(f"Consistency rule error: {e}")
+            except (AttributeError, KeyError, TypeError) as e:
+                # Invalid event or context data structure errors
+                logger.error(
+                    f"Invalid data in consistency rule: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+            except (ValueError, RuntimeError) as e:
+                # Consistency rule processing errors
+                logger.error(
+                    f"Consistency rule error: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
 
         # 基本一致性检查
         # 1. 时间一致性
@@ -253,10 +264,19 @@ class NarrativeCoherenceEngine:
                 )
                 return corrected_event
 
-        except Exception as e:
-            logger.error(f"Event correction failed: {e}")
-
-        return None
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event data or correction structure errors
+            logger.error(
+                f"Invalid data in event correction: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return None
+        except (ValueError, RuntimeError) as e:
+            # Event correction processing errors
+            logger.error(
+                f"Event correction failed: {e}", extra={"error_type": type(e).__name__}
+            )
+            return None
 
     def _update_character_arc(self, agent_id: str, event: CausalNode):
         """更新角色弧线"""
@@ -410,11 +430,22 @@ class NarrativeCoherenceEngine:
             if llm_response and llm_response.success:
                 return llm_response.content.strip()
 
-        except Exception as e:
-            logger.error(f"Narrative generation failed: {e}")
-
-        # 备用基础叙事
-        return self._generate_basic_narrative(event)
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event or context data structure errors
+            logger.error(
+                f"Invalid data in narrative generation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            # 备用基础叙事
+            return self._generate_basic_narrative(event)
+        except (ValueError, RuntimeError) as e:
+            # Narrative generation processing errors
+            logger.error(
+                f"Narrative generation failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            # 备用基础叙事
+            return self._generate_basic_narrative(event)
 
     def _create_context_summary(self, context_events: List[CausalNode]) -> str:
         """创建上下文摘要"""
@@ -547,4 +578,3 @@ class NarrativeCoherenceEngine:
                 tid: len(thread["events"]) for tid, thread in self.plot_threads.items()
             },
         }
-

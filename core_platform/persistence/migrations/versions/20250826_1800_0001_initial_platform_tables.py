@@ -47,9 +47,7 @@ def upgrade() -> None:
         sa.Column("aggregate_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("aggregate_type", sa.String(length=100), nullable=False),
         sa.Column("event_type", sa.String(length=200), nullable=False),
-        sa.Column(
-            "event_version", sa.String(length=20), nullable=False, default="1.0.0"
-        ),
+        sa.Column("event_version", sa.String(length=20), nullable=False, default="1.0.0"),
         # Event data
         sa.Column("event_data", postgresql.JSON(astext_type=sa.Text()), nullable=False),
         # Event metadata
@@ -71,9 +69,7 @@ def upgrade() -> None:
     # Create indexes for outbox_events
     op.create_index("ix_outbox_events_aggregate_id", "outbox_events", ["aggregate_id"])
     op.create_index("ix_outbox_events_processed", "outbox_events", ["processed"])
-    op.create_index(
-        "ix_outbox_events_correlation_id", "outbox_events", ["correlation_id"]
-    )
+    op.create_index("ix_outbox_events_correlation_id", "outbox_events", ["correlation_id"])
     op.create_index("ix_outbox_events_created_at", "outbox_events", ["created_at"])
     op.create_index("ix_outbox_events_event_type", "outbox_events", ["event_type"])
 
@@ -115,9 +111,7 @@ def upgrade() -> None:
         sa.Column("global_sequence", sa.BigInteger(), nullable=False),
         # Event data
         sa.Column("event_data", postgresql.JSON(astext_type=sa.Text()), nullable=False),
-        sa.Column(
-            "event_metadata", postgresql.JSON(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("event_metadata", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         # Event context
         sa.Column("correlation_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("causation_id", postgresql.UUID(as_uuid=True), nullable=True),
@@ -136,9 +130,7 @@ def upgrade() -> None:
     )
     op.create_index("ix_event_store_correlation_id", "event_store", ["correlation_id"])
     op.create_index("ix_event_store_event_type", "event_store", ["event_type"])
-    op.create_index(
-        "ix_event_store_global_sequence", "event_store", ["global_sequence"]
-    )
+    op.create_index("ix_event_store_global_sequence", "event_store", ["global_sequence"])
     op.create_index("ix_event_store_created_at", "event_store", ["created_at"])
 
     # Create sequence for global event ordering
@@ -207,12 +199,8 @@ def downgrade() -> None:
 
     # Drop triggers
     op.execute("DROP TRIGGER IF EXISTS trigger_event_store_updated_at ON event_store")
-    op.execute(
-        "DROP TRIGGER IF EXISTS trigger_outbox_events_updated_at ON outbox_events"
-    )
-    op.execute(
-        "DROP TRIGGER IF EXISTS trigger_set_event_store_global_sequence ON event_store"
-    )
+    op.execute("DROP TRIGGER IF EXISTS trigger_outbox_events_updated_at ON outbox_events")
+    op.execute("DROP TRIGGER IF EXISTS trigger_set_event_store_global_sequence ON event_store")
 
     # Drop functions
     op.execute("DROP FUNCTION IF EXISTS update_updated_at_column()")

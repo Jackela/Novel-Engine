@@ -83,9 +83,7 @@ class SagaCoordinator:
             compensation_actions.extend(phase_compensations)
 
         # Add global cleanup compensations
-        global_compensations = self._plan_global_compensation(
-            turn, failed_phase, error_context
-        )
+        global_compensations = self._plan_global_compensation(turn, failed_phase, error_context)
         compensation_actions.extend(global_compensations)
 
         # Set execution order and dependencies
@@ -98,9 +96,7 @@ class SagaCoordinator:
             "failed_phase": failed_phase.value,
             "total_actions": len(compensation_actions),
             "planned_at": datetime.now(),
-            "estimated_duration_ms": self._estimate_total_compensation_time(
-                compensation_actions
-            ),
+            "estimated_duration_ms": self._estimate_total_compensation_time(compensation_actions),
             "compensation_types": [
                 action.compensation_type.value for action in compensation_actions
             ],
@@ -247,9 +243,7 @@ class SagaCoordinator:
         }
 
         # Check rollback completeness
-        rollback_completeness = self._calculate_rollback_completeness(
-            turn, completed_actions
-        )
+        rollback_completeness = self._calculate_rollback_completeness(turn, completed_actions)
         validation_results["rollback_completeness"] = rollback_completeness
 
         if rollback_completeness < 0.95:  # Less than 95% complete
@@ -304,9 +298,7 @@ class SagaCoordinator:
             "total_actions": strategy["total_actions"],
             "completed_actions": len([a for a in active_actions if a.is_terminal()]),
             "failed_actions": len([a for a in active_actions if a.status == "failed"]),
-            "pending_actions": len(
-                [a for a in active_actions if a.status == "pending"]
-            ),
+            "pending_actions": len([a for a in active_actions if a.status == "pending"]),
             "estimated_duration_ms": strategy["estimated_duration_ms"],
             "started_at": strategy["planned_at"],
             "compensation_types": strategy["compensation_types"],
@@ -314,9 +306,7 @@ class SagaCoordinator:
 
     # Private helper methods
 
-    def _get_committed_phases(
-        self, turn: Turn, failed_phase: PhaseType
-    ) -> List[PhaseType]:
+    def _get_committed_phases(self, turn: Turn, failed_phase: PhaseType) -> List[PhaseType]:
         """Get list of phases that were committed and need compensation."""
         committed_phases = []
 
@@ -344,9 +334,7 @@ class SagaCoordinator:
 
         for compensation_type in compensation_types:
             # Skip compensations that don't apply to this scenario
-            if not self._should_apply_compensation(
-                phase_type, compensation_type, error_context
-            ):
+            if not self._should_apply_compensation(phase_type, compensation_type, error_context):
                 continue
 
             action = CompensationAction.create_for_phase_failure(
@@ -425,9 +413,7 @@ class SagaCoordinator:
         for i, action in enumerate(actions):
             action.metadata["execution_order"] = i + 1
 
-    def _estimate_total_compensation_time(
-        self, actions: List[CompensationAction]
-    ) -> int:
+    def _estimate_total_compensation_time(self, actions: List[CompensationAction]) -> int:
         """Estimate total time to execute all compensation actions."""
         return sum(action.execution_timeout_ms for action in actions)
 
@@ -440,21 +426,15 @@ class SagaCoordinator:
         if compensation_type == CompensationType.ROLLBACK_WORLD_STATE:
             return self._execute_world_state_rollback(turn, action, rollback_context)
         elif compensation_type == CompensationType.INVALIDATE_SUBJECTIVE_BRIEFS:
-            return self._execute_subjective_brief_invalidation(
-                turn, action, rollback_context
-            )
+            return self._execute_subjective_brief_invalidation(turn, action, rollback_context)
         elif compensation_type == CompensationType.CANCEL_INTERACTIONS:
-            return self._execute_interaction_cancellation(
-                turn, action, rollback_context
-            )
+            return self._execute_interaction_cancellation(turn, action, rollback_context)
         elif compensation_type == CompensationType.REMOVE_EVENTS:
             return self._execute_event_removal(turn, action, rollback_context)
         elif compensation_type == CompensationType.REVERT_NARRATIVE_CHANGES:
             return self._execute_narrative_reversion(turn, action, rollback_context)
         elif compensation_type == CompensationType.NOTIFY_PARTICIPANTS:
-            return self._execute_participant_notification(
-                turn, action, rollback_context
-            )
+            return self._execute_participant_notification(turn, action, rollback_context)
         elif compensation_type == CompensationType.LOG_FAILURE:
             return self._execute_failure_logging(turn, action, rollback_context)
         elif compensation_type == CompensationType.TRIGGER_MANUAL_REVIEW:
@@ -520,9 +500,7 @@ class SagaCoordinator:
         # This would integrate with the Narrative context to revert changes
         return {
             "success": True,
-            "narrative_segments_reverted": len(
-                rollback_context.get("narrative_changes", [])
-            ),
+            "narrative_segments_reverted": len(rollback_context.get("narrative_changes", [])),
             "story_consistency_maintained": True,
             "reversion_timestamp": datetime.now().isoformat(),
         }
@@ -581,9 +559,7 @@ class SagaCoordinator:
 
         return base_costs.get(compensation_type)
 
-    def _can_retry_action(
-        self, action: CompensationAction, error_details: Dict[str, Any]
-    ) -> bool:
+    def _can_retry_action(self, action: CompensationAction, error_details: Dict[str, Any]) -> bool:
         """Determine if compensation action can be retried."""
         # Don't retry certain error types
         non_retryable_errors = {
@@ -595,9 +571,7 @@ class SagaCoordinator:
         error_type = error_details.get("error_type", "")
         return error_type not in non_retryable_errors
 
-    def _update_compensation_metrics(
-        self, action: CompensationAction, success: bool
-    ) -> None:
+    def _update_compensation_metrics(self, action: CompensationAction, success: bool) -> None:
         """Update coordination metrics with action results."""
         self.coordination_state["total_compensations_executed"] += 1
 
@@ -608,9 +582,7 @@ class SagaCoordinator:
 
         # Update average compensation time
         if action.get_execution_time():
-            total_compensations = self.coordination_state[
-                "total_compensations_executed"
-            ]
+            total_compensations = self.coordination_state["total_compensations_executed"]
             current_avg = self.coordination_state["average_compensation_time_ms"]
             new_time = action.get_execution_time().total_seconds() * 1000
 
@@ -693,9 +665,7 @@ class SagaCoordinator:
         """Get rollback data for specific phase."""
         return turn.rollback_snapshots.get(phase_type.value, {})
 
-    def _is_critical_failure(
-        self, failed_phase: PhaseType, error_context: Dict[str, Any]
-    ) -> bool:
+    def _is_critical_failure(self, failed_phase: PhaseType, error_context: Dict[str, Any]) -> bool:
         """Determine if failure is critical and requires manual review."""
         # World state and event integration failures are always critical
         critical_phases = {PhaseType.WORLD_UPDATE, PhaseType.EVENT_INTEGRATION}

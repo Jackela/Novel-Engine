@@ -106,9 +106,7 @@ class WorldSliceReadModel(BaseModel):
     # World status and timing
     status = Column(String(50), nullable=False, index=True)
     world_time = Column(DateTime(timezone=True), nullable=False, index=True)
-    last_event_timestamp = Column(
-        DateTime(timezone=True), nullable=False, default=func.now()
-    )
+    last_event_timestamp = Column(DateTime(timezone=True), nullable=False, default=func.now())
 
     # Version tracking for consistency
     world_version = Column(Integer, nullable=False, default=1, index=True)
@@ -129,12 +127,8 @@ class WorldSliceReadModel(BaseModel):
     max_z = Column(Float, nullable=True, index=True)
 
     # Denormalized entity data for fast access
-    entities_by_type = Column(
-        JSON, nullable=False, default=dict
-    )  # Pre-grouped by entity type
-    entities_by_location = Column(
-        JSON, nullable=False, default=dict
-    )  # Spatial grid index
+    entities_by_type = Column(JSON, nullable=False, default=dict)  # Pre-grouped by entity type
+    entities_by_location = Column(JSON, nullable=False, default=dict)  # Spatial grid index
     all_entities = Column(JSON, nullable=False, default=dict)  # Complete entity data
 
     # Environment and world properties
@@ -142,9 +136,7 @@ class WorldSliceReadModel(BaseModel):
     world_metadata = Column(JSON, nullable=False, default=dict)
 
     # Query optimization fields
-    active_entity_ids = Column(
-        ARRAY(String), nullable=False, default=list
-    )  # For fast ID lookups
+    active_entity_ids = Column(ARRAY(String), nullable=False, default=list)  # For fast ID lookups
     searchable_content = Column(Text, nullable=True, index=True)  # For text search
 
     # Performance indexes
@@ -205,16 +197,11 @@ class WorldSliceReadModel(BaseModel):
                 entity_x, entity_y = coords["x"], coords["y"]
 
                 # Calculate squared distance (faster than sqrt)
-                distance_squared = (entity_x - center_x) ** 2 + (
-                    entity_y - center_y
-                ) ** 2
+                distance_squared = (entity_x - center_x) ** 2 + (entity_y - center_y) ** 2
 
                 if distance_squared <= radius_squared:
                     # Apply entity type filter if specified
-                    if (
-                        entity_types is None
-                        or entity_data["entity_type"] in entity_types
-                    ):
+                    if entity_types is None or entity_data["entity_type"] in entity_types:
                         # Add distance for sorting
                         entity_copy = entity_data.copy()
                         entity_copy["distance"] = distance_squared**0.5
@@ -294,10 +281,7 @@ class WorldSliceReadModel(BaseModel):
 
                 if min_x <= entity_x <= max_x and min_y <= entity_y <= max_y:
                     # Apply entity type filter if specified
-                    if (
-                        entity_types is None
-                        or entity_data["entity_type"] in entity_types
-                    ):
+                    if entity_types is None or entity_data["entity_type"] in entity_types:
                         matching_entities.append(entity_data)
 
             except (KeyError, TypeError, ValueError):
@@ -335,9 +319,7 @@ class WorldSliceReadModel(BaseModel):
             ),
             "environment_summary": self.environment_summary,
             "last_updated": (
-                self.last_event_timestamp.isoformat()
-                if self.last_event_timestamp
-                else None
+                self.last_event_timestamp.isoformat() if self.last_event_timestamp else None
             ),
             "version": {
                 "world_version": self.world_version,
@@ -346,9 +328,7 @@ class WorldSliceReadModel(BaseModel):
         }
 
     @classmethod
-    def create_from_world_state(
-        cls, world_state_data: Dict[str, Any]
-    ) -> "WorldSliceReadModel":
+    def create_from_world_state(cls, world_state_data: Dict[str, Any]) -> "WorldSliceReadModel":
         """
         Create a new read model from world state domain aggregate data.
 
@@ -424,9 +404,7 @@ class WorldSliceReadModel(BaseModel):
 
         # Extract environment summary (first 5 keys to avoid bloat)
         environment_data = world_state_data.get("environment", {})
-        environment_summary = (
-            dict(list(environment_data.items())[:5]) if environment_data else {}
-        )
+        environment_summary = dict(list(environment_data.items())[:5]) if environment_data else {}
 
         return cls(
             world_state_id=uuid.UUID(world_id),
@@ -454,9 +432,7 @@ class WorldSliceReadModel(BaseModel):
             environment_summary=environment_summary,
             world_metadata=world_state_data.get("metadata", {}),
             active_entity_ids=active_entity_ids,
-            searchable_content=searchable_content[
-                :1000
-            ],  # Truncate for index efficiency
+            searchable_content=searchable_content[:1000],  # Truncate for index efficiency
             last_event_timestamp=datetime.now(),
         )
 
@@ -517,9 +493,7 @@ class WorldSliceReadModel(BaseModel):
                 if entity_type and entity_type in self.entities_by_type:
                     # Remove from type list
                     self.entities_by_type[entity_type] = [
-                        e
-                        for e in self.entities_by_type[entity_type]
-                        if e.get("id") != entity_id
+                        e for e in self.entities_by_type[entity_type] if e.get("id") != entity_id
                     ]
                     self.entity_type_counts[entity_type] = max(
                         0, self.entity_type_counts[entity_type] - 1
@@ -545,10 +519,7 @@ class WorldSliceReadModel(BaseModel):
                         break
 
         # Recalculate spatial bounds if entities changed
-        if (
-            change_type in ["entity_added", "entity_removed", "entity_moved"]
-            and self.all_entities
-        ):
+        if change_type in ["entity_added", "entity_removed", "entity_moved"] and self.all_entities:
             coordinates = []
             for entity_data in self.all_entities.values():
                 if "coordinates" in entity_data:
@@ -563,9 +534,7 @@ class WorldSliceReadModel(BaseModel):
                 self.min_z = min(c[2] for c in coordinates)
                 self.max_z = max(c[2] for c in coordinates)
             else:
-                self.min_x = self.max_x = self.min_y = self.max_y = self.min_z = (
-                    self.max_z
-                ) = None
+                self.min_x = self.max_x = self.min_y = self.max_y = self.min_z = self.max_z = None
 
         # Update timestamps
         self.last_event_timestamp = datetime.now()

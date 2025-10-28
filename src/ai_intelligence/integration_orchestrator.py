@@ -468,8 +468,26 @@ class IntegrationOrchestrator:
                     traditional_result.success, ai_result.success
                 )
 
-        except Exception as e:
-            logger.error(f"Critical error during integration startup: {str(e)}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid configuration or system state errors
+            logger.error(
+                f"Invalid data during integration startup: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="INTEGRATION_STARTUP_ERROR",
+                    message="Integration startup error",
+                    details={"exception": str(e)},
+                ),
+            )
+        except (ValueError, RuntimeError) as e:
+            # Integration startup processing errors
+            logger.error(
+                f"Critical error during integration startup: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -512,8 +530,26 @@ class IntegrationOrchestrator:
                 },
             )
 
-        except Exception as e:
-            logger.error(f"Error during integration shutdown: {str(e)}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid system state or shutdown data errors
+            logger.error(
+                f"Invalid data during integration shutdown: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="INTEGRATION_SHUTDOWN_ERROR",
+                    message="Integration shutdown error",
+                    details={"exception": str(e)},
+                ),
+            )
+        except (ValueError, RuntimeError) as e:
+            # Integration shutdown processing errors
+            logger.error(
+                f"Error during integration shutdown: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -567,8 +603,31 @@ class IntegrationOrchestrator:
 
             return result
 
-        except Exception as e:
-            logger.error(f"Error processing character action for {agent_id}: {str(e)}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid agent or action data errors
+            logger.error(
+                f"Invalid data processing character action for {agent_id}: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            self.metrics_coordinator.record_error()
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="CHARACTER_ACTION_ERROR",
+                    message="Character action processing failed",
+                    details={
+                        "agent_id": agent_id,
+                        "action": action,
+                        "exception": str(e),
+                    },
+                ),
+            )
+        except (ValueError, RuntimeError) as e:
+            # Character action processing errors
+            logger.error(
+                f"Error processing character action for {agent_id}: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             self.metrics_coordinator.record_error()
             return StandardResponse(
                 success=False,
@@ -648,8 +707,27 @@ class IntegrationOrchestrator:
 
             return enhanced_result
 
-        except Exception as e:
-            logger.error(f"Error generating story content: {str(e)}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid prompt or content data errors
+            logger.error(
+                f"Invalid data generating story content: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            self.metrics_coordinator.record_error()
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="STORY_GENERATION_ERROR",
+                    message="Story generation failed",
+                    details={"prompt": prompt[:100], "exception": str(e)},
+                ),
+            )
+        except (ValueError, RuntimeError) as e:
+            # Story generation processing errors
+            logger.error(
+                f"Error generating story content: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             self.metrics_coordinator.record_error()
             return StandardResponse(
                 success=False,
@@ -699,8 +777,26 @@ class IntegrationOrchestrator:
                 },
             )
 
-        except Exception as e:
-            logger.error(f"Error getting system status: {str(e)}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid system state or status data errors
+            logger.error(
+                f"Invalid data getting system status: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="SYSTEM_STATUS_ERROR",
+                    message="System status retrieval failed",
+                    details={"exception": str(e)},
+                ),
+            )
+        except (ValueError, RuntimeError) as e:
+            # System status retrieval processing errors
+            logger.error(
+                f"Error getting system status: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(

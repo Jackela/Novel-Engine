@@ -89,8 +89,14 @@ try:
     is_valid_emotional_weight = core_types.is_valid_emotional_weight
     is_valid_relevance_score = core_types.is_valid_relevance_score
 
-except Exception:
-    # Fallback definitions for critical types
+except (ImportError, ModuleNotFoundError, AttributeError) as e:
+    # Fallback definitions for critical types when module loading fails
+    import logging
+
+    logging.warning(
+        f"Failed to load core types module, using fallbacks: {e}",
+        extra={"error_type": type(e).__name__},
+    )
     AgentID = str
     MemoryID = str
     InteractionID = str
@@ -114,6 +120,7 @@ except Exception:
 
     def is_valid_relevance_score(value: float) -> bool:
         return isinstance(value, (int, float)) and 0.0 <= float(value) <= 1.0
+
 
 __all__ = [
     # Core ID types

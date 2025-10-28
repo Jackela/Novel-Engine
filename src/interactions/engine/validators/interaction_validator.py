@@ -6,9 +6,11 @@ Interaction context validation and prerequisite checking.
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.core.data_models import ErrorInfo
-
-from ..models.interaction_models import InteractionContext
+from src.core.data_models import ErrorInfo, StandardResponse
+from src.interactions.engine.models.interaction_models import (
+    InteractionContext,
+    InteractionType,
+)
 
 logger = logging.getLogger(__name__)
 

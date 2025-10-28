@@ -1,0 +1,20 @@
+# Act CLI Configuration - Local Testing
+# 使用更轻量的镜像以加快测试
+
+# Use smaller, faster image for local testing
+-P ubuntu-22.04=node:20-bullseye
+
+# Container architecture
+--container-architecture linux/amd64
+
+# Secrets and env
+--secret-file .secrets
+--env-file .env.act
+
+# Performance
+--artifact-server-path ./act-artifacts
+--network host
+--reuse
+
+# Don't pull images forcefully  
+--pull=false

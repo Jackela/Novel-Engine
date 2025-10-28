@@ -85,12 +85,8 @@ class User(DBModel, TimestampMixin):
     email_verification_expires = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user_roles = relationship(
-        "UserRole", back_populates="user", cascade="all, delete-orphan"
-    )
-    user_sessions = relationship(
-        "UserSession", back_populates="user", cascade="all, delete-orphan"
-    )
+    user_roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
+    user_sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
 
     def set_password(self, password: str) -> None:
         """Set user password with proper hashing."""
@@ -110,9 +106,7 @@ class User(DBModel, TimestampMixin):
 
     def lock_account(self, duration_minutes: int = 15) -> None:
         """Lock account for specified duration."""
-        self.locked_until = datetime.now(timezone.utc) + timedelta(
-            minutes=duration_minutes
-        )
+        self.locked_until = datetime.now(timezone.utc) + timedelta(minutes=duration_minutes)
 
     def unlock_account(self) -> None:
         """Unlock account and reset failed attempts."""
@@ -129,9 +123,7 @@ class User(DBModel, TimestampMixin):
         """Generate password reset token."""
         token = secrets.token_urlsafe(32)
         self.password_reset_token = token
-        self.password_reset_expires = datetime.now(timezone.utc) + timedelta(
-            hours=expires_hours
-        )
+        self.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=expires_hours)
         return token
 
     def generate_email_verification_token(self, expires_hours: int = 24) -> str:
@@ -186,16 +178,10 @@ class UserRole(DBModel, TimestampMixin):
 
     __tablename__ = "user_roles"
 
-    user_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
-    )
-    role_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("roles.id"), nullable=False, index=True
-    )
+    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    role_id = Column(PGUUID(as_uuid=True), ForeignKey("roles.id"), nullable=False, index=True)
     granted_by = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    granted_at = Column(
-        DateTime(timezone=True), default=datetime.utcnow, nullable=False
-    )
+    granted_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
@@ -209,16 +195,12 @@ class RolePermission(DBModel, TimestampMixin):
 
     __tablename__ = "role_permissions"
 
-    role_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("roles.id"), nullable=False, index=True
-    )
+    role_id = Column(PGUUID(as_uuid=True), ForeignKey("roles.id"), nullable=False, index=True)
     permission_id = Column(
         PGUUID(as_uuid=True), ForeignKey("permissions.id"), nullable=False, index=True
     )
     granted_by = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    granted_at = Column(
-        DateTime(timezone=True), default=datetime.utcnow, nullable=False
-    )
+    granted_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     # Relationships
     role = relationship("Role", back_populates="role_permissions")
@@ -231,9 +213,7 @@ class UserSession(DBModel, TimestampMixin):
 
     __tablename__ = "user_sessions"
 
-    user_id = Column(
-        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
-    )
+    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     session_token = Column(String(255), unique=True, nullable=False, index=True)
     refresh_token = Column(String(255), unique=True, nullable=False, index=True)
 
@@ -243,9 +223,7 @@ class UserSession(DBModel, TimestampMixin):
 
     # Session lifecycle
     expires_at = Column(DateTime(timezone=True), nullable=False)
-    last_activity_at = Column(
-        DateTime(timezone=True), default=datetime.utcnow, nullable=False
-    )
+    last_activity_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False, index=True)
 
     # Security
@@ -418,9 +396,7 @@ class AuthenticationService:
         """
         try:
             # Decode refresh token
-            payload = jwt.decode(
-                refresh_token, self._secret_key, algorithms=[self._algorithm]
-            )
+            payload = jwt.decode(refresh_token, self._secret_key, algorithms=[self._algorithm])
 
             user_id = payload.get("user_id")
             if not user_id:
@@ -578,8 +554,7 @@ class AuthenticationService:
             "user_id": str(user.id),
             "email": user.email,
             "username": user.username,
-            "exp": datetime.now(timezone.utc)
-            + timedelta(seconds=self._access_token_expires),
+            "exp": datetime.now(timezone.utc) + timedelta(seconds=self._access_token_expires),
             "iat": datetime.now(timezone.utc),
             "type": "access",
         }
@@ -590,8 +565,7 @@ class AuthenticationService:
         """Generate JWT refresh token for user."""
         payload = {
             "user_id": str(user.id),
-            "exp": datetime.now(timezone.utc)
-            + timedelta(seconds=self._refresh_token_expires),
+            "exp": datetime.now(timezone.utc) + timedelta(seconds=self._refresh_token_expires),
             "iat": datetime.now(timezone.utc),
             "type": "refresh",
         }

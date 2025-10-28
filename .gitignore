@@ -263,6 +263,7 @@ coverage/
 screenshots/
 videos/
 test_artifacts/
+act-artifacts/
 
 # Backup Files
 *.bak
@@ -278,8 +279,11 @@ secrets/
 .secrets/
 vault/
 
-# ML and AI Models
-models/
+# ML and AI Models (exclude Python model packages)
+models/*.model
+models/*.pkl
+models/*.h5
+models/*.onnx
 *.model
 *.pkl
 *.h5
@@ -320,10 +324,75 @@ PYTEST_*.txt
 PYTEST_*.md
 test_campaign.md
 AGENTS.md
+*_SUMMARY.md
+*_REPORT.md
+*_STATUS.md
+*_RESOLUTION.md
+*_VALIDATION.md
+*_COMPLETE.md
+*_SUCCESS.md
+SESSION*.md
+ACT_*.md
+AIOREDIS_*.md
+DOCKER_*.md
+FIXES_*.md
+PROJECT_*.md
+TEST_*.md
 
 # Temporary and Generated Files
 world_state_backup.json
 aioredis.py
+nul
+test.md
+test_log.md
+campaign_log.md
 
 # Test Logs
 logs/test_logger*.jsonl
+logs/*_audit.jsonl
+
+# Act CI/CD Testing
+act_*.log
+act_*.txt
+act-runner.sh
+act-runner.ps1
+act-artifacts/
+
+# Screenshots and Visual Test Artifacts
+*.png
+!docs/**/*.png
+!frontend/public/*.png
+aria-*.png
+desktop-*.png
+mobile-*.png
+tablet-*.png
+*-validation-*.png
+
+# Frontend Test Artifacts (in root)
+/*.js
+/*.html
+/*.json
+!package.json
+!package-lock.json
+!pyproject.toml
+/*.spec.js
+*-test.js
+*-validation.js
+
+# Backup Configurations
+backup_configs*/
+
+# Evaluation and Analysis Outputs
+evaluation/
+exports/
+final-validation-screenshots/
+
+# Cleanup Script
+cleanup_project.sh
+
+# Act CLI configuration and secrets
+.env.act
+.actrc
+.secrets
+.actrc
+.actrc

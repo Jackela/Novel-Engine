@@ -156,9 +156,7 @@ class PartyPreferences:
             and self.maximum_session_duration
             and self.preferred_session_duration > self.maximum_session_duration
         ):
-            raise ValueError(
-                "preferred_session_duration cannot exceed maximum_session_duration"
-            )
+            raise ValueError("preferred_session_duration cannot exceed maximum_session_duration")
 
         # Validate string sets
         for field_name, string_set in [
@@ -252,13 +250,9 @@ class NegotiationParty:
         # Validate reputation modifiers
         for domain, modifier in self.reputation_modifiers.items():
             if not isinstance(domain, str) or not domain.strip():
-                raise ValueError(
-                    "Reputation modifier domains must be non-empty strings"
-                )
+                raise ValueError("Reputation modifier domains must be non-empty strings")
             if not (-100 <= modifier <= 100):
-                raise ValueError(
-                    f"Reputation modifier for {domain} must be between -100 and 100"
-                )
+                raise ValueError(f"Reputation modifier for {domain} must be between -100 and 100")
 
         # Validate active mandates
         for mandate in self.active_mandates:
@@ -266,10 +260,7 @@ class NegotiationParty:
                 raise ValueError("All active_mandates must be non-empty strings")
 
         # Authority level validation
-        if (
-            self.role == PartyRole.OBSERVER
-            and self.authority_level != AuthorityLevel.OBSERVER_ONLY
-        ):
+        if self.role == PartyRole.OBSERVER and self.authority_level != AuthorityLevel.OBSERVER_ONLY:
             raise ValueError("Observer role must have observer-only authority")
 
         if self.role == PartyRole.ADVISOR and self.authority_level not in [
@@ -281,11 +272,7 @@ class NegotiationParty:
     def get_capability(self, capability_name: str) -> Optional[NegotiationCapability]:
         """Get specific capability by name."""
         return next(
-            (
-                cap
-                for cap in self.capabilities
-                if cap.capability_name == capability_name
-            ),
+            (cap for cap in self.capabilities if cap.capability_name == capability_name),
             None,
         )
 
@@ -293,9 +280,7 @@ class NegotiationParty:
         """Get all capabilities applicable to specific domain."""
         return [cap for cap in self.capabilities if cap.applies_to_domain(domain)]
 
-    def get_effective_proficiency(
-        self, capability_name: str, domain: str
-    ) -> Optional[Decimal]:
+    def get_effective_proficiency(self, capability_name: str, domain: str) -> Optional[Decimal]:
         """Get effective proficiency for capability in specific domain."""
         capability = self.get_capability(capability_name)
         if not capability or not capability.applies_to_domain(domain):
@@ -332,9 +317,7 @@ class NegotiationParty:
             return False
 
         # At least one party must have decision-making authority
-        if not (
-            self.can_make_binding_decisions() or other.can_make_binding_decisions()
-        ):
+        if not (self.can_make_binding_decisions() or other.can_make_binding_decisions()):
             return False
 
         return True
@@ -380,9 +363,7 @@ class NegotiationParty:
 
         return negotiation_power * role_modifier
 
-    def with_updated_capability(
-        self, capability: NegotiationCapability
-    ) -> "NegotiationParty":
+    def with_updated_capability(self, capability: NegotiationCapability) -> "NegotiationParty":
         """Create new party with updated capability."""
         updated_capabilities = [
             capability if cap.capability_name == capability.capability_name else cap
@@ -390,10 +371,7 @@ class NegotiationParty:
         ]
 
         # Add capability if it doesn't exist
-        if not any(
-            cap.capability_name == capability.capability_name
-            for cap in self.capabilities
-        ):
+        if not any(cap.capability_name == capability.capability_name for cap in self.capabilities):
             updated_capabilities.append(capability)
 
         return NegotiationParty(
@@ -409,9 +387,7 @@ class NegotiationParty:
             active_mandates=self.active_mandates,
         )
 
-    def with_updated_authority(
-        self, authority_level: AuthorityLevel
-    ) -> "NegotiationParty":
+    def with_updated_authority(self, authority_level: AuthorityLevel) -> "NegotiationParty":
         """Create new party with updated authority level."""
         return NegotiationParty(
             party_id=self.party_id,

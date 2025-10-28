@@ -14,44 +14,43 @@ import psutil
 def kill_all_python_processes():
     """Kill all Python processes on Windows"""
     print("🔧 Stopping all Python processes...")
-    
+
     # Try multiple methods to ensure all processes are killed
     methods = [
-        'taskkill /F /IM python.exe 2>nul',
-        'taskkill /F /IM pythonw.exe 2>nul',
-        'powershell -Command "Get-Process python* | Stop-Process -Force" 2>nul'
+        "taskkill /F /IM python.exe 2>nul",
+        "taskkill /F /IM pythonw.exe 2>nul",
+        'powershell -Command "Get-Process python* | Stop-Process -Force" 2>nul',
     ]
-    
+
     for method in methods:
         try:
             subprocess.run(method, shell=True, capture_output=True)
         except Exception:
             pass
-    
+
     # Additional method using psutil
     try:
-        for proc in psutil.process_iter(['pid', 'name']):
-            if 'python' in proc.info['name'].lower():
+        for proc in psutil.process_iter(["pid", "name"]):
+            if "python" in proc.info["name"].lower():
                 try:
                     proc.terminate()
                 except Exception:
                     pass
     except Exception:
         pass
-    
+
     time.sleep(3)
     print("✅ All Python processes stopped")
+
 
 def start_service(name, port, module):
     """Start a service in background"""
     print(f"🚀 Starting {name} on port {port}...")
-    
-    cmd = f'start /B python -m uvicorn {module}:app --port {port} --log-level error'
-    
+
+    cmd = f"start /B python -m uvicorn {module}:app --port {port} --log-level error"
+
     try:
-        subprocess.Popen(cmd, shell=True, 
-                        stdout=subprocess.DEVNULL, 
-                        stderr=subprocess.DEVNULL)
+        subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(2)
         print(f"✅ {name} started")
         return True
@@ -59,23 +58,26 @@ def start_service(name, port, module):
         print(f"❌ Failed to start {name}: {e}")
         return False
 
+
 def check_service_health(port):
     """Check if a service is healthy"""
     import requests
+
     try:
         response = requests.get(f"http://localhost:{port}/health", timeout=5)
         data = response.json()
-        return data.get('status') in ['healthy', 'ready']
+        return data.get("status") in ["healthy", "ready"]
     except (requests.RequestException, ValueError, TimeoutError):
         return False
+
 
 def apply_config_fixes():
     """Apply configuration fixes"""
     print("🔧 Applying configuration fixes...")
-    
+
     # Update notification config to enable channels
     config_file = "D:\\Code\\Novel-Engine\\ai_testing_config.py"
-    
+
     config_content = '''#!/usr/bin/env python3
 """
 AI Testing Framework Configuration Override
@@ -183,24 +185,25 @@ def get_ai_testing_service_config(service_name: str) -> Dict[str, Any]:
     else:
         return {}
 '''
-    
-    with open(config_file, 'w') as f:
+
+    with open(config_file, "w") as f:
         f.write(config_content)
-    
+
     print("✅ Configuration fixes applied")
+
 
 def main():
     """Main execution"""
     print("=" * 60)
     print("🌊 AI Testing Framework - Complete Fix Script")
     print("=" * 60)
-    
+
     # Step 1: Kill all existing processes
     kill_all_python_processes()
-    
+
     # Step 2: Apply configuration fixes
     apply_config_fixes()
-    
+
     # Step 3: Start all services in correct order
     services = [
         ("Master Orchestrator", 8000, "ai_testing.orchestration.master_orchestrator"),
@@ -210,15 +213,15 @@ def main():
         ("Results Aggregation", 8004, "ai_testing.services.results_aggregation_service"),
         ("Notification", 8005, "ai_testing.services.notification_service"),
     ]
-    
+
     print("\n📦 Starting all services...")
     for name, port, module in services:
         start_service(name, port, module)
-    
+
     # Step 4: Wait for services to stabilize
     print("\n⏳ Waiting for services to stabilize...")
     time.sleep(10)
-    
+
     # Step 5: Check health status
     print("\n🔍 Checking service health...")
     healthy_count = 0
@@ -228,27 +231,28 @@ def main():
             healthy_count += 1
         else:
             print(f"⚠️  {name}: Not ready")
-    
+
     print(f"\n📊 Services Ready: {healthy_count}/6")
-    
+
     # Step 6: Run validation
     print("\n🚀 Running deployment validation...")
     result = subprocess.run(
         "python ai_testing/scripts/validate_deployment.py",
         shell=True,
         capture_output=True,
-        text=True
+        text=True,
     )
-    
+
     # Parse success rate from output
     output = result.stdout + result.stderr
-    for line in output.split('\n'):
-        if 'Success Rate:' in line:
+    for line in output.split("\n"):
+        if "Success Rate:" in line:
             print(f"\n🎯 {line.strip()}")
             break
-    
+
     print("\n✨ Fix script complete!")
     print("Run 'python ai_testing/scripts/validate_deployment.py' for full results")
+
 
 if __name__ == "__main__":
     # Check if psutil is installed
@@ -258,11 +262,11 @@ if __name__ == "__main__":
         print("Installing psutil...")
         subprocess.run("pip install psutil", shell=True)
         import psutil
-    
+
     try:
         import requests
     except ImportError:
         print("Installing requests...")
         subprocess.run("pip install requests", shell=True)
-    
+
     main()

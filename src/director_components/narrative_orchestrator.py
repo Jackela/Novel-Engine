@@ -15,7 +15,6 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 
-
 class EventType(Enum):
     """Types of narrative events."""
 
@@ -553,7 +552,9 @@ class NarrativeOrchestrator:
             "status": (
                 "healthy"
                 if health_score > 0.6
-                else "degraded" if health_score > 0.3 else "poor"
+                else "degraded"
+                if health_score > 0.3
+                else "poor"
             ),
             "score": health_score,
             "event_diversity": event_diversity,

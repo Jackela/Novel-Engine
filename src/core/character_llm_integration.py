@@ -93,9 +93,18 @@ class LLMIntegration:
                 )
                 return None
 
-        except Exception as e:
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid world state or response data errors
             logger.error(
-                f"LLM-enhanced decision making failed for agent {self.agent_id}: {str(e)}"
+                f"Invalid data in LLM decision making for agent {self.agent_id}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise  # Re-raise for fallback handling
+        except (ValueError, RuntimeError) as e:
+            # LLM processing or parsing errors
+            logger.error(
+                f"LLM-enhanced decision making failed for agent {self.agent_id}: {e}",
+                extra={"error_type": type(e).__name__},
             )
             raise  # Re-raise for fallback handling
 
@@ -423,8 +432,19 @@ REASONING: As a dedicated envoy of the Founders' Council, my duty requires me to
                 priority=priority,
             )
 
-        except Exception as e:
-            logger.error(f"Failed to parse LLM response for agent {self.agent_id}: {e}")
+        except (AttributeError, KeyError, TypeError, IndexError) as e:
+            # Invalid response structure or data extraction errors
+            logger.error(
+                f"Invalid LLM response data for agent {self.agent_id}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return None
+        except (ValueError, RuntimeError) as e:
+            # Response parsing or action creation errors
+            logger.error(
+                f"Failed to parse LLM response for agent {self.agent_id}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return None
 
     def _is_valid_llm_response_format(self, response: str) -> bool:

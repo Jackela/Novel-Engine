@@ -321,9 +321,9 @@ class StoryQualityEngine:
             genre_consistency_score = await self._analyze_genre_consistency(
                 story_text, genre
             )
-            dimension_scores[QualityDimension.GENRE_CONSISTENCY] = (
-                genre_consistency_score
-            )
+            dimension_scores[
+                QualityDimension.GENRE_CONSISTENCY
+            ] = genre_consistency_score
 
             # Store dimension scores
             report.dimension_scores = dimension_scores
@@ -368,8 +368,26 @@ class StoryQualityEngine:
 
             return report
 
-        except Exception as e:
-            logger.error(f"Story quality analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid story data or report structure errors
+            logger.error(
+                f"Invalid data in story quality analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            # Return minimal report on error
+            return StoryQualityReport(
+                story_id=story_id,
+                overall_score=0.0,
+                quality_level=QualityLevel.VERY_POOR,
+                weaknesses=["Analysis failed"],
+                improvement_recommendations=["Retry analysis with valid input"],
+            )
+        except (ValueError, RuntimeError) as e:
+            # Story quality analysis processing errors
+            logger.error(
+                f"Story quality analysis failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             # Return minimal report on error
             return StoryQualityReport(
                 story_id=story_id,
@@ -477,8 +495,18 @@ class StoryQualityEngine:
 
             return None
 
-        except Exception as e:
-            logger.error(f"Genre detection failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid story data or genre keywords errors
+            logger.error(
+                f"Invalid data in genre detection: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return None
+        except (ValueError, RuntimeError) as e:
+            # Genre detection processing errors
+            logger.error(
+                f"Genre detection failed: {e}", extra={"error_type": type(e).__name__}
+            )
             return None
 
     async def get_quality_trends(self, story_id: str) -> Dict[str, Any]:
@@ -534,8 +562,19 @@ class StoryQualityEngine:
                 "analysis_period": {"start": timestamps[0], "end": timestamps[-1]},
             }
 
-        except Exception as e:
-            logger.error(f"Quality trend analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid quality history or trend data errors
+            logger.error(
+                f"Invalid data in quality trend analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (ValueError, RuntimeError) as e:
+            # Quality trend analysis processing errors
+            logger.error(
+                f"Quality trend analysis failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"error": str(e)}
 
     async def generate_improvement_plan(self, story_id: str) -> Dict[str, Any]:
@@ -602,8 +641,19 @@ class StoryQualityEngine:
 
             return plan
 
-        except Exception as e:
-            logger.error(f"Improvement plan generation failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid quality report or plan data errors
+            logger.error(
+                f"Invalid data generating improvement plan: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (ValueError, RuntimeError) as e:
+            # Improvement plan generation processing errors
+            logger.error(
+                f"Improvement plan generation failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"error": str(e)}
 
     # Quality analysis methods for each dimension
@@ -668,8 +718,21 @@ class StoryQualityEngine:
                 },
             )
 
-        except Exception as e:
-            logger.error(f"Plot coherence analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid story text or plot data errors
+            logger.error(
+                f"Invalid data in plot coherence analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return QualityScore(
+                dimension=QualityDimension.PLOT_COHERENCE, score=0.5, confidence=0.1
+            )
+        except (ValueError, RuntimeError) as e:
+            # Plot coherence analysis processing errors
+            logger.error(
+                f"Plot coherence analysis failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return QualityScore(
                 dimension=QualityDimension.PLOT_COHERENCE, score=0.5, confidence=0.1
             )
@@ -768,8 +831,23 @@ class StoryQualityEngine:
                 },
             )
 
-        except Exception as e:
-            logger.error(f"Character development analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid story text or character data errors
+            logger.error(
+                f"Invalid data in character development analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return QualityScore(
+                dimension=QualityDimension.CHARACTER_DEVELOPMENT,
+                score=0.5,
+                confidence=0.1,
+            )
+        except (ValueError, RuntimeError) as e:
+            # Character development analysis processing errors
+            logger.error(
+                f"Character development analysis failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return QualityScore(
                 dimension=QualityDimension.CHARACTER_DEVELOPMENT,
                 score=0.5,
@@ -854,8 +932,21 @@ class StoryQualityEngine:
                 },
             )
 
-        except Exception as e:
-            logger.error(f"Dialogue quality analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid story text or dialogue data errors
+            logger.error(
+                f"Invalid data in dialogue quality analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return QualityScore(
+                dimension=QualityDimension.DIALOGUE_QUALITY, score=0.5, confidence=0.1
+            )
+        except (ValueError, RuntimeError) as e:
+            # Dialogue quality analysis processing errors
+            logger.error(
+                f"Dialogue quality analysis failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return QualityScore(
                 dimension=QualityDimension.DIALOGUE_QUALITY, score=0.5, confidence=0.1
             )
@@ -936,8 +1027,20 @@ class StoryQualityEngine:
                 },
             )
 
-        except Exception as e:
-            logger.error(f"Pacing analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid story text or pacing data errors
+            logger.error(
+                f"Invalid data in pacing analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return QualityScore(
+                dimension=QualityDimension.PACING, score=0.5, confidence=0.1
+            )
+        except (ValueError, RuntimeError) as e:
+            # Pacing analysis processing errors
+            logger.error(
+                f"Pacing analysis failed: {e}", extra={"error_type": type(e).__name__}
+            )
             return QualityScore(
                 dimension=QualityDimension.PACING, score=0.5, confidence=0.1
             )
@@ -1033,8 +1136,21 @@ class StoryQualityEngine:
                 },
             )
 
-        except Exception as e:
-            logger.error(f"World building analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid story text or world building data errors
+            logger.error(
+                f"Invalid data in world building analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return QualityScore(
+                dimension=QualityDimension.WORLD_BUILDING, score=0.5, confidence=0.1
+            )
+        except (ValueError, RuntimeError) as e:
+            # World building analysis processing errors
+            logger.error(
+                f"World building analysis failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return QualityScore(
                 dimension=QualityDimension.WORLD_BUILDING, score=0.5, confidence=0.1
             )
@@ -1134,8 +1250,21 @@ class StoryQualityEngine:
                 },
             )
 
-        except Exception as e:
-            logger.error(f"Emotional impact analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid story text or emotional data errors
+            logger.error(
+                f"Invalid data in emotional impact analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return QualityScore(
+                dimension=QualityDimension.EMOTIONAL_IMPACT, score=0.5, confidence=0.1
+            )
+        except (ValueError, RuntimeError) as e:
+            # Emotional impact analysis processing errors
+            logger.error(
+                f"Emotional impact analysis failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return QualityScore(
                 dimension=QualityDimension.EMOTIONAL_IMPACT, score=0.5, confidence=0.1
             )
@@ -1199,8 +1328,21 @@ class StoryQualityEngine:
                 },
             )
 
-        except Exception as e:
-            logger.error(f"Originality analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid story text or originality data errors
+            logger.error(
+                f"Invalid data in originality analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return QualityScore(
+                dimension=QualityDimension.ORIGINALITY, score=0.5, confidence=0.1
+            )
+        except (ValueError, RuntimeError) as e:
+            # Originality analysis processing errors
+            logger.error(
+                f"Originality analysis failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return QualityScore(
                 dimension=QualityDimension.ORIGINALITY, score=0.5, confidence=0.1
             )
@@ -1272,8 +1414,21 @@ class StoryQualityEngine:
                 },
             )
 
-        except Exception as e:
-            logger.error(f"Genre consistency analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid genre or consistency data errors
+            logger.error(
+                f"Invalid data in genre consistency analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return QualityScore(
+                dimension=QualityDimension.GENRE_CONSISTENCY, score=0.5, confidence=0.1
+            )
+        except (ValueError, RuntimeError) as e:
+            # Genre consistency analysis processing errors
+            logger.error(
+                f"Genre consistency analysis failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return QualityScore(
                 dimension=QualityDimension.GENRE_CONSISTENCY, score=0.5, confidence=0.1
             )

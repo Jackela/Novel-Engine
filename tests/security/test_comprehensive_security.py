@@ -30,7 +30,12 @@ import pytest_asyncio
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.api.main_api_server import create_app
-from src.security.auth_system import AuthenticationManager, Permission, UserRole
+from src.security.auth_system import (
+    AuthenticationManager,
+    Permission,
+    UserRole,
+    initialize_security_service,
+)
 from src.security.input_validation import InputType, InputValidator, ValidationError
 from src.security.rate_limiting import (
     InMemoryRateLimitBackend,
@@ -58,6 +63,11 @@ class SecurityTestSuite:
 
     async def setup(self):
         """Setup test environment"""
+        # Initialize security service before creating app
+        initialize_security_service(
+            database_path=TEST_DATABASE_PATH, secret_key=TEST_JWT_SECRET
+        )
+
         # Create test app
         self.app = create_app()
 
@@ -559,7 +569,6 @@ class TestSecurityPerformance:
 
         # Test with normal input
         normal_input = "This is normal text content" * 10
-
 
         start_time = time.time()
 

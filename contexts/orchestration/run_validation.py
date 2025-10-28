@@ -72,9 +72,7 @@ class M9OrchestrationValidator:
                     "category": category_name,
                     "tests_run": len(category_results),
                     "tests_passed": len([r for r in category_results if r["passed"]]),
-                    "tests_failed": len(
-                        [r for r in category_results if not r["passed"]]
-                    ),
+                    "tests_failed": len([r for r in category_results if not r["passed"]]),
                     "execution_time_ms": category_time,
                     "results": category_results,
                 }
@@ -103,9 +101,7 @@ class M9OrchestrationValidator:
                 validation_summary["failed_tests"] += 1
 
         # Calculate overall results
-        total_execution_time = (
-            datetime.now() - self.validation_start_time
-        ).total_seconds() * 1000
+        total_execution_time = (datetime.now() - self.validation_start_time).total_seconds() * 1000
         validation_summary["execution_time_ms"] = total_execution_time
         validation_summary["overall_success"] = validation_summary["failed_tests"] == 0
         validation_summary["detailed_results"] = self.test_results
@@ -225,17 +221,13 @@ class M9OrchestrationValidator:
         if turn_path.exists():
             content = turn_path.read_text()
             has_turn_class = "class Turn" in content
-            has_saga_methods = (
-                "execute_phase" in content or "apply_compensation" in content
-            )
+            has_saga_methods = "execute_phase" in content or "apply_compensation" in content
             has_state_management = "TurnState" in content
 
             results.append(
                 {
                     "test_name": "Turn Entity Structure",
-                    "passed": has_turn_class
-                    and has_saga_methods
-                    and has_state_management,
+                    "passed": has_turn_class and has_saga_methods and has_state_management,
                     "details": f"Turn aggregate with saga support: {has_turn_class and has_saga_methods}",
                     "validation_checks": [
                         ("Has Turn class", has_turn_class),
@@ -304,9 +296,7 @@ class M9OrchestrationValidator:
             results.append(
                 {
                     "test_name": "REST API Structure",
-                    "passed": has_fastapi
-                    and has_turns_run_endpoint
-                    and has_health_endpoint,
+                    "passed": has_fastapi and has_turns_run_endpoint and has_health_endpoint,
                     "details": f"FastAPI with required endpoints: {has_turns_run_endpoint and has_health_endpoint}",
                     "validation_checks": [
                         ("Uses FastAPI", has_fastapi),
@@ -487,9 +477,7 @@ class M9OrchestrationValidator:
 
         return results
 
-    async def _generate_validation_report(
-        self, validation_summary: Dict[str, Any]
-    ) -> None:
+    async def _generate_validation_report(self, validation_summary: Dict[str, Any]) -> None:
         """Generate comprehensive validation report."""
         report_path = Path("validation_report.json")
 
@@ -520,9 +508,7 @@ class M9OrchestrationValidator:
             f"Success Rate: {validation_summary['passed_tests']/max(1, validation_summary['total_tests']):.1%}"
         )
         print(f"Execution Time: {validation_summary['execution_time_ms']:.0f}ms")
-        print(
-            f"Overall Success: {'✅ PASS' if validation_summary['overall_success'] else '❌ FAIL'}"
-        )
+        print(f"Overall Success: {'✅ PASS' if validation_summary['overall_success'] else '❌ FAIL'}")
         print("=" * 80)
 
         # Detailed category results
@@ -536,9 +522,7 @@ class M9OrchestrationValidator:
             print("\nFAILED TESTS SUMMARY:")
             for category in validation_summary["test_categories"]:
                 if category["tests_failed"] > 0:
-                    print(
-                        f"  - {category['category']}: {category['tests_failed']} failures"
-                    )
+                    print(f"  - {category['category']}: {category['tests_failed']} failures")
                     for result in category.get("results", []):
                         if not result.get("passed", True):
                             print(

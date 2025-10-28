@@ -412,9 +412,7 @@ class PrintToLoggingMigrator:
                 # Migrate file
                 if self.migrate_file(analysis):
                     self.report.files_modified += 1
-                    self.report.print_statements_migrated += len(
-                        analysis.print_statements
-                    )
+                    self.report.print_statements_migrated += len(analysis.print_statements)
                     if not self.dry_run:
                         print(f"   ✅ Migrated successfully")
                     else:

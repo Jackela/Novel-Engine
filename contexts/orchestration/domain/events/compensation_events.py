@@ -68,8 +68,7 @@ class CompensationInitiated:
         """
         # Check if any action requires manual approval
         requires_manual_approval = any(
-            action.get("requires_manual_approval", False)
-            for action in compensation_actions
+            action.get("requires_manual_approval", False) for action in compensation_actions
         )
 
         return cls(
@@ -162,9 +161,7 @@ class CompensationActionCompleted:
             "rollback_completeness": cls._calculate_rollback_completeness(
                 rollback_data_processed or {}
             ),
-            "performance_score": cls._calculate_performance_score(
-                duration_ms, compensation_type
-            ),
+            "performance_score": cls._calculate_performance_score(duration_ms, compensation_type),
             "entities_restored": len(entities_affected or []),
             "data_integrity_maintained": execution_results.get("data_integrity", True),
         }
@@ -200,14 +197,10 @@ class CompensationActionCompleted:
             "world_state_restored": rollback_data.get("world_state_restored", False),
             "events_removed": rollback_data.get("events_removed", False),
             "entities_restored": rollback_data.get("entities_restored", False),
-            "relationships_maintained": rollback_data.get(
-                "relationships_maintained", True
-            ),
+            "relationships_maintained": rollback_data.get("relationships_maintained", True),
         }
 
-        completed_count = sum(
-            1 for indicator in completeness_indicators.values() if indicator
-        )
+        completed_count = sum(1 for indicator in completeness_indicators.values() if indicator)
         total_indicators = len(completeness_indicators)
 
         return completed_count / total_indicators if total_indicators > 0 else 0.0
@@ -317,9 +310,7 @@ class CompensationActionFailed:
 
         # Analyze failure impact
         failure_impact = {
-            "severity": cls._determine_failure_severity(
-                compensation_type, error_details
-            ),
+            "severity": cls._determine_failure_severity(compensation_type, error_details),
             "affects_other_compensations": cls._affects_other_compensations(
                 compensation_type, error_details
             ),
@@ -380,8 +371,7 @@ class CompensationActionFailed:
         }
 
         return any(
-            error in error_details.get("error_type", "")
-            for error in manual_intervention_errors
+            error in error_details.get("error_type", "") for error in manual_intervention_errors
         )
 
     @staticmethod
@@ -414,9 +404,7 @@ class CompensationActionFailed:
             "external_system_unavailable",
         }
 
-        return any(
-            error in error_details.get("error_type", "") for error in system_wide_errors
-        )
+        return any(error in error_details.get("error_type", "") for error in system_wide_errors)
 
     @staticmethod
     def _data_consistency_at_risk(error_details: Dict[str, Any]) -> bool:
@@ -428,9 +416,7 @@ class CompensationActionFailed:
             "referential_integrity_violation",
         }
 
-        return any(
-            risk in error_details.get("error_type", "") for risk in consistency_risks
-        )
+        return any(risk in error_details.get("error_type", "") for risk in consistency_risks)
 
     @staticmethod
     def _estimate_manual_effort(

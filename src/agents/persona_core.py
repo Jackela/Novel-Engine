@@ -197,8 +197,19 @@ class PersonaCore:
             self._file_cache[file_path] = (content, current_mtime)
             return content
 
-        except Exception as e:
-            logger.error(f"Error reading file {file_path}: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors reading cached file
+            logger.error(
+                f"File error reading {file_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return ""
+        except (UnicodeDecodeError, ValueError) as e:
+            # File encoding or content errors
+            logger.error(
+                f"Content error reading {file_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return ""
 
     def _parse_cached_yaml(self, file_path: str) -> Dict[str, Any]:
@@ -220,8 +231,19 @@ class PersonaCore:
 
             return yaml.safe_load(content) or {}
 
-        except Exception as e:
-            logger.error(f"Error parsing YAML file {file_path}: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors parsing YAML
+            logger.error(
+                f"File error parsing YAML {file_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {}
+        except (yaml.YAMLError, ValueError, TypeError) as e:
+            # YAML parsing or data validation errors
+            logger.error(
+                f"Parse error in YAML {file_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {}
 
     def handle_turn_start(self, world_state_update: Dict[str, Any]) -> None:

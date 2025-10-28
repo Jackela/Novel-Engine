@@ -108,7 +108,6 @@ class IntelligentCache:
         default_ttl: int = 3600,
         strategy: CacheStrategy = CacheStrategy.ADAPTIVE,
     ):
-
         self.l1_max_size = l1_max_size
         self.l2_max_size = l2_max_size
         self.l3_max_size = l3_max_size
@@ -953,9 +952,9 @@ async def get_comprehensive_caching_report() -> Dict[str, Any]:
 
     # World State Cache stats
     if _global_world_state_cache:
-        report["world_state_cache"] = (
-            _global_world_state_cache.get_comprehensive_stats()
-        )
+        report[
+            "world_state_cache"
+        ] = _global_world_state_cache.get_comprehensive_stats()
 
     # System memory usage
     process = psutil.Process()
@@ -967,5 +966,3 @@ async def get_comprehensive_caching_report() -> Dict[str, Any]:
     }
 
     return report
-
-

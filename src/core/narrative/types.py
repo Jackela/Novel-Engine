@@ -14,6 +14,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class CausalRelationType(Enum):
     """因果关系类型"""
 
@@ -323,4 +324,3 @@ class NegotiationSession:
     updated_at: datetime = field(default_factory=datetime.now)
     resolution: Optional[Dict[str, Any]] = None
     timeout_minutes: int = 30
-

@@ -248,9 +248,9 @@ class InteractionEngine:
                         f"INTERACTION PREREQUISITES NOT MET: {context.interaction_id}"
                     )
                     # Continue with warnings rather than failing
-                    context.metadata["prerequisite_warnings"] = (
-                        prerequisite_result.error.message
-                    )
+                    context.metadata[
+                        "prerequisite_warnings"
+                    ] = prerequisite_result.error.message
 
                 # Register enhanced active interaction
                 self._active_interactions[context.interaction_id] = context
@@ -1155,9 +1155,9 @@ class InteractionEngine:
         # For now, we'll define basic templates for each interaction type
 
         for interaction_type in InteractionType:
-            self._interaction_templates[interaction_type] = (
-                self._create_default_phases_for_type(interaction_type)
-            )
+            self._interaction_templates[
+                interaction_type
+            ] = self._create_default_phases_for_type(interaction_type)
 
     def _create_default_phases(
         self, context: InteractionContext
@@ -1458,7 +1458,9 @@ async def test_standard_interaction_engine():
         logger.info(
             f"ENGINE METRICS: {metrics['total_interactions_processed']} total, {metrics['success_rate']:.1f}% success rate"
         )
-        logger.info(f"Average processing time: {metrics['average_processing_time']:.2f}ms")
+        logger.info(
+            f"Average processing time: {metrics['average_processing_time']:.2f}ms"
+        )
 
         # Get enhanced active interactions
         active = interaction_engine.get_active_interactions()

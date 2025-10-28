@@ -81,9 +81,7 @@ class DatabaseSettings(BaseSettings):
     echo_pool: bool = Field(default=False, description="Echo pool events")
 
     # Migration settings
-    migration_timeout: int = Field(
-        default=300, description="Migration timeout in seconds"
-    )
+    migration_timeout: int = Field(default=300, description="Migration timeout in seconds")
 
     model_config = ConfigDict(env_prefix="DB_", case_sensitive=False)
 
@@ -92,22 +90,16 @@ class MessagingSettings(BaseSettings):
     """Messaging system configuration settings."""
 
     # Kafka settings
-    bootstrap_servers: str = Field(
-        default="localhost:9092", description="Kafka bootstrap servers"
-    )
+    bootstrap_servers: str = Field(default="localhost:9092", description="Kafka bootstrap servers")
 
     # Security settings
     use_ssl: bool = Field(default=False, description="Use SSL for Kafka connection")
     ssl_cafile: Optional[str] = Field(default=None, description="SSL CA file path")
-    ssl_certfile: Optional[str] = Field(
-        default=None, description="SSL certificate file path"
-    )
+    ssl_certfile: Optional[str] = Field(default=None, description="SSL certificate file path")
     ssl_keyfile: Optional[str] = Field(default=None, description="SSL key file path")
     ssl_password: Optional[str] = Field(default=None, description="SSL key password")
 
-    use_sasl: bool = Field(
-        default=False, description="Use SASL for Kafka authentication"
-    )
+    use_sasl: bool = Field(default=False, description="Use SASL for Kafka authentication")
     sasl_mechanism: str = Field(default="PLAIN", description="SASL mechanism")
     sasl_username: Optional[str] = Field(default=None, description="SASL username")
     sasl_password: Optional[str] = Field(default=None, description="SASL password")
@@ -118,13 +110,9 @@ class MessagingSettings(BaseSettings):
     producer_timeout: int = Field(default=30000, description="Producer timeout in ms")
 
     # Consumer settings
-    consumer_group_prefix: str = Field(
-        default="novel-engine", description="Consumer group prefix"
-    )
+    consumer_group_prefix: str = Field(default="novel-engine", description="Consumer group prefix")
     consumer_timeout: int = Field(default=30000, description="Consumer timeout in ms")
-    consumer_max_poll_records: int = Field(
-        default=500, description="Max records per poll"
-    )
+    consumer_max_poll_records: int = Field(default=500, description="Max records per poll")
 
     model_config = ConfigDict(env_prefix="MESSAGING_", case_sensitive=False)
 
@@ -133,16 +121,12 @@ class CacheSettings(BaseSettings):
     """Cache configuration settings."""
 
     # Redis settings
-    redis_url: str = Field(
-        default="redis://localhost:6379/0", description="Redis connection URL"
-    )
+    redis_url: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
 
     # Connection settings
     max_connections: int = Field(default=20, description="Maximum Redis connections")
     socket_timeout: int = Field(default=5, description="Socket timeout in seconds")
-    socket_connect_timeout: int = Field(
-        default=5, description="Socket connect timeout in seconds"
-    )
+    socket_connect_timeout: int = Field(default=5, description="Socket connect timeout in seconds")
 
     # Cache settings
     default_ttl: int = Field(default=3600, description="Default cache TTL in seconds")
@@ -179,19 +163,13 @@ class SecuritySettings(BaseSettings):
     password_require_lowercase: bool = Field(
         default=True, description="Require lowercase in passwords"
     )
-    password_require_digits: bool = Field(
-        default=True, description="Require digits in passwords"
-    )
-    password_require_symbols: bool = Field(
-        default=True, description="Require symbols in passwords"
-    )
+    password_require_digits: bool = Field(default=True, description="Require digits in passwords")
+    password_require_symbols: bool = Field(default=True, description="Require symbols in passwords")
 
     # Session settings
     session_timeout: int = Field(default=3600, description="Session timeout in seconds")
     max_login_attempts: int = Field(default=5, description="Maximum login attempts")
-    lockout_duration: int = Field(
-        default=900, description="Account lockout duration in seconds"
-    )
+    lockout_duration: int = Field(default=900, description="Account lockout duration in seconds")
 
     # CORS settings
     cors_origins: List[str] = Field(
@@ -206,12 +184,8 @@ class SecuritySettings(BaseSettings):
 
     # Rate limiting
     rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
-    rate_limit_requests: int = Field(
-        default=100, description="Rate limit requests per window"
-    )
-    rate_limit_window: int = Field(
-        default=60, description="Rate limit window in seconds"
-    )
+    rate_limit_requests: int = Field(default=100, description="Rate limit requests per window")
+    rate_limit_window: int = Field(default=60, description="Rate limit window in seconds")
 
     model_config = ConfigDict(env_prefix="SECURITY_", case_sensitive=False)
 
@@ -226,9 +200,7 @@ class MonitoringSettings(BaseSettings):
         description="Log format",
     )
     log_file: Optional[str] = Field(default=None, description="Log file path")
-    log_max_bytes: int = Field(
-        default=10485760, description="Log file max size in bytes"
-    )  # 10MB
+    log_max_bytes: int = Field(default=10485760, description="Log file max size in bytes")  # 10MB
     log_backup_count: int = Field(default=5, description="Log file backup count")
 
     # Metrics settings
@@ -238,17 +210,11 @@ class MonitoringSettings(BaseSettings):
 
     # Health check settings
     health_check_enabled: bool = Field(default=True, description="Enable health checks")
-    health_check_interval: int = Field(
-        default=30, description="Health check interval in seconds"
-    )
+    health_check_interval: int = Field(default=30, description="Health check interval in seconds")
 
     # Distributed tracing settings
-    tracing_enabled: bool = Field(
-        default=True, description="Enable distributed tracing"
-    )
-    tracing_service_name: str = Field(
-        default="novel-engine", description="Tracing service name"
-    )
+    tracing_enabled: bool = Field(default=True, description="Enable distributed tracing")
+    tracing_service_name: str = Field(default="novel-engine", description="Tracing service name")
     jaeger_endpoint: str = Field(
         default="http://localhost:14268/api/traces",
         description="Jaeger collector endpoint",
@@ -261,20 +227,14 @@ class StorageSettings(BaseSettings):
     """Object storage configuration settings."""
 
     # MinIO/S3 settings
-    endpoint_url: str = Field(
-        default="http://localhost:9000", description="Storage endpoint URL"
-    )
+    endpoint_url: str = Field(default="http://localhost:9000", description="Storage endpoint URL")
     access_key: str = Field(default="novel_engine", description="Storage access key")
-    secret_key: str = Field(
-        default="novel_engine_dev_password", description="Storage secret key"
-    )
+    secret_key: str = Field(default="novel_engine_dev_password", description="Storage secret key")
     bucket_name: str = Field(default="novel-engine", description="Default bucket name")
     region: str = Field(default="us-east-1", description="Storage region")
 
     # Upload settings
-    max_file_size: int = Field(
-        default=104857600, description="Maximum file size in bytes"
-    )  # 100MB
+    max_file_size: int = Field(default=104857600, description="Maximum file size in bytes")  # 100MB
     allowed_extensions: List[str] = Field(
         default=[".jpg", ".jpeg", ".png", ".gif", ".pdf", ".txt", ".md"],
         description="Allowed file extensions",
@@ -315,12 +275,8 @@ class AppSettings(BaseSettings):
     enable_rate_limiting: bool = Field(default=True, description="Enable rate limiting")
 
     # External services
-    ai_service_url: str = Field(
-        default="http://localhost:8080", description="AI service URL"
-    )
-    ai_service_timeout: int = Field(
-        default=30, description="AI service timeout in seconds"
-    )
+    ai_service_url: str = Field(default="http://localhost:8080", description="AI service URL")
+    ai_service_timeout: int = Field(default=30, description="AI service timeout in seconds")
 
     @field_validator("environment", mode="before")
     @classmethod
@@ -387,9 +343,7 @@ class PlatformConfig:
         # Track configuration loading
         self._track_config_sources()
 
-        logger.info(
-            f"Configuration loaded for environment: {self.app.environment.value}"
-        )
+        logger.info(f"Configuration loaded for environment: {self.app.environment.value}")
 
     def _detect_config_path(self) -> str:
         """Detect configuration file path."""
@@ -498,10 +452,7 @@ class PlatformConfig:
 
         # Production-specific validations
         if self.is_production():
-            if (
-                self.security.jwt_secret_key
-                == "development-secret-key-change-in-production"
-            ):
+            if self.security.jwt_secret_key == "development-secret-key-change-in-production":
                 errors.append("JWT secret key must be changed for production")
 
             if self.app.debug:
@@ -511,11 +462,7 @@ class PlatformConfig:
                 errors.append("Rate limiting should be enabled in production")
 
         # Database URL validation
-        if (
-            not self.database.url
-            or "localhost" in self.database.url
-            and self.is_production()
-        ):
+        if not self.database.url or "localhost" in self.database.url and self.is_production():
             errors.append("Database URL should not use localhost in production")
 
         return errors

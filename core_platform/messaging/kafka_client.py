@@ -298,9 +298,7 @@ class KafkaClient:
             return
 
         try:
-            logger.info(
-                f"Creating consumer for group {consumer_group}, topics: {topics}"
-            )
+            logger.info(f"Creating consumer for group {consumer_group}, topics: {topics}")
 
             # Create consumer
             consumer = AIOKafkaConsumer(
@@ -319,9 +317,7 @@ class KafkaClient:
             self._consumers[consumer_group] = consumer
 
             # Start consuming in background task
-            asyncio.create_task(
-                self._consume_messages(consumer, message_handler, consumer_group)
-            )
+            asyncio.create_task(self._consume_messages(consumer, message_handler, consumer_group))
 
             logger.info(f"Started consumer for group {consumer_group}")
 
@@ -383,9 +379,7 @@ class KafkaClient:
                     unhealthy_consumers.append(group_id)
             except Exception as e:
                 unhealthy_consumers.append(group_id)
-                health_status["errors"].append(
-                    f"Consumer {group_id} health check failed: {str(e)}"
-                )
+                health_status["errors"].append(f"Consumer {group_id} health check failed: {str(e)}")
 
         if unhealthy_consumers:
             health_status["status"] = "degraded"
@@ -478,9 +472,7 @@ class KafkaClient:
         # SASL configuration
         if self.config.get("use_sasl", False):
             security_config["security_protocol"] = "SASL_PLAINTEXT"
-            security_config["sasl_mechanism"] = self.config.get(
-                "sasl_mechanism", "PLAIN"
-            )
+            security_config["sasl_mechanism"] = self.config.get("sasl_mechanism", "PLAIN")
             security_config["sasl_plain_username"] = self.config.get("sasl_username")
             security_config["sasl_plain_password"] = self.config.get("sasl_password")
 

@@ -158,9 +158,35 @@ class PersonaAgent:
                 "response_generator": "initialized",
             }
 
-        except Exception as e:
-            self.logger.error(f"Component initialization failed: {e}")
-            raise
+        except (ImportError, ModuleNotFoundError) as e:
+            # Failed to import required component modules
+            self.logger.critical(
+                f"Failed to import component modules: {e}",
+                extra={"character_id": self.character_id, "error_type": "ImportError"},
+            )
+            from src.core.exceptions import StateInconsistencyException
+
+            raise StateInconsistencyException(
+                component="PersonaAgent",
+                expected_state="components_imported",
+                actual_state="import_failed",
+                action="component_initialization",
+            ) from e
+        except (TypeError, ValueError) as e:
+            # Invalid arguments passed to component constructors
+            self.logger.error(
+                f"Invalid component configuration: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            from src.core.exceptions import ValidationException
+
+            raise ValidationException(
+                message=f"Component initialization validation failed: {e}",
+                field="component_config",
+            ) from e
 
     async def initialize(self) -> bool:
         """
@@ -225,8 +251,35 @@ class PersonaAgent:
             )
             return True
 
-        except Exception as e:
-            self.logger.error(f"PersonaAgent initialization failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Missing required character data or attributes
+            self.logger.error(
+                f"Missing required data during initialization: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            return False
+        except (asyncio.TimeoutError, asyncio.CancelledError) as e:
+            # Initialization tasks timed out or cancelled
+            self.logger.error(
+                f"Async initialization failed: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            return False
+        except (TypeError, ValueError) as e:
+            # Invalid data types or values
+            self.logger.error(
+                f"Invalid data during initialization: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
             return False
 
     async def make_decision(self, world_state: Dict[str, Any]) -> CharacterAction:
@@ -314,7 +367,12 @@ class PersonaAgent:
                         event, character_context
                     )
                     threat_level = threat_assessment.get("threat_level", "low")
-                except Exception:
+                except (AttributeError, KeyError, TypeError) as e:
+                    # Threat assessment failed, default to low threat
+                    self.logger.warning(
+                        f"Threat assessment failed, using default: {e}",
+                        extra={"character_id": self.character_id},
+                    )
                     threat_level = "low"
             interpreted_state["threat_assessment"] = threat_level
 
@@ -330,9 +388,9 @@ class PersonaAgent:
             # Ensure decision has required fields
             if isinstance(decision, dict):
                 if "description" not in decision:
-                    decision["description"] = (
-                        f"Character action: {decision.get('action_type', 'unknown')}"
-                    )
+                    decision[
+                        "description"
+                    ] = f"Character action: {decision.get('action_type', 'unknown')}"
                 if "priority" not in decision:
                     decision["priority"] = "medium"
                 if "parameters" not in decision:
@@ -345,9 +403,9 @@ class PersonaAgent:
                     else {"action_type": "wait"}
                 )
                 if "description" not in decision_dict:
-                    decision_dict["description"] = (
-                        f"Character action: {decision_dict.get('action_type', 'wait')}"
-                    )
+                    decision_dict[
+                        "description"
+                    ] = f"Character action: {decision_dict.get('action_type', 'wait')}"
                 if "priority" not in decision_dict:
                     decision_dict["priority"] = "medium"
                 if "parameters" not in decision_dict:
@@ -406,16 +464,53 @@ class PersonaAgent:
 
             return decision
 
-        except Exception as e:
-            self.logger.error(f"Decision making failed: {e}")
-
-            # Emergency fallback
+        except (AttributeError, KeyError) as e:
+            # Missing required data or attributes
+            self.logger.error(
+                f"Missing data during decision making: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
             return {
                 "action_type": "wait",
                 "description": "I need to carefully consider the situation.",
                 "priority": "low",
                 "parameters": {},
-                "error": str(e),
+                "error": f"Missing data: {str(e)}",
+            }
+        except (TypeError, ValueError) as e:
+            # Invalid data types or values
+            self.logger.error(
+                f"Invalid data during decision making: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            return {
+                "action_type": "wait",
+                "description": "I need to carefully consider the situation.",
+                "priority": "low",
+                "parameters": {},
+                "error": f"Invalid data: {str(e)}",
+            }
+        except (asyncio.TimeoutError, asyncio.CancelledError) as e:
+            # Async operations failed
+            self.logger.error(
+                f"Async operation failed during decision making: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            return {
+                "action_type": "wait",
+                "description": "I need a moment to gather my thoughts.",
+                "priority": "low",
+                "parameters": {},
+                "error": f"Operation timeout: {str(e)}",
             }
 
     async def generate_response(
@@ -453,8 +548,24 @@ class PersonaAgent:
                 else:
                     self.logger.warning("LLM response quality low, using fallback")
 
-            except Exception as llm_error:
-                self.logger.warning(f"LLM generation failed: {llm_error}")
+            except (ConnectionError, TimeoutError, asyncio.TimeoutError) as llm_error:
+                # LLM API connection or timeout errors
+                self.logger.warning(
+                    f"LLM API connection failed: {llm_error}",
+                    extra={
+                        "character_id": self.character_id,
+                        "error_type": "LLMConnectionError",
+                    },
+                )
+            except (KeyError, AttributeError, TypeError) as llm_error:
+                # LLM response parsing or structure errors
+                self.logger.warning(
+                    f"LLM response processing failed: {llm_error}",
+                    extra={
+                        "character_id": self.character_id,
+                        "error_type": type(llm_error).__name__,
+                    },
+                )
 
             # Fallback to rule-based generation
             fallback_response = await self.response_generator.generate_response(
@@ -462,9 +573,33 @@ class PersonaAgent:
             )
             return fallback_response
 
-        except Exception as e:
-            self.logger.error(f"Response generation failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Missing character context data
+            self.logger.error(
+                f"Missing character data for response generation: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
             return "I'm not sure how to respond to that right now."
+        except (asyncio.TimeoutError, asyncio.CancelledError) as e:
+            # Async operations failed
+            self.logger.error(
+                f"Async operation timeout during response generation: {e}",
+                extra={"character_id": self.character_id},
+            )
+            return "I need a moment to collect my thoughts."
+        except (TypeError, ValueError) as e:
+            # Invalid data types
+            self.logger.error(
+                f"Invalid data during response generation: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            return "I'm having trouble expressing myself right now."
 
     async def process_world_events(
         self, events: List[Dict[str, Any]]
@@ -543,9 +678,33 @@ class PersonaAgent:
                 "character_state": await self.agent_state_manager.get_state(),
             }
 
-        except Exception as e:
-            self.logger.error(f"Event processing failed: {e}")
-            return {"processed_events": 0, "error": str(e)}
+        except (ImportError, ModuleNotFoundError) as e:
+            # Failed to import WorldEvent protocol
+            self.logger.error(
+                f"Failed to import required protocols: {e}",
+                extra={"character_id": self.character_id, "error_type": "ImportError"},
+            )
+            return {"processed_events": 0, "error": f"Import error: {str(e)}"}
+        except (AttributeError, KeyError) as e:
+            # Missing event data or component methods
+            self.logger.error(
+                f"Missing data during event processing: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            return {"processed_events": 0, "error": f"Missing data: {str(e)}"}
+        except (TypeError, ValueError) as e:
+            # Invalid event data format
+            self.logger.error(
+                f"Invalid event data format: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            return {"processed_events": 0, "error": f"Invalid data: {str(e)}"}
 
     async def get_character_data(self) -> Dict[str, Any]:
         """Get complete character data."""
@@ -559,16 +718,48 @@ class PersonaAgent:
 
             return self._character_data.copy()
 
-        except Exception as e:
-            self.logger.error(f"Failed to get character data: {e}")
+        except (ImportError, ModuleNotFoundError) as e:
+            # Failed to import CharacterDataManager
+            self.logger.error(
+                f"Failed to import character data components: {e}",
+                extra={"character_id": self.character_id},
+            )
+            return {}
+        except (AttributeError, KeyError) as e:
+            # Missing character directory path or data
+            self.logger.error(
+                f"Missing character data path or attributes: {e}",
+                extra={"character_id": self.character_id},
+            )
+            return {}
+        except (OSError, IOError) as e:
+            # File system errors
+            self.logger.error(
+                f"File system error loading character data: {e}",
+                extra={"character_id": self.character_id},
+            )
             return {}
 
     async def get_current_state(self) -> Dict[str, Any]:
         """Get current agent state."""
         try:
             return await self.agent_state_manager.get_state()
-        except Exception as e:
-            self.logger.error(f"Failed to get current state: {e}")
+        except (AttributeError, KeyError) as e:
+            # State manager not initialized or missing methods
+            self.logger.error(
+                f"State manager error: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            return {}
+        except (asyncio.TimeoutError, asyncio.CancelledError) as e:
+            # State retrieval timeout
+            self.logger.error(
+                f"State retrieval timeout: {e}",
+                extra={"character_id": self.character_id},
+            )
             return {}
 
     async def get_active_goals(self) -> List[Dict[str, Any]]:
@@ -579,8 +770,21 @@ class PersonaAgent:
             return [
                 asdict(goal) if hasattr(goal, "__dict__") else goal for goal in goals
             ]
-        except Exception as e:
-            self.logger.error(f"Failed to get active goals: {e}")
+        except (AttributeError, KeyError) as e:
+            # Goal manager not initialized or missing methods
+            self.logger.error(
+                f"Goal manager error: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            return []
+        except (TypeError, ValueError) as e:
+            # Invalid goal data or priority
+            self.logger.error(
+                f"Invalid goal data: {e}", extra={"character_id": self.character_id}
+            )
             return []
 
     async def get_recent_memories(self, limit: int = 10) -> List[Dict[str, Any]]:
@@ -589,8 +793,22 @@ class PersonaAgent:
             return await self.memory_manager.retrieve_memories(
                 {"type": "recent", "limit": limit}, limit=limit
             )
-        except Exception as e:
-            self.logger.error(f"Failed to get recent memories: {e}")
+        except (AttributeError, KeyError) as e:
+            # Memory manager not initialized or invalid query
+            self.logger.error(
+                f"Memory manager error: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            return []
+        except (asyncio.TimeoutError, asyncio.CancelledError) as e:
+            # Memory retrieval timeout
+            self.logger.error(
+                f"Memory retrieval timeout: {e}",
+                extra={"character_id": self.character_id},
+            )
             return []
 
     async def get_integration_statistics(self) -> Dict[str, Any]:
@@ -606,10 +824,15 @@ class PersonaAgent:
                 component = getattr(self, component_name, None)
                 if component and hasattr(component, "get_statistics"):
                     try:
-                        component_stats[component_name] = (
-                            await component.get_statistics()
+                        component_stats[
+                            component_name
+                        ] = await component.get_statistics()
+                    except (AttributeError, TypeError) as e:
+                        # Component doesn't have get_statistics method or returned invalid data
+                        self.logger.debug(
+                            f"Component statistics unavailable: {e}",
+                            extra={"component_name": component_name},
                         )
-                    except Exception:
                         component_stats[component_name] = {"status": status}
                 else:
                     component_stats[component_name] = {"status": status}
@@ -618,21 +841,35 @@ class PersonaAgent:
 
             # Add validation statistics
             if hasattr(self.validator, "get_validation_statistics"):
-                stats["validation_statistics"] = (
-                    await self.validator.get_validation_statistics()
-                )
+                stats[
+                    "validation_statistics"
+                ] = await self.validator.get_validation_statistics()
 
             # Add LLM usage statistics
             if hasattr(self.llm_client, "get_usage_statistics"):
-                stats["llm_usage_statistics"] = (
-                    await self.llm_client.get_usage_statistics()
-                )
+                stats[
+                    "llm_usage_statistics"
+                ] = await self.llm_client.get_usage_statistics()
 
             return stats
 
-        except Exception as e:
-            self.logger.error(f"Statistics calculation failed: {e}")
-            return {"error": str(e)}
+        except (AttributeError, KeyError) as e:
+            # Missing component attributes or methods
+            self.logger.error(
+                f"Missing component data for statistics: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
+            return {"error": f"Missing data: {str(e)}"}
+        except (TypeError, ValueError) as e:
+            # Invalid statistics data
+            self.logger.error(
+                f"Invalid statistics data: {e}",
+                extra={"character_id": self.character_id},
+            )
+            return {"error": f"Invalid data: {str(e)}"}
 
     # Private helper methods
 
@@ -645,14 +882,24 @@ class PersonaAgent:
             try:
                 current_state = await self.agent_state_manager.get_current_state()
                 context["state"] = current_state
-            except Exception:
+            except (AttributeError, asyncio.TimeoutError):
+                # State retrieval failed, use empty state
+                self.logger.debug(
+                    "State retrieval failed during context build",
+                    extra={"character_id": self.character_id},
+                )
                 context["state"] = {}
 
             # Add active goals
             try:
                 active_goals = await self.goal_manager.get_goals_by_priority("high")
                 context["active_goals"] = active_goals
-            except Exception:
+            except (AttributeError, TypeError):
+                # Goal retrieval failed, use empty goals
+                self.logger.debug(
+                    "Goal retrieval failed during context build",
+                    extra={"character_id": self.character_id},
+                )
                 context["active_goals"] = []
 
             # Add recent memories
@@ -661,14 +908,33 @@ class PersonaAgent:
                     {"type": "recent"}, limit=5
                 )
                 context["recent_memories"] = recent_memories
-            except Exception:
+            except (AttributeError, asyncio.TimeoutError):
+                # Memory retrieval failed, use empty memories
+                self.logger.debug(
+                    "Memory retrieval failed during context build",
+                    extra={"character_id": self.character_id},
+                )
                 context["recent_memories"] = []
 
             return context
 
-        except Exception as e:
-            self.logger.error(f"Character context building failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Missing character data attributes
+            self.logger.error(
+                f"Missing character data during context build: {e}",
+                extra={
+                    "character_id": self.character_id,
+                    "error_type": type(e).__name__,
+                },
+            )
             return self._character_data.copy()
+        except (TypeError, ValueError) as e:
+            # Invalid character data format
+            self.logger.error(
+                f"Invalid character data format: {e}",
+                extra={"character_id": self.character_id},
+            )
+            return {}
 
     # Backward compatibility methods
 

@@ -1,0 +1,84 @@
+name: CI Debug - System Info
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci-debug]
+
+permissions:
+  contents: read
+
+jobs:
+  system-info:
+    runs-on: ubuntu-22.04
+    
+    steps:
+    - name: Print system information
+      shell: bash
+      run: |
+        echo "=== System Information ==="
+        echo "OS: $(uname -a)"
+        echo "Kernel: $(uname -r)"
+        echo "Architecture: $(uname -m)"
+        echo ""
+        
+        echo "=== CPU Information ==="
+        cat /proc/cpuinfo | grep "model name" | head -1
+        echo "CPU Cores: $(nproc)"
+        echo ""
+        
+        echo "=== Memory Information ==="
+        free -h
+        echo ""
+        
+        echo "=== Disk Information ==="
+        df -h /
+        echo ""
+        
+        echo "=== Environment Variables ==="
+        env | sort
+        echo ""
+        
+        echo "=== Python Information ==="
+        which python3 || echo "python3 not found"
+        python3 --version || echo "python3 not available"
+        which pip3 || echo "pip3 not found"
+        pip3 --version || echo "pip3 not available"
+        echo ""
+        
+        echo "=== Node Information ==="
+        which node || echo "node not found"
+        node --version || echo "node not available"
+        which npm || echo "npm not found"
+        npm --version || echo "npm not available"
+        echo ""
+        
+        echo "=== Git Information ==="
+        git --version
+        git config --list
+        echo ""
+        
+        echo "=== Network Information ==="
+        ip addr show || ifconfig -a
+        echo ""
+        
+        echo "=== GitHub Context ==="
+        echo "Repository: ${{ github.repository }}"
+        echo "Ref: ${{ github.ref }}"
+        echo "SHA: ${{ github.sha }}"
+        echo "Actor: ${{ github.actor }}"
+        echo "Event: ${{ github.event_name }}"
+        echo "Workflow: ${{ github.workflow }}"
+        echo "Job: ${{ github.job }}"
+        echo "Run ID: ${{ github.run_id }}"
+        echo "Run Number: ${{ github.run_number }}"
+        
+    - name: Test permissions
+      shell: bash
+      run: |
+        echo "=== Testing File Permissions ==="
+        touch test-file.txt
+        echo "test content" > test-file.txt
+        cat test-file.txt
+        rm test-file.txt
+        echo "✅ File operations successful"

@@ -129,9 +129,7 @@ class StateHasher:
             component_id=component_id,
         )
         if self.config.cache_intermediate_results:
-            self.hash_cache[f"{component_type}_{component_id or 'singleton'}"] = (
-                state_hash
-            )
+            self.hash_cache[f"{component_type}_{component_id or 'singleton'}"] = state_hash
         return state_hash
 
     def clear_cache(self):

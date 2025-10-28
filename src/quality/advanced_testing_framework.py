@@ -241,11 +241,7 @@ class TestFramework:
                     report_data = json.load(f)
 
                 for test in report_data.get("tests", []):
-                    status = (
-                        TestStatus.PASSED
-                        if test["outcome"] == "passed"
-                        else TestStatus.FAILED
-                    )
+                    status = TestStatus.PASSED if test["outcome"] == "passed" else TestStatus.FAILED
 
                     result = TestResult(
                         test_name=test["nodeid"],
@@ -702,15 +698,11 @@ class QualityGates:
         results = {}
 
         # Coverage gate
-        results["coverage_gate"] = (
-            test_suite.coverage_percentage >= self.gates["minimum_coverage"]
-        )
+        results["coverage_gate"] = test_suite.coverage_percentage >= self.gates["minimum_coverage"]
 
         # Failure rate gate
         failure_rate = 100 - test_suite.success_rate
-        results["failure_rate_gate"] = (
-            failure_rate <= self.gates["maximum_failure_rate"]
-        )
+        results["failure_rate_gate"] = failure_rate <= self.gates["maximum_failure_rate"]
 
         # Performance regression gate
         performance_regressions = [b for b in test_suite.benchmarks if b.is_regression]
@@ -738,9 +730,7 @@ async def main():
         TestCategory.SECURITY,
     ]
 
-    results = await framework.run_comprehensive_tests(
-        categories=test_categories, parallel=True
-    )
+    results = await framework.run_comprehensive_tests(categories=test_categories, parallel=True)
 
     # Display results
     for suite_name, suite in results.items():

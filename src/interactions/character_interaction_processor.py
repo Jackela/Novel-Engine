@@ -917,7 +917,9 @@ class CharacterInteractionProcessor:
             except Exception as e:
                 logger.error(f"ERROR creating memories for {participant}: {str(e)}")
 
-    async def _process_equipment_interactions(self, outcome: InteractionOutcome) -> None:
+    async def _process_equipment_interactions(
+        self, outcome: InteractionOutcome
+    ) -> None:
         """Process equipment-related interactions if applicable."""
 
         # Check if any participants have equipment that should be affected

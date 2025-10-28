@@ -63,9 +63,7 @@ except ImportError as e:
     INFRASTRUCTURE_AVAILABLE = False
     import warnings
 
-    warnings.warn(
-        f"Character infrastructure layer not available due to import error: {e}"
-    )
+    warnings.warn(f"Character infrastructure layer not available due to import error: {e}")
 
 # Build __all__ list dynamically based on available imports
 __all__ = [

@@ -33,9 +33,7 @@ class NegotiationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(
-        self, session_id: InteractionId
-    ) -> Optional[NegotiationSession]:
+    async def get_by_id(self, session_id: InteractionId) -> Optional[NegotiationSession]:
         """
         Retrieve a negotiation session by its unique identifier.
 
@@ -85,9 +83,7 @@ class NegotiationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_participant(
-        self, participant_id: UUID
-    ) -> List[NegotiationSession]:
+    async def find_by_participant(self, participant_id: UUID) -> List[NegotiationSession]:
         """
         Find all negotiation sessions where the specified entity is a participant.
 
@@ -139,9 +135,7 @@ class NegotiationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_sessions_by_type(
-        self, session_type: str
-    ) -> List[NegotiationSession]:
+    async def find_sessions_by_type(self, session_type: str) -> List[NegotiationSession]:
         """
         Find negotiation sessions of a specific type.
 
@@ -235,9 +229,7 @@ class NegotiationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def batch_update_sessions(
-        self, session_updates: List[Dict[str, Any]]
-    ) -> List[str]:
+    async def batch_update_sessions(self, session_updates: List[Dict[str, Any]]) -> List[str]:
         """
         Perform batch updates on multiple sessions.
 

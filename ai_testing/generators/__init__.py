@@ -7,4 +7,4 @@ from .dialogue_generator import AIDialogueGenerator
 from .event_generator import AIEventGenerator
 from .narrative_generator import AInarrativeGenerator
 
-__all__ = ['AIDialogueGenerator', 'AIEventGenerator', 'AInarrativeGenerator']
+__all__ = ["AIDialogueGenerator", "AIEventGenerator", "AInarrativeGenerator"]

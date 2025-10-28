@@ -236,12 +236,8 @@ class NarrativeArcApplicationService:
             emotional_intensity=Decimal(str(emotional_intensity)),
             dramatic_tension=Decimal(str(dramatic_tension)),
             story_significance=Decimal(str(story_significance)),
-            involved_characters=(
-                set(involved_characters) if involved_characters else None
-            ),
-            prerequisite_events=(
-                set(prerequisite_events) if prerequisite_events else None
-            ),
+            involved_characters=(set(involved_characters) if involved_characters else None),
+            prerequisite_events=(set(prerequisite_events) if prerequisite_events else None),
             consequence_events=set(consequence_events) if consequence_events else None,
             location=location,
             time_context=time_context,
@@ -254,9 +250,7 @@ class NarrativeArcApplicationService:
 
         self.command_handler.handle_add_plot_point(command)
 
-    def get_plot_point(
-        self, arc_id: str, plot_point_id: str
-    ) -> Optional[Dict[str, Any]]:
+    def get_plot_point(self, arc_id: str, plot_point_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific plot point."""
         query = GetPlotPointQuery(arc_id=arc_id, plot_point_id=plot_point_id)
 
@@ -298,17 +292,13 @@ class NarrativeArcApplicationService:
             description=description,
             sequence_order=sequence_order,
             emotional_intensity=(
-                Decimal(str(emotional_intensity))
-                if emotional_intensity is not None
-                else None
+                Decimal(str(emotional_intensity)) if emotional_intensity is not None else None
             ),
             dramatic_tension=(
                 Decimal(str(dramatic_tension)) if dramatic_tension is not None else None
             ),
             story_significance=(
-                Decimal(str(story_significance))
-                if story_significance is not None
-                else None
+                Decimal(str(story_significance)) if story_significance is not None else None
             ),
             outcome=outcome,
             notes=notes,
@@ -373,9 +363,7 @@ class NarrativeArcApplicationService:
 
         return self.query_handler.handle_get_theme(query)
 
-    def get_themes_at_sequence(
-        self, arc_id: str, sequence: int
-    ) -> List[Dict[str, Any]]:
+    def get_themes_at_sequence(self, arc_id: str, sequence: int) -> List[Dict[str, Any]]:
         """Get themes active at a specific sequence."""
         query = GetThemesAtSequenceQuery(arc_id=arc_id, sequence=sequence)
 
@@ -427,17 +415,13 @@ class NarrativeArcApplicationService:
             start_sequence=start_sequence,
             end_sequence=end_sequence,
             event_density=Decimal(str(event_density)),
-            tension_curve=(
-                [Decimal(str(t)) for t in tension_curve] if tension_curve else None
-            ),
+            tension_curve=([Decimal(str(t)) for t in tension_curve] if tension_curve else None),
             dialogue_ratio=Decimal(str(dialogue_ratio)),
             action_ratio=Decimal(str(action_ratio)),
             reflection_ratio=Decimal(str(reflection_ratio)),
             description_density=Decimal(str(description_density)),
             character_focus=set(character_focus) if character_focus else None,
-            narrative_techniques=(
-                set(narrative_techniques) if narrative_techniques else None
-            ),
+            narrative_techniques=(set(narrative_techniques) if narrative_techniques else None),
             reader_engagement_target=reader_engagement_target,
             tags=set(tags) if tags else None,
             notes=notes,
@@ -488,9 +472,7 @@ class NarrativeArcApplicationService:
             atmosphere=atmosphere,
             social_context=social_context,
             cultural_context=cultural_context,
-            affected_characters=(
-                set(affected_characters) if affected_characters else None
-            ),
+            affected_characters=(set(affected_characters) if affected_characters else None),
             related_themes=set(related_themes) if related_themes else None,
             tags=set(tags) if tags else None,
             notes=notes,

@@ -118,9 +118,7 @@ class CreateCharacterCommand:
         # Validate personality traits
         for trait, score in self.personality_traits.items():
             if not 0.0 <= score <= 1.0:
-                errors.append(
-                    f"Personality trait '{trait}' score must be between 0.0 and 1.0"
-                )
+                errors.append(f"Personality trait '{trait}' score must be between 0.0 and 1.0")
 
         # Validate enum values
         try:
@@ -139,9 +137,7 @@ class CreateCharacterCommand:
             errors.append(f"Invalid character class: {self.character_class}")
 
         if errors:
-            raise ValueError(
-                f"CreateCharacterCommand validation failed: {'; '.join(errors)}"
-            )
+            raise ValueError(f"CreateCharacterCommand validation failed: {'; '.join(errors)}")
 
         # Generate correlation ID if not provided
         if not self.correlation_id:
@@ -235,9 +231,7 @@ class UpdateCharacterStatsCommand:
             errors.append("Skill points cannot be negative")
 
         if errors:
-            raise ValueError(
-                f"UpdateCharacterStatsCommand validation failed: {'; '.join(errors)}"
-            )
+            raise ValueError(f"UpdateCharacterStatsCommand validation failed: {'; '.join(errors)}")
 
         # Generate correlation ID if not provided
         if not self.correlation_id:
@@ -314,9 +308,7 @@ class UpdateCharacterSkillCommand:
             errors.append("Skill description cannot exceed 500 characters")
 
         if errors:
-            raise ValueError(
-                f"UpdateCharacterSkillCommand validation failed: {'; '.join(errors)}"
-            )
+            raise ValueError(f"UpdateCharacterSkillCommand validation failed: {'; '.join(errors)}")
 
         # Generate correlation ID if not provided
         if not self.correlation_id:
@@ -385,14 +377,10 @@ class LevelUpCharacterCommand:
             if "improvement" in skill_data:
                 improvement = skill_data["improvement"]
                 if not 0 <= improvement <= 2:
-                    errors.append(
-                        f"Skill improvement must be 0-2 levels, got {improvement}"
-                    )
+                    errors.append(f"Skill improvement must be 0-2 levels, got {improvement}")
 
         if errors:
-            raise ValueError(
-                f"LevelUpCharacterCommand validation failed: {'; '.join(errors)}"
-            )
+            raise ValueError(f"LevelUpCharacterCommand validation failed: {'; '.join(errors)}")
 
         # Generate correlation ID if not provided
         if not self.correlation_id:
@@ -439,9 +427,7 @@ class DeleteCharacterCommand:
             errors.append("Deletion reason cannot exceed 500 characters")
 
         if errors:
-            raise ValueError(
-                f"DeleteCharacterCommand validation failed: {'; '.join(errors)}"
-            )
+            raise ValueError(f"DeleteCharacterCommand validation failed: {'; '.join(errors)}")
 
         # Generate correlation ID if not provided
         if not self.correlation_id:
@@ -501,9 +487,7 @@ class HealCharacterCommand:
             errors.append(f"Invalid healing type: {self.healing_type}")
 
         if errors:
-            raise ValueError(
-                f"HealCharacterCommand validation failed: {'; '.join(errors)}"
-            )
+            raise ValueError(f"HealCharacterCommand validation failed: {'; '.join(errors)}")
 
         # Generate correlation ID if not provided
         if not self.correlation_id:
@@ -572,9 +556,7 @@ class DamageCharacterCommand:
             errors.append("Damage source cannot exceed 100 characters")
 
         if errors:
-            raise ValueError(
-                f"DamageCharacterCommand validation failed: {'; '.join(errors)}"
-            )
+            raise ValueError(f"DamageCharacterCommand validation failed: {'; '.join(errors)}")
 
         # Generate correlation ID if not provided
         if not self.correlation_id:

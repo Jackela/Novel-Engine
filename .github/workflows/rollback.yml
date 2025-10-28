@@ -22,6 +22,9 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: read
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -31,7 +34,7 @@ env:
 jobs:
   # Pre-rollback validation
   pre-rollback:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       rollback-version: ${{ steps.validate.outputs.version }}
       rollback-environment: ${{ steps.validate.outputs.environment }}
@@ -85,7 +88,7 @@ jobs:
 
   # Create rollback backup
   backup-current:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [pre-rollback]
     environment: ${{ needs.pre-rollback.outputs.rollback-environment }}
     outputs:
@@ -102,6 +105,7 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Update kubeconfig
+      shell: bash
       run: |
         aws eks update-kubeconfig \
           --region ${{ env.AWS_REGION }} \
@@ -159,7 +163,7 @@ jobs:
 
   # Execute rollback
   rollback:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [pre-rollback, backup-current]
     environment: ${{ needs.pre-rollback.outputs.rollback-environment }}
     steps:
@@ -174,12 +178,14 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Update kubeconfig
+      shell: bash
       run: |
         aws eks update-kubeconfig \
           --region ${{ env.AWS_REGION }} \
           --name ${{ env.EKS_CLUSTER_NAME }}
 
     - name: Execute rollback
+      shell: bash
       run: |
         NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
         ROLLBACK_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.pre-rollback.outputs.rollback-version }}"
@@ -194,6 +200,7 @@ jobs:
         echo "✅ Rollback deployment updated"
 
     - name: Wait for rollback completion
+      shell: bash
       run: |
         NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
         
@@ -220,6 +227,7 @@ jobs:
         fi
 
     - name: Restart related services
+      shell: bash
       run: |
         NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
         
@@ -238,7 +246,7 @@ jobs:
 
   # Post-rollback verification
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [rollback, pre-rollback]
     steps:
     - name: Configure AWS credentials
@@ -249,12 +257,14 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Update kubeconfig
+      shell: bash
       run: |
         aws eks update-kubeconfig \
           --region ${{ env.AWS_REGION }} \
           --name ${{ env.EKS_CLUSTER_NAME }}
 
     - name: Health check verification
+      shell: bash
       run: |
         NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
         
@@ -316,6 +326,7 @@ jobs:
         echo "✅ Performance verification completed"
 
     - name: Log verification
+      shell: bash
       run: |
         NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
         
@@ -343,10 +354,11 @@ jobs:
 
   # Update monitoring and alerts
   update-monitoring:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [verify, pre-rollback, backup-current]
     steps:
     - name: Update monitoring dashboards
+      shell: bash
       run: |
         echo "📊 Updating monitoring dashboards for rollback..."
         
@@ -356,6 +368,7 @@ jobs:
         echo "✅ Monitoring updated"
 
     - name: Create rollback event
+      shell: bash
       run: |
         # Create Kubernetes event for rollback
         kubectl create event rollback-completed \
@@ -367,7 +380,7 @@ jobs:
 
   # Notification and documentation
   notify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [verify, pre-rollback, backup-current]
     if: always()
     steps:
@@ -377,6 +390,7 @@ jobs:
         name: rollback-backup-${{ needs.backup-current.outputs.backup-id }}
 
     - name: Create rollback report
+      shell: bash
       run: |
         cat > rollback-report.md << EOF
         # Rollback Report

@@ -382,12 +382,17 @@ class TestProposalOperations:
         """Create sample proposal terms for testing."""
         proposal_terms = Mock(spec=ProposalTerms)
         proposal_terms.proposal_id = uuid4()
+        proposal_terms.is_expired = False  # Not expired for testing
         return proposal_terms
 
     @pytest.fixture
     def sample_proposal_response(self):
         """Create sample proposal response for testing."""
-        return Mock(spec=ProposalResponse)
+        proposal_response = Mock(spec=ProposalResponse)
+        proposal_response.is_expired = Mock(
+            return_value=False
+        )  # Method that returns False
+        return proposal_response
 
     @pytest.mark.asyncio
     async def test_submit_proposal_success(
@@ -426,9 +431,9 @@ class TestProposalOperations:
             "submitted_by": uuid4(),
             "events": ["proposal_submitted"],
         }
-        mock_dependencies["command_handler"].handle_submit_proposal.return_value = (
-            mock_submission_result
-        )
+        mock_dependencies[
+            "command_handler"
+        ].handle_submit_proposal.return_value = mock_submission_result
 
         result = await service.submit_proposal(
             session_id=session_id,
@@ -972,9 +977,9 @@ class TestProposalOptimization:
         service.command_handler = mock_dependencies["command_handler"]
 
         session_id = uuid4()
-        mock_dependencies["repository"].get_by_id.return_value = (
-            mock_negotiation_session
-        )
+        mock_dependencies[
+            "repository"
+        ].get_by_id.return_value = mock_negotiation_session
 
         # Mock analysis results for each proposal
         proposal_ids = list(mock_negotiation_session.active_proposals.keys())
@@ -1024,9 +1029,9 @@ class TestProposalOptimization:
         assert result["proposals_analyzed"] == 3
         assert len(result["proposal_optimizations"]) == 3
 
-        # Verify average viability calculation
+        # Verify average viability calculation (use pytest.approx for float comparison)
         expected_avg = (0.6 + 0.7 + 0.8) / 3
-        assert result["average_viability"] == expected_avg
+        assert result["average_viability"] == pytest.approx(expected_avg, rel=1e-9)
 
         # Verify optimization recommendations are included
         assert "overall_recommendations" in result

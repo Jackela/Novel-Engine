@@ -96,7 +96,9 @@ class NarrativeTheme:
         if self.symbolic_elements is None:
             object.__setattr__(self, "symbolic_elements", frozenset())
         elif isinstance(self.symbolic_elements, set):
-            object.__setattr__(self, "symbolic_elements", frozenset(self.symbolic_elements))
+            object.__setattr__(
+                self, "symbolic_elements", frozenset(self.symbolic_elements)
+            )
 
         if self.related_motifs is None:
             object.__setattr__(self, "related_motifs", frozenset())
@@ -106,17 +108,23 @@ class NarrativeTheme:
         if self.character_archetypes is None:
             object.__setattr__(self, "character_archetypes", frozenset())
         elif isinstance(self.character_archetypes, set):
-            object.__setattr__(self, "character_archetypes", frozenset(self.character_archetypes))
+            object.__setattr__(
+                self, "character_archetypes", frozenset(self.character_archetypes)
+            )
 
         if self.conflicts_with_themes is None:
             object.__setattr__(self, "conflicts_with_themes", frozenset())
         elif isinstance(self.conflicts_with_themes, set):
-            object.__setattr__(self, "conflicts_with_themes", frozenset(self.conflicts_with_themes))
+            object.__setattr__(
+                self, "conflicts_with_themes", frozenset(self.conflicts_with_themes)
+            )
 
         if self.reinforces_themes is None:
             object.__setattr__(self, "reinforces_themes", frozenset())
         elif isinstance(self.reinforces_themes, set):
-            object.__setattr__(self, "reinforces_themes", frozenset(self.reinforces_themes))
+            object.__setattr__(
+                self, "reinforces_themes", frozenset(self.reinforces_themes)
+            )
 
         if self.target_audience_relevance is None:
             object.__setattr__(self, "target_audience_relevance", {})
@@ -180,6 +188,7 @@ class NarrativeTheme:
 
     def __hash__(self) -> int:
         """Custom hash implementation for frozen dataclass with Dict fields."""
+
         def _dict_to_hashable(d):
             if not d:
                 return frozenset()
@@ -193,37 +202,73 @@ class NarrativeTheme:
                     v = float(v)
                 items.append((k, v))
             return frozenset(items)
-        
-        return hash((
-            self.theme_id,
-            self.theme_type,
-            self.intensity,
-            self.name,
-            self.description,
-            self.symbolic_elements,
-            self.related_motifs,
-            self.character_archetypes,
-            self.introduction_sequence,
-            self.resolution_sequence,
-            self.peak_intensity_sequence,
-            self.development_trajectory,
-            self.conflicts_with_themes,
-            self.reinforces_themes,
-            self.moral_complexity,
-            self.emotional_resonance,
-            self.universal_appeal,
-            self.expressed_through_dialogue,
-            self.expressed_through_action,
-            self.expressed_through_symbolism,
-            self.expressed_through_setting,
-            self.expressed_through_character_arc,
-            self.cultural_context,
-            self.historical_context,
-            _dict_to_hashable(self.target_audience_relevance),
-            self.tags,
-            self.creation_timestamp,
-            _dict_to_hashable(self.metadata),
-        ))
+
+        return hash(
+            (
+                self.theme_id,
+                self.theme_type,
+                self.intensity,
+                self.name,
+                self.description,
+                self.symbolic_elements,
+                self.related_motifs,
+                self.character_archetypes,
+                self.introduction_sequence,
+                self.resolution_sequence,
+                self.peak_intensity_sequence,
+                self.development_trajectory,
+                self.conflicts_with_themes,
+                self.reinforces_themes,
+                self.moral_complexity,
+                self.emotional_resonance,
+                self.universal_appeal,
+                self.expressed_through_dialogue,
+                self.expressed_through_action,
+                self.expressed_through_symbolism,
+                self.expressed_through_setting,
+                self.expressed_through_character_arc,
+                self.cultural_context,
+                self.historical_context,
+                _dict_to_hashable(self.target_audience_relevance),
+                self.tags,
+                _dict_to_hashable(self.metadata),
+            )
+        )
+
+    def __eq__(self, other):
+        """Custom equality excluding creation_timestamp for value object semantics."""
+        if not isinstance(other, NarrativeTheme):
+            return False
+        return (
+            self.theme_id == other.theme_id
+            and self.theme_type == other.theme_type
+            and self.intensity == other.intensity
+            and self.name == other.name
+            and self.description == other.description
+            and self.symbolic_elements == other.symbolic_elements
+            and self.related_motifs == other.related_motifs
+            and self.character_archetypes == other.character_archetypes
+            and self.introduction_sequence == other.introduction_sequence
+            and self.resolution_sequence == other.resolution_sequence
+            and self.peak_intensity_sequence == other.peak_intensity_sequence
+            and self.development_trajectory == other.development_trajectory
+            and self.conflicts_with_themes == other.conflicts_with_themes
+            and self.reinforces_themes == other.reinforces_themes
+            and self.moral_complexity == other.moral_complexity
+            and self.emotional_resonance == other.emotional_resonance
+            and self.universal_appeal == other.universal_appeal
+            and self.expressed_through_dialogue == other.expressed_through_dialogue
+            and self.expressed_through_action == other.expressed_through_action
+            and self.expressed_through_symbolism == other.expressed_through_symbolism
+            and self.expressed_through_setting == other.expressed_through_setting
+            and self.expressed_through_character_arc
+            == other.expressed_through_character_arc
+            and self.cultural_context == other.cultural_context
+            and self.historical_context == other.historical_context
+            and self.target_audience_relevance == other.target_audience_relevance
+            and self.tags == other.tags
+            and self.metadata == other.metadata
+        )
 
     @property
     def is_major_theme(self) -> bool:

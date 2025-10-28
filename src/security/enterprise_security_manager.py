@@ -22,7 +22,7 @@ import ipaddress
 import json
 import time
 
-import aioredis
+import redis.asyncio as redis
 import aiosqlite
 
 try:
@@ -226,7 +226,7 @@ class EnterpriseSecurityManager:
         """Initialize Enterprise Security Components"""
         try:
             # Initialize Redis connection
-            self.redis_client = aioredis.from_url(self.redis_url)
+            self.redis_client = redis.from_url(self.redis_url, decode_responses=True)
             await self.redis_client.ping()
             logger.info("✅ Redis connection established for security cache")
 

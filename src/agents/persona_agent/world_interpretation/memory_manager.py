@@ -15,7 +15,6 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 
-
 class MemoryType(Enum):
     """Types of memories."""
 
@@ -155,9 +154,9 @@ class MemoryManager:
         }
 
         # Memory associations graph
-        self._memory_associations: Dict[str, Dict[str, float]] = (
-            {}
-        )  # memory_id -> {related_id: strength}
+        self._memory_associations: Dict[
+            str, Dict[str, float]
+        ] = {}  # memory_id -> {related_id: strength}
 
     async def store_memory(
         self, memory: Dict[str, Any], memory_type: str = "episodic"
@@ -218,8 +217,17 @@ class MemoryManager:
             self.logger.debug(f"Stored {memory_type} memory: {memory_id}")
             return True
 
-        except Exception as e:
-            self.logger.error(f"Memory storage failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid memory data structure or missing required fields
+            self.logger.error(
+                f"Invalid memory data: {e}", extra={"error_type": type(e).__name__}
+            )
+            return False
+        except (ValueError, json.JSONDecodeError) as e:
+            # Memory type conversion or content serialization errors
+            self.logger.error(
+                f"Memory data format error: {e}", extra={"error_type": type(e).__name__}
+            )
             return False
 
     async def retrieve_memories(
@@ -288,8 +296,19 @@ class MemoryManager:
             )
             return retrieved_memories
 
-        except Exception as e:
-            self.logger.error(f"Memory retrieval failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid query structure or memory data access errors
+            self.logger.error(
+                f"Invalid query or memory data: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (ValueError, IndexError) as e:
+            # Memory type conversion or list access errors
+            self.logger.error(
+                f"Memory retrieval processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def consolidate_memories(self) -> None:
@@ -326,8 +345,18 @@ class MemoryManager:
 
             self.logger.info(f"Consolidated {consolidated_count} memories")
 
-        except Exception as e:
-            self.logger.error(f"Memory consolidation failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Memory data access or configuration errors
+            self.logger.error(
+                f"Memory data access error during consolidation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, ZeroDivisionError) as e:
+            # Consolidation score calculation errors
+            self.logger.error(
+                f"Consolidation calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def reinforce_memory(
         self, memory_id: str, reinforcement_strength: float = 0.1
@@ -364,8 +393,19 @@ class MemoryManager:
             )
             return True
 
-        except Exception as e:
-            self.logger.error(f"Memory reinforcement failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Memory not found or invalid memory structure
+            self.logger.error(
+                f"Memory access error during reinforcement: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (ValueError, TypeError) as e:
+            # Invalid reinforcement strength value
+            self.logger.error(
+                f"Invalid reinforcement value: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     async def forget_memory(
@@ -416,8 +456,18 @@ class MemoryManager:
             self.logger.debug(f"Forgot memory {memory_id} ({reason})")
             return True
 
-        except Exception as e:
-            self.logger.error(f"Memory forgetting failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Memory not found or invalid structure
+            self.logger.error(
+                f"Memory access error during forgetting: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (ValueError, IndexError) as e:
+            # List removal or index errors
+            self.logger.error(
+                f"Memory removal error: {e}", extra={"error_type": type(e).__name__}
+            )
             return False
 
     async def get_working_memory(self) -> List[Dict[str, Any]]:
@@ -433,8 +483,19 @@ class MemoryManager:
 
             return working_memories
 
-        except Exception as e:
-            self.logger.error(f"Working memory retrieval failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Working memory data access errors
+            self.logger.error(
+                f"Working memory data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (ValueError, IndexError) as e:
+            # Working memory list access errors
+            self.logger.error(
+                f"Working memory access error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def get_memory_statistics(self) -> Dict[str, Any]:
@@ -483,8 +544,18 @@ class MemoryManager:
                 "stats": self._stats.copy(),
             }
 
-        except Exception as e:
-            self.logger.error(f"Memory statistics calculation failed: {e}")
+        except (ZeroDivisionError, ValueError) as e:
+            # Division or calculation errors in statistics
+            self.logger.error(
+                f"Statistics calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (AttributeError, KeyError) as e:
+            # Missing statistics data or configuration
+            self.logger.error(
+                f"Statistics data error: {e}", extra={"error_type": type(e).__name__}
+            )
             return {"error": str(e)}
 
     async def save_memory_state(self, file_path: str) -> bool:
@@ -530,8 +601,18 @@ class MemoryManager:
             self.logger.info(f"Memory state saved to {file_path}")
             return True
 
-        except Exception as e:
-            self.logger.error(f"Memory state save failed: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during save
+            self.logger.error(
+                f"File system error during save: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
+            # JSON serialization errors
+            self.logger.error(
+                f"JSON serialization error: {e}", extra={"error_type": type(e).__name__}
+            )
             return False
 
     async def load_memory_state(self, file_path: str) -> bool:
@@ -583,8 +664,25 @@ class MemoryManager:
             self.logger.info(f"Memory state loaded from {file_path}")
             return True
 
-        except Exception as e:
-            self.logger.error(f"Memory state load failed: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during load
+            self.logger.error(
+                f"File system error during load: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except json.JSONDecodeError as e:
+            # JSON parsing errors
+            self.logger.error(
+                f"JSON parsing error: {e}", extra={"error_type": type(e).__name__}
+            )
+            return False
+        except (AttributeError, KeyError, ValueError) as e:
+            # Invalid memory state data format
+            self.logger.error(
+                f"Invalid memory state format: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     # Private helper methods
@@ -607,8 +705,12 @@ class MemoryManager:
                         f"Removed {removed_id} from working memory (capacity limit)"
                     )
 
-        except Exception as e:
-            self.logger.debug(f"Working memory addition failed: {e}")
+        except (AttributeError, ValueError, IndexError) as e:
+            # Working memory list manipulation errors
+            self.logger.debug(
+                f"Working memory addition failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def _get_candidate_memories(self, query: MemoryQuery) -> List[str]:
         """Get candidate memories that might match the query."""
@@ -658,8 +760,19 @@ class MemoryManager:
 
             return list(candidates)
 
-        except Exception as e:
-            self.logger.error(f"Candidate memory filtering failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Query data or memory structure errors
+            self.logger.error(
+                f"Memory filtering data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (ValueError, IndexError) as e:
+            # Memory type conversion or list access errors
+            self.logger.error(
+                f"Memory filtering processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def _calculate_relevance_score(
@@ -711,8 +824,19 @@ class MemoryManager:
 
             return min(1.0, score)
 
-        except Exception as e:
-            self.logger.debug(f"Relevance score calculation failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Memory content or query data access errors
+            self.logger.debug(
+                f"Relevance calculation data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return 0.0
+        except (ZeroDivisionError, ValueError) as e:
+            # Division or calculation errors
+            self.logger.debug(
+                f"Relevance score calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return 0.0
 
     async def _calculate_consolidation_score(self, memory: Memory) -> float:
@@ -745,8 +869,19 @@ class MemoryManager:
 
             return min(1.0, score)
 
-        except Exception as e:
-            self.logger.debug(f"Consolidation score calculation failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Memory data or association access errors
+            self.logger.debug(
+                f"Consolidation data access error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return 0.0
+        except (ZeroDivisionError, ValueError) as e:
+            # Division or calculation errors in consolidation scoring
+            self.logger.debug(
+                f"Consolidation score calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return 0.0
 
     async def _consolidate_memory(self, memory: Memory) -> None:
@@ -766,8 +901,12 @@ class MemoryManager:
                 f"Consolidated memory {memory.memory_id}: level {old_level:.2f} -> {memory.consolidation_level:.2f}"
             )
 
-        except Exception as e:
-            self.logger.debug(f"Memory consolidation failed: {e}")
+        except (AttributeError, ValueError, TypeError) as e:
+            # Memory attribute access or value errors
+            self.logger.debug(
+                f"Memory consolidation failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def _create_memory_associations(self, new_memory: Memory) -> None:
         """Create associations between new memory and existing memories."""
@@ -798,8 +937,18 @@ class MemoryManager:
                         new_memory.memory_id
                     ] = association_strength
 
-        except Exception as e:
-            self.logger.debug(f"Memory association creation failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Memory data or association dictionary errors
+            self.logger.debug(
+                f"Memory association data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Association calculation or processing errors
+            self.logger.debug(
+                f"Memory association processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def _calculate_memory_association_strength(
         self, memory1: Memory, memory2: Memory
@@ -842,8 +991,18 @@ class MemoryManager:
 
             return min(1.0, strength)
 
-        except Exception as e:
-            self.logger.debug(f"Association strength calculation failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Memory attribute or data structure errors
+            self.logger.debug(
+                f"Association data error: {e}", extra={"error_type": type(e).__name__}
+            )
+            return 0.0
+        except (ZeroDivisionError, ValueError) as e:
+            # Division or calculation errors
+            self.logger.debug(
+                f"Association strength calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return 0.0
 
     async def _manage_memory_capacity(self) -> None:
@@ -874,8 +1033,18 @@ class MemoryManager:
                     f"Removed {removal_count} weak memories for capacity management"
                 )
 
-        except Exception as e:
-            self.logger.debug(f"Memory capacity management failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Memory data or configuration access errors
+            self.logger.debug(
+                f"Capacity management data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, IndexError) as e:
+            # Memory sorting or removal errors
+            self.logger.debug(
+                f"Capacity management processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def _memory_to_dict(self, memory: Memory) -> Dict[str, Any]:
         """Convert memory object to dictionary format."""

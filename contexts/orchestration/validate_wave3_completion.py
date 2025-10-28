@@ -284,9 +284,7 @@ def main():
     print(f"\nSUCCESS RATE: {passed}/{total} ({success_rate:.1%})")
 
     if passed == total:
-        print(
-            "\n🎉 M10 WAVE 3: OPENTELEMETRY DISTRIBUTED TRACING IMPLEMENTATION COMPLETE!"
-        )
+        print("\n🎉 M10 WAVE 3: OPENTELEMETRY DISTRIBUTED TRACING IMPLEMENTATION COMPLETE!")
         print("=" * 80)
         print("✅ ROOT SPAN COVERAGE FOR COMPLETE RUN_TURN ORCHESTRATION FLOW")
         print("✅ Comprehensive OpenTelemetry distributed tracing infrastructure")

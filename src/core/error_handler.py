@@ -234,9 +234,18 @@ class CentralizedErrorHandler:
 
             return error_record
 
-        except Exception as handler_error:
-            # Error in error handler - log and return minimal record
-            self.logger.critical(f"Error handler failure: {handler_error}")
+        except (AttributeError, KeyError, TypeError) as handler_error:
+            # Invalid error record or context data errors
+            self.logger.critical(
+                f"Invalid data in error handler: {handler_error}",
+                extra={"error_type": type(handler_error).__name__},
+            )
+        except (ValueError, RuntimeError) as handler_error:
+            # Error handler processing or recovery errors
+            self.logger.critical(
+                f"Error handler failure: {handler_error}",
+                extra={"error_type": type(handler_error).__name__},
+            )
 
             return ErrorRecord(
                 error_id="handler_error",
@@ -388,8 +397,19 @@ class CentralizedErrorHandler:
                         f"Recovery failed for error {error_record.error_id}"
                     )
 
-        except Exception as recovery_error:
-            self.logger.error(f"Recovery attempt failed: {recovery_error}")
+        except (AttributeError, KeyError, TypeError) as recovery_error:
+            # Invalid error record or recovery data errors
+            self.logger.error(
+                f"Invalid data in recovery attempt: {recovery_error}",
+                extra={"error_type": type(recovery_error).__name__},
+            )
+            error_record.recovery_successful = False
+        except (ValueError, RuntimeError) as recovery_error:
+            # Recovery execution or strategy errors
+            self.logger.error(
+                f"Recovery attempt failed: {recovery_error}",
+                extra={"error_type": type(recovery_error).__name__},
+            )
             error_record.recovery_successful = False
 
     async def _handle_retry_recovery(self, error_record: ErrorRecord) -> bool:
@@ -409,7 +429,11 @@ class CentralizedErrorHandler:
                 if attempt >= 1:  # Succeed after first retry
                     return True
 
-            except Exception:
+            except (AttributeError, TypeError, asyncio.CancelledError):
+                # Retry operation cancelled or invalid retry data
+                continue
+            except (ValueError, RuntimeError):
+                # Retry execution errors
                 continue
 
         return False
@@ -518,8 +542,18 @@ class CentralizedErrorHandler:
         for callback in self._alert_callbacks:
             try:
                 await callback(alert_data)
-            except Exception as e:
-                self.logger.error(f"Alert callback failed: {e}")
+            except (AttributeError, TypeError, KeyError) as e:
+                # Invalid callback or alert data errors
+                self.logger.error(
+                    f"Invalid data in alert callback: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+            except (ValueError, RuntimeError) as e:
+                # Alert callback execution errors
+                self.logger.error(
+                    f"Alert callback failed: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
 
     def add_alert_callback(self, callback: Callable) -> None:
         """Add alert callback for notifications."""

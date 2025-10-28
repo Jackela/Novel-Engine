@@ -265,18 +265,14 @@ class LLMRequest:
         }
 
         required_capability = capability_map.get(self.request_type)
-        if required_capability and not self.model_id.supports_capability(
-            required_capability
-        ):
+        if required_capability and not self.model_id.supports_capability(required_capability):
             return False
 
         # Check context size
         estimated_input_tokens = self.estimate_input_tokens()
         effective_max_output = self.get_effective_max_tokens()
 
-        return self.model_id.can_handle_context(
-            estimated_input_tokens + effective_max_output
-        )
+        return self.model_id.can_handle_context(estimated_input_tokens + effective_max_output)
 
 
 @dataclass(frozen=True)
@@ -556,9 +552,7 @@ class ILLMProvider(ABC):
         """
         pass
 
-    def generate(
-        self, request: LLMRequest, budget: Optional[TokenBudget] = None
-    ) -> LLMResponse:
+    def generate(self, request: LLMRequest, budget: Optional[TokenBudget] = None) -> LLMResponse:
         """
         Generate response synchronously.
 

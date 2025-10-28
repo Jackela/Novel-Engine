@@ -145,9 +145,25 @@ class ThreatAssessor:
             )
             return assessment
 
-        except Exception as e:
-            self.logger.error(f"Threat assessment failed: {e}")
-            # Return minimal safe assessment
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event or character data structure
+            self.logger.error(
+                f"Invalid data during threat assessment: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return ThreatAssessment(
+                overall_threat_level=ThreatLevel.MODERATE,
+                threat_factors=[],
+                confidence=0.5,
+                assessment_timestamp=datetime.now().timestamp(),
+                recommended_response="proceed_with_caution",
+            )
+        except (ValueError, RuntimeError) as e:
+            # Threat calculation or processing errors
+            self.logger.error(
+                f"Threat assessment processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return ThreatAssessment(
                 overall_threat_level=ThreatLevel.MODERATE,
                 threat_factors=[],
@@ -198,8 +214,19 @@ class ThreatAssessor:
 
             return environmental_threats
 
-        except Exception as e:
-            self.logger.error(f"Environmental threat assessment failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid location data or world state structure
+            self.logger.error(
+                f"Invalid data during environmental threat assessment: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (ValueError, RuntimeError) as e:
+            # Threat evaluation or processing errors
+            self.logger.error(
+                f"Environmental threat assessment processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def assess_political_threats(
@@ -246,8 +273,19 @@ class ThreatAssessor:
 
             return political_threats
 
-        except Exception as e:
-            self.logger.error(f"Political threat assessment failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid character data or world state structure
+            self.logger.error(
+                f"Invalid data during political threat assessment: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (ValueError, RuntimeError) as e:
+            # Threat evaluation or processing errors
+            self.logger.error(
+                f"Political threat assessment processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def update_threat_patterns(
@@ -296,8 +334,18 @@ class ThreatAssessor:
 
             self.logger.debug(f"Updated {len(self._threat_patterns)} threat patterns")
 
-        except Exception as e:
-            self.logger.error(f"Threat pattern update failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event or outcome data structure
+            self.logger.error(
+                f"Invalid data during threat pattern update: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, ZeroDivisionError) as e:
+            # Calculation or averaging errors
+            self.logger.error(
+                f"Threat pattern update calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def get_threat_trend(self, time_window_hours: int = 24) -> Dict[str, Any]:
         """
@@ -370,8 +418,19 @@ class ThreatAssessor:
                 "time_window_hours": time_window_hours,
             }
 
-        except Exception as e:
-            self.logger.error(f"Threat trend analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid assessment data or history structure
+            self.logger.error(
+                f"Invalid data during threat trend analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"trend": "error", "error": str(e)}
+        except (ValueError, ZeroDivisionError, IndexError) as e:
+            # Calculation, division, or list operation errors
+            self.logger.error(
+                f"Threat trend analysis calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"trend": "error", "error": str(e)}
 
     async def _analyze_threat_factors(
@@ -408,8 +467,19 @@ class ThreatAssessor:
 
             return threat_factors
 
-        except Exception as e:
-            self.logger.error(f"Threat factor analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event or character data structure
+            self.logger.error(
+                f"Invalid data during threat factor analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (ValueError, RuntimeError) as e:
+            # Threat analysis or processing errors
+            self.logger.error(
+                f"Threat factor analysis processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def _analyze_direct_threats(
@@ -443,8 +513,19 @@ class ThreatAssessor:
 
             return threats
 
-        except Exception as e:
-            self.logger.debug(f"Direct threat analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event or character data structure
+            self.logger.debug(
+                f"Direct threat analysis data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (ValueError, RuntimeError) as e:
+            # Threat calculation or severity assessment errors
+            self.logger.debug(
+                f"Direct threat analysis processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def _analyze_indirect_threats(
@@ -516,8 +597,19 @@ class ThreatAssessor:
 
             return threats
 
-        except Exception as e:
-            self.logger.debug(f"Indirect threat analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event, character data, or world context structure
+            self.logger.debug(
+                f"Indirect threat analysis data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (ValueError, RuntimeError) as e:
+            # Threat calculation or faction analysis errors
+            self.logger.debug(
+                f"Indirect threat analysis processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def _calculate_overall_threat(
@@ -557,8 +649,19 @@ class ThreatAssessor:
             else:
                 return ThreatLevel.CRITICAL
 
-        except Exception as e:
-            self.logger.error(f"Overall threat calculation failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid threat factor data structure
+            self.logger.error(
+                f"Invalid data during overall threat calculation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return ThreatLevel.MODERATE
+        except (ValueError, ZeroDivisionError) as e:
+            # Calculation or scoring errors
+            self.logger.error(
+                f"Overall threat calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return ThreatLevel.MODERATE
 
     # Helper methods for specific threat analysis
@@ -749,8 +852,18 @@ class ThreatAssessor:
 
             self.logger.debug(f"Recorded threat assessment for event {event.event_id}")
 
-        except Exception as e:
-            self.logger.debug(f"Assessment recording failed: {e}")
+        except (AttributeError, TypeError) as e:
+            # Invalid assessment or history structure
+            self.logger.debug(
+                f"Assessment recording data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, IndexError) as e:
+            # History list operations errors
+            self.logger.debug(
+                f"Assessment recording processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     def get_assessment_history(self, limit: int = 10) -> List[ThreatAssessment]:
         """Get recent threat assessment history."""

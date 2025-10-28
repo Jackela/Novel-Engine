@@ -218,7 +218,4 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.slow)
 
 
-# 测试报告钩子
-def pytest_html_report_title(report):
-    """自定义HTML报告标题"""
-    report.title = "StoryForge AI 测试报告"
+# 测试报告钩子已移除 - pytest-html 版本不兼容

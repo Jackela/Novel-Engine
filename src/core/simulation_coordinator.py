@@ -133,8 +133,19 @@ class SimulationCoordinator:
         except AttributeError as e:
             logger.error(f"Agent validation failed - missing attribute: {str(e)}")
             return False
-        except Exception as e:
-            logger.error(f"Unexpected error during agent registration: {str(e)}")
+        except (TypeError, KeyError) as e:
+            # Invalid agent data or registration errors
+            logger.error(
+                f"Invalid data during agent registration: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (ValueError, RuntimeError) as e:
+            # Agent registration processing errors
+            logger.error(
+                f"Error during agent registration: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     def remove_agent(self, agent_id: str, log_event_callback) -> bool:
@@ -169,8 +180,19 @@ class SimulationCoordinator:
             logger.warning(f"Agent not found for removal: {agent_id}")
             return False
 
-        except Exception as e:
-            logger.error(f"Error removing agent {agent_id}: {str(e)}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid agent data or removal errors
+            logger.error(
+                f"Invalid data removing agent {agent_id}: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (ValueError, RuntimeError) as e:
+            # Agent removal processing errors
+            logger.error(
+                f"Error removing agent {agent_id}: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     def get_simulation_status(self) -> Dict[str, Any]:
@@ -280,8 +302,19 @@ class SimulationCoordinator:
 
             return True
 
-        except Exception as e:
-            logger.error(f"Failed to save world state: {str(e)}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors saving world state
+            logger.error(
+                f"File error saving world state: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (json.JSONEncodeError, TypeError, ValueError) as e:
+            # World state serialization errors
+            logger.error(
+                f"Serialization error saving world state: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     def _load_world_state(self) -> None:
@@ -319,9 +352,21 @@ class SimulationCoordinator:
             logger.error(f"Invalid JSON in world state file: {str(e)}")
             logger.info("Initializing default world state due to JSON error")
             self._initialize_default_world_state()
-        except Exception as e:
-            logger.error(f"Error loading world state: {str(e)}")
-            logger.info("Initializing default world state due to load error")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors loading world state
+            logger.error(
+                f"File error loading world state: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            logger.info("Initializing default world state due to file error")
+            self._initialize_default_world_state()
+        except (TypeError, ValueError) as e:
+            # World state parsing or validation errors
+            logger.error(
+                f"Parse error loading world state: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            logger.info("Initializing default world state due to parse error")
             self._initialize_default_world_state()
 
     def _initialize_default_world_state(self) -> None:

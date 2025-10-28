@@ -21,7 +21,10 @@ from .types import (
 
 # Export main classes
 from .causal_graph import CausalGraph
-from .emergent_narrative import EmergentNarrativeEngine, create_emergent_narrative_engine
+from .emergent_narrative import (
+    EmergentNarrativeEngine,
+    create_emergent_narrative_engine,
+)
 from .narrative_coherence import NarrativeCoherenceEngine
 from .negotiation import AgentNegotiationEngine
 

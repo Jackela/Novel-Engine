@@ -118,9 +118,9 @@ class ServiceContainer:
 
         # Service registry
         self._services: Dict[Type, ServiceDescriptor] = {}
-        self._instances: Dict[Type, Dict[str, ServiceInstance]] = (
-            {}
-        )  # Type -> {scope_key: instance}
+        self._instances: Dict[
+            Type, Dict[str, ServiceInstance]
+        ] = {}  # Type -> {scope_key: instance}
         self._singletons: Dict[Type, ServiceInstance] = {}
 
         # Lifecycle management
@@ -259,15 +259,35 @@ class ServiceContainer:
                 # Create new instance
                 return self._create_instance(service_type, descriptor, scope_key)
 
-        except Exception as e:
+        except (AttributeError, TypeError, KeyError) as e:
+            # Invalid service type or descriptor errors
             if self.error_handler:
                 error_context = ErrorContext(
                     component="ServiceContainer",
                     operation="get_service",
-                    metadata={"service_type": service_type.__name__},
+                    metadata={
+                        "service_type": service_type.__name__,
+                        "error_type": type(e).__name__,
+                    },
                 )
                 asyncio.create_task(self.error_handler.handle_error(e, error_context))
-
+            raise DependencyResolutionError(
+                f"Invalid service data for {service_type.__name__}: {e}"
+            )
+        except (ValueError, RuntimeError, DependencyResolutionError) as e:
+            # Circular dependencies or service creation errors
+            if self.error_handler:
+                error_context = ErrorContext(
+                    component="ServiceContainer",
+                    operation="get_service",
+                    metadata={
+                        "service_type": service_type.__name__,
+                        "error_type": type(e).__name__,
+                    },
+                )
+                asyncio.create_task(self.error_handler.handle_error(e, error_context))
+            if isinstance(e, DependencyResolutionError):
+                raise
             raise DependencyResolutionError(
                 f"Failed to resolve service {service_type.__name__}: {e}"
             )
@@ -302,10 +322,19 @@ class ServiceContainer:
                 initialized_count += 1
                 logger.debug(f"Initialized service: {service_type.__name__}")
 
-            except Exception as e:
+            except (AttributeError, TypeError) as e:
+                # Invalid service instance or method errors
                 failed_services.append((service_type, str(e)))
                 logger.error(
-                    f"Failed to initialize service {service_type.__name__}: {e}"
+                    f"Invalid service data during initialization of {service_type.__name__}: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+            except (ValueError, RuntimeError, DependencyResolutionError) as e:
+                # Service initialization or dependency errors
+                failed_services.append((service_type, str(e)))
+                logger.error(
+                    f"Service initialization error for {service_type.__name__}: {e}",
+                    extra={"error_type": type(e).__name__},
                 )
 
         if failed_services:
@@ -328,8 +357,18 @@ class ServiceContainer:
                 await self._startup_service(service_type)
                 started_count += 1
 
-            except Exception as e:
-                logger.error(f"Failed to start service {service_type.__name__}: {e}")
+            except (AttributeError, TypeError) as e:
+                # Invalid service instance or method errors
+                logger.error(
+                    f"Invalid service data during startup of {service_type.__name__}: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+            except (ValueError, RuntimeError) as e:
+                # Service startup or lifecycle errors
+                logger.error(
+                    f"Service startup error for {service_type.__name__}: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
 
         logger.info(f"Started {started_count} services")
 
@@ -344,8 +383,18 @@ class ServiceContainer:
                 await self._shutdown_service(service_type)
                 shutdown_count += 1
 
-            except Exception as e:
-                logger.error(f"Failed to shutdown service {service_type.__name__}: {e}")
+            except (AttributeError, TypeError) as e:
+                # Invalid service instance or method errors
+                logger.error(
+                    f"Invalid service data during shutdown of {service_type.__name__}: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+            except (ValueError, RuntimeError) as e:
+                # Service shutdown or lifecycle errors
+                logger.error(
+                    f"Service shutdown error for {service_type.__name__}: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
 
         logger.info(f"Shut down {shutdown_count} services")
 
@@ -374,7 +423,24 @@ class ServiceContainer:
                     "healthy" if health_result["healthy"] else "unhealthy"
                 )
 
-            except Exception as e:
+            except (AttributeError, TypeError) as e:
+                # Invalid service instance or health check method errors
+                logger.warning(
+                    f"Invalid service data during health check of {service_name}: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+                health_results[service_name] = {
+                    "healthy": False,
+                    "error": str(e),
+                    "last_check": datetime.now().isoformat(),
+                }
+                instance.error_count += 1
+            except (ValueError, RuntimeError) as e:
+                # Health check execution errors
+                logger.warning(
+                    f"Health check error for {service_name}: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
                 health_results[service_name] = {
                     "healthy": False,
                     "error": str(e),
@@ -440,9 +506,17 @@ class ServiceContainer:
 
                     dependencies.append(param_type)
 
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError) as e:
+            # Invalid implementation or type hints errors
             logger.debug(
-                f"Could not analyze dependencies for {implementation.__name__}: {e}"
+                f"Invalid data during dependency analysis for {implementation.__name__}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (RuntimeError, ImportError) as e:
+            # Signature inspection or import errors
+            logger.debug(
+                f"Dependency analysis error for {implementation.__name__}: {e}",
+                extra={"error_type": type(e).__name__},
             )
 
         return dependencies
@@ -553,8 +627,19 @@ class ServiceContainer:
 
             return implementation(**constructor_args)
 
-        except Exception as e:
-            logger.error(f"Failed to construct {implementation.__name__}: {e}")
+        except (AttributeError, TypeError, KeyError) as e:
+            # Invalid implementation or dependency data errors
+            logger.error(
+                f"Invalid data during construction of {implementation.__name__}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise
+        except (ValueError, RuntimeError) as e:
+            # Constructor execution or parameter errors
+            logger.error(
+                f"Construction error for {implementation.__name__}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             raise
 
     def _apply_configuration(self, instance: Any, config_section: str) -> None:
@@ -570,9 +655,17 @@ class ServiceContainer:
                 if hasattr(instance, key):
                     setattr(instance, key, value)
 
-        except Exception as e:
+        except (AttributeError, TypeError, KeyError) as e:
+            # Invalid instance, config data, or attribute errors
             logger.warning(
-                f"Failed to apply configuration to {type(instance).__name__}: {e}"
+                f"Invalid data during configuration of {type(instance).__name__}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Configuration value or application errors
+            logger.warning(
+                f"Configuration application error for {type(instance).__name__}: {e}",
+                extra={"error_type": type(e).__name__},
             )
 
     def _update_initialization_order(self) -> None:
@@ -644,8 +737,21 @@ class ServiceContainer:
 
                 service_instance.state = ServiceState.INITIALIZED
 
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Invalid instance or method errors
                 service_instance.state = ServiceState.FAILED
+                logger.error(
+                    f"Invalid service data during initialization: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+                raise
+            except (ValueError, RuntimeError) as e:
+                # Initialization execution errors
+                service_instance.state = ServiceState.FAILED
+                logger.error(
+                    f"Service initialization execution error: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
                 raise
 
     async def _startup_service(self, service_type: Type) -> None:
@@ -674,8 +780,21 @@ class ServiceContainer:
 
                 service_instance.state = ServiceState.RUNNING
 
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Invalid instance or method errors
                 service_instance.state = ServiceState.FAILED
+                logger.error(
+                    f"Invalid service data during startup: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+                raise
+            except (ValueError, RuntimeError) as e:
+                # Startup execution errors
+                service_instance.state = ServiceState.FAILED
+                logger.error(
+                    f"Service startup execution error: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
                 raise
 
     async def _shutdown_service(self, service_type: Type) -> None:
@@ -707,8 +826,21 @@ class ServiceContainer:
 
                     service_instance.state = ServiceState.STOPPED
 
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Invalid instance or method errors
                     service_instance.state = ServiceState.FAILED
+                    logger.error(
+                        f"Invalid service data during shutdown: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                    raise
+                except (ValueError, RuntimeError) as e:
+                    # Shutdown execution errors
+                    service_instance.state = ServiceState.FAILED
+                    logger.error(
+                        f"Service shutdown execution error: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
                     raise
 
         except DependencyResolutionError:
@@ -744,7 +876,20 @@ class ServiceContainer:
                 elif isinstance(result, bool):
                     health_result["healthy"] = result
 
-            except Exception as e:
+            except (AttributeError, TypeError) as e:
+                # Invalid instance or health check method errors
+                logger.debug(
+                    f"Invalid service data during health check: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+                health_result["healthy"] = False
+                health_result["error"] = str(e)
+            except (ValueError, RuntimeError) as e:
+                # Health check execution errors
+                logger.debug(
+                    f"Health check execution error: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
                 health_result["healthy"] = False
                 health_result["error"] = str(e)
 

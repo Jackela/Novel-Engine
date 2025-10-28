@@ -120,9 +120,7 @@ class PlatformValidator:
         )
 
         # Test 1: Configuration loading
-        result = await self._run_test(
-            "Configuration Loading", self._test_config_loading
-        )
+        result = await self._run_test("Configuration Loading", self._test_config_loading)
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -130,9 +128,7 @@ class PlatformValidator:
             component.tests_failed += 1
 
         # Test 2: Environment-based settings
-        result = await self._run_test(
-            "Environment Settings", self._test_environment_settings
-        )
+        result = await self._run_test("Environment Settings", self._test_environment_settings)
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -140,9 +136,7 @@ class PlatformValidator:
             component.tests_failed += 1
 
         # Test 3: Configuration validation
-        result = await self._run_test(
-            "Configuration Validation", self._test_config_validation
-        )
+        result = await self._run_test("Configuration Validation", self._test_config_validation)
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -166,9 +160,7 @@ class PlatformValidator:
         )
 
         # Test 1: Database connection
-        result = await self._run_test(
-            "Database Connection", self._test_database_connection
-        )
+        result = await self._run_test("Database Connection", self._test_database_connection)
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -176,9 +168,7 @@ class PlatformValidator:
             component.tests_failed += 1
 
         # Test 2: Database operations
-        result = await self._run_test(
-            "Database Operations", self._test_database_operations
-        )
+        result = await self._run_test("Database Operations", self._test_database_operations)
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -186,9 +176,7 @@ class PlatformValidator:
             component.tests_failed += 1
 
         # Test 3: Migrations
-        result = await self._run_test(
-            "Database Migrations", self._test_database_migrations
-        )
+        result = await self._run_test("Database Migrations", self._test_database_migrations)
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -212,9 +200,7 @@ class PlatformValidator:
         )
 
         # Test 1: Kafka connectivity
-        result = await self._run_test(
-            "Kafka Connectivity", self._test_kafka_connectivity
-        )
+        result = await self._run_test("Kafka Connectivity", self._test_kafka_connectivity)
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -222,9 +208,7 @@ class PlatformValidator:
             component.tests_failed += 1
 
         # Test 2: Message publishing
-        result = await self._run_test(
-            "Message Publishing", self._test_message_publishing
-        )
+        result = await self._run_test("Message Publishing", self._test_message_publishing)
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -256,9 +240,7 @@ class PlatformValidator:
         )
 
         # Test 1: Authentication service
-        result = await self._run_test(
-            "Authentication Service", self._test_authentication_service
-        )
+        result = await self._run_test("Authentication Service", self._test_authentication_service)
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -266,9 +248,7 @@ class PlatformValidator:
             component.tests_failed += 1
 
         # Test 2: Authorization service
-        result = await self._run_test(
-            "Authorization Service", self._test_authorization_service
-        )
+        result = await self._run_test("Authorization Service", self._test_authorization_service)
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -374,9 +354,7 @@ class PlatformValidator:
             component.tests_failed += 1
 
         # Test 2: Service health checks
-        result = await self._run_test(
-            "Service Health Checks", self._test_service_health
-        )
+        result = await self._run_test("Service Health Checks", self._test_service_health)
         component.results.append(result)
         if result.passed:
             component.tests_passed += 1
@@ -560,7 +538,6 @@ class PlatformValidator:
         """Test database migrations."""
         import os
 
-
         # Check if migration directory exists
         migration_dir = "platform/persistence/migrations"
         assert os.path.exists(migration_dir), "Migration directory not found"
@@ -574,9 +551,7 @@ class PlatformValidator:
         migration_files = []
         if os.path.exists(versions_dir):
             migration_files = [
-                f
-                for f in os.listdir(versions_dir)
-                if f.endswith(".py") and not f.startswith("__")
+                f for f in os.listdir(versions_dir) if f.endswith(".py") and not f.startswith("__")
             ]
 
         return {
@@ -612,9 +587,7 @@ class PlatformValidator:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-        await kafka_client.publish(
-            topic=test_topic, message=test_message, key="validation-test"
-        )
+        await kafka_client.publish(topic=test_topic, message=test_message, key="validation-test")
 
         # Test batch publishing
         batch_messages = [{"batch_id": str(uuid4()), "index": i} for i in range(3)]
@@ -683,9 +656,7 @@ class PlatformValidator:
 
         # Test service initialization
         assert auth_service is not None, "Authorization service not initialized"
-        assert (
-            auth_service.permission_manager is not None
-        ), "Permission manager not initialized"
+        assert auth_service.permission_manager is not None, "Permission manager not initialized"
 
         return {"service": "initialized", "permission_manager": "ready"}
 
@@ -704,9 +675,7 @@ class PlatformValidator:
         assert not has_permission, "Non-existent user should not have permissions"
 
         # Test role checking
-        has_role = auth_service.permission_manager.has_role(
-            fake_user_id, "user", use_cache=False
-        )
+        has_role = auth_service.permission_manager.has_role(fake_user_id, "user", use_cache=False)
         assert not has_role, "Non-existent user should not have roles"
 
         return {
@@ -739,9 +708,7 @@ class PlatformValidator:
         partition_key = event.get_partition_key()
 
         assert topic == "domain-events-character", f"Unexpected topic: {topic}"
-        assert (
-            partition_key == event.aggregate_id
-        ), "Partition key should match aggregate_id"
+        assert partition_key == event.aggregate_id, "Partition key should match aggregate_id"
 
         return {
             "event_creation": "success",
@@ -783,9 +750,7 @@ class PlatformValidator:
             retrieved = result.scalar_one()
 
             assert retrieved is not None, "Event not found after storage"
-            assert (
-                retrieved.event_type == test_event_data["event_type"]
-            ), "Event type mismatch"
+            assert retrieved.event_type == test_event_data["event_type"], "Event type mismatch"
 
             # Clean up
             await session.delete(retrieved)
@@ -948,14 +913,11 @@ class PlatformValidator:
 
     def _generate_final_report(self) -> Dict[str, Any]:
         """Generate final validation report."""
-        total_duration = (
-            (time.time() - self.start_time) * 1000 if self.start_time else 0
-        )
+        total_duration = (time.time() - self.start_time) * 1000 if self.start_time else 0
 
         # Calculate overall statistics
         total_tests = sum(
-            comp.tests_passed + comp.tests_failed
-            for comp in self.component_status.values()
+            comp.tests_passed + comp.tests_failed for comp in self.component_status.values()
         )
         total_passed = sum(comp.tests_passed for comp in self.component_status.values())
         total_failed = sum(comp.tests_failed for comp in self.component_status.values())
@@ -976,10 +938,7 @@ class PlatformValidator:
                 "tests_passed": component.tests_passed,
                 "tests_failed": component.tests_failed,
                 "success_rate": (
-                    (
-                        component.tests_passed
-                        / (component.tests_passed + component.tests_failed)
-                    )
+                    (component.tests_passed / (component.tests_passed + component.tests_failed))
                     * 100
                     if (component.tests_passed + component.tests_failed) > 0
                     else 0
@@ -995,14 +954,11 @@ class PlatformValidator:
                 "total_tests": total_tests,
                 "tests_passed": total_passed,
                 "tests_failed": total_failed,
-                "success_rate": (
-                    (total_passed / total_tests) * 100 if total_tests > 0 else 0
-                ),
+                "success_rate": ((total_passed / total_tests) * 100 if total_tests > 0 else 0),
                 "duration_ms": total_duration,
             },
             "components": component_summary,
-            "platform_ready": overall_status in ["healthy", "degraded"]
-            and total_passed > 0,
+            "platform_ready": overall_status in ["healthy", "degraded"] and total_passed > 0,
         }
 
         # Log final status

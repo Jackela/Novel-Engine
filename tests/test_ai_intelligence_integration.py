@@ -262,7 +262,6 @@ class TestAIIntelligenceIntegration:
                 "track_event",
                 new_callable=AsyncMock,
             ) as mock_analytics:
-
                 result = await integration_orchestrator.generate_story_content(
                     prompt="Generate an AI-enhanced story",
                     user_id="test_user",
@@ -439,7 +438,6 @@ class TestAIIntelligenceIntegration:
             "track_event",
             new_callable=AsyncMock,
         ) as mock_track:
-
             await integration_orchestrator.generate_story_content(
                 prompt="Test story for analytics",
                 user_id="analytics_test_user",
@@ -548,7 +546,9 @@ class TestNarrativeEngineV2Integration:
         assert isinstance(guidance["phase_progress"], float)
 
     @pytest.mark.asyncio
-    async def test_narrative_guidance_integration_in_story_generation(self, temp_database):
+    async def test_narrative_guidance_integration_in_story_generation(
+        self, temp_database
+    ):
         """Test that narrative guidance is integrated into story content generation."""
         orchestrator = IntegrationOrchestrator(database_path=temp_database)
         await orchestrator.startup()

@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, TextIO
 
 
-
 class LogLevel(Enum):
     """Log levels for campaign events."""
 
@@ -131,8 +130,19 @@ class CampaignLoggingService:
             )
             return True
 
-        except Exception as e:
-            self.logger.error(f"Campaign logging service initialization failed: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during initialization
+            self.logger.error(
+                f"File system error during logging initialization: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (ValueError, TypeError, RuntimeError) as e:
+            # Configuration or service setup errors
+            self.logger.error(
+                f"Logging initialization error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     async def log_event(self, event: Dict[str, Any]) -> None:
@@ -163,8 +173,19 @@ class CampaignLoggingService:
                 # Manage memory
                 await self._manage_memory()
 
-        except Exception as e:
-            self.logger.error(f"Failed to log event: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event data or log entry structure errors
+            self.logger.error(
+                f"Invalid data during event logging: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            # Don't raise - logging should never break the main system
+        except (ValueError, RuntimeError, IOError, OSError) as e:
+            # Event processing or file write errors
+            self.logger.error(
+                f"Event logging processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             # Don't raise - logging should never break the main system
 
     async def log_turn_summary(self, summary: Dict[str, Any]) -> None:
@@ -239,8 +260,18 @@ class CampaignLoggingService:
                     }
                 )
 
-        except Exception as e:
-            self.logger.error(f"Failed to log turn summary: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid summary data structure errors
+            self.logger.error(
+                f"Invalid data during turn summary logging: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Turn summary processing or logging errors
+            self.logger.error(
+                f"Turn summary logging error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def get_log_history(self, limit: int = 100) -> List[Dict[str, Any]]:
         """
@@ -270,8 +301,19 @@ class CampaignLoggingService:
                 for entry in recent_entries
             ]
 
-        except Exception as e:
-            self.logger.error(f"Failed to get log history: {e}")
+        except (AttributeError, TypeError, ValueError) as e:
+            # Invalid log entry or data conversion errors
+            self.logger.error(
+                f"Invalid data getting log history: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (IndexError, RuntimeError) as e:
+            # List slicing or processing errors
+            self.logger.error(
+                f"Log history retrieval error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def search_logs(
@@ -324,8 +366,19 @@ class CampaignLoggingService:
 
             return matching_entries
 
-        except Exception as e:
-            self.logger.error(f"Log search failed: {e}")
+        except (AttributeError, TypeError, ValueError) as e:
+            # Invalid search parameters or entry data errors
+            self.logger.error(
+                f"Invalid data during log search: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (RuntimeError, KeyError) as e:
+            # Search processing or filter application errors
+            self.logger.error(
+                f"Log search processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def get_statistics(self) -> Dict[str, Any]:
@@ -366,8 +419,19 @@ class CampaignLoggingService:
                 "performance_summary": self._get_performance_summary(),
             }
 
-        except Exception as e:
-            self.logger.error(f"Failed to get statistics: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid statistics data structure errors
+            self.logger.error(
+                f"Invalid data during statistics calculation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (ValueError, ZeroDivisionError, RuntimeError) as e:
+            # Calculation or processing errors
+            self.logger.error(
+                f"Statistics calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"error": str(e)}
 
     async def _create_log_entry(self, event: Dict[str, Any]) -> LogEntry:
@@ -430,8 +494,18 @@ class CampaignLoggingService:
             # Check for rotation
             await self._check_log_rotation(file_path)
 
-        except Exception as e:
-            self.logger.error(f"Failed to write log entry to file: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during write
+            self.logger.error(
+                f"File system error writing log entry: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (json.JSONEncodeError, TypeError, ValueError) as e:
+            # JSON serialization or data format errors
+            self.logger.error(
+                f"Log entry serialization error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     def _update_statistics(self, entry: LogEntry) -> None:
         """Update logging statistics."""
@@ -490,8 +564,18 @@ class CampaignLoggingService:
                     if m["timestamp"] > cutoff
                 ]
 
-        except Exception as e:
-            self.logger.debug(f"Log analysis failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid entry data or metadata errors
+            self.logger.debug(
+                f"Invalid data during log analysis: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Analysis processing or calculation errors
+            self.logger.debug(
+                f"Log analysis processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def _manage_memory(self) -> None:
         """Manage in-memory log entries."""
@@ -542,8 +626,18 @@ class CampaignLoggingService:
                     f"Archived {len(date_entries)} entries to {archive_file}"
                 )
 
-        except Exception as e:
-            self.logger.error(f"Failed to archive log entries: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during archival
+            self.logger.error(
+                f"File system error archiving log entries: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (json.JSONEncodeError, TypeError, ValueError) as e:
+            # JSON serialization or compression errors
+            self.logger.error(
+                f"Archive serialization error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def _check_log_rotation(self, file_path: Path) -> None:
         """Check if log file needs rotation."""
@@ -571,8 +665,18 @@ class CampaignLoggingService:
 
                 self.logger.debug(f"Rotated log file: {file_path} -> {rotated_name}")
 
-        except Exception as e:
-            self.logger.error(f"Log rotation failed: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during rotation
+            self.logger.error(
+                f"File system error during log rotation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (RuntimeError, ValueError) as e:
+            # Compression or file operation errors
+            self.logger.error(
+                f"Log rotation processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def _initialize_log_files(self) -> None:
         """Initialize log file handles."""
@@ -685,8 +789,19 @@ class CampaignLoggingService:
             )
             return True
 
-        except Exception as e:
-            self.logger.error(f"Log export failed: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during export
+            self.logger.error(
+                f"File system error during log export: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (json.JSONEncodeError, TypeError, ValueError) as e:
+            # JSON serialization or data format errors
+            self.logger.error(
+                f"Log export serialization error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     async def cleanup(self) -> None:
@@ -715,8 +830,12 @@ class CampaignLoggingService:
             for file_handle in self._log_files.values():
                 try:
                     file_handle.close()
-                except Exception:
-                    pass
+                except (AttributeError, IOError, OSError) as e:
+                    # File handle close errors - continue cleanup
+                    self.logger.debug(
+                        f"Error closing file handle: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
 
             # Clear memory
             self._log_entries.clear()
@@ -726,5 +845,13 @@ class CampaignLoggingService:
                 f"Campaign logging service cleanup completed for session {self.session_id}"
             )
 
-        except Exception as e:
-            self.logger.error(f"Campaign logging cleanup error: {e}")
+        except (AttributeError, TypeError) as e:
+            # Invalid data structures or method errors during cleanup
+            self.logger.error(
+                f"Cleanup data error: {e}", extra={"error_type": type(e).__name__}
+            )
+        except (RuntimeError, IOError, OSError) as e:
+            # Async operations or file system errors during cleanup
+            self.logger.error(
+                f"Cleanup processing error: {e}", extra={"error_type": type(e).__name__}
+            )

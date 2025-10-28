@@ -271,17 +271,12 @@ class TechnicalDebtCalculator:
         total_debt = 0
 
         # Complexity debt
-        if (
-            quality_report.complexity_score
-            > self.debt_rules["high_complexity"]["threshold"]
-        ):
+        if quality_report.complexity_score > self.debt_rules["high_complexity"]["threshold"]:
             excess_complexity = (
-                quality_report.complexity_score
-                - self.debt_rules["high_complexity"]["threshold"]
+                quality_report.complexity_score - self.debt_rules["high_complexity"]["threshold"]
             )
             total_debt += (
-                excess_complexity
-                * self.debt_rules["high_complexity"]["minutes_per_point"]
+                excess_complexity * self.debt_rules["high_complexity"]["minutes_per_point"]
             )
 
         # Size debt
@@ -292,10 +287,7 @@ class TechnicalDebtCalculator:
             total_debt += self.debt_rules["large_class"]["minutes"]
 
         # Duplication debt
-        if (
-            quality_report.duplication_percentage
-            > self.debt_rules["code_duplication"]["threshold"]
-        ):
+        if quality_report.duplication_percentage > self.debt_rules["code_duplication"]["threshold"]:
             total_debt += (
                 quality_report.duplication_percentage
                 * self.debt_rules["code_duplication"]["minutes_per_percent"]
@@ -304,9 +296,7 @@ class TechnicalDebtCalculator:
         # Test coverage debt
         if quality_report.test_coverage < 80:
             coverage_deficit = 80 - quality_report.test_coverage
-            total_debt += (coverage_deficit / 100) * self.debt_rules["no_tests"][
-                "minutes"
-            ]
+            total_debt += (coverage_deficit / 100) * self.debt_rules["no_tests"]["minutes"]
 
         return int(total_debt)
 
@@ -331,9 +321,7 @@ class QualityMonitor:
             "coverage": {"warning": 70, "critical": 50},
         }
 
-    async def analyze_project(
-        self, file_patterns: List[str] = None
-    ) -> ProjectQualityReport:
+    async def analyze_project(self, file_patterns: List[str] = None) -> ProjectQualityReport:
         """Analyze entire project quality"""
         file_patterns = file_patterns or ["**/*.py"]
 
@@ -349,8 +337,7 @@ class QualityMonitor:
             f
             for f in python_files
             if not any(
-                part.startswith(("test_", "__pycache__", ".pytest_cache"))
-                for part in f.parts
+                part.startswith(("test_", "__pycache__", ".pytest_cache")) for part in f.parts
             )
         ]
 
@@ -374,8 +361,7 @@ class QualityMonitor:
         # Calculate project-level metrics
         avg_complexity = total_complexity / len(file_reports) if file_reports else 0
         avg_maintainability = (
-            sum(r.maintainability_index for r in file_reports.values())
-            / len(file_reports)
+            sum(r.maintainability_index for r in file_reports.values()) / len(file_reports)
             if file_reports
             else 0
         )
@@ -434,18 +420,10 @@ class QualityMonitor:
 
             # Calculate metrics
             lines = content.split("\n")
-            loc = len(
-                [
-                    line
-                    for line in lines
-                    if line.strip() and not line.strip().startswith("#")
-                ]
-            )
+            loc = len([line for line in lines if line.strip() and not line.strip().startswith("#")])
 
             complexity_score = self.complexity_analyzer.complexity
-            duplication_pct = self.duplication_detector.analyze_file(
-                str(file_path), content
-            )
+            duplication_pct = self.duplication_detector.analyze_file(str(file_path), content)
 
             # Calculate maintainability index (simplified version)
             maintainability = max(
@@ -479,9 +457,7 @@ class QualityMonitor:
             debt_minutes = self.debt_calculator.calculate_debt(report)
             for issue in report.issues:
                 if not issue.debt_minutes:
-                    issue.debt_minutes = (
-                        debt_minutes // len(report.issues) if report.issues else 0
-                    )
+                    issue.debt_minutes = debt_minutes // len(report.issues) if report.issues else 0
 
             return report
 
@@ -644,9 +620,7 @@ class QualityMonitor:
         output.append(f"  Total files analyzed: {report.total_files}")
         output.append(f"  Total lines of code: {report.total_lines_of_code:,}")
         output.append(f"  Average complexity: {report.average_complexity:.1f}")
-        output.append(
-            f"  Average maintainability: {report.average_maintainability:.1f}"
-        )
+        output.append(f"  Average maintainability: {report.average_maintainability:.1f}")
         output.append(f"  Overall test coverage: {report.overall_coverage:.1f}%")
         output.append(f"  Technical debt: {report.technical_debt_hours:.1f} hours")
         output.append("")
@@ -655,9 +629,7 @@ class QualityMonitor:
         output.append("QUALITY GRADE DISTRIBUTION:")
         distribution = report.quality_distribution
         for grade, count in distribution.items():
-            percentage = (
-                (count / report.total_files * 100) if report.total_files > 0 else 0
-            )
+            percentage = (count / report.total_files * 100) if report.total_files > 0 else 0
             output.append(f"  Grade {grade}: {count} files ({percentage:.1f}%)")
         output.append("")
 

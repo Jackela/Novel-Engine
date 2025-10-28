@@ -197,7 +197,6 @@ class MemoryCache(CacheBackend):
             self.memory_usage + required_memory > self.max_memory_bytes
             or len(self.entries) >= self.max_size
         ):
-
             if not self.entries:
                 break
 
@@ -263,7 +262,8 @@ class MemoryCache(CacheBackend):
                 return len(json.dumps(value, default=str).encode("utf-8"))
             else:
                 return len(str(value).encode("utf-8"))
-        except Exception:
+        except (TypeError, ValueError, AttributeError):
+            # JSON serialization or encoding errors
             return 1024  # Default 1KB estimate
 
     async def get_stats(self) -> Dict[str, Any]:
@@ -320,8 +320,17 @@ class PerformanceCache:
                 await self._cleanup_expired()
             except asyncio.CancelledError:
                 break
-            except Exception as e:
-                logger.error(f"Cache cleanup error: {e}")
+            except (AttributeError, KeyError, TypeError) as e:
+                # Invalid cache data or cleanup operation errors
+                logger.error(
+                    f"Cache cleanup data error: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+            except (RuntimeError, ValueError) as e:
+                # Cleanup processing errors
+                logger.error(
+                    f"Cache cleanup error: {e}", extra={"error_type": type(e).__name__}
+                )
 
     async def _cleanup_expired(self):
         """Remove expired entries from cache."""

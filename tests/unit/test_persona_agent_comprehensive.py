@@ -96,7 +96,6 @@ class TestPersonaAgentInitialization:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path=self.temp_char_dir,
                 event_bus=self.mock_event_bus,
@@ -133,7 +132,6 @@ class TestPersonaAgentInitialization:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/imperial_guard/marcus",
                 event_bus=self.mock_event_bus,
@@ -159,7 +157,6 @@ class TestPersonaAgentInitialization:
         with patch("os.path.exists", return_value=True), patch(
             "os.path.isdir", return_value=True
         ), patch("os.listdir", return_value=[]):
-
             with pytest.raises(ValueError, match="No .md or .yaml files found"):
                 PersonaAgent(
                     character_directory_path=self.temp_char_dir,
@@ -189,7 +186,6 @@ class TestPersonaAgentInitialization:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path=self.temp_char_dir,
                 event_bus=self.mock_event_bus,
@@ -231,7 +227,6 @@ class TestPersonaAgentCharacterLoading:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             return PersonaAgent(
                 character_directory_path="test_character",
                 event_bus=self.mock_event_bus,
@@ -323,7 +318,6 @@ Just random text"""
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="test_character", event_bus=self.mock_event_bus
             )
@@ -376,7 +370,6 @@ class TestPersonaAgentDecisionMaking:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             return PersonaAgent(
                 character_directory_path="test_character",
                 event_bus=self.mock_event_bus,
@@ -493,7 +486,6 @@ class TestPersonaAgentWorldInterpretation:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             return PersonaAgent(
                 character_directory_path="test_character",
                 event_bus=self.mock_event_bus,
@@ -585,7 +577,6 @@ class TestPersonaAgentAIIntegration:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             return PersonaAgent(
                 character_directory_path="ai_test_character",
                 event_bus=self.mock_event_bus,
@@ -672,7 +663,6 @@ class TestPersonaAgentMemoryAndEvolution:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             return PersonaAgent(
                 character_directory_path="evolving_character",
                 event_bus=self.mock_event_bus,

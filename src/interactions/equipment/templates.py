@@ -7,9 +7,9 @@ import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
-from src.core.data_models import EquipmentItem
+from src.core.data_models import EquipmentItem, ErrorInfo, StandardResponse
 
 from .models import DynamicEquipment, EquipmentCategory
 

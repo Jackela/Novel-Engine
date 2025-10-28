@@ -44,12 +44,8 @@ class TurnExecutionRequest(BaseModel):
     configuration: Optional[Dict[str, Any]] = Field(
         None, description="Optional turn configuration parameters"
     )
-    turn_id: Optional[str] = Field(
-        None, description="Optional turn ID (generated if not provided)"
-    )
-    async_execution: bool = Field(
-        False, description="Whether to execute turn asynchronously"
-    )
+    turn_id: Optional[str] = Field(None, description="Optional turn ID (generated if not provided)")
+    async_execution: bool = Field(False, description="Whether to execute turn asynchronously")
 
     @field_validator("participants")
     @classmethod
@@ -234,9 +230,7 @@ async def execute_turn(
             try:
                 configuration = TurnConfiguration.from_dict(request.configuration)
             except Exception as e:
-                raise HTTPException(
-                    status_code=400, detail=f"Invalid configuration: {e}"
-                )
+                raise HTTPException(status_code=400, detail=f"Invalid configuration: {e}")
         else:
             configuration = TurnConfiguration.create_default()
 
@@ -336,13 +330,9 @@ async def get_turn_status(
                 status=turn_info["status"],
                 progress=detailed_status,
                 execution_time_ms=(
-                    detailed_status.get("execution_time_ms")
-                    if detailed_status
-                    else None
+                    detailed_status.get("execution_time_ms") if detailed_status else None
                 ),
-                current_phase=(
-                    detailed_status.get("current_phase") if detailed_status else None
-                ),
+                current_phase=(detailed_status.get("current_phase") if detailed_status else None),
             )
 
         else:
@@ -476,9 +466,7 @@ async def _execute_turn_background(
             "execution_time_ms": result.execution_time_ms,
         }
 
-        logger.info(
-            f"Background turn execution completed: {turn_id}, success={result.success}"
-        )
+        logger.info(f"Background turn execution completed: {turn_id}, success={result.success}")
 
     except Exception as e:
         logger.error(f"Background turn execution failed: {turn_id}, error={e}")
@@ -500,21 +488,13 @@ def _convert_to_response(result) -> TurnExecutionResponse:
         phase_results_dict[phase_type.value] = PhaseResultSummary(
             phase=phase_type.value,
             success=phase_result.success,
-            execution_time_ms=phase_result.performance_metrics.get(
-                "execution_time_ms", 0
-            ),
+            execution_time_ms=phase_result.performance_metrics.get("execution_time_ms", 0),
             events_processed=phase_result.events_processed,
             events_generated=len(phase_result.events_generated),
             artifacts_created=phase_result.artifacts_created,
-            ai_cost=(
-                float(phase_result.ai_usage["total_cost"])
-                if phase_result.ai_usage
-                else None
-            ),
+            ai_cost=(float(phase_result.ai_usage["total_cost"]) if phase_result.ai_usage else None),
             error_message=(
-                phase_result.error_details.get("message")
-                if phase_result.error_details
-                else None
+                phase_result.error_details.get("message") if phase_result.error_details else None
             ),
         )
 
@@ -527,9 +507,7 @@ def _convert_to_response(result) -> TurnExecutionResponse:
                 "compensation_type": action.compensation_type.value,
                 "target_phase": action.target_phase,
                 "triggered_at": action.triggered_at.isoformat(),
-                "status": (
-                    action.status.value if hasattr(action, "status") else "executed"
-                ),
+                "status": (action.status.value if hasattr(action, "status") else "executed"),
             }
         )
 
@@ -601,9 +579,7 @@ async def get_business_kpis():
         )
     except Exception as e:
         logger.error(f"Error retrieving business KPIs: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error retrieving business KPI data"
-        )
+        raise HTTPException(status_code=500, detail="Error retrieving business KPI data")
 
 
 # Error Handlers
@@ -633,6 +609,4 @@ async def general_exception_handler(request, exc):
 
 # Development Server
 if __name__ == "__main__":
-    uvicorn.run(
-        "turn_api:app", host="0.0.0.0", port=8000, log_level="info", reload=True
-    )
+    uvicorn.run("turn_api:app", host="0.0.0.0", port=8000, log_level="info", reload=True)

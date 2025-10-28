@@ -108,9 +108,7 @@ class WorldProjector:
         try:
             # Unregister from event bus
             event_bus = get_event_bus()
-            await event_bus.unsubscribe(
-                "world.state_changed", "world_projector_handler"
-            )
+            await event_bus.unsubscribe("world.state_changed", "world_projector_handler")
 
             self._is_running = False
             self.logger.info("World projector stopped successfully")
@@ -193,17 +191,13 @@ class WorldProjector:
         entity_data = event.payload.get("new_state")
 
         if not entity_data:
-            self.logger.warning(
-                f"Entity added event {event.event_id} missing new_state"
-            )
+            self.logger.warning(f"Entity added event {event.event_id} missing new_state")
             return
 
         try:
             with get_db_session() as session:
                 # Get or create read model
-                read_model = await self._get_or_create_read_model(
-                    session, world_state_id
-                )
+                read_model = await self._get_or_create_read_model(session, world_state_id)
 
                 if read_model:
                     # Update the read model with the new entity
@@ -299,9 +293,7 @@ class WorldProjector:
         snapshot_data = event.payload.get("new_state")
 
         if not snapshot_data:
-            self.logger.warning(
-                f"State snapshot event {event.event_id} missing new_state"
-            )
+            self.logger.warning(f"State snapshot event {event.event_id} missing new_state")
             return
 
         try:
@@ -316,9 +308,7 @@ class WorldProjector:
                 session.add(read_model)
                 session.commit()
 
-                self.logger.info(
-                    f"Created read model from snapshot for world {world_state_id}"
-                )
+                self.logger.info(f"Created read model from snapshot for world {world_state_id}")
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error handling state_snapshot: {e}")
@@ -340,9 +330,7 @@ class WorldProjector:
                 session.commit()
 
                 if deleted_count > 0:
-                    self.logger.info(
-                        f"Deleted read model for reset world {world_state_id}"
-                    )
+                    self.logger.info(f"Deleted read model for reset world {world_state_id}")
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error handling state_reset: {e}")
@@ -391,9 +379,7 @@ class WorldProjector:
         new_world_time = new_state.get("world_time")
 
         if not new_world_time:
-            self.logger.warning(
-                f"Time advanced event {event.event_id} missing new world time"
-            )
+            self.logger.warning(f"Time advanced event {event.event_id} missing new world time")
             return
 
         try:
@@ -484,9 +470,7 @@ class WorldProjector:
             )
             return None
 
-    async def _handle_failed_event(
-        self, event: WorldStateChanged, error_message: str
-    ) -> None:
+    async def _handle_failed_event(self, event: WorldStateChanged, error_message: str) -> None:
         """
         Handle failed event processing.
 
@@ -537,9 +521,7 @@ class WorldProjector:
             return True
 
         except Exception as e:
-            self.logger.error(
-                f"Failed to rebuild read model for world {world_state_id}: {e}"
-            )
+            self.logger.error(f"Failed to rebuild read model for world {world_state_id}: {e}")
             return False
 
     async def get_projector_status(self) -> Dict[str, Any]:

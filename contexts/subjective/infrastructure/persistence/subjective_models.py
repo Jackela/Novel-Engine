@@ -40,9 +40,7 @@ except ImportError:
         __abstract__ = True
         id = Column(String, primary_key=True)
         created_at = Column(DateTime, default=datetime.now, nullable=False)
-        updated_at = Column(
-            DateTime, default=datetime.now, onupdate=datetime.now, nullable=False
-        )
+        updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
 
     class FullAuditModel(BaseModel):
         __abstract__ = True
@@ -149,9 +147,7 @@ class KnowledgeItemORM(BaseModel):
     __tablename__ = "subjective_knowledge_items"
 
     # Primary key
-    knowledge_item_id = Column(
-        UUID(as_uuid=True), unique=True, nullable=False, index=True
-    )
+    knowledge_item_id = Column(UUID(as_uuid=True), unique=True, nullable=False, index=True)
 
     # Foreign key to TurnBrief
     turn_brief_id = Column(
@@ -227,9 +223,7 @@ class PerceptionRecordORM(BaseModel):
     __tablename__ = "subjective_perception_records"
 
     # Primary key
-    perception_record_id = Column(
-        UUID(as_uuid=True), unique=True, nullable=False, index=True
-    )
+    perception_record_id = Column(UUID(as_uuid=True), unique=True, nullable=False, index=True)
 
     # Foreign key to TurnBrief
     turn_brief_id = Column(
@@ -302,9 +296,7 @@ class ThreatAssessmentORM(BaseModel):
     __tablename__ = "subjective_threat_assessments"
 
     # Primary key
-    threat_assessment_id = Column(
-        UUID(as_uuid=True), unique=True, nullable=False, index=True
-    )
+    threat_assessment_id = Column(UUID(as_uuid=True), unique=True, nullable=False, index=True)
 
     # Foreign key to TurnBrief
     turn_brief_id = Column(
@@ -334,9 +326,7 @@ class ThreatAssessmentORM(BaseModel):
     lost_at = Column(DateTime, nullable=True, index=True)
 
     # Status and tracking
-    status = Column(
-        String(50), nullable=False, default="active"
-    )  # active, lost, neutralized
+    status = Column(String(50), nullable=False, default="active")  # active, lost, neutralized
     loss_reason = Column(String(200), nullable=True)
     last_known_position = Column(JSON, nullable=True)
 
@@ -420,9 +410,7 @@ class InformationSharingLogORM(BaseModel):
     shared_at = Column(DateTime, nullable=False, default=datetime.now, index=True)
 
     # Success metrics
-    success_rate = Column(
-        Float, nullable=True
-    )  # Percentage of knowledge successfully shared
+    success_rate = Column(Float, nullable=True)  # Percentage of knowledge successfully shared
     failure_reasons = Column(JSON, nullable=True)  # Reasons for any failures
 
     def __repr__(self):

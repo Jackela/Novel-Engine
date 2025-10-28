@@ -85,10 +85,14 @@ class TestNarrativeEngineV2:
         result = engine.get_narrative_context_for_turn(state=test_state)
 
         assert isinstance(result, NarrativeGuidance)
-        mock_planning_engine.generate_guidance_for_turn.assert_called_once_with(state=test_state)
+        mock_planning_engine.generate_guidance_for_turn.assert_called_once_with(
+            state=test_state
+        )
         mock_pacing_manager.adjust_pacing.assert_called_once_with(state=test_state)
 
-    def test_get_narrative_context_for_turn_integrates_pacing_into_guidance(self) -> None:
+    def test_get_narrative_context_for_turn_integrates_pacing_into_guidance(
+        self,
+    ) -> None:
         """
         Verify that pacing adjustments are integrated into the returned guidance.
         """

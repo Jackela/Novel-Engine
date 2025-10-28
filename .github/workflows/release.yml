@@ -11,6 +11,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 env:
   PYTHON_VERSION: '3.9'
   NODE_VERSION: '18'
@@ -18,7 +21,7 @@ env:
 jobs:
   # Create release build
   build-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     
     steps:
     - name: Checkout code
@@ -37,18 +40,21 @@ jobs:
         cache-dependency-path: frontend/package-lock.json
 
     - name: Install Python dependencies
+      shell: bash
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install build
 
     - name: Build frontend
+      shell: bash
       run: |
         cd frontend
         npm ci
         npm run build
 
     - name: Run full test suite
+      shell: bash
       run: |
         pytest --cov=src --cov-report=term-missing -v
         cd frontend
@@ -57,6 +63,7 @@ jobs:
         PYTHONPATH: ${{ github.workspace }}
 
     - name: Create distribution package
+      shell: bash
       run: |
         mkdir -p release
         cp -r frontend/dist release/frontend
@@ -79,6 +86,7 @@ jobs:
         tar -czf novel-engine-release.tar.gz release/
 
     - name: Generate changelog
+      shell: bash
       run: |
         echo "# Release Notes" > RELEASE_NOTES.md
         echo "" >> RELEASE_NOTES.md
@@ -105,7 +113,7 @@ jobs:
 
   # Deploy to production (manual approval required)
   deploy-production:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: build-release
     environment:
       name: production
@@ -119,12 +127,14 @@ jobs:
         name: release-package
 
     - name: Deploy to production
+      shell: bash
       run: |
         echo "🚀 Deploying to production..."
         # Add your production deployment logic here
         echo "✅ Production deployment complete"
 
     - name: Production health check
+      shell: bash
       run: |
         echo "🏥 Running production health checks..."
         # Add health check logic here

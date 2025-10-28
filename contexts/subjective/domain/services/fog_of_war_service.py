@@ -214,9 +214,7 @@ class FogOfWarService:
         Args:
             visibility_calculator: Strategy for calculating visibility (uses basic if None)
         """
-        self.visibility_calculator = (
-            visibility_calculator or BasicVisibilityCalculator()
-        )
+        self.visibility_calculator = visibility_calculator or BasicVisibilityCalculator()
         self.logger = logger.getChild(self.__class__.__name__)
 
     def calculate_visibility_between_positions(
@@ -296,9 +294,7 @@ class FogOfWarService:
                         VisibilityLevel.HIDDEN,
                         VisibilityLevel.INVISIBLE,
                     ]
-                    if visibility_order.index(visibility) < visibility_order.index(
-                        best_visibility
-                    ):
+                    if visibility_order.index(visibility) < visibility_order.index(best_visibility):
                         best_visibility = visibility
 
             # Track changes
@@ -375,10 +371,8 @@ class FogOfWarService:
         """
         # Check if entities can communicate (simplified - both need to be aware)
         if (
-            source_turn_brief.awareness_state.current_alertness
-            == AlertnessLevel.UNCONSCIOUS
-            or target_turn_brief.awareness_state.current_alertness
-            == AlertnessLevel.UNCONSCIOUS
+            source_turn_brief.awareness_state.current_alertness == AlertnessLevel.UNCONSCIOUS
+            or target_turn_brief.awareness_state.current_alertness == AlertnessLevel.UNCONSCIOUS
         ):
             return []
 
@@ -392,10 +386,7 @@ class FogOfWarService:
                     continue
 
                 # Only propagate current, reliable knowledge
-                if (
-                    item.is_current() and item.get_reliability_score() >= 0.5
-                ):  # Minimum for sharing
-
+                if item.is_current() and item.get_reliability_score() >= 0.5:  # Minimum for sharing
                     # Create new knowledge item with reduced reliability
                     propagated_item = KnowledgeItem(
                         subject=item.subject,
@@ -451,15 +442,11 @@ class FogOfWarService:
         new_certainty_value = max(0.0, current_certainty_value - decay_amount)
 
         # Find the closest certainty level
-        closest_certainty = min(
-            reverse_mapping.keys(), key=lambda x: abs(x - new_certainty_value)
-        )
+        closest_certainty = min(reverse_mapping.keys(), key=lambda x: abs(x - new_certainty_value))
         new_certainty_level = reverse_mapping[closest_certainty]
 
         if new_certainty_level != knowledge_item.certainty_level:
-            return knowledge_item.with_updated_certainty(
-                new_certainty_level, knowledge_item.source
-            )
+            return knowledge_item.with_updated_certainty(new_certainty_level, knowledge_item.source)
 
         return knowledge_item
 
@@ -484,8 +471,7 @@ class FogOfWarService:
         for subject, items in turn_brief.knowledge_base.knowledge_items.items():
             # Check if all knowledge about this subject is stale
             has_current_knowledge = any(
-                item.is_current(current_time) and item.acquired_at > cutoff_time
-                for item in items
+                item.is_current(current_time) and item.acquired_at > cutoff_time for item in items
             )
 
             if not has_current_knowledge:
@@ -529,14 +515,9 @@ class FogOfWarService:
 
             # Look for threat indicators in the knowledge
             info_lower = knowledge.information.lower()
-            if any(
-                word in info_lower
-                for word in ["hostile", "aggressive", "weapon", "attack"]
-            ):
+            if any(word in info_lower for word in ["hostile", "aggressive", "weapon", "attack"]):
                 threat_indicators += 2 * reliability
-            elif any(
-                word in info_lower for word in ["suspicious", "unknown", "moving"]
-            ):
+            elif any(word in info_lower for word in ["suspicious", "unknown", "moving"]):
                 threat_indicators += 1 * reliability
 
         if knowledge_count == 0:

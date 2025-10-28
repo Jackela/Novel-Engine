@@ -20,9 +20,7 @@ from domain.services import EnhancedPerformanceTracker
 from infrastructure.monitoring import PrometheusMetricsCollector
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -97,10 +95,8 @@ def test_prometheus_metrics_collector():
 
         # Verify core KPIs are present
         core_kpis_found = {
-            "llm_cost_per_request": "novel_engine_llm_cost_per_request_dollars"
-            in metrics_data,
-            "turn_duration_seconds": "novel_engine_turn_duration_seconds"
-            in metrics_data,
+            "llm_cost_per_request": "novel_engine_llm_cost_per_request_dollars" in metrics_data,
+            "turn_duration_seconds": "novel_engine_turn_duration_seconds" in metrics_data,
             "turns_total": "novel_engine_turns_total" in metrics_data,
             "phase_duration": "novel_engine_phase_duration_seconds" in metrics_data,
             "ai_cost_total": "novel_engine_ai_cost_total_dollars" in metrics_data,
@@ -124,9 +120,7 @@ def test_prometheus_metrics_collector():
         print(f"✅ Values recorded: {value_checks}")
 
         # Test additional metrics
-        collector.record_error(
-            error_type="test_error", severity="medium", component="validator"
-        )
+        collector.record_error(error_type="test_error", severity="medium", component="validator")
 
         collector.record_compensation_execution(
             compensation_type="test_rollback", success=True, execution_time_seconds=0.5
@@ -193,9 +187,7 @@ def test_enhanced_performance_tracker():
         # Test Prometheus integration
         prometheus_methods = {
             "get_prometheus_metrics": hasattr(tracker, "get_prometheus_metrics"),
-            "get_prometheus_content_type": hasattr(
-                tracker, "get_prometheus_content_type"
-            ),
+            "get_prometheus_content_type": hasattr(tracker, "get_prometheus_content_type"),
             "prometheus_collector": tracker.prometheus_collector is not None,
         }
 
@@ -248,12 +240,8 @@ def test_fastapi_integration():
         print("✅ FastAPI app import successful")
 
         # Test middleware integration (basic check)
-        middleware_names = [
-            middleware.cls.__name__ for middleware in app.middleware_stack
-        ]
-        has_prometheus_middleware = any(
-            "Prometheus" in name for name in middleware_names
-        )
+        middleware_names = [middleware.cls.__name__ for middleware in app.middleware_stack]
+        has_prometheus_middleware = any("Prometheus" in name for name in middleware_names)
 
         print(f"✅ Middleware stack: {middleware_names}")
         print(f"✅ Has Prometheus middleware: {has_prometheus_middleware}")
@@ -291,12 +279,8 @@ def main():
     test_results = []
 
     # Run all tests
-    test_results.append(
-        ("PrometheusMetricsCollector", test_prometheus_metrics_collector())
-    )
-    test_results.append(
-        ("EnhancedPerformanceTracker", test_enhanced_performance_tracker())
-    )
+    test_results.append(("PrometheusMetricsCollector", test_prometheus_metrics_collector()))
+    test_results.append(("EnhancedPerformanceTracker", test_enhanced_performance_tracker()))
     test_results.append(("FastAPI Integration", test_fastapi_integration()))
 
     # Print results summary
@@ -318,9 +302,7 @@ def main():
 
     if passed_tests == total_tests:
         print("\n🎉 M10 WAVE 2: PROMETHEUS METRICS IMPLEMENTATION SUCCESSFUL!")
-        print(
-            "✅ Core KPIs implemented: llm_cost_per_request_dollars, turn_duration_seconds"
-        )
+        print("✅ Core KPIs implemented: llm_cost_per_request_dollars, turn_duration_seconds")
         print("✅ Extended metrics suite fully functional")
         print("✅ FastAPI integration with middleware working")
         print("✅ Enhanced performance tracking operational")

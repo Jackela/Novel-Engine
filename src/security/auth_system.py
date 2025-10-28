@@ -859,9 +859,19 @@ async def get_current_user(
 
 
 def require_permission(permission: Permission):
-    """Standalone wrapper for requiring permission"""
-    service = get_security_service()
-    return service.require_permission(permission)
+    """Standalone wrapper for requiring permission - lazy evaluation"""
+
+    def decorator(func):
+        # Delay service lookup until runtime, not at decoration time
+        def wrapper(*args, **kwargs):
+            service = get_security_service()
+            permission_decorator = service.require_permission(permission)
+            wrapped_func = permission_decorator(func)
+            return wrapped_func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 __all__ = [

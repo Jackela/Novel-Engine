@@ -46,9 +46,28 @@ def handle_standard_errors(
         async def async_wrapper(*args, **kwargs):
             try:
                 return await func(*args, **kwargs)
-            except Exception as e:
+            except (AttributeError, KeyError, TypeError) as e:
+                # Invalid data structure errors in async operation
                 log_func = getattr(logger, log_level, logger.error)
-                log_func(f"{operation_name.upper()} FAILED: {e}")
+                log_func(
+                    f"{operation_name.upper()} FAILED (invalid data): {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+                return StandardResponse(
+                    success=False,
+                    error=ErrorInfo(
+                        code=error_code,
+                        message=f"{operation_name} failed: {str(e)}",
+                        recoverable=recoverable,
+                    ),
+                )
+            except (ValueError, RuntimeError) as e:
+                # Processing errors in async operation
+                log_func = getattr(logger, log_level, logger.error)
+                log_func(
+                    f"{operation_name.upper()} FAILED: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
                 return StandardResponse(
                     success=False,
                     error=ErrorInfo(
@@ -62,9 +81,28 @@ def handle_standard_errors(
         def sync_wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except Exception as e:
+            except (AttributeError, KeyError, TypeError) as e:
+                # Invalid data structure errors in sync operation
                 log_func = getattr(logger, log_level, logger.error)
-                log_func(f"{operation_name.upper()} FAILED: {e}")
+                log_func(
+                    f"{operation_name.upper()} FAILED (invalid data): {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+                return StandardResponse(
+                    success=False,
+                    error=ErrorInfo(
+                        code=error_code,
+                        message=f"{operation_name} failed: {str(e)}",
+                        recoverable=recoverable,
+                    ),
+                )
+            except (ValueError, RuntimeError) as e:
+                # Processing errors in sync operation
+                log_func = getattr(logger, log_level, logger.error)
+                log_func(
+                    f"{operation_name.upper()} FAILED: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
                 return StandardResponse(
                     success=False,
                     error=ErrorInfo(

@@ -133,8 +133,18 @@ class DecisionEngine:
 
             return None
 
-        except Exception as e:
-            self.logger.error(f"Decision making failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid world state data or missing attributes
+            self.logger.error(
+                f"Invalid data during decision making: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return None
+        except (ValueError, RuntimeError) as e:
+            # Decision evaluation or action creation failed
+            self.logger.error(
+                f"Decision making failed: {e}", extra={"error_type": type(e).__name__}
+            )
             return None
 
     def _assess_current_situation(

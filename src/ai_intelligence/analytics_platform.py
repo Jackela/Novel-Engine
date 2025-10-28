@@ -236,8 +236,18 @@ class AnalyticsPlatform:
                 f"Started {len(self.background_tasks)} background analytics tasks"
             )
 
-        except Exception as e:
-            logger.error(f"Failed to start background processing: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid processing config or data errors
+            logger.error(
+                f"Invalid data starting background processing: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Background processing start errors
+            logger.error(
+                f"Failed to start background processing: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def stop_background_processing(self):
         """Stop all background processing tasks."""
@@ -271,8 +281,18 @@ class AnalyticsPlatform:
             # Queue for background processing
             await self.processing_queue.put(event)
 
-        except Exception as e:
-            logger.error(f"Failed to track event {event.event_id}: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event data or tracking errors
+            logger.error(
+                f"Invalid data tracking event {event.event_id}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Event tracking processing errors
+            logger.error(
+                f"Failed to track event {event.event_id}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def track_story_generation(
         self, story_id: str, user_id: str, generation_data: Dict[str, Any]
@@ -326,8 +346,18 @@ class AnalyticsPlatform:
 
             logger.info(f"Tracked story generation: {story_id} for user {user_id}")
 
-        except Exception as e:
-            logger.error(f"Failed to track story generation: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid story or generation data errors
+            logger.error(
+                f"Invalid data tracking story generation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Story generation tracking processing errors
+            logger.error(
+                f"Failed to track story generation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def track_user_engagement(
         self, user_id: str, session_id: str, engagement_data: Dict[str, Any]
@@ -360,8 +390,18 @@ class AnalyticsPlatform:
                 user_id, "session_activity", engagement_data
             )
 
-        except Exception as e:
-            logger.error(f"Failed to track user engagement: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid user or engagement data errors
+            logger.error(
+                f"Invalid data tracking user engagement: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # User engagement tracking processing errors
+            logger.error(
+                f"Failed to track user engagement: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def track_character_usage(
         self,
@@ -395,8 +435,18 @@ class AnalyticsPlatform:
                 character_id, user_id, story_id, usage_context
             )
 
-        except Exception as e:
-            logger.error(f"Failed to track character usage: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid character or usage data errors
+            logger.error(
+                f"Invalid data tracking character usage: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Character usage tracking processing errors
+            logger.error(
+                f"Failed to track character usage: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def track_system_metrics(self, metrics: SystemMetrics):
         """
@@ -428,8 +478,18 @@ class AnalyticsPlatform:
             # Check for alerts
             await self._check_system_alerts(metrics)
 
-        except Exception as e:
-            logger.error(f"Failed to track system metrics: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid system or metrics data errors
+            logger.error(
+                f"Invalid data tracking system metrics: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # System metrics tracking processing errors
+            logger.error(
+                f"Failed to track system metrics: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def generate_analytics_report(
         self,
@@ -482,8 +542,24 @@ class AnalyticsPlatform:
             logger.info(f"Generated analytics report: {report_id}")
             return report
 
-        except Exception as e:
-            logger.error(f"Failed to generate analytics report: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid report data or config errors
+            logger.error(
+                f"Invalid data generating analytics report: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return AnalyticsReport(
+                report_id="error_report",
+                report_type="error",
+                time_window=time_window,
+                summary={"error": str(e)},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Analytics report generation processing errors
+            logger.error(
+                f"Failed to generate analytics report: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return AnalyticsReport(
                 report_id="error_report",
                 report_type="error",
@@ -541,8 +617,19 @@ class AnalyticsPlatform:
 
             return dashboard
 
-        except Exception as e:
-            logger.error(f"Failed to generate real-time dashboard: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid dashboard data or config errors
+            logger.error(
+                f"Invalid data generating real-time dashboard: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e), "timestamp": datetime.now()}
+        except (ValueError, RuntimeError) as e:
+            # Real-time dashboard generation processing errors
+            logger.error(
+                f"Failed to generate real-time dashboard: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"error": str(e), "timestamp": datetime.now()}
 
     async def get_user_insights(self, user_id: str) -> Dict[str, Any]:
@@ -607,8 +694,19 @@ class AnalyticsPlatform:
 
             return insights
 
-        except Exception as e:
-            logger.error(f"Failed to get user insights: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid user or insights data errors
+            logger.error(
+                f"Invalid data getting user insights: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (ValueError, RuntimeError) as e:
+            # User insights processing errors
+            logger.error(
+                f"Failed to get user insights: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"error": str(e)}
 
     async def get_character_insights(
@@ -680,8 +778,19 @@ class AnalyticsPlatform:
                     "character_overview": all_characters,
                 }
 
-        except Exception as e:
-            logger.error(f"Failed to get character insights: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid character or insights data errors
+            logger.error(
+                f"Invalid data getting character insights: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (ValueError, RuntimeError) as e:
+            # Character insights processing errors
+            logger.error(
+                f"Failed to get character insights: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"error": str(e)}
 
     async def export_analytics_data(
@@ -758,8 +867,19 @@ class AnalyticsPlatform:
             )
             return export_result
 
-        except Exception as e:
-            logger.error(f"Failed to export analytics data: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid analytics or export data errors
+            logger.error(
+                f"Invalid data exporting analytics: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (ValueError, RuntimeError) as e:
+            # Analytics export processing errors
+            logger.error(
+                f"Failed to export analytics data: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"error": str(e)}
 
     # Private helper methods
@@ -779,8 +899,18 @@ class AnalyticsPlatform:
                     event.character_id, event.user_id, event.story_id
                 )
 
-        except Exception as e:
-            logger.error(f"Failed to process event {event.event_id}: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event or processing data errors
+            logger.error(
+                f"Invalid data processing event {event.event_id}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Event processing errors
+            logger.error(
+                f"Failed to process event {event.event_id}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def _update_user_engagement(
         self,
@@ -808,8 +938,18 @@ class AnalyticsPlatform:
             # Update engagement level
             engagement.engagement_level = self._calculate_engagement_level(engagement)
 
-        except Exception as e:
-            logger.error(f"Failed to update user engagement: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid user or engagement data errors
+            logger.error(
+                f"Invalid data updating user engagement: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # User engagement update processing errors
+            logger.error(
+                f"Failed to update user engagement: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def _update_character_usage(
         self,
@@ -847,8 +987,18 @@ class AnalyticsPlatform:
                 char_analytics._unique_users_set.add(user_id)
                 char_analytics.unique_users = len(char_analytics._unique_users_set)
 
-        except Exception as e:
-            logger.error(f"Failed to update character usage: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid character or usage data errors
+            logger.error(
+                f"Invalid data updating character usage: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Character usage update processing errors
+            logger.error(
+                f"Failed to update character usage: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def _update_real_time_metrics(self, event: AnalyticsEvent):
         """Update real-time metrics based on event."""
@@ -890,8 +1040,18 @@ class AnalyticsPlatform:
 
             except asyncio.CancelledError:
                 break
-            except Exception as e:
-                logger.error(f"Real-time metrics processor error: {e}")
+            except (AttributeError, KeyError, TypeError) as e:
+                # Invalid metrics or processing data errors
+                logger.error(
+                    f"Invalid data in real-time metrics processor: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+            except (ValueError, RuntimeError) as e:
+                # Real-time metrics processing errors
+                logger.error(
+                    f"Real-time metrics processor error: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
 
     async def _hourly_aggregator(self):
         """Background task for hourly data aggregation."""
@@ -916,8 +1076,18 @@ class AnalyticsPlatform:
 
             except asyncio.CancelledError:
                 break
-            except Exception as e:
-                logger.error(f"Hourly aggregator error: {e}")
+            except (AttributeError, KeyError, TypeError) as e:
+                # Invalid aggregation data or config errors
+                logger.error(
+                    f"Invalid data in hourly aggregator: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+            except (ValueError, RuntimeError) as e:
+                # Hourly aggregation processing errors
+                logger.error(
+                    f"Hourly aggregator error: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
 
     async def _insights_generator(self):
         """Background task for generating insights and patterns."""
@@ -934,8 +1104,18 @@ class AnalyticsPlatform:
 
             except asyncio.CancelledError:
                 break
-            except Exception as e:
-                logger.error(f"Insights generator error: {e}")
+            except (AttributeError, KeyError, TypeError) as e:
+                # Invalid insights data or config errors
+                logger.error(
+                    f"Invalid data in insights generator: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+            except (ValueError, RuntimeError) as e:
+                # Insights generation processing errors
+                logger.error(
+                    f"Insights generator error: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
 
     async def _data_cleanup_processor(self):
         """Background task for data cleanup and archival."""
@@ -967,8 +1147,18 @@ class AnalyticsPlatform:
 
             except asyncio.CancelledError:
                 break
-            except Exception as e:
-                logger.error(f"Data cleanup processor error: {e}")
+            except (AttributeError, KeyError, TypeError) as e:
+                # Invalid cleanup data or config errors
+                logger.error(
+                    f"Invalid data in data cleanup processor: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
+            except (ValueError, RuntimeError) as e:
+                # Data cleanup processing errors
+                logger.error(
+                    f"Data cleanup processor error: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
 
     def _get_time_window_start(self, time_window: TimeWindow) -> datetime:
         """Get start time for a given time window."""

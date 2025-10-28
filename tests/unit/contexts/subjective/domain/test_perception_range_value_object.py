@@ -688,9 +688,7 @@ class TestPerceptionCapabilitiesBusinessLogic:
         )
 
         # Create capabilities normally, then test empty case directly
-        PerceptionCapabilities(
-            perception_ranges={PerceptionType.VISUAL: visual_range}
-        )
+        PerceptionCapabilities(perception_ranges={PerceptionType.VISUAL: visual_range})
 
         # Temporarily clear ranges to test the method
         empty_capabilities = PerceptionCapabilities.__new__(PerceptionCapabilities)

@@ -11,6 +11,9 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: read
+
 env:
   PYTHON_VERSION: '3.9'
   NODE_VERSION: '18'
@@ -18,7 +21,7 @@ env:
 jobs:
   # Quick health check
   health-check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     
     steps:
     - name: Checkout code
@@ -29,13 +32,16 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
+        cache-dependency-path: requirements.txt
 
     - name: Install dependencies
+      shell: bash
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
     - name: Run smoke tests
+      shell: bash
       run: |
         python -c "import sys; sys.path.append('.'); from src.core.system_orchestrator import SystemOrchestrator; print('✅ Core imports working')"
         python -m pytest tests/test_foundation.py -v
@@ -44,7 +50,7 @@ jobs:
 
   # Deploy to staging environment
   deploy-staging:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: health-check
     if: success() || inputs.force_deploy
     
@@ -69,12 +75,14 @@ jobs:
         cache-dependency-path: frontend/package-lock.json
 
     - name: Build frontend
+      shell: bash
       run: |
         cd frontend
         npm ci
         npm run build
 
     - name: Run staging deployment
+      shell: bash
       run: |
         python deploy/staging/deploy.py
       env:
@@ -82,12 +90,14 @@ jobs:
         PYTHONPATH: ${{ github.workspace }}
 
     - name: Health check staging deployment
+      shell: bash
       run: |
         sleep 30  # Wait for deployment
         curl -f http://localhost:8000/health || exit 1
         echo "✅ Staging deployment healthy"
 
     - name: Run staging smoke tests
+      shell: bash
       run: |
         cd frontend
         npm ci

@@ -80,9 +80,7 @@ def demonstrate_core_kpis():
         phase="complete", participants_count="2-3", ai_enabled="true", success="true"
     ).observe(turn_1_duration)
 
-    turns_total.labels(
-        status="success", participants_range="2-3", ai_enabled="true"
-    ).inc()
+    turns_total.labels(status="success", participants_range="2-3", ai_enabled="true").inc()
 
     # Individual phases for turn 1
     phases = [
@@ -99,9 +97,7 @@ def demonstrate_core_kpis():
         ).observe(duration)
 
         if cost > 0:
-            ai_cost_total.labels(
-                provider="openai", model="gpt-4", phase=phase_name
-            ).inc(cost)
+            ai_cost_total.labels(provider="openai", model="gpt-4", phase=phase_name).inc(cost)
 
     print(f"   Turn 1: ${turn_1_cost}, {turn_1_duration}s, 3 participants, SUCCESS")
 
@@ -117,9 +113,7 @@ def demonstrate_core_kpis():
         phase="complete", participants_count="1", ai_enabled="true", success="true"
     ).observe(turn_2_duration)
 
-    turns_total.labels(
-        status="success", participants_range="1", ai_enabled="true"
-    ).inc()
+    turns_total.labels(status="success", participants_range="1", ai_enabled="true").inc()
 
     print(f"   Turn 2: ${turn_2_cost}, {turn_2_duration}s, 1 participant, SUCCESS")
 
@@ -135,9 +129,7 @@ def demonstrate_core_kpis():
         phase="complete", participants_count="4-5", ai_enabled="true", success="false"
     ).observe(turn_3_duration)
 
-    turns_total.labels(
-        status="error", participants_range="4-5", ai_enabled="true"
-    ).inc()
+    turns_total.labels(status="error", participants_range="4-5", ai_enabled="true").inc()
 
     print(f"   Turn 3: ${turn_3_cost}, {turn_3_duration}s, 4 participants, FAILED")
 
@@ -192,9 +184,7 @@ def demonstrate_core_kpis():
     # Calculate success rate
     total_checks = len(core_kpi_checks) + len(value_checks) + len(phase_checks)
     passed_checks = (
-        sum(core_kpi_checks.values())
-        + sum(value_checks.values())
-        + sum(phase_checks.values())
+        sum(core_kpi_checks.values()) + sum(value_checks.values()) + sum(phase_checks.values())
     )
     success_rate = passed_checks / total_checks
 

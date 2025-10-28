@@ -212,8 +212,25 @@ class AgentLifecycleManager:
                     adjudication_notes=["Action could not be repaired"],
                 )
 
-        except Exception as e:
-            logger.error(f"Error during action adjudication: {str(e)}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid agent, action, or character data structure
+            logger.error(
+                f"Invalid data during action adjudication: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            return ActionAdjudicationResult(
+                success=False,
+                validated_action=None,
+                violations=[],
+                repair_log=[f"Adjudication system error: {str(e)}"],
+                adjudication_notes=["System error during adjudication"],
+            )
+        except (ValueError, RuntimeError) as e:
+            # Validation or processing errors
+            logger.error(
+                f"Action adjudication processing error: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             return ActionAdjudicationResult(
                 success=False,
                 validated_action=None,
@@ -268,8 +285,25 @@ class AgentLifecycleManager:
             if violations:
                 self._record_violations(proposed_action, violations)
 
-        except Exception as e:
-            logger.error(f"Error during Iron Laws validation: {str(e)}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid action or character data structure
+            logger.error(
+                f"Invalid data during Iron Laws validation: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            violations.append(
+                IronLawsViolation(
+                    law_code="E000",
+                    description=f"Validation system error: {str(e)}",
+                    severity="high",
+                )
+            )
+        except (ValueError, RuntimeError) as e:
+            # Validation processing or law check errors
+            logger.error(
+                f"Iron Laws validation processing error: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             violations.append(
                 IronLawsViolation(
                     law_code="E000",
@@ -310,8 +344,12 @@ class AgentLifecycleManager:
                     )
                 )
 
-        except Exception as e:
-            logger.error(f"Error validating causality law: {str(e)}")
+        except (AttributeError, TypeError) as e:
+            # Invalid action structure or field access errors
+            logger.error(
+                f"Invalid data during causality law validation: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
 
         return violations
 
@@ -330,8 +368,12 @@ class AgentLifecycleManager:
                 # In full implementation, this would check against character resources
                 pass
 
-        except Exception as e:
-            logger.error(f"Error validating resource law: {str(e)}")
+        except (AttributeError, TypeError) as e:
+            # Invalid action or character data structure
+            logger.error(
+                f"Invalid data during resource law validation: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
 
         return violations
 
@@ -359,8 +401,12 @@ class AgentLifecycleManager:
                         )
                     )
 
-        except Exception as e:
-            logger.error(f"Error validating physics law: {str(e)}")
+        except (AttributeError, TypeError, ValueError) as e:
+            # Invalid action structure or type errors
+            logger.error(
+                f"Invalid data during physics law validation: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
 
         return violations
 
@@ -383,8 +429,12 @@ class AgentLifecycleManager:
                         )
                     )
 
-        except Exception as e:
-            logger.error(f"Error validating narrative law: {str(e)}")
+        except (AttributeError, TypeError) as e:
+            # Invalid action structure or reasoning field errors
+            logger.error(
+                f"Invalid data during narrative law validation: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
 
         return violations
 
@@ -401,8 +451,12 @@ class AgentLifecycleManager:
                 # This would be expanded with full relationship tracking
                 pass
 
-        except Exception as e:
-            logger.error(f"Error validating social law: {str(e)}")
+        except (AttributeError, TypeError) as e:
+            # Invalid action or target data structure
+            logger.error(
+                f"Invalid data during social law validation: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
 
         return violations
 
@@ -442,42 +496,47 @@ class AgentLifecycleManager:
                     law_violations = violations_by_law[law_code]
 
                     if law_code == "E001":
-                        modified_action, causality_repairs = (
-                            self._repair_causality_violations(
-                                modified_action, law_violations
-                            )
+                        (
+                            modified_action,
+                            causality_repairs,
+                        ) = self._repair_causality_violations(
+                            modified_action, law_violations
                         )
                         repair_log.extend(causality_repairs)
 
                     elif law_code == "E002":
-                        modified_action, resource_repairs = (
-                            self._repair_resource_violations(
-                                modified_action, law_violations, character_data
-                            )
+                        (
+                            modified_action,
+                            resource_repairs,
+                        ) = self._repair_resource_violations(
+                            modified_action, law_violations, character_data
                         )
                         repair_log.extend(resource_repairs)
 
                     elif law_code == "E003":
-                        modified_action, physics_repairs = (
-                            self._repair_physics_violations(
-                                modified_action, law_violations, character_data
-                            )
+                        (
+                            modified_action,
+                            physics_repairs,
+                        ) = self._repair_physics_violations(
+                            modified_action, law_violations, character_data
                         )
                         repair_log.extend(physics_repairs)
 
                     elif law_code == "E004":
-                        modified_action, narrative_repairs = (
-                            self._repair_narrative_violations(
-                                modified_action, law_violations
-                            )
+                        (
+                            modified_action,
+                            narrative_repairs,
+                        ) = self._repair_narrative_violations(
+                            modified_action, law_violations
                         )
                         repair_log.extend(narrative_repairs)
 
                     elif law_code == "E005":
-                        modified_action, social_repairs = (
-                            self._repair_social_violations(
-                                modified_action, law_violations
-                            )
+                        (
+                            modified_action,
+                            social_repairs,
+                        ) = self._repair_social_violations(
+                            modified_action, law_violations
                         )
                         repair_log.extend(social_repairs)
 
@@ -500,9 +559,19 @@ class AgentLifecycleManager:
                 )
                 return validated_action, repair_log
 
-        except Exception as e:
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid action, violation, or character data structure
             logger.error(
-                f"Repair system failure for action {proposed_action.action_id}: {e}"
+                f"Invalid data during action repair for {proposed_action.action_id}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            repair_log.append(f"Repair system error: {str(e)}")
+            return None, repair_log
+        except (ValueError, RuntimeError, IndexError) as e:
+            # Repair processing or list operation errors
+            logger.error(
+                f"Action repair processing error for {proposed_action.action_id}: {e}",
+                extra={"error_type": type(e).__name__},
             )
             repair_log.append(f"Repair system error: {str(e)}")
             return None, repair_log
@@ -727,8 +796,19 @@ class AgentLifecycleManager:
                 "iron_laws_enabled": self.validation_enabled,
                 "last_updated": datetime.now().isoformat(),
             }
-        except Exception as e:
-            logger.error(f"Error generating lifecycle metrics: {str(e)}")
+        except (AttributeError, TypeError) as e:
+            # Invalid action record or metric data structure
+            logger.error(
+                f"Invalid data during lifecycle metrics generation: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (ValueError, ZeroDivisionError) as e:
+            # Calculation or division errors
+            logger.error(
+                f"Lifecycle metrics calculation error: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"error": str(e)}
 
     def get_violation_summary(self) -> Dict[str, Any]:
@@ -761,6 +841,17 @@ class AgentLifecycleManager:
                     else None
                 ),
             }
-        except Exception as e:
-            logger.error(f"Error generating violation summary: {str(e)}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid violation record or data structure
+            logger.error(
+                f"Invalid data during violation summary generation: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (ValueError, IndexError) as e:
+            # List operations or aggregation errors
+            logger.error(
+                f"Violation summary processing error: {str(e)}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"error": str(e)}

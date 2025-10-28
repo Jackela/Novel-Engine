@@ -15,7 +15,6 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 
-
 class CharacterDataManager:
     """
     Manages character data loading and validation.
@@ -91,9 +90,25 @@ class CharacterDataManager:
             )
             return character_data
 
-        except Exception as e:
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during character data loading
             self.logger.error(
-                f"Failed to load character data from {character_directory_path}: {e}"
+                f"File system error loading character data from {character_directory_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise
+        except (yaml.YAMLError, json.JSONDecodeError) as e:
+            # YAML or JSON parsing errors
+            self.logger.error(
+                f"Data parsing error loading character data from {character_directory_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise
+        except (ValueError, TypeError, KeyError) as e:
+            # Data validation or structure errors
+            self.logger.error(
+                f"Data validation error loading character data from {character_directory_path}: {e}",
+                extra={"error_type": type(e).__name__},
             )
             raise
 
@@ -157,8 +172,19 @@ class CharacterDataManager:
 
             return True
 
-        except Exception as e:
-            self.logger.error(f"Character data validation error: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid character data structure or missing required fields
+            self.logger.error(
+                f"Character data structure error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (ValueError, RuntimeError) as e:
+            # Data validation or conversion errors
+            self.logger.error(
+                f"Character data validation processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     async def get_character_trait(self, trait_name: str) -> Any:
@@ -190,8 +216,19 @@ class CharacterDataManager:
             self._cached_traits[trait_name] = current
             return current
 
-        except Exception as e:
-            self.logger.debug(f"Error getting trait {trait_name}: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid trait name or character data structure errors
+            self.logger.debug(
+                f"Trait access error for {trait_name}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return None
+        except (ValueError, IndexError) as e:
+            # Trait navigation or list access errors
+            self.logger.debug(
+                f"Trait navigation error for {trait_name}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return None
 
     def get_character_name(self) -> str:
@@ -244,8 +281,19 @@ class CharacterDataManager:
             # If no frontmatter, try to extract structured data from markdown
             return await self._parse_markdown_structure(content, file_path.stem)
 
-        except Exception as e:
-            self.logger.error(f"Failed to load markdown file {file_path}: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during markdown loading
+            self.logger.error(
+                f"File system error loading markdown {file_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {}
+        except (yaml.YAMLError, UnicodeDecodeError) as e:
+            # YAML parsing or encoding errors
+            self.logger.error(
+                f"File parsing error loading markdown {file_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {}
 
     async def _parse_markdown_structure(
@@ -298,9 +346,18 @@ class CharacterDataManager:
 
             return {}
 
-        except Exception as e:
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid markdown structure or data format errors
             self.logger.warning(
-                f"Failed to parse markdown structure for {filename}: {e}"
+                f"Markdown structure parsing error for {filename}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {}
+        except (ValueError, IndexError) as e:
+            # Pattern matching or list operations errors
+            self.logger.warning(
+                f"Markdown data extraction error for {filename}: {e}",
+                extra={"error_type": type(e).__name__},
             )
             return {}
 
@@ -309,8 +366,19 @@ class CharacterDataManager:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except Exception as e:
-            self.logger.error(f"Failed to load JSON file {file_path}: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during JSON loading
+            self.logger.error(
+                f"File system error loading JSON {file_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {}
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            # JSON parsing or encoding errors
+            self.logger.error(
+                f"JSON parsing error loading {file_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {}
 
     async def _load_yaml_file(self, file_path: Path) -> Dict[str, Any]:
@@ -318,8 +386,19 @@ class CharacterDataManager:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 return yaml.safe_load(f) or {}
-        except Exception as e:
-            self.logger.error(f"Failed to load YAML file {file_path}: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during YAML loading
+            self.logger.error(
+                f"File system error loading YAML {file_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {}
+        except (yaml.YAMLError, UnicodeDecodeError) as e:
+            # YAML parsing or encoding errors
+            self.logger.error(
+                f"YAML parsing error loading {file_path}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {}
 
     def _merge_character_data(

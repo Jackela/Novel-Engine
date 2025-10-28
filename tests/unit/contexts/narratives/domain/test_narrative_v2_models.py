@@ -194,9 +194,8 @@ class TestPacingAdjustment:
         adjustment = self._build_adjustment()
         assert adjustment.dialogue_adjustment == Decimal("0")
         assert adjustment.metadata == {}
-        assert (
-            adjustment.created_timestamp
-            <= datetime.now(timezone.utc) + timedelta(seconds=1)
+        assert adjustment.created_timestamp <= datetime.now(timezone.utc) + timedelta(
+            seconds=1
         )
 
     def test_adjustment_is_immutable(self) -> None:

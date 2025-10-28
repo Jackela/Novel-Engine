@@ -75,9 +75,7 @@ class BaseRepository(Generic[T], ABC):
             # Validate entity before saving
             validation_errors = entity.validate()
             if validation_errors:
-                raise RepositoryOperationException(
-                    f"Validation failed: {validation_errors}"
-                )
+                raise RepositoryOperationException(f"Validation failed: {validation_errors}")
 
             self.session.add(entity)
             self.session.flush()  # Get the ID without committing
@@ -143,9 +141,7 @@ class BaseRepository(Generic[T], ABC):
         """Get an entity by ID or raise EntityNotFoundException."""
         entity = self.get_by_id(entity_id)
         if entity is None:
-            raise EntityNotFoundException(
-                f"{self.model.__name__} with id {entity_id} not found"
-            )
+            raise EntityNotFoundException(f"{self.model.__name__} with id {entity_id} not found")
         return entity
 
     def get_all(
@@ -188,9 +184,7 @@ class BaseRepository(Generic[T], ABC):
 
         except SQLAlchemyError as e:
             self._metrics.record_operation_error("find_by")
-            logger.error(
-                f"Failed to find {self.model.__name__} by filters {filters}: {e}"
-            )
+            logger.error(f"Failed to find {self.model.__name__} by filters {filters}: {e}")
             raise RepositoryOperationException(f"Failed to find entities: {e}")
 
     def find_one_by(self, **filters) -> Optional[T]:
@@ -208,9 +202,7 @@ class BaseRepository(Generic[T], ABC):
 
         except SQLAlchemyError as e:
             self._metrics.record_operation_error("find_one_by")
-            logger.error(
-                f"Failed to find one {self.model.__name__} by filters {filters}: {e}"
-            )
+            logger.error(f"Failed to find one {self.model.__name__} by filters {filters}: {e}")
             raise RepositoryOperationException(f"Failed to find entity: {e}")
 
     def count(self, **filters) -> int:
@@ -228,9 +220,7 @@ class BaseRepository(Generic[T], ABC):
 
         except SQLAlchemyError as e:
             self._metrics.record_operation_error("count")
-            logger.error(
-                f"Failed to count {self.model.__name__} with filters {filters}: {e}"
-            )
+            logger.error(f"Failed to count {self.model.__name__} with filters {filters}: {e}")
             raise RepositoryOperationException(f"Failed to count entities: {e}")
 
     def exists(self, **filters) -> bool:
@@ -263,9 +253,7 @@ class BaseRepository(Generic[T], ABC):
             # Validate entity before updating
             validation_errors = entity.validate()
             if validation_errors:
-                raise RepositoryOperationException(
-                    f"Validation failed: {validation_errors}"
-                )
+                raise RepositoryOperationException(f"Validation failed: {validation_errors}")
 
             # Make sure the entity is attached to the session
             if entity not in self.session:
@@ -297,9 +285,7 @@ class BaseRepository(Generic[T], ABC):
 
         except SQLAlchemyError as e:
             self._metrics.record_operation_error("update_by_id")
-            logger.error(
-                f"Failed to update {self.model.__name__} by id {entity_id}: {e}"
-            )
+            logger.error(f"Failed to update {self.model.__name__} by id {entity_id}: {e}")
             raise RepositoryOperationException(f"Failed to update entity: {e}")
 
     # Delete Operations
@@ -385,9 +371,7 @@ class BaseRepository(Generic[T], ABC):
 
         return query
 
-    def _apply_ordering(
-        self, query: Query, order_by: str, order_direction: str
-    ) -> Query:
+    def _apply_ordering(self, query: Query, order_by: str, order_direction: str) -> Query:
         """Apply ordering to a query."""
         if hasattr(self.model, order_by):
             column = getattr(self.model, order_by)
@@ -422,9 +406,7 @@ class AsyncBaseRepository(Generic[T], ABC):
 
             validation_errors = entity.validate()
             if validation_errors:
-                raise RepositoryOperationException(
-                    f"Validation failed: {validation_errors}"
-                )
+                raise RepositoryOperationException(f"Validation failed: {validation_errors}")
 
             self.session.add(entity)
             await self.session.flush()
@@ -506,8 +488,6 @@ def create_repository(model: Type[T], session: Session) -> BaseRepository[T]:
     return BaseRepository(model, session)
 
 
-def create_async_repository(
-    model: Type[T], session: AsyncSession
-) -> AsyncBaseRepository[T]:
+def create_async_repository(model: Type[T], session: AsyncSession) -> AsyncBaseRepository[T]:
     """Factory function to create an async repository for a given model."""
     return AsyncBaseRepository(model, session)

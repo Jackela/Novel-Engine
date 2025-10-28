@@ -233,8 +233,18 @@ class TurnManager:
 
             logger.debug(f"Turn {turn_summary['turn_number']} stored in history")
 
-        except Exception as e:
-            logger.error(f"Failed to store turn in history: {str(e)}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid world state or turn summary data errors
+            logger.error(
+                f"Invalid data storing turn in history: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, IndexError, RuntimeError) as e:
+            # History management or data manipulation errors
+            logger.error(
+                f"Failed to store turn in history: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     def get_current_turn_number(self) -> int:
         """Get the current turn number."""

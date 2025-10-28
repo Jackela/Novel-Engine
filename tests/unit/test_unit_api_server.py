@@ -124,7 +124,6 @@ class TestAPIServerEndpoints:
             with patch("api_server.EventBus"), patch(
                 "api_server.CharacterFactory"
             ) as mock_factory:
-
                 # 模拟CharacterFactory失败，但仍应返回基础信息
                 mock_factory.return_value.create_character.side_effect = Exception(
                     "Factory error"
@@ -165,12 +164,9 @@ class TestAPIServerEndpoints:
         ):
             with patch("api_server.EventBus"), patch(
                 "api_server.CharacterFactory"
-            ) as mock_factory, patch(
-                "api_server.DirectorAgent"
-            ), patch(
+            ) as mock_factory, patch("api_server.DirectorAgent"), patch(
                 "api_server.ChroniclerAgent"
             ) as mock_chronicler:
-
                 # 模拟成功的组件创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
@@ -387,7 +383,6 @@ class TestAPIServerEndpoints:
             ) as mock_director, patch(
                 "api_server.ChroniclerAgent"
             ) as mock_chronicler:
-
                 # 设置成功的角色创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
@@ -425,12 +420,9 @@ class TestAPIServerEndpoints:
         ):
             with patch("api_server.EventBus"), patch(
                 "api_server.CharacterFactory"
-            ) as mock_factory, patch(
-                "api_server.DirectorAgent"
-            ), patch(
+            ) as mock_factory, patch("api_server.DirectorAgent"), patch(
                 "api_server.ChroniclerAgent"
             ) as mock_chronicler:
-
                 # 设置成功的角色创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
@@ -468,7 +460,6 @@ class TestAPIServerEndpoints:
             with patch("api_server.EventBus"), patch(
                 "api_server.CharacterFactory"
             ) as mock_factory:
-
                 mock_factory.return_value.create_character.side_effect = Exception(
                     "Unexpected character error"
                 )
@@ -500,7 +491,6 @@ class TestAPIServerEndpoints:
     def test_create_campaign_endpoint_file_creation_failure(self):
         """测试创建活动端点 - 文件创建失败"""
         with patch("os.makedirs"), patch("builtins.open") as mock_open:
-
             mock_open.side_effect = Exception("Failed to create campaign file")
 
             campaign_data = {

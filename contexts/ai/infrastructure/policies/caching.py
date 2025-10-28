@@ -48,9 +48,7 @@ class CacheKey:
             "top_p": request.top_p,
             "presence_penalty": request.presence_penalty,
             "frequency_penalty": request.frequency_penalty,
-            "stop_sequences": (
-                tuple(request.stop_sequences) if request.stop_sequences else None
-            ),
+            "stop_sequences": (tuple(request.stop_sequences) if request.stop_sequences else None),
         }
 
         # Generate hashes
@@ -269,9 +267,7 @@ class InMemoryCacheService(ICacheService):
 
             # Calculate cache health metrics
             active_entries = len(self._cache)
-            expired_entries = sum(
-                1 for entry in self._cache.values() if entry.is_expired
-            )
+            expired_entries = sum(1 for entry in self._cache.values() if entry.is_expired)
 
             return {
                 "hits": self._hits,
@@ -304,9 +300,7 @@ class InMemoryCacheService(ICacheService):
     async def cleanup_expired_async(self) -> int:
         """Remove all expired entries and return count removed."""
         async with self._lock:
-            expired_keys = [
-                key for key, entry in self._cache.items() if entry.is_expired
-            ]
+            expired_keys = [key for key, entry in self._cache.items() if entry.is_expired]
 
             for key in expired_keys:
                 del self._cache[key]

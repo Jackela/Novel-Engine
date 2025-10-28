@@ -76,36 +76,24 @@ class FormativeEvent(BaseModel):
 class RelationshipMemory(BaseModel):
     """Memory data for a specific relationship."""
 
-    character_name: str = Field(
-        ..., max_length=100, description="Name of the related character"
-    )
+    character_name: str = Field(..., max_length=100, description="Name of the related character")
     relationship_type: RelationshipType = Field(..., description="Type of relationship")
-    memory_foundation: str = Field(
-        ..., description="How the relationship was established"
-    )
+    memory_foundation: str = Field(..., description="How the relationship was established")
     trust_level: TrustLevel = Field(..., description="Trust level measurement")
     emotional_dynamics: str = Field(..., description="Emotional relationship patterns")
     shared_experiences: List[str] = Field(
         default_factory=list, description="Key shared experiences"
     )
-    conflict_points: List[str] = Field(
-        default_factory=list, description="Sources of conflict"
-    )
-    alliance_strength: Optional[str] = Field(
-        None, description="Strength assessment if allied"
-    )
+    conflict_points: List[str] = Field(default_factory=list, description="Sources of conflict")
+    alliance_strength: Optional[str] = Field(None, description="Strength assessment if allied")
 
 
 class BehavioralTrigger(BaseModel):
     """Behavioral pattern triggered by memories."""
 
     trigger_name: str = Field(..., max_length=100, description="Name of the trigger")
-    memory_origin: str = Field(
-        ..., description="Which memory/experience created this trigger"
-    )
-    trigger_conditions: List[str] = Field(
-        ..., description="Conditions that activate trigger"
-    )
+    memory_origin: str = Field(..., description="Which memory/experience created this trigger")
+    trigger_conditions: List[str] = Field(..., description="Conditions that activate trigger")
     behavioral_response: str = Field(..., description="How character responds")
     override_conditions: List[str] = Field(
         default_factory=list, description="What can override this response"
@@ -162,23 +150,15 @@ class Objective(BaseModel):
     name: str = Field(..., max_length=200, description="Objective name")
     description: str = Field(..., description="Detailed objective description")
     tier: ObjectiveTier = Field(..., description="Hierarchy tier")
-    status: ObjectiveStatus = Field(
-        default=ObjectiveStatus.ACTIVE, description="Current status"
-    )
+    status: ObjectiveStatus = Field(default=ObjectiveStatus.ACTIVE, description="Current status")
     priority: int = Field(..., ge=1, le=10, description="Priority level (1-10)")
-    success_metrics: List[str] = Field(
-        default_factory=list, description="How success is measured"
-    )
+    success_metrics: List[str] = Field(default_factory=list, description="How success is measured")
     timeline: Optional[str] = Field(None, description="Expected timeline")
     dependencies: List[str] = Field(
         default_factory=list, description="Dependencies on other objectives"
     )
-    motivation_source: Optional[str] = Field(
-        None, description="What motivates this objective"
-    )
-    risk_factors: List[str] = Field(
-        default_factory=list, description="Potential risk factors"
-    )
+    motivation_source: Optional[str] = Field(None, description="What motivates this objective")
+    risk_factors: List[str] = Field(default_factory=list, description="Potential risk factors")
 
 
 class ResourceAllocation(BaseModel):
@@ -222,9 +202,7 @@ class EmotionalDrive(BaseModel):
     """Core emotional drive with detailed modeling."""
 
     name: str = Field(..., max_length=100, description="Drive name")
-    dominance_level: str = Field(
-        ..., description="Dominance level (Dominant/Core/Emerging)"
-    )
+    dominance_level: str = Field(..., description="Dominance level (Dominant/Core/Emerging)")
     foundation: str = Field(..., description="Psychological foundation")
     positive_expression: str = Field(..., description="How it manifests positively")
     negative_expression: str = Field(..., description="How it manifests negatively")
@@ -239,9 +217,7 @@ class EmotionalDrive(BaseModel):
 class EmotionalResponse(BaseModel):
     """Emotional response pattern for different threat levels."""
 
-    level: int = Field(
-        ..., ge=1, le=3, description="Response level (1=Low, 2=Medium, 3=High)"
-    )
+    level: int = Field(..., ge=1, le=3, description="Response level (1=Low, 2=Medium, 3=High)")
     level_name: str = Field(..., description="Human-readable level name")
     physiological: str = Field(..., description="Physiological response")
     emotional: str = Field(..., description="Emotional state")
@@ -277,18 +253,14 @@ class ProfileContext(BaseModel):
     affiliation: Optional[str] = Field(None, description="Primary affiliation")
 
     # Physical Description
-    physical_description: str = Field(
-        ..., description="Physical appearance description"
-    )
+    physical_description: str = Field(..., description="Physical appearance description")
     distinguishing_features: List[str] = Field(
         default_factory=list, description="Notable physical features"
     )
 
     # Background
     background_summary: str = Field(..., description="Background summary")
-    key_life_phases: List[str] = Field(
-        default_factory=list, description="Major life phases"
-    )
+    key_life_phases: List[str] = Field(default_factory=list, description="Major life phases")
 
     # Emotional Model
     emotional_drives: List[EmotionalDrive] = Field(
@@ -303,15 +275,11 @@ class ProfileContext(BaseModel):
 
     # Skills and Capabilities
     core_skills: List[str] = Field(default_factory=list, description="Primary skills")
-    specializations: List[str] = Field(
-        default_factory=list, description="Areas of specialization"
-    )
+    specializations: List[str] = Field(default_factory=list, description="Areas of specialization")
 
     # Equipment and Resources
     equipment: List[str] = Field(default_factory=list, description="Notable equipment")
-    resources: List[str] = Field(
-        default_factory=list, description="Available resources"
-    )
+    resources: List[str] = Field(default_factory=list, description="Available resources")
 
 
 class CombatStats(BaseModel):
@@ -334,9 +302,7 @@ class CombatStats(BaseModel):
 class PsychologicalProfile(BaseModel):
     """Psychological characteristics."""
 
-    traits: Dict[str, int] = Field(
-        default_factory=dict, description="Psychological trait scores"
-    )
+    traits: Dict[str, int] = Field(default_factory=dict, description="Psychological trait scores")
 
     @field_validator("traits")
     @classmethod
@@ -344,9 +310,7 @@ class PsychologicalProfile(BaseModel):
         """Ensure trait scores are in valid ranges."""
         for trait_name, score in v.items():
             if not (0 <= score <= 10):
-                raise ValueError(
-                    f"Trait {trait_name} must be between 0-10, got {score}"
-                )
+                raise ValueError(f"Trait {trait_name} must be between 0-10, got {score}")
         return v
 
 
@@ -370,17 +334,13 @@ class StatsContext(BaseModel):
     specialization: str = Field(..., description="Primary specialization")
 
     # Stats
-    combat_stats: CombatStats = Field(
-        default_factory=CombatStats, description="Combat statistics"
-    )
+    combat_stats: CombatStats = Field(default_factory=CombatStats, description="Combat statistics")
     psychological_profile: PsychologicalProfile = Field(
         default_factory=PsychologicalProfile, description="Psychological traits"
     )
 
     # Equipment
-    equipment: Dict[str, Any] = Field(
-        default_factory=dict, description="Equipment data"
-    )
+    equipment: Dict[str, Any] = Field(default_factory=dict, description="Equipment data")
 
     # Relationships
     relationships: Dict[str, List[RelationshipEntry]] = Field(
@@ -389,9 +349,7 @@ class StatsContext(BaseModel):
 
     # Additional fields for flexibility
     locations: Dict[str, Any] = Field(default_factory=dict, description="Location data")
-    objectives: Dict[str, str] = Field(
-        default_factory=dict, description="Primary objectives"
-    )
+    objectives: Dict[str, str] = Field(default_factory=dict, description="Primary objectives")
     additional_data: Dict[str, Any] = Field(
         default_factory=dict, description="Additional character data"
     )
@@ -402,16 +360,12 @@ class LoadedFileInfo(BaseModel):
 
     file_name: str = Field(..., description="Name of the loaded file")
     file_path: str = Field(..., description="Full path to the file")
-    loaded_successfully: bool = Field(
-        ..., description="Whether file loaded successfully"
-    )
+    loaded_successfully: bool = Field(..., description="Whether file loaded successfully")
     file_size_bytes: int = Field(default=0, description="File size in bytes")
     load_timestamp: datetime = Field(
         default_factory=datetime.utcnow, description="When file was loaded"
     )
-    error_message: Optional[str] = Field(
-        None, description="Error message if loading failed"
-    )
+    error_message: Optional[str] = Field(None, description="Error message if loading failed")
 
 
 class CharacterContext(BaseModel):
@@ -427,9 +381,7 @@ class CharacterContext(BaseModel):
     character_name: str = Field(..., description="Character name")
 
     # Context Data
-    memory_context: Optional[MemoryContext] = Field(
-        None, description="Memory system data"
-    )
+    memory_context: Optional[MemoryContext] = Field(None, description="Memory system data")
     objectives_context: Optional[ObjectivesContext] = Field(
         None, description="Objectives framework data"
     )
@@ -445,9 +397,7 @@ class CharacterContext(BaseModel):
     load_timestamp: datetime = Field(
         default_factory=datetime.utcnow, description="When context was loaded"
     )
-    load_success: bool = Field(
-        default=True, description="Whether all files loaded successfully"
-    )
+    load_success: bool = Field(default=True, description="Whether all files loaded successfully")
     partial_load: bool = Field(
         default=False, description="Whether this is a partial load due to missing files"
     )
@@ -469,11 +419,26 @@ class CharacterContext(BaseModel):
         # Extract character names from different contexts
         names_found = []
 
-        if values.get("profile_context") and values["profile_context"].name:
-            names_found.append(("profile", values["profile_context"].name))
+        # Handle both dict and Pydantic model objects
+        profile_ctx = values.get("profile_context")
+        if profile_ctx:
+            profile_name = (
+                profile_ctx.get("name")
+                if isinstance(profile_ctx, dict)
+                else getattr(profile_ctx, "name", None)
+            )
+            if profile_name:
+                names_found.append(("profile", profile_name))
 
-        if values.get("stats_context") and values["stats_context"].name:
-            names_found.append(("stats", values["stats_context"].name))
+        stats_ctx = values.get("stats_context")
+        if stats_ctx:
+            stats_name = (
+                stats_ctx.get("name")
+                if isinstance(stats_ctx, dict)
+                else getattr(stats_ctx, "name", None)
+            )
+            if stats_name:
+                names_found.append(("stats", stats_name))
 
         character_name = values.get("character_name", "")
         if character_name:
@@ -483,9 +448,7 @@ class CharacterContext(BaseModel):
         if len(names_found) > 1:
             unique_names = set([name for _, name in names_found])
             if len(unique_names) > 1:
-                warnings.append(
-                    f"Character name inconsistency detected: {dict(names_found)}"
-                )
+                warnings.append(f"Character name inconsistency detected: {dict(names_found)}")
                 values["context_integrity"] = False
 
         # Check if we have at least one context loaded
@@ -530,9 +493,7 @@ class CharacterContext(BaseModel):
                 "stats": self.stats_context is not None,
             },
             "files_loaded_count": len(self.loaded_files),
-            "successful_files": len(
-                [f for f in self.loaded_files if f.loaded_successfully]
-            ),
+            "successful_files": len([f for f in self.loaded_files if f.loaded_successfully]),
             "load_success": self.load_success,
             "partial_load": self.partial_load,
             "context_integrity": self.context_integrity,

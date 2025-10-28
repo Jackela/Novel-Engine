@@ -4,13 +4,14 @@ Interaction phase processing and template initialization.
 """
 
 import logging
+from datetime import datetime
 from typing import Any, Dict, List
 
-from src.core.data_models import StandardResponse
+from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 from src.templates.dynamic_template_engine import TemplateType
-
-from ..models.interaction_models import (
+from src.interactions.engine.models.interaction_models import (
     InteractionContext,
+    InteractionOutcome,
     InteractionPhase,
     InteractionType,
 )
@@ -129,9 +130,9 @@ class PhaseProcessor:
         # For now, we'll define basic templates for each interaction type
 
         for interaction_type in InteractionType:
-            self._interaction_templates[interaction_type] = (
-                self._create_default_phases_for_type(interaction_type)
-            )
+            self._interaction_templates[
+                interaction_type
+            ] = self._create_default_phases_for_type(interaction_type)
 
     def _create_default_phases(
         self, context: InteractionContext

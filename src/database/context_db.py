@@ -224,7 +224,10 @@ class ContextDatabase:
                     "initialized": True,
                     "secure": True,
                 },
-                metadata={"blessing": "prime_architect_approved", "security": "enhanced"},
+                metadata={
+                    "blessing": "prime_architect_approved",
+                    "security": "enhanced",
+                },
             )
 
         except Exception as e:

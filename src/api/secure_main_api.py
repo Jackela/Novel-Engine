@@ -118,7 +118,6 @@ class OptimizedSecureJSONResponse(JSONResponse):
         cache_control: Optional[str] = None,
         max_age: Optional[int] = None,
     ):
-
         if headers is None:
             headers = {}
 

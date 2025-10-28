@@ -54,9 +54,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         self.interaction_service_endpoint = "interaction_context"
         self.agent_service_endpoint = "agent_context"
 
-    async def _execute_phase_implementation(
-        self, context: PhaseExecutionContext
-    ) -> PhaseResult:
+    async def _execute_phase_implementation(self, context: PhaseExecutionContext) -> PhaseResult:
         """
         Execute interaction orchestration for all participants.
 
@@ -74,9 +72,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
 
         try:
             # Step 1: Analyze interaction opportunities
-            interaction_opportunities = await self._analyze_interaction_opportunities(
-                context
-            )
+            interaction_opportunities = await self._analyze_interaction_opportunities(context)
 
             # Step 2: Create interaction sessions
             active_sessions = await self._create_interaction_sessions(
@@ -101,16 +97,11 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                     # Log session failure but continue with others
                     context.record_performance_metric(
                         "interaction_session_failures",
-                        context.performance_metrics.get(
-                            "interaction_session_failures", 0
-                        )
-                        + 1,
+                        context.performance_metrics.get("interaction_session_failures", 0) + 1,
                     )
 
             # Step 4: Process interaction outcomes
-            await self._process_interaction_outcomes(
-                context, session_results
-            )
+            await self._process_interaction_outcomes(context, session_results)
 
             # Step 5: Generate interaction events
             interaction_events = await self._generate_interaction_events(
@@ -121,23 +112,16 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
             context.record_performance_metric(
                 "interactions_completed", float(interactions_completed)
             )
-            context.record_performance_metric(
-                "negotiations_resolved", float(negotiations_resolved)
-            )
-            context.record_performance_metric(
-                "actions_proposed", float(actions_proposed)
-            )
-            context.record_performance_metric(
-                "conflicts_resolved", float(conflicts_resolved)
-            )
+            context.record_performance_metric("negotiations_resolved", float(negotiations_resolved))
+            context.record_performance_metric("actions_proposed", float(actions_proposed))
+            context.record_performance_metric("conflicts_resolved", float(conflicts_resolved))
 
             # Calculate success metrics
             total_opportunities = len(interaction_opportunities)
             completion_rate = interactions_completed / max(1, total_opportunities)
 
             return PhaseResult(
-                success=completion_rate
-                > 0.3,  # Success if >30% of opportunities completed
+                success=completion_rate > 0.3,  # Success if >30% of opportunities completed
                 events_processed=len(interaction_opportunities),
                 events_generated=interaction_events,
                 artifacts_created=[
@@ -236,15 +220,11 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
 
         # Agent-environment interactions
         opportunities.extend(
-            await self._find_environment_interaction_opportunities(
-                context, agent_states
-            )
+            await self._find_environment_interaction_opportunities(context, agent_states)
         )
 
         # Agent-NPC interactions
-        opportunities.extend(
-            await self._find_npc_interaction_opportunities(context, agent_states)
-        )
+        opportunities.extend(await self._find_npc_interaction_opportunities(context, agent_states))
 
         # Collaborative opportunities
         if len(context.participants) > 2:
@@ -311,8 +291,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
             "get_interaction_opportunities",
             {
                 "agent_positions": {
-                    agent_id: state.get("position", {})
-                    for agent_id, state in agent_states.items()
+                    agent_id: state.get("position", {}) for agent_id, state in agent_states.items()
                 },
                 "interaction_types": ["object", "location", "resource"],
             },
@@ -335,9 +314,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                         "participants": eligible_agents,
                         "target": opportunity.get("target"),
                         "priority": opportunity.get("priority", 0.3),
-                        "estimated_duration": opportunity.get(
-                            "estimated_duration", 5000
-                        ),
+                        "estimated_duration": opportunity.get("estimated_duration", 5000),
                     }
                 )
 
@@ -356,8 +333,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
             "get_nearby_npcs",
             {
                 "agent_positions": {
-                    agent_id: state.get("position", {})
-                    for agent_id, state in agent_states.items()
+                    agent_id: state.get("position", {}) for agent_id, state in agent_states.items()
                 },
                 "interaction_radius": 100,  # meters or game units
             },
@@ -393,15 +369,11 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         opportunities = []
 
         # Check for collaborative goals or tasks
-        collaborative_tasks = await self._identify_collaborative_tasks(
-            context, agent_states
-        )
+        collaborative_tasks = await self._identify_collaborative_tasks(context, agent_states)
 
         for task in collaborative_tasks:
             required_participants = task.get("required_participants", [])
-            available_participants = [
-                p for p in required_participants if p in context.participants
-            ]
+            available_participants = [p for p in required_participants if p in context.participants]
 
             if len(available_participants) >= task.get("min_participants", 2):
                 opportunities.append(
@@ -481,8 +453,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                 "completed": False,
                 "error": str(e),
                 "session_id": session.session_id,
-                "session_duration_ms": (datetime.now() - session_start).total_seconds()
-                * 1000,
+                "session_duration_ms": (datetime.now() - session_start).total_seconds() * 1000,
             }
 
     async def _execute_agent_interaction(
@@ -511,19 +482,13 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
 
         # Resolve interaction based on proposals
         if interaction_subtype == "negotiation":
-            resolution = await self._resolve_negotiation(
-                context, session, agent_proposals
-            )
+            resolution = await self._resolve_negotiation(context, session, agent_proposals)
         elif interaction_subtype == "cooperation":
-            resolution = await self._resolve_cooperation(
-                context, session, agent_proposals
-            )
+            resolution = await self._resolve_cooperation(context, session, agent_proposals)
         elif interaction_subtype == "conflict":
             resolution = await self._resolve_conflict(context, session, agent_proposals)
         else:
-            resolution = await self._resolve_general_interaction(
-                context, session, agent_proposals
-            )
+            resolution = await self._resolve_general_interaction(context, session, agent_proposals)
 
         # Apply interaction results
         await self._apply_interaction_results(context, session, resolution)
@@ -925,8 +890,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         """Check if two sets of goals conflict."""
         # Simplified conflict detection
         return any(
-            goal_a.get("type") == "exclusive"
-            and goal_a.get("target") == goal_b.get("target")
+            goal_a.get("type") == "exclusive" and goal_a.get("target") == goal_b.get("target")
             for goal_a in goals_a
             for goal_b in goals_b
         )
@@ -935,8 +899,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         """Check if two sets of goals can be cooperative."""
         # Simplified cooperation detection
         return any(
-            goal_a.get("type") == "shared"
-            or goal_a.get("target") == goal_b.get("target")
+            goal_a.get("type") == "shared" or goal_a.get("target") == goal_b.get("target")
             for goal_a in goals_a
             for goal_b in goals_b
         )
@@ -952,27 +915,21 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         needs_b = resources_b.get("needs", [])
         has_a = list(resources_a.get("inventory", {}).keys())
 
-        return any(need in has_b for need in needs_a) or any(
-            need in has_a for need in needs_b
-        )
+        return any(need in has_b for need in needs_a) or any(need in has_a for need in needs_b)
 
     def _proposals_compatible(self, proposals: List[Dict[str, Any]]) -> bool:
         """Check if proposals are compatible."""
         # Simple compatibility check
         return all(proposal.get("compatible", True) for proposal in proposals)
 
-    def _merge_compatible_proposals(
-        self, proposals: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _merge_compatible_proposals(self, proposals: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Merge compatible proposals into agreed terms."""
         merged = {}
         for proposal in proposals:
             merged.update(proposal.get("terms", {}))
         return merged
 
-    def _find_compromise(
-        self, proposals: List[Dict[str, Any]]
-    ) -> Optional[Dict[str, Any]]:
+    def _find_compromise(self, proposals: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """Find compromise between incompatible proposals."""
         # Simple compromise logic
         if len(proposals) == 2:
@@ -987,9 +944,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                 value_a = terms_a[key]
                 value_b = terms_b[key]
 
-                if isinstance(value_a, (int, float)) and isinstance(
-                    value_b, (int, float)
-                ):
+                if isinstance(value_a, (int, float)) and isinstance(value_b, (int, float)):
                     compromise[key] = (value_a + value_b) / 2
                 elif value_a == value_b:
                     compromise[key] = value_a
@@ -1053,9 +1008,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
 
         return True
 
-    def _calculate_distance(
-        self, pos_a: Dict[str, Any], pos_b: Dict[str, Any]
-    ) -> float:
+    def _calculate_distance(self, pos_a: Dict[str, Any], pos_b: Dict[str, Any]) -> float:
         """Calculate distance between two positions."""
         x_diff = abs(pos_a.get("x", 0) - pos_b.get("x", 0))
         y_diff = abs(pos_a.get("y", 0) - pos_b.get("y", 0))

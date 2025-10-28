@@ -16,7 +16,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests
 
 
-
 class LLMProvider(Enum):
     """Supported LLM providers."""
 
@@ -188,8 +187,26 @@ class LLMClient:
                 self.logger.warning(f"LLM generation failed: {response.error}")
                 return await self._get_fallback_response(prompt, context)
 
-        except Exception as e:
-            self.logger.error(f"Character response generation failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid context data or prompt formatting error
+            self.logger.error(
+                f"Invalid data during character response generation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return await self._get_fallback_response(prompt, context)
+        except (requests.Timeout, requests.ConnectionError) as e:
+            # Network or timeout errors
+            self.logger.error(
+                f"Network error during response generation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return await self._get_fallback_response(prompt, context)
+        except (ValueError, RuntimeError) as e:
+            # Response processing or validation errors
+            self.logger.error(
+                f"Response processing failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return await self._get_fallback_response(prompt, context)
 
     async def validate_api_connection(self) -> bool:
@@ -208,8 +225,19 @@ class LLMClient:
             self.logger.warning("No LLM providers available, fallback mode only")
             return self._config["fallback_enabled"]
 
-        except Exception as e:
-            self.logger.error(f"API connection validation failed: {e}")
+        except (requests.Timeout, requests.ConnectionError) as e:
+            # Network or timeout errors during validation
+            self.logger.error(
+                f"Network error during API validation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (AttributeError, KeyError) as e:
+            # Provider configuration errors
+            self.logger.error(
+                f"Provider configuration error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     async def format_prompt(
@@ -249,7 +277,9 @@ class LLMClient:
                         intensity = (
                             "high"
                             if value > 0.7
-                            else "low" if value < 0.3 else "moderate"
+                            else "low"
+                            if value < 0.3
+                            else "moderate"
                         )
                         trait_descriptions.append(f"{trait} ({intensity})")
 
@@ -270,7 +300,9 @@ class LLMClient:
                     morale_desc = (
                         "high"
                         if morale > 0.6
-                        else "low" if morale < 0.4 else "moderate"
+                        else "low"
+                        if morale < 0.4
+                        else "moderate"
                     )
                     state_info.append(f"Morale: {morale_desc}")
 
@@ -305,9 +337,19 @@ Respond as {character_name}, staying in character based on the personality, fact
 
             return formatted_prompt
 
-        except Exception as e:
-            self.logger.error(f"Prompt formatting failed: {e}")
-            return base_prompt  # Return original prompt on error
+        except (AttributeError, KeyError, TypeError) as e:
+            # Missing or invalid character data
+            self.logger.error(
+                f"Invalid character data during prompt formatting: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return base_prompt
+        except (ValueError, IndexError) as e:
+            # Data extraction or formatting errors
+            self.logger.error(
+                f"Data formatting error: {e}", extra={"error_type": type(e).__name__}
+            )
+            return base_prompt
 
     async def get_usage_statistics(self) -> Dict[str, Any]:
         """Get comprehensive usage statistics."""
@@ -346,8 +388,18 @@ Respond as {character_name}, staying in character based on the personality, fact
                 ],
             }
 
-        except Exception as e:
-            self.logger.error(f"Usage statistics calculation failed: {e}")
+        except (ZeroDivisionError, ValueError) as e:
+            # Division or calculation errors in statistics
+            self.logger.error(
+                f"Statistics calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (AttributeError, KeyError) as e:
+            # Missing usage statistics data
+            self.logger.error(
+                f"Missing statistics data: {e}", extra={"error_type": type(e).__name__}
+            )
             return {"error": str(e)}
 
     # Private helper methods
@@ -389,9 +441,27 @@ Respond as {character_name}, staying in character based on the personality, fact
                     else:
                         last_error = response.error
 
-                except Exception as e:
+                except (requests.Timeout, requests.ConnectionError) as e:
+                    # Network or timeout errors for this provider
                     last_error = str(e)
-                    self.logger.warning(f"Provider {provider.value} failed: {e}")
+                    self.logger.warning(
+                        f"Provider {provider.value} network error: {e}",
+                        extra={
+                            "provider": provider.value,
+                            "error_type": type(e).__name__,
+                        },
+                    )
+                    continue
+                except (ValueError, KeyError, AttributeError) as e:
+                    # Response parsing or validation errors
+                    last_error = str(e)
+                    self.logger.warning(
+                        f"Provider {provider.value} response error: {e}",
+                        extra={
+                            "provider": provider.value,
+                            "error_type": type(e).__name__,
+                        },
+                    )
                     continue
 
             # All providers failed
@@ -403,8 +473,20 @@ Respond as {character_name}, staying in character based on the personality, fact
                 error=f"All providers failed. Last error: {last_error}",
             )
 
-        except Exception as e:
-            self.logger.error(f"Response generation failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid request data or configuration
+            self.logger.error(
+                f"Invalid request data: {e}", extra={"error_type": type(e).__name__}
+            )
+            return LLMResponse(
+                success=False, content="", provider=LLMProvider.FALLBACK, error=str(e)
+            )
+        except (ValueError, RuntimeError) as e:
+            # Response processing or provider errors
+            self.logger.error(
+                f"Response generation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return LLMResponse(
                 success=False, content="", provider=LLMProvider.FALLBACK, error=str(e)
             )
@@ -430,9 +512,21 @@ Respond as {character_name}, staying in character based on the personality, fact
                     error=f"Unsupported provider: {provider}",
                 )
 
-        except Exception as e:
+        except (AttributeError, KeyError) as e:
+            # Provider method or configuration errors
             return LLMResponse(
-                success=False, content="", provider=provider, error=str(e)
+                success=False,
+                content="",
+                provider=provider,
+                error=f"Provider configuration error: {str(e)}",
+            )
+        except (requests.Timeout, requests.ConnectionError) as e:
+            # Network or timeout errors
+            return LLMResponse(
+                success=False,
+                content="",
+                provider=provider,
+                error=f"Network error: {str(e)}",
             )
 
     async def _call_gemini(self, request: LLMRequest) -> LLMResponse:
@@ -503,9 +597,29 @@ Respond as {character_name}, staying in character based on the personality, fact
                 error=f"API error: {response.status_code} - {response.text}",
             )
 
-        except Exception as e:
+        except (requests.Timeout, requests.ConnectionError) as e:
+            # Network or timeout errors
             return LLMResponse(
-                success=False, content="", provider=LLMProvider.GEMINI, error=str(e)
+                success=False,
+                content="",
+                provider=LLMProvider.GEMINI,
+                error=f"Network error: {str(e)}",
+            )
+        except (KeyError, AttributeError, ValueError) as e:
+            # Response parsing or data extraction errors
+            return LLMResponse(
+                success=False,
+                content="",
+                provider=LLMProvider.GEMINI,
+                error=f"Response parsing error: {str(e)}",
+            )
+        except (OSError, EnvironmentError) as e:
+            # API key or environment configuration errors
+            return LLMResponse(
+                success=False,
+                content="",
+                provider=LLMProvider.GEMINI,
+                error=f"Configuration error: {str(e)}",
             )
 
     async def _call_openai(self, request: LLMRequest) -> LLMResponse:
@@ -564,9 +678,29 @@ Respond as {character_name}, staying in character based on the personality, fact
                 error=f"API error: {response.status_code} - {response.text}",
             )
 
-        except Exception as e:
+        except (requests.Timeout, requests.ConnectionError) as e:
+            # Network or timeout errors
             return LLMResponse(
-                success=False, content="", provider=LLMProvider.OPENAI, error=str(e)
+                success=False,
+                content="",
+                provider=LLMProvider.OPENAI,
+                error=f"Network error: {str(e)}",
+            )
+        except (KeyError, AttributeError, ValueError) as e:
+            # Response parsing or data extraction errors
+            return LLMResponse(
+                success=False,
+                content="",
+                provider=LLMProvider.OPENAI,
+                error=f"Response parsing error: {str(e)}",
+            )
+        except (OSError, EnvironmentError) as e:
+            # API key or environment configuration errors
+            return LLMResponse(
+                success=False,
+                content="",
+                provider=LLMProvider.OPENAI,
+                error=f"Configuration error: {str(e)}",
             )
 
     async def _call_local(self, request: LLMRequest) -> LLMResponse:
@@ -609,9 +743,29 @@ Respond as {character_name}, staying in character based on the personality, fact
                 error=f"Local LLM error: {response.status_code}",
             )
 
-        except Exception as e:
+        except (requests.Timeout, requests.ConnectionError) as e:
+            # Network or timeout errors for local LLM
             return LLMResponse(
-                success=False, content="", provider=LLMProvider.LOCAL, error=str(e)
+                success=False,
+                content="",
+                provider=LLMProvider.LOCAL,
+                error=f"Local LLM connection error: {str(e)}",
+            )
+        except (KeyError, AttributeError, ValueError) as e:
+            # Response parsing errors
+            return LLMResponse(
+                success=False,
+                content="",
+                provider=LLMProvider.LOCAL,
+                error=f"Response parsing error: {str(e)}",
+            )
+        except (OSError, EnvironmentError) as e:
+            # Endpoint configuration errors
+            return LLMResponse(
+                success=False,
+                content="",
+                provider=LLMProvider.LOCAL,
+                error=f"Configuration error: {str(e)}",
             )
 
     async def _call_fallback(self, request: LLMRequest) -> LLMResponse:
@@ -672,12 +826,21 @@ Respond as {character_name}, staying in character based on the personality, fact
                 metadata={"fallback_category": response_category},
             )
 
-        except Exception as e:
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid context data or template errors
             return LLMResponse(
                 success=False,
                 content="I'm not sure how to respond to that.",
                 provider=LLMProvider.FALLBACK,
-                error=str(e),
+                error=f"Fallback generation error: {str(e)}",
+            )
+        except (IndexError, ValueError) as e:
+            # Response template selection or formatting errors
+            return LLMResponse(
+                success=False,
+                content="I'm not sure how to respond to that.",
+                provider=LLMProvider.FALLBACK,
+                error=f"Template error: {str(e)}",
             )
 
     # Configuration and setup methods
@@ -738,8 +901,19 @@ Respond as {character_name}, staying in character based on the personality, fact
             response = await self._call_fallback(request)
             return response.content
 
-        except Exception as e:
-            self.logger.error(f"Fallback response generation failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid context or request data
+            self.logger.error(
+                f"Invalid data for fallback response: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return "I'm uncertain how to respond in this situation."
+        except (ValueError, RuntimeError) as e:
+            # Fallback response generation errors
+            self.logger.error(
+                f"Fallback generation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return "I'm uncertain how to respond in this situation."
 
     async def _test_provider_connection(self, provider: LLMProvider) -> bool:
@@ -757,7 +931,11 @@ Respond as {character_name}, staying in character based on the personality, fact
             response = await self._call_provider(provider, test_request)
             return response.success
 
-        except Exception:
+        except (requests.Timeout, requests.ConnectionError):
+            # Network or timeout errors during connection test
+            return False
+        except (AttributeError, KeyError, TypeError):
+            # Provider configuration or request errors
             return False
 
     async def _is_provider_available(self, provider: LLMProvider) -> bool:
@@ -780,7 +958,11 @@ Respond as {character_name}, staying in character based on the personality, fact
 
             return False
 
-        except Exception:
+        except (AttributeError, KeyError):
+            # Provider configuration errors
+            return False
+        except (OSError, EnvironmentError):
+            # Environment variable or API key errors
             return False
 
     async def _check_rate_limit(self, provider: LLMProvider) -> bool:
@@ -804,8 +986,12 @@ Respond as {character_name}, staying in character based on the personality, fact
 
             return False
 
-        except Exception:
-            return True  # Allow on error
+        except (AttributeError, KeyError, TypeError):
+            # Rate limit data errors - allow request to proceed
+            return True
+        except (ValueError, RuntimeError):
+            # Time calculation errors - allow request to proceed
+            return True
 
     async def _get_cached_response(self, request: LLMRequest) -> Optional[LLMResponse]:
         """Get cached response if available and valid."""
@@ -824,7 +1010,11 @@ Respond as {character_name}, staying in character based on the personality, fact
 
             return None
 
-        except Exception:
+        except (AttributeError, KeyError, TypeError):
+            # Cache key generation or lookup errors
+            return None
+        except (ValueError, RuntimeError):
+            # Time validation errors
             return None
 
     async def _cache_response(self, request: LLMRequest, response: LLMResponse) -> None:
@@ -842,8 +1032,17 @@ Respond as {character_name}, staying in character based on the personality, fact
                 for key, _ in sorted_cache[:200]:  # Remove oldest 200 entries
                     del self._response_cache[key]
 
-        except Exception as e:
-            self.logger.debug(f"Response caching failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Cache key generation errors
+            self.logger.debug(
+                f"Cache key generation failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, RuntimeError) as e:
+            # Cache storage or cleanup errors
+            self.logger.debug(
+                f"Cache storage failed: {e}", extra={"error_type": type(e).__name__}
+            )
 
     def _generate_cache_key(self, request: LLMRequest) -> str:
         """Generate cache key for request."""
@@ -873,5 +1072,15 @@ Respond as {character_name}, staying in character based on the personality, fact
             else:
                 self._usage_stats["failed_requests"] += 1
 
-        except Exception as e:
-            self.logger.debug(f"Usage statistics update failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Missing statistics data structures
+            self.logger.debug(
+                f"Statistics data structure error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ZeroDivisionError, ValueError) as e:
+            # Calculation errors in statistics
+            self.logger.debug(
+                f"Statistics calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )

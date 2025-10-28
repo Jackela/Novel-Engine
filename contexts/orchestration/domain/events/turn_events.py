@@ -236,13 +236,9 @@ class TurnCompleted:
             ai_operations_count=performance_summary.get("ai_operations", 0),
             total_ai_cost=str(performance_summary.get("total_ai_cost", "0.00")),
             success_metrics={
-                "completion_percentage": performance_summary.get(
-                    "completion_percentage", 0
-                ),
+                "completion_percentage": performance_summary.get("completion_percentage", 0),
                 "performance_score": performance_summary.get("performance_score", 0),
-                "resource_efficiency": performance_summary.get(
-                    "resource_efficiency", 0
-                ),
+                "resource_efficiency": performance_summary.get("resource_efficiency", 0),
             },
             metadata=metadata or {},
         )
@@ -308,9 +304,7 @@ class TurnFailed:
             failure_metrics={
                 "completion_percentage": error_summary.get("completion_percentage", 0),
                 "phases_attempted": error_summary.get("phases_attempted", 0),
-                "compensation_success_rate": error_summary.get(
-                    "compensation_success_rate", 0
-                ),
+                "compensation_success_rate": error_summary.get("compensation_success_rate", 0),
             },
             metadata=metadata or {},
         )
@@ -374,8 +368,6 @@ class TurnCompensationCompleted:
             failed_actions=total_actions - successful_actions,
             rollback_phases=compensation_summary.get("rollback_phases", []),
             recovery_time_seconds=recovery_time_seconds,
-            compensation_cost=str(
-                compensation_summary.get("compensation_cost", "0.00")
-            ),
+            compensation_cost=str(compensation_summary.get("compensation_cost", "0.00")),
             metadata=metadata or {},
         )

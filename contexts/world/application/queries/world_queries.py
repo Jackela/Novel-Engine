@@ -98,12 +98,8 @@ class GetWorldSlice:
             raise QueryValidationException("world_id is required")
 
         # Check that we have either circular or rectangular query parameters
-        has_circle = all(
-            x is not None for x in [self.center_x, self.center_y, self.radius]
-        )
-        has_bounds = any(
-            x is not None for x in [self.min_x, self.max_x, self.min_y, self.max_y]
-        )
+        has_circle = all(x is not None for x in [self.center_x, self.center_y, self.radius])
+        has_bounds = any(x is not None for x in [self.min_x, self.max_x, self.min_y, self.max_y])
 
         if not has_circle and not has_bounds:
             raise QueryValidationException(
@@ -122,23 +118,11 @@ class GetWorldSlice:
 
         # Validate rectangular parameters
         if has_bounds:
-            if (
-                self.min_x is not None
-                and self.max_x is not None
-                and self.min_x >= self.max_x
-            ):
+            if self.min_x is not None and self.max_x is not None and self.min_x >= self.max_x:
                 raise QueryValidationException("min_x must be less than max_x")
-            if (
-                self.min_y is not None
-                and self.max_y is not None
-                and self.min_y >= self.max_y
-            ):
+            if self.min_y is not None and self.max_y is not None and self.min_y >= self.max_y:
                 raise QueryValidationException("min_y must be less than max_y")
-            if (
-                self.min_z is not None
-                and self.max_z is not None
-                and self.min_z >= self.max_z
-            ):
+            if self.min_z is not None and self.max_z is not None and self.min_z >= self.max_z:
                 raise QueryValidationException("min_z must be less than max_z")
 
         # Validate pagination
@@ -157,9 +141,7 @@ class GetWorldSlice:
 
     def is_bounded_query(self) -> bool:
         """Check if this is a rectangular bounds query."""
-        return any(
-            x is not None for x in [self.min_x, self.max_x, self.min_y, self.max_y]
-        )
+        return any(x is not None for x in [self.min_x, self.max_x, self.min_y, self.max_y])
 
 
 @dataclass
@@ -302,12 +284,9 @@ class GetWorldSliceQueryHandler:
                         "entities": [],
                         "entity_count": 0,
                         "world_summary": (
-                            read_model.get_world_summary()
-                            if query.include_world_summary
-                            else None
+                            read_model.get_world_summary() if query.include_world_summary else None
                         ),
-                        "query_time_ms": (datetime.now() - start_time).total_seconds()
-                        * 1000,
+                        "query_time_ms": (datetime.now() - start_time).total_seconds() * 1000,
                     }
 
                 # Execute spatial query based on query type
@@ -341,8 +320,7 @@ class GetWorldSliceQueryHandler:
                     "entities": entities,
                     "entity_count": len(entities),
                     "total_entities": total_count,
-                    "query_time_ms": (datetime.now() - start_time).total_seconds()
-                    * 1000,
+                    "query_time_ms": (datetime.now() - start_time).total_seconds() * 1000,
                 }
 
                 # Add optional data
@@ -367,9 +345,7 @@ class GetWorldSliceQueryHandler:
 
                 # Add query metadata
                 response["query_metadata"] = {
-                    "query_type": (
-                        "circular" if query.is_circular_query() else "bounded"
-                    ),
+                    "query_type": ("circular" if query.is_circular_query() else "bounded"),
                     "filtered_by_type": query.entity_types is not None,
                     "pagination_applied": query.limit is not None or query.offset > 0,
                     "world_version": read_model.world_version,
@@ -615,9 +591,7 @@ class SearchWorldsQueryHandler:
                         "name": world.world_name,
                         "description": world.world_description,
                         "status": world.status,
-                        "world_time": (
-                            world.world_time.isoformat() if world.world_time else None
-                        ),
+                        "world_time": (world.world_time.isoformat() if world.world_time else None),
                     }
 
                     if query.include_entity_counts:
@@ -680,9 +654,7 @@ class QueryHandlerRegistry:
         handler = self._handlers.get(query_type)
 
         if not handler:
-            raise QueryExecutionException(
-                f"No handler registered for query type: {query_type}"
-            )
+            raise QueryExecutionException(f"No handler registered for query type: {query_type}")
 
         return await handler.handle(query)
 

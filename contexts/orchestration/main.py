@@ -75,9 +75,7 @@ def main():
             port=port,
             log_level=log_level,
             reload=reload,
-            workers=(
-                workers if not reload else 1
-            ),  # Multiple workers don't work with reload
+            workers=(workers if not reload else 1),  # Multiple workers don't work with reload
             access_log=True,
             server_header=False,
             date_header=False,

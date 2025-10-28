@@ -6,9 +6,12 @@ Type-specific interaction processors.
 import logging
 from typing import Any, Dict
 
-from src.core.data_models import StandardResponse
-
-from ..models.interaction_models import InteractionContext, InteractionOutcome
+from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
+from src.templates.dynamic_template_engine import TemplateContext, TemplateType
+from src.interactions.engine.models.interaction_models import (
+    InteractionContext,
+    InteractionOutcome,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -290,9 +290,9 @@ class VersionMiddleware:
                     "%a, %d %b %Y %H:%M:%S GMT"
                 )
             if version_info.migration_guide_url:
-                response.headers["Link"] = (
-                    f'<{version_info.migration_guide_url}>; rel="migration-guide"'
-                )
+                response.headers[
+                    "Link"
+                ] = f'<{version_info.migration_guide_url}>; rel="migration-guide"'
 
         return response
 

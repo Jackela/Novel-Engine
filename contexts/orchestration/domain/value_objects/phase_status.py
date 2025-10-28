@@ -209,9 +209,7 @@ class PhaseStatus:
         # Calculate duration if both timestamps available
         if self.started_at and self.completed_at and self.duration_ms is None:
             duration = self.completed_at - self.started_at
-            object.__setattr__(
-                self, "duration_ms", int(duration.total_seconds() * 1000)
-            )
+            object.__setattr__(self, "duration_ms", int(duration.total_seconds() * 1000))
 
     @classmethod
     def create_pending(cls, phase_type: PhaseType) -> "PhaseStatus":
@@ -325,9 +323,7 @@ class PhaseStatus:
             ValueError: If transition is not valid
         """
         if not self.status.can_transition_to(new_status):
-            raise ValueError(
-                f"Invalid status transition from {self.status} to {new_status}"
-            )
+            raise ValueError(f"Invalid status transition from {self.status} to {new_status}")
 
         # Set defaults for specific transitions
         if new_status == PhaseStatusEnum.RUNNING and "started_at" not in updates:
@@ -350,14 +346,10 @@ class PhaseStatus:
             started_at=updates.get("started_at", self.started_at),
             completed_at=updates.get("completed_at", self.completed_at),
             duration_ms=updates.get("duration_ms", self.duration_ms),
-            progress_percentage=updates.get(
-                "progress_percentage", self.progress_percentage
-            ),
+            progress_percentage=updates.get("progress_percentage", self.progress_percentage),
             events_processed=updates.get("events_processed", self.events_processed),
             error_message=updates.get("error_message", self.error_message),
-            compensation_actions=updates.get(
-                "compensation_actions", self.compensation_actions
-            ),
+            compensation_actions=updates.get("compensation_actions", self.compensation_actions),
             metadata={**self.metadata, **updates.get("metadata", {})},
         )
 
@@ -440,11 +432,7 @@ class PhaseStatus:
 
         if self.status.is_successful():
             duration = f" ({self.duration_ms}ms)" if self.duration_ms else ""
-            events = (
-                f" - {self.events_processed} events"
-                if self.events_processed > 0
-                else ""
-            )
+            events = f" - {self.events_processed} events" if self.events_processed > 0 else ""
             return f"{name}: {status}{duration}{events}"
         elif self.status.is_failure():
             return f"{name}: {status} - {self.error_message}"

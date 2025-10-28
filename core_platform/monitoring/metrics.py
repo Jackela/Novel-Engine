@@ -39,9 +39,7 @@ class BaseMetrics:
             self._timing_metrics[metric_name].append(duration_ms)
             # Keep only last 1000 measurements
             if len(self._timing_metrics[metric_name]) > 1000:
-                self._timing_metrics[metric_name] = self._timing_metrics[metric_name][
-                    -1000:
-                ]
+                self._timing_metrics[metric_name] = self._timing_metrics[metric_name][-1000:]
 
     def get_metric(self, metric_name: str) -> Any:
         """Get specific metric value."""

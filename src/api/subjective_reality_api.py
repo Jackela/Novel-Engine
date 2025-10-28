@@ -189,7 +189,7 @@ class SubjectiveRealityAPI:
 
         @app.get(
             "/api/v1/turns/{turn_id}/briefs/{agent_id}",
-            response_model=StandardResponse[TurnBriefData],
+            response_model=StandardResponse,
             summary="Get Agent Turn Brief",
             description="Retrieve personalized turn brief for a specific agent",
         )
@@ -250,7 +250,7 @@ class SubjectiveRealityAPI:
 
         @app.get(
             "/api/v1/turns/{turn_id}/briefs",
-            response_model=StandardResponse[MultiBriefData],
+            response_model=StandardResponse,
             summary="Get All Agent Turn Briefs",
             description="Retrieve turn briefs for all agents in a turn",
         )
@@ -319,7 +319,7 @@ class SubjectiveRealityAPI:
 
         @app.get(
             "/api/v1/agents/{agent_id}/beliefs",
-            response_model=StandardResponse[BeliefModelData],
+            response_model=StandardResponse,
             summary="Get Agent Belief Model",
             description="Access agent's subjective belief model",
         )

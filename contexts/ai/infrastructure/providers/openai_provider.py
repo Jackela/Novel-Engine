@@ -125,9 +125,7 @@ class OpenAIProvider(ILLMProvider):
                 estimated_tokens, request.max_tokens or 100
             )
 
-            if budget.cost_limit and estimated_cost > (
-                budget.cost_limit - budget.accumulated_cost
-            ):
+            if budget.cost_limit and estimated_cost > (budget.cost_limit - budget.accumulated_cost):
                 return LLMResponse.create_error(
                     request_id=request.request_id,
                     status=LLMResponseStatus.QUOTA_EXCEEDED,
@@ -148,15 +146,12 @@ class OpenAIProvider(ILLMProvider):
                 headers=self._get_headers(),
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
-
                 response_data = await response.json()
 
                 if response.status == 200:
                     return self._parse_success_response(request, response_data)
                 else:
-                    return self._parse_error_response(
-                        request, response.status, response_data
-                    )
+                    return self._parse_error_response(request, response.status, response_data)
 
         except asyncio.TimeoutError:
             return LLMResponse.create_error(
@@ -204,7 +199,6 @@ class OpenAIProvider(ILLMProvider):
                 headers=self._get_headers(),
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
-
                 if response.status != 200:
                     yield f"Error: HTTP {response.status}"
                     return
@@ -249,9 +243,7 @@ class OpenAIProvider(ILLMProvider):
 
         # Adjust for different content types
         if re.search(r"[^\x00-\x7F]", text):  # Non-ASCII characters
-            token_ratio = (
-                0.6  # Non-English text typically has fewer tokens per character
-            )
+            token_ratio = 0.6  # Non-English text typically has fewer tokens per character
         else:
             token_ratio = 0.25  # English text: ~4 chars per token
 
@@ -292,9 +284,7 @@ class OpenAIProvider(ILLMProvider):
             return False
 
         # Check max tokens
-        max_model_tokens = self._supported_models[
-            request.model_id.model_name
-        ].max_output_tokens
+        max_model_tokens = self._supported_models[request.model_id.model_name].max_output_tokens
         if request.max_tokens and request.max_tokens > max_model_tokens:
             return False
 
@@ -328,7 +318,6 @@ class OpenAIProvider(ILLMProvider):
                 headers=self._get_headers(),
                 timeout=aiohttp.ClientTimeout(total=10),
             ) as response:
-
                 is_healthy = response.status == 200
 
                 return {
@@ -429,9 +418,7 @@ class OpenAIProvider(ILLMProvider):
 
         return headers
 
-    def _prepare_api_request(
-        self, request: LLMRequest, stream: bool = False
-    ) -> Dict[str, Any]:
+    def _prepare_api_request(self, request: LLMRequest, stream: bool = False) -> Dict[str, Any]:
         """
         Prepare OpenAI API request from LLM request.
 
@@ -515,15 +502,11 @@ class OpenAIProvider(ILLMProvider):
         output_cost = Decimal("0")
 
         if model_id.cost_per_input_token:
-            input_cost = (
-                Decimal(str(usage_stats["input_tokens"]))
-                * model_id.cost_per_input_token
-            )
+            input_cost = Decimal(str(usage_stats["input_tokens"])) * model_id.cost_per_input_token
 
         if model_id.cost_per_output_token:
             output_cost = (
-                Decimal(str(usage_stats["output_tokens"]))
-                * model_id.cost_per_output_token
+                Decimal(str(usage_stats["output_tokens"])) * model_id.cost_per_output_token
             )
 
         return LLMResponse.create_success(

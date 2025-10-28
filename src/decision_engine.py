@@ -496,26 +496,39 @@ class DecisionEngine:
             # Add some randomness to prevent completely predictable behavior
             selected = random.choice(best_actions)
 
-            # Convert to CharacterAction format
-            action_id = (
-                f"{self.agent_core.agent_id}_action_{datetime.now().strftime('%H%M%S')}"
-            )
-
-            character_action = {
-                "action_id": action_id,
+            # Convert to CharacterAction format (only use valid CharacterAction fields)
+            character_action_params = {
                 "action_type": selected.get("action_type", "observe"),
-                "agent_id": self.agent_core.agent_id,
                 "reasoning": self._generate_action_reasoning(selected),
-                "priority": selected.get("priority", "medium"),
-                "target": None,  # Could be enhanced with target selection
-                "timestamp": datetime.now().isoformat(),
+                "target": selected.get(
+                    "target"
+                ),  # Could be enhanced with target selection
+                "parameters": selected.get("parameters", {}),
             }
+
+            # Convert priority string to ActionPriority enum if needed
+            priority_str = selected.get("priority", "medium")
+            if isinstance(priority_str, str):
+                from src.core.types.shared_types import ActionPriority
+
+                priority_map = {
+                    "low": ActionPriority.LOW,
+                    "normal": ActionPriority.NORMAL,
+                    "medium": ActionPriority.NORMAL,
+                    "high": ActionPriority.HIGH,
+                    "critical": ActionPriority.CRITICAL,
+                }
+                character_action_params["priority"] = priority_map.get(
+                    priority_str.lower(), ActionPriority.NORMAL
+                )
+            else:
+                character_action_params["priority"] = priority_str
 
             # Convert to CharacterAction if available, otherwise return dict
             if CharacterAction is not dict:
-                return CharacterAction(**character_action)
+                return CharacterAction(**character_action_params)
             else:
-                return character_action
+                return selected  # Return original dict if CharacterAction not available
 
         except Exception as e:
             logger.error(f"Error selecting best action: {str(e)}")

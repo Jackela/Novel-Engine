@@ -5,10 +5,16 @@ Interaction Engine - Core orchestration.
 
 import asyncio
 import logging
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
-from src.core.data_models import CharacterState, ErrorInfo, StandardResponse
+from src.core.data_models import (
+    CharacterInteraction,
+    CharacterState,
+    ErrorInfo,
+    StandardResponse,
+)
 from src.database.context_db import ContextDatabase
 from src.memory.layered_memory import LayeredMemorySystem
 from src.templates.character import CharacterTemplateManager
@@ -20,6 +26,7 @@ from .managers.state_manager import StateManager
 from .models.interaction_models import (
     InteractionContext,
     InteractionOutcome,
+    InteractionPhase,
     InteractionPriority,
     InteractionType,
 )
@@ -29,6 +36,7 @@ from .utils.interaction_persistence import InteractionPersistence
 from .validators.interaction_validator import InteractionValidator
 
 logger = logging.getLogger(__name__)
+
 
 class InteractionEngine:
     """
@@ -128,9 +136,9 @@ class InteractionEngine:
                         f"INTERACTION PREREQUISITES NOT MET: {context.interaction_id}"
                     )
                     # Continue with warnings rather than failing
-                    context.metadata["prerequisite_warnings"] = (
-                        prerequisite_result.error.message
-                    )
+                    context.metadata[
+                        "prerequisite_warnings"
+                    ] = prerequisite_result.error.message
 
                 # Register enhanced active interaction
                 self._active_interactions[context.interaction_id] = context

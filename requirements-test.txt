@@ -1,18 +1,9 @@
-# Testing Infrastructure Requirements
-pytest>=7.0.0
-pytest-asyncio>=0.20.0
-pytest-mock>=3.10.0
-pytest-cov>=4.0.0
-pytest-benchmark>=4.0.0
-pytest-xdist>=3.0.0
-coverage>=7.0.0
-
-# Development tools
-black>=22.0.0
-flake8>=5.0.0
-mypy>=1.0.0
-pre-commit>=3.0.0
-
-# Core dependencies for testing
-aiofiles>=22.0.0
-pydantic>=1.10.0
+pydantic==2.11.7
+pydantic-settings==2.8.1
+pydantic_core==2.33.2
+pytest==8.4.2
+pytest-asyncio==1.1.0
+pytest-cov==4.1.0
+pytest-html==4.1.1
+pytest-metadata==3.1.1
+pytest-mock==3.12.0

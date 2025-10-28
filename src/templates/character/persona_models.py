@@ -6,9 +6,11 @@ Character persona data models and enums.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
+from src.templates.context_renderer import RenderFormat
 from src.templates.dynamic_template_engine import TemplateMetadata, TemplateType
+
 
 class CharacterArchetype(Enum):
     """ENHANCED CHARACTER ARCHETYPES SANCTIFIED BY PERSONALITY CLASSIFICATION"""
@@ -97,4 +99,3 @@ class CharacterContextProfile:
     interaction_patterns: Dict[str, List[str]] = field(default_factory=dict)
     learning_history: List[Dict[str, Any]] = field(default_factory=list)
     optimization_suggestions: List[str] = field(default_factory=list)
-

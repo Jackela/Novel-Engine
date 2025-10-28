@@ -107,9 +107,9 @@ class AsyncProcessingTest:
             avg_performance_improvement = sum(
                 r["performance_improvement_percent"] for r in successful_tests
             ) / len(successful_tests)
-            test_results["average_performance_improvement"] = (
-                avg_performance_improvement
-            )
+            test_results[
+                "average_performance_improvement"
+            ] = avg_performance_improvement
 
         logger.info("=== Async Processing Tests Completed ===")
         logger.info(
@@ -347,7 +347,6 @@ class AsyncProcessingTest:
                 "timestamp": time.time(),
                 "data": ["item_" + str(i) for i in range(100)],
             }
-
 
             # Measure synchronous file operations
             start_time = time.time()

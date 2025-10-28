@@ -116,9 +116,7 @@ class SkillGroup:
         # Validate all skills in group match category
         for skill in self.skills.values():
             if skill.category != self.category:
-                raise ValueError(
-                    f"All skills in group must match category {self.category.value}"
-                )
+                raise ValueError(f"All skills in group must match category {self.category.value}")
 
     def get_skill(self, skill_name: str) -> Optional[Skill]:
         """Get a specific skill from the group."""
@@ -209,9 +207,7 @@ class Skills:
 
         return skill.proficiency_level.value >= min_proficiency.value
 
-    def get_skill_modifier(
-        self, skill_name: str, include_specialization: bool = True
-    ) -> int:
+    def get_skill_modifier(self, skill_name: str, include_specialization: bool = True) -> int:
         """Get the total modifier for a skill including specializations."""
         skill = self.get_skill(skill_name)
         if not skill:
@@ -268,9 +264,7 @@ class Skills:
 
         return max(category_averages.keys(), key=lambda k: category_averages[k])
 
-    def is_specialist(
-        self, category: SkillCategory, min_expert_skills: int = 3
-    ) -> bool:
+    def is_specialist(self, category: SkillCategory, min_expert_skills: int = 3) -> bool:
         """Check if character is a specialist in a skill category."""
         expert_skills = self.get_skills_by_category(category)
         expert_count = sum(1 for skill in expert_skills if skill.is_expert_level())
@@ -293,9 +287,9 @@ class Skills:
             "skill_categories": list(self.skill_groups.keys()),
             "top_skills": [
                 skill.name
-                for skill in sorted(
-                    all_skills, key=lambda s: s.get_total_modifier(), reverse=True
-                )[:5]
+                for skill in sorted(all_skills, key=lambda s: s.get_total_modifier(), reverse=True)[
+                    :5
+                ]
             ],
         }
 
@@ -320,9 +314,7 @@ class Skills:
                 "ranged_combat": Skill(
                     "Ranged Combat", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0
                 ),
-                "dodge": Skill(
-                    "Dodge", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0
-                ),
+                "dodge": Skill("Dodge", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0),
             },
         )
 
@@ -331,9 +323,7 @@ class Skills:
             category=SkillCategory.SOCIAL,
             base_modifier=0,
             skills={
-                "persuasion": Skill(
-                    "Persuasion", SkillCategory.SOCIAL, ProficiencyLevel.NOVICE, 0
-                ),
+                "persuasion": Skill("Persuasion", SkillCategory.SOCIAL, ProficiencyLevel.NOVICE, 0),
                 "deception": Skill(
                     "Deception", SkillCategory.SOCIAL, ProficiencyLevel.UNTRAINED, 0
                 ),
@@ -348,15 +338,11 @@ class Skills:
             category=SkillCategory.PHYSICAL,
             base_modifier=0,
             skills={
-                "athletics": Skill(
-                    "Athletics", SkillCategory.PHYSICAL, ProficiencyLevel.NOVICE, 0
-                ),
+                "athletics": Skill("Athletics", SkillCategory.PHYSICAL, ProficiencyLevel.NOVICE, 0),
                 "acrobatics": Skill(
                     "Acrobatics", SkillCategory.PHYSICAL, ProficiencyLevel.UNTRAINED, 0
                 ),
-                "stealth": Skill(
-                    "Stealth", SkillCategory.PHYSICAL, ProficiencyLevel.NOVICE, 0
-                ),
+                "stealth": Skill("Stealth", SkillCategory.PHYSICAL, ProficiencyLevel.NOVICE, 0),
             },
         )
 
@@ -431,9 +417,7 @@ class Skills:
                 "technology": Skill(
                     "Technology", SkillCategory.TECHNICAL, ProficiencyLevel.UNTRAINED, 0
                 ),
-                "repair": Skill(
-                    "Repair", SkillCategory.TECHNICAL, ProficiencyLevel.UNTRAINED, 0
-                ),
+                "repair": Skill("Repair", SkillCategory.TECHNICAL, ProficiencyLevel.UNTRAINED, 0),
             },
         )
 
@@ -445,12 +429,8 @@ class Skills:
                 "performance": Skill(
                     "Performance", SkillCategory.ARTISTIC, ProficiencyLevel.NOVICE, 0
                 ),
-                "art": Skill(
-                    "Art", SkillCategory.ARTISTIC, ProficiencyLevel.UNTRAINED, 0
-                ),
-                "music": Skill(
-                    "Music", SkillCategory.ARTISTIC, ProficiencyLevel.UNTRAINED, 0
-                ),
+                "art": Skill("Art", SkillCategory.ARTISTIC, ProficiencyLevel.UNTRAINED, 0),
+                "music": Skill("Music", SkillCategory.ARTISTIC, ProficiencyLevel.UNTRAINED, 0),
             },
         )
 

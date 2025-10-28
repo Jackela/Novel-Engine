@@ -87,18 +87,13 @@ class TermResponse:
             ResponseType.REJECT,
         ]:
             if not self.comments:
-                raise ValueError(
-                    f"{self.response_type.value} responses should include comments"
-                )
+                raise ValueError(f"{self.response_type.value} responses should include comments")
 
         # Validate string fields
         if self.comments is not None and not self.comments.strip():
             raise ValueError("comments cannot be empty if provided")
 
-        if (
-            self.suggested_modification is not None
-            and not self.suggested_modification.strip()
-        ):
+        if self.suggested_modification is not None and not self.suggested_modification.strip():
             raise ValueError("suggested_modification cannot be empty if provided")
 
     def is_acceptance(self) -> bool:
@@ -153,9 +148,7 @@ class ProposalResponse:
     overall_reason: Optional[ResponseReason] = None
     overall_comments: Optional[str] = None
     confidence_level: ConfidenceLevel = ConfidenceLevel.MODERATE
-    response_timestamp: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    response_timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: Optional[datetime] = None
     conditions: Optional[List[str]] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -183,10 +176,7 @@ class ProposalResponse:
             self._validate_response_consistency()
 
         # Validate conditions for conditional acceptance
-        if (
-            self.overall_response == ResponseType.CONDITIONAL_ACCEPT
-            and not self.conditions
-        ):
+        if self.overall_response == ResponseType.CONDITIONAL_ACCEPT and not self.conditions:
             raise ValueError("Conditional acceptance must include conditions")
 
         # Validate string fields
@@ -207,9 +197,7 @@ class ProposalResponse:
 
         if self.overall_response == ResponseType.ACCEPT:
             if acceptance_count != total_terms:
-                raise ValueError(
-                    "ACCEPT overall response requires all terms to be accepted"
-                )
+                raise ValueError("ACCEPT overall response requires all terms to be accepted")
 
         elif self.overall_response == ResponseType.REJECT:
             if rejection_count == 0:
@@ -219,15 +207,11 @@ class ProposalResponse:
 
         elif self.overall_response == ResponseType.PARTIAL_ACCEPT:
             if acceptance_count == 0 or acceptance_count == total_terms:
-                raise ValueError(
-                    "PARTIAL_ACCEPT requires some but not all terms to be accepted"
-                )
+                raise ValueError("PARTIAL_ACCEPT requires some but not all terms to be accepted")
 
         elif self.overall_response == ResponseType.CONDITIONAL_ACCEPT:
             if acceptance_count == 0:
-                raise ValueError(
-                    "CONDITIONAL_ACCEPT requires at least some terms to be accepted"
-                )
+                raise ValueError("CONDITIONAL_ACCEPT requires at least some terms to be accepted")
 
     @classmethod
     def create(
@@ -276,9 +260,7 @@ class ProposalResponse:
 
     def get_terms_with_modifications(self) -> List[TermResponse]:
         """Get all term responses with suggested modifications."""
-        return [
-            tr for tr in self.term_responses if tr.suggested_modification is not None
-        ]
+        return [tr for tr in self.term_responses if tr.suggested_modification is not None]
 
     def is_complete_acceptance(self) -> bool:
         """Check if response represents complete acceptance."""
@@ -310,8 +292,7 @@ class ProposalResponse:
     def requires_clarification(self) -> bool:
         """Check if response requires clarification."""
         return self.overall_response == ResponseType.REQUEST_CLARIFICATION or any(
-            tr.response_type == ResponseType.REQUEST_CLARIFICATION
-            for tr in self.term_responses
+            tr.response_type == ResponseType.REQUEST_CLARIFICATION for tr in self.term_responses
         )
 
     def has_conditions(self) -> bool:
@@ -348,9 +329,7 @@ class ProposalResponse:
             "overall_response": self.overall_response.value,
             "confidence_level": self.confidence_level.value,
             "has_conditions": self.has_conditions(),
-            "requires_follow_up": any(
-                tr.requires_follow_up() for tr in self.term_responses
-            ),
+            "requires_follow_up": any(tr.requires_follow_up() for tr in self.term_responses),
             "is_expired": self.is_expired(),
         }
 

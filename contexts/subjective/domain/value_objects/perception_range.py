@@ -62,13 +62,9 @@ class PerceptionRange:
         if self.environmental_modifiers:
             for modifier_name, value in self.environmental_modifiers.items():
                 if not isinstance(modifier_name, str) or not modifier_name.strip():
-                    raise ValueError(
-                        "Environmental modifier names must be non-empty strings"
-                    )
+                    raise ValueError("Environmental modifier names must be non-empty strings")
                 if not isinstance(value, (int, float)):
-                    raise ValueError(
-                        f"Environmental modifier '{modifier_name}' must be numeric"
-                    )
+                    raise ValueError(f"Environmental modifier '{modifier_name}' must be numeric")
 
     def calculate_visibility_at_distance(self, distance: float) -> VisibilityLevel:
         """Calculate visibility level at a specific distance."""
@@ -143,9 +139,7 @@ class PerceptionCapabilities:
             if not isinstance(perception_range, PerceptionRange):
                 raise ValueError(f"Invalid perception range for {perception_type}")
             if perception_range.perception_type != perception_type:
-                raise ValueError(
-                    f"Perception range type mismatch for {perception_type}"
-                )
+                raise ValueError(f"Perception range type mismatch for {perception_type}")
 
         if self.passive_awareness_bonus < 0:
             raise ValueError("Passive awareness bonus cannot be negative")
@@ -185,9 +179,7 @@ class PerceptionCapabilities:
                 VisibilityLevel.INVISIBLE,
             ]
 
-            if visibility_order.index(visibility) < visibility_order.index(
-                best_visibility
-            ):
+            if visibility_order.index(visibility) < visibility_order.index(best_visibility):
                 best_visibility = visibility
 
         return best_visibility

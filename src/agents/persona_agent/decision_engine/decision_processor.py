@@ -127,9 +127,19 @@ class DecisionProcessor:
             )
             return selected_action
 
-        except Exception as e:
-            self.logger.error(f"Decision making failed: {e}")
-            # Return safe fallback action
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid world state or character context data
+            self.logger.error(
+                f"Invalid data during decision making: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return await self._get_fallback_action(character_context)
+        except (ValueError, RuntimeError) as e:
+            # Decision evaluation or action creation failed
+            self.logger.error(
+                f"Decision processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return await self._get_fallback_action(character_context)
 
     async def evaluate_threat(
@@ -154,9 +164,20 @@ class DecisionProcessor:
             )
             return threat_level
 
-        except Exception as e:
-            self.logger.error(f"Threat evaluation failed: {e}")
-            return ThreatLevel.MODERATE  # Safe default
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event or character data structure
+            self.logger.error(
+                f"Invalid data during threat evaluation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return ThreatLevel.MODERATE
+        except (ValueError, RuntimeError) as e:
+            # Threat calculation or analysis errors
+            self.logger.error(
+                f"Threat evaluation processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return ThreatLevel.MODERATE
 
     async def prioritize_goals(
         self, goals: List[Dict[str, Any]], context: Dict[str, Any]
@@ -187,9 +208,20 @@ class DecisionProcessor:
             self.logger.debug(f"Goals prioritized: {len(prioritized_goals)} goals")
             return prioritized_goals
 
-        except Exception as e:
-            self.logger.error(f"Goal prioritization failed: {e}")
-            return goals  # Return original order on error
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid goal or context data structure
+            self.logger.error(
+                f"Invalid data during goal prioritization: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return goals
+        except (ValueError, IndexError) as e:
+            # Scoring or sorting errors
+            self.logger.error(
+                f"Goal prioritization processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return goals
 
     async def _build_decision_context(
         self, world_state: Dict[str, Any], character_context: Dict[str, Any]
@@ -226,8 +258,19 @@ class DecisionProcessor:
                 resource_constraints=resource_constraints,
             )
 
-        except Exception as e:
-            self.logger.error(f"Failed to build decision context: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid world state or character context structure
+            self.logger.error(
+                f"Invalid data during context building: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise
+        except (ValueError, RuntimeError) as e:
+            # Threat assessment or calculation errors
+            self.logger.error(
+                f"Context building processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             raise
 
     async def _evaluate_all_actions(
@@ -254,8 +297,19 @@ class DecisionProcessor:
 
             return evaluations
 
-        except Exception as e:
-            self.logger.error(f"Action evaluation failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid context or character data
+            self.logger.error(
+                f"Invalid data during action evaluation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (ValueError, RuntimeError) as e:
+            # Action generation or scoring errors
+            self.logger.error(
+                f"Action evaluation processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def _score_action(
@@ -307,9 +361,20 @@ class DecisionProcessor:
 
             return max(0.0, min(1.0, final_score))  # Clamp to [0, 1]
 
-        except Exception as e:
-            self.logger.error(f"Action scoring failed: {e}")
-            return 0.5  # Neutral score on error
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid action or context structure
+            self.logger.debug(
+                f"Invalid data during action scoring: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return 0.5
+        except (ValueError, ZeroDivisionError) as e:
+            # Calculation or weighting errors
+            self.logger.debug(
+                f"Action scoring calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return 0.5
 
     async def _select_optimal_action(
         self, evaluations: List[Tuple[Dict[str, Any], float]], context: DecisionContext
@@ -341,8 +406,19 @@ class DecisionProcessor:
 
             return enhanced_action
 
-        except Exception as e:
-            self.logger.error(f"Action selection failed: {e}")
+        except (AttributeError, KeyError, TypeError, IndexError) as e:
+            # Invalid evaluations or context data structure
+            self.logger.error(
+                f"Invalid data during action selection: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return await self._get_fallback_action()
+        except (ValueError, RuntimeError) as e:
+            # Action enhancement or selection processing errors
+            self.logger.error(
+                f"Action selection processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return await self._get_fallback_action()
 
     async def _generate_action_details(
@@ -398,8 +474,19 @@ class DecisionProcessor:
 
             return action
 
-        except Exception as e:
-            self.logger.error(f"Action detail generation failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid context or action type data
+            self.logger.error(
+                f"Invalid data during action detail generation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"action_type": action_type, "priority": "medium"}
+        except (ValueError, RuntimeError) as e:
+            # Category determination or detail processing errors
+            self.logger.error(
+                f"Action detail generation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"action_type": action_type, "priority": "medium"}
 
     async def _score_self_preservation(
@@ -423,8 +510,19 @@ class DecisionProcessor:
 
             return max(0.0, min(1.0, base_score))
 
-        except Exception as e:
-            self.logger.debug(f"Self-preservation scoring failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid action or context structure
+            self.logger.debug(
+                f"Self-preservation scoring data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return 0.5
+        except (ValueError, ZeroDivisionError) as e:
+            # Calculation errors
+            self.logger.debug(
+                f"Self-preservation score calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return 0.5
 
     async def _score_faction_loyalty(
@@ -448,8 +546,12 @@ class DecisionProcessor:
 
             return max(0.0, min(1.0, base_score))
 
-        except Exception as e:
-            self.logger.debug(f"Faction loyalty scoring failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid action or context structure
+            self.logger.debug(
+                f"Faction loyalty scoring data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return 0.5
 
     async def _score_mission_success(
@@ -467,8 +569,12 @@ class DecisionProcessor:
 
             return max(0.0, min(1.0, base_score))
 
-        except Exception as e:
-            self.logger.debug(f"Mission success scoring failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid action, goal, or context data
+            self.logger.debug(
+                f"Mission success scoring data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return 0.5
 
     def _action_supports_goal(
@@ -510,8 +616,19 @@ class DecisionProcessor:
 
             return enhanced_action
 
-        except Exception as e:
-            self.logger.error(f"Action enhancement failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid action or context structure
+            self.logger.error(
+                f"Invalid data during action enhancement: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return action
+        except (ValueError, RuntimeError) as e:
+            # Enhancement processing or reasoning generation errors
+            self.logger.error(
+                f"Action enhancement processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return action
 
     async def _generate_action_reasoning(
@@ -535,8 +652,12 @@ class DecisionProcessor:
                 action_type, f"Action {action_type} selected based on current context"
             )
 
-        except Exception as e:
-            self.logger.debug(f"Reasoning generation failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid action or context data
+            self.logger.debug(
+                f"Reasoning generation data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return "Action selected based on available information"
 
     async def _get_fallback_action(
@@ -684,8 +805,18 @@ class DecisionProcessor:
             if len(self._decision_history) > 100:
                 self._decision_history = self._decision_history[-50:]
 
-        except Exception as e:
-            self.logger.debug(f"Decision recording failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid action, context, or character data structure
+            self.logger.debug(
+                f"Decision recording data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, IndexError) as e:
+            # History management or list operation errors
+            self.logger.debug(
+                f"Decision recording processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     def get_decision_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent decision history."""

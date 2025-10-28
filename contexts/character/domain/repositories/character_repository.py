@@ -147,9 +147,7 @@ class ICharacterRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_level_range(
-        self, min_level: int, max_level: int
-    ) -> List[Character]:
+    async def find_by_level_range(self, min_level: int, max_level: int) -> List[Character]:
         """
         Find characters within a level range.
 

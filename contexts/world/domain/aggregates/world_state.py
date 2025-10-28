@@ -129,9 +129,7 @@ class WorldState(Entity):
     world_time: datetime = field(default_factory=datetime.now)
     entities: Dict[str, WorldEntity] = field(default_factory=dict)
     environment: Dict[str, Any] = field(default_factory=dict)
-    spatial_index: Dict[str, List[str]] = field(
-        default_factory=dict
-    )  # Grid-based spatial index
+    spatial_index: Dict[str, List[str]] = field(default_factory=dict)  # Grid-based spatial index
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     # Configuration
@@ -162,9 +160,7 @@ class WorldState(Entity):
             errors.append("World name cannot be empty")
 
         if len(self.entities) > self.max_entities:
-            errors.append(
-                f"World cannot contain more than {self.max_entities} entities"
-            )
+            errors.append(f"World cannot contain more than {self.max_entities} entities")
 
         # Validate entity consistency
         for entity_id, entity in self.entities.items():
@@ -263,9 +259,7 @@ class WorldState(Entity):
             raise ValueError(f"Entity with ID {entity_id} already exists in world")
 
         if len(self.entities) >= self.max_entities:
-            raise ValueError(
-                f"World has reached maximum entity limit of {self.max_entities}"
-            )
+            raise ValueError(f"World has reached maximum entity limit of {self.max_entities}")
 
         # Create the entity
         entity = WorldEntity(
@@ -298,9 +292,7 @@ class WorldState(Entity):
 
         return entity
 
-    def remove_entity(
-        self, entity_id: str, reason: Optional[str] = None
-    ) -> Optional[WorldEntity]:
+    def remove_entity(self, entity_id: str, reason: Optional[str] = None) -> Optional[WorldEntity]:
         """
         Remove an entity from the world state.
 
@@ -332,8 +324,7 @@ class WorldState(Entity):
                 entity_id=entity_id,
                 entity_type=entity.entity_type.value,
                 previous_state=entity_state,
-                reason=reason
-                or f"Removed {entity.entity_type.value} '{entity.name}' from world",
+                reason=reason or f"Removed {entity.entity_type.value} '{entity.name}' from world",
             )
         )
 
@@ -448,11 +439,7 @@ class WorldState(Entity):
 
     def get_entities_by_type(self, entity_type: EntityType) -> List[WorldEntity]:
         """Get all entities of a specific type."""
-        return [
-            entity
-            for entity in self.entities.values()
-            if entity.entity_type == entity_type
-        ]
+        return [entity for entity in self.entities.values() if entity.entity_type == entity_type]
 
     def get_entities_in_area(
         self,
@@ -566,9 +553,7 @@ class WorldState(Entity):
             "description": self.description,
             "status": self.status.value,
             "world_time": self.world_time.isoformat(),
-            "entities": {
-                eid: entity.to_dict() for eid, entity in self.entities.items()
-            },
+            "entities": {eid: entity.to_dict() for eid, entity in self.entities.items()},
             "environment": self.environment.copy(),
             "metadata": self.metadata.copy(),
             "created_at": self.created_at.isoformat(),
@@ -648,9 +633,7 @@ class WorldState(Entity):
             self.spatial_index[grid_key] = []
         self.spatial_index[grid_key].append(entity_id)
 
-    def _remove_from_spatial_index(
-        self, entity_id: str, coordinates: Coordinates
-    ) -> None:
+    def _remove_from_spatial_index(self, entity_id: str, coordinates: Coordinates) -> None:
         """Remove entity from spatial index."""
         grid_key = self._get_spatial_grid_key(coordinates)
         if grid_key in self.spatial_index:
@@ -661,9 +644,7 @@ class WorldState(Entity):
             except ValueError:
                 pass  # Entity wasn't in the grid cell
 
-    def _get_entities_from_spatial_index(
-        self, center: Coordinates, radius: float
-    ) -> Set[str]:
+    def _get_entities_from_spatial_index(self, center: Coordinates, radius: float) -> Set[str]:
         """Get candidate entity IDs from spatial index within radius."""
         candidate_ids = set()
 
@@ -688,9 +669,7 @@ class WorldState(Entity):
             "description": self.description,
             "status": self.status.value,
             "world_time": self.world_time.isoformat(),
-            "entities": {
-                eid: entity.to_dict() for eid, entity in self.entities.items()
-            },
+            "entities": {eid: entity.to_dict() for eid, entity in self.entities.items()},
             "environment": self.environment,
             "metadata": self.metadata,
             "entity_count": len(self.entities),

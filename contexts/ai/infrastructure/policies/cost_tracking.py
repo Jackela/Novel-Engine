@@ -59,9 +59,7 @@ class CostEntry:
             raise ValueError("input_cost cannot be negative")
         if self.output_cost < 0:
             raise ValueError("output_cost cannot be negative")
-        if abs(self.total_cost - (self.input_cost + self.output_cost)) > Decimal(
-            "0.0001"
-        ):
+        if abs(self.total_cost - (self.input_cost + self.output_cost)) > Decimal("0.0001"):
             raise ValueError("total_cost must equal input_cost + output_cost")
 
     @classmethod
@@ -152,9 +150,9 @@ class UsageSummary:
     def __post_init__(self):
         """Calculate derived metrics."""
         if self.total_requests > 0:
-            self.avg_cost_per_request = (
-                self.total_cost / self.total_requests
-            ).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+            self.avg_cost_per_request = (self.total_cost / self.total_requests).quantize(
+                Decimal("0.0001"), rounding=ROUND_HALF_UP
+            )
             self.avg_tokens_per_request = self.total_tokens / self.total_requests
 
 
@@ -345,9 +343,7 @@ class DefaultCostTracker(ICostTracker):
 
             # Filter to recent entries (last 30 days)
             cutoff_time = datetime.now() - timedelta(days=30)
-            recent_entries = [
-                entry for entry in budget_entries if entry.timestamp > cutoff_time
-            ]
+            recent_entries = [entry for entry in budget_entries if entry.timestamp > cutoff_time]
 
             # Calculate current status
             status = BudgetStatus.from_budget_and_entries(budget, recent_entries)
@@ -371,9 +367,7 @@ class DefaultCostTracker(ICostTracker):
         async with self._lock:
             # Filter entries by time range and optional filters
             filtered_entries = [
-                entry
-                for entry in self._cost_entries
-                if start_time <= entry.timestamp <= end_time
+                entry for entry in self._cost_entries if start_time <= entry.timestamp <= end_time
             ]
 
             if provider_id:
@@ -481,9 +475,7 @@ class DefaultCostTracker(ICostTracker):
 
             # Calculate daily usage for last 30 days
             cutoff_time = datetime.now() - timedelta(days=30)
-            recent_entries = [
-                entry for entry in entries if entry.timestamp > cutoff_time
-            ]
+            recent_entries = [entry for entry in entries if entry.timestamp > cutoff_time]
 
             if not recent_entries:
                 return {
@@ -495,9 +487,7 @@ class DefaultCostTracker(ICostTracker):
 
             # Calculate daily averages
             total_cost = sum(entry.total_cost for entry in recent_entries)
-            days_with_data = len(
-                set(entry.timestamp.date() for entry in recent_entries)
-            )
+            days_with_data = len(set(entry.timestamp.date() for entry in recent_entries))
             daily_average = total_cost / max(1, days_with_data)
 
             # Simple linear projection
@@ -505,21 +495,18 @@ class DefaultCostTracker(ICostTracker):
 
             # Determine confidence based on data consistency
             confidence = (
-                "high"
-                if days_with_data > 20
-                else "medium" if days_with_data > 10 else "low"
+                "high" if days_with_data > 20 else "medium" if days_with_data > 10 else "low"
             )
 
             # Simple trend analysis (compare first half vs second half)
             mid_point = len(recent_entries) // 2
             if mid_point > 0:
                 first_half_avg = (
-                    sum(entry.total_cost for entry in recent_entries[:mid_point])
-                    / mid_point
+                    sum(entry.total_cost for entry in recent_entries[:mid_point]) / mid_point
                 )
-                second_half_avg = sum(
-                    entry.total_cost for entry in recent_entries[mid_point:]
-                ) / (len(recent_entries) - mid_point)
+                second_half_avg = sum(entry.total_cost for entry in recent_entries[mid_point:]) / (
+                    len(recent_entries) - mid_point
+                )
 
                 if second_half_avg > first_half_avg * 1.1:
                     trend = "increasing"
@@ -551,9 +538,7 @@ class DefaultCostTracker(ICostTracker):
         # Clean budget-specific entries
         for budget_id in list(self._budget_entries.keys()):
             self._budget_entries[budget_id] = [
-                entry
-                for entry in self._budget_entries[budget_id]
-                if entry.timestamp > cutoff_time
+                entry for entry in self._budget_entries[budget_id] if entry.timestamp > cutoff_time
             ]
 
             # Remove empty budget entries

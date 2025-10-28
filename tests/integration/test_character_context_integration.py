@@ -24,6 +24,7 @@ from contexts.character import (
 
 # Import value objects for detailed testing
 from contexts.character.domain.value_objects.character_stats import (
+    AbilityScore,
     CoreAbilities,
 )
 from contexts.character.domain.value_objects.skills import (
@@ -60,7 +61,7 @@ class TestCharacterContextIntegration:
             "character_name": "Test Hero",
             "gender": "male",
             "race": "human",
-            "character_class": "warrior",
+            "character_class": "fighter",
             "age": 25,
             "strength": 15,
             "dexterity": 12,
@@ -139,8 +140,8 @@ class TestCharacterContextIntegration:
         assert human_race.value == "human"
 
         # Test CharacterClass enum
-        warrior_class = CharacterClass("warrior")
-        assert warrior_class.value == "warrior"
+        fighter_class = CharacterClass("fighter")
+        assert fighter_class.value == "fighter"
 
         # Test invalid values raise errors
         with pytest.raises(ValueError):
@@ -173,7 +174,7 @@ class TestCharacterContextIntegration:
                 wisdom=10,
                 charisma=10,
             )
-            modifier = abilities.get_ability_modifier(abilities.AbilityScore.STRENGTH)
+            modifier = abilities.get_ability_modifier(AbilityScore.STRENGTH)
             assert (
                 modifier == expected_modifier
             ), f"Score {score} should have modifier {expected_modifier}, got {modifier}"
@@ -189,7 +190,7 @@ class TestCharacterContextIntegration:
         )
         character_application_service.repository.save = AsyncMock()
         character_application_service.command_handlers.handle_command = AsyncMock(
-            return_value=CharacterID()
+            return_value=CharacterID("test_character_123")
         )
 
         # Create character through application service
@@ -257,7 +258,7 @@ class TestCharacterContextIntegration:
     @pytest.mark.asyncio
     async def test_character_stats_updates(self, character_application_service):
         """Test character stats update functionality."""
-        character_id = str(CharacterID())
+        character_id = str(CharacterID("test_character_456"))
 
         # Mock repository
         mock_character = MagicMock()
@@ -281,7 +282,7 @@ class TestCharacterContextIntegration:
     @pytest.mark.asyncio
     async def test_character_level_up(self, character_application_service):
         """Test character level up functionality."""
-        character_id = str(CharacterID())
+        character_id = str(CharacterID("test_character_456"))
 
         # Mock repository
         character_application_service.command_handlers.handle_command = AsyncMock()
@@ -299,7 +300,7 @@ class TestCharacterContextIntegration:
     @pytest.mark.asyncio
     async def test_character_healing_and_damage(self, character_application_service):
         """Test character healing and damage functionality."""
-        character_id = str(CharacterID())
+        character_id = str(CharacterID("test_character_456"))
 
         # Mock repository
         character_application_service.command_handlers.handle_command = AsyncMock()
@@ -350,7 +351,7 @@ class TestCharacterContextIntegration:
             "Test"
         )
         class_results = await character_application_service.find_characters_by_class(
-            "warrior"
+            "fighter"
         )
         race_results = await character_application_service.find_characters_by_race(
             "human"
@@ -368,7 +369,7 @@ class TestCharacterContextIntegration:
             "Test"
         )
         character_application_service.repository.find_by_class.assert_called_once_with(
-            CharacterClass("warrior")
+            CharacterClass("fighter")
         )
         character_application_service.repository.find_by_race.assert_called_once_with(
             CharacterRace("human")
@@ -599,7 +600,7 @@ def run_character_context_integration_tests():
             character_name="Command Test Character",
             gender="male",
             race="human",
-            character_class="warrior",
+            character_class="fighter",
             age=30,
             strength=16,
             dexterity=12,

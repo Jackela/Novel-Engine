@@ -61,8 +61,6 @@ from src.core.system_orchestrator import (
 # Removed unused import: from functools import wraps
 
 
-
-
 # Import security systems (if available)
 try:
     from src.security.auth_system import AuthenticationManager
@@ -107,7 +105,6 @@ class OptimizedJSONResponse(JSONResponse):
         cache_control: Optional[str] = None,
         max_age: Optional[int] = None,
     ):
-
         # Add performance headers
         if headers is None:
             headers = {}
@@ -242,9 +239,24 @@ async def lifespan(app: FastAPI):
                 global_structured_logger.info(
                     "Authentication system initialized", category=LogCategory.SECURITY
                 )
-            except Exception as e:
+            except (ValueError, TypeError) as e:
+                # Invalid JWT secret or configuration
                 global_structured_logger.error(
-                    f"Authentication initialization failed: {e}",
+                    f"Authentication configuration error: {e}",
+                    category=LogCategory.SECURITY,
+                    extra={"error_type": type(e).__name__},
+                )
+            except (FileNotFoundError, PermissionError) as e:
+                # Database path issues
+                global_structured_logger.error(
+                    f"Authentication database access error: {e}",
+                    category=LogCategory.SECURITY,
+                    extra={"error_type": type(e).__name__},
+                )
+            except ImportError as e:
+                # Authentication modules not loaded
+                global_structured_logger.error(
+                    f"Authentication module import failed: {e}",
                     category=LogCategory.SECURITY,
                 )
 
@@ -261,9 +273,26 @@ async def lifespan(app: FastAPI):
 
         yield
 
-    except Exception as startup_error:
+    except ServiceUnavailableException as startup_error:
+        # System orchestrator or critical service unavailable
         global_structured_logger.error(
-            f"API server startup failed: {startup_error}",
+            f"Critical service unavailable during startup: {startup_error}",
+            exc_info=startup_error,
+            category=LogCategory.SYSTEM,
+        )
+        raise
+    except (FileNotFoundError, PermissionError) as startup_error:
+        # Missing files or insufficient permissions
+        global_structured_logger.error(
+            f"File system error during startup: {startup_error}",
+            exc_info=startup_error,
+            category=LogCategory.SYSTEM,
+        )
+        raise
+    except ImportError as startup_error:
+        # Critical module import failure
+        global_structured_logger.error(
+            f"Module import failed during startup: {startup_error}",
             exc_info=startup_error,
             category=LogCategory.ERROR,
         )
@@ -281,9 +310,17 @@ async def lifespan(app: FastAPI):
                 global_structured_logger.info(
                     "Story API background tasks stopped", category=LogCategory.SYSTEM
                 )
-            except Exception as e:
+            except (RuntimeError, AttributeError) as e:
+                # Story API in invalid state or missing methods
                 global_structured_logger.error(
-                    f"Error stopping story API tasks: {e}", category=LogCategory.ERROR
+                    f"Error stopping story API tasks: {e}",
+                    category=LogCategory.ERROR,
+                    extra={"error_type": type(e).__name__},
+                )
+            except (asyncio.CancelledError, asyncio.TimeoutError) as e:
+                # Task cancellation or timeout during shutdown
+                global_structured_logger.warning(
+                    f"Story API task shutdown timeout: {e}", category=LogCategory.ERROR
                 )
 
         # Shutdown orchestrator
@@ -293,10 +330,17 @@ async def lifespan(app: FastAPI):
                 global_structured_logger.info(
                     "System Orchestrator shutdown complete", category=LogCategory.SYSTEM
                 )
-            except Exception as e:
+            except (RuntimeError, AttributeError) as e:
+                # Orchestrator in invalid state or missing shutdown method
                 global_structured_logger.error(
                     f"Error during orchestrator shutdown: {e}",
                     category=LogCategory.ERROR,
+                    extra={"error_type": type(e).__name__},
+                )
+            except asyncio.TimeoutError as e:
+                # Shutdown timeout exceeded
+                global_structured_logger.error(
+                    f"Orchestrator shutdown timeout: {e}", category=LogCategory.ERROR
                 )
 
 
@@ -339,7 +383,7 @@ def create_app() -> FastAPI:
         # 1. Rate limiting middleware (first line of defense)
         if config.enable_rate_limiting:
             rate_limit_backend = InMemoryRateLimitBackend()
-            rate_limit_strategy = RateLimitStrategy()
+            rate_limit_strategy = RateLimitStrategy.ADAPTIVE
             app.add_middleware(
                 RateLimitMiddleware,
                 backend=rate_limit_backend,
@@ -424,8 +468,12 @@ def create_app() -> FastAPI:
                 cached_health = health_monitor.get_cached_health(max_age_seconds=60)
                 if cached_health:
                     health_status = cached_health.status.value
-            except Exception:
-                pass
+            except (AttributeError, ValueError, RuntimeError) as e:
+                # Health monitor missing methods, invalid parameters, or invalid state
+                global_structured_logger.debug(
+                    f"Health status retrieval failed: {e}",
+                    extra={"error_type": type(e).__name__},
+                )
 
         content = {
             "name": "Novel Engine API",
@@ -538,9 +586,88 @@ def create_app() -> FastAPI:
                 headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
             )
 
-        except Exception as e:
+        except ServiceUnavailableException as e:
+            # Health monitoring system unavailable
             response_time = (time.time() - start_time) * 1000
-            logger.error(f"Health check failed: {e}")
+            logger.error(
+                f"Health check failed - service unavailable: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            fallback_data = HealthCheckData(
+                service_status="unhealthy",
+                database_status="unknown",
+                orchestrator_status="unknown",
+                active_agents=0,
+                uptime_seconds=0,
+                version="1.1.0",
+                environment="unknown",
+            )
+            metadata = APIMetadata(
+                timestamp=datetime.now(), api_version="1.1", server_time=response_time
+            )
+            response = HealthCheckResponse(data=fallback_data, metadata=metadata)
+            return JSONResponse(
+                content=response.model_dump(),
+                status_code=503,
+                headers={"Cache-Control": "no-cache"},
+            )
+        except RuntimeError as e:
+            # Health monitoring in invalid state
+            response_time = (time.time() - start_time) * 1000
+            logger.error(
+                f"Health check failed - runtime error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            fallback_data = HealthCheckData(
+                service_status="unhealthy",
+                database_status="unknown",
+                orchestrator_status="unknown",
+                active_agents=0,
+                uptime_seconds=0,
+                version="1.1.0",
+                environment="unknown",
+            )
+            metadata = APIMetadata(
+                timestamp=datetime.now(), api_version="1.1", server_time=response_time
+            )
+            response = HealthCheckResponse(data=fallback_data, metadata=metadata)
+            return JSONResponse(
+                content=response.model_dump(),
+                status_code=503,
+                headers={"Cache-Control": "no-cache"},
+            )
+        except asyncio.TimeoutError as e:
+            # Health check timeout
+            response_time = (time.time() - start_time) * 1000
+            logger.error(
+                f"Health check failed - timeout: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            fallback_data = HealthCheckData(
+                service_status="unhealthy",
+                database_status="unknown",
+                orchestrator_status="unknown",
+                active_agents=0,
+                uptime_seconds=0,
+                version="1.1.0",
+                environment="unknown",
+            )
+            metadata = APIMetadata(
+                timestamp=datetime.now(), api_version="1.1", server_time=response_time
+            )
+            response = HealthCheckResponse(data=fallback_data, metadata=metadata)
+            return JSONResponse(
+                content=response.model_dump(),
+                status_code=503,
+                headers={"Cache-Control": "no-cache"},
+            )
+        except AttributeError as e:
+            # Health monitor missing expected methods
+            response_time = (time.time() - start_time) * 1000
+            logger.error(
+                f"Health check failed - attribute error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
             # Fallback health response
             fallback_data = HealthCheckData(
@@ -631,8 +758,26 @@ def _register_legacy_routes(app: FastAPI):
                 f"Legacy characters endpoint returned {len(characters)} characters"
             )
             return {"characters": characters}
-        except Exception as e:
-            logger.error(f"Error in legacy characters endpoint: {e}")
+        except PermissionError as e:
+            # Insufficient permissions to access characters directory
+            logger.error(
+                f"Error in legacy characters endpoint - permission denied: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(status_code=500, detail="Failed to retrieve characters")
+        except OSError as e:
+            # File system error accessing characters directory
+            logger.error(
+                f"Error in legacy characters endpoint - OS error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(status_code=500, detail="Failed to retrieve characters")
+        except UnicodeDecodeError as e:
+            # Character encoding error reading directory
+            logger.error(
+                f"Error in legacy characters endpoint - encoding error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             raise HTTPException(status_code=500, detail="Failed to retrieve characters")
 
     @app.get("/characters/{character_id}", response_model=dict)
@@ -682,9 +827,29 @@ def _register_legacy_routes(app: FastAPI):
                                 or "summary" in line.lower()
                             ):
                                 character_data["background_summary"] = line.strip()
-                except Exception as e:
+                except FileNotFoundError as e:
+                    # Character file doesn't exist
                     logger.warning(
-                        f"Could not read character file for {character_id}: {e}"
+                        f"Could not read character file for {character_id} - file not found: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                except PermissionError as e:
+                    # Insufficient permissions to read character file
+                    logger.warning(
+                        f"Could not read character file for {character_id} - permission denied: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                except UnicodeDecodeError as e:
+                    # Character encoding error
+                    logger.warning(
+                        f"Could not read character file for {character_id} - encoding error: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                except OSError as e:
+                    # File system error
+                    logger.warning(
+                        f"Could not read character file for {character_id} - OS error: {e}",
+                        extra={"error_type": type(e).__name__},
                     )
 
             # Try to read stats if file exists
@@ -697,8 +862,36 @@ def _register_legacy_routes(app: FastAPI):
                         if isinstance(stats, dict):
                             character_data["skills"] = stats.get("skills", {})
                             character_data["metadata"].update(stats.get("metadata", {}))
-                except Exception as e:
-                    logger.warning(f"Could not read stats file for {character_id}: {e}")
+                except FileNotFoundError as e:
+                    # Stats file doesn't exist
+                    logger.warning(
+                        f"Could not read stats file for {character_id} - file not found: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                except PermissionError as e:
+                    # Insufficient permissions to read stats file
+                    logger.warning(
+                        f"Could not read stats file for {character_id} - permission denied: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                except yaml.YAMLError as e:
+                    # YAML parsing error
+                    logger.warning(
+                        f"Could not read stats file for {character_id} - YAML error: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                except UnicodeDecodeError as e:
+                    # Character encoding error
+                    logger.warning(
+                        f"Could not read stats file for {character_id} - encoding error: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                except OSError as e:
+                    # File system error
+                    logger.warning(
+                        f"Could not read stats file for {character_id} - OS error: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
 
             logger.info(
                 f"Legacy character detail endpoint returned data for {character_id}"
@@ -707,9 +900,51 @@ def _register_legacy_routes(app: FastAPI):
 
         except HTTPException:
             raise
-        except Exception as e:
+        except FileNotFoundError as e:
+            # Character files not found
             logger.error(
-                f"Error in legacy character detail endpoint for {character_id}: {e}"
+                f"Error in legacy character detail endpoint for {character_id} - file not found: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to retrieve character details: {str(e)}",
+            )
+        except PermissionError as e:
+            # Insufficient permissions to access character files
+            logger.error(
+                f"Error in legacy character detail endpoint for {character_id} - permission denied: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to retrieve character details: {str(e)}",
+            )
+        except yaml.YAMLError as e:
+            # YAML parsing error
+            logger.error(
+                f"Error in legacy character detail endpoint for {character_id} - YAML error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to retrieve character details: {str(e)}",
+            )
+        except UnicodeDecodeError as e:
+            # Character encoding error
+            logger.error(
+                f"Error in legacy character detail endpoint for {character_id} - encoding error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to retrieve character details: {str(e)}",
+            )
+        except OSError as e:
+            # File system error
+            logger.error(
+                f"Error in legacy character detail endpoint for {character_id} - OS error: {e}",
+                extra={"error_type": type(e).__name__},
             )
             raise HTTPException(
                 status_code=500,
@@ -791,7 +1026,6 @@ def _register_legacy_routes(app: FastAPI):
                 import time
                 import uuid
 
-
                 start_time = time.time()
                 generation_id = f"legacy_{uuid.uuid4().hex[:8]}"
 
@@ -833,8 +1067,64 @@ def _register_legacy_routes(app: FastAPI):
                     )
                     return response
 
-                except Exception as e:
-                    logger.error(f"Story generation failed in legacy simulation: {e}")
+                except asyncio.TimeoutError as e:
+                    # Story generation timeout
+                    logger.error(
+                        f"Story generation failed in legacy simulation - timeout: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                    # Fallback response
+                    return {
+                        "story": f"A story featuring {', '.join(character_names)} was generated through the legacy simulation system.",
+                        "participants": character_names,
+                        "turns_executed": turns,
+                        "duration_seconds": time.time() - start_time,
+                    }
+                except asyncio.CancelledError as e:
+                    # Story generation cancelled
+                    logger.error(
+                        f"Story generation failed in legacy simulation - cancelled: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                    # Fallback response
+                    return {
+                        "story": f"A story featuring {', '.join(character_names)} was generated through the legacy simulation system.",
+                        "participants": character_names,
+                        "turns_executed": turns,
+                        "duration_seconds": time.time() - start_time,
+                    }
+                except RuntimeError as e:
+                    # Story generation runtime error
+                    logger.error(
+                        f"Story generation failed in legacy simulation - runtime error: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                    # Fallback response
+                    return {
+                        "story": f"A story featuring {', '.join(character_names)} was generated through the legacy simulation system.",
+                        "participants": character_names,
+                        "turns_executed": turns,
+                        "duration_seconds": time.time() - start_time,
+                    }
+                except ValueError as e:
+                    # Invalid parameters or data
+                    logger.error(
+                        f"Story generation failed in legacy simulation - value error: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
+                    # Fallback response
+                    return {
+                        "story": f"A story featuring {', '.join(character_names)} was generated through the legacy simulation system.",
+                        "participants": character_names,
+                        "turns_executed": turns,
+                        "duration_seconds": time.time() - start_time,
+                    }
+                except KeyError as e:
+                    # Missing expected data in response
+                    logger.error(
+                        f"Story generation failed in legacy simulation - key error: {e}",
+                        extra={"error_type": type(e).__name__},
+                    )
                     # Fallback response
                     return {
                         "story": f"A story featuring {', '.join(character_names)} was generated through the legacy simulation system.",
@@ -853,8 +1143,39 @@ def _register_legacy_routes(app: FastAPI):
 
         except HTTPException:
             raise
-        except Exception as e:
-            logger.error(f"Error in legacy simulation endpoint: {e}")
+        except ValueError as e:
+            # Invalid parameters or data
+            logger.error(
+                f"Error in legacy simulation endpoint - value error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(
+                status_code=500, detail=f"Simulation execution failed: {str(e)}"
+            )
+        except RuntimeError as e:
+            # Simulation runtime error
+            logger.error(
+                f"Error in legacy simulation endpoint - runtime error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(
+                status_code=500, detail=f"Simulation execution failed: {str(e)}"
+            )
+        except asyncio.TimeoutError as e:
+            # Simulation timeout
+            logger.error(
+                f"Error in legacy simulation endpoint - timeout: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(
+                status_code=500, detail=f"Simulation execution failed: {str(e)}"
+            )
+        except KeyError as e:
+            # Missing expected data
+            logger.error(
+                f"Error in legacy simulation endpoint - key error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             raise HTTPException(
                 status_code=500, detail=f"Simulation execution failed: {str(e)}"
             )

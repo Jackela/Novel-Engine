@@ -88,9 +88,7 @@ class PipelineOrchestrator:
                 return False
 
             # Start turn execution
-            if not self._execute_pipeline_phases(
-                turn, phase_handlers, progress_callback
-            ):
+            if not self._execute_pipeline_phases(turn, phase_handlers, progress_callback):
                 return False
 
             # Complete turn successfully
@@ -125,9 +123,7 @@ class PipelineOrchestrator:
         Returns:
             Tuple of (success, phase_results)
         """
-        phase_timeout = timeout_override or turn.configuration.get_phase_timeout(
-            phase_type.value
-        )
+        phase_timeout = timeout_override or turn.configuration.get_phase_timeout(phase_type.value)
 
         # Prepare phase execution context
         phase_context = self._prepare_phase_context(turn, phase_type)
@@ -174,8 +170,7 @@ class PipelineOrchestrator:
             error_details = {
                 "error_type": type(e).__name__,
                 "phase_context": phase_context,
-                "execution_time_ms": (datetime.now() - execution_start).total_seconds()
-                * 1000,
+                "execution_time_ms": (datetime.now() - execution_start).total_seconds() * 1000,
             }
 
             # Update turn with phase failure
@@ -250,9 +245,7 @@ class PipelineOrchestrator:
                     self.execution_metrics["successful_turns"]
                     / max(1, self.execution_metrics["total_turns_executed"])
                 ),
-                "average_execution_time_ms": self.execution_metrics[
-                    "average_execution_time_ms"
-                ],
+                "average_execution_time_ms": self.execution_metrics["average_execution_time_ms"],
             },
             "phase_performance": self.execution_metrics["phase_success_rates"],
             "resource_utilization": self.execution_metrics["resource_utilization"],
@@ -330,9 +323,7 @@ class PipelineOrchestrator:
                 raise ValueError(f"No handler provided for phase {phase_type}")
 
             # Execute phase
-            success, phase_results = self.execute_single_phase(
-                turn, phase_type, phase_handler
-            )
+            success, phase_results = self.execute_single_phase(turn, phase_type, phase_handler)
 
             # Call progress callback if provided
             if progress_callback:
@@ -349,18 +340,14 @@ class PipelineOrchestrator:
 
         return True
 
-    def _prepare_phase_context(
-        self, turn: Turn, phase_type: PhaseType
-    ) -> Dict[str, Any]:
+    def _prepare_phase_context(self, turn: Turn, phase_type: PhaseType) -> Dict[str, Any]:
         """Prepare execution context for phase."""
         return {
             "turn_id": turn.turn_id.turn_uuid,
             "phase_type": phase_type.value,
             "configuration": turn.configuration.__dict__,
             "participants": turn.configuration.participants,
-            "ai_integration_enabled": turn.configuration.should_use_ai_for_phase(
-                phase_type.value
-            ),
+            "ai_integration_enabled": turn.configuration.should_use_ai_for_phase(phase_type.value),
             "timeout_ms": turn.configuration.get_phase_timeout(phase_type.value),
             "previous_phases": [p.value for p in turn.get_completed_phases()],
             "rollback_snapshots": turn.rollback_snapshots,
@@ -391,9 +378,7 @@ class PipelineOrchestrator:
             # Check if execution exceeded timeout
             execution_time = (datetime.now() - start_time).total_seconds() * 1000
             if execution_time > timeout_ms:
-                raise TimeoutError(
-                    f"Phase {phase_type} exceeded timeout of {timeout_ms}ms"
-                )
+                raise TimeoutError(f"Phase {phase_type} exceeded timeout of {timeout_ms}ms")
 
             # Add execution metadata
             results["execution_time_ms"] = execution_time
@@ -407,9 +392,7 @@ class PipelineOrchestrator:
             # Wrap other exceptions with context
             raise RuntimeError(f"Phase {phase_type} execution failed: {e}") from e
 
-    def _validate_phase_results(
-        self, phase_type: PhaseType, results: Dict[str, Any]
-    ) -> bool:
+    def _validate_phase_results(self, phase_type: PhaseType, results: Dict[str, Any]) -> bool:
         """Validate phase execution results."""
         if not isinstance(results, dict):
             return False
@@ -423,10 +406,7 @@ class PipelineOrchestrator:
         if not isinstance(results.get("success"), bool):
             return False
 
-        if (
-            not isinstance(results.get("events_processed"), int)
-            or results["events_processed"] < 0
-        ):
+        if not isinstance(results.get("events_processed"), int) or results["events_processed"] < 0:
             return False
 
         # Phase-specific validation
@@ -463,9 +443,7 @@ class PipelineOrchestrator:
 
         # Check memory usage (would integrate with actual memory monitoring)
         # For now, we'll simulate based on turn complexity
-        estimated_memory = (
-            len(turn.configuration.participants) * 10
-        )  # MB per participant
+        estimated_memory = len(turn.configuration.participants) * 10  # MB per participant
         if estimated_memory > self.resource_limits["max_memory_mb"]:
             return False
 
@@ -512,9 +490,7 @@ class PipelineOrchestrator:
             self.execution_metrics["failed_turns"] += 1
 
         # Update average execution time
-        execution_time = (
-            datetime.now() - execution["started_at"]
-        ).total_seconds() * 1000
+        execution_time = (datetime.now() - execution["started_at"]).total_seconds() * 1000
         total_turns = self.execution_metrics["total_turns_executed"]
         current_avg = self.execution_metrics["average_execution_time_ms"]
 

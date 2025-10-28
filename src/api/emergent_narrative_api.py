@@ -202,7 +202,7 @@ class EmergentNarrativeAPI:
 
         @app.post(
             "/api/v1/narratives/emergent/generate",
-            response_model=StandardResponse[EmergentNarrativeData],
+            response_model=StandardResponse,
             summary="Generate Emergent Narrative",
             description="Generate emergent narrative based on agent interactions and causal graph",
         )
@@ -266,7 +266,7 @@ class EmergentNarrativeAPI:
 
         @app.post(
             "/api/v1/narratives/build",
-            response_model=StandardResponse[EmergentNarrativeData],
+            response_model=StandardResponse,
             summary="Build Comprehensive Narrative",
             description="Build comprehensive narrative from existing story elements",
         )
@@ -330,7 +330,7 @@ class EmergentNarrativeAPI:
 
         @app.get(
             "/api/v1/causality/graph",
-            response_model=StandardResponse[CausalGraphData],
+            response_model=StandardResponse,
             summary="Get Causal Graph",
             description="Access causal relationship graph",
         )
@@ -378,7 +378,7 @@ class EmergentNarrativeAPI:
 
         @app.get(
             "/api/v1/narratives/emergent/{narrative_id}",
-            response_model=StandardResponse[EmergentNarrativeData],
+            response_model=StandardResponse,
             summary="Get Generated Narrative",
             description="Retrieve previously generated emergent narrative",
         )

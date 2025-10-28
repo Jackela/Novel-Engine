@@ -123,9 +123,7 @@ class SubjectiveApplicationService:
         """
         return self.repository.get_by_entity_id(entity_id)
 
-    def delete_turn_brief(
-        self, entity_id: str, deletion_reason: str = "entity_removed"
-    ) -> bool:
+    def delete_turn_brief(self, entity_id: str, deletion_reason: str = "entity_removed") -> bool:
         """
         Delete a TurnBrief.
 
@@ -443,9 +441,7 @@ class SubjectiveApplicationService:
         Returns:
             Number of TurnBriefs successfully updated
         """
-        return self.repository.batch_update_world_state_version(
-            entity_ids, new_world_state_version
-        )
+        return self.repository.batch_update_world_state_version(entity_ids, new_world_state_version)
 
     def cleanup_stale_knowledge_for_entity(
         self,
@@ -479,9 +475,7 @@ class SubjectiveApplicationService:
         )
 
         if stale_subjects:
-            self.logger.info(
-                f"Cleaned up stale knowledge for entity {entity_id}: {stale_subjects}"
-            )
+            self.logger.info(f"Cleaned up stale knowledge for entity {entity_id}: {stale_subjects}")
 
     def cleanup_expired_turn_briefs(self, expiration_hours: float = 168.0) -> int:
         """
@@ -511,9 +505,7 @@ class SubjectiveApplicationService:
         Returns:
             List of entity IDs with knowledge about the subject
         """
-        return self.repository.find_entities_with_knowledge_about(
-            subject, min_certainty
-        )
+        return self.repository.find_entities_with_knowledge_about(subject, min_certainty)
 
     def get_entities_that_can_perceive_location(
         self, location_id: str, perception_type: Optional[PerceptionType] = None

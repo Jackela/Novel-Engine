@@ -153,9 +153,9 @@ class GoalManager:
         }
 
         # Goal interaction tracking
-        self._goal_relationships: Dict[str, List[str]] = (
-            {}
-        )  # goal_id -> [related_goal_ids]
+        self._goal_relationships: Dict[
+            str, List[str]
+        ] = {}  # goal_id -> [related_goal_ids]
 
         # Performance metrics
         self._metrics = {
@@ -208,8 +208,18 @@ class GoalManager:
             self.logger.info(f"Added new goal: {goal.title} ({goal_id})")
             return goal_id
 
-        except Exception as e:
-            self.logger.error(f"Failed to add goal: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid goal data structure or missing required fields
+            self.logger.error(
+                f"Invalid goal data: {e}", extra={"error_type": type(e).__name__}
+            )
+            raise
+        except (ValueError, RuntimeError) as e:
+            # Goal type/priority conversion or dependency validation errors
+            self.logger.error(
+                f"Goal creation processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             raise
 
     async def prioritize_goals(self, context: GoalContext) -> List[Goal]:
@@ -243,8 +253,19 @@ class GoalManager:
             self.logger.debug(f"Prioritized {len(prioritized_goals)} goals")
             return prioritized_goals
 
-        except Exception as e:
-            self.logger.error(f"Goal prioritization failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid context or goal data structure
+            self.logger.error(
+                f"Invalid data during goal prioritization: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return list(self._active_goals.values())
+        except (ValueError, IndexError) as e:
+            # Priority calculation or sorting errors
+            self.logger.error(
+                f"Goal prioritization processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return list(self._active_goals.values())
 
     async def update_goal_progress(
@@ -304,8 +325,19 @@ class GoalManager:
             )
             return True
 
-        except Exception as e:
-            self.logger.error(f"Goal progress update failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid goal or progress data structure
+            self.logger.error(
+                f"Invalid data during goal progress update: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (ValueError, IndexError) as e:
+            # List operations or completion check errors
+            self.logger.error(
+                f"Goal progress update processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     async def generate_goals_from_events(
@@ -346,8 +378,19 @@ class GoalManager:
             )
             return filtered_goals
 
-        except Exception as e:
-            self.logger.error(f"Goal generation from events failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid event or character context data
+            self.logger.error(
+                f"Invalid data during goal generation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (ValueError, RuntimeError) as e:
+            # Template generation or filtering errors
+            self.logger.error(
+                f"Goal generation processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return []
 
     async def get_goals_by_type(self, goal_type: GoalType) -> List[Goal]:
@@ -401,8 +444,19 @@ class GoalManager:
             self.logger.info(f"Abandoned goal {goal_id}: {reason}")
             return True
 
-        except Exception as e:
-            self.logger.error(f"Goal abandonment failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid goal data or status update errors
+            self.logger.error(
+                f"Invalid data during goal abandonment: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (ValueError, IndexError) as e:
+            # List operations or dictionary access errors
+            self.logger.error(
+                f"Goal abandonment processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     async def get_goal_statistics(self) -> Dict[str, Any]:
@@ -454,8 +508,19 @@ class GoalManager:
                 "metrics": self._metrics.copy(),
             }
 
-        except Exception as e:
-            self.logger.error(f"Goal statistics calculation failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid goal data or structure errors
+            self.logger.error(
+                f"Invalid data during statistics calculation: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (ValueError, ZeroDivisionError) as e:
+            # Calculation or division errors
+            self.logger.error(
+                f"Statistics calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return {"error": str(e)}
 
     async def save_goals_state(self, file_path: str) -> bool:
@@ -483,8 +548,18 @@ class GoalManager:
             self.logger.info(f"Goals state saved to {file_path}")
             return True
 
-        except Exception as e:
-            self.logger.error(f"Failed to save goals state: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during save
+            self.logger.error(
+                f"File system error during goals state save: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
+            # JSON serialization errors
+            self.logger.error(
+                f"JSON serialization error: {e}", extra={"error_type": type(e).__name__}
+            )
             return False
 
     async def load_goals_state(self, file_path: str) -> bool:
@@ -520,8 +595,19 @@ class GoalManager:
             self.logger.info(f"Goals state loaded from {file_path}")
             return True
 
-        except Exception as e:
-            self.logger.error(f"Failed to load goals state: {e}")
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            # File system errors during load
+            self.logger.error(
+                f"File system error during goals state load: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            # JSON parsing or data format errors
+            self.logger.error(
+                f"Data format error during goals state load: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return False
 
     # Private helper methods
@@ -553,9 +639,18 @@ class GoalManager:
 
             return max(0.0, min(1.0, score))
 
-        except Exception as e:
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid goal or context data structure
             self.logger.debug(
-                f"Priority calculation failed for goal {goal.goal_id}: {e}"
+                f"Priority calculation data error for goal {goal.goal_id}: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return 0.5
+        except (ValueError, ZeroDivisionError) as e:
+            # Calculation or weighting errors
+            self.logger.debug(
+                f"Priority score calculation error for goal {goal.goal_id}: {e}",
+                extra={"error_type": type(e).__name__},
             )
             return 0.5
 
@@ -674,8 +769,18 @@ class GoalManager:
 
                 self.logger.info(f"Goal failed: {goal.title}")
 
-        except Exception as e:
-            self.logger.error(f"Goal completion check failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid goal data or status update errors
+            self.logger.error(
+                f"Invalid data during goal completion check: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+        except (ValueError, IndexError) as e:
+            # List operations or dictionary access errors
+            self.logger.error(
+                f"Goal completion check processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     def _check_success_conditions(self, goal: Goal) -> bool:
         """Check if goal's success conditions are met."""

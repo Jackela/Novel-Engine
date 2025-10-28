@@ -96,9 +96,7 @@ class TermCondition:
 
         # Validate dependencies
         if self.dependencies:
-            if not all(
-                isinstance(dep, str) and dep.strip() for dep in self.dependencies
-            ):
+            if not all(isinstance(dep, str) and dep.strip() for dep in self.dependencies):
                 raise ValueError("All dependencies must be non-empty strings")
 
     def with_value(
@@ -224,9 +222,7 @@ class ProposalTerms:
         for term in self.terms:
             for dependency in term.dependencies or []:
                 if dependency not in term_ids:
-                    raise ValueError(
-                        f"Term {term.term_id} has invalid dependency: {dependency}"
-                    )
+                    raise ValueError(f"Term {term.term_id} has invalid dependency: {dependency}")
 
         # Check for circular dependencies
         self._validate_no_circular_dependencies()
@@ -256,9 +252,7 @@ class ProposalTerms:
         for term in self.terms:
             if term.term_id not in visited:
                 if has_circular_dependency(term.term_id, visited, set()):
-                    raise ValueError(
-                        f"Circular dependency detected involving term: {term.term_id}"
-                    )
+                    raise ValueError(f"Circular dependency detected involving term: {term.term_id}")
 
     @classmethod
     def create(
@@ -312,9 +306,7 @@ class ProposalTerms:
         if updated_term.term_id != term_id:
             raise ValueError("Updated term ID must match target term ID")
 
-        updated_terms = [
-            updated_term if term.term_id == term_id else term for term in self.terms
-        ]
+        updated_terms = [updated_term if term.term_id == term_id else term for term in self.terms]
 
         return ProposalTerms(
             proposal_id=self.proposal_id,
@@ -347,16 +339,12 @@ class ProposalTerms:
         """Create new ProposalTerms with term removed."""
         # Check if other terms depend on this term
         dependent_terms = [
-            term
-            for term in self.terms
-            if term.dependencies and term_id in term.dependencies
+            term for term in self.terms if term.dependencies and term_id in term.dependencies
         ]
 
         if dependent_terms:
             dependent_ids = [term.term_id for term in dependent_terms]
-            raise ValueError(
-                f"Cannot remove term {term_id}: it has dependents {dependent_ids}"
-            )
+            raise ValueError(f"Cannot remove term {term_id}: it has dependents {dependent_ids}")
 
         updated_terms = [term for term in self.terms if term.term_id != term_id]
 

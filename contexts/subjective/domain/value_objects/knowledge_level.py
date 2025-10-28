@@ -166,9 +166,7 @@ class KnowledgeBase:
         # Validate all knowledge items
         for subject, items in self.knowledge_items.items():
             if not isinstance(items, list):
-                raise ValueError(
-                    f"Knowledge items for subject '{subject}' must be a list"
-                )
+                raise ValueError(f"Knowledge items for subject '{subject}' must be a list")
 
             for item in items:
                 if not isinstance(item, KnowledgeItem):
@@ -192,10 +190,7 @@ class KnowledgeBase:
         filtered_items = []
 
         for item in items:
-            if (
-                item.is_current(current_time)
-                and item.get_reliability_score() >= min_reliability
-            ):
+            if item.is_current(current_time) and item.get_reliability_score() >= min_reliability:
                 filtered_items.append(item)
 
         # Sort by reliability score (descending) then by acquisition time (descending)
@@ -263,9 +258,7 @@ class KnowledgeBase:
 
         return stale_knowledge
 
-    def get_knowledge_by_source(
-        self, source: KnowledgeSource
-    ) -> Dict[str, List[KnowledgeItem]]:
+    def get_knowledge_by_source(self, source: KnowledgeSource) -> Dict[str, List[KnowledgeItem]]:
         """Get all knowledge from a specific source."""
         filtered_knowledge = {}
 
@@ -290,14 +283,10 @@ class KnowledgeBase:
 
         return KnowledgeBase(knowledge_items=new_knowledge_items)
 
-    def update_knowledge(
-        self, subject: str, updated_item: KnowledgeItem
-    ) -> "KnowledgeBase":
+    def update_knowledge(self, subject: str, updated_item: KnowledgeItem) -> "KnowledgeBase":
         """Create a new knowledge base with updated knowledge about a subject."""
         if updated_item.subject != subject:
-            raise ValueError(
-                "Updated knowledge item subject must match the specified subject"
-            )
+            raise ValueError("Updated knowledge item subject must match the specified subject")
 
         return self.add_knowledge(updated_item)
 

@@ -26,7 +26,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-import aioredis
+import redis.asyncio as redis
 import aiosqlite
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
@@ -160,7 +160,7 @@ class SecurityDashboard:
         """Initialize security dashboard"""
         try:
             # Connect to Redis
-            self.redis_client = aioredis.from_url(self.redis_url)
+            self.redis_client = redis.from_url(self.redis_url, decode_responses=True)
             await self.redis_client.ping()
             logger.info("✅ Security Dashboard Redis connection established")
 

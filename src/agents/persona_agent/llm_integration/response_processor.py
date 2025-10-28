@@ -217,14 +217,31 @@ class ResponseProcessor:
             )
             return result
 
-        except Exception as e:
-            self.logger.error(f"Response processing failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid context data or response structure
+            self.logger.error(
+                f"Invalid data during response processing: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             self._stats["total_processed"] += 1
             self._stats["validation_failures"] += 1
-
             return ProcessingResult(
                 success=False,
-                processed_content=raw_response,  # Return original on failure
+                processed_content=raw_response,
+                response_type=ResponseType.DESCRIPTION,
+                validation_issues=[str(e)],
+            )
+        except (ValueError, RuntimeError) as e:
+            # Processing or validation errors
+            self.logger.error(
+                f"Response processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            self._stats["total_processed"] += 1
+            self._stats["validation_failures"] += 1
+            return ProcessingResult(
+                success=False,
+                processed_content=raw_response,
                 response_type=ResponseType.DESCRIPTION,
                 validation_issues=[str(e)],
             )
@@ -307,8 +324,18 @@ class ResponseProcessor:
             self.logger.debug(f"Extracted {len(actions)} actions from response")
             return actions
 
-        except Exception as e:
-            self.logger.error(f"Action extraction failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid response structure or pattern errors
+            self.logger.error(
+                f"Invalid data during action extraction: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return []
+        except (ValueError, IndexError) as e:
+            # Pattern matching or text extraction errors
+            self.logger.error(
+                f"Action extraction error: {e}", extra={"error_type": type(e).__name__}
+            )
             return []
 
     async def enhance_response(self, response: str, context: Dict[str, Any]) -> str:
@@ -339,8 +366,19 @@ class ResponseProcessor:
 
             return enhanced
 
-        except Exception as e:
-            self.logger.error(f"Response enhancement failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid context or character data
+            self.logger.error(
+                f"Invalid data during response enhancement: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return response
+        except (ValueError, RuntimeError) as e:
+            # Enhancement processing errors
+            self.logger.error(
+                f"Enhancement processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return response
 
     async def validate_response_safety(self, response: str) -> Tuple[bool, List[str]]:
@@ -393,8 +431,19 @@ class ResponseProcessor:
             is_safe = len(issues) == 0
             return is_safe, issues
 
-        except Exception as e:
-            self.logger.error(f"Safety validation failed: {e}")
+        except (AttributeError, TypeError) as e:
+            # Pattern or configuration errors
+            self.logger.error(
+                f"Safety validation configuration error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return False, [str(e)]
+        except (ValueError, IndexError) as e:
+            # Pattern matching or validation errors
+            self.logger.error(
+                f"Safety validation processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return False, [str(e)]
 
     async def get_processing_statistics(self) -> Dict[str, Any]:
@@ -416,8 +465,18 @@ class ResponseProcessor:
                 "configuration": self._config.copy(),
             }
 
-        except Exception as e:
-            self.logger.error(f"Statistics calculation failed: {e}")
+        except (ZeroDivisionError, ValueError) as e:
+            # Division or calculation errors
+            self.logger.error(
+                f"Statistics calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return {"error": str(e)}
+        except (AttributeError, KeyError) as e:
+            # Missing statistics data
+            self.logger.error(
+                f"Statistics data error: {e}", extra={"error_type": type(e).__name__}
+            )
             return {"error": str(e)}
 
     # Private helper methods
@@ -438,8 +497,12 @@ class ResponseProcessor:
                 ),
             }
 
-        except Exception as e:
-            self.logger.debug(f"Character data update failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid context or character data structure
+            self.logger.debug(
+                f"Character data update failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
 
     async def _validate_response_basic(self, response: str) -> Tuple[bool, List[str]]:
         """Basic response validation."""
@@ -465,8 +528,12 @@ class ResponseProcessor:
 
             return len(issues) == 0, issues
 
-        except Exception as e:
-            return False, [str(e)]
+        except (AttributeError, TypeError) as e:
+            # Validation method or configuration errors
+            return False, [f"Validation error: {str(e)}"]
+        except (ValueError, IndexError) as e:
+            # Pattern matching or content validation errors
+            return False, [f"Content validation error: {str(e)}"]
 
     async def _classify_response_type(
         self, response: str, context: Dict[str, Any]
@@ -516,8 +583,12 @@ class ResponseProcessor:
             # Default to description
             return ResponseType.DESCRIPTION
 
-        except Exception as e:
-            self.logger.debug(f"Response type classification failed: {e}")
+        except (AttributeError, TypeError) as e:
+            # Invalid response or context structure
+            self.logger.debug(
+                f"Response type classification failed: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return ResponseType.DESCRIPTION
 
     async def _clean_response(self, response: str) -> str:
@@ -553,8 +624,11 @@ class ResponseProcessor:
 
             return cleaned.strip()
 
-        except Exception as e:
-            self.logger.debug(f"Response cleaning failed: {e}")
+        except (AttributeError, TypeError) as e:
+            # Invalid response structure
+            self.logger.debug(
+                f"Response cleaning failed: {e}", extra={"error_type": type(e).__name__}
+            )
             return response
 
     async def _check_character_consistency(
@@ -596,8 +670,27 @@ class ResponseProcessor:
                 suggestions=suggestions,
             )
 
-        except Exception as e:
-            self.logger.debug(f"Consistency check failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid character data or context
+            self.logger.debug(
+                f"Consistency check data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return CharacterConsistencyCheck(
+                overall_score=0.5,
+                personality_consistency=0.5,
+                faction_alignment=0.5,
+                emotional_consistency=0.5,
+                knowledge_consistency=0.5,
+                issues_found=[str(e)],
+                suggestions=[],
+            )
+        except (ValueError, ZeroDivisionError) as e:
+            # Calculation or scoring errors
+            self.logger.debug(
+                f"Consistency check calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return CharacterConsistencyCheck(
                 overall_score=0.5,
                 personality_consistency=0.5,
@@ -664,8 +757,18 @@ class ResponseProcessor:
 
             return max(0.0, min(1.0, score))
 
-        except Exception as e:
-            self.logger.debug(f"Personality consistency check failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Missing personality trait data
+            self.logger.debug(
+                f"Personality data error: {e}", extra={"error_type": type(e).__name__}
+            )
+            return 0.5
+        except (ValueError, ZeroDivisionError) as e:
+            # Calculation errors
+            self.logger.debug(
+                f"Personality score calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return 0.5
 
     async def _check_faction_alignment(self, response: str) -> float:
@@ -687,8 +790,12 @@ class ResponseProcessor:
 
             return max(0.0, min(1.0, score))
 
-        except Exception as e:
-            self.logger.debug(f"Faction alignment check failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Missing faction data or invalid structure
+            self.logger.debug(
+                f"Faction alignment data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return 0.5
 
     async def _check_emotional_consistency(
@@ -726,8 +833,12 @@ class ResponseProcessor:
 
             return max(0.0, min(1.0, score))
 
-        except Exception as e:
-            self.logger.debug(f"Emotional consistency check failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Missing emotional state or context data
+            self.logger.debug(
+                f"Emotional consistency data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return 0.5
 
     async def _check_knowledge_consistency(
@@ -740,8 +851,12 @@ class ResponseProcessor:
             # For now, return neutral score
             return 0.7
 
-        except Exception as e:
-            self.logger.debug(f"Knowledge consistency check failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Missing knowledge data
+            self.logger.debug(
+                f"Knowledge consistency data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return 0.5
 
     async def _parse_structured_content(
@@ -753,8 +868,12 @@ class ResponseProcessor:
             # Future versions could parse JSON, extract specific data structures, etc.
             return response
 
-        except Exception as e:
-            self.logger.debug(f"Content parsing failed: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            # Invalid response structure or type
+            self.logger.debug(
+                f"Content parsing data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return response
 
     async def _calculate_confidence_score(
@@ -790,8 +909,19 @@ class ResponseProcessor:
 
             return max(0.0, min(1.0, score))
 
-        except Exception as e:
-            self.logger.debug(f"Confidence calculation failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Missing context or consistency data
+            self.logger.debug(
+                f"Confidence calculation data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return 0.5
+        except (ValueError, ZeroDivisionError) as e:
+            # Calculation errors
+            self.logger.debug(
+                f"Confidence score calculation error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return 0.5
 
     # Enhancement methods
@@ -816,8 +946,19 @@ class ResponseProcessor:
 
             return enhanced
 
-        except Exception as e:
-            self.logger.debug(f"Speech pattern application failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Missing speech pattern data
+            self.logger.debug(
+                f"Speech pattern data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return response
+        except (TypeError, ValueError) as e:
+            # Pattern replacement errors
+            self.logger.debug(
+                f"Speech pattern processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return response
 
     def _initialize_response_patterns(self) -> Dict[str, List[str]]:
@@ -907,8 +1048,19 @@ class ResponseProcessor:
 
             return corrected
 
-        except Exception as e:
-            self.logger.debug(f"Consistency correction failed: {e}")
+        except (AttributeError, KeyError) as e:
+            # Missing consistency check data
+            self.logger.debug(
+                f"Consistency correction data error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
+            return response
+        except (ValueError, RuntimeError) as e:
+            # Correction processing errors
+            self.logger.debug(
+                f"Consistency correction processing error: {e}",
+                extra={"error_type": type(e).__name__},
+            )
             return response
 
     async def _add_emotional_context(

@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Set
 
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
 
-from .persona_models import CharacterPersona, CharacterTemplate
+from .persona_models import CharacterArchetype, CharacterPersona, CharacterTemplate
 
 logger = logging.getLogger(__name__)
 
@@ -119,4 +119,3 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
 
         dynamic_elements = list(set(variables + blocks))
         return dynamic_elements
-

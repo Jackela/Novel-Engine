@@ -146,11 +146,7 @@ class WorldStateModel(FullAuditModel):
             serialized_entities[entity_id] = entity.to_dict()
 
         return cls(
-            id=(
-                uuid.UUID(world_state.id)
-                if isinstance(world_state.id, str)
-                else world_state.id
-            ),
+            id=(uuid.UUID(world_state.id) if isinstance(world_state.id, str) else world_state.id),
             name=world_state.name,
             description=world_state.description,
             status=world_state.status.value,
@@ -331,9 +327,7 @@ class WorldStateVersionModel(FullAuditModel):
 
     # Performance indexes
     __table_args__ = (
-        Index(
-            "idx_world_versions_world_id_version", "world_state_id", "version_number"
-        ),
+        Index("idx_world_versions_world_id_version", "world_state_id", "version_number"),
         Index("idx_world_versions_created_at", "created_at"),
         Index("idx_world_versions_changed_by", "changed_by"),
     )
@@ -348,10 +342,7 @@ class WorldStateVersionModel(FullAuditModel):
         if self.version_number < 1:
             errors.append("Version number must be positive")
 
-        if (
-            self.previous_version is not None
-            and self.previous_version >= self.version_number
-        ):
+        if self.previous_version is not None and self.previous_version >= self.version_number:
             errors.append("Previous version must be less than current version")
 
         if not self.version_data:

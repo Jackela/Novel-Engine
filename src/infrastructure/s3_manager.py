@@ -412,7 +412,6 @@ class S3StorageManager:
 
             # Use multipart upload for large files
             if file_size > self.config.multipart_threshold:
-
                 # Progress tracking for multipart uploads to be implemented
                 async with aiofiles.open(local_path, "rb") as f:
                     await self.s3_client.upload_fileobj(

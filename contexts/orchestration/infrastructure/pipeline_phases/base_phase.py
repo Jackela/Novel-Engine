@@ -173,9 +173,7 @@ class BasePhaseImplementation(ABC):
         self._validate_preconditions(context)
 
         # Set up timeout monitoring
-        timeout_seconds = (
-            context.configuration.get_phase_timeout(self.phase_type.value) / 1000.0
-        )
+        timeout_seconds = context.configuration.get_phase_timeout(self.phase_type.value) / 1000.0
 
         try:
             # Execute phase with timeout
@@ -198,9 +196,7 @@ class BasePhaseImplementation(ABC):
                 "phase_type": self.phase_type.value,
             }
 
-            return self._create_failure_result(
-                context, "Phase execution timed out", error_details
-            )
+            return self._create_failure_result(context, "Phase execution timed out", error_details)
 
         except Exception as e:
             # Handle general execution errors
@@ -216,9 +212,7 @@ class BasePhaseImplementation(ABC):
             )
 
     @abstractmethod
-    async def _execute_phase_implementation(
-        self, context: PhaseExecutionContext
-    ) -> PhaseResult:
+    async def _execute_phase_implementation(self, context: PhaseExecutionContext) -> PhaseResult:
         """
         Implement phase-specific execution logic.
 
@@ -243,9 +237,7 @@ class BasePhaseImplementation(ABC):
         """
         pass
 
-    def _validate_phase_result(
-        self, result: PhaseResult, context: PhaseExecutionContext
-    ) -> None:
+    def _validate_phase_result(self, result: PhaseResult, context: PhaseExecutionContext) -> None:
         """
         Validate phase execution result structure and content.
 
@@ -283,9 +275,7 @@ class BasePhaseImplementation(ABC):
         """
         # Add execution timing
         result.performance_metrics.update(context.performance_metrics)
-        result.performance_metrics["execution_time_ms"] = (
-            context.get_execution_time_ms()
-        )
+        result.performance_metrics["execution_time_ms"] = context.get_execution_time_ms()
 
         # Add cross-context call data
         result.cross_context_calls = context.cross_context_calls.copy()
@@ -396,9 +386,7 @@ class BasePhaseImplementation(ABC):
             )
 
             # Record performance metric
-            context.record_performance_metric(
-                f"{service_name}_response_time_ms", response_time_ms
-            )
+            context.record_performance_metric(f"{service_name}_response_time_ms", response_time_ms)
 
             return response_data
 
@@ -547,10 +535,6 @@ class BasePhaseImplementation(ABC):
             ValueError: If required participants are not available
         """
         if required_participants:
-            missing_participants = set(required_participants) - set(
-                context.participants
-            )
+            missing_participants = set(required_participants) - set(context.participants)
             if missing_participants:
-                raise ValueError(
-                    f"Required participants not available: {missing_participants}"
-                )
+                raise ValueError(f"Required participants not available: {missing_participants}")

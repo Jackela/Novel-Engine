@@ -5,7 +5,6 @@ from src.event_bus import EventBus
 
 
 class TestEventBus(unittest.TestCase):
-
     def setUp(self):
         self.event_bus = EventBus()
 
