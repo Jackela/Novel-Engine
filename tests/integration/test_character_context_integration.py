@@ -24,6 +24,7 @@ from contexts.character import (
 
 # Import value objects for detailed testing
 from contexts.character.domain.value_objects.character_stats import (
+    AbilityScore,
     CoreAbilities,
 )
 from contexts.character.domain.value_objects.skills import (
@@ -173,7 +174,7 @@ class TestCharacterContextIntegration:
                 wisdom=10,
                 charisma=10,
             )
-            modifier = abilities.get_ability_modifier(abilities.AbilityScore.STRENGTH)
+            modifier = abilities.get_ability_modifier(AbilityScore.STRENGTH)
             assert (
                 modifier == expected_modifier
             ), f"Score {score} should have modifier {expected_modifier}, got {modifier}"
@@ -189,7 +190,7 @@ class TestCharacterContextIntegration:
         )
         character_application_service.repository.save = AsyncMock()
         character_application_service.command_handlers.handle_command = AsyncMock(
-            return_value=CharacterID()
+            return_value=CharacterID.generate()
         )
 
         # Create character through application service
@@ -257,7 +258,7 @@ class TestCharacterContextIntegration:
     @pytest.mark.asyncio
     async def test_character_stats_updates(self, character_application_service):
         """Test character stats update functionality."""
-        character_id = str(CharacterID())
+        character_id = str(CharacterID.generate())
 
         # Mock repository
         mock_character = MagicMock()
@@ -281,7 +282,7 @@ class TestCharacterContextIntegration:
     @pytest.mark.asyncio
     async def test_character_level_up(self, character_application_service):
         """Test character level up functionality."""
-        character_id = str(CharacterID())
+        character_id = str(CharacterID.generate())
 
         # Mock repository
         character_application_service.command_handlers.handle_command = AsyncMock()
@@ -299,7 +300,7 @@ class TestCharacterContextIntegration:
     @pytest.mark.asyncio
     async def test_character_healing_and_damage(self, character_application_service):
         """Test character healing and damage functionality."""
-        character_id = str(CharacterID())
+        character_id = str(CharacterID.generate())
 
         # Mock repository
         character_application_service.command_handlers.handle_command = AsyncMock()

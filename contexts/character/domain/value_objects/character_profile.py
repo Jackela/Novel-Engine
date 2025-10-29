@@ -41,6 +41,7 @@ class CharacterClass(Enum):
     """Character class/profession options."""
 
     FIGHTER = "fighter"
+    WARRIOR = "warrior"
     WIZARD = "wizard"
     ROGUE = "rogue"
     CLERIC = "cleric"
