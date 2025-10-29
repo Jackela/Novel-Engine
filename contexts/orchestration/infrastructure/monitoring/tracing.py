@@ -21,6 +21,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, SimpleSpanProcess
 from opentelemetry.sdk.trace.sampling import (
     Decision,
     ParentBased,
+    SamplingResult,
     StaticSampler,
     TraceIdRatioBased,
 )
@@ -96,7 +97,7 @@ class IntelligentSampler:
         attributes: Optional[Attributes] = None,
         links: Optional[List] = None,
         trace_state: Optional[trace.TraceState] = None,
-    ) -> trace.sampling.SamplingResult:
+    ) -> SamplingResult:
         """
         Determine sampling decision based on intelligent criteria.
 
@@ -186,9 +187,18 @@ class NovelEngineTracer:
 
         # Add exporters
         if self.config.jaeger_endpoint:
-            jaeger_exporter = JaegerExporter(endpoint=self.config.jaeger_endpoint)
-            self.tracer_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
-            logger.info(f"Jaeger exporter configured: {self.config.jaeger_endpoint}")
+            try:
+                jaeger_exporter = JaegerExporter(
+                    collector_endpoint=self.config.jaeger_endpoint
+                )
+                self.tracer_provider.add_span_processor(
+                    BatchSpanProcessor(jaeger_exporter)
+                )
+                logger.info(f"Jaeger exporter configured: {self.config.jaeger_endpoint}")
+            except (TypeError, Exception) as e:
+                logger.warning(
+                    f"Failed to initialize Jaeger exporter: {e}. Tracing will continue without Jaeger."
+                )
 
         if self.config.otlp_endpoint:
             otlp_exporter = OTLPSpanExporter(endpoint=self.config.otlp_endpoint)
