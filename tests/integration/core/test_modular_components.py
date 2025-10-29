@@ -20,17 +20,19 @@ logger = logging.getLogger(__name__)
 # Import modular components for testing
 try:
     # Persona Agent Modular Components
-    from src.agents.persona_agent.core.decision_engine import DecisionEngine
+    from src.agents.persona_agent.decision_engine.decision_processor import (
+        DecisionProcessor,
+    )
     from src.agents.persona_agent.core.types import (
         CharacterData,
         DecisionContext,
         PersonaAgentConfig,
     )
-    from src.agents.persona_agent.data.character_data_manager import (
+    from src.agents.persona_agent.core.character_data_manager import (
         CharacterDataManager,
     )
     from src.agents.persona_agent.llm_integration.llm_client import LLMClient
-    from src.agents.persona_agent.memory.memory_manager import PersonaMemoryManager
+    from src.agents.persona_agent.world_interpretation.memory_manager import MemoryManager
     from src.agents.persona_agent.persona_agent_modular import PersonaAgent
     from src.bridges.multi_agent_bridge.coordination.dialogue_manager import (
         DialogueManager,
@@ -145,12 +147,12 @@ class TestPersonaAgentModularComponents:
 
     @pytest.mark.asyncio
     async def test_decision_engine_component(self):
-        """Test DecisionEngine component in isolation."""
+        """Test DecisionProcessor component in isolation."""
         if not REAL_COMPONENTS:
             pytest.skip("Real components not available")
 
-        config = PersonaAgentConfig(decision_confidence_threshold=0.6)
-        decision_engine = DecisionEngine(config)
+        config = PersonaAgentConfig()
+        decision_engine = DecisionProcessor(config)
 
         # Test decision context processing
         context = DecisionContext(
@@ -184,12 +186,12 @@ class TestPersonaAgentModularComponents:
         assert hasattr(validation_result, "is_valid")
 
     def test_persona_memory_manager_component(self):
-        """Test PersonaMemoryManager component."""
+        """Test MemoryManager component."""
         if not REAL_COMPONENTS:
             pytest.skip("Real components not available")
 
-        config = PersonaAgentConfig(memory_capacity=100)
-        memory_manager = PersonaMemoryManager(config)
+        config = PersonaAgentConfig(max_memory_size=100)
+        memory_manager = MemoryManager(config)
 
         # Test memory operations
         memory_manager.store_memory("test_event", {"data": "test"})
