@@ -55,6 +55,8 @@ class TurnExecutionRequest(BaseModel):
     @field_validator("participants")
     @classmethod
     def validate_participants(cls, v):
+        if not v or len(v) == 0:
+            raise ValueError("At least one participant is required")
         if not all(isinstance(p, str) and p.strip() for p in v):
             raise ValueError("All participants must be non-empty strings")
         if len(set(v)) != len(v):
