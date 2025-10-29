@@ -467,7 +467,7 @@ class TestTurnOrchestrationE2E:
         assert response.status_code in [
             400,
             422,
-        ], f"Expected validation error, got {response.status_code}"
+        ], f"Expected validation error, got {response.status_code}. Response: {response.text}"
 
         response_data = response.json()
         assert (

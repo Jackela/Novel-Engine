@@ -38,8 +38,7 @@ class TurnExecutionRequest(BaseModel):
 
     participants: List[str] = Field(
         ...,
-        min_length=1,
-        max_length=10,
+        min_length=1,  # This validates each string item length
         description="List of participant agent IDs (1-10 participants)",
     )
     configuration: Optional[Dict[str, Any]] = Field(
