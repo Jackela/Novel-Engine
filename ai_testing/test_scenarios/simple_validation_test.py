@@ -9,8 +9,10 @@ import time
 from pathlib import Path
 
 import httpx
+import pytest
 
 
+@pytest.mark.asyncio
 async def test_framework_effectiveness():
     """测试框架有效性验证"""
     

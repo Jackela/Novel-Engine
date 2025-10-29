@@ -12,6 +12,7 @@ import asyncio
 
 import httpx
 import pytest
+import pytest_asyncio
 
 # Mark all tests in this module as requiring services
 pytestmark = pytest.mark.requires_services
@@ -27,13 +28,13 @@ SERVICE_URLS = {
     "notification": "http://localhost:8005"
 }
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def http_client():
     """HTTP client for testing"""
     async with httpx.AsyncClient(timeout=60.0) as client:
         yield client
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def wait_for_services():
     """Wait for all services to be ready"""
     async with httpx.AsyncClient(timeout=10.0) as client:

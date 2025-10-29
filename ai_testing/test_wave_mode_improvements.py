@@ -7,9 +7,12 @@ import asyncio
 import sys
 from pathlib import Path
 
+import pytest
+
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent))
 
+@pytest.mark.asyncio
 async def test_improvements():
     """Test the Wave Mode improvements"""
     print("=" * 80)
