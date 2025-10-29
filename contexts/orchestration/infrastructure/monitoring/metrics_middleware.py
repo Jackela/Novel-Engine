@@ -11,9 +11,51 @@ import time
 from typing import Callable, Optional
 
 from fastapi import Request, Response
-from prometheus_client import Counter, Gauge, Histogram, Info
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
+
+try:
+    from prometheus_client import Counter, Gauge, Histogram, Info
+except ImportError as prometheus_error:  # pragma: no cover - dependency-light mode
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        "prometheus_client unavailable (%s); Prometheus middleware will operate in no-op mode.",
+        prometheus_error,
+    )
+
+    class _NoOpMetric:
+        def __init__(self, *_, **__):
+            pass
+
+        def labels(self, *_, **__):
+            return self
+
+        def inc(self, *_, **__):
+            return self
+
+        def dec(self, *_, **__):
+            return self
+
+        def observe(self, *_, **__):
+            return self
+
+        def set(self, *_, **__):
+            return self
+
+        def info(self, *_, **__):
+            return self
+
+        def time(self):
+            class _Timer:
+                def __enter__(self_inner):
+                    return self_inner
+
+                def __exit__(self_inner, exc_type, exc, tb):
+                    return False
+
+            return _Timer()
+
+    Counter = Gauge = Histogram = Info = _NoOpMetric  # type: ignore
 
 from .prometheus_collector import PrometheusMetricsCollector
 

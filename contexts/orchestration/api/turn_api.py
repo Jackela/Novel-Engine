@@ -25,12 +25,44 @@ from typing import Annotated
 from ..application.services import TurnOrchestrator
 from ..domain.services import EnhancedPerformanceTracker
 from ..domain.value_objects import PhaseType, TurnConfiguration, TurnId
-from ..infrastructure.monitoring import (
-    PrometheusMetricsCollector,
-    PrometheusMiddleware,
-    initialize_tracing,
-    setup_fastapi_tracing,
-)
+try:
+    from ..infrastructure.monitoring import (
+        PrometheusMetricsCollector,
+        PrometheusMiddleware,
+        initialize_tracing,
+        setup_fastapi_tracing,
+    )
+except ImportError as monitoring_error:  # pragma: no cover - exercised in test stubs
+    logging.getLogger(__name__).warning(
+        "Observability dependencies missing (%s); using no-op monitoring.", monitoring_error
+    )
+
+    class PrometheusMetricsCollector:  # type: ignore[override]
+        """Minimal collector that satisfies EnhancedPerformanceTracker expectations."""
+
+        def __init__(self, *_, **__):
+            pass
+
+        def get_metrics_data(self) -> str:
+            return ""
+
+        def get_metrics_content_type(self) -> str:
+            return "text/plain"
+
+    class PrometheusMiddleware:  # type: ignore[override]
+        """No-op ASGI middleware when prometheus_client is unavailable."""
+
+        def __init__(self, app, *_, **__):
+            self.app = app
+
+        async def __call__(self, scope, receive, send):
+            await self.app(scope, receive, send)
+
+    def initialize_tracing(*_, **__):
+        return None
+
+    def setup_fastapi_tracing(app: FastAPI, *_args, **_kwargs) -> FastAPI:
+        return app
 
 logger = logging.getLogger(__name__)
 
@@ -768,6 +800,11 @@ def _convert_to_response(result) -> TurnExecutionResponse:
                 error_message=None,
             )
 
+    # Build phases completed list with deterministic fallback
+    phases_completed = [phase.value for phase in result.phases_completed]
+    if not phases_completed:
+        phases_completed = default_phases.copy()
+
     # Convert compensation actions
     compensation_actions = []
     for action in result.compensation_actions:
@@ -789,11 +826,7 @@ def _convert_to_response(result) -> TurnExecutionResponse:
         execution_time_ms=(
             result.execution_time_ms if result.execution_time_ms else 50.0
         ),
-        phases_completed=(
-            [phase.value for phase in result.phases_completed]
-            if result.phases_completed
-            else default_phases
-        ),
+        phases_completed=phases_completed,
         phase_results=phase_results_dict,
         compensation_actions=compensation_actions,
         performance_metrics=(
