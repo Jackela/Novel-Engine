@@ -15,6 +15,7 @@ import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field, field_validator
+from typing import Annotated
 
 from ..application.services import TurnOrchestrator
 from ..domain.services import EnhancedPerformanceTracker
