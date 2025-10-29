@@ -378,8 +378,11 @@ class TestCharacterContextIntegration:
 
     def test_character_skills_system(self):
         """Test the character skills system."""
+        # Import for skill creation
+        from contexts.character.domain.value_objects.skills import Skill
+        
         # Create a skill
-        skill = contexts.character.domain.value_objects.skills.Skill(
+        skill = Skill(
             name="sword_fighting",
             category=SkillCategory.COMBAT,
             proficiency_level=ProficiencyLevel.TRAINED,

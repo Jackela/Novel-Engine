@@ -43,6 +43,7 @@ class CharacterClass(Enum):
     FIGHTER = "fighter"
     WARRIOR = "warrior"
     WIZARD = "wizard"
+    MAGE = "mage"
     ROGUE = "rogue"
     CLERIC = "cleric"
     RANGER = "ranger"

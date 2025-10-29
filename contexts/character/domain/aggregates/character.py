@@ -365,6 +365,10 @@ class Character:
         if amount <= 0:
             raise ValueError("Heal amount must be positive")
 
+        # Cannot heal a dead character
+        if not self.is_alive():
+            return
+
         new_health = min(
             self.stats.vital_stats.current_health + amount,
             self.stats.vital_stats.max_health,
@@ -468,13 +472,15 @@ class Character:
         """Get a comprehensive summary of the character."""
         return {
             "id": str(self.character_id),
+            "name": self.profile.name,
+            "level": self.profile.level,
+            "class": self.profile.character_class.value,
+            "race": self.profile.race.value,
+            "health": f"{self.stats.vital_stats.current_health}/{self.stats.vital_stats.max_health}",
             "profile_summary": self.profile.get_character_summary(),
             "stats_summary": self.stats.get_stats_summary(),
             "skills_summary": self.skills.get_skill_summary(),
             "is_alive": self.is_alive(),
-            "level": self.profile.level,
-            "class": self.profile.character_class.value,
-            "race": self.profile.race.value,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "version": self.version,
