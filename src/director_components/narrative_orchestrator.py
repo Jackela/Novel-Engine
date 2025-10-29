@@ -15,7 +15,6 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 
-
 class EventType(Enum):
     """Types of narrative events."""
 

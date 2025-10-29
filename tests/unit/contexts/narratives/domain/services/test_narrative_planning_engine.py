@@ -11,14 +11,13 @@ from decimal import Decimal
 
 import pytest
 
+from src.contexts.narratives.domain.services.narrative_planning_engine import (
+    NarrativePlanningEngine,
+)
 from src.contexts.narratives.domain.value_objects import (
     NarrativeGuidance,
     StoryArcPhase,
     StoryArcState,
-)
-
-from src.contexts.narratives.domain.services.narrative_planning_engine import (
-    NarrativePlanningEngine,
 )
 
 
@@ -44,10 +43,14 @@ class TestNarrativePlanningEngine:
 
     def test_generate_guidance_in_exposition_focuses_on_character_intros(self) -> None:
         engine = NarrativePlanningEngine()
-        guidance = engine.generate_guidance_for_turn(state=_build_state(StoryArcPhase.EXPOSITION))
+        guidance = engine.generate_guidance_for_turn(
+            state=_build_state(StoryArcPhase.EXPOSITION)
+        )
 
         assert isinstance(guidance, NarrativeGuidance)
-        combined_objectives = " ".join([guidance.primary_narrative_goal, *guidance.secondary_narrative_goals]).lower()
+        combined_objectives = " ".join(
+            [guidance.primary_narrative_goal, *guidance.secondary_narrative_goals]
+        ).lower()
         assert "introduc" in combined_objectives and "character" in combined_objectives
 
     def test_generate_guidance_in_climax_highlights_high_tension(self) -> None:
@@ -63,28 +66,43 @@ class TestNarrativePlanningEngine:
         guidance = engine.generate_guidance_for_turn(state=state)
 
         assert isinstance(guidance, NarrativeGuidance)
-        assert "high tension" in guidance.primary_narrative_goal.lower() or guidance.target_tension_level >= Decimal("8")
+        assert (
+            "high tension" in guidance.primary_narrative_goal.lower()
+            or guidance.target_tension_level >= Decimal("8")
+        )
 
     def test_generate_guidance_in_rising_action_increases_tension(self) -> None:
         engine = NarrativePlanningEngine()
-        guidance = engine.generate_guidance_for_turn(state=_build_state(StoryArcPhase.RISING_ACTION))
+        guidance = engine.generate_guidance_for_turn(
+            state=_build_state(StoryArcPhase.RISING_ACTION)
+        )
 
         assert isinstance(guidance, NarrativeGuidance)
-        combined_objectives = " ".join([guidance.primary_narrative_goal, *guidance.secondary_narrative_goals]).lower()
+        combined_objectives = " ".join(
+            [guidance.primary_narrative_goal, *guidance.secondary_narrative_goals]
+        ).lower()
         assert "increase tension" in combined_objectives
 
     def test_generate_guidance_in_falling_action_resolves_subplots(self) -> None:
         engine = NarrativePlanningEngine()
-        guidance = engine.generate_guidance_for_turn(state=_build_state(StoryArcPhase.FALLING_ACTION))
+        guidance = engine.generate_guidance_for_turn(
+            state=_build_state(StoryArcPhase.FALLING_ACTION)
+        )
 
         assert isinstance(guidance, NarrativeGuidance)
-        combined_objectives = " ".join([guidance.primary_narrative_goal, *guidance.secondary_narrative_goals]).lower()
+        combined_objectives = " ".join(
+            [guidance.primary_narrative_goal, *guidance.secondary_narrative_goals]
+        ).lower()
         assert "resolve subplots" in combined_objectives
 
     def test_generate_guidance_in_resolution_provides_closure(self) -> None:
         engine = NarrativePlanningEngine()
-        guidance = engine.generate_guidance_for_turn(state=_build_state(StoryArcPhase.RESOLUTION))
+        guidance = engine.generate_guidance_for_turn(
+            state=_build_state(StoryArcPhase.RESOLUTION)
+        )
 
         assert isinstance(guidance, NarrativeGuidance)
-        combined_objectives = " ".join([guidance.primary_narrative_goal, *guidance.secondary_narrative_goals]).lower()
+        combined_objectives = " ".join(
+            [guidance.primary_narrative_goal, *guidance.secondary_narrative_goals]
+        ).lower()
         assert "provide closure" in combined_objectives

@@ -231,15 +231,13 @@ class NarrativeProcessor:
 
         # Add faction-specific narrative perspective
         faction_lower = faction.lower()
-        if any(keyword in faction_lower for keyword in ("alliance network", "coalition")):
-            alliance_context = (
-                " Your duty to the Founders' Council guides your perception of these events."
-            )
+        if any(
+            keyword in faction_lower for keyword in ("alliance network", "coalition")
+        ):
+            alliance_context = " Your duty to the Founders' Council guides your perception of these events."
             base_context += alliance_context
         elif "freewind" in faction_lower:
-            freewind_context = (
-                " Your freewind instincts tell you there's a decisive opportunity emerging here."
-            )
+            freewind_context = " Your freewind instincts tell you there's a decisive opportunity emerging here."
             base_context += freewind_context
         elif "engineering collective" in faction_lower:
             engineering_context = " Your engineered senses detect deeper mysteries in the system processes here."

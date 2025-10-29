@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Dict
 from unittest.mock import mock_open, patch
 
-import yaml
 import pytest
+import yaml
 
 # Assuming the service is imported from the correct path
 from contexts.character.application.services.context_loader import (

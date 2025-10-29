@@ -74,4 +74,3 @@ class LearningSystem:
                 profile.preferred_formats[fmt] = max(
                     0.0, profile.preferred_formats.get(fmt, 0.5) - 0.05
                 )
-

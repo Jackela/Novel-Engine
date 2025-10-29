@@ -336,11 +336,16 @@ def setup_fastapi_tracing(
     # Enable automatic instrumentation if requested
     if enable_automatic_instrumentation:
         try:
+            excluded = (
+                get_excluded_urls()
+                if excluded_urls is None
+                else ",".join(excluded_urls)
+                if isinstance(excluded_urls, list)
+                else excluded_urls
+            )
             FastAPIInstrumentor.instrument_app(
                 app,
-                excluded_urls=(
-                    get_excluded_urls() if excluded_urls is None else excluded_urls
-                ),
+                excluded_urls=excluded,
             )
             logger.info("FastAPI automatic instrumentation enabled")
         except Exception as e:

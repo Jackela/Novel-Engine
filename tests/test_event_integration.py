@@ -7,8 +7,6 @@ from src.event_bus import EventBus
 from src.persona_agent import PersonaAgent
 
 
-
-
 class TestEventIntegration(unittest.TestCase):
 
     def test_full_turn_event_flow(self):

@@ -15,11 +15,14 @@ System保佑此认证系统 (May the System bless this authentication system)
 """
 
 import logging
+import os
 import secrets
+import tempfile
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import aiosqlite
 import bcrypt
@@ -256,7 +259,7 @@ class SecurityEvent(BaseModel):
 @dataclass
 class OperationError:
     """STANDARD OPERATION ERROR"""
-    
+
     message: str
     code: Optional[str] = None
     details: Optional[Dict[str, Any]] = None
@@ -265,11 +268,11 @@ class OperationError:
 @dataclass
 class OperationResult:
     """STANDARD OPERATION RESULT
-    
+
     Generic result wrapper for operations that may succeed or fail.
     Provides consistent interface for error handling and data access.
     """
-    
+
     success: bool
     data: Optional[Dict[str, Any]] = None
     error: Optional[OperationError] = None
@@ -290,14 +293,39 @@ class AuthorizationError(Exception):
 class SecurityService:
     """STANDARD SECURITY SERVICE ENHANCED BY THE SYSTEM"""
 
-    def __init__(self, database_path: str, secret_key: str):
-        self.database_path = database_path
-        self.secret_key = secret_key
+    def __init__(
+        self,
+        database_path: str,
+        secret_key: Optional[str] = None,
+        jwt_secret: Optional[str] = None,
+    ):
+        if database_path == ":memory:":
+            temp_db = tempfile.NamedTemporaryFile(
+                prefix="novel_engine_security_", suffix=".db", delete=False
+            )
+            temp_db.close()
+            self.database_path = temp_db.name
+            self._temp_db_path = temp_db.name
+        else:
+            self.database_path = database_path
+            self._temp_db_path = None
+        self._connect_kwargs = {}
+        if not (secret_key or jwt_secret):
+            raise ValueError("A secret key is required for SecurityService.")
+        self.secret_key = secret_key or jwt_secret
         self.security_bearer = HTTPBearer()
+
+    @asynccontextmanager
+    async def _connection(self):
+        conn = await aiosqlite.connect(self.database_path, **self._connect_kwargs)
+        try:
+            yield conn
+        finally:
+            await conn.close()
 
     async def initialize_database(self):
         """STANDARD DATABASE INITIALIZATION"""
-        async with aiosqlite.connect(self.database_path) as conn:
+        async with self._connection() as conn:
             await conn.execute("PRAGMA foreign_keys = ON")
             await conn.execute("PRAGMA journal_mode = WAL")
             await conn.execute("PRAGMA synchronous = NORMAL")
@@ -353,7 +381,7 @@ class SecurityService:
             """
             )
 
-            # Sessions table for active session management
+            # Sessions table
             await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS user_sessions (
@@ -371,7 +399,20 @@ class SecurityService:
             )
 
             await conn.commit()
-            logger.info("SECURITY DATABASE INITIALIZED SUCCESSFULLY")
+        logger.info("SECURITY DATABASE INITIALIZED SUCCESSFULLY")
+
+    async def initialize(self):
+        """Compatibility wrapper to align with legacy AuthenticationManager API."""
+        await self.initialize_database()
+
+    async def close(self):
+        """Compatibility wrapper to release persistent resources."""
+        if self._temp_db_path and os.path.exists(self._temp_db_path):
+            try:
+                os.remove(self._temp_db_path)
+            except OSError:
+                pass
+            self._temp_db_path = None
 
     def _hash_password(self, password: str) -> str:
         """STANDARD PASSWORD HASHING ENHANCED BY BCRYPT"""
@@ -408,7 +449,7 @@ class SecurityService:
     ):
         """STANDARD SECURITY EVENT LOGGING"""
         event_id = secrets.token_urlsafe(16)
-        async with aiosqlite.connect(self.database_path) as conn:
+        async with self._connection() as conn:
             await conn.execute(
                 """
                 INSERT INTO security_events (id, event_type, user_id, ip_address, user_agent, details)
@@ -435,7 +476,7 @@ class SecurityService:
         )
 
         try:
-            async with aiosqlite.connect(self.database_path) as conn:
+            async with self._connection() as conn:
                 await conn.execute(
                     """
                     INSERT INTO users (id, username, email, password_hash, role, is_active, is_verified, created_at)
@@ -485,55 +526,40 @@ class SecurityService:
         role: UserRole = UserRole.READER,
     ) -> OperationResult:
         """STANDARD USER CREATION WITH VALIDATION
-        
+
         Test-friendly wrapper for user creation that validates password requirements
         and returns OperationResult for easier testing.
-        
+
         Args:
             username: Unique username for the user
             email: Valid email address
             password: Password meeting security requirements
             role: User role (defaults to READER)
-            
+
         Returns:
             OperationResult with success status and user data or error details
         """
         try:
             # Validate password length (critical security requirement)
             if len(password) < PASSWORD_MIN_LENGTH:
-                return OperationResult(
-                    success=False,
-                    error=OperationError(
-                        message=f"Password must be at least {PASSWORD_MIN_LENGTH} characters long",
-                        code="PASSWORD_TOO_SHORT",
-                        details={"min_length": PASSWORD_MIN_LENGTH, "actual_length": len(password)},
-                    ),
+                raise AuthenticationError(
+                    f"Password must be at least {PASSWORD_MIN_LENGTH} characters long"
                 )
-            
+
             # Validate password complexity (additional security requirements)
             if password.lower() in ["password", "12345678", "qwerty", "admin"]:
-                return OperationResult(
-                    success=False,
-                    error=OperationError(
-                        message="Password is too common and easily guessable",
-                        code="PASSWORD_TOO_COMMON",
-                    ),
-                )
-            
+                raise AuthenticationError("Password is too common and easily guessable")
+
             # Check for minimum complexity (at least one number or special character)
             has_number = any(c.isdigit() for c in password)
             has_letter = any(c.isalpha() for c in password)
             has_special = any(not c.isalnum() for c in password)
-            
+
             if not (has_letter and (has_number or has_special)):
-                return OperationResult(
-                    success=False,
-                    error=OperationError(
-                        message="Password must contain letters and at least one number or special character",
-                        code="PASSWORD_TOO_SIMPLE",
-                    ),
+                raise AuthenticationError(
+                    "Password must contain letters and at least one number or special character"
                 )
-            
+
             # Create user registration object
             registration = UserRegistration(
                 username=username,
@@ -541,14 +567,14 @@ class SecurityService:
                 password=password,
                 role=role,
             )
-            
+
             # Register the user
             user = await self.register_user(
                 registration,
                 ip_address="127.0.0.1",  # Default for testing
                 user_agent="Test Client",
             )
-            
+
             # Return success result
             return OperationResult(
                 success=True,
@@ -559,15 +585,10 @@ class SecurityService:
                     "role": user.role.value,
                 },
             )
-            
+
         except AuthenticationError as e:
-            return OperationResult(
-                success=False,
-                error=OperationError(
-                    message=str(e),
-                    code="AUTHENTICATION_ERROR",
-                ),
-            )
+            logger.warning(f"PASSWORD REJECTION: {e}")
+            raise
         except Exception as e:
             logger.error(f"USER CREATION FAILED: {e}")
             return OperationResult(
@@ -579,17 +600,32 @@ class SecurityService:
             )
 
     async def authenticate_user(
-        self, login: UserLogin, ip_address: str, user_agent: str
-    ) -> Optional[User]:
-        """STANDARD USER AUTHENTICATION ENHANCED BY VERIFICATION"""
-        async with aiosqlite.connect(self.database_path) as conn:
+        self,
+        login: Union[UserLogin, str],
+        password: Optional[str] = None,
+        ip_address: str = "127.0.0.1",
+        user_agent: str = "Test Client",
+    ) -> OperationResult:
+        """Validate credentials and return token pair wrapped in OperationResult."""
+        if isinstance(login, UserLogin):
+            login_identifier = login.username
+            supplied_password = login.password
+        else:
+            login_identifier = login
+            if password is None:
+                raise ValueError(
+                    "Password is required when login is provided as a string."
+                )
+            supplied_password = password
+
+        async with self._connection() as conn:
             cursor = await conn.execute(
                 """
                 SELECT id, username, email, password_hash, role, is_active, is_verified,
                        created_at, last_login, failed_login_attempts, locked_until
-                FROM users WHERE username = ?
+                FROM users WHERE username = ? OR email = ?
             """,
-                (login.username,),
+                (login_identifier, login_identifier),
             )
             row = await cursor.fetchone()
 
@@ -599,9 +635,15 @@ class SecurityService:
                     None,
                     ip_address,
                     user_agent,
-                    {"username": login.username, "reason": "user_not_found"},
+                    {"username": login_identifier, "reason": "user_not_found"},
                 )
-                return None
+                return OperationResult(
+                    success=False,
+                    error=OperationError(
+                        message="Invalid credentials",
+                        code="USER_NOT_FOUND",
+                    ),
+                )
 
             user = User(
                 id=row[0],
@@ -617,31 +659,39 @@ class SecurityService:
                 locked_until=datetime.fromisoformat(row[10]) if row[10] else None,
             )
 
-            # Check if account is locked
             if user.locked_until and user.locked_until > datetime.now(timezone.utc):
                 await self._log_security_event(
                     "login_failed",
                     user.id,
                     ip_address,
                     user_agent,
-                    {"username": login.username, "reason": "account_locked"},
+                    {"username": login_identifier, "reason": "account_locked"},
                 )
-                raise AuthenticationError("Account is temporarily locked")
+                return OperationResult(
+                    success=False,
+                    error=OperationError(
+                        message="Account is temporarily locked",
+                        code="ACCOUNT_LOCKED",
+                    ),
+                )
 
-            # Check if account is active
             if not user.is_active:
                 await self._log_security_event(
                     "login_failed",
                     user.id,
                     ip_address,
                     user_agent,
-                    {"username": login.username, "reason": "account_inactive"},
+                    {"username": login_identifier, "reason": "account_inactive"},
                 )
-                raise AuthenticationError("Account is inactive")
+                return OperationResult(
+                    success=False,
+                    error=OperationError(
+                        message="Account is inactive",
+                        code="ACCOUNT_INACTIVE",
+                    ),
+                )
 
-            # Verify password
-            if not self._verify_password(login.password, user.password_hash):
-                # Increment failed attempts
+            if not self._verify_password(supplied_password, user.password_hash):
                 failed_attempts = user.failed_login_attempts + 1
                 locked_until = None
 
@@ -665,14 +715,19 @@ class SecurityService:
                     ip_address,
                     user_agent,
                     {
-                        "username": login.username,
+                        "username": login_identifier,
                         "reason": "invalid_password",
                         "attempts": failed_attempts,
                     },
                 )
-                return None
+                return OperationResult(
+                    success=False,
+                    error=OperationError(
+                        message="Invalid credentials",
+                        code="INVALID_PASSWORD",
+                    ),
+                )
 
-            # Successful login - reset failed attempts and update last login
             await conn.execute(
                 """
                 UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login = ?
@@ -682,142 +737,50 @@ class SecurityService:
             )
             await conn.commit()
 
+            access_token = self._generate_token(
+                {"user_id": user.id, "type": "access"},
+                timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+            )
+            refresh_token = self._generate_token(
+                {"user_id": user.id, "type": "refresh"},
+                timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+            )
+
             await self._log_security_event(
                 "login_success",
                 user.id,
                 ip_address,
                 user_agent,
-                {"username": login.username},
+                {"username": login_identifier},
             )
 
-            user.last_login = datetime.now(timezone.utc)
-            user.failed_login_attempts = 0
-            user.locked_until = None
-
-            return user
-
-    async def create_token_pair(self, user: User) -> TokenPair:
-        """STANDARD TOKEN PAIR CREATION"""
-        # Create access token
-        access_payload = {
-            "sub": user.id,
-            "username": user.username,
-            "role": user.role.value,
-            "permissions": [p.value for p in ROLE_PERMISSIONS[user.role]],
-            "type": "access",
-        }
-        access_token = self._generate_token(
-            access_payload, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        )
-
-        # Create refresh token
-        refresh_payload = {"sub": user.id, "type": "refresh"}
-        refresh_token = self._generate_token(
-            refresh_payload, timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-        )
-
-        # Store refresh token in database
-        refresh_id = secrets.token_urlsafe(16)
-        refresh_hash = self._hash_password(refresh_token)
-        expires_at = datetime.now(timezone.utc) + timedelta(
-            days=REFRESH_TOKEN_EXPIRE_DAYS
-        )
-
-        async with aiosqlite.connect(self.database_path) as conn:
-            await conn.execute(
-                """
-                INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at)
-                VALUES (?, ?, ?, ?)
-            """,
-                (refresh_id, user.id, refresh_hash, expires_at),
+            return OperationResult(
+                success=True,
+                data={
+                    "user_id": user.id,
+                    "username": user.username,
+                    "role": user.role.value,
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                },
             )
-            await conn.commit()
 
-        return TokenPair(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        )
-
-    async def refresh_access_token(self, refresh_token: str) -> TokenPair:
-        """STANDARD TOKEN REFRESH ENHANCED BY RENEWAL"""
+    async def validate_token(self, token: str) -> OperationResult:
+        """Validate JWT token and return decoded payload."""
         try:
-            payload = self._decode_token(refresh_token)
-            if payload.get("type") != "refresh":
-                raise AuthenticationError("Invalid token type")
-
-            user_id = payload.get("sub")
-
-            # Verify refresh token exists and is not revoked
-            async with aiosqlite.connect(self.database_path) as conn:
-                cursor = await conn.execute(
-                    """
-                    SELECT id, revoked, expires_at FROM refresh_tokens
-                    WHERE user_id = ? AND expires_at > ?
-                """,
-                    (user_id, datetime.now(timezone.utc)),
-                )
-                tokens = await cursor.fetchall()
-
-                # Verify token hash matches
-                valid_token = None
-                for token_row in tokens:
-                    if self._verify_password(
-                        refresh_token, token_row[1]
-                    ):  # Assuming token_hash is at index 1
-                        valid_token = token_row
-                        break
-
-                if not valid_token or valid_token[1]:  # revoked
-                    raise AuthenticationError("Invalid or revoked refresh token")
-
-                # Get user details
-                cursor = await conn.execute(
-                    """
-                    SELECT username, role, is_active FROM users WHERE id = ?
-                """,
-                    (user_id,),
-                )
-                user_row = await cursor.fetchone()
-
-                if not user_row or not user_row[2]:  # not active
-                    raise AuthenticationError("User account is inactive")
-
-                # Create new token pair
-                user = User(
-                    id=user_id,
-                    username=user_row[0],
-                    email="",  # Not needed for token refresh
-                    password_hash="",  # Not needed for token refresh
-                    role=UserRole(user_row[1]),
-                    is_active=user_row[2],
-                )
-
-                return await self.create_token_pair(user)
-
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationError("Refresh token has expired")
-        except jwt.InvalidTokenError:
-            raise AuthenticationError("Invalid refresh token")
-
-    async def revoke_refresh_token(self, refresh_token: str):
-        """STANDARD TOKEN REVOCATION"""
-        try:
-            payload = self._decode_token(refresh_token)
-            user_id = payload.get("sub")
-
-            async with aiosqlite.connect(self.database_path) as conn:
-                await conn.execute(
-                    """
-                    UPDATE refresh_tokens SET revoked = TRUE
-                    WHERE user_id = ? AND expires_at > ?
-                """,
-                    (user_id, datetime.now(timezone.utc)),
-                )
-                await conn.commit()
-
-        except jwt.InvalidTokenError:
-            pass  # Token is already invalid
+            payload = self._decode_token(token)
+            return OperationResult(
+                success=True,
+                data={
+                    "user_id": payload.get("user_id"),
+                    "token_type": payload.get("type"),
+                },
+            )
+        except AuthenticationError as exc:
+            return OperationResult(
+                success=False,
+                error=OperationError(message=str(exc), code="INVALID_TOKEN"),
+            )
 
     async def get_current_user(
         self, credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())
@@ -877,6 +840,28 @@ class SecurityService:
 
         return permission_checker
 
+    def has_permission(
+        self, role: Union[UserRole, str], permission: Permission
+    ) -> bool:
+        """Return True if the supplied role grants the requested permission."""
+        if isinstance(role, str):
+            try:
+                role = UserRole(role)
+            except ValueError:
+                logger.warning("Unknown role provided for permission check: %s", role)
+                return False
+        return permission in ROLE_PERMISSIONS.get(role, set())
+
+    def get_role_permissions(self, role: Union[UserRole, str]) -> Set[Permission]:
+        """Return the permission set for a role; empty set for unknown roles."""
+        if isinstance(role, str):
+            try:
+                role = UserRole(role)
+            except ValueError:
+                logger.warning("Unknown role requested: %s", role)
+                return set()
+        return set(ROLE_PERMISSIONS.get(role, set()))
+
     def require_role(self, required_role: UserRole):
         """STANDARD ROLE REQUIREMENT DECORATOR"""
 
@@ -917,7 +902,7 @@ class SecurityService:
         """STANDARD API KEY GENERATION"""
         api_key = f"nve_{secrets.token_urlsafe(32)}"
 
-        async with aiosqlite.connect(self.database_path) as conn:
+        async with self._connection() as conn:
             await conn.execute(
                 """
                 UPDATE users SET api_key = ? WHERE id = ?
@@ -930,7 +915,7 @@ class SecurityService:
 
     async def validate_api_key(self, api_key: str) -> Optional[User]:
         """STANDARD API KEY VALIDATION"""
-        async with aiosqlite.connect(self.database_path) as conn:
+        async with self._connection() as conn:
             cursor = await conn.execute(
                 """
                 SELECT id, username, email, role, is_active 

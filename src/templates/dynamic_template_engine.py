@@ -1020,7 +1020,9 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
     )
     if render_result.success:
         result_data = render_result.data["render_result"]
-        logger.info(f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)")
+        logger.info(
+            f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)"
+        )
         logger.info(f"Variables used: {result_data.context_variables_used}")
         logger.info("Rendered content preview:")
         logger.info(result_data.rendered_content[:200] + "...")
@@ -1076,4 +1078,6 @@ if __name__ == "__main__":
     # Run enhanced async testing
     asyncio.run(test_standard_dynamic_template_engine())
 
-    logger.info("ALL STANDARD DYNAMIC TEMPLATE ENGINE OPERATIONS ENHANCED AND FUNCTIONAL")
+    logger.info(
+        "ALL STANDARD DYNAMIC TEMPLATE ENGINE OPERATIONS ENHANCED AND FUNCTIONAL"
+    )

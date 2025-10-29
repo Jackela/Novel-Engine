@@ -1147,7 +1147,9 @@ async def test_standard_context_renderer():
     )
     if conversational_result.success:
         result_data = conversational_result.data["render_result"]
-        logger.info(f"CONVERSATIONAL RENDERED: {result_data.total_character_count} chars")
+        logger.info(
+            f"CONVERSATIONAL RENDERED: {result_data.total_character_count} chars"
+        )
 
     # Test enhanced adaptive prompt rendering
     adaptive_result = await context_renderer.render_adaptive_prompt(
@@ -1176,7 +1178,9 @@ async def test_standard_context_renderer():
     )
     if constrained_result.success:
         result_data = constrained_result.data["render_result"]
-        logger.info(f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars")
+        logger.info(
+            f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars"
+        )
         logger.info(f"Excluded sections: {len(result_data.sections_excluded)}")
 
     # Display enhanced statistics

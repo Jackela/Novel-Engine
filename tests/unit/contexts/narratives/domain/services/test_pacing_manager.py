@@ -11,14 +11,13 @@ from decimal import Decimal
 
 import pytest
 
+from src.contexts.narratives.domain.services.pacing_manager import (
+    PacingManager,
+)
 from src.contexts.narratives.domain.value_objects import (
     PacingAdjustment,
     StoryArcPhase,
     StoryArcState,
-)
-
-from src.contexts.narratives.domain.services.pacing_manager import (
-    PacingManager,
 )
 
 

@@ -237,7 +237,9 @@ ContextResult = Union[dict, None]  # Context data or enhanced emptiness
 # STANDARD LITERAL TYPES ENHANCED BY SPECIFIC VALUES
 
 # Blessed threat level literals
-ThreatLevel = Literal["minimal", "low", "medium", "high", "extreme", "prime_architect_tier"]
+ThreatLevel = Literal[
+    "minimal", "low", "medium", "high", "extreme", "prime_architect_tier"
+]
 
 # Sacred mood literals
 MoodState = Literal[

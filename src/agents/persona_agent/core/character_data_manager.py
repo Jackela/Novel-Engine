@@ -15,7 +15,6 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 
-
 class CharacterDataManager:
     """
     Manages character data loading and validation.

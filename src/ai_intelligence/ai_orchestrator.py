@@ -26,7 +26,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-
 # Import base Novel Engine components
 from src.event_bus import EventBus
 

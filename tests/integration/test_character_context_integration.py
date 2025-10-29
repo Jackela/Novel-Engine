@@ -380,7 +380,7 @@ class TestCharacterContextIntegration:
         """Test the character skills system."""
         # Import for skill creation
         from contexts.character.domain.value_objects.skills import Skill
-        
+
         # Create a skill
         skill = Skill(
             name="sword_fighting",

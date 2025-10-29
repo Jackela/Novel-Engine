@@ -1458,7 +1458,9 @@ async def test_standard_interaction_engine():
         logger.info(
             f"ENGINE METRICS: {metrics['total_interactions_processed']} total, {metrics['success_rate']:.1f}% success rate"
         )
-        logger.info(f"Average processing time: {metrics['average_processing_time']:.2f}ms")
+        logger.info(
+            f"Average processing time: {metrics['average_processing_time']:.2f}ms"
+        )
 
         # Get enhanced active interactions
         active = interaction_engine.get_active_interactions()

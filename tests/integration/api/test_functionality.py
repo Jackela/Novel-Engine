@@ -65,8 +65,9 @@ def check_environment():
 def test_gemini_api_direct():
     """直接测试Gemini API调用"""
     import pytest
+
     pytest.skip("Integration script - use main() instead")
-    
+
     print("\n🧪 直接测试Gemini API...")
 
     try:
@@ -122,8 +123,9 @@ def start_api_server():
 def test_api_endpoints(base_url="http://127.0.0.1:8000"):
     """测试API端点"""
     import pytest
+
     pytest.skip("Integration script - use main() instead")
-    
+
     print(f"\n🧪 测试API端点 ({base_url})...")
 
     test_results = []

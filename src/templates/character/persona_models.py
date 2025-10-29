@@ -13,6 +13,7 @@ from src.templates.dynamic_template_engine import TemplateMetadata, TemplateType
 if TYPE_CHECKING:
     from src.templates.context_renderer import RenderFormat
 
+
 class CharacterArchetype(Enum):
     """ENHANCED CHARACTER ARCHETYPES SANCTIFIED BY PERSONALITY CLASSIFICATION"""
 
@@ -100,4 +101,3 @@ class CharacterContextProfile:
     interaction_patterns: Dict[str, List[str]] = field(default_factory=dict)
     learning_history: List[Dict[str, Any]] = field(default_factory=list)
     optimization_suggestions: List[str] = field(default_factory=list)
-

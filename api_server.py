@@ -27,7 +27,6 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-
 # Removed stale import: _validate_gemini_api_key, _make_gemini_api_request no longer exist
 from src.event_bus import EventBus
 
@@ -50,6 +49,8 @@ try:
         SystemStatus,
     )
 
+    # Bind to throwaway tuple to avoid lint "unused import" noise.
+    _SHARED_TYPE_SENTINEL = (CharacterData, SystemStatus)
     SHARED_TYPES_AVAILABLE = True
     logger.info("Shared types successfully imported.")
 except ImportError as e:
@@ -399,7 +400,11 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
         except Exception as e:
             logger.error(f"Story generation failed: {e}")
             # Fallback to basic story generation
-            story = f"A story featuring {', '.join(request.character_names)} was generated, but detailed transcription failed."
+            characters = ", ".join(request.character_names)
+            story = (
+                "A story featuring "
+                f"{characters} was generated, but detailed transcription failed."
+            )
 
         # Clean up log file
         try:

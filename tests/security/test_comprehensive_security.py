@@ -560,7 +560,6 @@ class TestSecurityPerformance:
         # Test with normal input
         normal_input = "This is normal text content" * 10
 
-
         start_time = time.time()
 
         for _ in range(1000):

@@ -10,17 +10,16 @@ from typing import Any, Dict, List, Optional
 
 from src.core.data_models import CharacterState, ErrorInfo, StandardResponse
 from src.database.context_db import ContextDatabase
-from src.memory.layered_memory import LayeredMemorySystem
-from src.templates.character import CharacterTemplateManager
-from src.templates.context_renderer import ContextRenderer
-from src.templates.dynamic_template_engine import DynamicTemplateEngine
-
 from src.interactions.interaction_engine_system.core.types import (
     InteractionContext,
     InteractionOutcome,
     InteractionPriority,
     InteractionType,
 )
+from src.memory.layered_memory import LayeredMemorySystem
+from src.templates.character import CharacterTemplateManager
+from src.templates.context_renderer import ContextRenderer
+from src.templates.dynamic_template_engine import DynamicTemplateEngine
 
 from .generators.content_generator import ContentGenerator
 from .managers.state_manager import StateManager
@@ -30,6 +29,7 @@ from .utils.interaction_persistence import InteractionPersistence
 from .validators.interaction_validator import InteractionValidator
 
 logger = logging.getLogger(__name__)
+
 
 class InteractionEngine:
     """

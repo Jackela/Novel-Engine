@@ -170,9 +170,7 @@ class TestSemanticMemory:
         assert semantic_memory.total_facts_learned == 0
         assert semantic_memory.total_concepts_formed == 0
 
-    async def test_extract_and_store_knowledge(
-        self, semantic_memory, sample_memory
-    ):
+    async def test_extract_and_store_knowledge(self, semantic_memory, sample_memory):
         """Test knowledge extraction from memory."""
         result = await semantic_memory.extract_and_store_knowledge(sample_memory)
 
@@ -205,9 +203,7 @@ class TestSemanticMemory:
         ]
 
         for content, expected_predicate in test_cases:
-            facts = semantic_memory._extract_facts_from_content(
-                content, "test_id", 0.9
-            )
+            facts = semantic_memory._extract_facts_from_content(content, "test_id", 0.9)
             assert len(facts) >= 0
             if facts:
                 assert any(f.predicate == expected_predicate for f in facts)
@@ -241,9 +237,7 @@ class TestSemanticMemory:
         result1 = await semantic_memory._store_fact(fact1)
         assert result1.success is True
 
-        initial_confirmation = semantic_memory._facts[
-            "dup_001"
-        ].confirmation_count
+        initial_confirmation = semantic_memory._facts["dup_001"].confirmation_count
 
         fact2 = KnowledgeFact(
             fact_id="dup_001",
@@ -279,9 +273,7 @@ class TestSemanticMemory:
         assert len(result.data["facts"]) >= 0
         assert result.data["subject"] == "ocean"
 
-    async def test_query_facts_by_subject_case_insensitive(
-        self, semantic_memory
-    ):
+    async def test_query_facts_by_subject_case_insensitive(self, semantic_memory):
         """Test subject query is case-insensitive."""
         memory = MemoryItem(
             agent_id="test_agent_001",

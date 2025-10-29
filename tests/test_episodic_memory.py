@@ -202,9 +202,7 @@ class TestEpisodicMemory:
             content="Boosted event.",
         )
 
-        result = await episodic_memory.store_episode(
-            memory, significance_boost=0.5
-        )
+        result = await episodic_memory.store_episode(memory, significance_boost=0.5)
 
         assert result.success is True
         assert result.data["significance_score"] >= 0.0
@@ -304,9 +302,7 @@ class TestEpisodicMemory:
         assert result.data["participants"] == ["Commander Lex"]
         assert episodic_memory.total_episodes == 4
 
-    async def test_retrieve_episodes_by_multiple_participants(
-        self, episodic_memory
-    ):
+    async def test_retrieve_episodes_by_multiple_participants(self, episodic_memory):
         """Test retrieval with multiple participants."""
         memory = MemoryItem(
             agent_id="test_agent_001",
@@ -351,9 +347,7 @@ class TestEpisodicMemory:
         assert len(combat_result.data["episodes"]) >= 3
         assert combat_result.data["themes"] == ["combat", "battle"]
 
-    async def test_retrieve_episodes_by_theme_multiple_themes(
-        self, episodic_memory
-    ):
+    async def test_retrieve_episodes_by_theme_multiple_themes(self, episodic_memory):
         """Test retrieval with multiple theme keywords."""
         memory = MemoryItem(
             agent_id="test_agent_001",

@@ -100,7 +100,14 @@ class TurnOrchestrator:
             sampling_rate=0.5,  # 50% sampling for development
             enable_console_exporter=True,  # Enable console output for debugging
         )
-        self.tracer = initialize_tracing(tracing_config)
+        try:
+            self.tracer = initialize_tracing(tracing_config)
+        except Exception as tracer_exc:
+            logger.warning(
+                "Tracing initialization failed: %s. Continuing without tracing.",
+                tracer_exc,
+            )
+            self.tracer = None
 
         # Phase implementations
         self.phase_implementations: Dict[PhaseType, BasePhaseImplementation] = {

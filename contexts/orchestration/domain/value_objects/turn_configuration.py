@@ -59,6 +59,9 @@ class TurnConfiguration:
     max_concurrent_operations: int = 10
 
     # Participant management
+    max_participants: int = 10
+
+    # Participant management
     participants: List[str] = field(default_factory=list)
     excluded_agents: Set[str] = field(default_factory=set)
     required_agents: Set[str] = field(default_factory=set)
@@ -132,6 +135,9 @@ class TurnConfiguration:
         # Validate AI cost limit
         if self.max_ai_cost is not None and self.max_ai_cost <= 0:
             raise ValueError("max_ai_cost must be positive if specified")
+
+        if self.max_participants <= 0:
+            raise ValueError("max_participants must be positive")
 
         # Validate participants
         if not self.participants:

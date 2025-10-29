@@ -24,7 +24,6 @@ import tempfile
 import pytest
 from chronicler_agent import CampaignEvent, ChroniclerAgent, NarrativeSegment
 
-
 # Test Constants
 GENERIC_CHARACTERS = ["pilot", "scientist", "engineer", "test"]
 SCI_FI_KEYWORDS = [
@@ -102,7 +101,12 @@ class TestChroniclerAgentCore:
             ), f"Missing generic faction: {faction}"
 
         # Check no branded factions
-        banned_factions = ["Vanguard Paladins", "Alliance Guard", "Entropy Cult", "Freewind Collective"]
+        banned_factions = [
+            "Vanguard Paladins",
+            "Alliance Guard",
+            "Entropy Cult",
+            "Freewind Collective",
+        ]
         for faction in banned_factions:
             assert (
                 faction not in chronicler.faction_descriptions

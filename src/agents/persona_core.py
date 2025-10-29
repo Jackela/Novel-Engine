@@ -146,29 +146,32 @@ class PersonaCore:
     @property
     def memory(self):
         """Get memory interface with agent_id property for compatibility."""
+
         # Create a simple object with agent_id property for test compatibility
         class MemoryInterface:
             def __init__(self, agent_id: str):
                 self.agent_id = agent_id
-        
+
         return MemoryInterface(self.agent_id)
 
     @property
     def narrative(self):
         """Get narrative interface with agent_id property for compatibility."""
+
         class NarrativeInterface:
             def __init__(self, agent_id: str):
                 self.agent_id = agent_id
-        
+
         return NarrativeInterface(self.agent_id)
 
     @property
     def actions(self):
         """Get actions interface with agent_id property for compatibility."""
+
         class ActionsInterface:
             def __init__(self, agent_id: str):
                 self.agent_id = agent_id
-        
+
         return ActionsInterface(self.agent_id)
 
     async def activate(self):
@@ -184,10 +187,10 @@ class PersonaCore:
     async def read_character_file(self, filename: str) -> str:
         """
         Read a character file from the character directory.
-        
+
         Args:
             filename: Name of file to read (e.g., 'character_sheet.md')
-        
+
         Returns:
             str: File contents, or empty string if file not found
         """
@@ -197,7 +200,7 @@ class PersonaCore:
     def get_status(self) -> Dict[str, Any]:
         """
         Get current PersonaCore status.
-        
+
         Returns:
             Dict containing status information
         """

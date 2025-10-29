@@ -11,6 +11,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
+
 import pytest
 
 # Add src to path for imports
@@ -155,6 +156,7 @@ async def test_modular_director_agent():
     except Exception as e:
         print(f"❌ ModularDirectorAgent test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

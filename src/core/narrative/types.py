@@ -5,14 +5,14 @@ Shared types for emergent narrative system.
 Contains enums and dataclasses used across narrative modules.
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-import logging
-
 logger = logging.getLogger(__name__)
+
 
 class CausalRelationType(Enum):
     """因果关系类型"""
@@ -323,4 +323,3 @@ class NegotiationSession:
     updated_at: datetime = field(default_factory=datetime.now)
     resolution: Optional[Dict[str, Any]] = None
     timeout_minutes: int = 30
-

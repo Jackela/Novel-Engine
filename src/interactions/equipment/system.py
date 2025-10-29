@@ -34,6 +34,7 @@ from .validators import EquipmentValidator
 
 logger = logging.getLogger(__name__)
 
+
 class DynamicEquipmentSystem:
     """
     STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY TECHNOLOGICAL ORCHESTRATION
@@ -187,7 +188,9 @@ class DynamicEquipmentSystem:
                 code="EQUIPMENT_REGISTRATION_FAILED",
                 message=f"Equipment registration failed: {str(e)}",
                 recoverable=True,
-                details={"standard_guidance": "Check equipment data format and system state"},
+                details={
+                    "standard_guidance": "Check equipment data format and system state"
+                },
             )
 
     async def use_equipment(
@@ -332,7 +335,9 @@ class DynamicEquipmentSystem:
 
         except Exception as e:
             logger.error(f"EQUIPMENT USAGE FAILED: {e}")
-            return ResponseBuilder.operation_failed("equipment usage", e, recoverable=True)
+            return ResponseBuilder.operation_failed(
+                "equipment usage", e, recoverable=True
+            )
 
     async def perform_maintenance(
         self,
@@ -412,9 +417,7 @@ class DynamicEquipmentSystem:
                     equipment, maintenance_type
                 )
                 equipment.system_core_mood = spirit_improvement["new_mood"]
-                maintenance_record.system_core_response = spirit_improvement[
-                    "response"
-                ]
+                maintenance_record.system_core_response = spirit_improvement["response"]
 
                 # Schedule enhanced next maintenance
                 if self.auto_maintenance:

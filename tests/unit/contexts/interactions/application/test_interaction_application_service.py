@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
 import pytest
+
 from contexts.interactions.application.commands.interaction_command_handlers import (
     InteractionCommandHandler,
 )

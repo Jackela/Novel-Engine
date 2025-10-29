@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 import pytest
+
 from contexts.narratives.domain.value_objects.narrative_theme import (
     NarrativeTheme,
     ThemeIntensity,

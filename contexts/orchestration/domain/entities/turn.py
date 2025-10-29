@@ -6,7 +6,7 @@ Central domain entity managing complete turn lifecycle, saga coordination,
 and pipeline orchestration across all Novel Engine contexts.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
@@ -136,6 +136,19 @@ class Turn:
 
     # Versioning
     version: int = 1
+
+    @classmethod
+    def create(
+        cls,
+        turn_id: TurnId,
+        configuration: TurnConfiguration,
+        participants: List[str],
+    ) -> "Turn":
+        """Factory helper to instantiate turn aggregates for orchestration tests."""
+        updated_config = configuration
+        if getattr(configuration, "participants", None) != participants:
+            updated_config = replace(configuration, participants=participants)
+        return cls(turn_id=turn_id, configuration=updated_config)
 
     def __post_init__(self):
         """Initialize turn aggregate and validate business rules."""
