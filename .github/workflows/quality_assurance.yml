@@ -123,6 +123,7 @@ jobs:
     - name: Run tests with coverage
       run: |
         python -m pytest \
+          -m "not requires_services" \
           --cov=src \
           --cov-config=.coveragerc \
           --cov-report=xml \
