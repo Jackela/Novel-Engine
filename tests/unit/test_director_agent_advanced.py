@@ -142,9 +142,7 @@ class TestDirectorAgentKnowledgeSystem:
             fragment.tags = (
                 ["combat", "imperial"]
                 if i == 0
-                else ["ork", "combat"]
-                if i == 1
-                else ["warfare"]
+                else ["ork", "combat"] if i == 1 else ["warfare"]
             )
             mock_fragments.append(fragment)
 
@@ -190,9 +188,6 @@ class TestDirectorAgentNarrativeEngine:
         assert self.director.narrative_resolver is not None
 
     @pytest.mark.unit
-    @pytest.mark.skip(
-        reason="Tests internal state attributes not exposed in integrated implementation - use behavioral tests instead"
-    )
     def test_story_state_tracking(self):
         """Test story state tracking system"""
         # Check if director maintains story state
@@ -205,9 +200,6 @@ class TestDirectorAgentNarrativeEngine:
             assert component in self.director.story_state
 
     @pytest.mark.unit
-    @pytest.mark.skip(
-        reason="Tests internal state attributes not exposed in integrated implementation - use behavioral tests instead"
-    )
     def test_world_state_tracker_initialization(self):
         """Test world state tracker initialization"""
         # Check if director has world state tracker
@@ -414,9 +406,6 @@ class TestDirectorAgentAgentOrchestration:
             assert "agent" in str(e).lower() or "turn" in str(e).lower()
 
     @pytest.mark.unit
-    @pytest.mark.skip(
-        reason="Tests internal error tracking attributes not exposed in integrated implementation"
-    )
     def test_error_tracking_system(self):
         """Test error tracking and recovery system"""
         # Should have error tracking attributes
@@ -442,9 +431,6 @@ class TestDirectorAgentAgentOrchestration:
         assert isinstance(self.director.simulation_start_time, datetime)
 
     @pytest.mark.unit
-    @pytest.mark.skip(
-        reason="Tests internal configuration attributes not exposed in integrated implementation"
-    )
     def test_configuration_driven_parameters(self):
         """Test configuration-driven parameter management"""
         # Should have configuration parameters

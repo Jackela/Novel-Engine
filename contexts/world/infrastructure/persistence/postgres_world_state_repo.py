@@ -81,7 +81,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     world_state.version += 1
 
                     # Create version history entry
-                    await self._create_version_entry(session, world_state, existing_model)
+                    await self._create_version_entry(
+                        session, world_state, existing_model
+                    )
 
                     # Update existing model
                     existing_model.update_from_domain_aggregate(world_state)
@@ -105,7 +107,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 # Validate the model before saving
                 validation_errors = model_to_save.validate()
                 if validation_errors:
-                    raise RepositoryException(f"Validation failed: {'; '.join(validation_errors)}")
+                    raise RepositoryException(
+                        f"Validation failed: {'; '.join(validation_errors)}"
+                    )
 
                 # Publish domain events within the same transaction
                 domain_events = world_state.get_domain_events()
@@ -124,10 +128,14 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         except ConcurrencyException:
             raise
         except SQLAlchemyError as e:
-            self.logger.error(f"Database error saving world state {world_state.id}: {e}")
+            self.logger.error(
+                f"Database error saving world state {world_state.id}: {e}"
+            )
             raise RepositoryException(f"Failed to save world state: {e}")
         except Exception as e:
-            self.logger.error(f"Unexpected error saving world state {world_state.id}: {e}")
+            self.logger.error(
+                f"Unexpected error saving world state {world_state.id}: {e}"
+            )
             raise RepositoryException(f"Unexpected error saving world state: {e}")
 
     async def get_by_id(self, world_state_id: str) -> Optional[WorldState]:
@@ -150,17 +158,23 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 return None
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Database error retrieving world state {world_state_id}: {e}")
+            self.logger.error(
+                f"Database error retrieving world state {world_state_id}: {e}"
+            )
             raise RepositoryException(f"Failed to retrieve world state: {e}")
         except Exception as e:
-            self.logger.error(f"Unexpected error retrieving world state {world_state_id}: {e}")
+            self.logger.error(
+                f"Unexpected error retrieving world state {world_state_id}: {e}"
+            )
             raise RepositoryException(f"Unexpected error retrieving world state: {e}")
 
     async def get_by_id_or_raise(self, world_state_id: str) -> WorldState:
         """Retrieve a WorldState aggregate by ID or raise exception if not found."""
         world_state = await self.get_by_id(world_state_id)
         if world_state is None:
-            raise EntityNotFoundException(f"World state with ID {world_state_id} not found")
+            raise EntityNotFoundException(
+                f"World state with ID {world_state_id} not found"
+            )
         return world_state
 
     async def delete(self, world_state_id: str) -> bool:
@@ -189,10 +203,14 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 return True
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Database error deleting world state {world_state_id}: {e}")
+            self.logger.error(
+                f"Database error deleting world state {world_state_id}: {e}"
+            )
             raise RepositoryException(f"Failed to delete world state: {e}")
         except Exception as e:
-            self.logger.error(f"Unexpected error deleting world state {world_state_id}: {e}")
+            self.logger.error(
+                f"Unexpected error deleting world state {world_state_id}: {e}"
+            )
             raise RepositoryException(f"Unexpected error deleting world state: {e}")
 
     async def exists(self, world_state_id: str) -> bool:
@@ -220,7 +238,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             self.logger.error(
                 f"Unexpected error checking existence of world state {world_state_id}: {e}"
             )
-            raise RepositoryException(f"Unexpected error checking world state existence: {e}")
+            raise RepositoryException(
+                f"Unexpected error checking world state existence: {e}"
+            )
 
     # Query Operations
 
@@ -266,11 +286,17 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 return None
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Database error finding world state by name '{name}': {e}")
+            self.logger.error(
+                f"Database error finding world state by name '{name}': {e}"
+            )
             raise RepositoryException(f"Failed to find world state by name: {e}")
         except Exception as e:
-            self.logger.error(f"Unexpected error finding world state by name '{name}': {e}")
-            raise RepositoryException(f"Unexpected error finding world state by name: {e}")
+            self.logger.error(
+                f"Unexpected error finding world state by name '{name}': {e}"
+            )
+            raise RepositoryException(
+                f"Unexpected error finding world state by name: {e}"
+            )
 
     async def find_by_criteria(
         self, criteria: Dict[str, Any], offset: int = 0, limit: int = 100
@@ -278,7 +304,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         """Find WorldState aggregates matching specific criteria."""
         try:
             with get_db_session() as session:
-                query = session.query(WorldStateModel).filter(WorldStateModel.is_deleted is False)
+                query = session.query(WorldStateModel).filter(
+                    WorldStateModel.is_deleted is False
+                )
 
                 # Apply criteria filters
                 for key, value in criteria.items():
@@ -287,7 +315,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     elif key == "status":
                         query = query.filter(WorldStateModel.status == value)
                     elif key == "description":
-                        query = query.filter(WorldStateModel.description.ilike(f"%{value}%"))
+                        query = query.filter(
+                            WorldStateModel.description.ilike(f"%{value}%")
+                        )
                     elif key == "max_entities":
                         query = query.filter(WorldStateModel.max_entities >= value)
                     elif key == "created_after":
@@ -311,19 +341,25 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             raise RepositoryException(f"Failed to find world states by criteria: {e}")
         except Exception as e:
             self.logger.error(f"Unexpected error finding world states by criteria: {e}")
-            raise RepositoryException(f"Unexpected error finding world states by criteria: {e}")
+            raise RepositoryException(
+                f"Unexpected error finding world states by criteria: {e}"
+            )
 
     async def count(self, criteria: Optional[Dict[str, Any]] = None) -> int:
         """Count WorldState aggregates matching optional criteria."""
         try:
             with get_db_session() as session:
-                query = session.query(WorldStateModel).filter(WorldStateModel.is_deleted is False)
+                query = session.query(WorldStateModel).filter(
+                    WorldStateModel.is_deleted is False
+                )
 
                 if criteria:
                     # Apply same criteria logic as find_by_criteria
                     for key, value in criteria.items():
                         if key == "name":
-                            query = query.filter(WorldStateModel.name.ilike(f"%{value}%"))
+                            query = query.filter(
+                                WorldStateModel.name.ilike(f"%{value}%")
+                            )
                         elif key == "status":
                             query = query.filter(WorldStateModel.status == value)
                         # Add other criteria as needed
@@ -364,7 +400,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         except EntityNotFoundException:
             raise
         except Exception as e:
-            self.logger.error(f"Error finding entities by type in world {world_state_id}: {e}")
+            self.logger.error(
+                f"Error finding entities by type in world {world_state_id}: {e}"
+            )
             raise RepositoryException(f"Failed to find entities by type: {e}")
 
     async def find_entities_in_area(
@@ -399,7 +437,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         except EntityNotFoundException:
             raise
         except Exception as e:
-            self.logger.error(f"Error finding entities in area for world {world_state_id}: {e}")
+            self.logger.error(
+                f"Error finding entities in area for world {world_state_id}: {e}"
+            )
             raise RepositoryException(f"Failed to find entities in area: {e}")
 
     async def find_entities_by_coordinates(
@@ -433,7 +473,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
 
     # Versioning and History Operations
 
-    async def get_version(self, world_state_id: str, version: int) -> Optional[WorldState]:
+    async def get_version(
+        self, world_state_id: str, version: int
+    ) -> Optional[WorldState]:
         """Retrieve a specific version of a WorldState aggregate."""
         try:
             with get_db_session() as session:
@@ -441,7 +483,8 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     session.query(WorldStateVersionModel)
                     .filter(
                         and_(
-                            WorldStateVersionModel.world_state_id == uuid.UUID(world_state_id),
+                            WorldStateVersionModel.world_state_id
+                            == uuid.UUID(world_state_id),
                             WorldStateVersionModel.version_number == version,
                         )
                     )
@@ -452,7 +495,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     return None
 
                 # Reconstruct world state from version data
-                return self._reconstruct_world_state_from_version_data(version_model.version_data)
+                return self._reconstruct_world_state_from_version_data(
+                    version_model.version_data
+                )
 
         except SQLAlchemyError as e:
             self.logger.error(
@@ -463,7 +508,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             self.logger.error(
                 f"Unexpected error retrieving version {version} of world state {world_state_id}: {e}"
             )
-            raise RepositoryException(f"Unexpected error retrieving world state version: {e}")
+            raise RepositoryException(
+                f"Unexpected error retrieving world state version: {e}"
+            )
 
     async def get_version_history(
         self, world_state_id: str, limit: int = 50
@@ -473,7 +520,10 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             with get_db_session() as session:
                 versions = (
                     session.query(WorldStateVersionModel)
-                    .filter(WorldStateVersionModel.world_state_id == uuid.UUID(world_state_id))
+                    .filter(
+                        WorldStateVersionModel.world_state_id
+                        == uuid.UUID(world_state_id)
+                    )
                     .order_by(WorldStateVersionModel.version_number.desc())
                     .limit(limit)
                     .all()
@@ -485,7 +535,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                         "previous_version": version.previous_version,
                         "change_reason": version.change_reason,
                         "change_summary": version.change_summary,
-                        "changed_by": (str(version.changed_by) if version.changed_by else None),
+                        "changed_by": (
+                            str(version.changed_by) if version.changed_by else None
+                        ),
                         "created_at": version.created_at.isoformat(),
                         "entities_added": version.entities_added,
                         "entities_removed": version.entities_removed,
@@ -504,9 +556,13 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             self.logger.error(
                 f"Unexpected error retrieving version history for world state {world_state_id}: {e}"
             )
-            raise RepositoryException(f"Unexpected error retrieving version history: {e}")
+            raise RepositoryException(
+                f"Unexpected error retrieving version history: {e}"
+            )
 
-    async def rollback_to_version(self, world_state_id: str, version: int) -> WorldState:
+    async def rollback_to_version(
+        self, world_state_id: str, version: int
+    ) -> WorldState:
         """Rollback a WorldState aggregate to a previous version."""
         try:
             # Get the target version
@@ -597,7 +653,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             )
             raise RepositoryException(f"Unexpected error creating snapshot: {e}")
 
-    async def restore_from_snapshot(self, world_state_id: str, snapshot_id: str) -> WorldState:
+    async def restore_from_snapshot(
+        self, world_state_id: str, snapshot_id: str
+    ) -> WorldState:
         """Restore a WorldState aggregate from a snapshot."""
         try:
             with get_db_session() as session:
@@ -606,7 +664,8 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     .filter(
                         and_(
                             WorldStateSnapshotModel.id == uuid.UUID(snapshot_id),
-                            WorldStateSnapshotModel.world_state_id == uuid.UUID(world_state_id),
+                            WorldStateSnapshotModel.world_state_id
+                            == uuid.UUID(world_state_id),
                         )
                     )
                     .first()
@@ -643,10 +702,14 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         except EntityNotFoundException:
             raise
         except SQLAlchemyError as e:
-            self.logger.error(f"Database error restoring from snapshot {snapshot_id}: {e}")
+            self.logger.error(
+                f"Database error restoring from snapshot {snapshot_id}: {e}"
+            )
             raise RepositoryException(f"Failed to restore from snapshot: {e}")
         except Exception as e:
-            self.logger.error(f"Unexpected error restoring from snapshot {snapshot_id}: {e}")
+            self.logger.error(
+                f"Unexpected error restoring from snapshot {snapshot_id}: {e}"
+            )
             raise RepositoryException(f"Unexpected error restoring from snapshot: {e}")
 
     async def list_snapshots(self, world_state_id: str) -> List[Dict[str, Any]]:
@@ -655,7 +718,10 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             with get_db_session() as session:
                 snapshots = (
                     session.query(WorldStateSnapshotModel)
-                    .filter(WorldStateSnapshotModel.world_state_id == uuid.UUID(world_state_id))
+                    .filter(
+                        WorldStateSnapshotModel.world_state_id
+                        == uuid.UUID(world_state_id)
+                    )
                     .order_by(WorldStateSnapshotModel.created_at.desc())
                     .all()
                 )
@@ -739,13 +805,17 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                             )
 
                         world_state.version += 1
-                        await self._create_version_entry(session, world_state, existing_model)
+                        await self._create_version_entry(
+                            session, world_state, existing_model
+                        )
                         existing_model.update_from_domain_aggregate(world_state)
                         model_to_save = existing_model
                     else:
                         # Create new
                         world_state.version = 1
-                        model_to_save = WorldStateModel.from_domain_aggregate(world_state)
+                        model_to_save = WorldStateModel.from_domain_aggregate(
+                            world_state
+                        )
                         session.add(model_to_save)
                         await self._create_version_entry(session, world_state, None)
 
@@ -828,7 +898,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 )
 
                 if not model:
-                    raise EntityNotFoundException(f"World state {world_state_id} not found")
+                    raise EntityNotFoundException(
+                        f"World state {world_state_id} not found"
+                    )
 
                 optimization_results = {
                     "world_state_id": world_state_id,
@@ -842,7 +914,10 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 # Optimization 1: Clean up old version history (keep last 50 versions)
                 version_count = (
                     session.query(WorldStateVersionModel)
-                    .filter(WorldStateVersionModel.world_state_id == uuid.UUID(world_state_id))
+                    .filter(
+                        WorldStateVersionModel.world_state_id
+                        == uuid.UUID(world_state_id)
+                    )
                     .count()
                 )
 
@@ -850,7 +925,10 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     # Delete old versions, keeping the latest 50
                     old_versions = (
                         session.query(WorldStateVersionModel)
-                        .filter(WorldStateVersionModel.world_state_id == uuid.UUID(world_state_id))
+                        .filter(
+                            WorldStateVersionModel.world_state_id
+                            == uuid.UUID(world_state_id)
+                        )
                         .order_by(WorldStateVersionModel.version_number.desc())
                         .offset(50)
                     )
@@ -867,7 +945,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 world_state = model.to_domain_aggregate()
                 world_state.rebuild_spatial_index()
                 model.update_from_domain_aggregate(world_state)
-                optimization_results["optimizations_performed"].append("Rebuilt spatial index")
+                optimization_results["optimizations_performed"].append(
+                    "Rebuilt spatial index"
+                )
 
                 session.commit()
 
@@ -892,7 +972,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             )
             raise RepositoryException(f"Unexpected error optimizing storage: {e}")
 
-    async def get_statistics(self, world_state_id: Optional[str] = None) -> Dict[str, Any]:
+    async def get_statistics(
+        self, world_state_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Get storage statistics for world states."""
         try:
             with get_db_session() as session:
@@ -905,17 +987,25 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     )
 
                     if not model:
-                        raise EntityNotFoundException(f"World state {world_state_id} not found")
+                        raise EntityNotFoundException(
+                            f"World state {world_state_id} not found"
+                        )
 
                     version_count = (
                         session.query(WorldStateVersionModel)
-                        .filter(WorldStateVersionModel.world_state_id == uuid.UUID(world_state_id))
+                        .filter(
+                            WorldStateVersionModel.world_state_id
+                            == uuid.UUID(world_state_id)
+                        )
                         .count()
                     )
 
                     snapshot_count = (
                         session.query(WorldStateSnapshotModel)
-                        .filter(WorldStateSnapshotModel.world_state_id == uuid.UUID(world_state_id))
+                        .filter(
+                            WorldStateSnapshotModel.world_state_id
+                            == uuid.UUID(world_state_id)
+                        )
                         .count()
                     )
 
@@ -963,7 +1053,8 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                         "total_entities": total_entities,
                         "total_versions": total_versions,
                         "total_snapshots": total_snapshots,
-                        "average_entities_per_world": total_entities / max(len(active_worlds), 1),
+                        "average_entities_per_world": total_entities
+                        / max(len(active_worlds), 1),
                     }
 
         except EntityNotFoundException:
@@ -987,7 +1078,8 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     session.query(WorldStateVersionModel)
                     .filter(
                         and_(
-                            WorldStateVersionModel.world_state_id == uuid.UUID(world_state_id),
+                            WorldStateVersionModel.world_state_id
+                            == uuid.UUID(world_state_id),
                             WorldStateVersionModel.version_number > since_version,
                         )
                     )
@@ -1007,7 +1099,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                         "entities_modified": version.entities_modified,
                         "environment_changed": version.environment_changed,
                         "timestamp": version.created_at.isoformat(),
-                        "changed_by": (str(version.changed_by) if version.changed_by else None),
+                        "changed_by": (
+                            str(version.changed_by) if version.changed_by else None
+                        ),
                     }
                     events.append(event_data)
 
@@ -1022,7 +1116,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             self.logger.error(
                 f"Unexpected error getting events since version {since_version} for world {world_state_id}: {e}"
             )
-            raise RepositoryException(f"Unexpected error getting events since version: {e}")
+            raise RepositoryException(
+                f"Unexpected error getting events since version: {e}"
+            )
 
     async def replay_events(
         self, world_state_id: str, to_version: Optional[int] = None
@@ -1039,7 +1135,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         except EntityNotFoundException:
             raise
         except Exception as e:
-            self.logger.error(f"Error replaying events for world state {world_state_id}: {e}")
+            self.logger.error(
+                f"Error replaying events for world state {world_state_id}: {e}"
+            )
             raise RepositoryException(f"Failed to replay events: {e}")
 
     # Private Helper Methods
@@ -1078,7 +1176,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                         entities_modified += 1
 
                 # Check environment changes
-                environment_changed = world_state.environment != previous_world_state.environment
+                environment_changed = (
+                    world_state.environment != previous_world_state.environment
+                )
 
             version_model = WorldStateVersionModel(
                 world_state_id=uuid.UUID(world_state.id),
@@ -1096,7 +1196,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             session.add(version_model)
 
         except Exception as e:
-            self.logger.error(f"Error creating version entry for world state {world_state.id}: {e}")
+            self.logger.error(
+                f"Error creating version entry for world state {world_state.id}: {e}"
+            )
             raise
 
     def _reconstruct_world_state_from_version_data(
@@ -1174,5 +1276,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             return world_state
 
         except Exception as e:
-            self.logger.error(f"Error reconstructing world state from version data: {e}")
-            raise RepositoryException(f"Failed to reconstruct world state from version data: {e}")
+            self.logger.error(
+                f"Error reconstructing world state from version data: {e}"
+            )
+            raise RepositoryException(
+                f"Failed to reconstruct world state from version data: {e}"
+            )

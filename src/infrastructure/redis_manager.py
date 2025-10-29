@@ -16,7 +16,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-import redis.asyncio as redis
+import aioredis
 
 logger = logging.getLogger(__name__)
 
@@ -128,8 +128,8 @@ class RedisConnectionPool:
     def __init__(self, config: RedisConfig):
         """Initialize Redis connection pool."""
         self.config = config
-        self.pool: Optional[redis.ConnectionPool] = None
-        self.redis: Optional[redis.Redis] = None
+        self.pool: Optional[aioredis.ConnectionPool] = None
+        self.redis: Optional[aioredis.Redis] = None
         self._initialized = False
 
         # Metrics tracking
@@ -155,7 +155,7 @@ class RedisConnectionPool:
         try:
             if self.config.cluster_enabled:
                 # Redis Cluster support
-                self.redis = redis.RedisCluster(
+                self.redis = aioredis.RedisCluster(
                     startup_nodes=[
                         {"host": node.split(":")[0], "port": int(node.split(":")[1])}
                         for node in self.config.cluster_nodes
@@ -167,7 +167,7 @@ class RedisConnectionPool:
                 )
             else:
                 # Single Redis instance
-                self.pool = redis.ConnectionPool(
+                self.pool = aioredis.ConnectionPool(
                     host=self.config.host,
                     port=self.config.port,
                     password=self.config.password,
@@ -181,7 +181,7 @@ class RedisConnectionPool:
                     max_connections=self.config.max_pool_size,
                 )
 
-                self.redis = redis.Redis(connection_pool=self.pool)
+                self.redis = aioredis.Redis(connection_pool=self.pool)
 
             # Test connection
             await self.redis.ping()
@@ -622,10 +622,10 @@ class RedisConnectionPool:
                 pass
 
         if self.redis:
-            await self.redis.aclose()
+            await self.redis.close()
 
         if self.pool:
-            await self.pool.aclose()
+            await self.pool.disconnect()
 
         self._initialized = False
         logger.info("Redis connection pool closed")

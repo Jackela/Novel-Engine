@@ -76,18 +76,8 @@ class CharacterContextManager:
                 f"Character context loaded successfully for {self.core.identity.character_name}"
             )
 
-        except (FileNotFoundError, IOError) as e:
-            # Character file not found or read error
-            self.logger.error(
-                f"Failed to load character file: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (KeyError, ValueError, TypeError) as e:
-            # Invalid character data format
-            self.logger.error(
-                f"Invalid character data format: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to load character context: {e}")
 
     def _parse_character_sheet_content(self, content: str) -> Dict[str, Any]:
         """
@@ -118,14 +108,9 @@ class CharacterContextManager:
                 if parser_method:
                     try:
                         parsed_data[section_name] = parser_method(section_content)
-                    except (AttributeError, KeyError, TypeError) as e:
-                        # Parser method error or invalid section data
+                    except Exception as e:
                         self.logger.warning(
-                            f"Failed to parse {section_name} section: {e}",
-                            extra={
-                                "section": section_name,
-                                "error_type": type(e).__name__,
-                            },
+                            f"Failed to parse {section_name} section: {e}"
                         )
                         parsed_data[section_name] = {}
                 else:
@@ -315,18 +300,8 @@ class CharacterContextManager:
                 f"Core identity extracted: {self.core.identity.character_name} ({self.core.identity.primary_faction})"
             )
 
-        except (KeyError, AttributeError) as e:
-            # Missing required identity fields
-            self.logger.error(
-                f"Missing required identity data: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, TypeError) as e:
-            # Invalid identity data format
-            self.logger.error(
-                f"Invalid identity data format: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to extract core identity: {e}")
 
     def get_character_summary(self) -> Dict[str, Any]:
         """Get summary of loaded character data."""

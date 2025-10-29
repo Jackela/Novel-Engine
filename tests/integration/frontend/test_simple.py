@@ -57,9 +57,8 @@ def start_frontend_server():
 def test_frontend_basic():
     """基础前端测试"""
     import pytest
-
     pytest.skip("Integration script - use main() instead")
-
+    
     print("测试前端基础功能...")
 
     results = {}

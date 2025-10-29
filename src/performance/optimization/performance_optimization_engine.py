@@ -28,7 +28,7 @@ from enum import Enum
 from functools import wraps
 from typing import Any, Dict, List, Optional, Tuple
 
-import redis.asyncio as redis
+import aioredis
 import aiosqlite
 import psutil
 
@@ -190,7 +190,7 @@ class MultiTierCache:
         self.l1_lock = asyncio.Lock()
 
         # L2 Cache: Redis (will be initialized async)
-        self.redis_client: Optional[redis.Redis] = None
+        self.redis_client: Optional[aioredis.Redis] = None
 
         # Cache statistics
         self.stats = {
@@ -205,7 +205,7 @@ class MultiTierCache:
     async def initialize(self):
         """Initialize async cache components."""
         try:
-            self.redis_client = redis.from_url(
+            self.redis_client = aioredis.from_url(
                 self.config.redis_url,
                 encoding="utf-8",
                 decode_responses=True,
@@ -417,9 +417,9 @@ class BatchProcessor:
 
     def __init__(self, config: OptimizationConfig):
         self.config = config
-        self.pending_operations: Dict[
-            str, List[Tuple[Any, asyncio.Future]]
-        ] = defaultdict(list)
+        self.pending_operations: Dict[str, List[Tuple[Any, asyncio.Future]]] = (
+            defaultdict(list)
+        )
         self.batch_timers: Dict[str, asyncio.Task] = {}
         self.batch_lock = asyncio.Lock()
 

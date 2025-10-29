@@ -383,7 +383,9 @@ class ExponentialBackoffRetry(IRetryPolicy):
                     response, attempt_num, provider_id
                 )
 
-                if not should_retry or attempt_num >= config.get_max_attempts(retry_reason):
+                if not should_retry or attempt_num >= config.get_max_attempts(
+                    retry_reason
+                ):
                     # Record final failure
                     circuit_breaker.record_failure()
 
@@ -483,7 +485,9 @@ class ExponentialBackoffRetry(IRetryPolicy):
         provider_key = provider_id.provider_name
         return await self._get_circuit_breaker_async(provider_key)
 
-    async def update_config_async(self, provider_id: ProviderId, config: RetryConfig) -> None:
+    async def update_config_async(
+        self, provider_id: ProviderId, config: RetryConfig
+    ) -> None:
         """
         Update retry configuration for specific provider.
 
@@ -505,17 +509,23 @@ class ExponentialBackoffRetry(IRetryPolicy):
         provider_key = provider_id.provider_name
         async with self._lock:
             if provider_key in self._circuit_breakers:
-                self._circuit_breakers[provider_key] = CircuitBreakerState(**self._cb_config)
+                self._circuit_breakers[provider_key] = CircuitBreakerState(
+                    **self._cb_config
+                )
 
     async def _get_config_async(self, provider_key: str) -> RetryConfig:
         """Get retry configuration for provider."""
         async with self._lock:
             return self._provider_configs.get(provider_key, self._default_config)
 
-    async def _get_circuit_breaker_async(self, provider_key: str) -> CircuitBreakerState:
+    async def _get_circuit_breaker_async(
+        self, provider_key: str
+    ) -> CircuitBreakerState:
         """Get or create circuit breaker for provider."""
         async with self._lock:
             if provider_key not in self._circuit_breakers:
-                self._circuit_breakers[provider_key] = CircuitBreakerState(**self._cb_config)
+                self._circuit_breakers[provider_key] = CircuitBreakerState(
+                    **self._cb_config
+                )
 
             return self._circuit_breakers[provider_key]

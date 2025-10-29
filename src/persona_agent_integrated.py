@@ -94,10 +94,8 @@ class PersonaAgent:
             f"Initializing integrated PersonaAgent with modular components: {character_directory_path}"
         )
 
-        # Initialize core component first (skip auto-subscription, we'll handle it after integration)
-        self.core = PersonaAgentCore(
-            character_directory_path, event_bus, agent_id, auto_subscribe=False
-        )
+        # Initialize core component first
+        self.core = PersonaAgentCore(character_directory_path, event_bus, agent_id)
 
         # Initialize character interpreter and load character data
         self.character_interpreter = CharacterInterpreter(character_directory_path)
@@ -202,16 +200,19 @@ class PersonaAgent:
     def _integrate_decision_engine(self) -> None:
         """Integrate decision engine with core turn handling."""
         try:
-            # Create new integrated turn handler that will be PersonaAgent's method
+            # Store original handle_turn_start method
+            original_handle_turn_start = self.core.handle_turn_start
+
+            # Create new integrated turn handler
             def integrated_turn_handler(world_state_update: Dict[str, Any]) -> None:
                 try:
                     # Process world state update through core
                     self.core._process_world_state_update(world_state_update)
 
-                    # Use _make_decision for action creation (allows test mocking)
-                    action = self._make_decision(world_state_update)
+                    # Use decision engine for action creation
+                    action = self.decision_engine.make_decision(world_state_update)
 
-                    # Emit action completion event with self (PersonaAgent) as agent
+                    # Emit action completion event
                     self.core.event_bus.emit(
                         "AGENT_ACTION_COMPLETE", agent=self, action=action
                     )
@@ -220,24 +221,11 @@ class PersonaAgent:
                     logger.error(
                         f"Error in integrated turn handler for {self.core.agent_id}: {e}"
                     )
-                    # Emit safe fallback
-                    self.core.event_bus.emit(
-                        "AGENT_ACTION_COMPLETE", agent=self, action=None
-                    )
+                    # Fall back to original behavior
+                    original_handle_turn_start(world_state_update)
 
-            # Set PersonaAgent's turn handler method
-            # This ensures the event subscription points to PersonaAgent.handle_turn_start
-            self.handle_turn_start = integrated_turn_handler
-
-            # Also update core's handler to point to PersonaAgent's method for consistency
-            self.core.handle_turn_start = self.handle_turn_start
-
-            # Now subscribe PersonaAgent.handle_turn_start to TURN_START
-            # (PersonaAgentCore was initialized with auto_subscribe=False, so no prior subscription)
-            self.core.event_bus.subscribe("TURN_START", self.handle_turn_start)
-            logger.info(
-                f"PersonaAgent '{self.core.agent_id}' subscribed to TURN_START events"
-            )
+            # Replace core's turn handler with integrated version
+            self.core.handle_turn_start = integrated_turn_handler
 
         except Exception as e:
             logger.error(f"Error integrating decision engine: {e}")
@@ -386,11 +374,6 @@ class PersonaAgent:
     def decision_weights(self) -> Dict[str, float]:
         """Get character's decision-making weights."""
         return self.core.decision_weights
-
-    @decision_weights.setter
-    def decision_weights(self, weights: Dict[str, float]) -> None:
-        """Set character's decision-making weights."""
-        self.core.decision_weights = weights
 
     @property
     def short_term_memory(self) -> List[Dict[str, Any]]:
@@ -658,262 +641,3 @@ class PersonaAgent:
         except Exception as e:
             logger.error(f"Error getting context integration status: {e}")
             return {"error": str(e)}
-
-    # Stub methods for backward compatibility with tests
-    # These methods existed in the original PersonaAgent but were moved to components
-    # Tests may try to patch these methods, so we provide stubs
-
-    def _extract_core_identity(self, character_sheet_content: str) -> Dict[str, Any]:
-        """Stub for backward compatibility - actual logic in CharacterInterpreter."""
-        return (
-            self.character_interpreter._extract_core_identity(character_sheet_content)
-            if hasattr(self.character_interpreter, "_extract_core_identity")
-            else {}
-        )
-
-    def _extract_personality_traits(
-        self, character_sheet_content: str
-    ) -> Dict[str, float]:
-        """Stub for backward compatibility - actual logic in CharacterInterpreter."""
-        return (
-            self.character_interpreter._extract_personality_traits(
-                character_sheet_content
-            )
-            if hasattr(self.character_interpreter, "_extract_personality_traits")
-            else {}
-        )
-
-    def _extract_decision_weights(
-        self, character_sheet_content: str
-    ) -> Dict[str, float]:
-        """Stub for backward compatibility - actual logic in CharacterInterpreter."""
-        return (
-            self.character_interpreter._extract_decision_weights(
-                character_sheet_content
-            )
-            if hasattr(self.character_interpreter, "_extract_decision_weights")
-            else {}
-        )
-
-    def _extract_relationships(self, character_sheet_content: str) -> Dict[str, float]:
-        """Stub for backward compatibility - actual logic in CharacterInterpreter."""
-        return (
-            self.character_interpreter._extract_relationships(character_sheet_content)
-            if hasattr(self.character_interpreter, "_extract_relationships")
-            else {}
-        )
-
-    def _extract_knowledge_domains(self, character_sheet_content: str) -> List[str]:
-        """Stub for backward compatibility - actual logic in CharacterInterpreter."""
-        return (
-            self.character_interpreter._extract_knowledge_domains(
-                character_sheet_content
-            )
-            if hasattr(self.character_interpreter, "_extract_knowledge_domains")
-            else []
-        )
-
-    def _initialize_subjective_worldview(self) -> Dict[str, Any]:
-        """Stub for backward compatibility - actual logic in PersonaAgentCore."""
-        return (
-            self.core._initialize_subjective_worldview()
-            if hasattr(self.core, "_initialize_subjective_worldview")
-            else {}
-        )
-
-    def _derive_agent_id_from_path(self, path: str) -> str:
-        """Stub for backward compatibility - actual logic in PersonaAgentCore."""
-        return self.core._derive_agent_id_from_path(path)
-
-    def _estimate_trait_strength(self, description: str) -> float:
-        """Stub for backward compatibility - actual logic in CharacterInterpreter."""
-        # Extract intensity modifier from description
-        intensity_map = {
-            "extremely": 0.9,
-            "very": 0.8,
-            "highly": 0.8,
-            "moderately": 0.6,
-            "somewhat": 0.5,
-            "slightly": 0.3,
-            "barely": 0.2,
-        }
-
-        description_lower = description.lower()
-        for modifier, strength in intensity_map.items():
-            if modifier in description_lower:
-                return strength
-
-        # Default to moderate strength
-        return 0.6
-
-    def _make_decision(
-        self, world_state_update: Dict[str, Any]
-    ) -> Optional[CharacterAction]:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        return self.decision_engine.make_decision(world_state_update)
-
-    # Additional decision-making stub methods
-    def _llm_enhanced_decision_making(
-        self, world_state_update: Dict[str, Any]
-    ) -> Optional[CharacterAction]:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        return (
-            self.decision_engine._llm_enhanced_decision_making(world_state_update)
-            if hasattr(self.decision_engine, "_llm_enhanced_decision_making")
-            else None
-        )
-
-    def _process_world_state_update(self, world_state_update: Dict[str, Any]) -> None:
-        """Stub for backward compatibility - actual logic in PersonaAgentCore."""
-        self.core._process_world_state_update(world_state_update)
-
-    def _identify_available_actions(
-        self, world_state_update: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        return (
-            self.decision_engine._identify_available_actions(world_state_update)
-            if hasattr(self.decision_engine, "_identify_available_actions")
-            else []
-        )
-
-    def _select_best_action(
-        self, available_actions: List[Dict[str, Any]]
-    ) -> Optional[CharacterAction]:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        return (
-            self.decision_engine._select_best_action(available_actions)
-            if hasattr(self.decision_engine, "_select_best_action")
-            else None
-        )
-
-    def _assess_overall_threat_level(self, world_state_update: Dict[str, Any]) -> str:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        if hasattr(self.decision_engine, "_assess_overall_threat_level"):
-            return self.decision_engine._assess_overall_threat_level(world_state_update)
-        return "moderate"
-
-    def _evaluate_action_option(
-        self, action_option: Dict[str, Any], situation: Dict[str, Any]
-    ) -> float:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        if hasattr(self.decision_engine, "_evaluate_action_option"):
-            return self.decision_engine._evaluate_action_option(
-                action_option, situation
-            )
-        return 0.5
-
-    def _parse_llm_response(
-        self, response: str, available_actions: Optional[List[Dict[str, Any]]] = None
-    ) -> Optional[CharacterAction]:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        if hasattr(self.decision_engine, "_parse_llm_response"):
-            if available_actions is not None:
-                return self.decision_engine._parse_llm_response(
-                    response, available_actions
-                )
-            return self.decision_engine._parse_llm_response(response)
-        return None
-
-    def _call_llm(self, prompt: str) -> str:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        if hasattr(self.decision_engine, "_call_llm"):
-            try:
-                return self.decision_engine._call_llm(prompt)
-            except Exception as e:
-                logger.warning(f"LLM call failed: {e}")
-                return ""
-        return ""
-
-    def _read_cached_file(self, file_path: str) -> Optional[str]:
-        """Stub for backward compatibility - actual logic in CharacterInterpreter."""
-        if hasattr(self.character_interpreter, "_read_cached_file"):
-            return self.character_interpreter._read_cached_file(file_path)
-        return None
-
-    def _parse_character_sheet_content(self, content: str) -> Dict[str, Any]:
-        """Stub for backward compatibility - actual logic in CharacterInterpreter."""
-        if hasattr(self.character_interpreter, "_parse_character_sheet_content"):
-            return self.character_interpreter._parse_character_sheet_content(content)
-        return {}
-
-    def _assess_available_resources(
-        self, world_state_update: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        if hasattr(self.decision_engine, "_assess_available_resources"):
-            return self.decision_engine._assess_available_resources(world_state_update)
-        return {}
-
-    def _assess_threat_from_description(self, description: str):
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        if hasattr(self.decision_engine, "_assess_threat_from_description"):
-            return self.decision_engine._assess_threat_from_description(description)
-        # Simple keyword-based threat assessment - return ThreatLevel enum
-        from src.agents.persona_agent.protocols import ThreatLevel
-
-        description_lower = description.lower()
-        if any(word in description_lower for word in ["critical", "extreme", "dire"]):
-            return ThreatLevel.HIGH
-        elif any(
-            word in description_lower
-            for word in ["enemy", "approaching", "moderate", "battle"]
-        ):
-            return ThreatLevel.MODERATE
-        elif any(word in description_lower for word in ["minor", "skirmish", "low"]):
-            return ThreatLevel.LOW
-        else:
-            return ThreatLevel.NEGLIGIBLE
-
-    def _assess_social_obligations(
-        self, world_state_update: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        if hasattr(self.decision_engine, "_assess_social_obligations"):
-            return self.decision_engine._assess_social_obligations(world_state_update)
-        return []
-
-    def _assess_mission_status(
-        self, world_state_update: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        if hasattr(self.decision_engine, "_assess_mission_status"):
-            return self.decision_engine._assess_mission_status(world_state_update)
-        return {"status": "active"}
-
-    def _assess_environmental_factors(
-        self, world_state_update: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        if hasattr(self.decision_engine, "_assess_environmental_factors"):
-            return self.decision_engine._assess_environmental_factors(
-                world_state_update
-            )
-        return {}
-
-    def _interpret_event_description(self, event_data: Dict[str, Any]) -> str:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        if hasattr(self.decision_engine, "_interpret_event_description"):
-            return self.decision_engine._interpret_event_description(event_data)
-        # Simple fallback interpretation
-        return event_data.get("description", "Unknown event")
-
-    def _assess_current_situation(
-        self, world_state_update: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Stub for backward compatibility - actual logic in DecisionEngine."""
-        if hasattr(self.decision_engine, "_assess_current_situation"):
-            # Get the real assessment from DecisionEngine (no args)
-            result = self.decision_engine._assess_current_situation()
-            # If result has 'resource_status', map it to 'available_resources' for backward compatibility
-            if "resource_status" in result and "available_resources" not in result:
-                result["available_resources"] = result.get("resource_status", {})
-            return result
-        # Simple fallback
-        return {
-            "threat_level": "low",
-            "available_resources": {},
-            "social_obligations": [],
-            "mission_status": {"status": "active"},
-            "environmental_factors": {},
-        }

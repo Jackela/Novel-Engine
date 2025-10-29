@@ -18,7 +18,6 @@ import os
 import tempfile
 
 import pytest
-import pytest_asyncio
 
 # Import test framework
 from fastapi.testclient import TestClient
@@ -32,7 +31,7 @@ from src.core.system_orchestrator import (
     OrchestratorMode,
     SystemOrchestrator,
 )
-from src.interactions.engine.models.interaction_models import InteractionType
+from src.interactions.engine import InteractionType
 
 
 class TestUserStories:
@@ -43,7 +42,7 @@ class TestUserStories:
     detailed acceptance criteria and business requirements.
     """
 
-    @pytest_asyncio.fixture(scope="class")
+    @pytest.fixture(scope="class")
     async def orchestrator(self):
         """Create test orchestrator instance."""
         config = OrchestratorConfig(
@@ -75,18 +74,12 @@ class TestUserStories:
     @pytest.fixture(scope="class")
     def api_client(self, orchestrator):
         """Create test API client."""
-        from src.security.auth_system import initialize_security_service
-        
-        # Initialize security service before creating app
-        initialize_security_service(database_path=":memory:", secret_key="test_secret")
-        
         app = create_app()
         app.state.orchestrator = orchestrator
         return TestClient(app)
 
     # ++ USER STORY 1: CHARACTER CREATION & CUSTOMIZATION TESTS ++
 
-    @pytest.mark.asyncio
     async def test_story_1_character_creation_basic(self, api_client):
         """
         Test Story 1 Acceptance Criteria: Basic character creation
@@ -131,7 +124,6 @@ class TestUserStories:
         assert "leadership" in detail_data["skills"]  # Archetype skill added
         assert detail_data["emotional_state"]["current_mood"] == 8
 
-    @pytest.mark.asyncio
     async def test_story_1_character_customization(self, api_client):
         """
         Test Story 1 Acceptance Criteria: Character customization
@@ -180,7 +172,6 @@ class TestUserStories:
         assert "research_tablet" in updated_data["inventory"]
         assert updated_data["current_location"] == "AI Research Laboratory"
 
-    @pytest.mark.asyncio
     async def test_story_1_validation_requirements(self, api_client):
         """
         Test Story 1 Acceptance Criteria: Validation requirements
@@ -223,7 +214,6 @@ class TestUserStories:
 
     # ++ USER STORY 2: REAL-TIME CHARACTER INTERACTIONS TESTS ++
 
-    @pytest.mark.asyncio
     async def test_story_2_interaction_initiation(self, api_client):
         """
         Test Story 2 Acceptance Criteria: Interaction initiation
@@ -285,7 +275,6 @@ class TestUserStories:
         result = response.json()
         assert len(result["participants"]) == 3
 
-    @pytest.mark.asyncio
     async def test_story_2_real_time_monitoring(self, api_client):
         """
         Test Story 2 Acceptance Criteria: Real-time monitoring
@@ -338,7 +327,6 @@ class TestUserStories:
 
     # ++ USER STORY 3: PERSISTENT MEMORY & RELATIONSHIP EVOLUTION TESTS ++
 
-    @pytest.mark.asyncio
     async def test_story_3_memory_formation(self, orchestrator):
         """
         Test Story 3 Acceptance Criteria: Memory system
@@ -409,7 +397,6 @@ class TestUserStories:
         assert stats_data["memory_types"]["semantic"] >= 1
         assert stats_data["memory_types"]["emotional"] >= 1
 
-    @pytest.mark.asyncio
     async def test_story_3_relationship_evolution(self, orchestrator):
         """
         Test Story 3 Acceptance Criteria: Relationship dynamics
@@ -474,7 +461,6 @@ class TestUserStories:
 
     # ++ INTEGRATION AND SYSTEM TESTS ++
 
-    @pytest.mark.asyncio
     async def test_system_health_and_metrics(self, api_client):
         """
         Test system health monitoring and metrics collection.

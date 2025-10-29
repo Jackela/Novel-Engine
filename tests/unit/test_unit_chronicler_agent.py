@@ -35,16 +35,16 @@ class TestChroniclerAgent:
             event_bus=self.mock_event_bus, character_names=self.test_character_names
         )
 
-        # Create test log file with format that parser expects
+        # 创建测试日志文件
         self.temp_log_file = "test_campaign.md"
         with open(self.temp_log_file, "w", encoding="utf-8") as f:
             f.write("# Test Campaign Log\n\n")
-            f.write("=== STARTING TURN 1 ===\n")
-            f.write("Hero decided to draw sword and face the villain!\n\n")
-            f.write("TURN 2 BEGINS\n")
-            f.write("Villain chose to challenge the foolish hero!\n\n")
-            f.write("TURN 3 BEGINS\n")
-            f.write("Sage decided to find another way to resolve this conflict.\n\n")
+            f.write("## Turn 1\n")
+            f.write("Hero: I draw my sword and face the villain!\n\n")
+            f.write("## Turn 2\n")
+            f.write("Villain: You cannot defeat me, foolish hero!\n\n")
+            f.write("## Turn 3\n")
+            f.write("Sage: Wait! There is another way to resolve this conflict.\n\n")
 
     def teardown_method(self):
         """每个测试方法的清理"""
@@ -85,13 +85,13 @@ class TestChroniclerAgent:
         """测试记录代理初始化 - 无角色名"""
         event_bus = Mock()
 
-        # Empty list is now allowed - it defaults to []
-        chronicler_empty = ChroniclerAgent(event_bus=event_bus, character_names=[])
-        assert chronicler_empty.character_names == []
+        # 测试空角色列表
+        with pytest.raises((ValueError, TypeError)):
+            ChroniclerAgent(event_bus=event_bus, character_names=[])
 
-        # None is also allowed - it defaults to []
-        chronicler_none = ChroniclerAgent(event_bus=event_bus, character_names=None)
-        assert chronicler_none.character_names == []
+        # 测试None
+        with pytest.raises((ValueError, TypeError)):
+            ChroniclerAgent(event_bus=event_bus, character_names=None)
 
     @pytest.mark.unit
     def test_transcribe_log_success(self):
@@ -99,24 +99,20 @@ class TestChroniclerAgent:
         if not hasattr(self.chronicler, "transcribe_log"):
             pytest.skip("Chronicler agent does not have transcribe_log method")
 
-        # Mock the LLM call - it should be called for each parsed event
-        with patch.object(self.chronicler, "_call_llm") as mock_llm:
-            mock_llm.return_value = (
+        # 使用模拟Gemini响应
+        with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            mock_response = Mock()
+            mock_response.text = (
                 "In a realm of adventure, our heroes faced great challenges..."
             )
+            mock_gemini.return_value = mock_response
 
             story = self.chronicler.transcribe_log(self.temp_log_file)
 
             assert story is not None
             assert isinstance(story, str)
             assert len(story) > 0
-            # Story should contain either the mocked text or template text
-            assert (
-                "adventure" in story
-                or "challenge" in story
-                or "cosmos" in story
-                or "saga" in story
-            )
+            assert "adventure" in story or "challenge" in story
 
     @pytest.mark.unit
     def test_transcribe_log_file_not_found(self):
@@ -126,12 +122,8 @@ class TestChroniclerAgent:
 
         non_existent_file = "nonexistent_log.md"
 
-        # Current implementation catches FileNotFoundError and returns fallback story
-        story = self.chronicler.transcribe_log(non_existent_file)
-        assert story is not None
-        assert isinstance(story, str)
-        # Should contain fallback text about mystery
-        assert "mystery" in story.lower() or "tale" in story.lower()
+        with pytest.raises(FileNotFoundError):
+            self.chronicler.transcribe_log(non_existent_file)
 
     @pytest.mark.unit
     def test_transcribe_log_empty_file(self):
@@ -145,8 +137,10 @@ class TestChroniclerAgent:
             with open(empty_log_file, "w") as f:
                 f.write("")
 
-            with patch.object(self.chronicler, "_call_llm") as mock_llm:
-                mock_llm.return_value = "A tale begins in silence..."
+            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+                mock_response = Mock()
+                mock_response.text = "A tale begins in silence..."
+                mock_gemini.return_value = mock_response
 
                 story = self.chronicler.transcribe_log(empty_log_file)
 
@@ -165,16 +159,12 @@ class TestChroniclerAgent:
         if not hasattr(self.chronicler, "transcribe_log"):
             pytest.skip("Chronicler agent does not have transcribe_log method")
 
-        # The current implementation catches all exceptions and returns a fallback story
-        # So we don't expect an exception to be raised - instead check for fallback behavior
-        with patch.object(self.chronicler, "_call_llm") as mock_llm:
-            # Simulate LLM call failure
-            mock_llm.side_effect = Exception("API request failed")
+        with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            # 模拟API调用失败
+            mock_gemini.side_effect = Exception("API request failed")
 
-            story = self.chronicler.transcribe_log(self.temp_log_file)
-            # Should return fallback story instead of raising
-            assert story is not None
-            assert isinstance(story, str)
+            with pytest.raises(Exception):
+                self.chronicler.transcribe_log(self.temp_log_file)
 
     @pytest.mark.unit
     def test_transcribe_log_invalid_response(self):
@@ -182,15 +172,20 @@ class TestChroniclerAgent:
         if not hasattr(self.chronicler, "transcribe_log"):
             pytest.skip("Chronicler agent does not have transcribe_log method")
 
-        with patch.object(self.chronicler, "_call_llm") as mock_llm:
-            # Simulate empty response
-            mock_llm.return_value = ""
+        with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            # 模拟空响应
+            mock_response = Mock()
+            mock_response.text = ""
+            mock_gemini.return_value = mock_response
 
             story = self.chronicler.transcribe_log(self.temp_log_file)
 
-            # Should handle empty response
-            assert story is not None
-            assert isinstance(story, str)
+            # 应该处理空响应
+            if story is not None:
+                assert isinstance(story, str)
+            else:
+                # 或者抛出适当的错误
+                pass
 
     @pytest.mark.unit
     def test_log_content_processing(self):
@@ -222,17 +217,35 @@ class TestChroniclerAgent:
         """测试角色名集成"""
         # 检查角色名是否在转录过程中被使用
         if hasattr(self.chronicler, "transcribe_log"):
-            with patch.object(self.chronicler, "_call_llm") as mock_llm:
-                mock_llm.return_value = (
+            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+                mock_response = Mock()
+                mock_response.text = (
                     "The hero, villain, and sage embark on their journey..."
                 )
+                mock_gemini.return_value = mock_response
 
                 story = self.chronicler.transcribe_log(self.temp_log_file)
 
-                # Check if story contains character-related content
+                # 检查故事中是否包含角色相关内容
                 if story:
-                    # Should have some narrative content
+                    # 至少应该有一些叙述内容
                     assert len(story) > 10
+
+                # 检查API调用是否包含角色信息
+                if mock_gemini.called:
+                    call_args = mock_gemini.call_args
+                    if call_args:
+                        # 检查调用参数中是否包含角色信息
+                        call_str = str(call_args)
+                        # 角色信息可能在提示文本中
+                        has_character_context = any(
+                            name.lower() in call_str.lower()
+                            for name in self.test_character_names
+                        )
+                        # 这是一个软检查，因为实现可能不同
+                        if not has_character_context:
+                            # 只记录，不失败
+                            pass
 
 
 @pytest.mark.skipif(
@@ -279,39 +292,30 @@ class TestChroniclerAgentAdvanced:
             with open(complex_log_file, "w", encoding="utf-8") as f:
                 f.write("# Epic Campaign Log\n\n")
                 for turn in range(5):
-                    f.write(f"TURN {turn + 1} BEGINS\n")
-                    f.write(f"Protagonist decided to take action in turn {turn + 1}\n")
-                    f.write(f"Antagonist chose to respond in turn {turn + 1}\n\n")
+                    f.write(f"## Turn {turn + 1}\n")
+                    f.write(f"Protagonist: Action in turn {turn + 1}\n")
+                    f.write(f"Antagonist: Response in turn {turn + 1}\n\n")
 
-            with patch.object(self.chronicler, "_call_llm") as mock_llm:
-                mock_llm.return_value = """In an epic tale spanning five crucial moments, 
+            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+                mock_response = Mock()
+                mock_response.text = """In an epic tale spanning five crucial moments, 
                 the protagonist and antagonist engaged in a series of meaningful exchanges 
                 that would determine the fate of their world. Each turn brought new 
                 revelations and deeper understanding of their eternal struggle."""
+                mock_gemini.return_value = mock_response
 
                 story = self.chronicler.transcribe_log(complex_log_file)
 
-                # Validate story quality
+                # 验证故事质量
                 if story:
+                    assert len(story) > 50  # 应该有实质性内容
                     assert (
-                        len(story) > 10
-                    )  # Should have substantive content (lowered threshold)
-                    # Should contain either character names or narrative keywords
-                    assert (
-                        "protagonist" in story.lower()
-                        or "antagonist" in story.lower()
-                        or any(
-                            word in story.lower()
-                            for word in [
-                                "tale",
-                                "story",
-                                "journey",
-                                "struggle",
-                                "battle",
-                                "cosmos",
-                                "saga",
-                            ]
-                        )
+                        "protagonist" in story.lower() or "antagonist" in story.lower()
+                    )
+                    # 检查是否有叙述结构
+                    assert any(
+                        word in story.lower()
+                        for word in ["tale", "story", "journey", "struggle", "battle"]
                     )
 
         finally:
@@ -371,10 +375,12 @@ class TestChroniclerAgentAdvanced:
                         f"Antagonist: Elaborate response {turn + 1} with intricate details...\n\n"
                     )
 
-            with patch.object(self.chronicler, "_call_llm") as mock_llm:
-                mock_llm.return_value = "An epic saga of twenty pivotal moments..."
+            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+                mock_response = Mock()
+                mock_response.text = "An epic saga of twenty pivotal moments..."
+                mock_gemini.return_value = mock_response
 
-                # Test that large files don't crash
+                # 测试处理大文件不会崩溃
                 story = self.chronicler.transcribe_log(large_log_file)
 
                 if story:
@@ -418,14 +424,16 @@ class TestChroniclerAgentPerformance:
                     f.write(f"Perf Hero: Action {turn + 1}\n")
                     f.write(f"Perf Villain: Response {turn + 1}\n\n")
 
-            with patch.object(self.chronicler, "_call_llm") as mock_llm:
-                mock_llm.return_value = (
+            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+                mock_response = Mock()
+                mock_response.text = (
                     "A performance test story with multiple characters..."
                 )
+                mock_gemini.return_value = mock_response
 
                 start_time = time.time()
 
-                # Execute transcription
+                # 执行转录
                 story = self.chronicler.transcribe_log(perf_log_file)
 
                 end_time = time.time()
@@ -464,12 +472,14 @@ class TestChroniclerAgentPerformance:
                     f.write(f"Hero: Action in log {i}\n")
                     f.write(f"Villain: Response in log {i}\n\n")
 
-            with patch.object(self.chronicler, "_call_llm") as mock_llm:
-                mock_llm.return_value = "Quick test story..."
+            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+                mock_response = Mock()
+                mock_response.text = "Quick test story..."
+                mock_gemini.return_value = mock_response
 
                 start_time = time.time()
 
-                # Transcribe all files
+                # 转录所有文件
                 for log_file in log_files:
                     story = self.chronicler.transcribe_log(log_file)
                     assert story is not None

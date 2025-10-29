@@ -148,7 +148,9 @@ class TurnId:
             raise ValueError(f"Invalid turn string format: {turn_string}") from e
 
     @classmethod
-    def create_sequenced(cls, sequence_number: int, campaign_id: Optional[UUID] = None) -> "TurnId":
+    def create_sequenced(
+        cls, sequence_number: int, campaign_id: Optional[UUID] = None
+    ) -> "TurnId":
         """
         Create a sequenced turn ID for campaign progression.
 
@@ -162,7 +164,9 @@ class TurnId:
         return cls.generate(sequence_number=sequence_number, campaign_id=campaign_id)
 
     @classmethod
-    def create_named(cls, custom_name: str, campaign_id: Optional[UUID] = None) -> "TurnId":
+    def create_named(
+        cls, custom_name: str, campaign_id: Optional[UUID] = None
+    ) -> "TurnId":
         """
         Create a named turn ID for special turns.
 

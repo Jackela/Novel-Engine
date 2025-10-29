@@ -3,10 +3,10 @@ fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 pydantic>=2.4.0
 pydantic-settings>=2.0.0
+email-validator>=2.0.0
 httpx>=0.25.0
 aiofiles>=23.2.0
 python-multipart>=0.0.6
-aiohttp>=3.9.0
 
 # Novel-Engine integration
 # Assuming these are available from the main project
@@ -16,8 +16,9 @@ aiohttp>=3.9.0
 # Async utilities
 asyncio-mqtt>=0.16.0
 asyncio-throttle>=1.0.2
-redis>=5.0.0  # Official async Redis client (replaces deprecated aioredis)
-aiosqlite>=0.19.0
+# aioredis>=2.0.0  # DEPRECATED: Incompatible with Python 3.11+ (duplicate TimeoutError base class)
+redis[asyncio]>=5.0.0  # Official async Redis client for Python 3.11+
+aiohttp>=3.9.0  # Required by async_processing_improvements.py
 
 # Data processing
 pandas>=1.5.0; python_version>="3.9"
@@ -45,12 +46,11 @@ requests>=2.31.0
 # Security scanning
 safety>=3.0.0
 bandit[toml]>=1.7.0
+PyJWT>=2.8.0  # JWT token handling for security tests
+bcrypt>=4.0.0  # Password hashing for auth_system
+bleach>=6.0.0  # HTML sanitization for security_middleware
+networkx>=3.0  # Graph library for causal graph
+aiosqlite>=0.19.0  # Async SQLite for context database
 
-# Additional dependencies
-networkx>=3.2.0
-bcrypt>=4.1.0
-PyJWT>=2.8.0
-SQLAlchemy>=2.0.0
-email-validator>=2.1.0
-bleach>=6.0.0
-radon>=6.0.1
+# Database
+sqlalchemy>=2.0.0  # ORM for narrative arc repository

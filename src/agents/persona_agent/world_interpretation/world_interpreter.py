@@ -86,12 +86,12 @@ class WorldInterpreter:
 
         # Worldview and beliefs
         self._worldview: Dict[str, float] = {}  # belief_key -> strength (-1.0 to 1.0)
-        self._faction_perceptions: Dict[
-            str, Dict[str, float]
-        ] = {}  # faction -> attributes
-        self._entity_relationships: Dict[
-            str, float
-        ] = {}  # entity_id -> relationship score
+        self._faction_perceptions: Dict[str, Dict[str, float]] = (
+            {}
+        )  # faction -> attributes
+        self._entity_relationships: Dict[str, float] = (
+            {}
+        )  # entity_id -> relationship score
 
         # Interpretation patterns learned over time
         self._interpretation_patterns: Dict[str, Dict[str, Any]] = {}
@@ -183,24 +183,9 @@ class WorldInterpreter:
             )
             return interpretation
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid event data or context structure
-            self.logger.error(
-                f"Invalid data during event interpretation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return SubjectiveInterpretation(
-                original_event_id=event.event_id,
-                character_understanding="Something happened, but I'm not sure what to make of it.",
-                emotional_response="confused",
-                threat_assessment=ThreatLevel.MODERATE,
-            )
-        except (ValueError, RuntimeError) as e:
-            # Processing or calculation errors
-            self.logger.error(
-                f"Event interpretation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Event interpretation failed: {e}")
+            # Return minimal safe interpretation
             return SubjectiveInterpretation(
                 original_event_id=event.event_id,
                 character_understanding="Something happened, but I'm not sure what to make of it.",
@@ -242,18 +227,8 @@ class WorldInterpreter:
                 f"Worldview updated from interpretation of event {interpretation.original_event_id}"
             )
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid interpretation data or worldview structure
-            self.logger.error(
-                f"Invalid data during worldview update: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, ZeroDivisionError) as e:
-            # Calculation errors in belief or relationship updates
-            self.logger.error(
-                f"Worldview calculation error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Worldview update failed: {e}")
 
     async def get_relevant_memories(
         self, context: Dict[str, Any], limit: int = 10
@@ -317,19 +292,8 @@ class WorldInterpreter:
             self.logger.debug(f"Retrieved {len(memory_data)} relevant memories")
             return memory_data
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context data or memory structure
-            self.logger.error(
-                f"Invalid data during memory retrieval: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return []
-        except (ValueError, IndexError) as e:
-            # Memory sorting or list access errors
-            self.logger.error(
-                f"Memory retrieval processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Memory retrieval failed: {e}")
             return []
 
     async def store_memory(
@@ -371,18 +335,8 @@ class WorldInterpreter:
             self.logger.debug(f"Stored {memory_type} memory: {memory_id}")
             return True
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid memory data structure
-            self.logger.error(
-                f"Invalid memory data: {e}", extra={"error_type": type(e).__name__}
-            )
-            return False
-        except (ValueError, RuntimeError) as e:
-            # Memory creation or storage errors
-            self.logger.error(
-                f"Memory storage processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Memory storage failed: {e}")
             return False
 
     async def get_worldview_summary(self) -> Dict[str, Any]:
@@ -420,19 +374,8 @@ class WorldInterpreter:
                 "interpretation_patterns": len(self._interpretation_patterns),
             }
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Worldview data access errors
-            self.logger.error(
-                f"Worldview data access error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"error": str(e)}
-        except (ValueError, ZeroDivisionError) as e:
-            # Calculation errors in summary statistics
-            self.logger.error(
-                f"Worldview summary calculation error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Worldview summary failed: {e}")
             return {"error": str(e)}
 
     # Private helper methods
@@ -467,19 +410,8 @@ class WorldInterpreter:
                 stress_level=current_state.get("stress_level", 0.5),
             )
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Missing character data or invalid context structure
-            self.logger.error(
-                f"Invalid character data for context: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            raise
-        except (ValueError, RuntimeError) as e:
-            # Context processing errors
-            self.logger.error(
-                f"Context building processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Interpretation context building failed: {e}")
             raise
 
     async def _generate_base_understanding(
@@ -519,19 +451,8 @@ class WorldInterpreter:
 
             return base_description
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Event data or context access errors
-            self.logger.error(
-                f"Invalid data in base understanding: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return event.description or "Something happened"
-        except (ValueError, IndexError) as e:
-            # List access or entity processing errors
-            self.logger.error(
-                f"Base understanding processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Base understanding generation failed: {e}")
             return event.description or "Something happened"
 
     async def _apply_interpretation_biases(
@@ -585,19 +506,8 @@ class WorldInterpreter:
 
             return biased_understanding
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Context or bias data access errors
-            self.logger.debug(
-                f"Bias application data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return base_understanding
-        except (ValueError, IndexError) as e:
-            # Bias processing or string manipulation errors
-            self.logger.debug(
-                f"Bias application processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Bias application failed: {e}")
             return base_understanding
 
     async def _generate_emotional_response(
@@ -658,19 +568,8 @@ class WorldInterpreter:
 
             return primary_emotion
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Event or context data access errors
-            self.logger.debug(
-                f"Emotional response data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return "confused"
-        except (ValueError, IndexError) as e:
-            # Emotion selection or list access errors
-            self.logger.debug(
-                f"Emotional response processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Emotional response generation failed: {e}")
             return "confused"
 
     async def _calculate_belief_impacts(
@@ -707,18 +606,8 @@ class WorldInterpreter:
 
             return belief_impacts
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Context or belief data access errors
-            self.logger.debug(
-                f"Belief impact data error: {e}", extra={"error_type": type(e).__name__}
-            )
-            return {}
-        except (ZeroDivisionError, ValueError) as e:
-            # Calculation or averaging errors
-            self.logger.debug(
-                f"Belief impact calculation error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Belief impact calculation failed: {e}")
             return {}
 
     async def _assess_subjective_threat(
@@ -779,19 +668,8 @@ class WorldInterpreter:
 
             return base_threat
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Event or context data access errors
-            self.logger.debug(
-                f"Threat assessment data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return ThreatLevel.MODERATE
-        except (ValueError, IndexError) as e:
-            # Threat level calculation or list access errors
-            self.logger.debug(
-                f"Threat assessment processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Subjective threat assessment failed: {e}")
             return ThreatLevel.MODERATE
 
     async def _calculate_relationship_changes(
@@ -832,29 +710,18 @@ class WorldInterpreter:
                 for entity in event.affected_entities:
                     if entity != self.character_id:
                         if "victory" in event.event_type:
-                            relationship_changes[
-                                entity
-                            ] = 0.1  # Bonding through shared victory
+                            relationship_changes[entity] = (
+                                0.1  # Bonding through shared victory
+                            )
                         elif "defeat" in event.event_type:
-                            relationship_changes[
-                                entity
-                            ] = 0.05  # Small bonding through shared hardship
+                            relationship_changes[entity] = (
+                                0.05  # Small bonding through shared hardship
+                            )
 
             return relationship_changes
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Event or relationship data access errors
-            self.logger.debug(
-                f"Relationship calculation data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {}
-        except (ValueError, IndexError) as e:
-            # Relationship scoring or entity access errors
-            self.logger.debug(
-                f"Relationship calculation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Relationship change calculation failed: {e}")
             return {}
 
     async def _calculate_memory_priority(
@@ -902,19 +769,8 @@ class WorldInterpreter:
 
             return max(0.0, min(1.0, priority))
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Event or memory data access errors
-            self.logger.debug(
-                f"Memory priority data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return 0.5
-        except (ValueError, IndexError) as e:
-            # Priority calculation or memory list access errors
-            self.logger.debug(
-                f"Memory priority calculation error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Memory priority calculation failed: {e}")
             return 0.5
 
     async def _determine_active_biases(
@@ -954,20 +810,9 @@ class WorldInterpreter:
 
             return active_biases
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Personality or state data access errors
-            self.logger.debug(
-                f"Bias determination data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return [InterpretationBias.PRAGMATIC]
-        except (ValueError, RuntimeError) as e:
-            # Bias selection processing errors
-            self.logger.debug(
-                f"Bias determination processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return [InterpretationBias.PRAGMATIC]
+        except Exception as e:
+            self.logger.debug(f"Bias determination failed: {e}")
+            return [InterpretationBias.PRAGMATIC]  # Safe default
 
     async def _store_interpretation_as_memory(
         self, interpretation: SubjectiveInterpretation, event: WorldEvent
@@ -985,18 +830,8 @@ class WorldInterpreter:
 
             await self.store_memory(memory_data, "episodic")
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Interpretation or event data access errors
-            self.logger.debug(
-                f"Memory storage data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, RuntimeError) as e:
-            # Memory creation or storage processing errors
-            self.logger.debug(
-                f"Memory storage processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Memory storage failed: {e}")
 
     async def _update_emotional_state(self, new_emotion: str) -> None:
         """Update character's emotional state."""
@@ -1016,18 +851,8 @@ class WorldInterpreter:
             if len(self._emotional_history) > 50:
                 self._emotional_history = self._emotional_history[-25:]
 
-        except (AttributeError, TypeError) as e:
-            # Emotional history or state data access errors
-            self.logger.debug(
-                f"Emotional state update data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, IndexError) as e:
-            # Emotional history list manipulation errors
-            self.logger.debug(
-                f"Emotional state update processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Emotional state update failed: {e}")
 
     async def _learn_interpretation_pattern(
         self, interpretation: SubjectiveInterpretation
@@ -1038,11 +863,8 @@ class WorldInterpreter:
             # that could improve interpretation quality over time
             pass
 
-        except (AttributeError, KeyError, RuntimeError) as e:
-            # Pattern learning data or processing errors
-            self.logger.debug(
-                f"Pattern learning error: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            self.logger.debug(f"Pattern learning failed: {e}")
 
     async def _manage_memory_capacity(self) -> None:
         """Manage memory capacity by removing old/irrelevant memories."""
@@ -1071,15 +893,5 @@ class WorldInterpreter:
                     f"Removed {removed_count} old memories to manage capacity"
                 )
 
-        except (AttributeError, ValueError) as e:
-            # Memory data or sorting errors
-            self.logger.debug(
-                f"Memory capacity management data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (IndexError, RuntimeError) as e:
-            # Memory list manipulation errors
-            self.logger.debug(
-                f"Memory capacity management processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Memory capacity management failed: {e}")

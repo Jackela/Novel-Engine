@@ -163,6 +163,16 @@ class PhaseResult:
         """Check if phase completed successfully."""
         return self.phase_status.status.is_successful()
 
+    @property
+    def success(self) -> bool:
+        """Convenience property for checking success status."""
+        return self.was_successful()
+
+    @property
+    def events_processed(self) -> int:
+        """Get number of events processed by this phase."""
+        return len(self.events_consumed)
+
     def was_compensated(self) -> bool:
         """Check if phase required compensation."""
         return len(self.compensation_applied) > 0
@@ -468,8 +478,12 @@ class PipelineResult:
 
         # Bonus for AI efficiency (more events per dollar spent)
         if self.total_ai_cost > 0:
-            events_per_dollar = float(self.total_events_processed) / float(self.total_ai_cost)
-            ai_efficiency = min(1.0, events_per_dollar / 100.0)  # Normalize to 100 events/$1
+            events_per_dollar = float(self.total_events_processed) / float(
+                self.total_ai_cost
+            )
+            ai_efficiency = min(
+                1.0, events_per_dollar / 100.0
+            )  # Normalize to 100 events/$1
             efficiency_score = (efficiency_score + ai_efficiency) / 2
 
         return efficiency_score

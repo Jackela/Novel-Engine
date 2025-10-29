@@ -12,12 +12,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
-from src.llm_service import (
-    LLMRequest,
-    ResponseFormat,
-    UnifiedLLMService,
-    get_llm_service,
-)
+from src.llm_service import LLMRequest, ResponseFormat, UnifiedLLMService, get_llm_service
 
 # Type alias for compatibility
 LLMService = UnifiedLLMService
@@ -28,7 +23,6 @@ from .negotiation import AgentNegotiationEngine
 from .types import CausalEdge, CausalNode, CausalRelationType, EventPriority
 
 logger = logging.getLogger(__name__)
-
 
 class EmergentNarrativeEngine:
     """涌现式叙事引擎 - 主引擎类"""
@@ -167,14 +161,17 @@ class EmergentNarrativeEngine:
                 existing_node.timestamp >= cutoff_time
                 and existing_node.node_id != event_node.node_id
             ):
+
                 # 基于位置的关联
                 if existing_node.location == event_node.location or (
                     existing_node.agent_id == event_node.agent_id
                 ):
+
                     causal_strength = self._calculate_causal_strength(
                         existing_node, event_node
                     )
                     if causal_strength > 0.3:
+
                         # 确定关系类型
                         relation_type = self._determine_relation_type(
                             existing_node, event_node
@@ -333,6 +330,7 @@ class EmergentNarrativeEngine:
                 )
                 < 300
             ):  # 5分钟内
+
                 conflict_score = self._calculate_conflict_score(
                     existing_event, event_node
                 )
@@ -620,20 +618,10 @@ class EmergentNarrativeEngine:
                 if isinstance(opportunities, list):
                     return opportunities[:3]  # 限制为3个
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid LLM response or JSON structure errors
-            logger.error(
-                f"Invalid data in LLM opportunity identification: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return []
-        except (ValueError, RuntimeError) as e:
-            # LLM opportunity identification processing errors
-            logger.error(
-                f"LLM opportunity identification failed: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return []
+        except Exception as e:
+            logger.error(f"LLM opportunity identification failed: {e}")
+
+        return []
 
     async def generate_story_summary(
         self,
@@ -718,20 +706,10 @@ class EmergentNarrativeEngine:
             if llm_response and llm_response.success:
                 return llm_response.content.strip()
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story data or timeline structure errors
-            logger.error(
-                f"Invalid data in story summary generation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return f"故事围绕{len(characters)}名角色展开，经历了{len(timeline)}个重要事件，正在不断发展中..."
-        except (ValueError, RuntimeError) as e:
-            # Story summary generation processing errors
-            logger.error(
-                f"Story summary generation failed: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return f"故事围绕{len(characters)}名角色展开，经历了{len(timeline)}个重要事件，正在不断发展中..."
+        except Exception as e:
+            logger.error(f"Story summary generation failed: {e}")
+
+        return f"故事围绕{len(characters)}名角色展开，经历了{len(timeline)}个重要事件，正在不断发展中..."
 
     def get_engine_status(self) -> Dict[str, Any]:
         """获取引擎状态"""
@@ -748,9 +726,7 @@ class EmergentNarrativeEngine:
 
 
 # Factory function
-def create_emergent_narrative_engine(
-    llm_service: Optional[LLMService] = None,
-) -> EmergentNarrativeEngine:
+def create_emergent_narrative_engine(llm_service: Optional[LLMService] = None) -> EmergentNarrativeEngine:
     """创建涌现式叙事引擎实例"""
     return EmergentNarrativeEngine(llm_service)
 

@@ -19,8 +19,8 @@ Test Categories:
 import tempfile
 from pathlib import Path
 
-import pytest
 import yaml
+import pytest
 from character_factory import CharacterFactory
 from director_agent import DirectorAgent
 
@@ -29,6 +29,8 @@ from src.event_bus import EventBus
 # Test Constants
 GENERIC_CHARACTERS = ["pilot", "scientist", "engineer", "test"]
 CHARACTER_DIR = Path("E:/Code/Novel-Engine/characters")
+
+
 
 
 class TestCharacterLoading:

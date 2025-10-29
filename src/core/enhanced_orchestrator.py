@@ -162,19 +162,8 @@ class HealthMonitoringHandler(EventHandler):
 
                 return True
 
-        except (AttributeError, TypeError, KeyError) as e:
-            # Invalid event payload or health data errors
-            logger.error(
-                f"Invalid data in health monitoring handler: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (ValueError, RuntimeError) as e:
-            # Event handling or health check errors
-            logger.error(
-                f"Health monitoring handler error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Health monitoring handler error: {e}")
             return False
 
 
@@ -195,19 +184,8 @@ class PerformanceMonitoringHandler(EventHandler):
 
                 return True
 
-        except (AttributeError, TypeError, KeyError) as e:
-            # Invalid event payload or metrics data errors
-            logger.error(
-                f"Invalid data in performance monitoring handler: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (ValueError, RuntimeError) as e:
-            # Performance threshold checking errors
-            logger.error(
-                f"Performance monitoring handler error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Performance monitoring handler error: {e}")
             return False
 
 
@@ -329,38 +307,15 @@ class EnhancedSystemOrchestrator:
             )
             return startup_result
 
-        except (AttributeError, TypeError, KeyError) as e:
-            # Invalid configuration or component errors
-            logger.error(
-                f"Invalid data during orchestrator startup: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Enhanced orchestrator startup failed: {e}")
             self.current_health = SystemHealth.CRITICAL
 
             # Try to cleanup partial initialization
             try:
                 await self.shutdown()
-            except (AttributeError, RuntimeError) as cleanup_error:
-                logger.debug(
-                    f"Cleanup after startup failure error: {cleanup_error}",
-                    extra={"error_type": type(cleanup_error).__name__},
-                )
-        except (ValueError, RuntimeError, asyncio.CancelledError) as e:
-            # Service initialization or async operation errors
-            logger.error(
-                f"Orchestrator startup error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            self.current_health = SystemHealth.CRITICAL
-
-            # Try to cleanup partial initialization
-            try:
-                await self.shutdown()
-            except (AttributeError, RuntimeError) as cleanup_error:
-                logger.debug(
-                    f"Cleanup after startup failure error: {cleanup_error}",
-                    extra={"error_type": type(cleanup_error).__name__},
-                )
+            except Exception:
+                pass
 
             return {
                 "success": False,
@@ -424,23 +379,8 @@ class EnhancedSystemOrchestrator:
             )
             return shutdown_result
 
-        except (AttributeError, TypeError) as e:
-            # Invalid component or data structure errors
-            logger.error(
-                f"Invalid data during orchestrator shutdown: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {
-                "success": False,
-                "error": str(e),
-                "timestamp": datetime.now().isoformat(),
-            }
-        except (RuntimeError, asyncio.TimeoutError) as e:
-            # Service shutdown or timeout errors
-            logger.error(
-                f"Orchestrator shutdown error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Enhanced orchestrator shutdown failed: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -697,19 +637,8 @@ class EnhancedSystemOrchestrator:
 
             logger.info(f"Initial health check completed: {self.current_health.value}")
 
-        except (AttributeError, TypeError, KeyError) as e:
-            # Invalid health check data or method errors
-            logger.error(
-                f"Invalid data during initial health check: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            self.current_health = SystemHealth.CRITICAL
-        except (RuntimeError, asyncio.TimeoutError) as e:
-            # Health check execution or timeout errors
-            logger.error(
-                f"Initial health check error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Initial health check failed: {e}")
             self.current_health = SystemHealth.CRITICAL
 
     async def _health_monitoring_loop(self) -> None:
@@ -739,18 +668,8 @@ class EnhancedSystemOrchestrator:
 
             except asyncio.CancelledError:
                 break
-            except (AttributeError, TypeError, KeyError) as e:
-                # Invalid health data or component errors
-                logger.error(
-                    f"Health monitoring loop data error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (RuntimeError, asyncio.TimeoutError) as e:
-                # Health check execution or timeout errors
-                logger.error(
-                    f"Health monitoring loop error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Health monitoring loop error: {e}")
 
     async def _performance_monitoring_loop(self) -> None:
         """Background performance monitoring loop."""
@@ -766,18 +685,8 @@ class EnhancedSystemOrchestrator:
 
             except asyncio.CancelledError:
                 break
-            except (AttributeError, TypeError, KeyError) as e:
-                # Invalid metrics data or collection method errors
-                logger.error(
-                    f"Performance monitoring loop data error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (RuntimeError, ValueError) as e:
-                # Metrics collection or calculation errors
-                logger.error(
-                    f"Performance monitoring loop error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Performance monitoring loop error: {e}")
 
     async def _service_health_check_loop(self) -> None:
         """Background service health check loop."""
@@ -800,18 +709,8 @@ class EnhancedSystemOrchestrator:
 
             except asyncio.CancelledError:
                 break
-            except (AttributeError, TypeError, KeyError) as e:
-                # Invalid service or health check data errors
-                logger.error(
-                    f"Service health check loop data error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (RuntimeError, asyncio.TimeoutError) as e:
-                # Health check execution or timeout errors
-                logger.error(
-                    f"Service health check loop error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Service health check loop error: {e}")
 
     async def _check_system_health(self) -> None:
         """Check overall system health."""
@@ -841,19 +740,8 @@ class EnhancedSystemOrchestrator:
             else:
                 self.current_health = SystemHealth.OPTIMAL
 
-        except (AttributeError, TypeError, KeyError) as e:
-            # Invalid health data or component errors
-            logger.error(
-                f"Invalid data during system health check: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            self.current_health = SystemHealth.CRITICAL
-        except (RuntimeError, ValueError) as e:
-            # Health check calculation or execution errors
-            logger.error(
-                f"System health check error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"System health check failed: {e}")
             self.current_health = SystemHealth.CRITICAL
 
     async def _collect_performance_metrics(self) -> None:
@@ -896,18 +784,8 @@ class EnhancedSystemOrchestrator:
             )
             await self.event_bus.publish(metrics_event)
 
-        except (AttributeError, TypeError, KeyError) as e:
-            # Invalid metrics data or component errors
-            logger.error(
-                f"Invalid data during performance metrics collection: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (RuntimeError, ValueError, ZeroDivisionError) as e:
-            # Metrics calculation or collection errors
-            logger.error(
-                f"Performance metrics collection error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Performance metrics collection failed: {e}")
 
     async def _check_performance_thresholds(self, metrics: Dict[str, Any]) -> None:
         """Check performance metrics against configured thresholds."""
@@ -1019,12 +897,7 @@ class EnhancedSystemOrchestrator:
         """Get subjective reality engine (legacy compatibility)."""
         try:
             return self.get_service(SubjectiveRealityEngine)
-        except (AttributeError, TypeError, KeyError, RuntimeError) as e:
-            # Service not available or resolution errors
-            logger.debug(
-                f"Subjective reality engine not available: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception:
             return (
                 self.legacy_orchestrator.subjective_reality_engine
                 if self.legacy_orchestrator
@@ -1036,12 +909,7 @@ class EnhancedSystemOrchestrator:
         """Get emergent narrative engine (legacy compatibility)."""
         try:
             return self.get_service(EmergentNarrativeEngine)
-        except (AttributeError, TypeError, KeyError, RuntimeError) as e:
-            # Service not available or resolution errors
-            logger.debug(
-                f"Emergent narrative engine not available: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception:
             return (
                 self.legacy_orchestrator.emergent_narrative_engine
                 if self.legacy_orchestrator

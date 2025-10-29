@@ -29,17 +29,16 @@ __all__ = [
     "load_upstream_config",
     "get_ssl_config",
     "validate_nginx_config",
-    "get_security_headers",
+    "get_security_headers"
 ]
 
-
-def generate_nginx_config(env: str = "production") -> str:
+def generate_nginx_config(env: str = 'production') -> str:
     """
     Generate Nginx configuration for the specified environment.
-
+    
     Args:
         env: Environment name (dev, staging, production)
-
+        
     Returns:
         str: Generated Nginx configuration
     """
@@ -69,61 +68,68 @@ server {{
 }}
 """
 
-
 def load_upstream_config() -> List[Dict[str, Any]]:
     """
     Load upstream server configuration.
-
+    
     Returns:
         List of upstream server configurations
     """
     return [
-        {"host": "127.0.0.1", "port": 8000, "weight": 1, "max_fails": 3, "fail_timeout": "30s"},
-        {"host": "127.0.0.1", "port": 8001, "weight": 1, "backup": True},
+        {
+            'host': '127.0.0.1',
+            'port': 8000,
+            'weight': 1,
+            'max_fails': 3,
+            'fail_timeout': '30s'
+        },
+        {
+            'host': '127.0.0.1', 
+            'port': 8001,
+            'weight': 1,
+            'backup': True
+        }
     ]
-
 
 def get_ssl_config() -> Dict[str, str]:
     """
     Get SSL/TLS configuration settings.
-
+    
     Returns:
         Dict containing SSL configuration
     """
     return {
-        "ssl_certificate": "/etc/ssl/certs/novel-engine.crt",
-        "ssl_certificate_key": "/etc/ssl/private/novel-engine.key",
-        "ssl_protocols": "TLSv1.2 TLSv1.3",
-        "ssl_ciphers": "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384",
+        'ssl_certificate': '/etc/ssl/certs/novel-engine.crt',
+        'ssl_certificate_key': '/etc/ssl/private/novel-engine.key',
+        'ssl_protocols': 'TLSv1.2 TLSv1.3',
+        'ssl_ciphers': 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384'
     }
-
 
 def validate_nginx_config(config: str) -> bool:
     """
     Validate Nginx configuration syntax.
-
+    
     Args:
         config: Nginx configuration string
-
+        
     Returns:
         bool: True if configuration is valid
     """
     # Basic validation - checks for required sections
-    required_sections = ["server {", "location /"]
+    required_sections = ['server {', 'location /']
     return all(section in config for section in required_sections)
-
 
 def get_security_headers() -> Dict[str, str]:
     """
     Get security headers configuration.
-
+    
     Returns:
         Dict containing security headers
     """
     return {
-        "X-Content-Type-Options": "nosniff",
-        "X-Frame-Options": "DENY",
-        "X-XSS-Protection": "1; mode=block",
-        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-        "Content-Security-Policy": "default-src 'self'",
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'Content-Security-Policy': "default-src 'self'"
     }

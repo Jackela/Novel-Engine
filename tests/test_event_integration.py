@@ -7,7 +7,10 @@ from src.event_bus import EventBus
 from src.persona_agent import PersonaAgent
 
 
+
+
 class TestEventIntegration(unittest.TestCase):
+
     def test_full_turn_event_flow(self):
         """
         Tests the full event flow for a single turn, ensuring agents
@@ -22,6 +25,7 @@ class TestEventIntegration(unittest.TestCase):
             "builtins.open",
             unittest.mock.mock_open(read_data="# Character Sheet: Test Agent"),
         ):
+
             # Instantiate the agents and director with the real event bus
             director = DirectorAgent(event_bus=event_bus)
             agent = PersonaAgent(

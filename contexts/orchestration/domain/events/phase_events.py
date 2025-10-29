@@ -147,8 +147,12 @@ class PhaseCompleted:
             "performance_score": cls._calculate_performance_score(
                 duration_ms, events_processed, performance_metrics or {}
             ),
-            "efficiency_ratio": (events_processed / duration_ms if duration_ms > 0 else 0),
-            "ai_cost_efficiency": cls._calculate_ai_efficiency(events_processed, ai_usage),
+            "efficiency_ratio": (
+                events_processed / duration_ms if duration_ms > 0 else 0
+            ),
+            "ai_cost_efficiency": cls._calculate_ai_efficiency(
+                events_processed, ai_usage
+            ),
         }
 
         return cls(
@@ -178,7 +182,9 @@ class PhaseCompleted:
         # Base score on events per second
         if duration_ms > 0:
             events_per_second = (events_processed * 1000) / duration_ms
-            base_score = min(1.0, events_per_second / 10.0)  # Normalize to 10 events/sec
+            base_score = min(
+                1.0, events_per_second / 10.0
+            )  # Normalize to 10 events/sec
         else:
             base_score = 0.5
 
@@ -284,9 +290,13 @@ class PhaseFailed:
 
         # Analyze failure impact
         failure_impact = {
-            "severity": cls._determine_failure_severity(phase_type, error_details or {}),
+            "severity": cls._determine_failure_severity(
+                phase_type, error_details or {}
+            ),
             "affects_downstream_phases": cls._affects_downstream_phases(phase_type),
-            "requires_human_intervention": cls._requires_human_intervention(error_details or {}),
+            "requires_human_intervention": cls._requires_human_intervention(
+                error_details or {}
+            ),
             "estimated_recovery_time_ms": cls._estimate_recovery_time(
                 phase_type, compensation_priority
             ),
@@ -344,7 +354,9 @@ class PhaseFailed:
         return min(10, max(1, base_priority))
 
     @staticmethod
-    def _determine_failure_severity(phase_type: PhaseType, error_details: Dict[str, Any]) -> str:
+    def _determine_failure_severity(
+        phase_type: PhaseType, error_details: Dict[str, Any]
+    ) -> str:
         """Determine failure severity level."""
         # Check for critical error indicators
         if error_details.get("data_corruption", False):
@@ -382,7 +394,9 @@ class PhaseFailed:
         )
 
     @staticmethod
-    def _estimate_recovery_time(phase_type: PhaseType, compensation_priority: int) -> int:
+    def _estimate_recovery_time(
+        phase_type: PhaseType, compensation_priority: int
+    ) -> int:
         """Estimate recovery time in milliseconds."""
         # Base recovery time by phase complexity
         base_times = {

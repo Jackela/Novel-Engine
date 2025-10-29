@@ -160,7 +160,9 @@ class ContextLoaderService:
             f"caching={enable_caching}, concurrent_limit={max_concurrent_loads}"
         )
 
-    async def load_character_context(self, character_identifier: str) -> CharacterContext:
+    async def load_character_context(
+        self, character_identifier: str
+    ) -> CharacterContext:
         """
         Load complete character context from files.
 
@@ -198,7 +200,9 @@ class ContextLoaderService:
 
                 try:
                     # Validate and sanitize input
-                    sanitized_id = await self._validate_character_identifier(character_identifier)
+                    sanitized_id = await self._validate_character_identifier(
+                        character_identifier
+                    )
 
                     # Check cache first
                     if self.enable_caching:
@@ -260,7 +264,9 @@ class ContextLoaderService:
             except asyncio.TimeoutError:
                 await self._record_failure()
                 self.logger.error(f"Context loading timeout for {character_identifier}")
-                raise ContextLoaderError("Context loading timeout - operation took too long")
+                raise ContextLoaderError(
+                    "Context loading timeout - operation took too long"
+                )
 
             except SecurityError as e:
                 self._load_stats["security_violations"] += 1
@@ -269,7 +275,9 @@ class ContextLoaderService:
 
             except Exception as e:
                 await self._record_failure()
-                self.logger.error(f"Failed to load context for {character_identifier}: {e}")
+                self.logger.error(
+                    f"Failed to load context for {character_identifier}: {e}"
+                )
                 raise ContextLoaderError(f"Context loading failed: {str(e)}") from e
 
     async def _validate_character_identifier(self, identifier: str) -> str:
@@ -291,13 +299,17 @@ class ContextLoaderService:
         # Sanitize for filesystem safety
         sanitized = re.sub(r"[^\w\-_\s]", "", identifier.strip())
         if not sanitized:
-            raise ValueError(f"Character identifier contains no valid characters: {identifier}")
+            raise ValueError(
+                f"Character identifier contains no valid characters: {identifier}"
+            )
 
         # Convert to filesystem-safe format (lowercase with underscores)
         sanitized = re.sub(r"\s+", "_", sanitized.lower())
 
         if len(sanitized) > 100:
-            raise ValueError(f"Character identifier too long (max 100 chars): {identifier}")
+            raise ValueError(
+                f"Character identifier too long (max 100 chars): {identifier}"
+            )
 
         self.logger.debug(f"Sanitized identifier: {identifier} -> {sanitized}")
         return sanitized
@@ -319,10 +331,14 @@ class ContextLoaderService:
 
         if not character_dir.exists():
             self.logger.warning(f"Character directory not found: {character_dir}")
-            raise ContextLoaderError(f"Character directory not found for: {character_id}")
+            raise ContextLoaderError(
+                f"Character directory not found for: {character_id}"
+            )
 
         if not character_dir.is_dir():
-            raise ContextLoaderError(f"Character path is not a directory: {character_dir}")
+            raise ContextLoaderError(
+                f"Character path is not a directory: {character_dir}"
+            )
 
         self.logger.debug(f"Found character directory: {character_dir}")
         return character_dir
@@ -494,7 +510,9 @@ class ContextLoaderService:
         except Exception as e:
             error_msg = f"Markdown parsing error: {str(e)}"
             file_info.error_message = error_msg
-            self.logger.error(f"Failed to load {context_type} file {file_path}: {error_msg}")
+            self.logger.error(
+                f"Failed to load {context_type} file {file_path}: {error_msg}"
+            )
             return None, file_info
 
     async def _parse_stats_data(self, yaml_data: Dict[str, Any]) -> StatsContext:
@@ -531,7 +549,9 @@ class ContextLoaderService:
                                 RelationshipEntry(
                                     name=rel.get("name", ""),
                                     trust_level=rel.get("trust_level", 50),
-                                    relationship_type=rel.get("relationship_type", "unknown"),
+                                    relationship_type=rel.get(
+                                        "relationship_type", "unknown"
+                                    ),
                                 )
                             )
                         elif isinstance(rel, str):
@@ -627,7 +647,9 @@ class ContextLoaderService:
                     age = int(match.group(1))
                     description = match.group(2).strip()
 
-                    if age <= 120 and len(description) > 10:  # Reasonable age and description
+                    if (
+                        age <= 120 and len(description) > 10
+                    ):  # Reasonable age and description
                         formative_events.append(
                             FormativeEvent(
                                 age=age,
@@ -689,7 +711,9 @@ class ContextLoaderService:
                         objective_list.append(
                             Objective(
                                 name=name,
-                                description=description[:500],  # Limit description length
+                                description=description[
+                                    :500
+                                ],  # Limit description length
                                 tier=tier_enum,
                                 status=ObjectiveStatus.ACTIVE,
                                 priority=5,  # Default priority
@@ -721,16 +745,24 @@ class ContextLoaderService:
             # Extract basic identity information
             name_match = re.search(r"\*\*Name\*\*:\s*([^\n]+)", content, re.IGNORECASE)
             age_match = re.search(r"\*\*Age\*\*:\s*(\d+)", content, re.IGNORECASE)
-            gender_match = re.search(r"\*\*Gender\*\*:\s*([^\n]+)", content, re.IGNORECASE)
+            gender_match = re.search(
+                r"\*\*Gender\*\*:\s*([^\n]+)", content, re.IGNORECASE
+            )
             race_match = re.search(r"\*\*Race\*\*:\s*([^\n]+)", content, re.IGNORECASE)
-            class_match = re.search(r"\*\*Class\*\*:\s*([^\n]+)", content, re.IGNORECASE)
+            class_match = re.search(
+                r"\*\*Class\*\*:\s*([^\n]+)", content, re.IGNORECASE
+            )
 
             # Extract profile sections
             physical_pattern = r"Physical Description[^#]*?([^#]+?)(?=\#|$)"
-            physical_match = re.search(physical_pattern, content, re.IGNORECASE | re.DOTALL)
+            physical_match = re.search(
+                physical_pattern, content, re.IGNORECASE | re.DOTALL
+            )
 
             background_pattern = r"Background[^#]*?([^#]+?)(?=\#|$)"
-            background_match = re.search(background_pattern, content, re.IGNORECASE | re.DOTALL)
+            background_match = re.search(
+                background_pattern, content, re.IGNORECASE | re.DOTALL
+            )
 
             # Extract emotional drives (simplified)
             emotional_drives = []
@@ -757,12 +789,18 @@ class ContextLoaderService:
                 age=int(age_match.group(1)) if age_match else 0,
                 gender=gender_match.group(1).strip() if gender_match else "Unknown",
                 race=race_match.group(1).strip() if race_match else "Unknown",
-                character_class=(class_match.group(1).strip() if class_match else "Unknown"),
+                character_class=(
+                    class_match.group(1).strip() if class_match else "Unknown"
+                ),
                 physical_description=(
-                    physical_match.group(1).strip() if physical_match else "Not provided"
+                    physical_match.group(1).strip()
+                    if physical_match
+                    else "Not provided"
                 ),
                 background_summary=(
-                    background_match.group(1).strip() if background_match else "Not provided"
+                    background_match.group(1).strip()
+                    if background_match
+                    else "Not provided"
                 ),
                 emotional_drives=emotional_drives,
                 emotional_responses=[],
@@ -837,7 +875,9 @@ class ContextLoaderService:
                 self._circuit_breaker["state"] = "HALF_OPEN"
                 self.logger.info("Circuit breaker moved to HALF_OPEN state")
             else:
-                remaining_time = self._circuit_breaker["recovery_timeout"] - time_since_failure
+                remaining_time = (
+                    self._circuit_breaker["recovery_timeout"] - time_since_failure
+                )
                 raise ServiceUnavailableError(
                     f"Service temporarily unavailable. Recovery in {remaining_time.total_seconds():.0f}s"
                 )
@@ -854,7 +894,10 @@ class ContextLoaderService:
         self._circuit_breaker["failure_count"] += 1
         self._circuit_breaker["last_failure_time"] = datetime.utcnow()
 
-        if self._circuit_breaker["failure_count"] >= self._circuit_breaker["failure_threshold"]:
+        if (
+            self._circuit_breaker["failure_count"]
+            >= self._circuit_breaker["failure_threshold"]
+        ):
             self._circuit_breaker["state"] = "OPEN"
             self.logger.warning(
                 f"Circuit breaker opened after {self._circuit_breaker['failure_count']} failures"
@@ -878,7 +921,9 @@ class ContextLoaderService:
         """
         # Check for path traversal attempts
         if ".." in character_id or "/" in character_id or "\\" in character_id:
-            raise SecurityError(f"Path traversal detected in character ID: {character_id}")
+            raise SecurityError(
+                f"Path traversal detected in character ID: {character_id}"
+            )
 
         # Check character ID length and characters
         if len(character_id) > 100:
@@ -936,7 +981,10 @@ class ContextLoaderService:
 
         # Memory-profile consistency
         if character_context.memory_context and character_context.profile_context:
-            {rel.character_name for rel in character_context.memory_context.relationships}
+            {
+                rel.character_name
+                for rel in character_context.memory_context.relationships
+            }
             # This could be expanded to check profile mentions
 
         # Update context with warnings
@@ -962,7 +1010,9 @@ class ContextLoaderService:
 
         return self._cache[character_id]
 
-    async def _store_in_cache(self, character_id: str, character_context: CharacterContext):
+    async def _store_in_cache(
+        self, character_id: str, character_context: CharacterContext
+    ):
         """Store character context in cache."""
         # Create a copy to avoid reference issues
         cache_entry = CharacterContext.model_validate(character_context.model_dump())
@@ -971,7 +1021,9 @@ class ContextLoaderService:
 
         # Basic cache size management
         if len(self._cache) > 100:  # Max 100 entries
-            oldest_id = min(self._cache_timestamps.keys(), key=lambda k: self._cache_timestamps[k])
+            oldest_id = min(
+                self._cache_timestamps.keys(), key=lambda k: self._cache_timestamps[k]
+            )
             self._cache.pop(oldest_id, None)
             self._cache_timestamps.pop(oldest_id, None)
 
@@ -981,7 +1033,9 @@ class ContextLoaderService:
         self._cache_timestamps.clear()
         self.logger.info("Context cache cleared")
 
-    async def _generate_cache_key(self, character_id: str, files_info: List[LoadedFileInfo]) -> str:
+    async def _generate_cache_key(
+        self, character_id: str, files_info: List[LoadedFileInfo]
+    ) -> str:
         """Generate cache key based on character ID and file modification times."""
         file_hashes = []
         for file_info in files_info:
@@ -1009,7 +1063,8 @@ class ContextLoaderService:
                     self._load_stats["cache_hits"]
                     / max(
                         1,
-                        self._load_stats["cache_hits"] + self._load_stats["cache_misses"],
+                        self._load_stats["cache_hits"]
+                        + self._load_stats["cache_misses"],
                     )
                 ),
             },
@@ -1039,7 +1094,9 @@ class ContextLoaderService:
         else:
             return "healthy"
 
-    async def validate_character_directory_structure(self, character_id: str) -> Dict[str, Any]:
+    async def validate_character_directory_structure(
+        self, character_id: str
+    ) -> Dict[str, Any]:
         """
         Validate character directory structure without loading files.
 

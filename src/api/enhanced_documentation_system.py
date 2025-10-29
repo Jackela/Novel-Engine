@@ -529,7 +529,7 @@ novel-engine stories generate --title "My Story"</code></pre>
             {
                 "format": "python",
                 "language": "python",
-                "code": f'import httpx\nresponse = await httpx.get("http://localhost:8000{endpoint_path}")\nprint(response.json())',
+"code": f'import httpx\nresponse = await httpx.get("http://localhost:8000{endpoint_path}")\nprint(response.json())',
                 "explanation": "Basic Python example using httpx",
             },
             {

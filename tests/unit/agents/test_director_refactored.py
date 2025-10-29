@@ -23,16 +23,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 # Import the refactored implementation
 try:
-    from src.director_agent_modular import DirectorAgent
+    from director_agent_integrated import DirectorAgent
 except ImportError:
-    try:
-        from src.director_agent_base import DirectorAgent
-    except ImportError:
-        from director_agent_base import DirectorAgent
+    from director_agent import DirectorAgent
 
 # Try to import create functions
 try:
-    from src.director_agent_modular import (
+    from director_agent_integrated import (
         create_async_director_agent,
         create_director_agent,
         create_director_with_agents,
@@ -158,9 +155,6 @@ class MockPersonaAgent:
         return f"MockPersonaAgent({self.character_name})"
 
 
-@pytest.mark.skip(
-    reason="Tests for refactored component architecture not yet implemented - components don't exist"
-)
 class TestDirectorAgentComponents(unittest.TestCase):
     """Test individual DirectorAgent components."""
 
@@ -334,9 +328,6 @@ class TestDirectorAgentComponents(unittest.TestCase):
         self.assertTrue(recovery_result)
 
 
-@pytest.mark.skip(
-    reason="Tests for refactored DirectorAgent interface not yet implemented - use test_unit_director_agent.py instead"
-)
 class TestDirectorAgentIntegration(unittest.TestCase):
     """Test integrated DirectorAgent functionality."""
 

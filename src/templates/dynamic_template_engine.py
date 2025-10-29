@@ -1020,9 +1020,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
     )
     if render_result.success:
         result_data = render_result.data["render_result"]
-        logger.info(
-            f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)"
-        )
+        logger.info(f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)")
         logger.info(f"Variables used: {result_data.context_variables_used}")
         logger.info("Rendered content preview:")
         logger.info(result_data.rendered_content[:200] + "...")
@@ -1037,7 +1035,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         inline_template, test_context
     )
     if inline_result.success:
-        print(
+        logger.info(
             f"INLINE TEMPLATE RENDERED: {inline_result.data['render_result'].rendered_content}"
         )
 
@@ -1052,7 +1050,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
 
     # Display enhanced statistics
     stats = template_engine.get_engine_statistics()
-    print(
+    logger.info(
         f"ENGINE STATISTICS: {stats['total_templates']} templates, {stats['render_statistics']['total_renders']} renders"
     )
 
@@ -1078,6 +1076,4 @@ if __name__ == "__main__":
     # Run enhanced async testing
     asyncio.run(test_standard_dynamic_template_engine())
 
-    logger.info(
-        "ALL STANDARD DYNAMIC TEMPLATE ENGINE OPERATIONS ENHANCED AND FUNCTIONAL"
-    )
+    logger.info("ALL STANDARD DYNAMIC TEMPLATE ENGINE OPERATIONS ENHANCED AND FUNCTIONAL")

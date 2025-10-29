@@ -8,8 +8,6 @@ import random
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Tuple
 
-from src.core.data_models import EquipmentCondition
-
 from .models import DynamicEquipment, EquipmentCategory
 
 logger = logging.getLogger(__name__)
@@ -188,9 +186,7 @@ class EquipmentAnalyzer:
                 else (
                     "High"
                     if total_risk > 0.5
-                    else "Medium"
-                    if total_risk > 0.2
-                    else "Low"
+                    else "Medium" if total_risk > 0.2 else "Low"
                 )
             ),
         }

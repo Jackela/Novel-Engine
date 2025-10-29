@@ -7,14 +7,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List
 
-from src.core.data_models import (
-    CharacterState,
-    ErrorInfo,
-    MemoryItem,
-    MemoryType,
-    StandardResponse,
-)
-from src.interactions.engine.models.interaction_models import (
+from src.core.data_models import CharacterState, MemoryItem, MemoryType, StandardResponse
+from src.interactions.interaction_engine_system.core.types import (
     InteractionContext,
     InteractionOutcome,
 )

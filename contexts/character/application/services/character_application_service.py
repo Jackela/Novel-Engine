@@ -158,7 +158,9 @@ class CharacterApplicationService:
         self.logger.info(f"Updating stats for character: {character_id}")
 
         try:
-            command = UpdateCharacterStatsCommand(character_id=character_id, **stat_updates)
+            command = UpdateCharacterStatsCommand(
+                character_id=character_id, **stat_updates
+            )
 
             await self.command_handlers.handle_command(command)
 
@@ -267,7 +269,9 @@ class CharacterApplicationService:
             ValueError: If input data is invalid
             RepositoryException: If healing fails
         """
-        self.logger.info(f"Healing character {character_id} for {healing_amount} points")
+        self.logger.info(
+            f"Healing character {character_id} for {healing_amount} points"
+        )
 
         try:
             command = HealCharacterCommand(
@@ -377,7 +381,9 @@ class CharacterApplicationService:
             char_class = CharacterClass(character_class.lower())
             return await self.repository.find_by_class(char_class)
         except Exception as e:
-            self.logger.error(f"Error finding characters by class '{character_class}': {e}")
+            self.logger.error(
+                f"Error finding characters by class '{character_class}': {e}"
+            )
             raise
 
     async def find_characters_by_race(self, race: str) -> List[Character]:
@@ -446,7 +452,9 @@ class CharacterApplicationService:
             self.logger.error(f"Error checking character existence {character_id}: {e}")
             raise
 
-    async def get_character_summary(self, character_id: str) -> Optional[Dict[str, Any]]:
+    async def get_character_summary(
+        self, character_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Get a summary of character information."""
         try:
             character = await self.get_character(character_id)
@@ -490,7 +498,9 @@ class CharacterApplicationService:
             # or return the partially successful results
             raise
 
-    async def delete_multiple_characters(self, character_ids: List[str], reason: str) -> int:
+    async def delete_multiple_characters(
+        self, character_ids: List[str], reason: str
+    ) -> int:
         """Delete multiple characters."""
         deleted_count = 0
 

@@ -62,6 +62,7 @@ class EnhancedDecisionEngine(DecisionEngine):
             and hasattr(self.agent_core, "character_data")
             and "enhanced_context" in self.agent_core.character_data
         ):
+
             context_score = self._apply_context_modifiers(base_score, action, situation)
             logger.debug(
                 f"Action {action.get('action_type', 'unknown')} enhanced: {base_score:.2f} → {context_score:.2f}"
@@ -442,41 +443,41 @@ class EnhancedDecisionEngine(DecisionEngine):
 
             # Calculate individual modifiers for transparency
             if "active_objectives" in character_data:
-                summary["modifiers_applied"][
-                    "objective_alignment"
-                ] = self._get_objective_alignment_modifier(
-                    action, character_data["active_objectives"]
+                summary["modifiers_applied"]["objective_alignment"] = (
+                    self._get_objective_alignment_modifier(
+                        action, character_data["active_objectives"]
+                    )
                 )
 
             if "behavioral_triggers" in character_data:
-                summary["modifiers_applied"][
-                    "behavioral_trigger"
-                ] = self._get_behavioral_trigger_modifier(
-                    action, situation, character_data["behavioral_triggers"]
+                summary["modifiers_applied"]["behavioral_trigger"] = (
+                    self._get_behavioral_trigger_modifier(
+                        action, situation, character_data["behavioral_triggers"]
+                    )
                 )
 
             if (
                 "enhanced_relationships" in character_data
                 and "target_character" in action
             ):
-                summary["modifiers_applied"][
-                    "relationship_context"
-                ] = self._get_relationship_modifier(
-                    action, character_data["enhanced_relationships"]
+                summary["modifiers_applied"]["relationship_context"] = (
+                    self._get_relationship_modifier(
+                        action, character_data["enhanced_relationships"]
+                    )
                 )
 
             if "emotional_drives" in character_data:
-                summary["modifiers_applied"][
-                    "emotional_drive"
-                ] = self._get_emotional_drive_modifier(
-                    action, character_data["emotional_drives"]
+                summary["modifiers_applied"]["emotional_drive"] = (
+                    self._get_emotional_drive_modifier(
+                        action, character_data["emotional_drives"]
+                    )
                 )
 
             if "formative_events" in character_data:
-                summary["modifiers_applied"][
-                    "memory_influence"
-                ] = self._get_memory_influence_modifier(
-                    action, situation, character_data["formative_events"]
+                summary["modifiers_applied"]["memory_influence"] = (
+                    self._get_memory_influence_modifier(
+                        action, situation, character_data["formative_events"]
+                    )
                 )
 
             return summary

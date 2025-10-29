@@ -6,11 +6,12 @@ Character persona data models and enums.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from src.templates.context_renderer import RenderFormat
 from src.templates.dynamic_template_engine import TemplateMetadata, TemplateType
 
+if TYPE_CHECKING:
+    from src.templates.context_renderer import RenderFormat
 
 class CharacterArchetype(Enum):
     """ENHANCED CHARACTER ARCHETYPES SANCTIFIED BY PERSONALITY CLASSIFICATION"""
@@ -91,7 +92,7 @@ class CharacterContextProfile:
     """
 
     persona_id: str
-    preferred_formats: Dict[RenderFormat, float] = field(default_factory=dict)
+    preferred_formats: Dict["RenderFormat", float] = field(default_factory=dict)
     context_emphasis: Dict[str, float] = field(
         default_factory=dict
     )  # memory, emotion, relationship, etc.
@@ -99,3 +100,4 @@ class CharacterContextProfile:
     interaction_patterns: Dict[str, List[str]] = field(default_factory=dict)
     learning_history: List[Dict[str, Any]] = field(default_factory=list)
     optimization_suggestions: List[str] = field(default_factory=list)
+

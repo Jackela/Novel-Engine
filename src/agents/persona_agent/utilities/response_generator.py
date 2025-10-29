@@ -214,19 +214,8 @@ class ResponseGenerator:
             self.logger.debug(f"Generated response: {final_response[:50]}...")
             return final_response
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context data or template structure
-            self.logger.error(
-                f"Invalid data during response generation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return await self._get_emergency_response()
-        except (ValueError, RuntimeError) as e:
-            # Response processing or generation errors
-            self.logger.error(
-                f"Response generation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Response generation failed: {e}")
             return await self._get_emergency_response()
 
     async def generate_dialogue(
@@ -270,19 +259,8 @@ class ResponseGenerator:
 
             return dialogue
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid speaker or conversation context
-            self.logger.error(
-                f"Invalid data during dialogue generation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return '"I\'m not sure what to say."'
-        except (ValueError, RuntimeError) as e:
-            # Dialogue type mapping or generation errors
-            self.logger.error(
-                f"Dialogue generation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Dialogue generation failed: {e}")
             return '"I\'m not sure what to say."'
 
     async def generate_action_narration(
@@ -369,19 +347,8 @@ class ResponseGenerator:
 
             return narration
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid action or context data
-            self.logger.error(
-                f"Invalid data during action narration generation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return f"{context.get('basic_info', {}).get('name', 'The character')} takes action."
-        except (ValueError, IndexError) as e:
-            # Template selection or list access errors
-            self.logger.error(
-                f"Action narration generation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Action narration generation failed: {e}")
             return f"{context.get('basic_info', {}).get('name', 'The character')} takes action."
 
     async def generate_emotional_response(
@@ -466,19 +433,8 @@ class ResponseGenerator:
 
             return f"{character_name} {base_response}."
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid emotion data or context structure
-            self.logger.error(
-                f"Invalid data during emotional response generation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return f"{context.get('basic_info', {}).get('name', 'The character')} reacts emotionally."
-        except (ValueError, IndexError) as e:
-            # Intensity calculation or template selection errors
-            self.logger.error(
-                f"Emotional response generation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Emotional response generation failed: {e}")
             return f"{context.get('basic_info', {}).get('name', 'The character')} reacts emotionally."
 
     async def get_generation_statistics(self) -> Dict[str, Any]:
@@ -499,19 +455,8 @@ class ResponseGenerator:
                 "configuration": self._config.copy(),
             }
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid statistics data structure
-            self.logger.error(
-                f"Invalid data during statistics calculation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"error": str(e)}
-        except (ValueError, ZeroDivisionError) as e:
-            # Calculation or division errors
-            self.logger.error(
-                f"Statistics calculation error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Statistics calculation failed: {e}")
             return {"error": str(e)}
 
     # Private helper methods
@@ -525,12 +470,8 @@ class ResponseGenerator:
                 "emotional_state", "neutral"
             )
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context or data structure
-            self.logger.debug(
-                f"Character data update error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Character data update failed: {e}")
 
     async def _determine_response_category(
         self, context: Dict[str, Any]
@@ -567,19 +508,8 @@ class ResponseGenerator:
             # Default to social
             return ResponseCategory.SOCIAL
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context or event data structure
-            self.logger.debug(
-                f"Category determination data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return ResponseCategory.SOCIAL
-        except (ValueError, RuntimeError) as e:
-            # Event type processing errors
-            self.logger.debug(
-                f"Category determination processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Category determination failed: {e}")
             return ResponseCategory.SOCIAL
 
     async def _determine_response_tone(
@@ -623,19 +553,8 @@ class ResponseGenerator:
 
             return category_tone_defaults.get(category, ResponseTone.CASUAL)
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid personality or context data
-            self.logger.debug(
-                f"Tone determination data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return ResponseTone.CASUAL
-        except (ValueError, RuntimeError) as e:
-            # Tone mapping or calculation errors
-            self.logger.debug(
-                f"Tone determination processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Tone determination failed: {e}")
             return ResponseTone.CASUAL
 
     async def _find_matching_templates(
@@ -666,19 +585,8 @@ class ResponseGenerator:
 
             return matching_templates
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid template or context data structure
-            self.logger.debug(
-                f"Template matching data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return []
-        except (ValueError, RuntimeError) as e:
-            # Template scoring or sorting errors
-            self.logger.debug(
-                f"Template matching processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Template matching failed: {e}")
             return []
 
     async def _generate_from_template(
@@ -694,19 +602,8 @@ class ResponseGenerator:
 
             return response
 
-        except (AttributeError, KeyError, TypeError, IndexError) as e:
-            # Invalid template or context structure
-            self.logger.debug(
-                f"Template generation data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return "I consider the situation carefully."
-        except (ValueError, RuntimeError) as e:
-            # Placeholder replacement or generation errors
-            self.logger.debug(
-                f"Template generation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Template generation failed: {e}")
             return "I consider the situation carefully."
 
     async def _generate_fallback_response(
@@ -763,19 +660,8 @@ class ResponseGenerator:
 
             return base_response
 
-        except (AttributeError, KeyError, TypeError, IndexError) as e:
-            # Invalid category or template data structure
-            self.logger.debug(
-                f"Fallback generation data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return "I consider my next move."
-        except (ValueError, RuntimeError) as e:
-            # Template selection or modification errors
-            self.logger.debug(
-                f"Fallback generation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Fallback generation failed: {e}")
             return "I consider my next move."
 
     async def _enhance_with_personality(
@@ -818,19 +704,8 @@ class ResponseGenerator:
 
             return enhanced
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid personality data or response structure
-            self.logger.debug(
-                f"Personality enhancement data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return response
-        except (ValueError, RuntimeError) as e:
-            # String replacement or modification errors
-            self.logger.debug(
-                f"Personality enhancement processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Personality enhancement failed: {e}")
             return response
 
     async def _apply_emotional_modifiers(
@@ -877,19 +752,8 @@ class ResponseGenerator:
 
             return response
 
-        except (AttributeError, KeyError, TypeError, IndexError) as e:
-            # Invalid emotional state or modifier data
-            self.logger.debug(
-                f"Emotional modifier application data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return response
-        except (ValueError, RuntimeError) as e:
-            # String replacement or modification errors
-            self.logger.debug(
-                f"Emotional modifier application processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Emotional modifier application failed: {e}")
             return response
 
     async def _format_and_validate(self, response: str) -> str:
@@ -918,19 +782,8 @@ class ResponseGenerator:
 
             return formatted
 
-        except (AttributeError, TypeError, IndexError) as e:
-            # Invalid response structure or string operations
-            self.logger.debug(
-                f"Response formatting data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return response
-        except (ValueError, RuntimeError) as e:
-            # String manipulation or validation errors
-            self.logger.debug(
-                f"Response formatting processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Response formatting failed: {e}")
             return response
 
     async def _replace_placeholders(
@@ -954,19 +807,8 @@ class ResponseGenerator:
 
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context or placeholder data
-            self.logger.debug(
-                f"Placeholder replacement data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return template
-        except (ValueError, RuntimeError) as e:
-            # String replacement errors
-            self.logger.debug(
-                f"Placeholder replacement processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.debug(f"Placeholder replacement failed: {e}")
             return template
 
     async def _get_emergency_response(self) -> str:

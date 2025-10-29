@@ -90,7 +90,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                 return None
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Database error retrieving TurnBrief {turn_brief_id}: {e}")
+            self.logger.error(
+                f"Database error retrieving TurnBrief {turn_brief_id}: {e}"
+            )
             raise RepositoryException(f"Failed to retrieve TurnBrief: {e}")
 
     def get_by_entity_id(self, entity_id: str) -> Optional[TurnBrief]:
@@ -109,7 +111,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         try:
             with self.session_factory() as session:
                 orm_entity = (
-                    session.query(TurnBriefORM).filter(TurnBriefORM.entity_id == entity_id).first()
+                    session.query(TurnBriefORM)
+                    .filter(TurnBriefORM.entity_id == entity_id)
+                    .first()
                 )
 
                 if orm_entity:
@@ -117,7 +121,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                 return None
 
         except SQLAlchemyError as e:
-            self.logger.error(f"Database error retrieving TurnBrief for entity {entity_id}: {e}")
+            self.logger.error(
+                f"Database error retrieving TurnBrief for entity {entity_id}: {e}"
+            )
             raise RepositoryException(f"Failed to retrieve TurnBrief for entity: {e}")
 
     def save(self, turn_brief: TurnBrief) -> None:
@@ -136,7 +142,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                 # Check if this is an update (existing entity)
                 existing_orm = (
                     session.query(TurnBriefORM)
-                    .filter(TurnBriefORM.turn_brief_id == turn_brief.turn_brief_id.value)
+                    .filter(
+                        TurnBriefORM.turn_brief_id == turn_brief.turn_brief_id.value
+                    )
                     .first()
                 )
 
@@ -160,7 +168,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         except ConcurrencyException:
             raise
         except SQLAlchemyError as e:
-            self.logger.error(f"Database error saving TurnBrief {turn_brief.turn_brief_id}: {e}")
+            self.logger.error(
+                f"Database error saving TurnBrief {turn_brief.turn_brief_id}: {e}"
+            )
             raise RepositoryException(f"Failed to save TurnBrief: {e}")
 
     def delete(self, turn_brief_id: SubjectiveId) -> bool:
@@ -190,7 +200,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                     self.logger.info(f"Deleted TurnBrief {turn_brief_id}")
                     return True
                 else:
-                    self.logger.warning(f"TurnBrief {turn_brief_id} not found for deletion")
+                    self.logger.warning(
+                        f"TurnBrief {turn_brief_id} not found for deletion"
+                    )
                     return False
 
         except SQLAlchemyError as e:
@@ -218,13 +230,18 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                     .all()
                 )
 
-                return [self._map_orm_to_domain(orm_entity, session) for orm_entity in orm_entities]
+                return [
+                    self._map_orm_to_domain(orm_entity, session)
+                    for orm_entity in orm_entities
+                ]
 
         except SQLAlchemyError as e:
             self.logger.error(
                 f"Database error finding TurnBriefs by world state version {world_state_version}: {e}"
             )
-            raise RepositoryException(f"Failed to find TurnBriefs by world state version: {e}")
+            raise RepositoryException(
+                f"Failed to find TurnBriefs by world state version: {e}"
+            )
 
     def find_by_alertness_level(self, alertness: AlertnessLevel) -> List[TurnBrief]:
         """
@@ -247,13 +264,18 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                     .all()
                 )
 
-                return [self._map_orm_to_domain(orm_entity, session) for orm_entity in orm_entities]
+                return [
+                    self._map_orm_to_domain(orm_entity, session)
+                    for orm_entity in orm_entities
+                ]
 
         except SQLAlchemyError as e:
             self.logger.error(
                 f"Database error finding TurnBriefs by alertness level {alertness}: {e}"
             )
-            raise RepositoryException(f"Failed to find TurnBriefs by alertness level: {e}")
+            raise RepositoryException(
+                f"Failed to find TurnBriefs by alertness level: {e}"
+            )
 
     def find_stale_turn_briefs(self, cutoff_time: datetime) -> List[TurnBrief]:
         """
@@ -271,10 +293,15 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         try:
             with self.session_factory() as session:
                 orm_entities = (
-                    session.query(TurnBriefORM).filter(TurnBriefORM.updated_at < cutoff_time).all()
+                    session.query(TurnBriefORM)
+                    .filter(TurnBriefORM.updated_at < cutoff_time)
+                    .all()
                 )
 
-                return [self._map_orm_to_domain(orm_entity, session) for orm_entity in orm_entities]
+                return [
+                    self._map_orm_to_domain(orm_entity, session)
+                    for orm_entity in orm_entities
+                ]
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error finding stale TurnBriefs: {e}")
@@ -317,7 +344,8 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                     .filter(
                         and_(
                             KnowledgeItemORM.subject == subject,
-                            func.coalesce(KnowledgeItemORM.expires_at, func.now()) > func.now(),
+                            func.coalesce(KnowledgeItemORM.expires_at, func.now())
+                            > func.now(),
                         )
                     )
                     .distinct()
@@ -346,7 +374,10 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                     if best_certainty and best_certainty[0]:
                         try:
                             cert_level = CertaintyLevel(best_certainty[0])
-                            if certainty_order.get(cert_level, 0) >= min_certainty_value:
+                            if (
+                                certainty_order.get(cert_level, 0)
+                                >= min_certainty_value
+                            ):
                                 entity_ids.append(entity_id)
                         except ValueError:
                             continue
@@ -394,9 +425,13 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
             self.logger.error(
                 f"Database error finding entities that can perceive location {location_id}: {e}"
             )
-            raise RepositoryException(f"Failed to find entities in perception range: {e}")
+            raise RepositoryException(
+                f"Failed to find entities in perception range: {e}"
+            )
 
-    def find_entities_with_perception_type(self, perception_type: PerceptionType) -> List[str]:
+    def find_entities_with_perception_type(
+        self, perception_type: PerceptionType
+    ) -> List[str]:
         """
         Find all entities that have a specific type of perception.
 
@@ -427,7 +462,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
             self.logger.error(
                 f"Database error finding entities with perception type {perception_type}: {e}"
             )
-            raise RepositoryException(f"Failed to find entities with perception type: {e}")
+            raise RepositoryException(
+                f"Failed to find entities with perception type: {e}"
+            )
 
     def get_knowledge_sharing_candidates(
         self,
@@ -469,7 +506,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
             self.logger.error(
                 f"Database error finding knowledge sharing candidates for {entity_id}: {e}"
             )
-            raise RepositoryException(f"Failed to find knowledge sharing candidates: {e}")
+            raise RepositoryException(
+                f"Failed to find knowledge sharing candidates: {e}"
+            )
 
     def count_total_turn_briefs(self) -> int:
         """
@@ -545,7 +584,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
             self.logger.error(f"Database error getting entities needing updates: {e}")
             raise RepositoryException(f"Failed to get entities needing updates: {e}")
 
-    def batch_update_world_state_version(self, entity_ids: List[str], new_version: int) -> int:
+    def batch_update_world_state_version(
+        self, entity_ids: List[str], new_version: int
+    ) -> int:
         """
         Update the world state version for multiple TurnBriefs in a batch operation.
 
@@ -583,7 +624,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error in batch update: {e}")
-            raise RepositoryException(f"Failed to batch update world state version: {e}")
+            raise RepositoryException(
+                f"Failed to batch update world state version: {e}"
+            )
 
     def cleanup_expired_turn_briefs(self, expiration_time: datetime) -> int:
         """
@@ -638,7 +681,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
             perception_capabilities=self._serialize_perception_capabilities(
                 turn_brief.perception_capabilities
             ),
-            visible_subjects=self._serialize_visible_subjects(turn_brief.visible_subjects),
+            visible_subjects=self._serialize_visible_subjects(
+                turn_brief.visible_subjects
+            ),
             known_threats=turn_brief.known_threats,
             created_at=turn_brief.created_at,
             updated_at=turn_brief.updated_at,
@@ -653,7 +698,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         orm_entity.last_world_update = turn_brief.last_world_update
         orm_entity.last_perception_update = turn_brief.last_perception_update
         orm_entity.base_alertness = turn_brief.awareness_state.base_alertness.value
-        orm_entity.current_alertness = turn_brief.awareness_state.current_alertness.value
+        orm_entity.current_alertness = (
+            turn_brief.awareness_state.current_alertness.value
+        )
         orm_entity.attention_focus = turn_brief.awareness_state.attention_focus.value
         orm_entity.focus_target = turn_brief.awareness_state.focus_target
         orm_entity.awareness_modifiers = self._serialize_awareness_modifiers(
@@ -664,12 +711,16 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         orm_entity.perception_capabilities = self._serialize_perception_capabilities(
             turn_brief.perception_capabilities
         )
-        orm_entity.visible_subjects = self._serialize_visible_subjects(turn_brief.visible_subjects)
+        orm_entity.visible_subjects = self._serialize_visible_subjects(
+            turn_brief.visible_subjects
+        )
         orm_entity.known_threats = turn_brief.known_threats
         orm_entity.updated_at = turn_brief.updated_at
         orm_entity.version = turn_brief.version
 
-    def _map_orm_to_domain(self, orm_entity: TurnBriefORM, session: Session) -> TurnBrief:
+    def _map_orm_to_domain(
+        self, orm_entity: TurnBriefORM, session: Session
+    ) -> TurnBrief:
         """Map ORM entity to domain TurnBrief."""
         # This is a simplified mapping - in production, you'd need full serialization/deserialization
         # For now, we'll create a basic TurnBrief that can be used for testing
@@ -706,7 +757,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         )
 
         # Create visible subjects
-        visible_subjects = self._deserialize_visible_subjects(orm_entity.visible_subjects)
+        visible_subjects = self._deserialize_visible_subjects(
+            orm_entity.visible_subjects
+        )
 
         # Create TurnBrief
         turn_brief = TurnBrief(
@@ -777,7 +830,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                 accuracy_modifier=0.8,
                 environmental_modifiers={},
             )
-            return PerceptionCapabilities(perception_ranges={PerceptionType.VISUAL: basic_visual})
+            return PerceptionCapabilities(
+                perception_ranges={PerceptionType.VISUAL: basic_visual}
+            )
 
         # Would implement proper deserialization here
         basic_visual = PerceptionRange(
@@ -790,7 +845,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         return PerceptionCapabilities(
             perception_ranges={PerceptionType.VISUAL: basic_visual},
             passive_awareness_bonus=data.get("passive_awareness_bonus", 0.0),
-            focused_perception_multiplier=data.get("focused_perception_multiplier", 1.5),
+            focused_perception_multiplier=data.get(
+                "focused_perception_multiplier", 1.5
+            ),
         )
 
     def _serialize_visible_subjects(self, subjects: Dict[str, Any]) -> Dict[str, str]:
@@ -800,7 +857,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
             for subject, level in subjects.items()
         }
 
-    def _deserialize_visible_subjects(self, data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _deserialize_visible_subjects(
+        self, data: Optional[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Deserialize visible subjects from JSON storage."""
         if not data:
             return {}

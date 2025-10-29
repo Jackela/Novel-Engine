@@ -69,7 +69,9 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
         self.trace_request_payload = trace_request_payload
         self.trace_response_payload = trace_response_payload
 
-        logger.info("OpenTelemetryMiddleware initialized with Novel Engine tracer integration")
+        logger.info(
+            "OpenTelemetryMiddleware initialized with Novel Engine tracer integration"
+        )
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """
@@ -98,7 +100,9 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
 
         span_name = f"{request.method} {self._get_route_pattern(request)}"
 
-        with otel_tracer.start_as_current_span(name=span_name, kind=trace.SpanKind.SERVER) as span:
+        with otel_tracer.start_as_current_span(
+            name=span_name, kind=trace.SpanKind.SERVER
+        ) as span:
             # Set HTTP attributes
             self._set_http_attributes(span, request)
 
@@ -116,7 +120,9 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
 
                 # Set span status based on HTTP status code
                 if response.status_code >= 400:
-                    span.set_status(Status(StatusCode.ERROR, f"HTTP {response.status_code}"))
+                    span.set_status(
+                        Status(StatusCode.ERROR, f"HTTP {response.status_code}")
+                    )
                 else:
                     span.set_status(Status(StatusCode.OK))
 
@@ -323,14 +329,18 @@ def setup_fastapi_tracing(
         enable_automatic_instrumentation: Whether to enable automatic instrumentation
     """
     # Add custom middleware
-    app.add_middleware(OpenTelemetryMiddleware, tracer=tracer, excluded_urls=excluded_urls)
+    app.add_middleware(
+        OpenTelemetryMiddleware, tracer=tracer, excluded_urls=excluded_urls
+    )
 
     # Enable automatic instrumentation if requested
     if enable_automatic_instrumentation:
         try:
             FastAPIInstrumentor.instrument_app(
                 app,
-                excluded_urls=(get_excluded_urls() if excluded_urls is None else excluded_urls),
+                excluded_urls=(
+                    get_excluded_urls() if excluded_urls is None else excluded_urls
+                ),
             )
             logger.info("FastAPI automatic instrumentation enabled")
         except Exception as e:

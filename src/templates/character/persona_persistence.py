@@ -88,3 +88,4 @@ class PersonaPersistence:
 
         with open(persona_file, "w", encoding="utf-8") as f:
             json.dump(persona_data, f, indent=2, ensure_ascii=False)
+

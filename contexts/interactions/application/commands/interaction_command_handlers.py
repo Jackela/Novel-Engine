@@ -98,7 +98,9 @@ class InteractionCommandHandler:
             "created_at": session.created_at,
             "status": session.status.phase.value,
             "max_parties": session.max_parties,
-            "events": [event.__class__.__name__ for event in session.get_uncommitted_events()],
+            "events": [
+                event.__class__.__name__ for event in session.get_uncommitted_events()
+            ],
         }
 
     async def handle_terminate_negotiation_session(
@@ -106,7 +108,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle termination of negotiation session."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -127,7 +131,9 @@ class InteractionCommandHandler:
             "termination_reason": command.termination_reason.value,
             "terminated_at": session.status.actual_completion_at,
             "duration": session.status.duration,
-            "events": [event.__class__.__name__ for event in session.get_uncommitted_events()],
+            "events": [
+                event.__class__.__name__ for event in session.get_uncommitted_events()
+            ],
         }
 
     async def handle_advance_negotiation_phase(
@@ -135,14 +141,18 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle advancement of negotiation phase."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
 
         # Advance phase
         old_phase = session.status.phase
-        session.advance_phase(target_phase=command.target_phase, forced=command.force_advancement)
+        session.advance_phase(
+            target_phase=command.target_phase, forced=command.force_advancement
+        )
 
         # Persist changes
         await self.session_repository.save(session)
@@ -153,7 +163,9 @@ class InteractionCommandHandler:
             "to_phase": command.target_phase.value,
             "forced": command.force_advancement,
             "advancement_reason": command.advancement_reason,
-            "events": [event.__class__.__name__ for event in session.get_uncommitted_events()],
+            "events": [
+                event.__class__.__name__ for event in session.get_uncommitted_events()
+            ],
         }
 
     async def handle_update_session_configuration(
@@ -161,7 +173,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle update of session configuration."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -219,7 +233,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle checking and processing session timeout."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -232,7 +248,11 @@ class InteractionCommandHandler:
         session.check_timeout()
 
         # Auto-terminate if configured and timed out
-        if command.auto_terminate_on_timeout and was_active_before and not session.is_active:
+        if (
+            command.auto_terminate_on_timeout
+            and was_active_before
+            and not session.is_active
+        ):
             # Session was auto-terminated due to timeout
             pass
 
@@ -245,7 +265,9 @@ class InteractionCommandHandler:
             "was_terminated": was_active_before and not session.is_active,
             "is_active": session.is_active,
             "time_since_last_activity": session.status.time_since_last_activity,
-            "events": [event.__class__.__name__ for event in session.get_uncommitted_events()],
+            "events": [
+                event.__class__.__name__ for event in session.get_uncommitted_events()
+            ],
         }
 
     # Party Management Command Handlers
@@ -255,7 +277,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle adding party to negotiation session."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -294,7 +318,9 @@ class InteractionCommandHandler:
             "party_role": command.party.role.value,
             "compatibility_score": compatibility_score,
             "total_parties": len(session.parties),
-            "events": [event.__class__.__name__ for event in session.get_uncommitted_events()],
+            "events": [
+                event.__class__.__name__ for event in session.get_uncommitted_events()
+            ],
         }
 
     async def handle_remove_party_from_session(
@@ -302,7 +328,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle removing party from negotiation session."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -319,7 +347,9 @@ class InteractionCommandHandler:
         if command.transfer_authority_to:
             transfer_party = session.parties.get(command.transfer_authority_to)
             if not transfer_party:
-                raise ValueError(f"Transfer target party {command.transfer_authority_to} not found")
+                raise ValueError(
+                    f"Transfer target party {command.transfer_authority_to} not found"
+                )
 
             # This would require domain logic to transfer authority
             # For now, just document the intent
@@ -337,10 +367,14 @@ class InteractionCommandHandler:
             "removed_party_role": party_role,
             "removal_reason": command.removal_reason,
             "authority_transferred_to": (
-                str(command.transfer_authority_to) if command.transfer_authority_to else None
+                str(command.transfer_authority_to)
+                if command.transfer_authority_to
+                else None
             ),
             "remaining_parties": len(session.parties),
-            "events": [event.__class__.__name__ for event in session.get_uncommitted_events()],
+            "events": [
+                event.__class__.__name__ for event in session.get_uncommitted_events()
+            ],
         }
 
     async def handle_update_party_capabilities(
@@ -348,7 +382,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle updating party capabilities."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -372,7 +408,9 @@ class InteractionCommandHandler:
         return {
             "session_id": str(session.session_id),
             "party_id": str(command.party_id),
-            "updated_capabilities": [cap.capability_name for cap in command.updated_capabilities],
+            "updated_capabilities": [
+                cap.capability_name for cap in command.updated_capabilities
+            ],
             "total_capabilities": len(updated_party.capabilities),
             "update_reason": command.update_reason,
             "average_proficiency": float(updated_party.average_proficiency),
@@ -383,7 +421,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle updating party authority level."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -396,7 +436,9 @@ class InteractionCommandHandler:
         old_authority = existing_party.authority_level
 
         # Update party authority
-        updated_party = existing_party.with_updated_authority(command.new_authority_level)
+        updated_party = existing_party.with_updated_authority(
+            command.new_authority_level
+        )
 
         # Update party in session
         session.parties[command.party_id] = updated_party
@@ -416,10 +458,14 @@ class InteractionCommandHandler:
 
     # Proposal Management Command Handlers
 
-    async def handle_submit_proposal(self, command: SubmitProposalCommand) -> Dict[str, Any]:
+    async def handle_submit_proposal(
+        self, command: SubmitProposalCommand
+    ) -> Dict[str, Any]:
         """Handle submission of proposal to negotiation."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -443,13 +489,19 @@ class InteractionCommandHandler:
             "submitted_by": str(command.initiated_by),
             "submission_notes": command.submission_notes,
             "current_phase": session.status.phase.value,
-            "events": [event.__class__.__name__ for event in session.get_uncommitted_events()],
+            "events": [
+                event.__class__.__name__ for event in session.get_uncommitted_events()
+            ],
         }
 
-    async def handle_withdraw_proposal(self, command: WithdrawProposalCommand) -> Dict[str, Any]:
+    async def handle_withdraw_proposal(
+        self, command: WithdrawProposalCommand
+    ) -> Dict[str, Any]:
         """Handle withdrawal of proposal from negotiation."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -487,10 +539,14 @@ class InteractionCommandHandler:
             "active_proposals_count": len(session.active_proposals),
         }
 
-    async def handle_update_proposal(self, command: UpdateProposalCommand) -> Dict[str, Any]:
+    async def handle_update_proposal(
+        self, command: UpdateProposalCommand
+    ) -> Dict[str, Any]:
         """Handle update of existing proposal."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -520,10 +576,14 @@ class InteractionCommandHandler:
             "notify_parties": command.notify_parties,
         }
 
-    async def handle_optimize_proposal(self, command: OptimizeProposalCommand) -> Dict[str, Any]:
+    async def handle_optimize_proposal(
+        self, command: OptimizeProposalCommand
+    ) -> Dict[str, Any]:
         """Handle optimization of proposal for better acceptance."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -544,10 +604,14 @@ class InteractionCommandHandler:
 
         # Apply optimizations if they meet criteria
         optimizations_applied = []
-        if optimization_result["expected_improvement"] > 10:  # 10% improvement threshold
+        if (
+            optimization_result["expected_improvement"] > 10
+        ):  # 10% improvement threshold
             for optimized_term in optimization_result["optimized_terms"]:
                 if len(optimizations_applied) < command.max_modifications:
-                    proposal = proposal.update_term(optimized_term.term_id, optimized_term)
+                    proposal = proposal.update_term(
+                        optimized_term.term_id, optimized_term
+                    )
                     optimizations_applied.append(optimized_term.term_id)
 
         session.active_proposals[command.proposal_id] = proposal
@@ -560,7 +624,9 @@ class InteractionCommandHandler:
             "proposal_id": str(command.proposal_id),
             "optimization_target": command.optimization_target,
             "optimizations_applied": optimizations_applied,
-            "expected_improvement": float(optimization_result.get("expected_improvement", 0)),
+            "expected_improvement": float(
+                optimization_result.get("expected_improvement", 0)
+            ),
             "risk_level": optimization_result.get("risk_assessment", {}).get(
                 "risk_level", "unknown"
             ),
@@ -576,7 +642,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle submission of proposal response."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -602,13 +670,19 @@ class InteractionCommandHandler:
             "acceptance_percentage": command.response.get_acceptance_percentage(),
             "requires_follow_up": command.response.requires_negotiation(),
             "current_phase": session.status.phase.value,
-            "events": [event.__class__.__name__ for event in session.get_uncommitted_events()],
+            "events": [
+                event.__class__.__name__ for event in session.get_uncommitted_events()
+            ],
         }
 
-    async def handle_update_response(self, command: UpdateResponseCommand) -> Dict[str, Any]:
+    async def handle_update_response(
+        self, command: UpdateResponseCommand
+    ) -> Dict[str, Any]:
         """Handle update of existing response."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -626,8 +700,10 @@ class InteractionCommandHandler:
                     # Apply updates
                     if command.updated_term_responses:
                         for term_response in command.updated_term_responses:
-                            updated_response = updated_response.with_updated_term_response(
-                                term_response.term_id, term_response
+                            updated_response = (
+                                updated_response.with_updated_term_response(
+                                    term_response.term_id, term_response
+                                )
                             )
 
                     if command.updated_overall_response:
@@ -635,9 +711,13 @@ class InteractionCommandHandler:
                             ResponseType,
                         )
 
-                        overall_response = ResponseType(command.updated_overall_response)
-                        updated_response = updated_response.with_updated_overall_response(
-                            overall_response
+                        overall_response = ResponseType(
+                            command.updated_overall_response
+                        )
+                        updated_response = (
+                            updated_response.with_updated_overall_response(
+                                overall_response
+                            )
                         )
 
                     # Replace response in list
@@ -672,7 +752,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle analysis of proposal viability."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -697,7 +779,9 @@ class InteractionCommandHandler:
 
         # Convert party-specific analysis
         for party_id, party_analysis in analysis["party_specific_analysis"].items():
-            party_analysis["acceptance_score"] = float(party_analysis["acceptance_score"])
+            party_analysis["acceptance_score"] = float(
+                party_analysis["acceptance_score"]
+            )
 
         return {
             "session_id": str(session.session_id),
@@ -713,7 +797,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle assessment of party compatibility."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -732,8 +818,10 @@ class InteractionCommandHandler:
         compatibility_matrix = {}
         for i, party1 in enumerate(parties_to_assess):
             for j, party2 in enumerate(parties_to_assess[i + 1 :], i + 1):
-                compatibility_score = self.negotiation_service.assess_party_compatibility(
-                    party1, party2, session.negotiation_domain
+                compatibility_score = (
+                    self.negotiation_service.assess_party_compatibility(
+                        party1, party2, session.negotiation_domain
+                    )
                 )
 
                 pair_key = f"{party1.party_id}_{party2.party_id}"
@@ -747,7 +835,9 @@ class InteractionCommandHandler:
 
         # Calculate overall compatibility
         if compatibility_matrix:
-            scores = [comp["compatibility_score"] for comp in compatibility_matrix.values()]
+            scores = [
+                comp["compatibility_score"] for comp in compatibility_matrix.values()
+            ]
             overall_compatibility = sum(scores) / len(scores)
         else:
             overall_compatibility = 100.0  # Single party or no comparisons
@@ -766,7 +856,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle recommendation of negotiation strategy."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -794,7 +886,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle detection of negotiation conflicts."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -822,7 +916,9 @@ class InteractionCommandHandler:
         # Convert UUID objects to strings for JSON serialization
         for conflict in filtered_conflicts:
             if "parties" in conflict:
-                conflict["parties"] = [str(party_id) for party_id in conflict["parties"]]
+                conflict["parties"] = [
+                    str(party_id) for party_id in conflict["parties"]
+                ]
 
         return {
             "session_id": str(session.session_id),
@@ -838,7 +934,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle calculation of negotiation momentum."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -846,7 +944,9 @@ class InteractionCommandHandler:
         # Get recent responses within analysis window
         from datetime import datetime, timedelta, timezone
 
-        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=command.analysis_window_hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(
+            hours=command.analysis_window_hours
+        )
         recent_responses = []
 
         for party_responses in session.responses.values():
@@ -879,7 +979,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle batch update of multiple parties."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -945,7 +1047,9 @@ class InteractionCommandHandler:
     ) -> Dict[str, Any]:
         """Handle batch submission of multiple responses."""
         # Retrieve session
-        session = await self.session_repository.get_by_id(InteractionId(command.session_id))
+        session = await self.session_repository.get_by_id(
+            InteractionId(command.session_id)
+        )
 
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
@@ -963,7 +1067,9 @@ class InteractionCommandHandler:
                         )
 
                     if response.proposal_id not in session.active_proposals:
-                        raise ValueError(f"Proposal {response.proposal_id} not found or not active")
+                        raise ValueError(
+                            f"Proposal {response.proposal_id} not found or not active"
+                        )
 
                 # Submit response
                 session.submit_response(response)
@@ -991,5 +1097,7 @@ class InteractionCommandHandler:
             "failed_submissions": failed_submissions,
             "auto_advance_on_completion": command.auto_advance_on_batch_completion,
             "current_phase": session.status.phase.value,
-            "events": [event.__class__.__name__ for event in session.get_uncommitted_events()],
+            "events": [
+                event.__class__.__name__ for event in session.get_uncommitted_events()
+            ],
         }

@@ -99,7 +99,9 @@ class CreateTurnBriefCommandHandler:
             return turn_brief.turn_brief_id
 
         except Exception as e:
-            self.logger.error(f"Failed to create TurnBrief for entity {command.entity_id}: {e}")
+            self.logger.error(
+                f"Failed to create TurnBrief for entity {command.entity_id}: {e}"
+            )
             raise SubjectiveCommandHandlerException(f"TurnBrief creation failed: {e}")
 
 
@@ -125,7 +127,9 @@ class UpdatePerceptionCapabilitiesCommandHandler:
         try:
             command.validate()
         except ValueError as e:
-            raise InvalidCommandException(f"Invalid UpdatePerceptionCapabilitiesCommand: {e}")
+            raise InvalidCommandException(
+                f"Invalid UpdatePerceptionCapabilitiesCommand: {e}"
+            )
 
         turn_brief = self.repository.get_by_entity_id(command.entity_id)
         if not turn_brief:
@@ -138,7 +142,9 @@ class UpdatePerceptionCapabilitiesCommandHandler:
 
             self.repository.save(turn_brief)
 
-            self.logger.info(f"Updated perception capabilities for entity {command.entity_id}")
+            self.logger.info(
+                f"Updated perception capabilities for entity {command.entity_id}"
+            )
 
         except ConcurrencyException:
             raise
@@ -146,7 +152,9 @@ class UpdatePerceptionCapabilitiesCommandHandler:
             self.logger.error(
                 f"Failed to update perception capabilities for entity {command.entity_id}: {e}"
             )
-            raise SubjectiveCommandHandlerException(f"Perception capabilities update failed: {e}")
+            raise SubjectiveCommandHandlerException(
+                f"Perception capabilities update failed: {e}"
+            )
 
 
 class UpdateAwarenessStateCommandHandler:
@@ -183,8 +191,10 @@ class UpdateAwarenessStateCommandHandler:
 
             new_awareness = AwarenessState(
                 base_alertness=current_awareness.base_alertness,
-                current_alertness=command.new_alertness or current_awareness.current_alertness,
-                attention_focus=command.new_attention_focus or current_awareness.attention_focus,
+                current_alertness=command.new_alertness
+                or current_awareness.current_alertness,
+                attention_focus=command.new_attention_focus
+                or current_awareness.attention_focus,
                 focus_target=(
                     command.new_focus_target
                     if command.new_focus_target is not None
@@ -218,13 +228,17 @@ class UpdateAwarenessStateCommandHandler:
             self.logger.error(
                 f"Failed to update awareness state for entity {command.entity_id}: {e}"
             )
-            raise SubjectiveCommandHandlerException(f"Awareness state update failed: {e}")
+            raise SubjectiveCommandHandlerException(
+                f"Awareness state update failed: {e}"
+            )
 
 
 class AddPerceptionCommandHandler:
     """Handler for AddPerceptionCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService):
+    def __init__(
+        self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
+    ):
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
         self.logger = logger.getChild(self.__class__.__name__)
@@ -253,15 +267,19 @@ class AddPerceptionCommandHandler:
         try:
             # Calculate visibility level using fog of war service
             if command.observer_position and command.target_position:
-                visibility_results = self.fog_of_war_service.calculate_visibility_between_positions(
-                    turn_brief,
-                    command.observer_position,
-                    command.target_position,
-                    command.environmental_conditions,
+                visibility_results = (
+                    self.fog_of_war_service.calculate_visibility_between_positions(
+                        turn_brief,
+                        command.observer_position,
+                        command.target_position,
+                        command.environmental_conditions,
+                    )
                 )
                 visibility_level = visibility_results.get(
                     command.perception_type,
-                    turn_brief.can_perceive_at_distance(command.distance, command.perception_type),
+                    turn_brief.can_perceive_at_distance(
+                        command.distance, command.perception_type
+                    ),
                 )
             else:
                 # Use TurnBrief's own perception calculation
@@ -287,7 +305,9 @@ class AddPerceptionCommandHandler:
         except ConcurrencyException:
             raise
         except Exception as e:
-            self.logger.error(f"Failed to add perception for entity {command.entity_id}: {e}")
+            self.logger.error(
+                f"Failed to add perception for entity {command.entity_id}: {e}"
+            )
             raise SubjectiveCommandHandlerException(f"Add perception failed: {e}")
 
 
@@ -331,7 +351,9 @@ class RevealKnowledgeCommandHandler:
         except ConcurrencyException:
             raise
         except Exception as e:
-            self.logger.error(f"Failed to reveal knowledge to entity {command.entity_id}: {e}")
+            self.logger.error(
+                f"Failed to reveal knowledge to entity {command.entity_id}: {e}"
+            )
             raise SubjectiveCommandHandlerException(f"Reveal knowledge failed: {e}")
 
 
@@ -383,14 +405,18 @@ class DetectThreatCommandHandler:
         except ConcurrencyException:
             raise
         except Exception as e:
-            self.logger.error(f"Failed to detect threat for entity {command.entity_id}: {e}")
+            self.logger.error(
+                f"Failed to detect threat for entity {command.entity_id}: {e}"
+            )
             raise SubjectiveCommandHandlerException(f"Threat detection failed: {e}")
 
 
 class UpdateFogOfWarCommandHandler:
     """Handler for UpdateFogOfWarCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService):
+    def __init__(
+        self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
+    ):
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
         self.logger = logger.getChild(self.__class__.__name__)
@@ -418,14 +444,12 @@ class UpdateFogOfWarCommandHandler:
 
         try:
             # Use fog of war service to calculate visibility changes
-            (
-                newly_revealed,
-                newly_concealed,
-                visibility_changes,
-            ) = self.fog_of_war_service.update_visible_subjects_for_turn_brief(
-                turn_brief,
-                command.world_positions,
-                command.environmental_conditions,
+            newly_revealed, newly_concealed, visibility_changes = (
+                self.fog_of_war_service.update_visible_subjects_for_turn_brief(
+                    turn_brief,
+                    command.world_positions,
+                    command.environmental_conditions,
+                )
             )
 
             # Update the TurnBrief with the changes
@@ -446,14 +470,18 @@ class UpdateFogOfWarCommandHandler:
         except ConcurrencyException:
             raise
         except Exception as e:
-            self.logger.error(f"Failed to update fog of war for entity {command.entity_id}: {e}")
+            self.logger.error(
+                f"Failed to update fog of war for entity {command.entity_id}: {e}"
+            )
             raise SubjectiveCommandHandlerException(f"Fog of war update failed: {e}")
 
 
 class ShareInformationCommandHandler:
     """Handler for ShareInformationCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService):
+    def __init__(
+        self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
+    ):
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
         self.logger = logger.getChild(self.__class__.__name__)
@@ -480,7 +508,9 @@ class ShareInformationCommandHandler:
 
         source_turn_brief = self.repository.get_by_entity_id(command.source_entity_id)
         if not source_turn_brief:
-            raise EntityNotFoundException(f"Source entity {command.source_entity_id} not found")
+            raise EntityNotFoundException(
+                f"Source entity {command.source_entity_id} not found"
+            )
 
         successful_shares = 0
 
@@ -488,7 +518,9 @@ class ShareInformationCommandHandler:
             try:
                 target_turn_brief = self.repository.get_by_entity_id(target_entity_id)
                 if not target_turn_brief:
-                    self.logger.warning(f"Target entity {target_entity_id} not found, skipping")
+                    self.logger.warning(
+                        f"Target entity {target_entity_id} not found, skipping"
+                    )
                     continue
 
                 # Use fog of war service to determine if sharing is possible
@@ -496,7 +528,9 @@ class ShareInformationCommandHandler:
                     self.fog_of_war_service.propagate_knowledge_between_entities(
                         source_turn_brief=source_turn_brief,
                         target_turn_brief=target_turn_brief,
-                        knowledge_types=[item.knowledge_type for item in command.knowledge_items],
+                        knowledge_types=[
+                            item.knowledge_type for item in command.knowledge_items
+                        ],
                         max_propagation_distance=command.max_sharing_distance,
                         source_reliability_modifier=command.reliability_modifier,
                     )
@@ -505,7 +539,10 @@ class ShareInformationCommandHandler:
                 # Share the knowledge items that can be propagated
                 for knowledge_item in command.knowledge_items:
                     # Check if this knowledge can be shared
-                    if any(pk.subject == knowledge_item.subject for pk in propagatable_knowledge):
+                    if any(
+                        pk.subject == knowledge_item.subject
+                        for pk in propagatable_knowledge
+                    ):
                         target_turn_brief.add_knowledge(
                             knowledge_item,
                             f"shared_by_{command.source_entity_id}_{command.communication_method}",
@@ -515,11 +552,14 @@ class ShareInformationCommandHandler:
                 successful_shares += 1
 
                 self.logger.debug(
-                    f"Shared information from {command.source_entity_id} " f"to {target_entity_id}"
+                    f"Shared information from {command.source_entity_id} "
+                    f"to {target_entity_id}"
                 )
 
             except Exception as e:
-                self.logger.error(f"Failed to share information to {target_entity_id}: {e}")
+                self.logger.error(
+                    f"Failed to share information to {target_entity_id}: {e}"
+                )
                 continue
 
         self.logger.info(
@@ -533,15 +573,21 @@ class ShareInformationCommandHandler:
 class SubjectiveCommandHandlerRegistry:
     """Registry for all Subjective command handlers."""
 
-    def __init__(self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService):
+    def __init__(
+        self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
+    ):
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
 
         # Initialize handlers
         self.create_handler = CreateTurnBriefCommandHandler(repository)
-        self.update_perception_handler = UpdatePerceptionCapabilitiesCommandHandler(repository)
+        self.update_perception_handler = UpdatePerceptionCapabilitiesCommandHandler(
+            repository
+        )
         self.update_awareness_handler = UpdateAwarenessStateCommandHandler(repository)
-        self.add_perception_handler = AddPerceptionCommandHandler(repository, fog_of_war_service)
+        self.add_perception_handler = AddPerceptionCommandHandler(
+            repository, fog_of_war_service
+        )
         self.reveal_knowledge_handler = RevealKnowledgeCommandHandler(repository)
         self.detect_threat_handler = DetectThreatCommandHandler(repository)
         self.update_fog_of_war_handler = UpdateFogOfWarCommandHandler(
@@ -563,7 +609,9 @@ class SubjectiveCommandHandlerRegistry:
         """Handle UpdatePerceptionCapabilitiesCommand."""
         self.update_perception_handler.handle(command)
 
-    def handle_update_awareness_state(self, command: UpdateAwarenessStateCommand) -> None:
+    def handle_update_awareness_state(
+        self, command: UpdateAwarenessStateCommand
+    ) -> None:
         """Handle UpdateAwarenessStateCommand."""
         self.update_awareness_handler.handle(command)
 

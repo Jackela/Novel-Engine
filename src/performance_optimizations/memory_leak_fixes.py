@@ -693,7 +693,7 @@ def apply_memory_fixes_to_persona_agent(persona_agent_instance) -> bool:
         return False
 
 
-def monitor_persona_agent_memory(persona_agent_instance) -> "PersonaAgentMemoryMonitor":
+def monitor_persona_agent_memory(persona_agent_instance):
     """
     Add memory monitoring to a PersonaAgent instance.
 

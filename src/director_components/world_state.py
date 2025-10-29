@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
+
 class StateChangeType(Enum):
     """Types of world state changes."""
 
@@ -106,19 +107,8 @@ class WorldStateManager:
             self.logger.info("World state manager initialized successfully")
             return True
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors during initialization
-            self.logger.error(
-                f"File system error during initialization: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (ValueError, RuntimeError, TypeError) as e:
-            # State creation or task creation errors
-            self.logger.error(
-                f"World state manager initialization error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"World state manager initialization failed: {e}")
             return False
 
     async def get_world_state(self) -> Dict[str, Any]:
@@ -158,19 +148,8 @@ class WorldStateManager:
 
                     self.logger.debug(f"Applied {len(changes)} state updates")
 
-            except (AttributeError, KeyError, TypeError) as e:
-                # Invalid updates dictionary or state structure errors
-                self.logger.error(
-                    f"Invalid data during state update: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                raise
-            except (ValueError, IndexError, RuntimeError) as e:
-                # Update application or history management errors
-                self.logger.error(
-                    f"State update processing error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                self.logger.error(f"State update failed: {e}")
                 raise
 
     async def _apply_single_update(
@@ -221,19 +200,8 @@ class WorldStateManager:
                 source="world_state_manager",
             )
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid state structure or path navigation errors
-            self.logger.error(
-                f"Invalid data during update to path '{path}': {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return None
-        except (ValueError, IndexError) as e:
-            # Path parsing or state manipulation errors
-            self.logger.error(
-                f"Update processing error for path '{path}': {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to apply update to path '{path}': {e}")
             return None
 
     async def get_state_value(self, path: str, default: Any = None) -> Any:
@@ -251,19 +219,8 @@ class WorldStateManager:
 
                 return current
 
-            except (AttributeError, KeyError, TypeError) as e:
-                # Invalid state structure or path navigation errors
-                self.logger.error(
-                    f"Invalid data while getting state value for path '{path}': {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                return default
-            except (ValueError, IndexError) as e:
-                # Path parsing or state access errors
-                self.logger.error(
-                    f"State value retrieval error for path '{path}': {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                self.logger.error(f"Failed to get state value for path '{path}': {e}")
                 return default
 
     async def set_state_value(self, path: str, value: Any) -> bool:
@@ -271,19 +228,8 @@ class WorldStateManager:
         try:
             await self.update_world_state({path: value})
             return True
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid path or value structure errors
-            self.logger.error(
-                f"Invalid data while setting state value for path '{path}': {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (ValueError, RuntimeError) as e:
-            # Update application or state modification errors
-            self.logger.error(
-                f"State value setting error for path '{path}': {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to set state value for path '{path}': {e}")
             return False
 
     async def save_world_state(self) -> bool:
@@ -314,19 +260,8 @@ class WorldStateManager:
                 self.logger.info(f"World state saved to {self.state_file}")
                 return True
 
-            except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-                # File system errors during save
-                self.logger.error(
-                    f"File system error during world state save: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                return False
-            except (json.JSONEncodeError, TypeError, ValueError) as e:
-                # JSON serialization or data conversion errors
-                self.logger.error(
-                    f"Data serialization error during world state save: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                self.logger.error(f"Failed to save world state: {e}")
                 return False
 
     async def load_world_state(self) -> bool:
@@ -362,19 +297,8 @@ class WorldStateManager:
                 self.logger.info(f"World state loaded from {self.state_file}")
                 return True
 
-            except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-                # File system errors during load
-                self.logger.error(
-                    f"File system error during world state load: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                return False
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
-                # JSON parsing or data format errors
-                self.logger.error(
-                    f"Data format error during world state load: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                self.logger.error(f"Failed to load world state: {e}")
                 return False
 
     async def _create_snapshot(self) -> None:
@@ -397,18 +321,8 @@ class WorldStateManager:
 
             self.logger.debug(f"Created state snapshot: {snapshot_id}")
 
-        except (AttributeError, TypeError, ValueError) as e:
-            # Invalid state structure or snapshot data errors
-            self.logger.error(
-                f"Invalid data during snapshot creation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (RuntimeError, IndexError) as e:
-            # Snapshot list operations or deep copy errors
-            self.logger.error(
-                f"Snapshot creation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Failed to create snapshot: {e}")
 
     async def restore_from_snapshot(self, snapshot_id: str) -> bool:
         """Restore state from a specific snapshot."""
@@ -432,19 +346,8 @@ class WorldStateManager:
                 self.logger.info(f"State restored from snapshot: {snapshot_id}")
                 return True
 
-            except (AttributeError, KeyError, TypeError) as e:
-                # Invalid snapshot data or state structure errors
-                self.logger.error(
-                    f"Invalid data during snapshot restore: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                return False
-            except (ValueError, IndexError, RuntimeError) as e:
-                # Snapshot search or state restoration errors
-                self.logger.error(
-                    f"Snapshot restoration processing error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                self.logger.error(f"Failed to restore from snapshot: {e}")
                 return False
 
     async def get_change_history(self, limit: int = 100) -> List[Dict[str, Any]]:
@@ -530,19 +433,8 @@ class WorldStateManager:
                     "checksum": self._calculate_state_checksum(),
                 }
 
-            except (AttributeError, TypeError, KeyError) as e:
-                # Invalid state structure or data access errors
-                self.logger.error(
-                    f"Invalid data during state statistics calculation: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                return {"error": str(e)}
-            except (ValueError, json.JSONDecodeError) as e:
-                # Statistics calculation or JSON serialization errors
-                self.logger.error(
-                    f"State statistics calculation error: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                self.logger.error(f"Failed to calculate state statistics: {e}")
                 return {"error": str(e)}
 
     def _calculate_state_checksum(self) -> str:
@@ -552,19 +444,7 @@ class WorldStateManager:
                 self._current_state, sort_keys=True, ensure_ascii=True
             )
             return hashlib.md5(state_json.encode()).hexdigest()
-        except (TypeError, ValueError, AttributeError) as e:
-            # JSON serialization or state data errors
-            self.logger.debug(
-                f"Checksum calculation data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return "checksum_error"
-        except (json.JSONEncodeError, RuntimeError) as e:
-            # JSON encoding or hashing errors
-            self.logger.debug(
-                f"Checksum calculation processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception:
             return "checksum_error"
 
     def _generate_change_id(self, path: str, change_type: StateChangeType) -> str:
@@ -619,18 +499,8 @@ class WorldStateManager:
 
         except asyncio.CancelledError:
             self.logger.info("Auto-save loop cancelled")
-        except (AttributeError, TypeError) as e:
-            # Invalid state or save method errors
-            self.logger.error(
-                f"Auto-save loop data error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (RuntimeError, ValueError) as e:
-            # Save operation or async task errors
-            self.logger.error(
-                f"Auto-save loop processing error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"Auto-save loop error: {e}")
 
     async def cleanup(self) -> None:
         """Cleanup world state manager."""
@@ -649,16 +519,8 @@ class WorldStateManager:
 
             self.logger.info("World state manager cleanup completed")
 
-        except (AttributeError, TypeError) as e:
-            # Invalid task or save method errors
-            self.logger.error(
-                f"Cleanup data error: {e}", extra={"error_type": type(e).__name__}
-            )
-        except (RuntimeError, ValueError) as e:
-            # Task cancellation or save operation errors
-            self.logger.error(
-                f"Cleanup processing error: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            self.logger.error(f"World state cleanup error: {e}")
 
     async def export_state(
         self, export_path: str, include_history: bool = False
@@ -687,19 +549,8 @@ class WorldStateManager:
             self.logger.info(f"State exported to {export_path}")
             return True
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors during export
-            self.logger.error(
-                f"File system error during state export: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (json.JSONEncodeError, TypeError, ValueError) as e:
-            # JSON serialization or data conversion errors
-            self.logger.error(
-                f"Data serialization error during state export: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            self.logger.error(f"State export failed: {e}")
             return False
 
     async def import_state(self, import_path: str) -> bool:
@@ -729,17 +580,6 @@ class WorldStateManager:
                 self.logger.info(f"State imported from {import_path}")
                 return True
 
-            except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-                # File system errors during import
-                self.logger.error(
-                    f"File system error during state import: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-                return False
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
-                # JSON parsing or data format errors
-                self.logger.error(
-                    f"Data format error during state import: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                self.logger.error(f"State import failed: {e}")
                 return False

@@ -321,49 +321,15 @@ class SystemOrchestrator:
                 },
             )
 
-        except (ImportError, ModuleNotFoundError) as e:
-            # Failed to import required subsystem modules
-            logger.critical(
-                f"Failed to import required subsystem modules: {e}",
-                extra={"error_type": "ImportError"},
-            )
-            self.system_health = SystemHealth.CRITICAL
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="ORCHESTRATOR_STARTUP_FAILED",
-                    message="Failed to import required modules",
-                    details={"exception": str(e), "error_type": "ImportError"},
-                ),
-            )
-        except (OSError, IOError, PermissionError) as e:
-            # File system or permission errors during startup
-            logger.critical(
-                f"File system error during startup: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            self.system_health = SystemHealth.CRITICAL
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="ORCHESTRATOR_STARTUP_FAILED",
-                    message="File system error during startup",
-                    details={"exception": str(e), "error_type": type(e).__name__},
-                ),
-            )
-        except (AttributeError, TypeError, ValueError) as e:
-            # Configuration or initialization errors
-            logger.error(
-                f"Configuration error during startup: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Critical error during startup: {str(e)}")
             self.system_health = SystemHealth.CRITICAL
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
                     code="ORCHESTRATOR_STARTUP_FAILED",
                     message="System orchestrator startup failed",
-                    details={"exception": str(e), "error_type": type(e).__name__},
+                    details={"exception": str(e)},
                 ),
             )
 
@@ -421,38 +387,14 @@ class SystemOrchestrator:
                 },
             )
 
-        except asyncio.CancelledError:
-            # Task cancellation during shutdown is expected
-            logger.info("Background tasks cancelled during shutdown")
-            return StandardResponse(
-                success=True,
-                data={"shutdown_time": datetime.now(), "status": "cancelled"},
-            )
-        except (OSError, IOError, PermissionError) as e:
-            # File system errors during state save or backup
-            logger.error(
-                f"File system error during shutdown: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="ORCHESTRATOR_SHUTDOWN_ERROR",
-                    message="File system error during shutdown",
-                    details={"exception": str(e), "error_type": type(e).__name__},
-                ),
-            )
-        except (AttributeError, TypeError) as e:
-            # Component shutdown method errors
-            logger.error(
-                f"Component shutdown error: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            logger.error(f"Error during shutdown: {str(e)}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
                     code="ORCHESTRATOR_SHUTDOWN_ERROR",
                     message="System orchestrator shutdown failed",
-                    details={"exception": str(e), "error_type": type(e).__name__},
+                    details={"exception": str(e)},
                 ),
             )
 
@@ -566,37 +508,14 @@ class SystemOrchestrator:
                 },
             )
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Missing or invalid agent data/state
-            logger.error(
-                f"Invalid agent data during context creation for {agent_id}: {e}",
-                extra={"agent_id": agent_id, "error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Error creating agent context for {agent_id}: {str(e)}")
             self.error_count += 1
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
                     code="AGENT_CONTEXT_CREATION_FAILED",
-                    message="Invalid agent data",
-                    details={
-                        "agent_id": agent_id,
-                        "exception": str(e),
-                        "error_type": type(e).__name__,
-                    },
-                ),
-            )
-        except (ImportError, ModuleNotFoundError) as e:
-            # Failed to import agent components
-            logger.error(
-                f"Failed to import agent components for {agent_id}: {e}",
-                extra={"agent_id": agent_id},
-            )
-            self.error_count += 1
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="AGENT_CONTEXT_CREATION_FAILED",
-                    message="Component import failed",
+                    message="Agent context creation failed",
                     details={"agent_id": agent_id, "exception": str(e)},
                 ),
             )
@@ -685,42 +604,15 @@ class SystemOrchestrator:
                 },
             )
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context data (missing attributes, invalid keys, type mismatches)
-            logger.error(
-                f"Invalid context data for {context.agent_id}: {e}",
-                extra={"agent_id": context.agent_id, "error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Error processing dynamic context: {str(e)}")
             self.error_count += 1
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
                     code="DYNAMIC_CONTEXT_PROCESSING_FAILED",
-                    message="Invalid context data",
-                    details={
-                        "agent_id": context.agent_id,
-                        "exception": str(e),
-                        "error_type": type(e).__name__,
-                    },
-                ),
-            )
-        except (asyncio.TimeoutError, asyncio.CancelledError) as e:
-            # Async operation timeout or cancellation
-            logger.error(
-                f"Async operation failed for {context.agent_id}: {e}",
-                extra={"agent_id": context.agent_id, "error_type": type(e).__name__},
-            )
-            self.error_count += 1
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="DYNAMIC_CONTEXT_PROCESSING_FAILED",
-                    message="Context processing timeout or cancelled",
-                    details={
-                        "agent_id": context.agent_id,
-                        "exception": str(e),
-                        "error_type": type(e).__name__,
-                    },
+                    message="Dynamic context processing failed",
+                    details={"agent_id": context.agent_id, "exception": str(e)},
                 ),
             )
 
@@ -782,42 +674,15 @@ class SystemOrchestrator:
             self.operation_count += 1
             return interaction_result
 
-        except (AttributeError, KeyError, ValueError) as e:
-            # Invalid interaction data (missing attributes, invalid participants, bad values)
-            logger.error(
-                f"Invalid interaction data: {e}",
-                extra={"participants": participants, "error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Error in multi-agent interaction orchestration: {str(e)}")
             self.error_count += 1
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
                     code="MULTI_AGENT_INTERACTION_FAILED",
-                    message="Invalid interaction data",
-                    details={
-                        "participants": participants,
-                        "exception": str(e),
-                        "error_type": type(e).__name__,
-                    },
-                ),
-            )
-        except (asyncio.TimeoutError, asyncio.CancelledError) as e:
-            # Interaction timeout or cancellation
-            logger.error(
-                f"Interaction operation timed out or cancelled: {e}",
-                extra={"participants": participants, "error_type": type(e).__name__},
-            )
-            self.error_count += 1
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="MULTI_AGENT_INTERACTION_FAILED",
-                    message="Interaction timeout or cancelled",
-                    details={
-                        "participants": participants,
-                        "exception": str(e),
-                        "error_type": type(e).__name__,
-                    },
+                    message="Multi-agent interaction failed",
+                    details={"participants": participants, "exception": str(e)},
                 ),
             )
 
@@ -870,32 +735,14 @@ class SystemOrchestrator:
                 },
             )
 
-        except (AttributeError, TypeError) as e:
-            # Component attribute errors or type issues
-            logger.error(
-                f"Component error during metrics retrieval: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Error retrieving system metrics: {str(e)}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
                     code="METRICS_RETRIEVAL_FAILED",
-                    message="Component error during metrics retrieval",
-                    details={"exception": str(e), "error_type": type(e).__name__},
-                ),
-            )
-        except (ZeroDivisionError, ValueError) as e:
-            # Calculation errors (division by zero, invalid values)
-            logger.error(
-                f"Calculation error during metrics retrieval: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="METRICS_RETRIEVAL_FAILED",
-                    message="Calculation error during metrics retrieval",
-                    details={"exception": str(e), "error_type": type(e).__name__},
+                    message="Metrics retrieval failed",
+                    details={"exception": str(e)},
                 ),
             )
 
@@ -930,14 +777,9 @@ class SystemOrchestrator:
                 )
 
             except asyncio.CancelledError:
-                # Expected cancellation during shutdown
                 break
-            except (AttributeError, RuntimeError) as e:
-                # Component failures or runtime issues
-                logger.error(
-                    f"Component failure in health check loop: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Error in health check loop: {str(e)}")
                 self.system_health = SystemHealth.DEGRADED
 
     async def _memory_cleanup_loop(self):
@@ -951,14 +793,9 @@ class SystemOrchestrator:
                 await self._perform_memory_cleanup()
 
             except asyncio.CancelledError:
-                # Expected cancellation during shutdown
                 break
-            except (AttributeError, RuntimeError) as e:
-                # Component failures during cleanup
-                logger.error(
-                    f"Component failure in memory cleanup loop: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Error in memory cleanup loop: {str(e)}")
 
     async def _backup_loop(self):
         """Background backup loop."""
@@ -971,14 +808,9 @@ class SystemOrchestrator:
                 await self._perform_backup()
 
             except asyncio.CancelledError:
-                # Expected cancellation during shutdown
                 break
-            except (AttributeError, RuntimeError) as e:
-                # Component failures during backup
-                logger.error(
-                    f"Component failure in backup loop: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
+            except Exception as e:
+                logger.error(f"Error in backup loop: {str(e)}")
 
     async def _perform_health_check(self) -> Dict[str, Any]:
         """Perform comprehensive system health check."""
@@ -1016,27 +848,9 @@ class SystemOrchestrator:
                 "check_time": self.last_health_check,
             }
 
-        except (AttributeError, TypeError) as e:
-            # Component check failures (missing attributes, type errors)
-            logger.error(
-                f"Component check failure during health check: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {
-                "system_health": SystemHealth.CRITICAL,
-                "error": str(e),
-                "error_type": type(e).__name__,
-            }
-        except asyncio.TimeoutError as e:
-            # Health check timeout
-            logger.error(
-                f"Health check timeout: {e}", extra={"error_type": type(e).__name__}
-            )
-            return {
-                "system_health": SystemHealth.CRITICAL,
-                "error": str(e),
-                "error_type": type(e).__name__,
-            }
+        except Exception as e:
+            logger.error(f"Error during health check: {str(e)}")
+            return {"system_health": SystemHealth.CRITICAL, "error": str(e)}
 
     async def _perform_memory_cleanup(self):
         """Perform memory cleanup and optimization."""
@@ -1059,17 +873,8 @@ class SystemOrchestrator:
                 f"Memory cleanup completed, removed {len(inactive_agents)} inactive agents"
             )
 
-        except (AttributeError, KeyError) as e:
-            # Missing agents or invalid agent data
-            logger.error(
-                f"Invalid agent data during memory cleanup: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except RuntimeError as e:
-            # Cleanup operation failures
-            logger.error(
-                f"Cleanup operation failed: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            logger.error(f"Error during memory cleanup: {str(e)}")
 
     async def _perform_backup(self):
         """Perform system state backup."""
@@ -1098,18 +903,8 @@ class SystemOrchestrator:
             self.last_backup = datetime.now()
             logger.info(f"System backup completed: {backup_path}")
 
-        except (IOError, OSError, PermissionError) as e:
-            # File system errors during backup
-            logger.error(
-                f"File system error during backup: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (json.JSONDecodeError, TypeError) as e:
-            # JSON serialization errors
-            logger.error(
-                f"JSON serialization error during backup: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Error during backup: {str(e)}")
 
     async def _save_system_state(self):
         """Save current system state to database."""
@@ -1133,18 +928,8 @@ class SystemOrchestrator:
 
             logger.info("System state saved successfully")
 
-        except (AttributeError, KeyError) as e:
-            # Missing state data or invalid attributes
-            logger.error(
-                f"Invalid state data during save: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (OSError, IOError) as e:
-            # Database write errors
-            logger.error(
-                f"Database write error during state save: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"ERROR saving system state: {str(e)}")
 
     async def _update_character_state(
         self, agent_id: str, character_state: CharacterState
@@ -1170,40 +955,13 @@ class SystemOrchestrator:
 
             return update_result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid character data (missing attributes, invalid keys, type errors)
-            logger.error(
-                f"Invalid character data for {agent_id}: {e}",
-                extra={"agent_id": agent_id, "error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"ERROR updating character state for {agent_id}: {str(e)}")
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
                     code="CHARACTER_STATE_UPDATE_FAILED",
-                    message="Invalid character data",
-                    details={
-                        "agent_id": agent_id,
-                        "exception": str(e),
-                        "error_type": type(e).__name__,
-                    },
-                ),
-            )
-        except asyncio.TimeoutError as e:
-            # Character state update timeout
-            logger.error(
-                f"Character state update timeout for {agent_id}: {e}",
-                extra={"agent_id": agent_id, "error_type": type(e).__name__},
-            )
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="CHARACTER_STATE_UPDATE_FAILED",
-                    message="Character state update timeout",
-                    details={
-                        "agent_id": agent_id,
-                        "exception": str(e),
-                        "error_type": type(e).__name__,
-                    },
+                    message="Character state update failed",
                 ),
             )
 
@@ -1224,40 +982,15 @@ class SystemOrchestrator:
 
             return await self.memory_system.store_memory(env_memory)
 
-        except (AttributeError, KeyError, ValueError) as e:
-            # Invalid environmental data (missing attributes, invalid keys, bad values)
+        except Exception as e:
             logger.error(
-                f"Invalid environmental data for {agent_id}: {e}",
-                extra={"agent_id": agent_id, "error_type": type(e).__name__},
+                f"ERROR processing environmental context for {agent_id}: {str(e)}"
             )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
                     code="ENVIRONMENTAL_CONTEXT_FAILED",
-                    message="Invalid environmental data",
-                    details={
-                        "agent_id": agent_id,
-                        "exception": str(e),
-                        "error_type": type(e).__name__,
-                    },
-                ),
-            )
-        except asyncio.TimeoutError as e:
-            # Environmental context processing timeout
-            logger.error(
-                f"Environmental context processing timeout for {agent_id}: {e}",
-                extra={"agent_id": agent_id, "error_type": type(e).__name__},
-            )
-            return StandardResponse(
-                success=False,
-                error=ErrorInfo(
-                    code="ENVIRONMENTAL_CONTEXT_FAILED",
-                    message="Environmental context processing timeout",
-                    details={
-                        "agent_id": agent_id,
-                        "exception": str(e),
-                        "error_type": type(e).__name__,
-                    },
+                    message="Environmental context processing failed",
                 ),
             )
 
@@ -1298,18 +1031,8 @@ class SystemOrchestrator:
                 f"Recorded narrative event: {interaction_context.interaction_id}"
             )
 
-        except (AttributeError, KeyError) as e:
-            # Missing event data or invalid attributes
-            logger.error(
-                f"Invalid event data during narrative event recording: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (TypeError, ValueError) as e:
-            # Invalid data format for narrative event
-            logger.error(
-                f"Invalid data format for narrative event: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to record narrative event: {e}")
 
     async def _analyze_agent_causal_relationships(
         self, agent_id: str, event_data: Dict[str, Any]
@@ -1332,18 +1055,8 @@ class SystemOrchestrator:
                     recent_events[-1], event_data
                 )
 
-        except (AttributeError, KeyError) as e:
-            # Missing agent data or invalid attributes
-            logger.error(
-                f"Invalid agent data during causal analysis for {agent_id}: {e}",
-                extra={"agent_id": agent_id, "error_type": type(e).__name__},
-            )
-        except (TypeError, ValueError) as e:
-            # Invalid data format for causal analysis
-            logger.error(
-                f"Invalid data format for causal analysis for {agent_id}: {e}",
-                extra={"agent_id": agent_id, "error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to analyze causal relationships for {agent_id}: {e}")
 
     async def _count_memory_items(self) -> int:
         """Count total memory items in the system."""
@@ -1352,19 +1065,7 @@ class SystemOrchestrator:
                 cursor = await conn.execute("SELECT COUNT(*) FROM memories")
                 result = await cursor.fetchone()
                 return result[0] if result else 0
-        except AttributeError as e:
-            # Database not initialized
-            logger.warning(
-                f"Database not initialized during memory count: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return 0
-        except (OSError, IOError) as e:
-            # Database read error
-            logger.warning(
-                f"Database error during memory count: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception:
             return 0
 
     async def _count_active_interactions(self) -> int:
@@ -1382,19 +1083,7 @@ class SystemOrchestrator:
                 cursor = await conn.execute("SELECT COUNT(*) FROM equipment")
                 result = await cursor.fetchone()
                 return result[0] if result else 0
-        except AttributeError as e:
-            # Database not initialized
-            logger.warning(
-                f"Database not initialized during equipment count: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return 0
-        except (OSError, IOError) as e:
-            # Database read error
-            logger.warning(
-                f"Database error during equipment count: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception:
             return 0
 
 

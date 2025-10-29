@@ -59,7 +59,9 @@ class NarrativeArcQueryHandler:
         self.flow_service = flow_service or NarrativeFlowService()
         self.causal_service = causal_service or CausalGraphService()
 
-    def handle_get_narrative_arc(self, query: GetNarrativeArcQuery) -> Optional[Dict[str, Any]]:
+    def handle_get_narrative_arc(
+        self, query: GetNarrativeArcQuery
+    ) -> Optional[Dict[str, Any]]:
         """Handle get narrative arc query."""
         try:
             arc = self.repository.get_by_id(NarrativeId(query.arc_id))
@@ -93,8 +95,12 @@ class NarrativeArcQueryHandler:
                         "pacing_segments_count": len(arc.pacing_segments),
                         "contexts_count": len(arc.narrative_contexts),
                         "active_contexts_count": len(arc.active_contexts),
-                        "primary_characters": [str(cid) for cid in arc.primary_characters],
-                        "supporting_characters": [str(cid) for cid in arc.supporting_characters],
+                        "primary_characters": [
+                            str(cid) for cid in arc.primary_characters
+                        ],
+                        "supporting_characters": [
+                            str(cid) for cid in arc.supporting_characters
+                        ],
                         "tags": list(arc.tags),
                         "notes": arc.notes,
                         "metadata": arc.metadata,
@@ -146,14 +152,18 @@ class NarrativeArcQueryHandler:
                     }
                 )
 
-            logger.debug(f"Retrieved {len(result)} narrative arcs of type {query.arc_type}")
+            logger.debug(
+                f"Retrieved {len(result)} narrative arcs of type {query.arc_type}"
+            )
             return result
 
         except Exception as e:
             logger.error(f"Failed to get narrative arcs by type: {str(e)}")
             raise
 
-    def handle_search_narrative_arcs(self, query: SearchNarrativeArcsQuery) -> Dict[str, Any]:
+    def handle_search_narrative_arcs(
+        self, query: SearchNarrativeArcsQuery
+    ) -> Dict[str, Any]:
         """Handle search narrative arcs query."""
         try:
             arcs, total_count = self.repository.search(
@@ -206,14 +216,18 @@ class NarrativeArcQueryHandler:
                 "has_more": (query.offset or 0) + len(results) < total_count,
             }
 
-            logger.debug(f"Search returned {len(results)} of {total_count} narrative arcs")
+            logger.debug(
+                f"Search returned {len(results)} of {total_count} narrative arcs"
+            )
             return result
 
         except Exception as e:
             logger.error(f"Failed to search narrative arcs: {str(e)}")
             raise
 
-    def handle_get_plot_point(self, query: GetPlotPointQuery) -> Optional[Dict[str, Any]]:
+    def handle_get_plot_point(
+        self, query: GetPlotPointQuery
+    ) -> Optional[Dict[str, Any]]:
         """Handle get plot point query."""
         try:
             arc = self.repository.get_by_id(NarrativeId(query.arc_id))
@@ -234,7 +248,9 @@ class NarrativeArcQueryHandler:
                 "emotional_intensity": float(plot_point.emotional_intensity),
                 "dramatic_tension": float(plot_point.dramatic_tension),
                 "story_significance": float(plot_point.story_significance),
-                "involved_characters": [str(cid) for cid in plot_point.involved_characters],
+                "involved_characters": [
+                    str(cid) for cid in plot_point.involved_characters
+                ],
                 "prerequisite_events": list(plot_point.prerequisite_events),
                 "consequence_events": list(plot_point.consequence_events),
                 "location": plot_point.location,
@@ -276,7 +292,10 @@ class NarrativeArcQueryHandler:
                         and pp.sequence_order < query.start_sequence
                     ):
                         continue
-                    if query.end_sequence is not None and pp.sequence_order > query.end_sequence:
+                    if (
+                        query.end_sequence is not None
+                        and pp.sequence_order > query.end_sequence
+                    ):
                         continue
                     filtered_points.append(pp)
                 plot_points = filtered_points
@@ -293,7 +312,9 @@ class NarrativeArcQueryHandler:
                         "emotional_intensity": float(plot_point.emotional_intensity),
                         "dramatic_tension": float(plot_point.dramatic_tension),
                         "story_significance": float(plot_point.story_significance),
-                        "involved_characters": [str(cid) for cid in plot_point.involved_characters],
+                        "involved_characters": [
+                            str(cid) for cid in plot_point.involved_characters
+                        ],
                         "outcome": plot_point.outcome,
                     }
                 )
@@ -328,9 +349,13 @@ class NarrativeArcQueryHandler:
                         plot_data.update(
                             {
                                 "description": plot_point.description,
-                                "emotional_intensity": float(plot_point.emotional_intensity),
+                                "emotional_intensity": float(
+                                    plot_point.emotional_intensity
+                                ),
                                 "dramatic_tension": float(plot_point.dramatic_tension),
-                                "story_significance": float(plot_point.story_significance),
+                                "story_significance": float(
+                                    plot_point.story_significance
+                                ),
                                 "involved_characters": [
                                     str(cid) for cid in plot_point.involved_characters
                                 ],
@@ -569,7 +594,9 @@ class NarrativeArcQueryHandler:
             }
 
             if query.include_tension_progression:
-                result["tension_progression"] = [float(t) for t in analysis.tension_progression]
+                result["tension_progression"] = [
+                    float(t) for t in analysis.tension_progression
+                ]
 
             if query.include_recommendations:
                 result["recommendations"] = analysis.recommended_adjustments
@@ -580,7 +607,9 @@ class NarrativeArcQueryHandler:
             logger.error(f"Failed to get narrative flow analysis: {str(e)}")
             raise
 
-    def handle_get_causal_analysis(self, query: GetCausalAnalysisQuery) -> Dict[str, Any]:
+    def handle_get_causal_analysis(
+        self, query: GetCausalAnalysisQuery
+    ) -> Dict[str, Any]:
         """Handle causal analysis query."""
         try:
             arc = self.repository.get_by_id(NarrativeId(query.arc_id))
@@ -624,7 +653,9 @@ class NarrativeArcQueryHandler:
                             "path_length": chain.path_length,
                             "total_strength": float(chain.total_strength),
                             "average_strength": float(chain.average_strength),
-                            "relationship_types": [rt.value for rt in chain.relationship_types],
+                            "relationship_types": [
+                                rt.value for rt in chain.relationship_types
+                            ],
                         }
                     )
                 result["longest_chains"] = longest_chains

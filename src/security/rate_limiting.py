@@ -125,6 +125,30 @@ class SlidingWindow:
 
 
 @dataclass
+class RateLimit:
+    """STANDARD RATE LIMIT SPECIFICATION
+    
+    Simple rate limit configuration for testing and basic use cases.
+    For production use, consider RateLimitConfig with advanced features.
+    """
+    
+    requests: int  # Maximum number of requests allowed
+    window: int  # Time window in seconds
+
+
+@dataclass
+class RateLimitResult:
+    """STANDARD RATE LIMIT CHECK RESULT
+    
+    Result of checking whether a request is allowed under rate limiting.
+    """
+    
+    allowed: bool  # Whether the request is allowed
+    remaining: int  # Number of requests remaining in the window
+    retry_after: int = 0  # Seconds until the client can retry (if blocked)
+
+
+@dataclass
 class ClientState:
     """STANDARD CLIENT STATE TRACKING"""
 
@@ -399,7 +423,9 @@ class RateLimiter:
         # Check endpoint-specific limits
         endpoint_config = self.config.endpoint_configs.get(request.url.path)
         if endpoint_config:
-            endpoint_config.get("requests_per_minute", self.config.requests_per_minute)
+            endpoint_config.get(
+                "requests_per_minute", self.config.requests_per_minute
+            )
             if client.minute_bucket and not client.minute_bucket.consume():
                 raise RateLimitExceeded(
                     f"Rate limit exceeded for endpoint {request.url.path}",
@@ -497,6 +523,81 @@ class InMemoryRateLimitBackend:
             "active_clients": len(self.clients),
             "timestamp": time.time(),
         }
+
+    async def check_rate_limit(
+        self, client_id: str, rate_limit: RateLimit
+    ) -> RateLimitResult:
+        """STANDARD RATE LIMIT CHECK
+        
+        Check if a client has exceeded their rate limit and return the result.
+        
+        Args:
+            client_id: Unique identifier for the client (IP, user ID, etc.)
+            rate_limit: Rate limit specification to check against
+            
+        Returns:
+            RateLimitResult indicating whether request is allowed
+        """
+        now = time.time()
+        
+        # Get or create client state
+        if client_id not in self.clients:
+            # Create new client state with sliding window
+            window = SlidingWindow(
+                window_size=rate_limit.window,
+                max_requests=rate_limit.requests,
+            )
+            self.clients[client_id] = ClientState(
+                ip_address=client_id,
+                minute_window=window,
+                first_seen=now,
+                last_request=now,
+            )
+        
+        client_state = self.clients[client_id]
+        window = client_state.minute_window
+        
+        if window is None:
+            # Initialize window if not present
+            window = SlidingWindow(
+                window_size=rate_limit.window,
+                max_requests=rate_limit.requests,
+            )
+            client_state.minute_window = window
+        
+        # Remove old requests outside the window
+        while window.requests and window.requests[0] <= now - rate_limit.window:
+            window.requests.popleft()
+        
+        # Check if request is allowed
+        current_count = len(window.requests)
+        remaining = rate_limit.requests - current_count
+        
+        if current_count < rate_limit.requests:
+            # Allow the request
+            window.requests.append(now)
+            client_state.total_requests += 1
+            client_state.last_request = now
+            self.update_stats("total_requests")
+            
+            return RateLimitResult(
+                allowed=True,
+                remaining=remaining - 1,  # -1 because we just consumed one
+                retry_after=0,
+            )
+        else:
+            # Block the request
+            oldest_request = window.requests[0]
+            retry_after = int(rate_limit.window - (now - oldest_request)) + 1
+            
+            client_state.failed_requests += 1
+            self.update_stats("blocked_requests")
+            
+            return RateLimitResult(
+                allowed=False,
+                remaining=0,
+                retry_after=retry_after,
+            )
 
     def cleanup_old_clients(self, max_age: float = 3600.0):
         """Remove clients inactive for more than max_age seconds"""

@@ -88,7 +88,6 @@ _STORY_ARC_PACING_MAP: Dict[StoryArcPhase, str] = {
     StoryArcPhase.RESOLUTION: "slow",
 }
 
-
 class StoryArcState(BaseModel):
     """
     Immutable snapshot describing the current position inside the story arc.
@@ -178,9 +177,7 @@ class StoryArcState(BaseModel):
         Determine whether the current phase is ready to transition.
         """
 
-        return (
-            self.phase_progress >= Decimal("0.95") and self.ready_for_phase_transition
-        )
+        return self.phase_progress >= Decimal("0.95") and self.ready_for_phase_transition
 
     @property
     def phase_position_description(self) -> str:

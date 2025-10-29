@@ -66,13 +66,21 @@ class Coordinates:
                 coords_are_numeric = False
 
         # Check precision
-        if not isinstance(self.precision, int) or self.precision < 0 or self.precision > 15:
+        if (
+            not isinstance(self.precision, int)
+            or self.precision < 0
+            or self.precision > 15
+        ):
             errors.append("Precision must be an integer between 0 and 15")
 
         # Only validate coordinate ranges if all coordinates are numeric
         if coords_are_numeric:
             max_coord = 1e10  # Reasonable maximum for game coordinates
-            if abs(self.x) > max_coord or abs(self.y) > max_coord or abs(self.z) > max_coord:
+            if (
+                abs(self.x) > max_coord
+                or abs(self.y) > max_coord
+                or abs(self.z) > max_coord
+            ):
                 errors.append(f"Coordinates must be within ±{max_coord:g}")
 
         if errors:
@@ -171,7 +179,9 @@ class Coordinates:
         Returns:
             New Coordinates object with translated position
         """
-        return Coordinates(x=self.x + dx, y=self.y + dy, z=self.z + dz, precision=self.precision)
+        return Coordinates(
+            x=self.x + dx, y=self.y + dy, z=self.z + dz, precision=self.precision
+        )
 
     def midpoint(self, other: "Coordinates") -> "Coordinates":
         """
@@ -187,7 +197,9 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            raise TypeError("Can only calculate midpoint with another Coordinates object")
+            raise TypeError(
+                "Can only calculate midpoint with another Coordinates object"
+            )
 
         return Coordinates(
             x=(self.x + other.x) / 2,
@@ -299,7 +311,10 @@ class Coordinates:
         Returns:
             Detailed string representation
         """
-        return f"Coordinates(x={self.x}, y={self.y}, z={self.z}, " f"precision={self.precision})"
+        return (
+            f"Coordinates(x={self.x}, y={self.y}, z={self.z}, "
+            f"precision={self.precision})"
+        )
 
     def __add__(self, other: "Coordinates") -> "Coordinates":
         """

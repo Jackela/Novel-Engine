@@ -5,9 +5,6 @@ Enhanced Multi-Agent Bridge Test Suite
 
 Comprehensive unit and integration tests for the refactored Enhanced Multi-Agent Bridge.
 Tests component coordination, dialogue management, and performance optimization.
-
-NOTE: This test suite is currently outdated due to API changes.
-BridgeConfiguration class no longer exists. Tests need to be rewritten for current API.
 """
 
 import sys
@@ -15,16 +12,15 @@ import time
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
-import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-# Skip entire module - API has changed significantly
-pytestmark = pytest.mark.skip(reason="API changed - BridgeConfiguration no longer exists, tests need rewrite")
+import pytest
 
 from enhanced_multi_agent_bridge import EnhancedMultiAgentBridge
 
 from src.bridge.types import RequestPriority
+
+
 
 
 class TestBridgeConfiguration:

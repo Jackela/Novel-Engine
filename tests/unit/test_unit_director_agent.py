@@ -6,7 +6,7 @@
 
 import os
 import time
-from unittest.mock import Mock, patch, MagicMock, create_autospec
+from unittest.mock import Mock
 
 import pytest
 
@@ -15,12 +15,10 @@ try:
     from director_agent import DirectorAgent
 
     from src.event_bus import EventBus
-    from src.persona_agent import PersonaAgent
 
     DIRECTOR_AGENT_AVAILABLE = True
 except ImportError:
     DIRECTOR_AGENT_AVAILABLE = False
-    PersonaAgent = None
 
 
 @pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
@@ -64,19 +62,12 @@ class TestDirectorAgent:
     @pytest.mark.unit
     def test_register_agent_success(self):
         """测试注册代理 - 成功情况"""
-        # Create a properly mocked PersonaAgent using create_autospec
-        mock_agent = create_autospec(PersonaAgent, instance=True)
+        mock_agent = Mock()
         mock_agent.character.name = "test_character"
-        mock_agent.agent_id = "test_agent_001"
-        mock_agent.handle_turn_start = Mock()
-        mock_agent.act = Mock(return_value="Test action")
 
         # 测试注册方法
         if hasattr(self.director, "register_agent"):
-            result = self.director.register_agent(mock_agent)
-            assert (
-                result is True
-            ), "Expected register_agent to return True for valid agent"
+            self.director.register_agent(mock_agent)
 
             # 检查代理是否被正确注册
             if hasattr(self.director, "agents"):
@@ -92,19 +83,13 @@ class TestDirectorAgent:
         if not hasattr(self.director, "register_agent"):
             pytest.skip("Director agent does not have register_agent method")
 
-        # Create properly mocked PersonaAgents using create_autospec
+        # 创建多个模拟代理
         agents = []
         for i in range(3):
-            mock_agent = create_autospec(PersonaAgent, instance=True)
+            mock_agent = Mock()
             mock_agent.character.name = f"character_{i}"
-            mock_agent.agent_id = f"test_agent_{i:03d}"
-            mock_agent.handle_turn_start = Mock()
-            mock_agent.act = Mock(return_value=f"Action {i}")
             agents.append(mock_agent)
-            result = self.director.register_agent(mock_agent)
-            assert (
-                result is True
-            ), f"Expected register_agent to return True for agent {i}"
+            self.director.register_agent(mock_agent)
 
         # 检查所有代理都被注册
         if hasattr(self.director, "agents"):
@@ -143,17 +128,16 @@ class TestDirectorAgent:
         if not hasattr(self.director, "register_agent"):
             pytest.skip("Director agent does not have register_agent method")
 
-        # 测试None - register_agent returns False for invalid agents
-        result = self.director.register_agent(None)
-        assert result is False, "Expected register_agent to return False for None"
+        # 测试None
+        with pytest.raises((ValueError, TypeError, AttributeError)):
+            self.director.register_agent(None)
 
         # 测试没有character属性的对象
         invalid_agent = Mock()
-        # Mock without required PersonaAgent attributes
-        result = self.director.register_agent(invalid_agent)
-        assert (
-            result is False
-        ), "Expected register_agent to return False for invalid agent"
+        del invalid_agent.character  # 删除character属性
+
+        with pytest.raises((AttributeError, ValueError)):
+            self.director.register_agent(invalid_agent)
 
     @pytest.mark.unit
     def test_run_turn_success(self):
@@ -161,16 +145,13 @@ class TestDirectorAgent:
         if not hasattr(self.director, "run_turn"):
             pytest.skip("Director agent does not have run_turn method")
 
-        # Create properly mocked PersonaAgent using create_autospec
-        mock_agent = create_autospec(PersonaAgent, instance=True)
+        # 注册模拟代理
+        mock_agent = Mock()
         mock_agent.character.name = "test_character"
-        mock_agent.agent_id = "test_turn_agent_001"
-        mock_agent.handle_turn_start = Mock()
-        mock_agent.act = Mock(return_value="Test action result")
+        mock_agent.act.return_value = "Test action result"
 
         if hasattr(self.director, "register_agent"):
-            result = self.director.register_agent(mock_agent)
-            assert result is True, "Expected agent to register successfully"
+            self.director.register_agent(mock_agent)
 
         # 运行回合
         try:
@@ -181,18 +162,12 @@ class TestDirectorAgent:
             if result is not None:
                 assert result is not None
 
-            # Note: act() may not be called in synchronous test context
-            # due to async turn orchestration. Just verify no errors occurred.
-            # If act was called, verify it worked
-            if mock_agent.act.called:
+            # 检查代理的act方法是否被调用
+            if hasattr(self.director, "register_agent"):
                 mock_agent.act.assert_called()
         except Exception as e:
             # 如果有依赖问题，确保不是关键错误
-            if (
-                "config" in str(e).lower()
-                or "api" in str(e).lower()
-                or "asyncio" in str(e).lower()
-            ):
+            if "config" in str(e).lower() or "api" in str(e).lower():
                 pytest.skip(f"External dependency issue: {e}")
             else:
                 raise

@@ -131,7 +131,9 @@ class ProviderId:
                 raise ValueError("region code must be uppercase")
 
     @classmethod
-    def create_openai(cls, api_version: str = "1.0.0", region: str = "US") -> "ProviderId":
+    def create_openai(
+        cls, api_version: str = "1.0.0", region: str = "US"
+    ) -> "ProviderId":
         """Factory method for creating OpenAI provider ID."""
         return cls(
             provider_name="OpenAI",
@@ -142,7 +144,9 @@ class ProviderId:
         )
 
     @classmethod
-    def create_anthropic(cls, api_version: str = "1.0.0", region: str = "US") -> "ProviderId":
+    def create_anthropic(
+        cls, api_version: str = "1.0.0", region: str = "US"
+    ) -> "ProviderId":
         """Factory method for creating Anthropic provider ID."""
         return cls(
             provider_name="Anthropic",
@@ -157,7 +161,9 @@ class ProviderId:
         )
 
     @classmethod
-    def create_custom(cls, name: str, key: str, api_version: str = "1.0.0") -> "ProviderId":
+    def create_custom(
+        cls, name: str, key: str, api_version: str = "1.0.0"
+    ) -> "ProviderId":
         """Factory method for creating custom provider ID."""
         return cls(
             provider_name=name,
@@ -274,10 +280,16 @@ class ModelId:
             raise ValueError("max_output_tokens cannot exceed max_context_tokens")
 
         # Validate costs
-        if not isinstance(self.cost_per_input_token, Decimal) or self.cost_per_input_token < 0:
+        if (
+            not isinstance(self.cost_per_input_token, Decimal)
+            or self.cost_per_input_token < 0
+        ):
             raise ValueError("cost_per_input_token must be a non-negative Decimal")
 
-        if not isinstance(self.cost_per_output_token, Decimal) or self.cost_per_output_token < 0:
+        if (
+            not isinstance(self.cost_per_output_token, Decimal)
+            or self.cost_per_output_token < 0
+        ):
             raise ValueError("cost_per_output_token must be a non-negative Decimal")
 
         # Validate capabilities
@@ -308,7 +320,9 @@ class ModelId:
         )
 
     @classmethod
-    def create_claude(cls, provider_id: ProviderId, variant: str = "claude-3-sonnet") -> "ModelId":
+    def create_claude(
+        cls, provider_id: ProviderId, variant: str = "claude-3-sonnet"
+    ) -> "ModelId":
         """Factory method for Claude model variants."""
         capabilities = {
             ModelCapability.TEXT_GENERATION,
@@ -494,7 +508,9 @@ class TokenBudget:
 
     def get_available_tokens(self) -> int:
         """Calculate available tokens for new operations."""
-        return max(0, self.allocated_tokens - self.consumed_tokens - self.reserved_tokens)
+        return max(
+            0, self.allocated_tokens - self.consumed_tokens - self.reserved_tokens
+        )
 
     def get_utilization_percentage(self) -> Decimal:
         """Calculate budget utilization as percentage."""
@@ -502,7 +518,9 @@ class TokenBudget:
             return Decimal("0.00")
 
         used_tokens = self.consumed_tokens + self.reserved_tokens
-        return (Decimal(str(used_tokens)) / Decimal(str(self.allocated_tokens))) * Decimal("100")
+        return (
+            Decimal(str(used_tokens)) / Decimal(str(self.allocated_tokens))
+        ) * Decimal("100")
 
     def get_cost_utilization_percentage(self) -> Decimal:
         """Calculate cost utilization as percentage."""
@@ -522,7 +540,9 @@ class TokenBudget:
     def reserve_tokens(self, token_count: int) -> "TokenBudget":
         """Create new budget with reserved tokens (immutable operation)."""
         if not self.can_reserve_tokens(token_count):
-            raise ValueError(f"Cannot reserve {token_count} tokens - insufficient budget")
+            raise ValueError(
+                f"Cannot reserve {token_count} tokens - insufficient budget"
+            )
 
         return TokenBudget(
             budget_id=self.budget_id,
@@ -541,14 +561,20 @@ class TokenBudget:
     def consume_tokens(self, token_count: int, cost: Decimal) -> "TokenBudget":
         """Create new budget with consumed tokens and cost (immutable operation)."""
         if token_count > (self.reserved_tokens + self.get_available_tokens()):
-            raise ValueError(f"Cannot consume {token_count} tokens - exceeds allocated budget")
+            raise ValueError(
+                f"Cannot consume {token_count} tokens - exceeds allocated budget"
+            )
 
         if not self.can_afford_cost(cost):
-            raise ValueError(f"Cannot afford additional cost of ${cost} - exceeds cost limit")
+            raise ValueError(
+                f"Cannot afford additional cost of ${cost} - exceeds cost limit"
+            )
 
         # Consume from reserved first, then available
         new_reserved = max(0, self.reserved_tokens - token_count)
-        tokens_from_available = max(0, token_count - (self.reserved_tokens - new_reserved))
+        tokens_from_available = max(
+            0, token_count - (self.reserved_tokens - new_reserved)
+        )
 
         return TokenBudget(
             budget_id=self.budget_id,
@@ -568,9 +594,13 @@ class TokenBudget:
 
     def is_exhausted(self) -> bool:
         """Check if budget is exhausted (no available tokens or cost limit reached)."""
-        return self.get_available_tokens() == 0 or self.accumulated_cost >= self.cost_limit
+        return (
+            self.get_available_tokens() == 0 or self.accumulated_cost >= self.cost_limit
+        )
 
-    def is_near_exhaustion(self, threshold_percentage: Decimal = Decimal("90.00")) -> bool:
+    def is_near_exhaustion(
+        self, threshold_percentage: Decimal = Decimal("90.00")
+    ) -> bool:
         """Check if budget is near exhaustion."""
         token_util = self.get_utilization_percentage()
         cost_util = self.get_cost_utilization_percentage()

@@ -22,7 +22,6 @@ from .types import (
 
 logger = logging.getLogger(__name__)
 
-
 class AgentNegotiationEngine:
     """多Agent协商引擎"""
 
@@ -196,18 +195,8 @@ class AgentNegotiationEngine:
                     f"Generated intelligent counter-proposal for {response.responder_id}"
                 )
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid LLM response or proposal structure errors
-            logger.error(
-                f"Invalid data in counter-proposal generation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, RuntimeError) as e:
-            # Counter-proposal generation processing errors
-            logger.error(
-                f"Failed to generate counter-proposal: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to generate counter-proposal: {e}")
 
     async def _evaluate_negotiation_status(self, session: NegotiationSession):
         """评估协商状态"""
@@ -392,18 +381,8 @@ class AgentNegotiationEngine:
             else:
                 session.status = NegotiationStatus.DEADLOCK
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid session or proposal data structure errors
-            logger.error(
-                f"Invalid data in mediation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            session.status = NegotiationStatus.DEADLOCK
-        except (ValueError, RuntimeError) as e:
-            # Mediation processing errors
-            logger.error(
-                f"Mediation failed: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
+            logger.error(f"Mediation failed: {e}")
             session.status = NegotiationStatus.DEADLOCK
 
     def _update_agent_reputations(self, session: NegotiationSession, success: bool):
@@ -458,3 +437,4 @@ class AgentNegotiationEngine:
             "created_at": session.created_at.isoformat(),
             "updated_at": session.updated_at.isoformat(),
         }
+

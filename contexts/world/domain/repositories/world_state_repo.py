@@ -259,7 +259,9 @@ class IWorldStateRepository(ABC):
     # Versioning and History Operations
 
     @abstractmethod
-    async def get_version(self, world_state_id: str, version: int) -> Optional[WorldState]:
+    async def get_version(
+        self, world_state_id: str, version: int
+    ) -> Optional[WorldState]:
         """
         Retrieve a specific version of a WorldState aggregate.
 
@@ -295,7 +297,9 @@ class IWorldStateRepository(ABC):
         pass
 
     @abstractmethod
-    async def rollback_to_version(self, world_state_id: str, version: int) -> WorldState:
+    async def rollback_to_version(
+        self, world_state_id: str, version: int
+    ) -> WorldState:
         """
         Rollback a WorldState aggregate to a previous version.
 
@@ -338,7 +342,9 @@ class IWorldStateRepository(ABC):
         pass
 
     @abstractmethod
-    async def restore_from_snapshot(self, world_state_id: str, snapshot_id: str) -> WorldState:
+    async def restore_from_snapshot(
+        self, world_state_id: str, snapshot_id: str
+    ) -> WorldState:
         """
         Restore a WorldState aggregate from a snapshot.
 
@@ -443,7 +449,9 @@ class IWorldStateRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_statistics(self, world_state_id: Optional[str] = None) -> Dict[str, Any]:
+    async def get_statistics(
+        self, world_state_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Get storage statistics for world states.
 

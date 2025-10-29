@@ -102,9 +102,9 @@ class NarrativeProcessor:
 
                 # Initialize story state phase from campaign brief
                 if hasattr(self.campaign_brief, "initial_phase"):
-                    self.story_state[
-                        "current_phase"
-                    ] = self.campaign_brief.initial_phase
+                    self.story_state["current_phase"] = (
+                        self.campaign_brief.initial_phase
+                    )
                 else:
                     self.story_state["current_phase"] = "investigation"
 
@@ -115,26 +115,8 @@ class NarrativeProcessor:
                 logger.warning("Failed to load campaign brief data")
                 self.narrative_resolver = NarrativeActionResolver(None)
 
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            # File system errors loading campaign brief
-            logger.error(
-                f"File error loading campaign brief: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
-            logger.info("Falling back to combat mode")
-            self.narrative_resolver = NarrativeActionResolver(None)
-        except (
-            json.JSONDecodeError,
-            yaml.YAMLError,
-            KeyError,
-            TypeError,
-            ValueError,
-        ) as e:
-            # Campaign brief parsing or validation errors
-            logger.error(
-                f"Parse error loading campaign brief: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Error loading campaign brief: {str(e)}")
             logger.info("Falling back to combat mode")
             self.narrative_resolver = NarrativeActionResolver(None)
 
@@ -227,19 +209,8 @@ class NarrativeProcessor:
 
             return narrative_context
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid agent or narrative data errors
-            logger.error(
-                f"Invalid data generating narrative context for {agent_id}: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
-            return None
-        except (ValueError, RuntimeError) as e:
-            # Narrative context generation processing errors
-            logger.error(
-                f"Error generating narrative context for {agent_id}: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Error generating narrative context for {agent_id}: {str(e)}")
             return None
 
     def _generate_character_specific_context(self, agent: PersonaAgent) -> str:
@@ -260,13 +231,15 @@ class NarrativeProcessor:
 
         # Add faction-specific narrative perspective
         faction_lower = faction.lower()
-        if any(
-            keyword in faction_lower for keyword in ("alliance network", "coalition")
-        ):
-            alliance_context = " Your duty to the Founders' Council guides your perception of these events."
+        if any(keyword in faction_lower for keyword in ("alliance network", "coalition")):
+            alliance_context = (
+                " Your duty to the Founders' Council guides your perception of these events."
+            )
             base_context += alliance_context
         elif "freewind" in faction_lower:
-            freewind_context = " Your freewind instincts tell you there's a decisive opportunity emerging here."
+            freewind_context = (
+                " Your freewind instincts tell you there's a decisive opportunity emerging here."
+            )
             base_context += freewind_context
         elif "engineering collective" in faction_lower:
             engineering_context = " Your engineered senses detect deeper mysteries in the system processes here."
@@ -494,18 +467,8 @@ class NarrativeProcessor:
                 self.story_state["current_phase"] = narrative_outcome.phase_change
                 logger.info(f"Story phase changed to: {narrative_outcome.phase_change}")
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story state or narrative data errors
-            logger.error(
-                f"Invalid data updating story state: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, RuntimeError) as e:
-            # Story state update processing errors
-            logger.error(
-                f"Error updating story state: {str(e)}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Error updating story state: {str(e)}")
 
     def get_story_state(self) -> Dict[str, Any]:
         """Get the current story state."""

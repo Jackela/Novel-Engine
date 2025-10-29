@@ -1,39 +1,58 @@
 {
-  "timestamp": "2025-10-26 22:06:48",
+  "timestamp": "2025-08-22 18:44:37",
   "tests": [
     {
       "name": "框架健康检查",
-      "passed": false,
-      "error": "All connection attempts failed"
+      "passed": true,
+      "details": {
+        "status": "degraded"
+      }
     },
     {
       "name": "API测试能力",
-      "passed": false,
-      "error": "All connection attempts failed"
+      "passed": true,
+      "details": {
+        "status": "failed",
+        "score": 0.0
+      }
     },
     {
       "name": "服务发现",
-      "passed": false,
-      "error": "All connection attempts failed"
+      "passed": true,
+      "details": {
+        "service_count": 5,
+        "all_healthy": true,
+        "services": [
+          "browser-automation",
+          "api-testing",
+          "ai-quality",
+          "results-aggregation",
+          "notification"
+        ]
+      }
     },
     {
       "name": "综合测试能力",
-      "passed": false,
-      "error": "All connection attempts failed"
+      "passed": true,
+      "details": {
+        "overall_passed": false,
+        "overall_score": 0.0,
+        "phases": 1
+      }
     },
     {
       "name": "错误检测能力",
       "passed": true,
       "details": {
-        "exception_caught": true
+        "detected_failure": true
       }
     }
   ],
   "summary": {
     "total_tests": 5,
-    "passed_tests": 1,
-    "failed_tests": 4,
-    "success_rate": 20.0,
-    "framework_effective": false
+    "passed_tests": 5,
+    "failed_tests": 0,
+    "success_rate": 100.0,
+    "framework_effective": true
   }
 }

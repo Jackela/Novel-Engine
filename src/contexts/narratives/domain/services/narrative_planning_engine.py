@@ -69,3 +69,4 @@ class NarrativePlanningEngine:
             primary_narrative_goal="Maintain narrative continuity",
             **base_payload,
         )
+

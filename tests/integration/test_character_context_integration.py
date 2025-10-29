@@ -61,7 +61,7 @@ class TestCharacterContextIntegration:
             "character_name": "Test Hero",
             "gender": "male",
             "race": "human",
-            "character_class": "fighter",
+            "character_class": "warrior",
             "age": 25,
             "strength": 15,
             "dexterity": 12,
@@ -140,8 +140,8 @@ class TestCharacterContextIntegration:
         assert human_race.value == "human"
 
         # Test CharacterClass enum
-        fighter_class = CharacterClass("fighter")
-        assert fighter_class.value == "fighter"
+        warrior_class = CharacterClass("warrior")
+        assert warrior_class.value == "warrior"
 
         # Test invalid values raise errors
         with pytest.raises(ValueError):
@@ -190,7 +190,7 @@ class TestCharacterContextIntegration:
         )
         character_application_service.repository.save = AsyncMock()
         character_application_service.command_handlers.handle_command = AsyncMock(
-            return_value=CharacterID("test_character_123")
+            return_value=CharacterID.generate()
         )
 
         # Create character through application service
@@ -258,7 +258,7 @@ class TestCharacterContextIntegration:
     @pytest.mark.asyncio
     async def test_character_stats_updates(self, character_application_service):
         """Test character stats update functionality."""
-        character_id = str(CharacterID("test_character_456"))
+        character_id = str(CharacterID.generate())
 
         # Mock repository
         mock_character = MagicMock()
@@ -282,7 +282,7 @@ class TestCharacterContextIntegration:
     @pytest.mark.asyncio
     async def test_character_level_up(self, character_application_service):
         """Test character level up functionality."""
-        character_id = str(CharacterID("test_character_456"))
+        character_id = str(CharacterID.generate())
 
         # Mock repository
         character_application_service.command_handlers.handle_command = AsyncMock()
@@ -300,7 +300,7 @@ class TestCharacterContextIntegration:
     @pytest.mark.asyncio
     async def test_character_healing_and_damage(self, character_application_service):
         """Test character healing and damage functionality."""
-        character_id = str(CharacterID("test_character_456"))
+        character_id = str(CharacterID.generate())
 
         # Mock repository
         character_application_service.command_handlers.handle_command = AsyncMock()
@@ -351,7 +351,7 @@ class TestCharacterContextIntegration:
             "Test"
         )
         class_results = await character_application_service.find_characters_by_class(
-            "fighter"
+            "warrior"
         )
         race_results = await character_application_service.find_characters_by_race(
             "human"
@@ -369,7 +369,7 @@ class TestCharacterContextIntegration:
             "Test"
         )
         character_application_service.repository.find_by_class.assert_called_once_with(
-            CharacterClass("fighter")
+            CharacterClass("warrior")
         )
         character_application_service.repository.find_by_race.assert_called_once_with(
             CharacterRace("human")
@@ -378,18 +378,21 @@ class TestCharacterContextIntegration:
 
     def test_character_skills_system(self):
         """Test the character skills system."""
+        # Import for skill creation
+        from contexts.character.domain.value_objects.skills import Skill
+        
         # Create a skill
-        skill = contexts.character.domain.value_objects.skills.Skill(
+        skill = Skill(
             name="sword_fighting",
             category=SkillCategory.COMBAT,
-            proficiency_level=ProficiencyLevel.TRAINED,
+            proficiency_level=ProficiencyLevel.APPRENTICE,
             modifier=2,
             description="Skill with sword combat",
         )
 
         assert skill.name == "sword_fighting"
         assert skill.category == SkillCategory.COMBAT
-        assert skill.proficiency_level == ProficiencyLevel.TRAINED
+        assert skill.proficiency_level == ProficiencyLevel.APPRENTICE
         assert skill.modifier == 2
 
         # Create a skill group
@@ -600,7 +603,7 @@ def run_character_context_integration_tests():
             character_name="Command Test Character",
             gender="male",
             race="human",
-            character_class="fighter",
+            character_class="warrior",
             age=30,
             strength=16,
             dexterity=12,

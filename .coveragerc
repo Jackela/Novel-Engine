@@ -1,6 +1,8 @@
 [run]
-# Coverage configuration for StoryForge AI
-source = .
+# Coverage configuration for Novel-Engine (Single Source of Truth)
+# All test execution environments (local pytest, act CLI, GitHub Actions) read from this file
+# DO NOT duplicate coverage settings elsewhere - update this file only
+source = src
 omit = 
     */tests/*
     */test_*
@@ -40,11 +42,15 @@ omit =
     scalability_*.py
 
 [report]
-# Reporting options
+# Coverage threshold: 25% (ADJUSTED - realistic interim target based on actual coverage 20.45%)
+# Original target: 30% (deferred to incremental improvement roadmap)
+# Improvement roadmap: 25% (current) → 30% (Month 1) → 35% (Month 2) → 70% (long-term goal)
+# This threshold is enforced across ALL environments (local, CI/CD)
+fail_under = 25
 precision = 2
 show_missing = true
 skip_covered = false
-sort = Cover
+skip_empty = true
 
 exclude_lines =
     pragma: no cover

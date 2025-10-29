@@ -36,8 +36,6 @@ class InteractionId:
     @classmethod
     def from_string(cls, uuid_string: str) -> "InteractionId":
         """Create InteractionId from string representation."""
-        if not isinstance(uuid_string, str):
-            raise ValueError(f"Invalid UUID string: {uuid_string}")
         try:
             uuid_value = UUID(uuid_string)
             return cls(uuid_value)

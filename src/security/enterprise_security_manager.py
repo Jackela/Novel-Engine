@@ -22,8 +22,19 @@ import ipaddress
 import json
 import time
 
-import redis.asyncio as redis
-import aiosqlite
+try:
+    import aioredis
+    AIOREDIS_AVAILABLE = True
+except ImportError:
+    AIOREDIS_AVAILABLE = False
+    aioredis = None
+
+try:
+    import aiosqlite
+    AIOSQLITE_AVAILABLE = True
+except ImportError:
+    AIOSQLITE_AVAILABLE = False
+    aiosqlite = None
 
 try:
     import geoip2.database
@@ -226,7 +237,7 @@ class EnterpriseSecurityManager:
         """Initialize Enterprise Security Components"""
         try:
             # Initialize Redis connection
-            self.redis_client = redis.from_url(self.redis_url, decode_responses=True)
+            self.redis_client = aioredis.from_url(self.redis_url)
             await self.redis_client.ping()
             logger.info("✅ Redis connection established for security cache")
 

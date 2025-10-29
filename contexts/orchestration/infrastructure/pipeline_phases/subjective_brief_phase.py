@@ -32,7 +32,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         self.ai_gateway_endpoint = "ai_gateway"
         self.agent_service_endpoint = "agent_context"
 
-    async def _execute_phase_implementation(self, context: PhaseExecutionContext) -> PhaseResult:
+    async def _execute_phase_implementation(
+        self, context: PhaseExecutionContext
+    ) -> PhaseResult:
         """
         Execute subjective brief generation for all participants.
 
@@ -80,7 +82,8 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
                     failed_generations += 1
                     context.record_performance_metric(
                         "brief_generation_errors",
-                        context.performance_metrics.get("brief_generation_errors", 0) + 1,
+                        context.performance_metrics.get("brief_generation_errors", 0)
+                        + 1,
                     )
 
             # Step 4: Store briefs and create agent notifications
@@ -92,8 +95,12 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
             )
 
             # Record performance metrics
-            context.record_performance_metric("briefs_generated", float(briefs_generated))
-            context.record_performance_metric("failed_generations", float(failed_generations))
+            context.record_performance_metric(
+                "briefs_generated", float(briefs_generated)
+            )
+            context.record_performance_metric(
+                "failed_generations", float(failed_generations)
+            )
             context.record_performance_metric("ai_cost_total", float(total_ai_cost))
 
             # Calculate success rate
@@ -151,7 +158,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
 
         # Check participants are available
         if not context.participants:
-            raise ValueError("No participants available for subjective brief generation")
+            raise ValueError(
+                "No participants available for subjective brief generation"
+            )
 
         # Check AI cost limits
         if context.configuration.max_ai_cost:
@@ -251,7 +260,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         """
         try:
             # Step 1: Get agent's current context and memory
-            agent_context = await self._get_agent_context(context, agent_id, agent_config)
+            agent_context = await self._get_agent_context(
+                context, agent_id, agent_config
+            )
 
             # Step 2: Build AI prompt for subjective brief
             prompt = await self._build_subjective_brief_prompt(
@@ -289,13 +300,16 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
                 "ai_model_used": ai_model,
                 "narrative_depth": context.configuration.narrative_analysis_depth,
                 "tokens_used": ai_response.get("tokens_used", 0),
-                "generation_cost": float(context.ai_usage_tracking.get("total_cost", 0)),
+                "generation_cost": float(
+                    context.ai_usage_tracking.get("total_cost", 0)
+                ),
             }
 
             return {
                 "success": True,
                 "brief": enriched_brief,
-                "ai_cost": ai_response.get("tokens_used", 0) * 0.001,  # Rough cost estimate
+                "ai_cost": ai_response.get("tokens_used", 0)
+                * 0.001,  # Rough cost estimate
             }
 
         except Exception as e:
@@ -410,7 +424,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
             current_mood=current_state.get("mood", "neutral"),
             world_changes=changes_summary,
             recent_memories=memories_text,
-            current_goals=(goals[:3] if goals else ["No specific goals"]),  # Limit to top 3
+            current_goals=(
+                goals[:3] if goals else ["No specific goals"]
+            ),  # Limit to top 3
             time_passed=context.configuration.world_time_advance,
         )
 
@@ -516,7 +532,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
             "comprehensive": Decimal("1.00"),
         }
 
-        base_cost = depth_costs.get(context.configuration.narrative_analysis_depth, Decimal("0.25"))
+        base_cost = depth_costs.get(
+            context.configuration.narrative_analysis_depth, Decimal("0.25")
+        )
 
         return base_cost * participant_count
 
@@ -559,7 +577,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         }
         return depth_tokens.get(depth, 500)
 
-    def _validate_brief_content(self, content: str, agent_config: Dict[str, Any]) -> bool:
+    def _validate_brief_content(
+        self, content: str, agent_config: Dict[str, Any]
+    ) -> bool:
         """Validate generated brief content."""
         if not content or len(content.strip()) < 10:
             return False
@@ -576,7 +596,9 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
 
         return True
 
-    def _summarize_world_changes(self, world_changes: List[Dict[str, Any]], agent_id: str) -> str:
+    def _summarize_world_changes(
+        self, world_changes: List[Dict[str, Any]], agent_id: str
+    ) -> str:
         """Summarize world changes relevant to agent."""
         if not world_changes:
             return "The world remains largely unchanged."

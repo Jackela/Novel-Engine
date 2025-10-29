@@ -7,8 +7,6 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Tuple
 
-from src.core.data_models import EquipmentCondition
-
 from .models import DynamicEquipment, EquipmentCategory, EquipmentModification
 
 logger = logging.getLogger(__name__)

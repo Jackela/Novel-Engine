@@ -22,7 +22,9 @@ T = TypeVar("T", bound="BaseModel")
 class TimestampMixin:
     """Mixin to add created_at and updated_at timestamps."""
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -111,7 +113,11 @@ class BaseModel(Base, TimestampMixin):
                             result[relationship.key] = value.to_dict()
                         elif hasattr(value, "__iter__"):
                             result[relationship.key] = [
-                                (item.to_dict() if hasattr(item, "to_dict") else str(item))
+                                (
+                                    item.to_dict()
+                                    if hasattr(item, "to_dict")
+                                    else str(item)
+                                )
                                 for item in value
                             ]
                         else:
@@ -222,7 +228,9 @@ class EventStore(BaseModel):
     stream_type = Column(String(100), nullable=False)
 
     # Event identification
-    event_id = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    event_id = Column(
+        UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4
+    )
     event_type = Column(String(200), nullable=False)
     event_version = Column(String(20), nullable=False)
 

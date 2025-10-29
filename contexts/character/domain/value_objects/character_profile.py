@@ -41,7 +41,9 @@ class CharacterClass(Enum):
     """Character class/profession options."""
 
     FIGHTER = "fighter"
+    WARRIOR = "warrior"
     WIZARD = "wizard"
+    MAGE = "mage"
     ROGUE = "rogue"
     CLERIC = "cleric"
     RANGER = "ranger"
@@ -250,7 +252,9 @@ class CharacterProfile:
 
         # Get traits above 0.7 (strong traits)
         strong_traits = [
-            trait for trait, score in self.personality_traits.traits.items() if score > 0.7
+            trait
+            for trait, score in self.personality_traits.traits.items()
+            if score > 0.7
         ]
 
         # If no strong traits, get top 3 traits

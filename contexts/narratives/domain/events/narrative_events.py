@@ -146,7 +146,9 @@ class PlotPointRemoved(NarrativeEvent):
 
     plot_point_id: str = ""
     removal_reason: str = ""
-    sequence_adjustments: Dict[str, int] = None  # Other plot points that need resequencing
+    sequence_adjustments: Dict[str, int] = (
+        None  # Other plot points that need resequencing
+    )
 
     def __post_init__(self):
         """Initialize default values for mutable fields."""
@@ -271,7 +273,9 @@ class NarrativeFlowChanged(NarrativeEvent):
         if self.new_flow_state is None:
             object.__setattr__(self, "new_flow_state", {})
         if len(self.affected_sequence_range) != 2:
-            raise ValueError("affected_sequence_range must contain exactly 2 elements [start, end]")
+            raise ValueError(
+                "affected_sequence_range must contain exactly 2 elements [start, end]"
+            )
 
 
 @dataclass(frozen=True)

@@ -216,19 +216,8 @@ class AgentCoordinationEngine:
             )
             return True
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid agent data or context errors
-            logger.error(
-                f"Invalid data registering agent {agent.agent_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return False
-        except (ValueError, RuntimeError) as e:
-            # Agent registration processing errors
-            logger.error(
-                f"Failed to register agent {agent.agent_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to register agent {agent.agent_id}: {e}")
             return False
 
     async def coordinate_agents(
@@ -288,19 +277,8 @@ class AgentCoordinationEngine:
 
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid agent or coordination data errors
-            logger.error(
-                f"Invalid data in agent coordination: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Coordination execution errors
-            logger.error(
-                f"Agent coordination failed: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Agent coordination failed: {e}")
             return {"success": False, "error": str(e)}
 
     async def validate_character_consistency(
@@ -381,20 +359,9 @@ class AgentCoordinationEngine:
 
             return is_consistent, overall_consistency, violations
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid agent or action data errors
-            logger.error(
-                f"Invalid data in consistency validation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return True, 1.0, []  # Permissive fallback
-        except (ValueError, RuntimeError) as e:
-            # Consistency validation processing errors
-            logger.error(
-                f"Character consistency validation failed: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return True, 1.0, []  # Permissive fallback
+        except Exception as e:
+            logger.error(f"Character consistency validation failed: {e}")
+            return True, 1.0, []
 
     async def analyze_narrative_coherence(
         self, story_context: Dict[str, Any]
@@ -480,24 +447,8 @@ class AgentCoordinationEngine:
                 "analysis_timestamp": datetime.now(),
             }
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid story context or data structure errors
-            logger.error(
-                f"Invalid data in narrative coherence analysis: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {
-                "coherence_score": 0.5,
-                "coherence_level": "unknown",
-                "issues": ["Analysis failed"],
-                "recommendations": ["Retry analysis"],
-            }
-        except (ValueError, RuntimeError) as e:
-            # Narrative analysis processing errors
-            logger.error(
-                f"Narrative coherence analysis failed: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Narrative coherence analysis failed: {e}")
             return {
                 "coherence_score": 0.5,
                 "coherence_level": "unknown",
@@ -560,19 +511,8 @@ class AgentCoordinationEngine:
 
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid agent or memory data errors
-            logger.error(
-                f"Invalid data in memory optimization for {agent_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Memory optimization processing errors
-            logger.error(
-                f"Memory optimization failed for agent {agent_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Memory optimization failed for agent {agent_id}: {e}")
             return {"success": False, "error": str(e)}
 
     def get_coordination_metrics(self) -> CoordinationMetrics:
@@ -622,21 +562,8 @@ class AgentCoordinationEngine:
 
             return result
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid task or coordination data errors
+        except Exception as e:
             task.status = "failed"
-            logger.error(
-                f"Invalid data resolving coordination conflict: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Conflict resolution processing errors
-            task.status = "failed"
-            logger.error(
-                f"Coordination conflict resolution failed: {e}",
-                extra={"error_type": type(e).__name__},
-            )
             return {"success": False, "error": str(e)}
 
     def _determine_required_actions(self, coordination_type: str) -> List[str]:

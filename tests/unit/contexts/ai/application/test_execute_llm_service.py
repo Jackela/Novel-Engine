@@ -544,9 +544,7 @@ class TestExecuteLLMServiceExecution:
         assert result.rate_limited is False
         assert result.budget_exceeded is False
         assert result.retry_attempts == 0
-        assert (
-            result.execution_time_seconds >= 0
-        )  # Can be 0 for very fast mocked operations
+        assert result.execution_time_seconds > 0
 
         # Verify service calls
         self.mock_cache_service.get_async.assert_called_once_with(self.request)
@@ -1163,9 +1161,7 @@ class TestExecuteLLMServiceIntegration:
         assert result.response == response
         assert result.provider_used == self.provider_id
         assert result.model_used == self.model_id
-        assert (
-            result.execution_time_seconds >= 0
-        )  # Can be 0 for very fast mocked operations
+        assert result.execution_time_seconds > 0
 
         # Verify statistics were updated
         stats = await self.service.get_execution_stats_async()

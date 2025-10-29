@@ -366,18 +366,8 @@ class EventBus:
             )
             return result
 
-        except (AttributeError, TypeError, KeyError) as e:
-            # Invalid event data or metadata errors
-            logger.error(
-                f"Invalid event data publishing {event.metadata.event_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, RuntimeError) as e:
-            # Event publishing or queue errors
-            logger.error(
-                f"Failed to publish event {event.metadata.event_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Failed to publish event {event.metadata.event_id}: {e}")
 
             if self.error_handler:
                 error_context = ErrorContext(
@@ -454,17 +444,9 @@ class EventBus:
             except asyncio.CancelledError:
                 # Task cancelled, exit
                 break
-            except (AttributeError, TypeError, KeyError) as e:
-                # Invalid event or processor data errors
+            except Exception as e:
                 logger.error(
-                    f"Invalid data in event processor for priority {priority.name}: {e}",
-                    extra={"error_type": type(e).__name__},
-                )
-            except (ValueError, RuntimeError) as e:
-                # Event processing or handler errors
-                logger.error(
-                    f"Error in event processor for priority {priority.name}: {e}",
-                    extra={"error_type": type(e).__name__},
+                    f"Error in event processor for priority {priority.name}: {e}"
                 )
 
     async def _handle_event(self, event: Event) -> None:
@@ -549,17 +531,9 @@ class EventBus:
                 f"Event processed: {event.event_type} - {successful_handlers} successful, {failed_handlers} failed"
             )
 
-        except (AttributeError, TypeError, KeyError) as e:
-            # Invalid event or handler data errors
+        except Exception as e:
             logger.error(
-                f"Invalid data processing event {event.metadata.event_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, RuntimeError) as e:
-            # Critical event handling errors
-            logger.error(
-                f"Critical error processing event {event.metadata.event_id}: {e}",
-                extra={"error_type": type(e).__name__},
+                f"Critical error processing event {event.metadata.event_id}: {e}"
             )
 
             # Add to dead letter queue
@@ -651,19 +625,8 @@ class EventBus:
             self._record_circuit_breaker_failure(handler_id)
             return False
 
-        except (AttributeError, TypeError, KeyError) as e:
-            # Invalid handler or event data errors
-            logger.error(
-                f"Invalid data in handler {handler_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            self._record_circuit_breaker_failure(handler_id)
-        except (ValueError, RuntimeError) as e:
-            # Handler execution errors
-            logger.error(
-                f"Handler error for {handler_id}: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
+            logger.error(f"Handler error for {handler_id}: {e}")
             self._record_circuit_breaker_failure(handler_id)
 
             if self.error_handler:

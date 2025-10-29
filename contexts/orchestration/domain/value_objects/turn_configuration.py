@@ -161,11 +161,15 @@ class TurnConfiguration:
 
         # Set default phase timeouts if not provided
         if not self.phase_timeouts:
-            object.__setattr__(self, "phase_timeouts", self.DEFAULT_PHASE_TIMEOUTS.copy())
+            object.__setattr__(
+                self, "phase_timeouts", self.DEFAULT_PHASE_TIMEOUTS.copy()
+            )
 
         # Set default performance targets if not provided
         if not self.performance_targets:
-            object.__setattr__(self, "performance_targets", self.DEFAULT_PERFORMANCE_TARGETS.copy())
+            object.__setattr__(
+                self, "performance_targets", self.DEFAULT_PERFORMANCE_TARGETS.copy()
+            )
 
     @classmethod
     def create_default(cls) -> "TurnConfiguration":
@@ -295,7 +299,9 @@ class TurnConfiguration:
         Returns:
             New TurnConfiguration with updated timeout
         """
-        return TurnConfiguration(**{**self.__dict__, "max_execution_time_ms": timeout_ms})
+        return TurnConfiguration(
+            **{**self.__dict__, "max_execution_time_ms": timeout_ms}
+        )
 
     def with_narrative_depth(self, depth: str) -> "TurnConfiguration":
         """
@@ -387,7 +393,10 @@ class TurnConfiguration:
         Returns:
             Total expected phase execution time in milliseconds
         """
-        return sum(self.get_phase_timeout(phase) for phase in self.DEFAULT_PHASE_TIMEOUTS.keys())
+        return sum(
+            self.get_phase_timeout(phase)
+            for phase in self.DEFAULT_PHASE_TIMEOUTS.keys()
+        )
 
     def validate_constraints(self) -> List[str]:
         """
@@ -411,7 +420,8 @@ class TurnConfiguration:
             estimated_cost = self.get_estimated_ai_cost()
             if estimated_cost and estimated_cost > self.max_ai_cost:
                 errors.append(
-                    f"Estimated AI cost ({estimated_cost}) exceeds " f"limit ({self.max_ai_cost})"
+                    f"Estimated AI cost ({estimated_cost}) exceeds "
+                    f"limit ({self.max_ai_cost})"
                 )
 
         # Check participant constraints

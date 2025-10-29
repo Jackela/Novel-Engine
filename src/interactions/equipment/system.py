@@ -34,7 +34,6 @@ from .validators import EquipmentValidator
 
 logger = logging.getLogger(__name__)
 
-
 class DynamicEquipmentSystem:
     """
     STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY TECHNOLOGICAL ORCHESTRATION
@@ -70,9 +69,9 @@ class DynamicEquipmentSystem:
         self._equipment_registry: Dict[str, DynamicEquipment] = {}
         self._agent_equipment: Dict[str, List[str]] = {}  # agent_id -> equipment_ids
         self._equipment_templates: Dict[str, Dict[str, Any]] = {}
-        self._maintenance_queue: List[
-            Tuple[datetime, str]
-        ] = []  # scheduled maintenance
+        self._maintenance_queue: List[Tuple[datetime, str]] = (
+            []
+        )  # scheduled maintenance
 
         # Blessed equipment processors
         self._category_processors = {
@@ -135,9 +134,9 @@ class DynamicEquipmentSystem:
                 )
 
                 # Register enhanced equipment
-                self._equipment_registry[
-                    equipment_item.equipment_id
-                ] = dynamic_equipment
+                self._equipment_registry[equipment_item.equipment_id] = (
+                    dynamic_equipment
+                )
 
                 # Associate enhanced equipment with agent
                 if agent_id not in self._agent_equipment:
@@ -188,9 +187,7 @@ class DynamicEquipmentSystem:
                 code="EQUIPMENT_REGISTRATION_FAILED",
                 message=f"Equipment registration failed: {str(e)}",
                 recoverable=True,
-                details={
-                    "standard_guidance": "Check equipment data format and system state"
-                },
+                details={"standard_guidance": "Check equipment data format and system state"},
             )
 
     async def use_equipment(
@@ -219,10 +216,7 @@ class DynamicEquipmentSystem:
                 if (
                     equipment.current_user != agent_id
                     and equipment.current_status
-                    not in [
-                        EquipmentStatus.READY,
-                        EquipmentStatus.STANDBY,
-                    ]
+                    not in [EquipmentStatus.READY, EquipmentStatus.STANDBY]
                 ):
                     return StandardResponse(
                         success=False,
@@ -338,9 +332,7 @@ class DynamicEquipmentSystem:
 
         except Exception as e:
             logger.error(f"EQUIPMENT USAGE FAILED: {e}")
-            return ResponseBuilder.operation_failed(
-                "equipment usage", e, recoverable=True
-            )
+            return ResponseBuilder.operation_failed("equipment usage", e, recoverable=True)
 
     async def perform_maintenance(
         self,
@@ -420,7 +412,9 @@ class DynamicEquipmentSystem:
                     equipment, maintenance_type
                 )
                 equipment.system_core_mood = spirit_improvement["new_mood"]
-                maintenance_record.system_core_response = spirit_improvement["response"]
+                maintenance_record.system_core_response = spirit_improvement[
+                    "response"
+                ]
 
                 # Schedule enhanced next maintenance
                 if self.auto_maintenance:
@@ -764,9 +758,9 @@ class DynamicEquipmentSystem:
                 eq.performance_metrics.get("reliability", 0.9)
                 for eq in self._equipment_registry.values()
             )
-            self.system_metrics[
-                "average_equipment_reliability"
-            ] = total_reliability / len(self._equipment_registry)
+            self.system_metrics["average_equipment_reliability"] = (
+                total_reliability / len(self._equipment_registry)
+            )
 
         return {
             **self.system_metrics,

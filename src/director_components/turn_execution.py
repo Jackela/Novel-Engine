@@ -128,9 +128,9 @@ class TurnExecutionEngine:
             # Phase 2: Agent Decisions
             decision_result = await self._execute_decision_phase(context)
             if not decision_result["success"]:
-                turn_result[
-                    "error"
-                ] = f"Decision phase failed: {decision_result['error']}"
+                turn_result["error"] = (
+                    f"Decision phase failed: {decision_result['error']}"
+                )
                 return turn_result
 
             # Phase 3: Conflict Resolution
@@ -182,19 +182,10 @@ class TurnExecutionEngine:
                 f"Turn {self._turn_counter} completed successfully in {turn_duration:.2f}s"
             )
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid turn data or context structure errors
+        except Exception as e:
             turn_duration = time.time() - turn_start_time
             self.logger.error(
-                f"Invalid data during turn {self._turn_counter} execution: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-        except (ValueError, RuntimeError, asyncio.TimeoutError) as e:
-            # Phase execution or timing errors
-            turn_duration = time.time() - turn_start_time
-            self.logger.error(
-                f"Turn {self._turn_counter} failed after {turn_duration:.2f}s: {e}",
-                extra={"error_type": type(e).__name__},
+                f"Turn {self._turn_counter} failed after {turn_duration:.2f}s: {e}"
             )
 
             turn_result.update(
@@ -247,19 +238,7 @@ class TurnExecutionEngine:
 
             return {"success": True}
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context or preparation data errors
-            self.logger.error(
-                f"Invalid data during turn preparation: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Phase execution or metric recording errors
-            self.logger.error(
-                f"Turn preparation phase error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
             return {"success": False, "error": str(e)}
 
     async def _execute_decision_phase(self, context: TurnContext) -> Dict[str, Any]:
@@ -312,19 +291,7 @@ class TurnExecutionEngine:
 
             return {"success": True, "successful_decisions": successful_decisions}
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context or agent data errors
-            self.logger.error(
-                f"Invalid data during decision phase: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError, asyncio.TimeoutError) as e:
-            # Agent decision or parallel execution errors
-            self.logger.error(
-                f"Decision phase execution error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
             return {"success": False, "error": str(e)}
 
     async def _execute_parallel_decisions(
@@ -419,20 +386,10 @@ class TurnExecutionEngine:
                 "response_time": response_time,
             }
 
-        except (AttributeError, TypeError, KeyError) as e:
-            # Invalid agent or decision data errors
+        except Exception as e:
             response_time = time.time() - decision_start
             self.logger.error(
-                f"Invalid data for agent {agent_id} decision: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e), "response_time": response_time}
-        except (ValueError, RuntimeError) as e:
-            # Agent decision execution errors
-            response_time = time.time() - decision_start
-            self.logger.error(
-                f"Agent {agent_id} decision error after {response_time:.2f}s: {e}",
-                extra={"error_type": type(e).__name__},
+                f"Agent {agent_id} decision error after {response_time:.2f}s: {e}"
             )
             return {"success": False, "error": str(e), "response_time": response_time}
 
@@ -472,19 +429,7 @@ class TurnExecutionEngine:
 
             return {"success": True, "conflicts_resolved": len(conflicts)}
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context or conflict data errors
-            self.logger.error(
-                f"Invalid data during conflict resolution: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Conflict resolution processing errors
-            self.logger.error(
-                f"Conflict resolution phase error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
             return {"success": False, "error": str(e)}
 
     async def _execute_state_update_phase(self, context: TurnContext) -> Dict[str, Any]:
@@ -515,18 +460,7 @@ class TurnExecutionEngine:
 
             return {"success": True, "state_changes": len(state_changes)}
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context or state update data errors
-            self.logger.error(
-                f"Invalid data during state update: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # State update processing or aggregation errors
-            self.logger.error(
-                f"State update phase error: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
             return {"success": False, "error": str(e)}
 
     async def _execute_finalization_phase(self, context: TurnContext) -> Dict[str, Any]:
@@ -552,18 +486,7 @@ class TurnExecutionEngine:
 
             return {"success": True}
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid context or finalization data errors
-            self.logger.error(
-                f"Invalid data during turn finalization: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, RuntimeError) as e:
-            # Finalization processing or metric recording errors
-            self.logger.error(
-                f"Finalization phase error: {e}", extra={"error_type": type(e).__name__}
-            )
+        except Exception as e:
             return {"success": False, "error": str(e)}
 
     async def _identify_conflicts(
@@ -614,19 +537,7 @@ class TurnExecutionEngine:
 
             return {"success": False, "error": "No agents in conflict"}
 
-        except (AttributeError, KeyError, TypeError) as e:
-            # Invalid conflict data or agent structure errors
-            self.logger.error(
-                f"Invalid data during conflict resolution: {e}",
-                extra={"error_type": type(e).__name__},
-            )
-            return {"success": False, "error": str(e)}
-        except (ValueError, IndexError, RuntimeError) as e:
-            # Conflict resolution logic or agent selection errors
-            self.logger.error(
-                f"Conflict resolution error: {e}",
-                extra={"error_type": type(e).__name__},
-            )
+        except Exception as e:
             return {"success": False, "error": str(e)}
 
     def _apply_conflict_resolution(

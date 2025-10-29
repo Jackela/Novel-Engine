@@ -158,7 +158,9 @@ class NarrativeFlowService:
     def _assess_content_balance(self, pacing: StoryPacing) -> Decimal:
         """Assess the balance of content types in pacing segment."""
         # Check if ratios sum to approximately 1.0
-        total_ratio = pacing.dialogue_ratio + pacing.action_ratio + pacing.reflection_ratio
+        total_ratio = (
+            pacing.dialogue_ratio + pacing.action_ratio + pacing.reflection_ratio
+        )
         balance_penalty = abs(total_ratio - Decimal("1.0")) * Decimal("5.0")
 
         # Assess appropriateness of content mix
@@ -200,7 +202,9 @@ class NarrativeFlowService:
             base_tension = plot_point.dramatic_tension
 
             # Adjust based on plot point type
-            type_modifier = self._get_tension_modifier_for_plot_type(plot_point.plot_point_type)
+            type_modifier = self._get_tension_modifier_for_plot_type(
+                plot_point.plot_point_type
+            )
 
             # Adjust based on importance
             importance_modifier = self._get_importance_modifier(plot_point.importance)
@@ -295,7 +299,8 @@ class NarrativeFlowService:
         resolution_points = [
             pp
             for pp in plot_points
-            if pp.plot_point_type in [PlotPointType.RESOLUTION, PlotPointType.FALLING_ACTION]
+            if pp.plot_point_type
+            in [PlotPointType.RESOLUTION, PlotPointType.FALLING_ACTION]
         ]
 
         if not resolution_points:
@@ -311,7 +316,9 @@ class NarrativeFlowService:
         if major_plot_points:
             # Simple heuristic: resolution should come after major plot points
             last_major_sequence = max(pp.sequence_order for pp in major_plot_points)
-            first_resolution_sequence = min(pp.sequence_order for pp in resolution_points)
+            first_resolution_sequence = min(
+                pp.sequence_order for pp in resolution_points
+            )
 
             if first_resolution_sequence > last_major_sequence:
                 resolution_quality += Decimal("2.0")
@@ -321,7 +328,9 @@ class NarrativeFlowService:
         # Check for thematic resolution
         if arc.themes:
             themes_with_resolution = sum(
-                1 for theme in arc.themes.values() if theme.resolution_sequence is not None
+                1
+                for theme in arc.themes.values()
+                if theme.resolution_sequence is not None
             )
             theme_resolution_ratio = Decimal(str(themes_with_resolution)) / Decimal(
                 str(len(arc.themes))
@@ -362,13 +371,17 @@ class NarrativeFlowService:
 
         return min(Decimal("10.0"), momentum_score)
 
-    def _calculate_pacing_momentum(self, pacing_segments: Dict[str, StoryPacing]) -> Decimal:
+    def _calculate_pacing_momentum(
+        self, pacing_segments: Dict[str, StoryPacing]
+    ) -> Decimal:
         """Calculate momentum from pacing progression."""
         if len(pacing_segments) < 2:
             return Decimal("5.0")
 
         # Sort segments by sequence
-        sorted_segments = sorted(pacing_segments.values(), key=lambda p: p.start_sequence)
+        sorted_segments = sorted(
+            pacing_segments.values(), key=lambda p: p.start_sequence
+        )
 
         momentum = Decimal("0")
 
@@ -386,7 +399,9 @@ class NarrativeFlowService:
 
         return momentum
 
-    def _is_good_pacing_transition(self, prev_seg: StoryPacing, curr_seg: StoryPacing) -> bool:
+    def _is_good_pacing_transition(
+        self, prev_seg: StoryPacing, curr_seg: StoryPacing
+    ) -> bool:
         """Check if pacing transition is well-executed."""
         # Good transitions: buildup to climax, rest after intense action
         intensity_order = ["glacial", "slow", "moderate", "brisk", "fast", "breakneck"]
@@ -399,12 +414,16 @@ class NarrativeFlowService:
             return True
 
         # Rest after high intensity is good
-        if prev_index >= 4 and curr_index <= 2:  # fast/breakneck to glacial/slow/moderate
+        if (
+            prev_index >= 4 and curr_index <= 2
+        ):  # fast/breakneck to glacial/slow/moderate
             return True
 
         return False
 
-    def _is_jarring_pacing_transition(self, prev_seg: StoryPacing, curr_seg: StoryPacing) -> bool:
+    def _is_jarring_pacing_transition(
+        self, prev_seg: StoryPacing, curr_seg: StoryPacing
+    ) -> bool:
         """Check if pacing transition is jarring."""
         intensity_order = ["glacial", "slow", "moderate", "brisk", "fast", "breakneck"]
 
@@ -435,15 +454,16 @@ class NarrativeFlowService:
             if len(appearances) >= 2:
                 # Check for consistent involvement
                 appearance_gaps = [
-                    appearances[i] - appearances[i - 1] for i in range(1, len(appearances))
+                    appearances[i] - appearances[i - 1]
+                    for i in range(1, len(appearances))
                 ]
 
                 # Reward consistent involvement (similar gaps)
                 if appearance_gaps:
                     avg_gap = sum(appearance_gaps) / len(appearance_gaps)
-                    gap_variance = sum((gap - avg_gap) ** 2 for gap in appearance_gaps) / len(
-                        appearance_gaps
-                    )
+                    gap_variance = sum(
+                        (gap - avg_gap) ** 2 for gap in appearance_gaps
+                    ) / len(appearance_gaps)
 
                     if gap_variance < avg_gap * 0.5:  # Low variance = consistent
                         momentum += Decimal("1.0")
@@ -514,7 +534,9 @@ class NarrativeFlowService:
             if theme.introduction_sequence is not None and development_sequences:
                 # Check if theme development follows introduction
                 intro_seq = theme.introduction_sequence
-                valid_developments = [seq for seq in development_sequences if seq >= intro_seq]
+                valid_developments = [
+                    seq for seq in development_sequences if seq >= intro_seq
+                ]
 
                 if len(valid_developments) == len(development_sequences):
                     consistency_bonus += Decimal("1.0")
@@ -530,7 +552,9 @@ class NarrativeFlowService:
             return Decimal("0")
 
         # Check for gaps or overlaps in pacing coverage
-        sorted_segments = sorted(arc.pacing_segments.values(), key=lambda p: p.start_sequence)
+        sorted_segments = sorted(
+            arc.pacing_segments.values(), key=lambda p: p.start_sequence
+        )
 
         consistency_bonus = Decimal("0")
 
@@ -558,7 +582,9 @@ class NarrativeFlowService:
         plot_points = arc.get_plot_points_in_sequence()
 
         for char_id in arc.primary_characters:
-            appearances = sum(1 for pp in plot_points if char_id in pp.involved_characters)
+            appearances = sum(
+                1 for pp in plot_points if char_id in pp.involved_characters
+            )
 
             if len(plot_points) > 0:
                 appearance_ratio = appearances / len(plot_points)
@@ -632,12 +658,16 @@ class NarrativeFlowService:
         original_sequence = arc.plot_sequence.copy()
         optimized_sequence = self._calculate_optimal_sequence(arc)
 
-        changes_made = self._identify_sequence_changes(original_sequence, optimized_sequence)
+        changes_made = self._identify_sequence_changes(
+            original_sequence, optimized_sequence
+        )
         improvement_score = self._calculate_improvement_score(
             arc, original_sequence, optimized_sequence
         )
 
-        rationale = self._generate_optimization_rationale(changes_made, improvement_score)
+        rationale = self._generate_optimization_rationale(
+            changes_made, improvement_score
+        )
 
         return SequenceOptimization(
             original_sequence=original_sequence,
@@ -658,9 +688,13 @@ class NarrativeFlowService:
         optimized = []
 
         # Group by importance and type
-        critical_points = [pp for pp in plot_points if pp.importance.value == "critical"]
+        critical_points = [
+            pp for pp in plot_points if pp.importance.value == "critical"
+        ]
         major_points = [pp for pp in plot_points if pp.importance.value == "major"]
-        [pp for pp in plot_points if pp.importance.value not in ["critical", "major"]]
+        [
+            pp for pp in plot_points if pp.importance.value not in ["critical", "major"]
+        ]
 
         # Ensure proper story structure
         # 1. Inciting incident should come early
@@ -678,11 +712,15 @@ class NarrativeFlowService:
         ]
 
         # 3. Resolution should come last
-        resolutions = [pp for pp in plot_points if pp.plot_point_type == PlotPointType.RESOLUTION]
+        resolutions = [
+            pp for pp in plot_points if pp.plot_point_type == PlotPointType.RESOLUTION
+        ]
 
         # Build optimized sequence
         remaining_points = [
-            pp for pp in plot_points if pp not in inciting_incidents + climaxes + resolutions
+            pp
+            for pp in plot_points
+            if pp not in inciting_incidents + climaxes + resolutions
         ]
 
         # Add inciting incidents first
@@ -714,7 +752,9 @@ class NarrativeFlowService:
                         "plot_point_id": plot_id,
                         "original_position": original_index,
                         "new_position": i,
-                        "direction": ("moved_forward" if i < original_index else "moved_backward"),
+                        "direction": (
+                            "moved_forward" if i < original_index else "moved_backward"
+                        ),
                     }
                 )
 
@@ -745,7 +785,9 @@ class NarrativeFlowService:
 
         return improvement
 
-    def _has_better_story_structure(self, arc: NarrativeArc, sequence: List[str]) -> bool:
+    def _has_better_story_structure(
+        self, arc: NarrativeArc, sequence: List[str]
+    ) -> bool:
         """Check if optimized sequence has better story structure."""
         # Simple check: inciting incident early, climax late, resolution last
         if len(sequence) < 3:
@@ -757,16 +799,24 @@ class NarrativeFlowService:
         for i, plot_id in enumerate(sequence):
             plot_point = arc.plot_points[plot_id]
 
-            if plot_point.plot_point_type == PlotPointType.INCITING_INCIDENT and i <= first_third:
+            if (
+                plot_point.plot_point_type == PlotPointType.INCITING_INCIDENT
+                and i <= first_third
+            ):
                 return True
             elif plot_point.plot_point_type == PlotPointType.CLIMAX and i >= last_third:
                 return True
-            elif plot_point.plot_point_type == PlotPointType.RESOLUTION and i >= last_third:
+            elif (
+                plot_point.plot_point_type == PlotPointType.RESOLUTION
+                and i >= last_third
+            ):
                 return True
 
         return False
 
-    def _has_better_prerequisite_satisfaction(self, arc: NarrativeArc, sequence: List[str]) -> bool:
+    def _has_better_prerequisite_satisfaction(
+        self, arc: NarrativeArc, sequence: List[str]
+    ) -> bool:
         """Check if prerequisites are better satisfied in optimized sequence."""
         # Check if more prerequisites are satisfied
         satisfied_count = 0
@@ -786,7 +836,9 @@ class NarrativeFlowService:
         # Compare with some baseline - for simplicity, assume improvement if any satisfied
         return satisfied_count > 0
 
-    def _has_better_tension_progression(self, arc: NarrativeArc, sequence: List[str]) -> bool:
+    def _has_better_tension_progression(
+        self, arc: NarrativeArc, sequence: List[str]
+    ) -> bool:
         """Check if tension progression is improved."""
         # Simple heuristic: check if high-tension plot points are better distributed
         high_tension_positions = []
@@ -813,14 +865,18 @@ class NarrativeFlowService:
         rationale_parts = []
 
         if improvement_score > Decimal("5.0"):
-            rationale_parts.append("Significant improvements to story structure and flow.")
+            rationale_parts.append(
+                "Significant improvements to story structure and flow."
+            )
         elif improvement_score > Decimal("2.0"):
             rationale_parts.append("Moderate improvements to narrative progression.")
         else:
             rationale_parts.append("Minor adjustments to optimize sequence flow.")
 
         if len(changes) == 1:
-            rationale_parts.append("One plot point repositioned for better narrative flow.")
+            rationale_parts.append(
+                "One plot point repositioned for better narrative flow."
+            )
         else:
             rationale_parts.append(
                 f"{len(changes)} plot points repositioned for better narrative flow."

@@ -194,7 +194,9 @@ class NarrativeThread(StoryElement):
         if not hasattr(self, "_total_elements_count"):
             # Estimate total elements from current state
             total_elements = (
-                len(self.unresolved_elements) + len(self.key_moments) + len(self.central_themes)
+                len(self.unresolved_elements)
+                + len(self.key_moments)
+                + len(self.central_themes)
             )
             if total_elements == 0:
                 self.resolution_progress = Decimal("0")
@@ -203,11 +205,15 @@ class NarrativeThread(StoryElement):
         # Simple heuristic: progress based on resolved vs total elements
         resolved_count = len(self.key_moments) + len(self.completed_arc_ids)
         total_count = (
-            resolved_count + len(self.unresolved_elements) + len(self.participating_arc_ids)
+            resolved_count
+            + len(self.unresolved_elements)
+            + len(self.participating_arc_ids)
         )
 
         if total_count > 0:
-            self.resolution_progress = Decimal(str(resolved_count)) / Decimal(str(total_count))
+            self.resolution_progress = Decimal(str(resolved_count)) / Decimal(
+                str(total_count)
+            )
         else:
             self.resolution_progress = Decimal("0")
 
