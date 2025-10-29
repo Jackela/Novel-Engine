@@ -116,7 +116,7 @@ class TurnConfiguration:
         "memory_efficiency": 0.8,  # utilization ratio
     }
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate configuration structure and business rules."""
         # Validate world time advance
         if self.world_time_advance <= 0:
@@ -188,7 +188,9 @@ class TurnConfiguration:
         return cls()
 
     @classmethod
-    def create_fast_turn(cls, participants: List[str] = None) -> "TurnConfiguration":
+    def create_fast_turn(
+        cls, participants: Optional[List[str]] = None
+    ) -> "TurnConfiguration":
         """
         Create configuration optimized for fast execution.
 
@@ -215,7 +217,9 @@ class TurnConfiguration:
 
     @classmethod
     def create_detailed_turn(
-        cls, participants: List[str] = None, max_ai_cost: Optional[Decimal] = None
+        cls,
+        participants: Optional[List[str]] = None,
+        max_ai_cost: Optional[Decimal] = None,
     ) -> "TurnConfiguration":
         """
         Create configuration for detailed, comprehensive turns.
@@ -246,7 +250,9 @@ class TurnConfiguration:
         )
 
     @classmethod
-    def create_ai_disabled(cls, participants: List[str] = None) -> "TurnConfiguration":
+    def create_ai_disabled(
+        cls, participants: Optional[List[str]] = None
+    ) -> "TurnConfiguration":
         """
         Create configuration without AI integration.
 
