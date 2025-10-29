@@ -385,14 +385,14 @@ class TestCharacterContextIntegration:
         skill = Skill(
             name="sword_fighting",
             category=SkillCategory.COMBAT,
-            proficiency_level=ProficiencyLevel.TRAINED,
+            proficiency_level=ProficiencyLevel.APPRENTICE,
             modifier=2,
             description="Skill with sword combat",
         )
 
         assert skill.name == "sword_fighting"
         assert skill.category == SkillCategory.COMBAT
-        assert skill.proficiency_level == ProficiencyLevel.TRAINED
+        assert skill.proficiency_level == ProficiencyLevel.APPRENTICE
         assert skill.modifier == 2
 
         # Create a skill group
