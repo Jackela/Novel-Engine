@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -35,8 +35,8 @@ import {
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import { useCreateCharacter } from '../../hooks/useCharacters';
-import { CharacterFormData, CharacterStats, Equipment } from '../../types';
-import { useFocusTrap, announceToScreenReader } from '../../utils/focusManagement';
+import type { CharacterFormData, CharacterStats, Equipment } from '../../types';
+import { useFocusTrap } from '../../utils/focusManagement';
 
 interface Props {
   open: boolean;
@@ -295,7 +295,7 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
 
       onCharacterCreated();
       onClose();
-    } catch (error) {
+    } catch {
       // Error is handled by the mutation
     }
   };

@@ -79,9 +79,9 @@ interface EnhancedAgentInterfaceProps {
 }
 
 const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
-  sessionId,
+  sessionId: _sessionId,
   allowDirectControl = true,
-  showAdvancedControls = false,
+  showAdvancedControls: _showAdvancedControls = false,
   maxAgents = 10,
   className = ''
 }) => {
@@ -93,7 +93,7 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'detailed'>('grid');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'activity' | 'performance' | 'name' | 'status'>('activity');
-  const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
+  const [_isConfigPanelOpen, _setIsConfigPanelOpen] = useState(false);
 
   // Performance metrics
   const [metrics, setMetrics] = useState({
@@ -202,12 +202,12 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
   // Generate agent color based on type
   const generateAgentColor = (type: string) => {
     const colors = {
-      director: '#3b82f6',
-      persona: '#10b981',
-      chronicler: '#f59e0b',
-      arbiter: '#ef4444'
-    };
-    return colors[type] || '#6b7280';
+      director: 'var(--color-info)',
+      persona: 'var(--color-success)',
+      chronicler: 'var(--color-warning)',
+      arbiter: 'var(--color-error)'
+    } as const;
+    return (colors as Record<string, string>)[type] ?? 'var(--color-text-secondary)';
   };
 
   // Default values
@@ -470,7 +470,7 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
 
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={(e) => setSortBy(e.target.value as 'activity' | 'performance' | 'name' | 'status')}
             className="px-3 py-2 bg-background border border-border rounded-md text-sm"
           >
             <option value="activity">Latest Activity</option>

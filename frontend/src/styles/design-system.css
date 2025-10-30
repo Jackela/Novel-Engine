@@ -1,3 +1,9 @@
+/*
+  Transitional note:
+  - This file is currently reconciled with generated tokens in design-system.generated.css.
+  - Tokens (SSOT) live in src/styles/tokens.ts → build-tokens.mjs → design-system.generated.css.
+  - Keep variable names aligned; avoid manual hex edits that diverge from tokens.
+*/
 /* Font Imports - Must be first */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap');

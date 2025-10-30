@@ -421,6 +421,7 @@ export class EnvironmentValidator {
           warnings.push('Low storage quota may limit some features');
         }
       } catch (_error) {
+        void _error;
         // Ignore quota estimation errors
       }
     }

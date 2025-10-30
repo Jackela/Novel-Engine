@@ -1,5 +1,6 @@
-import { apiClient, handleAPIResponse, handleAPIError, BaseAPIResponse } from './apiClient';
-import { User } from '../../store/slices/authSlice';
+import { apiClient, handleAPIResponse, handleAPIError } from './apiClient';
+import type { BaseAPIResponse } from './apiClient';
+import type { User } from '../../store/slices/authSlice';
 
 // Authentication request/response types based on OpenAPI spec
 export interface LoginRequest {

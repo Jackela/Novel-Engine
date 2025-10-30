@@ -9,7 +9,7 @@ import {
   useMediaQuery,
   Fade,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import {
   PlayArrow as EventIcon,
@@ -70,14 +70,14 @@ const EventNode = styled(motion(Box))<{ status: string }>(({ theme, status }) =>
   alignItems: 'center',
   padding: theme.spacing(1),
   borderRadius: theme.shape.borderRadius,
-  backgroundColor: status === 'active' ? 'rgba(99, 102, 241, 0.15)' : '#111113',
+  backgroundColor: status === 'active' ? alpha(theme.palette.primary.main, 0.15) : theme.palette.background.paper,
   border: status === 'active'
-    ? `2px solid #6366f1`
-    : `1px solid #2a2a30`,
+    ? `2px solid ${theme.palette.primary.main}`
+    : `1px solid ${theme.palette.divider}`,
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    backgroundColor: status === 'active' ? 'rgba(99, 102, 241, 0.2)' : '#1a1a1d',
-    borderColor: status === 'completed' ? '#10b981' : '#6366f1',
+    backgroundColor: status === 'active' ? alpha(theme.palette.primary.main, 0.2) : 'var(--color-bg-tertiary)',
+    borderColor: status === 'completed' ? theme.palette.success.main : theme.palette.primary.main,
     transform: 'translateY(-2px)',
     boxShadow: `0 4px 8px ${
       status === 'completed' ? 'rgba(16, 185, 129, 0.2)' : 
@@ -105,7 +105,7 @@ const EventConnector = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  color: '#808088',
+  color: 'var(--color-text-tertiary)',
   
   // Desktop: horizontal connector
   [theme.breakpoints.up('md')]: {
@@ -199,11 +199,11 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
   const getStatusColor = (status: EventFlowNode['status']) => {
     switch (status) {
       case 'completed':
-        return '#10b981';
+        return theme.palette.success.main;
       case 'active':
-        return '#6366f1';
+        return theme.palette.primary.main;
       default:
-        return '#808088';
+        return theme.palette.text.secondary;
     }
   };
 
@@ -235,9 +235,9 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
             label={`${totalEvents} Events`} 
             size="small" 
             sx={{
-              backgroundColor: '#111113',
-              borderColor: '#2a2a30',
-              color: '#b0b0b8',
+              backgroundColor: (theme) => theme.palette.background.paper,
+              borderColor: (theme) => theme.palette.divider,
+              color: (theme) => theme.palette.text.secondary,
               fontSize: '0.7rem',
               height: '22px',
             }}
@@ -246,9 +246,9 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
             label={`${totalDependencies} Links`} 
             size="small" 
             sx={{
-              backgroundColor: '#111113',
-              borderColor: '#2a2a30',
-              color: '#b0b0b8',
+              backgroundColor: (theme) => theme.palette.background.paper,
+              borderColor: (theme) => theme.palette.divider,
+              color: (theme) => theme.palette.text.secondary,
               fontSize: '0.7rem',
               height: '22px',
             }}
@@ -258,8 +258,8 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
             size="small" 
             sx={{
               backgroundColor: 'rgba(99, 102, 241, 0.2)',
-              borderColor: '#6366f1',
-              color: '#a5b4fc',
+              borderColor: (theme) => theme.palette.primary.main,
+              color: (theme) => alpha(theme.palette.primary.main, 0.75),
               fontSize: '0.7rem',
               height: '22px',
             }}
@@ -270,8 +270,8 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
               size="small" 
               sx={{
                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                borderColor: '#10b981',
-                color: '#6ee7b7',
+                borderColor: (theme) => theme.palette.success.main,
+                color: (theme) => alpha(theme.palette.success.main, 0.8),
                 fontSize: '0.7rem',
                 height: '22px',
               }}
@@ -309,7 +309,7 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
                       variant={isMobile ? 'caption' : 'body2'} 
                       fontWeight={600} 
                       sx={{ 
-                        color: '#f0f0f2',
+                        color: (theme) => theme.palette.text.primary,
                         lineHeight: 1.3,
                         mb: 0.25,
                       }}
@@ -357,9 +357,9 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
                           sx={{
                             height: '16px',
                             fontSize: '0.6rem',
-                            backgroundColor: '#111113',
-                            borderColor: '#2a2a30',
-                            color: '#b0b0b8',
+                            backgroundColor: (theme) => theme.palette.background.paper,
+                            borderColor: (theme) => theme.palette.divider,
+                            color: (theme) => theme.palette.text.secondary,
                           }}
                         />
                       )}

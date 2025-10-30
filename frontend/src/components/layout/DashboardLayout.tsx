@@ -7,9 +7,9 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
   position: 'sticky',
   top: 0,
   zIndex: theme.zIndex.appBar,
-  backgroundColor: '#111113',
+  backgroundColor: theme.palette.background.paper,
   color: theme.palette.text.primary,
-  borderBottom: '1px solid #2a2a30',
+  borderBottom: `1px solid ${theme.palette.divider}`,
   boxShadow: 'none',
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
 }));
@@ -34,7 +34,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       data-testid="dashboard-layout"
       sx={{ minHeight: '100vh', bgcolor: 'background.default' }}
     >
-      <StyledAppBar component="header" role="banner">
+      <StyledAppBar>
         <Toolbar>
           <Typography variant="h6" component="h1" sx={{ flexGrow: 1, fontWeight: 600 }}>
             Emergent Narrative Dashboard
@@ -45,7 +45,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </Toolbar>
       </StyledAppBar>
       
-      <MainContainer component="main" role="main">
+      <MainContainer>
         <BentoGrid>
           {children}
         </BentoGrid>

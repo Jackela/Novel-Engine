@@ -124,7 +124,7 @@ export interface CreationTemplate {
   name: string;
   description: string;
   category: 'character' | 'story' | 'setting';
-  template: any;
+  template: unknown;
   isDefault: boolean;
 }
 
@@ -175,7 +175,7 @@ export interface Notification {
 // WebSocket Event Types
 export interface WSEvent {
   type: string;
-  payload: any;
+  payload: unknown;
   timestamp: Date;
 }
 
@@ -233,7 +233,7 @@ export interface NetworkNode {
   id: string;
   label: string;
   type: 'character' | 'faction' | 'location';
-  data: any;
+  data: unknown;
   position?: { x: number; y: number };
 }
 

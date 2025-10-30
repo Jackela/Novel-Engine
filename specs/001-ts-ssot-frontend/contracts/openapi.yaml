@@ -1,0 +1,139 @@
+openapi: 3.0.3
+info:
+  title: Novel Engine Client-Consumed API (Read-only subset)
+  version: 0.1.0
+  description: Read endpoints consumed by the frontend, captured for reference. No backend contract change implied.
+servers:
+  - url: http://localhost:8000
+paths:
+  /characters:
+    get:
+      summary: List character names
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  characters:
+                    type: array
+                    items:
+                      type: string
+  /characters/{name}:
+    get:
+      summary: Get character details
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Character'
+  /characters/{name}/enhanced:
+    get:
+      summary: Get enhanced character details
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Character'
+  /api/v1/stories/generate:
+    post:
+      summary: Start story generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characters:
+                  type: array
+                  items:
+                    type: string
+                title:
+                  type: string
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  generation_id:
+                    type: string
+                  status:
+                    type: string
+                  message:
+                    type: string
+  /api/v1/stories/status/{id}:
+    get:
+      summary: Get generation status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerationStatus'
+components:
+  schemas:
+    Character:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        faction: { type: string }
+        role: { type: string }
+        description: { type: string }
+        stats:
+          type: object
+          properties:
+            strength: { type: number }
+            dexterity: { type: number }
+            intelligence: { type: number }
+            willpower: { type: number }
+            perception: { type: number }
+            charisma: { type: number }
+        equipment:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              name: { type: string }
+              type: { type: string }
+              description: { type: string }
+              condition: { type: number }
+    GenerationStatus:
+      type: object
+      properties:
+        generation_id: { type: string }
+        status: { type: string }
+        progress: { type: number }
+        stage: { type: string }
+        estimated_time_remaining: { type: number }
+

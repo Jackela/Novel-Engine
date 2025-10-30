@@ -3,41 +3,41 @@
 
 /* CSS Variables for Theme System */
 :root {
-  /* Light Theme Colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #e9ecef;
-  --bg-hover: #f0f0f0;
-  --bg-selected: #e3f2fd;
-  --text-color: #212529;
-  --text-muted: #495057; /* Enhanced contrast for WCAG AA compliance */
-  --border-color: #dee2e6;
-  --primary-color: #007bff;
-  --primary-dark: #0056b3;
-  --success-color: #28a745;
-  --warning-color: #d39e00; /* Enhanced contrast for WCAG AA compliance */
-  --danger-color: #dc3545;
-  --info-color: #17a2b8;
-  --secondary-color: #6c757d;
+  /* Light Theme Color Aliases to Design System Tokens */
+  --bg-primary: var(--color-bg-primary);
+  --bg-secondary: var(--color-bg-secondary);
+  --bg-tertiary: var(--color-bg-tertiary);
+  --bg-hover: var(--color-bg-elevated);
+  --bg-selected: var(--color-bg-interactive);
+  --text-color: var(--color-text-primary);
+  --text-muted: var(--color-text-secondary);
+  --border-color: var(--color-border-primary);
+  --primary-color: var(--color-primary);
+  --primary-dark: var(--color-primary-700);
+  --success-color: var(--color-success);
+  --warning-color: var(--color-warning);
+  --danger-color: var(--color-error);
+  --info-color: var(--color-info);
+  --secondary-color: var(--color-secondary);
 }
 
 [data-theme="dark"] {
-  /* Dark Theme Colors */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #2d2d2d;
-  --bg-tertiary: #262626;
-  --bg-hover: #333333;
-  --bg-selected: #1e3a8a;
-  --text-color: #ffffff;
-  --text-muted: #b3b3b3;
-  --border-color: #404040;
-  --primary-color: #3b82f6;
-  --primary-dark: #2563eb;
-  --success-color: #10b981;
-  --warning-color: #fbbf24; /* Enhanced contrast for dark mode WCAG AA compliance */
-  --danger-color: #ef4444;
-  --info-color: #06b6d4;
-  --secondary-color: #6b7280;
+  /* Dark Theme Color Aliases (tokens provide dark palette) */
+  --bg-primary: var(--color-bg-primary);
+  --bg-secondary: var(--color-bg-secondary);
+  --bg-tertiary: var(--color-bg-tertiary);
+  --bg-hover: var(--color-bg-elevated);
+  --bg-selected: var(--color-bg-interactive);
+  --text-color: var(--color-text-primary);
+  --text-muted: var(--color-text-secondary);
+  --border-color: var(--color-border-primary);
+  --primary-color: var(--color-primary);
+  --primary-dark: var(--color-primary-700);
+  --success-color: var(--color-success);
+  --warning-color: var(--color-warning);
+  --danger-color: var(--color-error);
+  --info-color: var(--color-info);
+  --secondary-color: var(--color-secondary);
 }
 
 /* Accessibility: Skip Links */
@@ -46,7 +46,7 @@
   top: -40px;
   left: 8px;
   background: var(--primary-color);
-  color: white;
+  color: var(--color-text-inverse);
   padding: 8px 16px;
   border-radius: 4px;
   text-decoration: none;
@@ -66,12 +66,9 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-primary);
+  font-family: -apple-system, blinkmacsystemfont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;  /* Vendor-specific font smoothing removed */background-color: var(--bg-primary);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -127,18 +124,12 @@ code {
   color: var(--primary-color);
   /* Fallback for accessibility - solid color with proper contrast */
   background: linear-gradient(135deg, var(--primary-color), var(--info-color));
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+  background-clip: text;  /* Vendor-specific background-clip removed */}
 
 /* Ensure proper contrast for users with gradient display issues */
 @media (prefers-contrast: high), (prefers-reduced-motion: reduce) {
   .app-title {
-    background: none;
-    -webkit-background-clip: unset;
-    -webkit-text-fill-color: unset;
-    color: var(--primary-color);
+    background: none;  /* Vendor-specific background-clip removed */color: var(--primary-color);
   }
 }
 
@@ -493,20 +484,20 @@ code {
 /* High Contrast Mode - Enhanced WCAG AA Compliance */
 @media (prefers-contrast: high) {
   :root {
-    /* High contrast color overrides for WCAG AA compliance */
-    --primary-color: #000080; /* Higher contrast blue */
-    --text-color: #000000;
-    --text-muted: #262626; /* Enhanced high contrast for WCAG AA compliance */
-    --border-color: #000000;
-    --bg-hover: #f0f0f0;
+    /* High contrast color overrides mapped to design tokens */
+    --primary-color: var(--color-primary);
+    --text-color: var(--color-text-primary);
+    --text-muted: var(--color-text-secondary);
+    --border-color: var(--color-border-primary);
+    --bg-hover: var(--color-bg-elevated);
   }
-  
+
   [data-theme="dark"] {
-    --primary-color: #6699ff; /* Lighter blue for dark mode contrast */
-    --text-color: #ffffff;
-    --text-muted: #cccccc;
-    --border-color: #ffffff;
-    --bg-hover: #333333;
+    --primary-color: var(--color-primary);
+    --text-color: var(--color-text-primary);
+    --text-muted: var(--color-text-secondary);
+    --border-color: var(--color-border-primary);
+    --bg-hover: var(--color-bg-elevated);
   }
   
   .view-btn,
@@ -563,15 +554,13 @@ code {
   }
 
   /* Optimize font rendering on mobile */
-  body {
-    -webkit-font-smoothing: subpixel-antialiased;
-    text-rendering: optimizeSpeed;
+  body {  /* Vendor-specific font smoothing removed */
+text-rendering: optimizeSpeed;
   }
 
   /* Reduce resource usage */
-  img, video {
-    image-rendering: -webkit-optimize-contrast;
-  }
+  img, video {  /* Vendor-specific rendering hint removed */
+}
 
   /* Mobile hover states - disable hover effects */
   .mobile-device button:hover,
@@ -583,23 +572,10 @@ code {
   }
 
   /* Touch-friendly scrollbars on mobile */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 4px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.5);
-  }
+    /* Removed vendor-specific scrollbar styling */
+  /* Removed vendor-specific scrollbar styling */
+  /* Removed vendor-specific scrollbar styling */
+  /* Removed vendor-specific scrollbar styling */
 }
 
 /* Data Saver Mode Optimizations */
@@ -638,10 +614,7 @@ code {
   /* Reduce gradient complexity */
   .app-title {
     background: var(--primary-color) !important;
-    background-clip: unset !important;
-    -webkit-background-clip: unset !important;
-    -webkit-text-fill-color: unset !important;
-  }
+    background-clip: unset !important;  /* Vendor-specific background-clip removed */}
 }
 
 /* Optimize for low-end mobile devices */

@@ -81,7 +81,7 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
 
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<AgentMessage[]>([]);
+  const [, setMessages] = useState<AgentMessage[]>([]);
   const [messageInput, setMessageInput] = useState('');
   const [messageType, setMessageType] = useState<AgentMessage['type']>('instruction');
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
@@ -275,12 +275,12 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
   // Render agent status indicator
   const renderAgentStatus = (status: Agent['status']) => {
     const statusConfig = {
-      idle: { color: '#6c757d', icon: '⏸️', label: 'Idle' },
-      thinking: { color: '#ffc107', icon: '🤔', label: 'Thinking' },
-      acting: { color: '#28a745', icon: '⚡', label: 'Acting' },
-      waiting: { color: '#17a2b8', icon: '⏳', label: 'Waiting' },
-      error: { color: '#dc3545', icon: '❌', label: 'Error' }
-    };
+      idle: { color: 'var(--color-text-secondary)', icon: '⏸️', label: 'Idle' },
+      thinking: { color: 'var(--color-warning)', icon: '🤔', label: 'Thinking' },
+      acting: { color: 'var(--color-success)', icon: '⚡', label: 'Acting' },
+      waiting: { color: 'var(--color-info)', icon: '⏳', label: 'Waiting' },
+      error: { color: 'var(--color-error)', icon: '❌', label: 'Error' }
+    } as const;
     
     const config = statusConfig[status];
     return (
@@ -390,7 +390,7 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
         <div className="agent-controls">
           <select
             value={coordinationMode}
-            onChange={(e) => setCoordinationMode(e.target.value as any)}
+            onChange={(e) => setCoordinationMode(e.target.value as 'autonomous' | 'guided' | 'manual')}
             className="coordination-select"
           >
             <option value="autonomous">Autonomous</option>

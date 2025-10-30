@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../services/api';
-import { CharacterFormData } from '../types';
+import type { CharacterFormData } from '../types';
 
 export function useCharacters() {
   return useQuery('characters', api.getCharacters, {

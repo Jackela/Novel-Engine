@@ -49,7 +49,7 @@ import {
   Star as StarIcon,
   StarBorder as StarBorderIcon,
 } from '@mui/icons-material';
-import { StoryProject } from '../../types';
+import type { StoryProject } from '../../types';
 
 // Mock data for stories - in real app, this would come from API
 const MOCK_STORIES: StoryProject[] = [

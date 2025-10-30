@@ -1,4 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
 // Placeholder campaign interfaces based on OpenAPI spec
 export interface Campaign {
@@ -6,7 +7,7 @@ export interface Campaign {
   name: string;
   description: string;
   status: 'planning' | 'active' | 'paused' | 'completed' | 'archived';
-  configuration: Record<string, any>;
+  configuration: Record<string, unknown>;
   participant_count: number;
   session_count: number;
   created_at: string;

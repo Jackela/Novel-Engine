@@ -28,7 +28,7 @@ interface EnhancedNarrativeEvent {
   timestamp: number;
   agentId?: string;
   agentName?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   isStreaming?: boolean;
   confidence?: number;
   causality?: {
@@ -61,7 +61,7 @@ interface EnhancedNarrativeDisplayProps {
 }
 
 const EnhancedNarrativeDisplay: React.FC<EnhancedNarrativeDisplayProps> = ({
-  sessionId,
+  sessionId: _sessionId,
   maxEvents = 1000,
   enableVirtualization = true,
   showAgentThoughts = false,
@@ -83,10 +83,10 @@ const EnhancedNarrativeDisplay: React.FC<EnhancedNarrativeDisplayProps> = ({
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
-  const [filterEmotion, setFilterEmotion] = useState<string>('all');
+  const [filterEmotion, _setFilterEmotion] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'timestamp' | 'priority' | 'reactions'>('timestamp');
   const [autoScroll, setAutoScroll] = useState(true);
-  const [viewMode, setViewMode] = useState<'feed' | 'timeline' | 'compact'>('feed');
+  const [_viewMode, _setViewMode] = useState<'feed' | 'timeline' | 'compact'>('feed');
 
   // Performance metrics
   const [metrics, setMetrics] = useState({
@@ -568,7 +568,7 @@ const EnhancedNarrativeDisplay: React.FC<EnhancedNarrativeDisplayProps> = ({
 
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={(e) => setSortBy(e.target.value as 'timestamp' | 'priority' | 'reactions')}
             className="px-3 py-2 bg-background border border-border rounded-md text-sm"
           >
             <option value="timestamp">Latest</option>

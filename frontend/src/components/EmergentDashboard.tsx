@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery } from 'react-query';
-import api from '../services/api';
+import { useCharactersQuery, useCampaignsQuery, useHealthQuery } from '../services/queries';
 import '../styles/design-system.css';
 import './EmergentDashboard.css';
 
@@ -82,21 +80,13 @@ const eventCascade = [
 ];
 
 const EmergentDashboard: React.FC = () => {
-  const navigate = useNavigate();
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
-  const [activityStream, setActivityStream] = useState<any[]>([]);
+  const [activityStream, setActivityStream] = useState<Array<{ timestamp: string; character: string; content: string }>>([]);
 
   // Fetch data
-  const { data: systemStatus, isLoading: statusLoading } = useQuery(
-    'system-status',
-    api.getHealth,
-    {
-      refetchInterval: 10000,
-    }
-  );
-
-  const { data: characters } = useQuery('characters', api.getCharacters);
-  const { data: campaigns } = useQuery('campaigns', api.getCampaigns);
+  const { data: systemStatus } = useHealthQuery();
+  const { data: characters } = useCharactersQuery();
+  const { data: _campaigns } = useCampaignsQuery();
 
   // Simulate real-time activity
   useEffect(() => {

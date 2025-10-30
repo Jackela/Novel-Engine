@@ -21,7 +21,7 @@ import {
   Settings as SettingsIcon,
   Group as GroupIcon,
 } from '@mui/icons-material';
-import { StoryFormData } from '../../types';
+import type { StoryFormData } from '../../types';
 
 interface Props {
   parameters: StoryFormData;
@@ -189,7 +189,7 @@ export default function StoryParameters({
                     <Select
                       value={parameters.settings.narrativeStyle}
                       label="Narrative Style"
-                      onChange={(e) => updateSettings({ narrativeStyle: e.target.value as any })}
+                      onChange={(e) => updateSettings({ narrativeStyle: e.target.value as unknown as 'epic' | 'detailed' | 'concise' })}
                     >
                       {NARRATIVE_STYLES.map((style) => (
                         <MenuItem key={style.value} value={style.value}>
@@ -209,7 +209,7 @@ export default function StoryParameters({
                     <Select
                       value={parameters.settings.tone}
                       label="Tone"
-                      onChange={(e) => updateSettings({ tone: e.target.value as any })}
+                      onChange={(e) => updateSettings({ tone: e.target.value as unknown as 'grimdark' | 'heroic' | 'tactical' | 'dramatic' })}
                     >
                       {TONES.map((tone) => (
                         <MenuItem key={tone.value} value={tone.value}>
@@ -229,7 +229,7 @@ export default function StoryParameters({
                     <Select
                       value={parameters.settings.perspective}
                       label="Perspective"
-                      onChange={(e) => updateSettings({ perspective: e.target.value as any })}
+                      onChange={(e) => updateSettings({ perspective: e.target.value as unknown as 'first_person' | 'third_person' })}
                     >
                       {PERSPECTIVES.map((perspective) => (
                         <MenuItem key={perspective.value} value={perspective.value}>

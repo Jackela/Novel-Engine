@@ -42,20 +42,20 @@ const ActivityList = styled(List)(({ theme }) => ({
 
 const ActivityItem = styled(motion(ListItem))<{ severity?: string }>(({ theme, severity }) => ({
   padding: theme.spacing(1, 0),
-  borderBottom: `1px solid #2a2a30`,
-  borderLeft: `3px solid ${severity === 'high' ? '#ef4444' : severity === 'medium' ? '#f59e0b' : '#10b981'}`,
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  borderLeft: `3px solid ${severity === 'high' ? theme.palette.error.main : severity === 'medium' ? theme.palette.warning.main : theme.palette.success.main}`,
   paddingLeft: theme.spacing(1),
   borderRadius: theme.shape.borderRadius / 2,
   marginBottom: theme.spacing(0.5),
   background: 'transparent',
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    background: '#1a1a1d',
+    background: 'var(--color-bg-tertiary)',
     borderLeftWidth: '4px',
     transform: 'translateX(4px)',
   },
   '&:last-child': {
-    borderBottom: `1px solid #2a2a30`,
+    borderBottom: `1px solid ${theme.palette.divider}`,
   },
 }));
 
@@ -65,14 +65,14 @@ const ActivityHeader = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between',
   marginBottom: theme.spacing(1.5),
   paddingBottom: theme.spacing(1),
-  borderBottom: `1px solid #2a2a30`,
+  borderBottom: `1px solid ${theme.palette.divider}`,
 }));
 
-const PulsingBadge = styled(motion.div)(({ theme }) => ({
+const PulsingBadge = styled(motion.div)({
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-}));
+});
 
 interface ActivityEvent {
   id: string;
@@ -274,7 +274,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                 }}
               >
                 <Badge badgeContent={unreadCount} color="primary">
-                  <NotificationIcon fontSize="small" sx={{ color: '#6366f1' }} />
+                  <NotificationIcon fontSize="small" sx={{ color: (theme) => theme.palette.primary.main }} />
                 </Badge>
               </PulsingBadge>
               <Typography variant="body2" color="text.secondary" fontWeight={500}>
@@ -285,9 +285,9 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
               label={`${activities.length} events`} 
               size="small" 
               sx={{ 
-                backgroundColor: '#111113',
-                borderColor: '#2a2a30',
-                color: '#b0b0b8',
+                backgroundColor: 'background.paper',
+                borderColor: 'divider',
+                color: (theme) => theme.palette.text.secondary,
                 fontWeight: 500,
               }}
             />
@@ -322,7 +322,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                   </Avatar>
                   <ListItemText
                     primary={
-                      <Typography variant="body2" fontWeight={500} sx={{ lineHeight: 1.3, mb: 0.25, color: '#f0f0f2' }}>
+                      <Typography variant="body2" fontWeight={500} sx={{ lineHeight: 1.3, mb: 0.25, color: 'text.primary' }}>
                         {activity.description.length > 60 
                           ? `${activity.description.substring(0, 60)}...`
                           : activity.description
@@ -342,8 +342,8 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                               height: '18px', 
                               fontSize: '0.6rem',
                               backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                              borderColor: '#6366f1',
-                              color: '#b0b0b8',
+                              borderColor: (theme) => theme.palette.primary.main,
+                              color: (theme) => theme.palette.text.secondary,
                             }}
                           />
                         )}
@@ -371,7 +371,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                 }}
               >
                 <Badge badgeContent={unreadCount} color="primary">
-                  <NotificationIcon fontSize="small" sx={{ color: '#6366f1' }} />
+                  <NotificationIcon fontSize="small" sx={{ color: (theme) => theme.palette.primary.main }} />
                 </Badge>
               </PulsingBadge>
               <Typography variant="body2" color="text.secondary" fontWeight={500}>
@@ -382,9 +382,9 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
               label={`${activities.length} events`} 
               size="small" 
               sx={{ 
-                backgroundColor: '#111113',
-                borderColor: '#2a2a30',
-                color: '#b0b0b8',
+                backgroundColor: 'background.paper',
+                borderColor: 'divider',
+                color: (theme) => theme.palette.text.secondary,
                 fontWeight: 500,
               }}
             />
@@ -417,7 +417,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                   </Avatar>
                   <ListItemText
                     primary={
-                      <Typography variant="body2" fontWeight={500} sx={{ color: '#f0f0f2' }}>
+                      <Typography variant="body2" fontWeight={500} sx={{ color: 'text.primary' }}>
                         {activity.description}
                       </Typography>
                     }
@@ -431,8 +431,8 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                               height: '16px', 
                               fontSize: '0.65rem',
                               backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                              borderColor: '#6366f1',
-                              color: '#b0b0b8',
+                              borderColor: (theme) => theme.palette.primary.main,
+                              color: (theme) => theme.palette.text.secondary,
                             }}
                           />
                         )}

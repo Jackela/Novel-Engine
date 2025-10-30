@@ -1,0 +1,30 @@
+#!/usr/bin/env node
+// Simple generator for CSS variables from token values.
+// NOTE: For safety, this writes to design-system.generated.css to avoid overwriting manual styles.
+import { writeFileSync, mkdirSync } from 'fs';
+import { dirname, resolve } from 'path';
+
+const outPath = resolve(process.cwd(), 'src/styles/design-system.generated.css');
+mkdirSync(dirname(outPath), { recursive: true });
+
+const css = `/* Generated from build-tokens.mjs */
+:root {
+  --color-primary: #6366f1;
+  --color-secondary: #8b5cf6;
+  --color-bg-primary: #0a0a0b;
+  --color-bg-secondary: #111113;
+  --color-bg-tertiary: #1a1a1d;
+  --color-border-primary: #2a2a30;
+  --color-text-primary: #f0f0f2;
+  --color-text-secondary: #b0b0b8;
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+}`;
+
+writeFileSync(outPath, css);
+console.log(`✔ Wrote ${outPath}`);
+
