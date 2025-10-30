@@ -6,4 +6,3 @@ This namespace complements the legacy `contexts` package and is scoped under
 """
 
 __all__ = ["narratives"]
-

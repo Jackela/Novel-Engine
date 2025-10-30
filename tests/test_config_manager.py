@@ -24,9 +24,9 @@ from src.core.config_manager import (
     ConfigFormat,
     ConfigurationManager,
     ConfigurationPaths,
+    get_campaign_log_filename,
     get_config,
     get_config_manager,
-    get_campaign_log_filename,
     reload_config,
 )
 

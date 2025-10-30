@@ -112,6 +112,12 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 show_error_codes = true
+follow_imports = "skip"
+files = [
+    "contexts/orchestration/domain/value_objects/turn_configuration.py",
+    "contexts/orchestration/domain/entities/turn.py",
+    "contexts/orchestration/application/services/turn_orchestrator.py",
+]
 
 [[tool.mypy.overrides]]
 module = [

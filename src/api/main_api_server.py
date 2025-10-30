@@ -11,6 +11,7 @@ This server provides a comprehensive, production-ready API with:
 - Security enhancements and monitoring
 """
 
+import asyncio
 import logging
 import os
 import secrets
@@ -61,11 +62,12 @@ from src.core.system_orchestrator import (
 # Removed unused import: from functools import wraps
 
 
-
-
 # Import security systems (if available)
 try:
-    from src.security.auth_system import AuthenticationManager
+    from src.security.auth_system import (
+        AuthenticationManager,
+        initialize_security_service,
+    )
     from src.security.enhanced_security import EnhancedSecurityMiddleware
     from src.security.input_validation import ValidationMiddleware, get_input_validator
     from src.security.rate_limiting import (
@@ -134,6 +136,9 @@ class APIServerConfig:
         self.host = os.getenv("API_HOST", "127.0.0.1")
         self.port = int(os.getenv("API_PORT", "8000"))
         self.database_path = os.getenv("DATABASE_PATH", "data/api_server.db")
+        self.security_database_path = os.getenv(
+            "SECURITY_DATABASE_PATH", "data/security.db"
+        )
         self.debug = (
             os.getenv("DEBUG", "true").lower() == "true"
         )  # Default to debug mode
@@ -154,6 +159,11 @@ class APIServerConfig:
         self.enable_auth = (
             os.getenv("ENABLE_AUTH", "false").lower() == "true"
         )  # Disabled by default for compatibility
+
+        # Ensure data directory exists for security database
+        security_db_dir = os.path.dirname(self.security_database_path)
+        if security_db_dir:
+            os.makedirs(security_db_dir, exist_ok=True)
 
 
 @asynccontextmanager
@@ -370,6 +380,29 @@ def create_app() -> FastAPI:
             logger.info("Some security middleware disabled in debug mode")
     else:
         logger.info("Security middleware not available - basic mode enabled")
+
+    # Initialize core security service prior to route registration (required by decorators)
+    app.state.security_service = None
+    if SECURITY_AVAILABLE:
+        try:
+            security_service = initialize_security_service(
+                config.security_database_path, config.jwt_secret
+            )
+            try:
+                running_loop = asyncio.get_running_loop()
+            except RuntimeError:
+                running_loop = None
+
+            if running_loop and running_loop.is_running():
+                running_loop.create_task(security_service.initialize_database())
+            else:
+                asyncio.run(security_service.initialize_database())
+
+            app.state.security_service = security_service
+            logger.info("Security service initialized for API routing.")
+        except Exception as exc:
+            logger.error(f"Failed to initialize security service: {exc}")
+            raise
 
     # Configure CORS more securely
     if config.debug:
@@ -791,7 +824,6 @@ def _register_legacy_routes(app: FastAPI):
                 import time
                 import uuid
 
-
                 start_time = time.time()
                 generation_id = f"legacy_{uuid.uuid4().hex[:8]}"
 
@@ -836,16 +868,28 @@ def _register_legacy_routes(app: FastAPI):
                 except Exception as e:
                     logger.error(f"Story generation failed in legacy simulation: {e}")
                     # Fallback response
+                    characters = ", ".join(character_names)
+                    fallback_story = (
+                        "A story featuring "
+                        f"{characters} was generated through the legacy simulation "
+                        "system."
+                    )
                     return {
-                        "story": f"A story featuring {', '.join(character_names)} was generated through the legacy simulation system.",
+                        "story": fallback_story,
                         "participants": character_names,
                         "turns_executed": turns,
                         "duration_seconds": time.time() - start_time,
                     }
             else:
                 # Fallback if story API is not available
+                characters = ", ".join(character_names)
+                fallback_story = (
+                    "Legacy simulation story featuring "
+                    f"{characters}. The characters interacted for {turns} turns "
+                    "in an engaging narrative."
+                )
                 return {
-                    "story": f"Legacy simulation story featuring {', '.join(character_names)}. The characters interacted for {turns} turns in an engaging narrative.",
+                    "story": fallback_story,
                     "participants": character_names,
                     "turns_executed": turns,
                     "duration_seconds": 2.0,

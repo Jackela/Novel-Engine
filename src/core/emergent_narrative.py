@@ -24,7 +24,7 @@ warnings.warn(
     "Importing from src.core.emergent_narrative is deprecated. "
     "Please use: from src.core.narrative import EmergentNarrativeEngine, ...",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Re-export everything from new location for backward compatibility

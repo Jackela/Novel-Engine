@@ -10,7 +10,7 @@ import asyncio
 import logging
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from ...domain.entities import Turn
 from ...domain.services import (
@@ -85,7 +85,7 @@ class TurnOrchestrator:
     - Cross-context integration with Novel Engine
     """
 
-    def __init__(self, prometheus_collector=None):
+    def __init__(self, prometheus_collector: Optional[Any] = None) -> None:
         self.saga_coordinator = SagaCoordinator()
         self.pipeline_orchestrator = PipelineOrchestrator()
 
@@ -100,7 +100,14 @@ class TurnOrchestrator:
             sampling_rate=0.5,  # 50% sampling for development
             enable_console_exporter=True,  # Enable console output for debugging
         )
-        self.tracer = initialize_tracing(tracing_config)
+        try:
+            self.tracer = initialize_tracing(tracing_config)
+        except Exception as tracer_exc:
+            logger.warning(
+                "Tracing initialization failed: %s. Continuing without tracing.",
+                tracer_exc,
+            )
+            self.tracer = None
 
         # Phase implementations
         self.phase_implementations: Dict[PhaseType, BasePhaseImplementation] = {
@@ -392,7 +399,7 @@ class TurnOrchestrator:
         turn: Turn,
         phase_type: PhaseType,
         previous_results: Dict[PhaseType, PhaseResult],
-        parent_span=None,
+        parent_span: Optional[Any] = None,
     ) -> PhaseResult:
         """
         Execute a single pipeline phase with comprehensive monitoring and distributed tracing.
@@ -770,7 +777,8 @@ class TurnOrchestrator:
         # In a real implementation, this would query turn state storage
         # For now, return basic status from performance tracker
         if self.performance_monitoring_enabled:
-            return self.performance_tracker.get_turn_status(turn_id)
+            status = self.performance_tracker.get_turn_status(turn_id)
+            return cast(Optional[Dict[str, Any]], status)
 
         return None
 

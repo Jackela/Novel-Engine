@@ -12,6 +12,7 @@ from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import pytest
+
 from contexts.narratives.application.commands.narrative_arc_commands import (
     ActivateContextCommand,
     AddCharacterToArcCommand,

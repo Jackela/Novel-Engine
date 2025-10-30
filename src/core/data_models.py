@@ -21,7 +21,7 @@ from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 from uuid import uuid4
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 

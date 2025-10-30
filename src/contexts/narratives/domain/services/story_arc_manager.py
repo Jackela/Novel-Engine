@@ -36,7 +36,9 @@ class StoryArcManager:
         phase_sequence: Optional[PhaseSequence] = None,
     ) -> None:
         self._phase_sequence: PhaseSequence = phase_sequence or self.DEFAULT_SEQUENCE
-        self._phase_index_map = {phase: idx for idx, phase in enumerate(self._phase_sequence)}
+        self._phase_index_map = {
+            phase: idx for idx, phase in enumerate(self._phase_sequence)
+        }
         self._validate_sequence(self._phase_sequence)
         self._state: StoryArcState = self._validate_initial_state(initial_state)
 

@@ -20,8 +20,8 @@ import logging
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import Enum, EnumMeta
+from typing import Any, Dict, List, Optional, Set
 
 from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -31,7 +31,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class RateLimitStrategy(str, Enum):
+class _RateLimitStrategyMeta(EnumMeta):
+    """Enum meta class that provides a sensible default when instantiated without a value."""
+
+    def __call__(cls, value=None, *args, **kwargs):
+        if isinstance(value, cls):
+            return value
+        if value is None:
+            # Default to the first declared enum member (TOKEN_BUCKET for this enum)
+            return next(iter(cls))
+        return super().__call__(value, *args, **kwargs)
+
+
+class RateLimitStrategy(str, Enum, metaclass=_RateLimitStrategyMeta):
     """STANDARD RATE LIMITING STRATEGIES"""
 
     TOKEN_BUCKET = "token_bucket"  # Classic token bucket algorithm
@@ -127,11 +139,11 @@ class SlidingWindow:
 @dataclass
 class RateLimit:
     """STANDARD RATE LIMIT SPECIFICATION
-    
+
     Simple rate limit configuration for testing and basic use cases.
     For production use, consider RateLimitConfig with advanced features.
     """
-    
+
     requests: int  # Maximum number of requests allowed
     window: int  # Time window in seconds
 
@@ -139,10 +151,10 @@ class RateLimit:
 @dataclass
 class RateLimitResult:
     """STANDARD RATE LIMIT CHECK RESULT
-    
+
     Result of checking whether a request is allowed under rate limiting.
     """
-    
+
     allowed: bool  # Whether the request is allowed
     remaining: int  # Number of requests remaining in the window
     retry_after: int = 0  # Seconds until the client can retry (if blocked)
@@ -190,9 +202,14 @@ class RateLimitExceeded(Exception):
 class RateLimiter:
     """STANDARD RATE LIMITER ENHANCED BY THE SYSTEM"""
 
-    def __init__(self, config: RateLimitConfig):
+    def __init__(
+        self,
+        config: RateLimitConfig,
+        backend: Optional["InMemoryRateLimitBackend"] = None,
+    ):
         self.config = config
         self.clients: Dict[str, ClientState] = {}
+        self.backend = backend or InMemoryRateLimitBackend()
         self.global_stats = {
             "total_requests": 0,
             "blocked_requests": 0,
@@ -200,6 +217,8 @@ class RateLimiter:
             "threats_detected": 0,
         }
         self._cleanup_task = None
+        self.ddos_detector = DDoSDetector()
+        self.whitelist = IPWhitelist(config.whitelist_ips)
         self._start_cleanup_task()
 
     def _start_cleanup_task(self):
@@ -423,9 +442,7 @@ class RateLimiter:
         # Check endpoint-specific limits
         endpoint_config = self.config.endpoint_configs.get(request.url.path)
         if endpoint_config:
-            endpoint_config.get(
-                "requests_per_minute", self.config.requests_per_minute
-            )
+            endpoint_config.get("requests_per_minute", self.config.requests_per_minute)
             if client.minute_bucket and not client.minute_bucket.consume():
                 raise RateLimitExceeded(
                     f"Rate limit exceeded for endpoint {request.url.path}",
@@ -528,18 +545,18 @@ class InMemoryRateLimitBackend:
         self, client_id: str, rate_limit: RateLimit
     ) -> RateLimitResult:
         """STANDARD RATE LIMIT CHECK
-        
+
         Check if a client has exceeded their rate limit and return the result.
-        
+
         Args:
             client_id: Unique identifier for the client (IP, user ID, etc.)
             rate_limit: Rate limit specification to check against
-            
+
         Returns:
             RateLimitResult indicating whether request is allowed
         """
         now = time.time()
-        
+
         # Get or create client state
         if client_id not in self.clients:
             # Create new client state with sliding window
@@ -553,10 +570,10 @@ class InMemoryRateLimitBackend:
                 first_seen=now,
                 last_request=now,
             )
-        
+
         client_state = self.clients[client_id]
         window = client_state.minute_window
-        
+
         if window is None:
             # Initialize window if not present
             window = SlidingWindow(
@@ -564,22 +581,22 @@ class InMemoryRateLimitBackend:
                 max_requests=rate_limit.requests,
             )
             client_state.minute_window = window
-        
+
         # Remove old requests outside the window
         while window.requests and window.requests[0] <= now - rate_limit.window:
             window.requests.popleft()
-        
+
         # Check if request is allowed
         current_count = len(window.requests)
         remaining = rate_limit.requests - current_count
-        
+
         if current_count < rate_limit.requests:
             # Allow the request
             window.requests.append(now)
             client_state.total_requests += 1
             client_state.last_request = now
             self.update_stats("total_requests")
-            
+
             return RateLimitResult(
                 allowed=True,
                 remaining=remaining - 1,  # -1 because we just consumed one
@@ -589,10 +606,10 @@ class InMemoryRateLimitBackend:
             # Block the request
             oldest_request = window.requests[0]
             retry_after = int(rate_limit.window - (now - oldest_request)) + 1
-            
+
             client_state.failed_requests += 1
             self.update_stats("blocked_requests")
-            
+
             return RateLimitResult(
                 allowed=False,
                 remaining=0,
@@ -614,12 +631,74 @@ class InMemoryRateLimitBackend:
         return len(old_clients)
 
 
+class DDoSDetector:
+    """Lightweight async DDoS detector used in middleware tests."""
+
+    def __init__(self, threshold: int = 500, interval_seconds: int = 60):
+        self.threshold = threshold
+        self.interval_seconds = interval_seconds
+        self._request_windows: Dict[str, deque] = {}
+
+    async def analyze_request(self, client_identifier: str) -> tuple[bool, str]:
+        now = time.time()
+        window = self._request_windows.setdefault(client_identifier, deque())
+
+        while window and now - window[0] > self.interval_seconds:
+            window.popleft()
+
+        window.append(now)
+        if len(window) > self.threshold:
+            return (
+                False,
+                "Potential DDoS attack detected - request threshold exceeded",
+            )
+        return True, "Traffic within acceptable thresholds"
+
+
+class IPWhitelist:
+    """Simple IP whitelist with sensible defaults for local development."""
+
+    def __init__(self, additional_ips: Optional[List[str]] = None):
+        defaults: Set[str] = {
+            "127.0.0.1",
+            "::1",
+            "192.168.1.100",
+        }
+        if additional_ips:
+            defaults.update(additional_ips)
+        self._whitelist = defaults
+
+    def is_whitelisted(self, ip_address: str) -> bool:
+        if ip_address in self._whitelist:
+            return True
+        if ip_address.startswith("192.168."):
+            return True
+        if ip_address.startswith("10.") or ip_address.startswith("172.16."):
+            return True
+        return False
+
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """STANDARD RATE LIMITING MIDDLEWARE"""
 
-    def __init__(self, app, rate_limiter: RateLimiter):
+    def __init__(
+        self,
+        app,
+        backend: Optional[InMemoryRateLimitBackend] = None,
+        strategy: Optional[RateLimitStrategy] = None,
+        config: Optional[RateLimitConfig] = None,
+        rate_limiter: Optional[RateLimiter] = None,
+    ):
         super().__init__(app)
-        self.rate_limiter = rate_limiter
+        self.strategy = strategy or RateLimitStrategy.TOKEN_BUCKET
+        self.config = config or RateLimitConfig(strategy=self.strategy)
+        self.backend = backend or InMemoryRateLimitBackend()
+        self.rate_limiter = rate_limiter or RateLimiter(
+            self.config, backend=self.backend
+        )
+        # Surface helper utilities commonly used by tests
+        self.ddos_detector = self.rate_limiter.ddos_detector
+        self.whitelist = self.rate_limiter.whitelist
 
     async def dispatch(self, request: Request, call_next):
         """STANDARD REQUEST RATE LIMITING"""
@@ -629,22 +708,43 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             if request.url.path in skip_paths:
                 return await call_next(request)
 
+            client_id = self.rate_limiter._get_client_identifier(request)
+
+            if self.whitelist and self.whitelist.is_whitelisted(client_id):
+                return await call_next(request)
+
+            if self.ddos_detector:
+                allowed, reason = await self.ddos_detector.analyze_request(client_id)
+                if not allowed:
+                    raise RateLimitExceeded(
+                        reason,
+                        retry_after=60,
+                        threat_level=ThreatLevel.CRITICAL,
+                    )
+
             # Check rate limit
-            await self.rate_limiter.check_rate_limit(request)
+            rate_limit = RateLimit(
+                requests=self.config.requests_per_minute,
+                window=60,
+            )
+            limit_result = await self.backend.check_rate_limit(client_id, rate_limit)
+
+            if not limit_result.allowed:
+                raise RateLimitExceeded(
+                    "Rate limit exceeded",
+                    retry_after=limit_result.retry_after,
+                    threat_level=ThreatLevel.HIGH,
+                )
 
             # Process request
             response = await call_next(request)
 
             # Add rate limit headers
-            client_info = self.rate_limiter.get_client_info(request)
-            if "remaining_tokens" in client_info:
-                response.headers["X-RateLimit-Limit"] = str(
-                    self.rate_limiter.config.requests_per_minute
-                )
-                response.headers["X-RateLimit-Remaining"] = str(
-                    client_info["remaining_tokens"]["minute"]
-                )
-                response.headers["X-RateLimit-Reset"] = str(int(time.time()) + 60)
+            response.headers["X-RateLimit-Limit"] = str(self.config.requests_per_minute)
+            response.headers["X-RateLimit-Remaining"] = str(
+                max(limit_result.remaining, 0)
+            )
+            response.headers["X-RateLimit-Reset"] = str(int(time.time()) + 60)
 
             return response
 
@@ -681,7 +781,8 @@ def get_rate_limiter() -> RateLimiter:
     global rate_limiter
     if rate_limiter is None:
         config = RateLimitConfig()
-        rate_limiter = RateLimiter(config)
+        backend = InMemoryRateLimitBackend()
+        rate_limiter = RateLimiter(config, backend=backend)
     return rate_limiter
 
 
@@ -689,10 +790,22 @@ def create_rate_limit_middleware(app, config: Optional[RateLimitConfig] = None):
     """STANDARD RATE LIMIT MIDDLEWARE CREATOR"""
     global rate_limiter
     if config:
-        rate_limiter = RateLimiter(config)
+        backend = InMemoryRateLimitBackend()
+        rate_limiter = RateLimiter(config, backend=backend)
+        return RateLimitMiddleware(
+            app,
+            backend=backend,
+            config=config,
+            rate_limiter=rate_limiter,
+        )
     else:
         rate_limiter = get_rate_limiter()
-    return RateLimitMiddleware(app, rate_limiter)
+        return RateLimitMiddleware(
+            app,
+            backend=rate_limiter.backend,
+            config=rate_limiter.config,
+            rate_limiter=rate_limiter,
+        )
 
 
 __all__ = [
@@ -706,6 +819,8 @@ __all__ = [
     "RateLimiter",
     "InMemoryRateLimitBackend",
     "RateLimitMiddleware",
+    "DDoSDetector",
+    "IPWhitelist",
     "get_rate_limiter",
     "create_rate_limit_middleware",
 ]

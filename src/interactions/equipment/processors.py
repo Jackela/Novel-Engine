@@ -27,7 +27,6 @@ class EquipmentProcessorRegistry:
         """Get the processor for a category."""
         return self.processors.get(category)
 
-
     async def _process_weapon_usage(
         self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int
     ) -> StandardResponse:
@@ -133,7 +132,7 @@ class EquipmentProcessorRegistry:
         )
 
     # Placeholder implementations for other categories
-    async def _process_consumable_usage( equipment, usage_context, duration):
+    async def _process_consumable_usage(equipment, usage_context, duration):
         """Process enhanced consumable usage with depletion tracking"""
         quantity_used = usage_context.get("quantity_used", 1)
         effects = [f"Consumable used: {quantity_used} units"]
@@ -148,33 +147,33 @@ class EquipmentProcessorRegistry:
 
         return StandardResponse(success=True, data={"effects": effects})
 
-    async def _process_augmetic_usage( equipment, usage_context, duration):
+    async def _process_augmetic_usage(equipment, usage_context, duration):
         return StandardResponse(
             success=True, data={"effects": ["Augmetic function optimal"]}
         )
 
-    async def _process_relic_usage( equipment, usage_context, duration):
+    async def _process_relic_usage(equipment, usage_context, duration):
         return StandardResponse(
             success=True,
             data={"effects": ["Sacred relic activated", "system core pleased"]},
         )
 
-    async def _process_transport_usage( equipment, usage_context, duration):
+    async def _process_transport_usage(equipment, usage_context, duration):
         return StandardResponse(
             success=True, data={"effects": ["Transport operational"]}
         )
 
-    async def _process_communication_usage( equipment, usage_context, duration):
+    async def _process_communication_usage(equipment, usage_context, duration):
         return StandardResponse(
             success=True, data={"effects": ["Communication established"]}
         )
 
-    async def _process_medical_usage( equipment, usage_context, duration):
+    async def _process_medical_usage(equipment, usage_context, duration):
         return StandardResponse(
             success=True, data={"effects": ["Medical assistance provided"]}
         )
 
-    async def _process_sensor_usage( equipment, usage_context, duration):
+    async def _process_sensor_usage(equipment, usage_context, duration):
         return StandardResponse(
             success=True, data={"effects": ["Sensor data acquired"]}
         )

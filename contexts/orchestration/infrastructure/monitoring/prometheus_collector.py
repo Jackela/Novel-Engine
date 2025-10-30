@@ -12,15 +12,62 @@ from decimal import Decimal
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from prometheus_client import (
-    CONTENT_TYPE_LATEST,
-    CollectorRegistry,
-    Counter,
-    Gauge,
-    Histogram,
-    Info,
-    generate_latest,
-)
+try:
+    from prometheus_client import (
+        CONTENT_TYPE_LATEST,
+        CollectorRegistry,
+        Counter,
+        Gauge,
+        Histogram,
+        Info,
+        generate_latest,
+    )
+except ImportError as prometheus_error:  # pragma: no cover - exercised in dependency-light env
+    logging.getLogger(__name__).warning(
+        "prometheus_client unavailable (%s); using no-op collectors.", prometheus_error
+    )
+
+    class _NoOpMetric:
+        def __init__(self, *_, **__):
+            pass
+
+        def labels(self, *_, **__):
+            return self
+
+        def inc(self, *_, **__):
+            return self
+
+        def dec(self, *_, **__):
+            return self
+
+        def observe(self, *_, **__):
+            return self
+
+        def set(self, *_, **__):
+            return self
+
+        def info(self, *_, **__):
+            return self
+
+        def time(self):
+            class _Timer:
+                def __enter__(self_inner):
+                    return self_inner
+
+                def __exit__(self_inner, exc_type, exc, tb):
+                    return False
+
+            return _Timer()
+
+    class CollectorRegistry:  # type: ignore[override]
+        def __init__(self, *_, **__):
+            pass
+
+    Counter = Gauge = Histogram = Info = _NoOpMetric  # type: ignore
+    CONTENT_TYPE_LATEST = "text/plain"
+
+    def generate_latest(_registry) -> bytes:
+        return b""
 
 logger = logging.getLogger(__name__)
 

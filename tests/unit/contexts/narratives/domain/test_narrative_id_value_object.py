@@ -9,6 +9,7 @@ and identity management in the Narrative Context domain layer.
 from uuid import UUID, uuid4
 
 import pytest
+
 from contexts.narratives.domain.value_objects.narrative_id import NarrativeId
 
 

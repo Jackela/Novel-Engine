@@ -12,6 +12,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional
 from uuid import uuid4
 
 import pytest
+
 from contexts.ai.domain.services.llm_provider import (
     ILLMProvider,
     InvalidRequestError,

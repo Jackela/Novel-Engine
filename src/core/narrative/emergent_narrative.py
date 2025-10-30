@@ -12,7 +12,12 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
-from src.llm_service import LLMRequest, ResponseFormat, UnifiedLLMService, get_llm_service
+from src.llm_service import (
+    LLMRequest,
+    ResponseFormat,
+    UnifiedLLMService,
+    get_llm_service,
+)
 
 # Type alias for compatibility
 LLMService = UnifiedLLMService
@@ -23,6 +28,7 @@ from .negotiation import AgentNegotiationEngine
 from .types import CausalEdge, CausalNode, CausalRelationType, EventPriority
 
 logger = logging.getLogger(__name__)
+
 
 class EmergentNarrativeEngine:
     """涌现式叙事引擎 - 主引擎类"""
@@ -726,7 +732,9 @@ class EmergentNarrativeEngine:
 
 
 # Factory function
-def create_emergent_narrative_engine(llm_service: Optional[LLMService] = None) -> EmergentNarrativeEngine:
+def create_emergent_narrative_engine(
+    llm_service: Optional[LLMService] = None,
+) -> EmergentNarrativeEngine:
     """创建涌现式叙事引擎实例"""
     return EmergentNarrativeEngine(llm_service)
 

@@ -40,12 +40,12 @@ from src.database.context_db import ContextDatabase
 from src.interactions.character_interaction_processor import (
     CharacterInteractionProcessor,
 )
-from src.interactions.equipment import DynamicEquipmentSystem
 from src.interactions.engine import (
     InteractionContext,
     InteractionEngine,
     InteractionType,
 )
+from src.interactions.equipment import DynamicEquipmentSystem
 
 # Import all subsystems
 from src.memory.layered_memory import LayeredMemorySystem

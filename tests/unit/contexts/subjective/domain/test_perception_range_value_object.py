@@ -8,6 +8,7 @@ and awareness zone management in the Subjective Context domain layer.
 
 
 import pytest
+
 from contexts.subjective.domain.value_objects.perception_range import (
     PerceptionCapabilities,
     PerceptionRange,
@@ -688,9 +689,7 @@ class TestPerceptionCapabilitiesBusinessLogic:
         )
 
         # Create capabilities normally, then test empty case directly
-        PerceptionCapabilities(
-            perception_ranges={PerceptionType.VISUAL: visual_range}
-        )
+        PerceptionCapabilities(perception_ranges={PerceptionType.VISUAL: visual_range})
 
         # Temporarily clear ranges to test the method
         empty_capabilities = PerceptionCapabilities.__new__(PerceptionCapabilities)

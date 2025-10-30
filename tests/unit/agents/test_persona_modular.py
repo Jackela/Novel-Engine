@@ -9,10 +9,10 @@ Tests component integration, backward compatibility, and end-to-end functionalit
 import asyncio
 from datetime import datetime
 
+import pytest
 
 # Test the modular PersonaAgent
 from src.agents.persona_agent_modular import PersonaAgent, create_persona_agent
-import pytest
 
 
 def create_test_character_data():

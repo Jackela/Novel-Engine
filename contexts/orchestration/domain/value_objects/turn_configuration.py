@@ -59,6 +59,9 @@ class TurnConfiguration:
     max_concurrent_operations: int = 10
 
     # Participant management
+    max_participants: int = 10
+
+    # Participant management
     participants: List[str] = field(default_factory=list)
     excluded_agents: Set[str] = field(default_factory=set)
     required_agents: Set[str] = field(default_factory=set)
@@ -113,7 +116,7 @@ class TurnConfiguration:
         "memory_efficiency": 0.8,  # utilization ratio
     }
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate configuration structure and business rules."""
         # Validate world time advance
         if self.world_time_advance <= 0:
@@ -132,6 +135,9 @@ class TurnConfiguration:
         # Validate AI cost limit
         if self.max_ai_cost is not None and self.max_ai_cost <= 0:
             raise ValueError("max_ai_cost must be positive if specified")
+
+        if self.max_participants <= 0:
+            raise ValueError("max_participants must be positive")
 
         # Validate participants
         if not self.participants:
@@ -182,7 +188,9 @@ class TurnConfiguration:
         return cls()
 
     @classmethod
-    def create_fast_turn(cls, participants: List[str] = None) -> "TurnConfiguration":
+    def create_fast_turn(
+        cls, participants: Optional[List[str]] = None
+    ) -> "TurnConfiguration":
         """
         Create configuration optimized for fast execution.
 
@@ -209,7 +217,9 @@ class TurnConfiguration:
 
     @classmethod
     def create_detailed_turn(
-        cls, participants: List[str] = None, max_ai_cost: Optional[Decimal] = None
+        cls,
+        participants: Optional[List[str]] = None,
+        max_ai_cost: Optional[Decimal] = None,
     ) -> "TurnConfiguration":
         """
         Create configuration for detailed, comprehensive turns.
@@ -240,7 +250,9 @@ class TurnConfiguration:
         )
 
     @classmethod
-    def create_ai_disabled(cls, participants: List[str] = None) -> "TurnConfiguration":
+    def create_ai_disabled(
+        cls, participants: Optional[List[str]] = None
+    ) -> "TurnConfiguration":
         """
         Create configuration without AI integration.
 

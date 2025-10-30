@@ -9,6 +9,7 @@ and identity management in the Interaction Context domain layer.
 from uuid import UUID, uuid4
 
 import pytest
+
 from contexts.interactions.domain.value_objects.interaction_id import InteractionId
 
 

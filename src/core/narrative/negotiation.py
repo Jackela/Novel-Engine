@@ -22,6 +22,7 @@ from .types import (
 
 logger = logging.getLogger(__name__)
 
+
 class AgentNegotiationEngine:
     """多Agent协商引擎"""
 
@@ -437,4 +438,3 @@ class AgentNegotiationEngine:
             "created_at": session.created_at.isoformat(),
             "updated_at": session.updated_at.isoformat(),
         }
-

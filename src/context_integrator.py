@@ -25,6 +25,7 @@ try:
         ProfileContext,
         StatsContext,
     )
+
     CONTEXT_MODELS_AVAILABLE = True
 except ImportError:
     # Fallback when contexts module not available

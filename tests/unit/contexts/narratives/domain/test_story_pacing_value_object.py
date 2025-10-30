@@ -12,6 +12,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+
 from contexts.narratives.domain.value_objects.story_pacing import (
     PacingIntensity,
     PacingType,
@@ -886,7 +887,7 @@ class TestStoryPacingMethods:
         tension_13 = pacing.get_tension_at_sequence(13)
         assert tension_13 is not None
         assert Decimal("2.0") < tension_13 < Decimal("8.0")
-        
+
         # Sequence 17 should interpolate between curve[1] and curve[2]
         # relative_pos=7, curve_pos=(7/10)*2=1.4, index=1, weight=0.4
         # result = 8.0*(1-0.4) + 4.0*0.4 = 4.8 + 1.6 = 6.4

@@ -206,10 +206,10 @@ class EmergentNarrativeAPI:
             summary="Generate Emergent Narrative",
             description="Generate emergent narrative based on agent interactions and causal graph",
         )
-        @require_permission(Permission.NARRATIVE_GENERATE)
         async def generate_emergent_narrative(
             request: EmergentNarrativeRequest,
             current_user: Dict = Depends(get_current_user),
+            _: Any = Depends(require_permission(Permission.NARRATIVE_GENERATE)),
         ):
             try:
                 if (
@@ -270,10 +270,10 @@ class EmergentNarrativeAPI:
             summary="Build Comprehensive Narrative",
             description="Build comprehensive narrative from existing story elements",
         )
-        @require_permission(Permission.NARRATIVE_BUILD)
         async def build_narrative(
             request: NarrativeBuildRequest,
             current_user: Dict = Depends(get_current_user),
+            _: Any = Depends(require_permission(Permission.NARRATIVE_BUILD)),
         ):
             try:
                 if (
@@ -334,10 +334,10 @@ class EmergentNarrativeAPI:
             summary="Get Causal Graph",
             description="Access causal relationship graph",
         )
-        @require_permission(Permission.CAUSALITY_READ)
         async def get_causal_graph(
             request_params: CausalGraphRequest = Depends(),
             current_user: Dict = Depends(get_current_user),
+            _: Any = Depends(require_permission(Permission.CAUSALITY_READ)),
         ):
             try:
                 if not self.orchestrator or not hasattr(self.orchestrator, "director"):
@@ -382,7 +382,6 @@ class EmergentNarrativeAPI:
             summary="Get Generated Narrative",
             description="Retrieve previously generated emergent narrative",
         )
-        @require_permission(Permission.NARRATIVE_READ)
         async def get_emergent_narrative(
             narrative_id: str = Path(..., description="Narrative identifier"),
             include_events: bool = Query(
@@ -395,6 +394,7 @@ class EmergentNarrativeAPI:
                 "structured", description="Response format (structured, text, timeline)"
             ),
             current_user: Dict = Depends(get_current_user),
+            _: Any = Depends(require_permission(Permission.NARRATIVE_READ)),
         ):
             try:
                 if (

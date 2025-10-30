@@ -16,7 +16,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests
 
 
-
 class LLMProvider(Enum):
     """Supported LLM providers."""
 

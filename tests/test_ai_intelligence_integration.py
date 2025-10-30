@@ -548,7 +548,9 @@ class TestNarrativeEngineV2Integration:
         assert isinstance(guidance["phase_progress"], float)
 
     @pytest.mark.asyncio
-    async def test_narrative_guidance_integration_in_story_generation(self, temp_database):
+    async def test_narrative_guidance_integration_in_story_generation(
+        self, temp_database
+    ):
         """Test that narrative guidance is integrated into story content generation."""
         orchestrator = IntegrationOrchestrator(database_path=temp_database)
         await orchestrator.startup()
