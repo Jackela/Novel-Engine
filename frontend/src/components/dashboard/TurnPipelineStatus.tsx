@@ -14,7 +14,7 @@ import {
   useMediaQuery,
   Fade,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PlayCircleOutline as StartIcon,
@@ -38,20 +38,20 @@ const PipelineContainer = styled(Box)(({ theme }) => ({
 
 const StageItem = styled(motion(ListItem))<{ status: string }>(({ theme, status }) => ({
   padding: theme.spacing(1, 0),
-  borderBottom: `1px solid #2a2a30`,
+  borderBottom: `1px solid ${theme.palette.divider}`,
   borderLeft: `3px solid ${
-    status === 'processing' ? '#6366f1' :
-    status === 'completed' ? '#10b981' :
-    status === 'error' ? '#ef4444' :
-    '#808088'
+    status === 'processing' ? theme.palette.primary.main :
+    status === 'completed' ? theme.palette.success.main :
+    status === 'error' ? theme.palette.error.main :
+    theme.palette.text.secondary
   }`,
   paddingLeft: theme.spacing(1),
   borderRadius: theme.shape.borderRadius / 2,
   marginBottom: theme.spacing(0.5),
-  background: status === 'processing' ? 'rgba(99, 102, 241, 0.05)' : 'transparent',
+  background: status === 'processing' ? alpha(theme.palette.primary.main, 0.05) : 'transparent',
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    background: status === 'processing' ? 'rgba(99, 102, 241, 0.1)' : '#1a1a1d',
+    background: status === 'processing' ? alpha(theme.palette.primary.main, 0.1) : 'var(--color-bg-tertiary)',
     borderLeftWidth: '4px',
   },
 }));
@@ -64,30 +64,30 @@ const StatusChip = styled(Chip)<{ status: string }>(({ theme, status }) => ({
     padding: '0 6px',
   },
   backgroundColor: 
-    status === 'processing' ? 'rgba(99, 102, 241, 0.2)' :
-    status === 'completed' ? 'rgba(16, 185, 129, 0.2)' :
-    status === 'queued' ? 'rgba(245, 158, 11, 0.2)' :
-    status === 'error' ? 'rgba(239, 68, 68, 0.2)' :
+    status === 'processing' ? alpha(theme.palette.primary.main, 0.2) :
+    status === 'completed' ? alpha(theme.palette.success.main, 0.2) :
+    status === 'queued' ? alpha(theme.palette.warning.main, 0.2) :
+    status === 'error' ? alpha(theme.palette.error.main, 0.2) :
     'transparent',
   color: 
-    status === 'processing' ? '#6366f1' :
-    status === 'completed' ? '#10b981' :
-    status === 'queued' ? '#f59e0b' :
-    status === 'error' ? '#ef4444' :
-    '#b0b0b8',
+    status === 'processing' ? theme.palette.primary.main :
+    status === 'completed' ? theme.palette.success.main :
+    status === 'queued' ? theme.palette.warning.main :
+    status === 'error' ? theme.palette.error.main :
+    theme.palette.text.secondary,
   border: `1px solid ${
-    status === 'processing' ? '#6366f1' :
-    status === 'completed' ? '#10b981' :
-    status === 'queued' ? '#f59e0b' :
-    status === 'error' ? '#ef4444' :
-    '#3a3a42'
+    status === 'processing' ? theme.palette.primary.main :
+    status === 'completed' ? theme.palette.success.main :
+    status === 'queued' ? theme.palette.warning.main :
+    status === 'error' ? theme.palette.error.main :
+    theme.palette.divider
   }`,
 }));
 
 const AnimatedProgress = styled(motion(LinearProgress))(({ theme }) => ({
   height: 4,
   borderRadius: 2,
-  backgroundColor: '#2a2a30',
+  backgroundColor: theme.palette.divider,
   '& .MuiLinearProgress-bar': {
     borderRadius: 2,
     transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -226,13 +226,13 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
     const iconProps = { fontSize: 'small' as const };
     switch (step.status) {
       case 'completed':
-        return <CompleteIcon {...iconProps} sx={{ color: '#10b981' }} />;
+        return <CompleteIcon {...iconProps} sx={{ color: (theme) => theme.palette.success.main }} />;
       case 'processing':
-        return <ProcessingIcon {...iconProps} sx={{ color: '#6366f1' }} />;
+        return <ProcessingIcon {...iconProps} sx={{ color: (theme) => theme.palette.primary.main }} />;
       case 'error':
-        return <ErrorIcon {...iconProps} sx={{ color: '#ef4444' }} />;
+        return <ErrorIcon {...iconProps} sx={{ color: (theme) => theme.palette.error.main }} />;
       default:
-        return <QueueIcon {...iconProps} sx={{ color: '#808088' }} />;
+        return <QueueIcon {...iconProps} sx={{ color: (theme) => theme.palette.text.secondary }} />;
     }
   };
 
@@ -259,9 +259,9 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
               label={`${pipelineData.queueLength} queued`} 
               size="small" 
               sx={{
-                backgroundColor: '#111113',
-                borderColor: '#2a2a30',
-                color: '#b0b0b8',
+                backgroundColor: (theme) => theme.palette.background.paper,
+                borderColor: (theme) => theme.palette.divider,
+                color: (theme) => theme.palette.text.secondary,
                 fontSize: '0.65rem',
                 height: '20px',
               }}
@@ -270,9 +270,9 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
               label={`${pipelineData.averageProcessingTime.toFixed(1)}s avg`} 
               size="small" 
               sx={{
-                backgroundColor: '#111113',
-                borderColor: '#2a2a30',
-                color: '#b0b0b8',
+                backgroundColor: (theme) => theme.palette.background.paper,
+                borderColor: (theme) => theme.palette.divider,
+                color: (theme) => theme.palette.text.secondary,
                 fontSize: '0.65rem',
                 height: '20px',
               }}
@@ -313,7 +313,7 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
                           <Typography 
                             variant={isMobile ? 'caption' : 'body2'} 
                             fontWeight={500}
-                            sx={{ color: '#f0f0f2' }}
+                            sx={{ color: (theme) => theme.palette.text.primary }}
                           >
                             {step.name}
                           </Typography>
@@ -339,7 +339,7 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
                           <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
                             {step.character && (
                               <Stack direction="row" alignItems="center" spacing={0.5}>
-                                <CharacterIcon sx={{ fontSize: '14px', color: '#6366f1' }} />
+                                <CharacterIcon sx={{ fontSize: '14px', color: (theme) => theme.palette.primary.main }} />
                                 <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                                   {step.character}
                                 </Typography>

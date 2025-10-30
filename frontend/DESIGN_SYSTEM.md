@@ -1,6 +1,26 @@
 # Novel Engine - Design System (SSOT)
 
-**Single Source of Truth** for all frontend components using Material-UI v5 + Framer Motion.
+This design system is driven by a Single Source of Truth for tokens. Author tokens in `src/styles/tokens.ts`, generate CSS variables (`src/styles/design-system.generated.css`) via `scripts/build-tokens.mjs`, then import the generated CSS before `src/styles/design-system.css`. Components consume tokens through the MUI theme defined in `src/styles/theme.ts`.
+
+## Token Update Workflow (SSOT)
+
+1) Edit tokens in `src/styles/tokens.ts`
+   - Colors, spacing, typography, radii, motion
+   - Avoid editing generated files directly
+
+2) Build generated CSS from tokens
+   - `npm run build:tokens` produces `src/styles/design-system.generated.css`
+   - App imports generated CSS first (see `src/App.tsx`), then `design-system.css`
+
+3) Verify consistency and accessibility
+   - Run `npm run tokens:check` to detect drift and WCAG AA contrast regressions
+   - Run `npm run lint:all` to ensure no hard-coded hex leaks into TSX in in-scope dirs
+
+4) Commit both source and generated outputs
+   - Include `src/styles/tokens.ts` and `src/styles/design-system.generated.css`
+
+5) Update documentation if adding/removing tokens
+   - Link changes back to `specs/002-ts-ssot-frontend/spec.md` and `quickstart.md`
 
 ---
 
@@ -287,17 +307,17 @@ const StyledCard = styled(Card)(({ theme }) => ({
 ### Chip Pattern (Status)
 
 ```typescript
-const StatusChip = styled(Chip)<{ status: string }>(({ status }) => ({
+const StatusChip = styled(Chip)<{ status: string }>(({ theme, status }) => ({
   backgroundColor: 
     status === 'completed' ? 'rgba(16, 185, 129, 0.15)' :
     status === 'error' ? 'rgba(239, 68, 68, 0.15)' :
     status === 'pending' ? 'rgba(245, 158, 11, 0.15)' :
     'rgba(99, 102, 241, 0.15)',
   color:
-    status === 'completed' ? '#10b981' :
-    status === 'error' ? '#ef4444' :
-    status === 'pending' ? '#f59e0b' :
-    '#6366f1',
+    status === 'completed' ? theme.palette.success.main :
+    status === 'error' ? theme.palette.error.main :
+    status === 'pending' ? theme.palette.warning.main :
+    theme.palette.primary.main,
   borderColor: 
     status === 'completed' ? '#10b981' :
     status === 'error' ? '#ef4444' :

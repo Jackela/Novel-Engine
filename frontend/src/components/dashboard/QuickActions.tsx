@@ -102,7 +102,7 @@ const ActionButton = styled(motion(IconButton))<{ active?: boolean }>(({ theme, 
 const SectionDivider = styled(Divider)(({ theme }) => ({
   width: '60%',
   margin: theme.spacing(1.5, 0),
-  backgroundColor: '#2a2a30',
+  backgroundColor: theme.palette.divider,
 }));
 
 const ActionGroup = styled(Box)(({ theme }) => ({
@@ -117,7 +117,7 @@ const GroupLabel = styled(Typography)(({ theme }) => ({
   fontWeight: 600,
   letterSpacing: '0.05em',
   textTransform: 'uppercase',
-  color: '#808088',
+  color: 'var(--color-text-tertiary)',
   marginBottom: theme.spacing(0.5),
 }));
 
@@ -199,7 +199,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
         </ActionButton>
       </Tooltip>
 
-      <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: '#2a2a30' }} />
+      <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: 'divider' }} />
 
       <Tooltip title="Refresh" placement="top">
         <ActionButton onClick={handleRefresh} whileTap={{ scale: 0.95 }}>
@@ -213,7 +213,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
         </ActionButton>
       </Tooltip>
 
-      <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: '#2a2a30' }} />
+      <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: 'divider' }} />
 
       <Tooltip title="Settings" placement="top">
         <ActionButton onClick={handleSettings} whileTap={{ scale: 0.95 }}>

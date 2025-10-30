@@ -13,7 +13,7 @@ import {
   useMediaQuery,
   Fade,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import { 
   Person as PersonIcon,
@@ -40,13 +40,13 @@ const CharacterCard = styled(motion(Box))<{ status: string }>(({ theme, status }
   alignItems: 'center',
   padding: theme.spacing(1),
   borderRadius: theme.shape.borderRadius,
-  backgroundColor: '#111113',
-  border: `1px solid #2a2a30`,
+  backgroundColor: theme.palette.background.paper,
+  border: `1px solid ${theme.palette.divider}`,
   marginBottom: theme.spacing(1),
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    backgroundColor: '#1a1a1d',
-    borderColor: status === 'active' ? '#10b981' : status === 'hostile' ? '#ef4444' : '#f59e0b',
+    backgroundColor: 'var(--color-bg-tertiary)',
+    borderColor: status === 'active' ? theme.palette.success.main : status === 'hostile' ? theme.palette.error.main : theme.palette.warning.main,
     transform: 'translateY(-2px)',
     boxShadow: `0 4px 8px ${
       status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 
@@ -59,14 +59,14 @@ const CharacterCard = styled(motion(Box))<{ status: string }>(({ theme, status }
 const TrustProgress = styled(LinearProgress)<{ trustlevel: number }>(({ theme, trustlevel }) => ({
   height: 4,
   borderRadius: 2,
-  backgroundColor: '#2a2a30',
+  backgroundColor: theme.palette.divider,
   '& .MuiLinearProgress-bar': {
     borderRadius: 2,
     backgroundColor: 
-      trustlevel >= 80 ? '#10b981' :
-      trustlevel >= 60 ? '#6366f1' :
-      trustlevel >= 40 ? '#f59e0b' :
-      '#ef4444',
+      trustlevel >= 80 ? theme.palette.success.main :
+      trustlevel >= 60 ? theme.palette.primary.main :
+      trustlevel >= 40 ? theme.palette.warning.main :
+      theme.palette.error.main,
   },
 }));
 
@@ -75,9 +75,9 @@ const StatusBadge = styled(Box)<{ status: string }>(({ theme, status }) => ({
   height: 8,
   borderRadius: '50%',
   backgroundColor: 
-    status === 'active' ? '#10b981' :
-    status === 'hostile' ? '#ef4444' :
-    '#f59e0b',
+    status === 'active' ? theme.palette.success.main :
+    status === 'hostile' ? theme.palette.error.main :
+    theme.palette.warning.main,
   animation: status === 'active' ? 'pulse 2s infinite' : 'none',
   '@keyframes pulse': {
     '0%, 100%': { opacity: 1 },
@@ -148,18 +148,22 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
 
   const getStatusColor = (status: CharacterData['status']) => {
     switch (status) {
-      case 'active': return '#10b981';
-      case 'hostile': return '#ef4444';
-      case 'inactive': return '#f59e0b';
-      default: return '#808088';
+      case 'active':
+        return theme.palette.success.main;
+      case 'hostile':
+        return theme.palette.error.main;
+      case 'inactive':
+        return theme.palette.warning.main;
+      default:
+        return theme.palette.text.secondary;
     }
   };
 
   const getTrustColor = (trust: number) => {
-    if (trust >= 80) return '#10b981';
-    if (trust >= 60) return '#6366f1';
-    if (trust >= 40) return '#f59e0b';
-    return '#ef4444';
+    if (trust >= 80) return theme.palette.success.main;
+    if (trust >= 60) return theme.palette.primary.main;
+    if (trust >= 40) return theme.palette.warning.main;
+    return theme.palette.error.main;
   };
 
   const totalConnections = characters.reduce((sum, c) => sum + c.connections, 0);
@@ -192,12 +196,12 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
             label={`${characters.length} Characters`} 
             size="small" 
             sx={{
-              backgroundColor: '#111113',
-              borderColor: '#2a2a30',
-              color: '#b0b0b8',
+              backgroundColor: (theme) => theme.palette.background.paper,
+              borderColor: (theme) => theme.palette.divider,
+              color: (theme) => theme.palette.text.secondary,
               fontSize: '0.7rem',
               height: '22px',
-              '& .MuiChip-icon': { color: '#6366f1' }
+              '& .MuiChip-icon': { color: (theme) => theme.palette.primary.main }
             }}
           />
           <Chip 
@@ -205,12 +209,12 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
             label={`${totalConnections} Links`} 
             size="small" 
             sx={{
-              backgroundColor: '#111113',
-              borderColor: '#2a2a30',
-              color: '#b0b0b8',
+              backgroundColor: (theme) => theme.palette.background.paper,
+              borderColor: (theme) => theme.palette.divider,
+              color: (theme) => theme.palette.text.secondary,
               fontSize: '0.7rem',
               height: '22px',
-              '& .MuiChip-icon': { color: '#8b5cf6' }
+              '& .MuiChip-icon': { color: (theme) => theme.palette.secondary.main }
             }}
           />
           <Chip 
@@ -218,12 +222,12 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
             label={`${activeCount} Active`} 
             size="small" 
             sx={{
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              borderColor: '#10b981',
-              color: '#6ee7b7',
+              backgroundColor: (theme) => alpha(theme.palette.success.main, 0.12),
+              borderColor: (theme) => theme.palette.success.main,
+              color: (theme) => alpha(theme.palette.success.main, 0.8),
               fontSize: '0.7rem',
               height: '22px',
-              '& .MuiChip-icon': { color: '#10b981' }
+              '& .MuiChip-icon': { color: (theme) => theme.palette.success.main }
             }}
           />
         </Stack>
@@ -245,7 +249,7 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                       width: isMobile ? 32 : 36,
                       height: isMobile ? 32 : 36,
                       backgroundColor: getStatusColor(character.status),
-                      border: '2px solid #0a0a0b',
+                      border: (theme) => `2px solid ${theme.palette.background.default}`,
                       mr: 1.5,
                       position: 'relative',
                     }}
@@ -257,7 +261,7 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                         position: 'absolute',
                         bottom: -2,
                         right: -2,
-                        border: '2px solid #0a0a0b',
+                        border: (theme) => `2px solid ${theme.palette.background.default}`,
                       }}
                     />
                   </Avatar>
@@ -268,7 +272,7 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                         variant={isMobile ? 'caption' : 'body2'} 
                         fontWeight={600} 
                         noWrap
-                        sx={{ color: '#f0f0f2' }}
+                        sx={{ color: 'var(--color-text-primary)' }}
                       >
                         {character.name}
                       </Typography>
@@ -298,7 +302,7 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                     </Stack>
 
                     <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <LinkIcon sx={{ fontSize: '12px', color: '#8b5cf6' }} />
+                      <LinkIcon sx={{ fontSize: '12px', color: 'secondary.main' }} />
                       <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                         {character.connections} connections
                       </Typography>
@@ -309,7 +313,7 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                           height: '16px',
                           fontSize: '0.6rem',
                           ml: 'auto',
-                          backgroundColor: `${getStatusColor(character.status)}20`,
+                          backgroundColor: alpha(getStatusColor(character.status), 0.12),
                           color: getStatusColor(character.status),
                           borderColor: getStatusColor(character.status),
                         }}
@@ -328,7 +332,7 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
             sx={{ 
               pt: 1, 
               mt: 1, 
-              borderTop: '1px solid #2a2a30',
+              borderTop: (theme) => `1px solid ${theme.palette.divider}`,
               flexShrink: 0,
             }}
           >

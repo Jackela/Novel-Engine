@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -33,7 +33,8 @@ import {
   ExpandLess as ExpandLessIcon,
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
-import { useWebSocketProgress, ProgressUpdate } from '../../hooks/useWebSocketProgress';
+import { useWebSocketProgress } from '../../hooks/useWebSocketProgress';
+import type { ProgressUpdate } from '../../hooks/useWebSocketProgress';
 
 interface Props {
   isGenerating: boolean;
@@ -106,10 +107,10 @@ export default function GenerationProgress({
   } | null>(null);
 
   // WebSocket hook for real-time updates
-  const {
+  const { 
     isConnected: wsConnected,
-    lastUpdate,
-    error: wsError,
+    lastUpdate: _lastUpdate,
+    error: _wsError,
     connectionAttempts,
   } = useWebSocketProgress({
     generationId,
@@ -242,7 +243,7 @@ export default function GenerationProgress({
                 <Typography variant="caption" color="text.secondary">
                   Active: 
                 </Typography>
-                {activeAgents.map((agent, index) => (
+                  {activeAgents.map((agent, _index) => (
                   <Chip
                     key={agent}
                     label={agent.replace('Agent', '')}

@@ -236,9 +236,7 @@
 
 html {
   font-size: 16px;
-  scroll-behavior: smooth;
-  -webkit-text-size-adjust: 100%;
-  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;-webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
@@ -445,24 +443,24 @@ button:disabled {
 
 /* 🎭 SOPHISTICATED ANIMATION UTILITIES */
 .fade-in {
-  animation: fadeIn var(--timing-standard) var(--easing-decelerate);
+  animation: fade-in var(--timing-standard) var(--easing-decelerate);
 }
 
 .slide-up {
-  animation: slideUp var(--timing-standard) var(--easing-decelerate);
+  animation: slide-up var(--timing-standard) var(--easing-decelerate);
 }
 
 .slide-in {
-  animation: slideIn 300ms var(--easing-decelerate);
+  animation: slide-in 300ms var(--easing-decelerate);
 }
 
 /* Keyframe Definitions */
-@keyframes fadeIn {
+@keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes slideUp {
+@keyframes slide-up {
   from { 
     opacity: 0; 
     transform: translateY(20px); 
@@ -473,7 +471,7 @@ button:disabled {
   }
 }
 
-@keyframes slideIn {
+@keyframes slide-in {
   from {
     opacity: 0;
     transform: translateY(-10px);
@@ -497,10 +495,11 @@ button:disabled {
 
 @media (prefers-contrast: high) {
   :root {
-    --color-bg-primary: #000000;
-    --color-bg-secondary: #000000;
-    --color-text-primary: #FFFFFF;
-    --color-border-primary: #FFFFFF;
+    /* Map to design tokens to avoid hard-coded hex in high-contrast mode */
+    --color-bg-primary: var(--color-bg-primary);
+    --color-bg-secondary: var(--color-bg-secondary);
+    --color-text-primary: var(--color-text-primary);
+    --color-border-primary: var(--color-border-primary);
   }
 }
 

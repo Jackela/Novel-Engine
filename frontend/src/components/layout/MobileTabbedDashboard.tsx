@@ -16,6 +16,7 @@ import {
   Analytics as AnalyticsIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
+import { tokens } from '@/styles/tokens';
 
 const MobileTabbedContainer = styled(Box)(({ theme }) => ({
   display: 'none',
@@ -37,8 +38,8 @@ const DesktopLayout = styled(Box)(({ theme }) => ({
 
 const CompactTabs = styled(Tabs)(({ theme }) => ({
   minHeight: '48px',
-  backgroundColor: '#111113',
-  borderBottom: '1px solid #2a2a30',
+  backgroundColor: theme.palette.background.paper,
+  borderBottom: `1px solid ${theme.palette.divider}`,
   
   '& .MuiTab-root': {
     minHeight: '48px',
@@ -54,7 +55,7 @@ const CompactTabs = styled(Tabs)(({ theme }) => ({
   },
   
   '& .MuiTabs-indicator': {
-    backgroundColor: '#6366f1',
+    backgroundColor: theme.palette.primary.main,
     height: '3px',
   },
 }));
@@ -69,14 +70,14 @@ const TabContent = styled(Box)(({ theme }) => ({
     width: '6px',
   },
   '&::-webkit-scrollbar-track': {
-    background: '#1a1a1d',
+    background: tokens.colors.background.tertiary,
     borderRadius: '3px',
   },
   '&::-webkit-scrollbar-thumb': {
-    background: '#6366f1',
+    background: theme.palette.primary.main,
     borderRadius: '3px',
     '&:hover': {
-      background: '#4f46e5',
+      background: theme.palette.primary.dark,
     },
   },
 }));
@@ -107,6 +108,7 @@ interface MobileTabbedDashboardProps {
     activity?: React.ReactNode[];
     characters?: React.ReactNode[];
     analytics?: React.ReactNode[];
+    timeline?: React.ReactNode[];
   };
 }
 
@@ -155,10 +157,10 @@ const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
       <Box sx={{ 
         p: 1.5, 
         textAlign: 'center', 
-        backgroundColor: '#111113',
-        borderBottom: '1px solid #2a2a30',
+        backgroundColor: theme.palette.background.paper,
+        borderBottom: `1px solid ${theme.palette.divider}`,
       }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#6366f1' }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.main' }}>
           Novel Engine M1
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -194,8 +196,8 @@ const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
                 elevation={0}
                 sx={{ 
                   overflow: 'hidden',
-                  backgroundColor: '#111113',
-                  border: '1px solid #2a2a30',
+                  backgroundColor: theme.palette.background.paper,
+                  border: `1px solid ${theme.palette.divider}`,
                   borderRadius: theme.shape.borderRadius,
                   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                   '& > *': {

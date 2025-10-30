@@ -97,7 +97,7 @@ export const unregisterServiceWorker = (): Promise<boolean> => {
 // Check if app is running standalone (installed as PWA)
 export const isStandalone = (): boolean => {
   return window.matchMedia('(display-mode: standalone)').matches ||
-         (window.navigator as any).standalone === true;
+         (window.navigator as unknown as { standalone?: boolean }).standalone === true;
 };
 
 // Get cache statistics
@@ -180,10 +180,10 @@ export const monitorMobilePerformance = (): void => {
   if (!isMobileDevice()) return;
 
   // Monitor memory usage
-  if ('memory' in performance) {
-    const checkMemory = () => {
-      const memory = (performance as any).memory;
-      const usedMB = memory.usedJSHeapSize / (1024 * 1024);
+    if ('memory' in performance) {
+      const checkMemory = () => {
+        const perf = performance as unknown as { memory?: { usedJSHeapSize: number } };
+        const usedMB = (perf.memory?.usedJSHeapSize ?? 0) / (1024 * 1024);
       
       if (usedMB > 100) { // > 100MB
         console.warn('Mobile: High memory usage detected', `${usedMB.toFixed(2)}MB`);
@@ -201,7 +201,7 @@ export const monitorMobilePerformance = (): void => {
 
   // Monitor network connection
   if ('connection' in navigator) {
-    const connection = (navigator as any).connection;
+    const connection = (navigator as unknown as { connection?: { effectiveType: string; downlink: number; saveData: boolean; addEventListener: (ev: string, cb: () => void) => void } }).connection;
     
     const logConnectionInfo = () => {
       console.log('Mobile: Network info', {
@@ -220,8 +220,8 @@ export const monitorMobilePerformance = (): void => {
       }));
     };
 
-    connection.addEventListener('change', logConnectionInfo);
-    logConnectionInfo(); // Initial check
+    connection?.addEventListener('change', logConnectionInfo);
+    if (connection) logConnectionInfo(); // Initial check
   }
 };
 

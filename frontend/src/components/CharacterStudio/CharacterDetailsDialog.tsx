@@ -45,7 +45,7 @@ import {
   Star as StarIcon,
   Timeline as TimelineIcon,
 } from '@mui/icons-material';
-import { Character } from '../../types';
+import type { Character } from '../../types';
 import { useFocusTrap } from '../../utils/focusManagement';
 
 interface Props {
@@ -184,17 +184,17 @@ export default function CharacterDetailsDialog({
 
   const getFactionColor = (faction: string) => {
     const colors: Record<string, string> = {
-      'Alliance Network': '#4169E1',
-      'Entropy Cult': '#DC143C',
-      'Freewind Collective': '#228B22',
-      'Bastion Cohort': '#8B4513',
-      'Starborne Conclave': '#9370DB',
-      'Harmonic Assembly': '#FF6347',
-      'Synthetic Vanguard': '#708090',
-      'Adaptive Swarm': '#8B008B',
-      'Other': '#696969',
+      'Alliance Network': 'var(--color-character-protagonist)',
+      'Entropy Cult': 'var(--color-character-antagonist)',
+      'Freewind Collective': 'var(--color-character-supporting)',
+      'Bastion Cohort': 'var(--color-character-neutral)',
+      'Starborne Conclave': 'var(--color-arc-mystery)',
+      'Harmonic Assembly': 'var(--color-event-emotional)',
+      'Synthetic Vanguard': 'var(--color-info)',
+      'Adaptive Swarm': 'var(--color-secondary)',
+      'Other': 'var(--color-text-tertiary)',
     };
-    return colors[faction] || '#696969';
+    return colors[faction] || 'var(--color-text-tertiary)';
   };
 
   if (!character) {

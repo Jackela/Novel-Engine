@@ -9,7 +9,7 @@
  * - Implementing LRU cache behavior for large datasets
  */
 
-import { Middleware } from '@reduxjs/toolkit';
+import type { Middleware } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 
 // Mobile memory limits
@@ -41,11 +41,9 @@ class MobileMemoryManager {
   }
 
   getMemoryUsage(): number {
-    if ('memory' in performance) {
-      const memory = (performance as any).memory;
-      return memory.usedJSHeapSize / (1024 * 1024); // MB
-    }
-    return 0;
+    const perf = performance as unknown as { memory?: { usedJSHeapSize: number } };
+    const used = perf.memory?.usedJSHeapSize ?? 0;
+    return used / (1024 * 1024); // MB
   }
 
   isMemoryPressure(): boolean {
@@ -75,58 +73,59 @@ class MobileMemoryManager {
   }
 
   // Clean specific state slice
-  cleanupSlice(state: any, sliceName: string): any {
+  cleanupSlice(state: unknown, sliceName: string): unknown {
+    const s = state as Record<string, unknown>;
     switch (sliceName) {
       case 'characters':
         return {
-          ...state,
+          ...s,
           characters: this.cleanupArray(
-            state.characters || [], 
+            (s as Record<string, unknown>).characters as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
             MOBILE_MEMORY_LIMITS.MAX_CHARACTERS
           ),
           recentActivity: this.cleanupArray(
-            state.recentActivity || [], 
+            (s as Record<string, unknown>).recentActivity as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
             100
           )
         };
 
       case 'stories':
         return {
-          ...state,
+          ...s,
           stories: this.cleanupArray(
-            state.stories || [], 
+            (s as Record<string, unknown>).stories as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
             MOBILE_MEMORY_LIMITS.MAX_STORIES
           ),
           history: this.cleanupArray(
-            state.history || [], 
+            (s as Record<string, unknown>).history as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
             MOBILE_MEMORY_LIMITS.MAX_HISTORY_ITEMS
           )
         };
 
       case 'campaigns':
         return {
-          ...state,
+          ...s,
           campaigns: this.cleanupArray(
-            state.campaigns || [], 
+            (s as Record<string, unknown>).campaigns as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
             MOBILE_MEMORY_LIMITS.MAX_CAMPAIGNS
           )
         };
 
       case 'dashboard':
         return {
-          ...state,
+          ...s,
           events: this.cleanupArray(
-            state.events || [], 
+            (s as Record<string, unknown>).events as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
             MOBILE_MEMORY_LIMITS.MAX_DASHBOARD_EVENTS
           ),
           notifications: this.cleanupArray(
-            state.notifications || [], 
+            (s as Record<string, unknown>).notifications as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
             50
           ),
           metrics: {
-            ...state.metrics,
+            ...(s as Record<string, unknown>).metrics as Record<string, unknown>,
             history: this.cleanupArray(
-              state.metrics?.history || [], 
+              ((s as Record<string, unknown>).metrics as Record<string, unknown>)?.history as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
               200
             )
           }

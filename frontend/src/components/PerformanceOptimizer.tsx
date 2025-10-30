@@ -44,21 +44,21 @@ interface OptimizationRule {
 }
 
 const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
-  sessionId,
+  sessionId: _sessionId,
   autoOptimize = true,
   showDetailedMetrics = false,
   onOptimizationApplied
 }) => {
   const {
     metrics,
-    optimizations,
+    optimizations: _optimizations,
     applyOptimization,
     resetOptimizations,
     isOptimizing,
     perfScore
   } = usePerformanceOptimizer();
 
-  const [selectedOptimization, setSelectedOptimization] = useState<string | null>(null);
+  const [_selectedOptimization, _setSelectedOptimization] = useState<string | null>(null);
   const [optimizationHistory, setOptimizationHistory] = useState<OptimizationResult[]>([]);
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [currentMetrics, setCurrentMetrics] = useState<PerformanceMetrics>({
@@ -76,7 +76,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
   useEffect(() => {
     const collectMetrics = () => {
       const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      const memory = (performance as any).memory;
+      const memory = (performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number } }).memory;
       
       setCurrentMetrics({
         fps: Math.round(1000 / (performance.now() % 1000)),

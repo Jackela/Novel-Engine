@@ -1,5 +1,6 @@
-import { apiClient, handleAPIResponse, handleAPIError, BaseAPIResponse } from './apiClient';
-import { Character, PersonalityTraits, CharacterListResponse } from '../../store/slices/charactersSlice';
+import { apiClient, handleAPIResponse, handleAPIError } from './apiClient';
+import type { BaseAPIResponse } from './apiClient';
+import type { Character, PersonalityTraits, CharacterListResponse } from '../../store/slices/charactersSlice';
 
 // Character API request types based on OpenAPI spec
 export interface CreateCharacterRequest {
@@ -18,7 +19,7 @@ export interface UpdateCharacterRequest {
   name?: string;
   personality_traits?: PersonalityTraits;
   background?: string;
-  configuration?: Record<string, any>;
+  configuration?: Record<string, unknown>;
 }
 
 export interface GetCharactersParams {
@@ -107,7 +108,7 @@ export class CharactersAPI {
    * Batch operations (future enhancement)
    */
   async batchUpdateCharacters(
-    updates: Array<{ id: string; updates: UpdateCharacterRequest }>
+    _updates: Array<{ id: string; updates: UpdateCharacterRequest }>
   ): Promise<BaseAPIResponse<Character[]>> {
     try {
       // TODO: Implement batch update endpoint when available
@@ -123,7 +124,7 @@ export class CharactersAPI {
   /**
    * Get character relationships (future enhancement)
    */
-  async getCharacterRelationships(characterId: string): Promise<BaseAPIResponse<any>> {
+  async getCharacterRelationships(_characterId: string): Promise<BaseAPIResponse<unknown>> {
     try {
       // TODO: Implement relationships endpoint when available
       // const response = await apiClient.get(`/characters/${characterId}/relationships`);
@@ -138,10 +139,10 @@ export class CharactersAPI {
   /**
    * Get character interaction history (future enhancement)
    */
-  async getCharacterHistory(characterId: string, params?: {
+  async getCharacterHistory(_characterId: string, _params?: {
     limit?: number;
     since?: string;
-  }): Promise<BaseAPIResponse<any[]>> {
+  }): Promise<BaseAPIResponse<unknown[]>> {
     try {
       // TODO: Implement history endpoint when available
       // const response = await apiClient.get(`/characters/${characterId}/history`, { params });
@@ -156,7 +157,7 @@ export class CharactersAPI {
   /**
    * Export character data (future enhancement)
    */
-  async exportCharacter(characterId: string, format: 'json' | 'csv' = 'json'): Promise<BaseAPIResponse<any>> {
+  async exportCharacter(_characterId: string, _format: 'json' | 'csv' = 'json'): Promise<BaseAPIResponse<unknown>> {
     try {
       // TODO: Implement export endpoint when available
       // const response = await apiClient.get(`/characters/${characterId}/export`, {

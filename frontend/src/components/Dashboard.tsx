@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -32,30 +32,15 @@ import {
   TrendingUp as TrendingUpIcon,
   AccessTime as TimeIcon,
 } from '@mui/icons-material';
-import { useQuery } from 'react-query';
-import api from '../services/api';
+import { useCampaignsQuery, useCharactersQuery, useHealthQuery } from '../services/queries';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   // Fetch dashboard data
-  const { data: characters, isLoading: charactersLoading } = useQuery(
-    'characters',
-    api.getCharacters
-  );
-
-  const { data: campaigns, isLoading: campaignsLoading } = useQuery(
-    'campaigns',
-    api.getCampaigns
-  );
-
-  const { data: systemStatus, isLoading: statusLoading } = useQuery(
-    'system-status',
-    api.getHealth,
-    {
-      refetchInterval: 10000, // Refresh every 10 seconds
-    }
-  );
+  const { data: characters, isLoading: charactersLoading } = useCharactersQuery();
+  const { data: campaigns, isLoading: _campaignsLoading } = useCampaignsQuery();
+  const { data: systemStatus } = useHealthQuery();
 
   // Mock data for recent activities and statistics
   const recentProjects = [

@@ -1,12 +1,26 @@
-# React + Vite
+# Novel Engine Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Quick Links
 
-Currently, two official plugins are available:
+- Design System (SSOT): `frontend/DESIGN_SYSTEM.md`
+- Feature Spec: `specs/002-ts-ssot-frontend/spec.md`
+- Quickstart (tokens + checks): `specs/002-ts-ssot-frontend/quickstart.md`
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Local Development
 
-## Expanding the ESLint configuration
+From repo root:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+cd frontend
+npm ci
+npm run build:tokens
+npm run dev
+```
+
+## Quality Gates
+
+- Type check: `npm run type-check`
+- Lint all (TS/JS, styles, hex scan): `npm run lint:all`
+- Token drift and contrast: `npm run tokens:check`
+
+These run in CI and must pass for merges.

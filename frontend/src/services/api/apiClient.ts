@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { store } from '../../store/store';
 import { refreshUserToken, logoutUser } from '../../store/slices/authSlice';
 
@@ -12,7 +13,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Simple in-memory cache for mobile optimization
 interface CacheEntry {
-  data: any;
+  data: unknown;
   timestamp: number;
   expires: number;
 }
@@ -25,7 +26,7 @@ class MobileAPICache {
     this.maxSize = maxSize;
   }
 
-  set(key: string, data: any, duration: number = CACHE_DURATION): void {
+  set(key: string, data: unknown, duration: number = CACHE_DURATION): void {
     // Cleanup if cache is full
     if (this.cache.size >= this.maxSize) {
       this.cleanup();
@@ -39,7 +40,7 @@ class MobileAPICache {
     });
   }
 
-  get(key: string): any | null {
+  get(key: string): unknown | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
 
@@ -85,13 +86,13 @@ class MobileAPICache {
 const mobileCache = new MobileAPICache();
 
 // Base API Response structure from OpenAPI spec
-export interface BaseAPIResponse<T = any> {
+export interface BaseAPIResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
     recoverable: boolean;
   };
   metadata?: {
@@ -144,7 +145,7 @@ const createAPIClient = (): AxiosInstance => {
 
   // Request interceptor to add authentication token
   client.interceptors.request.use(
-    (config: AxiosRequestConfig): any => {
+    (config: AxiosRequestConfig) => {
       const state = store.getState();
       const token = state.auth.accessToken;
       
@@ -263,15 +264,16 @@ export const handleAPIResponse = <T>(
 };
 
 // Helper function to handle API errors
-export const handleAPIError = (error: any): never => {
+type APIErrorShape = { message?: string; code?: string; recoverable?: boolean } & Record<string, unknown>;
+export const handleAPIError = (error: unknown): never => {
   console.error('API Error:', error);
   
   // Create standardized error format
   const standardError = {
-    message: error.message || 'An unexpected error occurred',
-    code: error.code || 'UNKNOWN_ERROR',
-    recoverable: error.recoverable !== undefined ? error.recoverable : true,
-    originalError: error,
+    message: (error as APIErrorShape).message || 'An unexpected error occurred',
+    code: (error as APIErrorShape).code || 'UNKNOWN_ERROR',
+    recoverable: (error as APIErrorShape).recoverable !== undefined ? (error as APIErrorShape).recoverable as boolean : true,
+    originalError: error as APIErrorShape,
   };
   
   throw standardError;
@@ -303,10 +305,11 @@ export const mobileOptimizedRequest = async <T>(
   try {
     const response = await apiClient(config);
     return handleAPIResponse<T>(response);
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Handle cached responses
-    if (error.__cached) {
-      return error.data;
+    const cached = error as { __cached?: boolean; data?: BaseAPIResponse<T> };
+    if (cached.__cached && cached.data) {
+      return cached.data;
     }
     throw handleAPIError(error);
   }

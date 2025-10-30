@@ -10,7 +10,7 @@ import {
   useMediaQuery,
   Fade,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import {
   CheckCircle as CompletedIcon,
@@ -38,7 +38,7 @@ const ProgressHeader = styled(Box)(({ theme }) => ({
   flexShrink: 0,
   marginBottom: theme.spacing(1.5),
   paddingBottom: theme.spacing(1),
-  borderBottom: '1px solid #2a2a30',
+  borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
 }));
 
 const TimelineTrack = styled(Box)(({ theme }) => ({
@@ -78,14 +78,14 @@ const TimelineNode = styled(motion(Box))<{ status: string }>(({ theme, status })
   alignItems: 'center',
   padding: theme.spacing(1),
   borderRadius: theme.shape.borderRadius,
-  backgroundColor: status === 'current' ? 'rgba(99, 102, 241, 0.15)' : '#111113',
+  backgroundColor: status === 'current' ? (alpha(theme.palette.primary.main, 0.15)) : theme.palette.background.paper,
   border: status === 'current'
-    ? `2px solid #6366f1`
-    : `1px solid #2a2a30`,
+    ? `2px solid ${theme.palette.primary.main}`
+    : `1px solid ${theme.palette.divider}`,
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    backgroundColor: status === 'current' ? 'rgba(99, 102, 241, 0.2)' : '#1a1a1d',
-    borderColor: status === 'completed' ? '#10b981' : '#6366f1',
+    backgroundColor: status === 'current' ? alpha(theme.palette.primary.main, 0.2) : 'var(--color-bg-tertiary)',
+    borderColor: status === 'completed' ? theme.palette.success.main : theme.palette.primary.main,
     transform: 'scale(1.02)',
   },
   
@@ -108,7 +108,7 @@ const TimelineConnector = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  color: '#808088',
+  color: 'var(--color-text-tertiary)',
   
   // Desktop: horizontal connector
   [theme.breakpoints.up('md')]: {
@@ -204,11 +204,11 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
   const getStatusColor = (status: TimelineEvent['status']) => {
     switch (status) {
       case 'completed':
-        return '#10b981';
+        return theme.palette.success.main;
       case 'current':
-        return '#6366f1';
+        return theme.palette.primary.main;
       default:
-        return '#808088';
+        return theme.palette.text.secondary;
     }
   };
 
@@ -243,7 +243,7 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
             <Typography variant="caption" color="text.secondary" fontWeight={500}>
               Turn {currentTurn} of {maxTurn}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#6366f1', fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600 }}>
               {Math.round(progressPercentage)}% Complete
             </Typography>
           </Stack>
@@ -254,9 +254,9 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
             sx={{ 
               height: 6, 
               borderRadius: 3,
-              backgroundColor: '#2a2a30',
+              backgroundColor: 'var(--color-border-primary)',
               '& .MuiLinearProgress-bar': {
-                backgroundColor: '#6366f1',
+                backgroundColor: 'primary.main',
                 borderRadius: 3,
               }
             }}
@@ -268,8 +268,8 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
               size="small" 
               sx={{
                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                borderColor: '#10b981',
-                color: '#6ee7b7',
+                borderColor: 'success.main',
+                color: 'var(--color-success-text)',
                 fontSize: '0.65rem',
                 height: '20px',
               }}
@@ -278,9 +278,9 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
               label="3 Plot Threads" 
               size="small" 
               sx={{
-                backgroundColor: '#111113',
-                borderColor: '#2a2a30',
-                color: '#b0b0b8',
+                backgroundColor: 'background.paper',
+                borderColor: 'divider',
+                color: 'text.secondary',
                 fontSize: '0.65rem',
                 height: '20px',
               }}
@@ -317,7 +317,7 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
                       variant="caption" 
                       fontWeight={600} 
                       sx={{ 
-                        color: '#f0f0f2',
+                        color: 'var(--color-text-primary)',
                         lineHeight: 1.2,
                         display: 'block',
                         mb: 0.25,

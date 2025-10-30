@@ -24,7 +24,7 @@ interface NarrativeEvent {
   timestamp: number;
   agentId?: string;
   agentName?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   isStreaming?: boolean;
   confidence?: number;
   causality?: {

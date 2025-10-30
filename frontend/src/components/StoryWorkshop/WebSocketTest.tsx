@@ -24,8 +24,8 @@ export default function WebSocketTest() {
     lastUpdate,
     error,
     connectionAttempts,
-    connect,
-    disconnect,
+    connect: _connect,
+    disconnect: _disconnect,
     sendMessage,
   } = useWebSocketProgress({
     generationId: isTestActive ? testGenerationId : null,

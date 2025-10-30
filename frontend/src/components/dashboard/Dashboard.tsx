@@ -33,18 +33,18 @@ interface DashboardProps {
   campaignId?: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ userId, campaignId }) => {
+const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _campaignId }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   // System state
-  const [systemStatus, setSystemStatus] = useState<'online' | 'offline' | 'maintenance'>('online');
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [systemStatus, _setSystemStatus] = useState<'online' | 'offline' | 'maintenance'>('online');
+  const [_lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   // WebSocket connection for real-time updates
   useEffect(() => {
@@ -83,7 +83,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, campaignId }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleRealtimeUpdate = (data: any) => {
+  const _handleRealtimeUpdate = (data: unknown) => {
     // Handle different types of real-time updates
     switch (data.type) {
       case 'character_update':

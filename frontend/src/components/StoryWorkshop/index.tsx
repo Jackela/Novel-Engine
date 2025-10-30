@@ -29,13 +29,13 @@ import {
   Group as GroupIcon,
   Tune as TuneIcon,
 } from '@mui/icons-material';
-import { useQuery, useMutation } from 'react-query';
+import { useMutation } from 'react-query';
 import api from '../../services/api';
-import CharacterSelection from './CharacterSelection';
+import CharacterSelectionContainer from './CharacterSelectionContainer';
 import StoryParameters from './StoryParameters';
 import GenerationProgress from './GenerationProgress';
 import StoryDisplay from './StoryDisplay';
-import { StoryFormData, StoryProject } from '../../types';
+import type { StoryFormData, StoryProject } from '../../types';
 
 const WORKSHOP_STEPS = [
   'Select Characters',
@@ -78,11 +78,7 @@ export default function StoryWorkshop() {
     generationId: null,
   });
 
-  // Fetch available characters
-  const { data: characters, isLoading: charactersLoading } = useQuery(
-    'characters',
-    api.getCharacters
-  );
+  // Characters are provided via container using shared query hooks
 
   // Story generation mutation
   const generateStoryMutation = useMutation(
@@ -367,11 +363,9 @@ export default function StoryWorkshop() {
                   </Box>
                 </Box>
 
-                <CharacterSelection
-                  characters={characters || []}
+                <CharacterSelectionContainer
                   selectedCharacters={selectedCharacters}
                   onSelectionChange={setSelectedCharacters}
-                  isLoading={charactersLoading}
                 />
 
                 {selectedCharacters.length > 0 && (

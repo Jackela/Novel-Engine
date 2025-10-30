@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, useTheme, useMediaQuery } from '@mui/material';
+import { Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 const GridContainer = styled(Box)(({ theme }) => ({
@@ -35,10 +35,6 @@ interface BentoGridProps {
 }
 
 const BentoGrid: React.FC<BentoGridProps> = ({ children }) => {
-  const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'));
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
     <GridContainer>

@@ -27,12 +27,12 @@ const MetricCard = styled(motion.div)(({ theme }) => ({
   flexDirection: 'column',
   alignItems: 'center',
   borderRadius: theme.shape.borderRadius,
-  backgroundColor: '#111113',
-  border: '1px solid #2a2a30',
+  backgroundColor: theme.palette.background.paper,
+  border: `1px solid ${theme.palette.divider}`,
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    borderColor: '#6366f1',
-    backgroundColor: '#1a1a1d',
+    borderColor: theme.palette.primary.main,
+    backgroundColor: 'var(--color-bg-tertiary)',
     transform: 'translateY(-2px)',
     boxShadow: '0 4px 8px rgba(99, 102, 241, 0.2)',
   },
@@ -62,10 +62,10 @@ const StatusIndicator = styled(motion.div)<{ status: 'healthy' | 'warning' | 'er
       : status === 'warning' 
       ? 'rgba(245, 158, 11, 0.1)' 
       : 'rgba(239, 68, 68, 0.1)',
-    border: `1px solid ${status === 'healthy' ? '#10b981' : status === 'warning' ? '#f59e0b' : '#ef4444'}`,
+    border: (theme) => `1px solid ${status === 'healthy' ? theme.palette.success.main : status === 'warning' ? theme.palette.warning.main : theme.palette.error.main}`,
     '& .MuiSvgIcon-root': {
       fontSize: '12px',
-      color: status === 'healthy' ? '#10b981' : status === 'warning' ? '#f59e0b' : '#ef4444',
+      color: (theme) => status === 'healthy' ? theme.palette.success.main : status === 'warning' ? theme.palette.warning.main : theme.palette.error.main,
       animation: status !== 'healthy' ? 'pulse 2s infinite' : 'none',
     },
     '@keyframes pulse': {
@@ -78,7 +78,7 @@ const StatusIndicator = styled(motion.div)<{ status: 'healthy' | 'warning' | 'er
 const AnimatedProgress = styled(motion(LinearProgress))(({ theme }) => ({
   height: 6,
   borderRadius: theme.shape.borderRadius,
-  backgroundColor: '#2a2a30',
+    backgroundColor: theme.palette.divider,
   '& .MuiLinearProgress-bar': {
     borderRadius: theme.shape.borderRadius,
     transition: 'transform 0.4s ease',
@@ -170,16 +170,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
     return () => clearInterval(interval);
   }, [metrics.systemLoad, metrics.errorRate, metrics.responseTime]);
 
-  const getStatusColor = (status: 'healthy' | 'warning' | 'error') => {
-    switch (status) {
-      case 'healthy':
-        return theme.palette.success.main;
-      case 'warning':
-        return theme.palette.warning.main;
-      case 'error':
-        return theme.palette.error.main;
-    }
-  };
+  // status color helper removed; inline theme.palette usage elsewhere
 
   const formatNumber = (num: number, decimals = 1) => {
     return num.toFixed(decimals);
@@ -220,8 +211,8 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                   size="small"
                   sx={{ 
                     backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                    borderColor: '#6366f1',
-                    color: '#b0b0b8',
+                    borderColor: (theme) => theme.palette.primary.main,
+                    color: (theme) => theme.palette.text.secondary,
                     fontWeight: 500,
                   }}
                 />
@@ -305,8 +296,8 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                   size="small"
                   sx={{ 
                     backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                    borderColor: '#6366f1',
-                    color: '#b0b0b8',
+                    borderColor: (theme) => theme.palette.primary.main,
+                    color: (theme) => theme.palette.text.secondary,
                     fontWeight: 500,
                   }}
                 />

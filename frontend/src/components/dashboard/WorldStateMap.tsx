@@ -12,7 +12,7 @@ import {
   ListItemAvatar,
   ListItemText,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LocationOn as LocationIcon,
@@ -28,7 +28,7 @@ const MapContainer = styled(Box)(({ theme }) => ({
   position: 'relative',
   borderRadius: theme.shape.borderRadius,
   overflow: 'hidden',
-  background: 'linear-gradient(135deg, #0a0a0b 0%, #1a1a1d 100%)',
+  background: 'linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-tertiary) 100%)',
   padding: theme.spacing(2),
 }));
 
@@ -61,18 +61,18 @@ const LocationMarker = styled(motion.div)<{ active?: boolean; activitylevel?: st
   justifyContent: 'center',
   gap: theme.spacing(1),
   background: active 
-    ? 'rgba(99, 102, 241, 0.2)' 
-    : '#111113',
+    ? (alpha(theme.palette.primary.main, 0.2)) 
+    : theme.palette.background.paper,
   border: active 
     ? `2px solid ${theme.palette.primary.main}` 
-    : `1px solid #2a2a30`,
+    : `1px solid ${theme.palette.divider}`,
   borderRadius: theme.shape.borderRadius,
   padding: theme.spacing(2),
   cursor: 'pointer',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    background: active ? 'rgba(99, 102, 241, 0.3)' : '#1a1a1d',
-    borderColor: '#6366f1',
+    background: active ? alpha(theme.palette.primary.main, 0.3) : 'var(--color-bg-tertiary)',
+    borderColor: theme.palette.primary.main,
     transform: 'scale(1.05)',
     boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
   },
@@ -84,7 +84,12 @@ const LocationMarker = styled(motion.div)<{ active?: boolean; activitylevel?: st
     width: 8,
     height: 8,
     borderRadius: '50%',
-    backgroundColor: activitylevel === 'high' ? '#10b981' : activitylevel === 'medium' ? '#f59e0b' : '#808088',
+    backgroundColor:
+      activitylevel === 'high'
+        ? theme.palette.success.main
+        : activitylevel === 'medium'
+        ? theme.palette.warning.main
+        : theme.palette.text.secondary,
     animation: activitylevel === 'high' ? 'pulse 2s infinite' : 'none',
   },
   '@keyframes pulse': {
@@ -182,13 +187,13 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
   const getActivityColor = (activity: string) => {
     switch (activity) {
       case 'high':
-        return '#10b981'; // Professional success green
+        return theme.palette.success.main; // success
       case 'medium':
-        return '#f59e0b'; // Sophisticated amber
+        return theme.palette.warning.main; // warning
       case 'low':
-        return '#808088'; // Tertiary text color
+        return theme.palette.text.secondary; // neutral text
       default:
-        return '#808088';
+        return theme.palette.text.secondary;
     }
   };
 
@@ -222,10 +227,10 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
             label={`${getTotalCharacters()} Characters`}
             size="small"
             sx={{ 
-              backgroundColor: '#2a2a30', 
-              color: '#f0f0f2',
-              border: '1px solid #3a3a42',
-              '& .MuiChip-icon': { color: '#6366f1' }
+              backgroundColor: (theme) => theme.palette.background.paper,
+              color: (theme) => theme.palette.text.primary,
+              border: (theme) => `1px solid ${theme.palette.divider}`,
+              '& .MuiChip-icon': { color: (theme) => theme.palette.primary.main }
             }}
           />
           <Chip
@@ -233,10 +238,10 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
             label={`${getActiveLocations()} Active`}
             size="small"
             sx={{ 
-              backgroundColor: '#064e3b', 
-              color: '#6ee7b7',
-              border: '1px solid #065f46',
-              '& .MuiChip-icon': { color: '#10b981' }
+              backgroundColor: (theme) => alpha(theme.palette.success.main, 0.15),
+              color: (theme) => alpha(theme.palette.success.main, 0.85),
+              border: (theme) => `1px solid ${theme.palette.success.main}`,
+              '& .MuiChip-icon': { color: (theme) => theme.palette.success.main }
             }}
           />
         </StatsOverlay>
@@ -272,7 +277,7 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
                   <Typography 
                     variant="caption" 
                     sx={{ 
-                      color: '#f0f0f2', 
+                      color: (theme) => theme.palette.text.primary, 
                       fontSize: '0.75rem',
                       fontWeight: isSelected ? 600 : 500,
                       flex: 1,
@@ -292,7 +297,7 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
                       active={isSelected}
                       sx={{ 
                         backgroundColor: getActivityColor(location.activity),
-                        border: '2px solid #111113',
+                        border: (theme) => `2px solid ${theme.palette.background.default}`,
                       }}
                     >
                       {character.initials}
@@ -301,8 +306,8 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
                   {location.characters.length > 3 && (
                     <CharacterAvatar
                       sx={{ 
-                        backgroundColor: '#2a2a30',
-                        border: '2px solid #111113',
+                        backgroundColor: (theme) => theme.palette.background.paper,
+                        border: (theme) => `2px solid ${theme.palette.background.default}`,
                       }}
                     >
                       <Typography variant="caption" sx={{ fontSize: '0.6rem' }}>
@@ -325,7 +330,7 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
                         sx={{ 
                           mt: 1, 
                           pt: 1, 
-                          borderTop: '1px solid #2a2a30',
+                          borderTop: (theme) => `1px solid ${theme.palette.divider}`,
                           width: '100%',
                         }}
                       >
@@ -352,7 +357,7 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
                                 primary={character.name}
                                 primaryTypographyProps={{
                                   variant: 'caption',
-                                  sx: { color: '#b0b0b8', fontSize: '0.7rem' },
+                                  sx: { color: (theme) => theme.palette.text.secondary, fontSize: '0.7rem' },
                                 }}
                               />
                             </ListItem>

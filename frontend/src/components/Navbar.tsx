@@ -9,6 +9,7 @@ import {
   IconButton,
   Chip,
   Tooltip,
+  useTheme,
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -96,13 +97,15 @@ const Navbar: React.FC = () => {
     }
   };
 
+  const theme = useTheme();
+
   return (
     <AppBar 
       position="sticky" 
       elevation={0}
       sx={{ 
-        backgroundColor: '#111113',
-        borderBottom: '1px solid #2a2a30',
+        backgroundColor: theme.palette.background.paper,
+        borderBottom: `1px solid ${theme.palette.divider}`,
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
@@ -114,14 +117,14 @@ const Navbar: React.FC = () => {
               width: 40,
               height: 40,
               borderRadius: 2,
-              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
               fontWeight: 700,
               fontSize: '1.2rem',
-              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
+              boxShadow: theme.shadows[4],
             }}
           >
             NE
@@ -156,7 +159,7 @@ const Navbar: React.FC = () => {
                     transform: isActive ? 'none' : 'translateY(-2px)',
                     backgroundColor: isActive 
                       ? undefined 
-                      : 'rgba(99, 102, 241, 0.1)',
+                      : 'primary.main',
                   },
                 }}
               >

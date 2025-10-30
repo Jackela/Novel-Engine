@@ -1,4 +1,5 @@
 import { Paper, Box, Typography, IconButton, useTheme, useMediaQuery } from '@mui/material';
+import type { CSSProperties } from 'react';
 import { styled } from '@mui/material/styles';
 import { MoreVert as MoreIcon } from '@mui/icons-material';
 
@@ -38,7 +39,7 @@ const StyledPaper = styled(Paper, {
     const getGridStyles = () => {
       const breakpointPos = position[currentBreakpoint];
       
-      const styles: Record<string, any> = {
+      const styles: Partial<CSSProperties> = {
         gridColumn: breakpointPos.column || 'auto',
       };
       
@@ -66,16 +67,16 @@ const StyledPaper = styled(Paper, {
       ...getGridStyles(),
       position: 'relative',
       overflow: 'hidden',
-      border: '1px solid #2a2a30',
+      border: `1px solid ${theme.palette.divider}`,
       borderRadius: theme.shape.borderRadius,
-      backgroundColor: '#111113',
+      backgroundColor: theme.palette.background.paper,
       transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
       
       '&:hover': {
-        backgroundColor: '#1a1a1d',
-        borderColor: '#6366f1',
+        backgroundColor: theme.palette.background.default,
+        borderColor: theme.palette.primary.main,
         transform: 'translateY(-2px)',
-        boxShadow: '0 4px 8px rgba(99, 102, 241, 0.2)',
+        boxShadow: theme.shadows[4],
       },
     };
   }
@@ -86,7 +87,7 @@ const TileHeader = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: theme.spacing(2, 2, 1),
-  borderBottom: '1px solid #2a2a30',
+  borderBottom: `1px solid ${theme.palette.divider}`,
   minHeight: '56px',
   
   [theme.breakpoints.down('md')]: {
@@ -104,14 +105,14 @@ const TileContent = styled(Box)(({ theme }) => ({
     height: '6px',
   },
   '&::-webkit-scrollbar-track': {
-    background: '#1a1a1d',
+    background: theme.palette.background.default,
     borderRadius: '3px',
   },
   '&::-webkit-scrollbar-thumb': {
-    background: '#6366f1',
+    background: theme.palette.primary.main,
     borderRadius: '3px',
     '&:hover': {
-      background: '#4f46e5',
+      background: theme.palette.primary.dark,
     },
   },
   
@@ -120,7 +121,7 @@ const TileContent = styled(Box)(({ theme }) => ({
   },
 }));
 
-const LoadingOverlay = styled(Box)(({ theme }) => ({
+const LoadingOverlay = styled(Box)({
   position: 'absolute',
   top: 0,
   left: 0,
@@ -132,7 +133,7 @@ const LoadingOverlay = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   zIndex: 10,
-}));
+});
 
 const GridTile: React.FC<GridTileProps> = ({
   title,
@@ -154,7 +155,7 @@ const GridTile: React.FC<GridTileProps> = ({
     <StyledPaper 
       position={position} 
       currentBreakpoint={currentBreakpoint}
-      className={className}
+      className={className ?? ''}
       elevation={1}
       data-testid={testId}
     >

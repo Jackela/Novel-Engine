@@ -1,0 +1,31 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/styles/tokens.ts",
+    "src/styles/theme.ts",
+    "src/services/api.ts",
+    "src/services/queries.ts",
+    "src/components/common/AsyncStates.tsx",
+    "src/components/layout/MobileTabbedDashboard.tsx",
+    "src/components/layout/DashboardLayout.tsx",
+    "src/components/layout/GridTile.tsx",
+    "src/components/StoryWorkshop/CharacterSelectionContainer.tsx",
+    "src/components/Navbar.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests",
+    "e2e-tests",
+    "playwright.config.ts",
+    "vite.config.ts",
+    "vite.config.js",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
+}

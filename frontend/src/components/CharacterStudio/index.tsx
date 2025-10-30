@@ -58,16 +58,7 @@ const CharacterStudio: React.FC = () => {
     setCreateDialogOpen(false);
   };
 
-  const getFactionColor = (faction: string) => {
-    const factionColors: Record<string, string> = {
-      'Bastion Cohort': '#8B4513',
-      'Freewind Collective': '#228B22',
-      'Alliance Network': '#4169E1',
-      'Entropy Cult': '#DC143C',
-      'Unknown': '#696969',
-    };
-    return factionColors[faction] || '#696969';
-  };
+  // Removed unused getFactionColor; colors sourced from tokens/theme directly in components
 
   return (
     <Box sx={{ maxWidth: 1400, mx: 'auto' }}>

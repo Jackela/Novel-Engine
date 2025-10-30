@@ -42,7 +42,7 @@ import {
   Group as GroupIcon,
   Speed as SpeedIcon,
 } from '@mui/icons-material';
-import { StoryProject } from '../../types';
+import type { StoryProject } from '../../types';
 import { useFocusTrap } from '../../utils/focusManagement';
 
 interface Props {
@@ -247,7 +247,7 @@ export default function StoryDisplay({ story, onEdit }: Props) {
                 Story Participants
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {story.characters.map((character, index) => (
+                {story.characters.map((character, _index) => (
                   <Chip
                     key={character}
                     avatar={<Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
@@ -447,3 +447,4 @@ export default function StoryDisplay({ story, onEdit }: Props) {
     </Box>
   );
 }
+
