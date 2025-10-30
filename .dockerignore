@@ -9,6 +9,7 @@
 .bmad-core/
 .benchmarks/
 .claude/
+node_modules/
 
 # Python cache
 __pycache__/
@@ -32,6 +33,7 @@ env/
 *.temp
 .DS_Store
 Thumbs.db
+coverage/
 
 # Test files and artifacts
 test_*.db

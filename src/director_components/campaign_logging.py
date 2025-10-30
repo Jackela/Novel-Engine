@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, TextIO
 
 
-
 class LogLevel(Enum):
     """Log levels for campaign events."""
 

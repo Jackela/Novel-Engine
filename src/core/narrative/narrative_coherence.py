@@ -17,6 +17,7 @@ from .types import CausalNode
 
 logger = logging.getLogger(__name__)
 
+
 class NarrativeCoherenceEngine:
     """叙事连贯性引擎 - 保证故事的一致性和连贯性"""
 
@@ -547,4 +548,3 @@ class NarrativeCoherenceEngine:
                 tid: len(thread["events"]) for tid, thread in self.plot_threads.items()
             },
         }
-

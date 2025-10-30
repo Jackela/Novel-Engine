@@ -8,8 +8,8 @@ Comprehensive tests for the modular enhanced multi-agent bridge implementation.
 import asyncio
 import logging
 from typing import Any
-import pytest
 
+import pytest
 
 # Import the modular bridge
 from src.bridges.multi_agent_bridge import (

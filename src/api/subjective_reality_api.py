@@ -193,12 +193,12 @@ class SubjectiveRealityAPI:
             summary="Get Agent Turn Brief",
             description="Retrieve personalized turn brief for a specific agent",
         )
-        @require_permission(Permission.NARRATIVE_READ)
         async def get_turn_brief(
             turn_id: int = Path(..., description="Turn identifier"),
             agent_id: str = Path(..., description="Agent identifier"),
             request_params: TurnBriefRequest = Depends(),
             current_user: Dict = Depends(get_current_user),
+            _: Any = Depends(require_permission(Permission.NARRATIVE_READ)),
         ):
             try:
                 if not self.orchestrator or not hasattr(self.orchestrator, "director"):
@@ -254,11 +254,11 @@ class SubjectiveRealityAPI:
             summary="Get All Agent Turn Briefs",
             description="Retrieve turn briefs for all agents in a turn",
         )
-        @require_permission(Permission.NARRATIVE_READ)
         async def get_all_turn_briefs(
             turn_id: int = Path(..., description="Turn identifier"),
             request_params: MultiBriefRequest = Depends(),
             current_user: Dict = Depends(get_current_user),
+            _: Any = Depends(require_permission(Permission.NARRATIVE_READ)),
         ):
             try:
                 if not self.orchestrator or not hasattr(self.orchestrator, "director"):
@@ -323,11 +323,11 @@ class SubjectiveRealityAPI:
             summary="Get Agent Belief Model",
             description="Access agent's subjective belief model",
         )
-        @require_permission(Permission.BELIEF_READ)
         async def get_agent_beliefs(
             agent_id: str = Path(..., description="Agent identifier"),
             request_params: BeliefModelRequest = Depends(),
             current_user: Dict = Depends(get_current_user),
+            _: Any = Depends(require_permission(Permission.BELIEF_READ)),
         ):
             try:
                 if (

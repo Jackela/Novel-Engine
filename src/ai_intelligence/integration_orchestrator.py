@@ -10,7 +10,7 @@ Architecture:
     This class follows the Extract Class refactoring pattern, having been
     decomposed from a God Class (917 lines) into a focused orchestrator (679 lines)
     that delegates to specialized coordinators:
-    
+
     - AISubsystemCoordinator: AI system lifecycle and narrative engine management
     - TraditionalSystemCoordinator: Traditional Novel Engine system coordination
     - MetricsCoordinator: Performance tracking and health monitoring

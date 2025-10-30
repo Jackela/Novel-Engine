@@ -34,6 +34,7 @@ from .template_selector import TemplateSelector
 
 logger = logging.getLogger(__name__)
 
+
 class CharacterTemplateManager:
     """
     STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY PERSONA ORCHESTRATION

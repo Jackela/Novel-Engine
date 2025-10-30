@@ -967,5 +967,3 @@ async def get_comprehensive_caching_report() -> Dict[str, Any]:
     }
 
     return report
-
-

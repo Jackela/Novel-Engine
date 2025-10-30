@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
+
 from contexts.interactions.domain.value_objects.negotiation_status import (
     NegotiationOutcome,
     NegotiationPhase,

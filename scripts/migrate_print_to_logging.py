@@ -348,7 +348,9 @@ class PrintToLoggingMigrator:
         # Replace print statements
         for print_stmt in analysis.print_statements:
             # Account for inserted lines
-            offset = sum(1 for pos, _ in lines_to_insert if pos < print_stmt.line_number)
+            offset = sum(
+                1 for pos, _ in lines_to_insert if pos < print_stmt.line_number
+            )
             actual_line_num = print_stmt.line_number - 1 + offset
 
             if actual_line_num < len(lines):
@@ -380,7 +382,9 @@ class PrintToLoggingMigrator:
         """
         print("🔍 Print to Logging Migration Tool")
         print("=" * 70)
-        print(f"Mode: {'DRY RUN (preview only)' if self.dry_run else 'LIVE (will modify files)'}")
+        print(
+            f"Mode: {'DRY RUN (preview only)' if self.dry_run else 'LIVE (will modify files)'}"
+        )
         print(f"Source Directory: {self.src_dir}")
         print()
 

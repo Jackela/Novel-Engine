@@ -21,13 +21,13 @@ from typing import Any, Dict, List, Optional
 
 from src.agents.context_manager import CharacterContextManager
 from src.agents.decision_engine import DecisionEngine
-from src.events.event_bus import EventBus
 
 # Import decomposed components
 from src.agents.persona_core import PersonaCore
 
 # Import shared types
 from src.core.types.shared_types import CharacterAction
+from src.events.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 

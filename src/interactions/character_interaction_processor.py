@@ -42,8 +42,6 @@ from src.templates.dynamic_template_engine import (
     TemplateContext,
 )
 
-from .equipment import DynamicEquipmentSystem
-
 # Import enhanced interaction systems
 from .engine import (
     InteractionContext,
@@ -51,6 +49,7 @@ from .engine import (
     InteractionPriority,
     InteractionType,
 )
+from .equipment import DynamicEquipmentSystem
 
 # Comprehensive logging enhanced by diagnostic clarity
 logger = logging.getLogger(__name__)
@@ -917,7 +916,9 @@ class CharacterInteractionProcessor:
             except Exception as e:
                 logger.error(f"ERROR creating memories for {participant}: {str(e)}")
 
-    async def _process_equipment_interactions(self, outcome: InteractionOutcome) -> None:
+    async def _process_equipment_interactions(
+        self, outcome: InteractionOutcome
+    ) -> None:
         """Process equipment-related interactions if applicable."""
 
         # Check if any participants have equipment that should be affected

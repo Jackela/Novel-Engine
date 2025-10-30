@@ -8,8 +8,6 @@ from src.event_bus import EventBus
 from src.persona_agent import PersonaAgent
 
 
-
-
 class TestDirectorAgent(unittest.TestCase):
 
     def setUp(self):

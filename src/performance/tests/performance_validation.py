@@ -19,6 +19,11 @@ import aiohttp
 # Add the current directory to Python path to import local modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 try:
     from production_performance_engine import (
         initialize_performance_engine,
@@ -27,11 +32,6 @@ try:
 except ImportError as e:
     logger.warning(f"Warning: Could not import performance engine: {e}")
     performance_engine = None
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 
 async def test_performance_engine():
@@ -323,7 +323,9 @@ def print_validation_summary(results: Dict[str, Any]):
     # API Endpoint Tests
     api_tests = results.get("api_endpoint_tests", {})
     if api_tests.get("skipped"):
-        logger.info(f"\nAPI Endpoints: SKIPPED ({api_tests.get('reason', 'Unknown reason')})")
+        logger.info(
+            f"\nAPI Endpoints: SKIPPED ({api_tests.get('reason', 'Unknown reason')})"
+        )
     else:
         api_success = api_tests.get("success", False)
         targets_met = api_tests.get("targets_met", False)
@@ -336,8 +338,11 @@ def print_validation_summary(results: Dict[str, Any]):
                     target_status = (
                         "PASS" if result.get("meets_target", False) else "FAIL"
                     )
-print(
-                        f"  {target_status} {result['description']}: {result.get('response_time_ms', 0):.1f}ms"
+                    logger.info(
+                        "  %s %s: %.1fms",
+                        target_status,
+                        result["description"],
+                        result.get("response_time_ms", 0.0),
                     )
                 else:
                     logger.error(f"  FAIL {result['description']}: ERROR")
@@ -345,15 +350,21 @@ print(
     # Load Test Results
     load_test = results.get("load_test_results", {})
     if load_test.get("skipped"):
-        logger.info(f"\nLoad Test: SKIPPED ({load_test.get('reason', 'Unknown reason')})")
+        logger.info(
+            f"\nLoad Test: SKIPPED ({load_test.get('reason', 'Unknown reason')})"
+        )
     else:
         targets = load_test.get("meets_targets", {})
         load_status = "PASS" if all(targets.values()) else "FAIL"
         logger.info(f"\nLoad Test: {load_status}")
 
         if "avg_response_time_ms" in load_test:
-            logger.info(f"  Average Response Time: {load_test['avg_response_time_ms']:.1f}ms")
-            logger.info(f"  P95 Response Time: {load_test['p95_response_time_ms']:.1f}ms")
+            logger.info(
+                f"  Average Response Time: {load_test['avg_response_time_ms']:.1f}ms"
+            )
+            logger.info(
+                f"  P95 Response Time: {load_test['p95_response_time_ms']:.1f}ms"
+            )
             logger.info(f"  Throughput: {load_test['throughput_rps']:.1f} RPS")
             logger.error(f"  Error Rate: {load_test['error_rate']:.1f}%")
 

@@ -7,6 +7,7 @@ Simplified test suite validating core interaction engine functionality.
 
 import asyncio
 import logging
+
 import pytest
 
 # Configure logging

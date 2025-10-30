@@ -12,7 +12,7 @@ Part of Wave 6.2 PersonaAgent Decomposition Strategy.
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
     from src.agents.persona_core import PersonaCore

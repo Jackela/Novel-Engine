@@ -22,6 +22,10 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from fastapi import APIRouter, HTTPException, Path, Query
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, field_validator
+
 # World Context CQRS Imports
 from contexts.world.application.commands.world_commands import (
     ApplyWorldDelta,
@@ -44,13 +48,11 @@ from contexts.world.application.queries.world_queries import (
 )
 from contexts.world.domain.aggregates.world_state import EntityType
 from contexts.world.domain.value_objects.coordinates import Coordinates
-from fastapi import APIRouter, HTTPException, Path, Query
-from pydantic import BaseModel, Field, field_validator
 
 logger = logging.getLogger(__name__)
 
 # Create FastAPI router for World context
-router = APIRouter(prefix="/worlds", tags=["worlds"])
+router = APIRouter(prefix="", tags=["worlds"])
 
 # ==================== REQUEST/RESPONSE MODELS ====================
 
@@ -477,6 +479,32 @@ async def get_world_summary(
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 
+@router.get(
+    "/{world_id}/history",
+    response_model=Dict[str, Any],
+    responses={
+        501: {
+            "description": "World history retrieval not yet implemented",
+            "model": Dict[str, Any],
+        }
+    },
+)
+async def get_world_history(world_id: str) -> JSONResponse:
+    """
+    Placeholder endpoint for retrieving historical world state deltas.
+
+    Returns HTTP 501 until a full history service is implemented.
+    """
+    logger.info("World history request received for world_id=%s", world_id)
+    return JSONResponse(
+        status_code=501,
+        content={
+            "detail": "World history retrieval is not yet implemented.",
+            "world_id": world_id,
+        },
+    )
+
+
 @router.get("/{world_id}/entities", response_model=EntitiesInAreaResponse)
 async def get_entities_in_area(
     world_id: str = Path(..., description="ID of the world to query"),
@@ -573,6 +601,32 @@ async def get_entities_by_type(
     except Exception as e:
         logger.error(f"Unexpected error in entities by type query: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
+
+
+@router.get(
+    "/{world_id}/validate",
+    response_model=Dict[str, Any],
+    responses={
+        501: {
+            "description": "World validation not yet implemented",
+            "model": Dict[str, Any],
+        }
+    },
+)
+async def validate_world_state(world_id: str) -> JSONResponse:
+    """
+    Placeholder endpoint for validating world state consistency.
+
+    Returns HTTP 501 until validation routines are implemented.
+    """
+    logger.info("World validation requested for world_id=%s", world_id)
+    return JSONResponse(
+        status_code=501,
+        content={
+            "detail": "World validation is not yet implemented.",
+            "world_id": world_id,
+        },
+    )
 
 
 @router.get("/search", response_model=SearchWorldsResponse)

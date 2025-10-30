@@ -9,6 +9,7 @@ and knowledge management business logic in the Subjective Context.
 from datetime import datetime, timedelta
 
 import pytest
+
 from contexts.subjective.domain.value_objects.knowledge_level import (
     CertaintyLevel,
     KnowledgeBase,

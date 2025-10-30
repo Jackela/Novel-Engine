@@ -165,9 +165,7 @@ class TestAPIServerEndpoints:
         ):
             with patch("api_server.EventBus"), patch(
                 "api_server.CharacterFactory"
-            ) as mock_factory, patch(
-                "api_server.DirectorAgent"
-            ), patch(
+            ) as mock_factory, patch("api_server.DirectorAgent"), patch(
                 "api_server.ChroniclerAgent"
             ) as mock_chronicler:
 
@@ -425,9 +423,7 @@ class TestAPIServerEndpoints:
         ):
             with patch("api_server.EventBus"), patch(
                 "api_server.CharacterFactory"
-            ) as mock_factory, patch(
-                "api_server.DirectorAgent"
-            ), patch(
+            ) as mock_factory, patch("api_server.DirectorAgent"), patch(
                 "api_server.ChroniclerAgent"
             ) as mock_chronicler:
 

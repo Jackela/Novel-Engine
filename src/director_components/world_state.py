@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-
 class StateChangeType(Enum):
     """Types of world state changes."""
 

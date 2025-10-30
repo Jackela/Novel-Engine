@@ -20,20 +20,22 @@ logger = logging.getLogger(__name__)
 # Import modular components for testing
 try:
     # Persona Agent Modular Components
-    from src.agents.persona_agent.decision_engine.decision_processor import (
-        DecisionProcessor,
+    from src.agents.persona_agent.core.character_data_manager import (
+        CharacterDataManager,
     )
     from src.agents.persona_agent.core.types import (
         CharacterData,
         DecisionContext,
         PersonaAgentConfig,
     )
-    from src.agents.persona_agent.core.character_data_manager import (
-        CharacterDataManager,
+    from src.agents.persona_agent.decision_engine.decision_processor import (
+        DecisionProcessor,
     )
     from src.agents.persona_agent.llm_integration.llm_client import LLMClient
-    from src.agents.persona_agent.world_interpretation.memory_manager import MemoryManager
     from src.agents.persona_agent.persona_agent_modular import PersonaAgent
+    from src.agents.persona_agent.world_interpretation.memory_manager import (
+        MemoryManager,
+    )
     from src.bridges.multi_agent_bridge.coordination.dialogue_manager import (
         DialogueManager,
     )
@@ -231,7 +233,7 @@ class TestInteractionEngineModularComponents:
         """Test InteractionEngine modular initialization."""
         if not REAL_COMPONENTS:
             pytest.skip("Real components not available")
-            
+
         config = InteractionEngineConfig(
             max_concurrent_interactions=5,
             enable_parallel_processing=True,
@@ -296,7 +298,7 @@ class TestInteractionEngineModularComponents:
         """Test complete interaction processing pipeline."""
         if not REAL_COMPONENTS:
             pytest.skip("Real components not available")
-            
+
         config = InteractionEngineConfig(
             enable_parallel_processing=True, performance_monitoring=True
         )
@@ -417,7 +419,7 @@ class TestModularComponentIntegration:
         """Test PersonaAgent integration with InteractionEngine."""
         if not REAL_COMPONENTS:
             pytest.skip("Real components not available")
-            
+
         # Create persona agent
         persona_config = PersonaAgentConfig(agent_id="integration_test_001")
         PersonaAgent(
@@ -473,7 +475,7 @@ class TestModularComponentPerformance:
         """Test PersonaAgent decision-making performance."""
         if not REAL_COMPONENTS:
             pytest.skip("Real components not available")
-            
+
         config = PersonaAgentConfig(agent_id="perf_test_001")
         agent = PersonaAgent(
             agent_id="perf_test_001", character_directory=None, config=config
@@ -505,7 +507,7 @@ class TestModularComponentPerformance:
         """Test InteractionEngine processing throughput."""
         if not REAL_COMPONENTS:
             pytest.skip("Real components not available")
-            
+
         config = InteractionEngineConfig(
             max_concurrent_interactions=5, enable_parallel_processing=True
         )

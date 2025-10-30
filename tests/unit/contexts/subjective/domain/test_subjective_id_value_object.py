@@ -9,6 +9,7 @@ and identity management in the Subjective Context domain layer.
 from uuid import UUID, uuid4
 
 import pytest
+
 from contexts.subjective.domain.value_objects.subjective_id import SubjectiveId
 
 

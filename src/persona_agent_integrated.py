@@ -37,11 +37,11 @@ except ImportError:
 
 
 from src.character_interpreter import CharacterInterpreter
-from src.decision_engine import DecisionEngine
-from src.memory_interface import MemoryInterface
 
 # Import extracted components
 from src.context_integrator import ContextIntegrator
+from src.decision_engine import DecisionEngine
+from src.memory_interface import MemoryInterface
 from src.persona_agent_core import PersonaAgentCore
 
 # Configure logging
@@ -51,7 +51,6 @@ try:
     from contexts.character.application.services.context_loader import (
         ContextLoaderService,
     )
-
     from src.enhanced_decision_engine import EnhancedDecisionEngine
 
     CONTEXT_LOADER_AVAILABLE = True

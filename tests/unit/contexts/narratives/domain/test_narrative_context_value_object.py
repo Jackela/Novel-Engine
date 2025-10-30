@@ -12,6 +12,7 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+
 from contexts.narratives.domain.value_objects.narrative_context import (
     ContextScope,
     ContextType,

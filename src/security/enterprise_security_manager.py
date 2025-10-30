@@ -24,6 +24,7 @@ import time
 
 try:
     import aioredis
+
     AIOREDIS_AVAILABLE = True
 except ImportError:
     AIOREDIS_AVAILABLE = False
@@ -31,6 +32,7 @@ except ImportError:
 
 try:
     import aiosqlite
+
     AIOSQLITE_AVAILABLE = True
 except ImportError:
     AIOSQLITE_AVAILABLE = False

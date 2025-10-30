@@ -6,11 +6,11 @@ Central domain entity managing complete turn lifecycle, saga coordination,
 and pipeline orchestration across all Novel Engine contexts.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
 from ..value_objects import (
@@ -122,7 +122,9 @@ class Turn:
     # Saga coordination
     compensation_actions: List[CompensationAction] = field(default_factory=list)
     saga_state: Dict[str, Any] = field(default_factory=dict)
-    rollback_snapshots: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    rollback_snapshots: Dict[str, Union[Dict[str, Any], List[Any]]] = field(
+        default_factory=dict
+    )
 
     # Results and events
     pipeline_result: Optional[PipelineResult] = None
@@ -137,7 +139,20 @@ class Turn:
     # Versioning
     version: int = 1
 
-    def __post_init__(self):
+    @classmethod
+    def create(
+        cls,
+        turn_id: TurnId,
+        configuration: TurnConfiguration,
+        participants: List[str],
+    ) -> "Turn":
+        """Factory helper to instantiate turn aggregates for orchestration tests."""
+        updated_config = configuration
+        if getattr(configuration, "participants", None) != participants:
+            updated_config = replace(configuration, participants=participants)
+        return cls(turn_id=turn_id, configuration=updated_config)
+
+    def __post_init__(self) -> None:
         """Initialize turn aggregate and validate business rules."""
         # Initialize phase statuses
         if not self.phase_statuses:
@@ -287,8 +302,8 @@ class Turn:
         self,
         phase_type: PhaseType,
         events_processed: int = 0,
-        events_generated: List[UUID] = None,
-        artifacts_created: List[str] = None,
+        events_generated: Optional[List[UUID]] = None,
+        artifacts_created: Optional[List[str]] = None,
         performance_metrics: Optional[Dict[str, float]] = None,
         ai_usage: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
@@ -592,7 +607,8 @@ class Turn:
 
         # Transition to completed state
         self.state = TurnState.COMPLETED
-        self.completed_at = datetime.now()
+        completed_at = datetime.now()
+        self.completed_at = completed_at
 
         # Record compensation completion
         self._record_audit_event(
@@ -629,7 +645,8 @@ class Turn:
         """Complete turn successfully with all phases completed."""
         # Transition to completed state
         self.state = TurnState.COMPLETED
-        self.completed_at = datetime.now()
+        completed_at = datetime.now()
+        self.completed_at = completed_at
 
         # Create successful pipeline result
         phase_results = []
@@ -644,7 +661,9 @@ class Turn:
             )
             phase_results.append(phase_result)
 
-        total_execution_time = self.completed_at - self.started_at
+        if self.started_at is None:
+            raise ValueError("Cannot complete turn without a start timestamp.")
+        total_execution_time = completed_at - self.started_at
 
         self.pipeline_result = PipelineResult.create_successful(
             turn_id=self.turn_id.turn_uuid,
@@ -688,7 +707,8 @@ class Turn:
         """Permanently fail turn without compensation."""
         # Transition to failed state
         self.state = TurnState.FAILED
-        self.completed_at = datetime.now()
+        completed_at = datetime.now()
+        self.completed_at = completed_at
 
         # Create failed pipeline result
         phase_results = []
@@ -707,7 +727,7 @@ class Turn:
             phase_results.append(phase_result)
 
         total_execution_time = (
-            self.completed_at - self.started_at
+            completed_at - self.started_at
             if self.started_at
             else timedelta(seconds=0)
         )
@@ -845,6 +865,10 @@ class Turn:
                 )
             phase_results.append(phase_result)
 
+        if self.started_at is None:
+            raise ValueError("Cannot compute compensation metrics without start time.")
+        if self.completed_at is None or self.started_at is None:
+            raise ValueError("Cannot summarize compensation without timing data.")
         total_execution_time = self.completed_at - self.started_at
 
         saga_actions = [
@@ -948,7 +972,7 @@ class Turn:
     def get_completion_percentage(self) -> float:
         """Get overall completion percentage."""
         if self.pipeline_result:
-            return self.pipeline_result.get_completion_percentage()
+            return float(self.pipeline_result.get_completion_percentage())
 
         completed_phases = len(self.get_completed_phases())
         total_phases = len(PhaseType.get_all_phases_ordered())

@@ -8,6 +8,7 @@ and all business logic methods in the Subjective Context domain layer.
 
 
 import pytest
+
 from contexts.subjective.domain.value_objects.awareness import (
     AlertnessLevel,
     AttentionFocus,

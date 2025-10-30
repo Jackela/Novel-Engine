@@ -13,14 +13,14 @@ import logging
 import random
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 # Import shared types
 from src.core.types.shared_types import ActionPriority, CharacterAction
 
 if TYPE_CHECKING:
-    from src.agents.persona_core import PersonaCore
     from src.agents.context_manager import CharacterContextManager
+    from src.agents.persona_core import PersonaCore
 
 logger = logging.getLogger(__name__)
 

@@ -7,6 +7,15 @@ Backward-compatible exports maintaining original API.
 Milestone 2 Implementation: CausalGraph + Multi-Agent Negotiation + Narrative Coherence
 """
 
+# Export main classes
+from .causal_graph import CausalGraph
+from .emergent_narrative import (
+    EmergentNarrativeEngine,
+    create_emergent_narrative_engine,
+)
+from .narrative_coherence import NarrativeCoherenceEngine
+from .negotiation import AgentNegotiationEngine
+
 # Export all types
 from .types import (
     CausalEdge,
@@ -18,12 +27,6 @@ from .types import (
     NegotiationSession,
     NegotiationStatus,
 )
-
-# Export main classes
-from .causal_graph import CausalGraph
-from .emergent_narrative import EmergentNarrativeEngine, create_emergent_narrative_engine
-from .narrative_coherence import NarrativeCoherenceEngine
-from .negotiation import AgentNegotiationEngine
 
 __all__ = [
     # Types

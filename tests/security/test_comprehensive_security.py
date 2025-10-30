@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import httpx
+from httpx import ASGITransport
 import jwt
 import pytest
 import pytest_asyncio
@@ -71,7 +72,8 @@ class SecurityTestSuite:
         await self._create_test_users()
 
         # Setup HTTP client
-        self.client = httpx.AsyncClient(app=self.app, base_url="http://testserver")
+        transport = ASGITransport(app=self.app)
+        self.client = httpx.AsyncClient(transport=transport, base_url="http://testserver")
 
     async def _create_test_users(self):
         """Create test users for different roles"""
@@ -559,7 +561,6 @@ class TestSecurityPerformance:
 
         # Test with normal input
         normal_input = "This is normal text content" * 10
-
 
         start_time = time.time()
 

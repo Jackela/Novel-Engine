@@ -18,9 +18,9 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 try:  # Prefer the new src layout when available
     from src.contexts.narratives.domain.value_objects.plot_point import PlotPointType
 except ModuleNotFoundError:  # pragma: no cover - fallback for legacy layout
-    from contexts.narratives.domain.value_objects.plot_point import (
+    from contexts.narratives.domain.value_objects.plot_point import (  # type: ignore[import-not-found]
         PlotPointType,
-    )  # type: ignore[import-not-found]
+    )
 
 
 class StoryArcPhase(str, Enum):
@@ -87,6 +87,7 @@ _STORY_ARC_PACING_MAP: Dict[StoryArcPhase, str] = {
     StoryArcPhase.FALLING_ACTION: "moderate",
     StoryArcPhase.RESOLUTION: "slow",
 }
+
 
 class StoryArcState(BaseModel):
     """
@@ -177,7 +178,9 @@ class StoryArcState(BaseModel):
         Determine whether the current phase is ready to transition.
         """
 
-        return self.phase_progress >= Decimal("0.95") and self.ready_for_phase_transition
+        return (
+            self.phase_progress >= Decimal("0.95") and self.ready_for_phase_transition
+        )
 
     @property
     def phase_position_description(self) -> str:

@@ -12,15 +12,11 @@ import time
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 import pytest
-
 from enhanced_multi_agent_bridge import EnhancedMultiAgentBridge
 
 from src.bridge.types import RequestPriority
-
-
 
 
 class TestBridgeConfiguration:

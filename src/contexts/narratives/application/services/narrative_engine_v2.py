@@ -91,6 +91,7 @@ class NarrativeEngineV2:
             Updated StoryArcState reflecting the turn's narrative impact
         """
         from decimal import Decimal
+
         from ...domain.value_objects import StoryArcState
 
         current_state = self._story_arc_manager.current_state
