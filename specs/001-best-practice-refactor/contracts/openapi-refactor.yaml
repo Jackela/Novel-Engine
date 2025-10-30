@@ -1,0 +1,370 @@
+openapi: 3.1.0
+info:
+  title: StoryForge Experience API (Refactor Alignment)
+  version: 2025-10-29-draft
+  description: >
+    Contract adjustments to align existing REST endpoints with constitution
+    mandates (idempotency, rate limiting, RFC 7807 errors, pagination metadata).
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: https://api.storyforge.ai
+    description: Production
+  - url: https://staging.storyforge.ai
+    description: Staging
+tags:
+  - name: Campaigns
+    description: Manage simulation campaigns
+  - name: Simulations
+    description: Execute campaign turns and retrieve results
+paths:
+  /api/v1/campaigns:
+    get:
+      tags: [Campaigns]
+      summary: List campaigns
+      operationId: listCampaigns
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          description: Paginated list of campaigns
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignListResponse'
+        '304':
+          description: Not Modified when ETag matches
+        '400':
+          $ref: '#/components/responses/ProblemResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+    post:
+      tags: [Campaigns]
+      summary: Create campaign
+      operationId: createCampaign
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CampaignCreateRequest'
+      responses:
+        '201':
+          description: Campaign created
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+            ETag:
+              description: Strong validator for the created campaign resource
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+        '400':
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/simulations:
+    post:
+      tags: [Simulations]
+      summary: Execute simulation turns
+      operationId: runSimulation
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulationRequest'
+      responses:
+        '202':
+          description: Simulation accepted and running asynchronously
+          headers:
+            Location:
+              description: Polling URL for retrieving simulation status/results
+              schema:
+                type: string
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationAccepted'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+        '400':
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/simulations/{simulationId}:
+    get:
+      tags: [Simulations]
+      summary: Retrieve simulation outcome
+      operationId: getSimulation
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/SimulationId'
+      responses:
+        '200':
+          description: Simulation complete
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationResult'
+        '202':
+          description: Simulation still running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationPending'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+        '404':
+          $ref: '#/components/responses/ProblemResponse'
+
+components:
+  parameters:
+    TenantId:
+      name: X-Tenant-ID
+      in: header
+      required: true
+      description: Tenant identifier used to enforce isolation and auditing.
+      schema:
+        type: string
+    Page:
+      name: page
+      in: query
+      required: false
+      description: 1-indexed page number; defaults to 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: page_size
+      in: query
+      required: false
+      description: Number of records per page (max 100).
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Unique key per mutating request to guarantee idempotent processing.
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 64
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      required: false
+      description: Provide an ETag to enable conditional requests.
+      schema:
+        type: string
+    SimulationId:
+      name: simulationId
+      in: path
+      required: true
+      description: Identifier for the requested simulation.
+      schema:
+        type: string
+        format: uuid
+
+  headers:
+    X-RateLimit-Limit:
+      description: Total number of allowed requests in the current window.
+      schema:
+        type: integer
+    X-RateLimit-Remaining:
+      description: Remaining requests in the current window.
+      schema:
+        type: integer
+    X-RateLimit-Reset:
+      description: UNIX epoch seconds when the current rate limit window resets.
+      schema:
+        type: integer
+
+  responses:
+    ProblemResponse:
+      description: RFC 7807 formatted error
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+  schemas:
+    CampaignListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CampaignSummary'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total_pages:
+          type: integer
+        total_items:
+          type: integer
+    CampaignSummary:
+      type: object
+      required: [campaign_id, name, status, created_at]
+      properties:
+        campaign_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, complete, archived]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CampaignCreateRequest:
+      type: object
+      required: [name, participants]
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        participants:
+          type: array
+          minItems: 2
+          maxItems: 10
+          items:
+            type: string
+            description: Persona identifier
+    CampaignResponse:
+      allOf:
+        - $ref: '#/components/schemas/CampaignSummary'
+        - type: object
+          properties:
+            participants:
+              type: array
+              items:
+                type: string
+            turn_limit:
+              type: integer
+            tenant_id:
+              type: string
+    SimulationRequest:
+      type: object
+      required: [campaign_id, turns]
+      properties:
+        campaign_id:
+          type: string
+          format: uuid
+        turns:
+          type: integer
+          minimum: 1
+          maximum: 10
+    SimulationAccepted:
+      type: object
+      properties:
+        simulation_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [accepted, running]
+        estimated_completion_seconds:
+          type: integer
+    SimulationResult:
+      type: object
+      properties:
+        simulation_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [complete]
+        turns_executed:
+          type: integer
+        duration_seconds:
+          type: number
+        story:
+          type: string
+    SimulationPending:
+      type: object
+      properties:
+        simulation_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [accepted, running]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+    ProblemDetail:
+      type: object
+      required: [type, title, status, detail, traceId]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        traceId:
+          type: string
+        violations:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
