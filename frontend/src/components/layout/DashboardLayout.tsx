@@ -7,19 +7,18 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
   position: 'sticky',
   top: 0,
   zIndex: theme.zIndex.appBar,
-  backgroundColor: theme.palette.background.paper,
+  backgroundColor: '#111113',
   color: theme.palette.text.primary,
-  borderBottom: `1px solid ${theme.palette.divider}`,
+  borderBottom: '1px solid #2a2a30',
   boxShadow: 'none',
+  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
 }));
 
 const MainContainer = styled(Container)(({ theme }) => ({
-  maxWidth: '1200px !important',
+  maxWidth: '1400px !important',
   padding: theme.spacing(3),
+  
   [theme.breakpoints.down('md')]: {
-    padding: theme.spacing(2.5),
-  },
-  [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(2),
   },
 }));

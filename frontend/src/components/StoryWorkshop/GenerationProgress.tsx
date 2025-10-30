@@ -14,6 +14,10 @@ import {
   Divider,
   Badge,
   Tooltip,
+  Collapse,
+  IconButton,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Psychology as PsychologyIcon,
@@ -26,6 +30,8 @@ import {
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon,
   SignalWifi4Bar as SignalIcon,
+  ExpandLess as ExpandLessIcon,
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { useWebSocketProgress, ProgressUpdate } from '../../hooks/useWebSocketProgress';
 
@@ -86,6 +92,10 @@ export default function GenerationProgress({
   generationId,
   enableRealTimeUpdates = true,
 }: Props) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [showMetrics, setShowMetrics] = useState(true);
+  
   // State for real-time updates
   const [realtimeData, setRealtimeData] = useState<{
     progress: number;
@@ -357,7 +367,6 @@ export default function GenerationProgress({
             );
           })}
         </List>
-        </Collapse>
       </Paper>
 
       {/* Performance Metrics - Collapsible on Mobile */}

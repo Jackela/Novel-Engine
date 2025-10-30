@@ -8,9 +8,11 @@ import {
   Grid, 
   CircularProgress,
   useTheme,
-  useMediaQuery 
+  useMediaQuery,
+  Fade, 
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Speed as PerformanceIcon,
   Memory as MemoryIcon,
@@ -20,12 +22,20 @@ import {
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
 
-const MetricCard = styled(Box)(({ theme }) => ({
+const MetricCard = styled(motion.div)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  borderRadius: theme.spacing(1),
-  backgroundColor: theme.palette.action.hover,
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: '#111113',
+  border: '1px solid #2a2a30',
+  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    borderColor: '#6366f1',
+    backgroundColor: '#1a1a1d',
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 8px rgba(99, 102, 241, 0.2)',
+  },
   
   // Mobile: more compact layout
   [theme.breakpoints.down('md')]: {
@@ -40,21 +50,40 @@ const MetricCard = styled(Box)(({ theme }) => ({
   },
 }));
 
-const StatusIndicator = styled(Box)<{ status: 'healthy' | 'warning' | 'error' }>(
+const StatusIndicator = styled(motion.div)<{ status: 'healthy' | 'warning' | 'error' }>(
   ({ theme, status }) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(0.5),
+    padding: theme.spacing(0.5, 1),
+    borderRadius: theme.shape.borderRadius / 2,
+    backgroundColor: status === 'healthy' 
+      ? 'rgba(16, 185, 129, 0.1)' 
+      : status === 'warning' 
+      ? 'rgba(245, 158, 11, 0.1)' 
+      : 'rgba(239, 68, 68, 0.1)',
+    border: `1px solid ${status === 'healthy' ? '#10b981' : status === 'warning' ? '#f59e0b' : '#ef4444'}`,
     '& .MuiSvgIcon-root': {
       fontSize: '12px',
-      color: status === 'healthy' 
-        ? theme.palette.success.main 
-        : status === 'warning' 
-        ? theme.palette.warning.main 
-        : theme.palette.error.main,
+      color: status === 'healthy' ? '#10b981' : status === 'warning' ? '#f59e0b' : '#ef4444',
+      animation: status !== 'healthy' ? 'pulse 2s infinite' : 'none',
+    },
+    '@keyframes pulse': {
+      '0%, 100%': { opacity: 1 },
+      '50%': { opacity: 0.6 },
     },
   })
 );
+
+const AnimatedProgress = styled(motion(LinearProgress))(({ theme }) => ({
+  height: 6,
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: '#2a2a30',
+  '& .MuiLinearProgress-bar': {
+    borderRadius: theme.shape.borderRadius,
+    transition: 'transform 0.4s ease',
+  },
+}));
 
 interface PerformanceData {
   responseTime: number;
@@ -180,12 +209,23 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                   System {systemStatus.overall}
                 </Typography>
               </StatusIndicator>
-              <Chip
-                label={`${metrics.activeUsers} users`}
-                size="small"
-                variant="outlined"
-                color="primary"
-              />
+              <motion.div
+                key={metrics.activeUsers}
+                initial={{ scale: 1.1 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Chip
+                  label={`${metrics.activeUsers} users`}
+                  size="small"
+                  sx={{ 
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    borderColor: '#6366f1',
+                    color: '#b0b0b8',
+                    fontWeight: 500,
+                  }}
+                />
+              </motion.div>
             </Box>
 
             {/* Essential Metrics Row */}
@@ -254,12 +294,23 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                   System {systemStatus.overall}
                 </Typography>
               </StatusIndicator>
-              <Chip
-                label={`${metrics.activeUsers} users`}
-                size="small"
-                variant="outlined"
-                color="primary"
-              />
+              <motion.div
+                key={metrics.activeUsers}
+                initial={{ scale: 1.1 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Chip
+                  label={`${metrics.activeUsers} users`}
+                  size="small"
+                  sx={{ 
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    borderColor: '#6366f1',
+                    color: '#b0b0b8',
+                    fontWeight: 500,
+                  }}
+                />
+              </motion.div>
             </Box>
 
             {/* Key Metrics Grid */}

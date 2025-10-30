@@ -101,9 +101,9 @@ const Navbar: React.FC = () => {
       position="sticky" 
       elevation={0}
       sx={{ 
-        backgroundColor: 'background.paper',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
+        backgroundColor: '#111113',
+        borderBottom: '1px solid #2a2a30',
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
       <Toolbar sx={{ justifyContent: 'space-between' }}>
@@ -114,13 +114,14 @@ const Navbar: React.FC = () => {
               width: 40,
               height: 40,
               borderRadius: 2,
-              background: 'linear-gradient(135deg, #1976d2, #dc004e)',
+              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
-              fontWeight: 'bold',
+              fontWeight: 700,
               fontSize: '1.2rem',
+              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
             }}
           >
             NE
@@ -150,10 +151,12 @@ const Navbar: React.FC = () => {
                 sx={{
                   minWidth: 120,
                   fontWeight: isActive ? 600 : 400,
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
+                    transform: isActive ? 'none' : 'translateY(-2px)',
                     backgroundColor: isActive 
                       ? undefined 
-                      : `${item.color === 'primary' ? '#1976d2' : '#dc004e'}20`,
+                      : 'rgba(99, 102, 241, 0.1)',
                   },
                 }}
               >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Box, 
   Typography, 
@@ -6,14 +6,18 @@ import {
   Stack, 
   Avatar,
   useTheme,
-  useMediaQuery 
+  useMediaQuery,
+  Fade,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { motion } from 'framer-motion';
 import {
   PlayArrow as EventIcon,
   TrendingFlat as ConnectionIcon,
   AccountTree as BranchIcon,
-  CheckCircle as CompleteIcon
+  CheckCircle as CompleteIcon,
+  FiberManualRecord as ActiveIcon,
+  RadioButtonUnchecked as PendingIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
 
@@ -21,66 +25,100 @@ const FlowContainer = styled(Box)(({ theme }) => ({
   width: '100%',
   height: '100%',
   position: 'relative',
-  padding: theme.spacing(1),
-  overflowX: 'auto',
-  overflowY: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
   
-  // Mobile: vertical flow
   [theme.breakpoints.down('md')]: {
-    overflowX: 'hidden',
-    overflowY: 'auto',
     padding: theme.spacing(0.5),
   },
 }));
 
-const EventNode = styled(Box)<{ status: 'completed' | 'active' | 'pending' }>(
-  ({ theme, status }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    padding: theme.spacing(1),
-    borderRadius: theme.spacing(1),
-    backgroundColor: status === 'active' 
-      ? theme.palette.primary.main + '20'
-      : theme.palette.action.hover,
-    border: status === 'active'
-      ? `2px solid ${theme.palette.primary.main}`
-      : `1px solid ${theme.palette.divider}`,
-    minWidth: '180px',
-    margin: theme.spacing(0.5),
-    
-    [theme.breakpoints.down('md')]: {
-      minWidth: 'auto',
-      width: '100%',
-      padding: theme.spacing(0.75),
-    },
-  })
-);
-
-const FlowConnection = styled(Box)(({ theme }) => ({
+const FlowTrack = styled(Box)(({ theme }) => ({
   display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: theme.spacing(0.5),
+  flex: 1,
   
+  // Desktop: horizontal flow
+  [theme.breakpoints.up('md')]: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflowX: 'auto',
+    overflowY: 'hidden',
+    gap: theme.spacing(1),
+    '&::-webkit-scrollbar': {
+      height: '4px',
+    },
+    '&::-webkit-scrollbar-track': {
+      backgroundColor: 'transparent',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: theme.palette.divider,
+      borderRadius: '2px',
+    },
+  },
+  
+  // Mobile: vertical flow
   [theme.breakpoints.down('md')]: {
-    transform: 'rotate(90deg)',
-    height: '20px',
+    flexDirection: 'column',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    gap: theme.spacing(0.5),
   },
 }));
 
-const MobileFlowColumn = styled(Box)(({ theme }) => ({
+const EventNode = styled(motion(Box))<{ status: string }>(({ theme, status }) => ({
   display: 'flex',
-  flexDirection: 'column',
   alignItems: 'center',
-  width: '100%',
+  padding: theme.spacing(1),
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: status === 'active' ? 'rgba(99, 102, 241, 0.15)' : '#111113',
+  border: status === 'active'
+    ? `2px solid #6366f1`
+    : `1px solid #2a2a30`,
+  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    backgroundColor: status === 'active' ? 'rgba(99, 102, 241, 0.2)' : '#1a1a1d',
+    borderColor: status === 'completed' ? '#10b981' : '#6366f1',
+    transform: 'translateY(-2px)',
+    boxShadow: `0 4px 8px ${
+      status === 'completed' ? 'rgba(16, 185, 129, 0.2)' : 
+      status === 'active' ? 'rgba(99, 102, 241, 0.3)' : 
+      'rgba(99, 102, 241, 0.1)'
+    }`,
+  },
+  
+  // Desktop: vertical layout
+  [theme.breakpoints.up('md')]: {
+    flexDirection: 'column',
+    minWidth: '140px',
+    maxWidth: '160px',
+    flexShrink: 0,
+  },
+  
+  // Mobile: horizontal layout
+  [theme.breakpoints.down('md')]: {
+    flexDirection: 'row',
+    width: '100%',
+  },
 }));
 
-const DesktopFlowRow = styled(Box)(({ theme }) => ({
+const EventConnector = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'flex-start',
-  flexWrap: 'nowrap',
-  minWidth: 'max-content',
+  justifyContent: 'center',
+  color: '#808088',
+  
+  // Desktop: horizontal connector
+  [theme.breakpoints.up('md')]: {
+    padding: theme.spacing(0, 0.5),
+    flexShrink: 0,
+  },
+  
+  // Mobile: vertical connector
+  [theme.breakpoints.down('md')]: {
+    width: '100%',
+    height: '24px',
+    transform: 'rotate(90deg)',
+  },
 }));
 
 interface EventFlowNode {
@@ -89,7 +127,7 @@ interface EventFlowNode {
   description: string;
   status: 'completed' | 'active' | 'pending';
   type: 'story' | 'character' | 'system' | 'branch';
-  connections: string[];
+  connections: number;
 }
 
 interface EventCascadeFlowProps {
@@ -108,7 +146,7 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
       description: 'Prophecy discovery triggers quest',
       status: 'completed',
       type: 'story',
-      connections: ['2'],
+      connections: 1,
     },
     {
       id: '2', 
@@ -116,7 +154,7 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
       description: 'Aldric provides crucial information',
       status: 'active',
       type: 'character',
-      connections: ['3', '4'],
+      connections: 2,
     },
     {
       id: '3',
@@ -124,7 +162,7 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
       description: 'Relationship development arc',
       status: 'active',
       type: 'character',
-      connections: ['5'],
+      connections: 1,
     },
     {
       id: '4',
@@ -132,7 +170,7 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
       description: 'New location discovered',
       status: 'pending',
       type: 'story',
-      connections: ['5'],
+      connections: 1,
     },
     {
       id: '5',
@@ -140,35 +178,39 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
       description: 'Climax event pending',
       status: 'pending',
       type: 'story',
-      connections: [],
+      connections: 0,
     },
   ]);
 
   const getEventIcon = (type: EventFlowNode['type'], status: EventFlowNode['status']) => {
-    if (status === 'completed') return <CompleteIcon fontSize="small" />;
+    const iconProps = { fontSize: 'small' as const };
+    
+    if (status === 'completed') return <CompleteIcon {...iconProps} />;
+    if (status === 'active') return <ActiveIcon {...iconProps} />;
     
     switch (type) {
-      case 'story':
-        return <EventIcon fontSize="small" />;
-      case 'character':
-        return <EventIcon fontSize="small" />;
       case 'branch':
-        return <BranchIcon fontSize="small" />;
+        return <BranchIcon {...iconProps} />;
       default:
-        return <EventIcon fontSize="small" />;
+        return <PendingIcon {...iconProps} />;
     }
   };
 
   const getStatusColor = (status: EventFlowNode['status']) => {
     switch (status) {
       case 'completed':
-        return theme.palette.success.main;
+        return '#10b981';
       case 'active':
-        return theme.palette.primary.main;
+        return '#6366f1';
       default:
-        return theme.palette.text.secondary;
+        return '#808088';
     }
   };
+
+  const totalEvents = flowNodes.length;
+  const activeCount = flowNodes.filter(n => n.status === 'active').length;
+  const completedCount = flowNodes.filter(n => n.status === 'completed').length;
+  const totalDependencies = flowNodes.reduce((sum, n) => sum + n.connections, 0);
 
   return (
     <GridTile
@@ -182,126 +224,158 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
       error={error}
     >
       <FlowContainer>
-        {isMobile ? (
-          // Mobile: Vertical flow visualization
-          <MobileFlowColumn>
-            <Stack spacing={1} sx={{ width: '100%', pb: 1 }}>
-              <Stack direction="row" spacing={1} justifyContent="center">
-                <Chip label="5 Events" size="small" variant="outlined" />
-                <Chip label="6 Dependencies" size="small" variant="outlined" />
-              </Stack>
-            </Stack>
-            
-            <Box sx={{ width: '100%', maxHeight: '200px', overflowY: 'auto' }}>
-              {flowNodes.map((node, index) => (
-                <Box key={node.id}>
-                  <EventNode status={node.status}>
-                    <Avatar
-                      sx={{
-                        bgcolor: 'transparent',
-                        color: getStatusColor(node.status),
-                        width: 32,
-                        height: 32,
-                        mr: 1,
-                      }}
-                    >
-                      {getEventIcon(node.type, node.status)}
-                    </Avatar>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="caption" fontWeight={600} sx={{ lineHeight: 1.2 }}>
-                        {node.title}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
-                        {node.description}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label={node.status}
-                      size="small"
-                      variant="outlined"
+        {/* Stats Header */}
+        <Stack 
+          direction="row" 
+          spacing={1} 
+          justifyContent="center" 
+          sx={{ mb: 1.5, flexShrink: 0, flexWrap: 'wrap' }}
+        >
+          <Chip 
+            label={`${totalEvents} Events`} 
+            size="small" 
+            sx={{
+              backgroundColor: '#111113',
+              borderColor: '#2a2a30',
+              color: '#b0b0b8',
+              fontSize: '0.7rem',
+              height: '22px',
+            }}
+          />
+          <Chip 
+            label={`${totalDependencies} Links`} 
+            size="small" 
+            sx={{
+              backgroundColor: '#111113',
+              borderColor: '#2a2a30',
+              color: '#b0b0b8',
+              fontSize: '0.7rem',
+              height: '22px',
+            }}
+          />
+          <Chip 
+            label={`${activeCount} Active`} 
+            size="small" 
+            sx={{
+              backgroundColor: 'rgba(99, 102, 241, 0.2)',
+              borderColor: '#6366f1',
+              color: '#a5b4fc',
+              fontSize: '0.7rem',
+              height: '22px',
+            }}
+          />
+          {!isMobile && (
+            <Chip 
+              label={`${completedCount} Done`} 
+              size="small" 
+              sx={{
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderColor: '#10b981',
+                color: '#6ee7b7',
+                fontSize: '0.7rem',
+                height: '22px',
+              }}
+            />
+          )}
+        </Stack>
+
+        {/* Event Flow */}
+        <FlowTrack>
+          {flowNodes.map((node, index) => (
+            <React.Fragment key={node.id}>
+              <Fade in timeout={300 + index * 100}>
+                <EventNode
+                  status={node.status}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <Avatar
+                    sx={{
+                      bgcolor: 'transparent',
+                      color: getStatusColor(node.status),
+                      width: isMobile ? 32 : 36,
+                      height: isMobile ? 32 : 36,
+                      mr: isMobile ? 1.5 : 0,
+                      mb: isMobile ? 0 : 0.5,
+                    }}
+                  >
+                    {getEventIcon(node.type, node.status)}
+                  </Avatar>
+
+                  <Box sx={{ flex: 1, textAlign: isMobile ? 'left' : 'center' }}>
+                    <Typography 
+                      variant={isMobile ? 'caption' : 'body2'} 
+                      fontWeight={600} 
                       sx={{ 
-                        height: '20px', 
-                        fontSize: '0.6rem',
-                        color: getStatusColor(node.status),
-                        borderColor: getStatusColor(node.status)
-                      }}
-                    />
-                  </EventNode>
-                  
-                  {index < flowNodes.length - 1 && node.connections.length > 0 && (
-                    <FlowConnection>
-                      <ConnectionIcon 
-                        fontSize="small" 
-                        sx={{ color: theme.palette.text.secondary, transform: 'rotate(90deg)' }}
-                      />
-                    </FlowConnection>
-                  )}
-                </Box>
-              ))}
-            </Box>
-          </MobileFlowColumn>
-        ) : (
-          // Desktop: Horizontal flow visualization
-          <Box sx={{ height: '100%' }}>
-            <Stack spacing={1} sx={{ mb: 2 }}>
-              <Stack direction="row" spacing={1} justifyContent="center">
-                <Chip label="5 Events" size="small" variant="outlined" />
-                <Chip label="6 Dependencies" size="small" variant="outlined" />
-                <Chip label="2 Active" size="small" color="primary" variant="outlined" />
-              </Stack>
-            </Stack>
-            
-            <DesktopFlowRow>
-              {flowNodes.map((node, index) => (
-                <React.Fragment key={node.id}>
-                  <EventNode status={node.status}>
-                    <Avatar
-                      sx={{
-                        bgcolor: 'transparent',
-                        color: getStatusColor(node.status),
-                        width: 36,
-                        height: 36,
-                        mr: 1.5,
+                        color: '#f0f0f2',
+                        lineHeight: 1.3,
+                        mb: 0.25,
                       }}
                     >
-                      {getEventIcon(node.type, node.status)}
-                    </Avatar>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        {node.title}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {node.description}
-                      </Typography>
-                      <Box sx={{ mt: 0.5 }}>
+                      {node.title}
+                    </Typography>
+                    
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary" 
+                      sx={{ 
+                        display: 'block',
+                        fontSize: '0.7rem',
+                        lineHeight: 1.3,
+                        mb: 0.5,
+                      }}
+                    >
+                      {isMobile && node.description.length > 30 
+                        ? `${node.description.substring(0, 30)}...`
+                        : node.description
+                      }
+                    </Typography>
+
+                    <Stack 
+                      direction="row" 
+                      spacing={0.5} 
+                      alignItems="center"
+                      justifyContent={isMobile ? 'flex-start' : 'center'}
+                    >
+                      <Chip
+                        label={node.status}
+                        size="small"
+                        sx={{
+                          height: '16px',
+                          fontSize: '0.6rem',
+                          backgroundColor: `${getStatusColor(node.status)}20`,
+                          color: getStatusColor(node.status),
+                          borderColor: getStatusColor(node.status),
+                        }}
+                      />
+                      {!isMobile && node.connections > 0 && (
                         <Chip
-                          label={node.status}
+                          label={`${node.connections} link${node.connections > 1 ? 's' : ''}`}
                           size="small"
-                          variant="outlined"
-                          sx={{ 
-                            height: '18px', 
-                            fontSize: '0.65rem',
-                            color: getStatusColor(node.status),
-                            borderColor: getStatusColor(node.status)
+                          sx={{
+                            height: '16px',
+                            fontSize: '0.6rem',
+                            backgroundColor: '#111113',
+                            borderColor: '#2a2a30',
+                            color: '#b0b0b8',
                           }}
                         />
-                      </Box>
-                    </Box>
-                  </EventNode>
-                  
-                  {index < flowNodes.length - 1 && node.connections.length > 0 && (
-                    <FlowConnection>
-                      <ConnectionIcon 
-                        fontSize="small" 
-                        sx={{ color: theme.palette.text.secondary }}
-                      />
-                    </FlowConnection>
-                  )}
-                </React.Fragment>
-              ))}
-            </DesktopFlowRow>
-          </Box>
-        )}
+                      )}
+                    </Stack>
+                  </Box>
+                </EventNode>
+              </Fade>
+
+              {index < flowNodes.length - 1 && node.connections > 0 && (
+                <EventConnector>
+                  <ConnectionIcon fontSize="small" />
+                </EventConnector>
+              )}
+            </React.Fragment>
+          ))}
+        </FlowTrack>
       </FlowContainer>
     </GridTile>
   );

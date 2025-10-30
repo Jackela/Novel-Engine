@@ -36,15 +36,26 @@ const DesktopLayout = styled(Box)(({ theme }) => ({
 }));
 
 const CompactTabs = styled(Tabs)(({ theme }) => ({
-  minHeight: '40px',
-  backgroundColor: theme.palette.background.paper,
-  borderBottom: `1px solid ${theme.palette.divider}`,
+  minHeight: '48px',
+  backgroundColor: '#111113',
+  borderBottom: '1px solid #2a2a30',
   
   '& .MuiTab-root': {
-    minHeight: '40px',
+    minHeight: '48px',
     fontSize: '0.75rem',
     minWidth: 'auto',
-    padding: theme.spacing(0.5, 1),
+    padding: theme.spacing(1, 1.5),
+    fontWeight: 500,
+    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    
+    '&.Mui-selected': {
+      fontWeight: 600,
+    },
+  },
+  
+  '& .MuiTabs-indicator': {
+    backgroundColor: '#6366f1',
+    height: '3px',
   },
 }));
 
@@ -52,7 +63,22 @@ const TabContent = styled(Box)(({ theme }) => ({
   flex: 1,
   padding: theme.spacing(1),
   overflow: 'auto',
-  maxHeight: 'calc(100vh - 120px)', // Account for header and tabs
+  maxHeight: 'calc(100vh - 120px)',
+  
+  '&::-webkit-scrollbar': {
+    width: '6px',
+  },
+  '&::-webkit-scrollbar-track': {
+    background: '#1a1a1d',
+    borderRadius: '3px',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: '#6366f1',
+    borderRadius: '3px',
+    '&:hover': {
+      background: '#4f46e5',
+    },
+  },
 }));
 
 interface TabPanelProps {
@@ -126,9 +152,17 @@ const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
   return (
     <MobileTabbedContainer>
       {/* Mobile Header */}
-      <Box sx={{ p: 1, textAlign: 'center', backgroundColor: 'background.paper' }}>
-        <Typography variant="subtitle1" color="primary" fontWeight={600}>
+      <Box sx={{ 
+        p: 1.5, 
+        textAlign: 'center', 
+        backgroundColor: '#111113',
+        borderBottom: '1px solid #2a2a30',
+      }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#6366f1' }}>
           Novel Engine M1
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          AI-Powered Story Creation
         </Typography>
       </Box>
 
@@ -157,13 +191,16 @@ const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
             {tab.components.map((component, compIndex) => (
               <Paper 
                 key={`${index}-${compIndex}`} 
-                elevation={1}
+                elevation={0}
                 sx={{ 
                   overflow: 'hidden',
+                  backgroundColor: '#111113',
+                  border: '1px solid #2a2a30',
+                  borderRadius: theme.shape.borderRadius,
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                   '& > *': {
-                    // Optimized height constraints for mobile - Overview tab needs more space for QuickActions
-                    maxHeight: index === 0 ? '200px' : '220px', // Increased Overview tab height to fix QuickActions rendering
-                  }
+                    maxHeight: index === 0 ? '200px' : '220px',
+                  },
                 }}
               >
                 {component}

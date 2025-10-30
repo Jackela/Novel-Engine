@@ -66,13 +66,16 @@ const StyledPaper = styled(Paper, {
       ...getGridStyles(),
       position: 'relative',
       overflow: 'hidden',
-      border: `1px solid ${theme.palette.divider}`,
-      borderRadius: theme.spacing(1.5),
-      backgroundColor: theme.palette.background.paper,
-      transition: 'box-shadow 0.2s ease-in-out',
+      border: '1px solid #2a2a30',
+      borderRadius: theme.shape.borderRadius,
+      backgroundColor: '#111113',
+      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
       
       '&:hover': {
-        boxShadow: theme.shadows[4],
+        backgroundColor: '#1a1a1d',
+        borderColor: '#6366f1',
+        transform: 'translateY(-2px)',
+        boxShadow: '0 4px 8px rgba(99, 102, 241, 0.2)',
       },
     };
   }
@@ -83,8 +86,12 @@ const TileHeader = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: theme.spacing(2, 2, 1),
-  borderBottom: `1px solid ${theme.palette.divider}`,
+  borderBottom: '1px solid #2a2a30',
   minHeight: '56px',
+  
+  [theme.breakpoints.down('md')]: {
+    padding: theme.spacing(1.5, 1.5, 1),
+  },
 }));
 
 const TileContent = styled(Box)(({ theme }) => ({
@@ -92,9 +99,24 @@ const TileContent = styled(Box)(({ theme }) => ({
   height: 'calc(100% - 56px)',
   overflow: 'auto',
   
-  // Mobile: reduced padding to maximize content space
+  '&::-webkit-scrollbar': {
+    width: '6px',
+    height: '6px',
+  },
+  '&::-webkit-scrollbar-track': {
+    background: '#1a1a1d',
+    borderRadius: '3px',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: '#6366f1',
+    borderRadius: '3px',
+    '&:hover': {
+      background: '#4f46e5',
+    },
+  },
+  
   [theme.breakpoints.down('md')]: {
-    padding: theme.spacing(1), // Reduced from 2 to 1 for mobile
+    padding: theme.spacing(1),
   },
 }));
 
@@ -104,7 +126,8 @@ const LoadingOverlay = styled(Box)(({ theme }) => ({
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  backgroundColor: 'rgba(10, 10, 11, 0.9)',
+  backdropFilter: 'blur(4px)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',

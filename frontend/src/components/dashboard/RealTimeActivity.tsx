@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Box, 
   List, 
@@ -10,9 +10,11 @@ import {
   Stack, 
   Badge,
   useTheme,
-  useMediaQuery 
+  useMediaQuery,
+  Fade,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Person as PersonIcon,
   AutoStories as StoryIcon,
@@ -38,11 +40,22 @@ const ActivityList = styled(List)(({ theme }) => ({
   },
 }));
 
-const ActivityItem = styled(ListItem)(({ theme }) => ({
+const ActivityItem = styled(motion(ListItem))<{ severity?: string }>(({ theme, severity }) => ({
   padding: theme.spacing(1, 0),
-  borderBottom: `1px solid ${theme.palette.divider}`,
+  borderBottom: `1px solid #2a2a30`,
+  borderLeft: `3px solid ${severity === 'high' ? '#ef4444' : severity === 'medium' ? '#f59e0b' : '#10b981'}`,
+  paddingLeft: theme.spacing(1),
+  borderRadius: theme.shape.borderRadius / 2,
+  marginBottom: theme.spacing(0.5),
+  background: 'transparent',
+  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    background: '#1a1a1d',
+    borderLeftWidth: '4px',
+    transform: 'translateX(4px)',
+  },
   '&:last-child': {
-    borderBottom: 'none',
+    borderBottom: `1px solid #2a2a30`,
   },
 }));
 
@@ -50,7 +63,15 @@ const ActivityHeader = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  marginBottom: theme.spacing(1),
+  marginBottom: theme.spacing(1.5),
+  paddingBottom: theme.spacing(1),
+  borderBottom: `1px solid #2a2a30`,
+}));
+
+const PulsingBadge = styled(motion.div)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 }));
 
 interface ActivityEvent {
@@ -117,6 +138,11 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
   ]);
 
   const [unreadCount, setUnreadCount] = useState(2);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+
+  const handleMarkAsRead = useCallback(() => {
+    setUnreadCount(0);
+  }, []);
 
   // Simulate real-time updates
   useEffect(() => {
@@ -173,6 +199,8 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
 
         setActivities(prev => [newActivity, ...prev.slice(0, 9)]); // Keep only 10 most recent
         setUnreadCount(prev => prev + 1);
+        setHighlightedId(newActivity.id);
+        setTimeout(() => setHighlightedId(null), 3000);
       }
     }, 5000); // Check every 5 seconds
 
@@ -228,68 +256,103 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
       }}
       loading={loading}
       error={error}
-      onMenuClick={() => setUnreadCount(0)}
+      onMenuClick={handleMarkAsRead}
     >
       {isMobile ? (
         // Mobile: Enhanced activity list with better visibility
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           <ActivityHeader sx={{ flexShrink: 0 }}>
             <Stack direction="row" spacing={1} alignItems="center">
-              <Badge badgeContent={unreadCount} color="primary">
-                <NotificationIcon fontSize="small" />
-              </Badge>
-              <Typography variant="body2" color="text.secondary">
+              <PulsingBadge
+                animate={unreadCount > 0 ? {
+                  scale: [1, 1.1, 1],
+                } : {}}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <Badge badgeContent={unreadCount} color="primary">
+                  <NotificationIcon fontSize="small" sx={{ color: '#6366f1' }} />
+                </Badge>
+              </PulsingBadge>
+              <Typography variant="body2" color="text.secondary" fontWeight={500}>
                 Live Feed
               </Typography>
             </Stack>
             <Chip 
               label={`${activities.length} events`} 
               size="small" 
-              variant="outlined"
+              sx={{ 
+                backgroundColor: '#111113',
+                borderColor: '#2a2a30',
+                color: '#b0b0b8',
+                fontWeight: 500,
+              }}
             />
           </ActivityHeader>
           
           <ActivityList sx={{ flex: 1, minHeight: '160px' }}>
-            {activities.slice(0, 6).map((activity) => (
-              <ActivityItem key={activity.id} sx={{ py: 1, minHeight: '48px' }}>
-                <Avatar
-                  sx={{
-                    bgcolor: 'transparent',
-                    color: getSeverityColor(activity.severity),
-                    width: 28,
-                    height: 28,
-                    mr: 1.5,
+            <AnimatePresence initial={false}>
+              {activities.slice(0, 6).map((activity, index) => (
+                <ActivityItem 
+                  key={activity.id} 
+                  severity={activity.severity}
+                  sx={{ 
+                    py: 1, 
+                    minHeight: '48px',
+                    backgroundColor: highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
                   }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
                 >
-                  {getActivityIcon(activity.type)}
-                </Avatar>
-                <ListItemText
-                  primary={
-                    <Typography variant="body2" fontWeight={500} sx={{ lineHeight: 1.3, mb: 0.25 }}>
-                      {activity.description.length > 60 
-                        ? `${activity.description.substring(0, 60)}...`
-                        : activity.description
-                      }
-                    </Typography>
-                  }
-                  secondary={
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                        {formatTimestamp(activity.timestamp)}
+                  <Avatar
+                    sx={{
+                      bgcolor: 'transparent',
+                      color: getSeverityColor(activity.severity),
+                      width: 28,
+                      height: 28,
+                      mr: 1.5,
+                    }}
+                  >
+                    {getActivityIcon(activity.type)}
+                  </Avatar>
+                  <ListItemText
+                    primary={
+                      <Typography variant="body2" fontWeight={500} sx={{ lineHeight: 1.3, mb: 0.25, color: '#f0f0f2' }}>
+                        {activity.description.length > 60 
+                          ? `${activity.description.substring(0, 60)}...`
+                          : activity.description
+                        }
                       </Typography>
-                      {activity.characterName && (
-                        <Chip
-                          label={activity.characterName}
-                          size="small"
-                          variant="outlined"
-                          sx={{ height: '18px', fontSize: '0.6rem' }}
-                        />
-                      )}
-                    </Stack>
-                  }
-                />
-              </ActivityItem>
-            ))}
+                    }
+                    secondary={
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                          {formatTimestamp(activity.timestamp)}
+                        </Typography>
+                        {activity.characterName && (
+                          <Chip
+                            label={activity.characterName}
+                            size="small"
+                            sx={{ 
+                              height: '18px', 
+                              fontSize: '0.6rem',
+                              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                              borderColor: '#6366f1',
+                              color: '#b0b0b8',
+                            }}
+                          />
+                        )}
+                      </Stack>
+                    }
+                  />
+                </ActivityItem>
+              ))}
+            </AnimatePresence>
           </ActivityList>
         </Box>
       ) : (
@@ -297,58 +360,91 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
         <Box sx={{ height: '100%' }}>
           <ActivityHeader>
             <Stack direction="row" spacing={1} alignItems="center">
-              <Badge badgeContent={unreadCount} color="primary">
-                <NotificationIcon fontSize="small" />
-              </Badge>
-              <Typography variant="body2" color="text.secondary">
+              <PulsingBadge
+                animate={unreadCount > 0 ? {
+                  scale: [1, 1.1, 1],
+                } : {}}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <Badge badgeContent={unreadCount} color="primary">
+                  <NotificationIcon fontSize="small" sx={{ color: '#6366f1' }} />
+                </Badge>
+              </PulsingBadge>
+              <Typography variant="body2" color="text.secondary" fontWeight={500}>
                 Live Feed
               </Typography>
             </Stack>
             <Chip 
               label={`${activities.length} events`} 
               size="small" 
-              variant="outlined"
+              sx={{ 
+                backgroundColor: '#111113',
+                borderColor: '#2a2a30',
+                color: '#b0b0b8',
+                fontWeight: 500,
+              }}
             />
           </ActivityHeader>
           
           <ActivityList>
-            {activities.map((activity) => (
-              <ActivityItem key={activity.id}>
-                <Avatar
+            <AnimatePresence initial={false}>
+              {activities.map((activity, index) => (
+                <ActivityItem 
+                  key={activity.id}
+                  severity={activity.severity}
                   sx={{
-                    bgcolor: 'transparent',
-                    color: getSeverityColor(activity.severity),
-                    width: 32,
-                    height: 32,
-                    mr: 2,
+                    backgroundColor: highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
                   }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
                 >
-                  {getActivityIcon(activity.type)}
-                </Avatar>
-                <ListItemText
-                  primary={
-                    <Typography variant="body2" fontWeight={500}>
-                      {activity.description}
-                    </Typography>
-                  }
-                  secondary={
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
-                      {activity.characterName && (
-                        <Chip
-                          label={activity.characterName}
-                          size="small"
-                          variant="outlined"
-                          sx={{ height: '16px', fontSize: '0.65rem' }}
-                        />
-                      )}
-                      <Typography variant="caption" color="text.secondary">
-                        {formatTimestamp(activity.timestamp)}
+                  <Avatar
+                    sx={{
+                      bgcolor: 'transparent',
+                      color: getSeverityColor(activity.severity),
+                      width: 32,
+                      height: 32,
+                      mr: 2,
+                    }}
+                  >
+                    {getActivityIcon(activity.type)}
+                  </Avatar>
+                  <ListItemText
+                    primary={
+                      <Typography variant="body2" fontWeight={500} sx={{ color: '#f0f0f2' }}>
+                        {activity.description}
                       </Typography>
-                    </Stack>
-                  }
-                />
-              </ActivityItem>
-            ))}
+                    }
+                    secondary={
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                        {activity.characterName && (
+                          <Chip
+                            label={activity.characterName}
+                            size="small"
+                            sx={{ 
+                              height: '16px', 
+                              fontSize: '0.65rem',
+                              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                              borderColor: '#6366f1',
+                              color: '#b0b0b8',
+                            }}
+                          />
+                        )}
+                        <Typography variant="caption" color="text.secondary">
+                          {formatTimestamp(activity.timestamp)}
+                        </Typography>
+                      </Stack>
+                    }
+                  />
+                </ActivityItem>
+              ))}
+            </AnimatePresence>
           </ActivityList>
         </Box>
       )}

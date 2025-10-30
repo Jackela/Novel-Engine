@@ -6,31 +6,83 @@ import {
   Stack, 
   List,
   ListItem,
+  ListItemText,
   Avatar,
   LinearProgress,
   useTheme,
-  useMediaQuery 
+  useMediaQuery,
+  Fade,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { motion } from 'framer-motion';
 import { 
   Person as PersonIcon,
   Groups as GroupIcon,
-  Link as LinkIcon 
+  Link as LinkIcon,
+  Diversity3 as NetworkIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
 
-const NetworkContainer = styled(Box)({
+const NetworkContainer = styled(Box)(({ theme }) => ({
   width: '100%',
   height: '100%',
   position: 'relative',
   display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-});
+  flexDirection: 'column',
+  
+  [theme.breakpoints.down('md')]: {
+    padding: theme.spacing(0.5),
+  },
+}));
 
-const PlaceholderContent = styled(Box)(({ theme }) => ({
-  textAlign: 'center',
-  padding: theme.spacing(2),
+const CharacterCard = styled(motion(Box))<{ status: string }>(({ theme, status }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(1),
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: '#111113',
+  border: `1px solid #2a2a30`,
+  marginBottom: theme.spacing(1),
+  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    backgroundColor: '#1a1a1d',
+    borderColor: status === 'active' ? '#10b981' : status === 'hostile' ? '#ef4444' : '#f59e0b',
+    transform: 'translateY(-2px)',
+    boxShadow: `0 4px 8px ${
+      status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 
+      status === 'hostile' ? 'rgba(239, 68, 68, 0.2)' : 
+      'rgba(245, 158, 11, 0.2)'
+    }`,
+  },
+}));
+
+const TrustProgress = styled(LinearProgress)<{ trustlevel: number }>(({ theme, trustlevel }) => ({
+  height: 4,
+  borderRadius: 2,
+  backgroundColor: '#2a2a30',
+  '& .MuiLinearProgress-bar': {
+    borderRadius: 2,
+    backgroundColor: 
+      trustlevel >= 80 ? '#10b981' :
+      trustlevel >= 60 ? '#6366f1' :
+      trustlevel >= 40 ? '#f59e0b' :
+      '#ef4444',
+  },
+}));
+
+const StatusBadge = styled(Box)<{ status: string }>(({ theme, status }) => ({
+  width: 8,
+  height: 8,
+  borderRadius: '50%',
+  backgroundColor: 
+    status === 'active' ? '#10b981' :
+    status === 'hostile' ? '#ef4444' :
+    '#f59e0b',
+  animation: status === 'active' ? 'pulse 2s infinite' : 'none',
+  '@keyframes pulse': {
+    '0%, 100%': { opacity: 1 },
+    '50%': { opacity: 0.5 },
+  },
 }));
 
 interface CharacterData {
@@ -96,19 +148,25 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
 
   const getStatusColor = (status: CharacterData['status']) => {
     switch (status) {
-      case 'active': return theme.palette.success.main;
-      case 'hostile': return theme.palette.error.main;
-      case 'inactive': return theme.palette.warning.main;
-      default: return theme.palette.grey[500];
+      case 'active': return '#10b981';
+      case 'hostile': return '#ef4444';
+      case 'inactive': return '#f59e0b';
+      default: return '#808088';
     }
   };
 
   const getTrustColor = (trust: number) => {
-    if (trust >= 80) return 'success';
-    if (trust >= 60) return 'primary';
-    if (trust >= 40) return 'warning';
-    return 'error';
+    if (trust >= 80) return '#10b981';
+    if (trust >= 60) return '#6366f1';
+    if (trust >= 40) return '#f59e0b';
+    return '#ef4444';
   };
+
+  const totalConnections = characters.reduce((sum, c) => sum + c.connections, 0);
+  const activeCount = characters.filter(c => c.status === 'active').length;
+  const averageTrust = Math.round(
+    characters.reduce((sum, c) => sum + c.trustLevel, 0) / characters.length
+  );
 
   return (
     <GridTile
@@ -122,120 +180,175 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
       error={error}
     >
       <NetworkContainer>
-        {isMobile ? (
-          // Mobile: Character list with key metrics
-          <Box sx={{ height: '100%', overflow: 'auto' }}>
-            <Stack spacing={1} sx={{ p: 1 }}>
-              {characters.slice(0, 3).map((character) => (
-                <Box
-                  key={character.id}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    p: 1,
-                    borderRadius: 1,
-                    bgcolor: 'action.hover',
-                    gap: 1
-                  }}
+        {/* Stats Header */}
+        <Stack 
+          direction="row" 
+          spacing={1} 
+          justifyContent="center" 
+          sx={{ mb: 1.5, flexShrink: 0, flexWrap: 'wrap' }}
+        >
+          <Chip 
+            icon={<PersonIcon sx={{ fontSize: '16px' }} />}
+            label={`${characters.length} Characters`} 
+            size="small" 
+            sx={{
+              backgroundColor: '#111113',
+              borderColor: '#2a2a30',
+              color: '#b0b0b8',
+              fontSize: '0.7rem',
+              height: '22px',
+              '& .MuiChip-icon': { color: '#6366f1' }
+            }}
+          />
+          <Chip 
+            icon={<LinkIcon sx={{ fontSize: '16px' }} />}
+            label={`${totalConnections} Links`} 
+            size="small" 
+            sx={{
+              backgroundColor: '#111113',
+              borderColor: '#2a2a30',
+              color: '#b0b0b8',
+              fontSize: '0.7rem',
+              height: '22px',
+              '& .MuiChip-icon': { color: '#8b5cf6' }
+            }}
+          />
+          <Chip 
+            icon={<GroupIcon sx={{ fontSize: '16px' }} />}
+            label={`${activeCount} Active`} 
+            size="small" 
+            sx={{
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderColor: '#10b981',
+              color: '#6ee7b7',
+              fontSize: '0.7rem',
+              height: '22px',
+              '& .MuiChip-icon': { color: '#10b981' }
+            }}
+          />
+        </Stack>
+
+        {/* Character List */}
+        <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <List dense sx={{ py: 0 }}>
+            {characters.slice(0, isMobile ? 3 : 5).map((character, index) => (
+              <Fade in key={character.id} timeout={300 + index * 100}>
+                <CharacterCard
+                  status={character.status}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  whileHover={{ scale: 1.02 }}
                 >
                   <Avatar
                     sx={{
-                      width: 32,
-                      height: 32,
-                      bgcolor: getStatusColor(character.status)
+                      width: isMobile ? 32 : 36,
+                      height: isMobile ? 32 : 36,
+                      backgroundColor: getStatusColor(character.status),
+                      border: '2px solid #0a0a0b',
+                      mr: 1.5,
+                      position: 'relative',
                     }}
                   >
                     <PersonIcon fontSize="small" />
+                    <StatusBadge 
+                      status={character.status}
+                      sx={{
+                        position: 'absolute',
+                        bottom: -2,
+                        right: -2,
+                        border: '2px solid #0a0a0b',
+                      }}
+                    />
                   </Avatar>
+
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="body2" fontWeight={500} noWrap>
-                      {character.name}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Typography variant="caption" color="text.secondary">
+                    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.25 }}>
+                      <Typography 
+                        variant={isMobile ? 'caption' : 'body2'} 
+                        fontWeight={600} 
+                        noWrap
+                        sx={{ color: '#f0f0f2' }}
+                      >
+                        {character.name}
+                      </Typography>
+                      <Typography 
+                        variant="caption" 
+                        color="text.secondary"
+                        sx={{ fontSize: '0.7rem' }}
+                      >
+                        • {character.role}
+                      </Typography>
+                    </Stack>
+
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+                      <Typography 
+                        variant="caption" 
+                        color="text.secondary"
+                        sx={{ fontSize: '0.7rem', minWidth: '50px' }}
+                      >
                         Trust: {character.trustLevel}%
                       </Typography>
-                      <LinearProgress
+                      <TrustProgress
                         variant="determinate"
                         value={character.trustLevel}
-                        sx={{ flex: 1, height: 4, borderRadius: 2 }}
-                        color={getTrustColor(character.trustLevel)}
+                        trustlevel={character.trustLevel}
+                        sx={{ flex: 1 }}
                       />
-                    </Box>
-                  </Box>
-                  <Chip
-                    label={`${character.connections}`}
-                    size="small"
-                    icon={<LinkIcon />}
-                    variant="outlined"
-                  />
-                </Box>
-              ))}
-              <Box sx={{ textAlign: 'center', pt: 1 }}>
-                <Typography variant="caption" color="text.secondary">
-                  {characters.length} characters • {characters.reduce((sum, c) => sum + c.connections, 0)} total connections
-                </Typography>
-              </Box>
-            </Stack>
-          </Box>
-        ) : (
-          // Desktop: Network overview with stats
-          <Box sx={{ height: '100%', p: 2 }}>
-            <Stack spacing={2}>
-              <Box>
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  Character Relationships
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Network of character relationships, trust levels, and social dynamics.
-                </Typography>
-              </Box>
-              
-              <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap">
-                <Chip 
-                  label={`${characters.length} Characters`} 
-                  size="small" 
-                  variant="outlined"
-                  icon={<PersonIcon />}
-                />
-                <Chip 
-                  label={`${characters.reduce((sum, c) => sum + c.connections, 0)} Connections`} 
-                  size="small" 
-                  variant="outlined"
-                  icon={<LinkIcon />}
-                />
-                <Chip 
-                  label={`${characters.filter(c => c.status === 'active').length} Active`} 
-                  size="small" 
-                  variant="outlined"
-                  icon={<GroupIcon />}
-                />
-              </Stack>
+                    </Stack>
 
-              <List dense>
-                {characters.slice(0, 3).map((character) => (
-                  <ListItem key={character.id} sx={{ px: 0 }}>
-                    <Avatar
-                      sx={{
-                        width: 24,
-                        height: 24,
-                        bgcolor: getStatusColor(character.status),
-                        mr: 2
-                      }}
-                    >
-                      <PersonIcon fontSize="small" />
-                    </Avatar>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="body2" fontWeight={500}>
-                        {character.name} • {character.role}
+                    <Stack direction="row" alignItems="center" spacing={0.5}>
+                      <LinkIcon sx={{ fontSize: '12px', color: '#8b5cf6' }} />
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                        {character.connections} connections
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Trust: {character.trustLevel}% • {character.connections} connections
-                      </Typography>
-                    </Box>
-                  </ListItem>
-                ))}
-              </List>
+                      <Chip
+                        label={character.status}
+                        size="small"
+                        sx={{
+                          height: '16px',
+                          fontSize: '0.6rem',
+                          ml: 'auto',
+                          backgroundColor: `${getStatusColor(character.status)}20`,
+                          color: getStatusColor(character.status),
+                          borderColor: getStatusColor(character.status),
+                        }}
+                      />
+                    </Stack>
+                  </Box>
+                </CharacterCard>
+              </Fade>
+            ))}
+          </List>
+        </Box>
+
+        {/* Summary Footer */}
+        {!isMobile && (
+          <Box 
+            sx={{ 
+              pt: 1, 
+              mt: 1, 
+              borderTop: '1px solid #2a2a30',
+              flexShrink: 0,
+            }}
+          >
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                Network Health
+              </Typography>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <NetworkIcon sx={{ fontSize: '16px', color: getTrustColor(averageTrust) }} />
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: getTrustColor(averageTrust)
+                  }}
+                >
+                  {averageTrust}% Avg Trust
+                </Typography>
+              </Stack>
             </Stack>
           </Box>
         )}

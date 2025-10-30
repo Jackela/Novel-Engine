@@ -5,17 +5,17 @@ import {
   Stack, 
   Chip, 
   LinearProgress, 
-  Stepper,
-  Step,
-  StepLabel,
-  StepContent,
-  useTheme,
   List,
   ListItem,
+  ListItemIcon,
   ListItemText,
-  ListItemIcon
+  Avatar,
+  useTheme,
+  useMediaQuery,
+  Fade,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   PlayCircleOutline as StartIcon,
   Psychology as ProcessingIcon,
@@ -30,26 +30,68 @@ const PipelineContainer = styled(Box)(({ theme }) => ({
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
+  
+  [theme.breakpoints.down('md')]: {
+    padding: theme.spacing(0.5),
+  },
+}));
+
+const StageItem = styled(motion(ListItem))<{ status: string }>(({ theme, status }) => ({
+  padding: theme.spacing(1, 0),
+  borderBottom: `1px solid #2a2a30`,
+  borderLeft: `3px solid ${
+    status === 'processing' ? '#6366f1' :
+    status === 'completed' ? '#10b981' :
+    status === 'error' ? '#ef4444' :
+    '#808088'
+  }`,
+  paddingLeft: theme.spacing(1),
+  borderRadius: theme.shape.borderRadius / 2,
+  marginBottom: theme.spacing(0.5),
+  background: status === 'processing' ? 'rgba(99, 102, 241, 0.05)' : 'transparent',
+  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    background: status === 'processing' ? 'rgba(99, 102, 241, 0.1)' : '#1a1a1d',
+    borderLeftWidth: '4px',
+  },
 }));
 
 const StatusChip = styled(Chip)<{ status: string }>(({ theme, status }) => ({
-  fontSize: '0.7rem',
-  height: '20px',
+  fontSize: '0.65rem',
+  height: '18px',
+  fontWeight: 500,
   '& .MuiChip-label': {
     padding: '0 6px',
   },
   backgroundColor: 
-    status === 'processing' ? theme.palette.info.light :
-    status === 'completed' ? theme.palette.success.light :
-    status === 'queued' ? theme.palette.warning.light :
-    status === 'error' ? theme.palette.error.light :
-    theme.palette.grey[300],
+    status === 'processing' ? 'rgba(99, 102, 241, 0.2)' :
+    status === 'completed' ? 'rgba(16, 185, 129, 0.2)' :
+    status === 'queued' ? 'rgba(245, 158, 11, 0.2)' :
+    status === 'error' ? 'rgba(239, 68, 68, 0.2)' :
+    'transparent',
   color: 
-    status === 'processing' ? theme.palette.info.contrastText :
-    status === 'completed' ? theme.palette.success.contrastText :
-    status === 'queued' ? theme.palette.warning.contrastText :
-    status === 'error' ? theme.palette.error.contrastText :
-    theme.palette.text.primary,
+    status === 'processing' ? '#6366f1' :
+    status === 'completed' ? '#10b981' :
+    status === 'queued' ? '#f59e0b' :
+    status === 'error' ? '#ef4444' :
+    '#b0b0b8',
+  border: `1px solid ${
+    status === 'processing' ? '#6366f1' :
+    status === 'completed' ? '#10b981' :
+    status === 'queued' ? '#f59e0b' :
+    status === 'error' ? '#ef4444' :
+    '#3a3a42'
+  }`,
+}));
+
+const AnimatedProgress = styled(motion(LinearProgress))(({ theme }) => ({
+  height: 4,
+  borderRadius: 2,
+  backgroundColor: '#2a2a30',
+  '& .MuiLinearProgress-bar': {
+    borderRadius: 2,
+    transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+  },
 }));
 
 interface TurnStep {
@@ -76,6 +118,8 @@ interface TurnPipelineStatusProps {
 
 const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [pipelineData, setPipelineData] = useState<PipelineData>({
     currentTurn: 47,
     totalTurns: 150,
@@ -179,19 +223,18 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
   }, []);
 
   const getStepIcon = (step: TurnStep) => {
+    const iconProps = { fontSize: 'small' as const };
     switch (step.status) {
       case 'completed':
-        return <CompleteIcon fontSize="small" color="success" />;
+        return <CompleteIcon {...iconProps} sx={{ color: '#10b981' }} />;
       case 'processing':
-        return <ProcessingIcon fontSize="small" color="info" />;
+        return <ProcessingIcon {...iconProps} sx={{ color: '#6366f1' }} />;
       case 'error':
-        return <ErrorIcon fontSize="small" color="error" />;
+        return <ErrorIcon {...iconProps} sx={{ color: '#ef4444' }} />;
       default:
-        return <QueueIcon fontSize="small" color="disabled" />;
+        return <QueueIcon {...iconProps} sx={{ color: '#808088' }} />;
     }
   };
-
-  const currentStep = pipelineData.steps.findIndex(step => step.status === 'processing');
 
   return (
     <GridTile
@@ -206,83 +249,120 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
       error={error}
     >
       <PipelineContainer>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-          <Typography variant="body2" color="text.secondary">
+        {/* Header */}
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, flexShrink: 0 }}>
+          <Typography variant="body2" color="text.secondary" fontWeight={500}>
             Turn {pipelineData.currentTurn} of {pipelineData.totalTurns}
           </Typography>
           <Stack direction="row" spacing={0.5}>
             <Chip 
               label={`${pipelineData.queueLength} queued`} 
               size="small" 
-              variant="outlined"
+              sx={{
+                backgroundColor: '#111113',
+                borderColor: '#2a2a30',
+                color: '#b0b0b8',
+                fontSize: '0.65rem',
+                height: '20px',
+              }}
             />
             <Chip 
-              label={`${pipelineData.averageProcessingTime}s avg`} 
+              label={`${pipelineData.averageProcessingTime.toFixed(1)}s avg`} 
               size="small" 
-              variant="outlined"
+              sx={{
+                backgroundColor: '#111113',
+                borderColor: '#2a2a30',
+                color: '#b0b0b8',
+                fontSize: '0.65rem',
+                height: '20px',
+              }}
             />
           </Stack>
         </Stack>
 
-        <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        {/* Pipeline Steps */}
+        <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
           <List dense sx={{ py: 0 }}>
-            {pipelineData.steps.map((step, index) => (
-              <ListItem key={step.id} sx={{ py: 0.5, px: 0 }}>
-                <ListItemIcon sx={{ minWidth: 28 }}>
-                  {getStepIcon(step)}
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <Typography variant="body2" fontWeight={500}>
-                        {step.name}
-                      </Typography>
-                      <StatusChip 
-                        status={step.status} 
-                        label={step.status} 
-                        size="small"
-                      />
-                    </Stack>
-                  }
-                  secondary={
-                    <Box sx={{ mt: 0.5 }}>
-                      {step.status === 'processing' && (
-                        <LinearProgress
-                          variant="determinate"
-                          value={step.progress}
-                          sx={{ 
-                            height: 3, 
-                            borderRadius: 1.5,
-                            mb: 0.5,
-                            backgroundColor: theme.palette.action.hover,
-                          }}
-                        />
-                      )}
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        {step.character && (
-                          <Stack direction="row" alignItems="center" spacing={0.5}>
-                            <CharacterIcon fontSize="small" />
-                            <Typography variant="caption" color="text.secondary">
-                              {step.character}
-                            </Typography>
+            <AnimatePresence>
+              {pipelineData.steps.map((step, index) => (
+                <Fade in key={step.id} timeout={300 + index * 100}>
+                  <StageItem 
+                    status={step.status}
+                    sx={{ 
+                      py: isMobile ? 0.5 : 0.75,
+                      px: 0,
+                    }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 32 }}>
+                      <Avatar
+                        sx={{
+                          bgcolor: 'transparent',
+                          width: 28,
+                          height: 28,
+                        }}
+                      >
+                        {getStepIcon(step)}
+                      </Avatar>
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.25 }}>
+                          <Typography 
+                            variant={isMobile ? 'caption' : 'body2'} 
+                            fontWeight={500}
+                            sx={{ color: '#f0f0f2' }}
+                          >
+                            {step.name}
+                          </Typography>
+                          <StatusChip 
+                            status={step.status} 
+                            label={step.status} 
+                            size="small"
+                          />
+                        </Stack>
+                      }
+                      secondary={
+                        <Box sx={{ mt: 0.5 }}>
+                          {step.status === 'processing' && (
+                            <AnimatedProgress
+                              variant="determinate"
+                              value={step.progress}
+                              sx={{ mb: 0.5 }}
+                              initial={{ scaleX: 0 }}
+                              animate={{ scaleX: 1 }}
+                              transition={{ duration: 0.5 }}
+                            />
+                          )}
+                          <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                            {step.character && (
+                              <Stack direction="row" alignItems="center" spacing={0.5}>
+                                <CharacterIcon sx={{ fontSize: '14px', color: '#6366f1' }} />
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                  {step.character}
+                                </Typography>
+                              </Stack>
+                            )}
+                            {step.duration !== undefined && (
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                {step.duration.toFixed(1)}s
+                              </Typography>
+                            )}
+                            {step.status === 'processing' && (
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                {step.progress.toFixed(0)}%
+                              </Typography>
+                            )}
                           </Stack>
-                        )}
-                        {step.duration && (
-                          <Typography variant="caption" color="text.secondary">
-                            {step.duration.toFixed(1)}s
-                          </Typography>
-                        )}
-                        {step.status === 'processing' && (
-                          <Typography variant="caption" color="text.secondary">
-                            {step.progress.toFixed(0)}%
-                          </Typography>
-                        )}
-                      </Stack>
-                    </Box>
-                  }
-                />
-              </ListItem>
-            ))}
+                        </Box>
+                      }
+                    />
+                  </StageItem>
+                </Fade>
+              ))}
+            </AnimatePresence>
           </List>
         </Box>
       </PipelineContainer>

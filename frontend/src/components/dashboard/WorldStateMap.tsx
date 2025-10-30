@@ -5,24 +5,32 @@ import {
   Stack, 
   Typography, 
   Avatar,
-  Badge
+  Badge,
+  Collapse,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   LocationOn as LocationIcon,
   Person as PersonIcon,
-  Star as ActivityIcon,
+  Activity as ActivityIcon,
+  Circle as PulseIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
 
-const MapContainer = styled(Box)({
+const MapContainer = styled(Box)(({ theme }) => ({
   width: '100%',
   height: '100%',
   position: 'relative',
-  borderRadius: '8px',
+  borderRadius: theme.shape.borderRadius,
   overflow: 'hidden',
-  background: 'linear-gradient(135deg, #1a1a1d 0%, color-mix(in srgb, #1a1a1d 70%, #6366f1) 100%)',
-});
+  background: 'linear-gradient(135deg, #0a0a0b 0%, #1a1a1d 100%)',
+  padding: theme.spacing(2),
+}));
 
 const StatsOverlay = styled(Box)(({ theme }) => ({
   position: 'absolute',
@@ -45,23 +53,43 @@ const MapGrid = styled(Box)({
   gap: '8px',
 });
 
-const LocationMarker = styled(Box)<{ active?: boolean }>(({ theme, active }) => ({
+const LocationMarker = styled(motion.div)<{ active?: boolean; activitylevel?: string }>(({ theme, active, activitylevel }) => ({
   position: 'relative',
   display: 'flex',
+  flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
+  gap: theme.spacing(1),
   background: active 
-    ? 'rgba(255, 255, 255, 0.2)' 
-    : 'rgba(255, 255, 255, 0.1)',
+    ? 'rgba(99, 102, 241, 0.2)' 
+    : '#111113',
   border: active 
     ? `2px solid ${theme.palette.primary.main}` 
-    : `1px solid rgba(255, 255, 255, 0.2)`,
-  borderRadius: '8px',
+    : `1px solid #2a2a30`,
+  borderRadius: theme.shape.borderRadius,
+  padding: theme.spacing(2),
   cursor: 'pointer',
-  transition: 'all 0.3s ease',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    background: 'rgba(255, 255, 255, 0.3)',
+    background: active ? 'rgba(99, 102, 241, 0.3)' : '#1a1a1d',
+    borderColor: '#6366f1',
     transform: 'scale(1.05)',
+    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+  },
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    backgroundColor: activitylevel === 'high' ? '#10b981' : activitylevel === 'medium' ? '#f59e0b' : '#808088',
+    animation: activitylevel === 'high' ? 'pulse 2s infinite' : 'none',
+  },
+  '@keyframes pulse': {
+    '0%, 100%': { opacity: 1 },
+    '50%': { opacity: 0.5 },
   },
 }));
 
@@ -72,11 +100,17 @@ const CharacterAvatar = styled(Avatar)<{ active?: boolean }>(({ theme, active })
   border: active ? `2px solid ${theme.palette.success.main}` : 'none',
 }));
 
+interface Character {
+  id: string;
+  name: string;
+  initials: string;
+}
+
 interface WorldLocation {
   id: string;
   name: string;
   gridPosition: { x: number; y: number };
-  characters: string[];
+  characters: Character[];
   activity: 'high' | 'medium' | 'low';
   type: 'city' | 'dungeon' | 'wilderness' | 'landmark';
 }
@@ -92,7 +126,10 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
       id: 'crystal-city',
       name: 'Crystal City',
       gridPosition: { x: 2, y: 1 },
-      characters: ['Aria Shadowbane'],
+      characters: [
+        { id: 'c1', name: 'Aria Shadowbane', initials: 'AS' },
+        { id: 'c2', name: 'Zara Moonwhisper', initials: 'ZM' },
+      ],
       activity: 'high',
       type: 'city'
     },
@@ -100,7 +137,9 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
       id: 'merchant-quarter',
       name: 'Merchant Quarter',
       gridPosition: { x: 3, y: 2 },
-      characters: ['Merchant Aldric'],
+      characters: [
+        { id: 'c3', name: 'Merchant Aldric', initials: 'MA' },
+      ],
       activity: 'medium',
       type: 'city'
     },
@@ -108,7 +147,9 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
       id: 'ancient-ruins',
       name: 'Ancient Ruins',
       gridPosition: { x: 5, y: 1 },
-      characters: ['Elder Thorne'],
+      characters: [
+        { id: 'c4', name: 'Elder Thorne', initials: 'ET' },
+      ],
       activity: 'low',
       type: 'landmark'
     },
@@ -116,7 +157,11 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
       id: 'shadow-forest',
       name: 'Shadow Forest',
       gridPosition: { x: 1, y: 3 },
-      characters: ['Captain Vex'],
+      characters: [
+        { id: 'c5', name: 'Captain Vex', initials: 'CV' },
+        { id: 'c6', name: 'Kael Stormrider', initials: 'KS' },
+        { id: 'c7', name: 'Luna Nightshade', initials: 'LN' },
+      ],
       activity: 'medium',
       type: 'wilderness'
     },
@@ -148,7 +193,10 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
   };
 
   const getTotalCharacters = () => {
-    return locations.reduce((total, location) => total + location.characters.length, 0);
+    const uniqueCharacters = new Set(
+      locations.flatMap(loc => loc.characters.map(c => c.id))
+    );
+    return uniqueCharacters.size;
   };
 
   const getActiveLocations = () => {
@@ -194,55 +242,129 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
         </StatsOverlay>
 
         <MapGrid>
-          {locations.map((location) => (
-            <LocationMarker
-              key={location.id}
-              active={selectedLocation === location.id}
-              style={{
-                gridColumnStart: location.gridPosition.x,
-                gridRowStart: location.gridPosition.y,
-              }}
-              onClick={() => setSelectedLocation(location.id)}
-            >
-              <Stack alignItems="center" spacing={0.5}>
-                <Badge
-                  badgeContent={location.characters.length}
-                  color="primary"
-                  sx={{ '& .MuiBadge-badge': { fontSize: '0.6rem', minWidth: '16px', height: '16px' } }}
-                >
+          {locations.map((location) => {
+            const isSelected = selectedLocation === location.id;
+            
+            return (
+              <LocationMarker
+                key={location.id}
+                active={isSelected}
+                activitylevel={location.activity}
+                style={{
+                  gridColumnStart: location.gridPosition.x,
+                  gridRowStart: location.gridPosition.y,
+                }}
+                onClick={() => setSelectedLocation(isSelected ? null : location.id)}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                   <LocationIcon
                     sx={{ 
                       color: getActivityColor(location.activity),
-                      fontSize: '20px'
+                      fontSize: '20px',
+                      flexShrink: 0,
                     }}
                   />
-                </Badge>
-                <Typography 
-                  variant="caption" 
-                  sx={{ 
-                    color: 'white', 
-                    fontSize: '0.65rem',
-                    textAlign: 'center',
-                    lineHeight: 1,
-                    opacity: selectedLocation === location.id ? 1 : 0.8
-                  }}
-                >
-                  {location.name}
-                </Typography>
-                <Stack direction="row" spacing={0.25}>
-                  {location.characters.slice(0, 2).map((character, index) => (
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: '#f0f0f2', 
+                      fontSize: '0.75rem',
+                      fontWeight: isSelected ? 600 : 500,
+                      flex: 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {location.name}
+                  </Typography>
+                </Box>
+
+                <Stack direction="row" spacing={-0.5} sx={{ alignSelf: 'flex-start' }}>
+                  {location.characters.slice(0, 3).map((character) => (
                     <CharacterAvatar
-                      key={index}
-                      active={selectedLocation === location.id}
-                      sx={{ backgroundColor: getActivityColor(location.activity) }}
+                      key={character.id}
+                      active={isSelected}
+                      sx={{ 
+                        backgroundColor: getActivityColor(location.activity),
+                        border: '2px solid #111113',
+                      }}
                     >
-                      {character.charAt(0)}
+                      {character.initials}
                     </CharacterAvatar>
                   ))}
+                  {location.characters.length > 3 && (
+                    <CharacterAvatar
+                      sx={{ 
+                        backgroundColor: '#2a2a30',
+                        border: '2px solid #111113',
+                      }}
+                    >
+                      <Typography variant="caption" sx={{ fontSize: '0.6rem' }}>
+                        +{location.characters.length - 3}
+                      </Typography>
+                    </CharacterAvatar>
+                  )}
                 </Stack>
-              </Stack>
-            </LocationMarker>
-          ))}
+
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ width: '100%', overflow: 'hidden' }}
+                    >
+                      <Box 
+                        sx={{ 
+                          mt: 1, 
+                          pt: 1, 
+                          borderTop: '1px solid #2a2a30',
+                          width: '100%',
+                        }}
+                      >
+                        <List dense disablePadding>
+                          {location.characters.map((character) => (
+                            <ListItem 
+                              key={character.id} 
+                              disablePadding
+                              sx={{ mb: 0.5 }}
+                            >
+                              <ListItemAvatar sx={{ minWidth: 32 }}>
+                                <Avatar 
+                                  sx={{ 
+                                    width: 24, 
+                                    height: 24, 
+                                    fontSize: '0.65rem',
+                                    backgroundColor: getActivityColor(location.activity),
+                                  }}
+                                >
+                                  {character.initials}
+                                </Avatar>
+                              </ListItemAvatar>
+                              <ListItemText 
+                                primary={character.name}
+                                primaryTypographyProps={{
+                                  variant: 'caption',
+                                  sx: { color: '#b0b0b8', fontSize: '0.7rem' },
+                                }}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Box>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </LocationMarker>
+            );
+          })}
         </MapGrid>
 
         {/* Status Information */}

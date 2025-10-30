@@ -7,14 +7,18 @@ import {
   LinearProgress,
   Avatar,
   useTheme,
-  useMediaQuery 
+  useMediaQuery,
+  Fade,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { motion } from 'framer-motion';
 import {
   CheckCircle as CompletedIcon,
   RadioButtonUnchecked as PendingIcon,
   PlayCircle as ActiveIcon,
-  MenuBook as ChapterIcon
+  MenuBook as ChapterIcon,
+  AutoStories as StoryIcon,
+  TrendingFlat as ConnectionIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
 
@@ -22,80 +26,110 @@ const TimelineContainer = styled(Box)(({ theme }) => ({
   width: '100%',
   height: '100%',
   position: 'relative',
-  padding: theme.spacing(1),
-  overflowX: 'auto',
-  overflowY: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
   
   [theme.breakpoints.down('md')]: {
     padding: theme.spacing(0.5),
-    overflowX: 'hidden',
-    overflowY: 'auto',
   },
+}));
+
+const ProgressHeader = styled(Box)(({ theme }) => ({
+  flexShrink: 0,
+  marginBottom: theme.spacing(1.5),
+  paddingBottom: theme.spacing(1),
+  borderBottom: '1px solid #2a2a30',
 }));
 
 const TimelineTrack = styled(Box)(({ theme }) => ({
+  flex: 1,
+  display: 'flex',
+  
+  // Desktop: horizontal track
+  [theme.breakpoints.up('md')]: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflowX: 'auto',
+    overflowY: 'hidden',
+    gap: theme.spacing(1),
+    '&::-webkit-scrollbar': {
+      height: '4px',
+    },
+    '&::-webkit-scrollbar-track': {
+      backgroundColor: 'transparent',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: theme.palette.divider,
+      borderRadius: '2px',
+    },
+  },
+  
+  // Mobile: vertical track
+  [theme.breakpoints.down('md')]: {
+    flexDirection: 'column',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    gap: theme.spacing(0.5),
+  },
+}));
+
+const TimelineNode = styled(motion(Box))<{ status: string }>(({ theme, status }) => ({
   display: 'flex',
   alignItems: 'center',
-  position: 'relative',
-  minWidth: 'max-content',
-  height: '100%',
+  padding: theme.spacing(1),
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: status === 'current' ? 'rgba(99, 102, 241, 0.15)' : '#111113',
+  border: status === 'current'
+    ? `2px solid #6366f1`
+    : `1px solid #2a2a30`,
+  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    backgroundColor: status === 'current' ? 'rgba(99, 102, 241, 0.2)' : '#1a1a1d',
+    borderColor: status === 'completed' ? '#10b981' : '#6366f1',
+    transform: 'scale(1.02)',
+  },
   
-  [theme.breakpoints.down('md')]: {
+  // Desktop: vertical layout
+  [theme.breakpoints.up('md')]: {
     flexDirection: 'column',
-    minWidth: 'auto',
+    minWidth: '120px',
+    maxWidth: '140px',
+    flexShrink: 0,
+  },
+  
+  // Mobile: horizontal layout
+  [theme.breakpoints.down('md')]: {
+    flexDirection: 'row',
     width: '100%',
-    height: 'auto',
   },
 }));
-
-const TimelineNode = styled(Box)<{ status: 'completed' | 'active' | 'pending' }>(
-  ({ theme, status }) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    minWidth: '120px',
-    padding: theme.spacing(1),
-    position: 'relative',
-    
-    [theme.breakpoints.down('md')]: {
-      flexDirection: 'row',
-      minWidth: 'auto',
-      width: '100%',
-      padding: theme.spacing(1),
-      borderRadius: theme.spacing(1),
-      backgroundColor: status === 'active' 
-        ? theme.palette.primary.main + '15'
-        : theme.palette.action.hover,
-      marginBottom: theme.spacing(0.5),
-    },
-  })
-);
 
 const TimelineConnector = styled(Box)(({ theme }) => ({
-  width: '40px',
-  height: '2px',
-  backgroundColor: theme.palette.divider,
-  position: 'relative',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: '#808088',
   
+  // Desktop: horizontal connector
+  [theme.breakpoints.up('md')]: {
+    padding: theme.spacing(0, 0.5),
+    flexShrink: 0,
+  },
+  
+  // Mobile: vertical connector
   [theme.breakpoints.down('md')]: {
-    width: '2px',
+    width: '100%',
     height: '20px',
-    alignSelf: 'center',
+    transform: 'rotate(90deg)',
   },
 }));
-
-const ProgressIndicator = styled(Box)(({ theme }) => ({
-  width: '100%',
-  marginBottom: theme.spacing(1),
-}));
-
 
 interface TimelineEvent {
   id: string;
   title: string;
   description: string;
   turn: number;
-  status: 'completed' | 'active' | 'pending';
+  status: 'completed' | 'current' | 'upcoming';
   type: 'chapter' | 'plot' | 'character' | 'climax';
 }
 
@@ -130,7 +164,7 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
       title: 'Merchant Alliance',
       description: 'Aldric partnership',
       turn: 47,
-      status: 'active',
+      status: 'current',
       type: 'character',
     },
     {
@@ -138,7 +172,7 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
       title: 'Crystal Caverns',
       description: 'New territory',
       turn: 75,
-      status: 'pending',
+      status: 'upcoming',
       type: 'chapter',
     },
     {
@@ -146,7 +180,7 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
       title: 'Final Confrontation',
       description: 'Climax approach',
       turn: 120,
-      status: 'pending',
+      status: 'upcoming',
       type: 'climax',
     },
   ]);
@@ -156,24 +190,38 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
   const progressPercentage = (currentTurn / maxTurn) * 100;
 
   const getStatusIcon = (status: TimelineEvent['status']) => {
+    const iconProps = { fontSize: 'small' as const };
     switch (status) {
       case 'completed':
-        return <CompletedIcon fontSize="small" />;
-      case 'active':
-        return <ActiveIcon fontSize="small" />;
+        return <CompletedIcon {...iconProps} />;
+      case 'current':
+        return <ActiveIcon {...iconProps} />;
       default:
-        return <PendingIcon fontSize="small" />;
+        return <PendingIcon {...iconProps} />;
     }
   };
 
   const getStatusColor = (status: TimelineEvent['status']) => {
     switch (status) {
       case 'completed':
-        return theme.palette.success.main;
-      case 'active':
-        return theme.palette.primary.main;
+        return '#10b981';
+      case 'current':
+        return '#6366f1';
       default:
-        return theme.palette.text.secondary;
+        return '#808088';
+    }
+  };
+
+  const getTypeIcon = (type: TimelineEvent['type']) => {
+    switch (type) {
+      case 'chapter':
+        return <ChapterIcon sx={{ fontSize: '14px' }} />;
+      case 'plot':
+      case 'character':
+      case 'climax':
+        return <StoryIcon sx={{ fontSize: '14px' }} />;
+      default:
+        return null;
     }
   };
 
@@ -190,119 +238,141 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
     >
       <TimelineContainer>
         {/* Progress Header */}
-        <ProgressIndicator>
+        <ProgressHeader>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" fontWeight={500}>
               Turn {currentTurn} of {maxTurn}
             </Typography>
-            <Typography variant="caption" color="primary">
+            <Typography variant="caption" sx={{ color: '#6366f1', fontWeight: 600 }}>
               {Math.round(progressPercentage)}% Complete
             </Typography>
           </Stack>
+          
           <LinearProgress 
             variant="determinate" 
             value={progressPercentage}
-            sx={{ height: 6, borderRadius: 3 }}
+            sx={{ 
+              height: 6, 
+              borderRadius: 3,
+              backgroundColor: '#2a2a30',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor: '#6366f1',
+                borderRadius: 3,
+              }
+            }}
           />
+          
           <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 1 }}>
-            <Chip label="Act 1 Complete" size="small" color="success" variant="outlined" />
-            <Chip label="3 Plot Threads" size="small" variant="outlined" />
+            <Chip 
+              label="Act 1 Complete" 
+              size="small" 
+              sx={{
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderColor: '#10b981',
+                color: '#6ee7b7',
+                fontSize: '0.65rem',
+                height: '20px',
+              }}
+            />
+            <Chip 
+              label="3 Plot Threads" 
+              size="small" 
+              sx={{
+                backgroundColor: '#111113',
+                borderColor: '#2a2a30',
+                color: '#b0b0b8',
+                fontSize: '0.65rem',
+                height: '20px',
+              }}
+            />
           </Stack>
-        </ProgressIndicator>
+        </ProgressHeader>
 
-        {isMobile ? (
-          // Mobile: Vertical timeline
-          <Box sx={{ flex: 1, overflowY: 'auto', maxHeight: '120px' }}>
-            <Stack spacing={0.5}>
-              {timelineEvents.map((event, index) => (
-                <Box key={event.id}>
-                  <TimelineNode status={event.status}>
-                    <Avatar
-                      sx={{
-                        bgcolor: 'transparent',
-                        color: getStatusColor(event.status),
-                        width: 28,
-                        height: 28,
-                        mr: isMobile ? 1 : 0,
-                        mb: isMobile ? 0 : 0.5,
+        {/* Timeline Track */}
+        <TimelineTrack>
+          {timelineEvents.map((event, index) => (
+            <React.Fragment key={event.id}>
+              <Fade in timeout={300 + index * 100}>
+                <TimelineNode
+                  status={event.status}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
+                  <Avatar
+                    sx={{
+                      bgcolor: 'transparent',
+                      color: getStatusColor(event.status),
+                      width: isMobile ? 28 : 32,
+                      height: isMobile ? 28 : 32,
+                      mr: isMobile ? 1 : 0,
+                      mb: isMobile ? 0 : 0.5,
+                    }}
+                  >
+                    {getStatusIcon(event.status)}
+                  </Avatar>
+
+                  <Box sx={{ flex: 1, textAlign: isMobile ? 'left' : 'center' }}>
+                    <Typography 
+                      variant="caption" 
+                      fontWeight={600} 
+                      sx={{ 
+                        color: '#f0f0f2',
+                        lineHeight: 1.2,
+                        display: 'block',
+                        mb: 0.25,
                       }}
                     >
-                      {getStatusIcon(event.status)}
-                    </Avatar>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="caption" fontWeight={600} sx={{ lineHeight: 1.2 }}>
-                        {event.title}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
-                        {event.description} • Turn {event.turn}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label={event.type}
-                      size="small"
-                      variant="outlined"
+                      {event.title}
+                    </Typography>
+                    
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary" 
                       sx={{ 
-                        height: '18px', 
-                        fontSize: '0.6rem',
-                        color: getStatusColor(event.status),
-                        borderColor: getStatusColor(event.status)
-                      }}
-                    />
-                  </TimelineNode>
-                  
-                  {index < timelineEvents.length - 1 && (
-                    <TimelineConnector />
-                  )}
-                </Box>
-              ))}
-            </Stack>
-          </Box>
-        ) : (
-          // Desktop: Horizontal timeline
-          <Box sx={{ flex: 1 }}>
-            <TimelineTrack>
-              {timelineEvents.map((event, index) => (
-                <React.Fragment key={event.id}>
-                  <TimelineNode status={event.status}>
-                    <Avatar
-                      sx={{
-                        bgcolor: 'transparent',
-                        color: getStatusColor(event.status),
-                        width: 32,
-                        height: 32,
+                        fontSize: '0.7rem',
+                        display: 'block',
                         mb: 0.5,
                       }}
                     >
-                      {getStatusIcon(event.status)}
-                    </Avatar>
-                    <Typography variant="caption" fontWeight={600} sx={{ textAlign: 'center', lineHeight: 1.2 }}>
-                      {event.title}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '0.7rem' }}>
                       Turn {event.turn}
                     </Typography>
-                    <Chip
-                      label={event.type}
-                      size="small"
-                      variant="outlined"
-                      sx={{ 
-                        height: '16px', 
-                        fontSize: '0.6rem',
-                        mt: 0.5,
-                        color: getStatusColor(event.status),
-                        borderColor: getStatusColor(event.status)
-                      }}
-                    />
-                  </TimelineNode>
-                  
-                  {index < timelineEvents.length - 1 && (
-                    <TimelineConnector />
-                  )}
-                </React.Fragment>
-              ))}
-            </TimelineTrack>
-          </Box>
-        )}
+
+                    <Stack 
+                      direction="row" 
+                      spacing={0.5} 
+                      alignItems="center"
+                      justifyContent={isMobile ? 'flex-start' : 'center'}
+                      flexWrap="wrap"
+                    >
+                      <Chip
+                        label={event.type}
+                        size="small"
+                        icon={getTypeIcon(event.type)}
+                        sx={{
+                          height: '16px',
+                          fontSize: '0.6rem',
+                          backgroundColor: `${getStatusColor(event.status)}20`,
+                          color: getStatusColor(event.status),
+                          borderColor: getStatusColor(event.status),
+                          '& .MuiChip-icon': {
+                            color: getStatusColor(event.status),
+                          }
+                        }}
+                      />
+                    </Stack>
+                  </Box>
+                </TimelineNode>
+              </Fade>
+
+              {index < timelineEvents.length - 1 && (
+                <TimelineConnector>
+                  <ConnectionIcon fontSize="small" />
+                </TimelineConnector>
+              )}
+            </React.Fragment>
+          ))}
+        </TimelineTrack>
       </TimelineContainer>
     </GridTile>
   );

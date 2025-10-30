@@ -7,9 +7,12 @@ import {
   Divider,
   Typography,
   useTheme,
-  useMediaQuery 
+  useMediaQuery,
+  ButtonGroup,
+  Fade,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { motion } from 'framer-motion';
 import {
   PlayArrow as PlayIcon,
   Pause as PauseIcon,
@@ -59,39 +62,63 @@ const ActionsContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ActionButton = styled(IconButton)(({ theme }) => ({
-  border: `1px solid ${theme.palette.divider}`,
+const ActionButton = styled(motion(IconButton))<{ active?: boolean }>(({ theme, active }) => ({
+  border: `1px solid ${active ? theme.palette.primary.main : theme.palette.divider}`,
+  backgroundColor: active ? 'rgba(99, 102, 241, 0.1)' : theme.palette.background.paper,
+  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    backgroundColor: theme.palette.action.hover,
+    backgroundColor: active ? 'rgba(99, 102, 241, 0.2)' : theme.palette.action.hover,
     borderColor: theme.palette.primary.main,
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 8px rgba(99, 102, 241, 0.2)',
+  },
+  '&:active': {
+    transform: 'translateY(0px)',
+  },
+  '&.Mui-disabled': {
+    opacity: 0.4,
+    borderColor: theme.palette.divider,
   },
   
   // Mobile: touch-friendly sizing, horizontal layout
   [theme.breakpoints.down('md')]: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     margin: 0,
     flexShrink: 0,
-    backgroundColor: theme.palette.background.paper,
-    '&:hover': {
-      backgroundColor: theme.palette.action.hover,
-    },
     '& .MuiSvgIcon-root': {
-      fontSize: '1.2rem',
+      fontSize: '1.3rem',
     },
   },
   
   // Desktop: larger, vertical layout
   [theme.breakpoints.up('md')]: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     margin: theme.spacing(0.5, 0),
   },
 }));
 
 const SectionDivider = styled(Divider)(({ theme }) => ({
   width: '60%',
-  margin: theme.spacing(1, 0),
+  margin: theme.spacing(1.5, 0),
+  backgroundColor: '#2a2a30',
+}));
+
+const ActionGroup = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: theme.spacing(0.5),
+}));
+
+const GroupLabel = styled(Typography)(({ theme }) => ({
+  fontSize: '0.65rem',
+  fontWeight: 600,
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase',
+  color: '#808088',
+  marginBottom: theme.spacing(0.5),
 }));
 
 interface QuickActionsProps {
@@ -147,7 +174,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
     onAction('export');
   };
 
-  // Mobile: Essential actions only, horizontal layout
+  // Mobile: Essential actions only, horizontal layout with visual grouping
   const renderMobileActions = () => (
     <ActionsContainer>
       <Tooltip title={isRunning && !isPaused ? "Pause" : "Start"} placement="top">
@@ -155,105 +182,157 @@ const QuickActions: React.FC<QuickActionsProps> = ({
           data-testid="run-turn-button"
           onClick={handlePlayPause} 
           color="primary"
+          active={isRunning && !isPaused}
+          whileTap={{ scale: 0.95 }}
         >
           {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
         </ActionButton>
       </Tooltip>
 
       <Tooltip title="Stop" placement="top">
-        <ActionButton onClick={handleStop} disabled={!isRunning}>
+        <ActionButton 
+          onClick={handleStop} 
+          disabled={!isRunning}
+          whileTap={{ scale: 0.95 }}
+        >
           <StopIcon />
         </ActionButton>
       </Tooltip>
 
+      <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: '#2a2a30' }} />
+
       <Tooltip title="Refresh" placement="top">
-        <ActionButton onClick={handleRefresh}>
+        <ActionButton onClick={handleRefresh} whileTap={{ scale: 0.95 }}>
           <RefreshIcon />
         </ActionButton>
       </Tooltip>
 
       <Tooltip title="Save" placement="top">
-        <ActionButton onClick={handleSave}>
+        <ActionButton onClick={handleSave} whileTap={{ scale: 0.95 }}>
           <SaveIcon />
         </ActionButton>
       </Tooltip>
 
+      <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: '#2a2a30' }} />
+
       <Tooltip title="Settings" placement="top">
-        <ActionButton onClick={handleSettings}>
+        <ActionButton onClick={handleSettings} whileTap={{ scale: 0.95 }}>
           <SettingsIcon />
+        </ActionButton>
+      </Tooltip>
+
+      <Tooltip title="Export" placement="top">
+        <ActionButton onClick={handleExport} whileTap={{ scale: 0.95 }}>
+          <DownloadIcon />
         </ActionButton>
       </Tooltip>
     </ActionsContainer>
   );
 
-  // Desktop: Full actions with sections, vertical layout  
+  // Desktop: Full actions with sections, vertical layout with enhanced grouping
   const renderDesktopActions = () => (
     <ActionsContainer>
-      <Stack direction="column" spacing={0.5} alignItems="center">
+      <Stack direction="column" spacing={0} alignItems="center" sx={{ width: '100%', py: 1 }}>
         {/* Playback Controls */}
-        <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
-          Control
-        </Typography>
-        
-        <Tooltip title={isRunning && !isPaused ? "Pause" : "Start"} placement="left">
-          <ActionButton 
-            data-testid="run-turn-button"
-            onClick={handlePlayPause} 
-            color="primary"
-          >
-            {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
-          </ActionButton>
-        </Tooltip>
+        <Fade in timeout={300}>
+          <ActionGroup>
+            <GroupLabel>Control</GroupLabel>
+            
+            <Tooltip title={isRunning && !isPaused ? "Pause" : "Start"} placement="left">
+              <ActionButton 
+                data-testid="run-turn-button"
+                onClick={handlePlayPause} 
+                color="primary"
+                active={isRunning && !isPaused}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
+              </ActionButton>
+            </Tooltip>
 
-        <Tooltip title="Stop" placement="left">
-          <ActionButton onClick={handleStop} disabled={!isRunning}>
-            <StopIcon />
-          </ActionButton>
-        </Tooltip>
+            <Tooltip title="Stop" placement="left">
+              <ActionButton 
+                onClick={handleStop} 
+                disabled={!isRunning}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <StopIcon />
+              </ActionButton>
+            </Tooltip>
+          </ActionGroup>
+        </Fade>
 
         <SectionDivider />
 
         {/* System Actions */}
-        <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
-          System
-        </Typography>
+        <Fade in timeout={400}>
+          <ActionGroup>
+            <GroupLabel>System</GroupLabel>
 
-        <Tooltip title="Refresh Data" placement="left">
-          <ActionButton onClick={handleRefresh}>
-            <RefreshIcon />
-          </ActionButton>
-        </Tooltip>
+            <Tooltip title="Refresh Data" placement="left">
+              <ActionButton 
+                onClick={handleRefresh}
+                whileHover={{ scale: 1.05, rotate: 180 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+              >
+                <RefreshIcon />
+              </ActionButton>
+            </Tooltip>
 
-        <Tooltip title="Save State" placement="left">
-          <ActionButton onClick={handleSave}>
-            <SaveIcon />
-          </ActionButton>
-        </Tooltip>
+            <Tooltip title="Save State" placement="left">
+              <ActionButton 
+                onClick={handleSave}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SaveIcon />
+              </ActionButton>
+            </Tooltip>
+          </ActionGroup>
+        </Fade>
 
         <SectionDivider />
 
         {/* View Actions */}
-        <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
-          View
-        </Typography>
+        <Fade in timeout={500}>
+          <ActionGroup>
+            <GroupLabel>View</GroupLabel>
 
-        <Tooltip title="Settings" placement="left">
-          <ActionButton onClick={handleSettings}>
-            <SettingsIcon />
-          </ActionButton>
-        </Tooltip>
+            <Tooltip title="Settings" placement="left">
+              <ActionButton 
+                onClick={handleSettings}
+                whileHover={{ scale: 1.05, rotate: 90 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+              >
+                <SettingsIcon />
+              </ActionButton>
+            </Tooltip>
 
-        <Tooltip title="Fullscreen" placement="left">
-          <ActionButton onClick={handleFullscreen}>
-            <FullscreenIcon />
-          </ActionButton>
-        </Tooltip>
+            <Tooltip title="Fullscreen" placement="left">
+              <ActionButton 
+                onClick={handleFullscreen}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <FullscreenIcon />
+              </ActionButton>
+            </Tooltip>
 
-        <Tooltip title="Export Data" placement="left">
-          <ActionButton onClick={handleExport}>
-            <DownloadIcon />
-          </ActionButton>
-        </Tooltip>
+            <Tooltip title="Export Data" placement="left">
+              <ActionButton 
+                onClick={handleExport}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <DownloadIcon />
+              </ActionButton>
+            </Tooltip>
+          </ActionGroup>
+        </Fade>
       </Stack>
     </ActionsContainer>
   );

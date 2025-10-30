@@ -5,36 +5,28 @@ import { styled } from '@mui/material/styles';
 const GridContainer = styled(Box)(({ theme }) => ({
   display: 'grid',
   width: '100%',
-  maxWidth: '1200px',
+  maxWidth: '1400px',
   margin: '0 auto',
-  padding: theme.spacing(3),
   
   // Desktop (≥1200px): 12-column grid  
-  [theme.breakpoints.up('xl')]: {
+  [theme.breakpoints.up('lg')]: {
     gridTemplateColumns: 'repeat(12, 1fr)',
-    gap: '24px 20px',
-    padding: theme.spacing(3),
+    gap: theme.spacing(3, 2.5),
+    padding: 0,
   },
   
-  // Large Desktop (≥1024px): 12-column grid
-  [theme.breakpoints.between('lg', 'xl')]: {
-    gridTemplateColumns: 'repeat(12, 1fr)',
-    gap: '24px 20px',
-    padding: theme.spacing(3),
-  },
-  
-  // Tablet (768px - 1199px): 8-column grid
+  // Tablet (900px - 1199px): 8-column grid
   [theme.breakpoints.between('md', 'lg')]: {
     gridTemplateColumns: 'repeat(8, 1fr)',
-    gap: '20px 16px',
-    padding: theme.spacing(2.5),
+    gap: theme.spacing(2.5, 2),
+    padding: 0,
   },
   
-  // Mobile (≤767px): Single column
+  // Mobile (<900px): Single column
   [theme.breakpoints.down('md')]: {
     gridTemplateColumns: '1fr',
-    gap: '16px 12px',
-    padding: theme.spacing(2),
+    gap: theme.spacing(2),
+    padding: 0,
   },
 }));
 
