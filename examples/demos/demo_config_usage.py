@@ -142,7 +142,7 @@ def demo_usage_in_components():
 
 def main():
     """Run configuration system demonstration."""
-    print("Warhammer 40k Multi-Agent Simulator")
+    print("Novel Engine Multi-Agent Simulator")
     print("Configuration System Demonstration")
     print("=" * 60)
     print()

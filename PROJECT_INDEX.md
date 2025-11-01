@@ -73,7 +73,7 @@
 | [TESTING.md](TESTING.md) | Testing framework overview | 15-30 minutes |
 
 ### Installation Documentation
-- **Frontend Setup**: [frontend/README.md](frontend/README.md)
+- **Frontend Setup**: [frontend/DEVELOPMENT.md](frontend/DEVELOPMENT.md)
 - **Backend Dependencies**: [requirements.txt](requirements.txt)
 - **Development Environment**: [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)
 
@@ -379,4 +379,4 @@ staging/              # Staging environment
 **Last Updated**: 2025-08-15  
 **Maintainer**: Development Team
 
-*"From the moment I understood the weakness of my flesh, it disgusted me. I craved the strength and certainty of steel." - The Omnissiah protects this codebase.*
+*"From the moment I understood the weakness of my flesh, it disgusted me. I craved the strength and certainty of steel." - The the system protects this codebase.*

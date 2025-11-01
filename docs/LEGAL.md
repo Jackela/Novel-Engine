@@ -6,7 +6,7 @@ This document outlines the legal and compliance framework for the Novel Engine p
 
 ## 1. Non-Affiliation Disclaimer
 
-This project, the "Novel Engine," is an independent, non-commercial research framework. It is not affiliated with, endorsed, sponsored, or approved by Games Workshop Group PLC or any of its affiliates. All trademarks, service marks, names, and logos associated with the Warhammer 40,000 universe are the property of their respective owners.
+This project, the "Novel Engine," is an independent, non-commercial research framework. It is not affiliated with, endorsed, sponsored, or approved by Games Workshop Group PLC or any of its affiliates. All trademarks, service marks, names, and logos associated with the Novel Engine 40,000 universe are the property of their respective owners.
 
 ## 2. Usage Boundaries & Non-Commercial Use
 

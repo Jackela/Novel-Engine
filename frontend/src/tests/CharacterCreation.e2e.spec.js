@@ -656,7 +656,7 @@ test.describe('Character Creation Component - Sacred Forging Rituals', () => {
     });
   });
 
-  test.describe('Error Recovery - When the Machine Spirits Falter', () => {
+  test.describe('Error Recovery - When the modules Falter', () => {
     
     test('should provide retry functionality after network failures', async ({ page }) => {
       let attemptCount = 0;

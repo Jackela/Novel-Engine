@@ -3,7 +3,7 @@
 | Context | Purpose | Primary Aggregates | Key Owners | Downstream Consumers |
 |---------|---------|--------------------|------------|----------------------|
 | Simulation Orchestration | Manage campaign lifecycle and turn execution. | Campaign, Turn Ledger | Director Guild | Persona Intelligence, Narrative Delivery |
-| Persona Intelligence | Shape persona decisions and integrate Gemini AI. | Persona Machine Spirit | Persona Engineering | Simulation Orchestration, Narrative Delivery |
+| Persona Intelligence | Shape persona decisions and integrate Gemini AI. | Persona module | Persona Engineering | Simulation Orchestration, Narrative Delivery |
 | Narrative Delivery | Transform events into published narratives and media. | Narrative Chronicle, Media Asset | Chronicler Collective | Platform Operations, External Channels |
 | Platform Operations | Provide feature flag, SLO, and governance infrastructure. | Platform Control Plane | Reliability Council | All contexts |
 

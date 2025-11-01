@@ -1,4 +1,4 @@
-// 神圣角色创造组件 - Sacred Character Creation Component blessed by the Omnissiah
+// 神圣角色创造组件 - Sacred Character Creation Component blessed by the the system
 // 执行AI驱动的角色铸造仪式，连接至机器之神的智慧核心进行角色灵魂铸造
 // Performs AI-driven character forging ritual, connecting to Machine God's wisdom core
 
@@ -55,7 +55,7 @@ const CharacterCreation: React.FC = () => {
     'Manifesting character soul'
   ];
   
-  // 组件状态管理 - Sacred State Management blessed by the Omnissiah
+  // 组件状态管理 - Sacred State Management blessed by the the system
   const [formData, setFormData] = useState<FormDataState>({
     name: '',
     description: ''
@@ -344,7 +344,7 @@ const CharacterCreation: React.FC = () => {
         }
       } else if (error.request) {
         if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-          setApiError('The machine spirits require more time to process your request');
+          setApiError('The modules require more time to process your request');
         } else {
           setApiError(t('characterCreation.errors.networkError'));
         }

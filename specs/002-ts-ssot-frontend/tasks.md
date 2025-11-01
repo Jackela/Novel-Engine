@@ -32,7 +32,7 @@
 - [X] T019 [US2] Add tokens quickstart with examples `specs/002-ts-ssot-frontend/quickstart.md`
 - [X] T020 [US2] Ensure tokens build emits CSS and theme consistently `frontend/scripts/build-tokens.mjs`
 - [X] T021 [US2] Add precommit or CI step to fail on deleted/renamed tokens without migration note `frontend/.github/workflows/frontend-ci.yml`
-- [X] T022 [US2] Add doc anchors from README to DESIGN_SYSTEM `frontend/README.md`
+- [X] T022 [US2] Add doc anchors from README to DESIGN_SYSTEM `frontend/DEVELOPMENT.md`
 
 ## Phase 5: User Story 3 – Predictable Data and Loading States (P3)
 
@@ -63,3 +63,4 @@
 
 - T030 documents the SSOT styling and server-state split as an ADR, aligning with Constitution Principle VI (Documentation & Knowledge Stewardship).
 - T031 updates the Constitution Gate Workbook, aligning with Constitution Principle VI and validating that gates from Principles II (API Discipline) and IV (Quality Engineering & Testing) are reflected in this feature’s plan/spec/tasks.
+

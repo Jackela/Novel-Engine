@@ -5,7 +5,7 @@ ChroniclerAgent Narrative Transcription Demonstration
 
 This script demonstrates the complete workflow of the ChroniclerAgent's narrative
 transcription capabilities. It initializes the ChroniclerAgent and uses it to
-transform the structured campaign log into a dramatic Warhammer 40k narrative.
+transform the structured campaign log into a dramatic Novel Engine narrative.
 
 The demonstration showcases:
 1. ChroniclerAgent initialization with output directory setup
@@ -15,7 +15,7 @@ The demonstration showcases:
 5. Complete narrative output display
 6. Validation of transcription quality
 
-This serves as the capstone demonstration of the Warhammer 40k Multi-Agent
+This serves as the capstone demonstration of the Novel Engine Multi-Agent
 Simulator's Phase 4 story transcription capabilities.
 
 Author: ChroniclerAgent Development Team
@@ -46,10 +46,10 @@ def demonstrate_chronicler_transcription():
     
     This function executes the full pipeline from campaign log to dramatic narrative,
     showcasing the transformation of structured simulation data into engaging
-    Warhammer 40k storytelling.
+    Novel Engine storytelling.
     """
     print("=" * 80)
-    print("WARHAMMER 40K MULTI-AGENT SIMULATOR")
+    print("Novel Engine MULTI-AGENT SIMULATOR")
     print("ChroniclerAgent Narrative Transcription Demonstration")
     print("=" * 80)
     print()
@@ -127,7 +127,7 @@ def demonstrate_chronicler_transcription():
         has_trooper_86 = "Trooper 86" in complete_narrative or "trooper 86" in complete_narrative.lower()
         has_griznork = "Griznork" in complete_narrative or "griznork" in complete_narrative.lower()
         
-        # Check for Warhammer 40k atmosphere
+        # Check for Novel Engine atmosphere
         wh40k_terms = [
             "Emperor", "grim darkness", "far future", "war", "41st millennium", 
             "Space Marines", "Imperial", "Orks", "Death Korps", "Krieg"
@@ -143,7 +143,7 @@ def demonstrate_chronicler_transcription():
         print(f"   Griznork (Orks): {'✅ Present' if has_griznork else '❌ Missing'}")
         print()
         
-        print("🌌 Warhammer 40k Atmosphere:")
+        print("🌌 Novel Engine Atmosphere:")
         print(f"   Atmospheric Terms: {wh40k_score}/{len(wh40k_terms)} detected")
         print(f"   Atmosphere Quality: {'✅ Excellent' if wh40k_score >= 5 else '⚠️ Adequate' if wh40k_score >= 3 else '❌ Poor'}")
         print()
@@ -192,7 +192,7 @@ def demonstrate_chronicler_transcription():
             print("   ✅ ChroniclerAgent initialized without errors")
             print("   ✅ Campaign log successfully processed into narrative")
             print("   ✅ Complete story generated with character interactions")
-            print("   ✅ Authentic Warhammer 40k storytelling demonstrated")
+            print("   ✅ Authentic Novel Engine storytelling demonstrated")
             print("   ✅ End-to-end workflow validated")
         else:
             print("⚠️  DEMONSTRATION PARTIALLY SUCCESSFUL")
@@ -243,9 +243,9 @@ def display_narrative_preview(narrative: str, max_lines: int = 20):
     print()
 
 
-def validate_warhammer_atmosphere(narrative: str) -> dict:
+def validate_Novel Engine_atmosphere(narrative: str) -> dict:
     """
-    Validate the Warhammer 40k atmospheric elements in the narrative.
+    Validate the Novel Engine atmospheric elements in the narrative.
     
     Args:
         narrative: Complete narrative text
@@ -275,7 +275,7 @@ def validate_warhammer_atmosphere(narrative: str) -> dict:
     # Check for faction representation
     faction_terms = [
         'death korps', 'krieg', 'astra militarum', 'imperial guard',
-        'orks', 'goff', 'space marines', 'adeptus mechanicus'
+        'orks', 'goff', 'space marines', 'Engineering Team'
     ]
     
     for term in faction_terms:
@@ -318,7 +318,7 @@ def main():
         if narrative and success:
             print("🚀 ChroniclerAgent demonstration completed successfully!")
             print()
-            print("The Warhammer 40k Multi-Agent Simulator has successfully demonstrated")
+            print("The Novel Engine Multi-Agent Simulator has successfully demonstrated")
             print("its complete end-to-end workflow from structured simulation data")
             print("to dramatic narrative storytelling.")
             print()
@@ -327,7 +327,7 @@ def main():
             print("✅ PersonaAgent character behavior simulation")
             print("✅ ChroniclerAgent narrative transcription")
             print("✅ LLM-guided story generation")
-            print("✅ Authentic Warhammer 40k atmosphere")
+            print("✅ Authentic Novel Engine atmosphere")
             print()
             print("The system is ready for extended campaign simulations!")
             

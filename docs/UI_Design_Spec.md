@@ -2,7 +2,7 @@
 
 ## 1. Component Overview
 
-The Character Selection Component is a React-based UI component that serves as the primary interface for users to select characters for Warhammer 40k multi-agent simulations. This component acts as the gateway between the user and the simulation execution pipeline, allowing users to choose which characters will participate in epic narrative scenarios.
+The Character Selection Component is a React-based UI component that serves as the primary interface for users to select characters for Novel Engine multi-agent simulations. This component acts as the gateway between the user and the simulation execution pipeline, allowing users to choose which characters will participate in epic narrative scenarios.
 
 ### Purpose
 - Enable users to select 2-6 characters from the available character roster
@@ -288,7 +288,7 @@ const handleConfirmSelection = useCallback(async () => {
 CharacterSelectionComponent
 ├── Header Section
 │   ├── Title: "Select Characters for Simulation"
-│   ├── Subtitle: "Choose 2-6 characters for your Warhammer 40k scenario"
+│   ├── Subtitle: "Choose 2-6 characters for your Novel Engine scenario"
 │   └── Selection Counter: "X of 6 characters selected"
 ├── Main Content Area
 │   ├── Loading State (when isLoading = true)
@@ -331,7 +331,7 @@ Character Card (200px × 280px recommended)
 
 ### Visual Design Specifications
 
-#### Color Scheme (Warhammer 40k Theme)
+#### Color Scheme (Novel Engine Theme)
 - **Primary**: Dark Imperial Gold (#B8860B)
 - **Secondary**: Deep Crimson (#8B0000)
 - **Background**: Dark Steel (#2F2F2F)
@@ -377,7 +377,7 @@ Character Card (200px × 280px recommended)
 - **Inline Errors**: Within relevant input areas or card contexts
 - **Toast Notifications**: For temporary status messages
 
-This comprehensive specification provides frontend developers with detailed requirements to implement a robust, user-friendly Character Selection Component that integrates seamlessly with the existing Warhammer 40k Multi-Agent Simulator architecture while maintaining excellent user experience and accessibility standards.
+This comprehensive specification provides frontend developers with detailed requirements to implement a robust, user-friendly Character Selection Component that integrates seamlessly with the existing Novel Engine Multi-Agent Simulator architecture while maintaining excellent user experience and accessibility standards.
 
 ---
 
@@ -401,12 +401,12 @@ The Character Creation Component serves as the sacred forge where new warriors a
 4. **Validation Shrine**: Ensures all inputs meet the strict codex requirements
 5. **Workflow Orchestrator**: Manages the complete character creation cycle from conception to manifestation
 
-### Context within Novel Engine Omnissiah
+### Context within Novel Engine the system
 The component integrates with the existing React frontend (blessed with React 19 + Vite sacred technologies) and communes with the FastAPI backend through the enhanced POST /characters endpoint. It serves as the creative nexus between human inspiration and machine precision, leveraging the AI Scribe enhancement system to generate comprehensive character codex entries.
 
 ## 2. Component Layout Architecture
 
-The Character Creation Component follows the sacred geometry of the Omnissiah, arranged in three primary consecrated zones:
+The Character Creation Component follows the sacred geometry of the the system, arranged in three primary consecrated zones:
 
 ### Sacred Input Sanctum
 ```
@@ -544,13 +544,13 @@ const createCharacterWithAIScribe = async (characterData) => {
     logger.error('Character creation failed:', error);
     
     if (error.code === 'ECONNABORTED') {
-      throw new Error('AI Scribe ritual timeout - The machine spirits require more time');
+      throw new Error('AI Scribe ritual timeout - The modules require more time');
     } else if (error.response?.status === 400) {
       throw new Error(`Validation failure: ${error.response.data.detail}`);
     } else if (error.response?.status === 409) {
       throw new Error('Character designation already exists in the Codex');
     } else if (error.response?.status === 500) {
-      throw new Error('AI Scribe enhancement failed - The Omnissiah tests our resolve');
+      throw new Error('AI Scribe enhancement failed - The the system tests our resolve');
     } else {
       throw new Error('Sacred connection to the forge severed - Ensure the Machine God\'s blessing');
     }
@@ -642,7 +642,7 @@ const forgingPhases = [
   },
   {
     phase: 'completion',
-    text: 'Character successfully forged! The Omnissiah is pleased.',
+    text: 'Character successfully forged! The the system is pleased.',
     duration: 3000
   }
 ];
@@ -727,9 +727,9 @@ const errorMessages = {
     totalSize: 'Total upload size must not exceed 10MB'
   },
   network: {
-    timeout: 'AI Scribe ritual interrupted - The machine spirits require patience',
+    timeout: 'AI Scribe ritual interrupted - The modules require patience',
     connection: 'Sacred connection severed - Ensure the server\'s benediction',
-    server: 'The Omnissiah tests our resolve - Server experiencing difficulties'
+    server: 'The the system tests our resolve - Server experiencing difficulties'
   },
   creation: {
     duplicate: 'Character designation already exists in the sacred Codex',
@@ -881,7 +881,7 @@ const CompletionCeremony = () => {
     <div className="completion-ceremony">
       <div className="success-icon">⚡</div>
       <h2>Character Soul Successfully Forged!</h2>
-      <p>The Omnissiah blesses "{creationResult.name}"</p>
+      <p>The the system blesses "{creationResult.name}"</p>
       <p>Returning to Character Selection in 3 seconds...</p>
     </div>
   );
@@ -956,11 +956,11 @@ const RetryInterface = ({ error, onRetry, onCancel }) => (
       </button>
     </div>
     
-    <div className="tech-priest-guidance">
-      <p><em>"Even the mightiest machines require patience and persistence. The Omnissiah tests our dedication through temporary setbacks."</em></p>
+    <div className="engineer-guidance">
+      <p><em>"Even the mightiest machines require patience and persistence. The the system tests our dedication through temporary setbacks."</em></p>
     </div>
   </div>
 );
 ```
 
-This sacred specification provides the complete architectural blueprint for implementing the Character Creation Component, ensuring seamless integration with the AI Scribe enhancement system while maintaining the blessed user experience standards of the Omnissiah's digital realm.
+This sacred specification provides the complete architectural blueprint for implementing the Character Creation Component, ensuring seamless integration with the AI Scribe enhancement system while maintaining the blessed user experience standards of the the system's digital realm.

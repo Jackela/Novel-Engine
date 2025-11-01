@@ -14,7 +14,7 @@
   - Immutable; appended to campaign timeline via event sourcing stream
 
 #### Persona Intelligence Context
-- **Persona Machine Spirit Aggregate**
+- **Persona module Aggregate**
   - **Identifiers**: `persona_id` (UUID), `character_sheet_hash`
   - **State**: personality profile, decision weights, cached prompt responses (Redis key `persona:{id}:response:{turn}`), fallback policy metadata
   - **Commands**: `ingest_character_sheet`, `record_decision`
@@ -43,7 +43,7 @@
   - **Invariants**: toggles require owner + rollback plan; every SLO entry links to measurement source
 
 ### 2. Relationships
-- Campaign ↔ Persona Machine Spirit: many-to-many via campaign participant list (campaign stores persona IDs; persona aggregate records campaign memberships).  
+- Campaign ↔ Persona module: many-to-many via campaign participant list (campaign stores persona IDs; persona aggregate records campaign memberships).  
 - Campaign ↔ Narrative Chronicle: one-to-one; chronicle references campaign ID and turn ledger entries.  
 - Platform Control Plane ↔ All Contexts: publishes feature flag and SLO policies consumed via read model projections.  
 - Anti-Corruption Layers mediate between Persona Intelligence and external Gemini API; no other context directly accesses Gemini.

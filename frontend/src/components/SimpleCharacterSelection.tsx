@@ -192,7 +192,7 @@ const SimpleCharacterSelection = () => {
 
   // 编译交互式故事
   const compileInteractiveStory = (history, participants) => {
-    let story = `🛡️ **战锤40K 交互式战役记录** 🛡️\n\n`;
+    let story = `🛡️ **Novel Engine 交互式战役记录** 🛡️\n\n`;
     story += `参与英雄: ${participants.join(', ')}\n`;
     story += `总回合数: ${history.length}\n`;
     story += `战斗类型: 交互式指挥战斗\n\n`;
@@ -512,7 +512,7 @@ const SimpleCharacterSelection = () => {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `warhammer-40k-simulation-${Date.now()}.txt`;
+                a.download = `Novel Engine-40k-simulation-${Date.now()}.txt`;
                 a.click();
                 URL.revokeObjectURL(url);
               }}

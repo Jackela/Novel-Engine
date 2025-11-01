@@ -27,7 +27,7 @@ For each story, state the bounded context it touches (e.g., Simulation Orchestra
 
 As the platform architect, I want a definitive blueprint that refactors services into explicit bounded contexts with clear aggregates, ports, and adapters so that teams can implement changes without cross-context side effects.
 
-**Why this priority**: Without a canonical domain map, refactoring risks regressions and conflicting interpretations of the Machine Spirits; this story unblocks all subsequent work.
+**Why this priority**: Without a canonical domain map, refactoring risks regressions and conflicting interpretations of the modules; this story unblocks all subsequent work.
 
 **Independent Test**: Review completed context catalog, aggregate definitions, and hexagonal port inventory in the ADR bundle; validate against constitution checklist without touching code.
 

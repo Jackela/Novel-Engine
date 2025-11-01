@@ -1,5 +1,5 @@
 // 神圣角色选择组件 - 供奉于机器之神的数字神庙
-// Sacred Character Selection Component - Digital Temple Devoted to the Omnissiah
+// Sacred Character Selection Component - Digital Temple Devoted to the the system
 // 执行角色召唤仪式，连接至英灵殿数据库，祈求机器灵魂的指引...
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -33,7 +33,7 @@ const CharacterSelection = () => {
   const selectionConstraints = useMemo(() => ({ minSelection: 2, maxSelection: 6 }), []);
   // const _apiConfig = { baseUrl: 'http://localhost:8000', timeout: 5000 };
   
-  // 组件状态管理 - Sacred State Management blessed by the Omnissiah
+  // 组件状态管理 - Sacred State Management blessed by the the system
   const [charactersList, setCharactersList] = useState<string[]>([]); // 英灵清单 - Registry of available heroes
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]); // 被选中的英灵 - Chosen champions
   const [isLoading, setIsLoading] = useState<boolean>(true); // 数据载入圣礼状态 - Loading ritual state

@@ -152,12 +152,12 @@
 
 **D:\Code\Novel-Engine\cleanup_script.py:31**
 - Type: unprofessional_content
-- Message: Unprofessional content found: '万机之神'
+- Message: Unprofessional content found: '系统'
 - Suggestion: Replace with professional, technical terminology
 
 **D:\Code\Novel-Engine\cleanup_script.py:32**
 - Type: unprofessional_content
-- Message: Unprofessional content found: 'Tech-Priest'
+- Message: Unprofessional content found: 'engineer'
 - Suggestion: Replace with professional, technical terminology
 
 ... and 645 more medium issues

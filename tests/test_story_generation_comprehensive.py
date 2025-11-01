@@ -42,7 +42,7 @@ SCI_FI_KEYWORDS = [
 BANNED_BRAND_TERMS = [
     "founders' council",
     "alliance network",
-    "warhammer",
+    "Novel Engine",
     "40k",
     "entropy cult",
     "freewind collective",

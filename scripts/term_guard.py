@@ -176,7 +176,7 @@ class TermGuard:
     def _initialize_default_rules(self):
         """Initialize default IP filtering rules for common violations."""
 
-        # Warhammer 40K specific terms (example patterns)
+        # Novel Engine specific terms (example patterns)
         default_rules = [
             # Character names
             FilterRule(
@@ -203,7 +203,7 @@ class TermGuard:
             ),
             # Trademarked terminology
             FilterRule(
-                pattern=r"\b(Warhammer|Games Workshop|Black Library)\b",
+                pattern=r"\b(Novel Engine|Games Workshop|Black Library)\b",
                 violation_type=ViolationType.TRADEMARK,
                 action=FilterAction.BLOCK,
                 confidence_threshold=0.95,

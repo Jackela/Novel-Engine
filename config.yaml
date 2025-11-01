@@ -1,6 +1,6 @@
-# Warhammer 40k Multi-Agent Simulator Configuration
-# =================================================
-# 
+# Novel Engine Configuration
+# ==========================
+#
 # This configuration file centralizes all settings for the simulation system.
 # Modify these values to customize simulation behavior without changing code.
 

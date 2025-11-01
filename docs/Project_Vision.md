@@ -1,10 +1,10 @@
-# Project Vision: Warhammer 40k Multi-Agent Narrative Engine
+# Project Vision: Novel Engine Multi-Agent Narrative Engine
 
 ## Project Overview
 
-The **Novel Engine** is an ambitious multi-agent simulator that brings the grim darkness of the Warhammer 40k universe to life through emergent storytelling. This project represents a fusion of advanced AI-driven simulation and narrative generation, where autonomous agents with deeply flawed, subjective worldviews interact within an objectively governed universe to create epic tales of war, betrayal, and heroism.
+The **Novel Engine** is an ambitious multi-agent simulator that brings the grim darkness of the Novel Engine universe to life through emergent storytelling. This project represents a fusion of advanced AI-driven simulation and narrative generation, where autonomous agents with deeply flawed, subjective worldviews interact within an objectively governed universe to create epic tales of war, betrayal, and heroism.
 
-Unlike traditional narrative engines that follow predetermined story beats, the Novel Engine generates authentic Warhammer 40k stories through the genuine interactions of PersonaAgents—each carrying their own biases, beliefs, and blind spots that mirror the fractured perspectives found throughout the 41st millennium.
+Unlike traditional narrative engines that follow predetermined story beats, the Novel Engine generates authentic Novel Engine stories through the genuine interactions of PersonaAgents—each carrying their own biases, beliefs, and blind spots that mirror the fractured perspectives found throughout the 41st millennium.
 
 ## Core Vision
 
@@ -22,7 +22,7 @@ Yet beneath these fractured perspectives runs the **objective WorldState**—the
 
 ### Emergent Authenticity
 
-This engine doesn't simulate Warhammer 40k—it **becomes** Warhammer 40k. By allowing agents to act according to their genuinely held (though flawed) beliefs, the system generates narratives that feel authentic because they emerge from the same kinds of miscommunication, fanaticism, and tragic misunderstanding that define the setting.
+This engine doesn't simulate Novel Engine—it **becomes** Novel Engine. By allowing agents to act according to their genuinely held (though flawed) beliefs, the system generates narratives that feel authentic because they emerge from the same kinds of miscommunication, fanaticism, and tragic misunderstanding that define the setting.
 
 ## Key Components
 
@@ -57,7 +57,7 @@ The final layer transforms the structured CampaignLog into compelling narrative 
 ## Narrative Generation Philosophy
 
 ### Stories That Write Themselves
-The Novel Engine operates on the principle that the best Warhammer 40k stories arise not from predetermined plots, but from the inevitable collisions between incompatible worldviews. When a zealous Space Marine Chaplain encounters a pragmatic Astra Militarum Commander, or when an Inquisitor's investigation intersects with a Mechanicus research project, conflict emerges naturally from their fundamentally different perspectives on reality.
+The Novel Engine operates on the principle that the best Novel Engine stories arise not from predetermined plots, but from the inevitable collisions between incompatible worldviews. When a zealous Space Marine Chaplain encounters a pragmatic Astra Militarum Commander, or when an Inquisitor's investigation intersects with a Mechanicus research project, conflict emerges naturally from their fundamentally different perspectives on reality.
 
 ### The Beauty of Imperfect Information
 In traditional storytelling, characters often act with perfect knowledge of their situation. In the Novel Engine, characters act with **authentic ignorance**—they make decisions based on incomplete, biased, or outright incorrect information, just as real people do. This creates the kind of tragic irony that defines the best 40k narratives.
@@ -99,5 +99,5 @@ In the Novel Engine, there is no author—only the universe itself, telling its 
 *"In the grim darkness of the far future, there are no heroes—only perspectives."*
 
 **Project Status**: Vision Phase  
-**Target Audience**: Warhammer 40k enthusiasts, AI researchers, interactive narrative developers  
+**Target Audience**: Novel Engine enthusiasts, AI researchers, interactive narrative developers  
 **Core Innovation**: Subjective agent cognition in objective reality simulation

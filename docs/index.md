@@ -1,98 +1,79 @@
-# Novel Engine Documentation
+# Novel Engine M1 - Documentation Hub
 
-Welcome to the Novel Engine documentation! Novel Engine is an AI-enhanced interactive novel framework that combines traditional storytelling with intelligent automation and dynamic content generation.
+Welcome to the comprehensive documentation for Novel Engine M1 Architecture. This documentation hub provides complete architectural, operational, and development guidance.
 
-## What is Novel Engine?
+## 📚 Documentation Structure
 
-Novel Engine is a comprehensive framework for creating interactive narrative experiences with:
+### 🏗️ [Architecture](./architecture/)
+System design, architectural decisions, and technical specifications
+- System Architecture Overview
+- Component Design Documents
+- Integration Patterns and Interfaces
+- Performance and Scalability Architecture
 
-- **AI-Enhanced Storytelling**: Intelligent agents that respond dynamically to player actions
-- **Character System**: Rich, persistent character models with personality and growth
-- **Event-Driven Architecture**: Scalable, modular design for complex narratives
-- **API-First Design**: RESTful APIs for integration with any frontend
-- **Production Ready**: Comprehensive testing, monitoring, and deployment tools
+### 🔌 [API](./api/)
+API documentation, specifications, and integration guides
+- API Reference and Specifications
+- Integration Guides and Examples
+- Authentication and Authorization
+- API Versioning and Compatibility
 
-## Key Features
+### 📖 [Guides](./guides/)
+User and developer guides for all aspects of the system
+- Getting Started and Quick Setup
+- Developer Guide and Best Practices
+- User Manual and Feature Guides
+- Configuration and Customization
 
-### 🤖 AI-Powered Characters
-- Persistent character personalities and memories
-- Dynamic decision-making based on character traits
-- Emergent narrative through character interactions
+### 🛠️ [Operations](./operations/)
+Operational procedures, runbooks, and maintenance guides
+- Deployment and Infrastructure Management
+- Monitoring and Observability
+- Troubleshooting and Problem Resolution
+- Backup and Disaster Recovery
 
-### 🎭 Interactive Storytelling
-- Turn-based narrative progression
-- Player choice impact on story direction
-- Rich world state management
+### 🎯 [Domains](./domains/)
+Domain-specific documentation for each business context
+- Character Domain Documentation
+- Narrative Domain Documentation
+- Campaign Domain Documentation
+- Interaction Domain Documentation
 
-### 🏗️ Robust Architecture
-- Event-driven, microservices-ready design
-- Comprehensive test coverage (90%+)
-- Production monitoring and observability
+### 🚀 [Deployment](./deployment/)
+Deployment guides, infrastructure setup, and environment management
+- Environment Setup and Configuration
+- Container and Kubernetes Deployment
+- Infrastructure as Code Documentation
+- Security and Compliance Guidelines
 
-### 🔒 Enterprise Ready
-- Security-first design with input validation
-- Performance optimization and caching
-- Comprehensive quality gates and CI/CD
+### 📋 [Decisions](./decisions/)
+Architectural Decision Records (ADRs) and design decisions
+- Architectural Decision Records
+- Technology Choice Rationale
+- Design Pattern Decisions
+- Migration and Evolution Decisions
 
-## Quick Start
+## 🎯 Quick Navigation
 
-Get up and running with Novel Engine in minutes:
+- **New to Novel Engine?** → Start with [Guides](./guides/)
+- **Setting up deployment?** → Check [Deployment](./deployment/)
+- **API Integration?** → Visit [API](./api/)
+- **System Administration?** → Go to [Operations](./operations/)
+- **Architecture Questions?** → Explore [Architecture](./architecture/)
 
-```bash
-# Clone the repository
-git clone https://github.com/novel-engine/novel-engine.git
-cd novel-engine
+## 📖 Documentation Standards
 
-# Install dependencies
-pip install -r requirements.txt
+All documentation follows:
+- **Living Documentation**: Always up-to-date with code changes
+- **User-Centric**: Written from the user's perspective
+- **Comprehensive**: Complete coverage of all system aspects
+- **Searchable**: Well-structured and easily navigable
+- **Actionable**: Provides clear next steps and examples
 
-# Run the API server
-python src/api/main_api_server.py
+## 🤝 Contributing
 
-# Start creating your story!
-curl http://localhost:8000/docs
-```
-
-## Architecture Overview
-
-```mermaid
-graph TB
-    A[Web API] --> B[System Orchestrator]
-    B --> C[Event Bus]
-    B --> D[Context Database]
-    C --> E[Director Agent]
-    C --> F[Character Agents]
-    E --> G[Story Generation]
-    F --> H[Character Decisions]
-    G --> I[Narrative Output]
-    H --> I
-```
-
-## Use Cases
-
-### Interactive Fiction
-Create branching narratives where player choices matter and characters remember past interactions.
-
-### Educational Content
-Build educational scenarios with AI tutors that adapt to student responses.
-
-### Game Development
-Integrate rich NPC behavior and dynamic storytelling into games.
-
-### Simulation & Training
-Create realistic scenario simulations for training and assessment.
-
-## Community & Support
-
-- **GitHub**: [https://github.com/novel-engine/novel-engine](https://github.com/novel-engine/novel-engine)
-- **Documentation**: You're reading it!
-- **Issues**: Report bugs and request features on GitHub
-- **Discussions**: Join the community discussions
-
-## License
-
-Novel Engine is released under the MIT License. See [LICENSE](LICENSE) for details.
+Documentation improvements and contributions are welcome. Please follow our documentation standards and update guidelines.
 
 ---
 
-Ready to start building? Check out our [Getting Started Guide](getting-started/installation.md)!
+**Novel Engine M1 Architecture** - Modern, scalable, and well-documented system architecture.

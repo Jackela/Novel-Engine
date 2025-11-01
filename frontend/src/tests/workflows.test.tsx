@@ -18,7 +18,7 @@ import { vi } from 'vitest';
 vi.mock('../services/api', () => ({
   default: {
     getCharacters: vi.fn(() => Promise.resolve(['krieg', 'ork_warboss', 'isabella_varr'])),
-    getCampaigns: vi.fn(() => Promise.resolve(['default', 'warhammer_40k'])),
+    getCampaigns: vi.fn(() => Promise.resolve(['default', 'Novel Engine_40k'])),
     getHealth: vi.fn(() => Promise.resolve({
       api: 'healthy',
       config: 'loaded',

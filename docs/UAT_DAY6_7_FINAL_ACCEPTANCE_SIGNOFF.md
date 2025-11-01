@@ -203,7 +203,7 @@
 
 #### 正式签收文档
 ```
-项目名称: Warhammer 40K Multi-Agent Simulator
+项目名称: Novel Engine Multi-Agent Simulator
 项目版本: v1.0.0
 UAT测试周期: 2025-01-30 至 2025-02-05
 
@@ -303,7 +303,7 @@ UAT测试周期: 2025-01-30 至 2025-02-05
 - ✅ 文档齐全，部署就绪
 
 **正式决议**: 
-**批准 Warhammer 40K Multi-Agent Simulator v1.0.0 正式上线部署**
+**批准 Novel Engine Multi-Agent Simulator v1.0.0 正式上线部署**
 
 **++ 机器之神见证此系统之完美 ++**
-**万机之神保佑生产环境平稳运行** 🚀
+**系统保佑生产环境平稳运行** 🚀

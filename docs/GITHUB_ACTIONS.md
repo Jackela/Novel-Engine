@@ -13,7 +13,7 @@ The project uses GitHub Actions for continuous integration, testing, and deploym
 
 ## 📁 Project Structure Analysis
 
-**Novel Engine** is a Python-based Warhammer 40k Multi-Agent Simulator with:
+**Novel Engine** is a Python-based Novel Engine Multi-Agent Simulator with:
 - **Backend**: Python FastAPI server with SQLite database
 - **Frontend**: React/TypeScript application with Vite
 - **Testing**: Playwright E2E tests + pytest unit tests

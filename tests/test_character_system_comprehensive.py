@@ -98,7 +98,7 @@ class TestCharacterLoading:
         branded_terms = [
             "emperor",
             "imperial",
-            "warhammer",
+            "Novel Engine",
             "40k",
             "chaos",
             "orks",

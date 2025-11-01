@@ -75,7 +75,7 @@ const MOCK_STORIES: StoryProject[] = [
       generationTime: 45.2,
       wordCount: 1247,
       participantCount: 2,
-      tags: ['action', 'warhammer40k', 'heroic'],
+      tags: ['action', 'Novel Engine', 'heroic'],
     },
   },
   {

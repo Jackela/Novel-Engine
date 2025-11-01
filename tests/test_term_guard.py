@@ -183,9 +183,9 @@ class TestTermGuard:
         assert space_marine_violations[0].violation_type == ViolationType.CHARACTER_NAME
 
         # Check legacy franchise detection
-        warhammer_violations = [v for v in violations if v.term == "legacy franchise"]
-        assert len(warhammer_violations) == 1
-        assert warhammer_violations[0].violation_type == ViolationType.TRADEMARK
+        Novel Engine_violations = [v for v in violations if v.term == "legacy franchise"]
+        assert len(Novel Engine_violations) == 1
+        assert Novel Engine_violations[0].violation_type == ViolationType.TRADEMARK
 
     def test_analyze_content_whitelist(self, temp_config):
         """Test content analysis respects whitelist."""

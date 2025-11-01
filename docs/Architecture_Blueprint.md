@@ -1,4 +1,4 @@
-# Architecture Blueprint: Warhammer 40k Multi-Agent Simulator
+# Architecture Blueprint: Novel Engine Multi-Agent Simulator
 *Production-Ready AI-Powered Narrative Simulation System*
 
 ## 1. System Architecture Overview
@@ -7,7 +7,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                  Warhammer 40k Multi-Agent Simulator                │
+│                  Novel Engine Multi-Agent Simulator                │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  ┌─────────────────┐    ┌──────────────────┐    ┌───────────────┐   │
@@ -99,7 +99,7 @@ class DirectorAgent:
 
 ### 2.2 PersonaAgent (AI-Powered Character)
 
-**Role**: Embodies individual Warhammer 40k characters using real AI integration for dynamic, authentic decision-making and personality expression.
+**Role**: Embodies individual Novel Engine characters using real AI integration for dynamic, authentic decision-making and personality expression.
 
 **Production Implementation**:
 - **File**: `persona_agent.py`
@@ -203,7 +203,7 @@ class AppConfig:
 **Core Responsibilities**:
 - Parse structured campaign logs from DirectorAgent
 - Extract key events, character actions, and faction dynamics
-- Generate dramatic narrative prose in authentic Warhammer 40k style
+- Generate dramatic narrative prose in authentic Novel Engine style
 - Combine individual event narratives into cohesive stories
 - Support multiple narrative styles (grimdark_dramatic, tactical, philosophical)
 - Create structured markdown output with proper formatting
@@ -223,7 +223,7 @@ class ChroniclerAgent:
 - **Event Parsing**: Intelligent parsing of campaign log markdown format
 - **Style Adaptation**: Multiple narrative styles for different campaign types
 - **Character Focus**: Maintains character development arcs across narratives
-- **Atmospheric Writing**: Authentic Warhammer 40k tone and terminology
+- **Atmospheric Writing**: Authentic Novel Engine tone and terminology
 - **Structured Output**: Well-formatted markdown with chapters and sections
 
 ### 2.5 World State Management (Production Implementation)
@@ -877,7 +877,7 @@ logger.setLevel(logging.DEBUG)
 
 **Production Status**: ✅ **COMPLETE**
 
-The Warhammer 40k Multi-Agent Simulator represents a sophisticated, production-ready AI-powered narrative simulation system that successfully integrates:
+The Novel Engine Multi-Agent Simulator represents a sophisticated, production-ready AI-powered narrative simulation system that successfully integrates:
 
 ### Core Achievements
 

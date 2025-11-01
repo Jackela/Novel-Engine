@@ -188,10 +188,10 @@ class TestDocumentationFoundation:
 
     def test_adrs_readme_exists(self):
         """Verify ADRs README exists and lists all ADRs."""
-        adrs_readme = Path("docs/ADRs/README.md")
-        assert adrs_readme.exists(), "docs/ADRs/README.md must exist"
+        adrs_index = Path("docs/ADRs/INDEX.md")
+        assert adrs_index.exists(), "docs/ADRs/INDEX.md must exist"
 
-        with open(adrs_readme, "r", encoding="utf-8") as f:
+        with open(adrs_index, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Verify essential ADRs are documented

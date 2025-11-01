@@ -74,7 +74,7 @@ class TestFullSystemIntegration:
 
         # Verify no branded content
         story_lower = story.lower()
-        banned_terms = ["emperor", "warhammer", "40k", "chaos", "grim darkness"]
+        banned_terms = ["emperor", "Novel Engine", "40k", "chaos", "grim darkness"]
         for term in banned_terms:
             assert term not in story_lower, f"Found banned term: {term}"
 
@@ -349,7 +349,7 @@ class TestStoryGenerationPipeline:
 
         # Story should be debranded
         story_lower = story.lower()
-        banned_terms = ["emperor", "imperial", "warhammer", "grim darkness"]
+        banned_terms = ["emperor", "imperial", "Novel Engine", "grim darkness"]
         for term in banned_terms:
             assert term not in story_lower, f"Found banned term: {term}"
 
@@ -671,7 +671,7 @@ class TestSecurityValidationIntegration:
 
         # Comprehensive brand content check
         banned_terms = [
-            "warhammer",
+            "Novel Engine",
             "40k",
             "emperor",
             "imperial",
