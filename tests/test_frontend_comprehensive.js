@@ -153,7 +153,7 @@ describe('StoryForge AI Frontend Application', () => {
       expect(screen.getByText(/Interactive Story Engine/i)).toBeInTheDocument();
       
       // Should not contain old branding
-      expect(screen.queryByText(/Warhammer/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Novel Engine/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/40k/i)).not.toBeInTheDocument();
     });
     
@@ -179,7 +179,7 @@ describe('StoryForge AI Frontend Application', () => {
       
       // Check document title
       expect(document.title).toContain('StoryForge AI');
-      expect(document.title).not.toContain('Warhammer');
+      expect(document.title).not.toContain('Novel Engine');
       expect(document.title).not.toContain('40k');
     });
   });
@@ -384,7 +384,7 @@ describe('StoryForge AI Frontend Application', () => {
             // Verify no branded content
             expect(screen.queryByText(/emperor/i)).not.toBeInTheDocument();
             expect(screen.queryByText(/imperial/i)).not.toBeInTheDocument();
-            expect(screen.queryByText(/warhammer/i)).not.toBeInTheDocument();
+            expect(screen.queryByText(/Novel Engine/i)).not.toBeInTheDocument();
             expect(screen.queryByText(/grim darkness/i)).not.toBeInTheDocument();
           }
         });
@@ -641,7 +641,7 @@ describe('StoryForge AI Frontend Application', () => {
       
       // Check entire page for branded content
       const bannedTerms = [
-        /warhammer/i, /40k/i, /emperor/i, /imperial/i,
+        /Novel Engine/i, /40k/i, /emperor/i, /imperial/i,
         /chaos/i, /ork/i, /krieg/i, /space marines/i,
         /grim darkness/i, /far future/i
       ];

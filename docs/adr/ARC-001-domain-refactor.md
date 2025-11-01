@@ -16,7 +16,7 @@ blocks adoption of contract-first workflows and operability standards.
 
 1. Adopt four bounded contexts with explicit aggregates and owners:
    - **Simulation Orchestration** – `Campaign` aggregate, turn processing.
-   - **Persona Intelligence** – `Persona Machine Spirit` aggregate, Gemini ACL.
+   - **Persona Intelligence** – `Persona module` aggregate, Gemini ACL.
    - **Narrative Delivery** – `Narrative Chronicle` aggregate, publishing flow.
    - **Platform Operations** – `Platform Control Plane` aggregate, feature flags and SLO registry.
 2. Implement hexagonal ports/adapters for each context and catalog them in

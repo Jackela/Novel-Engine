@@ -189,7 +189,7 @@ class TestSimulationEndpoints:
         branded_terms = [
             "founders' council",
             "alliance network",
-            "warhammer",
+            "Novel Engine",
             "40k",
             "bastion_guardian",
             "space marines",

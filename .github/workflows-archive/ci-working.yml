@@ -220,7 +220,7 @@ function testComponent() {
         name: 'NovelEngine',
         render: () => '<div>Novel Engine App</div>',
         props: {
-            title: 'Warhammer 40k Simulator'
+            title: 'Novel Engine Simulator'
         }
     };
     
@@ -566,7 +566,7 @@ EOF
     <div class="container">
         <h1>🎯 Novel Engine</h1>
         <p class="status">Production Build Successful</p>
-        <p>Warhammer 40k Multi-Agent Simulator</p>
+        <p>Novel Engine Multi-Agent Simulator</p>
         <p class="timestamp" id="timestamp"></p>
     </div>
     

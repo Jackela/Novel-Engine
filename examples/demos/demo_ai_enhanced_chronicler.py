@@ -4,14 +4,14 @@ AI-Enhanced ChroniclerAgent Demonstration
 =========================================
 
 This script demonstrates the complete end-to-end AI-powered workflow of the 
-Warhammer 40k Multi-Agent Simulator, showcasing the ChroniclerAgent's ability
+Novel Engine Multi-Agent Simulator, showcasing the ChroniclerAgent's ability
 to transcribe real Gemini API-generated campaign logs into dramatic narrative stories.
 
 The script processes the freshly generated campaign_log.md which contains:
 - Real Gemini API character decision-making and reasoning
 - Enhanced character personality expressions from LLM integration
 - Sophisticated tactical and strategic thinking from AI agents
-- Authentic Warhammer 40k faction-specific behavior patterns
+- Authentic Novel Engine faction-specific behavior patterns
 
 This demonstrates the full production-ready capability of the system with
 real AI integration rather than placeholder responses.
@@ -140,7 +140,7 @@ def demonstrate_ai_enhanced_transcription():
     Main demonstration function that showcases the complete AI-enhanced
     ChroniclerAgent workflow with real Gemini API-generated content.
     """
-    print("🚀 WARHAMMER 40K MULTI-AGENT SIMULATOR")
+    print("🚀 Novel Engine MULTI-AGENT SIMULATOR")
     print("🤖 AI-Enhanced ChroniclerAgent Demonstration")
     print("=" * 60)
     
@@ -208,7 +208,7 @@ def demonstrate_ai_enhanced_transcription():
         print("   • Parsing campaign events...")
         print("   • Generating narrative segments with LLM calls...")
         print("   • Combining segments into cohesive story...")
-        print("   • Applying Warhammer 40k atmospheric formatting...")
+        print("   • Applying Novel Engine atmospheric formatting...")
         
         # Perform the actual transcription
         complete_narrative = chronicler.transcribe_log(campaign_log_path)
@@ -244,7 +244,7 @@ def demonstrate_ai_enhanced_transcription():
     narrative_sentences = complete_narrative.count('.') + complete_narrative.count('!') + complete_narrative.count('?')
     avg_sentence_length = narrative_words / narrative_sentences if narrative_sentences > 0 else 0
     
-    # Check for Warhammer 40k terminology
+    # Check for Novel Engine terminology
     wh40k_terms = [
         'Emperor', 'Imperium', 'grim darkness', 'far future', 'war', 'battle',
         'Astra Militarum', 'Death Korps', 'Krieg', 'Orks', 'Goff', 'WAAAGH',
@@ -257,7 +257,7 @@ def demonstrate_ai_enhanced_transcription():
     print(f"   • Total words: {narrative_words:,}")
     print(f"   • Total sentences: {narrative_sentences}")
     print(f"   • Average sentence length: {avg_sentence_length:.1f} words")
-    print(f"   • Warhammer 40k terminology usage: {term_count} instances")
+    print(f"   • Novel Engine terminology usage: {term_count} instances")
     
     print("\n🎯 QUALITY ASSESSMENT:")
     quality_score = 0
@@ -269,12 +269,12 @@ def demonstrate_ai_enhanced_transcription():
     else:
         print("   ❌ Narrative length: Content too brief")
     
-    # Check Warhammer 40k atmosphere
+    # Check Novel Engine atmosphere
     if term_count > 5:
-        print("   ✅ Warhammer 40k atmosphere: Authentic terminology used")
+        print("   ✅ Novel Engine atmosphere: Authentic terminology used")
         quality_score += 1
     else:
-        print("   ❌ Warhammer 40k atmosphere: Limited authentic terminology")
+        print("   ❌ Novel Engine atmosphere: Limited authentic terminology")
     
     # Check for character integration
     characters_in_narrative = sum(1 for char in log_analysis.get('character_diversity', {}).get('unique_characters', []) 
@@ -311,7 +311,7 @@ def demonstrate_ai_enhanced_transcription():
     print("   • Real AI-enhanced campaign log processing")
     print("   • Narrative transcription with LLM integration")
     print("   • Complete dramatic story generation")
-    print("   • Warhammer 40k atmospheric preservation")
+    print("   • Novel Engine atmospheric preservation")
     print("   • Quality analysis and assessment")
     
     print("\n📁 GENERATED FILES:")
@@ -325,7 +325,7 @@ def demonstrate_ai_enhanced_transcription():
         print(f"   • Full path: {os.path.abspath(os.path.join(output_directory, latest_file))}")
     
     print("\n🚀 END-TO-END AI-POWERED WORKFLOW COMPLETE!")
-    print("The Warhammer 40k Multi-Agent Simulator has successfully demonstrated")
+    print("The Novel Engine Multi-Agent Simulator has successfully demonstrated")
     print("the full production capability from real Gemini API character decisions")
     print("through structured campaign logging to final dramatic narrative stories.")
     
@@ -369,7 +369,7 @@ def show_ai_enhancement_comparison():
     print("   ✅ Richer character depth from AI reasoning")
     print("   ✅ More varied and nuanced character interactions")
     print("   ✅ Enhanced tactical and strategic complexity")
-    print("   ✅ Authentic Warhammer 40k faction representations")
+    print("   ✅ Authentic Novel Engine faction representations")
     print("   ✅ Improved story coherence and dramatic flow")
 
 
@@ -391,7 +391,7 @@ if __name__ == "__main__":
         print("The ChroniclerAgent has successfully processed real AI-enhanced")
         print("campaign data and generated a complete dramatic narrative story.")
         print("This demonstrates the full production-ready capability of the")
-        print("Warhammer 40k Multi-Agent Simulator with genuine AI integration!")
+        print("Novel Engine Multi-Agent Simulator with genuine AI integration!")
     else:
         print(f"\n{'='*60}")
         print("❌ DEMONSTRATION ENCOUNTERED ISSUES")

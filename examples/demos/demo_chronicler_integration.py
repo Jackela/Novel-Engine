@@ -4,7 +4,7 @@ ChroniclerAgent Integration Demo
 ===============================
 
 This script demonstrates the complete integration of ChroniclerAgent with the
-Warhammer 40k Multi-Agent Simulator ecosystem, showing how campaign logs can
+Novel Engine Multi-Agent Simulator ecosystem, showing how campaign logs can
 be transformed into dramatic narrative stories.
 """
 
@@ -87,7 +87,7 @@ def demonstrate_narrative_styles():
             
             # Show style description
             if style == 'grimdark_dramatic':
-                print("  - Atmospheric, dramatic prose with Warhammer 40k flavor")
+                print("  - Atmospheric, dramatic prose with Novel Engine flavor")
             elif style == 'tactical':
                 print("  - Military-style tactical reports and assessments")
             elif style == 'philosophical':
@@ -234,7 +234,7 @@ def main():
     
     if passed == total:
         print("🎉 All demos passed! ChroniclerAgent integration is working perfectly.")
-        print("\nThe Warhammer 40k Multi-Agent Simulator now has complete")
+        print("\nThe Novel Engine Multi-Agent Simulator now has complete")
         print("story transcription capabilities. Campaign logs can be transformed")
         print("into dramatic narrative prose that captures the grimdark atmosphere")
         print("of the 41st millennium.")

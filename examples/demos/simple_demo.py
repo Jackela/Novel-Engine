@@ -62,7 +62,7 @@ try:
     
     print("\n🎉 DYNAMIC CONTEXT ENGINEERING FRAMEWORK")
     print("🎉 COMPLETE IMPLEMENTATION SUCCESS!")
-    print("万机之神保佑此框架 (May the Omnissiah bless this framework)")
+    print("系统保佑此框架 (May the the system bless this framework)")
     
     print("\n" + "=" * 60)
     print("Ready to serve intelligent agent interactions! 🤖")

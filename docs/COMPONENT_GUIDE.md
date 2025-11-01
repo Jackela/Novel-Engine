@@ -248,7 +248,7 @@ class RelationshipData:
 
 #### 4.3 DynamicEquipmentSystem
 
-**Purpose:** Real-time equipment state tracking with wear accumulation, machine spirit moods, and predictive maintenance.
+**Purpose:** Real-time equipment state tracking with wear accumulation, module moods, and predictive maintenance.
 
 **Equipment Categories:**
 - `COGITATOR` - Computing devices with processing power
@@ -270,7 +270,7 @@ machine_spirit_mood = calculate_spirit_response(wear_level, maintenance_history)
 failure_probability = predict_failure_risk(wear_accumulation, age, usage_patterns)
 ```
 
-**Machine Spirit System (Warhammer 40K Theme):**
+**module System (Novel Engine Theme):**
 - **Mood States:** Content, Displeased, Wrathful, Blessed
 - **Appeasement Rituals:** Maintenance activities that improve mood
 - **Performance Impact:** Spirit mood affects equipment performance

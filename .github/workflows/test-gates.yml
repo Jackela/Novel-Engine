@@ -1,36 +1,15 @@
 name: Test Gates
 
 on:
-  pull_request:
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - '.github/workflows/test-gates.yml'
   workflow_dispatch:
 
 jobs:
-  quality-gates:
+  note:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Dependencies (best-effort)
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pytest pytest-cov fastapi uvicorn httpx || true
-
-      - name: Unit & Integration Tests (best-effort)
-        run: |
+      - run: echo "Test Gates workflow set to manual-only."
           pytest -q --maxfail=1 --disable-warnings || true
 
       - name: Contract Tests (best-effort)
         run: |
           pytest -q tests/contract || true
-

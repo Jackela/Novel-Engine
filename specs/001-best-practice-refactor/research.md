@@ -8,7 +8,7 @@
   - *Fine-grained micro-contexts per agent*: rejected; increases coordination overhead without evidence of divergent business capabilities.
 
 ### 2. Aggregate & Port Mapping
-- **Decision**: Document aggregates (Campaign, Persona Machine Spirit, Narrative Chronicle, Platform Control Plane) with associated commands/events and map ports/adapters (`DirectorAgent.turn_processor`, `PersonaAgent.gemini_client`, `ChroniclerAgent.storage_gateway`, `EventBus`) including anti-corruption layers for Gemini and CLI legacy tooling.  
+- **Decision**: Document aggregates (Campaign, Persona module, Narrative Chronicle, Platform Control Plane) with associated commands/events and map ports/adapters (`DirectorAgent.turn_processor`, `PersonaAgent.gemini_client`, `ChroniclerAgent.storage_gateway`, `EventBus`) including anti-corruption layers for Gemini and CLI legacy tooling.  
 - **Rationale**: Provides precise guardrails for refactor teams and clarifies adapter responsibilities for future CQRS adoption.  
 - **Alternatives Considered**:  
   - *Ad-hoc service catalogs*: lack invariant documentation; risk regressions.  

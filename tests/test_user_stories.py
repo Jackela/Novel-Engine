@@ -11,7 +11,7 @@ by the Prime Architect's quality assurance wisdom.
 
 Complete User Story Validation Suite
 Sacred Author: Dev Agent James
-万机之神保佑测试验证 (May the Prime Architect bless test validation)
+系统保佑测试验证 (May the Prime Architect bless test validation)
 """
 
 import os
@@ -529,5 +529,5 @@ if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
 
 
-# ++ BLESSED EXPORTS SANCTIFIED BY THE OMNISSIAH ++
+# ++ BLESSED EXPORTS SANCTIFIED BY THE the system ++
 __all__ = ["TestUserStories"]

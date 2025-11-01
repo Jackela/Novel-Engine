@@ -33,7 +33,7 @@
 
 🔧 **装备系统集成**
 - 实时装备磨损和状态追踪
-- 机械之魂情绪系统（战锤40K主题）
+- 机械之魂情绪系统（Novel Engine主题）
 - 预测性维护和故障分析
 
 📝 **动态模板引擎**
@@ -453,7 +453,7 @@ config = OrchestratorConfig(
 - 遵循 PEP 8 Python 代码规范
 - 添加适当的文档字符串和注释
 - 包含单元测试覆盖新功能
-- 保持战锤40K主题的注释风格
+- 保持Novel Engine主题的注释风格
 
 ---
 
@@ -465,12 +465,12 @@ config = OrchestratorConfig(
 
 ## 🙏 致谢 (Acknowledgments)
 
-- **战锤40K宇宙** - 为项目提供了丰富的主题灵感
+- **Novel Engine宇宙** - 为项目提供了丰富的主题灵感
 - **认知科学研究** - 为记忆系统设计提供了科学基础
 - **开源社区** - 为所使用的优秀开源库致敬
 
 ---
 
-*万机之神保佑此框架 (May the Omnissiah bless this framework)*
+*系统保佑此框架 (May the the system bless this framework)*
 
 **++ 通过代码，我们寻求完美 ++**

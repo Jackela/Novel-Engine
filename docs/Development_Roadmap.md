@@ -1,10 +1,10 @@
-# Development Roadmap: Warhammer 40k Multi-Agent Simulator
+# Development Roadmap: Novel Engine Multi-Agent Simulator
 
 ## Roadmap Overview
 
-This roadmap outlines a 5-phase incremental development approach for creating a sophisticated Warhammer 40k multi-agent simulator. The project follows an iterative methodology with early validation opportunities and clear milestone-driven progression.
+This roadmap outlines a 5-phase incremental development approach for creating a sophisticated Novel Engine multi-agent simulator. The project follows an iterative methodology with early validation opportunities and clear milestone-driven progression.
 
-**Project Vision**: Create an immersive Warhammer 40k simulation where AI agents embody characters with authentic personalities, guided by a Director Agent that orchestrates narratively compelling scenarios, all documented by a Chronicler Agent for rich storytelling experiences.
+**Project Vision**: Create an immersive Novel Engine simulation where AI agents embody characters with authentic personalities, guided by a Director Agent that orchestrates narratively compelling scenarios, all documented by a Chronicler Agent for rich storytelling experiences.
 
 **Timeline**: 12-16 weeks total development
 **Methodology**: Agile with 2-3 week phase cycles
@@ -26,7 +26,7 @@ This roadmap outlines a 5-phase incremental development approach for creating a 
 #### Key Deliverables
 - **Technical Architecture Document** - System design, data flow, API specifications
 - **Agent Specification Documents** - Detailed behavioral models for PersonaAgent, DirectorAgent, ChroniclerAgent
-- **Warhammer 40k Lore Database Schema** - Character archetypes, factions, locations, events
+- **Novel Engine Lore Database Schema** - Character archetypes, factions, locations, events
 - **Development Environment Setup** - CI/CD pipeline, testing framework, documentation system
 - **Project Charter** - Scope, constraints, success metrics, resource allocation
 
@@ -60,7 +60,7 @@ This roadmap outlines a 5-phase incremental development approach for creating a 
 **Character AI Implementation Phase**
 
 #### Objectives
-- Implement core PersonaAgent with authentic Warhammer 40k character behaviors
+- Implement core PersonaAgent with authentic Novel Engine character behaviors
 - Create personality modeling system with faction-specific traits
 - Develop decision-making algorithms for character actions
 - Establish inter-agent communication protocols
@@ -85,7 +85,7 @@ This roadmap outlines a 5-phase incremental development approach for creating a 
 - Character behavior consistency testing
 - Multi-agent interaction scenarios
 - Performance testing with multiple concurrent agents
-- Lore accuracy validation with Warhammer 40k experts
+- Lore accuracy validation with Novel Engine experts
 
 #### Success Criteria
 - PersonaAgent can maintain consistent character behavior across sessions
@@ -110,13 +110,13 @@ This roadmap outlines a 5-phase incremental development approach for creating a 
 
 #### Objectives
 - Develop DirectorAgent to orchestrate narrative scenarios
-- Implement scenario generation based on Warhammer 40k lore
+- Implement scenario generation based on Novel Engine lore
 - Create conflict resolution systems for agent interactions
 - Build adaptive storytelling that responds to player/agent actions
 
 #### Key Deliverables
 - **DirectorAgent Core Engine** - Scenario orchestration and narrative control
-- **Scenario Generator** - Procedural generation of Warhammer 40k situations
+- **Scenario Generator** - Procedural generation of Novel Engine situations
 - **Conflict Resolution System** - Combat, diplomacy, and skill check mechanics
 - **Narrative Adaptation Engine** - Dynamic story adjustment based on agent actions
 - **World State Manager** - Global simulation state tracking
@@ -124,7 +124,7 @@ This roadmap outlines a 5-phase incremental development approach for creating a 
 
 #### Technical Requirements
 - Complex event processing for real-time scenario management
-- Rules engine for Warhammer 40k game mechanics
+- Rules engine for Novel Engine game mechanics
 - Narrative generation algorithms
 - Resource management for computational efficiency
 - Integration APIs with PersonaAgent systems
@@ -239,7 +239,7 @@ This roadmap outlines a 5-phase incremental development approach for creating a 
 
 #### Success Criteria
 - ChroniclerAgent produces coherent narratives from agent interactions
-- Generated stories maintain Warhammer 40k lore accuracy
+- Generated stories maintain Novel Engine lore accuracy
 - Real-time narration keeps pace with simulation events
 - User satisfaction with story quality above 4.2/5.0
 - Archive system supports efficient story retrieval and sharing
@@ -322,7 +322,7 @@ This roadmap outlines a 5-phase incremental development approach for creating a 
 - **Contingency**: Microservices architecture allowing independent deployment
 
 #### Lore Accuracy Issues
-- **Risk**: Generated content violates Warhammer 40k canon
+- **Risk**: Generated content violates Novel Engine canon
 - **Mitigation**: Lore expert validation and automated accuracy checking
 - **Contingency**: Conservative generation algorithms with manual oversight
 
@@ -461,7 +461,7 @@ def _get_http_session() -> requests.Session:
 
 ## Conclusion
 
-This roadmap provides a structured approach to developing a sophisticated Warhammer 40k multi-agent simulator through incremental, validated development phases. Each phase builds upon previous accomplishments while providing early validation opportunities and risk mitigation strategies.
+This roadmap provides a structured approach to developing a sophisticated Novel Engine multi-agent simulator through incremental, validated development phases. Each phase builds upon previous accomplishments while providing early validation opportunities and risk mitigation strategies.
 
 The key to success lies in maintaining focus on core functionality while building a flexible architecture that can accommodate future enhancements. Regular stakeholder feedback and continuous testing ensure that the final product meets both technical requirements and user expectations.
 
@@ -473,4 +473,4 @@ The key to success lies in maintaining focus on core functionality while buildin
 
 ---
 
-*Development Roadmap v1.0 | Created for Novel-Engine Warhammer 40k Multi-Agent Simulator*
+*Development Roadmap v1.0 | Created for Novel-Engine Novel Engine Multi-Agent Simulator*

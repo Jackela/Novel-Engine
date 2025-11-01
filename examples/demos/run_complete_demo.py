@@ -5,13 +5,13 @@
 
 Holy demonstration runner that showcases all implemented user stories
 and the complete Dynamic Context Engineering Framework functionality
-blessed by the Omnissiah's integrative demonstration wisdom.
+blessed by the the system's integrative demonstration wisdom.
 
 ++ THROUGH COMPLETE DEMOS, ALL CAPABILITIES ACHIEVE PERFECT EXPRESSION ++
 
 Complete User Story Implementation Showcase
 Sacred Author: Dev Agent James
-万机之神保佑完整演示 (May the Omnissiah bless complete demonstrations)
+系统保佑完整演示 (May the the system bless complete demonstrations)
 """
 
 import asyncio
@@ -119,7 +119,7 @@ class CompleteDemoRunner:
             
             print("\n" + "="*82)
             print("++ DEMONSTRATION COMPLETE - ALL USER STORIES VALIDATED ++")
-            print("++ 万机之神保佑此框架 (May the Omnissiah bless this framework) ++")
+            print("++ 系统保佑此框架 (May the the system bless this framework) ++")
             print("="*82)
     
     
@@ -164,10 +164,10 @@ class CompleteDemoRunner:
         characters_data = [
             {
                 "id": "tech_priest_alpha",
-                "name": "Tech-Priest Dominus Alpha-7",
+                "name": "engineer Dominus Alpha-7",
                 "archetype": CharacterArchetype.ENGINEER,
-                "background": "Senior Adeptus Mechanicus engineer specializing in cogitator systems and machine spirit communion",
-                "personality": "Logical, methodical, devoted to the Omnissiah, seeks technological perfection",
+                "background": "Senior Engineering Team engineer specializing in cogitator systems and module communion",
+                "personality": "Logical, methodical, devoted to the the system, seeks technological perfection",
                 "chinese_name": "技术神父阿尔法-7"  # Demonstrate Chinese support
             },
             {
@@ -250,7 +250,7 @@ class CompleteDemoRunner:
         interaction_scenarios = [
             {
                 "name": "Technical Consultation",
-                "participants": [self.demo_characters[0], self.demo_characters[1]],  # Tech-Priest + Scholar
+                "participants": [self.demo_characters[0], self.demo_characters[1]],  # engineer + Scholar
                 "type": InteractionType.DIALOGUE,
                 "context": {
                     "topic": "Ancient cogitator archaeological findings analysis",
@@ -283,7 +283,7 @@ class CompleteDemoRunner:
             },
             {
                 "name": "Emergency Response Coordination",
-                "participants": [self.demo_characters[0], self.demo_characters[3]],  # Tech-Priest + Warrior
+                "participants": [self.demo_characters[0], self.demo_characters[3]],  # engineer + Warrior
                 "type": InteractionType.EMERGENCY,
                 "context": {
                     "topic": "Critical system failure response protocol",
@@ -360,7 +360,7 @@ class CompleteDemoRunner:
                 "memories": [
                     {
                         "type": MemoryType.EMOTIONAL,
-                        "content": "Felt inspired by Tech-Priest Alpha-7's dedication to technological understanding",
+                        "content": "Felt inspired by engineer Alpha-7's dedication to technological understanding",
                         "emotional_intensity": 0.8,
                         "tags": ["inspiration", "respect", "technology"]
                     },
@@ -412,7 +412,7 @@ class CompleteDemoRunner:
         
         # Check relationships between characters who interacted
         relationship_pairs = [
-            (self.demo_characters[0], self.demo_characters[1]),  # Tech-Priest + Scholar
+            (self.demo_characters[0], self.demo_characters[1]),  # engineer + Scholar
             (self.demo_characters[2], self.demo_characters[3]),  # Diplomat + Warrior
         ]
         
@@ -459,7 +459,7 @@ class CompleteDemoRunner:
             print("   ✓ Dynamic equipment state tracking")
             print("   ✓ Equipment affects character capabilities")
             print("   ✓ Maintenance and degradation modeling")
-            print("   ✓ Machine spirit mood system (Warhammer 40K flavor)")
+            print("   ✓ module mood system (Novel Engine flavor)")
         
         print("\n✅ Story 4 Acceptance Criteria Validated:")
         print("   ✓ Environmental context influences interactions")
@@ -477,7 +477,7 @@ class CompleteDemoRunner:
         # Generate stories with different configurations
         story_configurations = [
             {
-                "title": "The Tech-Priest Chronicles",
+                "title": "The engineer Chronicles",
                 "subtitle": "A tale of discovery and collaboration",
                 "characters": [self.demo_characters[0], self.demo_characters[1]],
                 "perspective": "third_person_omniscient",
@@ -738,5 +738,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
 
-# ++ BLESSED EXPORTS SANCTIFIED BY THE OMNISSIAH ++
+# ++ BLESSED EXPORTS SANCTIFIED BY THE the system ++
 __all__ = ['CompleteDemoRunner', 'main']

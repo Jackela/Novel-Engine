@@ -127,7 +127,7 @@ All tests validate that the system produces **generic sci-fi content** instead o
 ```python
 # Example validation pattern used across tests
 banned_terms = [
-    "emperor", "imperial", "warhammer", "40k", "chaos", "orks",
+    "emperor", "imperial", "Novel Engine", "40k", "chaos", "orks",
     "space marines", "astra militarum", "adeptus", "krieg",
     "grim darkness", "far future", "41st millennium"
 ]
@@ -250,7 +250,7 @@ def test_end_to_end_simulation_workflow(self):
 1. **Brand Content Detection**
    ```bash
    # Find remaining branded content
-   grep -r -i "emperor\|imperial\|warhammer" . --exclude-dir=node_modules
+   grep -r -i "emperor\|imperial\|Novel Engine" . --exclude-dir=node_modules
    ```
 
 2. **API Response Validation**

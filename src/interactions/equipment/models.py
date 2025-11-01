@@ -105,7 +105,7 @@ class DynamicEquipment:
     current_user: Optional[str] = None
     location_history: List[Tuple[datetime, str]] = field(default_factory=list)
     wear_accumulation: float = 0.0  # 0.0-1.0, affects condition over time
-    system_core_mood: str = "content"  # Warhammer 40K flavor
+    system_core_mood: str = "content"  # Novel Engine flavor
     standard_rites_performed: int = 0
     blessing_level: float = 1.0  # Effectiveness multiplier from blessings
 

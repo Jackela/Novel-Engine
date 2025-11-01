@@ -9,7 +9,7 @@ test.describe('Full System Integration Tests', () => {
   test('should complete full user journey from home to character selection', async ({ page }) => {
     // 1. 访问主页
     await page.goto(BASE_URL);
-    await expect(page.locator('h1')).toContainText('Warhammer 40k Multi-Agent Simulator');
+    await expect(page.locator('h1')).toContainText('Novel Engine Multi-Agent Simulator');
     
     // 2. 检查后端连接状态
     await expect(page.locator('.status-success')).toBeVisible({ timeout: 15000 });

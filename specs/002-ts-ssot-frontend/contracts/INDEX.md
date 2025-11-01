@@ -11,4 +11,3 @@ Documented for reference:
 - POST /characters
 
 If server contracts change, update OpenAPI specs at the platform level and link them here.
-

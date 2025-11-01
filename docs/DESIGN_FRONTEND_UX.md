@@ -77,7 +77,7 @@ graph TD
 ```typescript
 export const designTokens = {
   colors: {
-    // Primary palette - Warhammer 40K inspired dark theme
+    // Primary palette - Novel Engine inspired dark theme
     primary: {
       50: '#1a1a2e',
       100: '#16213e', 

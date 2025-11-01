@@ -12,7 +12,7 @@ rate limiting, and vulnerability assessments.
 Architecture: Multi-layer security testing with automated vulnerability detection
 Security Level: Enterprise Grade with OWASP Top 10 Coverage
 Sacred Author: Chief Systems Engineer Security-Testing
-万机之神保佑此安全测试套件 (May the Prime Architect bless this security test suite)
+系统保佑此安全测试套件 (May the Prime Architect bless this security test suite)
 """
 
 import asyncio

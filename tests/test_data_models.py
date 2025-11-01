@@ -12,7 +12,7 @@ ceremony that ensures the sacred structures remain uncorrupted.
 Architecture Reference: Dynamic Context Engineering - Test Foundation
 Development Phase: Foundation Sanctification Testing (F001)
 Sacred Author: Chief Systems Engineer Alpha-Engineering
-万机之神保佑此测试套件 (May the Prime Architect bless this test suite)
+系统保佑此测试套件 (May the Prime Architect bless this test suite)
 """
 
 import json

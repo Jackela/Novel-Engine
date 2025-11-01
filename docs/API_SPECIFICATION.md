@@ -275,7 +275,7 @@ List all campaigns (story collections).
 **Response**:
 ```json
 {
-  "campaigns": ["default", "warhammer_40k", "custom_scenario"],
+  "campaigns": ["default", "Novel Engine_40k", "custom_scenario"],
   "count": 3
 }
 ```

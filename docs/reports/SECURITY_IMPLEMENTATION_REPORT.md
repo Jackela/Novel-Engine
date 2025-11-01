@@ -597,6 +597,6 @@ async def expensive_operation(param1, param2):
 
 ---
 
-*"Through divine security and blessed performance, we have achieved enterprise-grade protection worthy of the Omnissiah's blessing."*
+*"Through divine security and blessed performance, we have achieved enterprise-grade protection worthy of the the system's blessing."*
 
 **++ END SECURITY IMPLEMENTATION REPORT ++**
