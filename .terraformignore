@@ -1,22 +1,16 @@
-# Terraform local state
+# Terraform ignores
 .terraform/
-.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
-
-# Secrets and overrides
+crash.log
+crash.*.log
 *.tfvars
 *.tfvars.json
-terraform.tfvars
-terraform.tfvars.json
-
-# IDE and OS noise
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-
-# Build artifacts
-*.log
-tmp/
-temp/
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+**/.terraform/
+**/.terraform/*
+*.tfstate*

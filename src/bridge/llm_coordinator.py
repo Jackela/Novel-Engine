@@ -13,6 +13,8 @@ import time
 from collections import deque
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
+import time
+import asyncio
 
 from .types import (
     BatchedRequest,
@@ -58,6 +60,12 @@ class LLMCoordinator:
         self._batch_processor_task: Optional[asyncio.Task] = None
         self._cache_cleanup_task: Optional[asyncio.Task] = None
         self._shutdown_event = asyncio.Event()
+
+        # Single-flight & backoff
+        self._inflight: Dict[str, asyncio.Future] = {}
+        self._waiters_count: Dict[str, int] = {}
+        self._negative_cache: Dict[str, float] = {}  # key -> next_allowed_epoch
+        self._fail_counts: Dict[str, int] = {}
 
     async def initialize(self) -> bool:
         """Initialize the LLM coordinator."""
@@ -124,6 +132,43 @@ class LLMCoordinator:
                     return request.request_id
                 else:
                     self.cache_stats["misses"] += 1
+
+            # Negative cache/backoff
+            backoff_until = self._negative_cache.get(cache_key)
+            if backoff_until and time.time() < backoff_until:
+                result = {
+                    "request_id": request.request_id,
+                    "agent_id": request.agent_id,
+                    "error": "temporarily unavailable (backoff)",
+                    "success": False,
+                }
+                if callback:
+                    await callback(result)
+                return request.request_id
+
+            # Single-flight deduplication
+            if cache_key in self._inflight:
+                # attach waiter to existing future
+                fut = self._inflight[cache_key]
+                self._waiters_count[cache_key] = self._waiters_count.get(cache_key, 0) + 1
+
+                async def _await_and_callback():
+                    try:
+                        res = await fut
+                        if callback:
+                            await callback(res)
+                    except Exception:
+                        pass
+
+                asyncio.create_task(_await_and_callback())
+                # record single-flight merge metric
+                try:
+                    from src.metrics.global_metrics import metrics as _metrics
+
+                    _metrics.record_single_flight_merged(1)
+                except Exception:
+                    pass
+                return request.request_id
 
             # Handle critical priority requests immediately
             if priority == RequestPriority.CRITICAL:
@@ -272,10 +317,18 @@ class LLMCoordinator:
                 },
             )
 
+            # Single-flight key setup
+            cache_key = self._generate_cache_key(request)
+            fut: Optional[asyncio.Future] = None
+            if cache_key not in self._inflight:
+                fut = asyncio.get_event_loop().create_future()
+                self._inflight[cache_key] = fut
+                self._waiters_count[cache_key] = self._waiters_count.get(cache_key, 0)
+
             # Make request
             response = await llm_service.generate_response(llm_request)
 
-            return {
+            result = {
                 "request_id": request.request_id,
                 "agent_id": request.agent_id,
                 "response": response.content,
@@ -283,8 +336,29 @@ class LLMCoordinator:
                 "success": True,
             }
 
+            # resolve inflight and cleanup
+            if fut is not None:
+                try:
+                    fut.set_result(result)
+                except Exception:
+                    pass
+                finally:
+                    self._inflight.pop(cache_key, None)
+                    self._waiters_count.pop(cache_key, None)
+
+            return result
+
         except Exception as e:
             self.logger.error(f"Single request processing failed: {e}")
+            # backoff: exponential per key
+            try:
+                key = self._generate_cache_key(request)
+                cnt = self._fail_counts.get(key, 0) + 1
+                self._fail_counts[key] = cnt
+                backoff = min(60, 2 ** min(cnt, 5))  # cap 60s
+                self._negative_cache[key] = time.time() + backoff
+            except Exception:
+                pass
             return {
                 "request_id": request.request_id,
                 "agent_id": request.agent_id,

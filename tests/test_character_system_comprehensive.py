@@ -28,7 +28,8 @@ from src.event_bus import EventBus
 
 # Test Constants
 GENERIC_CHARACTERS = ["pilot", "scientist", "engineer", "test"]
-CHARACTER_DIR = Path("E:/Code/Novel-Engine/characters")
+# Resolve characters directory relative to repository root to avoid machine-specific paths
+CHARACTER_DIR = (Path(__file__).resolve().parents[1] / "characters").resolve()
 
 
 class TestCharacterLoading:

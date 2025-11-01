@@ -34,7 +34,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       data-testid="dashboard-layout"
       sx={{ minHeight: '100vh', bgcolor: 'background.default' }}
     >
-      <StyledAppBar>
+      <StyledAppBar data-testid="header-navigation" role="banner">
         <Toolbar>
           <Typography variant="h6" component="h1" sx={{ flexGrow: 1, fontWeight: 600 }}>
             Emergent Narrative Dashboard
@@ -45,7 +45,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </Toolbar>
       </StyledAppBar>
       
-      <MainContainer>
+      <MainContainer role="main">
         <BentoGrid>
           {children}
         </BentoGrid>

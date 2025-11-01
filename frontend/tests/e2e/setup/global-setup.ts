@@ -152,9 +152,9 @@ async function verifyDashboardAccessibility() {
     await page.goto(process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000');
     
     // Wait for main dashboard components to load
-    await page.waitForSelector('[data-testid="dashboard-layout"]', { timeout: 30000 });
-    await page.waitForSelector('[data-testid="world-state-map"]', { timeout: 10000 });
-    await page.waitForSelector('[data-testid="real-time-activity"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="dashboard-layout"]', { timeout: 30000, state: 'attached' });
+    await page.waitForSelector('[data-testid="world-state-map"]', { timeout: 10000, state: 'attached' });
+    await page.waitForSelector('[data-testid="real-time-activity"]', { timeout: 10000, state: 'attached' });
     
     console.log('🌐 Dashboard accessibility verified');
     

@@ -79,3 +79,8 @@ htmlcov/
 .DS_Store
 Thumbs.db
 desktop.ini
+.git/
+Dockerfile*
+.dockerignore
+*.log*
+.env*

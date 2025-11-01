@@ -37,7 +37,7 @@ interface BentoGridProps {
 const BentoGrid: React.FC<BentoGridProps> = ({ children }) => {
 
   return (
-    <GridContainer>
+    <GridContainer data-testid="bento-grid">
       {children}
     </GridContainer>
   );

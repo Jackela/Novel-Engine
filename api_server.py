@@ -23,12 +23,15 @@ from director_agent import DirectorAgent
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # Removed stale import: _validate_gemini_api_key, _make_gemini_api_request no longer exist
 from src.event_bus import EventBus
+from src.metrics.global_metrics import metrics as global_metrics
+from src.caching.registry import invalidate_by_tags
+from src.caching.global_chunk_cache import chunk_cache
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -240,6 +243,80 @@ async def fastapi_exception_handler(request: Request, exc: HTTPException):
             "detail": exc.detail,
         },
     )
+
+
+class InvalidationRequest(BaseModel):
+    all_of: List[str]
+
+
+@app.get("/cache/metrics")
+async def cache_metrics() -> Dict[str, Any]:
+    """Return cache/coordinator metrics snapshot (internal)."""
+    try:
+        return global_metrics.snapshot().to_dict()
+    except Exception as e:
+        logger.error(f"metrics snapshot error: {e}")
+        raise HTTPException(status_code=500, detail="metrics error")
+
+
+@app.post("/cache/invalidate")
+async def cache_invalidate(req: InvalidationRequest) -> Dict[str, Any]:
+    """Invalidate cache entries that include all provided tags (intersection)."""
+    try:
+        removed = invalidate_by_tags(req.all_of)
+        return {"removed": int(removed)}
+    except Exception as e:
+        logger.error(f"invalidation error: {e}")
+        raise HTTPException(status_code=500, detail="invalidation error")
+
+
+class ChunkInRequest(BaseModel):
+    seq: int
+    data: str
+
+
+@app.post("/cache/chunk/{key}")
+async def cache_chunk_append(key: str, req: ChunkInRequest) -> Dict[str, Any]:
+    try:
+        chunk_cache.add_chunk(key, req.seq, req.data)
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"chunk append error: {e}")
+        raise HTTPException(status_code=500, detail="chunk append error")
+
+
+@app.post("/cache/chunk/{key}/complete")
+async def cache_chunk_complete(key: str) -> Dict[str, Any]:
+    try:
+        chunk_cache.mark_complete(key)
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"chunk complete error: {e}")
+        raise HTTPException(status_code=500, detail="chunk complete error")
+
+
+@app.get("/cache/stream/{key}")
+async def cache_stream(key: str):
+    import asyncio
+
+    async def event_gen():
+        last_seq = -1
+        idle = 0
+        while True:
+            chunks = chunk_cache.get_since(key, last_seq)
+            for c in chunks:
+                last_seq = c.seq
+                yield f"data: {c.data}\n\n"
+            if chunk_cache.is_complete(key):
+                break
+            await asyncio.sleep(0.2)
+            idle += 1
+            if idle > 300:  # ~60s timeout
+                break
+        # end of stream signal
+        yield "event: done\ndata: complete\n\n"
+
+    return StreamingResponse(event_gen(), media_type="text/event-stream")
 
 
 @app.get("/", response_model=HealthResponse)
