@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import theme from './styles/theme';
 import { store } from './store/store';
 import EmergentDashboardSimple from './components/EmergentDashboardSimple';
+import DashboardLayout from './components/layout/DashboardLayout';
 import { useAppSelector } from './hooks/redux';
 import { initializeMobileOptimizations } from './utils/serviceWorkerRegistration';
 import './styles/design-system.generated.css';
@@ -39,11 +40,22 @@ const AppRoutes: React.FC = () => {
         {/* Main dashboard route */}
         <Route 
           path="/dashboard" 
-          element={<EmergentDashboardSimple />} 
+          element={
+            <DashboardLayout>
+              <EmergentDashboardSimple />
+            </DashboardLayout>
+          }
         />
         
         {/* Default route shows dashboard directly */}
-        <Route path="/" element={<EmergentDashboardSimple />} />
+        <Route 
+          path="/" 
+          element={
+            <DashboardLayout>
+              <EmergentDashboardSimple />
+            </DashboardLayout>
+          } 
+        />
         
         {/* Login route (placeholder for future implementation) */}
         <Route 

@@ -1,0 +1,67 @@
+openapi: 3.0.3
+info:
+  title: Semantic Cache Internal API
+  version: 0.1.0
+paths:
+  /cache/metrics:
+    get:
+      summary: Get cache and coordinator metrics snapshot
+      responses:
+        '200':
+          description: Metrics snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ts:
+                    type: string
+                    format: date-time
+                  cache_exact_hits:
+                    type: integer
+                  cache_semantic_hits:
+                    type: integer
+                  cache_tool_hits:
+                    type: integer
+                  cache_size:
+                    type: integer
+                  evictions:
+                    type: integer
+                  invalidations:
+                    type: integer
+                  single_flight_merged:
+                    type: integer
+                  replay_hits:
+                    type: integer
+                  saved_tokens:
+                    type: integer
+                    description: Estimated total tokens saved due to cache hits
+                  saved_cost:
+                    type: number
+                    format: float
+                    description: Estimated total cost saved due to cache hits (in default currency)
+  /cache/invalidate:
+    post:
+      summary: Invalidate cache entries by tag intersection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                all_of:
+                  type: array
+                  items:
+                    type: string
+              required: [all_of]
+      responses:
+        '200':
+          description: Invalidation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  removed:
+                    type: integer

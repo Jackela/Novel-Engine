@@ -435,3 +435,6 @@ evaluation/
 # Temporary package.json in root (if not a real Node.js project)
 # package.json
 /.codex
+*.pyc
+.venv/
+.env*

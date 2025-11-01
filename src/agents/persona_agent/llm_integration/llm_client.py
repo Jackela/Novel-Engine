@@ -15,6 +15,26 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
+# Caching & metrics
+from src.caching.exact_cache import ExactCache
+from src.caching.semantic_cache_adapter import SemanticCacheBucketed
+from src.caching.key_builder import build_exact, build_semantic_bucket
+from src.metrics.global_metrics import metrics as global_metrics
+from src.caching.registry import register_exact, register_semantic
+from src.caching.interfaces import CacheEntryMeta
+from src.config.caching import default_caching_config
+
+# Optional semantic cache integration
+try:
+    from src.caching.semantic_cache import (
+        SemanticCache,
+        SemanticCacheConfig,
+    )
+
+    _SEMANTIC_CACHE_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency path
+    _SEMANTIC_CACHE_AVAILABLE = False
+
 
 class LLMProvider(Enum):
     """Supported LLM providers."""
@@ -23,6 +43,7 @@ class LLMProvider(Enum):
     OPENAI = "openai"
     LOCAL = "local"
     FALLBACK = "fallback"
+    CACHE = "cache"
 
 
 class ResponseFormat(Enum):
@@ -120,9 +141,12 @@ class LLMClient:
             },
         }
 
-        # Response caching
-        self._response_cache: Dict[str, Tuple[LLMResponse, float]] = {}
-        self._cache_ttl = 300  # 5 minutes
+        # Caches & metrics
+        self._exact_cache = ExactCache(max_size=1000)
+        self._semantic_cache = SemanticCacheBucketed()
+        self._metrics = global_metrics
+        register_exact(self._exact_cache)
+        register_semantic(self._semantic_cache)
 
         # Usage tracking
         self._usage_stats = {
@@ -140,6 +164,8 @@ class LLMClient:
             "max_retries": 3,
             "retry_delay": 1.0,
             "enable_caching": True,
+            "enable_semantic_cache": True,
+            "semantic_cache_ttl_hours": default_caching_config.semantic_ttl_hours,
             "fallback_enabled": True,
             "default_temperature": 0.7,
             "default_max_tokens": 500,
@@ -182,6 +208,19 @@ class LLMClient:
             response = await self._generate_response(request)
 
             if response.success:
+                # Optional: emit model config changed event when explicitly requested by context
+                try:
+                    if context.get("emit_model_config_changed"):
+                        from src.caching.invalidation import invalidate_event
+
+                        invalidate_event(
+                            {
+                                "type": "ModelConfigChanged",
+                                "model_name": str(context.get("model_name", "")),
+                            }
+                        )
+                except Exception:
+                    pass
                 return response.content
             else:
                 self.logger.warning(f"LLM generation failed: {response.error}")
@@ -354,11 +393,47 @@ Respond as {character_name}, staying in character based on the personality, fact
     async def _generate_response(self, request: LLMRequest) -> LLMResponse:
         """Generate response using available providers."""
         try:
-            # Check cache first
-            if self._config["enable_caching"]:
-                cached_response = await self._get_cached_response(request)
-                if cached_response:
-                    return cached_response
+            # Build key params
+            params = self._build_key_params(request)
+            sensitive = bool(params.get("sensitive", False))
+            exact_key = build_exact(params, request.prompt)
+
+            # Exact cache
+            if self._config["enable_caching"] and not sensitive:
+                exact_hit = self._exact_cache.get(exact_key)
+                if isinstance(exact_hit, str) and exact_hit:
+                    self._metrics.record_hit("exact")
+                    # heuristic savings
+                    self._metrics.record_savings(tokens=len(exact_hit.split()), cost=0.0)
+                    return LLMResponse(
+                        success=True,
+                        content=exact_hit,
+                        provider=LLMProvider.CACHE,
+                        tokens_used=0,
+                        metadata={"exact_cache_hit": True},
+                    )
+
+            # Semantic cache
+            if self._config.get("enable_semantic_cache") and not sensitive:
+                bucket = build_semantic_bucket(params)
+                val, sim = self._semantic_cache.query(
+                    bucket,
+                    request.prompt,
+                    default_caching_config.semantic_threshold_high,
+                    default_caching_config.semantic_threshold_low,
+                    default_caching_config.semantic_guard_keyword_overlap,
+                    default_caching_config.semantic_guard_length_delta_pct,
+                )
+                if isinstance(val, str) and val:
+                    self._metrics.record_hit("semantic")
+                    self._metrics.record_savings(tokens=len(val.split()), cost=0.0)
+                    return LLMResponse(
+                        success=True,
+                        content=val,
+                        provider=LLMProvider.CACHE,
+                        tokens_used=0,
+                        metadata={"semantic_cache_hit": True, "similarity": sim},
+                    )
 
             # Try providers in priority order
             last_error = None
@@ -377,9 +452,29 @@ Respond as {character_name}, staying in character based on the personality, fact
                     if response.success:
                         response.response_time = response_time
 
-                        # Cache successful response
-                        if self._config["enable_caching"]:
-                            await self._cache_response(request, response)
+                        # Cache successful response (write-on-completion)
+                        if self._config["enable_caching"] and response.content and not sensitive:
+                            try:
+                                # Exact with tags
+                                self._exact_cache.put(
+                                    exact_key,
+                                    response.content,
+                                    meta=CacheEntryMeta(tags=tags),
+                                )
+                                # Semantic (bucketed)
+                                bucket = build_semantic_bucket(params)
+                                tags = [
+                                    f"character:{params.get('character_id','')}",
+                                    f"tmpl:{params.get('prompt_template_id','')}",
+                                    f"tmplv:{params.get('prompt_template_version','')}",
+                                    f"idxv:{params.get('index_version','')}",
+                                    f"model:{params.get('model_name','')}",
+                                ]
+                                self._semantic_cache.put(bucket, request.prompt, response.content, tags=tags)
+                                # update metrics size (best effort)
+                                self._metrics.set_cache_size(self._exact_cache.stats().get("size", 0))
+                            except Exception:
+                                pass
 
                         # Update statistics
                         await self._update_usage_stats(response, True)
@@ -844,13 +939,20 @@ Respond as {character_name}, staying in character based on the personality, fact
         except Exception as e:
             self.logger.debug(f"Response caching failed: {e}")
 
-    def _generate_cache_key(self, request: LLMRequest) -> str:
-        """Generate cache key for request."""
-        import hashlib
-
-        # Include relevant request parameters in cache key
-        key_data = f"{request.prompt}_{request.temperature}_{request.max_tokens}"
-        return hashlib.md5(key_data.encode()).hexdigest()
+    def _build_key_params(self, request: LLMRequest) -> Dict[str, Any]:
+        ctx = request.character_context or {}
+        return {
+            "character_id": self.character_id,
+            "provider": ctx.get("provider", "generic"),
+            "model_name": ctx.get("model_name", "generic"),
+            "prompt_template_id": ctx.get("prompt_template_id", "tmpl"),
+            "prompt_template_version": ctx.get("prompt_template_version", "v"),
+            "index_version": ctx.get("index_version", "idx"),
+            "sensitive": bool(ctx.get("sensitive", False)),
+            "temperature": request.temperature,
+            "top_p": request.top_p,
+            "max_tokens": request.max_tokens,
+        }
 
     async def _update_usage_stats(self, response: LLMResponse, success: bool) -> None:
         """Update usage statistics."""

@@ -101,7 +101,10 @@ class MetricsCollector:
         self.gauges: Dict[str, float] = {}
         self.histograms: Dict[str, List[float]] = defaultdict(list)
         self.timers: Dict[str, List[float]] = defaultdict(list)
-        self._lock = threading.Lock()
+        # Use a re-entrant lock to avoid deadlocks when helper methods that also
+        # acquire the lock (e.g., record_metric via record_timer) are called
+        # from within other locked sections like end_request_timer.
+        self._lock = threading.RLock()
 
         # Request tracking
         self.requests: deque = deque(maxlen=1000)

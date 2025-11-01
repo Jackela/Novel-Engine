@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import api from '../services/api';
 // Access private transform methods for test via 'any' escape on exported singleton
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const getTransforms = () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const mod = require('../services/api');
-  const instance: any = mod.default; // singleton instance
+  const instance: any = api; // singleton instance
   return {
     transformCharacterResponse: instance.transformCharacterResponse.bind(instance),
     extractStatsFromData: instance.extractStatsFromData.bind(instance),

@@ -1,0 +1,36 @@
+name: Test Gates (Example)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install pytest pytest-cov
+
+      - name: Unit & Integration Tests
+        run: |
+          pytest -q --maxfail=1 --disable-warnings
+
+      - name: Contract Tests (optional)
+        run: |
+          pytest -q tests/contract || echo "No contract tests yet"
+
+      - name: Lint Contracts (optional)
+        run: |
+          npm i -g @redocly/cli || true
+          redocly lint specs/001-semantic-cache/contracts/cache-api.yaml || true
+

@@ -52,6 +52,7 @@ test = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0", 
     "pytest-cov>=4.0.0",
+    "pytest-timeout>=2.2.0",
     "coverage[toml]>=7.0.0",
     "httpx>=0.28.1",
 ]
@@ -192,6 +193,8 @@ addopts = [
     "--cov-fail-under=90",
     "--durations=10",
     "--maxfail=10",
+    "--timeout=60",
+    "--timeout-method=thread",
 ]
 markers = [
     "unit: Unit tests for individual components",

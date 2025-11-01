@@ -20,7 +20,7 @@ async function globalTeardown(config: FullConfig) {
   await clearTestData();
   
   // Generate test summary metrics
-  await generateTestMetrics();
+  await generateTestMetrics(config);
   
   console.log('✅ Global teardown completed successfully');
 }
@@ -66,7 +66,7 @@ async function clearTestData() {
 /**
  * Generate test metrics for UAT reporting
  */
-async function generateTestMetrics() {
+async function generateTestMetrics(config: FullConfig) {
   console.log('📊 Generating test metrics...');
   
   const testMetrics = {

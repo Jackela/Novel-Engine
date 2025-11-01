@@ -5,6 +5,8 @@ pytest配置文件和共享fixture
 """
 
 import asyncio
+import threading
+from multiprocessing import active_children
 import os
 import shutil
 import sys
@@ -164,6 +166,10 @@ def clean_environment():
     """每个测试后清理环境"""
     # 测试前设置
     original_env = os.environ.copy()
+    # Provide sane defaults to ensure security middleware and docs behave predictably
+    os.environ.setdefault("DEBUG", "false")
+    os.environ.setdefault("ENABLE_RATE_LIMITING", "true")
+    os.environ.setdefault("ENABLE_DOCS", "true")
 
     yield
 
@@ -222,3 +228,55 @@ def pytest_collection_modifyitems(config, items):
 def pytest_html_report_title(report):
     """自定义HTML报告标题"""
     report.title = "StoryForge AI 测试报告"
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_sessionfinish(session, exitstatus):
+    """尽最大努力确保测试会话结束时清理所有存活资源，避免挂起。
+
+    - 终止/回收 multiprocessing 子进程
+    - 尝试取消仍在运行的 asyncio 任务
+    - 等待非守护线程短暂退出
+    """
+    # Join non-daemon threads to avoid interpreter hang
+    try:
+        for t in list(threading.enumerate()):
+            if t is threading.current_thread():
+                continue
+            # Skip daemons; they won't block interpreter exit
+            if getattr(t, "daemon", False):
+                continue
+            t.join(timeout=1.0)
+    except Exception:
+        pass
+
+    # Terminate any active multiprocessing children
+    try:
+        for p in active_children():
+            try:
+                p.terminate()
+            except Exception:
+                pass
+            try:
+                p.join(timeout=2.0)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # Best-effort cancellation of pending asyncio tasks on a running loop
+    try:
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            pending = [t for t in asyncio.all_tasks(loop) if not t.done()]
+            for task in pending:
+                task.cancel()
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+    except Exception:
+        # If loop is closed or unavailable, ignore
+        pass
