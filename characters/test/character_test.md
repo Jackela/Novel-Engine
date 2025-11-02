@@ -3,7 +3,8 @@
 ## Core Identity
 - **Name**: Test Subject 01
 - **Role**: Development Test Character
-- **Affiliation**: Test Facility
+- **Affiliation**: Development Team
+- **Faction**: Development Team  
 - **Specialization**: Quality Assurance
 
 ## Physical Description

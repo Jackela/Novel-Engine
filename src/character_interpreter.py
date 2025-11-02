@@ -357,18 +357,28 @@ class CharacterInterpreter:
         basic_info = {}
 
         try:
-            # Extract name
+            # Extract name (skip file separator headers marked with ===)
             name_patterns = [
                 r"(?:name|character):\s*([^\n]+)",
-                r"#\s*([^\n]+)",  # First header
                 r"character name:\s*([^\n]+)",
             ]
 
             for pattern in name_patterns:
                 match = re.search(pattern, content, re.IGNORECASE)
                 if match:
-                    basic_info["name"] = match.group(1).strip()
-                    break
+                    name_candidate = match.group(1).strip()
+                    # Skip if it's a file separator
+                    if "===" not in name_candidate:
+                        basic_info["name"] = name_candidate
+                        break
+            
+            # If no name found, try first header (excluding separators)
+            if "name" not in basic_info:
+                for match in re.finditer(r"#\s*([^\n]+)", content):
+                    name_candidate = match.group(1).strip()
+                    if "===" not in name_candidate:
+                        basic_info["name"] = name_candidate
+                        break
 
             # Extract faction
             faction_patterns = [
