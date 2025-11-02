@@ -438,3 +438,5 @@ evaluation/
 *.pyc
 .venv/
 .env*
+!.env.example
+!.env.local.template
