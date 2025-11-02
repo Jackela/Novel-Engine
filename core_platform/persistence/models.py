@@ -6,7 +6,7 @@ Base model classes, mixins, and common database patterns for Novel Engine platfo
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional, TypeVar
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, String, Text, event
@@ -42,7 +42,7 @@ class SoftDeleteMixin:
     def soft_delete(self):
         """Mark the record as deleted."""
         self.is_deleted = True
-        self.deleted_at = datetime.utcnow()
+        self.deleted_at = datetime.now(UTC)
 
     def restore(self):
         """Restore a soft deleted record."""
@@ -199,7 +199,7 @@ class OutboxEvent(BaseModel):
     def mark_processed(self):
         """Mark the event as successfully processed."""
         self.processed = True
-        self.processed_at = datetime.utcnow()
+        self.processed_at = datetime.now(UTC)
         self.error_message = None
 
     def mark_failed(self, error: str):
@@ -253,7 +253,7 @@ class EventStore(BaseModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.global_sequence:
-            self.global_sequence = f"{int(datetime.utcnow().timestamp() * 1000000)}"
+            self.global_sequence = f"{int(datetime.now(UTC).timestamp() * 1000000)}"
 
 
 # Event listeners for automatic audit trail

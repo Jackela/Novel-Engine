@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict
 
 from . import MetricsPublisher, MetricsSnapshot
@@ -52,7 +52,7 @@ class InMemoryMetrics(MetricsPublisher):
 
     def snapshot(self) -> MetricsSnapshot:
         return MetricsSnapshot(
-            ts=datetime.utcnow().isoformat(),
+            ts=datetime.now(UTC).isoformat(),
             cache_exact_hits=self._c.exact,
             cache_semantic_hits=self._c.semantic,
             cache_tool_hits=self._c.tool,
