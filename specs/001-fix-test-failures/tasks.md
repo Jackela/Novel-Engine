@@ -112,9 +112,9 @@
 - [x] T022 [P] Update specification checklist in `specs/001-fix-test-failures/checklists/requirements.md` - mark implementation complete
 - [x] T023 [P] Verify quickstart.md validation steps work correctly
 - [x] T024 [P] Update constitution-check.md with implementation results
-- [ ] T025 Create commit with descriptive message documenting both fixes
-- [ ] T026 Run final test suite validation before PR creation
-- [ ] T027 Document completion metrics: 5 tests fixed, 0 regression, 100% backward compatibility
+- [x] T025 Create commit with descriptive message documenting both fixes
+- [x] T026 Run final test suite validation before PR creation
+- [x] T027 Document completion metrics: 5 tests fixed, 0 regression, 100% backward compatibility
 
 **Checkpoint**: Feature complete and ready for code review
 
