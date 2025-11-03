@@ -20,10 +20,14 @@ All 5 failing tests successfully fixed with zero regression and 100% backward co
 - ❌ `tests/test_director_agent.py::TestDirectorAgent::test_run_turn_emits_event` - FAILED
 - ❌ `tests/test_data_models.py::TestSacredValidationFunctions::test_validate_blessed_data_model_success` - FAILED
 
-**After Implementation**:
+**After Initial Implementation**:
 - ✅ `tests/test_director_agent.py::TestDirectorAgent::test_initialization` - PASSED
+- ❌ `tests/test_director_agent.py::TestDirectorAgent::test_handle_agent_action` - STILL FAILING (async issue)
+- ❌ `tests/test_director_agent.py::TestDirectorAgent::test_handle_agent_action_with_no_action` - STILL FAILING (async issue)
+- ❌ `tests/test_director_agent.py::TestDirectorAgent::test_run_turn_emits_event` - STILL FAILING (async issue)
 - ✅ `tests/test_data_models.py::TestSacredValidationFunctions::test_validate_blessed_data_model_success` - PASSED
-- ✅ All other tests remain passing
+
+**Status**: 2/5 tests fixed. Remaining 3 failures require async/await handling fixes.
 
 ### Regression Testing: 0 New Failures
 
