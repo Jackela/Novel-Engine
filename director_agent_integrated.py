@@ -443,6 +443,11 @@ Each entry includes timestamps, participating agents, and detailed event descrip
         """Get world state data."""
         return self.world_state_coordinator.world_state_data
 
+    @property
+    def event_bus(self) -> EventBus:
+        """Get event bus instance."""
+        return self.base.event_bus
+
     def close_campaign_log(self) -> None:
         """Close the campaign log with summary information."""
         try:
