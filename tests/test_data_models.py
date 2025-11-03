@@ -490,7 +490,7 @@ class TestSacredValidationFunctions:
         result = validate_blessed_data_model(memory)
 
         assert result.success is True
-        assert result.data["validation"] == "blessed_by_PRIME ARCHITECT"
+        assert result.data["validation"] == "verified_by_prime_architect"
         assert result.metadata["model_type"] == "MemoryItem"
 
     def test_validate_blessed_data_model_failure(self):

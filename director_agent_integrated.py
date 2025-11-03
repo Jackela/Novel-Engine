@@ -14,6 +14,7 @@ The integrated DirectorAgent coordinates:
 - AgentLifecycleManager: Iron Laws validation and action adjudication
 """
 
+import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -286,12 +287,23 @@ Each entry includes timestamps, participating agents, and detailed event descrip
             Dictionary containing turn execution results
         """
         try:
-            # Use turn orchestrator to execute turn
-            turn_result = self.turn_orchestrator.run_turn(
-                registered_agents=self.base.registered_agents,
-                world_state_data=self.base.world_state_data,
-                log_event_callback=self.log_event,
-            )
+            # Use turn orchestrator to execute turn (async method)
+            # Check if there's already a running event loop
+            try:
+                loop = asyncio.get_running_loop()
+                # If we're already in an async context, we can't use asyncio.run()
+                # Instead, we need to handle this synchronously
+                logger.warning("Cannot use asyncio.run() inside an existing event loop")
+                return {"status": "error", "message": "run_turn called from async context - use async version"}
+            except RuntimeError:
+                # No event loop running, safe to use asyncio.run()
+                turn_result = asyncio.run(
+                    self.turn_orchestrator.run_turn(
+                        registered_agents=self.base.registered_agents,
+                        world_state_data=self.base.world_state_data,
+                        log_event_callback=self.log_event,
+                    )
+                )
 
             # Update base counters
             if turn_result.get("status") == "turn_started":
@@ -333,7 +345,25 @@ Each entry includes timestamps, participating agents, and detailed event descrip
                 agent, action, self.log_event
             )
 
-            if success:
+            # If turn orchestrator couldn't handle it (no active turn), handle it directly
+            if not success:
+                # Log the action directly for backward compatibility
+                if action:
+                    character_name = getattr(agent, "character_data", {}).get(
+                        "name", agent.agent_id
+                    )
+                    action_description = f"{character_name} ({agent.agent_id}) decided to {action.action_type}"
+                    if hasattr(action, "reasoning") and action.reasoning:
+                        action_description += f": {action.reasoning}"
+                    self.log_event(action_description)
+                    self.base.total_actions_processed += 1
+                else:
+                    character_name = getattr(agent, "character_data", {}).get(
+                        "name", agent.agent_id
+                    )
+                    self.log_event(f"{character_name} is waiting and observing.")
+
+            elif success:
                 self.base.total_actions_processed += 1
 
                 # If Iron Laws validation is available and action exists, validate it
@@ -442,6 +472,11 @@ Each entry includes timestamps, participating agents, and detailed event descrip
     def world_state_data(self) -> Dict[str, Any]:
         """Get world state data."""
         return self.world_state_coordinator.world_state_data
+
+    @property
+    def event_bus(self) -> EventBus:
+        """Get event bus instance."""
+        return self.base.event_bus
 
     def close_campaign_log(self) -> None:
         """Close the campaign log with summary information."""
