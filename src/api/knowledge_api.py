@@ -1,0 +1,477 @@
+"""
+Knowledge Management API
+
+FastAPI routes for knowledge entry CRUD operations (Admin API).
+
+Constitution Compliance:
+- Article II (Hexagonal): API layer adapter for knowledge management use cases
+- Article VII (Observability): Structured logging, metrics, tracing for all endpoints
+"""
+
+from typing import List, Optional
+from uuid import UUID
+
+from fastapi import APIRouter, HTTPException, Depends, status
+from pydantic import BaseModel, Field
+
+from src.shared_types import KnowledgeEntryId, CharacterId, UserId
+from src.security.auth_system import User, require_role, UserRole
+
+# OpenTelemetry tracing (Article VII - Observability)
+try:
+    from opentelemetry import trace
+    OTEL_AVAILABLE = True
+    tracer = trace.get_tracer("novel_engine.knowledge_api")
+except ImportError:
+    OTEL_AVAILABLE = False
+    tracer = None
+
+from contexts.knowledge.application.use_cases.create_knowledge_entry import CreateKnowledgeEntryUseCase
+from contexts.knowledge.application.use_cases.update_knowledge_entry import UpdateKnowledgeEntryUseCase
+from contexts.knowledge.application.use_cases.delete_knowledge_entry import DeleteKnowledgeEntryUseCase
+from contexts.knowledge.application.use_cases.migrate_markdown_files import MigrateMarkdownFilesUseCase
+from contexts.knowledge.application.ports.i_knowledge_repository import IKnowledgeRepository
+from contexts.knowledge.application.ports.i_event_publisher import IEventPublisher
+from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+from contexts.knowledge.domain.models.access_level import AccessLevel
+from contexts.knowledge.infrastructure.repositories.postgresql_knowledge_repository import PostgreSQLKnowledgeRepository
+from contexts.knowledge.infrastructure.events.kafka_event_publisher import KafkaEventPublisher
+from contexts.knowledge.infrastructure.adapters.markdown_migration_adapter import MarkdownMigrationAdapter
+
+
+# Request/Response Models
+
+class CreateKnowledgeEntryRequest(BaseModel):
+    """Request model for creating a knowledge entry."""
+    content: str = Field(..., min_length=1, description="Knowledge content text")
+    knowledge_type: KnowledgeType = Field(..., description="Category of knowledge")
+    owning_character_id: Optional[CharacterId] = Field(None, description="Character this belongs to (None for world knowledge)")
+    access_level: AccessLevel = Field(..., description="Access control level")
+    allowed_roles: List[str] = Field(default_factory=list, description="Roles permitted (for ROLE_BASED access)")
+    allowed_character_ids: List[CharacterId] = Field(default_factory=list, description="Character IDs permitted (for CHARACTER_SPECIFIC)")
+
+
+class CreateKnowledgeEntryResponse(BaseModel):
+    """Response model for creating a knowledge entry."""
+    entry_id: KnowledgeEntryId = Field(..., description="Unique identifier of created entry")
+
+
+class UpdateKnowledgeEntryRequest(BaseModel):
+    """Request model for updating a knowledge entry."""
+    content: str = Field(..., min_length=1, description="New knowledge content text")
+
+
+class KnowledgeEntryResponse(BaseModel):
+    """Response model for knowledge entry details."""
+    id: KnowledgeEntryId
+    content: str
+    knowledge_type: KnowledgeType
+    owning_character_id: Optional[CharacterId]
+    access_level: AccessLevel
+    allowed_roles: List[str]
+    allowed_character_ids: List[CharacterId]
+    created_at: str  # ISO 8601 timestamp
+    updated_at: str  # ISO 8601 timestamp
+    created_by: UserId
+
+
+# Dependency injection helpers
+
+async def get_repository() -> IKnowledgeRepository:
+    """Get knowledge repository instance (dependency injection)."""
+    # TODO: Integrate with DatabaseManager for session management
+    from core_platform.persistence.database import get_async_db_session
+    
+    async with get_async_db_session() as session:
+        yield PostgreSQLKnowledgeRepository(session)
+
+
+async def get_event_publisher() -> IEventPublisher:
+    """Get event publisher instance (dependency injection)."""
+    # TODO: Integrate with KafkaClient singleton
+    from contexts.orchestration.infrastructure.kafka.kafka_client import KafkaClient
+    
+    kafka_client = KafkaClient()
+    yield KafkaEventPublisher(kafka_client)
+
+
+# Authentication integrated via SecurityService (T008, T043)
+# Use require_role(UserRole.ADMIN) dependency in endpoints
+
+
+# API Router
+
+def create_knowledge_api() -> APIRouter:
+    """
+    Create Knowledge Management API router.
+    
+    Provides Admin API endpoints for:
+    - POST /api/v1/knowledge/entries (FR-002)
+    - GET /api/v1/knowledge/entries
+    - GET /api/v1/knowledge/entries/{id}
+    - PUT /api/v1/knowledge/entries/{id} (FR-003)
+    - DELETE /api/v1/knowledge/entries/{id} (FR-004)
+    
+    Constitution Compliance:
+    - Article II (Hexagonal): API adapter for use cases
+    - Article VII (Observability): All endpoints logged and instrumented
+    
+    Returns:
+        APIRouter with knowledge management endpoints
+    """
+    router = APIRouter(
+        prefix="/api/v1/knowledge",
+        tags=["Knowledge Management"],
+        responses={
+            401: {"description": "Unauthorized"},
+            403: {"description": "Forbidden - requires admin or game_master role"},
+            500: {"description": "Internal server error"},
+        },
+    )
+    
+    @router.post(
+        "/entries",
+        response_model=CreateKnowledgeEntryResponse,
+        status_code=status.HTTP_201_CREATED,
+        summary="Create Knowledge Entry",
+        description="Create a new knowledge entry with specified access control (FR-002)",
+    )
+    async def create_entry(
+        request: CreateKnowledgeEntryRequest,
+        repository: IKnowledgeRepository = Depends(get_repository),
+        event_publisher: IEventPublisher = Depends(get_event_publisher),
+        current_user: User = Depends(require_role(UserRole.ADMIN)),
+    ) -> CreateKnowledgeEntryResponse:
+        """
+        Create a new knowledge entry.
+        
+        Requires: Admin role (enforced by authentication T008, T043)
+        """
+        user_id = current_user.id
+        
+        # Start OpenTelemetry span (Article VII - Observability)
+        if OTEL_AVAILABLE and tracer:
+            with tracer.start_as_current_span("knowledge.create_entry") as span:
+                span.set_attribute("knowledge_type", request.knowledge_type.value)
+                span.set_attribute("access_level", request.access_level.value)
+                span.set_attribute("user_id", user_id)
+                
+                try:
+                    use_case = CreateKnowledgeEntryUseCase(repository, event_publisher)
+                    entry_id = await use_case.execute(
+                        content=request.content,
+                        knowledge_type=request.knowledge_type,
+                        owning_character_id=request.owning_character_id,
+                        access_level=request.access_level,
+                        created_by=user_id,
+                        allowed_roles=tuple(request.allowed_roles),
+                        allowed_character_ids=tuple(request.allowed_character_ids),
+                    )
+                    
+                    span.set_attribute("entry_id", entry_id)
+                    span.set_attribute("success", True)
+                    return CreateKnowledgeEntryResponse(entry_id=entry_id)
+                    
+                except ValueError as e:
+                    span.set_attribute("error", str(e))
+                    span.set_attribute("success", False)
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+                except Exception as e:
+                    span.set_attribute("error", str(e))
+                    span.set_attribute("success", False)
+                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        else:
+            # Fallback without tracing
+            try:
+                use_case = CreateKnowledgeEntryUseCase(repository, event_publisher)
+                entry_id = await use_case.execute(
+                    content=request.content,
+                    knowledge_type=request.knowledge_type,
+                    owning_character_id=request.owning_character_id,
+                    access_level=request.access_level,
+                    created_by=user_id,
+                    allowed_roles=tuple(request.allowed_roles),
+                    allowed_character_ids=tuple(request.allowed_character_ids),
+                )
+                return CreateKnowledgeEntryResponse(entry_id=entry_id)
+            except ValueError as e:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+    
+    @router.get(
+        "/entries",
+        response_model=List[KnowledgeEntryResponse],
+        summary="List Knowledge Entries",
+        description="Retrieve all knowledge entries with optional filtering",
+    )
+    async def list_entries(
+        knowledge_type: Optional[KnowledgeType] = None,
+        owning_character_id: Optional[CharacterId] = None,
+        repository: IKnowledgeRepository = Depends(get_repository),
+        current_user: User = Depends(require_role(UserRole.ADMIN)),
+    ) -> List[KnowledgeEntryResponse]:
+        """
+        List knowledge entries with optional filters.
+        
+        Requires: Admin role (enforced by authentication T008, T043)
+        """
+        # TODO: Implement list/filter logic
+        # For now, return empty list
+        return []
+    
+    @router.get(
+        "/entries/{entry_id}",
+        response_model=KnowledgeEntryResponse,
+        summary="Get Knowledge Entry",
+        description="Retrieve a specific knowledge entry by ID",
+    )
+    async def get_entry(
+        entry_id: UUID,
+        repository: IKnowledgeRepository = Depends(get_repository),
+        current_user: User = Depends(require_role(UserRole.ADMIN)),
+    ) -> KnowledgeEntryResponse:
+        """
+        Get a knowledge entry by ID.
+        
+        Requires: Admin role (enforced by authentication T008, T043)
+        """
+        try:
+            entry = await repository.get_by_id(str(entry_id))
+            
+            if entry is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Knowledge entry not found")
+            
+            # Convert to response model
+            return KnowledgeEntryResponse(
+                id=entry.id,
+                content=entry.content,
+                knowledge_type=entry.knowledge_type,
+                owning_character_id=entry.owning_character_id,
+                access_level=entry.access_control.access_level,
+                allowed_roles=list(entry.access_control.allowed_roles),
+                allowed_character_ids=list(entry.access_control.allowed_character_ids),
+                created_at=entry.created_at.isoformat(),
+                updated_at=entry.updated_at.isoformat(),
+                created_by=entry.created_by,
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            # TODO: Log error with structured logging
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+    
+    @router.put(
+        "/entries/{entry_id}",
+        status_code=status.HTTP_204_NO_CONTENT,
+        summary="Update Knowledge Entry",
+        description="Update the content of an existing knowledge entry (FR-003)",
+    )
+    async def update_entry(
+        entry_id: UUID,
+        request: UpdateKnowledgeEntryRequest,
+        repository: IKnowledgeRepository = Depends(get_repository),
+        event_publisher: IEventPublisher = Depends(get_event_publisher),
+        current_user: User = Depends(require_role(UserRole.ADMIN)),
+    ):
+        """
+        Update a knowledge entry's content.
+        
+        Requires: Admin role (enforced by authentication T008, T043)
+        """
+        user_id = current_user.id
+        
+        # Start OpenTelemetry span (Article VII - Observability)
+        if OTEL_AVAILABLE and tracer:
+            with tracer.start_as_current_span("knowledge.update_entry") as span:
+                span.set_attribute("entry_id", str(entry_id))
+                span.set_attribute("user_id", user_id)
+                
+                try:
+                    use_case = UpdateKnowledgeEntryUseCase(repository, event_publisher)
+                    await use_case.execute(
+                        entry_id=str(entry_id),
+                        new_content=request.content,
+                        updated_by=user_id,
+                    )
+                    span.set_attribute("success", True)
+                    
+                except ValueError as e:
+                    span.set_attribute("error", str(e))
+                    span.set_attribute("success", False)
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+                except Exception as e:
+                    span.set_attribute("error", str(e))
+                    span.set_attribute("success", False)
+                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        else:
+            # Fallback without tracing
+            try:
+                use_case = UpdateKnowledgeEntryUseCase(repository, event_publisher)
+                await use_case.execute(
+                    entry_id=str(entry_id),
+                    new_content=request.content,
+                    updated_by=user_id,
+                )
+            except ValueError as e:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+    
+    @router.delete(
+        "/entries/{entry_id}",
+        status_code=status.HTTP_204_NO_CONTENT,
+        summary="Delete Knowledge Entry",
+        description="Delete a knowledge entry (FR-004)",
+    )
+    async def delete_entry(
+        entry_id: UUID,
+        repository: IKnowledgeRepository = Depends(get_repository),
+        event_publisher: IEventPublisher = Depends(get_event_publisher),
+        current_user: User = Depends(require_role(UserRole.ADMIN)),
+    ):
+        """
+        Delete a knowledge entry.
+        
+        Requires: Admin role (enforced by authentication T008, T043)
+        """
+        user_id = current_user.id
+        
+        # Start OpenTelemetry span (Article VII - Observability)
+        if OTEL_AVAILABLE and tracer:
+            with tracer.start_as_current_span("knowledge.delete_entry") as span:
+                span.set_attribute("entry_id", str(entry_id))
+                span.set_attribute("user_id", user_id)
+                
+                try:
+                    use_case = DeleteKnowledgeEntryUseCase(repository, event_publisher)
+                    await use_case.execute(
+                        entry_id=str(entry_id),
+                        deleted_by=user_id,
+                    )
+                    span.set_attribute("success", True)
+                    
+                except ValueError as e:
+                    span.set_attribute("error", str(e))
+                    span.set_attribute("success", False)
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+                except Exception as e:
+                    span.set_attribute("error", str(e))
+                    span.set_attribute("success", False)
+                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        else:
+            # Fallback without tracing
+            try:
+                use_case = DeleteKnowledgeEntryUseCase(repository, event_publisher)
+                await use_case.execute(
+                    entry_id=str(entry_id),
+                    deleted_by=user_id,
+                )
+            except ValueError as e:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+    
+    # ===== Migration Endpoints (FR-016, FR-018) =====
+    
+    class MigrateMarkdownRequest(BaseModel):
+        """Request model for Markdown migration."""
+        markdown_directory: str = Field(..., description="Root directory containing agent .md files")
+        create_backup: bool = Field(True, description="Create timestamped backup before migration")
+    
+    class RollbackMigrationRequest(BaseModel):
+        """Request model for migration rollback."""
+        backup_path: str = Field(..., description="Path to backup directory from migration")
+    
+    class VerifyMigrationRequest(BaseModel):
+        """Request model for migration verification."""
+        markdown_directory: str = Field(..., description="Root directory containing agent .md files")
+    
+    @router.post(
+        "/migrate",
+        status_code=status.HTTP_200_OK,
+        summary="Migrate Markdown files to knowledge base (FR-016)",
+        dependencies=[Depends(require_role(UserRole.ADMIN))],
+    )
+    async def migrate_markdown_files(
+        request: MigrateMarkdownRequest,
+        repository: IKnowledgeRepository = Depends(get_repository),
+    ):
+        """
+        Migrate all Markdown files to PostgreSQL knowledge base.
+        
+        Creates timestamped backup, parses Markdown files, creates knowledge entries.
+        
+        Functional Requirements:
+            - FR-016: Manual migration from Markdown to knowledge base
+            - FR-017: Timestamped backup creation
+        
+        Returns:
+            Migration report with statistics and backup path
+        """
+        migration_adapter = MarkdownMigrationAdapter(repository=repository)
+        use_case = MigrateMarkdownFilesUseCase(migration_adapter=migration_adapter)
+        
+        report = await use_case.execute(
+            markdown_directory=request.markdown_directory,
+            create_backup=request.create_backup,
+        )
+        
+        return report
+    
+    @router.post(
+        "/rollback",
+        status_code=status.HTTP_200_OK,
+        summary="Rollback migration to restore Markdown-based operation (FR-018)",
+        dependencies=[Depends(require_role(UserRole.ADMIN))],
+    )
+    async def rollback_migration(
+        request: RollbackMigrationRequest,
+        repository: IKnowledgeRepository = Depends(get_repository),
+    ):
+        """
+        Rollback migration by deleting entries and restoring Markdown files.
+        
+        Functional Requirements:
+            - FR-018: Rollback capability to restore Markdown-based operation
+        
+        Returns:
+            Rollback report with statistics
+        """
+        migration_adapter = MarkdownMigrationAdapter(repository=repository)
+        use_case = MigrateMarkdownFilesUseCase(migration_adapter=migration_adapter)
+        
+        try:
+            report = await use_case.rollback(backup_path=request.backup_path)
+            return report
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
+    @router.post(
+        "/verify",
+        status_code=status.HTTP_200_OK,
+        summary="Verify migration by comparing Markdown vs knowledge base (FR-019)",
+        dependencies=[Depends(require_role(UserRole.ADMIN))],
+    )
+    async def verify_migration(
+        request: VerifyMigrationRequest,
+        repository: IKnowledgeRepository = Depends(get_repository),
+    ):
+        """
+        Verify migration by comparing Markdown content vs PostgreSQL entries.
+        
+        Functional Requirements:
+            - FR-019: Verification mode for comparing sources
+        
+        Returns:
+            Verification report with comparison results
+        """
+        migration_adapter = MarkdownMigrationAdapter(repository=repository)
+        use_case = MigrateMarkdownFilesUseCase(migration_adapter=migration_adapter)
+        
+        report = await use_case.verify(markdown_directory=request.markdown_directory)
+        
+        return report
+    
+    return router
