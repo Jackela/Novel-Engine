@@ -40,7 +40,7 @@ const Dashboard: React.FC = () => {
   // Fetch dashboard data
   const { data: characters, isLoading: charactersLoading } = useCharactersQuery();
   const { data: campaigns, isLoading: _campaignsLoading } = useCampaignsQuery();
-  const { data: systemStatus } = useHealthQuery();
+  const { data: systemStatus, isLoading: statusLoading } = useHealthQuery();
 
   // Mock data for recent activities and statistics
   const recentProjects = [
