@@ -136,9 +136,9 @@ describe('GenerationProgress - Backward Compatibility', () => {
     
     expect(screen.getByText("What's Happening?")).toBeInTheDocument();
     expect(screen.getAllByText(/Character Analysis/)[0]).toBeInTheDocument();
-    expect(screen.getByText(/Narrative Planning/)).toBeInTheDocument();
-    expect(screen.getByText(/Turn Generation/)).toBeInTheDocument();
-    expect(screen.getByText(/Quality Control/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Narrative Planning/)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Turn Generation/)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Quality Control/)[0]).toBeInTheDocument();
   });
 });
 
