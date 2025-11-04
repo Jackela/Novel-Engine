@@ -32,6 +32,12 @@ dependencies = [
     "pydantic>=2.11.7",
     "uvicorn>=0.35.0",
     "httpx>=0.28.1",
+    # Knowledge Management dependencies (Feature 001)
+    "asyncpg>=0.29.0",  # PostgreSQL async driver
+    "aiokafka>=0.10.0",  # Kafka async client
+    "prometheus-client>=0.19.0",  # Prometheus metrics
+    "opentelemetry-api>=1.21.0",  # OpenTelemetry tracing API
+    "opentelemetry-sdk>=1.21.0",  # OpenTelemetry SDK
 ]
 
 [project.optional-dependencies]
@@ -209,6 +215,7 @@ markers = [
     "security: Security and validation tests",
     "slow: Tests that take significant time to run",
     "requires_services: Tests requiring external services to be running",
+    "knowledge: Knowledge Management context tests (Feature 001)",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",

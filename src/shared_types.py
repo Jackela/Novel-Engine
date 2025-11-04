@@ -30,6 +30,11 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 # Base Types and Enums
 # =============================================================================
 
+# Knowledge Management Type Aliases (Feature 001)
+KnowledgeEntryId = str  # Unique identifier for knowledge entries
+CharacterId = str  # Unique identifier for characters (already used throughout system)
+UserId = str  # Unique identifier for users (Game Masters, admins)
+
 
 class ActionType(str, Enum):
     """Enumeration of possible action types in the simulation."""
@@ -1024,6 +1029,10 @@ class ConsistencyCheck(BaseModel):
 
 # All models for easy importing
 __all__ = [
+    # Knowledge Management Type Aliases
+    "KnowledgeEntryId",
+    "CharacterId",
+    "UserId",
     # Enums
     "ActionType",
     "EntityType",

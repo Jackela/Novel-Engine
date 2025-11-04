@@ -1,0 +1,60 @@
+# Kafka Topics Configuration for Knowledge Management
+# Feature: 001-dynamic-agent-knowledge
+# Purpose: Define topics for knowledge domain events per Article VI (EDA)
+
+topics:
+  - name: knowledge.entry.created
+    partitions: 3
+    replication_factor: 2  # Adjust based on Kafka cluster size (min 2 for production)
+    config:
+      retention.ms: 604800000  # 7 days retention
+      cleanup.policy: delete
+      compression.type: snappy
+      min.insync.replicas: 1
+      max.message.bytes: 1048576  # 1MB max message size
+    description: "Published when a new knowledge entry is created (FR-002)"
+    schema: contracts/domain-events.avro.json#KnowledgeEntryCreated
+
+  - name: knowledge.entry.updated
+    partitions: 3
+    replication_factor: 2
+    config:
+      retention.ms: 604800000  # 7 days retention
+      cleanup.policy: delete
+      compression.type: snappy
+      min.insync.replicas: 1
+      max.message.bytes: 1048576
+    description: "Published when a knowledge entry is updated (FR-003)"
+    schema: contracts/domain-events.avro.json#KnowledgeEntryUpdated
+
+  - name: knowledge.entry.deleted
+    partitions: 3
+    replication_factor: 2
+    config:
+      retention.ms: 2592000000  # 30 days retention (longer for audit)
+      cleanup.policy: delete
+      compression.type: snappy
+      min.insync.replicas: 1
+      max.message.bytes: 1048576
+    description: "Published when a knowledge entry is deleted (FR-004)"
+    schema: contracts/domain-events.avro.json#KnowledgeEntryDeleted
+
+# Topic naming conventions:
+# - {bounded-context}.{aggregate}.{event-type}
+# - Example: knowledge.entry.created
+#
+# Partition strategy:
+# - Key by entry_id for ordering guarantees per entry
+# - 3 partitions for parallel processing without over-fragmentation
+#
+# Retention policy:
+# - Created/Updated: 7 days (operational events)
+# - Deleted: 30 days (audit trail requirements per FR-011)
+#
+# Replication:
+# - Factor 2 minimum for production (durability)
+# - Adjust based on cluster size and availability requirements
+#
+# Performance targets (per SC-002):
+# - <500ms event publishing latency
+# - min.insync.replicas=1 for write performance (increase for stronger durability)

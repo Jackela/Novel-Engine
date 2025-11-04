@@ -8,10 +8,24 @@ with personalized context, memory integration, and narrative awareness.
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from ...domain.value_objects import PhaseType
 from .base_phase import BasePhaseImplementation, PhaseExecutionContext, PhaseResult
+
+# Knowledge system integration (FR-007)
+try:
+    from contexts.knowledge.infrastructure.adapters.subjective_brief_phase_adapter import (
+        SubjectiveBriefPhaseAdapter,
+    )
+    from contexts.knowledge.infrastructure.config.feature_flags import (
+        KnowledgeFeatureFlags,
+    )
+    KNOWLEDGE_SYSTEM_AVAILABLE = True
+except ImportError:
+    KNOWLEDGE_SYSTEM_AVAILABLE = False
+    SubjectiveBriefPhaseAdapter = None
+    KnowledgeFeatureFlags = None
 
 
 class SubjectiveBriefPhase(BasePhaseImplementation):
@@ -26,11 +40,71 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
     - Manage AI cost optimization and rate limiting
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        knowledge_adapter: Optional[SubjectiveBriefPhaseAdapter] = None,
+    ):
+        """
+        Initialize SubjectiveBriefPhase with optional knowledge adapter.
+        
+        Args:
+            knowledge_adapter: Optional adapter for knowledge retrieval (FR-007)
+                              If None, falls back to legacy Markdown-based approach
+        """
         super().__init__(PhaseType.SUBJECTIVE_BRIEF)
         self.execution_timeout_ms = 15000  # 15 seconds for AI operations
         self.ai_gateway_endpoint = "ai_gateway"
         self.agent_service_endpoint = "agent_context"
+        
+        # Knowledge system integration (FR-007)
+        self._knowledge_adapter = knowledge_adapter
+    
+    @classmethod
+    def create_with_feature_flags(
+        cls,
+        knowledge_adapter_factory=None,
+    ) -> "SubjectiveBriefPhase":
+        """
+        Factory method to create SubjectiveBriefPhase with feature flag control.
+        
+        Automatically determines whether to use knowledge base or Markdown files
+        based on NOVEL_ENGINE_USE_KNOWLEDGE_BASE environment variable.
+        
+        Args:
+            knowledge_adapter_factory: Optional callable that returns configured
+                                      SubjectiveBriefPhaseAdapter instance.
+                                      Only called if feature flag is enabled.
+        
+        Returns:
+            SubjectiveBriefPhase instance with appropriate knowledge adapter
+        
+        Example:
+            # With feature flag enabled
+            os.environ["NOVEL_ENGINE_USE_KNOWLEDGE_BASE"] = "true"
+            phase = SubjectiveBriefPhase.create_with_feature_flags(
+                knowledge_adapter_factory=lambda: create_knowledge_adapter()
+            )
+            
+            # With feature flag disabled (default)
+            phase = SubjectiveBriefPhase.create_with_feature_flags()
+        
+        Constitution Compliance:
+            - FR-018: Enables rollback to Markdown-based operation
+            - Article VII (Observability): Logs knowledge source selection
+        """
+        knowledge_adapter = None
+        
+        # Check if knowledge system is available and feature flag is enabled
+        if KNOWLEDGE_SYSTEM_AVAILABLE and KnowledgeFeatureFlags.use_knowledge_base():
+            if knowledge_adapter_factory is not None:
+                try:
+                    knowledge_adapter = knowledge_adapter_factory()
+                except Exception:
+                    # Log error but continue with Markdown fallback
+                    # Actual logging would go here in production
+                    pass
+        
+        return cls(knowledge_adapter=knowledge_adapter)
 
     async def _execute_phase_implementation(
         self, context: PhaseExecutionContext
@@ -51,6 +125,10 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         briefs_generated = 0
         total_ai_cost = Decimal("0.00")
         failed_generations = 0
+        
+        # Record knowledge source for observability (FR-007, Article VII)
+        knowledge_source = "knowledge_base" if self._knowledge_adapter else "markdown"
+        context.record_performance_metric("knowledge_source", knowledge_source)
 
         try:
             # Step 1: Gather world state changes from previous phase
@@ -359,6 +437,28 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
             "get_agent_goals",
             {"agent_id": agent_id},
         )
+        
+        # FR-007: Get agent's knowledge context from knowledge base
+        # (Replaces Markdown file reads per FR-006)
+        knowledge_context = None
+        if self._knowledge_adapter is not None:
+            try:
+                # Retrieve knowledge from PostgreSQL instead of Markdown files
+                agent_roles = agent_config.get("roles", ())
+                if isinstance(agent_roles, list):
+                    agent_roles = tuple(agent_roles)
+                
+                knowledge_context = await self._knowledge_adapter.get_agent_knowledge_context(
+                    character_id=agent_id,
+                    roles=agent_roles,
+                    turn_number=context.turn_id,
+                )
+            except Exception as e:
+                # Log warning but don't fail - knowledge is enhancement not requirement
+                context.record_performance_metric(
+                    "knowledge_retrieval_errors",
+                    context.performance_metrics.get("knowledge_retrieval_errors", 0) + 1,
+                )
 
         return {
             "current_state": agent_state_response.get("state", {}),
@@ -367,6 +467,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
             "personality": agent_config.get("personality", {}),
             "preferences": agent_config.get("preferences", {}),
             "capabilities": agent_config.get("capabilities", []),
+            "knowledge_context": knowledge_context,  # New: Knowledge from PostgreSQL (FR-007)
         }
 
     async def _build_subjective_brief_prompt(
@@ -396,12 +497,18 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         current_state = agent_context.get("current_state", {})
         recent_memories = agent_context.get("recent_memories", [])
         goals = agent_context.get("goals", [])
+        knowledge_context = agent_context.get("knowledge_context")  # FR-007
 
         # Build world changes summary
         changes_summary = self._summarize_world_changes(world_changes, agent_id)
 
         # Build memories context
         memories_text = self._format_memories_for_prompt(recent_memories)
+        
+        # Build knowledge context section (FR-007: PostgreSQL-backed knowledge)
+        knowledge_text = ""
+        if knowledge_context:
+            knowledge_text = f"\n\nYour persistent knowledge:\n{knowledge_context}\n"
 
         # Create depth-appropriate prompt
         depth = context.configuration.narrative_analysis_depth
@@ -428,6 +535,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
                 goals[:3] if goals else ["No specific goals"]
             ),  # Limit to top 3
             time_passed=context.configuration.world_time_advance,
+            knowledge_context=knowledge_text,  # FR-007: Include knowledge from PostgreSQL
         )
 
         return prompt
@@ -632,7 +740,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         """Get basic prompt template for brief generation."""
         return """
 You are {agent_name}, currently at {current_location}.
-
+{knowledge_context}
 Recent events in the world:
 {world_changes}
 
@@ -644,7 +752,7 @@ Generate a brief subjective perception of these events from your character's per
         return """
 You are {agent_name}, a character with these personality traits: {personality_traits}.
 You are currently at {current_location} with {current_health} health and feeling {current_mood}.
-
+{knowledge_context}
 Recent world events:
 {world_changes}
 
@@ -666,7 +774,7 @@ Respond in character, in 1-2 paragraphs.
         return """
 You are {agent_name}, a character with personality traits: {personality_traits}.
 Current status: At {current_location}, health: {current_health}, mood: {current_mood}
-
+{knowledge_context}
 World changes since last awareness ({time_passed} seconds ago):
 {world_changes}
 
@@ -696,7 +804,7 @@ CURRENT SITUATION:
 - Physical state: {current_health}  
 - Emotional state: {current_mood}
 - Time elapsed since last conscious moment: {time_passed} seconds
-
+{knowledge_context}
 WORLD CHANGES YOU PERCEIVE:
 {world_changes}
 
