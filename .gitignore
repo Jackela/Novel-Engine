@@ -443,3 +443,4 @@ evaluation/
 !.env.example
 !.env.local.template
 .venv-run/
+coverage.json
