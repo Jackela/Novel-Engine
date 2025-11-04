@@ -418,9 +418,15 @@ wave*.py
 world_state.json
 nonexistent_world_state.json
 
-# Test results (now in reports/)
-pytest-report*.xml
-test-results*.xml
+# Test results (organized in reports/test-results/)
+reports/test-results/*.xml
+reports/test-results/*.html
+reports/test-results/*.json
+
+# Evidence/screenshots (organized in reports/evidence/)
+reports/evidence/**/*.png
+reports/evidence/**/*.jpg
+reports/evidence/**/*.mp4
 
 # Third-party tool configurations
 .specify/
