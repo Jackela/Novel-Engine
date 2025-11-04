@@ -11,8 +11,10 @@ Constitution Compliance:
 """
 
 import pytest
+import pytest_asyncio
 from datetime import datetime, timezone
 from uuid import uuid4
+from sqlalchemy import text
 
 # NOTE: These imports will fail until infrastructure is implemented
 try:
@@ -36,10 +38,10 @@ except ImportError:
 pytestmark = [pytest.mark.knowledge, pytest.mark.integration, pytest.mark.requires_services]
 
 
-@pytest.fixture
-async def db_connection():
+@pytest_asyncio.fixture
+async def db_session():
     """
-    Create database connection for integration tests.
+    Create database session for integration tests.
     
     NOTE: This fixture assumes PostgreSQL is running locally.
     Integration tests will be skipped if database is unavailable.
@@ -47,38 +49,40 @@ async def db_connection():
     if PostgreSQLKnowledgeRepository is None:
         pytest.skip("PostgreSQLKnowledgeRepository not yet implemented (TDD - expected to fail)")
     
-    # TODO: Implement actual database connection
-    # For now, this will fail as expected for TDD
     try:
-        import asyncpg
-        conn = await asyncpg.connect(
-            host="localhost",
-            port=5432,
-            user="postgres",
-            password="postgres",
-            database="novel_engine_test",
-        )
-        yield conn
-        await conn.close()
+        from core_platform.persistence.database import db_manager
+        
+        # Initialize database if needed
+        if not db_manager._is_initialized:
+            await db_manager.initialize({
+                "url": "postgresql://postgres:postgres@localhost:5432/novel_engine_test",
+                "pool_size": 5,
+                "echo": False,
+            })
+        
+        async with db_manager.get_async_session() as session:
+            yield session
     except Exception as e:
         pytest.skip(f"PostgreSQL not available: {e}")
 
 
-@pytest.fixture
-async def repository(db_connection):
-    """Create repository instance with database connection."""
+@pytest_asyncio.fixture
+async def repository(db_session):
+    """Create repository instance with database session."""
     if PostgreSQLKnowledgeRepository is None:
         pytest.skip("PostgreSQLKnowledgeRepository not yet implemented (TDD - expected to fail)")
     
-    repo = PostgreSQLKnowledgeRepository(connection=db_connection)
+    repo = PostgreSQLKnowledgeRepository(session=db_session)
     
     # Clean up any existing test data
-    await db_connection.execute("DELETE FROM knowledge_entries WHERE created_by LIKE 'test-user-%'")
+    await db_session.execute(text("DELETE FROM knowledge_entries WHERE created_by LIKE 'test-user-%'"))
+    await db_session.commit()
     
     yield repo
     
     # Cleanup after tests
-    await db_connection.execute("DELETE FROM knowledge_entries WHERE created_by LIKE 'test-user-%'")
+    await db_session.execute(text("DELETE FROM knowledge_entries WHERE created_by LIKE 'test-user-%'"))
+    await db_session.commit()
 
 
 @pytest.fixture
@@ -308,29 +312,30 @@ class TestPostgreSQLKnowledgeRepositoryDelete:
         await repository.delete(non_existent_id)
 
     @pytest.mark.asyncio
-    async def test_delete_cascades_to_audit_log(self, repository, sample_entry, db_connection):
+    async def test_delete_cascades_to_audit_log(self, repository, sample_entry, db_session):
         """Test that deleting entry also removes audit log entries (CASCADE)."""
         # Arrange - save entry
         await repository.save(sample_entry)
         
         # Insert audit log entry (would normally be done by audit log writer)
-        await db_connection.execute(
-            """
+        await db_session.execute(
+            text("""
             INSERT INTO knowledge_audit_log (timestamp, user_id, entry_id, change_type)
-            VALUES (NOW(), $1, $2, 'created')
-            """,
-            "test-user-001",
-            sample_entry.id,
+            VALUES (NOW(), :user_id, :entry_id, 'created')
+            """),
+            {"user_id": "test-user-001", "entry_id": sample_entry.id}
         )
+        await db_session.commit()
         
         # Act - delete entry
         await repository.delete(sample_entry.id)
         
         # Assert - audit log entries should also be deleted (CASCADE)
-        audit_count = await db_connection.fetchval(
-            "SELECT COUNT(*) FROM knowledge_audit_log WHERE entry_id = $1",
-            sample_entry.id,
+        result = await db_session.execute(
+            text("SELECT COUNT(*) FROM knowledge_audit_log WHERE entry_id = :entry_id"),
+            {"entry_id": sample_entry.id}
         )
+        audit_count = result.scalar()
         assert audit_count == 0
 
 
