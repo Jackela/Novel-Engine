@@ -414,17 +414,13 @@ validate_platform.py
 validation_test.py
 wave*.py
 
-# Temporary data files
+# Temporary data files (now organized in reports/)
 world_state.json
 nonexistent_world_state.json
-aria_mission_report.json
-aria_shadowbane_autonomous_exploration.js
-quick_platform_validation_report.json
-final_integration_validation_report_*.json
-wave5_*_validation*.json
 
-# Debug scripts
-debug-frontend-issues.js
+# Test results (now in reports/)
+pytest-report*.xml
+test-results*.xml
 
 # Third-party tool configurations
 .specify/

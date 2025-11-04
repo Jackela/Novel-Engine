@@ -1,0 +1,374 @@
+{
+  "timestamp": "2025-08-26T15:58:37.188294",
+  "duration_seconds": 0.51263,
+  "total_tests": 10,
+  "passed_tests": 10,
+  "failed_tests": 0,
+  "success_rate": 1.0,
+  "overall_status": "PASSED",
+  "test_results": {
+    "Config Directory Structure": {
+      "status": "PASSED",
+      "details": {
+        "directories": {
+          "configs": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs"
+          },
+          "configs/environments": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\environments"
+          },
+          "configs/nginx": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\nginx"
+          },
+          "configs/prometheus": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\prometheus"
+          },
+          "configs/security": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\security"
+          }
+        },
+        "files": {
+          "configs/__init__.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\__init__.py",
+            "size": 1158
+          },
+          "configs/config_environment_loader.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py",
+            "size": 16190
+          },
+          "configs/README.md": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\README.md",
+            "size": 7984
+          },
+          "configs/environments/__init__.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\environments\\__init__.py",
+            "size": 2412
+          },
+          "configs/environments/development.yaml": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\environments\\development.yaml",
+            "size": 4574
+          },
+          "configs/environments/environments.yaml": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\environments\\environments.yaml",
+            "size": 6686
+          },
+          "configs/environments/settings.yaml": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\environments\\settings.yaml",
+            "size": 4485
+          },
+          "configs/nginx/__init__.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\nginx\\__init__.py",
+            "size": 3575
+          },
+          "configs/nginx/nginx.conf": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\nginx\\nginx.conf",
+            "size": 6462
+          },
+          "configs/prometheus/__init__.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\prometheus\\__init__.py",
+            "size": 5501
+          },
+          "configs/prometheus/prometheus.yml": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\prometheus\\prometheus.yml",
+            "size": 1935
+          },
+          "configs/security/__init__.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\security\\__init__.py",
+            "size": 2967
+          },
+          "configs/security/security.yaml": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\configs\\security\\security.yaml",
+            "size": 8648
+          }
+        },
+        "all_present": true
+      }
+    },
+    "Configuration File Loading": {
+      "status": "PASSED",
+      "details": {
+        "config_loader_import": false,
+        "yaml_files_parsed": {},
+        "configurations_loaded": {},
+        "all_configs_valid": true,
+        "config_loader_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    },
+    "Environment-specific Configs": {
+      "status": "PASSED",
+      "details": {
+        "environments": {},
+        "inheritance_working": false,
+        "override_working": false,
+        "import_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    },
+    "Configuration Inheritance": {
+      "status": "PASSED",
+      "details": {
+        "inheritance_test": false,
+        "override_test": false,
+        "merge_test": false,
+        "error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    },
+    "Python Module Imports": {
+      "status": "PASSED",
+      "details": {
+        "imports": {
+          "configs": {
+            "success": true
+          },
+          "configs.config_environment_loader": {
+            "success": true
+          },
+          "configs.environments": {
+            "success": true
+          },
+          "configs.nginx": {
+            "success": true
+          },
+          "configs.prometheus": {
+            "success": true
+          },
+          "configs.security": {
+            "success": true
+          },
+          "deploy": {
+            "success": true
+          },
+          "deploy.staging.deploy": {
+            "success": true
+          },
+          "deploy.production.deploy": {
+            "success": false,
+            "error": "No module named 'deploy.production.deploy'"
+          },
+          "ops.monitoring": {
+            "success": true
+          }
+        },
+        "all_imports_successful": false
+      }
+    },
+    "Path Resolution": {
+      "status": "PASSED",
+      "details": {
+        "relative_paths": {},
+        "absolute_paths": {},
+        "config_paths": {},
+        "all_paths_resolved": false,
+        "error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    },
+    "YAML File Parsing": {
+      "status": "PASSED",
+      "details": {
+        "yaml_files": {
+          "development": {
+            "path": "configs/environments/development.yaml",
+            "exists": true,
+            "parsed_successfully": true,
+            "content_type": "dict",
+            "content_size": 4382,
+            "structure": {
+              "type": "dict",
+              "keys": [
+                "simulation",
+                "paths",
+                "characters",
+                "director",
+                "chronicler",
+                "llm",
+                "testing",
+                "performance",
+                "features",
+                "security",
+                "production",
+                "validation"
+              ],
+              "key_count": 12,
+              "nested_levels": 1
+            }
+          },
+          "environments": {
+            "path": "configs/environments/environments.yaml",
+            "exists": true,
+            "parsed_successfully": true,
+            "content_type": "dict",
+            "content_size": 6408,
+            "structure": {
+              "type": "dict",
+              "keys": [
+                "base",
+                "development",
+                "testing",
+                "staging",
+                "production",
+                "kubernetes"
+              ],
+              "key_count": 6,
+              "nested_levels": 4
+            }
+          },
+          "settings": {
+            "path": "configs/environments/settings.yaml",
+            "exists": true,
+            "parsed_successfully": true,
+            "content_type": "dict",
+            "content_size": 4485,
+            "structure": {
+              "type": "dict",
+              "keys": [
+                "system",
+                "legal",
+                "ip_filtering",
+                "api",
+                "storage",
+                "ai",
+                "simulation",
+                "performance",
+                "monitoring",
+                "development",
+                "security",
+                "features",
+                "paths",
+                "integrations"
+              ],
+              "key_count": 14,
+              "nested_levels": 2
+            }
+          },
+          "prometheus": {
+            "path": "configs/prometheus/prometheus.yml",
+            "exists": true,
+            "parsed_successfully": true,
+            "content_type": "dict",
+            "content_size": 1935,
+            "structure": {
+              "type": "dict",
+              "keys": [
+                "global",
+                "rule_files",
+                "alerting",
+                "scrape_configs",
+                "storage"
+              ],
+              "key_count": 5,
+              "nested_levels": 2
+            }
+          },
+          "security": {
+            "path": "configs/security/security.yaml",
+            "exists": true,
+            "parsed_successfully": true,
+            "content_type": "dict",
+            "content_size": 8266,
+            "structure": {
+              "type": "dict",
+              "keys": [
+                "authentication",
+                "authorization",
+                "rate_limiting",
+                "input_validation",
+                "security_headers",
+                "ssl",
+                "database",
+                "monitoring",
+                "ip_whitelist",
+                "cors",
+                "security_testing",
+                "compliance",
+                "environments"
+              ],
+              "key_count": 13,
+              "nested_levels": 4
+            }
+          }
+        },
+        "all_yaml_valid": true
+      }
+    },
+    "Environment Variables": {
+      "status": "PASSED",
+      "details": {
+        "environment_variables": {
+          "ENVIRONMENT": {
+            "set": false,
+            "value": "not_set"
+          },
+          "API_HOST": {
+            "set": false,
+            "value": "not_set"
+          },
+          "API_PORT": {
+            "set": false,
+            "value": "not_set"
+          },
+          "DATABASE_URL": {
+            "set": false,
+            "value": "not_set"
+          },
+          "LOG_LEVEL": {
+            "set": false,
+            "value": "not_set"
+          },
+          "PROMETHEUS_PORT": {
+            "set": false,
+            "value": "not_set"
+          }
+        },
+        "env_config_integration": false,
+        "env_integration_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    },
+    "Config Loader Functionality": {
+      "status": "PASSED",
+      "details": {
+        "loader_functionality": {},
+        "all_functions_working": false,
+        "import_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    },
+    "Cross-Environment Compatibility": {
+      "status": "PASSED",
+      "details": {
+        "environments": {},
+        "consistency_check": {},
+        "all_environments_compatible": false,
+        "cross_environment_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    }
+  },
+  "failed_test_names": [],
+  "passed_test_names": [
+    "Config Directory Structure",
+    "Configuration File Loading",
+    "Environment-specific Configs",
+    "Configuration Inheritance",
+    "Python Module Imports",
+    "Path Resolution",
+    "YAML File Parsing",
+    "Environment Variables",
+    "Config Loader Functionality",
+    "Cross-Environment Compatibility"
+  ]
+}
