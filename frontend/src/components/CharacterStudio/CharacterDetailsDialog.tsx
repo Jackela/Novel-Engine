@@ -37,7 +37,7 @@ import {
   ContentCopy as CopyIcon,
   MoreVert as MoreVertIcon,
   Shield as ShieldIcon,
-  Sword as SwordIcon,
+  Gavel as SwordIcon,
   Build as BuildIcon,
   Psychology as PsychologyIcon,
   Visibility as VisibilityIcon,
