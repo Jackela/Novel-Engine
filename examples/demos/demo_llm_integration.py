@@ -18,7 +18,7 @@ Usage:
 
 import logging
 
-from character_factory import CharacterFactory
+from src.config.character_factory import CharacterFactory
 
 
 # Configure logging to show LLM integration details

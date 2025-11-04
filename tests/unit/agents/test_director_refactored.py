@@ -24,13 +24,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 # Import the refactored implementation
 try:
-    from director_agent_integrated import DirectorAgent
+    from src.agents.director_agent_integrated import DirectorAgent
 except ImportError:
-    from director_agent import DirectorAgent
+    from src.agents.director_agent import DirectorAgent
 
 # Try to import create functions
 try:
-    from director_agent_integrated import (
+    from src.agents.director_agent_integrated import (
         create_async_director_agent,
         create_director_agent,
         create_director_with_agents,

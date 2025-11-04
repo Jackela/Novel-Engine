@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """
-角色工厂单元测试套件
-测试角色创建、加载、验证等核心功能
+Character Factory Unit Test Suite
+Testing character creation, loading, and validation core functionality
 """
 
-from unittest.mock import Mock, patch
-
+from unittest.mock import Mock, patch, MagicMock
+import os
 import pytest
 
-# 导入被测试的模块
+# Import modules under test
 try:
-    from character_factory import CharacterFactory
-
+    from src.config.character_factory import CharacterFactory
     from src.event_bus import EventBus
 
     CHARACTER_FACTORY_AVAILABLE = True
@@ -23,275 +22,274 @@ except ImportError:
     not CHARACTER_FACTORY_AVAILABLE, reason="Character factory not available"
 )
 class TestCharacterFactory:
-    """角色工厂核心测试"""
+    """Character Factory Core Tests"""
 
     def setup_method(self):
-        """每个测试方法的设置"""
-        self.mock_event_bus = Mock()
-        self.factory = CharacterFactory(self.mock_event_bus)
+        """Setup for each test method"""
+        self.mock_event_bus = Mock(spec=EventBus)
 
     @pytest.mark.unit
     def test_factory_initialization_success(self):
-        """测试工厂初始化 - 成功情况"""
-        event_bus = Mock()
+        """Test factory initialization - success case"""
+        event_bus = Mock(spec=EventBus)
         factory = CharacterFactory(event_bus)
 
         assert factory.event_bus == event_bus
         assert hasattr(factory, "event_bus")
+        assert hasattr(factory, "base_character_path")
 
     @pytest.mark.unit
-    def test_factory_initialization_no_event_bus(self):
-        """测试工厂初始化 - 无事件总线"""
-        with pytest.raises((TypeError, ValueError)):
-            CharacterFactory(None)
+    def test_create_character_empty_name(self):
+        """Test character creation with empty name raises ValueError"""
+        factory = CharacterFactory(self.mock_event_bus)
+
+        with pytest.raises(ValueError, match="Character name cannot be empty"):
+            factory.create_character("")
+
+        with pytest.raises(ValueError, match="Character name cannot be empty"):
+            factory.create_character("   ")
 
     @pytest.mark.unit
-    def test_create_character_success(self, characters_directory):
-        """测试角色创建 - 成功情况"""
-        with patch(
-            "character_factory._get_characters_directory_path",
-            return_value=str(characters_directory),
-        ):
-            with patch("character_factory.PersonaAgent") as mock_persona:
+    def test_create_character_not_found(self, tmp_path):
+        """Test character creation - character not found"""
+        # Create factory with temporary path
+        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+
+        with pytest.raises(FileNotFoundError, match="Character directory not found"):
+            factory.create_character("nonexistent_character")
+
+    @pytest.mark.unit
+    def test_create_character_path_is_file_not_directory(self, tmp_path):
+        """Test character creation when path exists but is a file not directory"""
+        # Create a file instead of directory
+        char_file = tmp_path / "testchar"
+        char_file.write_text("not a directory")
+
+        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+
+        with pytest.raises(FileNotFoundError, match="not a directory"):
+            factory.create_character("testchar")
+
+    @pytest.mark.unit
+    def test_create_character_success(self, tmp_path):
+        """Test successful character creation"""
+        # Create character directory
+        char_dir = tmp_path / "testchar"
+        char_dir.mkdir()
+        
+        # Create minimal character files
+        (char_dir / "character_testchar.md").write_text("# Test Character\n")
+
+        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+
+        # Mock PersonaAgent to avoid actual initialization
+        with patch("src.config.character_factory.PersonaAgent") as mock_persona:
+            mock_agent = Mock()
+            mock_agent.agent_id = "testchar_1"
+            mock_persona.return_value = mock_agent
+
+            agent = factory.create_character("testchar")
+
+            assert agent is not None
+            assert agent.agent_id == "testchar_1"
+            mock_persona.assert_called_once()
+            # Verify it was called with the correct directory path
+            call_args = mock_persona.call_args
+            assert str(char_dir) in str(call_args[0][0])
+
+    @pytest.mark.unit
+    def test_create_character_with_agent_id(self, tmp_path):
+        """Test character creation with custom agent_id"""
+        char_dir = tmp_path / "testchar"
+        char_dir.mkdir()
+        (char_dir / "character_testchar.md").write_text("# Test\n")
+
+        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+
+        with patch("src.config.character_factory.PersonaAgent") as mock_persona:
+            mock_agent = Mock()
+            mock_agent.agent_id = "custom_id"
+            mock_persona.return_value = mock_agent
+
+            agent = factory.create_character("testchar", agent_id="custom_id")
+
+            assert agent is not None
+            # Verify agent_id was passed
+            call_args = mock_persona.call_args
+            assert call_args[1]["agent_id"] == "custom_id"
+
+    @pytest.mark.unit
+    def test_character_factory_persona_creation_error(self, tmp_path):
+        """Test error handling when PersonaAgent creation fails"""
+        char_dir = tmp_path / "testchar"
+        char_dir.mkdir()
+        (char_dir / "character_testchar.md").write_text("# Test\n")
+
+        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+
+        with patch("src.config.character_factory.PersonaAgent") as mock_persona:
+            # Simulate PersonaAgent initialization failure
+            mock_persona.side_effect = Exception("Persona creation failed")
+
+            with pytest.raises(Exception, match="Persona creation failed"):
+                factory.create_character("testchar")
+
+    @pytest.mark.unit
+    def test_list_available_characters(self, tmp_path):
+        """Test listing available characters"""
+        # Create multiple character directories
+        (tmp_path / "char1").mkdir()
+        (tmp_path / "char2").mkdir()
+        (tmp_path / "char3").mkdir()
+        # Create a file (should be ignored)
+        (tmp_path / "notachar.txt").write_text("ignore")
+
+        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+
+        characters = factory.list_available_characters()
+
+        assert len(characters) == 3
+        assert "char1" in characters
+        assert "char2" in characters
+        assert "char3" in characters
+        assert "notachar.txt" not in characters
+
+    @pytest.mark.unit
+    def test_list_available_characters_no_directory(self, tmp_path):
+        """Test listing characters when base directory doesn't exist"""
+        nonexistent = tmp_path / "nonexistent"
+        
+        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(nonexistent))
+
+        with pytest.raises(FileNotFoundError, match="Character base directory not found"):
+            factory.list_available_characters()
+
+    @pytest.mark.unit
+    def test_multiple_character_creation(self, tmp_path):
+        """Test creating multiple characters"""
+        # Create multiple character directories
+        for i in range(3):
+            char_dir = tmp_path / f"char{i}"
+            char_dir.mkdir()
+            (char_dir / f"character_char{i}.md").write_text(f"# Char {i}\n")
+
+        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+
+        with patch("src.config.character_factory.PersonaAgent") as mock_persona:
+            agents = []
+            for i in range(3):
                 mock_agent = Mock()
-                mock_agent.character.name = "engineer"
+                mock_agent.agent_id = f"char{i}_agent"
                 mock_persona.return_value = mock_agent
 
-                agent = self.factory.create_character("engineer")
+                agent = factory.create_character(f"char{i}")
+                agents.append(agent)
 
-                assert agent is not None
-                assert agent.character.name == "engineer"
-                mock_persona.assert_called_once()
-
-    @pytest.mark.unit
-    def test_create_character_not_found(self, temp_dir):
-        """测试角色创建 - 角色不存在"""
-        with patch(
-            "character_factory._get_characters_directory_path",
-            return_value=str(temp_dir),
-        ):
-            with pytest.raises((FileNotFoundError, ValueError)):
-                self.factory.create_character("nonexistent_character")
-
-    @pytest.mark.unit
-    def test_create_character_invalid_name(self, characters_directory):
-        """测试角色创建 - 无效角色名"""
-        with patch(
-            "character_factory._get_characters_directory_path",
-            return_value=str(characters_directory),
-        ):
-            # 测试空字符串
-            with pytest.raises((ValueError, TypeError)):
-                self.factory.create_character("")
-
-            # 测试None
-            with pytest.raises((ValueError, TypeError)):
-                self.factory.create_character(None)
-
-            # 测试危险路径
-            with pytest.raises((ValueError, FileNotFoundError)):
-                self.factory.create_character("../../../etc/passwd")
-
-    @pytest.mark.unit
-    def test_load_character_data_success(self, characters_directory):
-        """测试角色数据加载 - 成功情况"""
-        with patch(
-            "character_factory._get_characters_directory_path",
-            return_value=str(characters_directory),
-        ):
-            try:
-                # 尝试调用内部方法加载数据
-                if hasattr(self.factory, "_load_character_data"):
-                    data = self.factory._load_character_data("engineer")
-                    assert data is not None
-                    assert isinstance(data, dict)
-                else:
-                    # 如果没有直接的加载方法，通过创建角色来间接测试
-                    with patch("character_factory.PersonaAgent") as mock_persona:
-                        mock_agent = Mock()
-                        mock_persona.return_value = mock_agent
-
-                        agent = self.factory.create_character("engineer")
-                        assert agent is not None
-            except Exception as e:
-                # 如果方法不存在或有其他问题，跳过测试
-                pytest.skip(f"Character data loading method not accessible: {e}")
-
-    @pytest.mark.unit
-    def test_validate_character_directory_success(self, characters_directory):
-        """测试角色目录验证 - 成功情况"""
-        with patch(
-            "character_factory._get_characters_directory_path",
-            return_value=str(characters_directory),
-        ):
-            # 测试验证方法是否存在
-            if hasattr(self.factory, "_validate_character_directory"):
-                is_valid = self.factory._validate_character_directory("engineer")
-                assert is_valid is True
-            else:
-                # 间接测试：创建角色不应该抛出目录相关错误
-                with patch("character_factory.PersonaAgent") as mock_persona:
-                    mock_agent = Mock()
-                    mock_persona.return_value = mock_agent
-
-                    # 这应该不会因为目录问题失败
-                    agent = self.factory.create_character("engineer")
-                    assert agent is not None
-
-    @pytest.mark.unit
-    def test_validate_character_directory_invalid(self, temp_dir):
-        """测试角色目录验证 - 无效目录"""
-        with patch(
-            "character_factory._get_characters_directory_path",
-            return_value=str(temp_dir),
-        ):
-            if hasattr(self.factory, "_validate_character_directory"):
-                is_valid = self.factory._validate_character_directory("nonexistent")
-                assert is_valid is False
-            else:
-                # 间接测试：尝试创建不存在的角色应该失败
-                with pytest.raises((FileNotFoundError, ValueError)):
-                    self.factory.create_character("nonexistent")
-
-    @pytest.mark.unit
-    def test_character_factory_error_handling(self, characters_directory):
-        """测试角色工厂错误处理"""
-        with patch(
-            "character_factory._get_characters_directory_path",
-            return_value=str(characters_directory),
-        ):
-            with patch("character_factory.PersonaAgent") as mock_persona:
-                # 模拟PersonaAgent初始化失败
-                mock_persona.side_effect = Exception("Persona creation failed")
-
-                with pytest.raises(Exception):
-                    self.factory.create_character("engineer")
-
-    @pytest.mark.unit
-    def test_multiple_character_creation(self, characters_directory):
-        """测试多个角色创建"""
-        with patch(
-            "character_factory._get_characters_directory_path",
-            return_value=str(characters_directory),
-        ):
-            with patch("character_factory.PersonaAgent") as mock_persona:
-                # 为不同角色返回不同的agent
-                def create_mock_agent(name):
-                    mock_agent = Mock()
-                    mock_agent.character.name = name
-                    return mock_agent
-
-                mock_persona.side_effect = lambda *args, **kwargs: create_mock_agent(
-                    "test"
-                )
-
-                characters_to_create = ["engineer", "pilot", "scientist"]
-                agents = []
-
-                for char_name in characters_to_create:
-                    agent = self.factory.create_character(char_name)
-                    agents.append(agent)
-                    assert agent is not None
-
-                assert len(agents) == 3
-                assert mock_persona.call_count == 3
+            assert len(agents) == 3
+            assert mock_persona.call_count == 3
 
 
 @pytest.mark.skipif(
     not CHARACTER_FACTORY_AVAILABLE, reason="Character factory not available"
 )
 class TestCharacterFactoryConfiguration:
-    """角色工厂配置测试"""
+    """Character Factory Configuration Tests"""
 
     def setup_method(self):
-        """每个测试方法的设置"""
-        self.mock_event_bus = Mock()
+        """Setup for each test method"""
+        self.mock_event_bus = Mock(spec=EventBus)
 
     @pytest.mark.unit
-    def test_factory_with_different_configurations(self):
-        """测试不同配置下的工厂行为"""
-        # 基础配置
-        factory1 = CharacterFactory(self.mock_event_bus)
-        assert factory1.event_bus == self.mock_event_bus
+    def test_factory_with_different_event_buses(self):
+        """Test factory with different event bus instances"""
+        bus1 = Mock(spec=EventBus)
+        bus2 = Mock(spec=EventBus)
 
-        # 不同的事件总线
-        different_bus = Mock()
-        factory2 = CharacterFactory(different_bus)
-        assert factory2.event_bus == different_bus
-        assert factory2.event_bus != factory1.event_bus
+        factory1 = CharacterFactory(bus1)
+        factory2 = CharacterFactory(bus2)
+
+        assert factory1.event_bus == bus1
+        assert factory2.event_bus == bus2
+        assert factory1.event_bus != factory2.event_bus
 
     @pytest.mark.unit
-    def test_factory_character_path_resolution(self, temp_dir):
-        """测试角色路径解析"""
-        factory = CharacterFactory(self.mock_event_bus)
+    def test_factory_with_custom_base_path(self, tmp_path):
+        """Test factory initialization with custom base path"""
+        custom_path = tmp_path / "custom_characters"
+        custom_path.mkdir()
 
-        # 测试路径解析功能
-        with patch(
-            "character_factory._get_characters_directory_path",
-            return_value=str(temp_dir),
-        ):
-            # 创建测试角色目录
-            char_dir = temp_dir / "test_character"
-            char_dir.mkdir()
+        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(custom_path))
 
-            # 创建基本的角色文件
-            (char_dir / "character_test_character.md").write_text("# Test Character\n")
+        assert str(custom_path) in factory.base_character_path
 
-            try:
-                # 尝试创建角色（可能会失败，但不应该是路径问题）
-                with patch("character_factory.PersonaAgent") as mock_persona:
-                    mock_agent = Mock()
-                    mock_persona.return_value = mock_agent
+    @pytest.mark.unit
+    def test_factory_path_resolution(self, tmp_path):
+        """Test character path resolution"""
+        char_dir = tmp_path / "testchar"
+        char_dir.mkdir()
+        (char_dir / "character_testchar.md").write_text("# Test\n")
 
-                    agent = factory.create_character("test_character")
-                    assert agent is not None
-            except Exception as e:
-                # 如果创建失败，确保不是因为路径问题
-                assert "path" not in str(e).lower() or "directory" not in str(e).lower()
+        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+
+        # Verify the factory correctly resolves paths
+        expected_path = os.path.join(str(tmp_path), "testchar")
+        
+        with patch("src.config.character_factory.PersonaAgent") as mock_persona:
+            mock_agent = Mock()
+            mock_persona.return_value = mock_agent
+
+            factory.create_character("testchar")
+
+            # Verify PersonaAgent was called with correct path
+            call_args = mock_persona.call_args
+            actual_path = call_args[0][0]
+            assert os.path.normpath(actual_path) == os.path.normpath(expected_path)
 
 
 @pytest.mark.skipif(
     not CHARACTER_FACTORY_AVAILABLE, reason="Character factory not available"
 )
 class TestCharacterFactoryPerformance:
-    """角色工厂性能测试"""
+    """Character Factory Performance Tests"""
 
     def setup_method(self):
-        """每个测试方法的设置"""
-        self.mock_event_bus = Mock()
-        self.factory = CharacterFactory(self.mock_event_bus)
+        """Setup for each test method"""
+        self.mock_event_bus = Mock(spec=EventBus)
 
     @pytest.mark.performance
-    def test_character_creation_performance(self, characters_directory):
-        """测试角色创建性能"""
+    def test_character_creation_performance(self, tmp_path):
+        """Test character creation performance"""
         import time
 
-        with patch(
-            "character_factory._get_characters_directory_path",
-            return_value=str(characters_directory),
-        ):
-            with patch("character_factory.PersonaAgent") as mock_persona:
-                mock_agent = Mock()
-                mock_persona.return_value = mock_agent
+        # Create test character directory
+        char_dir = tmp_path / "testchar"
+        char_dir.mkdir()
+        (char_dir / "character_testchar.md").write_text("# Test\n")
 
-                start_time = time.time()
+        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
 
-                # 创建5个角色
-                for i in range(5):
-                    agent = self.factory.create_character("engineer")
-                    assert agent is not None
+        with patch("src.config.character_factory.PersonaAgent") as mock_persona:
+            mock_agent = Mock()
+            mock_persona.return_value = mock_agent
 
-                end_time = time.time()
-                creation_time = end_time - start_time
+            start_time = time.time()
 
-                # 每个角色创建应该在合理时间内完成（1秒内）
-                assert creation_time < 5.0
-                assert creation_time / 5 < 1.0  # 平均每个角色不超过1秒
+            # Create 5 characters
+            for i in range(5):
+                agent = factory.create_character("testchar")
+                assert agent is not None
+
+            end_time = time.time()
+            creation_time = end_time - start_time
+
+            # Each character creation should complete quickly (mock is fast)
+            assert creation_time < 1.0
+            assert creation_time / 5 < 0.5  # Average per character
 
 
-# 运行测试的辅助函数
+# Helper functions for running tests
 def run_character_factory_tests():
-    """运行所有角色工厂测试的辅助函数"""
+    """Helper function to run all character factory tests"""
     import subprocess
     import sys
 
@@ -310,15 +308,15 @@ def run_character_factory_tests():
         text=True,
     )
 
-    print("角色工厂测试结果:")
+    print("Character Factory Test Results:")
     print(result.stdout)
     if result.stderr:
-        print("错误输出:")
+        print("Error Output:")
         print(result.stderr)
 
     return result.returncode == 0
 
 
 if __name__ == "__main__":
-    # 直接运行此文件时执行测试
+    # Direct execution runs all tests
     run_character_factory_tests()

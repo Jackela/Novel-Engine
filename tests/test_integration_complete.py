@@ -26,7 +26,7 @@ import pytest
 
 # Core Novel Engine imports
 try:
-    from director_agent import DirectorAgent
+    from src.agents.director_agent import DirectorAgent
 
     from src.persona_agent import PersonaAgent
     from src.shared_types import (

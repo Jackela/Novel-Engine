@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from director_agent import DirectorAgent
+from src.agents.director_agent import DirectorAgent
 
 from src.event_bus import EventBus
 from src.persona_agent import PersonaAgent

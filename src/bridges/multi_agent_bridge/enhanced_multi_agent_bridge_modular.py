@@ -22,8 +22,8 @@ from .performance import CostTracker, PerformanceBudget, PerformanceMetrics
 
 # Import existing Novel Engine components
 try:
-    from chronicler_agent import ChroniclerAgent
-    from director_agent import DirectorAgent
+    from src.agents.chronicler_agent import ChroniclerAgent
+    from src.agents.director_agent import DirectorAgent
 
     from shared_types import CharacterAction
     from src.event_bus import EventBus

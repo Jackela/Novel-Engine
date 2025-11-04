@@ -12,7 +12,7 @@ import pytest
 
 # 导入被测试的模块
 try:
-    from chronicler_agent import ChroniclerAgent
+    from src.agents.chronicler_agent import ChroniclerAgent
 
     from src.event_bus import EventBus
 

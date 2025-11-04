@@ -21,8 +21,8 @@ from pathlib import Path
 
 import pytest
 import yaml
-from character_factory import CharacterFactory
-from director_agent import DirectorAgent
+from src.config.character_factory import CharacterFactory
+from src.agents.director_agent import DirectorAgent
 
 from src.event_bus import EventBus
 

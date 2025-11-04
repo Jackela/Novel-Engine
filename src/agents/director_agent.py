@@ -14,7 +14,7 @@ Original functionality is preserved through the integrated architecture:
 """
 
 # Import the integrated implementation
-from director_agent_integrated import DirectorAgent
+from src.agents.director_agent_integrated import DirectorAgent
 
 # Re-export for backward compatibility
 __all__ = ["DirectorAgent"]

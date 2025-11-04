@@ -12,7 +12,7 @@ import pytest
 
 # 导入被测试的模块
 try:
-    from director_agent import DirectorAgent
+    from src.agents.director_agent import DirectorAgent
 
     from src.event_bus import EventBus
 

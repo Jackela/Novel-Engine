@@ -28,7 +28,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from director_agent import DirectorAgent
+from src.agents.director_agent import DirectorAgent
 
 
 # Import advanced AI intelligence systems

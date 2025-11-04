@@ -94,7 +94,7 @@ sys.path.append(".")
 sys.path.insert(0, os.path.abspath("."))
 
 try:
-    from director_agent import DirectorAgent
+    from src.agents.director_agent import DirectorAgent
     from src.persona_agent import PersonaAgent
     from src.caching import StateHasher, SemanticCache, TokenBudgetManager
     from src.shared_types import CharacterData, WorldState, ProposedAction

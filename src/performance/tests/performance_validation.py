@@ -25,7 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 try:
-    from production_performance_engine import (
+    from src.performance.production_performance_engine import (
         initialize_performance_engine,
         performance_engine,
     )

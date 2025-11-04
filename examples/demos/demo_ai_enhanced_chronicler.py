@@ -36,7 +36,7 @@ from datetime import datetime
 # Add the current directory to the Python path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from chronicler_agent import ChroniclerAgent
+from src.agents.chronicler_agent import ChroniclerAgent
 
 
 def analyze_campaign_log_quality(log_path: str) -> dict:

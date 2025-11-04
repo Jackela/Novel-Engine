@@ -25,10 +25,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
-from chronicler_agent import ChroniclerAgent
+from src.agents.chronicler_agent import ChroniclerAgent
 
 # Import our enhanced multi-agent system
-from enterprise_multi_agent_orchestrator import (
+from src.orchestrators.enterprise_multi_agent_orchestrator import (
     create_enterprise_orchestrator,
 )
 

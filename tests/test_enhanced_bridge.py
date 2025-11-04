@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 import pytest
-from enhanced_multi_agent_bridge import (
+from src.orchestrators.enhanced_multi_agent_bridge import (
     BridgeConfiguration,
     EnhancedMultiAgentBridge,
     create_enhanced_bridge,

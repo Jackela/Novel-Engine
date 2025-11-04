@@ -16,7 +16,7 @@ import pytest
 
 # Import the modules under test
 try:
-    from director_agent import DirectorAgent
+    from src.agents.director_agent import DirectorAgent
 
     from shared_types import CharacterAction
     from src.event_bus import EventBus

@@ -123,8 +123,8 @@ def demo_usage_in_components():
     print("=== Component Configuration Usage ===")
     
     # Show how DirectorAgent would use configuration
-    from chronicler_agent import ChroniclerAgent
-    from director_agent import DirectorAgent
+    from src.agents.chronicler_agent import ChroniclerAgent
+    from src.agents.director_agent import DirectorAgent
     
     print("DirectorAgent configuration integration:")
     director = DirectorAgent()

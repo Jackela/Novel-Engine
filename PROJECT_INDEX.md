@@ -230,7 +230,29 @@
 ### Source Code Organization
 ```
 src/
-├── api/                    # API layer implementation
+├── agents/                # Agent implementations (NEW - 2025-11-04)
+│   ├── director_agent.py       # Director agent (orchestration)
+│   ├── director_agent_integrated.py # Integrated director
+│   └── chronicler_agent.py     # Chronicler agent (logging)
+├── orchestrators/         # Multi-agent orchestration (NEW - 2025-11-04)
+│   ├── emergent_narrative_orchestrator.py # Wave 4 orchestrator
+│   ├── enhanced_multi_agent_bridge.py # Wave 2 bridge
+│   ├── enhanced_simulation_orchestrator.py # Enhanced simulation
+│   ├── enterprise_multi_agent_orchestrator.py # Wave 5 orchestrator
+│   ├── parallel_agent_coordinator.py # Wave 3 coordinator
+│   └── ai_agent_story_server.py # Story server
+├── config/                # Configuration management (EXPANDED - 2025-11-04)
+│   └── character_factory.py    # Character agent factory
+├── security/              # Security components (EXPANDED - 2025-11-04)
+│   ├── database_security.py    # Database security
+│   ├── security_middleware.py  # Security middleware
+│   └── production_security_implementation.py # Production security
+├── performance/           # Performance optimization (NEW - 2025-11-04)
+│   ├── high_performance_concurrent_processor.py # Concurrent processing
+│   ├── production_performance_engine.py # Performance engine
+│   ├── scalability_framework.py # Scalability framework
+│   └── quality_gates.py        # Quality gates
+├── api/                   # API layer implementation
 │   ├── character_api.py   # Character management endpoints
 │   ├── interaction_api.py # Character interaction endpoints
 │   ├── story_generation_api.py # Story generation endpoints
@@ -262,6 +284,50 @@ src/
     └── context_db.py     # Context database
 ```
 
+### Test Suite Organization (REORGANIZED - 2025-11-04)
+```
+tests/
+├── unit/              # Unit tests
+│   ├── test_character_factory.py
+│   ├── test_director_agent_comprehensive.py
+│   └── ...
+├── integration/       # Integration tests (EXPANDED - 2025-11-04)
+│   ├── integration_test.py
+│   ├── integration_validation_test.py
+│   ├── integration_compatibility_fix.py
+│   ├── component_integration_test.py
+│   └── production_integration_test_suite.py
+├── validation/        # Validation tests (NEW - 2025-11-04)
+│   ├── validate_platform.py
+│   ├── phase1_validation_test.py
+│   ├── performance_validation_test.py
+│   ├── wave5_comprehensive_validation.py
+│   └── ... (14 validation test files)
+├── security/          # Security tests (NEW - 2025-11-04)
+│   ├── database_security_test.py
+│   ├── security_audit_simulation.py
+│   └── uat_test_script.py
+└── performance/       # Performance tests (NEW - 2025-11-04)
+    ├── evaluate_baseline.py
+    └── playwright_ai_validation_test.py
+```
+
+### Scripts Organization (REORGANIZED - 2025-11-04)
+```
+scripts/
+├── fixes/             # Bug fixes and patches (NEW - 2025-11-04)
+│   ├── component_integration_fix.py
+│   ├── enterprise_integration_fix.py
+│   └── fix_async_tests.py
+├── analysis/          # Analysis and profiling (NEW - 2025-11-04)
+│   ├── ai_enhancement_analysis.py
+│   └── production_assessment.py
+└── utils/             # Utility scripts (NEW - 2025-11-04)
+    ├── find_missing_docstrings.py
+    ├── wave_testing_strategy.py
+    └── update_imports.py  # Import path updater
+```
+
 ### Frontend Structure
 ```
 frontend/
@@ -273,6 +339,17 @@ frontend/
 ├── public/             # Static assets
 ├── dist/              # Built application
 └── tests/             # Frontend tests
+```
+
+### Root Directory (CLEANED - 2025-11-04)
+```
+./                     # Root contains only 6 essential Python files
+├── api_server.py      # Main API entry point
+├── production_api_server.py  # Production API server
+├── config_loader.py   # Configuration management
+├── shared_types.py    # Shared type definitions
+├── sitecustomize.py   # Python customization
+└── campaign_brief.py  # Campaign configuration
 ```
 
 ### Data & Configuration

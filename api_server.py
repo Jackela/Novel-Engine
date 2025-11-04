@@ -16,10 +16,10 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import uvicorn
-from character_factory import CharacterFactory
-from chronicler_agent import ChroniclerAgent
+from src.config.character_factory import CharacterFactory
+from src.agents.chronicler_agent import ChroniclerAgent
 from config_loader import get_config
-from director_agent import DirectorAgent
+from src.agents.director_agent import DirectorAgent
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware

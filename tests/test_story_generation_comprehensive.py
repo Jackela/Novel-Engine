@@ -22,7 +22,7 @@ import re
 import tempfile
 
 import pytest
-from chronicler_agent import CampaignEvent, ChroniclerAgent, NarrativeSegment
+from src.agents.chronicler_agent import CampaignEvent, ChroniclerAgent, NarrativeSegment
 
 # Test Constants
 GENERIC_CHARACTERS = ["pilot", "scientist", "engineer", "test"]

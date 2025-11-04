@@ -30,7 +30,7 @@ from datetime import datetime
 # Add the current directory to Python path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from chronicler_agent import create_chronicler_with_output
+from src.agents.chronicler_agent import create_chronicler_with_output
 
 # Configure logging for demonstration
 logging.basicConfig(

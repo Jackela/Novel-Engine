@@ -326,8 +326,8 @@ class AsyncSimulationManager:
 
         try:
             # Initialize components asynchronously
-            from character_factory import CharacterFactory
-            from director_agent import DirectorAgent
+            from src.config.character_factory import CharacterFactory
+            from src.agents.director_agent import DirectorAgent
 
             from src.event_bus import EventBus
 
@@ -355,7 +355,7 @@ class AsyncSimulationManager:
             await optimize_simulation_execution(director, turns)
 
             # Generate story
-            from chronicler_agent import ChroniclerAgent
+            from src.agents.chronicler_agent import ChroniclerAgent
 
             chronicler = ChroniclerAgent(event_bus, character_names=character_names)
             story = chronicler.transcribe_log(log_path)

@@ -4,7 +4,9 @@
       "Bash(python:*)",
       "Bash(find:*)",
       "Bash(curl:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }
