@@ -17,6 +17,24 @@
 import { apiClient } from '../../../../services/api/apiClient';
 
 // ============================================================================
+// Error Handling Utilities
+// ============================================================================
+
+/**
+ * Extract error message from axios error or unknown error
+ */
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const axiosError = error as { response?: { data?: { detail?: string } } };
+    return axiosError.response?.data?.detail || fallback;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallback;
+}
+
+// ============================================================================
 // Types & Interfaces
 // ============================================================================
 
@@ -99,11 +117,9 @@ export class KnowledgeAPI {
         request
       );
       return response.data.entry_id;
-    } catch (error: any) {
+    } catch (error) {
       console.error('[KnowledgeAPI] Failed to create entry:', error);
-      throw new Error(
-        error.response?.data?.detail || 'Failed to create knowledge entry'
-      );
+      throw new Error(getErrorMessage(error, 'Failed to create knowledge entry'));
     }
   }
 
@@ -128,11 +144,9 @@ export class KnowledgeAPI {
         `${BASE_PATH}/entries${params.toString() ? `?${params.toString()}` : ''}`
       );
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('[KnowledgeAPI] Failed to list entries:', error);
-      throw new Error(
-        error.response?.data?.detail || 'Failed to retrieve knowledge entries'
-      );
+      throw new Error(getErrorMessage(error, 'Failed to retrieve knowledge entries'));
     }
   }
 
@@ -149,14 +163,15 @@ export class KnowledgeAPI {
         `${BASE_PATH}/entries/${entryId}`
       );
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('[KnowledgeAPI] Failed to get entry:', error);
-      if (error.response?.status === 404) {
-        throw new Error('Knowledge entry not found');
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError.response?.status === 404) {
+          throw new Error('Knowledge entry not found');
+        }
       }
-      throw new Error(
-        error.response?.data?.detail || 'Failed to retrieve knowledge entry'
-      );
+      throw new Error(getErrorMessage(error, 'Failed to retrieve knowledge entry'));
     }
   }
 
@@ -176,14 +191,15 @@ export class KnowledgeAPI {
         `${BASE_PATH}/entries/${entryId}`,
         request
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('[KnowledgeAPI] Failed to update entry:', error);
-      if (error.response?.status === 404) {
-        throw new Error('Knowledge entry not found');
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError.response?.status === 404) {
+          throw new Error('Knowledge entry not found');
+        }
       }
-      throw new Error(
-        error.response?.data?.detail || 'Failed to update knowledge entry'
-      );
+      throw new Error(getErrorMessage(error, 'Failed to update knowledge entry'));
     }
   }
 
@@ -196,14 +212,15 @@ export class KnowledgeAPI {
   static async deleteEntry(entryId: string): Promise<void> {
     try {
       await apiClient.delete(`${BASE_PATH}/entries/${entryId}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[KnowledgeAPI] Failed to delete entry:', error);
-      if (error.response?.status === 404) {
-        throw new Error('Knowledge entry not found');
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError.response?.status === 404) {
+          throw new Error('Knowledge entry not found');
+        }
       }
-      throw new Error(
-        error.response?.data?.detail || 'Failed to delete knowledge entry'
-      );
+      throw new Error(getErrorMessage(error, 'Failed to delete knowledge entry'));
     }
   }
 }

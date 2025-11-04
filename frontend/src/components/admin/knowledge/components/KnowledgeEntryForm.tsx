@@ -16,20 +16,21 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import type {
+  CreateKnowledgeEntryRequest,
+  UpdateKnowledgeEntryRequest} from '../services/knowledgeApi';
 import {
   KnowledgeAPI,
   KnowledgeType,
   AccessLevel,
   KnowledgeEntry,
-  CreateKnowledgeEntryRequest,
-  UpdateKnowledgeEntryRequest,
   getKnowledgeTypeLabel,
-  getAccessLevelLabel,
 } from '../services/knowledgeApi';
-import {
-  AccessControlPanel,
+import type {
   AccessControlConfig,
-  AccessControlErrors,
+  AccessControlErrors} from './AccessControlPanel';
+import {
+  AccessControlPanel
 } from './AccessControlPanel';
 
 // ============================================================================
@@ -110,8 +111,8 @@ export const KnowledgeEntryForm: React.FC<KnowledgeEntryFormProps> = ({
           allowed_character_ids: entry.allowed_character_ids.join(', '),
         },
       });
-    } catch (error: any) {
-      setSubmitError(error.message);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Failed to load entry');
     } finally {
       setLoadingEntry(false);
     }
@@ -194,8 +195,8 @@ export const KnowledgeEntryForm: React.FC<KnowledgeEntryFormProps> = ({
         const newEntryId = await KnowledgeAPI.createEntry(createRequest);
         onSuccess?.(newEntryId);
       }
-    } catch (error: any) {
-      setSubmitError(error.message);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Failed to load entry');
     } finally {
       setLoading(false);
     }

@@ -17,11 +17,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import type {
+  KnowledgeEntry,
+  KnowledgeEntryFilters} from '../services/knowledgeApi';
 import {
   KnowledgeAPI,
-  KnowledgeEntry,
   KnowledgeType,
-  KnowledgeEntryFilters,
   getKnowledgeTypeLabel,
   getAccessLevelLabel,
   formatTimestamp,
@@ -84,8 +85,8 @@ export const KnowledgeEntryList: React.FC<KnowledgeEntryListProps> = ({
     try {
       const fetchedEntries = await KnowledgeAPI.listEntries(initialFilters);
       setEntries(fetchedEntries);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load entries');
     } finally {
       setLoading(false);
     }
@@ -143,8 +144,8 @@ export const KnowledgeEntryList: React.FC<KnowledgeEntryListProps> = ({
       setEntries((prev) => prev.filter((entry) => entry.id !== deleteConfirmId));
       onDelete?.(deleteConfirmId);
       setDeleteConfirmId(null);
-    } catch (err: any) {
-      alert(`Failed to delete entry: ${err.message}`);
+    } catch (err) {
+      alert(`Failed to delete entry: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setDeleting(false);
     }
