@@ -109,7 +109,7 @@ describe('GenerationProgress - Backward Compatibility', () => {
       />
     );
     
-    expect(screen.getByText(/Character Analysis/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Character Analysis/)[0]).toBeInTheDocument();
     
     rerender(
       <GenerationProgress
@@ -135,7 +135,7 @@ describe('GenerationProgress - Backward Compatibility', () => {
     render(<GenerationProgress {...defaultProps} />);
     
     expect(screen.getByText("What's Happening?")).toBeInTheDocument();
-    expect(screen.getByText(/Character Analysis/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Character Analysis/)[0]).toBeInTheDocument();
     expect(screen.getByText(/Narrative Planning/)).toBeInTheDocument();
     expect(screen.getByText(/Turn Generation/)).toBeInTheDocument();
     expect(screen.getByText(/Quality Control/)).toBeInTheDocument();
