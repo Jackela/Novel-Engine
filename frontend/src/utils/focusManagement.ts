@@ -6,6 +6,8 @@
  * to ensure WCAG 2.1 AA compliance and excellent keyboard accessibility.
  */
 
+import React from 'react';
+
 interface FocusTrapOptions {
   onEscape?: () => void;
   preventScroll?: boolean;
