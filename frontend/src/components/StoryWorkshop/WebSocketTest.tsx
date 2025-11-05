@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { logger } from '../../services/logging/LoggerFactory';
 import {
   Box,
   Button,
@@ -31,16 +32,16 @@ export default function WebSocketTest() {
     generationId: isTestActive ? testGenerationId : null,
     enabled: isTestActive,
     onUpdate: (update) => {
-      console.log('WebSocket Update Received:', update);
+      logger.info('WebSocket Update Received:', update);
     },
     onError: (error) => {
-      console.error('WebSocket Error:', error);
+      logger.error('WebSocket Error:', error);
     },
     onConnect: () => {
-      console.log('WebSocket Connected');
+      logger.info('WebSocket Connected');
     },
     onDisconnect: () => {
-      console.log('WebSocket Disconnected');
+      logger.info('WebSocket Disconnected');
     },
   });
 

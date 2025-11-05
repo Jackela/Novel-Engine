@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../services/logging/LoggerFactory';
 import {
   Box,
   Grid,
@@ -231,7 +232,7 @@ export default function StoryWorkshop() {
   const handleSaveStory = () => {
     if (generatedStory) {
       // TODO: Implement story saving to library
-      console.log('Saving story:', generatedStory);
+      logger.info('Saving story:', generatedStory);
     }
   };
 

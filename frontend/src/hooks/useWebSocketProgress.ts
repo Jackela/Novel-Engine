@@ -137,7 +137,7 @@ export function useWebSocketProgress({
           
           onUpdate?.(update);
         } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
+          logger.error('Failed to parse WebSocket message:', error);
           const parseError = new Error('Failed to parse progress update');
           setState(prev => ({
             ...prev,
@@ -150,7 +150,7 @@ export function useWebSocketProgress({
       ws.onerror = (error) => {
         if (isUnmountedRef.current) return;
         
-        console.error('WebSocket error:', error);
+        logger.error('WebSocket error:', error);
         const wsError = new Error('WebSocket connection error');
         setState(prev => ({
           ...prev,
@@ -181,7 +181,7 @@ export function useWebSocketProgress({
             connectionAttempts: prev.connectionAttempts + 1,
           }));
 
-          console.log(`WebSocket reconnecting in ${delay}ms (attempt ${state.connectionAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+          logger.info(`WebSocket reconnecting in ${delay}ms (attempt ${state.connectionAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
           
           reconnectTimeoutRef.current = setTimeout(() => {
             if (!isUnmountedRef.current) {
@@ -198,7 +198,7 @@ export function useWebSocketProgress({
       };
 
     } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
+      logger.error('Failed to create WebSocket connection:', error);
       const connectionError = new Error('Failed to establish WebSocket connection');
       setState(prev => ({
         ...prev,

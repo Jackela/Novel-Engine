@@ -37,7 +37,7 @@ export const store = configureStore({
     // Add mobile memory middleware on mobile devices
     if (isMobile()) {
       middleware.concat(mobileMemoryMiddleware);
-      console.log('Mobile memory middleware enabled');
+      logger.info('Mobile memory middleware enabled');
     }
 
     return middleware;

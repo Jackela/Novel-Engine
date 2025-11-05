@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { logger } from '../services/logging/LoggerFactory';
 import './ApiKeySetup.css';
 
 /**
@@ -61,7 +62,7 @@ function ApiKeySetup({ onConfigured, allowSkip = true }: ApiKeySetupProps) {
         return { valid: false, error: response.data.error || 'Invalid API key' };
       }
     } catch (error) {
-      console.error('API key test failed:', error);
+      logger.error('API key test failed', error as Error, { component: 'ApiKeySetup', action: 'testApiKey' });
       
       if (error.code === 'ECONNABORTED') {
         return { valid: false, error: 'Request timeout - please try again' };

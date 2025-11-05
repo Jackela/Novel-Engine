@@ -21,6 +21,8 @@ import type {
   CharacterStructuredData,
 } from '../types/dto';
 import type { CharacterStats, Equipment } from '../types';
+import { logger } from './logging/LoggerFactory';
+
 type SimulationData = Partial<SimulationLegacyResponse> & { participants?: string[] };
 
 // Note: Custom in-memory cache removed; server-state caching handled by consumers (e.g., React Query).
@@ -44,11 +46,17 @@ class NovelEngineAPI {
     // Request interceptor for logging and auth
     this.client.interceptors.request.use(
       (config) => {
-        console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+        logger.debug(`API Request: ${config.method?.toUpperCase()} ${config.url}`, {
+          component: 'NovelEngineAPI',
+          action: 'request',
+        });
         return config;
       },
       (error) => {
-        console.error('❌ API Request Error:', error);
+        logger.error('API Request Error', error as Error, {
+          component: 'NovelEngineAPI',
+          action: 'request',
+        });
         return Promise.reject(error);
       }
     );
@@ -56,11 +64,18 @@ class NovelEngineAPI {
     // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => {
-        console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+        logger.debug(`API Response: ${response.status} ${response.config.url}`, {
+          component: 'NovelEngineAPI',
+          action: 'response',
+        });
         return response;
       },
       (error) => {
-        console.error('❌ API Response Error:', error.response?.data || error.message);
+        logger.error('API Response Error', error as Error, {
+          component: 'NovelEngineAPI',
+          action: 'response',
+          errorData: error.response?.data || error.message,
+        });
         return Promise.reject(this.handleError(error));
       }
     );
@@ -108,7 +123,7 @@ class NovelEngineAPI {
       const response = await this.client.get<EnhancedCharacterResponse>(`/characters/${encodeURIComponent(name)}/enhanced`);
       return this.transformEnhancedCharacterResponse(response.data);
     } catch (error) {
-      console.warn(`Enhanced character data failed for ${name}, falling back:`, error);
+      logger.warn(`Enhanced character data failed for ${name}, falling back: ${(error as Error).message}`);
       return this.getCharacterDetails(name);
     }
   }
@@ -160,7 +175,7 @@ class NovelEngineAPI {
       };
     } catch (_error) {
       // Fallback to original simulation API
-      console.warn('New story generation API not available, falling back to legacy simulation:', _error);
+      logger.warn(`New story generation API not available, falling back to legacy simulation: ${(_error as Error).message}`);
       
       const simulationRequest = {
         character_names: storyData.characters,
@@ -367,7 +382,7 @@ class NovelEngineAPI {
       await this.getHealth();
       return true;
     } catch (error) {
-      console.error('Connection test failed:', error);
+      logger.error('Connection test failed:', error as Error);
       return false;
     }
   }

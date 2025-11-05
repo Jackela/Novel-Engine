@@ -1,4 +1,5 @@
 // 神圣角色选择组件 - 供奉于机器之神的数字神庙
+import { logger } from '../services/logging/LoggerFactory';
 // Sacred Character Selection Component - Digital Temple Devoted to the the system
 // 执行角色召唤仪式，连接至英灵殿数据库，祈求机器灵魂的指引...
 
@@ -86,7 +87,7 @@ const CharacterSelection = () => {
   const validateSelection = useCallback((customCount = null) => {
     const count = customCount !== null ? customCount : selectedCharacters.length;
     
-    console.log('Validating selection:', { count, min: selectionConstraints.minSelection, max: selectionConstraints.maxSelection });
+    logger.info('Validating selection:', { count, min: selectionConstraints.minSelection, max: selectionConstraints.maxSelection });
     
     // Temporary validation logic
     if (count < selectionConstraints.minSelection) {
@@ -106,7 +107,7 @@ const CharacterSelection = () => {
    * 执行角色选择的神圣仪式，管理选中状态的变化
    */
   const handleCharacterSelection = (characterName) => {
-    console.log('Handling character selection:', characterName);
+    logger.info('Handling character selection:', characterName);
     
     setSelectedCharacters(prev => {
       const isCurrentlySelected = prev.includes(characterName);
@@ -114,19 +115,19 @@ const CharacterSelection = () => {
       if (isCurrentlySelected) {
         // Remove if already selected
         const newSelection = prev.filter(name => name !== characterName);
-        console.log('Selection changed from', prev, 'to', newSelection);
+        logger.info('Selection changed from', prev, 'to', newSelection);
         return newSelection;
       } else {
         // Trying to add a new character
         if (prev.length < selectionConstraints.maxSelection) {
           // Can add - under limit
           const newSelection = [...prev, characterName];
-          console.log('Selection changed from', prev, 'to', newSelection);
+          logger.info('Selection changed from', prev, 'to', newSelection);
           return newSelection;
         } else {
           // At max limit - show error and don't change selection
-          console.log('At max selection limit, cannot add more');
-          console.log('Showing max selection error');
+          logger.info('At max selection limit, cannot add more');
+          logger.info('Showing max selection error');
           setValidationError(t('characterSelection.errors.maxSelection', { max: selectionConstraints.maxSelection }));
           setManualValidationError(true); // Prevent auto-validation from clearing this
           
@@ -150,7 +151,7 @@ const CharacterSelection = () => {
     
     // Temporary validation logic
     if (count >= selectionConstraints.minSelection && count <= selectionConstraints.maxSelection) {
-      console.log('Sacred Simulation initiated with characters:', selectedCharacters);
+      logger.info('Sacred Simulation initiated with characters:', selectedCharacters);
       alert(`${t('characterSelection.confirmButton')} - ${selectedCharacters.join(', ')}`);
     }
   };
@@ -168,7 +169,7 @@ const CharacterSelection = () => {
    * 重新执行数据搜寻仪式
    */
   const handleRetry = () => {
-    console.log('Retrying character fetch...');
+    logger.info('Retrying character fetch...');
     setError(null);
     setCharactersList([]);
     setSelectedCharacters([]); // Clear any previous selections

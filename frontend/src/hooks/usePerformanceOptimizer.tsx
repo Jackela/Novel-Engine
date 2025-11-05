@@ -133,7 +133,7 @@ export const usePerformanceOptimizer = () => {
           entryTypes: ['measure', 'navigation', 'paint'] 
         });
       } catch (error) {
-        console.warn('Performance Observer not supported:', error);
+        logger.warn('Performance Observer not supported:', error);
       }
     }
   }, []);
@@ -206,7 +206,7 @@ export const usePerformanceOptimizer = () => {
     // Apply performance optimizations
     const win = window as unknown as { scheduler?: { postTask: (cb: () => void, opts?: { priority: string }) => void } };
     win.scheduler?.postTask(() => {
-      console.log('Performance optimization activated');
+      logger.info('Performance optimization activated');
     }, { priority: 'background' });
     
     // Enable React concurrent features if available
@@ -251,7 +251,7 @@ export const usePerformanceOptimizer = () => {
       
       return totalSize;
     } catch (error) {
-      console.warn('Bundle size analysis failed:', error);
+      logger.warn('Bundle size analysis failed:', error);
       return 0;
     }
   }, []);

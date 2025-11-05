@@ -1,10 +1,11 @@
 // 简化版角色选择组件 - 逐步修复问题
+import { logger } from '../services/logging/LoggerFactory';
 import React, { useState, useEffect } from 'react';
 import { useCharactersQuery } from '../services/queries';
 import './CharacterSelection.css';
 
 const SimpleCharacterSelection = () => {
-  console.log('SimpleCharacterSelection component mounted');
+  logger.info('SimpleCharacterSelection component mounted');
   
   const [characters, setCharacters] = useState<string[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
@@ -32,7 +33,7 @@ const SimpleCharacterSelection = () => {
   }, [charactersData, isLoading, charactersError]);
 
   const handleCharacterSelection = (character: string) => {
-    console.log('Character selected:', character);
+    logger.info('Character selected:', character);
     
     setSelectedCharacters(prev => {
       if (prev.includes(character)) {
@@ -109,7 +110,7 @@ const SimpleCharacterSelection = () => {
       }
       
     } catch (error) {
-      console.error('Error advancing turn:', error);
+      logger.error('Error advancing turn:', error);
       setError('推进回合失败: ' + error.message);
     } finally {
       setIsSimulating(false);
@@ -162,7 +163,7 @@ const SimpleCharacterSelection = () => {
         turn_history: turnHistory
       };
       
-      console.log('Generating final story with data:', storyRequest);
+      logger.info('Generating final story with data:', storyRequest);
       
       // 模拟故事生成过程
       await new Promise(resolve => setTimeout(resolve, 3000));
@@ -183,7 +184,7 @@ const SimpleCharacterSelection = () => {
       setSimulationResult(finalResult);
       
     } catch (error) {
-      console.error('Error generating final story:', error);
+      logger.error('Error generating final story:', error);
       setError('生成故事失败: ' + error.message);
     } finally {
       setIsSimulating(false);
@@ -261,7 +262,7 @@ const SimpleCharacterSelection = () => {
 
   // 处理用户干预选择
   const handleInterventionChoice = (choice) => {
-    console.log('User intervention choice:', choice);
+    logger.info('User intervention choice:', choice);
     
     // 添加干预事件到历史记录
     const interventionEvent = {
@@ -281,7 +282,7 @@ const SimpleCharacterSelection = () => {
     setSimulationStatus('running');
   };
 
-  console.log('Rendering component - loading:', loading, 'error:', error, 'characters:', characters);
+  logger.info('Rendering component - loading:', loading, 'error:', error, 'characters:', characters);
 
   if (loading) {
     return (
@@ -619,7 +620,7 @@ const SimpleCharacterSelection = () => {
                 }`}
                 data-testid="interactive-simulation-button"
                 onClick={() => {
-                  console.log('Starting interactive simulation with characters:', selectedCharacters);
+                  logger.info('Starting interactive simulation with characters:', selectedCharacters);
                   setInteractiveMode(true);
                   setSimulationStatus('idle');
                   setCurrentTurn(0);
@@ -638,7 +639,7 @@ const SimpleCharacterSelection = () => {
                 data-testid="confirm-selection-button"
                 aria-label={`Confirm selection of ${selectedCharacters.length} characters`}
                 onClick={() => {
-                  console.log('Starting simulation with characters:', selectedCharacters);
+                  logger.info('Starting simulation with characters:', selectedCharacters);
                   setIsSimulating(true);
                   setError(null);
                   setSimulationResult(null);
@@ -662,13 +663,13 @@ const SimpleCharacterSelection = () => {
                     return response.json();
                   })
                   .then(data => {
-                    console.log('Simulation completed:', data);
+                    logger.info('Simulation completed:', data);
                     setIsSimulating(false);
                     // 显示结果界面而不是alert
                     setSimulationResult(data);
                   })
                   .catch(error => {
-                    console.error('Error starting simulation:', error);
+                    logger.error('Error starting simulation:', error);
                     setIsSimulating(false);
                     setError(`模拟启动失败: ${error.message}`);
                   });

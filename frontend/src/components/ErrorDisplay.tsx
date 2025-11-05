@@ -1,4 +1,5 @@
 import React from 'react';
+import { logger } from '../services/logging/LoggerFactory';
 import './ErrorDisplay.css';
 
 /**
@@ -251,7 +252,7 @@ export class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error Boundary caught an error:', error, errorInfo);
+    logger.error('Error Boundary caught an error:', error, errorInfo);
   }
 
   render() {

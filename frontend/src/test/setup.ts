@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
-import { vi, beforeEach, afterEach } from 'vitest';
+import { vi, beforeEach, afterEach, afterAll } from 'vitest';
+import { runCleanups as runUtilCleanups } from './utils/cleanup';
 
 // Global test setup for Novel Engine frontend tests
 
@@ -12,14 +13,16 @@ export const registerCleanup = (fn: () => void) => {
 };
 
 // Run all cleanup functions
-export const runCleanups = () => {
+export const runCleanups = async () => {
   for (const cleanup of cleanupFunctions.splice(0)) {
     try {
-      cleanup();
+      await cleanup();
     } catch (error) {
       console.warn('Cleanup function failed:', error);
     }
   }
+  // Also run cleanup registry
+  await runUtilCleanups();
 };
 
 // WebSocket Mock Class for Testing
@@ -164,14 +167,19 @@ beforeEach(() => {
   vi.useRealTimers();
 });
 
-afterEach(() => {
+afterEach(async () => {
   // Run cleanup functions
-  runCleanups();
+  await runCleanups();
   // Clear all mocks
   vi.clearAllMocks();
   // Clear all timers
   vi.clearAllTimers();
   vi.useRealTimers();
+});
+
+afterAll(async () => {
+  // Final cleanup after all tests
+  await runCleanups();
 });
 
 // Suppress console warnings during tests

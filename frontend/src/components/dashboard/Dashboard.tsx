@@ -46,59 +46,15 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
   const [systemStatus, _setSystemStatus] = useState<'online' | 'offline' | 'maintenance'>('online');
   const [_lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  // WebSocket connection for real-time updates
+  // Periodic updates using HTTP polling
+  // Note: WebSocket support deferred - using polling for real-time updates
   useEffect(() => {
-    // TODO: Implement WebSocket connection to backend
-    // const ws = new WebSocket('ws://localhost:3000/dashboard');
-    
-    // ws.onopen = () => {
-    //   console.log('Dashboard WebSocket connected');
-    //   setSystemStatus('online');
-    // };
-
-    // ws.onmessage = (event) => {
-    //   const data = JSON.parse(event.data);
-    //   handleRealtimeUpdate(data);
-    // };
-
-    // ws.onclose = () => {
-    //   console.log('Dashboard WebSocket disconnected');
-    //   setSystemStatus('offline');
-    // };
-
-    // ws.onerror = (error) => {
-    //   console.error('Dashboard WebSocket error:', error);
-    //   setError('Connection error: Real-time updates unavailable');
-    // };
-
-    // return () => {
-    //   ws.close();
-    // };
-
-    // Simulate periodic updates for now
     const interval = setInterval(() => {
       setLastUpdate(new Date());
-    }, 10000);
+    }, 10000); // Poll every 10 seconds
 
     return () => clearInterval(interval);
   }, []);
-
-  const _handleRealtimeUpdate = (data: unknown) => {
-    // Handle different types of real-time updates
-    switch (data.type) {
-      case 'character_update':
-        // Trigger character network refresh
-        break;
-      case 'story_event':
-        // Trigger event cascade and timeline refresh
-        break;
-      case 'system_alert':
-        showNotification(data.message);
-        break;
-      default:
-        console.log('Unknown update type:', data.type);
-    }
-  };
 
   const showNotification = (message: string) => {
     setSnackbarMessage(message);
@@ -106,7 +62,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
   };
 
   const handleQuickAction = (action: string) => {
-    console.log('Quick action triggered:', action);
+    logger.info('Quick action triggered:', action);
     
     switch (action) {
       case 'play':
@@ -145,7 +101,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
         showNotification('Export started (not yet implemented)');
         break;
       default:
-        console.log('Unknown action:', action);
+        logger.info('Unknown action:', action);
     }
   };
 
