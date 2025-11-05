@@ -2,6 +2,8 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { store } from '../../store/store';
 import { refreshUserToken, logoutUser } from '../../store/slices/authSlice';
+import { logger } from '../logging/LoggerFactory';
+import type { IAuthenticationService } from '../auth/IAuthenticationService';
 
 // API base configuration
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1';
@@ -170,7 +172,7 @@ const createAPIClient = (): AxiosInstance => {
     (response: AxiosResponse<BaseAPIResponse>) => {
       // Log rate limit info if available
       if (response.data.metadata?.rate_limit) {
-        console.debug('Rate limit:', response.data.metadata.rate_limit);
+        logger.debug('Rate limit:', response.data.metadata.rate_limit);
       }
       
       // Cache GET requests for mobile optimization
@@ -224,7 +226,7 @@ const createAPIClient = (): AxiosInstance => {
           originalRequest._rateLimitRetry = true;
           
           const delay = parseInt(retryAfter) * 1000; // Convert to milliseconds
-          console.warn(`Rate limited. Retrying after ${delay}ms`);
+          logger.warn(`Rate limited. Retrying after ${delay}ms`);
           
           await new Promise(resolve => setTimeout(resolve, delay));
           return client(originalRequest);
@@ -253,7 +255,184 @@ const generateRequestId = (): string => {
   return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
 
-// Create and export the API client instance
+/**
+ * Create API client with JWTAuthService integration (T049-T050)
+ * 
+ * This version uses the new IAuthenticationService for token management
+ * and automatic token refresh with 401 handling
+ * 
+ * @param authService - Authentication service instance
+ * @returns Axios instance with auth interceptors
+ */
+export const createAuthenticatedAPIClient = (authService: IAuthenticationService): AxiosInstance => {
+  const client = axios.create({
+    baseURL: API_BASE_URL,
+    timeout: API_TIMEOUT,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  });
+
+  // Request interceptor for mobile cache checking (keep existing functionality)
+  client.interceptors.request.use(
+    (config) => {
+      // Check cache for GET requests
+      if (config.method === 'get') {
+        const cacheKey = `${config.url}_${JSON.stringify(config.params || {})}`;
+        const cachedData = mobileCache.get(cacheKey);
+        
+        if (cachedData) {
+          return Promise.reject({
+            __cached: true,
+            data: cachedData,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config
+          });
+        }
+      }
+      
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
+  // T049: Request interceptor for auth token injection
+  client.interceptors.request.use(
+    (config: AxiosRequestConfig) => {
+      const token = authService.getToken();
+      
+      if (token && config.headers) {
+        config.headers.Authorization = `${token.tokenType} ${token.accessToken}`;
+        
+        logger.debug('Auth token injected into request', undefined, {
+          component: 'apiClient',
+          action: 'injectToken',
+          url: config.url,
+        });
+      }
+      
+      // Add request ID for tracing
+      if (config.headers) {
+        config.headers['X-Request-ID'] = generateRequestId();
+      }
+      
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // T050: Response interceptor for 401 handling and token refresh
+  client.interceptors.response.use(
+    (response: AxiosResponse<BaseAPIResponse>) => {
+      // Log rate limit info if available
+      if (response.data.metadata?.rate_limit) {
+        logger.debug('Rate limit info', undefined, {
+          component: 'apiClient',
+          action: 'response',
+          rateLimit: response.data.metadata.rate_limit,
+        });
+      }
+      
+      // Cache GET requests for mobile optimization
+      const config = response.config;
+      if (config.method === 'get' && response.status === 200) {
+        const cacheKey = `${config.url}_${JSON.stringify(config.params || {})}`;
+        mobileCache.set(cacheKey, response.data);
+      }
+      
+      return response;
+    },
+    async (error) => {
+      // Handle cached responses
+      if (error.__cached) {
+        return Promise.resolve(error);
+      }
+
+      const originalRequest = error.config;
+
+      // T050: Handle 401 errors with automatic token refresh
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+
+        logger.warn('401 Unauthorized, attempting token refresh', undefined, {
+          component: 'apiClient',
+          action: '401Handler',
+          url: originalRequest.url,
+        });
+
+        try {
+          // Attempt to refresh token using JWTAuthService
+          const newToken = await authService.refreshToken();
+          
+          // Retry original request with new token
+          originalRequest.headers.Authorization = `${newToken.tokenType} ${newToken.accessToken}`;
+          
+          logger.info('Token refreshed, retrying request', undefined, {
+            component: 'apiClient',
+            action: '401Handler',
+            url: originalRequest.url,
+          });
+          
+          return client(originalRequest);
+        } catch (refreshError) {
+          // Refresh failed, logout user
+          logger.error('Token refresh failed during 401 handling', refreshError as Error, {
+            component: 'apiClient',
+            action: '401Handler',
+          });
+          
+          await authService.logout();
+          
+          // Redirect to login page
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+          
+          return Promise.reject(refreshError);
+        }
+      }
+
+      // Handle 429 (Rate Limit) with automatic retry
+      if (error.response?.status === 429) {
+        const retryAfter = error.response.headers['retry-after'];
+        if (retryAfter && !originalRequest._rateLimitRetry) {
+          originalRequest._rateLimitRetry = true;
+          
+          const delay = parseInt(retryAfter) * 1000;
+          logger.warn('Rate limited, retrying', undefined, {
+            component: 'apiClient',
+            action: 'rateLimitHandler',
+            delayMs: delay,
+          });
+          
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return client(originalRequest);
+        }
+      }
+
+      // Transform API error response to standard format
+      if (error.response?.data) {
+        const apiError = error.response.data as BaseAPIResponse;
+        if (apiError.error) {
+          error.message = apiError.error.message;
+          error.code = apiError.error.code;
+          error.recoverable = apiError.error.recoverable;
+        }
+      }
+
+      return Promise.reject(error);
+    }
+  );
+
+  return client;
+};
+
+// Create and export the API client instance (legacy - uses Redux store)
 export const apiClient = createAPIClient();
 
 // Helper function to handle API responses
@@ -266,7 +445,7 @@ export const handleAPIResponse = <T>(
 // Helper function to handle API errors
 type APIErrorShape = { message?: string; code?: string; recoverable?: boolean } & Record<string, unknown>;
 export const handleAPIError = (error: unknown): never => {
-  console.error('API Error:', error);
+  logger.error('API Error:', error);
   
   // Create standardized error format
   const standardError = {

@@ -30,7 +30,7 @@ interface SWConfig {
 export const registerServiceWorker = (config?: SWConfig): Promise<ServiceWorkerRegistration | null> => {
   // Only register on mobile devices in production
   if (!isServiceWorkerSupported || !isMobileDevice()) {
-    console.log('Service Worker: Not registering (desktop or unsupported)');
+    logger.info('Service Worker: Not registering (desktop or unsupported)');
     return Promise.resolve(null);
   }
 
@@ -39,7 +39,7 @@ export const registerServiceWorker = (config?: SWConfig): Promise<ServiceWorkerR
       scope: '/',
     })
     .then((registration) => {
-      console.log('Service Worker: Registered successfully', registration.scope);
+      logger.info('Service Worker: Registered successfully', registration.scope);
 
       // Check for updates
       registration.addEventListener('updatefound', () => {
@@ -50,11 +50,11 @@ export const registerServiceWorker = (config?: SWConfig): Promise<ServiceWorkerR
             if (installingWorker.state === 'installed') {
               if (navigator.serviceWorker.controller) {
                 // New content available
-                console.log('Service Worker: New content available');
+                logger.info('Service Worker: New content available');
                 config?.onUpdate?.(registration);
               } else {
                 // Content cached for offline use
-                console.log('Service Worker: Content cached for offline use');
+                logger.info('Service Worker: Content cached for offline use');
                 config?.onSuccess?.(registration);
                 config?.onOfflineReady?.();
               }
@@ -66,7 +66,7 @@ export const registerServiceWorker = (config?: SWConfig): Promise<ServiceWorkerR
       return registration;
     })
     .catch((error) => {
-      console.error('Service Worker: Registration failed', error);
+      logger.error('Service Worker: Registration failed', error);
       return null;
     });
 };
@@ -85,11 +85,11 @@ export const unregisterServiceWorker = (): Promise<boolean> => {
       );
     })
     .then((results) => {
-      console.log('Service Worker: Unregistered');
+      logger.info('Service Worker: Unregistered');
       return results.every(Boolean);
     })
     .catch((error) => {
-      console.error('Service Worker: Unregistration failed', error);
+      logger.error('Service Worker: Unregistration failed', error);
       return false;
     });
 };
@@ -172,7 +172,7 @@ export const applyMobileOptimizations = (): void => {
     }
   });
 
-  console.log('Mobile optimizations applied');
+  logger.info('Mobile optimizations applied');
 };
 
 // Performance monitoring for mobile
@@ -186,7 +186,7 @@ export const monitorMobilePerformance = (): void => {
         const usedMB = (perf.memory?.usedJSHeapSize ?? 0) / (1024 * 1024);
       
       if (usedMB > 100) { // > 100MB
-        console.warn('Mobile: High memory usage detected', `${usedMB.toFixed(2)}MB`);
+        logger.warn('Mobile: High memory usage detected', `${usedMB.toFixed(2)}MB`);
         
         // Dispatch memory pressure event
         window.dispatchEvent(new CustomEvent('mobile-memory-pressure', {
@@ -204,7 +204,7 @@ export const monitorMobilePerformance = (): void => {
     const connection = (navigator as unknown as { connection?: { effectiveType: string; downlink: number; saveData: boolean; addEventListener: (ev: string, cb: () => void) => void } }).connection;
     
     const logConnectionInfo = () => {
-      console.log('Mobile: Network info', {
+      logger.info('Mobile: Network info', {
         effectiveType: connection.effectiveType,
         downlink: connection.downlink,
         saveData: connection.saveData
@@ -229,7 +229,7 @@ export const monitorMobilePerformance = (): void => {
 export const initializeMobileOptimizations = (config?: SWConfig): void => {
   if (!isMobileDevice()) return;
 
-  console.log('Initializing mobile optimizations...');
+  logger.info('Initializing mobile optimizations...');
   
   // Apply immediate optimizations
   applyMobileOptimizations();

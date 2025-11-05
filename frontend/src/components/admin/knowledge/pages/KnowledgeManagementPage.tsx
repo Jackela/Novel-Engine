@@ -1,4 +1,5 @@
 /**
+import { logger } from '../services/logging/LoggerFactory';
  * Knowledge Management Page
  * 
  * Main page for Game Masters to manage knowledge entries
@@ -64,21 +65,21 @@ export const KnowledgeManagementPage: React.FC = () => {
 
   // Success handlers
   const handleCreateSuccess = (entryId: string) => {
-    console.log('[KnowledgeManagementPage] Entry created successfully:', entryId);
+    logger.info('[KnowledgeManagementPage] Entry created successfully:', entryId);
     setViewState({ mode: 'list' });
     // Show success notification (TODO: integrate with notification system)
     alert(`Knowledge entry created successfully!\nID: ${entryId}`);
   };
 
   const handleUpdateSuccess = (entryId: string) => {
-    console.log('[KnowledgeManagementPage] Entry updated successfully:', entryId);
+    logger.info('[KnowledgeManagementPage] Entry updated successfully:', entryId);
     setViewState({ mode: 'list' });
     // Show success notification (TODO: integrate with notification system)
     alert(`Knowledge entry updated successfully!\nID: ${entryId}`);
   };
 
   const handleDeleteSuccess = (entryId: string) => {
-    console.log('[KnowledgeManagementPage] Entry deleted successfully:', entryId);
+    logger.info('[KnowledgeManagementPage] Entry deleted successfully:', entryId);
     // Show success notification (TODO: integrate with notification system)
     alert(`Knowledge entry deleted successfully!\nID: ${entryId}`);
   };

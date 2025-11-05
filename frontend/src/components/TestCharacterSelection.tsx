@@ -1,9 +1,10 @@
 // 简化的角色选择组件用于问题诊断
+import { logger } from '../services/logging/LoggerFactory';
 import React, { useState, useEffect } from 'react';
 import { useCharactersQuery } from '../services/queries';
 
 const TestCharacterSelection = () => {
-  console.log('TestCharacterSelection component mounted');
+  logger.info('TestCharacterSelection component mounted');
   
   const [characters, setCharacters] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -17,7 +18,7 @@ const TestCharacterSelection = () => {
     if (charactersError) setError(String(charactersError));
   }, [charactersData, isLoading, charactersError]);
 
-  console.log('Rendering component - loading:', loading, 'error:', error, 'characters:', characters);
+  logger.info('Rendering component - loading:', loading, 'error:', error, 'characters:', characters);
 
   if (loading) {
     return (

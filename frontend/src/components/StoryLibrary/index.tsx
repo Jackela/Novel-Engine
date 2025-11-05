@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { logger } from '../services/logging/LoggerFactory';
 import {
   Box,
   Grid,
@@ -513,17 +514,17 @@ export default function StoryLibrary() {
   const paginatedStories = filteredAndSortedStories.slice(startIndex, startIndex + itemsPerPage);
 
   const handleView = (story: StoryProject) => {
-    console.log('View story:', story.title);
+    logger.info('View story:', story.title);
     // TODO: Navigate to story details or open in modal
   };
 
   const handleEdit = (story: StoryProject) => {
-    console.log('Edit story:', story.title);
+    logger.info('Edit story:', story.title);
     // TODO: Navigate to story editor
   };
 
   const handleDelete = (story: StoryProject) => {
-    console.log('Delete story:', story.title);
+    logger.info('Delete story:', story.title);
     // TODO: Show confirmation dialog and delete story
   };
 
@@ -694,7 +695,7 @@ export default function StoryLibrary() {
             variant="contained"
             size="large"
             startIcon={<StoryIcon />}
-            onClick={() => console.log('Navigate to workshop')}
+            onClick={() => logger.info('Navigate to workshop')}
             sx={{ fontWeight: 600 }}
           >
             Create Your First Story

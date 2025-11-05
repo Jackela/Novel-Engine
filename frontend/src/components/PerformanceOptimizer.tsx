@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { usePerformanceOptimizer } from '../hooks/usePerformanceOptimizer';
+import { logger } from '../services/logging/LoggerFactory';
 import './PerformanceOptimizer.css';
 
 interface PerformanceOptimizerProps {
@@ -204,7 +205,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
       setOptimizationHistory(prev => [...prev, result]);
       onOptimizationApplied?.(result);
     } catch (error) {
-      console.error('Failed to apply optimization:', error);
+      logger.error('Failed to apply optimization:', error);
     }
   }, [optimizationRules, applyOptimization, onOptimizationApplied]);
 

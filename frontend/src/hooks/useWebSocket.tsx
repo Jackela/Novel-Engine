@@ -12,6 +12,7 @@
 
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { usePerformanceOptimizer } from './usePerformanceOptimizer';
+import { logger } from '../services/logging/LoggerFactory';
 
 // Types
 export interface WebSocketMessage {
@@ -171,7 +172,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
           wsRef.current!.send(messageString);
           statsRef.current.messagesSent++;
         } catch (error) {
-          console.error('Failed to send queued message:', error);
+          logger.error('Failed to send queued message:', error);
           statsRef.current.errorsCount++;
         }
       }
@@ -212,14 +213,14 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
       }));
 
     } catch (error) {
-      console.error('Failed to parse WebSocket message:', error);
+      logger.error('Failed to parse WebSocket message:', error);
       statsRef.current.errorsCount++;
     }
   }, [isDuplicateMessage]);
 
   // Handle WebSocket open
   const handleOpen = useCallback(() => {
-    console.log('WebSocket connected');
+    logger.info('WebSocket connected');
     connectionStartTime.current = Date.now();
     
     setState(prevState => ({
@@ -245,7 +246,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
 
   // Handle WebSocket close
   const handleClose = useCallback((event: CloseEvent) => {
-    console.log('WebSocket closed:', event.code, event.reason);
+    logger.info('WebSocket closed:', event.code, event.reason);
     
     setState(prevState => ({
       ...prevState,
@@ -263,7 +264,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
     if (event.code !== 1000 && state.reconnectAttempts < maxReconnectAttempts) {
       const delay = getReconnectDelay(state.reconnectAttempts);
       
-      console.log(`Reconnecting in ${delay}ms (attempt ${state.reconnectAttempts + 1}/${maxReconnectAttempts})`);
+      logger.info(`Reconnecting in ${delay}ms (attempt ${state.reconnectAttempts + 1}/${maxReconnectAttempts})`);
       
       reconnectTimeoutRef.current = setTimeout(() => {
         setState(prevState => ({
@@ -278,7 +279,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
 
   // Handle WebSocket error
   const handleError = useCallback((event: Event) => {
-    console.error('WebSocket error:', event);
+    logger.error('WebSocket error:', event);
     statsRef.current.errorsCount++;
     
     setState(prevState => ({
@@ -312,7 +313,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
       wsRef.current = ws;
 
     } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
+      logger.error('Failed to create WebSocket connection:', error);
       setState(prevState => ({
         ...prevState,
         lastError: error as Error,
@@ -363,7 +364,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
         wsRef.current.send(messageString);
         statsRef.current.messagesSent++;
       } catch (error) {
-        console.error('Failed to send message:', error);
+        logger.error('Failed to send message:', error);
         statsRef.current.errorsCount++;
         
         // Queue message for retry

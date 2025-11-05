@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { logger } from '../services/logging/LoggerFactory';
 import { useEnvironmentValidator } from '../../utils/EnvironmentValidator';
 import { useHealthMonitor } from '../../utils/HealthMonitor';
 import { usePortDetection } from '../../utils/PortDetector';
@@ -132,7 +133,7 @@ export default function SystemCheckStep({
       });
       completeValidation();
     } catch (error) {
-      console.error('Validation failed:', error);
+      logger.error('Validation failed:', error);
       setOverallStatus('error');
     }
   }, [validateEnvironment, validationData, portConfig, detectConfig, performHealthCheck, runValidationStage, completeValidation]);

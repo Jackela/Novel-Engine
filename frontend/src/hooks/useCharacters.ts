@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../services/api';
 import type { CharacterFormData } from '../types';
+import { logger } from '../services/logging/LoggerFactory';
 
 export function useCharacters() {
   return useQuery('characters', api.getCharacters, {
@@ -33,7 +34,7 @@ export function useCreateCharacter() {
         queryClient.invalidateQueries('characters');
       },
       onError: (error) => {
-        console.error('Character creation failed:', error);
+        logger.error('Character creation failed', error as Error, { component: 'useCreateCharacter' });
       },
     }
   );

@@ -15,6 +15,7 @@
  */
 
 import { apiClient } from '../../../../services/api/apiClient';
+import { logger } from '../../../../services/logging/LoggerFactory';
 
 // ============================================================================
 // Error Handling Utilities
@@ -118,7 +119,7 @@ export class KnowledgeAPI {
       );
       return response.data.entry_id;
     } catch (error) {
-      console.error('[KnowledgeAPI] Failed to create entry:', error);
+      logger.error('Failed to create entry', error as Error, { component: 'KnowledgeAPI', action: 'createEntry' });
       throw new Error(getErrorMessage(error, 'Failed to create knowledge entry'));
     }
   }
@@ -145,7 +146,7 @@ export class KnowledgeAPI {
       );
       return response.data;
     } catch (error) {
-      console.error('[KnowledgeAPI] Failed to list entries:', error);
+      logger.error('Failed to list entries', error as Error, { component: 'KnowledgeAPI', action: 'listEntries' });
       throw new Error(getErrorMessage(error, 'Failed to retrieve knowledge entries'));
     }
   }
@@ -164,7 +165,7 @@ export class KnowledgeAPI {
       );
       return response.data;
     } catch (error) {
-      console.error('[KnowledgeAPI] Failed to get entry:', error);
+      logger.error('Failed to get entry', error as Error, { component: 'KnowledgeAPI', action: 'getEntry', entryId });
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { status?: number } };
         if (axiosError.response?.status === 404) {
@@ -192,7 +193,7 @@ export class KnowledgeAPI {
         request
       );
     } catch (error) {
-      console.error('[KnowledgeAPI] Failed to update entry:', error);
+      logger.error('Failed to update entry', error as Error, { component: 'KnowledgeAPI', action: 'updateEntry', entryId });
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { status?: number } };
         if (axiosError.response?.status === 404) {
@@ -213,7 +214,7 @@ export class KnowledgeAPI {
     try {
       await apiClient.delete(`${BASE_PATH}/entries/${entryId}`);
     } catch (error) {
-      console.error('[KnowledgeAPI] Failed to delete entry:', error);
+      logger.error('Failed to delete entry', error as Error, { component: 'KnowledgeAPI', action: 'deleteEntry', entryId });
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { status?: number } };
         if (axiosError.response?.status === 404) {

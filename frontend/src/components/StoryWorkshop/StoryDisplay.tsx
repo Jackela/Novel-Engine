@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { logger } from '../services/logging/LoggerFactory';
 import {
   Box,
   Card,
@@ -89,7 +90,7 @@ export default function StoryDisplay({ story, onEdit }: Props) {
       await navigator.clipboard.writeText(story.storyContent || '');
       // TODO: Show success notification
     } catch (error) {
-      console.error('Failed to copy content:', error);
+      logger.error('Failed to copy content:', error);
     }
     setMenuAnchor(null);
   };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '../services/logging/LoggerFactory';
 import './WizardNavigation.css';
 
 /**
@@ -122,7 +123,7 @@ function WizardNavigation({
           });
         }
       } catch (error) {
-        console.error('Validation error:', error);
+        logger.error('Validation error:', error);
         setValidationErrors(prev => ({
           ...prev,
           [currentStep]: ['Validation failed. Please try again.']

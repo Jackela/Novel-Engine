@@ -125,7 +125,7 @@ export default function GenerationProgress({
       });
     },
     onError: (error) => {
-      console.warn('WebSocket progress error:', error);
+      logger.warn('WebSocket progress error:', error);
     },
   });
 

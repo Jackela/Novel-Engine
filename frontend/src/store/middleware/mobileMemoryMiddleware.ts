@@ -172,7 +172,7 @@ export const mobileMemoryMiddleware: Middleware<{}, RootState> =
 
       // Dispatch cleanup action if needed
       if (needsCleanup) {
-        console.log('Mobile memory cleanup triggered:', {
+        logger.info('Mobile memory cleanup triggered:', {
           memoryUsage: memoryManager.getMemoryUsage(),
           cleanedSlices: Object.keys(cleanedSlices)
         });

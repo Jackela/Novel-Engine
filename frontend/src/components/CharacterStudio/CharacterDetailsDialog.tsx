@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
+import { logger } from '../services/logging/LoggerFactory';
 import {
   Dialog,
   DialogTitle,
@@ -115,13 +116,13 @@ export default function CharacterDetailsDialog({
   const handleEdit = () => {
     handleMenuClose();
     // TODO: Implement edit functionality
-    console.log('Edit character:', characterName);
+    logger.info('Edit character:', characterName);
   };
 
   const handleDelete = () => {
     handleMenuClose();
     // TODO: Implement delete functionality with confirmation
-    console.log('Delete character:', characterName);
+    logger.info('Delete character:', characterName);
   };
 
   const handleExport = () => {
@@ -146,7 +147,7 @@ export default function CharacterDetailsDialog({
         await navigator.clipboard.writeText(JSON.stringify(character, null, 2));
         // TODO: Show success notification
       } catch (error) {
-        console.error('Failed to copy character data:', error);
+        logger.error('Failed to copy character data:', error);
       }
     }
   };
