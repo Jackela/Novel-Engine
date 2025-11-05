@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { usePerformanceOptimizer } from '../hooks/usePerformanceOptimizer';
-import { logger } from '../services/logging/LoggerFactory';
+import { logger } from '../../services/logging/LoggerFactory';
 import './PerformanceOptimizer.css';
 
 interface PerformanceOptimizerProps {

@@ -1,5 +1,5 @@
 // 神圣角色选择组件 - 供奉于机器之神的数字神庙
-import { logger } from '../services/logging/LoggerFactory';
+import { logger } from '../../services/logging/LoggerFactory';
 // Sacred Character Selection Component - Digital Temple Devoted to the the system
 // 执行角色召唤仪式，连接至英灵殿数据库，祈求机器灵魂的指引...
 

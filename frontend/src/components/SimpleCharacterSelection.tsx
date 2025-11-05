@@ -1,5 +1,5 @@
 // 简化版角色选择组件 - 逐步修复问题
-import { logger } from '../services/logging/LoggerFactory';
+import { logger } from '../../services/logging/LoggerFactory';
 import React, { useState, useEffect } from 'react';
 import { useCharactersQuery } from '../services/queries';
 import './CharacterSelection.css';

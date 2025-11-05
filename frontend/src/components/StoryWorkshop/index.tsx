@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { logger } from '../services/logging/LoggerFactory';
+import { logger } from '../../services/logging/LoggerFactory';
 import {
   Box,
   Grid,

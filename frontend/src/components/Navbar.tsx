@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { logger } from '../services/logging/LoggerFactory';
+import { logger } from '../../services/logging/LoggerFactory';
 import {
   AppBar,
   Toolbar,

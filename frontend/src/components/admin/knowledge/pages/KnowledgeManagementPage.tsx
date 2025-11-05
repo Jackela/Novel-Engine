@@ -1,5 +1,4 @@
 /**
-import { logger } from '../services/logging/LoggerFactory';
  * Knowledge Management Page
  * 
  * Main page for Game Masters to manage knowledge entries
@@ -22,6 +21,7 @@ import { logger } from '../services/logging/LoggerFactory';
  */
 
 import React, { useState } from 'react';
+import { logger } from '../../../../services/logging/LoggerFactory';
 import { KnowledgeEntryList } from '../components/KnowledgeEntryList';
 import { KnowledgeEntryForm } from '../components/KnowledgeEntryForm';
 

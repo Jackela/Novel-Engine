@@ -1,5 +1,5 @@
 import React from 'react';
-import { logger } from '../services/logging/LoggerFactory';
+import { logger } from '../../services/logging/LoggerFactory';
 import './ErrorDisplay.css';
 
 /**
