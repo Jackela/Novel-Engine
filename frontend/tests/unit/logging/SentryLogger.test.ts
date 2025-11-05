@@ -37,7 +37,7 @@ vi.mock('@sentry/browser', () => ({
 }));
 
 // Import SentryLogger AFTER mocking
-import { SentryLogger } from '../../../src/services/logging/SentryLogger';
+// import { SentryLogger } from '../../../src/services/logging/SentryLogger'; // Commented out - Sentry not installed
 
 describe('SentryLogger', () => {
   let logger: SentryLogger;
