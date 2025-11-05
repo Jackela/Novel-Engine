@@ -1,5 +1,5 @@
 // 简化的角色选择组件用于问题诊断
-import { logger } from '../../services/logging/LoggerFactory';
+import { logger } from '../services/logging/LoggerFactory';
 import React, { useState, useEffect } from 'react';
 import { useCharactersQuery } from '../services/queries';
 
