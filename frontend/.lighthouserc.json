@@ -2,11 +2,11 @@
   "ci": {
     "collect": {
       "startServerCommand": "npm run preview",
-      "startServerReadyPattern": "Local:.*http://localhost:3000",
+      "startServerReadyPattern": "Local:.*http://localhost:4173",
       "url": [
-        "http://localhost:3000/",
-        "http://localhost:3000/character-selection",
-        "http://localhost:3000/dashboard"
+        "http://localhost:4173/",
+        "http://localhost:4173/character-selection",
+        "http://localhost:4173/dashboard"
       ],
       "numberOfRuns": 3,
       "settings": {
