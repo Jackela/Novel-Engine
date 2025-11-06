@@ -202,6 +202,7 @@ const Navbar: React.FC = () => {
                 // Future: Open settings dialog
                 logger.info('Settings clicked');
               }}
+              aria-label="Open settings"
             >
               <SettingsIcon />
             </IconButton>

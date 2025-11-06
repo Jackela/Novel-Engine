@@ -254,8 +254,16 @@ export const KnowledgeEntryForm: React.FC<KnowledgeEntryFormProps> = ({
           placeholder="Enter knowledge content..."
           className={errors.content ? 'error' : ''}
           disabled={loading}
+          required
+          aria-required="true"
+          aria-invalid={!!errors.content}
+          aria-describedby={errors.content ? 'content-error' : undefined}
         />
-        {errors.content && <span className="error-message">{errors.content}</span>}
+        {errors.content && (
+          <span className="error-message" id="content-error" role="alert">
+            {errors.content}
+          </span>
+        )}
       </div>
 
       {/* Knowledge Type (disabled in edit mode) */}
@@ -270,6 +278,10 @@ export const KnowledgeEntryForm: React.FC<KnowledgeEntryFormProps> = ({
           onChange={handleChange}
           disabled={isEditMode || loading}
           className={errors.knowledge_type ? 'error' : ''}
+          required
+          aria-required="true"
+          aria-invalid={!!errors.knowledge_type}
+          aria-describedby={errors.knowledge_type ? 'knowledge-type-error' : undefined}
         >
           {Object.values(KnowledgeType).map((type) => (
             <option key={type} value={type}>
@@ -278,7 +290,9 @@ export const KnowledgeEntryForm: React.FC<KnowledgeEntryFormProps> = ({
           ))}
         </select>
         {errors.knowledge_type && (
-          <span className="error-message">{errors.knowledge_type}</span>
+          <span className="error-message" id="knowledge-type-error" role="alert">
+            {errors.knowledge_type}
+          </span>
         )}
         {isEditMode && (
           <span className="help-text">Knowledge type cannot be changed after creation</span>

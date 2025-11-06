@@ -1,0 +1,98 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/lighthouse-ci.yml'
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      
+      - name: Build production bundle
+        working-directory: frontend
+        run: npm run build
+        env:
+          NODE_ENV: production
+      
+      - name: Check bundle sizes (T071)
+        working-directory: frontend
+        run: |
+          echo "📦 Checking bundle sizes..."
+          
+          # Get gzipped sizes of main bundles
+          INITIAL_SIZE=$(find dist -name "index-*.js" -exec gzip -c {} \; | wc -c | awk '{print int($1/1024)}')
+          echo "Initial bundle: ${INITIAL_SIZE}KB (gzip)"
+          
+          # Check route chunks
+          echo "Route chunks:"
+          find dist -name "*.js" ! -name "index-*.js" ! -name "vendor-*.js" -exec sh -c '
+            SIZE=$(gzip -c "$1" | wc -c | awk "{print int(\$1/1024)}")
+            echo "  $(basename "$1"): ${SIZE}KB (gzip)"
+            if [ $SIZE -gt 200 ]; then
+              echo "❌ Chunk exceeds 200KB limit"
+              exit 1
+            fi
+          ' sh {} \;
+          
+          # Verify initial bundle < 400KB
+          if [ $INITIAL_SIZE -gt 400 ]; then
+            echo "❌ Initial bundle ${INITIAL_SIZE}KB exceeds 400KB limit"
+            exit 1
+          fi
+          
+          echo "✅ All bundle sizes within thresholds"
+      
+      - name: Run Lighthouse CI
+        working-directory: frontend
+        run: npx @lhci/cli@0.14.0 autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+      
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-results
+          path: frontend/.lighthouseci
+          retention-days: 30
+      
+      - name: Check Lighthouse scores
+        working-directory: frontend
+        run: |
+          # Extract scores from Lighthouse report
+          ACCESSIBILITY_SCORE=$(jq '.[] | select(.url | contains("index.html")) | .categories.accessibility.score * 100' .lighthouseci/lhr-*.json | head -1)
+          PERFORMANCE_SCORE=$(jq '.[] | select(.url | contains("index.html")) | .categories.performance.score * 100' .lighthouseci/lhr-*.json | head -1)
+          
+          echo "Accessibility Score: $ACCESSIBILITY_SCORE"
+          echo "Performance Score: $PERFORMANCE_SCORE"
+          
+          # Fail if scores below threshold
+          if (( $(echo "$ACCESSIBILITY_SCORE < 90" | bc -l) )); then
+            echo "❌ Accessibility score $ACCESSIBILITY_SCORE is below 90"
+            exit 1
+          fi
+          
+          if (( $(echo "$PERFORMANCE_SCORE < 90" | bc -l) )); then
+            echo "❌ Performance score $PERFORMANCE_SCORE is below 90"
+            exit 1
+          fi
+          
+          echo "✅ All Lighthouse scores meet thresholds"
