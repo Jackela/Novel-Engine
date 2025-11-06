@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { Provider } from 'react-redux';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
@@ -6,13 +6,18 @@ import { CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import theme from './styles/theme';
 import { store } from './store/store';
-import EmergentDashboardSimple from './components/EmergentDashboardSimple';
 import DashboardLayout from './components/layout/DashboardLayout';
+
+// Route-based code splitting with React.lazy() (T050)
+const EmergentDashboardSimple = lazy(() => import('./components/EmergentDashboardSimple'));
 // import { useAppSelector } from './hooks/redux'; // Unused after auth refactor
 import { initializeMobileOptimizations } from './utils/serviceWorkerRegistration';
 import { logger } from './services/logging/LoggerFactory';
 import { ErrorBoundary } from './components/error-boundaries/ErrorBoundary';
 import { AuthProvider, useAuthContext } from './contexts/AuthContext';
+import { SkipLink } from './components/a11y';
+import { SkeletonDashboard } from './components/loading';
+import { usePerformance } from './hooks/usePerformance';
 import './styles/design-system.generated.css';
 import './styles/design-system.css';
 import './components/EmergentDashboard.css';
@@ -51,18 +56,24 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+// Loading fallback using SkeletonDashboard (T059)
+const LoadingFallback: React.FC = () => <SkeletonDashboard />;
+
 // Main App component with routing
 const AppRoutes: React.FC = () => {
   return (
     <Router>
+      <SkipLink targetId="main-content" text="Skip to main content" />
       <Routes>
-        {/* Main dashboard route */}
+        {/* Main dashboard route with Suspense boundary */}
         <Route 
           path="/dashboard" 
           element={
-            <DashboardLayout>
-              <EmergentDashboardSimple />
-            </DashboardLayout>
+            <Suspense fallback={<LoadingFallback />}>
+              <DashboardLayout>
+                <EmergentDashboardSimple />
+              </DashboardLayout>
+            </Suspense>
           }
         />
         
@@ -70,9 +81,11 @@ const AppRoutes: React.FC = () => {
         <Route 
           path="/" 
           element={
-            <DashboardLayout>
-              <EmergentDashboardSimple />
-            </DashboardLayout>
+            <Suspense fallback={<LoadingFallback />}>
+              <DashboardLayout>
+                <EmergentDashboardSimple />
+              </DashboardLayout>
+            </Suspense>
           } 
         />
         
@@ -101,6 +114,20 @@ const AppRoutes: React.FC = () => {
 
 // Root App component
 const App: React.FC = () => {
+  // T075: Core Web Vitals tracking in production
+  usePerformance({
+    onMetric: (metric) => {
+      // Send to LoggerFactory for analytics
+      logger.info('Web Vital metric', {
+        name: metric.name,
+        value: metric.value,
+        rating: metric.rating,
+        delta: metric.delta,
+      });
+    },
+    reportToAnalytics: import.meta.env.PROD,
+  });
+
   useEffect(() => {
     // Initialize mobile optimizations
     initializeMobileOptimizations({

@@ -247,6 +247,11 @@ const Dashboard: React.FC = () => {
                       value={systemMetrics.systemUptime} 
                       color="success"
                       sx={{ borderRadius: 1, height: 6 }}
+                      aria-label={`System uptime: ${systemMetrics.systemUptime} percent`}
+                      role="progressbar"
+                      aria-valuenow={systemMetrics.systemUptime}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
                     />
                   </Box>
                 </Grid>
@@ -264,6 +269,11 @@ const Dashboard: React.FC = () => {
                       value={systemMetrics.cacheHitRate} 
                       color="info"
                       sx={{ borderRadius: 1, height: 6 }}
+                      aria-label={`Cache efficiency: ${systemMetrics.cacheHitRate} percent`}
+                      role="progressbar"
+                      aria-valuenow={systemMetrics.cacheHitRate}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
                     />
                   </Box>
                 </Grid>
@@ -300,7 +310,11 @@ const Dashboard: React.FC = () => {
                   Recent Projects
                 </Typography>
                 <Tooltip title="View All">
-                  <IconButton size="small" onClick={() => navigate('/library')}>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => navigate('/library')}
+                    aria-label="View all recent projects"
+                  >
                     <TrendingUpIcon />
                   </IconButton>
                 </Tooltip>

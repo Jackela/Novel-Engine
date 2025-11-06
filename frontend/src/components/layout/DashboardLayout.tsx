@@ -45,7 +45,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </Toolbar>
       </StyledAppBar>
       
-      <MainContainer role="main">
+      <MainContainer role="main" id="main-content" tabIndex={-1}>
         <BentoGrid>
           {children}
         </BentoGrid>
