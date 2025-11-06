@@ -1,30 +1,82 @@
+import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { vi } from 'vitest';
 import CharacterSelection from '../../../src/components/CharacterSelection';
 
 const mockCharacters = [
-  'Character 1',
-  'Character 2',
-  'Character 3',
+  'character_1',
+  'character_2',
+  'character_3',
 ];
 
-const mockStory = {
-  id: 'test-story',
-  title: 'Test Story',
-  characters: mockCharacters,
+// Mock the queries module
+vi.mock('../../../src/services/queries', () => ({
+  useCharactersQuery: () => ({
+    data: mockCharacters,
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+  useStoryQuery: () => ({
+    data: {
+      id: 'test-story',
+      name: 'Test Story',
+      selectionConstraints: {
+        minSelection: 1,
+        maxSelection: 3,
+      },
+    },
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+// Mock i18next
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, params?: any) => {
+      if (key === 'characterSelection.counter' && params) {
+        return `${params.count} characters selected`;
+      }
+      return key;
+    },
+    i18n: {
+      changeLanguage: vi.fn(),
+    },
+  }),
+}));
+
+// Create a test wrapper with all required providers
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        {children}
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
 };
 
 describe('Screen Reader Announcements', () => {
-  it('should have aria-live="polite" region for dynamic updates', () => {
-    render(
-      <BrowserRouter>
-        <CharacterSelection 
-          story={mockStory}
-          onCharactersSelected={() => {}}
-        />
-      </BrowserRouter>
-    );
+  it('should have aria-live="polite" region for dynamic updates', async () => {
+    render(<CharacterSelection />, {
+      wrapper: createWrapper(),
+    });
+    
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: /select character/i })).toHaveLength(3);
+    });
     
     const liveRegion = screen.getByRole('status', { hidden: true });
     expect(liveRegion).toHaveAttribute('aria-live', 'polite');
@@ -33,14 +85,13 @@ describe('Screen Reader Announcements', () => {
   it('should announce selection changes to screen readers', async () => {
     const user = userEvent.setup();
     
-    render(
-      <BrowserRouter>
-        <CharacterSelection 
-          story={mockStory}
-          onCharactersSelected={() => {}}
-        />
-      </BrowserRouter>
-    );
+    render(<CharacterSelection />, {
+      wrapper: createWrapper(),
+    });
+    
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: /select character/i })).toHaveLength(3);
+    });
     
     const liveRegion = screen.getByRole('status', { hidden: true });
     expect(liveRegion).toHaveTextContent(/0.*selected/i);
@@ -59,14 +110,13 @@ describe('Screen Reader Announcements', () => {
   it('should announce deselection to screen readers', async () => {
     const user = userEvent.setup();
     
-    render(
-      <BrowserRouter>
-        <CharacterSelection 
-          story={mockStory}
-          onCharactersSelected={() => {}}
-        />
-      </BrowserRouter>
-    );
+    render(<CharacterSelection />, {
+      wrapper: createWrapper(),
+    });
+    
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: /select character/i })).toHaveLength(3);
+    });
     
     const liveRegion = screen.getByRole('status', { hidden: true });
     const characterCard = screen.getAllByRole('button', { 
@@ -87,33 +137,28 @@ describe('Screen Reader Announcements', () => {
   it('should announce validation errors in aria-live region', async () => {
     const user = userEvent.setup();
     
-    render(
-      <BrowserRouter>
-        <CharacterSelection 
-          story={mockStory}
-          onCharactersSelected={() => {}}
-        />
-      </BrowserRouter>
-    );
+    render(<CharacterSelection />, {
+      wrapper: createWrapper(),
+    });
     
-    // Try to continue without selecting minimum characters
-    const continueButton = screen.getByRole('button', { name: /continue/i });
-    await user.click(continueButton);
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: /select character/i })).toHaveLength(3);
+    });
     
-    // Validation error should be announced
-    const errorRegion = screen.queryByRole('alert') || screen.getByRole('status', { hidden: true });
+    // Validation error should be visible by default (no characters selected)
+    const errorRegion = screen.getByRole('alert');
     expect(errorRegion).toBeInTheDocument();
+    expect(errorRegion).toHaveAttribute('aria-atomic', 'true');
   });
 
-  it('should not use aria-live="assertive" for non-critical updates', () => {
-    const { container } = render(
-      <BrowserRouter>
-        <CharacterSelection 
-          story={mockStory}
-          onCharactersSelected={() => {}}
-        />
-      </BrowserRouter>
-    );
+  it('should not use aria-live="assertive" for non-critical updates', async () => {
+    const { container } = render(<CharacterSelection />, {
+      wrapper: createWrapper(),
+    });
+    
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: /select character/i })).toHaveLength(3);
+    });
     
     const assertiveRegions = container.querySelectorAll('[aria-live="assertive"]');
     
@@ -125,14 +170,13 @@ describe('Screen Reader Announcements', () => {
   it('should maintain aria-pressed state across interactions', async () => {
     const user = userEvent.setup();
     
-    render(
-      <BrowserRouter>
-        <CharacterSelection 
-          story={mockStory}
-          onCharactersSelected={() => {}}
-        />
-      </BrowserRouter>
-    );
+    render(<CharacterSelection />, {
+      wrapper: createWrapper(),
+    });
+    
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: /select character/i })).toHaveLength(3);
+    });
     
     const characterCards = screen.getAllByRole('button', { 
       name: /select character/i 
@@ -148,15 +192,14 @@ describe('Screen Reader Announcements', () => {
     expect(characterCards[2]).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('should have descriptive aria-labels for all interactive elements', () => {
-    render(
-      <BrowserRouter>
-        <CharacterSelection 
-          story={mockStory}
-          onCharactersSelected={() => {}}
-        />
-      </BrowserRouter>
-    );
+  it('should have descriptive aria-labels for all interactive elements', async () => {
+    render(<CharacterSelection />, {
+      wrapper: createWrapper(),
+    });
+    
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: /select character/i })).toHaveLength(3);
+    });
     
     const buttons = screen.getAllByRole('button');
     
