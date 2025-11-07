@@ -199,6 +199,29 @@ yarn.lock
 .yarn/
 .pnp.*
 
+# Local-only AI tooling and working dirs (keep locally, ignore in repo)
+/.bmad-core/
+/.claude/
+/.codex/
+/.cursor/
+/.benchmarks/
+/web-bundles/
+/logs/
+/playwright_ai_validation_evidence/
+
+# Frontend build output
+/frontend/dist/
+
+# Local virtual environments
+/.venv/
+/.venv-ci/
+/.venv-run/
+
+# Coverage & local CI artifacts
+/.coverage
+/coverage.json
+/act-*.log
+
 # Frontend Build Output
 frontend/dist/
 frontend/build/
