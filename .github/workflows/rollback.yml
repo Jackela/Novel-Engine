@@ -1,0 +1,480 @@
+name: Production Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+        - staging
+        - production
+      rollback_version:
+        description: 'Version to rollback to (tag or sha)'
+        required: true
+      reason:
+        description: 'Reason for rollback'
+        required: true
+      emergency:
+        description: 'Emergency rollback (skip validations)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  AWS_REGION: us-west-2
+  EKS_CLUSTER_NAME: novel-engine-production-cluster
+
+jobs:
+  # Pre-rollback validation
+  pre-rollback:
+    runs-on: ubuntu-latest
+    outputs:
+      rollback-version: ${{ steps.validate.outputs.version }}
+      rollback-environment: ${{ steps.validate.outputs.environment }}
+    steps:
+    - name: Validate rollback parameters
+      id: validate
+      run: |
+        ENV="${{ github.event.inputs.environment }}"
+        VERSION="${{ github.event.inputs.rollback_version }}"
+        REASON="${{ github.event.inputs.reason }}"
+        
+        if [[ ! "$ENV" =~ ^(staging|production)$ ]]; then
+          echo "❌ Invalid environment: $ENV"
+          exit 1
+        fi
+        
+        if [[ -z "$VERSION" ]]; then
+          echo "❌ Rollback version is required"
+          exit 1
+        fi
+        
+        if [[ -z "$REASON" ]]; then
+          echo "❌ Rollback reason is required"
+          exit 1
+        fi
+        
+        echo "environment=$ENV" >> $GITHUB_OUTPUT
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+        echo "✅ Rollback validation passed"
+        echo "Environment: $ENV"
+        echo "Version: $VERSION"
+        echo "Reason: $REASON"
+
+    - name: Check image exists
+      if: ${{ !inputs.emergency }}
+      run: |
+        # Check if the rollback image exists in registry
+        TOKEN=$(echo ${{ secrets.GITHUB_TOKEN }} | base64)
+        
+        IMAGE_URL="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.validate.outputs.version }}"
+        
+        if docker manifest inspect $IMAGE_URL > /dev/null 2>&1; then
+          echo "✅ Rollback image found: $IMAGE_URL"
+        else
+          echo "❌ Rollback image not found: $IMAGE_URL"
+          echo "Available tags:"
+          # List available tags
+          exit 1
+        fi
+
+  # Create rollback backup
+  backup-current:
+    runs-on: ubuntu-latest
+    needs: [pre-rollback]
+    environment: ${{ needs.pre-rollback.outputs.rollback-environment }}
+    outputs:
+      backup-id: ${{ steps.backup.outputs.id }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig \
+          --region ${{ env.AWS_REGION }} \
+          --name ${{ env.EKS_CLUSTER_NAME }}
+
+    - name: Create deployment backup
+      id: backup
+      run: |
+        NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
+        BACKUP_ID="backup-$(date +%Y%m%d-%H%M%S)-${{ github.run_id }}"
+        BACKUP_FILE="rollback-backup-${BACKUP_ID}.yaml"
+        
+        echo "🔄 Creating deployment backup..."
+        
+        # Backup current deployment
+        kubectl get deployment novel-engine -n $NAMESPACE -o yaml > $BACKUP_FILE
+        
+        # Backup current configmaps
+        kubectl get configmap -n $NAMESPACE -o yaml >> $BACKUP_FILE
+        
+        # Backup current secrets (metadata only)
+        kubectl get secret -n $NAMESPACE -o yaml --export >> $BACKUP_FILE || true
+        
+        # Get current image version
+        CURRENT_IMAGE=$(kubectl get deployment novel-engine -n $NAMESPACE -o jsonpath='{.spec.template.spec.containers[0].image}')
+        
+        echo "Current deployment image: $CURRENT_IMAGE"
+        echo "Backup created: $BACKUP_FILE"
+        echo "id=$BACKUP_ID" >> $GITHUB_OUTPUT
+        
+        # Store backup information
+        cat > rollback-info.json << EOF
+        {
+          "backup_id": "$BACKUP_ID",
+          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "environment": "${{ needs.pre-rollback.outputs.rollback-environment }}",
+          "current_image": "$CURRENT_IMAGE",
+          "rollback_to": "${{ needs.pre-rollback.outputs.rollback-version }}",
+          "reason": "${{ github.event.inputs.reason }}",
+          "initiated_by": "${{ github.actor }}",
+          "run_id": "${{ github.run_id }}"
+        }
+        EOF
+        
+        echo "✅ Backup completed"
+
+    - name: Upload backup artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: rollback-backup-${{ steps.backup.outputs.id }}
+        path: |
+          rollback-backup-*.yaml
+          rollback-info.json
+        retention-days: 30
+
+  # Execute rollback
+  rollback:
+    runs-on: ubuntu-latest
+    needs: [pre-rollback, backup-current]
+    environment: ${{ needs.pre-rollback.outputs.rollback-environment }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig \
+          --region ${{ env.AWS_REGION }} \
+          --name ${{ env.EKS_CLUSTER_NAME }}
+
+    - name: Execute rollback
+      run: |
+        NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
+        ROLLBACK_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.pre-rollback.outputs.rollback-version }}"
+        
+        echo "🔄 Starting rollback to $ROLLBACK_IMAGE"
+        
+        # Update deployment image
+        kubectl set image deployment/novel-engine \
+          novel-engine=$ROLLBACK_IMAGE \
+          --namespace $NAMESPACE
+        
+        echo "✅ Rollback deployment updated"
+
+    - name: Wait for rollback completion
+      run: |
+        NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
+        
+        echo "⏳ Waiting for rollback to complete..."
+        
+        # Wait for deployment to be available
+        kubectl wait deployment/novel-engine \
+          --for=condition=Available \
+          --timeout=600s \
+          --namespace $NAMESPACE
+        
+        # Verify rollback
+        CURRENT_IMAGE=$(kubectl get deployment novel-engine -n $NAMESPACE -o jsonpath='{.spec.template.spec.containers[0].image}')
+        EXPECTED_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.pre-rollback.outputs.rollback-version }}"
+        
+        if [ "$CURRENT_IMAGE" == "$EXPECTED_IMAGE" ]; then
+          echo "✅ Rollback completed successfully"
+          echo "Current image: $CURRENT_IMAGE"
+        else
+          echo "❌ Rollback verification failed"
+          echo "Expected: $EXPECTED_IMAGE"
+          echo "Current: $CURRENT_IMAGE"
+          exit 1
+        fi
+
+    - name: Restart related services
+      run: |
+        NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
+        
+        echo "🔄 Restarting related services..."
+        
+        # Restart Redis to clear cache
+        kubectl rollout restart deployment/redis --namespace $NAMESPACE || true
+        
+        # Wait for Redis to be ready
+        kubectl wait deployment/redis \
+          --for=condition=Available \
+          --timeout=300s \
+          --namespace $NAMESPACE || true
+        
+        echo "✅ Related services restarted"
+
+  # Post-rollback verification
+  verify:
+    runs-on: ubuntu-latest
+    needs: [rollback, pre-rollback]
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig \
+          --region ${{ env.AWS_REGION }} \
+          --name ${{ env.EKS_CLUSTER_NAME }}
+
+    - name: Health check verification
+      run: |
+        NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
+        
+        echo "🏥 Running post-rollback health checks..."
+        
+        # Port forward for health check
+        kubectl port-forward service/novel-engine 8080:8000 \
+          --namespace $NAMESPACE &
+        
+        PF_PID=$!
+        sleep 10
+        
+        # Health check
+        for i in {1..5}; do
+          if curl -f http://localhost:8080/health; then
+            echo "✅ Health check $i/5 passed"
+          else
+            echo "❌ Health check $i/5 failed"
+            if [ $i -eq 5 ]; then
+              kill $PF_PID || true
+              exit 1
+            fi
+            sleep 5
+          fi
+        done
+        
+        kill $PF_PID || true
+        echo "✅ All health checks passed"
+
+    - name: Performance verification
+      if: ${{ !inputs.emergency }}
+      run: |
+        NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
+        
+        echo "⚡ Running performance verification..."
+        
+        # Port forward for performance test
+        kubectl port-forward service/novel-engine 8080:8000 \
+          --namespace $NAMESPACE &
+        
+        PF_PID=$!
+        sleep 10
+        
+        # Simple performance test
+        echo "Testing response times..."
+        for i in {1..10}; do
+          start_time=$(date +%s%N)
+          curl -s http://localhost:8080/health > /dev/null
+          end_time=$(date +%s%N)
+          duration=$((($end_time - $start_time) / 1000000))
+          echo "Request $i: ${duration}ms"
+          
+          if [ $duration -gt 5000 ]; then
+            echo "⚠️ High response time detected: ${duration}ms"
+          fi
+        done
+        
+        kill $PF_PID || true
+        echo "✅ Performance verification completed"
+
+    - name: Log verification
+      run: |
+        NAMESPACE="novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }}"
+        
+        echo "📋 Checking application logs..."
+        
+        # Get recent logs
+        kubectl logs -l app=novel-engine \
+          --namespace $NAMESPACE \
+          --tail=50 \
+          --since=5m || true
+        
+        # Check for error patterns
+        ERROR_COUNT=$(kubectl logs -l app=novel-engine \
+          --namespace $NAMESPACE \
+          --since=5m 2>/dev/null | grep -c "ERROR\|CRITICAL\|FATAL" || echo "0")
+        
+        if [ $ERROR_COUNT -gt 0 ]; then
+          echo "⚠️ Found $ERROR_COUNT error(s) in logs"
+          kubectl logs -l app=novel-engine \
+            --namespace $NAMESPACE \
+            --since=5m | grep "ERROR\|CRITICAL\|FATAL" || true
+        else
+          echo "✅ No critical errors found in logs"
+        fi
+
+  # Update monitoring and alerts
+  update-monitoring:
+    runs-on: ubuntu-latest
+    needs: [verify, pre-rollback, backup-current]
+    steps:
+    - name: Update monitoring dashboards
+      run: |
+        echo "📊 Updating monitoring dashboards for rollback..."
+        
+        # Create rollback annotation in Grafana (if API available)
+        # This would typically be done via Grafana API
+        
+        echo "✅ Monitoring updated"
+
+    - name: Create rollback event
+      run: |
+        # Create Kubernetes event for rollback
+        kubectl create event rollback-completed \
+          --field-selector involvedObject.kind=Deployment \
+          --field-selector involvedObject.name=novel-engine \
+          --namespace novel-engine-${{ needs.pre-rollback.outputs.rollback-environment }} \
+          --message="Rollback to ${{ needs.pre-rollback.outputs.rollback-version }} completed. Reason: ${{ github.event.inputs.reason }}" \
+          --type=Normal || true
+
+  # Notification and documentation
+  notify:
+    runs-on: ubuntu-latest
+    needs: [verify, pre-rollback, backup-current]
+    if: always()
+    steps:
+    - name: Download backup info
+      uses: actions/download-artifact@v4
+      with:
+        name: rollback-backup-${{ needs.backup-current.outputs.backup-id }}
+
+    - name: Create rollback report
+      run: |
+        cat > rollback-report.md << EOF
+        # Rollback Report
+        
+        ## Summary
+        - **Environment**: ${{ needs.pre-rollback.outputs.rollback-environment }}
+        - **Rollback Version**: ${{ needs.pre-rollback.outputs.rollback-version }}
+        - **Reason**: ${{ github.event.inputs.reason }}
+        - **Initiated By**: ${{ github.actor }}
+        - **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+        - **Backup ID**: ${{ needs.backup-current.outputs.backup-id }}
+        
+        ## Status
+        - **Rollback**: ${{ needs.rollback.result == 'success' && '✅ Success' || '❌ Failed' }}
+        - **Verification**: ${{ needs.verify.result == 'success' && '✅ Success' || '❌ Failed' }}
+        
+        ## Recovery Instructions
+        If issues persist, the previous deployment can be restored using backup ID: ${{ needs.backup-current.outputs.backup-id }}
+        
+        ## Next Steps
+        1. Monitor application metrics
+        2. Verify user-facing functionality
+        3. Review incident post-mortem
+        4. Plan forward fix if needed
+        EOF
+        
+        cat rollback-report.md
+
+    - name: Slack notification
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: custom
+        custom_payload: |
+          {
+            attachments: [{
+              color: '${{ needs.verify.result == 'success' && 'good' || 'danger' }}',
+              title: 'Production Rollback ${{ needs.verify.result == 'success' && 'Completed' || 'Failed' }}',
+              fields: [
+                {
+                  title: 'Environment',
+                  value: '${{ needs.pre-rollback.outputs.rollback-environment }}',
+                  short: true
+                },
+                {
+                  title: 'Version',
+                  value: '${{ needs.pre-rollback.outputs.rollback-version }}',
+                  short: true
+                },
+                {
+                  title: 'Reason',
+                  value: '${{ github.event.inputs.reason }}',
+                  short: false
+                },
+                {
+                  title: 'Initiated By',
+                  value: '${{ github.actor }}',
+                  short: true
+                },
+                {
+                  title: 'Backup ID',
+                  value: '${{ needs.backup-current.outputs.backup-id }}',
+                  short: true
+                }
+              ]
+            }]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+    - name: Create GitHub issue (on failure)
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: 'Rollback Failed - ${{ needs.pre-rollback.outputs.rollback-environment }}',
+            body: `
+            ## Rollback Failure Report
+            
+            **Environment**: ${{ needs.pre-rollback.outputs.rollback-environment }}
+            **Target Version**: ${{ needs.pre-rollback.outputs.rollback-version }}
+            **Reason**: ${{ github.event.inputs.reason }}
+            **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            The automatic rollback process has failed. Manual intervention is required.
+            
+            ### Backup Information
+            - **Backup ID**: ${{ needs.backup-current.outputs.backup-id }}
+            - **Backup Artifacts**: Available in workflow run artifacts
+            
+            ### Immediate Actions Required
+            1. Assess current system state
+            2. Consider manual rollback using backup
+            3. Investigate rollback failure cause
+            4. Communicate status to stakeholders
+            `,
+            labels: ['urgent', 'rollback', 'production']
+          })

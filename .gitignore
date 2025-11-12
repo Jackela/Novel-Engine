@@ -1,0 +1,446 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# UV
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#uv.lock
+
+# poetry
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+#poetry.lock
+
+# pdm
+#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#pdm.lock
+#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
+#   in version control.
+#   https://pdm.fming.dev/latest/usage/project/#working-with-version-control
+.pdm.toml
+.pdm-python
+.pdm-build/
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+#  and can be added to the global gitignore or merged into this file.  For a more nuclear
+#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+#.idea/
+
+# Ruff stuff:
+.ruff_cache/
+
+# PyPI configuration file
+.pypirc
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cursorignore
+.cursorindexingignore
+
+# Node.js (Frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+package-lock.json
+yarn.lock
+.npm
+.yarn/
+.pnp.*
+
+# Frontend Build Output
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/out/
+frontend/.nuxt/
+frontend/.output/
+frontend/.vercel
+frontend/.netlify/
+
+# Database Files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+data/*.db*
+data/api_server.db*
+data/novel_engine.db*
+
+# Docker & Deployment
+.docker/
+docker-compose.override.yml
+.env.docker
+.env.k8s
+
+# Logs and Monitoring
+logs/
+*.log
+*.log.*
+*.jsonl
+*.jsonl.gz
+monitoring/logs/
+grafana/data/
+prometheus/data/
+
+# Temporary and Cache Files
+tmp/
+temp/
+.tmp/
+.temp/
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Testing and Coverage
+test-results/
+playwright-report/
+coverage/
+.nyc_output/
+screenshots/
+videos/
+test_artifacts/
+
+# Backup Files
+*.bak
+*.backup
+*~
+*.orig
+
+# Security and Secrets
+*.key
+*.pem
+*.crt
+secrets/
+.secrets/
+vault/
+
+# ML and AI Models
+models/
+*.model
+*.pkl
+*.h5
+*.onnx
+
+# Performance and Profiling
+*.prof
+*.trace
+memory_profiler/
+
+# Local Development
+.local/
+.dev/
+.development/
+
+# Platform Specific
+platform/cache/
+platform/temp/
+
+# Caching System (Legacy - Remove after refactoring)
+/src/caching/
+
+# BMAD and Tool-Specific Directories
+.bmad-core/
+.claude/commands/
+.cursor/rules/bmad/
+web-bundles/
+
+# Generated Data and Artifacts
+personas/
+quality/
+data/backups/
+campaigns/
+
+# Analysis and Test Reports
+*_ANALYSIS.md
+PYTEST_*.txt
+PYTEST_*.md
+test_campaign.md
+AGENTS.md
+
+# Temporary and Generated Files
+world_state_backup.json
+aioredis.py
+
+# Test Logs
+logs/test_logger*.jsonl
+
+# ===========================================
+# CI/CD Coverage Alignment Project - Temporary Files
+# ===========================================
+
+# Act CLI testing artifacts
+.env.act
+act_validation.log
+act-runner.sh
+act-runner.ps1
+act-artifacts/
+
+# Sensitive information
+.secrets
+.secrets/
+
+# Temporary reports and documentation
+CLEANUP_COMPLETION_REPORT.md
+COMPREHENSIVE_STRESS_SCENARIO_TEST_REPORT.md
+DEPENDENCY_AUDIT_REPORT.md
+DOMAIN_PURITY_REPORT.md
+DYNAMIC_UAT_REPORT.md
+FINAL_ACCEPTANCE_RUN_REPORT.md
+FRONTEND_UI_REFACTORING_COMPLETE.md
+PYDANTIC_V2_MIGRATION_STATUS_REPORT.md
+REFACTORING_SUMMARY.md
+VISUAL_DESIGN_REFACTORING_COMPLIANCE_REPORT.md
+PRODUCTION_READINESS_SCORECARD.json
+database_security_assessment.json
+security_assessment_report.json
+security_audit_report.json
+security_implementation_report.json
+
+# Test screenshots and artifacts
+aria-*.png
+FrontEndDesign.png
+mobile-quickactions-fix-validation-*.png
+
+# Backup directories
+backup_configs_wave3/
+
+# Root-level temporary scripts (keep organized scripts in scripts/ dir)
+cleanup_project.sh
+ai_agent_story_server.py
+ai_enhancement_analysis.py
+# api_server.py  # KEEP: Required by tests
+campaign_brief.py
+# character_factory.py  # KEEP: Backward compatibility interface, required by tests
+chronicler_agent.py
+component_integration_fix.py
+component_integration_test.py
+config_loader.py
+database_security.py
+database_security_test.py
+# director_agent.py  # KEEP: Backward compatibility interface, required by tests
+# director_agent_integrated.py  # KEEP: Required by director_agent.py
+emergent_narrative_orchestrator.py
+# enhanced_multi_agent_bridge.py  # KEEP: Required by tests
+enhanced_simulation_orchestrator.py
+enterprise_integration_fix.py
+enterprise_multi_agent_orchestrator.py
+evaluate_baseline.py
+final-dashboard-validation.js
+find_missing_docstrings.py
+fix_async_tests.py
+high_performance_concurrent_processor.py
+inspect-current-app*.js
+integration_compatibility_fix.py
+integration_test.py
+integration_validation_test.py
+m45_platform_fix_validation.py
+parallel_agent_coordinator.py
+performance_stability_validation.py
+performance_validation_test.py
+phase1_validation_test.py
+playwright_ai_validation_test.py
+production_*.py
+quality_gates.py
+quick_platform_validation.py
+scalability_framework.py
+security_*.py
+shared_types.py
+uat_test_script.py
+validate_platform.py
+validation_test.py
+wave*.py
+
+# Temporary data files (now organized in reports/)
+world_state.json
+nonexistent_world_state.json
+
+# Test results (organized in reports/test-results/)
+reports/test-results/*.xml
+reports/test-results/*.html
+reports/test-results/*.json
+
+# Evidence/screenshots (organized in reports/evidence/)
+reports/evidence/**/*.png
+reports/evidence/**/*.jpg
+reports/evidence/**/*.mp4
+
+# Third-party tool configurations
+.specify/
+
+# Evaluation artifacts
+evaluation/
+
+# Temporary package.json in root (if not a real Node.js project)
+# package.json
+/.codex
+*.pyc
+.venv/
+.env*
+!.env.example
+!.env.local.template
+.venv-run/
+coverage.json

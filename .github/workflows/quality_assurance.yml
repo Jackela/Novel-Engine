@@ -1,0 +1,11 @@
+name: Quality Assurance (Manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  note:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "QA pipeline simplified and manual-only. Use CI workflows for basic tests/build."
+

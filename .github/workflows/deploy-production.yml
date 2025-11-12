@@ -1,0 +1,410 @@
+name: Production Deployment Pipeline
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - staging
+        - production
+      version:
+        description: 'Version to deploy'
+        required: true
+        default: 'latest'
+      skip_tests:
+        description: 'Skip test suite'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  AWS_REGION: us-west-2
+  EKS_CLUSTER_NAME: novel-engine-production-cluster
+
+jobs:
+  # Pre-deployment validation
+  pre-deployment:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy-environment: ${{ steps.set-env.outputs.environment }}
+      image-tag: ${{ steps.set-env.outputs.tag }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set deployment environment
+      id: set-env
+      run: |
+        if [ "${{ github.event_name }}" == "release" ]; then
+          echo "environment=production" >> $GITHUB_OUTPUT
+          echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+        else
+          echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Validate deployment environment
+      run: |
+        ENV="${{ steps.set-env.outputs.environment }}"
+        if [[ ! "$ENV" =~ ^(staging|production)$ ]]; then
+          echo "❌ Invalid environment: $ENV"
+          exit 1
+        fi
+        echo "✅ Deploying to: $ENV"
+
+  # Run tests unless explicitly skipped
+  tests:
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-cov
+
+    - name: Run test suite
+      run: |
+        python -m pytest tests/ -v --cov=src --cov-report=xml
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+
+  # Build and push Docker image
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: [pre-deployment, tests]
+    if: always() && (needs.tests.result == 'success' || needs.tests.result == 'skipped')
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-url: ${{ steps.build.outputs.image-url }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix=sha-
+          type=raw,value=${{ needs.pre-deployment.outputs.image-tag }}
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        target: production
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        provenance: true
+        sbom: true
+        platforms: linux/amd64,linux/arm64
+
+    - name: Generate SBOM
+      uses: anchore/sbom-action@v0
+      with:
+        image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.pre-deployment.outputs.image-tag }}
+        format: spdx-json
+        output-file: sbom.spdx.json
+
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom
+        path: sbom.spdx.json
+
+  # Security scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    steps:
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.pre-deployment.outputs.image-tag }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Check for critical vulnerabilities
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.pre-deployment.outputs.image-tag }}
+        exit-code: '1'
+        severity: 'CRITICAL,HIGH'
+
+  # Infrastructure provisioning
+  infrastructure:
+    runs-on: ubuntu-latest
+    needs: [pre-deployment, build-and-push]
+    environment: ${{ needs.pre-deployment.outputs.deploy-environment }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+
+    - name: Terraform Init
+      run: |
+        cd terraform
+        terraform init \
+          -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" \
+          -backend-config="key=${{ needs.pre-deployment.outputs.deploy-environment }}/terraform.tfstate" \
+          -backend-config="region=${{ env.AWS_REGION }}"
+
+    - name: Terraform Plan
+      run: |
+        cd terraform
+        terraform plan \
+          -var="environment=${{ needs.pre-deployment.outputs.deploy-environment }}" \
+          -var="app_image_tag=${{ needs.pre-deployment.outputs.image-tag }}" \
+          -var="aws_region=${{ env.AWS_REGION }}" \
+          -out=tfplan
+
+    - name: Terraform Apply
+      run: |
+        cd terraform
+        terraform apply -auto-approve tfplan
+
+    - name: Save Terraform outputs
+      run: |
+        cd terraform
+        terraform output -json > terraform-outputs.json
+
+    - name: Upload Terraform outputs
+      uses: actions/upload-artifact@v4
+      with:
+        name: terraform-outputs
+        path: terraform/terraform-outputs.json
+
+  # Kubernetes deployment
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [pre-deployment, build-and-push, security-scan, infrastructure]
+    environment: ${{ needs.pre-deployment.outputs.deploy-environment }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig \
+          --region ${{ env.AWS_REGION }} \
+          --name ${{ env.EKS_CLUSTER_NAME }}
+
+    - name: Download Terraform outputs
+      uses: actions/download-artifact@v4
+      with:
+        name: terraform-outputs
+        path: terraform/
+
+    - name: Setup Kustomize
+      run: |
+        curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+        sudo mv kustomize /usr/local/bin/
+
+    - name: Create namespace
+      run: |
+        kubectl create namespace novel-engine-${{ needs.pre-deployment.outputs.deploy-environment }} --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Deploy secrets
+      run: |
+        # Create database URL secret
+        kubectl create secret generic novel-engine-secrets \
+          --from-literal=database-url="${{ secrets.DATABASE_URL }}" \
+          --from-literal=redis-url="${{ secrets.REDIS_URL }}" \
+          --from-literal=jwt-secret="${{ secrets.JWT_SECRET }}" \
+          --from-literal=gemini-api-key="${{ secrets.GEMINI_API_KEY }}" \
+          --namespace novel-engine-${{ needs.pre-deployment.outputs.deploy-environment }} \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Deploy application
+      run: |
+        cd k8s/overlays/${{ needs.pre-deployment.outputs.deploy-environment }}
+        
+        # Update image tag in kustomization
+        kustomize edit set image \
+          novel-engine=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.pre-deployment.outputs.image-tag }}
+        
+        # Apply manifests
+        kustomize build . | kubectl apply -f -
+
+    - name: Wait for deployment
+      run: |
+        kubectl wait deployment/novel-engine \
+          --for=condition=Available \
+          --timeout=600s \
+          --namespace novel-engine-${{ needs.pre-deployment.outputs.deploy-environment }}
+
+    - name: Run deployment verification
+      run: |
+        # Get pod status
+        kubectl get pods -l app=novel-engine \
+          --namespace novel-engine-${{ needs.pre-deployment.outputs.deploy-environment }}
+        
+        # Check health endpoint
+        kubectl port-forward service/novel-engine 8080:8000 \
+          --namespace novel-engine-${{ needs.pre-deployment.outputs.deploy-environment }} &
+        
+        sleep 10
+        
+        if curl -f http://localhost:8080/health; then
+          echo "✅ Health check passed"
+        else
+          echo "❌ Health check failed"
+          exit 1
+        fi
+
+  # Post-deployment monitoring setup
+  monitoring:
+    runs-on: ubuntu-latest
+    needs: [deploy, pre-deployment]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig \
+          --region ${{ env.AWS_REGION }} \
+          --name ${{ env.EKS_CLUSTER_NAME }}
+
+    - name: Deploy monitoring stack
+      run: |
+        # Deploy Prometheus
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        helm repo update
+        
+        helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+          --namespace monitoring \
+          --create-namespace \
+          --values config/monitoring/prometheus-values.yaml \
+          --wait
+
+    - name: Configure alerting
+      run: |
+        kubectl apply -f config/prometheus/rules/ \
+          --namespace monitoring
+
+    - name: Verify monitoring
+      run: |
+        # Check Prometheus is running
+        kubectl wait deployment/prometheus-server \
+          --for=condition=Available \
+          --timeout=300s \
+          --namespace monitoring || true
+        
+        # Check Grafana is running
+        kubectl wait deployment/prometheus-grafana \
+          --for=condition=Available \
+          --timeout=300s \
+          --namespace monitoring || true
+
+  # Notification and cleanup
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy, monitoring, pre-deployment]
+    if: always()
+    steps:
+    - name: Deployment Status
+      run: |
+        if [ "${{ needs.deploy.result }}" == "success" ]; then
+          echo "✅ Deployment to ${{ needs.pre-deployment.outputs.deploy-environment }} successful"
+          echo "🚀 Application URL: https://novel-engine-${{ needs.pre-deployment.outputs.deploy-environment }}.example.com"
+        else
+          echo "❌ Deployment to ${{ needs.pre-deployment.outputs.deploy-environment }} failed"
+          exit 1
+        fi
+
+    - name: Slack Notification
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+    - name: Create deployment record
+      if: success()
+      run: |
+        echo "Recording deployment in GitHub Deployments API"
+        curl -X POST \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/deployments \
+          -d '{
+            "ref": "${{ github.sha }}",
+            "environment": "${{ needs.pre-deployment.outputs.deploy-environment }}",
+            "description": "Novel Engine deployment",
+            "auto_merge": false,
+            "required_contexts": []
+          }'

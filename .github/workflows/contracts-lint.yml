@@ -1,0 +1,28 @@
+name: Contracts Lint
+
+on:
+  pull_request:
+    paths:
+      - 'specs/001-semantic-cache/contracts/**'
+      - '.github/workflows/contracts-lint.yml'
+  workflow_dispatch:
+
+jobs:
+  lint-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install OpenAPI CLI
+        run: npm i -g @redocly/cli
+
+      - name: Lint Semantic Cache contract
+        run: |
+          redocly lint specs/001-semantic-cache/contracts/cache-api.yaml
+
