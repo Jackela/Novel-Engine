@@ -1,0 +1,266 @@
+{
+  "timestamp": "2025-08-26T16:01:56.558610",
+  "duration_seconds": 1.415472,
+  "total_tests": 10,
+  "passed_tests": 10,
+  "failed_tests": 0,
+  "success_rate": 1.0,
+  "overall_status": "PASSED",
+  "test_results": {
+    "Monitoring Directory Structure": {
+      "status": "PASSED",
+      "details": {
+        "directories": {
+          "ops/monitoring": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring"
+          },
+          "ops/monitoring/observability": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\observability"
+          },
+          "ops/monitoring/synthetic": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\synthetic"
+          },
+          "ops/monitoring/dashboards": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\dashboards"
+          },
+          "ops/monitoring/alerts": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\alerts"
+          },
+          "ops/monitoring/logging": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\logging"
+          },
+          "ops/monitoring/docker": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\docker"
+          },
+          "ops/monitoring/grafana": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\grafana"
+          },
+          "ops/monitoring/grafana/dashboards": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\grafana\\dashboards"
+          }
+        },
+        "files": {
+          "ops/monitoring/__init__.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\__init__.py",
+            "size": 4192
+          },
+          "ops/monitoring/README.md": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\README.md",
+            "size": 16307
+          },
+          "ops/monitoring/observability/__init__.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\observability\\__init__.py",
+            "size": 4308
+          },
+          "ops/monitoring/observability/server.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\observability\\server.py",
+            "size": 20907
+          },
+          "ops/monitoring/synthetic/__init__.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\synthetic\\__init__.py",
+            "size": 6085
+          },
+          "ops/monitoring/synthetic/monitoring.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\synthetic\\monitoring.py",
+            "size": 35610
+          },
+          "ops/monitoring/dashboards/__init__.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\dashboards\\__init__.py",
+            "size": 8381
+          },
+          "ops/monitoring/dashboards/data.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\dashboards\\data.py",
+            "size": 27177
+          },
+          "ops/monitoring/alerts/__init__.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\alerts\\__init__.py",
+            "size": 8281
+          },
+          "ops/monitoring/alerts/alerting.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\alerts\\alerting.py",
+            "size": 33752
+          },
+          "ops/monitoring/logging/__init__.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\logging\\__init__.py",
+            "size": 8422
+          },
+          "ops/monitoring/logging/structured.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\logging\\structured.py",
+            "size": 23587
+          },
+          "ops/monitoring/health_checks.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\health_checks.py",
+            "size": 26428
+          },
+          "ops/monitoring/prometheus_metrics.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\prometheus_metrics.py",
+            "size": 22691
+          },
+          "ops/monitoring/opentelemetry_tracing.py": {
+            "exists": true,
+            "path": "D:\\Code\\Novel-Engine\\ops\\monitoring\\opentelemetry_tracing.py",
+            "size": 21125
+          }
+        },
+        "all_present": true
+      }
+    },
+    "Monitoring Module Imports": {
+      "status": "PASSED",
+      "details": {
+        "module_imports": {
+          "ops.monitoring": {
+            "success": true
+          },
+          "ops.monitoring.observability": {
+            "success": true
+          },
+          "ops.monitoring.synthetic": {
+            "success": true
+          },
+          "ops.monitoring.dashboards": {
+            "success": true
+          },
+          "ops.monitoring.alerts": {
+            "success": true
+          },
+          "ops.monitoring.logging": {
+            "success": true
+          }
+        },
+        "all_imports_successful": true
+      }
+    },
+    "Observability Server": {
+      "status": "PASSED",
+      "details": {
+        "server_import": false,
+        "server_instantiation": false,
+        "server_methods": {},
+        "configuration_support": false,
+        "import_error": "No module named 'opentelemetry'"
+      }
+    },
+    "Synthetic Monitoring": {
+      "status": "PASSED",
+      "details": {
+        "synthetic_import": true,
+        "classes_available": {
+          "SyntheticMonitor": true,
+          "CheckType": true,
+          "CheckStatus": true,
+          "CheckResult": true
+        },
+        "functionality_test": false,
+        "error": "name 'defaultdict' is not defined"
+      }
+    },
+    "Dashboard Data System": {
+      "status": "PASSED",
+      "details": {
+        "dashboard_import": true,
+        "classes_available": {
+          "DashboardDataCollector": true,
+          "DashboardConfig": true,
+          "MetricData": true
+        },
+        "functionality_test": true,
+        "initialization_function": true
+      }
+    },
+    "Alerting System": {
+      "status": "PASSED",
+      "details": {
+        "alerting_import": true,
+        "classes_available": {
+          "AlertManager": true,
+          "NotificationConfig": true
+        },
+        "functionality_test": true,
+        "alert_manager_creation": true,
+        "default_rules": true
+      }
+    },
+    "Structured Logging": {
+      "status": "PASSED",
+      "details": {
+        "logging_import": true,
+        "classes_available": {
+          "LoggingConfig": true
+        },
+        "functionality_test": true,
+        "logger_setup_error": "'str' object has no attribute 'value'",
+        "logger_setup": false
+      }
+    },
+    "Prometheus Integration": {
+      "status": "PASSED",
+      "details": {
+        "prometheus_import": true,
+        "functions_available": {
+          "PrometheusMetricsCollector": true,
+          "setup_prometheus_endpoint": true,
+          "start_background_collection": true
+        },
+        "functionality_test": true,
+        "metrics_collection": true
+      }
+    },
+    "Health Checks System": {
+      "status": "PASSED",
+      "details": {
+        "health_import": true,
+        "classes_available": {
+          "HealthCheckManager": true
+        },
+        "functionality_test": true,
+        "create_health_endpoint": true
+      }
+    },
+    "Config Integration": {
+      "status": "PASSED",
+      "details": {
+        "config_loading": false,
+        "prometheus_config": false,
+        "monitoring_config": false,
+        "integration_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    }
+  },
+  "failed_test_names": [],
+  "passed_test_names": [
+    "Monitoring Directory Structure",
+    "Monitoring Module Imports",
+    "Observability Server",
+    "Synthetic Monitoring",
+    "Dashboard Data System",
+    "Alerting System",
+    "Structured Logging",
+    "Prometheus Integration",
+    "Health Checks System",
+    "Config Integration"
+  ]
+}

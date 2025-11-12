@@ -1,0 +1,12 @@
+{
+  "test_timestamp": "1756006028.363485",
+  "initial_repetition": 0.0983299206141063,
+  "final_repetition": 0.06281120240076013,
+  "improvement_ratio": 0.3612198402227805,
+  "overall_repetition": 0.14416100595147688,
+  "variety_score": 0.6041463414634147,
+  "literary_score": 0.08,
+  "overall_score": 0.49505266452558766,
+  "passed_criteria": 1,
+  "total_criteria": 4
+}

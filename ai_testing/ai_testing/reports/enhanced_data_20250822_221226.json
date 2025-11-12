@@ -1,0 +1,1184 @@
+{
+  "timestamp": "2025-08-22T22:12:26.190880",
+  "blueprint": {
+    "theme": "个体意识与集体智慧",
+    "central_conflict": "时空连续体即将崩塌，需要三人合力修复",
+    "plot_points": [
+      {
+        "stage": "setup",
+        "description": "三位主角在虚空观察站相遇，感受到异常的能量波动",
+        "tension": 0.2
+      },
+      {
+        "stage": "inciting_incident",
+        "description": "发现时空裂缝正在扩大，威胁到所有维度的稳定",
+        "tension": 0.4
+      },
+      {
+        "stage": "rising_action",
+        "description": "寻找古老的量子密钥，遭遇来自其他维度的阻力",
+        "tension": 0.5
+      },
+      {
+        "stage": "midpoint",
+        "description": "发现其中一人与危机有神秘联系，信任开始动摇",
+        "tension": 0.6
+      },
+      {
+        "stage": "crisis",
+        "description": "必须在拯救单一维度和保护所有现实之间做出选择",
+        "tension": 0.8
+      },
+      {
+        "stage": "climax",
+        "description": "三人合力，通过牺牲个体意识来修复时空裂缝",
+        "tension": 0.9
+      },
+      {
+        "stage": "resolution",
+        "description": "时空恢复稳定，但三人的联系永远改变了多元宇宙",
+        "tension": 0.4
+      },
+      {
+        "stage": "denouement",
+        "description": "各自回到自己的维度，但保持着量子纠缠的联系",
+        "tension": 0.2
+      }
+    ]
+  },
+  "characters": [
+    {
+      "name": "量子诗人·墨羽",
+      "personality": [
+        "philosophical",
+        "mysterious",
+        "wise"
+      ],
+      "background": "来自第七维度的意识体，能够感知所有可能性的分支",
+      "motivation": "寻找能够统一所有现实的终极真理",
+      "speech_style": "诗意而深邃，常用比喻和象征",
+      "arc_description": "孤独的探索者 → 学会信任与合作 → 连接的守护者",
+      "relationships": {
+        "时空织者·凌风": "从怀疑到信任",
+        "虚空行者·星尘": "发现共同使命"
+      }
+    },
+    {
+      "name": "时空织者·凌风",
+      "personality": [
+        "analytical",
+        "determined",
+        "protective"
+      ],
+      "background": "掌握时间编织技术的古老守护者",
+      "motivation": "修复被撕裂的时空连续体",
+      "speech_style": "理性而准确，偶尔流露情感",
+      "arc_description": "理性的分析者 → 接受直觉与情感 → 平衡的智者",
+      "relationships": {
+        "量子诗人·墨羽": "从冷漠到关心"
+      }
+    },
+    {
+      "name": "虚空行者·星尘",
+      "personality": [
+        "curious",
+        "brave",
+        "emotional"
+      ],
+      "background": "能在维度间自由穿梭的探索者",
+      "motivation": "理解不同维度生命的本质联系",
+      "speech_style": "充满好奇和热情，富有感染力",
+      "arc_description": "充满疑虑的旁观者 → 承担责任与使命 → 坚定的行动者",
+      "relationships": {
+        "量子诗人·墨羽": "找到精神导师"
+      }
+    }
+  ],
+  "events": [
+    {
+      "timestamp": 1755864746.1877904,
+      "character": "Narrator",
+      "event_type": "scene_change",
+      "content": "量子花园的中心",
+      "emotion": null,
+      "location": "量子花园的中心",
+      "plot_stage": "setup",
+      "tension_level": 0.2,
+      "tags": [
+        "opening"
+      ]
+    },
+    {
+      "timestamp": 1755864746.187927,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "在实相的深处，我看到了本质",
+      "emotion": "hopeful",
+      "location": "虚空观察站的控制室",
+      "plot_stage": "setup",
+      "tension_level": 0.2,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1879914,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...关于联结，我有了新的理解...",
+      "emotion": "peaceful",
+      "location": "虚空观察站的控制室",
+      "plot_stage": "setup",
+      "tension_level": 0.2,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.188033,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "如果永恒只是{illusion}，那么{truth}在哪里？",
+      "emotion": "contemplative",
+      "location": "虚空观察站的控制室",
+      "plot_stage": "setup",
+      "tension_level": 0.2,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1880696,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...在觉察的深处，我看到了领悟...",
+      "emotion": "hopeful",
+      "location": "虚空观察站的控制室",
+      "plot_stage": "setup",
+      "tension_level": 0.2,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1880796,
+      "character": "时空织者·凌风",
+      "event_type": "action",
+      "content": "时空织者·凌风快速分析着听到的信息",
+      "emotion": null,
+      "location": "虚空观察站的控制室",
+      "plot_stage": "setup",
+      "tension_level": 0.2,
+      "tags": [
+        "reaction"
+      ]
+    },
+    {
+      "timestamp": 1755864746.188122,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "关于时空，我有了新的理解",
+      "emotion": "peaceful",
+      "location": "虚空观察站的控制室",
+      "plot_stage": "setup",
+      "tension_level": 0.2,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1881597,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...在本质的深处，我看到了真相...",
+      "emotion": "peaceful",
+      "location": "虚空观察站的控制室",
+      "plot_stage": "setup",
+      "tension_level": 0.2,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.188198,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...关于瞬间，我有了新的理解...",
+      "emotion": "hopeful",
+      "location": "虚空观察站的控制室",
+      "plot_stage": "setup",
+      "tension_level": 0.2,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1882367,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...关于明悟，我有了新的理解...",
+      "emotion": "contemplative",
+      "location": "虚空观察站的控制室",
+      "plot_stage": "setup",
+      "tension_level": 0.2,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1882641,
+      "character": "时空织者·凌风",
+      "event_type": "discovery",
+      "content": "时空织者·凌风破译了量子密码",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "inciting_incident",
+      "tension_level": 0.35,
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "timestamp": 1755864746.188288,
+      "character": "量子诗人·墨羽",
+      "event_type": "discovery",
+      "content": "量子诗人·墨羽破译了量子密码",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "inciting_incident",
+      "tension_level": 0.35,
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1883125,
+      "character": "虚空行者·星尘",
+      "event_type": "discovery",
+      "content": "虚空行者·星尘破译了量子密码",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "inciting_incident",
+      "tension_level": 0.35,
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1883352,
+      "character": "时空织者·凌风",
+      "event_type": "discovery",
+      "content": "时空织者·凌风破译了量子密码",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "inciting_incident",
+      "tension_level": 0.35,
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1883578,
+      "character": "时空织者·凌风",
+      "event_type": "discovery",
+      "content": "时空织者·凌风破译了量子密码",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "inciting_incident",
+      "tension_level": 0.35,
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1883798,
+      "character": "量子诗人·墨羽",
+      "event_type": "discovery",
+      "content": "量子诗人·墨羽破译了量子密码",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "inciting_incident",
+      "tension_level": 0.35,
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1884007,
+      "character": "虚空行者·星尘",
+      "event_type": "discovery",
+      "content": "虚空行者·星尘发现了一个古老的装置",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "inciting_incident",
+      "tension_level": 0.35,
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1884272,
+      "character": "量子诗人·墨羽",
+      "event_type": "conflict",
+      "content": "量子诗人·墨羽质疑时空织者·凌风的决定",
+      "emotion": null,
+      "location": "记忆图书馆",
+      "plot_stage": "rising_action",
+      "tension_level": 0.5395207256819681,
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1884341,
+      "character": "Narrator",
+      "event_type": "scene_change",
+      "content": "空间扭曲，将众人从量子花园的中心传送到记忆图书馆",
+      "emotion": null,
+      "location": "记忆图书馆",
+      "plot_stage": null,
+      "tension_level": 0.5,
+      "tags": [
+        "transition"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1884625,
+      "character": "量子诗人·墨羽",
+      "event_type": "conflict",
+      "content": "量子诗人·墨羽质疑时空织者·凌风的决定",
+      "emotion": null,
+      "location": "记忆图书馆",
+      "plot_stage": "rising_action",
+      "tension_level": 0.5395207256819681,
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1885056,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "真相正在崩塌",
+      "emotion": "focused",
+      "location": "记忆图书馆",
+      "plot_stage": "rising_action",
+      "tension_level": 0.5395207256819681,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.188513,
+      "character": "时空织者·凌风",
+      "event_type": "action",
+      "content": "时空织者·凌风的表情变得专注",
+      "emotion": null,
+      "location": "记忆图书馆",
+      "plot_stage": "rising_action",
+      "tension_level": 0.5395207256819681,
+      "tags": [
+        "reaction"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1885374,
+      "character": "量子诗人·墨羽",
+      "event_type": "conflict",
+      "content": "量子诗人·墨羽质疑时空织者·凌风的决定",
+      "emotion": null,
+      "location": "记忆图书馆",
+      "plot_stage": "rising_action",
+      "tension_level": 0.5395207256819681,
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "timestamp": 1755864746.188591,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...沉思片刻后，关于本质，我有了新的理解...",
+      "emotion": "contemplative",
+      "location": "记忆图书馆",
+      "plot_stage": "rising_action",
+      "tension_level": 0.5395207256819681,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1885972,
+      "character": "虚空行者·星尘",
+      "event_type": "action",
+      "content": "微微点头，虚空行者·星尘似乎理解了什么",
+      "emotion": null,
+      "location": "记忆图书馆",
+      "plot_stage": "rising_action",
+      "tension_level": 0.5395207256819681,
+      "tags": [
+        "reaction"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1889532,
+      "character": "量子诗人·墨羽",
+      "event_type": "conflict",
+      "content": "关于如何处理危机，量子诗人·墨羽和时空织者·凌风产生分歧",
+      "emotion": null,
+      "location": "记忆图书馆",
+      "plot_stage": "rising_action",
+      "tension_level": 0.5395207256819681,
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "timestamp": 1755864746.188999,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...好奇地，实相与{space}的交织点上，{revelation}正在显现...",
+      "emotion": "curious",
+      "location": "记忆图书馆",
+      "plot_stage": "rising_action",
+      "tension_level": 0.5395207256819681,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.189024,
+      "character": "量子诗人·墨羽",
+      "event_type": "conflict",
+      "content": "量子诗人·墨羽发现时空织者·凌风隐瞒了重要信息",
+      "emotion": null,
+      "location": "记忆图书馆",
+      "plot_stage": "rising_action",
+      "tension_level": 0.5395207256819681,
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1890624,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...在联结的深处，我看到了联结...",
+      "emotion": "curious",
+      "location": null,
+      "plot_stage": "midpoint",
+      "tension_level": 0.5040328745934636,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1891003,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "在共鸣的深处，我看到了共鸣",
+      "emotion": "contemplative",
+      "location": null,
+      "plot_stage": "midpoint",
+      "tension_level": 0.5040328745934636,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1891067,
+      "character": "虚空行者·星尘",
+      "event_type": "action",
+      "content": "虚空行者·星尘能感受到话语中的深层含义",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "midpoint",
+      "tension_level": 0.5040328745934636,
+      "tags": [
+        "reaction"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1891508,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...沉思片刻后，关于时空，我有了新的理解...",
+      "emotion": "contemplative",
+      "location": null,
+      "plot_stage": "midpoint",
+      "tension_level": 0.5040328745934636,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.189156,
+      "character": "虚空行者·星尘",
+      "event_type": "action",
+      "content": "虚空行者·星尘能感受到话语中的深层含义",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "midpoint",
+      "tension_level": 0.5040328745934636,
+      "tags": [
+        "reaction"
+      ]
+    },
+    {
+      "timestamp": 1755864746.189203,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "关于明悟，我有了新的理解",
+      "emotion": "focused",
+      "location": null,
+      "plot_stage": "midpoint",
+      "tension_level": 0.5040328745934636,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1892078,
+      "character": "时空织者·凌风",
+      "event_type": "action",
+      "content": "时空织者·凌风的表情变得专注",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "midpoint",
+      "tension_level": 0.5040328745934636,
+      "tags": [
+        "reaction"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1892495,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...沉思片刻后，关于永恒，我有了新的理解...",
+      "emotion": "contemplative",
+      "location": null,
+      "plot_stage": "midpoint",
+      "tension_level": 0.5040328745934636,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1892862,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...领悟与{space}的交织点上，{revelation}正在显现...",
+      "emotion": "curious",
+      "location": null,
+      "plot_stage": "midpoint",
+      "tension_level": 0.5040328745934636,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1893282,
+      "character": "量子诗人·墨羽",
+      "event_type": "dialogue",
+      "content": "...沉思片刻后，关于真相，我有了新的理解...",
+      "emotion": "contemplative",
+      "location": null,
+      "plot_stage": "midpoint",
+      "tension_level": 0.5040328745934636,
+      "tags": [
+        "dialogue"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1893592,
+      "character": "Narrator",
+      "event_type": "crisis",
+      "content": "时空裂缝即将吞噬一切",
+      "emotion": null,
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "crisis"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1893675,
+      "character": "Narrator",
+      "event_type": "scene_change",
+      "content": "时空裂缝闪现，维度交汇点的景象浮现",
+      "emotion": null,
+      "location": "维度交汇点",
+      "plot_stage": null,
+      "tension_level": 0.5,
+      "tags": [
+        "transition"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1893954,
+      "character": "Narrator",
+      "event_type": "crisis",
+      "content": "只有一个人能进入核心修复系统",
+      "emotion": null,
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "crisis"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1894205,
+      "character": "Narrator",
+      "event_type": "crisis",
+      "content": "时空裂缝即将吞噬一切",
+      "emotion": null,
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "crisis"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1894248,
+      "character": "量子诗人·墨羽",
+      "event_type": "thought",
+      "content": "也许答案一直在我们面前",
+      "emotion": "contemplative",
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1894498,
+      "character": "Narrator",
+      "event_type": "crisis",
+      "content": "量子病毒开始感染主系统",
+      "emotion": null,
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "crisis"
+      ]
+    },
+    {
+      "timestamp": 1755864746.189453,
+      "character": "虚空行者·星尘",
+      "event_type": "thought",
+      "content": "也许答案一直在我们面前",
+      "emotion": "contemplative",
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1894782,
+      "character": "Narrator",
+      "event_type": "crisis",
+      "content": "只有一个人能进入核心修复系统",
+      "emotion": null,
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "crisis"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1894808,
+      "character": "虚空行者·星尘",
+      "event_type": "thought",
+      "content": "这种感觉...似曾相识",
+      "emotion": "contemplative",
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.189506,
+      "character": "Narrator",
+      "event_type": "crisis",
+      "content": "只有一个人能进入核心修复系统",
+      "emotion": null,
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "crisis"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1895084,
+      "character": "时空织者·凌风",
+      "event_type": "thought",
+      "content": "也许答案一直在我们面前",
+      "emotion": "contemplative",
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1895318,
+      "character": "Narrator",
+      "event_type": "crisis",
+      "content": "量子病毒开始感染主系统",
+      "emotion": null,
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "crisis"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1895344,
+      "character": "量子诗人·墨羽",
+      "event_type": "thought",
+      "content": "这种感觉...似曾相识",
+      "emotion": "contemplative",
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1895587,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "启动了古老的防御系统",
+      "emotion": null,
+      "location": "维度交汇点",
+      "plot_stage": "crisis",
+      "tension_level": 0.6529952527009761,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1895776,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "他们穿越了时空裂缝",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "climax",
+      "tension_level": 0.7699808845992969,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1895957,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "三人合力激活了量子传送门",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "climax",
+      "tension_level": 0.7699808845992969,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1895986,
+      "character": "量子诗人·墨羽",
+      "event_type": "thought",
+      "content": "这比预想的更加危险...",
+      "emotion": "contemplative",
+      "location": null,
+      "plot_stage": "climax",
+      "tension_level": 0.7699808845992969,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1896179,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "三人合力激活了量子传送门",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "climax",
+      "tension_level": 0.7699808845992969,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1896355,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "启动了古老的防御系统",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "climax",
+      "tension_level": 0.7699808845992969,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1896527,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "三人合力激活了量子传送门",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "climax",
+      "tension_level": 0.7699808845992969,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1896553,
+      "character": "虚空行者·星尘",
+      "event_type": "thought",
+      "content": "我能感受到命运的重量",
+      "emotion": "contemplative",
+      "location": null,
+      "plot_stage": "climax",
+      "tension_level": 0.7699808845992969,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1896727,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "启动了古老的防御系统",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "climax",
+      "tension_level": 0.7699808845992969,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1896749,
+      "character": "时空织者·凌风",
+      "event_type": "thought",
+      "content": "这比预想的更加危险...",
+      "emotion": "contemplative",
+      "location": null,
+      "plot_stage": "climax",
+      "tension_level": 0.7699808845992969,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.189692,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "他们穿越了时空裂缝",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "climax",
+      "tension_level": 0.7699808845992969,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1897106,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "三人合力激活了量子传送门",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "resolution",
+      "tension_level": 0.95,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1897151,
+      "character": "Narrator",
+      "event_type": "scene_change",
+      "content": "空间扭曲，将众人从维度交汇点传送到量子花园的中心",
+      "emotion": null,
+      "location": "量子花园的中心",
+      "plot_stage": null,
+      "tension_level": 0.5,
+      "tags": [
+        "transition"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1897333,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "启动了古老的防御系统",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "resolution",
+      "tension_level": 0.95,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1897523,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "启动了古老的防御系统",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "resolution",
+      "tension_level": 0.95,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1897697,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "三人合力激活了量子传送门",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "resolution",
+      "tension_level": 0.95,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1897871,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "启动了古老的防御系统",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "resolution",
+      "tension_level": 0.95,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1898057,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "启动了古老的防御系统",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "resolution",
+      "tension_level": 0.95,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.189823,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "他们穿越了时空裂缝",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "resolution",
+      "tension_level": 0.95,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1898398,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "启动了古老的防御系统",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "resolution",
+      "tension_level": 0.95,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.189858,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "他们穿越了时空裂缝",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.9,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1898603,
+      "character": "时空织者·凌风",
+      "event_type": "thought",
+      "content": "我能感受到命运的重量",
+      "emotion": "contemplative",
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.9,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1898787,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "启动了古老的防御系统",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.9,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1899009,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "他们穿越了时空裂缝",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.9,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.189903,
+      "character": "虚空行者·星尘",
+      "event_type": "thought",
+      "content": "时间不多了，必须做出选择",
+      "emotion": "contemplative",
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.9,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1899214,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "他们穿越了时空裂缝",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.9,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.189941,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "他们穿越了时空裂缝",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.9,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1899433,
+      "character": "时空织者·凌风",
+      "event_type": "thought",
+      "content": "我能感受到命运的重量",
+      "emotion": "contemplative",
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.9,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1899614,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "他们穿越了时空裂缝",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.9,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1899638,
+      "character": "时空织者·凌风",
+      "event_type": "thought",
+      "content": "我能感受到命运的重量",
+      "emotion": "contemplative",
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.9,
+      "tags": [
+        "internal"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1899824,
+      "character": "Narrator",
+      "event_type": "action",
+      "content": "三人合力激活了量子传送门",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.9,
+      "tags": [
+        "action"
+      ]
+    },
+    {
+      "timestamp": 1755864746.1899853,
+      "character": "Narrator",
+      "event_type": "description",
+      "content": "虚空观察站的灯光渐渐暗淡，但三位英雄的联系已经永远改变了多元宇宙的命运。",
+      "emotion": null,
+      "location": null,
+      "plot_stage": "denouement",
+      "tension_level": 0.1,
+      "tags": [
+        "ending"
+      ]
+    }
+  ],
+  "statistics": {
+    "total_events": 83,
+    "unique_dialogues": 18,
+    "plot_stages_covered": 8,
+    "average_tension": 0.6045094353477105
+  }
+}

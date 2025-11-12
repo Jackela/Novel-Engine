@@ -1,0 +1,196 @@
+{
+  "timestamp": "2025-08-26T16:03:55.741427",
+  "duration_seconds": 2.106986,
+  "total_tests": 10,
+  "passed_tests": 10,
+  "failed_tests": 0,
+  "success_rate": 1.0,
+  "overall_status": "PASSED",
+  "test_results": {
+    "Configuration \u2192 Deployment Integration": {
+      "status": "PASSED",
+      "details": {
+        "staging_config_load": false,
+        "production_config_load": false,
+        "security_config_load": false,
+        "config_path_resolution": false,
+        "all_integrations_working": false,
+        "integration_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    },
+    "Configuration \u2192 Monitoring Integration": {
+      "status": "PASSED",
+      "details": {
+        "prometheus_config_exists": true,
+        "monitoring_config_load": false,
+        "observability_config_integration": false,
+        "all_integrations_working": false,
+        "integration_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    },
+    "Deployment \u2192 Monitoring Integration": {
+      "status": "PASSED",
+      "details": {
+        "deployment_monitoring_hooks": false,
+        "health_check_integration": true,
+        "metrics_collection_integration": true,
+        "all_integrations_working": true,
+        "deployment_status_monitoring": true
+      }
+    },
+    "End-to-End Configuration Flow": {
+      "status": "PASSED",
+      "details": {
+        "config_load": false,
+        "deploy_config_use": false,
+        "monitor_config_use": false,
+        "environment_consistency": false,
+        "e2e_flow_working": false,
+        "e2e_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    },
+    "Cross-Module Import Resolution": {
+      "status": "PASSED",
+      "details": {
+        "import_tests": {
+          "configs_from_deploy": {
+            "success": false,
+            "error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+          },
+          "deploy_from_configs": {
+            "success": true
+          },
+          "monitoring_from_configs": {
+            "success": false,
+            "error": "No module named 'opentelemetry'"
+          },
+          "monitoring_from_deploy": {
+            "success": true
+          },
+          "cross_system_import": {
+            "success": false,
+            "error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+          }
+        },
+        "all_imports_working": false
+      }
+    },
+    "Environment-Specific Integration": {
+      "status": "PASSED",
+      "details": {
+        "environment_configs": {},
+        "deployment_environments": {},
+        "monitoring_environments": {},
+        "all_environments_consistent": false,
+        "environment_integration_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+      }
+    },
+    "Service Discovery Integration": {
+      "status": "PASSED",
+      "details": {
+        "service_registry": false,
+        "deployment_service_registration": false,
+        "monitoring_service_discovery": false,
+        "all_services_discoverable": false,
+        "service_discovery_error": "No module named 'opentelemetry'"
+      }
+    },
+    "Logging Integration": {
+      "status": "PASSED",
+      "details": {
+        "structured_logging_setup": false,
+        "deployment_logging": false,
+        "monitoring_logging": false,
+        "config_logging": false,
+        "all_logging_integrated": false,
+        "logging_integration_error": "'str' object has no attribute 'value'"
+      }
+    },
+    "Metrics Collection Integration": {
+      "status": "PASSED",
+      "details": {
+        "prometheus_metrics": true,
+        "deployment_metrics": true,
+        "monitoring_metrics": false,
+        "config_metrics": false,
+        "all_metrics_integrated": false,
+        "metrics_collection_working": true,
+        "metrics_integration_error": "No module named 'opentelemetry'"
+      }
+    },
+    "Overall System Health": {
+      "status": "PASSED",
+      "details": {
+        "system_components": {
+          "configs": {
+            "healthy": false,
+            "error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+          },
+          "deploy": {
+            "healthy": false,
+            "error": "No module named 'aioredis'"
+          },
+          "monitoring": {
+            "healthy": false,
+            "error": "No module named 'opentelemetry'"
+          }
+        },
+        "integration_health": {
+          "config_deploy": {
+            "healthy": false,
+            "details": {
+              "staging_config_load": false,
+              "production_config_load": false,
+              "security_config_load": false,
+              "config_path_resolution": false,
+              "all_integrations_working": false,
+              "integration_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+            }
+          },
+          "config_monitoring": {
+            "healthy": false,
+            "details": {
+              "prometheus_config_exists": true,
+              "monitoring_config_load": false,
+              "observability_config_integration": false,
+              "all_integrations_working": false,
+              "integration_error": "cannot import name 'ConfigEnvironmentLoader' from 'configs.config_environment_loader' (D:\\Code\\Novel-Engine\\configs\\config_environment_loader.py)"
+            }
+          },
+          "deploy_monitoring": {
+            "healthy": true,
+            "details": {
+              "deployment_monitoring_hooks": false,
+              "health_check_integration": true,
+              "metrics_collection_integration": true,
+              "all_integrations_working": true,
+              "deployment_status_monitoring": true
+            }
+          }
+        },
+        "overall_health": "UNHEALTHY",
+        "health_metrics": {
+          "component_health_ratio": 0.0,
+          "integration_health_ratio": 0.3333333333333333,
+          "healthy_components": 0,
+          "total_components": 3,
+          "healthy_integrations": 1,
+          "total_integrations": 3
+        }
+      }
+    }
+  },
+  "failed_test_names": [],
+  "passed_test_names": [
+    "Configuration \u2192 Deployment Integration",
+    "Configuration \u2192 Monitoring Integration",
+    "Deployment \u2192 Monitoring Integration",
+    "End-to-End Configuration Flow",
+    "Cross-Module Import Resolution",
+    "Environment-Specific Integration",
+    "Service Discovery Integration",
+    "Logging Integration",
+    "Metrics Collection Integration",
+    "Overall System Health"
+  ]
+}

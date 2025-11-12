@@ -1,0 +1,52 @@
+{
+  "timestamp": "2025-08-23T11:30:58.568430",
+  "tests": [
+    {
+      "iteration": 1,
+      "character_balance": {
+        "星际游侠·逐光": 10,
+        "量子贤者·静渊": 10,
+        "维度舞者·幻音": 12
+      },
+      "dialogue_variety": 0.8181818181818182,
+      "repetition_ratio": 0.5263157894736843,
+      "event_types": 3,
+      "overall_score": 81.33069675477374,
+      "novel_length": 1839
+    },
+    {
+      "iteration": 2,
+      "character_balance": {
+        "星际游侠·逐光": 10,
+        "量子贤者·静渊": 10,
+        "维度舞者·幻音": 12
+      },
+      "dialogue_variety": 0.8181818181818182,
+      "repetition_ratio": 0.5263157894736843,
+      "event_types": 3,
+      "overall_score": 81.12473625842703,
+      "novel_length": 1884
+    },
+    {
+      "iteration": 3,
+      "character_balance": {
+        "星际游侠·逐光": 9,
+        "量子贤者·静渊": 11,
+        "维度舞者·幻音": 12
+      },
+      "dialogue_variety": 0.8181818181818182,
+      "repetition_ratio": 0.525,
+      "event_types": 4,
+      "overall_score": 84.82292422058536,
+      "novel_length": 1908
+    }
+  ],
+  "summary": {
+    "average_score": 82.42611907792872,
+    "average_dialogue_variety": 0.8181818181818182,
+    "average_repetition": 0.5258771929824562,
+    "average_event_types": 3.3333333333333335
+  },
+  "criteria_passed": 3,
+  "total_criteria": 5
+}
