@@ -1,0 +1,43 @@
+character:
+  name: "Jordan Kim"
+  age: 35
+  origin: "Industrial Colony"
+  faction: "Galactic Engineering Corps"
+  rank: "Senior Engineer"
+  specialization: "Systems Engineering"
+
+combat_stats:
+  marksmanship: 6
+  melee: 5
+  tactics: 8
+  leadership: 7
+  endurance: 7
+  pilot: 6
+
+equipment:
+  primary_weapon: "Engineering Tool (Multi-use)"
+  secondary_weapon: "Plasma Cutter"
+  armor: "Engineering Exosuit"
+  special_gear:
+    - "Advanced Toolkit"
+    - "Diagnostic Scanner"
+    - "Fabrication Unit"
+
+psychological_profile:
+  loyalty: 8
+  aggression: 4
+  caution: 8
+  morale: 7
+  corruption_resistance: 7
+
+specializations:
+  - "Systems Engineering"
+  - "Technology Integration"
+  - "Equipment Maintenance"
+
+relationships:
+  allies:
+    - "Engineering Corps"
+  enemies:
+    - "Equipment Saboteurs"
+  mentor: "Chief Engineer Lisa Chang"
