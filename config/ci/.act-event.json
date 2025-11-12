@@ -1,0 +1,42 @@
+{
+  "ref": "refs/heads/main",
+  "before": "0000000000000000000000000000000000000000",
+  "after": "8abaf85fcaedcaf367084d3e76cb85547b96e726",
+  "repository": {
+    "id": 1,
+    "name": "Novel-Engine",
+    "full_name": "Jackela/Novel-Engine",
+    "owner": {
+      "name": "Jackela",
+      "login": "Jackela",
+      "type": "User"
+    },
+    "html_url": "https://github.com/Jackela/Novel-Engine",
+    "description": "StoryForge AI Interactive Story Engine",
+    "private": false,
+    "default_branch": "main"
+  },
+  "pusher": {
+    "name": "local-dev",
+    "email": "dev@localhost"
+  },
+  "sender": {
+    "login": "local-dev",
+    "type": "User"
+  },
+  "head_commit": {
+    "id": "8abaf85fcaedcaf367084d3e76cb85547b96e726",
+    "message": "Local ACT test run",
+    "timestamp": "2025-11-02T03:09:00+11:00",
+    "author": {
+      "name": "Local Developer",
+      "email": "dev@localhost"
+    },
+    "committer": {
+      "name": "Local Developer",
+      "email": "dev@localhost"
+    }
+  },
+  "commits": [],
+  "compare": ""
+}

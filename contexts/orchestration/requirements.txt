@@ -1,0 +1,43 @@
+# Novel Engine Turn Orchestration Service Dependencies
+
+# FastAPI and ASGI server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Pydantic for data validation
+pydantic==2.4.2
+
+# HTTP client for cross-context integration
+httpx==0.25.0
+
+# UUID and datetime utilities
+python-dateutil==2.8.2
+
+# Decimal arithmetic
+# (built-in module, no installation needed)
+
+# Logging and monitoring
+structlog==23.2.0
+
+# Prometheus metrics collection
+prometheus-client==0.19.0
+
+# OpenTelemetry distributed tracing
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-instrumentation-fastapi==0.42b0
+opentelemetry-instrumentation-requests==0.42b0
+opentelemetry-exporter-jaeger-thrift==1.21.0
+opentelemetry-exporter-otlp-proto-grpc==1.21.0
+
+# Optional: Development and testing dependencies
+# pytest==7.4.3
+# pytest-asyncio==0.21.1
+# black==23.10.1
+# flake8==6.1.0
+# mypy==1.6.1
+
+# Optional: Production dependencies
+# gunicorn==21.2.0  # Alternative WSGI server
+# prometheus-client==0.17.1  # Metrics collection
+# sentry-sdk[fastapi]==1.38.0  # Error tracking

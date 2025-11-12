@@ -1,0 +1,162 @@
+groups:
+  - name: novel-engine.rules
+    rules:
+      # Application Health Rules
+      - alert: NovelEngineDown
+        expr: up{job="novel-engine"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: novel-engine
+        annotations:
+          summary: "Novel Engine application is down"
+          description: "Novel Engine application has been down for more than 1 minute"
+
+      - alert: NovelEngineHighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="novel-engine"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: novel-engine
+        annotations:
+          summary: "Novel Engine high response latency"
+          description: "95th percentile latency is {{ $value }}s for the past 5 minutes"
+
+      - alert: NovelEngineHighErrorRate
+        expr: rate(http_requests_total{job="novel-engine",status=~"5.."}[5m]) / rate(http_requests_total{job="novel-engine"}[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+          service: novel-engine
+        annotations:
+          summary: "Novel Engine high error rate"
+          description: "Error rate is {{ $value | humanizePercentage }} for the past 5 minutes"
+
+      # Resource Usage Rules
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes{name="novel-engine-app"} / container_spec_memory_limit_bytes{name="novel-engine-app"}) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: novel-engine
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 90% for {{ $labels.name }}"
+
+      - alert: HighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{name="novel-engine-app"}[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: novel-engine
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80% for {{ $labels.name }}"
+
+      # Database Rules
+      - alert: DatabaseConnectionsHigh
+        expr: sqlite_connections{job="novel-engine"} > 50
+        for: 2m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "High database connections"
+          description: "Database connections are {{ $value }} (threshold: 50)"
+
+      # Redis Rules
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been down for more than 1 minute"
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis memory usage is {{ $value | humanizePercentage }}"
+
+      # System Rules
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes{fstype!="tmpfs"} - node_filesystem_free_bytes{fstype!="tmpfs"}) / node_filesystem_size_bytes{fstype!="tmpfs"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High disk usage"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.device }}"
+
+      - alert: SystemLoadHigh
+        expr: node_load1 > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High system load"
+          description: "System load is {{ $value }} (1min average)"
+
+  - name: novel-engine.performance
+    rules:
+      # Performance Metrics
+      - record: novel_engine:request_rate_5m
+        expr: rate(http_requests_total{job="novel-engine"}[5m])
+
+      - record: novel_engine:error_rate_5m
+        expr: rate(http_requests_total{job="novel-engine",status=~"5.."}[5m]) / rate(http_requests_total{job="novel-engine"}[5m])
+
+      - record: novel_engine:latency_95p_5m
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="novel-engine"}[5m]))
+
+      - record: novel_engine:latency_50p_5m
+        expr: histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job="novel-engine"}[5m]))
+
+      # Resource Usage Records
+      - record: novel_engine:memory_usage_percent
+        expr: (container_memory_usage_bytes{name="novel-engine-app"} / container_spec_memory_limit_bytes{name="novel-engine-app"}) * 100
+
+      - record: novel_engine:cpu_usage_percent
+        expr: rate(container_cpu_usage_seconds_total{name="novel-engine-app"}[5m]) * 100
+
+  - name: novel-engine.business
+    rules:
+      # Business Logic Metrics
+      - alert: LowUserActivity
+        expr: rate(http_requests_total{job="novel-engine",endpoint=~"/api/.*"}[1h]) < 1
+        for: 30m
+        labels:
+          severity: info
+          service: novel-engine
+        annotations:
+          summary: "Low user activity detected"
+          description: "API request rate is {{ $value }} requests/second over the past hour"
+
+      - alert: HighNarrativeGenerationLatency
+        expr: histogram_quantile(0.95, rate(narrative_generation_duration_seconds_bucket[5m])) > 5
+        for: 3m
+        labels:
+          severity: warning
+          service: novel-engine
+        annotations:
+          summary: "High narrative generation latency"
+          description: "95th percentile narrative generation time is {{ $value }}s"
+
+      - alert: FailedNarrativeGenerations
+        expr: rate(narrative_generation_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: novel-engine
+        annotations:
+          summary: "Failed narrative generations"
+          description: "Narrative generation error rate is {{ $value }} errors/second"

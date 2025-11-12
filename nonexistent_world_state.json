@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "created": "2025-11-12T16:06:44.539202",
+  "locations": {
+    "default_area": {
+      "name": "Unknown Region",
+      "description": "A mysterious area awaiting exploration",
+      "threat_level": "moderate",
+      "faction_control": "contested",
+      "resources": [
+        "unknown"
+      ],
+      "notable_features": []
+    }
+  },
+  "global_events": [],
+  "faction_status": {
+    "alliance_network": {
+      "influence": 0.4,
+      "activity": "moderate"
+    },
+    "entropy_cult": {
+      "influence": 0.2,
+      "activity": "low"
+    },
+    "freewind_collective": {
+      "influence": 0.2,
+      "activity": "moderate"
+    },
+    "other": {
+      "influence": 0.2,
+      "activity": "low"
+    }
+  },
+  "environmental_state": {
+    "weather": "stable",
+    "visibility": "normal",
+    "hazards": []
+  },
+  "last_saved": "2025-11-12T16:06:44.539217",
+  "world_state_tracker": {
+    "discovered_clues": {},
+    "environmental_changes": {},
+    "agent_discoveries": {},
+    "temporal_markers": {},
+    "investigation_history": []
+  }
+}

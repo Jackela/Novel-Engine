@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Novel Engine API</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 40px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; }
+        .nav { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+        .nav a { text-decoration: none; padding: 10px 15px; background: #f8f9fa; border-radius: 5px; color: #333; }
+        .nav a:hover { background: #e9ecef; }
+        .section { margin-bottom: 40px; }
+        .endpoint { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+        .endpoint-header { background: #f8f9fa; padding: 15px; border-bottom: 1px solid #ddd; }
+        .endpoint-content { padding: 15px; }
+        .method { display: inline-block; padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; margin-right: 10px; }
+        .method.get { background: #28a745; }
+        .method.post { background: #007bff; }
+        .method.put { background: #ffc107; color: #333; }
+        .method.delete { background: #dc3545; }
+        .code-example { margin: 15px 0; }
+        .tab-container { border: 1px solid #ddd; border-radius: 5px; }
+        .tab-headers { display: flex; background: #f8f9fa; }
+        .tab-header { padding: 10px 15px; cursor: pointer; border-right: 1px solid #ddd; }
+        .tab-header.active { background: white; border-bottom: 1px solid white; }
+        .tab-content { display: none; padding: 15px; }
+        .tab-content.active { display: block; }
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 30px 0; }
+        .feature-card { padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ title }}</h1>
+            <p>{{ description }}</p>
+            {% if version %}
+                <span style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px;">v{{ version }}</span>
+            {% endif %}
+        </div>
+        
+        <div class="nav">
+            <a href="#overview">Overview</a>
+            <a href="#authentication">Authentication</a>
+            <a href="#endpoints">API Endpoints</a>
+            <a href="#examples">Code Examples</a>
+            <a href="#best-practices">Best Practices</a>
+            <a href="#sdk">SDK & Tools</a>
+        </div>
+        
+        <div id="overview" class="section">
+            <h2>Overview</h2>
+            <p>{{ overview }}</p>
+            
+            <div class="features">
+                {% for feature in features %}
+                <div class="feature-card">
+                    <h3>{{ feature.title }}</h3>
+                    <p>{{ feature.description }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div id="authentication" class="section">
+            <h2>Authentication</h2>
+            <p>The Novel Engine API uses JWT tokens for authentication.</p>
+            
+            <div class="tab-container">
+                <div class="tab-headers">
+                    <div class="tab-header active" onclick="showTab(this, 'auth-curl')">cURL</div>
+                    <div class="tab-header" onclick="showTab(this, 'auth-python')">Python</div>
+                    <div class="tab-header" onclick="showTab(this, 'auth-javascript')">JavaScript</div>
+                </div>
+                <div id="auth-curl" class="tab-content active">
+                    <pre><code class="language-bash">curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     http://localhost:8000/api/v1/endpoint</code></pre>
+                </div>
+                <div id="auth-python" class="tab-content">
+                    <pre><code class="language-python">import httpx
+
+headers = {"Authorization": "Bearer YOUR_JWT_TOKEN"}
+response = httpx.get("http://localhost:8000/api/v1/endpoint", headers=headers)</code></pre>
+                </div>
+                <div id="auth-javascript" class="tab-content">
+                    <pre><code class="language-javascript">const response = await fetch('http://localhost:8000/api/v1/endpoint', {
+    headers: {'Authorization': 'Bearer YOUR_JWT_TOKEN'}
+});</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <div id="endpoints" class="section">
+            <h2>API Endpoints</h2>
+            {% for endpoint in endpoints %}
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method {{ endpoint.method.lower() }}">{{ endpoint.method.upper() }}</span>
+                    <strong>{{ endpoint.path }}</strong>
+                    {% if endpoint.summary %}
+                        - {{ endpoint.summary }}
+                    {% endif %}
+                </div>
+                <div class="endpoint-content">
+                    {% if endpoint.description %}
+                        <p>{{ endpoint.description }}</p>
+                    {% endif %}
+                    
+                    {% if endpoint.examples %}
+                    <div class="code-example">
+                        <h4>Examples</h4>
+                        <div class="tab-container">
+                            <div class="tab-headers">
+                                {% for example in endpoint.examples %}
+                                <div class="tab-header{% if loop.first %} active{% endif %}" 
+                                     onclick="showTab(this, '{{ endpoint.path|replace('/', '_') }}_{{ example.format }}')">
+                                     {{ example.format|title }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% for example in endpoint.examples %}
+                            <div id="{{ endpoint.path|replace('/', '_') }}_{{ example.format }}" 
+                                 class="tab-content{% if loop.first %} active{% endif %}">
+                                <pre><code class="language-{{ example.language }}">{{ example.code }}</code></pre>
+                                {% if example.explanation %}
+                                    <p><em>{{ example.explanation }}</em></p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div id="examples" class="section">
+            <h2>Code Examples</h2>
+            <p>Interactive code examples powered by Context7 integration.</p>
+            
+            <div class="tab-container">
+                <div class="tab-headers">
+                    <div class="tab-header active" onclick="showTab(this, 'example-quickstart')">Quick Start</div>
+                    <div class="tab-header" onclick="showTab(this, 'example-auth')">Authentication</div>
+                    <div class="tab-header" onclick="showTab(this, 'example-characters')">Characters</div>
+                    <div class="tab-header" onclick="showTab(this, 'example-stories')">Stories</div>
+                </div>
+                
+                <div id="example-quickstart" class="tab-content active">
+                    <h3>Quick Start Guide</h3>
+                    <pre><code class="language-python"># Install dependencies
+pip install httpx pydantic
+
+# Basic API client
+import httpx
+import asyncio
+
+async def main():
+    async with httpx.AsyncClient() as client:
+        # Get API status
+        response = await client.get("http://localhost:8000/")
+        logger.info("API Status:", response.json())
+        
+        # Get health check
+        health = await client.get("http://localhost:8000/health")
+        logger.info("Health:", health.json())
+
+if __name__ == "__main__":
+    asyncio.run(main())</code></pre>
+                </div>
+                
+                <div id="example-auth" class="tab-content">
+                    <h3>Authentication Example</h3>
+                    <pre><code class="language-python"># Authentication workflow
+import httpx
+from typing import Dict, Optional
+
+class NovelEngineClient:
+    def __init__(self, base_url: str = "http://localhost:8000"):
+        self.base_url = base_url
+        self.token: Optional[str] = None
+        
+    async def login(self, username: str, password: str):
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.base_url}/api/v1/auth/login",
+                json={"username": username, "password": password}
+            )
+            response.raise_for_status()
+            self.token = response.json()["token"]
+            
+    def get_headers(self) -> Dict[str, str]:
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        return headers</code></pre>
+                </div>
+                
+                <div id="example-characters" class="tab-content">
+                    <h3>Character Management</h3>
+                    <pre><code class="language-python"># Character operations
+async def character_examples(client: NovelEngineClient):
+    headers = client.get_headers()
+    
+    async with httpx.AsyncClient() as http_client:
+        # List all characters
+        response = await http_client.get(
+            f"{client.base_url}/api/v1/characters",
+            headers=headers
+        )
+        characters = response.json()["data"]
+        
+        # Create new character
+        new_character = {
+            "name": "Hero Protagonist",
+            "background_summary": "A brave adventurer",
+            "personality_traits": ["brave", "curious", "loyal"]
+        }
+        
+        response = await http_client.post(
+            f"{client.base_url}/api/v1/characters",
+            json=new_character,
+            headers=headers
+        )
+        character_id = response.json()["data"]["character_id"]</code></pre>
+                </div>
+                
+                <div id="example-stories" class="tab-content">
+                    <h3>Story Generation</h3>
+                    <pre><code class="language-python"># Story generation workflow
+async def story_examples(client: NovelEngineClient):
+    headers = client.get_headers()
+    
+    async with httpx.AsyncClient() as http_client:
+        # Generate new story
+        story_request = {
+            "title": "The Epic Adventure",
+            "characters": ["Hero Protagonist", "Wise Mentor"],
+            "setting": "A mystical fantasy realm",
+            "genre": "fantasy",
+            "complexity_level": "intermediate"
+        }
+        
+        # Start generation
+        response = await http_client.post(
+            f"{client.base_url}/api/v1/stories/generate",
+            json=story_request,
+            headers=headers
+        )
+        generation_id = response.json()["data"]["generation_id"]
+        
+        # Check progress
+        progress_response = await http_client.get(
+            f"{client.base_url}/api/v1/stories/generate/{generation_id}/progress",
+            headers=headers
+        )
+print("Progress:", progress_response.json())</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <div id="best-practices" class="section">
+            <h2>Best Practices</h2>
+            <p>Framework best practices powered by Context7 integration.</p>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <h3>Error Handling</h3>
+                    <p>Always implement proper error handling with try-catch blocks and status code checks.</p>
+                    <pre><code class="language-python">try:
+    response.raise_for_status()
+    return response.json()
+except httpx.HTTPError as e:
+    logger.error(f"API call failed: {e}")
+    return None</code></pre>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>Rate Limiting</h3>
+                    <p>Implement backoff strategies and respect rate limits to ensure stable API usage.</p>
+                    <pre><code class="language-python">import asyncio
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+@retry(stop=stop_after_attempt(3), 
+       wait=wait_exponential(multiplier=1, min=4, max=10))
+async def api_call_with_retry():
+    return await client.get("/api/endpoint")</code></pre>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>Authentication</h3>
+                    <p>Store tokens securely and implement proper token refresh mechanisms.</p>
+                    <pre><code class="language-python"># Use environment variables for sensitive data
+import os
+token = os.getenv("NOVEL_ENGINE_TOKEN")
+
+# Implement token refresh
+if response.status_code == 401:
+    await refresh_token()
+    # Retry request with new token</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <div id="sdk" class="section">
+            <h2>SDK & Tools</h2>
+            <p>Official SDKs and development tools for the Novel Engine API.</p>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <h3>Python SDK</h3>
+                    <p>Official Python SDK with async support and comprehensive type hints.</p>
+                    <pre><code class="language-bash">pip install novel-engine-sdk</code></pre>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>CLI Tool</h3>
+                    <p>Command-line interface for quick API interactions and testing.</p>
+                    <pre><code class="language-bash">novel-engine characters list
+novel-engine stories generate --title "My Story"</code></pre>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>Postman Collection</h3>
+                    <p>Ready-to-use Postman collection with example requests and environments.</p>
+                    <a href="/api/v1/postman/collection" style="color: #007bff;">Download Collection</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showTab(element, tabId) {
+            // Hide all tabs in the same container
+            const container = element.closest('.tab-container');
+            const tabs = container.querySelectorAll('.tab-content');
+            const headers = container.querySelectorAll('.tab-header');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            headers.forEach(header => header.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
+        }
+        
+        // Smooth scrolling for navigation links
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

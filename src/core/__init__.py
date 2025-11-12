@@ -1,0 +1,1 @@
+"""Core Novel Engine infrastructure components."""

@@ -1,0 +1,47 @@
+{
+  "character": {
+    "name": {
+      "minLength": 3,
+      "maxLength": 50,
+      "pattern": "^[a-zA-Z0-9\\s\\-_']+$",
+      "description": "Character name must be 3-50 characters using letters, numbers, spaces, hyphens, underscores, and apostrophes"
+    },
+    "description": {
+      "minLength": 10,
+      "maxLength": 2000,
+      "minWords": 3,
+      "description": "Character description must be 10-2000 characters with at least 3 words"
+    }
+  },
+  "file": {
+    "upload": {
+      "maxSize": 5242880,
+      "maxSizeMB": 5,
+      "allowedTypes": [".txt", ".md", ".json", ".yaml", ".yml"],
+      "allowedMimeTypes": ["text/plain", "text/markdown", "application/json", "text/yaml", "application/x-yaml"]
+    }
+  },
+  "simulation": {
+    "characters": {
+      "minSelection": 2,
+      "maxSelection": 6,
+      "description": "Simulation requires 2-6 characters for optimal narrative balance"
+    }
+  },
+  "api": {
+    "timeout": 5000,
+    "retryAttempts": 3,
+    "baseUrl": "http://localhost:8000"
+  },
+  "validation": {
+    "messages": {
+      "required": "This field is required",
+      "minLength": "Must be at least {min} characters",
+      "maxLength": "Must be no more than {max} characters",
+      "minWords": "Must contain at least {min} words",
+      "pattern": "Invalid format",
+      "fileSize": "File size must not exceed {max}MB",
+      "fileType": "Only {types} files are allowed"
+    }
+  }
+}
