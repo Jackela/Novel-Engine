@@ -1,0 +1,57 @@
+# Core dependencies for Novel-Engine AI Testing Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.4.0
+pydantic-settings>=2.0.0
+email-validator>=2.0.0
+httpx>=0.25.0
+aiofiles>=23.2.0
+python-multipart>=0.0.6
+
+# Novel-Engine integration
+# Assuming these are available from the main project
+# config_loader (from Novel-Engine)
+# src.event_bus (from Novel-Engine)
+
+# Async utilities
+asyncio-mqtt>=0.16.0
+asyncio-throttle>=1.0.2
+# aioredis>=2.0.0  # DEPRECATED: Incompatible with Python 3.11+ (duplicate TimeoutError base class)
+redis[asyncio]>=5.0.0  # Official async Redis client for Python 3.11+
+aiohttp>=3.9.0  # Required by async_processing_improvements.py
+
+# Data processing
+pandas>=1.5.0; python_version>="3.9"
+pandas>=1.3.0; python_version=="3.8"
+numpy>=1.21.0; python_version=="3.8"
+numpy>=1.24.0; python_version>="3.9"
+Pillow>=10.0.0
+
+# Testing and validation
+jsonschema>=4.19.0
+pytest-timeout>=2.2.0
+
+# Utilities
+python-dateutil>=2.8.2
+pytz>=2023.3
+uuid>=1.30
+PyYAML>=6.0.1
+
+# Environment and configuration
+python-dotenv>=1.0.0
+
+# Testing and performance monitoring (Phase 1 Critical Fixes)
+psutil>=5.9.0
+requests>=2.31.0
+
+# Security scanning
+safety>=3.0.0
+bandit[toml]>=1.7.0
+PyJWT>=2.8.0  # JWT token handling for security tests
+bcrypt>=4.0.0  # Password hashing for auth_system
+bleach>=6.0.0  # HTML sanitization for security_middleware
+networkx>=3.0  # Graph library for causal graph
+aiosqlite>=0.19.0  # Async SQLite for context database
+
+# Database
+sqlalchemy>=2.0.0  # ORM for narrative arc repository

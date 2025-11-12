@@ -1,0 +1,78 @@
+# Service-specific dependencies for AI Testing Framework
+
+# Browser automation dependencies
+playwright>=1.40.0
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+
+# AI/ML dependencies for quality assessment
+openai>=1.3.0
+anthropic>=0.7.0
+google-generativeai>=0.3.0
+sentence-transformers>=2.2.0
+transformers>=4.35.0
+torch>=2.1.0
+
+# Image processing for visual quality assessment
+opencv-python>=4.8.0
+scikit-image>=0.21.0
+matplotlib>=3.7.0
+
+# Statistical analysis for results aggregation
+scipy>=1.11.0
+statsmodels>=0.14.0
+plotly>=5.17.0
+
+# Email and notification services
+aiosmtplib>=3.0.0
+slack-sdk>=3.23.0
+
+# Data storage and caching
+redis>=5.0.0
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+
+# Monitoring and observability
+prometheus-client>=0.18.0
+structlog>=23.2.0
+
+# Security and authentication
+cryptography>=41.0.0
+passlib>=1.7.4
+python-jose[cryptography]>=3.3.0
+
+# Performance and optimization
+orjson>=3.9.0
+msgpack>=1.0.0
+lz4>=4.3.0
+
+# Development and testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.12.0
+coverage>=7.3.0
+black>=23.9.0
+flake8>=6.1.0
+mypy>=1.6.0
+
+# Production and monitoring requirements for Wave 9.3
+# Enterprise deployment and monitoring systems
+
+# Web framework for UI (Wave 9.2)
+flask>=3.0.0
+flask-socketio>=5.3.0
+werkzeug>=3.0.0
+
+# Production web server
+gunicorn>=21.2.0
+
+# Monitoring and metrics
+psutil>=5.9.0
+aiohttp>=3.9.0
+
+# Container and orchestration
+# docker - External dependency, install separately
+# kubectl - External dependency, install separately
+
+# Data serialization
+pyyaml>=6.0.1
