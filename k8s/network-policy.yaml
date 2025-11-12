@@ -1,0 +1,517 @@
+# Network Policies for Security
+# =============================
+
+# Default deny all traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: security
+    tier: network-policy
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+
+# Allow API pods to receive traffic from frontend and external
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-ingress
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: api
+    tier: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: novel-engine
+      component: api
+  policyTypes:
+  - Ingress
+  ingress:
+  # Allow from frontend pods
+  - from:
+    - podSelector:
+        matchLabels:
+          app: novel-engine
+          component: frontend
+    ports:
+    - protocol: TCP
+      port: 8000
+  
+  # Allow from ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8000
+  
+  # Allow from monitoring (Prometheus)
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090  # metrics port
+  
+  # Allow health checks from kube-system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 8000
+
+---
+
+# Allow API pods to connect to database and cache
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-egress
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: api
+    tier: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: novel-engine
+      component: api
+  policyTypes:
+  - Egress
+  egress:
+  # Allow to PostgreSQL
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+          component: database
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  # Allow to Redis
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+          component: cache
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  
+  # Allow HTTPS traffic for external APIs (LLM services, S3, etc.)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  
+  # Allow HTTP traffic for specific external services
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 80
+  
+  # Allow to monitoring services
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9091  # Prometheus pushgateway
+
+---
+
+# Allow WebSocket pods traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-websocket-traffic
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: websocket
+    tier: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: novel-engine
+      component: websocket
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow from frontend
+  - from:
+    - podSelector:
+        matchLabels:
+          app: novel-engine
+          component: frontend
+    ports:
+    - protocol: TCP
+      port: 8001
+  
+  # Allow from ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8001
+  
+  egress:
+  # Allow to Redis for pub/sub
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+          component: cache
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # Allow to API service for backend communication
+  - to:
+    - podSelector:
+        matchLabels:
+          app: novel-engine
+          component: api
+    ports:
+    - protocol: TCP
+      port: 8000
+  
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+
+# Allow frontend pods traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-traffic
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: frontend
+    tier: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: novel-engine
+      component: frontend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow from anywhere (public facing)
+  - from: []
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+  
+  egress:
+  # Allow to API service
+  - to:
+    - podSelector:
+        matchLabels:
+          app: novel-engine
+          component: api
+    ports:
+    - protocol: TCP
+      port: 8000
+  
+  # Allow to WebSocket service
+  - to:
+    - podSelector:
+        matchLabels:
+          app: novel-engine
+          component: websocket
+    ports:
+    - protocol: TCP
+      port: 8001
+  
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+
+# PostgreSQL network policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-postgres-traffic
+  namespace: novel-engine
+  labels:
+    app: postgres
+    component: database
+    tier: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+      component: database
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Only allow from API pods
+  - from:
+    - podSelector:
+        matchLabels:
+          app: novel-engine
+          component: api
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  # Allow from monitoring for metrics collection
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  egress:
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+
+# Redis network policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis-traffic
+  namespace: novel-engine
+  labels:
+    app: redis
+    component: cache
+    tier: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+      component: cache
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow from API pods
+  - from:
+    - podSelector:
+        matchLabels:
+          app: novel-engine
+          component: api
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # Allow from WebSocket pods
+  - from:
+    - podSelector:
+        matchLabels:
+          app: novel-engine
+          component: websocket
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # Allow from monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  egress:
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+
+# Allow monitoring namespace to scrape metrics
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring-scraping
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: monitoring
+    tier: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      prometheus.io/scrape: "true"
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8000  # API metrics
+    - protocol: TCP
+      port: 9090  # Dedicated metrics port
+
+---
+
+# Emergency access policy (can be applied when needed)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: emergency-access
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: emergency
+    tier: network-policy
+  annotations:
+    description: "Emergency access policy - remove after troubleshooting"
+    created-by: "ops-team"
+spec:
+  podSelector:
+    matchLabels:
+      emergency-access: "enabled"
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from: []
+  egress:
+  - to: []
+
+---
+
+# Calico GlobalNetworkPolicy for cluster-wide security
+# (Only if using Calico CNI)
+# apiVersion: projectcalico.org/v3
+# kind: GlobalNetworkPolicy
+# metadata:
+#   name: novel-engine-global-policy
+# spec:
+#   order: 100
+#   selector: projectcalico.org/namespace == "novel-engine"
+#   types:
+#   - Ingress
+#   - Egress
+#   ingress:
+#   - action: Allow
+#     source:
+#       namespaceSelector: name == "ingress-nginx"
+#   - action: Allow
+#     source:
+#       namespaceSelector: name == "monitoring"
+#   egress:
+#   - action: Allow
+#     destination:
+#       nets:
+#       - 10.0.0.0/8    # Internal cluster network
+#       - 172.16.0.0/12 # Internal cluster network
+#       - 192.168.0.0/16 # Internal cluster network
+#   - action: Allow
+#     protocol: TCP
+#     destination:
+#       ports: [80, 443]  # Allow HTTPS to external services
+#   - action: Allow
+#     protocol: UDP
+#     destination:
+#       ports: [53]       # Allow DNS
+
+---
+
+# Network policy for development/staging (more permissive)
+# Only apply in non-production environments
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: dev-allow-all
+#   namespace: novel-engine-dev
+#   labels:
+#     app: novel-engine
+#     environment: development
+#     tier: network-policy
+# spec:
+#   podSelector: {}
+#   policyTypes:
+#   - Ingress
+#   - Egress
+#   ingress:
+#   - from: []
+#   egress:
+#   - to: []

@@ -1,0 +1,428 @@
+version: '3.8'
+
+# Enhanced Multi-Agent Enterprise Infrastructure
+# Optimized for high-performance multi-agent coordination and enterprise monitoring
+
+services:
+  # Main Novel Engine application with enterprise multi-agent capabilities
+  novel-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile.enterprise
+      target: enterprise
+      args:
+        - ENABLE_MULTI_AGENT=true
+        - ENABLE_ENTERPRISE_FEATURES=true
+    container_name: novel-engine-enterprise
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "8001:8001"  # Multi-agent coordination port
+      - "8002:8002"  # Enterprise monitoring port
+    environment:
+      - NOVEL_ENGINE_ENV=enterprise
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://novel_user:${POSTGRES_PASSWORD}@postgres:5432/novel_engine_enterprise
+      - REDIS_URL=redis://redis-cluster:6379/0
+      - ENABLE_MULTI_AGENT=true
+      - ENABLE_ENTERPRISE_MONITORING=true
+      - MAX_AGENTS=20
+      - AGENT_COORDINATION_WORKERS=4
+      - EMERGENT_NARRATIVE_ENABLED=true
+    volumes:
+      - novel_data:/app/data
+      - novel_logs:/app/logs
+      - novel_enterprise_reports:/app/reports
+      - ./config/enterprise.yaml:/app/settings.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # For container management
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    networks:
+      - novel-enterprise-network
+    depends_on:
+      - postgres
+      - redis-cluster
+      - message-broker
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # PostgreSQL database for enterprise data persistence
+  postgres:
+    image: postgres:15-alpine
+    container_name: novel-engine-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=novel_engine_enterprise
+      - POSTGRES_USER=novel_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS="--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./config/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    networks:
+      - novel-enterprise-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U novel_user -d novel_engine_enterprise"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cluster for high-performance caching and session management
+  redis-cluster:
+    image: redis:7-alpine
+    container_name: novel-engine-redis-cluster
+    restart: unless-stopped
+    command: |
+      redis-server 
+      --appendonly yes 
+      --maxmemory 512mb 
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --tcp-keepalive 60
+      --timeout 0
+    volumes:
+      - redis_data:/data
+      - ./config/redis/redis.conf:/etc/redis/redis.conf:ro
+    networks:
+      - novel-enterprise-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.3'
+        reservations:
+          memory: 256M
+          cpus: '0.15'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # RabbitMQ for reliable message queuing between agents
+  message-broker:
+    image: rabbitmq:3.11-management-alpine
+    container_name: novel-engine-rabbitmq
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_DEFAULT_USER=novel_admin
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+      - RABBITMQ_DEFAULT_VHOST=/novel-engine
+    ports:
+      - "15672:15672"  # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./config/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./config/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    networks:
+      - novel-enterprise-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.2'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx with advanced load balancing for multi-agent traffic
+  nginx-enterprise:
+    image: nginx:alpine
+    container_name: novel-engine-nginx-enterprise
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # API Gateway
+    volumes:
+      - ./config/nginx/enterprise.conf:/etc/nginx/nginx.conf:ro
+      - ./config/nginx/ssl:/etc/nginx/ssl:ro
+      - ./config/nginx/locations:/etc/nginx/locations:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - novel-enterprise-network
+    depends_on:
+      - novel-engine
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.2'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Enhanced Prometheus with multi-agent metrics
+  prometheus-enterprise:
+    image: prom/prometheus:latest
+    container_name: novel-engine-prometheus-enterprise
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/enterprise.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus/rules:/etc/prometheus/rules:ro
+      - ./config/prometheus/alerts:/etc/prometheus/alerts:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=10GB'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--storage.tsdb.wal-compression'
+    networks:
+      - novel-enterprise-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Enhanced Grafana with multi-agent dashboards
+  grafana-enterprise:
+    image: grafana/grafana:latest
+    container_name: novel-engine-grafana-enterprise
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/enterprise:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel,grafana-clock-panel
+      - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+      - GF_SERVER_DOMAIN=novel-engine.local
+      - GF_SERVER_ROOT_URL=https://novel-engine.local/grafana/
+    networks:
+      - novel-enterprise-network
+    depends_on:
+      - prometheus-enterprise
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.3'
+        reservations:
+          memory: 256M
+          cpus: '0.15'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Elasticsearch for advanced log aggregation and search
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: novel-engine-elasticsearch
+    restart: unless-stopped
+    environment:
+      - node.name=novel-engine-es01
+      - cluster.name=novel-engine-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - novel-enterprise-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Kibana for log visualization
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: novel-engine-kibana
+    restart: unless-stopped
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=novel-engine-kibana
+      - SERVER_HOST=0.0.0.0
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+      - ./config/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    networks:
+      - novel-enterprise-network
+    depends_on:
+      - elasticsearch
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.3'
+        reservations:
+          memory: 256M
+          cpus: '0.15'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jaeger for distributed tracing of multi-agent interactions
+  jaeger:
+    image: jaegertracing/all-in-one:1.50
+    container_name: novel-engine-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Jaeger collector
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - COLLECTOR_OTLP_ENABLED=true
+    volumes:
+      - jaeger_data:/tmp
+    networks:
+      - novel-enterprise-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.2'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:16686/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MinIO for S3-compatible object storage
+  minio:
+    image: minio/minio:latest
+    container_name: novel-engine-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    networks:
+      - novel-enterprise-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.2'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  novel_data:
+    driver: local
+  novel_logs:
+    driver: local
+  novel_enterprise_reports:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  nginx_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
+  kibana_data:
+    driver: local
+  jaeger_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  novel-enterprise-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1
+    driver_opts:
+      com.docker.network.enable_ipv6: "false"
+      com.docker.network.bridge.name: "novel-enterprise-br0"

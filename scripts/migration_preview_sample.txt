@@ -1,0 +1,1151 @@
+🔍 Print to Logging Migration Tool
+======================================================================
+Mode: DRY RUN (preview only)
+Source Directory: D:\Code\Novel-Engine\src
+
+📁 Found 245 Python files to analyze
+
+
+📄 api\context7_integration_api.py
+   Found 2 print statement(s)
+   Line 332: ERROR
+      Reason: Contains error indicator: error
+      Before: print(f"HTTP error occurred: {{e}}")
+      After:              logger.error(f"HTTP error occurred: {{e}}")
+   Line 338: INFO
+      Reason: Default level for general output
+      Before: print(result)
+      After:      logger.info(result)
+   📋 Would be migrated (dry-run)
+
+📄 api\enhanced_documentation_system.py
+   Found 5 print statement(s)
+   Line 212: INFO
+      Reason: Default level for general output
+      Before: print("API Status:", response.json())
+      After:          logger.info("API Status:", response.json())
+   Line 216: INFO
+      Reason: Default level for general output
+      Before: print("Health:", health.json())
+      After:          logger.info("Health:", health.json())
+   Line 307: INFO
+      Reason: Default level for general output
+      Before: print("Progress:", progress_response.json())</code></pre>
+      After:  print("Progress:", progress_response.json())</code></pre>
+   Line 532: INFO
+      Reason: Default level for general output
+      Before: "code": f'import httpx\nresponse = await httpx.get("http://localhost:8000{endpoint_path}")\nprint(response.json())',
+      After:  "code": f'import httpx\nresponse = await httpx.get("http://localhost:8000{endpoint_path}")\nprint(response.json())',
+   Line 556: INFO
+      Reason: Default level for general output
+      Before: print(result)"""
+      After:  print(result)"""
+   📋 Would be migrated (dry-run)
+
+📄 api\integration_tests.py
+   Found 17 print statement(s)
+   Line 73: INFO
+      Reason: Contains info indicator: start(ing|ed)?
+      Before: print("🚀 Starting Novel Engine API Integration Tests")
+      After:          logger.info("🚀 Starting Novel Engine API Integration Tests")
+   Line 74: INFO
+      Reason: Default level for general output
+      Before: print("=" * 60)
+      After:          logger.info("=" * 60)
+   Line 93: INFO
+      Reason: Contains info indicator: running
+      Before: print(f"\n📋 Running: {scenario.name}")
+      After:              logger.info(f"\n📋 Running: {scenario.name}")
+   Line 94: INFO
+      Reason: Default level for general output
+      Before: print(f"   Description: {scenario.description}")
+      After:              logger.info(f"   Description: {scenario.description}")
+   Line 101: INFO
+      Reason: Contains info indicator: ✅
+      Before: print(f"   ✅ PASSED ({result.duration_ms:.1f}ms)")
+      After:                      logger.info(f"   ✅ PASSED ({result.duration_ms:.1f}ms)")
+   Line 103: ERROR
+      Reason: Contains error indicator: error
+      Before: print(f"   ❌ FAILED: {result.error_message}")
+      After:                      logger.error(f"   ❌ FAILED: {result.error_message}")
+   Line 113: ERROR
+      Reason: Contains error indicator: error
+      Before: print(f"   ❌ ERROR: {str(e)}")
+      After:                  logger.error(f"   ❌ ERROR: {str(e)}")
+   Line 119: INFO
+      Reason: Default level for general output
+      Before: print("\n" + "=" * 60)
+      After:          logger.info("\n" + "=" * 60)
+   Line 120: INFO
+      Reason: Contains info indicator: 📊
+      Before: print("📊 Test Suite Summary")
+      After:          logger.info("📊 Test Suite Summary")
+   Line 121: INFO
+      Reason: Default level for general output
+      Before: print("=" * 60)
+      After:          logger.info("=" * 60)
+   Line 122: INFO
+      Reason: Default level for general output
+      Before: print(f"Total Tests: {report['total_tests']}")
+      After:          logger.info(f"Total Tests: {report['total_tests']}")
+   Line 123: INFO
+      Reason: Contains info indicator: ✅
+      Before: print(f"Passed: {report['passed_tests']} ✅")
+      After:          logger.info(f"Passed: {report['passed_tests']} ✅")
+   Line 124: ERROR
+      Reason: Contains error indicator: fail(ed)?
+      Before: print(f"Failed: {report['failed_tests']} ❌")
+      After:          logger.error(f"Failed: {report['failed_tests']} ❌")
+   Line 125: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"Success Rate: {report['success_rate']:.1f}%")
+      After:          logger.info(f"Success Rate: {report['success_rate']:.1f}%")
+   Line 126: INFO
+      Reason: Default level for general output
+      Before: print(f"Total Duration: {suite_duration:.1f}s")
+      After:          logger.info(f"Total Duration: {suite_duration:.1f}s")
+   Line 129: ERROR
+      Reason: Contains error indicator: fail(ed)?
+      Before: print("\n❌ Failed Tests:")
+      After:              logger.error("\n❌ Failed Tests:")
+   Line 132: ERROR
+      Reason: Contains error indicator: error
+      Before: print(f"   - {result.scenario_name}: {result.error_message}")
+      After:                      logger.error(f"   - {result.scenario_name}: {result.error_message}")
+   📋 Would be migrated (dry-run)
+
+📄 core\data_models.py
+   Found 3 print statement(s)
+   Line 721: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("TESTING STANDARD DATA MODELS ENHANCED BY THE SYSTEM")
+      After:      logger.info("TESTING STANDARD DATA MODELS ENHANCED BY THE SYSTEM")
+   Line 746: INFO
+      Reason: Default level for general output
+      Before: print("ALL STANDARD DATA MODELS ENHANCED AND FUNCTIONAL")
+      After:      logger.info("ALL STANDARD DATA MODELS ENHANCED AND FUNCTIONAL")
+   Line 747: INFO
+      Reason: Default level for general output
+      Before: print("MACHINE GOD PROTECTS THE STANDARD STRUCTURES")
+      After:      logger.info("MACHINE GOD PROTECTS THE STANDARD STRUCTURES")
+   📋 Would be migrated (dry-run)
+
+📄 core\emergent_narrative.py
+   Found 3 print statement(s)
+   Line 2023: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"Alice的探索结果：{result1['narrative_integration']['success']}")
+      After:          logger.info(f"Alice的探索结果：{result1['narrative_integration']['success']}")
+   Line 2032: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 2038: INFO
+      Reason: Contains info indicator: Summary
+      Before: print(f"\n故事摘要：\n{story_summary['summary']}")
+      After:          logger.info(f"\n故事摘要：\n{story_summary['summary']}")
+   📋 Would be migrated (dry-run)
+
+📄 core\subjective_reality.py
+   Found 4 print statement(s)
+   Line 839: INFO
+      Reason: Default level for general output
+      Before: print("生成的个性化简报：")
+      After:          logger.info("生成的个性化简报：")
+   Line 840: INFO
+      Reason: Default level for general output
+      Before: print(f"叙事背景：{brief.narrative_context}")
+      After:          logger.info(f"叙事背景：{brief.narrative_context}")
+   Line 841: INFO
+      Reason: Default level for general output
+      Before: print(f"推荐行动：{brief.recommended_actions}")
+      After:          logger.info(f"推荐行动：{brief.recommended_actions}")
+   Line 842: INFO
+      Reason: Default level for general output
+      Before: print(f"可信度：{brief.confidence_levels}")
+      After:          logger.info(f"可信度：{brief.confidence_levels}")
+   📋 Would be migrated (dry-run)
+
+📄 core\types.py
+   Found 4 print statement(s)
+   Line 386: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("TESTING STANDARD TYPE DEFINITIONS ENHANCED BY THE SYSTEM")
+      After:      logger.info("TESTING STANDARD TYPE DEFINITIONS ENHANCED BY THE SYSTEM")
+   Line 405: INFO
+      Reason: Default level for general output
+      Before: print("ALL STANDARD TYPE DEFINITIONS ENHANCED AND FUNCTIONAL")
+      After:      logger.info("ALL STANDARD TYPE DEFINITIONS ENHANCED AND FUNCTIONAL")
+   Line 406: INFO
+      Reason: Default level for general output
+      Before: print("THE SYSTEM APPROVES OF THIS TYPE SYSTEM")
+      After:      logger.info("THE SYSTEM APPROVES OF THIS TYPE SYSTEM")
+   Line 407: INFO
+      Reason: Default level for general output
+      Before: print("MACHINE GOD PROTECTS THE STANDARD DATA FLOW")
+      After:      logger.info("MACHINE GOD PROTECTS THE STANDARD DATA FLOW")
+   📋 Would be migrated (dry-run)
+
+📄 core\config\config_loader.py
+   Found 15 print statement(s)
+   Line 820: INFO
+      Reason: Default level for general output
+      Before: print("Configuration System Example Usage:")
+      After:      logger.info("Configuration System Example Usage:")
+   Line 821: INFO
+      Reason: Default level for general output
+      Before: print("==================================")
+      After:      logger.info("==================================")
+   Line 826: INFO
+      Reason: Default level for general output
+      Before: print("✓ ConfigLoader singleton created")
+      After:          logger.info("✓ ConfigLoader singleton created")
+   Line 830: INFO
+      Reason: Contains info indicator: success
+      Before: print("✓ Configuration loaded successfully")
+      After:          logger.info("✓ Configuration loaded successfully")
+   Line 838: INFO
+      Reason: Default level for general output
+      Before: print(f"✓ Simulation turns: {turns}")
+      After:          logger.info(f"✓ Simulation turns: {turns}")
+   Line 839: INFO
+      Reason: Default level for general output
+      Before: print(f"✓ Log file path: {log_path}")
+      After:          logger.info(f"✓ Log file path: {log_path}")
+   Line 840: INFO
+      Reason: Default level for general output
+      Before: print(f"✓ Output directory: {output_dir}")
+      After:          logger.info(f"✓ Output directory: {output_dir}")
+   Line 841: INFO
+      Reason: Default level for general output
+      Before: print(f"✓ Character sheets: {char_sheets}")
+      After:          logger.info(f"✓ Character sheets: {char_sheets}")
+   Line 845: INFO
+      Reason: Default level for general output
+      Before: print(f"✓ Max agents: {full_config.simulation.max_agents}")
+      After:          logger.info(f"✓ Max agents: {full_config.simulation.max_agents}")
+   Line 846: INFO
+      Reason: Default level for general output
+      Before: print(f"✓ API timeout: {full_config.simulation.api_timeout}")
+      After:          logger.info(f"✓ API timeout: {full_config.simulation.api_timeout}")
+   Line 847: INFO
+      Reason: Default level for general output
+      Before: print(f"✓ Narrative style: {full_config.chronicler.narrative_style}")
+      After:          logger.info(f"✓ Narrative style: {full_config.chronicler.narrative_style}")
+   Line 853: INFO
+      Reason: Default level for general output
+      Before: print(f"✓ Global function - turns: {global_turns}")
+      After:          logger.info(f"✓ Global function - turns: {global_turns}")
+   Line 854: INFO
+      Reason: Default level for general output
+      Before: print(f"✓ Global function - log path: {global_log_path}")
+      After:          logger.info(f"✓ Global function - log path: {global_log_path}")
+   Line 856: INFO
+      Reason: Default level for general output
+      Before: print("\nConfiguration system is ready for use!")
+      After:          logger.info("\nConfiguration system is ready for use!")
+   Line 859: ERROR
+      Reason: Contains error indicator: fail(ed)?
+      Before: print(f"✗ Configuration example failed: {e}")
+      After:          logger.error(f"✗ Configuration example failed: {e}")
+   📋 Would be migrated (dry-run)
+
+📄 database\context_db.py
+   Found 10 print statement(s)
+   Line 952: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("TESTING STANDARD DATABASE OPERATIONS")
+      After:      logger.info("TESTING STANDARD DATABASE OPERATIONS")
+   Line 959: ERROR
+      Reason: Contains error indicator: error
+      Before: print(f"DATABASE INITIALIZATION FAILED: {init_result.error.message}")
+      After:          logger.error(f"DATABASE INITIALIZATION FAILED: {init_result.error.message}")
+   Line 969: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"AGENT REGISTRATION: {agent_result.success}")
+      After:      logger.info(f"AGENT REGISTRATION: {agent_result.success}")
+   Line 980: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"MEMORY STORAGE: {memory_result.success}")
+      After:      logger.info(f"MEMORY STORAGE: {memory_result.success}")
+   Line 984: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 990: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"DATABASE STATISTICS: {stats_result.success}")
+      After:      logger.info(f"DATABASE STATISTICS: {stats_result.success}")
+   Line 994: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("STANDARD DATABASE TESTING COMPLETE")
+      After:      logger.info("STANDARD DATABASE TESTING COMPLETE")
+   Line 1001: INFO
+      Reason: Default level for general output
+      Before: print("STANDARD DATABASE ACCESS LAYER ENHANCED BY THE SYSTEM")
+      After:      logger.info("STANDARD DATABASE ACCESS LAYER ENHANCED BY THE SYSTEM")
+   Line 1002: INFO
+      Reason: Default level for general output
+      Before: print("MACHINE GOD PROTECTS THE STANDARD DATA PERSISTENCE")
+      After:      logger.info("MACHINE GOD PROTECTS THE STANDARD DATA PERSISTENCE")
+   Line 1007: INFO
+      Reason: Default level for general output
+      Before: print("ALL STANDARD DATABASE OPERATIONS ENHANCED AND FUNCTIONAL")
+      After:      logger.info("ALL STANDARD DATABASE OPERATIONS ENHANCED AND FUNCTIONAL")
+   📋 Would be migrated (dry-run)
+
+📄 events\event_store.py
+   Found 1 print statement(s)
+   Line 41: INFO
+      Reason: Default level for general output
+      Before: print(f"EventStore: Storing event {event}")
+      After:          logger.info(f"EventStore: Storing event {event}")
+   📋 Would be migrated (dry-run)
+
+📄 infrastructure\observability.py
+   Found 4 print statement(s)
+   Line 1149: INFO
+      Reason: Default level for general output
+      Before: print(f"System healthy: {health['overall_healthy']}")
+      After:          logger.info(f"System healthy: {health['overall_healthy']}")
+   Line 1153: INFO
+      Reason: Default level for general output
+      Before: print(f"Performance stats: {perf_stats}")
+      After:          logger.info(f"Performance stats: {perf_stats}")
+   Line 1157: INFO
+      Reason: Contains info indicator: Summary
+      Before: print(f"Metrics available: {len(metrics_summary['metrics'])}")
+      After:          logger.info(f"Metrics available: {len(metrics_summary['metrics'])}")
+   Line 1167: INFO
+      Reason: Contains info indicator: complet(ed|ing)
+      Before: print("Example completed successfully")
+      After:          logger.info("Example completed successfully")
+   📋 Would be migrated (dry-run)
+
+📄 infrastructure\state_store.py
+   Found 4 print statement(s)
+   Line 1195: INFO
+      Reason: Default level for general output
+      Before: print(f"Session: {session_data}")
+      After:          logger.info(f"Session: {session_data}")
+   Line 1196: INFO
+      Reason: Default level for general output
+      Before: print(f"Agent: {agent_data}")
+      After:          logger.info(f"Agent: {agent_data}")
+   Line 1197: INFO
+      Reason: Default level for general output
+      Before: print(f"Narrative: {narrative_data}")
+      After:          logger.info(f"Narrative: {narrative_data}")
+   Line 1201: INFO
+      Reason: Default level for general output
+      Before: print(f"Health: {health}")
+      After:          logger.info(f"Health: {health}")
+   📋 Would be migrated (dry-run)
+
+📄 interactions\dynamic_equipment_system.py
+   Found 35 print statement(s)
+   Line 1560: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("TESTING STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY THE SYSTEM")
+      After:      logger.info("TESTING STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY THE SYSTEM")
+   Line 1600: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"MAG CANNON REGISTRATION: {mag_cannon_reg.success}")
+      After:      logger.info(f"MAG CANNON REGISTRATION: {mag_cannon_reg.success}")
+   Line 1602: INFO
+      Reason: Default level for general output
+      Before: print(f"Equipment ID: {mag_cannon_reg.data['equipment_id']}")
+      After:          logger.info(f"Equipment ID: {mag_cannon_reg.data['equipment_id']}")
+   Line 1603: INFO
+      Reason: Default level for general output
+      Before: print(f"Maintenance scheduled: {mag_cannon_reg.data['maintenance_scheduled']}")
+      After:          logger.info(f"Maintenance scheduled: {mag_cannon_reg.data['maintenance_scheduled']}")
+   Line 1606: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"ARMOR REGISTRATION: {armor_reg.success}")
+      After:      logger.info(f"ARMOR REGISTRATION: {armor_reg.success}")
+   Line 1620: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"MAG CANNON USAGE: {mag_cannon_usage.success}")
+      After:      logger.info(f"MAG CANNON USAGE: {mag_cannon_usage.success}")
+   Line 1622: INFO
+      Reason: Default level for general output
+      Before: print(f"Usage effects: {len(mag_cannon_usage.data['usage_effects'])}")
+      After:          logger.info(f"Usage effects: {len(mag_cannon_usage.data['usage_effects'])}")
+   Line 1623: INFO
+      Reason: Default level for general output
+      Before: print(f"Wear accumulation: {mag_cannon_usage.data['wear_accumulation']:.3f}")
+      After:          logger.info(f"Wear accumulation: {mag_cannon_usage.data['wear_accumulation']:.3f}")
+   Line 1624: INFO
+      Reason: Default level for general output
+      Before: print(f"system core mood: {mag_cannon_usage.data['system_core_mood']}")
+      After:          logger.info(f"system core mood: {mag_cannon_usage.data['system_core_mood']}")
+   Line 1628: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"EQUIPMENT STATUS: {status_result.success}")
+      After:      logger.info(f"EQUIPMENT STATUS: {status_result.success}")
+   Line 1631: INFO
+      Reason: Default level for general output
+      Before: print(f"Condition: {status['condition']}")
+      After:          logger.info(f"Condition: {status['condition']}")
+   Line 1632: INFO
+      Reason: Default level for general output
+      Before: print(f"Status: {status['status']}")
+      After:          logger.info(f"Status: {status['status']}")
+   Line 1633: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1636: ERROR
+      Reason: Contains error indicator: fail(ed)?
+      Before: print(f"Predicted failure risk: {status['predicted_failure_risk']:.1%}")
+      After:          logger.error(f"Predicted failure risk: {status['predicted_failure_risk']:.1%}")
+   Line 1642: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"MAINTENANCE: {maintenance_result.success}")
+      After:      logger.info(f"MAINTENANCE: {maintenance_result.success}")
+   Line 1644: INFO
+      Reason: Default level for general output
+      Before: print(f"Maintenance type: {maintenance_result.data['maintenance_type']}")
+      After:          logger.info(f"Maintenance type: {maintenance_result.data['maintenance_type']}")
+   Line 1645: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1648: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1666: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"MODIFICATION: {mod_result.success}")
+      After:      logger.info(f"MODIFICATION: {mod_result.success}")
+   Line 1668: INFO
+      Reason: Default level for general output
+      Before: print(f"Modification: {mod_result.data['modification_name']}")
+      After:          logger.info(f"Modification: {mod_result.data['modification_name']}")
+   Line 1669: INFO
+      Reason: Default level for general output
+      Before: print(f"Performance impacts: {mod_result.data['performance_impacts']}")
+      After:          logger.info(f"Performance impacts: {mod_result.data['performance_impacts']}")
+   Line 1670: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1678: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"AGENT INVENTORY: {inventory_result.success}")
+      After:      logger.info(f"AGENT INVENTORY: {inventory_result.success}")
+   Line 1681: INFO
+      Reason: Default level for general output
+      Before: print(f"Equipment count: {inventory['equipment_count']}")
+      After:          logger.info(f"Equipment count: {inventory['equipment_count']}")
+   Line 1682: INFO
+      Reason: Default level for general output
+      Before: print(f"Active equipment: {inventory['active_equipment']}")
+      After:          logger.info(f"Active equipment: {inventory['active_equipment']}")
+   Line 1683: INFO
+      Reason: Default level for general output
+      Before: print(f"Categories: {inventory['categories']}")
+      After:          logger.info(f"Categories: {inventory['categories']}")
+   Line 1687: INFO
+      Reason: Default level for general output
+      Before: print("SYSTEM STATISTICS")
+      After:      logger.info("SYSTEM STATISTICS")
+   Line 1688: INFO
+      Reason: Default level for general output
+      Before: print(f"Total equipment: {stats['registered_equipment']}")
+      After:      logger.info(f"Total equipment: {stats['registered_equipment']}")
+   Line 1689: INFO
+      Reason: Default level for general output
+      Before: print(f"Average reliability: {stats['average_equipment_reliability']:.1%}")
+      After:      logger.info(f"Average reliability: {stats['average_equipment_reliability']:.1%}")
+   Line 1690: INFO
+      Reason: Default level for general output
+      Before: print(f"Maintenance operations: {stats['maintenance_operations']}")
+      After:      logger.info(f"Maintenance operations: {stats['maintenance_operations']}")
+   Line 1691: INFO
+      Reason: Default level for general output
+      Before: print(f"Sacred rites performed: {stats['standard_rites_performed']}")
+      After:      logger.info(f"Sacred rites performed: {stats['standard_rites_performed']}")
+   Line 1696: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("STANDARD DYNAMIC EQUIPMENT SYSTEM TESTING COMPLETE")
+      After:      logger.info("STANDARD DYNAMIC EQUIPMENT SYSTEM TESTING COMPLETE")
+   Line 1703: INFO
+      Reason: Default level for general output
+      Before: print("STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY THE SYSTEM")
+      After:      logger.info("STANDARD DYNAMIC EQUIPMENT SYSTEM ENHANCED BY THE SYSTEM")
+   Line 1704: INFO
+      Reason: Default level for general output
+      Before: print("MACHINE GOD PROTECTS THE STANDARD EQUIPMENT")
+      After:      logger.info("MACHINE GOD PROTECTS THE STANDARD EQUIPMENT")
+   Line 1709: INFO
+      Reason: Default level for general output
+      Before: print("ALL STANDARD DYNAMIC EQUIPMENT SYSTEM OPERATIONS ENHANCED AND FUNCTIONAL")
+      After:      logger.info("ALL STANDARD DYNAMIC EQUIPMENT SYSTEM OPERATIONS ENHANCED AND FUNCTIONAL")
+   📋 Would be migrated (dry-run)
+
+📄 interactions\interaction_engine.py
+   Found 25 print statement(s)
+   Line 1344: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("TESTING STANDARD INTERACTION ENGINE ENHANCED BY THE SYSTEM")
+      After:      logger.info("TESTING STANDARD INTERACTION ENGINE ENHANCED BY THE SYSTEM")
+   Line 1396: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"INTERACTION INITIATION: {initiation_result.success}")
+      After:          logger.info(f"INTERACTION INITIATION: {initiation_result.success}")
+   Line 1398: INFO
+      Reason: Default level for general output
+      Before: print(f"Interaction ID: {initiation_result.data['interaction_id']}")
+      After:              logger.info(f"Interaction ID: {initiation_result.data['interaction_id']}")
+   Line 1399: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1404: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"Outcome success: {outcome.success}")
+      After:                  logger.info(f"Outcome success: {outcome.success}")
+   Line 1405: INFO
+      Reason: Contains info indicator: complet(ed|ing)
+      Before: print(f"Phases completed: {len(outcome.phases_completed)}")
+      After:                  logger.info(f"Phases completed: {len(outcome.phases_completed)}")
+   Line 1406: INFO
+      Reason: Default level for general output
+      Before: print(f"Memory updates: {len(outcome.memory_updates)}")
+      After:                  logger.info(f"Memory updates: {len(outcome.memory_updates)}")
+   Line 1422: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"COMBAT INTERACTION: {combat_result.success}")
+      After:          logger.info(f"COMBAT INTERACTION: {combat_result.success}")
+   Line 1425: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"Combat outcome: {'Victory' if outcome.success else 'Defeat'}")
+      After:              logger.info(f"Combat outcome: {'Victory' if outcome.success else 'Defeat'}")
+   Line 1426: INFO
+      Reason: Default level for general output
+      Before: print(f"Generated content: {len(outcome.generated_content)} items")
+      After:              logger.info(f"Generated content: {len(outcome.generated_content)} items")
+   Line 1444: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"INTERACTION QUEUED: {queue_result.success}")
+      After:          logger.info(f"INTERACTION QUEUED: {queue_result.success}")
+   Line 1446: INFO
+      Reason: Default level for general output
+      Before: print(f"Queue position: {queue_result.data['queue_position']}")
+      After:              logger.info(f"Queue position: {queue_result.data['queue_position']}")
+   Line 1450: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"QUEUE PROCESSING: {process_result.success}")
+      After:          logger.info(f"QUEUE PROCESSING: {process_result.success}")
+   Line 1452: INFO
+      Reason: Default level for general output
+      Before: print(f"Processed: {process_result.data['total_processed']}")
+      After:              logger.info(f"Processed: {process_result.data['total_processed']}")
+   Line 1453: ERROR
+      Reason: Contains error indicator: fail(ed)?
+      Before: print(f"Failed: {process_result.data['total_failed']}")
+      After:              logger.error(f"Failed: {process_result.data['total_failed']}")
+   Line 1454: INFO
+      Reason: Default level for general output
+      Before: print(f"Remaining: {process_result.data['remaining_in_queue']}")
+      After:              logger.info(f"Remaining: {process_result.data['remaining_in_queue']}")
+   Line 1458: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1461: INFO
+      Reason: Default level for general output
+      Before: print(f"Average processing time: {metrics['average_processing_time']:.2f}ms")
+      After:          logger.info(f"Average processing time: {metrics['average_processing_time']:.2f}ms")
+   Line 1465: INFO
+      Reason: Default level for general output
+      Before: print(f"ACTIVE INTERACTIONS: {len(active)}")
+      After:          logger.info(f"ACTIVE INTERACTIONS: {len(active)}")
+   Line 1469: INFO
+      Reason: Default level for general output
+      Before: print(f"INTERACTION HISTORY: {len(history)} recent interactions")
+      After:          logger.info(f"INTERACTION HISTORY: {len(history)} recent interactions")
+   Line 1471: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1478: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("STANDARD INTERACTION ENGINE TESTING COMPLETE")
+      After:          logger.info("STANDARD INTERACTION ENGINE TESTING COMPLETE")
+   Line 1489: INFO
+      Reason: Default level for general output
+      Before: print("STANDARD INTERACTION ENGINE ENHANCED BY THE SYSTEM")
+      After:      logger.info("STANDARD INTERACTION ENGINE ENHANCED BY THE SYSTEM")
+   Line 1490: INFO
+      Reason: Default level for general output
+      Before: print("MACHINE GOD PROTECTS THE DIGITAL INTERACTIONS")
+      After:      logger.info("MACHINE GOD PROTECTS THE DIGITAL INTERACTIONS")
+   Line 1495: INFO
+      Reason: Default level for general output
+      Before: print("ALL STANDARD INTERACTION ENGINE OPERATIONS ENHANCED AND FUNCTIONAL")
+      After:      logger.info("ALL STANDARD INTERACTION ENGINE OPERATIONS ENHANCED AND FUNCTIONAL")
+   📋 Would be migrated (dry-run)
+
+📄 memory\emotional_memory.py
+   Found 2 print statement(s)
+   Line 133: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("Testing Emotional Memory System...")
+      After:      logger.info("Testing Emotional Memory System...")
+   Line 146: INFO
+      Reason: Default level for general output
+      Before: print("Emotional memory test complete.")
+      After:      logger.info("Emotional memory test complete.")
+   📋 Would be migrated (dry-run)
+
+📄 memory\episodic_memory.py
+   Found 7 print statement(s)
+   Line 471: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("Testing Episodic Memory System...")
+      After:      logger.info("Testing Episodic Memory System...")
+   Line 490: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"Stored episode {i}: {result.success}")
+      After:          logger.info(f"Stored episode {i}: {result.success}")
+   Line 498: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 505: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 510: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 515: INFO
+      Reason: Default level for general output
+      Before: print(f"Episodic Memory Statistics: {stats}")
+      After:      logger.info(f"Episodic Memory Statistics: {stats}")
+   Line 518: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("Episodic Memory testing complete.")
+      After:      logger.info("Episodic Memory testing complete.")
+   📋 Would be migrated (dry-run)
+
+📄 memory\layered_memory.py
+   Found 7 print statement(s)
+   Line 623: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("Testing Layered Memory System...")
+      After:      logger.info("Testing Layered Memory System...")
+   Line 657: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 668: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 672: INFO
+      Reason: Default level for general output
+      Before: print(f"Query Sources: {set(result_data.memory_sources)}")
+      After:              logger.info(f"Query Sources: {set(result_data.memory_sources)}")
+   Line 675: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"Consolidation: {consolidation_result.success}")
+      After:      logger.info(f"Consolidation: {consolidation_result.success}")
+   Line 678: INFO
+      Reason: Default level for general output
+      Before: print(f"Unified Statistics: {stats['coordination_stats']}")
+      After:      logger.info(f"Unified Statistics: {stats['coordination_stats']}")
+   Line 681: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("Layered Memory System testing complete.")
+      After:      logger.info("Layered Memory System testing complete.")
+   📋 Would be migrated (dry-run)
+
+📄 memory\memory_query_engine.py
+   Found 5 print statement(s)
+   Line 583: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("Testing Memory Query Engine...")
+      After:      logger.info("Testing Memory Query Engine...")
+   Line 603: INFO
+      Reason: Default level for general output
+      Before: print(f"Query '{query}' found {len(query_result.memories)} results.")
+      After:          logger.info(f"Query '{query}' found {len(query_result.memories)} results.")
+   Line 606: ERROR
+      Reason: Contains error indicator: error
+      Before: print(f"Query failed: {result.error.message}")
+      After:          logger.error(f"Query failed: {result.error.message}")
+   Line 610: INFO
+      Reason: Default level for general output
+      Before: print(f"Query Engine Stats: {stats}")
+      After:      logger.info(f"Query Engine Stats: {stats}")
+   Line 613: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("Memory Query Engine testing complete.")
+      After:      logger.info("Memory Query Engine testing complete.")
+   📋 Would be migrated (dry-run)
+
+📄 memory\semantic_memory.py
+   Found 6 print statement(s)
+   Line 377: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("Testing Semantic Memory...")
+      After:      logger.info("Testing Semantic Memory...")
+   Line 392: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 397: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 403: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"Query for 'sky' concept successful: {concept_result.success}")
+      After:      logger.info(f"Query for 'sky' concept successful: {concept_result.success}")
+   Line 407: INFO
+      Reason: Default level for general output
+      Before: print(f"Semantic Memory Stats: {stats}")
+      After:      logger.info(f"Semantic Memory Stats: {stats}")
+   Line 410: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("Semantic Memory testing complete.")
+      After:      logger.info("Semantic Memory testing complete.")
+   📋 Would be migrated (dry-run)
+
+📄 memory\working_memory.py
+   Found 7 print statement(s)
+   Line 306: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("Testing Working Memory...")
+      After:      logger.info("Testing Working Memory...")
+   Line 317: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"Added memory {i}: {result.success}")
+      After:          logger.info(f"Added memory {i}: {result.success}")
+   Line 320: INFO
+      Reason: Default level for general output
+      Before: print(f"Retrieved {len(active_memories)} active memories.")
+      After:      logger.info(f"Retrieved {len(active_memories)} active memories.")
+   Line 325: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"Focusing on memory: {focus_result.success}")
+      After:          logger.info(f"Focusing on memory: {focus_result.success}")
+   Line 328: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"Maintenance complete: {maintenance_result.success}")
+      After:      logger.info(f"Maintenance complete: {maintenance_result.success}")
+   Line 331: INFO
+      Reason: Default level for general output
+      Before: print(f"Working Memory Statistics: {stats}")
+      After:      logger.info(f"Working Memory Statistics: {stats}")
+   Line 333: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("Working Memory testing complete.")
+      After:      logger.info("Working Memory testing complete.")
+   📋 Would be migrated (dry-run)
+
+📄 performance\monitoring\performance_monitoring.py
+   Found 3 print statement(s)
+   Line 883: INFO
+      Reason: Default level for general output
+      Before: print(f"Dashboard data: {json.dumps(dashboard, indent=2, default=str)}")
+      After:          logger.info(f"Dashboard data: {json.dumps(dashboard, indent=2, default=str)}")
+   Line 886: INFO
+      Reason: Default level for general output
+      Before: print("\nActive alerts:")
+      After:          logger.info("\nActive alerts:")
+   Line 888: INFO
+      Reason: Default level for general output
+      Before: print(f"- {alert.level.name}: {alert.message}")
+      After:              logger.info(f"- {alert.level.name}: {alert.message}")
+   📋 Would be migrated (dry-run)
+
+📄 performance\optimization\performance_optimization.py
+   Found 1 print statement(s)
+   Line 446: INFO
+      Reason: Contains info indicator: success
+      Before: print("Performance optimization systems tested successfully")
+      After:          logger.info("Performance optimization systems tested successfully")
+   📋 Would be migrated (dry-run)
+
+📄 performance\tests\performance_stress_test.py
+   Found 11 print statement(s)
+   Line 730: INFO
+      Reason: Default level for general output
+      Before: print("\n" + "=" * 80)
+      After:      logger.info("\n" + "=" * 80)
+   Line 731: INFO
+      Reason: Default level for general output
+      Before: print("PERFORMANCE STRESS TEST RESULTS")
+      After:      logger.info("PERFORMANCE STRESS TEST RESULTS")
+   Line 732: INFO
+      Reason: Default level for general output
+      Before: print("=" * 80)
+      After:      logger.info("=" * 80)
+   Line 733: INFO
+      Reason: Contains info indicator: Summary
+      Before: print(f"Total Requests: {summary['total_requests']:,}")
+      After:      logger.info(f"Total Requests: {summary['total_requests']:,}")
+   Line 734: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"Success Rate: {summary['overall_success_rate']:.1f}%")
+      After:      logger.info(f"Success Rate: {summary['overall_success_rate']:.1f}%")
+   Line 735: INFO
+      Reason: Contains info indicator: Summary
+      Before: print(f"Average RPS: {summary['average_rps']:.1f}")
+      After:      logger.info(f"Average RPS: {summary['average_rps']:.1f}")
+   Line 736: INFO
+      Reason: Contains info indicator: Summary
+      Before: print(f"Average Response Time: {summary['average_response_time_ms']:.1f}ms")
+      After:      logger.info(f"Average Response Time: {summary['average_response_time_ms']:.1f}ms")
+   Line 737: INFO
+      Reason: Contains info indicator: Summary
+      Before: print(f"Peak Memory Usage: {summary['peak_memory_mb']:.1f}MB")
+      After:      logger.info(f"Peak Memory Usage: {summary['peak_memory_mb']:.1f}MB")
+   Line 738: INFO
+      Reason: Contains info indicator: Summary
+      Before: print(f"Average CPU Usage: {summary['average_cpu_percent']:.1f}%")
+      After:      logger.info(f"Average CPU Usage: {summary['average_cpu_percent']:.1f}%")
+   Line 739: INFO
+      Reason: Contains info indicator: Summary
+      Before: print(f"Performance Grade: {summary['performance_grade']}")
+      After:      logger.info(f"Performance Grade: {summary['performance_grade']}")
+   Line 740: INFO
+      Reason: Default level for general output
+      Before: print("=" * 80)
+      After:      logger.info("=" * 80)
+   📋 Would be migrated (dry-run)
+
+📄 performance\tests\performance_test_suite.py
+   Found 4 print statement(s)
+   Line 1044: INFO
+      Reason: Default level for general output
+      Before: print("\n" + "=" * 80)
+      After:          logger.info("\n" + "=" * 80)
+   Line 1045: INFO
+      Reason: Contains info indicator: Summary
+      Before: print("PERFORMANCE TEST SUMMARY")
+      After:          logger.info("PERFORMANCE TEST SUMMARY")
+   Line 1046: INFO
+      Reason: Default level for general output
+      Before: print("=" * 80)
+      After:          logger.info("=" * 80)
+   Line 1047: INFO
+      Reason: Default level for general output
+      Before: print(report)
+      After:          logger.info(report)
+   📋 Would be migrated (dry-run)
+
+📄 performance\tests\performance_validation.py
+   Found 17 print statement(s)
+   Line 28: WARNING
+      Reason: Contains warning indicator: warn(ing)?
+      Before: print(f"Warning: Could not import performance engine: {e}")
+      After:      logger.warning(f"Warning: Could not import performance engine: {e}")
+   Line 314: INFO
+      Reason: Default level for general output
+      Before: print("\n" + "=" * 60)
+      After:      logger.info("\n" + "=" * 60)
+   Line 315: INFO
+      Reason: Contains info indicator: Summary
+      Before: print("PERFORMANCE VALIDATION SUMMARY")
+      After:      logger.info("PERFORMANCE VALIDATION SUMMARY")
+   Line 316: INFO
+      Reason: Default level for general output
+      Before: print("=" * 60)
+      After:      logger.info("=" * 60)
+   Line 321: INFO
+      Reason: Default level for general output
+      Before: print(f"\nPerformance Engine: {engine_status}")
+      After:      logger.info(f"\nPerformance Engine: {engine_status}")
+   Line 326: INFO
+      Reason: Default level for general output
+      Before: print(f"\nAPI Endpoints: SKIPPED ({api_tests.get('reason', 'Unknown reason')})")
+      After:          logger.info(f"\nAPI Endpoints: SKIPPED ({api_tests.get('reason', 'Unknown reason')})")
+   Line 331: INFO
+      Reason: Default level for general output
+      Before: print(f"\nAPI Endpoints: {api_status}")
+      After:          logger.info(f"\nAPI Endpoints: {api_status}")
+   Line 339: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 343: ERROR
+      Reason: Contains error indicator: error
+      Before: print(f"  FAIL {result['description']}: ERROR")
+      After:                      logger.error(f"  FAIL {result['description']}: ERROR")
+   Line 348: INFO
+      Reason: Default level for general output
+      Before: print(f"\nLoad Test: SKIPPED ({load_test.get('reason', 'Unknown reason')})")
+      After:          logger.info(f"\nLoad Test: SKIPPED ({load_test.get('reason', 'Unknown reason')})")
+   Line 352: INFO
+      Reason: Default level for general output
+      Before: print(f"\nLoad Test: {load_status}")
+      After:          logger.info(f"\nLoad Test: {load_status}")
+   Line 355: INFO
+      Reason: Default level for general output
+      Before: print(f"  Average Response Time: {load_test['avg_response_time_ms']:.1f}ms")
+      After:              logger.info(f"  Average Response Time: {load_test['avg_response_time_ms']:.1f}ms")
+   Line 356: INFO
+      Reason: Default level for general output
+      Before: print(f"  P95 Response Time: {load_test['p95_response_time_ms']:.1f}ms")
+      After:              logger.info(f"  P95 Response Time: {load_test['p95_response_time_ms']:.1f}ms")
+   Line 357: INFO
+      Reason: Default level for general output
+      Before: print(f"  Throughput: {load_test['throughput_rps']:.1f} RPS")
+      After:              logger.info(f"  Throughput: {load_test['throughput_rps']:.1f} RPS")
+   Line 358: ERROR
+      Reason: Contains error indicator: error
+      Before: print(f"  Error Rate: {load_test['error_rate']:.1f}%")
+      After:              logger.error(f"  Error Rate: {load_test['error_rate']:.1f}%")
+   Line 362: INFO
+      Reason: Default level for general output
+      Before: print(f"\nOVERALL VALIDATION: {overall_status}")
+      After:      logger.info(f"\nOVERALL VALIDATION: {overall_status}")
+   Line 363: INFO
+      Reason: Default level for general output
+      Before: print("=" * 60)
+      After:      logger.info("=" * 60)
+   📋 Would be migrated (dry-run)
+
+📄 quality\code_quality_monitor.py
+   Found 1 print statement(s)
+   Line 784: INFO
+      Reason: Default level for general output
+      Before: print(console_report)
+      After:      logger.info(console_report)
+   📋 Would be migrated (dry-run)
+
+📄 security\compliance_framework.py
+   Found 1 print statement(s)
+   Line 778: INFO
+      Reason: Default level for general output
+      Before: print(console_report)
+      After:      logger.info(console_report)
+   📋 Would be migrated (dry-run)
+
+📄 security\ssl_config.py
+   Found 1 print statement(s)
+   Line 215: INFO
+      Reason: Default level for general output
+      Before: "fingerprint_sha256": cert.fingerprint(hashes.SHA256()).hex(),
+      After:  "fingerprint_sha256": cert.fingerprint(hashes.SHA256()).hex(),
+   📋 Would be migrated (dry-run)
+
+📄 templates\character_template_manager.py
+   Found 17 print statement(s)
+   Line 1466: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("TESTING STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY THE SYSTEM")
+      After:      logger.info("TESTING STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY THE SYSTEM")
+   Line 1510: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"PERSONA CREATION: {creation_result.success}")
+      After:          logger.info(f"PERSONA CREATION: {creation_result.success}")
+   Line 1512: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1520: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"PERSONA SWITCH: {switch_result.success}")
+      After:          logger.info(f"PERSONA SWITCH: {switch_result.success}")
+   Line 1547: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"CHARACTER CONTEXT RENDERING: {render_result.success}")
+      After:          logger.info(f"CHARACTER CONTEXT RENDERING: {render_result.success}")
+   Line 1550: INFO
+      Reason: Default level for general output
+      Before: print(f"Rendered {len(result_data.rendered_content)} characters")
+      After:              logger.info(f"Rendered {len(result_data.rendered_content)} characters")
+   Line 1551: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1554: INFO
+      Reason: Default level for general output
+      Before: print("Content preview:")
+      After:              logger.info("Content preview:")
+   Line 1555: INFO
+      Reason: Default level for general output
+      Before: print(result_data.rendered_content[:300] + "...")
+      After:              logger.info(result_data.rendered_content[:300] + "...")
+   Line 1561: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"TEMPLATE GENERATION: {template_result.success}")
+      After:          logger.info(f"TEMPLATE GENERATION: {template_result.success}")
+   Line 1563: INFO
+      Reason: Default level for general output
+      Before: print(f"Generated template: {template_result.data['template_id']}")
+      After:              logger.info(f"Generated template: {template_result.data['template_id']}")
+   Line 1567: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1573: INFO
+      Reason: Default level for general output
+      Before: print(f"PERSONAS: {[p['name'] for p in persona_list]}")
+      After:          logger.info(f"PERSONAS: {[p['name'] for p in persona_list]}")
+   Line 1575: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("STANDARD CHARACTER TEMPLATE MANAGER TESTING COMPLETE")
+      After:          logger.info("STANDARD CHARACTER TEMPLATE MANAGER TESTING COMPLETE")
+   Line 1586: INFO
+      Reason: Default level for general output
+      Before: print("STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY THE SYSTEM")
+      After:      logger.info("STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY THE SYSTEM")
+   Line 1587: INFO
+      Reason: Default level for general output
+      Before: print("MACHINE GOD PROTECTS THE DIGITAL PERSONAS")
+      After:      logger.info("MACHINE GOD PROTECTS THE DIGITAL PERSONAS")
+   Line 1592: INFO
+      Reason: Default level for general output
+      Before: print("ALL STANDARD CHARACTER TEMPLATE MANAGER OPERATIONS ENHANCED AND FUNCTIONAL")
+      After:      logger.info("ALL STANDARD CHARACTER TEMPLATE MANAGER OPERATIONS ENHANCED AND FUNCTIONAL")
+   📋 Would be migrated (dry-run)
+
+📄 templates\context_renderer.py
+   Found 15 print statement(s)
+   Line 1067: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("TESTING STANDARD CONTEXT RENDERER ENHANCED BY THE SYSTEM")
+      After:      logger.info("TESTING STANDARD CONTEXT RENDERER ENHANCED BY THE SYSTEM")
+   Line 1138: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1141: INFO
+      Reason: Default level for general output
+      Before: print("Content preview:")
+      After:          logger.info("Content preview:")
+   Line 1142: INFO
+      Reason: Default level for general output
+      Before: print(result_data.rendered_content[:300] + "...")
+      After:          logger.info(result_data.rendered_content[:300] + "...")
+   Line 1150: INFO
+      Reason: Default level for general output
+      Before: print(f"CONVERSATIONAL RENDERED: {result_data.total_character_count} chars")
+      After:          logger.info(f"CONVERSATIONAL RENDERED: {result_data.total_character_count} chars")
+   Line 1158: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1161: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1164: INFO
+      Reason: Default level for general output
+      Before: print(f"Adaptive decisions: {len(result_data.adaptive_decisions)}")
+      After:          logger.info(f"Adaptive decisions: {len(result_data.adaptive_decisions)}")
+   Line 1179: INFO
+      Reason: Default level for general output
+      Before: print(f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars")
+      After:          logger.info(f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars")
+   Line 1180: INFO
+      Reason: Default level for general output
+      Before: print(f"Excluded sections: {len(result_data.sections_excluded)}")
+      After:          logger.info(f"Excluded sections: {len(result_data.sections_excluded)}")
+   Line 1184: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1193: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("STANDARD CONTEXT RENDERER TESTING COMPLETE")
+      After:      logger.info("STANDARD CONTEXT RENDERER TESTING COMPLETE")
+   Line 1200: INFO
+      Reason: Default level for general output
+      Before: print("STANDARD CONTEXT RENDERER ENHANCED BY THE SYSTEM")
+      After:      logger.info("STANDARD CONTEXT RENDERER ENHANCED BY THE SYSTEM")
+   Line 1201: INFO
+      Reason: Default level for general output
+      Before: print("MACHINE GOD PROTECTS THE INTELLIGENT CONTEXT PRESENTATION")
+      After:      logger.info("MACHINE GOD PROTECTS THE INTELLIGENT CONTEXT PRESENTATION")
+   Line 1206: INFO
+      Reason: Default level for general output
+      Before: print("ALL STANDARD CONTEXT RENDERER OPERATIONS ENHANCED AND FUNCTIONAL")
+      After:      logger.info("ALL STANDARD CONTEXT RENDERER OPERATIONS ENHANCED AND FUNCTIONAL")
+   📋 Would be migrated (dry-run)
+
+📄 templates\dynamic_template_engine.py
+   Found 14 print statement(s)
+   Line 961: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("TESTING STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY THE SYSTEM")
+      After:      logger.info("TESTING STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY THE SYSTEM")
+   Line 1023: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)")
+      After:          logger.info(f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)")
+   Line 1024: INFO
+      Reason: Default level for general output
+      Before: print(f"Variables used: {result_data.context_variables_used}")
+      After:          logger.info(f"Variables used: {result_data.context_variables_used}")
+   Line 1025: INFO
+      Reason: Default level for general output
+      Before: print("Rendered content preview:")
+      After:          logger.info("Rendered content preview:")
+   Line 1026: INFO
+      Reason: Default level for general output
+      Before: print(result_data.rendered_content[:200] + "...")
+      After:          logger.info(result_data.rendered_content[:200] + "...")
+   Line 1028: ERROR
+      Reason: Contains error indicator: error
+      Before: print(f"TEMPLATE RENDERING FAILED: {render_result.error.message}")
+      After:          logger.error(f"TEMPLATE RENDERING FAILED: {render_result.error.message}")
+   Line 1038: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1049: INFO
+      Reason: Contains info indicator: success
+      Before: print(f"TEMPLATE CREATION: {creation_result.success}")
+      After:      logger.info(f"TEMPLATE CREATION: {creation_result.success}")
+   Line 1053: INFO
+      Reason: Default level for general output
+      Before: print(
+      After:  print(
+   Line 1059: INFO
+      Reason: Default level for general output
+      Before: print(f"DISCOVERED TEMPLATES: {[t['template_id'] for t in template_list]}")
+      After:      logger.info(f"DISCOVERED TEMPLATES: {[t['template_id'] for t in template_list]}")
+   Line 1066: INFO
+      Reason: Contains info indicator: TESTING
+      Before: print("STANDARD DYNAMIC TEMPLATE ENGINE TESTING COMPLETE")
+      After:      logger.info("STANDARD DYNAMIC TEMPLATE ENGINE TESTING COMPLETE")
+   Line 1073: INFO
+      Reason: Default level for general output
+      Before: print("STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY THE SYSTEM")
+      After:      logger.info("STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY THE SYSTEM")
+   Line 1074: INFO
+      Reason: Default level for general output
+      Before: print("MACHINE GOD PROTECTS THE DYNAMIC CONTENT GENERATION")
+      After:      logger.info("MACHINE GOD PROTECTS THE DYNAMIC CONTENT GENERATION")
+   Line 1079: INFO
+      Reason: Default level for general output
+      Before: print("ALL STANDARD DYNAMIC TEMPLATE ENGINE OPERATIONS ENHANCED AND FUNCTIONAL")
+      After:      logger.info("ALL STANDARD DYNAMIC TEMPLATE ENGINE OPERATIONS ENHANCED AND FUNCTIONAL")
+   📋 Would be migrated (dry-run)
+
+======================================================================
+📊 Migration Summary
+======================================================================
+Files Analyzed:            245
+Files Modified:            31
+Print Statements Found:    251
+Print Statements Migrated: 251
+
+Logging Level Distribution:
+  ERROR   :  14 statements
+  INFO    : 236 statements
+  WARNING :   1 statements
+
+💡 This was a DRY RUN. No files were modified.
+   Run without --dry-run to apply changes.

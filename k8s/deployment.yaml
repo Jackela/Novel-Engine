@@ -1,0 +1,542 @@
+# Novel Engine Main Application Deployment
+# ========================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: novel-engine-api
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: api
+    version: v1.0.0
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    description: "Novel Engine API server deployment"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: novel-engine
+      component: api
+  template:
+    metadata:
+      labels:
+        app: novel-engine
+        component: api
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: novel-engine-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      
+      # Init containers
+      initContainers:
+      - name: wait-for-postgres
+        image: postgres:15-alpine
+        command: ['sh', '-c', 'until pg_isready -h postgres-service -p 5432 -U $POSTGRES_USER; do sleep 2; done']
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: postgres_user
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 50m
+          limits:
+            memory: 128Mi
+            cpu: 100m
+      
+      - name: wait-for-redis
+        image: redis:7-alpine
+        command: ['sh', '-c', 'until redis-cli -h redis-service -p 6379 ping; do sleep 2; done']
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 50m
+          limits:
+            memory: 128Mi
+            cpu: 100m
+      
+      containers:
+      - name: novel-engine-api
+        image: novel-engine:v1.0.0  # Replace with your actual image
+        imagePullPolicy: IfNotPresent
+        
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: novel-engine-config
+              key: log_level
+        - name: API_WORKERS
+          valueFrom:
+            configMapKeyRef:
+              name: novel-engine-config
+              key: api_workers
+        - name: MAX_MEMORY_MB
+          valueFrom:
+            configMapKeyRef:
+              name: novel-engine-config
+              key: max_memory_mb
+        
+        # Database configuration
+        - name: POSTGRES_URL
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: postgres_url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: redis_url
+        
+        # AWS S3 configuration
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: aws_secret_access_key
+        - name: S3_BUCKET
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: s3_bucket
+        - name: S3_REGION
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: s3_region
+        
+        # Security configuration
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: encryption_key
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: jwt_secret
+        
+        # LLM API keys
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: openai_api_key
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: anthropic_api_key
+        - name: GOOGLE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: google_api_key
+        
+        # Observability
+        - name: JAEGER_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: jaeger_endpoint
+        - name: PROMETHEUS_PUSHGATEWAY
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: prometheus_pushgateway
+        
+        # CORS origins
+        - name: CORS_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: novel-engine-config
+              key: cors_origins
+        
+        # Health check configuration
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        
+        # Startup probe for slower startup
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 10
+        
+        # Resource management
+        resources:
+          requests:
+            memory: 512Mi
+            cpu: 250m
+            ephemeral-storage: 1Gi
+          limits:
+            memory: 2Gi
+            cpu: 1000m
+            ephemeral-storage: 5Gi
+        
+        # Volume mounts
+        volumeMounts:
+        - name: log-volume
+          mountPath: /var/log/novel-engine
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: logging-config
+          mountPath: /app/logging.yaml
+          subPath: logging.yaml
+          readOnly: true
+        - name: tmp-volume
+          mountPath: /tmp
+        
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+      
+      # Volumes
+      volumes:
+      - name: log-volume
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: config-volume
+        configMap:
+          name: novel-engine-config
+      - name: logging-config
+        configMap:
+          name: novel-engine-logging-config
+      - name: tmp-volume
+        emptyDir:
+          sizeLimit: 512Mi
+      
+      # Image pull secrets
+      imagePullSecrets:
+      - name: docker-registry-secret
+      
+      # Node selection
+      nodeSelector:
+        kubernetes.io/os: linux
+      
+      # Tolerations
+      tolerations:
+      - key: "novel-engine.com/dedicated"
+        operator: "Equal"
+        value: "api"
+        effect: "NoSchedule"
+      
+      # Affinity rules
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - novel-engine
+                - key: component
+                  operator: In
+                  values:
+                  - api
+              topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: node-type
+                operator: In
+                values:
+                - application
+      
+      # Pod disruption constraints
+      terminationGracePeriodSeconds: 60
+      
+      # DNS policy
+      dnsPolicy: ClusterFirst
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "2"
+        - name: edns0
+
+---
+
+# WebSocket Service Deployment (if separate from API)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: novel-engine-websocket
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: websocket
+    version: v1.0.0
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: novel-engine
+      component: websocket
+  template:
+    metadata:
+      labels:
+        app: novel-engine
+        component: websocket
+        version: v1.0.0
+    spec:
+      serviceAccountName: novel-engine-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      
+      containers:
+      - name: novel-engine-websocket
+        image: novel-engine-websocket:v1.0.0  # Replace with your WebSocket server image
+        imagePullPolicy: IfNotPresent
+        
+        ports:
+        - name: websocket
+          containerPort: 8001
+          protocol: TCP
+        
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: novel-engine-secrets
+              key: redis_url
+        
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: websocket
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: websocket
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+        
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+      
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - novel-engine
+                - key: component
+                  operator: In
+                  values:
+                  - websocket
+              topologyKey: kubernetes.io/hostname
+
+---
+
+# Frontend Deployment (Nginx serving React app)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: novel-engine-frontend
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: frontend
+    version: v1.0.0
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 2
+  selector:
+    matchLabels:
+      app: novel-engine
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: novel-engine
+        component: frontend
+        version: v1.0.0
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101  # nginx user
+        runAsGroup: 101
+        fsGroup: 101
+      
+      containers:
+      - name: nginx
+        image: nginx:1.24-alpine
+        imagePullPolicy: IfNotPresent
+        
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        - name: https
+          containerPort: 443
+          protocol: TCP
+        
+        livenessProbe:
+          httpGet:
+            path: /
+            port: https
+            scheme: HTTPS
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        
+        readinessProbe:
+          httpGet:
+            path: /
+            port: https
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 50m
+          limits:
+            memory: 128Mi
+            cpu: 200m
+        
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+          readOnly: true
+        - name: tls-certs
+          mountPath: /etc/nginx/certs
+          readOnly: true
+        - name: frontend-files
+          mountPath: /var/www/html
+          readOnly: true
+        - name: nginx-cache
+          mountPath: /var/cache/nginx
+        - name: nginx-run
+          mountPath: /var/run
+        
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+      
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+      - name: tls-certs
+        secret:
+          secretName: novel-engine-tls
+      - name: frontend-files
+        configMap:
+          name: frontend-files  # This would contain your built React app
+      - name: nginx-cache
+        emptyDir: {}
+      - name: nginx-run
+        emptyDir: {}

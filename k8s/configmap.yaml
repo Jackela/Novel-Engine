@@ -1,0 +1,436 @@
+# Configuration Management
+# =======================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: novel-engine-config
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: config
+data:
+  # Application Configuration
+  environment: "production"
+  log_level: "INFO"
+  api_workers: "4"
+  api_timeout: "60"
+  
+  # Simulation Settings
+  simulation_turns: "10"
+  max_agents: "20"
+  
+  # Performance Settings
+  max_memory_mb: "2048"
+  enable_caching: "true"
+  enable_monitoring: "true"
+  
+  # Security Settings
+  enable_security_headers: "true"
+  force_https: "true"
+  enable_input_validation: "true"
+  enable_rate_limiting: "true"
+  enable_audit_logging: "true"
+  session_timeout_minutes: "30"
+  max_upload_size_mb: "50"
+  
+  # Features
+  ai_enhanced_narratives: "true"
+  advanced_world_state: "true"
+  multiplayer_support: "true"
+  realtime_updates: "true"
+  
+  # CORS Origins (comma-separated)
+  cors_origins: "https://novel-engine.com,https://www.novel-engine.com"
+  
+  # Kubernetes Service Discovery
+  redis_host: "redis-service"
+  redis_port: "6379"
+  postgres_host: "postgres-service"
+  postgres_port: "5432"
+  postgres_database: "novelengine"
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: novel-engine-logging-config
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: logging
+data:
+  logging.yaml: |
+    version: 1
+    disable_existing_loggers: false
+    
+    formatters:
+      structured:
+        class: src.infrastructure.observability.StructuredFormatter
+      
+      simple:
+        format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    
+    handlers:
+      console:
+        class: logging.StreamHandler
+        level: INFO
+        formatter: structured
+        stream: ext://sys.stdout
+      
+      file:
+        class: logging.handlers.RotatingFileHandler
+        level: INFO
+        formatter: structured
+        filename: /var/log/novel-engine/app.log
+        maxBytes: 10485760  # 10MB
+        backupCount: 5
+    
+    loggers:
+      novel_engine:
+        level: INFO
+        handlers: [console, file]
+        propagate: false
+        
+      src:
+        level: INFO
+        handlers: [console, file]
+        propagate: false
+        
+      uvicorn:
+        level: INFO
+        handlers: [console]
+        propagate: false
+        
+      fastapi:
+        level: INFO
+        handlers: [console]
+        propagate: false
+    
+    root:
+      level: WARNING
+      handlers: [console, file]
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: novel-engine
+  labels:
+    app: redis
+    component: config
+data:
+  redis.conf: |
+    # Redis Configuration for Novel Engine
+    
+    # Network
+    bind 0.0.0.0
+    port 6379
+    tcp-backlog 511
+    timeout 0
+    tcp-keepalive 300
+    
+    # General
+    daemonize no
+    supervised no
+    pidfile /var/run/redis_6379.pid
+    loglevel notice
+    logfile ""
+    databases 16
+    
+    # Memory
+    maxmemory 1gb
+    maxmemory-policy allkeys-lru
+    
+    # Persistence
+    save 900 1
+    save 300 10
+    save 60 10000
+    stop-writes-on-bgsave-error yes
+    rdbcompression yes
+    rdbchecksum yes
+    dbfilename dump.rdb
+    dir ./
+    
+    # Security
+    protected-mode yes
+    # requirepass will be set via secret
+    
+    # Performance
+    tcp-nodelay yes
+    client-output-buffer-limit normal 0 0 0
+    client-output-buffer-limit replica 256mb 64mb 60
+    client-output-buffer-limit pubsub 32mb 8mb 60
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: novel-engine
+  labels:
+    app: postgres
+    component: init
+data:
+  init.sql: |
+    -- Initialize Novel Engine Database
+    
+    -- Create database if not exists
+    SELECT 'CREATE DATABASE novelengine'
+    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'novelengine');
+    
+    -- Connect to the database
+    \c novelengine;
+    
+    -- Create extensions
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+    CREATE EXTENSION IF NOT EXISTS "btree_gin";
+    
+    -- Create schemas
+    CREATE SCHEMA IF NOT EXISTS novel_engine;
+    CREATE SCHEMA IF NOT EXISTS monitoring;
+    CREATE SCHEMA IF NOT EXISTS security;
+    
+    -- Set default search path
+    ALTER DATABASE novelengine SET search_path TO novel_engine, public;
+    
+    -- Create application user if not exists
+    DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'novel_engine_app') THEN
+            CREATE ROLE novel_engine_app LOGIN PASSWORD 'change_this_password';
+        END IF;
+    END
+    $$;
+    
+    -- Grant permissions
+    GRANT USAGE ON SCHEMA novel_engine TO novel_engine_app;
+    GRANT CREATE ON SCHEMA novel_engine TO novel_engine_app;
+    GRANT USAGE ON SCHEMA monitoring TO novel_engine_app;
+    GRANT CREATE ON SCHEMA monitoring TO novel_engine_app;
+    
+    -- Create performance monitoring table
+    CREATE TABLE IF NOT EXISTS monitoring.performance_metrics (
+        id SERIAL PRIMARY KEY,
+        timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        metric_name VARCHAR(100) NOT NULL,
+        metric_value DOUBLE PRECISION NOT NULL,
+        labels JSONB DEFAULT '{}',
+        node_name VARCHAR(100),
+        INDEX (timestamp, metric_name)
+    );
+    
+    -- Create audit log table
+    CREATE TABLE IF NOT EXISTS security.audit_log (
+        id SERIAL PRIMARY KEY,
+        timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        event_type VARCHAR(50) NOT NULL,
+        user_id VARCHAR(100),
+        resource VARCHAR(200),
+        action VARCHAR(50),
+        result VARCHAR(20),
+        details JSONB DEFAULT '{}',
+        source_ip INET,
+        user_agent TEXT,
+        INDEX (timestamp, event_type),
+        INDEX (user_id, timestamp)
+    );
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: novel-engine
+  labels:
+    app: nginx
+    component: config
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+    
+    events {
+        worker_connections 1024;
+        use epoll;
+        multi_accept on;
+    }
+    
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        
+        # Logging
+        log_format json_combined escape=json
+        '{'
+          '"timestamp":"$time_iso8601",'
+          '"remote_addr":"$remote_addr",'
+          '"remote_user":"$remote_user",'
+          '"request":"$request",'
+          '"status":"$status",'
+          '"body_bytes_sent":"$body_bytes_sent",'
+          '"http_referer":"$http_referer",'
+          '"http_user_agent":"$http_user_agent",'
+          '"http_x_forwarded_for":"$http_x_forwarded_for",'
+          '"request_time":"$request_time",'
+          '"upstream_response_time":"$upstream_response_time"'
+        '}';
+        
+        access_log /var/log/nginx/access.log json_combined;
+        
+        # Performance
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+        client_max_body_size 50m;
+        
+        # Gzip
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_types text/plain text/css text/xml text/javascript
+                   application/javascript application/xml application/json
+                   application/rss+xml application/atom+xml image/svg+xml;
+        
+        # Security Headers
+        add_header X-Frame-Options DENY;
+        add_header X-Content-Type-Options nosniff;
+        add_header X-XSS-Protection "1; mode=block";
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' wss: https:;";
+        
+        # Rate limiting
+        limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+        limit_req_zone $binary_remote_addr zone=auth:10m rate=5r/m;
+        
+        # Upstream
+        upstream novel_engine_api {
+            least_conn;
+            server novel-engine-api-service:8000 max_fails=3 fail_timeout=30s;
+            keepalive 32;
+        }
+        
+        upstream novel_engine_websocket {
+            server novel-engine-websocket-service:8001 max_fails=3 fail_timeout=30s;
+        }
+        
+        server {
+            listen 80;
+            server_name _;
+            return 301 https://$server_name$request_uri;
+        }
+        
+        server {
+            listen 443 ssl http2;
+            server_name novel-engine.com www.novel-engine.com;
+            
+            # SSL Configuration
+            ssl_certificate /etc/nginx/certs/tls.crt;
+            ssl_certificate_key /etc/nginx/certs/tls.key;
+            ssl_protocols TLSv1.2 TLSv1.3;
+            ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
+            ssl_prefer_server_ciphers off;
+            ssl_session_cache shared:SSL:10m;
+            ssl_session_timeout 10m;
+            
+            # Security
+            add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+            
+            # API endpoints
+            location /api/ {
+                limit_req zone=api burst=20 nodelay;
+                
+                proxy_pass http://novel_engine_api;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_cache_bypass $http_upgrade;
+                
+                # Timeouts
+                proxy_connect_timeout 60s;
+                proxy_send_timeout 60s;
+                proxy_read_timeout 60s;
+            }
+            
+            # Authentication endpoints (stricter rate limiting)
+            location ~ ^/api/(auth|login|register) {
+                limit_req zone=auth burst=5 nodelay;
+                
+                proxy_pass http://novel_engine_api;
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            # WebSocket endpoints
+            location /ws/ {
+                proxy_pass http://novel_engine_websocket;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "upgrade";
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                
+                # WebSocket timeouts
+                proxy_read_timeout 3600s;
+                proxy_send_timeout 3600s;
+            }
+            
+            # Health checks (no rate limiting)
+            location ~ ^/(health|ready|metrics) {
+                proxy_pass http://novel_engine_api;
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                
+                access_log off;
+            }
+            
+            # Static files (frontend)
+            location / {
+                root /var/www/html;
+                try_files $uri $uri/ /index.html;
+                
+                # Caching for static assets
+                location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+                    expires 1y;
+                    add_header Cache-Control "public, immutable";
+                }
+                
+                # No caching for HTML files
+                location ~* \.html$ {
+                    expires -1;
+                    add_header Cache-Control "no-cache, no-store, must-revalidate";
+                }
+            }
+            
+            # Security
+            location ~ /\. {
+                deny all;
+            }
+            
+            # Error pages
+            error_page 404 /404.html;
+            error_page 500 502 503 504 /50x.html;
+        }
+    }

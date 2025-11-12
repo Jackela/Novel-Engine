@@ -1,0 +1,51 @@
+
+# Multi-stage Docker build for production deployment
+FROM python:3.11-slim as base
+
+# Security: Create non-root user
+RUN groupadd -r novelengine && useradd -r -g novelengine novelengine
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt requirements-services.txt /tmp/
+RUN pip install --no-cache-dir -r /tmp/requirements.txt -r /tmp/requirements-services.txt
+
+# Development stage
+FROM base as development
+COPY . /app
+WORKDIR /app
+RUN chown -R novelengine:novelengine /app
+USER novelengine
+EXPOSE 8000 5000
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Production stage
+FROM base as production
+
+# Copy application code
+COPY --chown=novelengine:novelengine . /app
+WORKDIR /app
+
+# Security hardening
+RUN rm -rf /app/tests /app/docs /app/*.md
+RUN chmod -R 750 /app
+RUN find /app -type f -name "*.py" -exec chmod 644 {} \;
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Switch to non-root user
+USER novelengine
+
+# Expose ports
+EXPOSE 8000 5000
+
+# Production command
+CMD ["python", "-m", "gunicorn", "main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]

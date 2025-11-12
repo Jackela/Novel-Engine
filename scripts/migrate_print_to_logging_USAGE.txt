@@ -1,0 +1,273 @@
+================================================================================
+PRINT TO LOGGING MIGRATION TOOL - USAGE SUMMARY
+Novel-Engine Project
+================================================================================
+
+SCRIPT LOCATION:
+    scripts/migrate_print_to_logging.py
+
+DOCUMENTATION:
+    scripts/MIGRATION_README.md          - Comprehensive guide
+    scripts/MIGRATION_QUICKSTART.md      - Quick start instructions
+    scripts/migration_preview_sample.txt - Full dry-run output sample
+
+================================================================================
+CURRENT PROJECT STATE (as of scan)
+================================================================================
+
+Total Python Files:     245
+Files with print():     31
+Print statements:       251
+
+Level Distribution:
+    INFO:     236 statements (94%)
+    ERROR:     14 statements (6%)
+    WARNING:    1 statement  (<1%)
+
+================================================================================
+BASIC COMMANDS
+================================================================================
+
+# 1. PREVIEW CHANGES (SAFE - NO MODIFICATIONS)
+python scripts/migrate_print_to_logging.py --dry-run
+
+# 2. APPLY MIGRATION TO ALL FILES
+python scripts/migrate_print_to_logging.py
+
+# 3. MIGRATE SINGLE FILE
+python scripts/migrate_print_to_logging.py --file src/api/integration_tests.py
+
+# 4. CUSTOM SOURCE DIRECTORY
+python scripts/migrate_print_to_logging.py --src-dir custom/path
+
+# 5. GET HELP
+python scripts/migrate_print_to_logging.py --help
+
+================================================================================
+RECOMMENDED WORKFLOW
+================================================================================
+
+STEP 1: Preview Everything
+---------------------------
+python scripts/migrate_print_to_logging.py --dry-run > migration_preview.txt
+less migration_preview.txt
+
+STEP 2: Test on One File
+-------------------------
+python scripts/migrate_print_to_logging.py --file src/core/types.py
+git diff src/core/types.py
+
+STEP 3: If Good, Apply to All
+------------------------------
+python scripts/migrate_print_to_logging.py
+
+STEP 4: Review Changes
+----------------------
+git status
+git diff --stat
+git diff src/api/integration_tests.py
+
+STEP 5: Run Tests
+-----------------
+pytest tests/
+
+STEP 6: Commit
+--------------
+git add .
+git commit -m "Migrate print() statements to logging"
+
+================================================================================
+WHAT THE SCRIPT DOES
+================================================================================
+
+For each Python file with print() statements:
+
+1. Analyzes Context
+   - Reads file content
+   - Identifies print() statements
+   - Determines appropriate logging level
+
+2. Adds Logging Infrastructure (if needed)
+   - Adds: import logging
+   - Adds: logger = logging.getLogger(__name__)
+
+3. Converts Print Statements
+   print("text")           → logger.info("text")
+   print(f"error: {e}")    → logger.error(f"error: {e}")
+   print("⚠️ warning")     → logger.warning("⚠️ warning")
+
+4. Preserves Formatting
+   - F-strings maintained
+   - Indentation preserved
+   - Line structure kept
+
+================================================================================
+LOGGING LEVEL DETECTION
+================================================================================
+
+ERROR → Patterns: error, exception, failed, critical, fatal, ❌
+    Example: print(f"❌ FAILED: {msg}") → logger.error(f"❌ FAILED: {msg}")
+
+WARNING → Patterns: warning, caution, deprecated, ⚠️
+    Example: print("⚠️ Deprecated") → logger.warning("⚠️ Deprecated")
+
+INFO → Patterns: starting, running, completed, success, ✅, 🚀, 📋, 📊
+    Example: print("🚀 Starting") → logger.info("🚀 Starting")
+    Default: Most general output
+
+DEBUG → Patterns: debug, verbose, trace, detail
+    Example: print("Debug info") → logger.debug("Debug info")
+
+================================================================================
+FILES REQUIRING MOST ATTENTION
+================================================================================
+
+High Impact Files:
+    templates/dynamic_template_engine.py        - 19 print statements
+    api/integration_tests.py                    - 17 print statements
+    core/config/config_loader.py               - 15 print statements
+    api/enhanced_documentation_system.py        -  5 print statements
+
+Files with Special Cases:
+    api/enhanced_documentation_system.py        - Has prints in code examples
+    templates/dynamic_template_engine.py        - Many test-related prints
+
+Manual review recommended for these files after migration.
+
+================================================================================
+EXAMPLE TRANSFORMATIONS
+================================================================================
+
+BEFORE:
+-------
+def run_test_suite(self):
+    print("🚀 Starting Novel Engine API Integration Tests")
+    print("=" * 60)
+    
+    for scenario in scenarios:
+        print(f"\n📋 Running: {scenario.name}")
+        try:
+            result = self._execute_scenario(scenario)
+            if result.success:
+                print(f"   ✅ PASSED ({result.duration_ms:.1f}ms)")
+            else:
+                print(f"   ❌ FAILED: {result.error_message}")
+        except Exception as e:
+            print(f"   ❌ ERROR: {str(e)}")
+
+AFTER:
+------
+import logging
+
+logger = logging.getLogger(__name__)
+
+def run_test_suite(self):
+    logger.info("🚀 Starting Novel Engine API Integration Tests")
+    logger.info("=" * 60)
+    
+    for scenario in scenarios:
+        logger.info(f"\n📋 Running: {scenario.name}")
+        try:
+            result = self._execute_scenario(scenario)
+            if result.success:
+                logger.info(f"   ✅ PASSED ({result.duration_ms:.1f}ms)")
+            else:
+                logger.error(f"   ❌ FAILED: {result.error_message}")
+        except Exception as e:
+            logger.error(f"   ❌ ERROR: {str(e)}")
+
+================================================================================
+POST-MIGRATION CONFIGURATION
+================================================================================
+
+Add to main application entry point:
+
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('novel_engine.log'),
+        logging.StreamHandler()
+    ]
+)
+
+For tests, add to conftest.py or test fixtures:
+
+import logging
+logging.basicConfig(level=logging.INFO)
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+If migration doesn't work:
+    1. Check Python version: python --version (requires 3.7+)
+    2. Verify file paths exist
+    3. Check file permissions
+    4. Run with --dry-run first
+    5. Try single file: --file path/to/file.py
+
+If results are unexpected:
+    1. Review dry-run output carefully
+    2. Check git diff for changes
+    3. Manually adjust logging levels as needed
+    4. Some edge cases may need manual fixes
+
+To rollback:
+    git checkout -- src/                    # All files
+    git checkout -- src/api/tests.py        # Single file
+
+================================================================================
+LIMITATIONS & EDGE CASES
+================================================================================
+
+Known Limitations:
+    - Multi-line print statements may need manual review
+    - Print statements with sep/end parameters need manual conversion
+    - Prints inside string literals are detected but not converted
+    - Complex string formatting may need adjustment
+
+Files Needing Manual Review:
+    - Code with prints in docstrings or examples
+    - Test files with specific output formatting
+    - Files with conditional print logic
+
+================================================================================
+SAFETY FEATURES
+================================================================================
+
+✓ Dry-run mode for safe preview
+✓ Single-file testing capability
+✓ Preserves all formatting and structure
+✓ Detailed reporting with reasoning
+✓ Git-friendly (easy to review/rollback)
+✓ No external dependencies
+✓ Comprehensive error handling
+
+================================================================================
+ADDITIONAL RESOURCES
+================================================================================
+
+Full Documentation:     scripts/MIGRATION_README.md
+Quick Start:           scripts/MIGRATION_QUICKSTART.md
+Sample Output:         scripts/migration_preview_sample.txt
+Script Source:         scripts/migrate_print_to_logging.py
+
+================================================================================
+SUMMARY STATISTICS (Latest Scan)
+================================================================================
+
+Files analyzed:            245
+Files to be modified:       31
+Print statements found:    251
+Migration success rate:    100% (in dry-run)
+
+Estimated time:            < 5 seconds
+Risk level:                Low (reversible via git)
+Testing required:          Yes (run pytest after)
+
+================================================================================
+END OF USAGE GUIDE
+================================================================================

@@ -1,0 +1,54 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: novel-engine-prod
+
+namePrefix: prod-
+
+commonLabels:
+  environment: production
+  tier: production
+
+bases:
+  - ../../base
+
+patchesStrategicMerge:
+  - deployment-patch.yaml
+  - ingress-patch.yaml
+  - hpa-patch.yaml
+
+configMapGenerator:
+  - name: novel-engine-config
+    behavior: replace
+    files:
+      - config/production.yaml
+  - name: novel-engine-env
+    literals:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - METRICS_ENABLED=true
+      - DEBUG=false
+
+secretGenerator:
+  - name: novel-engine-secrets
+    behavior: replace
+    files:
+      - secrets/database-url
+      - secrets/redis-url
+      - secrets/jwt-secret
+      - secrets/api-keys
+
+images:
+  - name: novel-engine
+    newName: your-registry.com/novel-engine
+    newTag: v1.0.0
+
+replicas:
+  - name: novel-engine
+    count: 3
+  - name: redis
+    count: 1
+
+resources:
+  - network-policy.yaml
+  - monitoring.yaml

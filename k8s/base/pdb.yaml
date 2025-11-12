@@ -1,0 +1,25 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: novel-engine-pdb
+  labels:
+    app: novel-engine
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: novel-engine
+      component: api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-pdb
+  labels:
+    app: redis
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: redis
+      component: cache

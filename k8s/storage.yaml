@@ -1,0 +1,610 @@
+# Persistent Storage Configuration
+# ===============================
+
+# Storage Class for high-performance SSD storage
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: novel-engine-ssd
+  labels:
+    app: novel-engine
+    component: storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp3
+  fsType: ext4
+  encrypted: "true"
+  iops: "3000"
+  throughput: "125"
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+
+---
+
+# Storage Class for database storage (high IOPS)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: novel-engine-db-ssd
+  labels:
+    app: novel-engine
+    component: database-storage
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: io2
+  fsType: ext4
+  encrypted: "true"
+  iops: "5000"
+  throughput: "250"
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain  # Retain for database data
+
+---
+
+# PostgreSQL StatefulSet with Persistent Storage
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: novel-engine
+  labels:
+    app: postgres
+    component: database
+    version: "15"
+spec:
+  serviceName: postgres-service
+  replicas: 1  # Single instance for now, can be scaled later
+  selector:
+    matchLabels:
+      app: postgres
+      component: database
+  template:
+    metadata:
+      labels:
+        app: postgres
+        component: database
+        version: "15"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9187"
+    spec:
+      serviceAccountName: novel-engine-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999  # postgres user
+        runAsGroup: 999
+        fsGroup: 999
+      
+      initContainers:
+      - name: postgres-init
+        image: postgres:15-alpine
+        command:
+        - sh
+        - -c
+        - |
+          if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
+            initdb --auth-host=md5 --auth-local=trust --encoding=UTF8 --locale=C.UTF-8
+          fi
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: postgres_user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: postgres_password
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: postgres_db
+        - name: PGDATA
+          value: /var/lib/postgresql/data
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+      
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - name: postgres
+          containerPort: 5432
+          protocol: TCP
+        
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: postgres_user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: postgres_password
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: postgres_db
+        - name: PGDATA
+          value: /var/lib/postgresql/data
+        - name: POSTGRES_INITDB_ARGS
+          value: "--auth-host=md5 --auth-local=trust --encoding=UTF8 --locale=C.UTF-8"
+        
+        # Health checks
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER)
+            - -d
+            - $(POSTGRES_DB)
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER)
+            - -d
+            - $(POSTGRES_DB)
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Resource management
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 500m
+          limits:
+            memory: 4Gi
+            cpu: 2
+        
+        # Volume mounts
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        - name: postgres-config
+          mountPath: /etc/postgresql/postgresql.conf
+          subPath: postgresql.conf
+          readOnly: true
+        - name: postgres-init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+          readOnly: true
+        
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false  # PostgreSQL needs write access
+          runAsNonRoot: true
+          runAsUser: 999
+          capabilities:
+            drop:
+            - ALL
+      
+      # PostgreSQL Exporter for Prometheus metrics
+      - name: postgres-exporter
+        image: prometheuscommunity/postgres-exporter:v0.12.0
+        ports:
+        - name: metrics
+          containerPort: 9187
+          protocol: TCP
+        
+        env:
+        - name: DATA_SOURCE_NAME
+          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: postgres_user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: postgres_password
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: postgres_db
+        
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 50m
+          limits:
+            memory: 128Mi
+            cpu: 200m
+        
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534  # nobody user
+          capabilities:
+            drop:
+            - ALL
+      
+      volumes:
+      - name: postgres-config
+        configMap:
+          name: postgres-config
+      - name: postgres-init-scripts
+        configMap:
+          name: postgres-init
+      
+      # Affinity to ensure database runs on dedicated nodes if available
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: node-type
+                operator: In
+                values:
+                - database
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - postgres
+            topologyKey: kubernetes.io/hostname
+  
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+      labels:
+        app: postgres
+        component: database-storage
+    spec:
+      accessModes: 
+      - ReadWriteOnce
+      storageClassName: novel-engine-db-ssd
+      resources:
+        requests:
+          storage: 100Gi
+
+---
+
+# Redis StatefulSet with Persistence
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: novel-engine
+  labels:
+    app: redis
+    component: cache
+    version: "7"
+spec:
+  serviceName: redis-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      component: cache
+  template:
+    metadata:
+      labels:
+        app: redis
+        component: cache
+        version: "7"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+    spec:
+      serviceAccountName: novel-engine-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999  # redis user
+        runAsGroup: 999
+        fsGroup: 999
+      
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - name: redis
+          containerPort: 6379
+          protocol: TCP
+        
+        command:
+        - redis-server
+        - /etc/redis/redis.conf
+        - --requirepass
+        - $(REDIS_PASSWORD)
+        
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets
+              key: redis_password
+        
+        # Health checks
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - -a
+            - $(REDIS_PASSWORD)
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - -a
+            - $(REDIS_PASSWORD)
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Resource management
+        resources:
+          requests:
+            memory: 512Mi
+            cpu: 250m
+          limits:
+            memory: 2Gi
+            cpu: 1
+        
+        # Volume mounts
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
+        - name: redis-config
+          mountPath: /etc/redis/redis.conf
+          subPath: redis.conf
+          readOnly: true
+        
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false  # Redis needs write access for persistence
+          runAsNonRoot: true
+          runAsUser: 999
+          capabilities:
+            drop:
+            - ALL
+      
+      # Redis Exporter for Prometheus metrics
+      - name: redis-exporter
+        image: oliver006/redis_exporter:v1.52.0-alpine
+        ports:
+        - name: metrics
+          containerPort: 9121
+          protocol: TCP
+        
+        env:
+        - name: REDIS_ADDR
+          value: "redis://localhost:6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets
+              key: redis_password
+        
+        resources:
+          requests:
+            memory: 32Mi
+            cpu: 25m
+          limits:
+            memory: 64Mi
+            cpu: 100m
+        
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534  # nobody user
+          capabilities:
+            drop:
+            - ALL
+      
+      volumes:
+      - name: redis-config
+        configMap:
+          name: redis-config
+      
+      # Affinity
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: node-type
+                operator: In
+                values:
+                - cache
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - redis
+            topologyKey: kubernetes.io/hostname
+  
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-storage
+      labels:
+        app: redis
+        component: cache-storage
+    spec:
+      accessModes: 
+      - ReadWriteOnce
+      storageClassName: novel-engine-ssd
+      resources:
+        requests:
+          storage: 20Gi
+
+---
+
+# Backup PersistentVolumeClaim for database backups
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-backup-pvc
+  namespace: novel-engine
+  labels:
+    app: postgres
+    component: backup
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: novel-engine-ssd
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+
+# Log storage PVC for centralized logging
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: application-logs-pvc
+  namespace: novel-engine
+  labels:
+    app: novel-engine
+    component: logging
+spec:
+  accessModes:
+  - ReadWriteMany  # Shared across multiple pods
+  storageClassName: novel-engine-ssd
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+
+# ConfigMap for PostgreSQL configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: novel-engine
+  labels:
+    app: postgres
+    component: config
+data:
+  postgresql.conf: |
+    # PostgreSQL Configuration for Novel Engine
+    
+    # Connection Settings
+    listen_addresses = '*'
+    port = 5432
+    max_connections = 200
+    superuser_reserved_connections = 3
+    
+    # Memory Settings
+    shared_buffers = 1GB
+    effective_cache_size = 3GB
+    work_mem = 32MB
+    maintenance_work_mem = 256MB
+    
+    # WAL Settings
+    wal_buffers = 16MB
+    checkpoint_completion_target = 0.9
+    max_wal_size = 4GB
+    min_wal_size = 1GB
+    
+    # Query Planning
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+    
+    # Logging
+    log_destination = 'stderr'
+    logging_collector = off
+    log_statement = 'mod'
+    log_duration = on
+    log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+    log_checkpoints = on
+    log_connections = on
+    log_disconnections = on
+    log_lock_waits = on
+    
+    # Performance
+    autovacuum = on
+    autovacuum_max_workers = 3
+    autovacuum_vacuum_cost_limit = 400
+    
+    # Replication (for future scaling)
+    max_wal_senders = 3
+    max_replication_slots = 3
+    hot_standby = on
+    
+    # Security
+    ssl = off  # Handled by service mesh
+    password_encryption = 'scram-sha-256'
+
+---
+
+# VolumeSnapshot for backup automation
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: postgres-snapshot-template
+  namespace: novel-engine
+  labels:
+    app: postgres
+    component: backup
+    backup-type: automated
+spec:
+  volumeSnapshotClassName: novel-engine-snapshot-class
+  source:
+    persistentVolumeClaimName: postgres-storage
+
+---
+
+# VolumeSnapshotClass for automated backups
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: novel-engine-snapshot-class
+  labels:
+    app: novel-engine
+    component: backup
+driver: ebs.csi.aws.com
+deletionPolicy: Retain
+parameters:
+  tagSpecification_1: "Name=novel-engine-backup"
+  tagSpecification_2: "Environment=production"
