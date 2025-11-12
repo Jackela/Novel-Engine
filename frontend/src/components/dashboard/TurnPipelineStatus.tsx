@@ -14,6 +14,7 @@ import {
   useMediaQuery,
   Fade,
 } from '@mui/material';
+import type { ChipProps } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -25,6 +26,7 @@ import {
   Groups as CharacterIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
+import type { DensityMode } from '@/utils/density';
 
 const PipelineContainer = styled(Box)(({ theme }) => ({
   height: '100%',
@@ -114,9 +116,19 @@ interface PipelineData {
 interface TurnPipelineStatusProps {
   loading?: boolean;
   error?: boolean;
+  status?: 'idle' | 'running' | 'paused';
+  isLive?: boolean;
+  runSummary?: {
+    phase: string;
+    completed: number;
+    total: number;
+    lastSignal?: string;
+    queueLength?: number;
+  };
+  density?: DensityMode;
 }
 
-const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error }) => {
+const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error, status = 'idle', isLive = false, runSummary, density = 'relaxed' }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -236,26 +248,68 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
     }
   };
 
+  const statusLabel = status === 'running' ? 'Running' : status === 'paused' ? 'Paused' : 'Idle';
+  const statusChipColor: ChipProps['color'] =
+    status === 'running' ? 'success' : status === 'paused' ? 'warning' : 'default';
+  const tileClassName =
+    status === 'running'
+      ? 'pipeline-active active'
+      : status === 'paused'
+      ? 'pipeline-paused'
+      : 'pipeline-idle';
+
   return (
     <GridTile
       title="Turn Pipeline"
       data-testid="turn-pipeline-status"
+      className={tileClassName}
       position={{
-        desktop: { column: '8 / 11', height: '160px' },
-        tablet: { column: '1 / 9', height: '140px' },
-        mobile: { height: '120px' },
+        desktop: { column: '5 / 9', height: '280px' },
+        tablet: { column: '1 / 9', height: '240px' },
+        mobile: { height: '180px' },
       }}
       loading={loading}
       error={error}
     >
-      <PipelineContainer>
+      <PipelineContainer data-density={density} sx={density === 'compact' ? { maxHeight: 360 } : undefined}>
         {/* Header */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, flexShrink: 0 }}>
-          <Typography variant="body2" color="text.secondary" fontWeight={500}>
-            Turn {pipelineData.currentTurn} of {pipelineData.totalTurns}
-          </Typography>
-          <Stack direction="row" spacing={0.5}>
+        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} sx={{ mb: 1, flexShrink: 0, gap: 1 }}>
+          <Stack spacing={0.5}>
+            <Typography variant="body2" color="text.secondary" fontWeight={500}>
+              Turn {pipelineData.currentTurn} of {pipelineData.totalTurns}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Phase: {runSummary?.phase ?? 'Idle'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Completed: {runSummary ? `${runSummary.completed}/${runSummary.total}` : `${pipelineData.currentTurn} / ${pipelineData.totalTurns}`}
+            </Typography>
+            {runSummary?.lastSignal && (
+              <Typography variant="caption" color="text.secondary">
+                Last signal {runSummary.lastSignal}
+              </Typography>
+            )}
+          </Stack>
+          <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap">
             <Chip 
+              label={statusLabel}
+              size="small"
+              color={statusChipColor}
+              sx={{
+                height: '20px',
+                fontWeight: 600,
+              }}
+            />
+            {isLive && status === 'running' && (
+              <Chip
+                label="LIVE"
+                size="small"
+                color="error"
+                data-testid="pipeline-live-indicator"
+                sx={{ height: '20px', fontWeight: 600 }}
+              />
+            )}
+            <Chip
               label={`${pipelineData.queueLength} queued`} 
               size="small" 
               sx={{

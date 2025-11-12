@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -130,12 +130,21 @@ interface EventFlowNode {
   connections: number;
 }
 
-interface EventCascadeFlowProps {
+export interface EventCascadeFlowProps {
   loading?: boolean;
   error?: boolean;
+  variant?: 'standalone' | 'embedded';
+  title?: string;
+  onCountChange?: (count: number) => void;
 }
 
-const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) => {
+const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({
+  loading,
+  error,
+  variant = 'standalone',
+  title = 'Event Cascade Flow',
+  onCountChange,
+}) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -212,17 +221,11 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
   const completedCount = flowNodes.filter(n => n.status === 'completed').length;
   const totalDependencies = flowNodes.reduce((sum, n) => sum + n.connections, 0);
 
-  return (
-    <GridTile
-      title="Event Cascade Flow"
-      position={{
-        desktop: { column: '8 / 13', height: '280px' },
-        tablet: { column: '5 / 9', height: '260px' },
-        mobile: { height: '160px' },
-      }}
-      loading={loading}
-      error={error}
-    >
+  useEffect(() => {
+    onCountChange?.(totalEvents);
+  }, [onCountChange, totalEvents]);
+
+  const content = (
       <FlowContainer>
         {/* Stats Header */}
         <Stack 
@@ -377,6 +380,24 @@ const EventCascadeFlow: React.FC<EventCascadeFlowProps> = ({ loading, error }) =
           ))}
         </FlowTrack>
       </FlowContainer>
+  );
+
+  if (variant === 'embedded') {
+    return content;
+  }
+
+  return (
+    <GridTile
+      title={title}
+      position={{
+        desktop: { column: '9 / 13', height: '320px' },
+        tablet: { column: '1 / 9', height: '280px' },
+        mobile: { height: '160px' },
+      }}
+      loading={loading}
+      error={error}
+    >
+      {content}
     </GridTile>
   );
 };

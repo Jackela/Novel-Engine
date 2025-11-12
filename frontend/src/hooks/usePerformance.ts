@@ -100,7 +100,18 @@ export function usePerformance(options: UsePerformanceOptions = {}): IPerformanc
   }
 
   const trackWebVitals = () => {
-    if (typeof window === 'undefined') return
+    const isTestMode =
+      (typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test') ||
+      process.env.NODE_ENV === 'test';
+
+    if (isTestMode) {
+      return
+    }
+    // Skip in non-browser or limited test environments
+    const hasWindow = typeof window !== 'undefined'
+    const hasDocument = typeof document !== 'undefined'
+    const hasSelf = typeof (globalThis as unknown as { self?: unknown }).self !== 'undefined'
+    if (!hasWindow || !hasDocument || !hasSelf) return
 
     // Dynamic import to avoid bundling in SSR
     import('web-vitals').then(({ onCLS, onFID, onLCP, onFCP, onTTFB }) => {

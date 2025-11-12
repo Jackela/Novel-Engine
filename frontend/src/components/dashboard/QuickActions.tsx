@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Box, 
   IconButton, 
@@ -8,8 +8,8 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
-  ButtonGroup,
   Fade,
+  Chip,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
@@ -24,6 +24,7 @@ import {
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
+import type { DensityMode } from '@/utils/density';
 
 const ActionsContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -121,36 +122,48 @@ const GroupLabel = styled(Typography)(({ theme }) => ({
   marginBottom: theme.spacing(0.5),
 }));
 
+type PipelineStatus = 'idle' | 'running' | 'paused';
+
 interface QuickActionsProps {
   loading?: boolean;
   error?: boolean;
   onAction?: (action: string) => void;
+  status?: PipelineStatus;
+  isLive?: boolean;
+  runSummary?: {
+    phase: string;
+    completed: number;
+    total: number;
+    lastSignal?: string;
+  };
+  density?: DensityMode;
 }
 
 const QuickActions: React.FC<QuickActionsProps> = ({ 
   loading, 
   error, 
-  onAction = () => {} 
+  onAction = () => {},
+  status = 'idle',
+  isLive = false,
+  runSummary,
+  density = 'relaxed',
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const isRunning = status === 'running';
+  const isPaused = status === 'paused';
+  const statusLabel = isRunning ? 'Running' : isPaused ? 'Paused' : 'Idle';
+  const statusChipColor: 'default' | 'success' | 'warning' = isRunning ? 'success' : isPaused ? 'warning' : 'default';
 
   const handlePlayPause = () => {
-    if (isRunning && !isPaused) {
-      setIsPaused(true);
+    if (isRunning) {
       onAction('pause');
     } else {
-      setIsRunning(true);
-      setIsPaused(false);
       onAction('play');
     }
   };
 
   const handleStop = () => {
-    setIsRunning(false);
-    setIsPaused(false);
     onAction('stop');
   };
 
@@ -176,23 +189,24 @@ const QuickActions: React.FC<QuickActionsProps> = ({
 
   // Mobile: Essential actions only, horizontal layout with visual grouping
   const renderMobileActions = () => (
-    <ActionsContainer>
+    <ActionsContainer data-testid="quick-actions">
       <Tooltip title={isRunning && !isPaused ? "Pause" : "Start"} placement="top">
         <ActionButton 
-          data-testid="run-turn-button"
+          data-testid={isRunning ? 'quick-action-pause' : 'quick-action-play'}
           onClick={handlePlayPause} 
           color="primary"
-          active={isRunning && !isPaused}
+          active={isRunning}
           whileTap={{ scale: 0.95 }}
         >
-          {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
+          {isRunning ? <PauseIcon /> : <PlayIcon />}
         </ActionButton>
       </Tooltip>
 
       <Tooltip title="Stop" placement="top">
         <ActionButton 
+          data-testid="quick-action-stop"
           onClick={handleStop} 
-          disabled={!isRunning}
+          disabled={status === 'idle'}
           whileTap={{ scale: 0.95 }}
         >
           <StopIcon />
@@ -201,8 +215,8 @@ const QuickActions: React.FC<QuickActionsProps> = ({
 
       <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: 'divider' }} />
 
-      <Tooltip title="Refresh" placement="top">
-        <ActionButton onClick={handleRefresh} whileTap={{ scale: 0.95 }}>
+        <Tooltip title="Refresh" placement="top">
+        <ActionButton data-testid="quick-action-refresh" onClick={handleRefresh} whileTap={{ scale: 0.95 }}>
           <RefreshIcon />
         </ActionButton>
       </Tooltip>
@@ -212,49 +226,36 @@ const QuickActions: React.FC<QuickActionsProps> = ({
           <SaveIcon />
         </ActionButton>
       </Tooltip>
-
-      <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: 'divider' }} />
-
-      <Tooltip title="Settings" placement="top">
-        <ActionButton onClick={handleSettings} whileTap={{ scale: 0.95 }}>
-          <SettingsIcon />
-        </ActionButton>
-      </Tooltip>
-
-      <Tooltip title="Export" placement="top">
-        <ActionButton onClick={handleExport} whileTap={{ scale: 0.95 }}>
-          <DownloadIcon />
-        </ActionButton>
-      </Tooltip>
     </ActionsContainer>
   );
 
   // Desktop: Full actions with sections, vertical layout with enhanced grouping
   const renderDesktopActions = () => (
-    <ActionsContainer>
+    <ActionsContainer data-testid="quick-actions">
       <Stack direction="column" spacing={0} alignItems="center" sx={{ width: '100%', py: 1 }}>
         {/* Playback Controls */}
         <Fade in timeout={300}>
           <ActionGroup>
             <GroupLabel>Control</GroupLabel>
             
-            <Tooltip title={isRunning && !isPaused ? "Pause" : "Start"} placement="left">
+            <Tooltip title={isRunning ? "Pause" : "Start"} placement="left">
               <ActionButton 
-                data-testid="run-turn-button"
+                data-testid={isRunning ? 'quick-action-pause' : 'quick-action-play'}
                 onClick={handlePlayPause} 
                 color="primary"
-                active={isRunning && !isPaused}
+                active={isRunning}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
+                {isRunning ? <PauseIcon /> : <PlayIcon />}
               </ActionButton>
             </Tooltip>
 
             <Tooltip title="Stop" placement="left">
               <ActionButton 
+                data-testid="quick-action-stop"
                 onClick={handleStop} 
-                disabled={!isRunning}
+                disabled={status === 'idle'}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -273,6 +274,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
 
             <Tooltip title="Refresh Data" placement="left">
               <ActionButton 
+                data-testid="quick-action-refresh"
                 onClick={handleRefresh}
                 whileHover={{ scale: 1.05, rotate: 180 }}
                 whileTap={{ scale: 0.95 }}
@@ -341,15 +343,80 @@ const QuickActions: React.FC<QuickActionsProps> = ({
     <GridTile
       title="Actions"
       data-testid="quick-actions"
+      className="quick-actions-tile"
       position={{
-        desktop: { column: '12 / 13', height: '160px' },
-        tablet: { column: '8 / 9', height: '140px' },
+        desktop: { column: '9 / 13', height: '220px' },
+        tablet: { column: '6 / 9', height: '180px' },
         mobile: { column: '1', height: '200px' }, // Increased to match MobileTabbedDashboard height
       }}
       loading={loading}
       error={error}
     >
-      {isMobile ? renderMobileActions() : renderDesktopActions()}
+      <Box data-density={density} data-testid="quick-actions-density">
+      <Stack spacing={density === 'compact' ? 0.75 : isMobile ? 1 : 2}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Chip
+            label={statusLabel}
+            size="small"
+            color={statusChipColor === 'default' ? 'default' : statusChipColor}
+            sx={{ fontWeight: 600, height: 22 }}
+          />
+          {isLive && isRunning && (
+            <Chip
+              label="LIVE"
+              size="small"
+              color="error"
+              data-testid="live-indicator"
+              sx={{ fontWeight: 600, height: 22 }}
+            />
+          )}
+        </Stack>
+        <Typography variant="caption" color="text.secondary">
+          {isLive ? 'Live orchestration in progress' : 'Live mode disabled'}
+        </Typography>
+        <Stack
+          spacing={0.5}
+          direction={isMobile ? 'column' : 'row'}
+          alignItems={isMobile ? 'flex-start' : 'center'}
+          justifyContent="space-between"
+          sx={{
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+            p: density === 'compact' ? 0.75 : 1,
+            backgroundColor: (theme) => theme.palette.background.default,
+          }}
+        >
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              Current phase
+            </Typography>
+            <Typography variant="body2" fontWeight={600}>
+              {runSummary?.phase ?? 'Idle'}
+            </Typography>
+          </Box>
+          <Box textAlign={isMobile ? 'left' : 'right'}>
+            <Typography variant="caption" color="text.secondary">
+              Completed
+            </Typography>
+            <Typography variant="body2" fontWeight={600}>
+              {runSummary ? `${runSummary.completed}/${runSummary.total}` : '0/0'}
+            </Typography>
+          </Box>
+          {runSummary?.lastSignal && (
+            <Box textAlign={isMobile ? 'left' : 'right'}>
+              <Typography variant="caption" color="text.secondary">
+                Last signal
+              </Typography>
+              <Typography variant="body2" fontWeight={500}>
+                {runSummary.lastSignal}
+              </Typography>
+            </Box>
+          )}
+        </Stack>
+        {isMobile ? renderMobileActions() : renderDesktopActions()}
+      </Stack>
+      </Box>
     </GridTile>
   );
 };

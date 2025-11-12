@@ -23,6 +23,7 @@ import {
   Notifications as NotificationIcon
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
+import type { DensityMode } from '@/utils/density';
 
 const ActivityList = styled(List)(({ theme }) => ({
   padding: 0,
@@ -84,12 +85,25 @@ interface ActivityEvent {
   severity: 'low' | 'medium' | 'high';
 }
 
-interface RealTimeActivityProps {
+export interface RealTimeActivityProps {
   loading?: boolean;
   error?: boolean;
+  isLive?: boolean;
+  variant?: 'standalone' | 'embedded';
+  title?: string;
+  onActivityCountChange?: (count: number) => void;
+  density?: DensityMode;
 }
 
-const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) => {
+const RealTimeActivity: React.FC<RealTimeActivityProps> = ({
+  loading,
+  error,
+  isLive = false,
+  variant = 'standalone',
+  title = 'Real-time Activity',
+  onActivityCountChange,
+  density = 'relaxed',
+}) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [activities, setActivities] = useState<ActivityEvent[]>([
@@ -139,6 +153,10 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
 
   const [unreadCount, setUnreadCount] = useState(2);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    onActivityCountChange?.(activities.length);
+  }, [activities.length, onActivityCountChange]);
 
   const handleMarkAsRead = useCallback(() => {
     setUnreadCount(0);
@@ -245,20 +263,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
     }
   };
 
-  return (
-    <GridTile
-      title="Real-time Activity"
-      data-testid="real-time-activity"
-      position={{
-        desktop: { column: '8 / 11', height: '160px' },
-        tablet: { column: '6 / 9', height: '150px' },
-        mobile: { height: '180px' },
-      }}
-      loading={loading}
-      error={error}
-      onMenuClick={handleMarkAsRead}
-    >
-      {isMobile ? (
+  const content = isMobile ? (
         // Mobile: Enhanced activity list with better visibility
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           <ActivityHeader sx={{ flexShrink: 0 }}>
@@ -280,6 +285,15 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
               <Typography variant="body2" color="text.secondary" fontWeight={500}>
                 Live Feed
               </Typography>
+              {isLive && (
+                <Chip
+                  label="LIVE"
+                  size="small"
+                  color="error"
+                  data-testid="activity-live-indicator"
+                  sx={{ height: 20, fontWeight: 600 }}
+                />
+              )}
             </Stack>
             <Chip 
               label={`${activities.length} events`} 
@@ -293,7 +307,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
             />
           </ActivityHeader>
           
-          <ActivityList sx={{ flex: 1, minHeight: '160px' }}>
+          <ActivityList sx={{ flex: 1, minHeight: density === 'compact' ? '140px' : '160px' }}>
             <AnimatePresence initial={false}>
               {activities.slice(0, 6).map((activity, index) => (
                 <ActivityItem 
@@ -377,6 +391,15 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
               <Typography variant="body2" color="text.secondary" fontWeight={500}>
                 Live Feed
               </Typography>
+              {isLive && (
+                <Chip
+                  label="LIVE"
+                  size="small"
+                  color="error"
+                  data-testid="activity-live-indicator"
+                  sx={{ height: 20, fontWeight: 600 }}
+                />
+              )}
             </Stack>
             <Chip 
               label={`${activities.length} events`} 
@@ -390,7 +413,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
             />
           </ActivityHeader>
           
-          <ActivityList>
+          <ActivityList sx={density === 'compact' ? { maxHeight: 240 } : undefined}>
             <AnimatePresence initial={false}>
               {activities.map((activity, index) => (
                 <ActivityItem 
@@ -447,7 +470,26 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
             </AnimatePresence>
           </ActivityList>
         </Box>
-      )}
+      );
+
+  if (variant === 'embedded') {
+    return content;
+  }
+
+  return (
+    <GridTile
+      title={title}
+      data-testid="real-time-activity"
+      position={{
+        desktop: { column: '1 / 5', height: '280px' },
+        tablet: { column: '1 / 9', height: '260px' },
+        mobile: { height: '200px' },
+      }}
+      loading={loading}
+      error={error}
+      onMenuClick={handleMarkAsRead}
+    >
+      {content}
     </GridTile>
   );
 };
