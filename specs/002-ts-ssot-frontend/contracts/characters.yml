@@ -1,0 +1,44 @@
+openapi: 3.0.3
+info:
+  title: Novel Engine Characters API (Client Reference)
+  version: 0.1.0
+paths:
+  /characters:
+    get:
+      summary: List character names
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  characters:
+                    type: array
+                    items:
+                      type: string
+  /characters/{name}:
+    get:
+      summary: Get character details
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  narrative_context:
+                    type: string
+                  structured_data:
+                    type: object
+

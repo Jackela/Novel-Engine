@@ -1,0 +1,5 @@
+1. [x] Fix eslint `label-has-associated-control` violations by ensuring every `<label>` wraps/targets an input (`AgentInterface`, `PerformanceOptimizer`, etc.) and re-run lint until those errors disappear.
+2. [x] Address `click-events-have-key-events` by either converting clickable containers into semantic buttons/links or adding proper `role`, `tabIndex`, and `onKeyDown` handlers (NarrativeDisplay, EmergentDashboard, wizard steps, Badge, etc.).
+3. [x] Resolve remaining lint issues (remove unused vars in `useFocusTrap`/`WebVitalsMonitor`, tighten SkipLink typing) and keep TypeScript strictness intact.
+4. [x] Provide a real quick Playwright smoke spec (`frontend/tests/e2e/quick-e2e.spec.js`) and wire `npm run test:e2e -- quick-e2e.spec.js` to that file so the CI smoke command executes at least one dashboard check.
+5. [x] Re-run `npm run lint` and `npm run test:e2e -- quick-e2e.spec.js`, attach/describe the outputs, and ensure CI scripts can depend on them. *(Lint now passes; smoke command passes on Chromium/Firefox/Tablet/High-DPI projects and skips WebKit/mobile due to missing host libs.)*
