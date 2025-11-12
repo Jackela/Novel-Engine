@@ -1,0 +1,114 @@
+site_name: Novel Engine Documentation
+site_description: AI-Enhanced Interactive Novel Engine - Developer Documentation
+site_author: Novel Engine Team
+site_url: https://novel-engine.github.io/docs
+
+repo_name: novel-engine/novel-engine
+repo_url: https://github.com/novel-engine/novel-engine
+edit_uri: edit/main/docs/
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Configuration: getting-started/configuration.md
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Core Components: architecture/components.md
+    - Event System: architecture/events.md
+    - Database Schema: architecture/database.md
+  - API Reference:
+    - Core API: api/core.md
+    - Character System: api/characters.md
+    - Story Generation: api/story.md
+    - Web API: api/web.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+    - Quality Gates: development/quality.md
+    - Performance: development/performance.md
+  - Deployment:
+    - Production Setup: deployment/production.md
+    - Docker: deployment/docker.md
+    - Monitoring: deployment/monitoring.md
+  - Examples:
+    - Basic Usage: examples/basic.md
+    - Advanced Scenarios: examples/advanced.md
+    - Integration: examples/integration.md
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.annotate
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_root_heading: true
+            show_source: true
+            members_order: source
+            merge_init_into_class: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - def_list
+  - abbr
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/novel-engine/novel-engine
+  version:
+    provider: mike
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascript/extra.js
