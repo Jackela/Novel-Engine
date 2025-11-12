@@ -1,0 +1,616 @@
+{
+  "timestamp": "2025-08-30T00:16:08.676Z",
+  "character": "Aria Shadowbane",
+  "mission": "Extended exploration and stability testing",
+  "turns": [
+    {
+      "turn": 1,
+      "action": "initial_survey",
+      "description": "Aria conducts a comprehensive survey of the dashboard interface",
+      "startTime": 1756512973412,
+      "success": true,
+      "discoveries": [
+        "10 dashboard tiles",
+        "10 interactive buttons",
+        "Professional dark theme confirmed"
+      ],
+      "interactions": [],
+      "errors": [],
+      "data": {
+        "totalTiles": 10,
+        "totalButtons": 10,
+        "totalChips": 31,
+        "pageTitle": "Novel Engine - AI Story Generator",
+        "professionalTheme": true
+      },
+      "responseTime": 10,
+      "endTime": 1756512973931,
+      "duration": 519
+    },
+    {
+      "turn": 2,
+      "action": "world_map_analysis",
+      "description": "Detailed analysis of world locations and territories",
+      "startTime": 1756512973931,
+      "success": true,
+      "discoveries": [
+        "World map found and accessible",
+        "0 location markers"
+      ],
+      "interactions": [],
+      "errors": [],
+      "data": {
+        "worldMapPresent": true,
+        "locationMarkersFound": 0,
+        "mapInteractive": true
+      },
+      "responseTime": 1267,
+      "endTime": 1756512975704,
+      "duration": 1773
+    },
+    {
+      "turn": 3,
+      "action": "merchant_aldric_search",
+      "description": "Systematic search for Merchant Aldric's current location",
+      "startTime": 1756512975704,
+      "success": true,
+      "discoveries": [
+        "Merchant Aldric located in interface",
+        "49 merchant references found"
+      ],
+      "interactions": [],
+      "errors": [],
+      "data": {
+        "merchantFound": true,
+        "aldricFound": true,
+        "merchantElements": 49,
+        "contextRich": true
+      },
+      "responseTime": 10,
+      "endTime": 1756512976220,
+      "duration": 516
+    },
+    {
+      "turn": 4,
+      "action": "relationship_status_check",
+      "description": "Check current relationship metrics with all characters",
+      "startTime": 1756512976220,
+      "success": false,
+      "discoveries": [],
+      "interactions": [],
+      "errors": [],
+      "error": "this.performRelationshipStatusCheck is not a function",
+      "endTime": 1756512976222,
+      "duration": 2
+    },
+    {
+      "turn": 5,
+      "action": "inventory_exploration",
+      "description": "Explore available items and trading opportunities",
+      "startTime": 1756512976222,
+      "success": true,
+      "discoveries": [
+        "Executed inventory_exploration",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "31 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 1545,
+      "endTime": 1756512978280,
+      "duration": 2058
+    },
+    {
+      "turn": 6,
+      "action": "quest_system_review",
+      "description": "Review active quests and potential narrative threads",
+      "startTime": 1756512978281,
+      "success": true,
+      "discoveries": [
+        "Executed quest_system_review",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "31 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 844,
+      "endTime": 1756512979640,
+      "duration": 1359
+    },
+    {
+      "turn": 7,
+      "action": "character_interaction",
+      "description": "Attempt interaction with various characters",
+      "startTime": 1756512979640,
+      "success": true,
+      "discoveries": [
+        "Executed character_interaction",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "10 buttons available",
+        "31 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 1402,
+      "endTime": 1756512981556,
+      "duration": 1916
+    },
+    {
+      "turn": 8,
+      "action": "location_deep_dive",
+      "description": "Deep exploration of a specific location",
+      "startTime": 1756512981556,
+      "success": true,
+      "discoveries": [
+        "Executed location_deep_dive",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "31 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 1460,
+      "endTime": 1756512983529,
+      "duration": 1973
+    },
+    {
+      "turn": 9,
+      "action": "dialogue_options_test",
+      "description": "Test various dialogue and communication options",
+      "startTime": 1756512983530,
+      "success": true,
+      "discoveries": [
+        "Executed dialogue_options_test",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "31 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 829,
+      "endTime": 1756512984871,
+      "duration": 1341
+    },
+    {
+      "turn": 10,
+      "action": "trust_building_focus",
+      "description": "Focus specifically on trust-building activities",
+      "startTime": 1756512984871,
+      "success": true,
+      "discoveries": [
+        "Executed trust_building_focus",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "10 buttons available",
+        "31 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 821,
+      "endTime": 1756512986194,
+      "duration": 1323
+    },
+    {
+      "turn": 11,
+      "action": "reputation_analysis",
+      "description": "Analyze reputation across different factions",
+      "startTime": 1756512986194,
+      "success": true,
+      "discoveries": [
+        "Executed reputation_analysis",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "31 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 1496,
+      "endTime": 1756512988194,
+      "duration": 2000
+    },
+    {
+      "turn": 12,
+      "action": "trading_simulation",
+      "description": "Simulate trading interactions with merchants",
+      "startTime": 1756512988194,
+      "success": true,
+      "discoveries": [
+        "Executed trading_simulation",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "31 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 1572,
+      "endTime": 1756512990267,
+      "duration": 2073
+    },
+    {
+      "turn": 13,
+      "action": "social_network_mapping",
+      "description": "Map relationships between different characters",
+      "startTime": 1756512990268,
+      "success": true,
+      "discoveries": [
+        "Executed social_network_mapping",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "32 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 1387,
+      "endTime": 1756512992169,
+      "duration": 1901
+    },
+    {
+      "turn": 14,
+      "action": "narrative_thread_exploration",
+      "description": "Explore different narrative possibilities",
+      "startTime": 1756512992169,
+      "success": true,
+      "discoveries": [
+        "Executed narrative_thread_exploration",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "32 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 781,
+      "endTime": 1756512993466,
+      "duration": 1297
+    },
+    {
+      "turn": 15,
+      "action": "ui_component_stress",
+      "description": "Stress test various UI components",
+      "startTime": 1756512993466,
+      "success": true,
+      "discoveries": [
+        "Executed ui_component_stress",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "35 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 1464,
+      "endTime": 1756512995431,
+      "duration": 1965
+    },
+    {
+      "turn": 16,
+      "action": "memory_intensive_operations",
+      "description": "Perform memory-intensive operations",
+      "startTime": 1756512995432,
+      "success": true,
+      "discoveries": [
+        "Executed memory_intensive_operations",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "35 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 840,
+      "endTime": 1756512996786,
+      "duration": 1354
+    },
+    {
+      "turn": 17,
+      "action": "rapid_location_switching",
+      "description": "Rapidly switch between different locations",
+      "startTime": 1756512996787,
+      "success": true,
+      "discoveries": [
+        "Executed rapid_location_switching",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "10 buttons available",
+        "35 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 858,
+      "endTime": 1756512998157,
+      "duration": 1370
+    },
+    {
+      "turn": 18,
+      "action": "concurrent_interactions",
+      "description": "Attempt multiple concurrent interactions",
+      "startTime": 1756512998157,
+      "success": true,
+      "discoveries": [
+        "Executed concurrent_interactions",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "35 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 1311,
+      "endTime": 1756512999984,
+      "duration": 1827
+    },
+    {
+      "turn": 19,
+      "action": "error_recovery_testing",
+      "description": "Test system's error recovery capabilities",
+      "startTime": 1756512999984,
+      "success": true,
+      "discoveries": [
+        "Executed error_recovery_testing",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "35 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 1512,
+      "endTime": 1756513002011,
+      "duration": 2027
+    },
+    {
+      "turn": 20,
+      "action": "stability_validation",
+      "description": "Final stability and consistency validation",
+      "startTime": 1756513002011,
+      "success": true,
+      "discoveries": [
+        "Executed stability_validation",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "10 buttons available",
+        "35 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 844,
+      "endTime": 1756513003370,
+      "duration": 1359
+    },
+    {
+      "turn": 21,
+      "action": "narrative_coherence_check",
+      "description": "Verify narrative coherence throughout session",
+      "startTime": 1756513003370,
+      "success": true,
+      "discoveries": [
+        "Executed narrative_coherence_check",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "11 buttons available",
+        "35 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 1438,
+      "endTime": 1756513005311,
+      "duration": 1941
+    },
+    {
+      "turn": 22,
+      "action": "final_relationship_assessment",
+      "description": "Final assessment of relationship with Merchant Aldric",
+      "startTime": 1756513005311,
+      "success": true,
+      "discoveries": [
+        "Executed final_relationship_assessment",
+        "Interacted with buttons"
+      ],
+      "interactions": [
+        "9 buttons available",
+        "35 chips available"
+      ],
+      "errors": [],
+      "data": {},
+      "responseTime": 1326,
+      "endTime": 1756513007150,
+      "duration": 1839
+    }
+  ],
+  "stability": {
+    "memoryUsage": [
+      {
+        "turn": 1,
+        "usedJSHeapSize": 44360896,
+        "totalJSHeapSize": 73713668,
+        "timestamp": 1756512973418
+      },
+      {
+        "turn": 2,
+        "usedJSHeapSize": 44390663,
+        "totalJSHeapSize": 73713775,
+        "timestamp": 1756512973934
+      },
+      {
+        "turn": 3,
+        "usedJSHeapSize": 46484605,
+        "totalJSHeapSize": 73714497,
+        "timestamp": 1756512975706
+      },
+      {
+        "turn": 4,
+        "usedJSHeapSize": 48406464,
+        "totalJSHeapSize": 75194400,
+        "timestamp": 1756512976222
+      },
+      {
+        "turn": 5,
+        "usedJSHeapSize": 48406464,
+        "totalJSHeapSize": 75194400,
+        "timestamp": 1756512976223
+      },
+      {
+        "turn": 6,
+        "usedJSHeapSize": 58312122,
+        "totalJSHeapSize": 74501542,
+        "timestamp": 1756512978290
+      },
+      {
+        "turn": 7,
+        "usedJSHeapSize": 55214888,
+        "totalJSHeapSize": 83941060,
+        "timestamp": 1756512979642
+      },
+      {
+        "turn": 8,
+        "usedJSHeapSize": 57142525,
+        "totalJSHeapSize": 84200817,
+        "timestamp": 1756512981558
+      },
+      {
+        "turn": 9,
+        "usedJSHeapSize": 59531541,
+        "totalJSHeapSize": 95213173,
+        "timestamp": 1756512983531
+      },
+      {
+        "turn": 10,
+        "usedJSHeapSize": 49422181,
+        "totalJSHeapSize": 106223221,
+        "timestamp": 1756512984873
+      },
+      {
+        "turn": 11,
+        "usedJSHeapSize": 45450844,
+        "totalJSHeapSize": 106482848,
+        "timestamp": 1756512986196
+      },
+      {
+        "turn": 12,
+        "usedJSHeapSize": 46915385,
+        "totalJSHeapSize": 108058261,
+        "timestamp": 1756512988197
+      },
+      {
+        "turn": 13,
+        "usedJSHeapSize": 61433765,
+        "totalJSHeapSize": 110417557,
+        "timestamp": 1756512990285
+      },
+      {
+        "turn": 14,
+        "usedJSHeapSize": 47069236,
+        "totalJSHeapSize": 110941832,
+        "timestamp": 1756512992171
+      },
+      {
+        "turn": 15,
+        "usedJSHeapSize": 50413359,
+        "totalJSHeapSize": 110942155,
+        "timestamp": 1756512993468
+      },
+      {
+        "turn": 16,
+        "usedJSHeapSize": 60614394,
+        "totalJSHeapSize": 110939838,
+        "timestamp": 1756512995434
+      },
+      {
+        "turn": 17,
+        "usedJSHeapSize": 49344908,
+        "totalJSHeapSize": 111204164,
+        "timestamp": 1756512996789
+      },
+      {
+        "turn": 18,
+        "usedJSHeapSize": 65431183,
+        "totalJSHeapSize": 111466455,
+        "timestamp": 1756512998158
+      },
+      {
+        "turn": 19,
+        "usedJSHeapSize": 67686426,
+        "totalJSHeapSize": 111466478,
+        "timestamp": 1756512999986
+      },
+      {
+        "turn": 20,
+        "usedJSHeapSize": 61366036,
+        "totalJSHeapSize": 115396100,
+        "timestamp": 1756513002013
+      },
+      {
+        "turn": 21,
+        "usedJSHeapSize": 61916245,
+        "totalJSHeapSize": 115398277,
+        "timestamp": 1756513003372
+      },
+      {
+        "turn": 22,
+        "usedJSHeapSize": 58342413,
+        "totalJSHeapSize": 120117045,
+        "timestamp": 1756513005314
+      }
+    ],
+    "errorCount": 5,
+    "responseConsistency": [
+      10,
+      1267,
+      10,
+      1545,
+      844,
+      1402,
+      1460,
+      829,
+      821,
+      1496,
+      1572,
+      1387,
+      781,
+      1464,
+      840,
+      858,
+      1311,
+      1512,
+      844,
+      1438,
+      1326
+    ]
+  },
+  "narrative": {
+    "diversity": 100,
+    "coherence": "coherent",
+    "relationshipProgression": []
+  },
+  "performance": {
+    "degradation": false,
+    "averageResponseTime": 1096.047619047619
+  }
+}

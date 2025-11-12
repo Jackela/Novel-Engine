@@ -1,0 +1,472 @@
+/**
+ * Knowledge Management Styles
+ * 
+ * CSS styles for knowledge management components
+ * 
+ * Features:
+ * - Responsive layout for desktop and mobile
+ * - Consistent design system integration
+ * - Accessible form controls
+ * - Modal dialogs
+ * - List and card layouts
+ */
+
+/* ============================================================================
+ * Page Layout
+ * ============================================================================ */
+
+.knowledge-management-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--color-border, #e0e0e0);
+  padding-bottom: 1rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  color: var(--color-text-primary, #1a1a1a);
+  margin-bottom: 0.5rem;
+}
+
+.page-description {
+  color: var(--color-text-secondary, #666);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.page-content {
+  min-height: 400px;
+}
+
+.page-footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-border, #e0e0e0);
+}
+
+.help-text {
+  color: var(--color-text-secondary, #666);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ============================================================================
+ * Action Bar
+ * ============================================================================ */
+
+.action-bar {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ============================================================================
+ * Knowledge Entry Form
+ * ============================================================================ */
+
+.knowledge-entry-form {
+  background: var(--color-background-card, #fff);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.knowledge-entry-form h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-primary, #1a1a1a);
+  font-size: 0.95rem;
+}
+
+.required {
+  color: var(--color-error, #d32f2f);
+}
+
+.form-group input[type='text'],
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.form-group input[type='text']:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--color-primary, #1976d2);
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+}
+
+.form-group input.error,
+.form-group textarea.error,
+.form-group select.error {
+  border-color: var(--color-error, #d32f2f);
+}
+
+.form-group input:disabled,
+.form-group textarea:disabled,
+.form-group select:disabled {
+  background-color: var(--color-background-disabled, #f5f5f5);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 150px;
+  line-height: 1.5;
+}
+
+.error-message {
+  display: block;
+  color: var(--color-error, #d32f2f);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.submit-error {
+  background-color: #ffebee;
+  border: 1px solid var(--color-error, #d32f2f);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  color: var(--color-error, #d32f2f);
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border, #e0e0e0);
+}
+
+/* ============================================================================
+ * Knowledge Entry List
+ * ============================================================================ */
+
+.knowledge-entry-list {
+  background: var(--color-background-card, #fff);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.list-header h2 {
+  font-size: 1.25rem;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.list-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.filter-input,
+.filter-select {
+  padding: 0.5rem;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.list-empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--color-text-secondary, #666);
+}
+
+.list-entries {
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* ============================================================================
+ * Entry Card
+ * ============================================================================ */
+
+.entry-card {
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: var(--color-background-card, #fff);
+  transition: box-shadow 0.2s;
+}
+
+.entry-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.entry-header {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.entry-type-badge,
+.entry-access-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.entry-type-badge {
+  background-color: var(--color-primary-light, #e3f2fd);
+  color: var(--color-primary, #1976d2);
+}
+
+.entry-access-badge {
+  background-color: var(--color-success-light, #e8f5e9);
+  color: var(--color-success, #388e3c);
+}
+
+.entry-content {
+  margin-bottom: 1rem;
+}
+
+.entry-text {
+  color: var(--color-text-primary, #1a1a1a);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.entry-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #666);
+}
+
+.meta-item {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* ============================================================================
+ * Buttons
+ * ============================================================================ */
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--color-primary, #1976d2);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark, #1565c0);
+}
+
+.btn-secondary {
+  background-color: var(--color-secondary, #757575);
+  color: #fff;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-secondary-dark, #616161);
+}
+
+.btn-danger {
+  background-color: var(--color-error, #d32f2f);
+  color: #fff;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: var(--color-error-dark, #c62828);
+}
+
+.btn-link {
+  background: none;
+  color: var(--color-primary, #1976d2);
+  text-decoration: underline;
+  padding: 0;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* ============================================================================
+ * Modal
+ * ============================================================================ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--color-background-card, #fff);
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.modal-content p {
+  margin-bottom: 1rem;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.warning-text {
+  color: var(--color-error, #d32f2f);
+  font-weight: 600;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border, #e0e0e0);
+}
+
+/* ============================================================================
+ * Loading & Error States
+ * ============================================================================ */
+
+.knowledge-entry-form-loading,
+.knowledge-entry-list-loading,
+.knowledge-entry-list-error {
+  text-align: center;
+  padding: 3rem;
+}
+
+.knowledge-entry-list-error {
+  background-color: #ffebee;
+  border: 1px solid var(--color-error, #d32f2f);
+  border-radius: 8px;
+}
+
+/* ============================================================================
+ * Responsive Design
+ * ============================================================================ */
+
+@media (max-width: 768px) {
+  .knowledge-management-page {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .knowledge-entry-form,
+  .knowledge-entry-list {
+    padding: 1rem;
+  }
+
+  .list-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .entry-card {
+    padding: 1rem;
+  }
+
+  .entry-actions {
+    flex-direction: column;
+  }
+
+  .entry-actions .btn {
+    width: 100%;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+}

@@ -1,0 +1,662 @@
+/* Novel Engine Application Styles */
+/* ================================ */
+
+/* CSS Variables for Theme System */
+:root {
+  /* Light Theme Color Aliases to Design System Tokens */
+  --bg-primary: var(--color-bg-primary);
+  --bg-secondary: var(--color-bg-secondary);
+  --bg-tertiary: var(--color-bg-tertiary);
+  --bg-hover: var(--color-bg-elevated);
+  --bg-selected: var(--color-bg-interactive);
+  --text-color: var(--color-text-primary);
+  --text-muted: var(--color-text-secondary);
+  --border-color: var(--color-border-primary);
+  --primary-color: var(--color-primary);
+  --primary-dark: var(--color-primary-700);
+  --success-color: var(--color-success);
+  --warning-color: var(--color-warning);
+  --danger-color: var(--color-error);
+  --info-color: var(--color-info);
+  --secondary-color: var(--color-secondary);
+}
+
+[data-theme="dark"] {
+  /* Dark Theme Color Aliases (tokens provide dark palette) */
+  --bg-primary: var(--color-bg-primary);
+  --bg-secondary: var(--color-bg-secondary);
+  --bg-tertiary: var(--color-bg-tertiary);
+  --bg-hover: var(--color-bg-elevated);
+  --bg-selected: var(--color-bg-interactive);
+  --text-color: var(--color-text-primary);
+  --text-muted: var(--color-text-secondary);
+  --border-color: var(--color-border-primary);
+  --primary-color: var(--color-primary);
+  --primary-dark: var(--color-primary-700);
+  --success-color: var(--color-success);
+  --warning-color: var(--color-warning);
+  --danger-color: var(--color-error);
+  --info-color: var(--color-info);
+  --secondary-color: var(--color-secondary);
+}
+
+/* Accessibility: Skip Links */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 8px;
+  background: var(--primary-color);
+  color: var(--color-text-inverse);
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  z-index: 10000;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, blinkmacsystemfont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;  /* Vendor-specific font smoothing removed */background-color: var(--bg-primary);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+  background-color: var(--bg-secondary);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+
+/* Main App Container */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.app--light {
+  background: var(--bg-primary);
+}
+
+.app--dark {
+  background: var(--bg-primary);
+}
+
+/* Header Styles */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  min-height: 60px;
+}
+
+.app-header__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary-color);
+  /* Fallback for accessibility - solid color with proper contrast */
+  background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+  background-clip: text;  /* Vendor-specific background-clip removed */}
+
+/* Ensure proper contrast for users with gradient display issues */
+@media (prefers-contrast: high), (prefers-reduced-motion: reduce) {
+  .app-title {
+    background: none;  /* Vendor-specific background-clip removed */color: var(--primary-color);
+  }
+}
+
+.session-id {
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.app-header__center {
+  display: flex;
+  align-items: center;
+}
+
+.view-selector {
+  display: flex;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.view-btn {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-color);
+}
+
+.view-btn.active {
+  background: var(--primary-color);
+  color: white;
+  font-weight: 600;
+}
+
+.app-header__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-btn {
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-btn:hover {
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+}
+
+.control-btn.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.connection-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.connection-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.connection-dot.connected {
+  background: var(--success-color);
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+.connection-dot.disconnected {
+  background: var(--danger-color);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.connection-text {
+  font-weight: 500;
+}
+
+/* Main Content */
+.app-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+/* Panel Layouts */
+.single-panel {
+  flex: 1;
+  display: flex;
+  padding: 20px;
+}
+
+.single-panel .full-height {
+  flex: 1;
+  height: 100%;
+}
+
+.split-panel {
+  flex: 1;
+  display: flex;
+  gap: 1px;
+  background: var(--border-color);
+}
+
+.split-panel__left,
+.split-panel__right {
+  flex: 1;
+  background: var(--bg-primary);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.split-panel__left {
+  flex: 1.5; /* Give narrative more space */
+}
+
+.split-panel__right {
+  flex: 1;
+}
+
+/* Footer Styles */
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 24px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.app-footer__left,
+.app-footer__center,
+.app-footer__right {
+  flex: 1;
+}
+
+.app-footer__center {
+  text-align: center;
+}
+
+.app-footer__right {
+  text-align: right;
+}
+
+.keyboard-shortcuts {
+  font-family: monospace;
+  opacity: 0.7;
+}
+
+/* Development Metrics Overlay */
+.dev-metrics {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 11px;
+  opacity: 0.8;
+  z-index: 9999;
+  min-width: 200px;
+}
+
+.dev-metrics .metric {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  padding: 2px 0;
+}
+
+.dev-metrics .metric:last-child {
+  margin-bottom: 0;
+}
+
+.dev-metrics span {
+  color: var(--text-muted);
+}
+
+.dev-metrics code {
+  color: var(--text-color);
+  background: transparent;
+  padding: 0;
+  font-size: 10px;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .split-panel {
+    flex-direction: column;
+  }
+  
+  .split-panel__left,
+  .split-panel__right {
+    flex: 1;
+  }
+  
+  .app-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    min-height: auto;
+  }
+  
+  .app-header__center {
+    order: 3;
+    flex: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    flex-direction: column;
+    padding: 16px;
+  }
+  
+  .app-header__left,
+  .app-header__right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .app-header__center {
+    width: 100%;
+    margin: 12px 0;
+  }
+  
+  .view-selector {
+    width: 100%;
+    justify-content: space-around;
+  }
+  
+  .view-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .single-panel {
+    padding: 12px;
+  }
+  
+  .app-footer {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+  
+  .app-footer__left,
+  .app-footer__center,
+  .app-footer__right {
+    flex: none;
+  }
+  
+  .keyboard-shortcuts {
+    display: none; /* Hide on mobile */
+  }
+  
+  .dev-metrics {
+    top: auto;
+    bottom: 80px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-title {
+    font-size: 20px;
+  }
+  
+  .session-id {
+    font-size: 10px;
+  }
+  
+  .view-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .control-btn {
+    min-width: 44px;
+    height: 44px;
+    font-size: 14px;
+  }
+  
+  .connection-indicator {
+    font-size: 10px;
+  }
+  
+  .single-panel {
+    padding: 8px;
+  }
+}
+
+/* High Contrast Mode - Enhanced WCAG AA Compliance */
+@media (prefers-contrast: high) {
+  :root {
+    /* High contrast color overrides mapped to design tokens */
+    --primary-color: var(--color-primary);
+    --text-color: var(--color-text-primary);
+    --text-muted: var(--color-text-secondary);
+    --border-color: var(--color-border-primary);
+    --bg-hover: var(--color-bg-elevated);
+  }
+
+  [data-theme="dark"] {
+    --primary-color: var(--color-primary);
+    --text-color: var(--color-text-primary);
+    --text-muted: var(--color-text-secondary);
+    --border-color: var(--color-border-primary);
+    --bg-hover: var(--color-bg-elevated);
+  }
+  
+  .view-btn,
+  .control-btn {
+    border-width: 2px;
+    font-weight: 600; /* Bolder text for better readability */
+  }
+  
+  .view-btn.active {
+    border: 3px solid white;
+    background: var(--primary-color);
+  }
+  
+  .connection-dot.connected {
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.8);
+    border: 2px solid white;
+  }
+  
+  /* Enhanced focus indicators */
+  button:focus,
+  .control-btn:focus,
+  .view-btn:focus,
+  a:focus {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 3px;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .app,
+  .view-btn,
+  .control-btn,
+  .connection-dot {
+    transition: none;
+  }
+  
+  .connection-dot.disconnected {
+    animation: none;
+  }
+  
+  .control-btn:hover {
+    transform: none;
+  }
+}
+
+/* Mobile-Specific Performance Optimizations */
+@media (max-width: 768px) {
+  /* Reduce animations on mobile for performance */
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Optimize font rendering on mobile */
+  body {  /* Vendor-specific font smoothing removed */
+text-rendering: optimizeSpeed;
+  }
+
+  /* Reduce resource usage */
+  img, video {  /* Vendor-specific rendering hint removed */
+}
+
+  /* Mobile hover states - disable hover effects */
+  .mobile-device button:hover,
+  .mobile-device a:hover,
+  .mobile-device .hover-effect:hover {
+    transform: none !important;
+    box-shadow: inherit !important;
+    background-color: inherit !important;
+  }
+
+  /* Touch-friendly scrollbars on mobile */
+    /* Removed vendor-specific scrollbar styling */
+  /* Removed vendor-specific scrollbar styling */
+  /* Removed vendor-specific scrollbar styling */
+  /* Removed vendor-specific scrollbar styling */
+}
+
+/* Data Saver Mode Optimizations */
+@media (prefers-reduced-data) {
+  /* Disable background images */
+  * {
+    background-image: none !important;
+  }
+
+  /* Reduce image quality */
+  img {
+    image-rendering: pixelated;
+  }
+
+  /* Disable video autoplay */
+  video {
+    preload: none;
+  }
+}
+
+/* Memory Pressure Mode */
+.memory-pressure-mode {
+  /* Simplify rendering */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+  }
+
+  /* Disable complex animations */
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Reduce gradient complexity */
+  .app-title {
+    background: var(--primary-color) !important;
+    background-clip: unset !important;  /* Vendor-specific background-clip removed */}
+}
+
+/* Optimize for low-end mobile devices */
+@media (max-width: 480px) and (max-height: 850px) {
+  /* Reduce complexity for low-end phones */
+  .complex-component {
+    display: none;
+  }
+
+  /* Simplify layouts */
+  .grid-layout {
+    display: block !important;
+  }
+
+  /* Reduce padding/margins to save space */
+  .container {
+    padding: 8px !important;
+    margin: 4px !important;
+  }
+
+  /* Minimize dev metrics overlay on small screens */
+  .dev-metrics {
+    font-size: 9px;
+    padding: 8px;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .app-header,
+  .app-footer,
+  .dev-metrics {
+    display: none;
+  }
+  
+  .app-content {
+    height: auto;
+  }
+  
+  .split-panel {
+    flex-direction: column;
+  }
+}

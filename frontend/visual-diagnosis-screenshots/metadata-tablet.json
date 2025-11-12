@@ -1,0 +1,796 @@
+{
+  "breakpoint": "tablet",
+  "viewport": {
+    "width": 768,
+    "height": 1024,
+    "name": "Tablet"
+  },
+  "timestamp": "2025-08-28T05:05:05.573Z",
+  "analysis": {
+    "scrollHeight": 1543,
+    "clientHeight": 1024,
+    "scrollWidth": 768,
+    "clientWidth": 768,
+    "components": [
+      {
+        "testId": "dashboard-layout",
+        "visible": true,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1543,
+          "top": 0,
+          "right": 768,
+          "bottom": 1543,
+          "left": 0
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "visible"
+        }
+      },
+      {
+        "testId": "world-state-map",
+        "visible": true,
+        "bounds": {
+          "x": 20,
+          "y": 85,
+          "width": 728,
+          "height": 250,
+          "top": 85,
+          "right": 748,
+          "bottom": 335,
+          "left": 20
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "PersonIcon",
+        "visible": false,
+        "bounds": {
+          "x": 49,
+          "y": 170,
+          "width": 18,
+          "height": 18,
+          "top": 170,
+          "right": 67,
+          "bottom": 188,
+          "left": 49
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "StarIcon",
+        "visible": false,
+        "bounds": {
+          "x": 164.5,
+          "y": 170,
+          "width": 18,
+          "height": 18,
+          "top": 170,
+          "right": 182.5,
+          "bottom": 188,
+          "left": 164.5
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "LocationOnIcon",
+        "visible": false,
+        "bounds": {
+          "x": 206.484375,
+          "y": 177,
+          "width": 20,
+          "height": 20,
+          "top": 177,
+          "right": 226.484375,
+          "bottom": 197,
+          "left": 206.484375
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "LocationOnIcon",
+        "visible": false,
+        "bounds": {
+          "x": 318.15625,
+          "y": 250.40625,
+          "width": 20,
+          "height": 20,
+          "top": 250.40625,
+          "right": 338.15625,
+          "bottom": 270.40625,
+          "left": 318.15625
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "LocationOnIcon",
+        "visible": false,
+        "bounds": {
+          "x": 541.484375,
+          "y": 177,
+          "width": 20,
+          "height": 20,
+          "top": 177,
+          "right": 561.484375,
+          "bottom": 197,
+          "left": 541.484375
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "LocationOnIcon",
+        "visible": false,
+        "bounds": {
+          "x": 94.828125,
+          "y": 322.8125,
+          "width": 20,
+          "height": 20,
+          "top": 322.8125,
+          "right": 114.828125,
+          "bottom": 342.8125,
+          "left": 94.828125
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "real-time-activity",
+        "visible": true,
+        "bounds": {
+          "x": 20,
+          "y": 351,
+          "width": 728,
+          "height": 120,
+          "top": 351,
+          "right": 748,
+          "bottom": 471,
+          "left": 20
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "MoreVertIcon",
+        "visible": false,
+        "bounds": {
+          "x": 705,
+          "y": 373,
+          "width": 24,
+          "height": 24,
+          "top": 373,
+          "right": 729,
+          "bottom": 397,
+          "left": 705
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "NotificationsIcon",
+        "visible": false,
+        "bounds": {
+          "x": 37,
+          "y": 428.984375,
+          "width": 20,
+          "height": 20,
+          "top": 428.984375,
+          "right": 57,
+          "bottom": 448.984375,
+          "left": 37
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "PersonIcon",
+        "visible": false,
+        "bounds": {
+          "x": 43,
+          "y": 484.953125,
+          "width": 20,
+          "height": 20,
+          "top": 484.953125,
+          "right": 63,
+          "bottom": 504.953125,
+          "left": 43
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "AutoStoriesIcon",
+        "visible": false,
+        "bounds": {
+          "x": 43,
+          "y": 557.875,
+          "width": 20,
+          "height": 20,
+          "top": 557.875,
+          "right": 63,
+          "bottom": 577.875,
+          "left": 43
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "SpeedIcon",
+        "visible": false,
+        "bounds": {
+          "x": 43,
+          "y": 630.796875,
+          "width": 20,
+          "height": 20,
+          "top": 630.796875,
+          "right": 63,
+          "bottom": 650.796875,
+          "left": 43
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "PsychologyIcon",
+        "visible": false,
+        "bounds": {
+          "x": 43,
+          "y": 703.71875,
+          "width": 20,
+          "height": 20,
+          "top": 703.71875,
+          "right": 63,
+          "bottom": 723.71875,
+          "left": 43
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "SpeedIcon",
+        "visible": false,
+        "bounds": {
+          "x": 43,
+          "y": 776.640625,
+          "width": 20,
+          "height": 20,
+          "top": 776.640625,
+          "right": 63,
+          "bottom": 796.640625,
+          "left": 43
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "performance-metrics",
+        "visible": true,
+        "bounds": {
+          "x": 20,
+          "y": 487,
+          "width": 728,
+          "height": 100,
+          "top": 487,
+          "right": 748,
+          "bottom": 587,
+          "left": 20
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "CircleIcon",
+        "visible": false,
+        "bounds": {
+          "x": 37,
+          "y": 567,
+          "width": 12,
+          "height": 12,
+          "top": 567,
+          "right": 49,
+          "bottom": 579,
+          "left": 37
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "SpeedIcon",
+        "visible": false,
+        "bounds": {
+          "x": 176.578125,
+          "y": 613,
+          "width": 20,
+          "height": 20,
+          "top": 613,
+          "right": 196.578125,
+          "bottom": 633,
+          "left": 176.578125
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "NetworkCheckIcon",
+        "visible": false,
+        "bounds": {
+          "x": 543.953125,
+          "y": 613,
+          "width": 20,
+          "height": 20,
+          "top": 613,
+          "right": 563.953125,
+          "bottom": 633,
+          "left": 543.953125
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "MemoryIcon",
+        "visible": false,
+        "bounds": {
+          "x": 181,
+          "y": 689,
+          "width": 20,
+          "height": 20,
+          "top": 689,
+          "right": 201,
+          "bottom": 709,
+          "left": 181
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "StorageIcon",
+        "visible": false,
+        "bounds": {
+          "x": 541.40625,
+          "y": 689,
+          "width": 20,
+          "height": 20,
+          "top": 689,
+          "right": 561.40625,
+          "bottom": 709,
+          "left": 541.40625
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "turn-pipeline-status",
+        "visible": true,
+        "bounds": {
+          "x": 20,
+          "y": 603,
+          "width": 728,
+          "height": 120,
+          "top": 603,
+          "right": 748,
+          "bottom": 723,
+          "left": 20
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "CheckCircleIcon",
+        "visible": false,
+        "bounds": {
+          "x": 37,
+          "y": 731,
+          "width": 20,
+          "height": 20,
+          "top": 731,
+          "right": 57,
+          "bottom": 751,
+          "left": 37
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "GroupsIcon",
+        "visible": false,
+        "bounds": {
+          "x": 65,
+          "y": 743.015625,
+          "width": 20,
+          "height": 20,
+          "top": 743.015625,
+          "right": 85,
+          "bottom": 763.015625,
+          "left": 65
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "CheckCircleIcon",
+        "visible": false,
+        "bounds": {
+          "x": 37,
+          "y": 794.96875,
+          "width": 20,
+          "height": 20,
+          "top": 794.96875,
+          "right": 57,
+          "bottom": 814.96875,
+          "left": 37
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "PsychologyIcon",
+        "visible": false,
+        "bounds": {
+          "x": 37,
+          "y": 862.4375,
+          "width": 20,
+          "height": 20,
+          "top": 862.4375,
+          "right": 57,
+          "bottom": 882.4375,
+          "left": 37
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "GroupsIcon",
+        "visible": false,
+        "bounds": {
+          "x": 65,
+          "y": 877.953125,
+          "width": 20,
+          "height": 20,
+          "top": 877.953125,
+          "right": 85,
+          "bottom": 897.953125,
+          "left": 65
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "AccessTimeIcon",
+        "visible": false,
+        "bounds": {
+          "x": 37,
+          "y": 919.953125,
+          "width": 20,
+          "height": 20,
+          "top": 919.953125,
+          "right": 57,
+          "bottom": 939.953125,
+          "left": 37
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "AccessTimeIcon",
+        "visible": false,
+        "bounds": {
+          "x": 37,
+          "y": 963.96875,
+          "width": 20,
+          "height": 20,
+          "top": 963.96875,
+          "right": 57,
+          "bottom": 983.96875,
+          "left": 37
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "quick-actions",
+        "visible": true,
+        "bounds": {
+          "x": 20,
+          "y": 739,
+          "width": 728,
+          "height": 80,
+          "top": 739,
+          "right": 748,
+          "bottom": 819,
+          "left": 20
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "run-turn-button",
+        "visible": true,
+        "bounds": {
+          "x": 364,
+          "y": 836.90625,
+          "width": 40,
+          "height": 40,
+          "top": 836.90625,
+          "right": 404,
+          "bottom": 876.90625,
+          "left": 364
+        },
+        "computedStyle": {
+          "display": "flex",
+          "visibility": "visible",
+          "overflow": "visible"
+        }
+      },
+      {
+        "testId": "PlayArrowIcon",
+        "visible": false,
+        "bounds": {
+          "x": 372,
+          "y": 844.90625,
+          "width": 24,
+          "height": 24,
+          "top": 844.90625,
+          "right": 396,
+          "bottom": 868.90625,
+          "left": 372
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "StopIcon",
+        "visible": false,
+        "bounds": {
+          "x": 372,
+          "y": 888.90625,
+          "width": 24,
+          "height": 24,
+          "top": 888.90625,
+          "right": 396,
+          "bottom": 912.90625,
+          "left": 372
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "RefreshIcon",
+        "visible": false,
+        "bounds": {
+          "x": 372,
+          "y": 961.8125,
+          "width": 24,
+          "height": 24,
+          "top": 961.8125,
+          "right": 396,
+          "bottom": 985.8125,
+          "left": 372
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "SaveIcon",
+        "visible": false,
+        "bounds": {
+          "x": 372,
+          "y": 1005.8125,
+          "width": 24,
+          "height": 24,
+          "top": 1005.8125,
+          "right": 396,
+          "bottom": 1029.8125,
+          "left": 372
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "SettingsIcon",
+        "visible": false,
+        "bounds": {
+          "x": 372,
+          "y": 1078.71875,
+          "width": 24,
+          "height": 24,
+          "top": 1078.71875,
+          "right": 396,
+          "bottom": 1102.71875,
+          "left": 372
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "FullscreenIcon",
+        "visible": false,
+        "bounds": {
+          "x": 372,
+          "y": 1122.71875,
+          "width": 24,
+          "height": 24,
+          "top": 1122.71875,
+          "right": 396,
+          "bottom": 1146.71875,
+          "left": 372
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "DownloadIcon",
+        "visible": false,
+        "bounds": {
+          "x": 372,
+          "y": 1166.71875,
+          "width": 24,
+          "height": 24,
+          "top": 1166.71875,
+          "right": 396,
+          "bottom": 1190.71875,
+          "left": 372
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "MoreVertIcon",
+        "visible": false,
+        "bounds": {
+          "x": 705,
+          "y": 1485,
+          "width": 24,
+          "height": 24,
+          "top": 1485,
+          "right": 729,
+          "bottom": 1509,
+          "left": 705
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "testId": "ExpandMoreIcon",
+        "visible": false,
+        "bounds": {
+          "x": 694,
+          "y": 1552,
+          "width": 24,
+          "height": 24,
+          "top": 1552,
+          "right": 718,
+          "bottom": 1576,
+          "left": 694
+        },
+        "computedStyle": {
+          "display": "block",
+          "visibility": "visible",
+          "overflow": "hidden"
+        }
+      }
+    ]
+  }
+}

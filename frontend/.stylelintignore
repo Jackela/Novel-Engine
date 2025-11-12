@@ -1,0 +1,4 @@
+src/styles/design-system.css
+src/components/**/*.css
+src/components/**/**/*.css
+# Keep core app styles linted
