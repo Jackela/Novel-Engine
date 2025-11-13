@@ -7,6 +7,7 @@ Comprehensive unit and integration tests for the refactored Enhanced Multi-Agent
 Tests component coordination, dialogue management, and performance optimization.
 """
 
+import asyncio
 import sys
 import time
 from pathlib import Path
@@ -14,6 +15,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 import pytest
+from functools import wraps
 
 from src.bridge.types import RequestPriority
 from src.orchestrators.enhanced_multi_agent_bridge import (
@@ -21,6 +23,16 @@ from src.orchestrators.enhanced_multi_agent_bridge import (
     EnhancedMultiAgentBridge,
     create_enhanced_bridge,
 )
+
+
+def run_async_test(fn):
+    """Decorator to execute async tests without pytest-asyncio."""
+
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(fn(*args, **kwargs))
+
+    return wrapper
 
 
 class TestBridgeConfiguration:
@@ -81,7 +93,7 @@ class TestEnhancedMultiAgentBridge:
         assert enhanced_bridge.coordination_engine is None
         assert len(enhanced_bridge.turn_history) == 0
 
-    @pytest.mark.asyncio
+    @run_async_test
     async def test_bridge_component_initialization(self, enhanced_bridge):
         """Test bridge component initialization."""
         success = await enhanced_bridge.initialize()
@@ -89,7 +101,7 @@ class TestEnhancedMultiAgentBridge:
         assert success is True
         assert enhanced_bridge._initialized is True
 
-    @pytest.mark.asyncio
+    @run_async_test
     async def test_enhanced_turn_execution_no_agents(self, enhanced_bridge):
         """Test enhanced turn with no agents."""
         # Initialize bridge first
@@ -103,7 +115,7 @@ class TestEnhancedMultiAgentBridge:
         assert "timestamp" in result
         assert "components_used" in result
 
-    @pytest.mark.asyncio
+    @run_async_test
     async def test_enhanced_turn_execution_with_agents(
         self, enhanced_bridge, mock_director_agent
     ):
@@ -150,7 +162,7 @@ class TestEnhancedMultiAgentBridge:
         )
         assert priority == RequestPriority.HIGH
 
-    @pytest.mark.asyncio
+    @run_async_test
     async def test_bridge_status(self, enhanced_bridge):
         """Test bridge status reporting."""
         status = await enhanced_bridge.get_bridge_status()
@@ -184,7 +196,7 @@ class TestEnhancedMultiAgentBridge:
         avg_time = enhanced_bridge._calculate_avg_execution_time()
         assert avg_time == 0.0
 
-    @pytest.mark.asyncio
+    @run_async_test
     async def test_bridge_shutdown(self, enhanced_bridge):
         """Test bridge shutdown process."""
         # Mock components
@@ -205,7 +217,7 @@ class TestEnhancedMultiAgentBridge:
         enhanced_bridge.ai_orchestrator.shutdown.assert_called_once()
         enhanced_bridge.coordination_engine.shutdown.assert_called_once()
 
-    @pytest.mark.asyncio
+    @run_async_test
     async def test_context_building(self, enhanced_bridge, mock_director_agent):
         """Test enhanced context building."""
         mock_agent = Mock()
@@ -230,7 +242,7 @@ class TestEnhancedMultiAgentBridge:
 class TestBridgeFactory:
     """Test bridge factory functionality."""
 
-    @pytest.mark.asyncio
+    @run_async_test
     async def test_create_enhanced_bridge_success(self):
         """Test successful bridge creation."""
         mock_director = Mock()
@@ -244,7 +256,7 @@ class TestBridgeFactory:
         assert isinstance(bridge, EnhancedMultiAgentBridge)
         assert bridge._initialized is True
 
-    @pytest.mark.asyncio
+    @run_async_test
     async def test_create_enhanced_bridge_failure(self):
         """Test bridge creation failure handling."""
         mock_director = Mock()
@@ -258,7 +270,7 @@ class TestBridgeFactory:
 class TestBridgeIntegration:
     """Integration tests for bridge components."""
 
-    @pytest.mark.asyncio
+    @run_async_test
     async def test_dialogue_manager_integration(self):
         """Test dialogue manager integration."""
         mock_director = Mock()
@@ -277,7 +289,7 @@ class TestBridgeIntegration:
         assert "dialogue_status" in result
         assert "cleaned_up_dialogues" in result
 
-    @pytest.mark.asyncio
+    @run_async_test
     async def test_performance_monitoring(self):
         """Test performance monitoring integration."""
         mock_director = Mock()
