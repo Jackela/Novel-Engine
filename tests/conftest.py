@@ -17,6 +17,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+# Explicitly enable async plugin because autoload is disabled via sitecustomize.
+try:
+    import pytest_asyncio  # noqa: F401
+
+    pytest_plugins = ["pytest_asyncio"]
+except ImportError:  # pragma: no cover
+    pytest_plugins = []
+
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -233,14 +241,14 @@ def pytest_collection_modifyitems(config, items):
 
 
 # 测试报告钩子（仅在 pytest-html 可用时注册，避免 GA 缺失插件导致失败）
-if importlib.util.find_spec("pytest_html") is not None and os.environ.get(
-    "PYTEST_DISABLE_PLUGIN_AUTOLOAD"
-) != "1":
+if (
+    importlib.util.find_spec("pytest_html") is not None
+    and os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD") != "1"
+):
 
     def pytest_html_report_title(report):
         """自定义HTML报告标题"""
         report.title = "StoryForge AI 测试报告"
-
 
 
 @pytest.hookimpl(trylast=True)
