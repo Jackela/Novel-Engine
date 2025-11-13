@@ -233,7 +233,9 @@ def pytest_collection_modifyitems(config, items):
 
 
 # 测试报告钩子（仅在 pytest-html 可用时注册，避免 GA 缺失插件导致失败）
-if importlib.util.find_spec("pytest_html") is not None:
+if importlib.util.find_spec("pytest_html") is not None and os.environ.get(
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD"
+) != "1":
 
     def pytest_html_report_title(report):
         """自定义HTML报告标题"""
