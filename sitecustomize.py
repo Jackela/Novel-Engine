@@ -25,3 +25,7 @@ if os.environ.get("PYTEST_PLUGINS") in (None, ""):
             os.environ["PYTEST_PLUGINS"] = "pytest_asyncio"
     except Exception:
         pass
+
+_addopts = os.environ.get("PYTEST_ADDOPTS", "")
+if "-p pytest_asyncio" not in _addopts:
+    os.environ["PYTEST_ADDOPTS"] = f"{_addopts} -p pytest_asyncio".strip()
