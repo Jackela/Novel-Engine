@@ -42,6 +42,10 @@ jobs:
         if: ${{ hashFiles('frontend/package.json') != '' }}
         run: npm run build --if-present
 
+      - name: Install Playwright Browsers
+        if: ${{ hashFiles('frontend/package.json') != '' }}
+        run: npx playwright install --with-deps chromium
+
       - name: Playwright Smoke Tests
         if: ${{ hashFiles('frontend/package.json') != '' && github.event_name == 'pull_request' }}
         run: npm run test:e2e:smoke
