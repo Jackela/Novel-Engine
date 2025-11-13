@@ -1,7 +1,9 @@
-import React from 'react';
-import { Box, AppBar, Toolbar, Typography, Container } from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import { Box, AppBar, Toolbar, Typography, Container, Chip, Tooltip, Alert, Button, Collapse } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import BentoGrid from './BentoGrid';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   position: 'sticky',
@@ -27,7 +29,34 @@ interface DashboardLayoutProps {
   children?: React.ReactNode;
 }
 
+const GUEST_BANNER_KEY = 'novel-engine-guest-banner-dismissed';
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  const { isGuest } = useAuthContext();
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    try {
+      return window.sessionStorage.getItem(GUEST_BANNER_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleDismissBanner = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.setItem(GUEST_BANNER_KEY, '1');
+      } catch {
+        // ignore storage errors
+      }
+    }
+    setBannerDismissed(true);
+  };
+
+  const guestBannerVisible = useMemo(() => isGuest && !bannerDismissed, [isGuest, bannerDismissed]);
+
   return (
     <Box 
       component="div"
@@ -35,15 +64,45 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       sx={{ minHeight: '100vh', bgcolor: 'background.default' }}
     >
       <StyledAppBar data-testid="header-navigation" role="banner">
-        <Toolbar>
+        <Toolbar sx={{ gap: 2 }}>
           <Typography variant="h6" component="h1" sx={{ flexGrow: 1, fontWeight: 600 }}>
             Emergent Narrative Dashboard
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          {isGuest && (
+            <Tooltip title="Demo mode: curated sci-fi data">
+              <Chip
+                label="Demo Mode"
+                color="warning"
+                size="small"
+                icon={<InfoOutlinedIcon fontSize="small" />}
+                data-testid="guest-mode-chip"
+              />
+            </Tooltip>
+          )}
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
             Novel Engine M1
           </Typography>
         </Toolbar>
       </StyledAppBar>
+
+      {guestBannerVisible && (
+        <Box px={{ xs: 2, md: 4 }} pt={2}>
+          <Collapse in={guestBannerVisible}>
+            <Alert
+              severity="info"
+              variant="outlined"
+              action={
+                <Button color="inherit" size="small" onClick={handleDismissBanner}>
+                  Dismiss
+                </Button>
+              }
+              data-testid="guest-mode-banner"
+            >
+              You&apos;re viewing the demo dataset. Actions and telemetry are simulated for showcasing the narrative engine.
+            </Alert>
+          </Collapse>
+        </Box>
+      )}
       
       <MainContainer role="main" id="main-content" tabIndex={-1}>
         <BentoGrid>

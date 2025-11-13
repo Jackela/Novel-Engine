@@ -88,7 +88,11 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ loading, error 
       onMenuClick={handleToggle}
     >
       <AnalyticsContainer>
-        <ExpandButton onClick={handleToggle} size="small">
+        <ExpandButton
+          onClick={handleToggle}
+          size="small"
+          aria-label={expanded ? 'Collapse analytics panel' : 'Expand analytics panel'}
+        >
           {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </ExpandButton>
 

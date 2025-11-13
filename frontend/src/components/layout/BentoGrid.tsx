@@ -7,26 +7,24 @@ const GridContainer = styled(Box)(({ theme }) => ({
   width: '100%',
   maxWidth: '1400px',
   margin: '0 auto',
-  
-  // Desktop (≥1200px): 12-column grid  
+  gridAutoFlow: 'row dense',
+  gridAutoRows: 'minmax(160px, auto)',
+  gap: theme.spacing(2.5),
+  padding: 0,
+
   [theme.breakpoints.up('lg')]: {
-    gridTemplateColumns: 'repeat(12, 1fr)',
-    gap: theme.spacing(3, 2.5),
-    padding: 0,
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: theme.spacing(3),
   },
-  
-  // Tablet (900px - 1199px): 8-column grid
+
   [theme.breakpoints.between('md', 'lg')]: {
-    gridTemplateColumns: 'repeat(8, 1fr)',
-    gap: theme.spacing(2.5, 2),
-    padding: 0,
+    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+    gap: theme.spacing(2.5),
   },
-  
-  // Mobile (<900px): Single column
+
   [theme.breakpoints.down('md')]: {
     gridTemplateColumns: '1fr',
     gap: theme.spacing(2),
-    padding: 0,
   },
 }));
 

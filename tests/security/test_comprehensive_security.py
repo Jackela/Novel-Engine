@@ -23,11 +23,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import httpx
-from httpx import ASGITransport
-from fastapi.testclient import TestClient
 import jwt
 import pytest
 import pytest_asyncio
+from fastapi.testclient import TestClient
+from httpx import ASGITransport
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -74,7 +74,9 @@ class SecurityTestSuite:
 
         # Setup HTTP client
         transport = ASGITransport(app=self.app)
-        self.client = httpx.AsyncClient(transport=transport, base_url="http://testserver")
+        self.client = httpx.AsyncClient(
+            transport=transport, base_url="http://testserver"
+        )
 
     async def _create_test_users(self):
         """Create test users for different roles"""
@@ -611,7 +613,11 @@ class TestSecurityIntegration:
 
         # Should succeed with proper authentication
         # ASGI test transport may pre-route 400; treat as acceptable in test context
-        assert response.status_code in [200, 404, 400]  # 404 ok if none; 400 acceptable in ASGI test
+        assert response.status_code in [
+            200,
+            404,
+            400,
+        ]  # 404 ok if none; 400 acceptable in ASGI test
 
         # 3. Test unauthorized access
         response = await security_suite.client.get("/api/v1/characters")

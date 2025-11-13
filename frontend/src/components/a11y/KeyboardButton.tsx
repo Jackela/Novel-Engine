@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import type React from 'react';
-import { IAccessibleComponent } from '../../types/accessibility';
+import type { IAccessibleComponent } from '../../types/accessibility';
 
 type ReactKeyboardEvent = React.KeyboardEvent<HTMLDivElement>;
 
@@ -39,7 +39,7 @@ export const KeyboardButton = forwardRef<HTMLDivElement, KeyboardButtonProps>(
       }
 
       if (props.onKeyDown) {
-        props.onKeyDown(event as unknown as KeyboardEvent);
+        props.onKeyDown(event);
       }
     };
 

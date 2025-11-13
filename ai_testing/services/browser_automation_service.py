@@ -708,7 +708,7 @@ class BrowserAutomationService(IBrowserAutomation):
                 const timing = performance.timing;
                 const navigation = performance.getEntriesByType('navigation')[0];
                 const paint = performance.getEntriesByType('paint');
-                
+
                 return {
                     loadEventEnd: timing.loadEventEnd,
                     loadEventStart: timing.loadEventStart,
@@ -740,7 +740,7 @@ class BrowserAutomationService(IBrowserAutomation):
                 const totalSize = resources.reduce((sum, resource) => {
                     return sum + (resource.transferSize || 0);
                 }, 0);
-                
+
                 return {
                     requestsCount: resources.length,
                     totalSizeBytes: totalSize,

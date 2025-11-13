@@ -16,7 +16,7 @@ import {
   Analytics as AnalyticsIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import { tokens } from '@/styles/tokens';
+import { tokens } from '../../styles/tokens';
 
 const MobileTabbedContainer = styled(Box)(({ theme }) => ({
   display: 'none',

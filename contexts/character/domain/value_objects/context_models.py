@@ -469,11 +469,25 @@ class CharacterContext(BaseModel):
         # Extract character names from different contexts
         names_found = []
 
-        if values.get("profile_context") and values["profile_context"].name:
-            names_found.append(("profile", values["profile_context"].name))
+        profile_ctx = values.get("profile_context")
+        if profile_ctx:
+            profile_name = (
+                profile_ctx.get("name")
+                if isinstance(profile_ctx, dict)
+                else getattr(profile_ctx, "name", None)
+            )
+            if profile_name:
+                names_found.append(("profile", profile_name))
 
-        if values.get("stats_context") and values["stats_context"].name:
-            names_found.append(("stats", values["stats_context"].name))
+        stats_ctx = values.get("stats_context")
+        if stats_ctx:
+            stats_name = (
+                stats_ctx.get("name")
+                if isinstance(stats_ctx, dict)
+                else getattr(stats_ctx, "name", None)
+            )
+            if stats_name:
+                names_found.append(("stats", stats_name))
 
         character_name = values.get("character_name", "")
         if character_name:

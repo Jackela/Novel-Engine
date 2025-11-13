@@ -24,10 +24,9 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from fastapi.responses import PlainTextResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.api.character_api import create_character_api
 
@@ -424,12 +423,12 @@ def create_app() -> FastAPI:
     if SECURITY_AVAILABLE:
         # Apply Security Headers as the outermost middleware so it can decorate all responses
         security_config = (
-            get_production_security_config() if not config.debug else get_development_security_config()
+            get_production_security_config()
+            if not config.debug
+            else get_development_security_config()
         )
         security_headers = SecurityHeaders(security_config)
-        app.add_middleware(
-            SecurityHeadersMiddleware, security_headers=security_headers
-        )
+        app.add_middleware(SecurityHeadersMiddleware, security_headers=security_headers)
         logger.info("Security headers middleware enabled (outermost)")
 
         # Rate limiting (line of defense inside headers layer)

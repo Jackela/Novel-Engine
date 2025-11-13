@@ -617,9 +617,10 @@ All components include comprehensive accessibility support:
 # Start all services
 docker-compose up -d
 
-# Run in development mode
-npm run dev          # Frontend
-python main.py       # Backend
+# Run in development mode (non-blocking)
+npm run dev:daemon   # Spawns backend API + frontend Vite via scripts/dev_env_daemon.sh
+# Optional: stop background services when finished
+npm run dev:stop
 ```
 
 ### Production Kubernetes Deployment

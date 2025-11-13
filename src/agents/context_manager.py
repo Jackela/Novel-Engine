@@ -134,7 +134,7 @@ class CharacterContextManager:
         """
         # Try various section header patterns
         patterns = [
-            rf"#{1,3}\s*{section_name}.*?\n(.*?)(?=\n#{1,3}\s*\w+|\Z)",
+            rf"#{{1,3}}\s*{section_name}.*?\n(.*?)(?=\n#{{1,3}}\s*\w+|\Z)",
             rf"## {section_name}.*?\n(.*?)(?=\n## \w+|\Z)",
             rf"# {section_name}.*?\n(.*?)(?=\n# \w+|\Z)",
         ]

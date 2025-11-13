@@ -4,8 +4,9 @@ Character Factory Unit Test Suite
 Testing character creation, loading, and validation core functionality
 """
 
-from unittest.mock import Mock, patch, MagicMock
 import os
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
 
 # Import modules under test
@@ -53,7 +54,9 @@ class TestCharacterFactory:
     def test_create_character_not_found(self, tmp_path):
         """Test character creation - character not found"""
         # Create factory with temporary path
-        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+        factory = CharacterFactory(
+            self.mock_event_bus, base_character_path=str(tmp_path)
+        )
 
         with pytest.raises(FileNotFoundError, match="Character directory not found"):
             factory.create_character("nonexistent_character")
@@ -65,7 +68,9 @@ class TestCharacterFactory:
         char_file = tmp_path / "testchar"
         char_file.write_text("not a directory")
 
-        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+        factory = CharacterFactory(
+            self.mock_event_bus, base_character_path=str(tmp_path)
+        )
 
         with pytest.raises(FileNotFoundError, match="not a directory"):
             factory.create_character("testchar")
@@ -76,11 +81,13 @@ class TestCharacterFactory:
         # Create character directory
         char_dir = tmp_path / "testchar"
         char_dir.mkdir()
-        
+
         # Create minimal character files
         (char_dir / "character_testchar.md").write_text("# Test Character\n")
 
-        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+        factory = CharacterFactory(
+            self.mock_event_bus, base_character_path=str(tmp_path)
+        )
 
         # Mock PersonaAgent to avoid actual initialization
         with patch("src.config.character_factory.PersonaAgent") as mock_persona:
@@ -104,7 +111,9 @@ class TestCharacterFactory:
         char_dir.mkdir()
         (char_dir / "character_testchar.md").write_text("# Test\n")
 
-        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+        factory = CharacterFactory(
+            self.mock_event_bus, base_character_path=str(tmp_path)
+        )
 
         with patch("src.config.character_factory.PersonaAgent") as mock_persona:
             mock_agent = Mock()
@@ -125,7 +134,9 @@ class TestCharacterFactory:
         char_dir.mkdir()
         (char_dir / "character_testchar.md").write_text("# Test\n")
 
-        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+        factory = CharacterFactory(
+            self.mock_event_bus, base_character_path=str(tmp_path)
+        )
 
         with patch("src.config.character_factory.PersonaAgent") as mock_persona:
             # Simulate PersonaAgent initialization failure
@@ -144,7 +155,9 @@ class TestCharacterFactory:
         # Create a file (should be ignored)
         (tmp_path / "notachar.txt").write_text("ignore")
 
-        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+        factory = CharacterFactory(
+            self.mock_event_bus, base_character_path=str(tmp_path)
+        )
 
         characters = factory.list_available_characters()
 
@@ -158,10 +171,14 @@ class TestCharacterFactory:
     def test_list_available_characters_no_directory(self, tmp_path):
         """Test listing characters when base directory doesn't exist"""
         nonexistent = tmp_path / "nonexistent"
-        
-        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(nonexistent))
 
-        with pytest.raises(FileNotFoundError, match="Character base directory not found"):
+        factory = CharacterFactory(
+            self.mock_event_bus, base_character_path=str(nonexistent)
+        )
+
+        with pytest.raises(
+            FileNotFoundError, match="Character base directory not found"
+        ):
             factory.list_available_characters()
 
     @pytest.mark.unit
@@ -173,7 +190,9 @@ class TestCharacterFactory:
             char_dir.mkdir()
             (char_dir / f"character_char{i}.md").write_text(f"# Char {i}\n")
 
-        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+        factory = CharacterFactory(
+            self.mock_event_bus, base_character_path=str(tmp_path)
+        )
 
         with patch("src.config.character_factory.PersonaAgent") as mock_persona:
             agents = []
@@ -218,7 +237,9 @@ class TestCharacterFactoryConfiguration:
         custom_path = tmp_path / "custom_characters"
         custom_path.mkdir()
 
-        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(custom_path))
+        factory = CharacterFactory(
+            self.mock_event_bus, base_character_path=str(custom_path)
+        )
 
         assert str(custom_path) in factory.base_character_path
 
@@ -229,11 +250,13 @@ class TestCharacterFactoryConfiguration:
         char_dir.mkdir()
         (char_dir / "character_testchar.md").write_text("# Test\n")
 
-        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+        factory = CharacterFactory(
+            self.mock_event_bus, base_character_path=str(tmp_path)
+        )
 
         # Verify the factory correctly resolves paths
         expected_path = os.path.join(str(tmp_path), "testchar")
-        
+
         with patch("src.config.character_factory.PersonaAgent") as mock_persona:
             mock_agent = Mock()
             mock_persona.return_value = mock_agent
@@ -266,7 +289,9 @@ class TestCharacterFactoryPerformance:
         char_dir.mkdir()
         (char_dir / "character_testchar.md").write_text("# Test\n")
 
-        factory = CharacterFactory(self.mock_event_bus, base_character_path=str(tmp_path))
+        factory = CharacterFactory(
+            self.mock_event_bus, base_character_path=str(tmp_path)
+        )
 
         with patch("src.config.character_factory.PersonaAgent") as mock_persona:
             mock_agent = Mock()

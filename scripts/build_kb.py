@@ -26,11 +26,16 @@ import json
 import logging
 import os
 import sys
+
+# Expose builtin __import__ for tests that patch scripts.build_kb.__import__
+from builtins import __import__ as _builtin_import
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
 import yaml
+
+__import__ = _builtin_import
 
 
 class StartupGuard:

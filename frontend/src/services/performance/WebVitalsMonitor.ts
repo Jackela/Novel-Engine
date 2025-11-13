@@ -138,17 +138,16 @@ export class WebVitalsMonitor implements IPerformanceMonitor {
    * Future: Integrate with LoggerFactory or analytics platform
    */
   private sendToAnalytics(metric: PerformanceMetric): void {
-    // Future implementation:
-    // LoggerFactory.info('web_vitals', {
-    //   metric_name: metric.name,
-    //   metric_value: metric.value,
-    //   metric_rating: metric.rating,
-    //   metric_delta: metric.delta,
-    //   metric_id: metric.id,
-    // })
+    if (!this.options.reportToAnalytics) {
+      return
+    }
 
-    // For now, just track in memory
-    // Could send to Google Analytics, Datadog, etc.
+    // Placeholder hook for future integration
+    console.debug('[Web Vitals][analytics]', {
+      metric: metric.name,
+      value: metric.value,
+      rating: metric.rating,
+    })
   }
 }
 

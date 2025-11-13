@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Dict
 
 from . import MetricsPublisher, MetricsSnapshot
@@ -64,4 +64,3 @@ class InMemoryMetrics(MetricsPublisher):
             saved_tokens=self._c.saved_tokens,
             saved_cost=self._c.saved_cost,
         )
-

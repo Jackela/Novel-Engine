@@ -7,19 +7,20 @@ Constitution Compliance:
 - Article III (TDD): Tests written FIRST, ensuring they FAIL before implementation
 """
 
-import pytest
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 from contexts.knowledge.application.use_cases.retrieve_agent_context import (
     RetrieveAgentContextUseCase,
 )
-from contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
-from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
 from contexts.knowledge.domain.models.access_control_rule import AccessControlRule
 from contexts.knowledge.domain.models.access_level import AccessLevel
-from contexts.knowledge.domain.models.agent_identity import AgentIdentity
 from contexts.knowledge.domain.models.agent_context import AgentContext
+from contexts.knowledge.domain.models.agent_identity import AgentIdentity
+from contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
+from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
 
 
 class TestRetrieveAgentContextUseCase:
@@ -55,7 +56,7 @@ class TestRetrieveAgentContextUseCase:
     def sample_entries(self):
         """Create sample knowledge entries."""
         now = datetime.now(timezone.utc)
-        
+
         return [
             KnowledgeEntry(
                 id="entry-001",

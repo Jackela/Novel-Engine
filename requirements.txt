@@ -19,6 +19,9 @@ asyncio-throttle>=1.0.2
 # aioredis>=2.0.0  # DEPRECATED: Incompatible with Python 3.11+ (duplicate TimeoutError base class)
 redis[asyncio]>=5.0.0  # Official async Redis client for Python 3.11+
 aiohttp>=3.9.0  # Required by async_processing_improvements.py
+prometheus-client>=0.20.0
+opentelemetry-api>=1.21.0
+opentelemetry-sdk>=1.21.0
 
 # Data processing
 pandas>=1.5.0; python_version>="3.9"

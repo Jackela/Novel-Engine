@@ -171,7 +171,7 @@ def get_ai_testing_config() -> Dict[str, Any]:
 def get_ai_testing_service_config(service_name: str) -> Dict[str, Any]:
     """Get configuration for a specific AI testing service"""
     config = get_ai_testing_config()
-    
+
     if service_name == "browser_automation":
         return config["ai_testing"]["browser_automation"]
     elif service_name == "api_testing":

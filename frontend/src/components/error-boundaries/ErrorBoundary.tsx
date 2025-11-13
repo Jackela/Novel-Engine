@@ -114,19 +114,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           style={{
             padding: '2rem',
             margin: '2rem',
-            border: '2px solid #ff4444',
+            border: '2px solid var(--color-error)',
             borderRadius: '8px',
-            backgroundColor: '#fff5f5',
+            backgroundColor: 'rgba(239, 68, 68, 0.08)',
             fontFamily: 'system-ui, -apple-system, sans-serif',
           }}
         >
-          <h2 style={{ color: '#cc0000', marginTop: 0 }}>
+          <h2 style={{ color: 'var(--color-error)', marginTop: 0 }}>
             Something went wrong
           </h2>
-          <p style={{ color: '#666', marginBottom: '1.5rem' }}>
+          <p style={{ color: 'var(--color-text-tertiary)', marginBottom: '1.5rem' }}>
             We're sorry, but an unexpected error occurred. Please try one of the following:
           </p>
-          <ul style={{ color: '#666', marginBottom: '1.5rem' }}>
+          <ul style={{ color: 'var(--color-text-tertiary)', marginBottom: '1.5rem' }}>
             <li>Refresh the page</li>
             <li>Go back and try again</li>
             <li>Contact support if the problem persists</li>
@@ -136,7 +136,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               onClick={this.handleReset}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: '#0066cc',
+                backgroundColor: 'var(--color-info)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -150,7 +150,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               onClick={() => window.location.reload()}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: '#666',
+                backgroundColor: 'var(--color-text-tertiary)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -164,7 +164,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
           {/* Technical details - only show in development */}
           {process.env.NODE_ENV === 'development' && this.state.error && (
-            <details style={{ marginTop: '2rem', color: '#333' }}>
+            <details style={{ marginTop: '2rem', color: 'var(--color-text-secondary)' }}>
               <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
                 Technical Details (Development Only)
               </summary>
@@ -172,7 +172,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 style={{
                   marginTop: '1rem',
                   padding: '1rem',
-                  backgroundColor: '#f5f5f5',
+                  backgroundColor: 'var(--color-bg-secondary)',
                   borderRadius: '4px',
                   overflow: 'auto',
                   fontSize: '0.875rem',

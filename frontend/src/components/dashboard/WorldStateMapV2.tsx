@@ -11,13 +11,14 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
+  useTheme,
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LocationOn as LocationIcon,
   Person as PersonIcon,
-  Activity as ActivityIcon,
+  Timeline as ActivityIcon,
   Circle as PulseIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
@@ -53,7 +54,9 @@ const MapGrid = styled(Box)({
   gap: '8px',
 });
 
-const LocationMarker = styled(motion.div)<{ active?: boolean; activitylevel?: string }>(({ theme, active, activitylevel }) => ({
+const LocationMarker = styled(motion.div, {
+  shouldForwardProp: (prop: PropertyKey) => !['active', 'activitylevel'].includes(String(prop))
+})<{ active?: boolean; activitylevel?: string }>(({ theme, active, activitylevel }) => ({
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
@@ -126,6 +129,7 @@ interface WorldStateMapProps {
 }
 
 const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
+  const theme = useTheme();
   const [locations] = useState<WorldLocation[]>([
     {
       id: 'crystal-city',
@@ -251,10 +255,12 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
             const isSelected = selectedLocation === location.id;
             
             return (
-              <LocationMarker
+             <LocationMarker
                 key={location.id}
                 active={isSelected}
                 activitylevel={location.activity}
+                data-activity={location.activity}
+                data-location={location.id}
                 style={{
                   gridColumnStart: location.gridPosition.x,
                   gridRowStart: location.gridPosition.y,
@@ -266,6 +272,7 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.3 }}
               >
+                <span className="location-activity-flag" data-activity={location.activity} style={{ display: 'none' }} />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                   <LocationIcon
                     sx={{ 

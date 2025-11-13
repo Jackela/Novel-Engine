@@ -33,10 +33,10 @@ if not FULL_INTEGRATION:
 
 # Import system components
 from api_server import app
-from src.agents.chronicler_agent import ChroniclerAgent
-from src.agents.director_agent import DirectorAgent
 from fastapi.testclient import TestClient
 
+from src.agents.chronicler_agent import ChroniclerAgent
+from src.agents.director_agent import DirectorAgent
 from src.persona_agent import PersonaAgent
 
 # Test client

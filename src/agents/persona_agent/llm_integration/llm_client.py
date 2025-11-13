@@ -11,22 +11,22 @@ import os
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import requests
 
 # Caching & metrics
 from src.caching.exact_cache import ExactCache
-from src.caching.semantic_cache_adapter import SemanticCacheBucketed
-from src.caching.key_builder import build_exact, build_semantic_bucket
-from src.metrics.global_metrics import metrics as global_metrics
-from src.caching.registry import register_exact, register_semantic
 from src.caching.interfaces import CacheEntryMeta
+from src.caching.key_builder import build_exact, build_semantic_bucket
+from src.caching.registry import register_exact, register_semantic
+from src.caching.semantic_cache_adapter import SemanticCacheBucketed
 from src.config.caching import default_caching_config
+from src.metrics.global_metrics import metrics as global_metrics
 
 # Optional semantic cache integration
 try:
-    from src.caching.semantic_cache import (
+    from src.caching.semantic_cache import (  # noqa: F401
         SemanticCache,
         SemanticCacheConfig,
     )
@@ -404,7 +404,9 @@ Respond as {character_name}, staying in character based on the personality, fact
                 if isinstance(exact_hit, str) and exact_hit:
                     self._metrics.record_hit("exact")
                     # heuristic savings
-                    self._metrics.record_savings(tokens=len(exact_hit.split()), cost=0.0)
+                    self._metrics.record_savings(
+                        tokens=len(exact_hit.split()), cost=0.0
+                    )
                     return LLMResponse(
                         success=True,
                         content=exact_hit,
@@ -453,8 +455,20 @@ Respond as {character_name}, staying in character based on the personality, fact
                         response.response_time = response_time
 
                         # Cache successful response (write-on-completion)
-                        if self._config["enable_caching"] and response.content and not sensitive:
+                        if (
+                            self._config["enable_caching"]
+                            and response.content
+                            and not sensitive
+                        ):
                             try:
+                                tags = [
+                                    f"character:{params.get('character_id', '')}",
+                                    f"tmpl:{params.get('prompt_template_id', '')}",
+                                    f"tmplv:{params.get('prompt_template_version', '')}",
+                                    f"idxv:{params.get('index_version', '')}",
+                                    f"model:{params.get('model_name', '')}",
+                                ]
+
                                 # Exact with tags
                                 self._exact_cache.put(
                                     exact_key,
@@ -463,16 +477,13 @@ Respond as {character_name}, staying in character based on the personality, fact
                                 )
                                 # Semantic (bucketed)
                                 bucket = build_semantic_bucket(params)
-                                tags = [
-                                    f"character:{params.get('character_id','')}",
-                                    f"tmpl:{params.get('prompt_template_id','')}",
-                                    f"tmplv:{params.get('prompt_template_version','')}",
-                                    f"idxv:{params.get('index_version','')}",
-                                    f"model:{params.get('model_name','')}",
-                                ]
-                                self._semantic_cache.put(bucket, request.prompt, response.content, tags=tags)
+                                self._semantic_cache.put(
+                                    bucket, request.prompt, response.content, tags=tags
+                                )
                                 # update metrics size (best effort)
-                                self._metrics.set_cache_size(self._exact_cache.stats().get("size", 0))
+                                self._metrics.set_cache_size(
+                                    self._exact_cache.stats().get("size", 0)
+                                )
                             except Exception:
                                 pass
 

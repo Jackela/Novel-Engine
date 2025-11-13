@@ -6,7 +6,7 @@ This module defines value objects for representing cause-and-effect relationship
 and causal structures within narrative systems.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
@@ -98,7 +98,9 @@ class CausalNode:
     # Metadata
     tags: FrozenSet[str] = None
     narrative_context: str = ""
-    creation_timestamp: datetime = None
+    creation_timestamp: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc), compare=False
+    )
     metadata: Dict[str, Any] = None
 
     def __post_init__(self):
@@ -141,9 +143,6 @@ class CausalNode:
             object.__setattr__(self, "tags", frozenset())
         elif isinstance(self.tags, set):
             object.__setattr__(self, "tags", frozenset(self.tags))
-
-        if self.creation_timestamp is None:
-            object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -243,7 +242,6 @@ class CausalNode:
             self.blocking_conditions,
             self.tags,
             self.narrative_context,
-            self.creation_timestamp,
             _dict_to_hashable(self.metadata),
         ))
 

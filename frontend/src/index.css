@@ -265,6 +265,55 @@ body {
   overflow-x: hidden;
 }
 
+/* 🔗 PROFESSIONAL INTERACTIVE ELEMENTS */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: color var(--timing-standard) var(--easing-standard);
+}
+
+a:hover {
+  color: var(--color-primary-400);
+}
+
+a:focus {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--border-radius-sm);
+}
+
+/* 🎛️ SOPHISTICATED FORM CONTROLS */
+input, textarea, select, button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+button {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-3) var(--spacing-5);
+  font: var(--text-body-base) var(--font-primary);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--timing-standard) var(--easing-standard);
+  position: relative;
+  overflow: hidden;
+}
+
+button:hover {
+  background: var(--color-primary-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+button:focus {
+  outline: none;
+}
+
 /* 🎯 ACCESSIBILITY - Keyboard Focus Indicators (WCAG 2.1 AA: 2.4.7 Focus Visible) */
 
 /* Remove default browser focus outline */
@@ -391,107 +440,6 @@ p {
   line-height: 1.6;
 }
 
-/* 🔗 PROFESSIONAL INTERACTIVE ELEMENTS */
-a {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-  transition: color var(--timing-standard) var(--easing-standard);
-}
-
-a:hover {
-  color: var(--color-primary-400);
-}
-
-a:focus {
-  outline: 2px solid var(--color-border-focus);
-  outline-offset: 2px;
-  border-radius: var(--border-radius-sm);
-}
-
-/* 🎛️ SOPHISTICATED FORM CONTROLS */
-input, textarea, select, button {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-}
-
-button {
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-3) var(--spacing-5);
-  font: var(--text-body-base) var(--font-primary);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all var(--timing-standard) var(--easing-standard);
-  position: relative;
-  overflow: hidden;
-}
-
-button:hover {
-  background: var(--color-primary-600);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-lg);
-}
-
-button:focus {
-  outline: none;
-  box-shadow: var(--shadow-focus);
-  border-color: var(--color-border-focus);
-}
-
-button:active {
-  transform: translateY(0);
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-/* 🎨 BENTO TILE PATTERN - Core Dashboard Component */
-.bento-tile {
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-primary);
-  border-radius: 12px;
-  padding: var(--tile-padding-desktop);
-  box-shadow: var(--shadow-sm);
-  transition: all var(--timing-standard) var(--easing-standard);
-  overflow: hidden;
-  position: relative;
-}
-
-.bento-tile:hover {
-  border-color: var(--color-border-secondary);
-  box-shadow: var(--shadow-md);
-}
-
-.bento-tile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--tile-header-margin);
-  padding-bottom: var(--spacing-3);
-  border-bottom: 1px solid var(--color-border-primary);
-}
-
-.bento-tile-title {
-  font: var(--text-heading-sm) var(--font-primary);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.bento-tile-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4);
-}
 
 /* 🎯 INTERACTIVE STATE PATTERNS */
 .interactive-hover {

@@ -1,7 +1,6 @@
 import pytest
-from fastapi.testclient import TestClient
-
 from api_server import app
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture(scope="module")
@@ -37,4 +36,3 @@ def test_invalidate_contract_shape(client):
     data = resp.json()
     assert "removed" in data
     assert isinstance(data["removed"], int)
-

@@ -14,29 +14,30 @@ import time
 from typing import List
 
 from src.shared_types import CharacterId
-from ..ports.i_knowledge_retriever import IKnowledgeRetriever
-from ..ports.i_context_assembler import IContextAssembler
-from ...domain.models.agent_identity import AgentIdentity
+
 from ...domain.models.agent_context import AgentContext
+from ...domain.models.agent_identity import AgentIdentity
 from ...domain.models.knowledge_type import KnowledgeType
 from ...infrastructure.metrics_config import record_knowledge_retrieval
+from ..ports.i_context_assembler import IContextAssembler
+from ..ports.i_knowledge_retriever import IKnowledgeRetriever
 
 
 class RetrieveAgentContextUseCase:
     """
     Use case for retrieving agent knowledge context.
-    
+
     Coordinates knowledge retrieval and context assembly for agents
     during simulation turns. Delegates to:
     - IKnowledgeRetriever: Fetch accessible knowledge entries from persistence
     - IContextAssembler: Assemble entries into structured AgentContext
-    
+
     Constitution Compliance:
         - Article I (DDD): Orchestrates domain operations without business logic
         - Article II (Hexagonal): Depends on application ports (abstractions)
         - Article V (SOLID): SRP - context retrieval orchestration only
     """
-    
+
     def __init__(
         self,
         knowledge_retriever: IKnowledgeRetriever,
@@ -44,17 +45,17 @@ class RetrieveAgentContextUseCase:
     ):
         """
         Initialize use case with dependencies.
-        
+
         Args:
             knowledge_retriever: Port for retrieving knowledge entries
             context_assembler: Port for assembling agent context
-        
+
         Constitution Compliance:
             - Article V (SOLID): Dependency Inversion - depend on abstractions
         """
         self._retriever = knowledge_retriever
         self._assembler = context_assembler
-    
+
     async def execute(
         self,
         agent: AgentIdentity,
@@ -67,18 +68,18 @@ class RetrieveAgentContextUseCase:
     ) -> AgentContext:
         """
         Retrieve and assemble agent knowledge context.
-        
+
         Supports two retrieval modes:
         1. Standard retrieval: Timestamp-ordered retrieval (default)
         2. Semantic retrieval: Vector similarity search (if semantic_query provided)
-        
+
         Workflow:
         1. Retrieve accessible knowledge entries via IKnowledgeRetriever
            - If semantic_query provided: Use semantic search with vector embeddings
            - Otherwise: Use standard timestamp-ordered retrieval
         2. Assemble context aggregate via IContextAssembler
         3. Return assembled AgentContext
-        
+
         Args:
             agent: Agent identity (character_id and roles)
             knowledge_types: Optional filter by knowledge types
@@ -87,29 +88,29 @@ class RetrieveAgentContextUseCase:
             semantic_query: Optional natural language query for semantic search (US4)
             top_k: Maximum results for semantic search (default: 5, only used if semantic_query provided)
             threshold: Minimum similarity score for semantic search (0.0-1.0, default: 0.0)
-        
+
         Returns:
             Assembled AgentContext aggregate with formatted knowledge
-        
+
         Performance Requirement:
             - SC-002: Must complete in <500ms for ≤100 entries
-        
+
         Constitution Compliance:
             - Article II (Hexagonal): Coordinates ports without infrastructure knowledge
             - Article V (SOLID): SRP - orchestration only, no business logic
             - Article VII (Observability): Prometheus metrics instrumented
-        
+
         User Story 4 (Semantic Retrieval):
             - FR-020: Semantic search enabled when semantic_query is provided
             - FR-021: Fallback to standard retrieval when semantic_query is None
         """
         # Start timing for performance metrics (SC-002, Article VII)
         start_time = time.time()
-        
+
         try:
             # Step 1: Retrieve accessible knowledge entries
             # (Access control filtering happens in retriever via domain logic)
-            
+
             # Semantic retrieval mode with automatic fallback (US4 - T084)
             if semantic_query is not None:
                 try:
@@ -121,7 +122,7 @@ class RetrieveAgentContextUseCase:
                         threshold=threshold,
                         knowledge_types=knowledge_types,
                     )
-                    
+
                     # Fallback to standard retrieval if no semantic results
                     # (This happens when embeddings not yet generated for entries)
                     if not entries:
@@ -131,8 +132,8 @@ class RetrieveAgentContextUseCase:
                             knowledge_types=knowledge_types,
                             owning_character_id=owning_character_id,
                         )
-                
-                except (ValueError, AttributeError) as e:
+
+                except (ValueError, AttributeError):
                     # Fallback if semantic search fails (e.g., embedding service unavailable)
                     # ValueError: Empty query
                     # AttributeError: retrieve_for_agent_semantic not implemented
@@ -148,7 +149,7 @@ class RetrieveAgentContextUseCase:
                     knowledge_types=knowledge_types,
                     owning_character_id=owning_character_id,
                 )
-            
+
             # Step 2: Assemble context aggregate
             # (Context formatting happens in domain aggregate)
             context = self._assembler.assemble_context(
@@ -156,7 +157,7 @@ class RetrieveAgentContextUseCase:
                 entries=entries,
                 turn_number=turn_number,
             )
-            
+
             # Step 3: Record metrics (Article VII - Observability)
             duration_seconds = time.time() - start_time
             record_knowledge_retrieval(
@@ -165,9 +166,9 @@ class RetrieveAgentContextUseCase:
                 entry_count=len(entries),
                 duration_seconds=duration_seconds,
             )
-            
+
             return context
-        
+
         except Exception:
             # Record metrics even on failure for observability
             duration_seconds = time.time() - start_time

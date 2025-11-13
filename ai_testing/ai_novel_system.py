@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 sys.path.append(str(Path(__file__).parent))
 
 try:
-    from dialogue_engine import ContextAwareDialogueEngine, DialogueMemory
+    from dialogue_engine import ContextAwareDialogueEngine
     from event_orchestrator import DynamicEventOrchestrator
     from story_architect import PlotStage, StoryArchitect, StoryBlueprint
 except ImportError:

@@ -1,8 +1,8 @@
 # Novel Engine - Documentation Hub
 
-**Last Updated**: 2024-11-04  
-**Status**: Current  
-**Version**: 2.0.0
+**Last Updated**: 2025-11-12  
+**Status**: Current (Flow Layout / Dev Daemon)  
+**Version**: 2.1.0
 
 **Navigation**: [Home](../README.md) > Documentation
 
@@ -10,7 +10,7 @@
 
 ## Overview
 
-Welcome to the comprehensive documentation for Novel Engine. This documentation hub provides complete architectural, operational, and development guidance for the AI-driven narrative generation and multi-agent simulation platform.
+Welcome to the comprehensive documentation for Novel Engine. This hub now reflects the flow-based dashboard layout, the unified non-blocking dev script (`scripts/dev_env_daemon.sh`), and the alignment requirements defined in `openspec/specs/docs-alignment/spec.md`.
 
 ---
 

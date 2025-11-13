@@ -147,17 +147,19 @@ const EmergentDashboard: React.FC = () => {
           <div className="bento-tile-content">
             <div className="world-map-canvas">
               {worldEntities.map((entity) => (
-                <div
+                <button
                   key={entity.id}
+                  type="button"
                   className={`entity-marker entity-marker--${entity.type} ${
                     selectedEntity === entity.id ? 'entity-marker--selected' : ''
                   }`}
                   style={{ left: `${entity.x}%`, top: `${entity.y}%` }}
                   onClick={() => setSelectedEntity(entity.id)}
                   title={entity.name}
+                  aria-pressed={selectedEntity === entity.id}
                 >
                   <span className="entity-label">{entity.name[0]}</span>
-                </div>
+                </button>
               ))}
             </div>
             <div className="world-map-legend">

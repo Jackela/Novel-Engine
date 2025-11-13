@@ -148,14 +148,14 @@ python run_ai_validation_tests.py --browser firefox
 python run_comprehensive_ai_validation.py
 
 # Manual server management
-# Terminal 1: Start API server
-python api_server.py
+# Terminal 1: Start API + frontend via daemon
+npm run dev:daemon
 
-# Terminal 2: Start frontend server
-cd frontend && npm run dev
-
-# Terminal 3: Run tests
+# Terminal 2: Run tests
 python run_ai_validation_tests.py
+
+# Terminal 3 (optional): Stop services when finished
+npm run dev:stop
 ```
 
 #### Direct Playwright Execution
@@ -388,8 +388,8 @@ npx playwright test --trace on --config=playwright-ai-validation.config.js
 # Check API server logs
 tail -f logs/api_server.log
 
-# Review frontend server logs
-cd frontend && npm run dev 2>&1 | tee frontend.log
+# Review frontend server logs (daemon output)
+tail -f tmp/dev_env.log
 
 # Analyze test execution logs
 cat frontend/test-results/ai-validation-execution.log

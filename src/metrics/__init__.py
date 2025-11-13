@@ -1,6 +1,6 @@
-from typing import Any, Dict
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict
 
 
 @dataclass
@@ -42,4 +42,3 @@ class MetricsPublisher:
 
     def snapshot(self) -> MetricsSnapshot:
         raise NotImplementedError
-

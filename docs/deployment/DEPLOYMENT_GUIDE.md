@@ -346,16 +346,16 @@ server {
 ### 1. Local Development
 
 ```bash
-# Backend
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-python api_server.py
+# One command spins up both stacks and waits for health checks
+npm run dev:daemon
 
-# Frontend (separate terminal)
-cd frontend
-npm install
-npm run dev
+# Logs live in tmp/dev_env.log  (PID files: tmp/dev_env/)
+# Stop everything when finished
+npm run dev:stop
+
+# Manual fallback (per-stack debugging only)
+python api_server.py
+(cd frontend && npm run dev)
 ```
 
 ### 2. Docker Deployment

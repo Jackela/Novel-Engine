@@ -355,7 +355,6 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} sm={6}>
               <TextField
-                autoFocus
                 fullWidth
                 label="Character Name"
                 value={formData.name}

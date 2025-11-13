@@ -11,4 +11,3 @@ in `src.templates.character.persona_models` and re-exports via
 from src.templates.character import CharacterArchetype, CharacterPersona  # re-export
 
 __all__ = ["CharacterArchetype", "CharacterPersona"]
-

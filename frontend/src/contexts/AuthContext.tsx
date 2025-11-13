@@ -18,17 +18,46 @@ import { TokenStorage } from '../services/auth/TokenStorage';
 import axios from 'axios';
 import { logger } from '../services/logging/LoggerFactory';
 
+const createGuestToken = (): AuthToken => {
+  const now = Date.now();
+  return {
+    accessToken: 'guest-access-token',
+    refreshToken: 'guest-refresh-token',
+    tokenType: 'guest',
+    expiresAt: now + 3600 * 1000,
+    refreshExpiresAt: now + 24 * 3600 * 1000,
+    user: {
+      id: 'guest-user',
+      username: 'Guest Explorer',
+      email: 'guest@example.com',
+      roles: ['guest'],
+    },
+  };
+};
+
+const GUEST_SESSION_KEY = 'novel-engine-guest-session';
+
 /**
  * Authentication context state
  */
 interface AuthContextState {
   isAuthenticated: boolean;
+  isGuest: boolean;
   token: AuthToken | null;
   isLoading: boolean;
   error: Error | null;
   login: (credentials: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
+  enterGuestMode: () => void;
+}
+
+interface AuthInternalState {
+  isAuthenticated: boolean;
+  isGuest: boolean;
+  token: AuthToken | null;
+  isLoading: boolean;
+  error: Error | null;
 }
 
 /**
@@ -53,6 +82,19 @@ interface AuthProviderProps {
  * @returns Provider component wrapping children
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authService: customAuthService }) => {
+  const guestEnv =
+    (import.meta as ImportMeta & { env?: Record<string, string> }).env
+      ?.VITE_ENABLE_GUEST_MODE;
+
+  const enableGuestMode =
+    String(
+      (process.env.REACT_APP_ENABLE_GUEST_MODE ??
+        guestEnv ??
+        'true') as string
+    )
+      .trim()
+      .toLowerCase() === 'true';
+
   // Initialize auth service (use custom or create default)
   const [authService] = useState<IAuthenticationService>(() => {
     if (customAuthService) {
@@ -70,8 +112,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
   });
 
   // Auth state
-  const [state, setState] = useState<Omit<AuthContextState, 'login' | 'logout' | 'refreshToken'>>({
+  const [state, setState] = useState<AuthInternalState>({
     isAuthenticated: false,
+    isGuest: false,
     token: null,
     isLoading: true,
     error: null,
@@ -82,8 +125,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
    */
   useEffect(() => {
     const initializeAuth = async () => {
+      const shouldResumeGuestSession = (() => {
+        if (!enableGuestMode || typeof window === 'undefined') {
+          return false;
+        }
+        try {
+          return window.sessionStorage.getItem(GUEST_SESSION_KEY) === '1';
+        } catch {
+          return false;
+        }
+      })();
+
       try {
-        logger.info('Initializing authentication state', undefined, {
+        logger.info('Initializing authentication state', {
           component: 'AuthProvider',
           action: 'initialize',
         });
@@ -91,23 +145,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
         const isAuth = await authService.isAuthenticated();
         const token = authService.getToken();
 
-        setState({
-          isAuthenticated: isAuth,
-          token,
-          isLoading: false,
-          error: null,
-        });
+        if (isAuth) {
+          setState({
+            isAuthenticated: true,
+            isGuest: false,
+            token,
+            isLoading: false,
+            error: null,
+          });
+        } else if (shouldResumeGuestSession) {
+          setState({
+            isAuthenticated: true,
+            isGuest: true,
+            token: createGuestToken(),
+            isLoading: false,
+            error: null,
+          });
+        } else {
+          setState({
+            isAuthenticated: false,
+            isGuest: false,
+            token: null,
+            isLoading: false,
+            error: null,
+          });
+        }
 
         // Start automatic token refresh if authenticated
         if (isAuth) {
           authService.startTokenRefresh();
-          logger.info('User authenticated, token refresh started', undefined, {
+          logger.info('User authenticated, token refresh started', {
             component: 'AuthProvider',
             action: 'initialize',
-            userId: token?.user.id,
+            ...(token?.user.id ? { userId: token.user.id } : {}),
           });
-        } else {
-          logger.info('User not authenticated', undefined, {
+        } else if (!enableGuestMode) {
+          logger.info('User not authenticated', {
             component: 'AuthProvider',
             action: 'initialize',
           });
@@ -118,34 +191,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
           action: 'initialize',
         });
 
-        setState({
-          isAuthenticated: false,
-          token: null,
-          isLoading: false,
-          error: error as Error,
-        });
+        if (enableGuestMode && shouldResumeGuestSession) {
+          setState({
+            isAuthenticated: true,
+            isGuest: true,
+            token: createGuestToken(),
+            isLoading: false,
+            error: null,
+          });
+        } else {
+          setState({
+            isAuthenticated: false,
+            isGuest: false,
+            token: null,
+            isLoading: false,
+            error: error as Error,
+          });
+        }
       }
     };
 
     initializeAuth();
-  }, [authService]);
+  }, [authService, enableGuestMode]);
 
   /**
    * Subscribe to auth state changes
    */
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChange((authState) => {
-      logger.debug('Auth state changed', undefined, {
+      logger.debug('Auth state changed', {
         component: 'AuthProvider',
         action: 'stateChange',
         isAuthenticated: authState.isAuthenticated,
       });
 
-      setState(prev => ({
-        ...prev,
-        isAuthenticated: authState.isAuthenticated,
-        token: authState.isAuthenticated ? authService.getToken() : null,
-      }));
+      if (authState.isAuthenticated) {
+        setState(prev => ({
+          ...prev,
+          isAuthenticated: true,
+          isGuest: false,
+          token: authService.getToken(),
+        }));
+      } else if (enableGuestMode) {
+        setState(prev => ({
+          ...prev,
+          isAuthenticated: true,
+          isGuest: true,
+          token: createGuestToken(),
+        }));
+      } else {
+        setState(prev => ({
+          ...prev,
+          isAuthenticated: false,
+          isGuest: false,
+          token: null,
+        }));
+      }
     });
 
     return () => {
@@ -157,25 +258,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
    * Register unauthenticated callback for redirect
    */
   useEffect(() => {
-    authService.onUnauthenticated(() => {
-      logger.warn('User became unauthenticated, redirecting to login', undefined, {
-        component: 'AuthProvider',
-        action: 'unauthenticated',
-      });
+    if (!enableGuestMode) {
+      authService.onUnauthenticated(() => {
+        logger.warn('User became unauthenticated, redirecting to login', {
+          component: 'AuthProvider',
+          action: 'unauthenticated',
+        });
 
-      // Redirect to login page
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
-    });
-  }, [authService]);
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      });
+    }
+  }, [authService, enableGuestMode]);
 
   /**
    * Login with credentials
    */
   const login = async (credentials: LoginRequest): Promise<void> => {
     try {
-      logger.info('Login attempt', undefined, {
+      logger.info('Login attempt', {
         component: 'AuthProvider',
         action: 'login',
         username: credentials.username,
@@ -187,12 +289,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
 
       setState({
         isAuthenticated: true,
+        isGuest: false,
         token,
         isLoading: false,
         error: null,
       });
 
-      logger.info('Login successful', undefined, {
+      logger.info('Login successful', {
         component: 'AuthProvider',
         action: 'login',
         userId: token.user.id,
@@ -206,6 +309,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
 
       setState({
         isAuthenticated: false,
+        isGuest: false,
         token: null,
         isLoading: false,
         error: error as Error,
@@ -220,23 +324,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
    */
   const logout = async (): Promise<void> => {
     try {
-      logger.info('Logout attempt', undefined, {
+      logger.info('Logout attempt', {
         component: 'AuthProvider',
         action: 'logout',
       });
 
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      await authService.logout();
+      if (state.isGuest && enableGuestMode) {
+        if (typeof window !== 'undefined') {
+          try {
+            window.sessionStorage.removeItem(GUEST_SESSION_KEY);
+          } catch {
+            // ignore
+          }
+        }
+        setState(prev => ({
+          ...prev,
+          isAuthenticated: false,
+          isGuest: false,
+          token: null,
+          isLoading: false,
+          error: null,
+        }));
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+        return;
+      } else {
+        await authService.logout();
+        setState({
+          isAuthenticated: false,
+          isGuest: false,
+          token: null,
+          isLoading: false,
+          error: null,
+        });
+      }
 
-      setState({
-        isAuthenticated: false,
-        token: null,
-        isLoading: false,
-        error: null,
-      });
-
-      logger.info('Logout successful', undefined, {
+      logger.info('Logout successful', {
         component: 'AuthProvider',
         action: 'logout',
       });
@@ -261,7 +387,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
    */
   const refreshToken = async (): Promise<void> => {
     try {
-      logger.info('Manual token refresh', undefined, {
+      logger.info('Manual token refresh', {
         component: 'AuthProvider',
         action: 'refreshToken',
       });
@@ -272,12 +398,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
 
       setState({
         isAuthenticated: true,
+        isGuest: false,
         token,
         isLoading: false,
         error: null,
       });
 
-      logger.info('Token refresh successful', undefined, {
+      logger.info('Token refresh successful', {
         component: 'AuthProvider',
         action: 'refreshToken',
       });
@@ -289,6 +416,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
 
       setState({
         isAuthenticated: false,
+        isGuest: false,
         token: null,
         isLoading: false,
         error: error as Error,
@@ -298,11 +426,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
     }
   };
 
+  const enterGuestMode = () => {
+    if (!enableGuestMode) {
+      logger.warn('Guest mode is disabled; ignoring enterGuestMode call');
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.setItem(GUEST_SESSION_KEY, '1');
+      } catch {
+        // ignore
+      }
+    }
+
+    setState({
+      isAuthenticated: true,
+      isGuest: true,
+      token: createGuestToken(),
+      isLoading: false,
+      error: null,
+    });
+  };
+
   const contextValue: AuthContextState = {
     ...state,
     login,
     logout,
     refreshToken,
+    enterGuestMode,
   };
 
   return (

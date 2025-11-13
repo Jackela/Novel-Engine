@@ -221,12 +221,12 @@ class AIScenarioGenerator:
 
         prompt = f"""
         Generate {scenario_count} comprehensive test scenarios for this Novel-Engine API:
-        
+
         API Endpoints:
         {json.dumps(endpoints, indent=2)}
-        
+
         {focus_text}
-        
+
         For each scenario, provide:
         1. Scenario name and description
         2. Test type (api, ui, ai_quality, integration, performance)
@@ -234,21 +234,21 @@ class AIScenarioGenerator:
         4. Detailed test configuration
         5. Expected outcomes and validation criteria
         6. Quality thresholds for AI features
-        
+
         Consider these Novel-Engine specific aspects:
         - Character simulation and AI decision-making
         - Story generation and narrative quality
         - Multi-agent interactions and event bus patterns
         - Real-time simulation execution
         - Performance under AI workloads
-        
+
         Generate scenarios that cover:
         - Happy path and edge cases
         - Error handling and resilience
         - Performance under load
         - AI output quality and consistency
         - Security and input validation
-        
+
         Return as JSON array with this structure:
         [
           {{
@@ -278,17 +278,17 @@ class AIScenarioGenerator:
 
         prompt = f"""
         Generate comprehensive user journey test scenarios for Novel-Engine:
-        
+
         Journey Description: {journey_description}
         User Personas: {', '.join(user_personas)}
         Complexity Level: {complexity_level.value}
-        
+
         Novel-Engine is an AI-powered interactive story generation system with:
         - React frontend for simulation control
         - FastAPI backend with character management
         - Multi-agent AI for character decision-making
         - Real-time story generation and narrative creation
-        
+
         Generate scenarios that test complete user workflows:
         1. User authentication and onboarding
         2. Character selection and customization
@@ -296,14 +296,14 @@ class AIScenarioGenerator:
         4. Real-time interaction and decision-making
         5. Story generation and narrative viewing
         6. Results sharing and campaign management
-        
+
         For each scenario, include:
         - Multi-step user actions (UI interactions)
         - API calls and data validation
         - AI quality assessment for generated content
         - Performance measurement for user experience
         - Accessibility and usability validation
-        
+
         Return as JSON array with detailed step-by-step scenarios.
         """
 
@@ -318,17 +318,17 @@ class AIScenarioGenerator:
 
         prompt = f"""
         Generate AI quality assessment scenarios for Novel-Engine features:
-        
+
         AI Features to Test: {', '.join(ai_features)}
         Quality Metrics: {metrics_text}
-        
+
         Novel-Engine AI capabilities include:
         - Character AI decision-making with Gemini API
         - Dynamic story generation and narrative creation
         - Multi-agent interaction and dialogue
         - Context-aware character behavior
         - Adaptive storytelling based on user preferences
-        
+
         Generate scenarios that assess:
         1. AI output coherence and logical consistency
         2. Creative quality and narrative engagement
@@ -336,14 +336,14 @@ class AIScenarioGenerator:
         4. Safety and content appropriateness
         5. Relevance to context and user input
         6. Consistency across multiple generations
-        
+
         Each scenario should include:
         - Specific AI prompts and inputs
         - Expected output characteristics
         - Quality assessment criteria
         - Comparison baselines
         - Multi-model validation approach
-        
+
         Use "LLM as a Judge" methodology for quality assessment.
         Return as JSON array with comprehensive quality scenarios.
         """
