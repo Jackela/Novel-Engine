@@ -21,9 +21,9 @@ import pytest
 try:
     import pytest_asyncio  # noqa: F401
 
-    pytest_plugins = ["pytest_asyncio"]
+    pytest_plugins = ("pytest_asyncio",)
 except ImportError:  # pragma: no cover
-    pytest_plugins = []
+    pytest_plugins = tuple()
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
