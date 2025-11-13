@@ -6,7 +6,7 @@ This module defines value objects for representing themes, motifs, and
 thematic elements within narrative structures.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
@@ -87,7 +87,9 @@ class NarrativeTheme:
     historical_context: Optional[str] = None
     target_audience_relevance: Dict[str, Decimal] = None
     tags: FrozenSet[str] = None
-    creation_timestamp: datetime = None
+    creation_timestamp: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc), compare=False
+    )
     metadata: Dict[str, Any] = None
 
     def __post_init__(self):
@@ -125,9 +127,6 @@ class NarrativeTheme:
             object.__setattr__(self, "tags", frozenset())
         elif isinstance(self.tags, set):
             object.__setattr__(self, "tags", frozenset(self.tags))
-
-        if self.creation_timestamp is None:
-            object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -221,7 +220,6 @@ class NarrativeTheme:
             self.historical_context,
             _dict_to_hashable(self.target_audience_relevance),
             self.tags,
-            self.creation_timestamp,
             _dict_to_hashable(self.metadata),
         ))
 

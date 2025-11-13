@@ -29,12 +29,13 @@ jobs:
           pip install -r requirements.txt -r requirements/requirements-test.txt
 
       - name: Run smoke tests with JUnit XML
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: pytest -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py
 
       - name: Upload JUnit report
-        if: ${{ always() }}
+        if: ${{ always() && env.ACT != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: junit-report
           path: reports/test-results/pytest-report.xml
-

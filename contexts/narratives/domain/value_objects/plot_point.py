@@ -6,7 +6,7 @@ This module defines value objects related to plot points and story progression,
 representing key moments and transitions in narrative structure.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
@@ -88,7 +88,9 @@ class PlotPoint:
     # Metadata
     tags: FrozenSet[str] = None
     narrative_notes: str = ""
-    creation_timestamp: datetime = None
+    creation_timestamp: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc), compare=False
+    )
     metadata: Dict[str, Any] = None
 
     def __post_init__(self):
@@ -114,9 +116,6 @@ class PlotPoint:
             object.__setattr__(self, "tags", frozenset())
         elif isinstance(self.tags, set):
             object.__setattr__(self, "tags", frozenset(self.tags))
-
-        if self.creation_timestamp is None:
-            object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -194,7 +193,6 @@ class PlotPoint:
             self.advances_subplot,
             self.tags,
             self.narrative_notes,
-            self.creation_timestamp,
             _dict_to_hashable(self.metadata),
         ))
 

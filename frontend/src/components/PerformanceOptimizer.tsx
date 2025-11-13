@@ -324,7 +324,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
               <h5>Detailed Performance Analysis</h5>
               <div className="performance-bars">
                 <div className="performance-bar">
-                  <label>CPU Usage</label>
+                  <span className="performance-bar__label">CPU Usage</span>
                   <div className="bar-container">
                     <div 
                       className="bar-fill bar-fill--cpu" 
@@ -334,7 +334,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
                   <span>{currentMetrics.memoryUsage}%</span>
                 </div>
                 <div className="performance-bar">
-                  <label>Network Efficiency</label>
+                  <span className="performance-bar__label">Network Efficiency</span>
                   <div className="bar-container">
                     <div 
                       className="bar-fill bar-fill--network" 
@@ -344,7 +344,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
                   <span>{Math.max(100 - currentMetrics.wsLatency / 10, 0)}%</span>
                 </div>
                 <div className="performance-bar">
-                  <label>Render Efficiency</label>
+                  <span className="performance-bar__label">Render Efficiency</span>
                   <div className="bar-container">
                     <div 
                       className="bar-fill bar-fill--render" 

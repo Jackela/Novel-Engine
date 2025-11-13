@@ -5,24 +5,25 @@
 ### Setting Up
 
 ```bash
-# Install dependencies
-cd frontend
-npm install
+# Install dependencies (one time)
+python -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+(cd frontend && npm install)
 
-# Run development server
-npm run dev
+# Start both stacks in the background (non-blocking)
+npm run dev:daemon
 
 # Run tests
-npm test
+(cd frontend && npm test)
 
-# Run accessibility tests specifically
-npm test -- accessibility
+# Accessibility-only suite
+(cd frontend && npm test -- accessibility)
 
-# Check bundle sizes
-npm run size
+# Size + type checks
+(cd frontend && npm run size && npm run type-check)
 
-# Type check
-npm run type-check
+# Stop dev environment after auditing
+npm run dev:stop
 ```
 
 ## Accessible Component Development

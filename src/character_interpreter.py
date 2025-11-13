@@ -371,7 +371,7 @@ class CharacterInterpreter:
                     if "===" not in name_candidate:
                         basic_info["name"] = name_candidate
                         break
-            
+
             # If no name found, try first header (excluding separators)
             if "name" not in basic_info:
                 for match in re.finditer(r"#\s*([^\n]+)", content):

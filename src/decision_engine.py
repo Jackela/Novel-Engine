@@ -501,21 +501,19 @@ class DecisionEngine:
                 f"{self.agent_core.agent_id}_action_{datetime.now().strftime('%H%M%S')}"
             )
 
-            character_action = {
-                "action_id": action_id,
-                "action_type": selected.get("action_type", "observe"),
-                "agent_id": self.agent_core.agent_id,
-                "reasoning": self._generate_action_reasoning(selected),
-                "priority": selected.get("priority", "medium"),
-                "target": None,  # Could be enhanced with target selection
-                "timestamp": datetime.now().isoformat(),
-            }
+            character_action = CharacterAction(
+                action_type=selected.get("action_type", "observe"),
+                target=selected.get("target"),
+                priority=selected.get("priority", ActionPriority.NORMAL),
+                reasoning=self._generate_action_reasoning(selected),
+                parameters={
+                    "agent_id": self.agent_core.agent_id,
+                    "action_id": action_id,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
 
-            # Convert to CharacterAction if available, otherwise return dict
-            if CharacterAction is not dict:
-                return CharacterAction(**character_action)
-            else:
-                return character_action
+            return character_action
 
         except Exception as e:
             logger.error(f"Error selecting best action: {str(e)}")
@@ -648,13 +646,18 @@ class DecisionEngine:
     ) -> None:
         """Record decision for analysis and debugging."""
         try:
+            if action and hasattr(action, "__dict__"):
+                action_payload = action.__dict__
+            else:
+                action_payload = action or {}
+
             decision_record = {
                 "timestamp": datetime.now().isoformat(),
                 "agent_id": self.agent_core.agent_id,
-                "action_type": action.get("action_type") if action else "wait",
+                "action_type": action_payload.get("action_type", "wait"),
                 "decision_type": decision_type,
-                "reasoning": (
-                    action.get("reasoning") if action else "Chose to wait and observe"
+                "reasoning": action_payload.get(
+                    "reasoning", "Chose to wait and observe"
                 ),
                 "morale_at_decision": self.agent_core.morale_level,
             }

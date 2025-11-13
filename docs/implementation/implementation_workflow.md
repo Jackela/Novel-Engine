@@ -16,6 +16,15 @@
 
 ---
 
+## ⚙️ Operational Notes (Demo CTA, Offline Simulation, Reports)
+
+- **Demo CTA Happy Path**: run `npm run dev:daemon`, open `http://127.0.0.1:3000/`, click the “View Demo” CTA (`data-testid="cta-demo"`), ensure the guest banner + summary strip show demo mode.  
+- **Offline Simulation**: toggle `page.context().setOffline(true)` in Playwright or use DevTools Network → “Offline”; the connection indicator logs `[connection-indicator]` events whenever it switches OFFLINE/ONLINE.  
+- **Experience Report**: every `npm run test:e2e` or `npm run test:e2e:smoke` run generates `frontend/reports/experience-report-*.{md,html,json}` summarising CTA + offline checks；CI 上传为 `experience-report` 工件并在 GitHub Job Summary 内嵌 CTA/Offline 表格。  
+- **Global Setup Retries**: adjust `PLAYWRIGHT_VERIFY_ATTEMPTS` / `PLAYWRIGHT_VERIFY_RETRY_DELAY` when dashboards need more warm-up time, e.g. `PLAYWRIGHT_VERIFY_ATTEMPTS=5 npm run test:e2e:smoke`.
+
+---
+
 ## 📊 Requirements Analysis
 
 ### Critical UX Issues Identified
@@ -83,23 +92,13 @@
 
 - [ ] **Create start script** (2 hours)
   ```bash
-  # start.sh - One-command startup
-  #!/bin/bash
-  echo "🚀 Starting StoryForge AI..."
-  
-  # Start backend
-  python api_server.py &
-  BACKEND_PID=$!
-  
-  # Start frontend  
-  cd frontend && npm run dev &
-  FRONTEND_PID=$!
-  
+  # start.sh delegates to the maintained daemon script
+  #!/usr/bin/env bash
+  set -euo pipefail
+  npm run dev:daemon
   echo "Backend: http://localhost:8000"
-  echo "Frontend: http://localhost:5173"
-  echo "Press Ctrl+C to stop all services"
-  
-  wait
+  echo "Frontend: http://localhost:3000"
+  echo "Use npm run dev:stop to terminate background services"
   ```
 
 - [ ] **Add dependency validation** (3 hours)

@@ -508,10 +508,16 @@ class PostgreSQLConnectionPool:
         try:
             from src.caching.invalidation import invalidate_event
 
-            if str(key).lower() in {"semantic_index_version", "retrieval_index_version", "index_version"}:
+            if str(key).lower() in {
+                "semantic_index_version",
+                "retrieval_index_version",
+                "index_version",
+            }:
                 invalidate_event({"type": "IndexRebuilt", "version": str(value)})
             if str(key).lower() in {"model_name", "model_version", "llm_model"}:
-                invalidate_event({"type": "ModelConfigChanged", "model_name": str(value)})
+                invalidate_event(
+                    {"type": "ModelConfigChanged", "model_name": str(value)}
+                )
         except Exception:
             pass
         return True

@@ -53,9 +53,8 @@ export function useFocusTrap(
   const handleTabKey = (event: KeyboardEvent) => {
     if (!containerRef.current || !enabled) return
 
-    const focusableElements = getFocusableElements(containerRef.current)
-    const firstElement = focusableElements[0]
-    const lastElement = focusableElements[focusableElements.length - 1]
+    const firstElement = getFirstFocusable(containerRef.current)
+    const lastElement = getLastFocusable(containerRef.current)
 
     if (event.shiftKey) {
       // Shift + Tab: Moving backward

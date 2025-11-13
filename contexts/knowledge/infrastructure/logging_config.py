@@ -15,7 +15,6 @@ from typing import Any, Dict, Optional
 from src.core.logging_system import (
     LogCategory,
     LogContext,
-    LogLevel,
     PerformanceTracker,
     StructuredLogger,
 )
@@ -31,15 +30,15 @@ def get_knowledge_logger(
 ) -> StructuredLogger:
     """
     Get a structured logger for Knowledge Management operations.
-    
+
     Args:
         component: Component name (e.g., "repository", "use_case", "api")
         correlation_id: Optional correlation ID for request tracing
         user_id: Optional user ID for audit trail
-        
+
     Returns:
         StructuredLogger instance configured for Knowledge Management
-        
+
     Usage:
         logger = get_knowledge_logger(
             component="CreateKnowledgeEntryUseCase",
@@ -53,7 +52,7 @@ def get_knowledge_logger(
         user_id=user_id,
         component=f"knowledge.{component}",
     )
-    
+
     return StructuredLogger(
         logger=logger,
         context=context,
@@ -70,7 +69,7 @@ def log_knowledge_entry_created(
 ) -> None:
     """
     Log knowledge entry creation event.
-    
+
     Args:
         entry_id: Knowledge entry ID
         knowledge_type: Type of knowledge (profile, objective, etc.)
@@ -85,13 +84,13 @@ def log_knowledge_entry_created(
         operation="create_entry",
         metadata=metadata or {},
     )
-    
+
     structured_logger = StructuredLogger(
         logger=logger,
         context=context,
         category=LogCategory.AUDIT,
     )
-    
+
     structured_logger.info(
         f"Knowledge entry created: {entry_id}",
         entry_id=entry_id,
@@ -108,7 +107,7 @@ def log_knowledge_entry_updated(
 ) -> None:
     """
     Log knowledge entry update event.
-    
+
     Args:
         entry_id: Knowledge entry ID
         updated_by: User ID who updated the entry
@@ -122,13 +121,13 @@ def log_knowledge_entry_updated(
         operation="update_entry",
         metadata={"changes": changes} if changes else {},
     )
-    
+
     structured_logger = StructuredLogger(
         logger=logger,
         context=context,
         category=LogCategory.AUDIT,
     )
-    
+
     structured_logger.info(
         f"Knowledge entry updated: {entry_id}",
         entry_id=entry_id,
@@ -145,7 +144,7 @@ def log_knowledge_entry_deleted(
 ) -> None:
     """
     Log knowledge entry deletion event.
-    
+
     Args:
         entry_id: Knowledge entry ID
         deleted_by: User ID who deleted the entry
@@ -159,13 +158,13 @@ def log_knowledge_entry_deleted(
         operation="delete_entry",
         metadata={"snapshot": snapshot} if snapshot else {},
     )
-    
+
     structured_logger = StructuredLogger(
         logger=logger,
         context=context,
         category=LogCategory.AUDIT,
     )
-    
+
     structured_logger.info(
         f"Knowledge entry deleted: {entry_id}",
         entry_id=entry_id,
@@ -182,7 +181,7 @@ def log_knowledge_retrieval(
 ) -> None:
     """
     Log knowledge retrieval operation for agent context assembly.
-    
+
     Args:
         agent_character_id: Character ID of agent
         turn_number: Simulation turn number
@@ -200,13 +199,13 @@ def log_knowledge_retrieval(
             "entry_count": entry_count,
         },
     )
-    
+
     structured_logger = StructuredLogger(
         logger=logger,
         context=context,
         category=LogCategory.PERFORMANCE,
     )
-    
+
     structured_logger.info(
         f"Knowledge retrieval completed for agent {agent_character_id}",
         agent_character_id=agent_character_id,
@@ -224,7 +223,7 @@ def log_access_denied(
 ) -> None:
     """
     Log access control violation for security monitoring.
-    
+
     Args:
         entry_id: Knowledge entry ID that was denied
         agent_character_id: Character ID that was denied access
@@ -241,13 +240,13 @@ def log_access_denied(
             "access_level": access_level,
         },
     )
-    
+
     structured_logger = StructuredLogger(
         logger=logger,
         context=context,
         category=LogCategory.SECURITY,
     )
-    
+
     structured_logger.warning(
         f"Access denied to entry {entry_id} for agent {agent_character_id}",
         entry_id=entry_id,
@@ -259,10 +258,10 @@ def log_access_denied(
 class KnowledgePerformanceTracker(PerformanceTracker):
     """
     Performance tracker for Knowledge Management operations.
-    
+
     Extends PerformanceTracker with Knowledge-specific context.
     """
-    
+
     def __init__(
         self,
         operation: str,
@@ -271,7 +270,7 @@ class KnowledgePerformanceTracker(PerformanceTracker):
     ):
         """
         Initialize performance tracker for Knowledge Management.
-        
+
         Args:
             operation: Operation name (e.g., "retrieve_agent_context")
             correlation_id: Optional correlation ID

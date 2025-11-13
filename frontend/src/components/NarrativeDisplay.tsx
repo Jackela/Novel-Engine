@@ -227,6 +227,14 @@ const NarrativeDisplay: React.FC<NarrativeDisplayProps> = ({
   }, [wsState.isConnected, sendMessage, sessionId]);
 
   // Render individual narrative event
+  const handleEventKeyDown = useCallback((eventId: string, event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!enableInteractivity) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleEventClick(eventId);
+    }
+  }, [enableInteractivity, handleEventClick]);
+
   const renderEvent = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
     const event = filteredEvents[index];
     if (!event) return null;
@@ -239,7 +247,10 @@ const NarrativeDisplay: React.FC<NarrativeDisplayProps> = ({
         style={style}
         className={`narrative-event narrative-event--${event.type} ${isSelected ? 'narrative-event--selected' : ''} ${isStreaming ? 'narrative-event--streaming' : ''}`}
         onClick={() => handleEventClick(event.id)}
+        onKeyDown={(keyboardEvent) => handleEventKeyDown(event.id, keyboardEvent)}
         data-event-id={event.id}
+        role={enableInteractivity ? 'button' : undefined}
+        tabIndex={enableInteractivity ? 0 : -1}
       >
         <div className="narrative-event__header">
           {event.agentName && (

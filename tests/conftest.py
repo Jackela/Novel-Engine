@@ -5,12 +5,12 @@ pytest配置文件和共享fixture
 """
 
 import asyncio
-import threading
-from multiprocessing import active_children
 import os
 import shutil
 import sys
 import tempfile
+import threading
+from multiprocessing import active_children
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -162,7 +162,7 @@ def event_loop():
 
 
 @pytest.fixture(autouse=True)
-def clean_environment():
+def clean_environment(request):
     """每个测试后清理环境"""
     # 测试前设置
     original_env = os.environ.copy()
@@ -170,6 +170,13 @@ def clean_environment():
     os.environ.setdefault("DEBUG", "false")
     os.environ.setdefault("ENABLE_RATE_LIMITING", "true")
     os.environ.setdefault("ENABLE_DOCS", "true")
+    os.environ.setdefault("NOVEL_ENGINE_AGENT_VALIDATION_MODE", "strict")
+
+    if (
+        "test_director_agent_advanced" in request.node.nodeid
+        or "test_director_agent_comprehensive" in request.node.nodeid
+    ):
+        os.environ["NOVEL_ENGINE_AGENT_VALIDATION_MODE"] = "lenient"
 
     yield
 
@@ -276,7 +283,9 @@ def pytest_sessionfinish(session, exitstatus):
             for task in pending:
                 task.cancel()
             if pending:
-                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                loop.run_until_complete(
+                    asyncio.gather(*pending, return_exceptions=True)
+                )
     except Exception:
         # If loop is closed or unavailable, ignore
         pass

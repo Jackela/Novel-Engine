@@ -92,14 +92,14 @@ npm test -- tests/test_frontend_comprehensive.js
 ### Integration Testing
 
 ```bash
-# Start API server (Terminal 1)
-python api_server.py
+# Start API + frontend via daemon (non-blocking)
+npm run dev:daemon
 
-# Start frontend (Terminal 2) 
-cd frontend && npm run dev
-
-# Run integration tests (Terminal 3)
+# Run integration tests
 pytest tests/test_integration_comprehensive.py -v
+
+# Stop background services when finished
+npm run dev:stop
 ```
 
 ## 🎨 Generic Sci-Fi Content Validation

@@ -42,7 +42,9 @@ def main() -> int:
     out = sys.stdout if args.output == "-" else open(args.output, "w", encoding="utf-8")
     try:
         if args.format == "csv":
-            print("timestamp,saved_tokens,saved_cost,exact_hits,semantic_hits", file=out)
+            print(
+                "timestamp,saved_tokens,saved_cost,exact_hits,semantic_hits", file=out
+            )
             for r in rows:
                 print(
                     f"{r[0]},{r[1]},{r[2]},{r[3]},{r[4]}",
@@ -50,8 +52,14 @@ def main() -> int:
                 )
         else:  # md
             print("# Cache Savings Report\n", file=out)
-            print("| Timestamp | Saved Tokens | Saved Cost | Exact Hits | Semantic Hits |", file=out)
-            print("|-----------|--------------|------------|------------|---------------|", file=out)
+            print(
+                "| Timestamp | Saved Tokens | Saved Cost | Exact Hits | Semantic Hits |",
+                file=out,
+            )
+            print(
+                "|-----------|--------------|------------|------------|---------------|",
+                file=out,
+            )
             for r in rows:
                 print(f"| {r[0]} | {r[1]} | {r[2]} | {r[3]} | {r[4]} |", file=out)
     finally:
@@ -62,4 +70,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

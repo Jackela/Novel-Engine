@@ -9,12 +9,12 @@ Dialogue Variety: PASS
 - Unique dialogue ratio: 100.0%
 
 Enhanced Events: PASS
-- Enhanced types used: {'discovery', 'conflict'}
+- Enhanced types used: {'conflict', 'discovery', 'crisis'}
 
 Character Development: PASS
 - Characters with arcs: 3/3
 
-Overall Quality: 85.1/100
+Overall Quality: 81.8/100
 - Status: GOOD
 
 CONCLUSION: Wave Mode improvements SUCCESSFULLY APPLIED

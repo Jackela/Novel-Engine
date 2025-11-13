@@ -194,6 +194,7 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 package-lock.json
+!frontend/package-lock.json
 yarn.lock
 .npm
 .yarn/
@@ -284,6 +285,8 @@ models/
 *.pkl
 *.h5
 *.onnx
+!contexts/knowledge/domain/models/
+!contexts/knowledge/domain/models/**
 
 # Performance and Profiling
 *.prof
@@ -299,8 +302,9 @@ memory_profiler/
 platform/cache/
 platform/temp/
 
-# Caching System (Legacy - Remove after refactoring)
-/src/caching/
+# Caching artifacts (source now tracked)
+/src/caching/__pycache__/
+/src/caching/*.pyc
 
 # BMAD and Tool-Specific Directories
 .bmad-core/
@@ -427,6 +431,7 @@ reports/test-results/*.json
 reports/evidence/**/*.png
 reports/evidence/**/*.jpg
 reports/evidence/**/*.mp4
+frontend/reports/
 
 # Third-party tool configurations
 .specify/

@@ -7,7 +7,7 @@ Uses Python's Protocol for type safety and clear API definition.
 """
 
 from abc import abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Protocol
 
@@ -41,17 +41,13 @@ class WorldEvent:
     event_id: str
     event_type: str  # e.g., "battle", "discovery", "political_change"
     source: str  # Entity ID that triggered the event
-    affected_entities: List[str]
+    affected_entities: List[str] = field(default_factory=list)
     location: Optional[str] = None
     description: str = ""
-    data: Dict[str, Any] = None
+    data: Dict[str, Any] = field(default_factory=dict)
     timestamp: float = 0.0
 
     def __post_init__(self):
-        if self.affected_entities is None:
-            self.affected_entities = []
-        if self.data is None:
-            self.data = {}
         if self.timestamp == 0.0:
             from datetime import datetime
 

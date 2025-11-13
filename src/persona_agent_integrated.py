@@ -94,7 +94,12 @@ class PersonaAgent:
         )
 
         # Initialize core component first
-        self.core = PersonaAgentCore(character_directory_path, event_bus, agent_id)
+        self.core = PersonaAgentCore(
+            character_directory_path,
+            event_bus,
+            agent_id,
+            auto_subscribe_turn_start=False,
+        )
 
         # Initialize character interpreter and load character data
         self.character_interpreter = CharacterInterpreter(character_directory_path)
@@ -111,7 +116,7 @@ class PersonaAgent:
                     base_characters_path=base_characters_path
                 )
                 # Attempt initial context loading
-                asyncio.create_task(self._load_enhanced_context())
+                self._schedule_context_load()
                 logger.info(f"Context loading initialized for {self.core.agent_id}")
             except Exception as e:
                 logger.warning(f"Failed to initialize context loading: {e}")
@@ -133,6 +138,10 @@ class PersonaAgent:
 
         # Override core's basic action creation with decision engine
         self._integrate_decision_engine()
+        try:
+            event_bus.subscribe("TURN_START", self.handle_turn_start)
+        except Exception as e:
+            logger.error(f"Failed to subscribe PersonaAgent to TURN_START: {e}")
 
         logger.info(
             f"PersonaAgent integrated architecture initialized for '{self.character_name}'"
@@ -220,8 +229,18 @@ class PersonaAgent:
                     logger.error(
                         f"Error in integrated turn handler for {self.core.agent_id}: {e}"
                     )
-                    # Fall back to original behavior
-                    original_handle_turn_start(world_state_update)
+                    # Emit deterministic fallback CharacterAction instead of duplicating events
+                    fallback_action = CharacterAction(
+                        action_type="wait",
+                        target="none",
+                        priority=ActionPriority.NORMAL,
+                        reasoning="Fallback action emitted after decision failure.",
+                    )
+                    self.core.event_bus.emit(
+                        "AGENT_ACTION_COMPLETE",
+                        agent=self,
+                        action=fallback_action,
+                    )
 
             # Replace core's turn handler with integrated version
             self.core.handle_turn_start = integrated_turn_handler
@@ -258,6 +277,19 @@ class PersonaAgent:
             return False
 
         return await self._load_enhanced_context()
+
+    def _schedule_context_load(self) -> None:
+        """Safely schedule initial context loading when an event loop is available."""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            logger.debug(
+                "No running loop available for context preload; skipping task."
+            )
+            return
+
+        if loop.is_running():
+            loop.create_task(self._load_enhanced_context())
 
     # Public API methods - maintaining backward compatibility
 

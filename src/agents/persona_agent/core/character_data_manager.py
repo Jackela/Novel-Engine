@@ -89,11 +89,15 @@ class CharacterDataManager:
             try:
                 from src.caching.invalidation import invalidate_event
 
-                char_id = character_data.get("basic_info", {}).get("name") or "character"
-                invalidate_event({
-                    "type": "CharacterUpdated",
-                    "character_id": str(char_id),
-                })
+                char_id = (
+                    character_data.get("basic_info", {}).get("name") or "character"
+                )
+                invalidate_event(
+                    {
+                        "type": "CharacterUpdated",
+                        "character_id": str(char_id),
+                    }
+                )
             except Exception:
                 # Non-fatal: event bus may be unavailable in some contexts
                 pass

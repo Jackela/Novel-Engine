@@ -93,6 +93,14 @@ const Badge = forwardRef<HTMLDivElement, BadgeProps>(
   }, ref) => {
     const isInteractive = interactive || !!onClick || !!onRemove;
 
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!isInteractive) return;
+      if ((event.key === 'Enter' || event.key === ' ') && onClick) {
+        event.preventDefault();
+        onClick(event as unknown as React.MouseEvent<HTMLDivElement, MouseEvent>);
+      }
+    };
+
     return (
       <div
         ref={ref}
@@ -103,6 +111,7 @@ const Badge = forwardRef<HTMLDivElement, BadgeProps>(
           className
         )}
         onClick={onClick}
+        onKeyDown={handleKeyDown}
         role={isInteractive ? "button" : undefined}
         tabIndex={isInteractive ? 0 : undefined}
         {...props}

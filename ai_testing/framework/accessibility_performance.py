@@ -334,7 +334,7 @@ class AccessibilityTester:
                         'a[href]', 'button', 'input', 'textarea', 'select',
                         '[tabindex]:not([tabindex="-1"])', '[contenteditable="true"]'
                     ];
-                    
+
                     const elements = document.querySelectorAll(focusableSelectors.join(', '));
                     return Array.from(elements).map(el => ({
                         tagName: el.tagName,
@@ -375,7 +375,7 @@ class AccessibilityTester:
                             () => {
                                 const activeElement = document.activeElement;
                                 const styles = window.getComputedStyle(activeElement);
-                                return styles.outline !== 'none' || 
+                                return styles.outline !== 'none' ||
                                        styles.outlineWidth !== '0px' ||
                                        styles.boxShadow !== 'none';
                             }
@@ -428,12 +428,12 @@ class AccessibilityTester:
                     testButton.style.position = 'absolute';
                     testButton.style.top = '-1000px';
                     document.body.appendChild(testButton);
-                    
+
                     testButton.focus();
                     const styles = window.getComputedStyle(testButton);
-                    const hasFocusIndicator = styles.outline !== 'none' || 
+                    const hasFocusIndicator = styles.outline !== 'none' ||
                                             styles.outlineWidth !== '0px';
-                    
+
                     document.body.removeChild(testButton);
                     return hasFocusIndicator;
                 }
@@ -451,7 +451,7 @@ class AccessibilityTester:
                     const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
                     let previousLevel = 0;
                     let orderIssues = 0;
-                    
+
                     headings.forEach(heading => {
                         const currentLevel = parseInt(heading.tagName.charAt(1));
                         if (currentLevel - previousLevel > 1) {
@@ -459,8 +459,8 @@ class AccessibilityTester:
                         }
                         previousLevel = currentLevel;
                     });
-                    
-                    return { 
+
+                    return {
                         totalHeadings: headings.length,
                         orderIssues: orderIssues,
                         logicalOrder: orderIssues === 0
@@ -507,12 +507,12 @@ class AccessibilityTester:
                 () => {
                     const textElements = document.querySelectorAll('p, span, div, h1, h2, h3, h4, h5, h6, a, button, label');
                     const contrastResults = [];
-                    
+
                     function getRGB(color) {
                         const match = color.match(/\\d+/g);
                         return match ? match.map(Number) : [0, 0, 0];
                     }
-                    
+
                     function getLuminance(r, g, b) {
                         const [rs, gs, bs] = [r, g, b].map(c => {
                             c = c / 255;
@@ -520,7 +520,7 @@ class AccessibilityTester:
                         });
                         return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
                     }
-                    
+
                     function getContrastRatio(color1, color2) {
                         const lum1 = getLuminance(...getRGB(color1));
                         const lum2 = getLuminance(...getRGB(color2));
@@ -528,13 +528,13 @@ class AccessibilityTester:
                         const darker = Math.min(lum1, lum2);
                         return (lighter + 0.05) / (darker + 0.05);
                     }
-                    
+
                     textElements.forEach((element, index) => {
                         if (element.offsetWidth > 0 && element.offsetHeight > 0) {
                             const styles = window.getComputedStyle(element);
                             const textColor = styles.color;
                             const backgroundColor = styles.backgroundColor;
-                            
+
                             // If background is transparent, try to find parent background
                             let bgColor = backgroundColor;
                             if (bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') {
@@ -547,15 +547,15 @@ class AccessibilityTester:
                                     bgColor = 'rgb(255, 255, 255)'; // Default to white
                                 }
                             }
-                            
+
                             const contrastRatio = getContrastRatio(textColor, bgColor);
                             const fontSize = parseFloat(styles.fontSize);
                             const fontWeight = styles.fontWeight;
-                            
+
                             const isLargeText = fontSize >= 18 || (fontSize >= 14 && (fontWeight === 'bold' || parseInt(fontWeight) >= 700));
                             const aaThreshold = isLargeText ? 3.0 : 4.5;
                             const aaaThreshold = isLargeText ? 4.5 : 7.0;
-                            
+
                             contrastResults.push({
                                 element: element.tagName + (element.className ? '.' + element.className.split(' ')[0] : ''),
                                 textColor,
@@ -568,7 +568,7 @@ class AccessibilityTester:
                             });
                         }
                     });
-                    
+
                     return contrastResults;
                 }
             """
@@ -931,28 +931,28 @@ class PerformanceTester:
             () => {
                 return new Promise((resolve) => {
                     const vitals = {};
-                    
+
                     // Measure Core Web Vitals
                     webVitals.getCLS((metric) => {
                         vitals.cls = metric.value;
                     });
-                    
+
                     webVitals.getFCP((metric) => {
                         vitals.fcp = metric.value;
                     });
-                    
+
                     webVitals.getFID((metric) => {
                         vitals.fid = metric.value;
                     });
-                    
+
                     webVitals.getLCP((metric) => {
                         vitals.lcp = metric.value;
                     });
-                    
+
                     webVitals.getTTFB((metric) => {
                         vitals.ttfb = metric.value;
                     });
-                    
+
                     // Wait for measurements to complete
                     setTimeout(() => {
                         resolve(vitals);
@@ -977,16 +977,16 @@ class PerformanceTester:
             () => {
                 const navigation = performance.getEntriesByType('navigation')[0];
                 const timing = performance.timing;
-                
+
                 return {
                     load_time_ms: timing.loadEventEnd - timing.navigationStart,
                     dom_content_loaded_ms: timing.domContentLoadedEventEnd - timing.navigationStart,
                     time_to_interactive_ms: null, // Would need complex calculation
-                    
+
                     // Memory metrics (if available)
                     js_heap_used_mb: performance.memory ? performance.memory.usedJSHeapSize / (1024 * 1024) : 0,
                     js_heap_total_mb: performance.memory ? performance.memory.totalJSHeapSize / (1024 * 1024) : 0,
-                    
+
                     // Network metrics (if available)
                     effective_connection_type: navigator.connection ? navigator.connection.effectiveType : null,
                     bandwidth_estimate_mbps: navigator.connection ? navigator.connection.downlink : null
@@ -1004,17 +1004,17 @@ class PerformanceTester:
             """
             () => {
                 const resources = performance.getEntriesByType('resource');
-                
+
                 let totalSize = 0;
                 let imageSize = 0;
                 let scriptSize = 0;
                 let styleSize = 0;
                 let failedRequests = 0;
-                
+
                 resources.forEach(resource => {
                     const size = resource.transferSize || 0;
                     totalSize += size;
-                    
+
                     if (resource.initiatorType === 'img') {
                         imageSize += size;
                     } else if (resource.initiatorType === 'script') {
@@ -1022,13 +1022,13 @@ class PerformanceTester:
                     } else if (resource.initiatorType === 'link' && resource.name.includes('.css')) {
                         styleSize += size;
                     }
-                    
+
                     // Check for failed requests (status >= 400)
                     if (resource.responseStatus && resource.responseStatus >= 400) {
                         failedRequests++;
                     }
                 });
-                
+
                 return {
                     total_requests: resources.length,
                     failed_requests: failedRequests,

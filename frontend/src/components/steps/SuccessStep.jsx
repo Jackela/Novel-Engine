@@ -537,6 +537,14 @@ function SuccessStep({
                   key={goal.id}
                   className={`goal-item ${goal.completed ? 'selected' : ''}`}
                   onClick={() => handleGoalToggle(goal.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleGoalToggle(goal.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                 >
                   <div className="goal-checkbox">
                     {goal.completed ? '✓' : '○'}

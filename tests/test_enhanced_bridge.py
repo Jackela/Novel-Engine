@@ -14,13 +14,13 @@ from unittest.mock import AsyncMock, Mock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 import pytest
+
+from src.bridge.types import RequestPriority
 from src.orchestrators.enhanced_multi_agent_bridge import (
     BridgeConfiguration,
     EnhancedMultiAgentBridge,
     create_enhanced_bridge,
 )
-
-from src.bridge.types import RequestPriority
 
 
 class TestBridgeConfiguration:
@@ -250,7 +250,7 @@ class TestBridgeFactory:
         mock_director = Mock()
 
         # Mock bridge initialize to return False
-        with patch.object(EnhancedMultiAgentBridge, 'initialize', return_value=False):
+        with patch.object(EnhancedMultiAgentBridge, "initialize", return_value=False):
             with pytest.raises(RuntimeError, match="Failed to initialize"):
                 await create_enhanced_bridge(mock_director)
 

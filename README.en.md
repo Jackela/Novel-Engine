@@ -20,6 +20,8 @@ This monorepo uses the root README as the single authoritative project homepage.
 - Production-ready: concurrency-safe, rich logging, caching & retries, error handling & observability
 - Frontend: isolated `frontend/` (React 18) with design system and quality gates
 
+![Flow-based dashboard view](docs/assets/dashboard/dashboard-flow-2025-11-12.png)
+
 ---
 
 ## Theoretical Foundation
@@ -71,22 +73,64 @@ pytest -q  # optional quick tests
 python api_server.py  # or production entry points
 ```
 
-Frontend (example)
+Unified dev bootstrap (non-blocking)
 
-```
-cd frontend
-npm ci
-npm run build:tokens
-npm run dev
-```
+1. Prepare dependencies:
+   ```bash
+   python -m venv .venv
+   . .venv/bin/activate  # Windows: .venv\\Scripts\\activate
+   pip install -r requirements.txt
+   (cd frontend && npm install)
+   ```
+2. Launch both stacks in the background:
+   ```bash
+   npm run dev:daemon
+   ```
+   - Backend: `http://127.0.0.1:8000/health`
+   - Frontend: `http://127.0.0.1:3000`
+   - Logs live in `tmp/dev_env.log`, PID files in `tmp/dev_env/`
+3. Stop everything once you are done:
+   ```bash
+   npm run dev:stop
+   ```
+4. Individual commands still work, but the daemon script is now the supported workflow documented throughout the repo.
 
 ---
 
 ## Testing & Quality
 
-- Python tests: `pytest` (see `pytest.ini` / `.coveragerc`)
-- Local CI parity: `scripts/validate_ci_locally.sh` (Windows: `scripts/validate_ci_locally.ps1`)
-- Frontend gates: `npm run type-check`, `npm run lint:all`, `npm run tokens:check`
+**Last local validation** (2025-11-12, commit `584cc40`)
+
+| Scope | Commands |
+| --- | --- |
+| Lint & Type Safety | `npm run lint:all --prefix frontend`, `npm run type-check --prefix frontend` |
+| Unit Tests | `npm test -- --run` (frontend), `pytest` (backend) |
+| Playwright Smoke | `npx playwright test tests/e2e/login-flow.spec.ts`, `npx playwright test tests/e2e/dashboard-interactions.spec.ts` |
+| CI Mirrors | `scripts/validate_ci_locally.sh`, `act --pull=false -W .github/workflows/frontend-ci.yml -j build-and-test`, `act --pull=false -W .github/workflows/ci.yml -j tests` |
+
+Run `npm run dev:daemon` beforehand so both stacks are healthy; logs and artifacts live in `tmp/dev_env.log` and `reports/test-results/`.
+
+### Demo CTA & Offline Guide
+
+- **Run the Demo CTA flow**
+  1. `cd frontend && npm install && npm run dev`;
+  2. Visit `http://127.0.0.1:3000/` and click the “View Demo” button (`data-testid="cta-demo"`);
+  3. Verify you land on `/dashboard`, the guest banner (`data-testid="guest-mode-banner"`) is visible, and the summary strip reflects the demo/live state.
+
+- **Simulate offline**
+  - Use DevTools Network → “Offline”, or call `page.context().setOffline(true)` in Playwright;
+  - The connection indicator flips to `OFFLINE`, and when the network returns it switches back to `ONLINE/LIVE` while logging `[connection-indicator]` events in the console.
+
+- **Playwright + Experience Report**
+  - `npm run test:e2e:smoke` (<1 minute) covers the CTA/offline scenarios;
+  - `npm run test:e2e` runs the full suite;
+  - Each run writes `frontend/reports/experience-report-*.{md,html}` containing the CTA/offline summary and screenshot links; CI uploads the files as artifacts **and** adds a condensed CTA/offline table to the GitHub job summary so reviewers can see pass/fail status without downloading artifacts.
+
+- **Environment variables**
+  - `PLAYWRIGHT_VERIFY_ATTEMPTS` / `PLAYWRIGHT_VERIFY_RETRY_DELAY` control the dashboard verification retries inside global setup. Example:
+    ```bash
+    PLAYWRIGHT_VERIFY_ATTEMPTS=5 PLAYWRIGHT_VERIFY_RETRY_DELAY=8000 npm run test:e2e:smoke
+    ```
 
 ---
 
@@ -108,4 +152,3 @@ Contributions welcome via Issues and PRs. Please run local validation and tests 
 ## License
 
 MIT License. See `LICENSE`.
-

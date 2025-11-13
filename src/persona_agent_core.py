@@ -58,6 +58,7 @@ class PersonaAgentCore:
         character_directory_path: str,
         event_bus: EventBus,
         agent_id: Optional[str] = None,
+        auto_subscribe_turn_start: bool = True,
     ):
         """
         Initialize the PersonaAgent core infrastructure.
@@ -80,6 +81,7 @@ class PersonaAgentCore:
             character_directory_path
         )
         self.event_bus = event_bus
+        self._auto_subscribe_turn_start = auto_subscribe_turn_start
 
         # Core character data container
         self.character_data: Dict[str, Any] = {}
@@ -187,6 +189,8 @@ class PersonaAgentCore:
 
     def _setup_event_handling(self) -> None:
         """Set up event system subscriptions."""
+        if not self._auto_subscribe_turn_start:
+            return
         try:
             self.event_bus.subscribe("TURN_START", self.handle_turn_start)
             logger.info(

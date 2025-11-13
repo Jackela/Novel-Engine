@@ -6,6 +6,7 @@ The test suite patches classes from this module. We provide minimal stubs
 so that patching works regardless of internal implementation details.
 """
 
+
 class DialogueManager:  # pragma: no cover - test uses patch
     pass
 
@@ -22,10 +23,13 @@ class AgentCoordinationEngine:  # pragma: no cover - test uses patch
     pass
 
 
-from typing import Optional, Any
+from typing import Any, Optional
+
+from src.orchestrators.enhanced_multi_agent_bridge import (
+    BridgeConfiguration as _BridgeConfig,
+)
 from src.orchestrators.enhanced_multi_agent_bridge import (
     EnhancedMultiAgentBridge as _Bridge,
-    BridgeConfiguration as _BridgeConfig,
 )
 
 # Expose the bridge class for tests that patch here

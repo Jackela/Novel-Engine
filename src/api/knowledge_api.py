@@ -11,58 +11,88 @@ Constitution Compliance:
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from src.shared_types import KnowledgeEntryId, CharacterId, UserId
-from src.security.auth_system import User, require_role, UserRole
+from src.security.auth_system import User, UserRole, require_role
+from src.shared_types import CharacterId, KnowledgeEntryId, UserId
 
 # OpenTelemetry tracing (Article VII - Observability)
 try:
     from opentelemetry import trace
+
     OTEL_AVAILABLE = True
     tracer = trace.get_tracer("novel_engine.knowledge_api")
 except ImportError:
     OTEL_AVAILABLE = False
     tracer = None
 
-from contexts.knowledge.application.use_cases.create_knowledge_entry import CreateKnowledgeEntryUseCase
-from contexts.knowledge.application.use_cases.update_knowledge_entry import UpdateKnowledgeEntryUseCase
-from contexts.knowledge.application.use_cases.delete_knowledge_entry import DeleteKnowledgeEntryUseCase
-from contexts.knowledge.application.use_cases.migrate_markdown_files import MigrateMarkdownFilesUseCase
-from contexts.knowledge.application.ports.i_knowledge_repository import IKnowledgeRepository
 from contexts.knowledge.application.ports.i_event_publisher import IEventPublisher
-from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+from contexts.knowledge.application.ports.i_knowledge_repository import (
+    IKnowledgeRepository,
+)
+from contexts.knowledge.application.use_cases.create_knowledge_entry import (
+    CreateKnowledgeEntryUseCase,
+)
+from contexts.knowledge.application.use_cases.delete_knowledge_entry import (
+    DeleteKnowledgeEntryUseCase,
+)
+from contexts.knowledge.application.use_cases.migrate_markdown_files import (
+    MigrateMarkdownFilesUseCase,
+)
+from contexts.knowledge.application.use_cases.update_knowledge_entry import (
+    UpdateKnowledgeEntryUseCase,
+)
 from contexts.knowledge.domain.models.access_level import AccessLevel
-from contexts.knowledge.infrastructure.repositories.postgresql_knowledge_repository import PostgreSQLKnowledgeRepository
-from contexts.knowledge.infrastructure.events.kafka_event_publisher import KafkaEventPublisher
-from contexts.knowledge.infrastructure.adapters.markdown_migration_adapter import MarkdownMigrationAdapter
-
+from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+from contexts.knowledge.infrastructure.adapters.markdown_migration_adapter import (
+    MarkdownMigrationAdapter,
+)
+from contexts.knowledge.infrastructure.events.kafka_event_publisher import (
+    KafkaEventPublisher,
+)
+from contexts.knowledge.infrastructure.repositories.postgresql_knowledge_repository import (
+    PostgreSQLKnowledgeRepository,
+)
 
 # Request/Response Models
 
+
 class CreateKnowledgeEntryRequest(BaseModel):
     """Request model for creating a knowledge entry."""
+
     content: str = Field(..., min_length=1, description="Knowledge content text")
     knowledge_type: KnowledgeType = Field(..., description="Category of knowledge")
-    owning_character_id: Optional[CharacterId] = Field(None, description="Character this belongs to (None for world knowledge)")
+    owning_character_id: Optional[CharacterId] = Field(
+        None, description="Character this belongs to (None for world knowledge)"
+    )
     access_level: AccessLevel = Field(..., description="Access control level")
-    allowed_roles: List[str] = Field(default_factory=list, description="Roles permitted (for ROLE_BASED access)")
-    allowed_character_ids: List[CharacterId] = Field(default_factory=list, description="Character IDs permitted (for CHARACTER_SPECIFIC)")
+    allowed_roles: List[str] = Field(
+        default_factory=list, description="Roles permitted (for ROLE_BASED access)"
+    )
+    allowed_character_ids: List[CharacterId] = Field(
+        default_factory=list,
+        description="Character IDs permitted (for CHARACTER_SPECIFIC)",
+    )
 
 
 class CreateKnowledgeEntryResponse(BaseModel):
     """Response model for creating a knowledge entry."""
-    entry_id: KnowledgeEntryId = Field(..., description="Unique identifier of created entry")
+
+    entry_id: KnowledgeEntryId = Field(
+        ..., description="Unique identifier of created entry"
+    )
 
 
 class UpdateKnowledgeEntryRequest(BaseModel):
     """Request model for updating a knowledge entry."""
+
     content: str = Field(..., min_length=1, description="New knowledge content text")
 
 
 class KnowledgeEntryResponse(BaseModel):
     """Response model for knowledge entry details."""
+
     id: KnowledgeEntryId
     content: str
     knowledge_type: KnowledgeType
@@ -77,11 +107,12 @@ class KnowledgeEntryResponse(BaseModel):
 
 # Dependency injection helpers
 
+
 async def get_repository() -> IKnowledgeRepository:
     """Get knowledge repository instance (dependency injection)."""
     # TODO: Integrate with DatabaseManager for session management
     from core_platform.persistence.database import get_async_db_session
-    
+
     async with get_async_db_session() as session:
         yield PostgreSQLKnowledgeRepository(session)
 
@@ -90,7 +121,7 @@ async def get_event_publisher() -> IEventPublisher:
     """Get event publisher instance (dependency injection)."""
     # TODO: Integrate with KafkaClient singleton
     from contexts.orchestration.infrastructure.kafka.kafka_client import KafkaClient
-    
+
     kafka_client = KafkaClient()
     yield KafkaEventPublisher(kafka_client)
 
@@ -101,21 +132,22 @@ async def get_event_publisher() -> IEventPublisher:
 
 # API Router
 
+
 def create_knowledge_api() -> APIRouter:
     """
     Create Knowledge Management API router.
-    
+
     Provides Admin API endpoints for:
     - POST /api/v1/knowledge/entries (FR-002)
     - GET /api/v1/knowledge/entries
     - GET /api/v1/knowledge/entries/{id}
     - PUT /api/v1/knowledge/entries/{id} (FR-003)
     - DELETE /api/v1/knowledge/entries/{id} (FR-004)
-    
+
     Constitution Compliance:
     - Article II (Hexagonal): API adapter for use cases
     - Article VII (Observability): All endpoints logged and instrumented
-    
+
     Returns:
         APIRouter with knowledge management endpoints
     """
@@ -128,7 +160,7 @@ def create_knowledge_api() -> APIRouter:
             500: {"description": "Internal server error"},
         },
     )
-    
+
     @router.post(
         "/entries",
         response_model=CreateKnowledgeEntryResponse,
@@ -144,18 +176,18 @@ def create_knowledge_api() -> APIRouter:
     ) -> CreateKnowledgeEntryResponse:
         """
         Create a new knowledge entry.
-        
+
         Requires: Admin role (enforced by authentication T008, T043)
         """
         user_id = current_user.id
-        
+
         # Start OpenTelemetry span (Article VII - Observability)
         if OTEL_AVAILABLE and tracer:
             with tracer.start_as_current_span("knowledge.create_entry") as span:
                 span.set_attribute("knowledge_type", request.knowledge_type.value)
                 span.set_attribute("access_level", request.access_level.value)
                 span.set_attribute("user_id", user_id)
-                
+
                 try:
                     use_case = CreateKnowledgeEntryUseCase(repository, event_publisher)
                     entry_id = await use_case.execute(
@@ -167,19 +199,24 @@ def create_knowledge_api() -> APIRouter:
                         allowed_roles=tuple(request.allowed_roles),
                         allowed_character_ids=tuple(request.allowed_character_ids),
                     )
-                    
+
                     span.set_attribute("entry_id", entry_id)
                     span.set_attribute("success", True)
                     return CreateKnowledgeEntryResponse(entry_id=entry_id)
-                    
+
                 except ValueError as e:
                     span.set_attribute("error", str(e))
                     span.set_attribute("success", False)
-                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+                    )
                 except Exception as e:
                     span.set_attribute("error", str(e))
                     span.set_attribute("success", False)
-                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Internal server error",
+                    )
         else:
             # Fallback without tracing
             try:
@@ -195,10 +232,15 @@ def create_knowledge_api() -> APIRouter:
                 )
                 return CreateKnowledgeEntryResponse(entry_id=entry_id)
             except ValueError as e:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+                )
             except Exception as e:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
-    
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Internal server error",
+                )
+
     @router.get(
         "/entries",
         response_model=List[KnowledgeEntryResponse],
@@ -213,13 +255,13 @@ def create_knowledge_api() -> APIRouter:
     ) -> List[KnowledgeEntryResponse]:
         """
         List knowledge entries with optional filters.
-        
+
         Requires: Admin role (enforced by authentication T008, T043)
         """
         # TODO: Implement list/filter logic
         # For now, return empty list
         return []
-    
+
     @router.get(
         "/entries/{entry_id}",
         response_model=KnowledgeEntryResponse,
@@ -233,15 +275,18 @@ def create_knowledge_api() -> APIRouter:
     ) -> KnowledgeEntryResponse:
         """
         Get a knowledge entry by ID.
-        
+
         Requires: Admin role (enforced by authentication T008, T043)
         """
         try:
             entry = await repository.get_by_id(str(entry_id))
-            
+
             if entry is None:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Knowledge entry not found")
-            
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Knowledge entry not found",
+                )
+
             # Convert to response model
             return KnowledgeEntryResponse(
                 id=entry.id,
@@ -255,13 +300,16 @@ def create_knowledge_api() -> APIRouter:
                 updated_at=entry.updated_at.isoformat(),
                 created_by=entry.created_by,
             )
-            
+
         except HTTPException:
             raise
         except Exception as e:
             # TODO: Log error with structured logging
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
-    
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal server error",
+            )
+
     @router.put(
         "/entries/{entry_id}",
         status_code=status.HTTP_204_NO_CONTENT,
@@ -277,17 +325,17 @@ def create_knowledge_api() -> APIRouter:
     ):
         """
         Update a knowledge entry's content.
-        
+
         Requires: Admin role (enforced by authentication T008, T043)
         """
         user_id = current_user.id
-        
+
         # Start OpenTelemetry span (Article VII - Observability)
         if OTEL_AVAILABLE and tracer:
             with tracer.start_as_current_span("knowledge.update_entry") as span:
                 span.set_attribute("entry_id", str(entry_id))
                 span.set_attribute("user_id", user_id)
-                
+
                 try:
                     use_case = UpdateKnowledgeEntryUseCase(repository, event_publisher)
                     await use_case.execute(
@@ -296,15 +344,20 @@ def create_knowledge_api() -> APIRouter:
                         updated_by=user_id,
                     )
                     span.set_attribute("success", True)
-                    
+
                 except ValueError as e:
                     span.set_attribute("error", str(e))
                     span.set_attribute("success", False)
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+                    )
                 except Exception as e:
                     span.set_attribute("error", str(e))
                     span.set_attribute("success", False)
-                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Internal server error",
+                    )
         else:
             # Fallback without tracing
             try:
@@ -315,10 +368,15 @@ def create_knowledge_api() -> APIRouter:
                     updated_by=user_id,
                 )
             except ValueError as e:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+                )
             except Exception as e:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
-    
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Internal server error",
+                )
+
     @router.delete(
         "/entries/{entry_id}",
         status_code=status.HTTP_204_NO_CONTENT,
@@ -333,17 +391,17 @@ def create_knowledge_api() -> APIRouter:
     ):
         """
         Delete a knowledge entry.
-        
+
         Requires: Admin role (enforced by authentication T008, T043)
         """
         user_id = current_user.id
-        
+
         # Start OpenTelemetry span (Article VII - Observability)
         if OTEL_AVAILABLE and tracer:
             with tracer.start_as_current_span("knowledge.delete_entry") as span:
                 span.set_attribute("entry_id", str(entry_id))
                 span.set_attribute("user_id", user_id)
-                
+
                 try:
                     use_case = DeleteKnowledgeEntryUseCase(repository, event_publisher)
                     await use_case.execute(
@@ -351,15 +409,20 @@ def create_knowledge_api() -> APIRouter:
                         deleted_by=user_id,
                     )
                     span.set_attribute("success", True)
-                    
+
                 except ValueError as e:
                     span.set_attribute("error", str(e))
                     span.set_attribute("success", False)
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+                    )
                 except Exception as e:
                     span.set_attribute("error", str(e))
                     span.set_attribute("success", False)
-                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Internal server error",
+                    )
         else:
             # Fallback without tracing
             try:
@@ -369,25 +432,41 @@ def create_knowledge_api() -> APIRouter:
                     deleted_by=user_id,
                 )
             except ValueError as e:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+                )
             except Exception as e:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
-    
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Internal server error",
+                )
+
     # ===== Migration Endpoints (FR-016, FR-018) =====
-    
+
     class MigrateMarkdownRequest(BaseModel):
         """Request model for Markdown migration."""
-        markdown_directory: str = Field(..., description="Root directory containing agent .md files")
-        create_backup: bool = Field(True, description="Create timestamped backup before migration")
-    
+
+        markdown_directory: str = Field(
+            ..., description="Root directory containing agent .md files"
+        )
+        create_backup: bool = Field(
+            True, description="Create timestamped backup before migration"
+        )
+
     class RollbackMigrationRequest(BaseModel):
         """Request model for migration rollback."""
-        backup_path: str = Field(..., description="Path to backup directory from migration")
-    
+
+        backup_path: str = Field(
+            ..., description="Path to backup directory from migration"
+        )
+
     class VerifyMigrationRequest(BaseModel):
         """Request model for migration verification."""
-        markdown_directory: str = Field(..., description="Root directory containing agent .md files")
-    
+
+        markdown_directory: str = Field(
+            ..., description="Root directory containing agent .md files"
+        )
+
     @router.post(
         "/migrate",
         status_code=status.HTTP_200_OK,
@@ -400,26 +479,26 @@ def create_knowledge_api() -> APIRouter:
     ):
         """
         Migrate all Markdown files to PostgreSQL knowledge base.
-        
+
         Creates timestamped backup, parses Markdown files, creates knowledge entries.
-        
+
         Functional Requirements:
             - FR-016: Manual migration from Markdown to knowledge base
             - FR-017: Timestamped backup creation
-        
+
         Returns:
             Migration report with statistics and backup path
         """
         migration_adapter = MarkdownMigrationAdapter(repository=repository)
         use_case = MigrateMarkdownFilesUseCase(migration_adapter=migration_adapter)
-        
+
         report = await use_case.execute(
             markdown_directory=request.markdown_directory,
             create_backup=request.create_backup,
         )
-        
+
         return report
-    
+
     @router.post(
         "/rollback",
         status_code=status.HTTP_200_OK,
@@ -432,22 +511,22 @@ def create_knowledge_api() -> APIRouter:
     ):
         """
         Rollback migration by deleting entries and restoring Markdown files.
-        
+
         Functional Requirements:
             - FR-018: Rollback capability to restore Markdown-based operation
-        
+
         Returns:
             Rollback report with statistics
         """
         migration_adapter = MarkdownMigrationAdapter(repository=repository)
         use_case = MigrateMarkdownFilesUseCase(migration_adapter=migration_adapter)
-        
+
         try:
             report = await use_case.rollback(backup_path=request.backup_path)
             return report
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    
+
     @router.post(
         "/verify",
         status_code=status.HTTP_200_OK,
@@ -460,18 +539,18 @@ def create_knowledge_api() -> APIRouter:
     ):
         """
         Verify migration by comparing Markdown content vs PostgreSQL entries.
-        
+
         Functional Requirements:
             - FR-019: Verification mode for comparing sources
-        
+
         Returns:
             Verification report with comparison results
         """
         migration_adapter = MarkdownMigrationAdapter(repository=repository)
         use_case = MigrateMarkdownFilesUseCase(migration_adapter=migration_adapter)
-        
+
         report = await use_case.verify(markdown_directory=request.markdown_directory)
-        
+
         return report
-    
+
     return router

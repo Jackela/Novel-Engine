@@ -362,24 +362,24 @@ class AITestOrchestrator(ITestOrchestrator):
 
         prompt = f"""
         As an AI test orchestration expert, optimize this test execution plan:
-        
+
         Test Scenarios: {scenario_info}
         Available Services: {list(self.service_endpoints.keys())}
         Service Health: {self.service_health}
-        
+
         Please provide optimization recommendations for:
         1. Execution order based on dependencies and priorities
         2. Parallel execution groups to minimize total time
         3. Risk assessment for each scenario (0.0-1.0)
         4. Resource allocation strategy
         5. Potential optimization suggestions
-        
+
         Consider these factors:
         - Higher priority tests should run earlier
         - Tests with dependencies must run after their prerequisites
         - Parallel execution should balance load across services
         - Risk assessment should consider test complexity and failure probability
-        
+
         Return response as JSON with this structure:
         {{
             "execution_order": ["scenario_id1", "scenario_id2", ...],

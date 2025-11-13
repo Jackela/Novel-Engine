@@ -1,5 +1,7 @@
 # Mobile Quick Actions Fix Validation Report
 
+> **Flow layout alignment (2025-11-12):** The Quick Actions component now includes pipeline status within the Control Cluster tile; refer to `docs/assets/dashboard/dashboard-flow-2025-11-12.png` until a dedicated mobile capture is produced.
+
 ## Test Overview
 - **Date**: 2025-08-28T07:55:57.063Z
 - **Viewport**: 375x667px (Mobile)

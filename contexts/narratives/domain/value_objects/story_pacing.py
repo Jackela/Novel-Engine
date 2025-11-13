@@ -6,7 +6,7 @@ This module defines value objects for controlling narrative rhythm,
 timing, and pacing within story structures.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
@@ -88,7 +88,9 @@ class StoryPacing:
     target_reading_time: Optional[int] = None  # Minutes
     emotional_target: str = ""  # Desired emotional response
     pacing_notes: str = ""
-    creation_timestamp: datetime = None
+    creation_timestamp: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc), compare=False
+    )
     metadata: Dict[str, Any] = None
 
     def __post_init__(self):
@@ -108,9 +110,6 @@ class StoryPacing:
             object.__setattr__(self, "rest_periods", ())
         elif isinstance(self.rest_periods, list):
             object.__setattr__(self, "rest_periods", tuple(self.rest_periods))
-
-        if self.creation_timestamp is None:
-            object.__setattr__(self, "creation_timestamp", datetime.now(timezone.utc))
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -242,7 +241,6 @@ class StoryPacing:
             self.target_reading_time,
             self.emotional_target,
             self.pacing_notes,
-            self.creation_timestamp,
             _dict_to_hashable(self.metadata),
         ))
 

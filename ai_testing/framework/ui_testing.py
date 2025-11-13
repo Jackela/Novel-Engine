@@ -205,7 +205,7 @@ class ResponsiveTestSuite:
                     touch_targets: 0,
                     readable_text: true
                 };
-                
+
                 // Check images
                 const images = document.querySelectorAll('img');
                 images.forEach(img => {
@@ -214,24 +214,24 @@ class ResponsiveTestSuite:
                         results.responsive_images++;
                     }
                 });
-                
+
                 // Check for fixed width elements
                 const allElements = document.querySelectorAll('*');
                 allElements.forEach(el => {
                     const style = window.getComputedStyle(el);
-                    
+
                     // Check for fixed widths
-                    if (style.width && style.width.includes('px') && 
+                    if (style.width && style.width.includes('px') &&
                         parseInt(style.width) > window.innerWidth) {
                         results.fixed_width_elements++;
                     }
-                    
+
                     // Check for overflow
                     if (style.overflow === 'hidden' && el.scrollWidth > el.clientWidth) {
                         results.overflow_elements++;
                     }
                 });
-                
+
                 // Check touch targets (buttons, links)
                 const touchTargets = document.querySelectorAll('button, a, input[type="submit"]');
                 touchTargets.forEach(target => {
@@ -240,7 +240,7 @@ class ResponsiveTestSuite:
                         results.touch_targets++;
                     }
                 });
-                
+
                 // Check text readability
                 const textElements = document.querySelectorAll('p, span, div, h1, h2, h3, h4, h5, h6');
                 let readableTextCount = 0;
@@ -251,11 +251,11 @@ class ResponsiveTestSuite:
                         readableTextCount++;
                     }
                 });
-                
+
                 results.readable_text = readableTextCount / Math.max(textElements.length, 1) > 0.8;
                 results.total_images = images.length;
                 results.total_touch_targets = touchTargets.length;
-                
+
                 return results;
             }
         """

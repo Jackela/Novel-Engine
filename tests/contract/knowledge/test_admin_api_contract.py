@@ -9,9 +9,11 @@ Constitution Compliance:
 - FR-002, FR-003, FR-004: CRUD API endpoints
 """
 
-import pytest
-from httpx import AsyncClient
 from uuid import uuid4
+
+import pytest
+import pytest_asyncio
+from httpx import AsyncClient
 
 # NOTE: These imports will fail until API is implemented
 try:
@@ -23,12 +25,12 @@ except ImportError:
 pytestmark = [pytest.mark.knowledge, pytest.mark.api, pytest.mark.requires_services]
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client():
     """Create test client for API testing."""
     if app is None:
         pytest.skip("FastAPI app not yet implemented (TDD - expected to fail)")
-    
+
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
 
@@ -57,14 +59,14 @@ class TestPostKnowledgeEntriesEndpoint:
             "owning_character_id": "char-001",
             "access_level": "public",
         }
-        
+
         # Act
         response = await client.post(
             "/api/v1/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
-        
+
         # Assert
         assert response.status_code == 201
         data = response.json()
@@ -74,7 +76,9 @@ class TestPostKnowledgeEntriesEndpoint:
         assert data["knowledge_type"] == payload["knowledge_type"]
 
     @pytest.mark.asyncio
-    async def test_create_entry_with_empty_content_returns_400(self, client, auth_headers):
+    async def test_create_entry_with_empty_content_returns_400(
+        self, client, auth_headers
+    ):
         """Test creating entry with empty content returns 400 Bad Request."""
         # Arrange
         payload = {
@@ -83,21 +87,23 @@ class TestPostKnowledgeEntriesEndpoint:
             "owning_character_id": "char-001",
             "access_level": "public",
         }
-        
+
         # Act
         response = await client.post(
             "/api/v1/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
-        
+
         # Assert
         assert response.status_code == 400
         data = response.json()
         assert "error" in data or "detail" in data
 
     @pytest.mark.asyncio
-    async def test_create_entry_with_invalid_knowledge_type_returns_400(self, client, auth_headers):
+    async def test_create_entry_with_invalid_knowledge_type_returns_400(
+        self, client, auth_headers
+    ):
         """Test creating entry with invalid knowledge_type returns 400."""
         # Arrange
         payload = {
@@ -106,19 +112,21 @@ class TestPostKnowledgeEntriesEndpoint:
             "owning_character_id": "char-001",
             "access_level": "public",
         }
-        
+
         # Act
         response = await client.post(
             "/api/v1/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
-        
+
         # Assert
         assert response.status_code == 400
 
     @pytest.mark.asyncio
-    async def test_create_entry_with_character_specific_access(self, client, auth_headers):
+    async def test_create_entry_with_character_specific_access(
+        self, client, auth_headers
+    ):
         """Test creating entry with CHARACTER_SPECIFIC access level."""
         # Arrange
         payload = {
@@ -128,14 +136,14 @@ class TestPostKnowledgeEntriesEndpoint:
             "access_level": "character_specific",
             "allowed_character_ids": ["char-001", "char-002"],
         }
-        
+
         # Act
         response = await client.post(
             "/api/v1/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
-        
+
         # Assert
         assert response.status_code == 201
         data = response.json()
@@ -153,14 +161,14 @@ class TestPostKnowledgeEntriesEndpoint:
             "access_level": "role_based",
             "allowed_roles": ["engineer", "medical"],
         }
-        
+
         # Act
         response = await client.post(
             "/api/v1/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
-        
+
         # Assert
         assert response.status_code == 201
         data = response.json()
@@ -177,13 +185,13 @@ class TestPostKnowledgeEntriesEndpoint:
             "owning_character_id": "char-001",
             "access_level": "public",
         }
-        
+
         # Act - no auth headers
         response = await client.post(
             "/api/v1/knowledge/entries",
             json=payload,
         )
-        
+
         # Assert
         assert response.status_code == 401
 
@@ -202,14 +210,14 @@ class TestPostKnowledgeEntriesEndpoint:
             "X-User-ID": "test-user-001",
             "X-User-Role": "player",  # Not admin or game_master
         }
-        
+
         # Act
         response = await client.post(
             "/api/v1/knowledge/entries",
             json=payload,
             headers=non_admin_headers,
         )
-        
+
         # Assert
         assert response.status_code == 403
 
@@ -217,7 +225,7 @@ class TestPostKnowledgeEntriesEndpoint:
 class TestPutKnowledgeEntriesEndpoint:
     """Contract tests for PUT /api/v1/knowledge/entries/{id} (FR-003)."""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def existing_entry_id(self, client, auth_headers):
         """Create an entry for update tests."""
         # Create entry first
@@ -235,20 +243,22 @@ class TestPutKnowledgeEntriesEndpoint:
         return response.json()["entry_id"]
 
     @pytest.mark.asyncio
-    async def test_update_entry_success_returns_200(self, client, auth_headers, existing_entry_id):
+    async def test_update_entry_success_returns_200(
+        self, client, auth_headers, existing_entry_id
+    ):
         """Test successful entry update returns 200 OK."""
         # Arrange
         payload = {
             "content": "Updated content for testing",
         }
-        
+
         # Act
         response = await client.put(
             f"/api/v1/knowledge/entries/{existing_entry_id}",
             json=payload,
             headers=auth_headers,
         )
-        
+
         # Assert
         assert response.status_code == 200
         data = response.json()
@@ -257,20 +267,22 @@ class TestPutKnowledgeEntriesEndpoint:
         assert "updated_at" in data
 
     @pytest.mark.asyncio
-    async def test_update_entry_with_empty_content_returns_400(self, client, auth_headers, existing_entry_id):
+    async def test_update_entry_with_empty_content_returns_400(
+        self, client, auth_headers, existing_entry_id
+    ):
         """Test updating entry with empty content returns 400 Bad Request."""
         # Arrange
         payload = {
             "content": "",  # Empty content
         }
-        
+
         # Act
         response = await client.put(
             f"/api/v1/knowledge/entries/{existing_entry_id}",
             json=payload,
             headers=auth_headers,
         )
-        
+
         # Assert
         assert response.status_code == 400
 
@@ -282,31 +294,33 @@ class TestPutKnowledgeEntriesEndpoint:
         payload = {
             "content": "Updated content",
         }
-        
+
         # Act
         response = await client.put(
             f"/api/v1/knowledge/entries/{non_existent_id}",
             json=payload,
             headers=auth_headers,
         )
-        
+
         # Assert
         assert response.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_update_entry_without_auth_returns_401(self, client, existing_entry_id):
+    async def test_update_entry_without_auth_returns_401(
+        self, client, existing_entry_id
+    ):
         """Test updating entry without authentication returns 401."""
         # Arrange
         payload = {
             "content": "Updated content",
         }
-        
+
         # Act
         response = await client.put(
             f"/api/v1/knowledge/entries/{existing_entry_id}",
             json=payload,
         )
-        
+
         # Assert
         assert response.status_code == 401
 
@@ -314,7 +328,7 @@ class TestPutKnowledgeEntriesEndpoint:
 class TestDeleteKnowledgeEntriesEndpoint:
     """Contract tests for DELETE /api/v1/knowledge/entries/{id} (FR-004)."""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def existing_entry_id(self, client, auth_headers):
         """Create an entry for delete tests."""
         payload = {
@@ -331,26 +345,30 @@ class TestDeleteKnowledgeEntriesEndpoint:
         return response.json()["entry_id"]
 
     @pytest.mark.asyncio
-    async def test_delete_entry_success_returns_204(self, client, auth_headers, existing_entry_id):
+    async def test_delete_entry_success_returns_204(
+        self, client, auth_headers, existing_entry_id
+    ):
         """Test successful entry deletion returns 204 No Content."""
         # Act
         response = await client.delete(
             f"/api/v1/knowledge/entries/{existing_entry_id}",
             headers=auth_headers,
         )
-        
+
         # Assert
         assert response.status_code == 204
 
     @pytest.mark.asyncio
-    async def test_delete_entry_removes_from_database(self, client, auth_headers, existing_entry_id):
+    async def test_delete_entry_removes_from_database(
+        self, client, auth_headers, existing_entry_id
+    ):
         """Test that deleted entry cannot be retrieved."""
         # Act - delete entry
         await client.delete(
             f"/api/v1/knowledge/entries/{existing_entry_id}",
             headers=auth_headers,
         )
-        
+
         # Assert - entry should not be retrievable
         get_response = await client.get(
             f"/api/v1/knowledge/entries/{existing_entry_id}",
@@ -363,29 +381,33 @@ class TestDeleteKnowledgeEntriesEndpoint:
         """Test deleting non-existent entry returns 404 Not Found."""
         # Arrange
         non_existent_id = str(uuid4())
-        
+
         # Act
         response = await client.delete(
             f"/api/v1/knowledge/entries/{non_existent_id}",
             headers=auth_headers,
         )
-        
+
         # Assert
         assert response.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_delete_entry_without_auth_returns_401(self, client, existing_entry_id):
+    async def test_delete_entry_without_auth_returns_401(
+        self, client, existing_entry_id
+    ):
         """Test deleting entry without authentication returns 401."""
         # Act
         response = await client.delete(
             f"/api/v1/knowledge/entries/{existing_entry_id}",
         )
-        
+
         # Assert
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_delete_entry_is_idempotent(self, client, auth_headers, existing_entry_id):
+    async def test_delete_entry_is_idempotent(
+        self, client, auth_headers, existing_entry_id
+    ):
         """Test that deleting already deleted entry succeeds (idempotent)."""
         # Act - delete twice
         response1 = await client.delete(
@@ -396,7 +418,7 @@ class TestDeleteKnowledgeEntriesEndpoint:
             f"/api/v1/knowledge/entries/{existing_entry_id}",
             headers=auth_headers,
         )
-        
+
         # Assert - first succeeds, second returns 404 (entry already gone)
         assert response1.status_code == 204
         assert response2.status_code == 404

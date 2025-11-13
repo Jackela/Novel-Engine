@@ -17,23 +17,35 @@ export class ConsoleLogger implements ILogger {
     };
   }
 
-  debug(message: string, context?: LogContext): void {
+  debug(message: string, context?: LogContext | Error, extraContext?: LogContext): void {
     if (this.shouldLog(LogLevelEnum.DEBUG)) {
-      const entry = this.createLogEntry(LogLevelEnum.DEBUG, message, context);
+      const entry = this.createLogEntry(
+        LogLevelEnum.DEBUG,
+        message,
+        this.mergeContexts(this.toLogContext(context), extraContext)
+      );
       console.log(`[DEBUG] ${entry.message}`, entry.context || {});
     }
   }
 
-  info(message: string, context?: LogContext): void {
+  info(message: string, context?: LogContext | Error, extraContext?: LogContext): void {
     if (this.shouldLog(LogLevelEnum.INFO)) {
-      const entry = this.createLogEntry(LogLevelEnum.INFO, message, context);
+      const entry = this.createLogEntry(
+        LogLevelEnum.INFO,
+        message,
+        this.mergeContexts(this.toLogContext(context), extraContext)
+      );
       console.info(`[INFO] ${entry.message}`, entry.context || {});
     }
   }
 
-  warn(message: string, context?: LogContext): void {
+  warn(message: string, context?: LogContext | Error, extraContext?: LogContext): void {
     if (this.shouldLog(LogLevelEnum.WARN)) {
-      const entry = this.createLogEntry(LogLevelEnum.WARN, message, context);
+      const entry = this.createLogEntry(
+        LogLevelEnum.WARN,
+        message,
+        this.mergeContexts(this.toLogContext(context), extraContext)
+      );
       console.warn(`[WARN] ${entry.message}`, entry.context || {});
     }
   }
@@ -93,5 +105,28 @@ export class ConsoleLogger implements ILogger {
     } catch {
       return undefined;
     }
+  }
+
+  private mergeContexts(context?: LogContext, extraContext?: LogContext): LogContext | undefined {
+    if (!context && !extraContext) {
+      return undefined;
+    }
+    return { ...(context ?? {}), ...(extraContext ?? {}) };
+  }
+
+  private toLogContext(value?: LogContext | Error): LogContext | undefined {
+    if (!value) {
+      return undefined;
+    }
+    if (value instanceof Error) {
+      return {
+        errorMessage: value.message,
+        errorName: value.name,
+        ...(this.config.environment === 'development' && value.stack
+          ? { stack: value.stack }
+          : {}),
+      };
+    }
+    return value;
   }
 }

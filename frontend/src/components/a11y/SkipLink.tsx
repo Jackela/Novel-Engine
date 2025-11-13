@@ -14,15 +14,12 @@ export const SkipLink: React.FC<SkipLinkProps> = ({
   text,
   className = '',
 }) => {
-  const handleClick = (event: MouseEvent) => {
-    event.preventDefault();
-    
+  const focusTarget = () => {
     const targetElement = document.getElementById(targetId);
-    
     if (targetElement) {
       targetElement.setAttribute('tabIndex', '-1');
       targetElement.focus();
-      
+
       targetElement.addEventListener(
         'blur',
         () => {
@@ -35,10 +32,15 @@ export const SkipLink: React.FC<SkipLinkProps> = ({
     }
   };
 
+  const handleClick = (event: MouseEvent | KeyboardEvent) => {
+    event.preventDefault();
+    focusTarget();
+  };
+
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      handleClick(event as any);
+      handleClick(event);
     }
   };
 
@@ -62,8 +64,8 @@ export const SkipLink: React.FC<SkipLinkProps> = ({
         e.currentTarget.style.width = 'auto';
         e.currentTarget.style.height = 'auto';
         e.currentTarget.style.padding = '0.5rem 1rem';
-        e.currentTarget.style.backgroundColor = '#000';
-        e.currentTarget.style.color = '#fff';
+        e.currentTarget.style.backgroundColor = 'var(--color-bg-primary)';
+        e.currentTarget.style.color = 'var(--color-text-primary)';
         e.currentTarget.style.zIndex = '9999';
         e.currentTarget.style.overflow = 'visible';
       }}

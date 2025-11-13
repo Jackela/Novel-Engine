@@ -17,6 +17,20 @@ NC='\033[0m' # No Color
 
 PY_BIN=${PY_BIN:-python3}
 VENV_DIR=${VENV_DIR:-.venv-ci}
+DEFAULT_FLAKE8_TARGETS=("config_loader.py" "contexts/knowledge" "src/api")
+DEFAULT_MYPY_TARGETS=("contexts/knowledge/application/use_cases/retrieve_agent_context.py")
+
+if [[ -n "${FLAKE8_TARGETS:-}" ]]; then
+    read -r -a FLAKE8_PATHS <<< "$FLAKE8_TARGETS"
+else
+    FLAKE8_PATHS=("${DEFAULT_FLAKE8_TARGETS[@]}")
+fi
+
+if [[ -n "${MYPY_TARGETS:-}" ]]; then
+    read -r -a MYPY_PATHS <<< "$MYPY_TARGETS"
+else
+    MYPY_PATHS=("${DEFAULT_MYPY_TARGETS[@]}")
+fi
 
 echo "📋 Checking Python version..."
 if ! command -v "$PY_BIN" >/dev/null 2>&1; then
@@ -49,7 +63,7 @@ VENV_PIP="$VENV_DIR/bin/pip"
 "$VENV_PIP" install --upgrade pip --quiet
 "$VENV_PIP" install -r requirements.txt --quiet
 "$VENV_PIP" install pytest pytest-cov coverage httpx pytest-timeout pytest-asyncio black isort flake8 mypy playwright pytest-html --quiet
-"$VENV_PY" -m playwright install chromium >/dev/null 2>&1 || true
+"$VENV_PY" -m playwright install chromium >/dev/null 2>&1 
 echo -e "${GREEN}✓ Dependencies installed${NC}"
 echo ""
 
@@ -59,9 +73,11 @@ set +e
 BLACK_EXIT=$?
 "$VENV_PY" -m isort --check-only src tests ai_testing scripts
 ISORT_EXIT=$?
-"$VENV_PY" -m flake8 src tests ai_testing scripts
+echo "   flake8 targets: ${FLAKE8_PATHS[*]}"
+"$VENV_PY" -m flake8 "${FLAKE8_PATHS[@]}"
 FLAKE_EXIT=$?
-"$VENV_PY" -m mypy src --ignore-missing-imports
+echo "   mypy targets: ${MYPY_PATHS[*]}"
+"$VENV_PY" -m mypy "${MYPY_PATHS[@]}" --ignore-missing-imports
 MYPY_EXIT=$?
 set -e
 

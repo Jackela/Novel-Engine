@@ -14,7 +14,6 @@ import pytest
 # Import the modules under test
 try:
     from src.agents.director_agent import DirectorAgent
-
     from src.event_bus import EventBus
     from src.persona_agent import PersonaAgent
 
@@ -50,7 +49,9 @@ class TestDirectorAgentInitialization:
     @pytest.mark.unit
     def test_initialization_with_valid_config(self):
         """Test DirectorAgent initialization with valid configuration"""
-        with patch("src.agents.director_agent_integrated.get_config") as mock_get_config:
+        with patch(
+            "src.agents.director_agent_integrated.get_config"
+        ) as mock_get_config:
             mock_config = Mock()
             mock_config.director = Mock()
             mock_config.director.world_state_file = None
@@ -75,7 +76,9 @@ class TestDirectorAgentInitialization:
     @pytest.mark.unit
     def test_initialization_without_config(self):
         """Test DirectorAgent initialization when config loading fails"""
-        with patch("src.agents.director_agent_integrated.get_config") as mock_get_config:
+        with patch(
+            "src.agents.director_agent_integrated.get_config"
+        ) as mock_get_config:
             mock_get_config.side_effect = Exception("Config file not found")
 
             # Should still initialize with defaults

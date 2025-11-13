@@ -10,7 +10,7 @@ import asyncio
 import logging
 import tempfile
 import unittest
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Dict
 from unittest.mock import AsyncMock, mock_open, patch
@@ -312,7 +312,10 @@ Developed expertise in systematic validation and quality assurance.
 
     async def test_markdown_parsing_memory(self):
         """Test memory markdown parsing."""
-        with patch("aiofiles.open", return_value=create_async_mock_file(self.sample_memory_content)):
+        with patch(
+            "aiofiles.open",
+            return_value=create_async_mock_file(self.sample_memory_content),
+        ):
             with patch("pathlib.Path.stat") as mock_stat:
                 mock_stat.return_value.st_size = len(self.sample_memory_content)
 
@@ -326,7 +329,10 @@ Developed expertise in systematic validation and quality assurance.
 
     async def test_markdown_parsing_objectives(self):
         """Test objectives markdown parsing."""
-        with patch("aiofiles.open", return_value=create_async_mock_file(self.sample_objectives_content)):
+        with patch(
+            "aiofiles.open",
+            return_value=create_async_mock_file(self.sample_objectives_content),
+        ):
             with patch("pathlib.Path.stat") as mock_stat:
                 mock_stat.return_value.st_size = len(self.sample_objectives_content)
 
@@ -340,7 +346,10 @@ Developed expertise in systematic validation and quality assurance.
 
     async def test_markdown_parsing_profile(self):
         """Test profile markdown parsing."""
-        with patch("aiofiles.open", return_value=create_async_mock_file(self.sample_profile_content)):
+        with patch(
+            "aiofiles.open",
+            return_value=create_async_mock_file(self.sample_profile_content),
+        ):
             with patch("pathlib.Path.stat") as mock_stat:
                 mock_stat.return_value.st_size = len(self.sample_profile_content)
 
@@ -382,7 +391,9 @@ Developed expertise in systematic validation and quality assurance.
     async def test_invalid_context_type(self):
         """Test handling of invalid context type in markdown parsing."""
         # Use the helper function for proper async context manager
-        with patch("aiofiles.open", return_value=create_async_mock_file("test content")):
+        with patch(
+            "aiofiles.open", return_value=create_async_mock_file("test content")
+        ):
             with patch("pathlib.Path.stat") as mock_stat:
                 mock_stat.return_value.st_size = 100
 
@@ -518,9 +529,9 @@ Developed expertise in systematic validation and quality assurance.
         """Test circuit breaker recovery to half-open state."""
         # Force circuit breaker open with old failure time
         self.service._circuit_breaker["state"] = "OPEN"
-        self.service._circuit_breaker["last_failure_time"] = (
-            datetime.now(UTC) - timedelta(minutes=10)
-        )
+        self.service._circuit_breaker["last_failure_time"] = datetime.now(
+            UTC
+        ) - timedelta(minutes=10)
 
         character_id = "recovery_test"
         self.create_test_character_files(character_id)

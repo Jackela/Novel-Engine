@@ -31,7 +31,6 @@ import pytest
 # Import system components
 try:
     from src.agents.director_agent import DirectorAgent
-
     from src.persona_agent import PersonaAgent
     from src.shared_types import (
         ActionIntensity,

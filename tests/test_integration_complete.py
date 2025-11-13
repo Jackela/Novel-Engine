@@ -16,8 +16,8 @@ This test suite validates:
 Development Phase: Final Integration Testing - Complete System Validation
 """
 
-import os
 import json
+import os
 import tempfile
 import time
 from datetime import datetime
@@ -34,7 +34,6 @@ if not FULL_INTEGRATION:
 # Core Novel Engine imports
 try:
     from src.agents.director_agent import DirectorAgent
-
     from src.persona_agent import PersonaAgent
     from src.shared_types import (
         ActionIntensity,

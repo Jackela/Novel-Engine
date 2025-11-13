@@ -30,6 +30,7 @@ interface GridTileProps {
   onMenuClick?: () => void;
   className?: string;
   'data-testid'?: string;
+  'data-role'?: string;
 }
 
 const StyledPaper = styled(Paper, {
@@ -52,11 +53,11 @@ const StyledPaper = styled(Paper, {
       } else {
         // Default heights for different breakpoints
         if (currentBreakpoint === 'desktop') {
-          styles.minHeight = '320px';
+          styles.minHeight = '260px';
         } else if (currentBreakpoint === 'tablet') {
-          styles.minHeight = '280px';
+          styles.minHeight = '220px';
         } else {
-          styles.minHeight = '200px';
+          styles.minHeight = '180px';
         }
       }
       
@@ -144,6 +145,7 @@ const GridTile: React.FC<GridTileProps> = ({
   onMenuClick,
   className,
   'data-testid': testId,
+  'data-role': role,
 }) => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
@@ -158,13 +160,19 @@ const GridTile: React.FC<GridTileProps> = ({
       className={className ?? ''}
       elevation={1}
       data-testid={testId}
+      data-role={role}
     >
       <TileHeader>
         <Typography variant="h6" component="h2" fontWeight={600}>
           {title}
         </Typography>
         {onMenuClick && (
-          <IconButton size="small" onClick={onMenuClick} edge="end">
+          <IconButton
+            size="small"
+            onClick={onMenuClick}
+            edge="end"
+            aria-label={`${title} options`}
+          >
             <MoreIcon />
           </IconButton>
         )}

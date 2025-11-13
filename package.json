@@ -1,5 +1,10 @@
 {
+  "scripts": {
+    "dev:daemon": "bash scripts/dev_env_daemon.sh",
+    "dev:stop": "bash scripts/stop_dev_env.sh"
+  },
   "dependencies": {
+    "markdown-it": "^14.1.0",
     "playwright": "^1.55.0"
   }
 }
