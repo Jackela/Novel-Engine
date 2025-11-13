@@ -412,7 +412,7 @@ quality_gates.py
 quick_platform_validation.py
 scalability_framework.py
 security_*.py
-shared_types.py
+# shared_types.py  # tracked for core type exports
 uat_test_script.py
 validate_platform.py
 validation_test.py
