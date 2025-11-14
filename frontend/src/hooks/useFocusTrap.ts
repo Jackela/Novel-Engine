@@ -45,7 +45,7 @@ export function useFocusTrap(
     return elements[0] || null
   }
 
-  const _getLastFocusable = (container: HTMLElement): HTMLElement | null => {
+  const getLastFocusable = (container: HTMLElement): HTMLElement | null => {
     const elements = getFocusableElements(container)
     return elements[elements.length - 1] || null
   }
