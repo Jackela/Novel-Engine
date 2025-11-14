@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node (cached)
-        if: env.ACT != 'true'
+        if: env.ACT != 'true' && hashFiles('frontend/package-lock.json') != ''
         uses: actions/setup-node@v4
         with:
           node-version: '20'
