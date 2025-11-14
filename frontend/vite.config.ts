@@ -139,7 +139,7 @@ export default defineConfig({
   
   // Preview configuration
   preview: {
-    port: 3000,
+    port: 4173,
     host: true,
   },
   test: {
