@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 try:  # Prefer richer schema when available
     from src.shared_types import CharacterData  # type: ignore
@@ -121,10 +121,25 @@ class ProposedAction:
             self.confidence = max(0.0, min(1.0, self.confidence))
 
 
+@dataclass
+class WorldState:
+    """
+    Lightweight representation of the narrative world state used by orchestrators/tests.
+    """
+
+    current_location: str = "Unknown"
+    time_period: str = "Day"
+    weather: str = "Clear"
+    active_events: List[str] = field(default_factory=list)
+    environmental_factors: Dict[str, Any] = field(default_factory=dict)
+    notes: Optional[str] = None
+
+
 __all__ = [
     "ActionPriority",
     "ActionType",
     "CharacterAction",
     "CharacterData",
     "ProposedAction",
+    "WorldState",
 ]

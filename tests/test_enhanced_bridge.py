@@ -14,8 +14,9 @@ from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-import pytest
 from functools import wraps
+
+import pytest
 
 from src.bridge.types import RequestPriority
 from src.orchestrators.enhanced_multi_agent_bridge import (
