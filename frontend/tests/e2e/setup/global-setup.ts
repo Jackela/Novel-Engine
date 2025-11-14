@@ -22,8 +22,7 @@ async function globalSetup(config: FullConfig) {
   // Seed test database with consistent data
   await seedTestData();
   
-  // Verify dashboard accessibility
-  await verifyDashboardAccessibility();
+  await verifyDashboardAccessibilityWithRetry();
   
   console.log('✅ Global setup completed successfully');
 }
@@ -146,21 +145,29 @@ async function verifyDashboardAccessibility() {
   const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
+  const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
   
   try {
-    // Navigate to dashboard
-    const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
-    await page.goto(baseUrl);
-    
-    // If we're on the landing page, trigger demo CTA to reach the dashboard
-    const demoCta = page.locator('[data-testid="cta-demo"], [data-testid="cta-demo-primary"]');
-    if (await demoCta.count()) {
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+
+    const demoCta = page.locator('[data-testid="cta-demo"]');
+    const guestChip = page.locator('[data-testid="guest-mode-chip"]');
+
+    const ctaVisible = await demoCta
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (ctaVisible) {
       console.log('🧪 Landing page detected; triggering demo mode CTA…');
-      await demoCta.first().click();
-      await page.waitForURL('**/dashboard', { timeout: 15000 });
+      await demoCta.click();
+    } else if (!(await guestChip.isVisible().catch(() => false))) {
+      console.log('ℹ️ No landing CTA visible; assuming direct dashboard access.');
     }
-    
-    // Wait for main dashboard components to load
+
+    if (!page.url().includes('/dashboard')) {
+      await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    }
     await page.waitForSelector('[data-testid="dashboard-layout"]', { timeout: 30000, state: 'attached' });
     await page.waitForSelector('[data-testid="world-state-map"]', { timeout: 10000, state: 'attached' });
     await page.waitForSelector('[data-testid="real-time-activity"]', { timeout: 10000, state: 'attached' });
@@ -176,5 +183,36 @@ async function verifyDashboardAccessibility() {
     await browser.close();
   }
 }
+
+async function verifyDashboardAccessibilityWithRetry() {
+  const attempts = Number(process.env.PLAYWRIGHT_VERIFY_ATTEMPTS ?? '3');
+  const delayMs = Number(process.env.PLAYWRIGHT_VERIFY_RETRY_DELAY ?? '5000');
+  let lastError: unknown = null;
+
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      await verifyDashboardAccessibility();
+      return;
+    } catch (error) {
+      lastError = error;
+      const remaining = attempts - i;
+      console.warn(
+        `⚠️ Dashboard verification attempt ${i}/${attempts} failed${
+          remaining > 0 ? `; retrying in ${delayMs}ms...` : '.'
+        }`,
+        error,
+      );
+      if (remaining > 0) {
+        await delay(delayMs);
+      }
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('Dashboard verification failed after retrying');
+}
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export default globalSetup;

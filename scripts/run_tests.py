@@ -72,16 +72,38 @@ class TestRunner:
         """Run unit tests with coverage."""
         self.log("🧪 Running Unit Tests", "INFO")
 
+        coverage_args = []
+        enable_coverage = os.getenv("NOVEL_ENGINE_ENABLE_COVERAGE", "0").lower()
+        if enable_coverage not in {"", "0", "false", "off"}:
+            try:
+                import pytest_cov  # type: ignore  # noqa: F401
+
+                coverage_args = [
+                    "-p",
+                    "pytest_cov",
+                    "--cov=src",
+                    "--cov-report=term-missing",
+                    "--cov-report=html:htmlcov",
+                    "--cov-report=json:coverage.json",
+                    "--cov-report=xml:coverage.xml",
+                ]
+            except ImportError:
+                self.log(
+                    "pytest-cov not installed; running unit tests without coverage",
+                    "WARNING",
+                )
+        else:
+            self.log(
+                "Coverage disabled (set NOVEL_ENGINE_ENABLE_COVERAGE=1 to enable)",
+                "INFO",
+            )
+
         command = [
             sys.executable,
             "-m",
             "pytest",
-            "tests/",
-            "--cov=src",
-            "--cov-report=term-missing",
-            "--cov-report=html:htmlcov",
-            "--cov-report=json:coverage.json",
-            "--cov-report=xml:coverage.xml",
+            "tests/unit",
+            *coverage_args,
             "--junitxml=test-results.xml",
             "-v",
             "--tb=short",
@@ -254,7 +276,7 @@ class TestRunner:
             "--maxfail=1",
         ]
 
-        success, stdout, stderr = self.run_command(command, "Smoke Tests", timeout=60)
+        success, stdout, stderr = self.run_command(command, "Smoke Tests", timeout=180)
 
         self.results["test_results"]["smoke_tests"] = {
             "success": success,

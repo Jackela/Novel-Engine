@@ -8,75 +8,123 @@
  * using only keyboard (no mouse required)
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { DashboardPage } from './pages/DashboardPage';
+
+const ACCESSIBILITY_IGNORED_RULES = ['color-contrast', 'list', 'scrollable-region-focusable'];
+
+const focusViaTab = async (page: Page, locator: Locator, maxPresses = 40) => {
+  await locator.waitFor({ state: 'visible' });
+  for (let i = 0; i < maxPresses; i++) {
+    const isFocused = await locator.evaluate((el) => el === document.activeElement).catch(() => false);
+    if (isFocused) return;
+    await page.keyboard.press('Tab');
+  }
+  throw new Error('Unable to reach locator via keyboard navigation');
+};
+
+const activateDemoCtaWithKeyboard = async (page: Page) => {
+  await page.keyboard.press('Tab');
+  const skipLink = page.getByText('Skip to main content');
+  await expect(skipLink).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  await page.keyboard.press('Tab');
+  const ctaButton = page.locator('[data-testid="cta-demo"]');
+  await expect(ctaButton).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  const dashboardPage = new DashboardPage(page);
+  await dashboardPage.waitForDashboardLoad();
+  return dashboardPage;
+};
 
 test.describe('Keyboard-Only User Journey', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    const demoButton = page.getByRole('button', { name: /view demo/i });
-    if (await demoButton.count()) {
-      await demoButton.click();
+    const navigate = async () => {
+      await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 45000 });
+    };
+    try {
+      await navigate();
+    } catch {
+      await page.waitForTimeout(2000);
+      await navigate();
     }
-    await page.waitForSelector('[data-testid="dashboard-layout"]');
   });
 
   /**
    * Test 1: Complete keyboard navigation through CharacterSelection
    */
-  test('should allow keyboard navigation to Quick Actions and main content', async ({ page }) => {
+  test('Skip link jumps to CTA region', async ({ page }) => {
+    await page.keyboard.press('Tab');
     const skipLink = page.getByText('Skip to main content');
-    await skipLink.focus();
     await expect(skipLink).toBeFocused();
     await page.keyboard.press('Enter');
-    
-    const mainContent = page.locator('#main-content, [role="main"], main').first();
+
+    const mainContent = page.locator('#main-content');
     await expect(mainContent).toBeVisible();
-    
-    // Tab until play button is focused
-    let guard = 0;
-    while (guard < 25) {
-      const active = await page.evaluate(() => document.activeElement?.getAttribute('data-testid'));
-      if (active === 'quick-action-play') break;
-      await page.keyboard.press('Tab');
-      guard++;
-    }
-    const playButton = page.getByTestId('quick-action-play');
-    await expect(playButton).toBeFocused();
+    await expect(page.locator('[data-testid="cta-container"]')).toBeVisible();
   });
 
   /**
    * Test 2: Arrow key navigation in character grid
    */
-  test('should activate quick actions via keyboard', async ({ page }) => {
-    await page.focus('[data-testid="quick-action-play"]');
+  test('Quick Actions support keyboard navigation', async ({ page }) => {
+    const dashboardPage = await activateDemoCtaWithKeyboard(page);
+
+    const playButton = dashboardPage.playButton.first();
+    await focusViaTab(page, playButton);
+    await expect(playButton).toBeFocused();
     await page.keyboard.press('Enter');
-    await page.focus('[data-testid="quick-action-stop"]');
-    await page.keyboard.press(' ');
-    await page.focus('[data-testid="quick-action-refresh"]');
+    await expect(dashboardPage.liveIndicator).toBeVisible();
+
+    const pauseButton = dashboardPage.pauseButton.first();
+    await focusViaTab(page, pauseButton);
+    await expect(pauseButton).toBeFocused();
     await page.keyboard.press('Enter');
+    await expect(
+      dashboardPage.turnPipelineStatus.locator('[data-testid="pipeline-run-state"]'),
+    ).toHaveText(/Paused|Idle/i);
   });
 
   /**
    * Test 3: No accessibility violations on CharacterSelection
    */
-  test('should expose accessible names for quick actions', async ({ page }) => {
-    const playButton = page.getByTestId('quick-action-play');
-    const refreshButton = page.getByTestId('quick-action-refresh');
-    await expect(playButton).toHaveAttribute('aria-label', /start|pause|resume/i);
-    await expect(refreshButton).toHaveAttribute('aria-label', /refresh/i);
+  test('should have no accessibility violations on landing page', async ({ page }) => {
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .disableRules(ACCESSIBILITY_IGNORED_RULES)
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
+
+  /**
+   * Test 4: No accessibility violations on Dashboard
+   */
+  test('should have no accessibility violations on Dashboard', async ({ page }) => {
+    const dashboardPage = new DashboardPage(page);
+    await dashboardPage.navigateToDashboard();
+
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .disableRules(ACCESSIBILITY_IGNORED_RULES)
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    expect(accessibilityScanResults.violations).toEqual([]);
   });
 
   /**
    * Test 5: Focus indicators are visible
    */
   test('should show visible focus indicators', async ({ page }) => {
-    // Tab to first interactive element
-    const playButton = page.getByTestId('quick-action-play');
-    await playButton.focus();
+    const dashboardPage = await activateDemoCtaWithKeyboard(page);
+    const playButton = dashboardPage.playButton.first();
+    await focusViaTab(page, playButton);
     await expect(playButton).toBeFocused();
-    
-    // Check focus indicator is visible (outline or custom styling)
-    const outlineStyle = await playButton.evaluate(el => {
+
+    const outlineStyle = await playButton.evaluate((el) => {
       const styles = window.getComputedStyle(el);
       return {
         outline: styles.outline,
@@ -85,43 +133,37 @@ test.describe('Keyboard-Only User Journey', () => {
         boxShadow: styles.boxShadow,
       };
     });
-    
-    // Should have some form of visual focus indicator
-    const hasFocusIndicator = 
+
+    const hasFocusIndicator =
       (outlineStyle.outlineWidth !== '0px' && outlineStyle.outlineStyle !== 'none') ||
       outlineStyle.boxShadow !== 'none';
-    
+
     expect(hasFocusIndicator).toBe(true);
   });
 
   /**
    * Test 6: Screen reader announcements work correctly
    */
-  test('should announce selection changes to screen readers', async ({ page }) => {
-    await page.evaluate(() => {
-      (window as any).__announcements = [];
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach(mutation => {
-          const target = mutation.target as HTMLElement;
-          if (target.getAttribute('aria-live')) {
-            (window as any).__announcements.push(target.textContent);
-          }
-        });
-      });
-      observer.observe(document.body, { subtree: true, childList: true, characterData: true });
-    });
-    
-    const playButton = page.getByTestId('quick-action-play');
-    const pauseButton = page.getByTestId('quick-action-pause');
+test('should announce connection state updates to screen readers', async ({ page }) => {
+  const dashboardPage = await activateDemoCtaWithKeyboard(page);
+  await focusViaTab(page, dashboardPage.playButton.first());
 
-    await playButton.focus();
-    await page.keyboard.press('Enter');
-    await expect(pauseButton).toBeEnabled();
-    await pauseButton.focus();
+    await page.evaluate(() => {
+      (window as any).announcements = [];
+      const target = document.querySelector('[data-testid="live-indicator"]');
+      if (!target) return;
+      const observer = new MutationObserver(() => {
+        if (target.textContent) {
+          (window as any).announcements.push(target.textContent);
+        }
+      });
+      observer.observe(target, { childList: true, subtree: true, characterData: true });
+    });
+
     await page.keyboard.press('Enter');
     await page.waitForTimeout(500);
-    
-    const announcements = await page.evaluate(() => (window as any).__announcements || []);
-    expect(announcements.length).toBeGreaterThan(0);
-  });
+
+  const announcements = await page.evaluate(() => (window as any).announcements);
+  expect(announcements.length).toBeGreaterThan(0);
+});
 });

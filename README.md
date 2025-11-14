@@ -21,6 +21,8 @@
 - 生产友好：并发安全、丰富日志、缓存与重试、错误处理与可观测性
 - 前端支持：独立的 `frontend/`（React 18），设计系统与质量门禁集成
 
+![Flow-based dashboard view](docs/assets/dashboard/dashboard-flow-2025-11-12.png)
+
 ---
 
 ## 理论基础
@@ -72,14 +74,27 @@ pytest -q  # 可选：快速运行测试
 python api_server.py  # 或运行其他入口，如 production_api_server.py
 ```
 
-前端（示例）
+前/后端一键启动（非阻塞）
 
-```
-cd frontend
-npm ci
-npm run build:tokens
-npm run dev
-```
+1. 创建虚拟环境并安装依赖：
+   ```bash
+   python -m venv .venv
+   . .venv/bin/activate  # Windows 请使用 .venv\\Scripts\\activate
+   pip install -r requirements.txt
+   (cd frontend && npm install)
+   ```
+2. 运行统一脚本（后台启动 + 健康检查）：
+   ```bash
+   npm run dev:daemon
+   ```
+   - 后端默认监听 `http://127.0.0.1:8000/health`
+   - 前端默认监听 `http://127.0.0.1:3000`
+   - 日志写入 `tmp/dev_env.log`，PID 写入 `tmp/dev_env/`
+3. 停止后台进程：
+   ```bash
+   npm run dev:stop
+   ```
+4. 如需单独运行某端，可进入对应目录执行传统命令，但 README 以后将以脚本为准。
 
 ### 统一开发脚本（前后端同步启动）
 
@@ -117,8 +132,42 @@ SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwri
 ## 测试与质量
 
 - Python 测试：`pytest`（配置见 `pytest.ini` / `.coveragerc`）
-- 本地 CI 对齐验证：`scripts/validate_ci_locally.sh`（Windows 可用 `scripts/validate_ci_locally.ps1`）。默认仅校验当前变更涉及的文件，可通过 `RUN_LINT=1` / `RUN_MYPY=1` / `RUN_TESTS=1` 扩展到完整的遗留模块（注意：旧模块仍存在未清理的 lint/mypy 问题，需逐步消化）。
+- 本地 CI 对齐：`scripts/validate_ci_locally.sh`（Windows 可用 `scripts/validate_ci_locally.ps1`）。默认只跑相关文件，可通过 `RUN_LINT=1` / `RUN_MYPY=1` / `RUN_TESTS=1` 扩展到遗留模块（注意其中仍有 lint/mypy 技债）。
 - 前端质量门禁：`npm run type-check`、`npm run lint:all`、`npm run tokens:check`
+- 完整 UAT：使用 `npm run dev:daemon` 启动后执行 Playwright 套件（核心 UAT、扩展 UAT、跨浏览器、无障碍）。
+
+**最后一次本地验证**（2025-11-12，commit `584cc40`）
+
+| 范畴 | 命令 |
+| --- | --- |
+| Lint & Type | `npm run lint:all --prefix frontend`、`npm run type-check --prefix frontend` |
+| 单元测试 | `npm test -- --run`（frontend）、`pytest`（backend） |
+| Playwright | `npx playwright test tests/e2e/login-flow.spec.ts`、`npx playwright test tests/e2e/dashboard-interactions.spec.ts` |
+| CI Parity | `scripts/validate_ci_locally.sh`、`act --pull=false -W .github/workflows/frontend-ci.yml -j build-and-test`、`act --pull=false -W .github/workflows/ci.yml -j tests` |
+
+如需快速复现，可执行 `scripts/dev_env_daemon.sh` 启动环境后运行以上命令；验证输出会被追加到 `tmp/dev_env.log` 与 `reports/test-results/`。
+
+### Demo CTA & Offline 模式指南
+
+- **运行 Demo CTA 流程**  
+  1. 在 `frontend/` 中执行 `npm install && npm run dev`；  
+  2. 打开 `http://127.0.0.1:3000/`，点击 “View Demo (cta-demo)” 按钮；  
+  3. 确认跳转到 `/dashboard`，看到 Demo banner（`data-testid="guest-mode-banner"`）与 Summary Strip 的 Demo/Live 指示。
+
+- **模拟离线状态**  
+  - 在本地 DevTools Network 面板选择 “Offline”，或在 Playwright 里使用 `page.context().setOffline(true)`；  
+  - 仪表盘右上角的 Connection 指示器会变为 `OFFLINE`，恢复网络后自动返回 `ONLINE/LIVE` 并在控制台输出 `[connection-indicator]` 日志。
+
+- **Playwright 验证与 Experience Report**  
+  - `npm run test:e2e:smoke`（<1 分钟）仅覆盖 Demo CTA + Offline 场景；  
+  - `npm run test:e2e` 运行完整套件；  
+  - 每次 Playwright 运行结束都会在 `frontend/reports/experience-report-*.md/.html` 生成报告，CI 不仅上传为构建工件，还会在 GitHub Job Summary 中渲染 CTA/Offline 状态表格（无需下载即可查看）。
+
+- **全局变量**  
+  - `PLAYWRIGHT_VERIFY_ATTEMPTS` / `PLAYWRIGHT_VERIFY_RETRY_DELAY`：控制全局 setup 在验证 `/dashboard` 之前的重试次数与间隔，调试不稳定环境时可在命令行导出：  
+    ```bash
+    PLAYWRIGHT_VERIFY_ATTEMPTS=5 PLAYWRIGHT_VERIFY_RETRY_DELAY=8000 npm run test:e2e:smoke
+    ```
 
 ---
 

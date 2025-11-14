@@ -14,4 +14,3 @@ class CachingConfig:
 
 
 default_caching_config = CachingConfig()
-

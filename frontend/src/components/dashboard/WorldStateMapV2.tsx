@@ -55,8 +55,8 @@ const MapGrid = styled(Box)({
 });
 
 const LocationMarker = styled(motion.div, {
-  shouldForwardProp: (prop) => prop !== 'activeState' && prop !== 'activityLevel',
-})<{ activeState?: boolean; activityLevel?: string }>(({ theme, activeState: active, activityLevel: activitylevel }) => ({
+  shouldForwardProp: (prop: PropertyKey) => !['active', 'activitylevel'].includes(String(prop))
+})<{ active?: boolean; activitylevel?: string }>(({ theme, active, activitylevel }) => ({
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
@@ -101,9 +101,7 @@ const LocationMarker = styled(motion.div, {
   },
 }));
 
-const CharacterAvatar = styled(Avatar, {
-  shouldForwardProp: (prop) => prop !== 'activeState',
-})<{ activeState?: boolean }>(({ theme, activeState: active }) => ({
+const CharacterAvatar = styled(Avatar)<{ active?: boolean }>(({ theme, active }) => ({
   width: 24,
   height: 24,
   fontSize: '0.7rem',
@@ -257,14 +255,12 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
             const isSelected = selectedLocation === location.id;
             
             return (
-              <LocationMarker
+             <LocationMarker
                 key={location.id}
-                activeState={isSelected}
-                activityLevel={location.activity}
-                data-testid="world-map-location"
-                data-location-id={location.id}
+                active={isSelected}
+                activitylevel={location.activity}
                 data-activity={location.activity}
-                data-role="world-map-location"
+                data-location={location.id}
                 style={{
                   gridColumnStart: location.gridPosition.x,
                   gridRowStart: location.gridPosition.y,
@@ -276,6 +272,7 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.3 }}
               >
+                <span className="location-activity-flag" data-activity={location.activity} style={{ display: 'none' }} />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                   <LocationIcon
                     sx={{ 
@@ -300,19 +297,11 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
                   </Typography>
                 </Box>
 
-                <Stack 
-                  direction="row" 
-                  spacing={-0.5} 
-                  sx={{ alignSelf: 'flex-start' }}
-                  data-testid="world-map-character-markers"
-                >
+                <Stack direction="row" spacing={-0.5} sx={{ alignSelf: 'flex-start' }}>
                   {location.characters.slice(0, 3).map((character) => (
                     <CharacterAvatar
                       key={character.id}
-                      activeState={isSelected}
-                      data-testid="world-map-character"
-                      data-character-id={character.id}
-                      data-character-name={character.name}
+                      active={isSelected}
                       sx={{ 
                         backgroundColor: getActivityColor(location.activity),
                         border: (theme) => `2px solid ${theme.palette.background.default}`,
@@ -357,7 +346,6 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
                             <ListItem 
                               key={character.id} 
                               disablePadding
-                              data-testid="world-map-character-detail"
                               sx={{ mb: 0.5 }}
                             >
                               <ListItemAvatar sx={{ minWidth: 32 }}>
@@ -393,7 +381,6 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
 
         {/* Status Information */}
         <Box
-          data-testid="world-map-last-updated"
           sx={{
             position: 'absolute',
             bottom: 8,

@@ -28,8 +28,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache: ${{ env.ACT != 'true' && 'npm' || '' }}
+          cache-dependency-path: ${{ env.ACT != 'true' && 'frontend/package-lock.json' || '' }}
 
       - name: Setup Node (no cache under act)
         if: env.ACT == 'true'
@@ -58,3 +58,23 @@ jobs:
       - name: Build
         if: ${{ hashFiles('frontend/package.json') != '' }}
         run: npm run build --if-present
+
+      - name: Install Playwright Browsers
+        if: ${{ hashFiles('frontend/package.json') != '' }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright Smoke Tests
+        if: ${{ hashFiles('frontend/package.json') != '' && github.event_name == 'pull_request' }}
+        run: npm run test:e2e:smoke
+
+      - name: Playwright Full Tests
+        if: ${{ hashFiles('frontend/package.json') != '' && github.event_name != 'pull_request' }}
+        run: npm run test:e2e
+
+      - name: Upload Experience Report
+        if: ${{ always() && env.ACT != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: experience-report
+          path: frontend/reports/experience-report-*.md
+          if-no-files-found: ignore

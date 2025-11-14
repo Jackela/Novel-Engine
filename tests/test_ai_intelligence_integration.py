@@ -16,8 +16,8 @@ Test Categories:
 - User experience integration
 """
 
-import os
 import asyncio
+import os
 import tempfile
 from datetime import datetime
 from pathlib import Path

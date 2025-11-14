@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
 import pytest
+import pytest_asyncio
 
 # Import the security framework components
 from src.security.auth_system import (
@@ -64,7 +65,7 @@ from src.security.security_logging import (
 class TestSecurityService:
     """Security Service Tests"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_service(self):
         """Create a temporary security service for testing"""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
@@ -488,7 +489,7 @@ class TestSecurityHeaders:
 class TestDataProtection:
     """Data Protection Tests"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def data_protection_service(self):
         """Create data protection service for testing"""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
@@ -610,7 +611,7 @@ class TestDataProtection:
 class TestSecurityLogging:
     """Security Logging Tests"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def security_logger(self):
         """Create security logger for testing"""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:

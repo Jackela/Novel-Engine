@@ -11,6 +11,64 @@ import { defineConfig, devices } from '@playwright/test';
  * - Performance monitoring
  */
 
+const enableFullMatrix =
+  (process.env.PLAYWRIGHT_ENABLE_FULL_MATRIX || '').toLowerCase() === 'true';
+
+const browserProjects = [
+  {
+    name: 'chromium-desktop',
+    use: { 
+      ...devices['Desktop Chrome'],
+      viewport: { width: 1440, height: 900 },
+      contextOptions: {
+        // Enable real-time features
+        permissions: ['notifications'],
+      },
+    },
+  },
+];
+
+if (enableFullMatrix) {
+  browserProjects.push(
+    {
+      name: 'firefox-desktop',
+      use: { 
+        ...devices['Desktop Firefox'],
+        viewport: { width: 1440, height: 900 },
+      },
+    },
+    {
+      name: 'webkit-desktop',
+      use: { 
+        ...devices['Desktop Safari'],
+        viewport: { width: 1440, height: 900 },
+      },
+    },
+    {
+      name: 'tablet',
+      use: { 
+        ...devices['iPad Pro'],
+        viewport: { width: 1024, height: 768 },
+      },
+    },
+    {
+      name: 'mobile',
+      use: { 
+        ...devices['iPhone 13'],
+        viewport: { width: 375, height: 667 },
+      },
+    },
+    {
+      name: 'high-dpi',
+      use: {
+        ...devices['Desktop Chrome HiDPI'],
+        viewport: { width: 1440, height: 900 },
+        deviceScaleFactor: 2,
+      },
+    }
+  );
+}
+
 export default defineConfig({
   testDir: './tests/e2e',
   
@@ -58,67 +116,11 @@ export default defineConfig({
   },
 
   // Project configurations for different browsers and devices
-  projects: [
-    {
-      name: 'chromium-desktop',
-      use: { 
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1440, height: 900 },
-        contextOptions: {
-          // Enable real-time features
-          permissions: ['notifications'],
-        },
-      },
-    },
-
-    {
-      name: 'firefox-desktop',
-      use: { 
-        ...devices['Desktop Firefox'],
-        viewport: { width: 1440, height: 900 },
-      },
-    },
-
-    {
-      name: 'webkit-desktop',
-      use: { 
-        ...devices['Desktop Safari'],
-        viewport: { width: 1440, height: 900 },
-      },
-    },
-
-    // Tablet testing for responsive design
-    {
-      name: 'tablet',
-      use: { 
-        ...devices['iPad Pro'],
-        viewport: { width: 1024, height: 768 },
-      },
-    },
-
-    // Mobile testing
-    {
-      name: 'mobile',
-      use: { 
-        ...devices['iPhone 13'],
-        viewport: { width: 375, height: 667 },
-      },
-    },
-
-    // High DPI testing
-    {
-      name: 'high-dpi',
-      use: {
-        ...devices['Desktop Chrome HiDPI'],
-        viewport: { width: 1440, height: 900 },
-        deviceScaleFactor: 2,
-      },
-    },
-  ],
+  projects: browserProjects,
 
   // Development server configuration
   webServer: {
-    command: 'npm run dev',
+    command: 'bash ../scripts/dev_env_webserver.sh',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 2 minutes to start dev server

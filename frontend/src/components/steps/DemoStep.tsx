@@ -61,7 +61,19 @@ export default function DemoStep({ apiUrl: _apiUrl, hasApiKey, onStoryGenerated,
           <p>Select one of our sample stories to see StoryForge AI in action:</p>
           <div className="story-grid">
             {sampleStories.map((story) => (
-              <div key={story.id} className="story-card" onClick={() => handleStorySelection(story)}>
+              <div
+                key={story.id}
+                className="story-card"
+                onClick={() => handleStorySelection(story)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleStorySelection(story);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+              >
                 <div className="story-header">
                   <h4>{story.title}</h4>
                   <span className="story-genre">{story.genre}</span>

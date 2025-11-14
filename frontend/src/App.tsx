@@ -8,6 +8,7 @@ import theme from './styles/theme';
 import { store } from './store/store';
 // Route-based code splitting with React.lazy() (T050)
 const Dashboard = lazy(() => import('./components/dashboard/Dashboard'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 // import { useAppSelector } from './hooks/redux'; // Unused after auth refactor
 import { initializeMobileOptimizations } from './utils/serviceWorkerRegistration';
 import { logger } from './services/logging/LoggerFactory';
@@ -44,11 +45,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   
   // T051: No dev mode bypass - authentication enforced in all environments
   if (!isAuthenticated) {
-    logger.warn('Unauthenticated access to protected route, redirecting to login', undefined, {
+    logger.warn('Unauthenticated access to protected route, redirecting to landing', {
       component: 'ProtectedRoute',
       action: 'authCheck',
     });
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
   
   return <>{children}</>;
@@ -67,18 +68,20 @@ const AppRoutes: React.FC = () => {
         <Route
           path="/dashboard"
           element={
-            <Suspense fallback={<LoadingFallback />}>
-              <Dashboard />
-            </Suspense>
+            <ProtectedRoute>
+              <Suspense fallback={<LoadingFallback />}>
+                <Dashboard />
+              </Suspense>
+            </ProtectedRoute>
           }
         />
         
-        {/* Default route shows dashboard directly */}
+        {/* Landing route */}
         <Route
           path="/"
           element={
             <Suspense fallback={<LoadingFallback />}>
-              <Dashboard />
+              <LandingPage />
             </Suspense>
           }
         />
@@ -100,7 +103,7 @@ const AppRoutes: React.FC = () => {
         />
         
         {/* Fallback for unknown routes */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

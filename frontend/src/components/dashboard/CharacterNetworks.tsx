@@ -176,6 +176,7 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
     <GridTile
       title="Character Networks"
       data-testid="character-networks"
+      data-role="character-networks"
       position={{
         desktop: { column: '1 / 7', height: '280px' },
         tablet: { column: '1 / 5', height: '260px' },
@@ -240,6 +241,9 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
               <Fade in key={character.id} timeout={300 + index * 100}>
                 <CharacterCard
                   status={character.status}
+                  data-character-id={character.id}
+                  data-character-status={character.status}
+                  data-character-name={character.name}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -302,6 +306,8 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                         value={character.trustLevel}
                         trustlevel={character.trustLevel}
                         sx={{ flex: 1 }}
+                        aria-label={`${character.name} trust level ${character.trustLevel} percent`}
+                        data-testid="character-trust-progress"
                       />
                     </Stack>
 

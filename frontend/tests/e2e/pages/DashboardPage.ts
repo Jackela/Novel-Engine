@@ -36,6 +36,10 @@ export class DashboardPage {
   readonly connectionStatus: Locator;
   readonly systemHealth: Locator;
   readonly liveIndicator: Locator;
+  readonly guestModeChip: Locator;
+  readonly guestModeBanner: Locator;
+  readonly summaryStrip: Locator;
+  readonly pipelineStageMarkers: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -49,13 +53,11 @@ export class DashboardPage {
     this.worldStateMap = page.locator('[data-testid="world-state-map"]');
     this.realTimeActivity = page.locator('[data-testid="real-time-activity"]');
     this.performanceMetrics = page.locator('[data-testid="performance-metrics"]');
-    this.turnPipelineStatus = page.locator('[data-testid="turn-pipeline-status"]');
+    this.turnPipelineStatus = page.locator('[data-testid="turn-pipeline-status"]').first();
     this.quickActions = page.locator('[data-testid="quick-actions"]');
-    this.characterNetworks = page.locator(
-      '[data-testid="character-networks"], [data-component="character-networks"], section:has-text("Character Networks"), div:has(> h2:has-text("Character Networks"))'
-    );
+    this.characterNetworks = page.locator('[data-testid="character-networks"]');
     this.eventCascadeFlow = page.locator('[data-testid="event-cascade-flow"]');
-    this.narrativeTimeline = page.locator('[data-testid="narrative-timeline"]').first();
+    this.narrativeTimeline = page.locator('[data-testid="narrative-timeline"]');
     this.analyticsPanel = page.locator('[data-testid="analytics-panel"]');
     
     // Controls based on UI spec
@@ -68,21 +70,62 @@ export class DashboardPage {
     // Status indicators
     this.connectionStatus = page.locator('[data-testid="connection-status"]');
     this.systemHealth = page.locator('[data-testid="system-health"]');
-    this.liveIndicator = page.locator('[data-testid="live-indicator"]');
+    this.liveIndicator = page.locator('[data-testid="live-indicator"]').first();
+    this.guestModeChip = page.locator('[data-testid="guest-mode-chip"]');
+    this.guestModeBanner = page.locator('[data-testid="guest-mode-banner"]');
+    this.summaryStrip = page.locator('[data-testid="summary-strip"]');
+    this.pipelineStageMarkers = this.turnPipelineStatus.locator('[data-testid="pipeline-stage-marker"]');
   }
 
   /**
    * Navigate to dashboard and wait for full load
    */
   async navigateToDashboard() {
-    await this.page.goto('/dashboard');
-    console.log(`📍 Navigated to ${await this.page.url()}`);
-    
-    // If redirected to landing page, trigger demo CTA
-    const demoCta = this.page.locator('[data-testid="cta-demo"], [data-testid="cta-demo-primary"]');
-    if (await demoCta.count()) {
-      console.log('🧪 Landing page detected during navigation; activating demo CTA…');
-      await demoCta.first().click();
+    await this.page.addInitScript(() => {
+      try {
+        window.sessionStorage.setItem('novel-engine-guest-session', '1');
+      } catch {
+        // ignore storage failures in CI
+      }
+    });
+
+    let onDashboard = false;
+    try {
+      await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 45000 });
+      onDashboard = true;
+    } catch (error) {
+      console.warn('⚠️ Direct dashboard navigation failed, falling back to landing CTA', error);
+    }
+
+    if (!onDashboard) {
+      try {
+        await this.page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      } catch (error) {
+        console.warn('⚠️ Landing page navigation timed out, retrying once more', error);
+        await this.page.goto('/', { waitUntil: 'commit', timeout: 30000 });
+      }
+
+      const demoCta = this.page.locator('[data-testid="cta-demo"]');
+      const ctaReady = await demoCta.waitFor({ state: 'visible', timeout: 10000 }).then(() => true).catch(() => false);
+      if (ctaReady) {
+        await demoCta.click();
+      }
+
+      await this.page.waitForURL('**/dashboard', { timeout: 20000 }).catch(async () => {
+        await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      });
+    }
+
+    let navigated = false;
+    try {
+      await this.page.waitForURL('**/dashboard', { timeout: 20000 });
+      navigated = true;
+    } catch {
+      // fall through and try direct navigation
+    }
+
+    if (!navigated) {
+      await this.page.goto('/dashboard', { waitUntil: 'load' });
       await this.page.waitForURL('**/dashboard', { timeout: 15000 });
     }
 
@@ -120,17 +163,9 @@ export class DashboardPage {
     const runButton = this.playButton.first();
     
     await expect(runButton).toBeVisible({ timeout: 5000 });
+    await expect(runButton).toBeEnabled({ timeout: 5000 });
     
-    const enabled = await runButton.isEnabled().catch(() => false);
-    if (!enabled) {
-      console.log('⏳ Play button disabled; waiting for previous orchestration to settle');
-      const reenabled = await this.waitForQuickActionAvailability(runButton, 7000);
-      if (!reenabled) {
-        console.log('⚠️ Play button never re-enabled; assuming orchestration already active');
-        return;
-      }
-    }
-    
+    // Click to start turn orchestration
     await runButton.click();
     
     // Verify turn started by checking pipeline status
@@ -141,20 +176,14 @@ export class DashboardPage {
    * Wait for turn orchestration to start
    */
   async waitForTurnStart() {
-    try {
-      await this.page.waitForSelector(
-        '[data-testid="turn-pipeline-status"] [data-status="processing"]',
-        { timeout: 10000 }
-      );
-    } catch {
-      console.log('⚠️ Turn pipeline never reported processing state');
-    }
+    // Wait for pipeline to show active status
+    await this.page.waitForSelector(
+      '[data-testid="turn-pipeline-status"] [data-status="processing"], [data-testid="turn-pipeline-status"] [data-status="active"]',
+      { timeout: 10000 }
+    );
     
-    try {
-      await expect(this.liveIndicator).toBeVisible({ timeout: 5000 });
-    } catch {
-      console.log('⚠️ Live indicator not visible after triggering orchestration');
-    }
+    // Verify live indicator shows activity
+    await expect(this.liveIndicator).toBeVisible({ timeout: 5000 });
   }
 
   /**
@@ -180,17 +209,31 @@ export class DashboardPage {
       const phaseStart = Date.now();
       
       try {
-        const phaseItem = this.turnPipelineStatus.getByRole('listitem').filter({
-          hasText: phase,
-        }).first();
+        const phaseRow = this.turnPipelineStatus
+          .locator('[data-phase-name]')
+          .filter({ hasText: new RegExp(phase, 'i') })
+          .first();
+        await expect(phaseRow).toBeVisible({ timeout: 10000 });
 
-        await expect(phaseItem).toBeVisible({ timeout: 10000 });
-        await expect(phaseItem.getByText(/completed/i)).toBeVisible({ timeout: 30000 });
-        
+        let completed = false;
+        try {
+          const phaseHandle = await phaseRow.elementHandle();
+          if (phaseHandle) {
+            await this.page.waitForFunction(
+              el => el?.getAttribute?.('data-status') === 'completed',
+              phaseHandle,
+              { timeout: 15000 }
+            );
+            completed = true;
+          }
+        } catch {
+          completed = (await phaseRow.getAttribute('data-status')) === 'completed';
+        }
+
         const duration = Date.now() - phaseStart;
-        results.push({ phase, completed: true, duration });
+        results.push({ phase, completed, duration });
         
-        console.log(`✅ Phase ${i + 1}: ${phase} completed in ${duration}ms`);
+        console.log(`✅ Phase ${i + 1}: ${phase} completed in ${duration}ms (completed=${completed})`);
         
       } catch (error) {
         console.log(`⚠️ Phase ${i + 1}: ${phase} did not complete within timeout`);
@@ -227,19 +270,14 @@ export class DashboardPage {
   private async checkWorldStateUpdates() {
     const component = this.worldStateMap;
     
-    // Look for activity indicators, updated positions, new markers
-    const activityIndicators = await component.locator('[class*="activity"], [data-activity]').count();
-    const locationMarkers = await component.locator('[data-role="world-map-location"], [data-testid="world-map-location"]').count();
-    const characterMarkers = await component.locator('[data-testid*="character"], [data-character-id], .character-marker, .MuiAvatar-root').count();
-    
+    const markerCount = await component.locator('[data-location]').count();
+    const avatarCount = await component.locator('.MuiAvatar-root').count();
     const updates = {
-      hasActivityIndicators: activityIndicators > 0,
-      hasCharacterMarkers: characterMarkers > 0 || locationMarkers > 0,
-      hasNewMovement: locationMarkers > 2 || activityIndicators > 1,
-      timestampUpdated: await this.checkTimestampUpdate(component)
+      hasActivityIndicators: markerCount > 0,
+      hasCharacterMarkers: avatarCount > 0,
+      hasNewMovement: markerCount > 1,
+      timestampUpdated: await component.locator('text=/Last updated/i').count() > 0
     };
-    
-    console.log('🌐 World map update snapshot:', updates);
     
     return updates;
   }
@@ -249,25 +287,15 @@ export class DashboardPage {
    */
   private async checkActivityUpdates() {
     const component = this.realTimeActivity;
-    let liveIndicatorVisible = false;
-    try {
-      liveIndicatorVisible = await this.liveIndicator.isVisible();
-    } catch {
-      liveIndicatorVisible = false;
-    }
     
-    const eventLocator = component.locator('[data-testid="activity-event"], [data-activity-id], li.MuiListItem-root');
-    const characterLocator = component.locator('[data-testid*="character-activity"], [data-character-activity="true"], .MuiChip-root');
-    const eventCount = await eventLocator.count();
-
+    const eventCount = await component.locator('li').count();
     const updates = {
       hasNewEvents: eventCount > 0,
-      hasLiveIndicator: liveIndicatorVisible,
+      hasLiveIndicator: await this.connectionStatus.isVisible(),
       eventCount,
-      hasCharacterActivity: (await characterLocator.count()) > 0
+      hasCharacterActivity: await component.locator('[data-testid*="character-activity"]').count() > 0
     };
     
-    console.log('📡 Real-time activity snapshot:', updates);
     return updates;
   }
 
@@ -278,21 +306,12 @@ export class DashboardPage {
     const component = this.performanceMetrics;
     
     const updates = {
-      hasHealthStatus: (await component.locator('[data-testid="health-status"], [data-role="system-health"]').count()) > 0 
-        || (await component.getByText(/system health/i).count()) > 0,
-      hasMetricValues: await component.locator('[data-testid*="metric-value"]').count() > 0,
-      hasProgressBars: await component.locator('progress, [role="progressbar"]').count() > 0,
-      systemOnline: await this.checkSystemStatus(component)
+      hasHealthStatus: await component.locator('[data-testid="performance-health-status"]').first().isVisible(),
+      hasMetricValues: await component.locator('[data-testid="performance-metric-value"]').count() > 0,
+      hasProgressBars: await component.locator('[data-testid="performance-metric-progress"], progress, [role="progressbar"]').count() > 0,
+      systemOnline: await this.checkSystemStatus(component, '[data-testid="performance-health-status"]')
     };
     
-    if (!updates.hasHealthStatus) {
-      updates.hasHealthStatus = await component.isVisible();
-    }
-    if (!updates.systemOnline && updates.hasMetricValues) {
-      updates.systemOnline = true;
-    }
-    
-    console.log('📈 Performance metrics snapshot:', updates);
     return updates;
   }
 
@@ -300,42 +319,23 @@ export class DashboardPage {
    * Check for Character Networks updates
    */
   private async checkCharacterUpdates() {
-    let component = this.characterNetworks;
-    if ((await component.count()) === 0) {
-      const fallback = this.page.locator('section:has-text("Character Networks"), div:has-text("Character Networks")').first();
-      if (await fallback.count()) {
-        component = fallback;
-      }
+    const component = this.characterNetworks;
+    await component.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+
+    const nodesLocator = component.locator('[data-character-id], .MuiAvatar-root, [data-character]');
+    const nodeCount = await nodesLocator.count();
+    if (nodeCount === 0) {
+      await nodesLocator.first().waitFor({ state: 'attached', timeout: 2000 }).catch(() => {});
     }
-    if ((await component.count()) > 1) {
-      component = component.first();
-    }
-    
-    const nodeLocator = component.locator('[data-testid*="character-node"], [data-character-id], .MuiListItem-root');
-    const connectionLocator = component.locator('[data-testid*="connection"], [data-character-status], .MuiChip-root');
-    const activityLocator = component.locator('[class*="activity"], [data-activity], [data-character-status]');
-    
+
+    const connectionCount = await component.locator('[data-character-id] svg, line, path').count();
     const updates = {
-      hasCharacterNodes: (await nodeLocator.count()) > 0,
-      hasConnections: (await connectionLocator.count()) > 0,
-      hasActivityMarkers: (await activityLocator.count()) > 0,
+      hasCharacterNodes: nodeCount > 0,
+      hasConnections: connectionCount > 0,
+      hasActivityMarkers: nodeCount > 2,
       networkVisible: await component.isVisible()
     };
-
-    if (!updates.hasCharacterNodes && updates.networkVisible) {
-      updates.hasCharacterNodes = true;
-    }
-    if (!updates.hasConnections && (await component.locator('.MuiChip-root, [data-character-status]').count()) > 0) {
-      updates.hasConnections = true;
-    }
-    if (!updates.hasConnections && updates.hasCharacterNodes) {
-      updates.hasConnections = true;
-    }
-    if (!updates.hasActivityMarkers && (updates.hasCharacterNodes || updates.hasConnections)) {
-      updates.hasActivityMarkers = true;
-    }
     
-    console.log('🕸️ Character network snapshot:', updates);
     return updates;
   }
 
@@ -343,46 +343,14 @@ export class DashboardPage {
    * Check for Narrative Timeline updates
    */
   private async checkTimelineUpdates() {
-    let component = this.narrativeTimeline;
-    if ((await component.count()) === 0) {
-      const fallback = this.page
-        .locator('[data-role="stream-feed"] section, [data-role="stream-feed"] div')
-        .filter({ hasText: /Narrative Arc Timeline/i })
-        .first();
-      if (await fallback.count()) {
-        component = fallback;
-      }
-    }
-    component = component.first();
+    const component = this.narrativeTimeline;
     
-    const progressLocator = component.locator('[data-testid*="progress"], [class*="marker"], progress, .MuiLinearProgress-root');
-    let hasProgressMarkers = (await progressLocator.count()) > 0;
-    let hasCurrentTurn = false;
-    try {
-      hasCurrentTurn = await component.locator('[data-testid="current-turn"]').isVisible();
-    } catch {
-      hasCurrentTurn = false;
-    }
-    if (!hasCurrentTurn) {
-      hasCurrentTurn = (await component.getByText(/Turn\s+\d+/i).count()) > 0;
-    }
-
     const updates = {
-      hasProgressMarkers,
-      hasCurrentTurn,
+      hasProgressMarkers: await component.locator('[data-testid*="progress"], [class*="marker"]').count() > 0,
+      hasCurrentTurn: await component.locator('[data-testid="current-turn"]').isVisible(),
       hasArcProgress: await component.locator('[data-testid*="arc-progress"]').count() > 0,
       timelineVisible: await component.isVisible()
     };
-
-    if (!updates.hasProgressMarkers && updates.timelineVisible) {
-      updates.hasProgressMarkers = true;
-    }
-    if (!updates.hasArcProgress && updates.hasProgressMarkers) {
-      updates.hasArcProgress = true;
-    }
-    if (!updates.hasCurrentTurn && updates.timelineVisible) {
-      updates.hasCurrentTurn = true;
-    }
     
     return updates;
   }
@@ -391,36 +359,21 @@ export class DashboardPage {
    * Helper method to check timestamp updates
    */
   private async checkTimestampUpdate(component: Locator) {
-    const timestampElements = component.locator('[data-testid*="timestamp"], [data-testid="world-map-last-updated"], [class*="timestamp"], time');
-    if (await timestampElements.count() > 0) {
-      return true;
-    }
-    return (await component.getByText(/Last updated/i).count()) > 0;
+    const timestampElements = component.locator('[data-testid*="timestamp"], [class*="timestamp"], time');
+    return await timestampElements.count() > 0;
   }
 
   /**
    * Helper method to check system status
    */
-  private async checkSystemStatus(component: Locator) {
-    const statusElements = component.locator('[data-testid="system-status"], [data-role="system-health"], [class*="status"]');
-    if (await statusElements.count() === 0) {
-      return (await component.getByText(/system (healthy|warning|online)/i).count()) > 0;
-    }
+  private async checkSystemStatus(component: Locator, selector = '[data-testid="system-status"], [class*="status"]') {
+    const statusElements = component.locator(selector);
+    if (await statusElements.count() === 0) return false;
     
     const statusText = await statusElements.first().textContent();
-    return statusText?.toLowerCase().includes('healthy') || statusText?.toLowerCase().includes('online');
-  }
-
-  /**
-   * Helper to wait for quick action button availability.
-   */
-  private async waitForQuickActionAvailability(button: Locator, timeout = 5000) {
-    try {
-      await expect(button).toBeEnabled({ timeout });
-      return true;
-    } catch {
-      return false;
-    }
+    if (!statusText) return false;
+    const normalized = statusText.toLowerCase();
+    return ['healthy', 'online', 'warning', 'active', 'live'].some(flag => normalized.includes(flag));
   }
 
   /**
@@ -430,46 +383,28 @@ export class DashboardPage {
     console.log('📐 Validating component layout...');
     
     const layout = {
-      worldStateMap: await this.isComponentVisible(this.worldStateMap),
-      realTimeActivity: await this.isComponentVisible(this.realTimeActivity),
-      performanceMetrics: await this.isComponentVisible(this.performanceMetrics),
-      turnPipeline: await this.isComponentVisible(this.turnPipelineStatus),
-      quickActions: await this.validateControlCluster()
+      worldStateMap: await this.validateGridPosition(this.worldStateMap, { columns: '1 / 7' }),
+      realTimeActivity: await this.validateGridPosition(this.realTimeActivity, { columns: '8 / 11' }),
+      performanceMetrics: await this.validateGridPosition(this.performanceMetrics, { columns: '12 / 13' }),
+      turnPipeline: await this.validateGridPosition(this.turnPipelineStatus, { columns: '8 / 11' }),
+      quickActions: await this.validateGridPosition(this.quickActions, { columns: '12 / 13' })
     };
     
     return layout;
   }
 
   /**
-   * Helper to validate control cluster presence + visibility
+   * Helper to validate grid positioning
    */
-  private async validateControlCluster() {
-    const controlCluster = this.page.locator('[data-role="control-cluster"]');
-    const clusterExists = (await controlCluster.count()) > 0;
-
-    const clusterVisible = clusterExists ? await controlCluster.first().isVisible() : true;
-    const quickActionsVisible = await this.isComponentVisible(this.quickActions);
-    const summaryStripLocator = this.page.locator('[data-testid="summary-strip"]');
-    let summaryStripVisible = true;
-    if ((await summaryStripLocator.count()) > 0) {
-      summaryStripVisible = await this.isComponentVisible(summaryStripLocator);
-    }
-
-    return clusterVisible && quickActionsVisible && summaryStripVisible;
-  }
-
-  /**
-   * Helper to validate component visibility
-   */
-  private async isComponentVisible(component: Locator) {
-    if ((await component.count()) === 0) {
-      return false;
-    }
-    try {
-      return await component.first().isVisible();
-    } catch {
-      return false;
-    }
+  private async validateGridPosition(component: Locator, expected: { columns: string }) {
+    const element = await component.first().elementHandle();
+    if (!element) return false;
+    
+    const gridColumn = await element.evaluate(el => 
+      window.getComputedStyle(el).getPropertyValue('grid-column')
+    );
+    
+    return gridColumn.includes(expected.columns.replace(' / ', ' / '));
   }
 
   /**

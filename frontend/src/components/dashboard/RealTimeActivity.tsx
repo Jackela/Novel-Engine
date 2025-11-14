@@ -297,6 +297,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
             <AnimatePresence initial={false}>
               {activities.slice(0, 6).map((activity, index) => (
                 <ActivityItem 
+                  data-testid="activity-event"
                   key={activity.id} 
                   severity={activity.severity}
                   sx={{ 
@@ -401,6 +402,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
             <AnimatePresence initial={false}>
               {activities.map((activity, index) => (
                 <ActivityItem 
+                  data-testid="activity-event"
                   key={activity.id}
                   severity={activity.severity}
                   sx={{

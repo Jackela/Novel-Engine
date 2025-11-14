@@ -310,24 +310,24 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
         <div className="parameter-group">
           <h5>Core Attributes</h5>
           {(['creativity', 'consistency', 'responsiveness', 'autonomy'] as const).map(param => {
-            const inputId = `core-${param}`;
+            const sliderId = `${selectedAgent.id}-${param}`;
             return (
-            <div key={param} className="parameter-control">
-              <label htmlFor={inputId}>{param.charAt(0).toUpperCase() + param.slice(1)}</label>
-              <input
-                id={inputId}
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={selectedAgent.parameters[param]}
-                onChange={(e) => handleParameterChange(param, parseFloat(e.target.value))}
-                className="parameter-slider"
-              />
-              <span className="parameter-value">
-                {(selectedAgent.parameters[param] * 100).toFixed(0)}%
-              </span>
-            </div>
+              <div key={param} className="parameter-control">
+                <label htmlFor={sliderId}>{param.charAt(0).toUpperCase() + param.slice(1)}</label>
+                <input
+                  id={sliderId}
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={selectedAgent.parameters[param]}
+                  onChange={(e) => handleParameterChange(param, parseFloat(e.target.value))}
+                  className="parameter-slider"
+                />
+                <span className="parameter-value">
+                  {(selectedAgent.parameters[param] * 100).toFixed(0)}%
+                </span>
+              </div>
             );
           })}
         </div>
@@ -335,24 +335,24 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
         <div className="parameter-group">
           <h5>Social Attributes</h5>
           {(['collaboration', 'riskTolerance', 'memoryRetention'] as const).map(param => {
-            const inputId = `social-${param}`;
+            const sliderId = `${selectedAgent.id}-${param}-slider`;
             return (
-            <div key={param} className="parameter-control">
-              <label htmlFor={inputId}>{param.replace(/([A-Z])/g, ' $1').toLowerCase()}</label>
-              <input
-                id={inputId}
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={selectedAgent.parameters[param]}
-                onChange={(e) => handleParameterChange(param, parseFloat(e.target.value))}
-                className="parameter-slider"
-              />
-              <span className="parameter-value">
-                {(selectedAgent.parameters[param] * 100).toFixed(0)}%
-              </span>
-            </div>
+              <div key={param} className="parameter-control">
+                <label htmlFor={sliderId}>{param.replace(/([A-Z])/g, ' $1').toLowerCase()}</label>
+                <input
+                  id={sliderId}
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={selectedAgent.parameters[param]}
+                  onChange={(e) => handleParameterChange(param, parseFloat(e.target.value))}
+                  className="parameter-slider"
+                />
+                <span className="parameter-value">
+                  {(selectedAgent.parameters[param] * 100).toFixed(0)}%
+                </span>
+              </div>
             );
           })}
         </div>
@@ -360,9 +360,9 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
         <div className="parameter-group">
           <h5>Behavior Settings</h5>
           <div className="parameter-control">
-            <label htmlFor="narrative-focus">Narrative Focus</label>
+            <label htmlFor={`narrative-focus-${selectedAgent.id}`}>Narrative Focus</label>
             <select
-              id="narrative-focus"
+              id={`narrative-focus-${selectedAgent.id}`}
               value={selectedAgent.parameters.narrativeFocus}
               onChange={(e) => handleParameterChange('narrativeFocus', e.target.value)}
               className="parameter-select"
@@ -375,9 +375,9 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
           </div>
           
           <div className="parameter-control">
-            <label htmlFor="communication-style">Communication Style</label>
+            <label htmlFor={`communication-style-${selectedAgent.id}`}>Communication Style</label>
             <select
-              id="communication-style"
+              id={`communication-style-${selectedAgent.id}`}
               value={selectedAgent.parameters.communicationStyle}
               onChange={(e) => handleParameterChange('communicationStyle', e.target.value)}
               className="parameter-select"
@@ -427,6 +427,14 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
               key={agent.id}
               className={`agent-item ${selectedAgentId === agent.id ? 'selected' : ''}`}
               onClick={() => setSelectedAgentId(agent.id)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setSelectedAgentId(agent.id);
+                }
+              }}
+              role="button"
+              tabIndex={0}
             >
               <div className="agent-item__header">
                 <span className="agent-name">{agent.name}</span>

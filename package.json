@@ -1,11 +1,10 @@
 {
   "scripts": {
-    "dev:daemon": "bash scripts/dev_env.sh start --detach",
-    "dev:stop": "bash scripts/dev_env.sh stop",
-    "dev:logs": "bash scripts/dev_env.sh logs",
-    "dev:status": "bash scripts/dev_env.sh status"
+    "dev:daemon": "bash scripts/dev_env_daemon.sh",
+    "dev:stop": "bash scripts/stop_dev_env.sh"
   },
   "dependencies": {
+    "markdown-it": "^14.1.0",
     "playwright": "^1.55.0"
   }
 }

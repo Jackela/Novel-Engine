@@ -318,6 +318,14 @@ function AnimatedFeatureCard({ feature, isActive, onClick }) {
     <div 
       className={`animated-feature-card ${isActive ? 'active' : ''}`}
       onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
     >
       <div className="card-icon">{feature.icon}</div>
       <div className="card-content">

@@ -1,5 +1,7 @@
 # Emergent Narrative Dashboard - UI Visual Design Specification
 
+> **2025-11-12 Update**: The dashboard now uses the flow-based zones defined in `frontend/src/components/EmergentDashboard.css`. Treat the legacy Bento grid guidance below as reference material only; new work must rely on the semantic `data-role` wrappers (`dashboard-control-cluster`, `dashboard-streams`, `dashboard-signals`, `dashboard-pipeline`).
+
 ## Document Overview
 
 This comprehensive visual design specification transforms the Novel Engine's Emergent Narrative Dashboard into a sophisticated, professional interface for monitoring emergent storytelling. The design emphasizes clarity, accessibility, and modern data visualization principles while maintaining the robust Bento Grid layout architecture.

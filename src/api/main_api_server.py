@@ -79,7 +79,6 @@ try:
     from src.security.security_headers import (
         SecurityHeaders,
         SecurityHeadersMiddleware,
-        get_development_security_config,
         get_production_security_config,
     )
 
@@ -176,22 +175,14 @@ async def lifespan(app: FastAPI):
     config = APIServerConfig()
     app_start_time = datetime.now()
 
-    log_config = getattr(
-        app.state,
-        "log_config",
-        {
-            "log_level": LogLevel.DEBUG if config.debug else LogLevel.INFO,
-            "log_file": "logs/novel_engine_api.log" if not config.debug else None,
-            "output_format": "json" if not config.debug else "text",
-        },
-    )
-
     try:
-        # Initialize structured logging (reuse existing logger if already configured)
-        global_structured_logger = getattr(app.state, "logger", None)
-        if global_structured_logger is None:
-            global_structured_logger = setup_logging(app, **log_config)
-        app.state.logger = global_structured_logger
+        # Initialize structured logging
+        global_structured_logger = setup_logging(
+            app,
+            log_level=LogLevel.DEBUG if config.debug else LogLevel.INFO,
+            log_file="logs/novel_engine_api.log" if not config.debug else None,
+            output_format="json" if not config.debug else "text",
+        )
 
         global_structured_logger.info(
             "Starting Enhanced Novel Engine API Server", category=LogCategory.SYSTEM
@@ -404,7 +395,7 @@ def create_app() -> FastAPI:
                 await send(start)
                 await send(body)
 
-    # Add ASGI-level header guard (will execute before subsequently added middleware)
+    # Add ASGI-level header guard last so it executes first among middlewares
     app.add_middleware(
         RawHeaderASGIMiddleware,
         headers={
@@ -412,15 +403,6 @@ def create_app() -> FastAPI:
             "X-Frame-Options": "DENY",
         },
     )
-
-    # Structured logging configuration (stored for lifespan reuse)
-    log_config = {
-        "log_level": LogLevel.DEBUG if config.debug else LogLevel.INFO,
-        "log_file": "logs/novel_engine_api.log" if not config.debug else None,
-        "output_format": "json" if not config.debug else "text",
-    }
-    app.state.log_config = log_config
-    setup_logging(app, **log_config)
 
     # Exception handlers that ensure minimal security headers on error responses
     @app.exception_handler(HTTPException)
@@ -440,10 +422,11 @@ def create_app() -> FastAPI:
     # Add security middleware stack if available (order matters - first added = last executed)
     if SECURITY_AVAILABLE:
         # Apply Security Headers as the outermost middleware so it can decorate all responses
-        if config.debug and "get_development_security_config" in globals():
-            security_config = get_development_security_config()
-        else:
-            security_config = get_production_security_config()
+        security_config = (
+            get_production_security_config()
+            if not config.debug
+            else get_development_security_config()
+        )
         security_headers = SecurityHeaders(security_config)
         app.add_middleware(SecurityHeadersMiddleware, security_headers=security_headers)
         logger.info("Security headers middleware enabled (outermost)")
@@ -1053,8 +1036,6 @@ def main():
         date_header=False,  # Security: Don't expose date header
     )
 
-
-app = create_app()
 
 if __name__ == "__main__":
     main()

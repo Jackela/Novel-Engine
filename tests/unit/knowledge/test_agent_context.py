@@ -8,15 +8,16 @@ Constitution Compliance:
 - Article III (TDD): Tests written FIRST, ensuring they FAIL before implementation
 """
 
-import pytest
 from datetime import datetime, timezone
 
-from contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
-from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+import pytest
+
 from contexts.knowledge.domain.models.access_control_rule import AccessControlRule
 from contexts.knowledge.domain.models.access_level import AccessLevel
-from contexts.knowledge.domain.models.agent_identity import AgentIdentity
 from contexts.knowledge.domain.models.agent_context import AgentContext
+from contexts.knowledge.domain.models.agent_identity import AgentIdentity
+from contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
+from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
 
 
 class TestAgentContext:
@@ -34,7 +35,7 @@ class TestAgentContext:
     def sample_entries(self):
         """Create sample knowledge entries for testing."""
         now = datetime.now(timezone.utc)
-        
+
         return [
             KnowledgeEntry(
                 id="entry-001",
@@ -159,12 +160,10 @@ class TestAgentContext:
         for role in sample_agent.roles:
             assert role in prompt
 
-    def test_to_llm_prompt_text_preserves_entry_order_within_type(
-        self, sample_agent
-    ):
+    def test_to_llm_prompt_text_preserves_entry_order_within_type(self, sample_agent):
         """Test that entries maintain order within their knowledge type group."""
         now = datetime.now(timezone.utc)
-        
+
         # Create multiple entries of same type
         entries = [
             KnowledgeEntry(

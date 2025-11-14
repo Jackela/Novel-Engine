@@ -13,8 +13,6 @@ import time
 from collections import deque
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
-import time
-import asyncio
 
 from .types import (
     BatchedRequest,
@@ -150,7 +148,9 @@ class LLMCoordinator:
             if cache_key in self._inflight:
                 # attach waiter to existing future
                 fut = self._inflight[cache_key]
-                self._waiters_count[cache_key] = self._waiters_count.get(cache_key, 0) + 1
+                self._waiters_count[cache_key] = (
+                    self._waiters_count.get(cache_key, 0) + 1
+                )
 
                 async def _await_and_callback():
                     try:

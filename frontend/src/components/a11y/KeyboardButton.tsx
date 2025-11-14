@@ -37,7 +37,7 @@ export const KeyboardButton = forwardRef<HTMLDivElement, KeyboardButtonProps>(
       }
 
       if (props.onKeyDown) {
-        props.onKeyDown(event as unknown as KeyboardEvent);
+        props.onKeyDown(event);
       }
     };
 

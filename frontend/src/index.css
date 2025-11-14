@@ -312,19 +312,6 @@ button:hover {
 
 button:focus {
   outline: none;
-  box-shadow: var(--shadow-focus);
-  border-color: var(--color-border-focus);
-}
-
-button:active {
-  transform: translateY(0);
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
 }
 
 /* 🎯 ACCESSIBILITY - Keyboard Focus Indicators (WCAG 2.1 AA: 2.4.7 Focus Visible) */
@@ -342,7 +329,6 @@ button:disabled {
 }
 
 /* Enhanced focus for interactive elements */
-/* stylelint-disable no-descending-specificity */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -356,7 +342,6 @@ select:focus-visible,
   outline-offset: var(--focus-outline-offset);
   box-shadow: 0 0 0 4px rgba(99, 102, 241, var(--focus-ring-opacity));
 }
-/* stylelint-enable no-descending-specificity */
 
 /* High Contrast Mode Support (Windows High Contrast, Forced Colors) */
 @media (prefers-contrast: high), (forced-colors: active) {
@@ -455,45 +440,6 @@ p {
   line-height: 1.6;
 }
 
-/* 🎨 BENTO TILE PATTERN - Core Dashboard Component */
-.bento-tile {
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-primary);
-  border-radius: 12px;
-  padding: var(--tile-padding-desktop);
-  box-shadow: var(--shadow-sm);
-  transition: all var(--timing-standard) var(--easing-standard);
-  overflow: hidden;
-  position: relative;
-}
-
-.bento-tile:hover {
-  border-color: var(--color-border-secondary);
-  box-shadow: var(--shadow-md);
-}
-
-.bento-tile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--tile-header-margin);
-  padding-bottom: var(--spacing-3);
-  border-bottom: 1px solid var(--color-border-primary);
-}
-
-.bento-tile-title {
-  font: var(--text-heading-sm) var(--font-primary);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.bento-tile-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4);
-}
 
 /* 🎯 INTERACTIVE STATE PATTERNS */
 .interactive-hover {

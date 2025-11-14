@@ -1,5 +1,7 @@
 # UX Visual Diagnosis Report: Emergent Narrative Dashboard
 
+> **Flow layout alignment (2025-11-12):** Dashboard quick actions + pipeline now share the composite Control Cluster card shown in `docs/assets/dashboard/dashboard-flow-2025-11-12.png`. Historical screenshots below should be interpreted as "before" references.
+
 ## Executive Summary
 
 The Emergent Narrative Dashboard demonstrates excellent design and functionality at desktop resolutions but suffers from severe responsive design degradation on mobile devices. Critical UX issues include massive information loss (70-80%), component failures, and poor mobile information hierarchy, creating an inadequate user experience on smaller screens.

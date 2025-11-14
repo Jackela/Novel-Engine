@@ -1,7 +1,7 @@
 # Complete Frontend User Experience Design
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-08-15  
+**Document Version**: 1.1  
+**Last Updated**: 2025-11-12  
 **Purpose**: Design comprehensive frontend user experience flow
 
 ## 🎯 Design Overview
@@ -69,6 +69,17 @@ graph TD
     E --> S[Progress Indicators]
     E --> T[Error Messages]
 ```
+
+## Flow-based Dashboard Layout (2025-11 refresh)
+
+The dashboard now uses an adaptive flow manager instead of the legacy `tile-small/tile-medium/tile-large` grid. Key characteristics:
+
+- **Semantic Zones**: `data-role="summary-strip"`, `data-role="control-cluster"`, `data-role="stream-feed"`, `data-role="system-signals"`, and `data-role="pipeline"` wrap each composite card so AI tooling and Playwright selectors can reason about intent rather than CSS class names.
+- **Composite Cards**: Quick Actions + Run State now render inside the Control Cluster with shared `status` props, while Narrative + Activity share a stacked/tabs container that virtualises long feeds. Performance metrics share a card with Event Cascade to reduce vertical clutter.
+- **Flow Tokens**: Layout is governed by CSS custom properties (see `frontend/src/components/EmergentDashboard.css`), using `grid-auto-flow: dense` plus `minmax()` weights so cards expand based on content density and breakpoints (`@container dashboard-flow`).
+- **Responsive Order**: Desktop shows Summary Strip → Control Cluster → Streams → Signals → Pipeline, tablet collapses Streams/Signals into tabs, and mobile defers to `MobileTabbedDashboard` with Quick Actions pinned first.
+
+Refer to the updated screenshots in `docs/assets/dashboard/` for visual context.
 
 ## 🎨 Visual Design System
 

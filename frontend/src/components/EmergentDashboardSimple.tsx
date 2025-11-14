@@ -159,17 +159,19 @@ const EmergentDashboardSimple: React.FC = () => {
           <div className="world-map" data-activity="true">
             <div className="map-container">
               {worldEntities.map((entity) => (
-                <div
+                <button
                   key={entity.id}
+                  type="button"
                   className={`map-entity entity-${entity.type} ${selectedEntity === entity.id ? 'selected' : ''} activity`}
                   data-testid={`character-${entity.id}`}
                   style={{ left: `${entity.x}%`, top: `${entity.y}%` }}
                   onClick={() => setSelectedEntity(entity.id)}
                   title={entity.name}
+                  aria-pressed={selectedEntity === entity.id}
                 >
                   <div className="entity-marker"></div>
                   <span className="entity-label">{entity.name}</span>
-                </div>
+                </button>
               ))}
               <div className="map-grid"></div>
             </div>

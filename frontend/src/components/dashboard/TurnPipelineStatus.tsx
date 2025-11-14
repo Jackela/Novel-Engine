@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Box, 
   Typography, 
@@ -25,7 +25,6 @@ import {
   Groups as CharacterIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
-import type { RunStateSummary } from './types';
 
 const PipelineContainer = styled(Box)(({ theme }) => ({
   height: '100%',
@@ -37,22 +36,24 @@ const PipelineContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const StageItem = styled(motion(ListItem))<{ status: string }>(({ theme, status }) => ({
+const StageItem = styled(motion(ListItem), {
+  shouldForwardProp: (prop: PropertyKey) => prop !== '$status'
+})<{ $status: string }>(({ theme, $status }) => ({
   padding: theme.spacing(1, 0),
   borderBottom: `1px solid ${theme.palette.divider}`,
   borderLeft: `3px solid ${
-    status === 'processing' ? theme.palette.primary.main :
-    status === 'completed' ? theme.palette.success.main :
-    status === 'error' ? theme.palette.error.main :
+    $status === 'processing' ? theme.palette.primary.main :
+    $status === 'completed' ? theme.palette.success.main :
+    $status === 'error' ? theme.palette.error.main :
     theme.palette.text.secondary
   }`,
   paddingLeft: theme.spacing(1),
   borderRadius: theme.shape.borderRadius / 2,
   marginBottom: theme.spacing(0.5),
-  background: status === 'processing' ? alpha(theme.palette.primary.main, 0.05) : 'transparent',
+  background: $status === 'processing' ? alpha(theme.palette.primary.main, 0.05) : 'transparent',
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    background: status === 'processing' ? alpha(theme.palette.primary.main, 0.1) : 'var(--color-bg-tertiary)',
+    background: $status === 'processing' ? alpha(theme.palette.primary.main, 0.1) : 'var(--color-bg-tertiary)',
     borderLeftWidth: '4px',
   },
 }));
@@ -109,51 +110,53 @@ interface PipelineData {
   totalTurns: number;
   queueLength: number;
   averageProcessingTime: number;
-  activeStepIndex: number;
   steps: TurnStep[];
 }
 
 interface TurnPipelineStatusProps {
   loading?: boolean;
   error?: boolean;
-  runState?: RunStateSummary;
-  onPhaseChange?: (phase: string) => void;
+  status?: 'idle' | 'running' | 'paused' | 'stopped';
+  isLive?: boolean;
 }
 
 const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ 
   loading, 
   error,
-  runState,
-  onPhaseChange,
+  status = 'idle',
+  isLive = false,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const previousStatus = useRef(status);
   
   const [pipelineData, setPipelineData] = useState<PipelineData>({
     currentTurn: 47,
     totalTurns: 150,
     queueLength: 3,
     averageProcessingTime: 2.3,
-    activeStepIndex: 0,
     steps: [
       {
         id: 'world-update',
         name: 'World Update',
-        status: 'processing',
-        progress: 45,
+        status: 'completed',
+        progress: 100,
+        duration: 0.5,
         character: 'Aria Shadowbane',
       },
       {
         id: 'subjective-brief',
         name: 'Subjective Brief',
-        status: 'queued',
-        progress: 0,
+        status: 'completed',
+        progress: 100,
+        duration: 1.2,
       },
       {
         id: 'interaction-orchestration',
         name: 'Interaction Orchestration',
-        status: 'queued',
-        progress: 0,
+        status: 'processing',
+        progress: 73,
+        character: 'Merchant Aldric',
       },
       {
         id: 'event-integration',
@@ -170,104 +173,88 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
     ],
   });
 
-  // Simulate pipeline progression with deterministic step advancement
+  // Ensure pipeline visibly restarts whenever orchestration resumes.
   useEffect(() => {
+    if (status === 'running' && previousStatus.current !== 'running') {
+      setPipelineData(prev => ({
+        ...prev,
+        steps: prev.steps.map((step, index) => ({
+          ...step,
+          status: index === 0 ? 'processing' : 'queued',
+          progress: index === 0 ? Math.random() * 30 : 0,
+          duration: undefined,
+        })),
+      }));
+    }
+    previousStatus.current = status;
+  }, [status]);
+
+  // Simulate pipeline progression when running
+  useEffect(() => {
+    if (status !== 'running') {
+      return;
+    }
+
+    const PROCESS_INTERVAL = 1200;
     const interval = setInterval(() => {
       setPipelineData(prev => {
-        const newData = { ...prev };
-        const totalSteps = prev.steps.length;
-        let steps = prev.steps.map(step => ({ ...step }));
+        const next = { ...prev };
 
-        let activeIndex = Math.min(newData.activeStepIndex, totalSteps - 1);
-        if (newData.activeStepIndex >= totalSteps) {
-          activeIndex = totalSteps - 1;
-        }
+        const ensureProcessingStep = () => {
+          const activeIndex = next.steps.findIndex(step => step.status === 'processing');
+          if (activeIndex === -1) {
+            const nextIndex = next.steps.findIndex(step => step.status !== 'completed');
+            if (nextIndex !== -1) {
+              next.steps[nextIndex] = {
+                ...next.steps[nextIndex],
+                status: 'processing',
+                progress: Math.max(next.steps[nextIndex].progress, 20 + Math.random() * 15),
+              };
+            }
+          }
+        };
 
-        const activeStep = newData.activeStepIndex >= totalSteps ? null : steps[activeIndex];
-
-        if (activeStep) {
-          if (activeStep.status === 'processing') {
-            const increment = 40 + Math.random() * 35;
-            const updatedProgress = Math.min(100, activeStep.progress + increment);
-            steps[activeIndex] = { ...activeStep, progress: updatedProgress };
-            if (updatedProgress >= 100) {
-              steps[activeIndex] = {
-                ...steps[activeIndex],
+        next.steps = next.steps.map(step => {
+          if (step.status === 'processing') {
+            const increment = 35 + Math.random() * 30;
+            const newProgress = Math.min(100, step.progress + increment);
+            if (newProgress >= 100) {
+              return {
+                ...step,
                 status: 'completed',
                 progress: 100,
-                duration: Math.random() * 2 + 0.8,
+                duration: (step.duration ?? 0) + increment / 60,
               };
-              newData.activeStepIndex = activeIndex + 1;
-              activeIndex = newData.activeStepIndex;
             }
-          } else if (activeStep.status === 'queued') {
-            steps[activeIndex] = {
-              ...activeStep,
-              status: 'processing',
-              progress: 35 + Math.random() * 25,
-            };
+            return { ...step, progress: newProgress };
           }
-        }
+          return step;
+        });
 
-        if (newData.activeStepIndex < totalSteps) {
-          const candidateIndex = Math.max(newData.activeStepIndex, 0);
-          const candidate = steps[candidateIndex];
-          if (candidate && candidate.status === 'queued') {
-            steps[candidateIndex] = {
-              ...candidate,
-              status: 'processing',
-              progress: 30 + Math.random() * 30,
-            };
-          }
-        }
+        ensureProcessingStep();
 
-        const completedCount = steps.filter(step => step.status === 'completed').length;
-        const allCompleted = completedCount === totalSteps;
-
-        if (!allCompleted && !steps.some(step => step.status === 'processing')) {
-          const nextIndex = steps.findIndex(step => step.status === 'queued');
-          if (nextIndex !== -1) {
-            steps[nextIndex] = {
-              ...steps[nextIndex],
-              status: 'processing',
-              progress: 35 + Math.random() * 30,
-            };
-            newData.activeStepIndex = nextIndex;
-          }
-        }
-
-        if (allCompleted) {
-          newData.currentTurn += 1;
-          newData.queueLength = Math.max(0, newData.queueLength - 1 + Math.floor(Math.random() * 2));
-
+        const completedCount = next.steps.filter(step => step.status === 'completed').length;
+        if (completedCount === next.steps.length) {
           const characters = ['Aria Shadowbane', 'Merchant Aldric', 'Elder Thorne', 'Captain Vex'];
-          steps = steps.map((step, index) => ({
+          next.currentTurn += 1;
+          next.queueLength = Math.max(0, next.queueLength - 1 + Math.floor(Math.random() * 2));
+          next.steps = next.steps.map((step, index) => ({
             ...step,
             status: index === 0 ? 'processing' : 'queued',
-            progress: index === 0 ? 30 + Math.random() * 20 : 0,
-            character: step.id === 'input' || step.id === 'ai_generation'
+            progress: index === 0 ? 25 + Math.random() * 20 : 0,
+            character: step.id === 'world-update' || step.id === 'interaction-orchestration'
               ? characters[Math.floor(Math.random() * characters.length)]
               : undefined,
             duration: undefined,
           }));
-          newData.activeStepIndex = 0;
         }
 
-        newData.steps = steps;
-        return newData;
+        return next;
       });
-    }, 1000);
+    }, PROCESS_INTERVAL);
 
     return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (!onPhaseChange) return;
-    const activeStep = pipelineData.steps[pipelineData.activeStepIndex];
-    if (activeStep) {
-      onPhaseChange(activeStep.name);
-    }
-  }, [pipelineData.steps, pipelineData.activeStepIndex, onPhaseChange]);
+  }, [status]);
 
   const getStepIcon = (step: TurnStep) => {
     const iconProps = { fontSize: 'small' as const };
@@ -283,10 +270,24 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
     }
   };
 
+  const statusLabel = (() => {
+    switch (status) {
+      case 'running':
+        return 'Processing';
+      case 'paused':
+        return 'Paused';
+      case 'stopped':
+        return 'Stopped';
+      default:
+        return 'Idle';
+    }
+  })();
+
   return (
     <GridTile
       title="Turn Pipeline"
       data-testid="turn-pipeline-status"
+      data-role="pipeline"
       position={{
         desktop: { column: '8 / 11', height: '160px' },
         tablet: { column: '1 / 9', height: '140px' },
@@ -297,41 +298,42 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
     >
       <PipelineContainer>
         {/* Header */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, flexShrink: 0 }}>
-          <Typography variant="body2" color="text.secondary" fontWeight={500}>
-            Turn {pipelineData.currentTurn} of {pipelineData.totalTurns}
-          </Typography>
-          <Stack direction="row" spacing={0.5}>
-            {runState && (
+        <Stack direction={isMobile ? 'column' : 'row'} justifyContent="space-between" alignItems={isMobile ? 'flex-start' : 'center'} sx={{ mb: 1, flexShrink: 0 }} spacing={1}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="body2" color="text.secondary" fontWeight={500}>
+              Turn {pipelineData.currentTurn} of {pipelineData.totalTurns}
+            </Typography>
+            <Chip 
+              label={statusLabel}
+              size="small"
+              data-testid="pipeline-run-state"
+              sx={{
+                height: 20,
+                fontSize: '0.65rem',
+                fontWeight: 600,
+                backgroundColor: (theme) => status === 'running'
+                  ? alpha(theme.palette.success.main, 0.15)
+                  : alpha(theme.palette.text.primary, 0.05),
+                color: (theme) => status === 'running'
+                  ? theme.palette.success.main
+                  : theme.palette.text.secondary,
+              }}
+            />
+            {isLive && (
               <Chip
-                data-testid="pipeline-run-state"
+                label="LIVE"
+                color="success"
                 size="small"
-                label={runState.status.toUpperCase()}
+                data-testid="pipeline-live-indicator"
                 sx={{
-                  textTransform: 'uppercase',
-                  backgroundColor: (theme) =>
-                    runState.status === 'running'
-                      ? alpha(theme.palette.success.main, 0.15)
-                      : runState.status === 'paused'
-                        ? alpha(theme.palette.warning.main, 0.15)
-                        : alpha(theme.palette.text.secondary, 0.1),
-                  borderColor: (theme) =>
-                    runState.status === 'running'
-                      ? theme.palette.success.main
-                      : runState.status === 'paused'
-                        ? theme.palette.warning.main
-                        : theme.palette.divider,
-                  color: (theme) =>
-                    runState.status === 'running'
-                      ? theme.palette.success.main
-                      : runState.status === 'paused'
-                        ? theme.palette.warning.main
-                        : theme.palette.text.secondary,
-                  fontSize: '0.65rem',
-                  height: '20px',
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  height: 20,
                 }}
               />
             )}
+          </Stack>
+          <Stack direction="row" spacing={0.5}>
             <Chip 
               label={`${pipelineData.queueLength} queued`} 
               size="small" 
@@ -364,9 +366,10 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
               {pipelineData.steps.map((step, index) => (
                 <Fade in key={step.id} timeout={300 + index * 100}>
                   <StageItem 
-                    status={step.status}
+                    $status={step.status}
                     data-status={step.status}
-                    data-phase={step.name}
+                    data-phase={step.id}
+                    data-phase-name={step.name}
                     data-step-index={index}
                     sx={{ 
                       py: isMobile ? 0.5 : 0.75,
@@ -376,70 +379,83 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                   >
-                    <ListItemIcon sx={{ minWidth: 32 }}>
-                      <Avatar
-                        sx={{
-                          bgcolor: 'transparent',
-                          width: 28,
-                          height: 28,
-                        }}
-                      >
-                        {getStepIcon(step)}
-                      </Avatar>
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.25 }}>
-                          <Typography 
-                            variant={isMobile ? 'caption' : 'body2'} 
-                            fontWeight={500}
-                            sx={{ color: (theme) => theme.palette.text.primary }}
-                          >
-                            {step.name}
-                          </Typography>
-                          <StatusChip 
-                            status={step.status} 
-                            data-status={step.status}
-                            label={step.status} 
-                            size="small"
-                          />
-                        </Stack>
-                      }
-                      secondary={
-                        <Box sx={{ mt: 0.5 }}>
-                          {step.status === 'processing' && (
-                            <AnimatedProgress
-                              variant="determinate"
-                              value={step.progress}
-                              sx={{ mb: 0.5 }}
-                              initial={{ scaleX: 0 }}
-                              animate={{ scaleX: 1 }}
-                              transition={{ duration: 0.5 }}
-                            />
-                          )}
-                          <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-                            {step.character && (
-                              <Stack direction="row" alignItems="center" spacing={0.5}>
-                                <CharacterIcon sx={{ fontSize: '14px', color: (theme) => theme.palette.primary.main }} />
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                  {step.character}
-                                </Typography>
-                              </Stack>
-                            )}
-                            {step.duration !== undefined && (
-                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                {step.duration.toFixed(1)}s
-                              </Typography>
-                            )}
-                            {step.status === 'processing' && (
-                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                {step.progress.toFixed(0)}%
-                              </Typography>
-                            )}
-                          </Stack>
-                        </Box>
-                      }
+                    {/* Hidden marker ensures deterministic selectors for Playwright & monitoring */}
+                    <Box
+                      component="span"
+                      sx={{ display: 'none' }}
+                      data-testid="pipeline-stage-marker"
+                      data-status={step.status}
+                      data-phase={step.id}
+                      data-phase-name={step.name}
+                      data-step-index={index}
                     />
+                    <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <Avatar
+                          sx={{
+                            bgcolor: 'transparent',
+                            width: 28,
+                            height: 28,
+                          }}
+                        >
+                          {getStepIcon(step)}
+                        </Avatar>
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={
+                          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.25 }}>
+                            <Typography 
+                              variant={isMobile ? 'caption' : 'body2'} 
+                              fontWeight={500}
+                              sx={{ color: (theme) => theme.palette.text.primary }}
+                            >
+                              {step.name}
+                            </Typography>
+                            <StatusChip 
+                              status={step.status} 
+                              label={step.status} 
+                              size="small"
+                            />
+                          </Stack>
+                        }
+                        secondary={
+                          <Box sx={{ mt: 0.5 }}>
+                            {step.status === 'processing' && (
+                              <AnimatedProgress
+                                variant="determinate"
+                                value={step.progress}
+                                sx={{ mb: 0.5 }}
+                                initial={{ scaleX: 0 }}
+                                animate={{ scaleX: 1 }}
+                                transition={{ duration: 0.5 }}
+                                aria-label={`${step.name} processing progress`}
+                                data-testid="pipeline-progress"
+                              />
+                            )}
+                            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                              {step.character && (
+                                <Stack direction="row" alignItems="center" spacing={0.5}>
+                                  <CharacterIcon sx={{ fontSize: '14px', color: (theme) => theme.palette.primary.main }} />
+                                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                    {step.character}
+                                  </Typography>
+                                </Stack>
+                              )}
+                              {step.duration !== undefined && (
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                  {step.duration.toFixed(1)}s
+                                </Typography>
+                              )}
+                              {step.status === 'processing' && (
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                  {step.progress.toFixed(0)}%
+                                </Typography>
+                              )}
+                            </Stack>
+                          </Box>
+                        }
+                      />
+                    </Box>
                   </StageItem>
                 </Fade>
               ))}

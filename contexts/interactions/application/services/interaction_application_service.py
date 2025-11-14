@@ -528,11 +528,11 @@ class InteractionApplicationService:
             )
 
         # Calculate overall optimization potential
-        total_viability = sum(
-            result["current_viability"] for result in optimization_results
-        )
-        avg_viability = (
-            total_viability / len(optimization_results) if optimization_results else 0
+        total_viability = 0.0
+        for result in optimization_results:
+            total_viability += result["current_viability"]
+        avg_viability_value = (
+            total_viability / len(optimization_results) if optimization_results else 0.0
         )
 
         return {
@@ -541,7 +541,7 @@ class InteractionApplicationService:
             "session_id": str(session_id),
             "optimization_target": optimization_target,
             "proposals_analyzed": len(optimization_results),
-            "average_viability": avg_viability,
+            "average_viability": avg_viability_value,
             "proposal_optimizations": optimization_results,
             "overall_recommendations": self._generate_proposal_optimization_recommendations(
                 optimization_results

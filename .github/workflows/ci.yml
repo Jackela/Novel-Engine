@@ -44,14 +44,14 @@ jobs:
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
           unset PYTEST_DISABLE_PLUGIN_AUTOLOAD
+          echo "PYTHONPATH=$PYTHONPATH"
           echo "PYTEST_DISABLE_PLUGIN_AUTOLOAD=${PYTEST_DISABLE_PLUGIN_AUTOLOAD:-<unset>}"
-          echo "Using PYTHONPATH=$PYTHONPATH"
           python -c "import sys; print('sys.path head:', sys.path[:3])"
           python -c "import importlib; mod = importlib.import_module('src.shared_types'); print('CharacterData?', hasattr(mod, 'CharacterData'))"
           pytest -p pytest_asyncio -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py
 
       - name: Upload JUnit report
-        if: ${{ always() }}
+        if: ${{ always() && env.ACT != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: junit-report

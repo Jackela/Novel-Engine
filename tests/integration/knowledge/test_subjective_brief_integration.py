@@ -9,23 +9,24 @@ Constitution Compliance:
 - SC-002: Knowledge retrieval must complete in <500ms for ≤100 entries
 """
 
-import pytest
 import time
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, Mock, patch
 
-from contexts.knowledge.infrastructure.adapters.subjective_brief_phase_adapter import (
-    SubjectiveBriefPhaseAdapter,
-)
+import pytest
+
 from contexts.knowledge.application.use_cases.retrieve_agent_context import (
     RetrieveAgentContextUseCase,
 )
-from contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
-from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
 from contexts.knowledge.domain.models.access_control_rule import AccessControlRule
 from contexts.knowledge.domain.models.access_level import AccessLevel
-from contexts.knowledge.domain.models.agent_identity import AgentIdentity
 from contexts.knowledge.domain.models.agent_context import AgentContext
+from contexts.knowledge.domain.models.agent_identity import AgentIdentity
+from contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
+from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+from contexts.knowledge.infrastructure.adapters.subjective_brief_phase_adapter import (
+    SubjectiveBriefPhaseAdapter,
+)
 
 
 @pytest.mark.integration
@@ -54,7 +55,7 @@ class TestSubjectiveBriefPhaseAdapter:
     def sample_entries(self):
         """Create sample knowledge entries."""
         now = datetime.now(timezone.utc)
-        
+
         return [
             KnowledgeEntry(
                 id="entry-001",
@@ -105,7 +106,7 @@ class TestSubjectiveBriefPhaseAdapter:
         # Verify use case called
         mock_use_case.execute.assert_called_once()
         call_args = mock_use_case.execute.call_args
-        
+
         # Verify agent identity constructed correctly
         assert call_args.kwargs["agent"].character_id == "char-001"
         assert call_args.kwargs["agent"].roles == ("player", "engineer")
@@ -192,7 +193,7 @@ class TestSubjectiveBriefPhaseAdapter:
     ):
         """
         Test that context assembly completes within 500ms for ≤100 entries.
-        
+
         Success Criteria SC-002: Knowledge retrieval <500ms for ≤100 entries
         """
         # Setup - create 100 entries
@@ -229,7 +230,9 @@ class TestSubjectiveBriefPhaseAdapter:
         duration = time.time() - start_time
 
         # Verify performance requirement
-        assert duration < 0.5, f"Context assembly took {duration:.3f}s, exceeds 500ms limit (SC-002)"
+        assert (
+            duration < 0.5
+        ), f"Context assembly took {duration:.3f}s, exceeds 500ms limit (SC-002)"
 
         # Verify all entries included
         assert result is not None
@@ -244,7 +247,7 @@ class TestSubjectiveBriefPhaseMarkdownReplacement:
     async def test_subjective_brief_phase_does_not_read_markdown_files(self):
         """
         Test that SubjectiveBriefPhase does NOT read Markdown files when adapter is used.
-        
+
         Functional Requirement FR-006: Markdown files no longer read for agent context
         """
         # Setup mocks
@@ -273,7 +276,9 @@ class TestSubjectiveBriefPhaseMarkdownReplacement:
         mock_use_case.execute.return_value = context
 
         # Patch built-in open to detect file operations
-        with patch("builtins.open", side_effect=AssertionError("Markdown file read detected!")) as mock_open:
+        with patch(
+            "builtins.open", side_effect=AssertionError("Markdown file read detected!")
+        ) as mock_open:
             # Execute adapter
             result = await adapter.get_agent_knowledge_context(
                 character_id="char-001",

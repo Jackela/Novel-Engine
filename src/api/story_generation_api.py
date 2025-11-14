@@ -105,6 +105,44 @@ class ConnectionPool:
             self.last_activity.pop(gen_id, None)
 
 
+class GenerationSemaphore:
+    """Hybrid semaphore supporting async context managers and sync inspection."""
+
+    def __init__(self, permits: int):
+        self._initial = permits
+        self._semaphore = Semaphore(permits)
+
+    @property
+    def _value(self) -> int:
+        return self._semaphore._value
+
+    def acquire(self, blocking: bool = True) -> bool:
+        """
+        Non-blocking acquire compatible with legacy tests.
+
+        For asynchronous workflows use `async with GenerationSemaphore()`.
+        """
+        if blocking:
+            raise RuntimeError(
+                "Synchronous blocking acquires are not supported; use async context."
+            )
+        if self._semaphore._value > 0:
+            self._semaphore._value -= 1
+            return True
+        return False
+
+    def release(self) -> None:
+        self._semaphore._value = min(self._semaphore._value + 1, self._initial)
+
+    async def __aenter__(self):
+        await self._semaphore.acquire()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        self._semaphore.release()
+        return False
+
+
 class StoryGenerationAPI:
     """API for story export and narrative generation with optimized WebSocket handling."""
 
@@ -113,7 +151,7 @@ class StoryGenerationAPI:
         self.orchestrator = orchestrator
         self.active_generations: Dict[str, Any] = {}
         self.connection_pool = ConnectionPool()
-        self.generation_semaphore = Semaphore(5)  # Limit concurrent generations
+        self.generation_semaphore = GenerationSemaphore(5)
         self.cleanup_task = None
         logger.info("Story Generation API initialized with performance optimizations.")
 

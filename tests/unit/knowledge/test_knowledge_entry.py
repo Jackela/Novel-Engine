@@ -8,19 +8,22 @@ Constitution Compliance:
 - Article I (DDD): Pure domain model testing with no infrastructure
 """
 
-import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+
+import pytest
 
 # NOTE: These imports will fail until domain models are implemented
 # This is expected for TDD - tests must fail first
 try:
-    from contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
-    from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+    from contexts.knowledge.domain.events.knowledge_entry_updated import (
+        KnowledgeEntryUpdated,
+    )
     from contexts.knowledge.domain.models.access_control_rule import AccessControlRule
     from contexts.knowledge.domain.models.access_level import AccessLevel
     from contexts.knowledge.domain.models.agent_identity import AgentIdentity
-    from contexts.knowledge.domain.events.knowledge_entry_updated import KnowledgeEntryUpdated
+    from contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
+    from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
 except ImportError:
     # Expected to fail - models not yet implemented
     KnowledgeEntry = None
@@ -42,10 +45,10 @@ class TestKnowledgeEntryUpdateContent:
         """Create a sample knowledge entry for testing."""
         if KnowledgeEntry is None:
             pytest.skip("KnowledgeEntry not yet implemented (TDD - expected to fail)")
-        
+
         entry_id = str(uuid4())
         created_at = datetime.now(timezone.utc)
-        
+
         return KnowledgeEntry(
             id=entry_id,
             content="Original character profile content",
@@ -63,10 +66,10 @@ class TestKnowledgeEntryUpdateContent:
         new_content = "Updated character profile content"
         updated_by = "user-002"
         original_updated_at = sample_knowledge_entry.updated_at
-        
+
         # Act
         event = sample_knowledge_entry.update_content(new_content, updated_by)
-        
+
         # Assert
         assert sample_knowledge_entry.content == new_content
         assert sample_knowledge_entry.updated_at > original_updated_at
@@ -80,7 +83,7 @@ class TestKnowledgeEntryUpdateContent:
         # Arrange
         empty_content = ""
         updated_by = "user-002"
-        
+
         # Act & Assert
         with pytest.raises(ValueError, match="Content cannot be empty"):
             sample_knowledge_entry.update_content(empty_content, updated_by)
@@ -90,7 +93,7 @@ class TestKnowledgeEntryUpdateContent:
         # Arrange
         whitespace_content = "   \n\t   "
         updated_by = "user-002"
-        
+
         # Act & Assert
         with pytest.raises(ValueError, match="Content cannot be empty"):
             sample_knowledge_entry.update_content(whitespace_content, updated_by)
@@ -104,10 +107,10 @@ class TestKnowledgeEntryUpdateContent:
         original_created_at = sample_knowledge_entry.created_at
         original_created_by = sample_knowledge_entry.created_by
         original_knowledge_type = sample_knowledge_entry.knowledge_type
-        
+
         # Act
         sample_knowledge_entry.update_content(new_content, updated_by)
-        
+
         # Assert - immutable fields unchanged
         assert sample_knowledge_entry.id == original_id
         assert sample_knowledge_entry.created_at == original_created_at
@@ -119,10 +122,10 @@ class TestKnowledgeEntryUpdateContent:
         # Arrange
         new_content = "Updated content"
         updated_by = "user-002"
-        
+
         # Act
         event = sample_knowledge_entry.update_content(new_content, updated_by)
-        
+
         # Assert
         assert sample_knowledge_entry.updated_at.tzinfo == timezone.utc
         assert event.timestamp.tzinfo == timezone.utc
@@ -131,15 +134,15 @@ class TestKnowledgeEntryUpdateContent:
         """Test multiple consecutive content updates."""
         # Arrange
         updated_by = "user-002"
-        
+
         # Act - First update
         event1 = sample_knowledge_entry.update_content("First update", updated_by)
         timestamp1 = sample_knowledge_entry.updated_at
-        
+
         # Act - Second update
         event2 = sample_knowledge_entry.update_content("Second update", updated_by)
         timestamp2 = sample_knowledge_entry.updated_at
-        
+
         # Assert
         assert sample_knowledge_entry.content == "Second update"
         assert timestamp2 > timestamp1
@@ -154,7 +157,7 @@ class TestKnowledgeEntryContentValidation:
         """Sample data for creating knowledge entries."""
         if KnowledgeEntry is None:
             pytest.skip("KnowledgeEntry not yet implemented (TDD - expected to fail)")
-        
+
         return {
             "id": str(uuid4()),
             "content": "Valid content",
@@ -170,7 +173,7 @@ class TestKnowledgeEntryContentValidation:
         """Test that creating entry with empty content raises ValueError."""
         # Arrange
         sample_entry_data["content"] = ""
-        
+
         # Act & Assert
         with pytest.raises(ValueError, match="Content cannot be empty"):
             KnowledgeEntry(**sample_entry_data)
@@ -179,7 +182,7 @@ class TestKnowledgeEntryContentValidation:
         """Test successful creation with valid content."""
         # Act
         entry = KnowledgeEntry(**sample_entry_data)
-        
+
         # Assert
         assert entry.content == sample_entry_data["content"]
         assert entry.id == sample_entry_data["id"]
@@ -188,7 +191,7 @@ class TestKnowledgeEntryContentValidation:
         """Test that knowledge_type cannot be changed after creation."""
         # Arrange
         entry = KnowledgeEntry(**sample_entry_data)
-        
+
         # Act & Assert
         # Dataclass frozen=True should prevent modification
         with pytest.raises(AttributeError):
@@ -199,7 +202,7 @@ class TestKnowledgeEntryContentValidation:
         # Arrange
         entry = KnowledgeEntry(**sample_entry_data)
         new_timestamp = datetime.now(timezone.utc) + timedelta(days=1)
-        
+
         # Act & Assert
         with pytest.raises(AttributeError):
             entry.created_at = new_timestamp
@@ -209,7 +212,7 @@ class TestKnowledgeEntryContentValidation:
         # Arrange
         entry = KnowledgeEntry(**sample_entry_data)
         new_id = str(uuid4())
-        
+
         # Act & Assert
         with pytest.raises(AttributeError):
             entry.id = new_id
@@ -223,7 +226,7 @@ class TestKnowledgeEntryIsAccessibleBy:
         """Create a public access knowledge entry."""
         if KnowledgeEntry is None:
             pytest.skip("KnowledgeEntry not yet implemented (TDD - expected to fail)")
-        
+
         return KnowledgeEntry(
             id=str(uuid4()),
             content="Public knowledge content",
@@ -240,7 +243,7 @@ class TestKnowledgeEntryIsAccessibleBy:
         """Create a role-based access knowledge entry."""
         if KnowledgeEntry is None:
             pytest.skip("KnowledgeEntry not yet implemented (TDD - expected to fail)")
-        
+
         return KnowledgeEntry(
             id=str(uuid4()),
             content="Role-based knowledge content",
@@ -260,7 +263,7 @@ class TestKnowledgeEntryIsAccessibleBy:
         """Create a character-specific access knowledge entry."""
         if KnowledgeEntry is None:
             pytest.skip("KnowledgeEntry not yet implemented (TDD - expected to fail)")
-        
+
         return KnowledgeEntry(
             id=str(uuid4()),
             content="Character-specific knowledge content",
@@ -281,52 +284,66 @@ class TestKnowledgeEntryIsAccessibleBy:
         agent1 = AgentIdentity(character_id="char-001", roles=())
         agent2 = AgentIdentity(character_id="char-002", roles=("engineer",))
         agent3 = AgentIdentity(character_id="char-003", roles=("medical", "crew"))
-        
+
         # Act & Assert
         assert public_entry.is_accessible_by(agent1) is True
         assert public_entry.is_accessible_by(agent2) is True
         assert public_entry.is_accessible_by(agent3) is True
 
-    def test_role_based_entry_accessible_by_agents_with_matching_role(self, role_based_entry):
+    def test_role_based_entry_accessible_by_agents_with_matching_role(
+        self, role_based_entry
+    ):
         """Test that ROLE_BASED entry is accessible by agents with matching role."""
         # Arrange
-        agent_with_engineer = AgentIdentity(character_id="char-001", roles=("engineer",))
+        agent_with_engineer = AgentIdentity(
+            character_id="char-001", roles=("engineer",)
+        )
         agent_with_medical = AgentIdentity(character_id="char-002", roles=("medical",))
-        agent_with_both = AgentIdentity(character_id="char-003", roles=("engineer", "medical"))
-        
+        agent_with_both = AgentIdentity(
+            character_id="char-003", roles=("engineer", "medical")
+        )
+
         # Act & Assert
         assert role_based_entry.is_accessible_by(agent_with_engineer) is True
         assert role_based_entry.is_accessible_by(agent_with_medical) is True
         assert role_based_entry.is_accessible_by(agent_with_both) is True
 
-    def test_role_based_entry_not_accessible_by_agents_without_matching_role(self, role_based_entry):
+    def test_role_based_entry_not_accessible_by_agents_without_matching_role(
+        self, role_based_entry
+    ):
         """Test that ROLE_BASED entry is not accessible by agents without matching role."""
         # Arrange
         agent_no_roles = AgentIdentity(character_id="char-001", roles=())
         agent_wrong_role = AgentIdentity(character_id="char-002", roles=("crew",))
-        agent_other_roles = AgentIdentity(character_id="char-003", roles=("security", "pilot"))
-        
+        agent_other_roles = AgentIdentity(
+            character_id="char-003", roles=("security", "pilot")
+        )
+
         # Act & Assert
         assert role_based_entry.is_accessible_by(agent_no_roles) is False
         assert role_based_entry.is_accessible_by(agent_wrong_role) is False
         assert role_based_entry.is_accessible_by(agent_other_roles) is False
 
-    def test_character_specific_entry_accessible_by_allowed_characters(self, character_specific_entry):
+    def test_character_specific_entry_accessible_by_allowed_characters(
+        self, character_specific_entry
+    ):
         """Test that CHARACTER_SPECIFIC entry is accessible by allowed characters."""
         # Arrange
         agent_char_001 = AgentIdentity(character_id="char-001", roles=())
         agent_char_002 = AgentIdentity(character_id="char-002", roles=("engineer",))
-        
+
         # Act & Assert
         assert character_specific_entry.is_accessible_by(agent_char_001) is True
         assert character_specific_entry.is_accessible_by(agent_char_002) is True
 
-    def test_character_specific_entry_not_accessible_by_other_characters(self, character_specific_entry):
+    def test_character_specific_entry_not_accessible_by_other_characters(
+        self, character_specific_entry
+    ):
         """Test that CHARACTER_SPECIFIC entry is not accessible by other characters."""
         # Arrange
         agent_char_003 = AgentIdentity(character_id="char-003", roles=())
         agent_char_004 = AgentIdentity(character_id="char-004", roles=("engineer",))
-        
+
         # Act & Assert
         assert character_specific_entry.is_accessible_by(agent_char_003) is False
         assert character_specific_entry.is_accessible_by(agent_char_004) is False
@@ -335,7 +352,7 @@ class TestKnowledgeEntryIsAccessibleBy:
         """Test that is_accessible_by delegates to AccessControlRule.permits."""
         if KnowledgeEntry is None:
             pytest.skip("KnowledgeEntry not yet implemented (TDD - expected to fail)")
-        
+
         # Arrange
         entry = KnowledgeEntry(
             id=str(uuid4()),
@@ -352,7 +369,7 @@ class TestKnowledgeEntryIsAccessibleBy:
         )
         agent_with_role = AgentIdentity(character_id="char-001", roles=("scientist",))
         agent_without_role = AgentIdentity(character_id="char-002", roles=("engineer",))
-        
+
         # Act & Assert - should delegate to AccessControlRule.permits
         assert entry.is_accessible_by(agent_with_role) is True
         assert entry.is_accessible_by(agent_without_role) is False

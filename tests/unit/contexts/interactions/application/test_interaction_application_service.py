@@ -383,12 +383,15 @@ class TestProposalOperations:
         """Create sample proposal terms for testing."""
         proposal_terms = Mock(spec=ProposalTerms)
         proposal_terms.proposal_id = uuid4()
+        proposal_terms.is_expired = False
         return proposal_terms
 
     @pytest.fixture
     def sample_proposal_response(self):
         """Create sample proposal response for testing."""
-        return Mock(spec=ProposalResponse)
+        response = Mock(spec=ProposalResponse)
+        response.is_expired.return_value = False
+        return response
 
     @pytest.mark.asyncio
     async def test_submit_proposal_success(

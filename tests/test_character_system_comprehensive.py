@@ -28,9 +28,8 @@ if not FULL_INTEGRATION:
     pytestmark = pytest.mark.skip(
         reason="Character system comprehensive suite requires NOVEL_ENGINE_FULL_INTEGRATION=1"
     )
-from src.config.character_factory import CharacterFactory
 from src.agents.director_agent import DirectorAgent
-
+from src.config.character_factory import CharacterFactory
 from src.event_bus import EventBus
 
 # Test Constants
@@ -489,7 +488,7 @@ class TestCharacterInteractions:
         # Test that decision engine is initialized
         assert hasattr(agent, "decision_engine")
         assert agent.decision_engine is not None
-        
+
         # Test that decision weights are available
         assert hasattr(agent, "decision_weights")
         weights = agent.decision_weights
@@ -544,8 +543,12 @@ class TestCharacterInteractions:
         director.register_agent(scientist)
 
         assert len(director.registered_agents) == 2
-        assert pilot.agent_id in [agent.agent_id for agent in director.registered_agents]
-        assert scientist.agent_id in [agent.agent_id for agent in director.registered_agents]
+        assert pilot.agent_id in [
+            agent.agent_id for agent in director.registered_agents
+        ]
+        assert scientist.agent_id in [
+            agent.agent_id for agent in director.registered_agents
+        ]
 
 
 class TestPerformanceAndScalability:
@@ -665,7 +668,9 @@ class TestCharacterValidation:
         balance_ratio = max_total / min_total if min_total > 0 else float("inf")
 
         # Allow for specialization differences (pilot is combat-focused, scientist is research-focused)
-        assert balance_ratio <= 2.0, f"Characters are severely unbalanced: {combat_totals}"
+        assert (
+            balance_ratio <= 2.0
+        ), f"Characters are severely unbalanced: {combat_totals}"
 
     def test_sci_fi_theme_consistency(self):
         """Test that all characters maintain sci-fi theme consistency"""

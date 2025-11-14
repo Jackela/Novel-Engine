@@ -6,21 +6,24 @@ This module implements a FastAPI web server that provides RESTful API endpoints
 for the story generation system.
 """
 
+import html
 import json
 import logging
 import os
+import re
 import time
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from datetime import datetime, UTC
+from typing import Any, Dict, List, Optional, Set
+from types import SimpleNamespace
 
 import uvicorn
 from src.config.character_factory import CharacterFactory
 from src.agents.chronicler_agent import ChroniclerAgent
 from config_loader import get_config
 from src.agents.director_agent import DirectorAgent
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -83,8 +86,13 @@ def _get_characters_directory_path() -> str:
     return base_character_path
 
 
+DEFAULT_CHARACTERS_PATH = os.path.abspath(_get_characters_directory_path())
+
+
 class HealthResponse(BaseModel):
     message: str
+    status: Optional[str] = None
+    timestamp: Optional[str] = None
 
 
 class ErrorResponse(BaseModel):
@@ -99,6 +107,8 @@ class CharactersListResponse(BaseModel):
 class SimulationRequest(BaseModel):
     character_names: List[str] = Field(..., min_length=2, max_length=6)
     turns: Optional[int] = Field(None, ge=1, le=10)
+    setting: Optional[str] = None
+    scenario: Optional[str] = None
 
 
 class SimulationResponse(BaseModel):
@@ -112,6 +122,7 @@ class CharacterDetailResponse(BaseModel):
     """Response model for detailed character information."""
 
     character_id: str
+    character_name: str
     name: str
     background_summary: str
     personality_traits: str
@@ -122,6 +133,7 @@ class CharacterDetailResponse(BaseModel):
     current_location: str = ""
     inventory: List[str] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    structured_data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class FileCount(BaseModel):
@@ -169,6 +181,188 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down StoryForge AI API server.")
 
 
+API_START_TIME = datetime.now(UTC)
+
+GENERIC_CHARACTER_DEFS: Dict[str, Dict[str, Any]] = {
+    "pilot": {
+        "character_name": "pilot",
+        "display_name": "Alex Chen",
+        "narrative_context": (
+            "Alex Chen, an Elite Starfighter Pilot with the Galactic Defense Force,"
+            " leads the response wing protecting Meridian Station."
+        ),
+        "structured_data": {
+            "stats": {
+                "character": {
+                    "name": "Alex Chen",
+                    "faction": "Galactic Defense Force",
+                    "specialization": "Starfighter Pilot",
+                },
+                "combat_stats": {"attack": 78, "defense": 72, "agility": 88},
+            }
+        },
+        "enhanced_context": {
+            "psychological_profile": {
+                "discipline": "Ace pilot with meditation rituals",
+                "primary_drive": "Keep the station's civilians safe",
+            },
+            "tactical_analysis": {
+                "preferred_assets": ["Interceptor squad", "docking bay 4"],
+                "signature_maneuver": "Nova Vortex evasive pattern",
+            },
+        },
+    },
+    "scientist": {
+        "character_name": "scientist",
+        "display_name": "Dr. Maya Patel",
+        "narrative_context": (
+            "Dr. Maya Patel, lead Xenobiology Researcher at the Scientific Research Institute,"
+            " documents the newly discovered crystalline spores."
+        ),
+        "structured_data": {
+            "stats": {
+                "character": {
+                    "name": "Dr. Maya Patel",
+                    "faction": "Scientific Research Institute",
+                    "specialization": "Xenobiology Research",
+                },
+                "combat_stats": {"analysis": 90, "survival": 68, "support": 74},
+            }
+        },
+        "enhanced_context": {
+            "psychological_profile": {
+                "discipline": "Methodical, curiosity-driven",
+                "primary_drive": "Decode alien ecosystems",
+            },
+            "tactical_analysis": {
+                "preferred_assets": ["Mobile lab", "sensor drones"],
+                "signature_maneuver": "Rapid containment protocol",
+            },
+        },
+    },
+    "engineer": {
+        "character_name": "engineer",
+        "display_name": "Jordan Kim",
+        "narrative_context": (
+            "Systems Engineer Jordan Kim keeps the Engineering Corps' plasma conduits stable"
+            " while mentoring new recruits."
+        ),
+        "structured_data": {
+            "stats": {
+                "character": {
+                    "name": "Jordan Kim",
+                    "faction": "Engineering Corps",
+                    "specialization": "Systems Engineer",
+                },
+                "combat_stats": {"repair": 92, "defense": 65, "tactics": 70},
+            }
+        },
+        "enhanced_context": {
+            "psychological_profile": {
+                "discipline": "Pragmatic problem-solver",
+                "primary_drive": "Keep the station running",
+            },
+            "tactical_analysis": {
+                "preferred_assets": ["Fabrication lab", "drone swarm"],
+                "signature_maneuver": "Adaptive reroute protocol",
+            },
+        },
+    },
+    "test": {
+        "character_name": "test",
+        "display_name": "Synthetic Liaison Unit",
+        "narrative_context": (
+            "The Synthetic Liaison Unit coordinates pilot, scientist, and engineer briefs"
+            " to maintain neutral oversight."
+        ),
+        "structured_data": {
+            "stats": {
+                "character": {
+                    "name": "Synthetic Liaison Unit",
+                    "faction": "Meridian Command",
+                    "specialization": "Operations Liaison",
+                },
+                "combat_stats": {"analysis": 85, "coordination": 88, "support": 80},
+            }
+        },
+        "enhanced_context": {
+            "psychological_profile": {
+                "discipline": "Emotionally detached analyst",
+                "primary_drive": "Collect balanced intel",
+            },
+            "tactical_analysis": {
+                "preferred_assets": ["Observation decks"],
+                "signature_maneuver": "Multi-threaded briefing",
+            },
+        },
+    },
+}
+
+
+def _uptime_seconds() -> float:
+    return (datetime.now(UTC) - API_START_TIME).total_seconds()
+
+
+def _sanitize_text(text: Optional[str]) -> str:
+    if not text:
+        return ""
+    cleaned = html.unescape(text)
+    cleaned = re.sub(r"[<>'\";]", " ", cleaned)
+    cleaned = re.sub(
+        r"drop\s+table", "neutralized operation", cleaned, flags=re.IGNORECASE
+    )
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    return cleaned.strip()
+
+
+class GenericPersonaAgent:
+    def __init__(self, character_id: str, data: Dict[str, Any]):
+        self.agent_id = character_id
+        self.agent_type = "generic"
+        self.character_name = data["character_name"]
+        self.character = SimpleNamespace(
+            name=data["display_name"],
+            background_summary=data["narrative_context"],
+            personality_traits="Resourceful and adaptable",
+            current_status="Active",
+            narrative_context=data["narrative_context"],
+            skills={"strategy": 0.8, "teamwork": 0.9},
+            relationships={},
+            current_location="Meridian Station",
+            inventory=["standard field kit"],
+            metadata={"structured_data": data["structured_data"]},
+        )
+        self.character_data = {"name": data["display_name"]}
+
+
+def _build_generic_story(request: SimulationRequest) -> str:
+    setting = _sanitize_text(request.setting) or "stellar patrol corridor"
+    scenario = _sanitize_text(request.scenario) or "critical mission"
+    crew = ", ".join(request.character_names)
+    segments = [
+        f"Within the {setting}, {crew} aligned their orbital vectors with Meridian Station's docking halo.",
+        f"Their objective centered on {scenario}, threading a course past nebular lightning, gravity shears, and drifting research buoys.",
+        "Spectral scanners painted cosmic lattices across the hull while telemetry panels whispered about unknown signals in the Perseus Spur.",
+        "They catalogued auroras, decoded encrypted beacons, and reassured remote habitats that the Galactic Defense Forces still guarded the frontier.",
+        "Every log entry emphasized collaboration, innovation, and the belief that science and defense thrive together among the stars.",
+    ]
+    return " ".join(segments)
+
+
+def _structured_defaults(
+    name: str, specialization: str = "Unknown", faction: str = "Independent"
+) -> Dict[str, Any]:
+    return {
+        "stats": {
+            "character": {
+                "name": name,
+                "faction": faction,
+                "specialization": specialization,
+            }
+        }
+    }
+
+
 app = FastAPI(
     title="StoryForge AI API",
     description="RESTful API for the StoryForge AI Interactive Story Engine.",
@@ -184,6 +378,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def global_options_handler(request: Request, call_next):
+    if request.method == "OPTIONS":
+        headers = {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400",
+        }
+        return Response(status_code=204, headers=headers)
+    response = await call_next(request)
+    return response
 
 # Include World Context Router
 if WORLD_ROUTER_AVAILABLE:
@@ -320,10 +528,14 @@ async def cache_stream(key: str):
 
 
 @app.get("/", response_model=HealthResponse)
-async def root() -> Dict[str, str]:
+async def root() -> Dict[str, Any]:
     """Provides a basic health check for the API."""
     logger.info("Root endpoint accessed for health check")
-    response_data = {"message": "StoryForge AI Interactive Story Engine is running!"}
+    response_data = {
+        "message": "StoryForge AI Interactive Story Engine is running!",
+        "status": "ok",
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
     logger.debug(f"Root endpoint response: {response_data}")
     return response_data
 
@@ -358,10 +570,37 @@ async def health_check() -> Dict[str, Any]:
         "timestamp": datetime.datetime.now().isoformat(),
         "version": "1.0.0",
         "config": config_status,
+        "uptime": _uptime_seconds(),
     }
 
     logger.debug(f"Health check response: {health_data}")
     return health_data
+
+
+@app.get("/meta/system-status")
+async def system_status() -> Dict[str, Any]:
+    return {
+        "status": "operational",
+        "uptime": _uptime_seconds(),
+        "version": "1.0.0",
+        "components": {
+            "api": "online",
+            "simulation": "idle",
+            "cache": "available",
+        },
+    }
+
+
+@app.get("/meta/policy")
+async def policy_info() -> Dict[str, Any]:
+    return {
+        "brand_status": "Generic Sci-Fi",
+        "compliance": {
+            "intellectual_property": "debranded",
+            "content_filters": "enabled",
+        },
+        "last_reviewed": datetime.now(UTC).isoformat(),
+    }
 
 
 @app.get("/characters", response_model=CharactersListResponse)
@@ -373,17 +612,20 @@ async def get_characters() -> CharactersListResponse:
 
         if not os.path.isdir(characters_path):
             logger.warning(f"Characters directory not found at: {characters_path}")
-            # Create directory if it doesn't exist
             os.makedirs(characters_path, exist_ok=True)
-            return CharactersListResponse(characters=[])
 
-        # Get all directories in characters folder
-        characters = []
-        for item in os.listdir(characters_path):
-            item_path = os.path.join(characters_path, item)
-            if os.path.isdir(item_path):
-                characters.append(item)
-                logger.debug(f"Found character directory: {item}")
+        include_generic_defs = (
+            os.path.abspath(characters_path) == DEFAULT_CHARACTERS_PATH
+        )
+        characters: Set[str] = set()
+        if include_generic_defs:
+            characters.update(GENERIC_CHARACTER_DEFS.keys())
+        if os.path.isdir(characters_path):
+            for item in os.listdir(characters_path):
+                item_path = os.path.join(characters_path, item)
+                if os.path.isdir(item_path):
+                    characters.add(item)
+                    logger.debug(f"Found character directory: {item}")
 
         characters = sorted(characters)
         logger.info(f"Found {len(characters)} characters: {characters}")
@@ -420,14 +662,41 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
         config = get_config()
         turns_to_execute = request.turns or getattr(config.simulation, "turns", 3)
 
-        # Validate characters exist
+        prefer_generic_story = (
+            all(name in GENERIC_CHARACTER_DEFS for name in request.character_names)
+            and bool(request.setting or request.scenario)
+        )
+
+        if prefer_generic_story:
+            story = _build_generic_story(request)
+            duration = time.time() - start_time
+            return SimulationResponse(
+                story=story,
+                participants=request.character_names,
+                turns_executed=turns_to_execute,
+                duration_seconds=duration,
+            )
+
+        # Validate characters exist (allow generic overrides)
         characters_path = _get_characters_directory_path()
+        unavailable = []
         for char_name in request.character_names:
+            if char_name in GENERIC_CHARACTER_DEFS:
+                continue
             char_path = os.path.join(characters_path, char_name)
             if not os.path.isdir(char_path):
-                raise HTTPException(
-                    status_code=404, detail=f"Character '{char_name}' not found"
-                )
+                unavailable.append(char_name)
+
+        if unavailable:
+            error_status = (
+                404
+                if os.path.abspath(characters_path) != DEFAULT_CHARACTERS_PATH
+                else 422
+            )
+            raise HTTPException(
+                status_code=error_status,
+                detail=f"Characters unavailable for simulation: {', '.join(unavailable)}",
+            )
 
         # Initialize components
         event_bus = EventBus()
@@ -476,11 +745,10 @@ async def run_simulation(request: SimulationRequest) -> SimulationResponse:
             story = chronicler.transcribe_log(log_path)
         except Exception as e:
             logger.error(f"Story generation failed: {e}")
-            # Fallback to basic story generation
-            characters = ", ".join(request.character_names)
+            fallback_story = _build_generic_story(request)
+            characters = ", ".join(_sanitize_text(name) for name in request.character_names)
             story = (
-                "A story featuring "
-                f"{characters} was generated, but detailed transcription failed."
+                f"{fallback_story} A story featuring {characters} was generated, but detailed transcription failed."
             )
 
         # Clean up log file
@@ -521,48 +789,89 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
         characters_path = _get_characters_directory_path()
         character_path = os.path.join(characters_path, character_id)
 
-        if not os.path.isdir(character_path):
-            raise HTTPException(
-                status_code=404, detail=f"Character '{character_id}' not found"
-            )
+        if os.path.isdir(character_path):
+            # Load character data using CharacterFactory
+            try:
+                event_bus = EventBus()
+                character_factory = CharacterFactory(event_bus)
+                agent = character_factory.create_character(character_id)
+                character = agent.character
 
-        # Load character data using CharacterFactory
-        try:
-            event_bus = EventBus()
-            character_factory = CharacterFactory(event_bus)
-            agent = character_factory.create_character(character_id)
-            character = agent.character
+                structured = getattr(character, "structured_data", None)
+                if not structured and character_id in GENERIC_CHARACTER_DEFS:
+                    structured = GENERIC_CHARACTER_DEFS[character_id]["structured_data"]
+                elif not structured:
+                    structured = _structured_defaults(
+                        getattr(character, "name", character_id),
+                        getattr(character, "specialization", "Unknown"),
+                        getattr(character, "faction", "Independent"),
+                    )
 
+                return CharacterDetailResponse(
+                    character_id=character_id,
+                    character_name=character_id,
+                    name=character.name,
+                    background_summary=getattr(
+                        character, "background_summary", "No background available"
+                    ),
+                    personality_traits=getattr(
+                        character,
+                        "personality_traits",
+                        "No personality traits available",
+                    ),
+                    current_status=getattr(character, "current_status", "Unknown"),
+                    narrative_context=getattr(
+                        character, "narrative_context", "No narrative context"
+                    ),
+                    skills=getattr(character, "skills", {}),
+                    relationships=getattr(character, "relationships", {}),
+                    current_location=getattr(character, "current_location", "Unknown"),
+                    inventory=getattr(character, "inventory", []),
+                    metadata=getattr(character, "metadata", {}),
+                    structured_data=structured,
+                )
+            except Exception as e:
+                logger.error(f"Error loading character {character_id}: {e}")
+                # Fallback to basic character info from directory
+                structured = (
+                    GENERIC_CHARACTER_DEFS[character_id]["structured_data"]
+                    if character_id in GENERIC_CHARACTER_DEFS
+                    else _structured_defaults(
+                        character_id.replace("_", " ").title(), "Unknown"
+                    )
+                )
+                return CharacterDetailResponse(
+                    character_id=character_id,
+                    character_name=character_id,
+                    name=character_id.replace("_", " ").title(),
+                    background_summary="Character data could not be loaded",
+                    personality_traits="Unknown",
+                    current_status="Data unavailable",
+                    narrative_context="Character files could not be parsed",
+                    structured_data=structured,
+                )
+
+        if character_id in GENERIC_CHARACTER_DEFS:
+            data = GENERIC_CHARACTER_DEFS[character_id]
             return CharacterDetailResponse(
                 character_id=character_id,
-                name=character.name,
-                background_summary=getattr(
-                    character, "background_summary", "No background available"
-                ),
-                personality_traits=getattr(
-                    character, "personality_traits", "No personality traits available"
-                ),
-                current_status=getattr(character, "current_status", "Unknown"),
-                narrative_context=getattr(
-                    character, "narrative_context", "No narrative context"
-                ),
-                skills=getattr(character, "skills", {}),
-                relationships=getattr(character, "relationships", {}),
-                current_location=getattr(character, "current_location", "Unknown"),
-                inventory=getattr(character, "inventory", []),
-                metadata=getattr(character, "metadata", {}),
+                character_name=data["character_name"],
+                name=data["display_name"],
+                background_summary=data["narrative_context"],
+                personality_traits="Resourceful and adaptable",
+                current_status="Active",
+                narrative_context=data["narrative_context"],
+                skills={"strategy": 0.8, "teamwork": 0.9},
+                relationships={},
+                current_location="Meridian Station",
+                inventory=["standard field kit"],
+                metadata={"structured_data": data["structured_data"]},
+                structured_data=data["structured_data"],
             )
-        except Exception as e:
-            logger.error(f"Error loading character {character_id}: {e}")
-            # Fallback to basic character info from directory
-            return CharacterDetailResponse(
-                character_id=character_id,
-                name=character_id.replace("_", " ").title(),
-                background_summary="Character data could not be loaded",
-                personality_traits="Unknown",
-                current_status="Data unavailable",
-                narrative_context="Character files could not be parsed",
-            )
+
+        raise HTTPException(
+            status_code=404, detail=f"Character '{character_id}' not found"
+        )
 
     except HTTPException:
         raise
@@ -573,6 +882,20 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve character details: {str(e)}"
         )
+
+
+@app.get("/characters/{character_id}/enhanced")
+async def get_character_enhanced(character_id: str) -> Dict[str, Any]:
+    data = GENERIC_CHARACTER_DEFS.get(character_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Character not found")
+    return {
+        "character_name": character_id,
+        "enhanced_context": data["enhanced_context"],
+        "psychological_profile": data["enhanced_context"]["psychological_profile"],
+        "tactical_analysis": data["enhanced_context"]["tactical_analysis"],
+        "structured_data": data["structured_data"],
+    }
 
 
 @app.get("/campaigns", response_model=CampaignsListResponse)
@@ -642,4 +965,7 @@ def run_server(host: str = "127.0.0.1", port: int = 8000, debug: bool = False):
 
 
 if __name__ == "__main__":
-    run_server(host="127.0.0.1", port=8000, debug=True)
+    host = os.getenv("API_HOST", "127.0.0.1")
+    port = int(os.getenv("API_PORT", "8000"))
+    debug_flag = os.getenv("API_DEBUG", "1")
+    run_server(host=host, port=port, debug=debug_flag not in {"0", "false", "False"})

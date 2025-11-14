@@ -276,13 +276,13 @@ class CentralizedErrorHandler:
         self, error: Exception, context: ErrorContext
     ) -> ErrorCategory:
         """Auto-detect error category based on error type and context."""
+        # Network errors (checked before generic system errors because of inheritance)
+        if isinstance(error, (ConnectionError, TimeoutError)):
+            return ErrorCategory.NETWORK
+
         # System errors
         if isinstance(error, (SystemError, MemoryError, OSError)):
             return ErrorCategory.SYSTEM
-
-        # Network errors
-        if isinstance(error, (ConnectionError, TimeoutError)):
-            return ErrorCategory.NETWORK
 
         # Validation errors
         if isinstance(error, (ValueError, TypeError)):
@@ -614,7 +614,28 @@ async def handle_error(
     Returns:
         ErrorRecord: Complete error record
     """
-    context = ErrorContext(component=component, operation=operation, metadata=kwargs)
+    extra_kwargs = dict(kwargs)
+
+    context_kwargs = {}
+    for field in ("user_id", "session_id", "request_id"):
+        if field in extra_kwargs:
+            context_kwargs[field] = extra_kwargs.pop(field)
+
+    metadata_param = extra_kwargs.pop("metadata", None)
+    metadata: Dict[str, Any] = {}
+    if isinstance(metadata_param, dict):
+        metadata.update(metadata_param)
+    elif metadata_param is not None:
+        metadata["value"] = metadata_param
+
+    metadata.update(extra_kwargs)
+
+    context = ErrorContext(
+        component=component,
+        operation=operation,
+        metadata=metadata,
+        **context_kwargs,
+    )
 
     handler = get_error_handler()
     return await handler.handle_error(error, context)

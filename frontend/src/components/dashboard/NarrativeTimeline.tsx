@@ -229,6 +229,7 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
     <GridTile
       title="Narrative Arc Timeline"
       data-testid="narrative-timeline"
+      data-role="narrative-timeline"
       position={{
         desktop: { column: '1 / 13', height: '200px' },
         tablet: { column: '1 / 9', height: '180px' },
@@ -244,7 +245,10 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
             <Typography variant="caption" color="text.secondary" fontWeight={500}>
               Turn {currentTurn} of {maxTurn}
             </Typography>
-            <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600 }}>
+            <Typography
+              variant="caption"
+              sx={{ color: (theme) => theme.palette.primary.light, fontWeight: 600 }}
+            >
               {Math.round(progressPercentage)}% Complete
             </Typography>
           </Stack>
@@ -252,6 +256,8 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
           <LinearProgress 
             variant="determinate" 
             value={progressPercentage}
+            data-testid="timeline-progress"
+            aria-label={`Narrative arc progress ${Math.round(progressPercentage)} percent complete`}
             sx={{ 
               height: 6, 
               borderRadius: 3,
@@ -296,6 +302,9 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
               <Fade in timeout={300 + index * 100}>
                 <TimelineNode
                   status={event.status}
+                  data-testid="timeline-node"
+                  data-status={event.status}
+                  data-turn={event.turn}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -330,6 +339,7 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
                     <Typography 
                       variant="caption" 
                       color="text.secondary" 
+                      data-testid={event.status === 'current' ? 'current-turn' : undefined}
                       sx={{ 
                         fontSize: '0.7rem',
                         display: 'block',
@@ -353,8 +363,8 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
                         sx={{
                           height: '16px',
                           fontSize: '0.6rem',
-                          backgroundColor: `${getStatusColor(event.status)}20`,
-                          color: getStatusColor(event.status),
+                          backgroundColor: 'transparent',
+                          color: 'var(--color-text-primary)',
                           borderColor: getStatusColor(event.status),
                           '& .MuiChip-icon': {
                             color: getStatusColor(event.status),

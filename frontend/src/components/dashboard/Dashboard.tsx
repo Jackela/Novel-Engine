@@ -1,25 +1,13 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { 
-  Box, 
-  Alert, 
-  Snackbar, 
-  useTheme, 
-  useMediaQuery, 
-  CircularProgress,
-  Stack,
-  Typography,
-  Chip,
-} from '@mui/material';
+import { Box, Alert, Snackbar, useTheme, useMediaQuery, CircularProgress, Stack } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import DashboardLayout from '../layout/DashboardLayout';
 import MobileTabbedDashboard from '../layout/MobileTabbedDashboard';
-
-// Critical components loaded immediately
-import WorldStateMap from './WorldStateMap';
-import QuickActions from './QuickActions';
-import type { RunStateSummary, QuickAction } from './types';
 import { logger } from '../../services/logging/LoggerFactory';
+import WorldStateMap from './WorldStateMapV2';
+import QuickActions, { type QuickAction } from './QuickActions';
+import SummaryStrip from './SummaryStrip';
 
-// Non-critical components lazy loaded for mobile performance
 const RealTimeActivity = lazy(() => import('./RealTimeActivity'));
 const PerformanceMetrics = lazy(() => import('./PerformanceMetrics'));
 const TurnPipelineStatus = lazy(() => import('./TurnPipelineStatus'));
@@ -28,151 +16,95 @@ const EventCascadeFlow = lazy(() => import('./EventCascadeFlow'));
 const NarrativeTimeline = lazy(() => import('./NarrativeTimeline'));
 const AnalyticsDashboard = lazy(() => import('./AnalyticsDashboard'));
 
-// Lazy loading wrapper with loading indicator
 const LazyWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Suspense fallback={
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-      <CircularProgress size={24} />
-    </Box>
-  }>
+  <Suspense
+    fallback={
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+        <CircularProgress size={24} />
+      </Box>
+    }
+  >
     {children}
   </Suspense>
 );
 
-interface SummaryStripProps {
-  runState: RunStateSummary;
-  lastUpdate: Date;
-}
-
-const SummaryStrip: React.FC<SummaryStripProps> = ({ runState, lastUpdate }) => {
-  const theme = useTheme();
-  const lastUpdatedLabel = lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-  return (
-    <Box
-      data-testid="dashboard-summary"
-      data-role="summary-strip"
-      sx={{
-        width: '100%',
-        background: `linear-gradient(120deg, ${theme.palette.primary.main}22, ${theme.palette.secondary.main}11)`,
-        border: `1px solid ${theme.palette.primary.main}33`,
-        borderRadius: theme.shape.borderRadius * 1.5,
-        padding: theme.spacing(2, 3),
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: theme.spacing(2),
-        justifyContent: 'space-between',
-        boxShadow: theme.shadows[6],
-      }}
-    >
-      <Stack spacing={0.5}>
-        <Typography variant="caption" color="text.secondary">
-          Orchestration
-        </Typography>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="subtitle1" fontWeight={600}>
-            {runState.status.toUpperCase()}
-          </Typography>
-          <Chip
-            label={runState.isLiveMode ? 'LIVE MODE' : 'SIMULATION'}
-            size="small"
-            color={runState.isLiveMode ? 'success' : 'default'}
-          />
-          <Chip
-            label={runState.connected ? 'Connected' : 'Offline'}
-            size="small"
-            color={runState.connected ? 'success' : 'warning'}
-          />
-        </Stack>
-      </Stack>
-
-      <Stack spacing={0.5}>
-        <Typography variant="caption" color="text.secondary">
-          Active Phase
-        </Typography>
-        <Typography variant="subtitle1" fontWeight={600}>
-          {runState.phase || 'Initializing'}
-        </Typography>
-      </Stack>
-
-      <Stack spacing={0.5}>
-        <Typography variant="caption" color="text.secondary">
-          Last Updated
-        </Typography>
-        <Typography variant="subtitle1" fontWeight={600}>
-          {lastUpdatedLabel}
-        </Typography>
-      </Stack>
-    </Box>
-  );
-};
+type PipelineState = 'idle' | 'running' | 'paused' | 'stopped';
 
 interface DashboardProps {
-  // Add authentication and user context props as needed
   userId?: string;
   campaignId?: string;
 }
 
+interface ZoneSpan {
+  desktop?: number;
+  tablet?: number;
+  mobile?: number;
+}
+
+interface ZoneConfig {
+  id: string;
+  role: string;
+  span?: ZoneSpan;
+  content: React.ReactNode;
+}
+
+const ZoneWrapper = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(1.5),
+}));
+
 const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _campaignId }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   const [loading, setLoading] = useState(false);
   const [error, _setError] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-
-  // System state
   const [systemStatus, _setSystemStatus] = useState<'online' | 'offline' | 'maintenance'>('online');
-  const [_lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [runState, setRunState] = useState<RunStateSummary>({
-    status: 'idle',
-    mode: 'simulation',
-    connected: true,
-    isLiveMode: false,
-    phase: 'World Update',
-    lastUpdated: Date.now(),
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [pipelineStatus, setPipelineStatus] = useState<PipelineState>('idle');
+  const [isLiveMode, setIsLiveMode] = useState(false);
+  const [isOnline, setIsOnline] = useState(() => {
+    if (typeof navigator === 'undefined') {
+      return true;
+    }
+    return navigator.onLine;
   });
 
-  // Periodic updates using HTTP polling
-  // Note: WebSocket support deferred - using polling for real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
       setLastUpdate(new Date());
-    }, 10000); // Poll every 10 seconds
+    }, 10000);
 
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    const endpoints = ['/characters', '/world/state', '/narratives/arcs'];
-    const pingEndpoints = () => {
-      endpoints.forEach((endpoint) => {
-        console.info('[api-mock]', endpoint);
-        fetch(`${window.location.origin}/api${endpoint}`, { mode: 'no-cors' })
-          .then(() => {})
-          .catch(() => {});
-      });
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      showNotification('Connection restored. Resuming live data.');
     };
 
-    pingEndpoints();
-    const interval = setInterval(pingEndpoints, 2500);
-    return () => clearInterval(interval);
+    const handleOffline = () => {
+      setIsOnline(false);
+      setIsLiveMode(false);
+      showNotification('Connection lost. Working offline.');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
-
-  const updateRunState = (partial: Partial<RunStateSummary>) => {
-    setRunState(prev => ({
-      ...prev,
-      ...partial,
-      lastUpdated: Date.now(),
-    }));
-  };
-
-  const handlePipelinePhaseChange = (phase?: string) => {
-    if (phase) {
-      updateRunState({ phase });
-    }
-  };
 
   const showNotification = (message: string) => {
     setSnackbarMessage(message);
@@ -181,44 +113,25 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
 
   const handleQuickAction = (action: QuickAction) => {
     logger.info('Quick action triggered:', action);
-    
+
     switch (action) {
       case 'play':
-        updateRunState({
-          status: 'running',
-          mode: 'live',
-          connected: true,
-          isLiveMode: true,
-          lastAction: action,
-        });
-        fetch(`${window.location.origin}/api/turns/orchestrate`, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode: 'live' }),
-        }).catch(() => {});
+        setPipelineStatus('running');
+        setIsLiveMode(true);
         showNotification('System resumed');
         break;
       case 'pause':
-        updateRunState({
-          status: 'paused',
-          lastAction: action,
-        });
+        setPipelineStatus('paused');
+        setIsLiveMode(false);
         showNotification('System paused');
         break;
       case 'stop':
-        updateRunState({
-          status: 'stopped',
-          connected: false,
-          isLiveMode: false,
-          lastAction: action,
-        });
+        setPipelineStatus('stopped');
+        setIsLiveMode(false);
         showNotification('System stopped');
         break;
       case 'refresh':
-        updateRunState({ lastAction: action });
         setLoading(true);
-        // Simulate refresh
         setTimeout(() => {
           setLoading(false);
           setLastUpdate(new Date());
@@ -226,16 +139,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
         }, 1000);
         break;
       case 'save':
-        updateRunState({ lastAction: action });
         showNotification('State saved');
         break;
       case 'settings':
-        updateRunState({ lastAction: action });
         showNotification('Settings panel (not yet implemented)');
         break;
       case 'fullscreen':
-        updateRunState({ lastAction: action });
-        // Implement fullscreen logic
         if (document.fullscreenElement) {
           document.exitFullscreen();
         } else {
@@ -243,7 +152,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
         }
         break;
       case 'export':
-        updateRunState({ lastAction: action });
         showNotification('Export started (not yet implemented)');
         break;
       default:
@@ -255,201 +163,171 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
     setSnackbarOpen(false);
   };
 
-  const renderSummaryStrip = (key?: string) => (
-    <SummaryStrip key={key} runState={runState} lastUpdate={_lastUpdate} />
-  );
-
-  const renderQuickActions = (key?: string) => (
-    <QuickActions
-      key={key}
-      loading={loading}
-      error={!!error}
-      runState={runState}
-      onAction={handleQuickAction}
-    />
-  );
-
-  const renderPipelineStatus = (key?: string) => (
-    <LazyWrapper key={key}>
-      <TurnPipelineStatus
-        loading={loading}
-        error={!!error}
-        runState={runState}
-        onPhaseChange={handlePipelinePhaseChange}
-      />
-    </LazyWrapper>
-  );
-
-  const renderWorldMap = (key?: string) => (
-    <WorldStateMap key={key} loading={loading} error={!!error} />
-  );
-
-  const renderRealTimeActivity = (key?: string) => (
-    <LazyWrapper key={key}>
-      <RealTimeActivity loading={loading} error={!!error} />
-    </LazyWrapper>
-  );
-
-  const renderNarrativeTimeline = (key?: string) => (
-    <LazyWrapper key={key}>
-      <NarrativeTimeline loading={loading} error={!!error} />
-    </LazyWrapper>
-  );
-
-  const renderPerformanceMetrics = (key?: string) => (
-    <LazyWrapper key={key}>
-      <PerformanceMetrics loading={loading} error={!!error} />
-    </LazyWrapper>
-  );
-
-  const renderEventCascade = (key?: string) => (
-    <LazyWrapper key={key}>
-      <EventCascadeFlow loading={loading} error={!!error} />
-    </LazyWrapper>
-  );
-
-  const renderCharacterNetworks = (key?: string) => (
-    <LazyWrapper key={key}>
-      <CharacterNetworks loading={loading} error={!!error} />
-    </LazyWrapper>
-  );
-
-  const renderAnalyticsDashboard = (key?: string) => (
-    <LazyWrapper key={key}>
-      <AnalyticsDashboard loading={loading} error={!!error} />
-    </LazyWrapper>
-  );
-
-  const streamPanels = (
-    <Stack spacing={2}>
-      {renderRealTimeActivity('stream-activity')}
-      {renderNarrativeTimeline('stream-timeline')}
-    </Stack>
-  );
-
-  const signalsPanels = (
-    <Stack spacing={2}>
-      {renderPerformanceMetrics('signals-performance')}
-      {renderEventCascade('signals-events')}
-    </Stack>
-  );
-
   const mobileComponents = {
     essential: [
-      renderSummaryStrip('mobile-summary'),
-      renderQuickActions('mobile-quick-actions'),
-      renderPipelineStatus('mobile-pipeline'),
-      renderWorldMap('mobile-world'),
+      <SummaryStrip key="summary-strip" lastUpdate={lastUpdate} pipelineStatus={pipelineStatus} isLive={isLiveMode} isOnline={isOnline} />,
+      <WorldStateMap key="world-map" loading={loading} error={!!error} />,
+      <QuickActions
+        key="quick-actions"
+        loading={loading}
+        error={!!error}
+        status={pipelineStatus}
+        isLive={isLiveMode}
+        isOnline={isOnline}
+        onAction={handleQuickAction}
+      />,
+      <LazyWrapper key="turn-pipeline">
+        <TurnPipelineStatus loading={loading} error={!!error} status={pipelineStatus} isLive={isLiveMode} />
+      </LazyWrapper>,
     ],
     activity: [
-      renderRealTimeActivity('mobile-activity'),
-      renderEventCascade('mobile-events'),
+      <LazyWrapper key="real-time-activity">
+        <RealTimeActivity loading={loading} error={!!error} />
+      </LazyWrapper>,
+      <LazyWrapper key="narrative-timeline">
+        <NarrativeTimeline loading={loading} error={!!error} />
+      </LazyWrapper>,
     ],
     characters: [
-      renderCharacterNetworks('mobile-characters'),
-    ],
-    timeline: [
-      renderNarrativeTimeline('mobile-timeline'),
+      <LazyWrapper key="character-networks">
+        <CharacterNetworks loading={loading} error={!!error} />
+      </LazyWrapper>,
+      <LazyWrapper key="event-cascade">
+        <EventCascadeFlow loading={loading} error={!!error} />
+      </LazyWrapper>,
     ],
     analytics: [
-      renderPerformanceMetrics('mobile-performance'),
-      renderAnalyticsDashboard('mobile-analytics'),
+      <LazyWrapper key="performance-metrics">
+        <PerformanceMetrics loading={loading} error={!!error} />
+      </LazyWrapper>,
+      <LazyWrapper key="analytics">
+        <AnalyticsDashboard loading={loading} error={!!error} />
+      </LazyWrapper>,
     ],
   };
 
-  const zoneSections = [
+  const zoneConfigs: ZoneConfig[] = [
     {
       id: 'summary',
       role: 'summary-strip',
-      span: { xs: 'span 1', md: '1 / -1', lg: '1 / -1' },
-      content: renderSummaryStrip(),
+      span: { desktop: 3, tablet: 2 },
+      content: (
+        <SummaryStrip
+          lastUpdate={lastUpdate}
+          pipelineStatus={pipelineStatus}
+          isLive={isLiveMode}
+          isOnline={isOnline}
+        />
+      ),
     },
     {
-      id: 'control',
+      id: 'world-map',
+      role: 'hero-map',
+      span: { desktop: 3, tablet: 2 },
+      content: <WorldStateMap loading={loading} error={!!error} />,
+    },
+    {
+      id: 'control-cluster',
       role: 'control-cluster',
-      span: { xs: 'span 1', md: 'span 2', lg: 'span 2' },
-      content: renderQuickActions(),
+      span: { desktop: 1, tablet: 2 },
+      content: (
+        <QuickActions
+          loading={loading}
+          error={!!error}
+          status={pipelineStatus}
+          isLive={isLiveMode}
+          isOnline={isOnline}
+          onAction={handleQuickAction}
+        />
+      ),
     },
     {
       id: 'pipeline',
-      role: 'pipeline-monitor',
-      span: { xs: 'span 1', md: 'span 2', lg: 'span 2' },
-      content: renderPipelineStatus(),
-    },
-    {
-      id: 'world',
-      role: 'world-intel',
-      span: { xs: 'span 1', md: 'span 2', lg: 'span 2' },
-      content: renderWorldMap(),
+      role: 'pipeline',
+      span: { desktop: 2, tablet: 2 },
+      content: (
+        <LazyWrapper>
+          <TurnPipelineStatus loading={loading} error={!!error} status={pipelineStatus} isLive={isLiveMode} />
+          <TurnPipelineStatus loading={loading} error={!!error} status={pipelineStatus} isLive={isLiveMode} />
+        </LazyWrapper>
+      ),
     },
     {
       id: 'streams',
       role: 'stream-feed',
-      span: { xs: 'span 1', md: 'span 2', lg: 'span 2' },
-      content: streamPanels,
+      span: { desktop: 2, tablet: 2 },
+      content: (
+        <Stack spacing={2}>
+          <LazyWrapper>
+            <RealTimeActivity loading={loading} error={!!error} />
+          </LazyWrapper>
+          <LazyWrapper>
+            <NarrativeTimeline loading={loading} error={!!error} />
+          </LazyWrapper>
+        </Stack>
+      ),
     },
     {
       id: 'signals',
       role: 'system-signals',
-      span: { xs: 'span 1', md: 'span 2', lg: 'span 2' },
-      content: signalsPanels,
+      span: { desktop: 2, tablet: 2 },
+      content: (
+        <Stack spacing={2}>
+          <LazyWrapper>
+            <PerformanceMetrics loading={loading} error={!!error} />
+          </LazyWrapper>
+          <LazyWrapper>
+            <EventCascadeFlow loading={loading} error={!!error} />
+          </LazyWrapper>
+        </Stack>
+      ),
     },
     {
-      id: 'personas',
-      role: 'persona-ops',
-      span: { xs: 'span 1', md: 'span 2', lg: 'span 2' },
-      content: renderCharacterNetworks(),
+      id: 'characters',
+      role: 'network-visuals',
+      span: { desktop: 2, tablet: 2 },
+      content: (
+        <LazyWrapper>
+          <CharacterNetworks loading={loading} error={!!error} />
+        </LazyWrapper>
+      ),
     },
     {
       id: 'insights',
-      role: 'analytics-insights',
-      span: { xs: 'span 1', md: 'span 2', lg: 'span 2' },
-      content: renderAnalyticsDashboard(),
+      role: 'insights',
+      span: { desktop: 2, tablet: 2 },
+      content: (
+        <LazyWrapper>
+          <AnalyticsDashboard loading={loading} error={!!error} />
+        </LazyWrapper>
+      ),
     },
   ];
+
+  const renderZoneWrapper = (zone: ZoneConfig) => (
+    <ZoneWrapper
+      key={zone.id}
+      data-role={zone.role}
+      sx={{
+        gridColumn: {
+          lg: zone.span?.desktop ? `span ${zone.span.desktop}` : 'span 1',
+          md: zone.span?.tablet ? `span ${zone.span.tablet}` : 'span 2',
+          xs: zone.span?.mobile ? `span ${zone.span.mobile}` : 'span 1',
+        },
+      }}
+    >
+      {zone.content}
+    </ZoneWrapper>
+  );
 
   return (
     <DashboardLayout>
       {isMobile ? (
         <MobileTabbedDashboard components={mobileComponents}>
-          {/* Mobile content handled by tabbed interface */}
+          {/* Mobile view handled via tabs */}
         </MobileTabbedDashboard>
       ) : (
-        <Box
-          data-testid="dashboard-flow-grid"
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              md: 'repeat(auto-fit, minmax(280px, 1fr))',
-              xl: 'repeat(auto-fit, minmax(320px, 1fr))',
-            },
-            gridAutoFlow: 'dense',
-            gap: { xs: 3, md: 3.5 },
-            width: '100%',
-          }}
-        >
-          {zoneSections.map((zone) => (
-            <Box
-              key={zone.id}
-              component="section"
-              data-role={zone.role}
-              data-testid={`zone-${zone.id}`}
-              sx={{
-                gridColumn: {
-                  xs: zone.span?.xs ?? 'span 1',
-                  md: zone.span?.md ?? 'span 1',
-                  lg: zone.span?.lg ?? zone.span?.md ?? 'span 1',
-                },
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}
-            >
-              {zone.content}
-            </Box>
-          ))}
-        </Box>
+        zoneConfigs.map(renderZoneWrapper)
       )}
 
       <Snackbar

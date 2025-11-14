@@ -156,3 +156,83 @@ AND the container logs show the restart event
 AND the service becomes healthy again
 ```
 
+### Requirement: Unified Non-blocking Dev Bootstrap Script
+The repository MUST provide a documented script that starts backend and frontend services in the background, waits for both health checks, and returns control to the shell.
+
+#### Scenario: Developer launches `scripts/dev_env_daemon.sh`
+- **GIVEN** Python and Node dependencies are installed
+- **AND** the developer runs `scripts/dev_env_daemon.sh` (or `npm run dev:daemon`) from the repo root
+- **THEN** the backend API server starts on the configured port, the frontend Vite dev server starts on its configured port, and logs stream to `tmp/dev_env.log`
+- **AND** the script polls `/health` and `http://localhost:<vite>` until both return 200 or timeout, then prints "Backend ready" / "Frontend ready" plus URLs
+- **AND** control returns to the shell while both processes continue running in the background, with instructions to stop them via the documented cleanup command
+
+#### Scenario: README documents bootstrap + cleanup flow
+- **GIVEN** the README quick-start section is referenced by contributors
+- **WHEN** the non-blocking script changes its CLI, ports, or prerequisites
+- **THEN** the README (both languages) is updated in the same change to describe the command, ports, health endpoints, and cleanup method so contributors can reproduce the experience without guessing
+
+### Requirement: Guided Dev Environment Bootstrap
+Developers MUST have a single `scripts/dev_env.sh` helper that launches the FastAPI (`src.api.main_api_server`) and Vite dev servers simultaneously, streams logs, and terminates both processes when interrupted.
+
+#### Scenario: Script starts both services
+- **GIVEN** Python/Node dependencies are installed
+- **WHEN** a developer runs `scripts/dev_env.sh start`
+- **THEN** the FastAPI server starts on `$API_HOST:$API_PORT`
+- **AND** the Vite dev server starts on `$VITE_HOST:$VITE_PORT`
+- **AND** the script prints both log streams with clear prefixes
+
+#### Scenario: Script handles cleanup
+- **GIVEN** `scripts/dev_env.sh` is running
+- **WHEN** the developer presses `Ctrl+C`
+- **THEN** the script traps the signal
+- **AND** stops both child processes
+- **AND** prints "Dev environment stopped cleanly"
+
+### Requirement: AI-Native Playwright Validation
+The frontend MUST expose `npm run ai:test` which runs tagged Playwright usability specs (with mocked APIs) and emits trace/video artifacts for downstream AI agents.
+
+#### Scenario: AI test command executes tagged suite
+- **GIVEN** the repository dependencies are installed
+- **WHEN** a developer runs `npm run ai:test`
+- **THEN** Playwright executes only specs tagged `@ai`
+- **AND** generates trace/video artifacts in `playwright-report` or `test-results`
+- **AND** exits non-zero on any usability regression
+
+#### Scenario: CI parity script calls AI tests
+- **GIVEN** `RUN_AI_TESTS` is `true` (default)
+- **WHEN** `tools/ci/run-all.sh` runs (locally或在 GitHub Actions)
+- **THEN** it invokes `npm run ai:test`
+- **AND** the pipeline fails if AI usability specs regress
+
+#### Scenario: One-command CI wrapper
+- **GIVEN** a developer or AI assistant runs `scripts/run_ci.sh`
+- **THEN** the script exports recommended `RUN_*` environment flags
+- **AND** defers to `tools/ci/run-all.sh`
+- **SO THAT** local runs mirror GitHub Actions without remembering multiple commands
+
+### Requirement: Playwright smoke vs full pipelines
+The CI pipeline MUST provide two Playwright tracks: a <1 minute smoke run for PR validation and the existing full suite for nightly/merge events, ensuring faster feedback while preserving coverage.
+
+#### Scenario: Smoke run for PRs
+- **GIVEN** a PR workflow runs `npm run test:e2e:smoke`
+- **THEN** it executes a curated subset (CTA + offline tests) and finishes in under 60 seconds.
+
+#### Scenario: Full run for nightly/main
+- **GIVEN** the nightly or main-branch workflow
+- **WHEN** it runs `npm run test:e2e`
+- **THEN** the existing full suite executes, generating the Experience Report and attaching artifacts.
+
+### Requirement: Publish experience summary to CI job output
+Playwright jobs MUST append a condensed experience summary (CTA/offline statuses and links to full reports) to the CI job summary so reviewers can see results without downloading artifacts.
+
+#### Scenario: GitHub job summary shows CTA/offline table
+- **WHEN** the Playwright workflow completes in CI
+- **THEN** `$GITHUB_STEP_SUMMARY` contains a Markdown table with Demo CTA + offline recovery statuses and a link to the HTML/Markdown report artifacts.
+
+### Requirement: Report cleanup in workflows
+CI and local workflows that generate experience reports MUST enforce the retention rule (clean up older files) to keep working directories tidy.
+
+#### Scenario: CI run prunes old reports
+- **WHEN** the GitHub workflow runs Playwright + report generation
+- **THEN** it automatically prunes reports beyond the retention limit before uploading artifacts.
+

@@ -30,7 +30,6 @@ from typing import Any, Dict, List, Optional, Union
 
 from src.agents.director_agent import DirectorAgent
 
-
 # Import advanced AI intelligence systems
 from src.ai_intelligence.ai_orchestrator import (
     AIIntelligenceOrchestrator,
@@ -269,7 +268,9 @@ class EnhancedMultiAgentBridge:
     def __init__(
         self,
         director_or_event_bus: Union[DirectorAgent, EventBus],
-        config_or_director: Optional[Union["BridgeConfiguration", DirectorAgent]] = None,
+        config_or_director: Optional[
+            Union["BridgeConfiguration", DirectorAgent]
+        ] = None,
         llm_coordination_config: Optional[LLMCoordinationConfig] = None,
     ):
         """
@@ -286,7 +287,9 @@ class EnhancedMultiAgentBridge:
             # Signature style: (event_bus, director?, llm_config?)
             event_bus: EventBus = director_or_event_bus  # type: ignore[assignment]
             director_agent = (
-                config_or_director if isinstance(config_or_director, DirectorAgent) else None
+                config_or_director
+                if isinstance(config_or_director, DirectorAgent)
+                else None
             )
             self.llm_config = llm_coordination_config or LLMCoordinationConfig()
         else:
@@ -299,7 +302,9 @@ class EnhancedMultiAgentBridge:
             )
             event_bus = getattr(director_agent, "event_bus", EventBus())  # type: ignore[arg-type]
             self.llm_config = (
-                config.llm_coordination if isinstance(config, BridgeConfiguration) else LLMCoordinationConfig()
+                config.llm_coordination
+                if isinstance(config, BridgeConfiguration)
+                else LLMCoordinationConfig()
             )
 
         self.event_bus = event_bus
@@ -413,7 +418,9 @@ class EnhancedMultiAgentBridge:
                     max_concurrent_operations=15,
                     optimization_enabled=True,
                 )
-                self.ai_orchestrator = AIIntelligenceOrchestrator(self.event_bus, ai_config)
+                self.ai_orchestrator = AIIntelligenceOrchestrator(
+                    self.event_bus, ai_config
+                )
             self._initialized = True
             return True
         except Exception:
@@ -1172,11 +1179,19 @@ class EnhancedMultiAgentBridge:
         # Keep simple: no automatic dialogues
         return []
 
-    async def _initiate_agent_dialogue(self, participants, communication_type, context) -> Dict[str, Any]:
+    async def _initiate_agent_dialogue(
+        self, participants, communication_type, context
+    ) -> Dict[str, Any]:
         # Return a minimal successful dialogue result
-        return {"success": True, "participants": participants, "type": str(communication_type)}
+        return {
+            "success": True,
+            "participants": participants,
+            "type": str(communication_type),
+        }
 
-    async def _analyze_post_turn_results(self, base_turn_result, dialogue_results) -> Dict[str, Any]:
+    async def _analyze_post_turn_results(
+        self, base_turn_result, dialogue_results
+    ) -> Dict[str, Any]:
         return {"narrative_insights": [], "ai_insights": []}
 
     async def _update_agent_relationships(self, dialogue_results) -> None:
@@ -1190,10 +1205,14 @@ class EnhancedMultiAgentBridge:
     ) -> str:
         return f"Turn {turn_number} summary"
 
-    def _generate_fast_turn_summary(self, turn_number, base_turn_result, dialogue_results) -> str:
+    def _generate_fast_turn_summary(
+        self, turn_number, base_turn_result, dialogue_results
+    ) -> str:
         return f"Turn {turn_number} fast summary"
 
-    async def _update_communication_metrics(self, dialogue_results, execution_time) -> None:
+    async def _update_communication_metrics(
+        self, dialogue_results, execution_time
+    ) -> None:
         self.turn_history.append({"execution_time": execution_time})
         return None
 
@@ -1201,7 +1220,11 @@ class EnhancedMultiAgentBridge:
         # Minimal implementation for tests that patch DialogueManager
         status = {"active": 0}
         cleaned = 0
-        return {"status": "success", "dialogue_status": status, "cleaned_up_dialogues": cleaned}
+        return {
+            "status": "success",
+            "dialogue_status": status,
+            "cleaned_up_dialogues": cleaned,
+        }
 
     async def _analyze_turn_performance(self, start_time: float) -> Dict[str, Any]:
         # Ensure strictly positive execution time for test stability
@@ -1227,7 +1250,9 @@ class EnhancedMultiAgentBridge:
                 return ExtPriority.HIGH
             return ExtPriority.NORMAL
         except Exception:
-            if (hasattr(agent, "is_critical") and agent.is_critical is True) or context.get("active_dialogues", 0) > 0:
+            if (
+                hasattr(agent, "is_critical") and agent.is_critical is True
+            ) or context.get("active_dialogues", 0) > 0:
                 return RequestPriority.HIGH
             return RequestPriority.NORMAL
 
@@ -1243,8 +1268,12 @@ class EnhancedMultiAgentBridge:
             },
             "metrics": self.get_coordination_performance_metrics(),
             "configuration": {
-                "max_concurrent_agents": getattr(self.llm_config, "max_parallel_llm_calls", 3),
-                "turn_timeout_seconds": getattr(self.llm_config, "max_turn_time_seconds", 5.0),
+                "max_concurrent_agents": getattr(
+                    self.llm_config, "max_parallel_llm_calls", 3
+                ),
+                "turn_timeout_seconds": getattr(
+                    self.llm_config, "max_turn_time_seconds", 5.0
+                ),
             },
         }
 
@@ -1273,7 +1302,11 @@ class EnhancedMultiAgentBridge:
     async def shutdown(self) -> None:
         self._shutdown_requested = True
         # Gracefully try shutting down mocked components if present
-        for comp in (self.llm_coordinator, self.ai_orchestrator, self.coordination_engine):
+        for comp in (
+            self.llm_coordinator,
+            self.ai_orchestrator,
+            self.coordination_engine,
+        ):
             if comp is not None and hasattr(comp, "shutdown"):
                 try:
                     coro = comp.shutdown()
@@ -1294,7 +1327,9 @@ class BridgeConfiguration:
     enable_performance_monitoring: bool = True
     max_concurrent_agents: int = 20
     turn_timeout_seconds: int = 30
-    llm_coordination: LLMCoordinationConfig = field(default_factory=LLMCoordinationConfig)
+    llm_coordination: LLMCoordinationConfig = field(
+        default_factory=LLMCoordinationConfig
+    )
 
 
 async def create_enhanced_bridge(

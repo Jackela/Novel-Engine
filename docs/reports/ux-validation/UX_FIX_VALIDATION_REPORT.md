@@ -1,5 +1,7 @@
 # UX Fix Validation Report: Mobile Responsiveness Restoration
 
+> **Flow layout alignment (2025-11-12):** Mobile screenshots and quick-action descriptions now map to the Control Cluster layout shown in `docs/assets/dashboard/dashboard-flow-2025-11-12.png`. Use the new asset for "after" comparisons.
+
 ## Executive Summary
 
 **MISSION ACCOMPLISHED** ✅ All critical mobile UX issues have been successfully resolved through systematic responsive design improvements. The Emergent Narrative Dashboard now provides an excellent user experience across all breakpoints.
