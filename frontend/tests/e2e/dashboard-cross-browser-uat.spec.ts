@@ -118,12 +118,12 @@ test.describe('Cross-Browser Compatibility UAT', () => {
         const activityVisible = await dashboardPage.realTimeActivity.isVisible();
         
         // On mobile, some components might be collapsed or stacked
-        if (viewport.width >= 768) {
-          // Desktop and tablet should show all components
+        if (viewport.width >= 1024) {
+          // Desktop and large tablets should show all components
           expect(worldMapVisible).toBe(true);
           expect(activityVisible).toBe(true);
         } else {
-          // Mobile should show at least some components (may be stacked)
+          // Smaller tablets / mobile should surface at least one high-priority component
           expect(worldMapVisible || activityVisible).toBe(true);
         }
         

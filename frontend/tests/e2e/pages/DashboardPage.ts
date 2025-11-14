@@ -383,28 +383,44 @@ export class DashboardPage {
     console.log('📐 Validating component layout...');
     
     const layout = {
-      worldStateMap: await this.validateGridPosition(this.worldStateMap, { columns: '1 / 7' }),
-      realTimeActivity: await this.validateGridPosition(this.realTimeActivity, { columns: '8 / 11' }),
-      performanceMetrics: await this.validateGridPosition(this.performanceMetrics, { columns: '12 / 13' }),
-      turnPipeline: await this.validateGridPosition(this.turnPipelineStatus, { columns: '8 / 11' }),
-      quickActions: await this.validateGridPosition(this.quickActions, { columns: '12 / 13' })
+      worldStateMap: await this.validateComponentPresence(this.worldStateMap),
+      realTimeActivity: await this.validateComponentPresence(this.realTimeActivity),
+      performanceMetrics: await this.validateComponentPresence(this.performanceMetrics),
+      turnPipeline: await this.validateComponentPresence(this.turnPipelineStatus),
+      quickActions: await this.validateQuickActions()
     };
     
     return layout;
   }
 
   /**
-   * Helper to validate grid positioning
+   * Helper to validate component visibility/size
    */
-  private async validateGridPosition(component: Locator, expected: { columns: string }) {
-    const element = await component.first().elementHandle();
-    if (!element) return false;
-    
-    const gridColumn = await element.evaluate(el => 
-      window.getComputedStyle(el).getPropertyValue('grid-column')
-    );
-    
-    return gridColumn.includes(expected.columns.replace(' / ', ' / '));
+  private async validateComponentPresence(component: Locator, minWidth = 200, minHeight = 120) {
+    const locator = component.first();
+    const isVisible = await locator.isVisible().catch(() => false);
+    if (!isVisible) {
+      return false;
+    }
+
+    const box = await locator.boundingBox();
+    if (!box) {
+      return false;
+    }
+
+    return box.width >= minWidth && box.height >= minHeight;
+  }
+
+  private async validateQuickActions() {
+    const quickActionsContainer = this.quickActions.first();
+    const isVisible = await quickActionsContainer.isVisible().catch(() => false);
+    if (!isVisible) {
+      return false;
+    }
+
+    const actionButtons = await quickActionsContainer.locator('button').count();
+    const connectionIndicator = await quickActionsContainer.locator('[data-testid="connection-status"]').count();
+    return actionButtons >= 4 && connectionIndicator >= 1;
   }
 
   /**

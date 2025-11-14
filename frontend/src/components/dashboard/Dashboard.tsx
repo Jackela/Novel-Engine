@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Box, Alert, Snackbar, useTheme, useMediaQuery, CircularProgress, Stack } from '@mui/material';
+import { Box, Alert, Snackbar, useMediaQuery, CircularProgress, Stack } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import DashboardLayout from '../layout/DashboardLayout';
 import MobileTabbedDashboard from '../layout/MobileTabbedDashboard';
@@ -46,6 +46,7 @@ interface ZoneConfig {
   role: string;
   span?: ZoneSpan;
   content: React.ReactNode;
+  density?: 'condensed' | 'default';
 }
 
 const ZoneWrapper = styled(Box)(({ theme }) => ({
@@ -55,8 +56,8 @@ const ZoneWrapper = styled(Box)(({ theme }) => ({
 }));
 
 const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _campaignId }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery('(max-width:767px)');
+  const isDesktop = useMediaQuery('(min-width:1200px)');
 
   const [loading, setLoading] = useState(false);
   const [error, _setError] = useState<string | null>(null);
@@ -175,6 +176,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
         isLive={isLiveMode}
         isOnline={isOnline}
         onAction={handleQuickAction}
+        variant="inline"
       />,
       <LazyWrapper key="turn-pipeline">
         <TurnPipelineStatus loading={loading} error={!!error} status={pipelineStatus} isLive={isLiveMode} />
@@ -208,46 +210,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
 
   const zoneConfigs: ZoneConfig[] = [
     {
-      id: 'summary',
-      role: 'summary-strip',
-      span: { desktop: 3, tablet: 2 },
-      content: (
-        <SummaryStrip
-          lastUpdate={lastUpdate}
-          pipelineStatus={pipelineStatus}
-          isLive={isLiveMode}
-          isOnline={isOnline}
-        />
-      ),
-    },
-    {
-      id: 'world-map',
-      role: 'hero-map',
-      span: { desktop: 3, tablet: 2 },
-      content: <WorldStateMap loading={loading} error={!!error} />,
-    },
-    {
-      id: 'control-cluster',
-      role: 'control-cluster',
-      span: { desktop: 1, tablet: 2 },
-      content: (
-        <QuickActions
-          loading={loading}
-          error={!!error}
-          status={pipelineStatus}
-          isLive={isLiveMode}
-          isOnline={isOnline}
-          onAction={handleQuickAction}
-        />
-      ),
-    },
-    {
       id: 'pipeline',
       role: 'pipeline',
       span: { desktop: 2, tablet: 2 },
       content: (
         <LazyWrapper>
-          <TurnPipelineStatus loading={loading} error={!!error} status={pipelineStatus} isLive={isLiveMode} />
           <TurnPipelineStatus loading={loading} error={!!error} status={pipelineStatus} isLive={isLiveMode} />
         </LazyWrapper>
       ),
@@ -256,15 +223,31 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
       id: 'streams',
       role: 'stream-feed',
       span: { desktop: 2, tablet: 2 },
+      density: isDesktop ? 'condensed' : 'default',
       content: (
-        <Stack spacing={2}>
-          <LazyWrapper>
-            <RealTimeActivity loading={loading} error={!!error} />
-          </LazyWrapper>
-          <LazyWrapper>
-            <NarrativeTimeline loading={loading} error={!!error} />
-          </LazyWrapper>
-        </Stack>
+        <LazyWrapper>
+          <RealTimeActivity
+            loading={loading}
+            error={!!error}
+            density={isDesktop ? 'condensed' : 'default'}
+          />
+        </LazyWrapper>
+      ),
+    },
+    {
+      id: 'world-map',
+      role: 'hero-map',
+      span: { desktop: 2, tablet: 2 },
+      content: <WorldStateMap loading={loading} error={!!error} />,
+    },
+    {
+      id: 'characters',
+      role: 'network-visuals',
+      span: { desktop: 2, tablet: 2 },
+      content: (
+        <LazyWrapper>
+          <CharacterNetworks loading={loading} error={!!error} />
+        </LazyWrapper>
       ),
     },
     {
@@ -277,19 +260,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
             <PerformanceMetrics loading={loading} error={!!error} />
           </LazyWrapper>
           <LazyWrapper>
-            <EventCascadeFlow loading={loading} error={!!error} />
+            <NarrativeTimeline loading={loading} error={!!error} />
           </LazyWrapper>
         </Stack>
-      ),
-    },
-    {
-      id: 'characters',
-      role: 'network-visuals',
-      span: { desktop: 2, tablet: 2 },
-      content: (
-        <LazyWrapper>
-          <CharacterNetworks loading={loading} error={!!error} />
-        </LazyWrapper>
       ),
     },
     {
@@ -304,10 +277,41 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
     },
   ];
 
+  const controlCluster = (
+    <Box
+      data-role="control-cluster"
+      sx={{
+        gridColumn: '1 / -1',
+      }}
+    >
+      <SummaryStrip
+        lastUpdate={lastUpdate}
+        pipelineStatus={pipelineStatus}
+        isLive={isLiveMode}
+        isOnline={isOnline}
+        embedded
+        actions={
+          <QuickActions
+            loading={loading}
+            error={!!error}
+            status={pipelineStatus}
+            isLive={isLiveMode}
+            isOnline={isOnline}
+            onAction={handleQuickAction}
+            variant="inline"
+            showInlineTitle={false}
+            density="compact"
+          />
+        }
+      />
+    </Box>
+  );
+
   const renderZoneWrapper = (zone: ZoneConfig) => (
     <ZoneWrapper
       key={zone.id}
       data-role={zone.role}
+      data-density={zone.density}
       sx={{
         gridColumn: {
           lg: zone.span?.desktop ? `span ${zone.span.desktop}` : 'span 1',
@@ -327,7 +331,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
           {/* Mobile view handled via tabs */}
         </MobileTabbedDashboard>
       ) : (
-        zoneConfigs.map(renderZoneWrapper)
+        <>
+          {controlCluster}
+          {zoneConfigs.map(renderZoneWrapper)}
+        </>
       )}
 
       <Snackbar

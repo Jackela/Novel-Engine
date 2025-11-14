@@ -178,9 +178,9 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
       data-testid="character-networks"
       data-role="character-networks"
       position={{
-        desktop: { column: '1 / 7', height: '280px' },
-        tablet: { column: '1 / 5', height: '260px' },
-        mobile: { height: '160px' },
+        desktop: { column: 'span 2', height: '320px' },
+        tablet: { column: 'span 2', height: '300px' },
+        mobile: { column: 'span 1', height: '220px' },
       }}
       loading={loading}
       error={error}
@@ -249,8 +249,6 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   whileHover={{ scale: 1.02 }}
                   data-testid="character-node"
-                  data-character-id={character.id}
-                  data-character-status={character.status}
                 >
                   <Avatar
                     sx={{

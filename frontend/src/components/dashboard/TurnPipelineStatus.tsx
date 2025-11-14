@@ -289,9 +289,9 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
       data-testid="turn-pipeline-status"
       data-role="pipeline"
       position={{
-        desktop: { column: '8 / 11', height: '160px' },
-        tablet: { column: '1 / 9', height: '140px' },
-        mobile: { height: '120px' },
+        desktop: { column: 'span 2', height: '260px' },
+        tablet: { column: 'span 2', height: '240px' },
+        mobile: { column: 'span 1', height: '220px' },
       }}
       loading={loading}
       error={error}

@@ -1,5 +1,7 @@
 import { Paper, Box, Typography, IconButton, useTheme, useMediaQuery } from '@mui/material';
 import type { CSSProperties } from 'react';
+import type { SxProps } from '@mui/system';
+import type { Theme } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
 import { MoreVert as MoreIcon } from '@mui/icons-material';
 
@@ -23,7 +25,7 @@ interface GridPosition {
 
 interface GridTileProps {
   title: string;
-  position: GridPosition;
+  position?: GridPosition;
   children: React.ReactNode;
   loading?: boolean;
   error?: boolean;
@@ -31,6 +33,7 @@ interface GridTileProps {
   className?: string;
   'data-testid'?: string;
   'data-role'?: string;
+  sx?: SxProps<Theme> | undefined;
 }
 
 const StyledPaper = styled(Paper, {
@@ -38,17 +41,18 @@ const StyledPaper = styled(Paper, {
 })<{ position: GridPosition; currentBreakpoint: 'desktop' | 'tablet' | 'mobile' }>(
   ({ theme, position, currentBreakpoint }) => {
     const getGridStyles = () => {
-      const breakpointPos = position[currentBreakpoint];
+      const breakpointPos = position?.[currentBreakpoint];
       
       const styles: Partial<CSSProperties> = {
-        gridColumn: breakpointPos.column || 'auto',
+        gridColumn: breakpointPos?.column || 'auto',
       };
       
-      if (breakpointPos.row) {
+      if (breakpointPos?.row) {
         styles.gridRow = breakpointPos.row;
       }
       
-      if (breakpointPos.height) {
+      if (breakpointPos?.height) {
+        styles.minHeight = breakpointPos.height;
         styles.height = breakpointPos.height;
       } else {
         // Default heights for different breakpoints
@@ -146,21 +150,28 @@ const GridTile: React.FC<GridTileProps> = ({
   className,
   'data-testid': testId,
   'data-role': role,
+  sx,
 }) => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
   const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   
   const currentBreakpoint = isDesktop ? 'desktop' : isTablet ? 'tablet' : 'mobile';
+  const resolvedPosition: GridPosition = position ?? {
+    desktop: { column: 'auto' },
+    tablet: { column: 'auto' },
+    mobile: { column: 'auto' },
+  };
 
   return (
     <StyledPaper 
-      position={position} 
+      position={resolvedPosition} 
       currentBreakpoint={currentBreakpoint}
       className={className ?? ''}
       elevation={1}
       data-testid={testId}
       data-role={role}
+      sx={sx as SxProps<Theme>}
     >
       <TileHeader>
         <Typography variant="h6" component="h2" fontWeight={600}>

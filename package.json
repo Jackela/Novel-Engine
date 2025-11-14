@@ -4,6 +4,7 @@
     "dev:stop": "bash scripts/stop_dev_env.sh"
   },
   "dependencies": {
+    "chrome-remote-interface": "^0.33.3",
     "markdown-it": "^14.1.0",
     "playwright": "^1.55.0"
   }

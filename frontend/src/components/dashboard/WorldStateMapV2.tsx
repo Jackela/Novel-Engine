@@ -176,7 +176,7 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
     },
   ]);
 
-  const [selectedLocation, setSelectedLocation] = useState<string | null>('crystal-city');
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   // Simulate periodic updates
@@ -217,9 +217,9 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
       title="World State Map"
       data-testid="world-state-map"
       position={{
-        desktop: { column: '1 / 7', height: '320px' },
-        tablet: { column: '1 / 6', height: '300px' },
-        mobile: { height: '140px' },
+        desktop: { column: 'span 2', height: 'clamp(320px, 45vh, 420px)' },
+        tablet: { column: 'span 2', height: '360px' },
+        mobile: { column: 'span 1', height: '240px' },
       }}
       loading={loading}
       error={error}

@@ -25,13 +25,22 @@ const focusViaTab = async (page: Page, locator: Locator, maxPresses = 40) => {
 };
 
 const activateDemoCtaWithKeyboard = async (page: Page) => {
-  await page.keyboard.press('Tab');
   const skipLink = page.getByText('Skip to main content');
+  await skipLink.waitFor({ state: 'visible' });
+  await page.evaluate(() => {
+    try {
+      document.body.focus();
+    } catch {
+      // ignore focus errors
+    }
+  });
+  await page.keyboard.press('Tab');
   await expect(skipLink).toBeFocused();
   await page.keyboard.press('Enter');
 
-  await page.keyboard.press('Tab');
   const ctaButton = page.locator('[data-testid="cta-demo"]');
+  await ctaButton.waitFor({ state: 'visible' });
+  await page.keyboard.press('Tab');
   await expect(ctaButton).toBeFocused();
   await page.keyboard.press('Enter');
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Tabs,
@@ -8,12 +8,16 @@ import {
   Stack,
   useTheme,
   useMediaQuery,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import {
   Map as MapIcon,
   Timeline as ActivityIcon,
   People as PeopleIcon,
   Analytics as AnalyticsIcon,
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { tokens } from '../../styles/tokens';
@@ -117,7 +121,7 @@ const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
   components 
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery('(max-width:767px)');
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -146,6 +150,64 @@ const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
       components: components?.analytics || [],
     },
   ];
+
+  const getPanelLabel = (component: React.ReactNode, fallback: string) => {
+    if (React.isValidElement(component)) {
+      if (component.props?.title) {
+        return component.props.title as string;
+      }
+      if (component.props?.['data-role']) {
+        return component.props['data-role'] as string;
+      }
+    }
+    return fallback;
+  };
+
+  const renderPanel = (component: React.ReactNode, compIndex: number, tabLabel: string, key: string) => {
+    const label = getPanelLabel(component, `${tabLabel} Panel ${compIndex + 1}`);
+    const isHighPriorityOverview = tabLabel === 'Overview' && compIndex <= 2;
+
+    if (isHighPriorityOverview) {
+      return (
+        <Paper
+          key={key}
+          elevation={0}
+          sx={{
+            overflow: 'hidden',
+            backgroundColor: theme.palette.background.paper,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: theme.shape.borderRadius,
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          {component}
+        </Paper>
+      );
+    }
+
+    return (
+      <Accordion
+        key={key}
+        disableGutters
+        defaultExpanded={false}
+        sx={{
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: `${theme.shape.borderRadius}px`,
+          backgroundColor: theme.palette.background.paper,
+          '&:before': { display: 'none' },
+        }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />}>
+          <Typography variant="subtitle2" fontWeight={600}>
+            {label}
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          {component}
+        </AccordionDetails>
+      </Accordion>
+    );
+  };
 
   if (!isMobile) {
     return <DesktopLayout>{children}</DesktopLayout>;
@@ -190,24 +252,9 @@ const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
       {tabs.map((tab, index) => (
         <TabPanel key={index} value={activeTab} index={index}>
           <Stack spacing={1}>
-            {tab.components.map((component, compIndex) => (
-              <Paper 
-                key={`${index}-${compIndex}`} 
-                elevation={0}
-                sx={{ 
-                  overflow: 'hidden',
-                  backgroundColor: theme.palette.background.paper,
-                  border: `1px solid ${theme.palette.divider}`,
-                  borderRadius: theme.shape.borderRadius,
-                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                  '& > *': {
-                    maxHeight: index === 0 ? '200px' : '220px',
-                  },
-                }}
-              >
-                {component}
-              </Paper>
-            ))}
+            {tab.components.map((component, compIndex) =>
+              renderPanel(component, compIndex, tab.label, `${index}-${compIndex}`)
+            )}
           </Stack>
         </TabPanel>
       ))}

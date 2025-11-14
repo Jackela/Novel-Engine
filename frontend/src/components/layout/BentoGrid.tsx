@@ -13,12 +13,12 @@ const GridContainer = styled(Box)(({ theme }) => ({
   padding: 0,
 
   [theme.breakpoints.up('lg')]: {
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
     gap: theme.spacing(3),
   },
 
   [theme.breakpoints.between('md', 'lg')]: {
-    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
     gap: theme.spacing(2.5),
   },
 

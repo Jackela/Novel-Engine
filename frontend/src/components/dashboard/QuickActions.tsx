@@ -1,12 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { 
-  Box, 
-  IconButton, 
-  Tooltip, 
+import {
+  Box,
+  IconButton,
+  Tooltip,
   Stack,
-  Divider,
   Typography,
-  useTheme,
   useMediaQuery,
   Fade,
   Chip,
@@ -26,43 +24,6 @@ import {
 import GridTile from '../layout/GridTile';
 import { telemetry } from '../../utils/telemetry';
 
-const ActionsContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  height: '100%',
-  
-  // Mobile: horizontal layout with scrolling and optimized compact height
-  [theme.breakpoints.down('md')]: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    overflowX: 'auto',
-    gap: theme.spacing(1.5),
-    paddingLeft: theme.spacing(1.5), // Reduced padding for more space
-    paddingRight: theme.spacing(1.5),
-    paddingTop: theme.spacing(0.75), // Reduced padding for more space  
-    paddingBottom: theme.spacing(0.75),
-    minHeight: '56px', // Reduced to be more compact while maintaining 44px button + minimal padding
-    scrollBehavior: 'smooth',
-    '&::-webkit-scrollbar': {
-      height: '4px',
-    },
-    '&::-webkit-scrollbar-track': {
-      backgroundColor: 'transparent',
-    },
-    '&::-webkit-scrollbar-thumb': {
-      backgroundColor: theme.palette.divider,
-      borderRadius: '2px',
-    },
-  },
-  
-  // Desktop: vertical layout
-  [theme.breakpoints.up('md')]: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-}));
-
 const ActionButton = styled(motion(IconButton))<{ active?: boolean }>(({ theme, active }) => ({
   border: `1px solid ${active ? theme.palette.primary.main : theme.palette.divider}`,
   backgroundColor: active ? 'rgba(99, 102, 241, 0.1)' : theme.palette.background.paper,
@@ -80,46 +41,17 @@ const ActionButton = styled(motion(IconButton))<{ active?: boolean }>(({ theme, 
     opacity: 0.4,
     borderColor: theme.palette.divider,
   },
-  
-  // Mobile: touch-friendly sizing, horizontal layout
-  [theme.breakpoints.down('md')]: {
-    width: 48,
-    height: 48,
-    margin: 0,
-    flexShrink: 0,
-    '& .MuiSvgIcon-root': {
-      fontSize: '1.3rem',
-    },
+  width: 48,
+  height: 48,
+  margin: 0,
+  flexShrink: 0,
+  '& .MuiSvgIcon-root': {
+    fontSize: '1.2rem',
   },
-  
-  // Desktop: larger, vertical layout
   [theme.breakpoints.up('md')]: {
-    width: 44,
-    height: 44,
-    margin: theme.spacing(0.5, 0),
+    width: 52,
+    height: 52,
   },
-}));
-
-const SectionDivider = styled(Divider)(({ theme }) => ({
-  width: '60%',
-  margin: theme.spacing(1.5, 0),
-  backgroundColor: theme.palette.divider,
-}));
-
-const ActionGroup = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: theme.spacing(0.5),
-}));
-
-const GroupLabel = styled(Typography)(({ theme }) => ({
-  fontSize: '0.65rem',
-  fontWeight: 600,
-  letterSpacing: '0.05em',
-  textTransform: 'uppercase',
-  color: 'var(--color-text-tertiary)',
-  marginBottom: theme.spacing(0.5),
 }));
 
 export type QuickAction =
@@ -139,18 +71,26 @@ interface QuickActionsProps {
   isLive?: boolean;
   isOnline?: boolean;
   onAction?: (action: QuickAction) => void;
+  variant?: 'tile' | 'inline';
+  inlineTitle?: string;
+  density?: 'standard' | 'compact';
+  showInlineTitle?: boolean;
 }
 
-const QuickActions: React.FC<QuickActionsProps> = ({ 
-  loading, 
-  error, 
+const QuickActions: React.FC<QuickActionsProps> = ({
+  loading,
+  error,
   status = 'idle',
   isLive = false,
   isOnline = true,
-  onAction = () => {} 
+  onAction = () => {},
+  variant = 'tile',
+  inlineTitle = 'Quick Actions',
+  density = 'standard',
+  showInlineTitle = true,
 }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery('(max-width:767px)');
+  const isCompact = density === 'compact' && !isMobile;
   const isRunning = status === 'running';
   const isPaused = status === 'paused';
   const connectionState = !isOnline
@@ -210,7 +150,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
     onAction('export');
   };
 
-  const renderConnectionIndicator = () => (
+  const renderConnectionIndicator = (showStatusChip = true) => (
     <Box
       data-testid="connection-status"
       data-status={connectionState.toLowerCase()}
@@ -220,11 +160,11 @@ const QuickActions: React.FC<QuickActionsProps> = ({
         alignItems: 'center',
         justifyContent: 'space-between',
         px: isMobile ? 1.5 : 0,
-        py: 0.5,
+        py: isCompact ? 0.25 : 0.5,
         borderRadius: 1,
         border: (theme) => `1px solid ${theme.palette.divider}`,
         backgroundColor: 'rgba(99, 102, 241, 0.05)',
-        width: '100%'
+        width: '100%',
       }}
     >
       <Typography variant="caption" color="text.secondary" fontWeight={600} textTransform="uppercase">
@@ -246,246 +186,184 @@ const QuickActions: React.FC<QuickActionsProps> = ({
         >
           {connectionState}
         </Typography>
-        <Chip 
-          label={
-            !isOnline ? 'OFFLINE' : isLive ? 'LIVE' : isRunning ? 'ACTIVE' : 'STANDBY'
-          }
-          size="small"
-          color={isLive ? 'success' : 'default'}
-          sx={{
-            fontWeight: 600,
-            letterSpacing: '0.04em',
-            height: 20,
-            borderRadius: 1,
-            ...(connectionState === 'OFFLINE'
-              ? {
-                  bgcolor: (theme) => theme.palette.error.light,
-                  color: (theme) => theme.palette.error.contrastText,
-                  borderColor: (theme) => theme.palette.error.main,
-                }
-              : {}),
-          }}
-        />
+        {showStatusChip && (
+          <Chip
+            label={!isOnline ? 'OFFLINE' : isLive ? 'LIVE' : isRunning ? 'ACTIVE' : 'STANDBY'}
+            size="small"
+            color={isLive ? 'success' : 'default'}
+            sx={{
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              height: 20,
+              borderRadius: 1,
+              ...(connectionState === 'OFFLINE'
+                ? {
+                    bgcolor: (theme) => theme.palette.error.light,
+                    color: (theme) => theme.palette.error.contrastText,
+                    borderColor: (theme) => theme.palette.error.main,
+                  }
+                : {}),
+            }}
+          />
+        )}
       </Stack>
     </Box>
   );
 
   // Mobile: Essential actions only, horizontal layout with visual grouping
-  const renderMobileActions = () => (
-    <ActionsContainer>
-      <Tooltip title={isRunning && !isPaused ? "Pause" : "Start"} placement="top">
-        <ActionButton 
-          data-testid="quick-action-play"
-          onClick={handlePlayPause} 
-          color="primary"
-          active={isRunning && !isPaused}
-          whileTap={{ scale: 0.95 }}
-          aria-label={isRunning && !isPaused ? 'Pause orchestration' : 'Start orchestration'}
-        >
-          {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
-        </ActionButton>
-      </Tooltip>
+  const renderActions = (compactLayout = false) => (
+    <Stack
+      direction="row"
+      flexWrap={compactLayout ? 'nowrap' : 'wrap'}
+      gap={isMobile ? 1 : compactLayout ? 0.75 : 1.25}
+      justifyContent={compactLayout ? 'flex-end' : isMobile ? 'center' : 'flex-start'}
+      sx={{ width: '100%' }}
+    >
+      <Fade in timeout={200}>
+        <Tooltip title={isRunning && !isPaused ? 'Pause' : 'Start'} placement={isMobile ? 'top' : 'bottom'}>
+          <ActionButton
+            data-testid="quick-action-play"
+            onClick={handlePlayPause}
+            color="primary"
+            active={isRunning && !isPaused}
+            whileTap={{ scale: 0.95 }}
+            aria-label={isRunning && !isPaused ? 'Pause orchestration' : 'Start orchestration'}
+          >
+            {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
+          </ActionButton>
+        </Tooltip>
+      </Fade>
 
-      <Tooltip title="Stop" placement="top">
-        <ActionButton 
-          data-testid="quick-action-stop"
-          onClick={handleStop} 
-          disabled={!isRunning}
-          whileTap={{ scale: 0.95 }}
-          aria-label="Stop orchestration"
-        >
-          <StopIcon />
-        </ActionButton>
-      </Tooltip>
+      <Fade in timeout={220}>
+        <Tooltip title="Stop" placement={isMobile ? 'top' : 'bottom'}>
+          <ActionButton
+            data-testid="quick-action-stop"
+            onClick={handleStop}
+            disabled={!isRunning}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Stop orchestration"
+          >
+            <StopIcon />
+          </ActionButton>
+        </Tooltip>
+      </Fade>
 
-      <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: 'divider' }} />
+      <Fade in timeout={260}>
+        <Tooltip title="Refresh" placement={isMobile ? 'top' : 'bottom'}>
+          <ActionButton
+            data-testid="quick-action-refresh"
+            onClick={handleRefresh}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Refresh dashboard data"
+          >
+            <RefreshIcon />
+          </ActionButton>
+        </Tooltip>
+      </Fade>
 
-      <Tooltip title="Refresh" placement="top">
-        <ActionButton 
-          data-testid="quick-action-refresh"
-          onClick={handleRefresh} 
-          whileTap={{ scale: 0.95 }}
-          aria-label="Refresh dashboard data"
-        >
-          <RefreshIcon />
-        </ActionButton>
-      </Tooltip>
+      <Fade in timeout={280}>
+        <Tooltip title="Save" placement={isMobile ? 'top' : 'bottom'}>
+          <ActionButton
+            data-testid="quick-action-save"
+            onClick={handleSave}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Save current state"
+          >
+            <SaveIcon />
+          </ActionButton>
+        </Tooltip>
+      </Fade>
 
-      <Tooltip title="Save" placement="top">
-        <ActionButton 
-          data-testid="quick-action-save"
-          onClick={handleSave} 
-          whileTap={{ scale: 0.95 }}
-          aria-label="Save current state"
-        >
-          <SaveIcon />
-        </ActionButton>
-      </Tooltip>
+      <Fade in timeout={320}>
+        <Tooltip title="Settings" placement={isMobile ? 'top' : 'bottom'}>
+          <ActionButton
+            data-testid="settings-button"
+            onClick={handleSettings}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Open settings"
+          >
+            <SettingsIcon />
+          </ActionButton>
+        </Tooltip>
+      </Fade>
 
-      <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: 'divider' }} />
+      <Fade in timeout={340}>
+        <Tooltip title="Fullscreen" placement={isMobile ? 'top' : 'bottom'}>
+          <ActionButton
+            onClick={handleFullscreen}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Toggle fullscreen"
+          >
+            <FullscreenIcon />
+          </ActionButton>
+        </Tooltip>
+      </Fade>
 
-      <Tooltip title="Settings" placement="top">
-        <ActionButton 
-          data-testid="settings-button"
-          onClick={handleSettings} 
-          whileTap={{ scale: 0.95 }}
-          aria-label="Open settings"
-        >
-          <SettingsIcon />
-        </ActionButton>
-      </Tooltip>
-
-      <Tooltip title="Export" placement="top">
-        <ActionButton 
-          data-testid="quick-action-export"
-          onClick={handleExport} 
-          whileTap={{ scale: 0.95 }}
-          aria-label="Export data"
-        >
-          <DownloadIcon />
-        </ActionButton>
-      </Tooltip>
-    </ActionsContainer>
+      <Fade in timeout={360}>
+        <Tooltip title="Export" placement={isMobile ? 'top' : 'bottom'}>
+          <ActionButton
+            data-testid="quick-action-export"
+            onClick={handleExport}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Export data"
+          >
+            <DownloadIcon />
+          </ActionButton>
+        </Tooltip>
+      </Fade>
+    </Stack>
   );
 
-  // Desktop: Full actions with sections, vertical layout with enhanced grouping
-  const renderDesktopActions = () => (
-    <ActionsContainer>
-      <Stack direction="column" spacing={0} alignItems="center" sx={{ width: '100%', py: 1 }}>
-        {/* Playback Controls */}
-        <Fade in timeout={300}>
-          <ActionGroup>
-            <GroupLabel>Control</GroupLabel>
-            
-            <Tooltip title={isRunning && !isPaused ? "Pause" : "Start"} placement="left">
-              <ActionButton 
-                data-testid="quick-action-play"
-                onClick={handlePlayPause} 
-                color="primary"
-                active={isRunning && !isPaused}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label={isRunning && !isPaused ? 'Pause orchestration' : 'Start orchestration'}
-              >
-                {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
-              </ActionButton>
-            </Tooltip>
-
-            <Tooltip title="Stop" placement="left">
-              <ActionButton 
-                data-testid="quick-action-stop"
-                onClick={handleStop} 
-                disabled={!isRunning}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Stop orchestration"
-              >
-                <StopIcon />
-              </ActionButton>
-            </Tooltip>
-          </ActionGroup>
-        </Fade>
-
-        <SectionDivider />
-
-        {/* System Actions */}
-        <Fade in timeout={400}>
-          <ActionGroup>
-            <GroupLabel>System</GroupLabel>
-
-            <Tooltip title="Refresh Data" placement="left">
-              <ActionButton 
-                data-testid="quick-action-refresh"
-                onClick={handleRefresh}
-                whileHover={{ scale: 1.05, rotate: 180 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-                aria-label="Refresh dashboard data"
-              >
-                <RefreshIcon />
-              </ActionButton>
-            </Tooltip>
-
-            <Tooltip title="Save State" placement="left">
-              <ActionButton 
-                data-testid="quick-action-save"
-                onClick={handleSave}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Save current state"
-              >
-                <SaveIcon />
-              </ActionButton>
-            </Tooltip>
-          </ActionGroup>
-        </Fade>
-
-        <SectionDivider />
-
-        {/* View Actions */}
-        <Fade in timeout={500}>
-          <ActionGroup>
-            <GroupLabel>View</GroupLabel>
-
-            <Tooltip title="Settings" placement="left">
-              <ActionButton 
-                data-testid="settings-button"
-                onClick={handleSettings}
-                whileHover={{ scale: 1.05, rotate: 90 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-                aria-label="Open settings"
-              >
-                <SettingsIcon />
-              </ActionButton>
-            </Tooltip>
-
-            <Tooltip title="Fullscreen" placement="left">
-              <ActionButton 
-                onClick={handleFullscreen}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Toggle fullscreen"
-              >
-                <FullscreenIcon />
-              </ActionButton>
-            </Tooltip>
-
-            <Tooltip title="Export Data" placement="left">
-              <ActionButton 
-                data-testid="quick-action-export"
-                onClick={handleExport}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Export data"
-              >
-                <DownloadIcon />
-              </ActionButton>
-            </Tooltip>
-          </ActionGroup>
-        </Fade>
-      </Stack>
-    </ActionsContainer>
+  const body = isCompact ? (
+    <Stack
+      direction="row"
+      spacing={2}
+      alignItems="center"
+      justifyContent="space-between"
+      sx={{ width: '100%' }}
+    >
+      <Box sx={{ flex: '0 0 260px', minWidth: 200 }}>
+        {renderConnectionIndicator(false)}
+      </Box>
+      <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+        {renderActions(true)}
+      </Box>
+    </Stack>
+  ) : (
+    <Stack spacing={isMobile ? 1 : 1.5} sx={{ width: '100%' }}>
+      {renderConnectionIndicator()}
+      {renderActions()}
+    </Stack>
   );
 
   return (
-    <GridTile
-      title="Actions"
-      data-testid="quick-actions"
-      data-role="control-cluster"
-      position={{
-        desktop: { column: '12 / 13', height: '160px' },
-        tablet: { column: '8 / 9', height: '140px' },
-        mobile: { column: '1', height: '200px' },
-      }}
-      loading={loading}
-      error={error}
-    >
-      <Stack spacing={isMobile ? 1 : 1.5} sx={{ height: '100%' }}>
-        {renderConnectionIndicator()}
-        {isMobile ? renderMobileActions() : renderDesktopActions()}
-      </Stack>
-    </GridTile>
+    variant === 'inline' ? (
+      <Box data-testid="quick-actions" sx={{ width: '100%', minWidth: 0 }}>
+        <Stack spacing={1.25}>
+          {showInlineTitle && (
+            <Typography variant="subtitle2" fontWeight={700}>
+              {inlineTitle}
+            </Typography>
+          )}
+          {body}
+        </Stack>
+      </Box>
+    ) : (
+      <GridTile
+        title="Actions"
+        data-testid="quick-actions"
+        data-role="control-cluster"
+        position={{
+          desktop: { column: 'span 2', height: 'auto' },
+          tablet: { column: 'span 2', height: 'auto' },
+          mobile: { column: 'span 1', height: 'auto' },
+        }}
+        loading={loading}
+        error={error}
+      >
+        {body}
+      </GridTile>
+    )
   );
 };
 

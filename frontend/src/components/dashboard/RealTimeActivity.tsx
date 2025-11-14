@@ -87,11 +87,13 @@ interface ActivityEvent {
 interface RealTimeActivityProps {
   loading?: boolean;
   error?: boolean;
+  density?: 'default' | 'condensed';
 }
 
-const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) => {
+const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, density = 'default' }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isCondensed = density === 'condensed' && !isMobile;
   const [activities, setActivities] = useState<ActivityEvent[]>([
     {
       id: '1',
@@ -250,9 +252,9 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
       title="Real-time Activity"
       data-testid="real-time-activity"
       position={{
-        desktop: { column: '8 / 11', height: '160px' },
-        tablet: { column: '6 / 9', height: '150px' },
-        mobile: { height: '180px' },
+        desktop: { column: 'span 2', height: isCondensed ? '240px' : '280px' },
+        tablet: { column: 'span 2', height: '260px' },
+        mobile: { column: 'span 1', height: '220px' },
       }}
       loading={loading}
       error={error}
@@ -305,7 +307,6 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                     minHeight: '48px',
                     backgroundColor: highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
                   }}
-                  data-testid="activity-event"
                   data-activity-type={activity.type}
                   data-severity={activity.severity}
                   data-activity-id={activity.id}
@@ -364,8 +365,8 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
           </ActivityList>
         </Box>
       ) : (
-        // Desktop: Full activity list
-        <Box sx={{ height: '100%' }}>
+        // Desktop: Full or condensed activity list
+        <Box sx={{ height: '100%' }} data-density={isCondensed ? 'condensed' : 'default'}>
           <ActivityHeader>
             <Stack direction="row" spacing={1} alignItems="center">
               <PulsingBadge
@@ -398,7 +399,19 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
             />
           </ActivityHeader>
           
-          <ActivityList>
+          <ActivityList
+            sx={
+              isCondensed
+                ? {
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    columnGap: 1.5,
+                    rowGap: 0.5,
+                  }
+                : undefined
+            }
+            data-density={isCondensed ? 'condensed' : 'default'}
+          >
             <AnimatePresence initial={false}>
               {activities.map((activity, index) => (
                 <ActivityItem 
@@ -407,8 +420,9 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                   severity={activity.severity}
                   sx={{
                     backgroundColor: highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                    flexDirection: isCondensed ? 'column' : 'row',
+                    gap: isCondensed ? 0.5 : 0,
                   }}
-                  data-testid="activity-event"
                   data-activity-type={activity.type}
                   data-severity={activity.severity}
                   data-activity-id={activity.id}
@@ -424,19 +438,28 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                       color: getSeverityColor(activity.severity),
                       width: 32,
                       height: 32,
-                      mr: 2,
+                      mr: isCondensed ? 0 : 2,
                     }}
                   >
                     {getActivityIcon(activity.type)}
                   </Avatar>
                   <ListItemText
                     primary={
-                      <Typography variant="body2" fontWeight={500} sx={{ color: 'text.primary' }}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={500}
+                        sx={{ color: 'text.primary', lineHeight: 1.3 }}
+                      >
                         {activity.description}
                       </Typography>
                     }
                     secondary={
-                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        sx={{ mt: 0.5, flexWrap: 'wrap' }}
+                      >
                         {activity.characterName && (
                           <Box data-testid="character-activity" sx={{ display: 'inline-flex' }}>
                             <Chip
