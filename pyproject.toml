@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "novel-engine"
+version = "0.1.0"
 description = "AI-Enhanced Interactive Novel Engine"
 readme = "README.md"
 requires-python = ">=3.8"

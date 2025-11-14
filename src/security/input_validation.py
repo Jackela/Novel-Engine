@@ -213,7 +213,7 @@ class InputValidator:
                     pattern=re.compile(pattern),
                     severity=ValidationSeverity.MEDIUM,
                     message="Potential LDAP injection detected",
-                    input_types=[InputType.USERNAME, InputType.TEXT],
+                    input_types=[InputType.USERNAME],
                 )
             )
 

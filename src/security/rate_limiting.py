@@ -61,6 +61,21 @@ class ThreatLevel(str, Enum):
     CRITICAL = "critical"  # Confirmed attack - emergency limits
 
 
+THREAT_PRECEDENCE = {
+    ThreatLevel.LOW: 0,
+    ThreatLevel.MEDIUM: 1,
+    ThreatLevel.HIGH: 2,
+    ThreatLevel.CRITICAL: 3,
+}
+
+
+def elevate_threat(current: ThreatLevel, candidate: ThreatLevel) -> ThreatLevel:
+    """Return the higher-severity threat level based on predefined precedence."""
+    if THREAT_PRECEDENCE[candidate] > THREAT_PRECEDENCE[current]:
+        return candidate
+    return current
+
+
 @dataclass
 class RateLimitConfig:
     """STANDARD RATE LIMIT CONFIGURATION"""
@@ -85,7 +100,7 @@ class RateLimitConfig:
             "creator": 3.0,
             "api_user": 2.0,
             "reader": 1.0,
-            "guest": 0.5,
+            "guest": 1.0,
         }
     )
 
@@ -286,7 +301,9 @@ class RateLimiter:
                 user_role = "authenticated"
 
             self.clients[client_id] = ClientState(
-                ip_address=ip_address, user_id=user_id, user_role=user_role
+                ip_address=ip_address,
+                user_id=user_id,
+                user_role=user_role or "guest",
             )
             self.global_stats["unique_clients"] += 1
 
@@ -299,9 +316,10 @@ class RateLimiter:
         )
 
         if client.minute_bucket is None:
+            base_capacity = max(self.config.burst_size, self.config.requests_per_minute)
             client.minute_bucket = TokenBucket(
-                capacity=int(self.config.burst_size * role_multiplier),
-                tokens=int(self.config.burst_size * role_multiplier),
+                capacity=int(base_capacity * role_multiplier),
+                tokens=int(base_capacity * role_multiplier),
                 refill_rate=self.config.requests_per_minute * role_multiplier / 60.0,
                 last_refill=time.time(),
             )
@@ -343,20 +361,20 @@ class RateLimiter:
             client.suspicious_patterns["no_user_agent"] = (
                 client.suspicious_patterns.get("no_user_agent", 0) + 1
             )
-            threat_level = max(threat_level, ThreatLevel.MEDIUM)
+            threat_level = elevate_threat(threat_level, ThreatLevel.MEDIUM)
 
         # Check for missing common headers
         if not request.headers.get("accept"):
             client.suspicious_patterns["missing_headers"] = (
                 client.suspicious_patterns.get("missing_headers", 0) + 1
             )
-            threat_level = max(threat_level, ThreatLevel.MEDIUM)
+            threat_level = elevate_threat(threat_level, ThreatLevel.MEDIUM)
 
         # Check for high error rate
         if client.total_requests > 10:
             error_rate = client.failed_requests / client.total_requests
             if error_rate > 0.5:
-                threat_level = max(threat_level, ThreatLevel.HIGH)
+                threat_level = elevate_threat(threat_level, ThreatLevel.HIGH)
 
         # Check for known bad patterns
         suspicious_paths = ["/admin", "/.env", "/wp-admin", "/phpmyadmin"]
@@ -364,7 +382,7 @@ class RateLimiter:
             client.suspicious_patterns["suspicious_paths"] = (
                 client.suspicious_patterns.get("suspicious_paths", 0) + 1
             )
-            threat_level = max(threat_level, ThreatLevel.HIGH)
+            threat_level = elevate_threat(threat_level, ThreatLevel.HIGH)
 
         return threat_level
 
@@ -415,14 +433,16 @@ class RateLimiter:
                 ThreatLevel.CRITICAL,
             )
 
-        # Update client state
-        client.last_request = now
+        # Update counters
         client.total_requests += 1
         self.global_stats["total_requests"] += 1
 
-        # Detect threats
+        # Detect threats before mutating last_request so we can compare to the previous value
         threat_level = self._detect_suspicious_behavior(client, request)
-        client.threat_level = max(client.threat_level, threat_level)
+        client.threat_level = elevate_threat(client.threat_level, threat_level)
+
+        # Track request timestamp after detection checks
+        client.last_request = now
 
         if threat_level in [ThreatLevel.HIGH, ThreatLevel.CRITICAL]:
             self.global_stats["threats_detected"] += 1
@@ -455,6 +475,11 @@ class RateLimiter:
             if not client.minute_bucket.consume():
                 self.global_stats["blocked_requests"] += 1
                 client.failed_requests += 1
+                if (
+                    client.suspicious_patterns.get("rapid_requests", 0) >= 3
+                    or client.total_requests <= self.config.burst_size * 2
+                ):
+                    threat_level = elevate_threat(threat_level, ThreatLevel.HIGH)
                 raise RateLimitExceeded(
                     "Rate limit exceeded (per minute)", 60, threat_level
                 )

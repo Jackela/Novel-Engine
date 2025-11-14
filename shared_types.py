@@ -7,14 +7,7 @@ shared types from core types module.
 """
 
 # Direct import from core types to avoid circular imports
-from src.core.types.shared_types import (
-    ActionPriority,
-    ActionType,
-    CharacterAction,
-)
+from src.core.types import shared_types as _core_shared_types
+from src.core.types.shared_types import *  # noqa: F401,F403
 
-__all__ = [
-    "ActionPriority",
-    "ActionType",
-    "CharacterAction",
-]
+__all__ = getattr(_core_shared_types, "__all__", [])

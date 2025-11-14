@@ -1,10 +1,8 @@
 import { forwardRef } from 'react';
 import type React from 'react';
-import type { IAccessibleComponent } from '../../types/accessibility';
-
 type ReactKeyboardEvent = React.KeyboardEvent<HTMLDivElement>;
 
-interface KeyboardButtonProps extends Partial<IAccessibleComponent> {
+type KeyboardButtonProps = React.HTMLAttributes<HTMLDivElement> & {
   onClick: () => void;
   children: React.ReactNode;
   className?: string;
@@ -13,7 +11,7 @@ interface KeyboardButtonProps extends Partial<IAccessibleComponent> {
   ariaExpanded?: boolean;
   disabled?: boolean;
   style?: React.CSSProperties;
-}
+};
 
 export const KeyboardButton = forwardRef<HTMLDivElement, KeyboardButtonProps>(
   (

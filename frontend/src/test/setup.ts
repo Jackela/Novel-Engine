@@ -2,6 +2,11 @@ import '@testing-library/jest-dom';
 import { vi, beforeEach, afterEach, afterAll } from 'vitest';
 import { runCleanups as runUtilCleanups } from './utils/cleanup';
 
+// Ensure globals expected by browser-only libraries (e.g., web-vitals) exist
+if (typeof globalThis.self === 'undefined') {
+  (globalThis as any).self = globalThis;
+}
+
 // Global test setup for Novel Engine frontend tests
 
 // Track cleanup functions for proper test isolation

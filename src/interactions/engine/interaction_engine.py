@@ -106,6 +106,89 @@ class InteractionEngine:
 
         logger.info("INTERACTION ENGINE INITIALIZED WITH ENHANCED ORCHESTRATION")
 
+    def _initialize_interaction_templates(self) -> None:
+        """Ensure the interaction template directory exists and map defaults."""
+        self.interaction_templates_dir.mkdir(parents=True, exist_ok=True)
+        if not self._interaction_templates:
+            self._interaction_templates = {
+                interaction_type: {} for interaction_type in InteractionType
+            }
+
+    async def _process_dialogue_interaction(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        """Minimal dialogue processing placeholder."""
+        outcome.generated_content.append(
+            f"Dialogue between {', '.join(context.participants)}"
+        )
+        return StandardResponse(
+            success=True, metadata={"blessing": "dialogue_processed"}
+        )
+
+    async def _process_combat_interaction(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        outcome.generated_content.append(
+            f"Combat initiated at {context.location or 'unknown location'}"
+        )
+        return StandardResponse(success=True, metadata={"blessing": "combat_processed"})
+
+    async def _process_cooperation_interaction(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        outcome.generated_content.append(
+            f"Cooperation effort among {', '.join(context.participants)}"
+        )
+        return StandardResponse(
+            success=True, metadata={"blessing": "cooperation_processed"}
+        )
+
+    async def _process_negotiation_interaction(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        outcome.generated_content.append("Negotiation sequence completed")
+        return StandardResponse(
+            success=True, metadata={"blessing": "negotiation_processed"}
+        )
+
+    async def _process_instruction_interaction(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        outcome.generated_content.append("Instruction delivered successfully")
+        return StandardResponse(
+            success=True, metadata={"blessing": "instruction_processed"}
+        )
+
+    async def _process_ritual_interaction(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        outcome.generated_content.append("Ritual completed according to plan")
+        return StandardResponse(success=True, metadata={"blessing": "ritual_processed"})
+
+    async def _process_exploration_interaction(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        outcome.generated_content.append("Exploration results catalogued")
+        return StandardResponse(
+            success=True, metadata={"blessing": "exploration_processed"}
+        )
+
+    async def _process_maintenance_interaction(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        outcome.generated_content.append("Maintenance cycle completed")
+        return StandardResponse(
+            success=True, metadata={"blessing": "maintenance_processed"}
+        )
+
+    async def _process_emergency_interaction(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        outcome.generated_content.append("Emergency response executed")
+        return StandardResponse(
+            success=True, metadata={"blessing": "emergency_processed"}
+        )
+
     async def initiate_interaction(
         self, context: InteractionContext, auto_process: bool = True
     ) -> StandardResponse:

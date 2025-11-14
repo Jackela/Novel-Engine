@@ -42,6 +42,10 @@ export interface UsePerformanceOptions {
 export function usePerformance(options: UsePerformanceOptions = {}): IPerformanceMonitor {
   const { onMetric, reportToAnalytics = false } = options
   const renderCount = useRef(0)
+  const supportsWebVitals =
+    typeof window !== 'undefined' &&
+    typeof window.document !== 'undefined' &&
+    typeof self !== 'undefined'
 
   // Track re-renders (T052)
   renderCount.current++
@@ -100,16 +104,22 @@ export function usePerformance(options: UsePerformanceOptions = {}): IPerformanc
   }
 
   const trackWebVitals = () => {
-    if (typeof window === 'undefined') return
+    if (!supportsWebVitals) return
 
-    // Dynamic import to avoid bundling in SSR
-    import('web-vitals').then(({ onCLS, onFID, onLCP, onFCP, onTTFB }) => {
-      onCLS((metric) => reportMetric(convertWebVitalsMetric(metric)))
-      onFID((metric) => reportMetric(convertWebVitalsMetric(metric)))
-      onLCP((metric) => reportMetric(convertWebVitalsMetric(metric)))
-      onFCP((metric) => reportMetric(convertWebVitalsMetric(metric)))
-      onTTFB((metric) => reportMetric(convertWebVitalsMetric(metric)))
-    })
+    // Dynamic import to avoid bundling in SSR/test environments
+    import('web-vitals')
+      .then(({ onCLS, onFID, onLCP, onFCP, onTTFB }) => {
+        onCLS((metric) => reportMetric(convertWebVitalsMetric(metric)))
+        onFID((metric) => reportMetric(convertWebVitalsMetric(metric)))
+        onLCP((metric) => reportMetric(convertWebVitalsMetric(metric)))
+        onFCP((metric) => reportMetric(convertWebVitalsMetric(metric)))
+        onTTFB((metric) => reportMetric(convertWebVitalsMetric(metric)))
+      })
+      .catch((error) => {
+        if (import.meta.env.DEV) {
+          console.warn('Web Vitals monitoring skipped:', error)
+        }
+      })
   }
 
   // Get render count (T052)
@@ -131,7 +141,7 @@ export function usePerformance(options: UsePerformanceOptions = {}): IPerformanc
 
   useEffect(() => {
     trackWebVitals()
-  }, [])
+  }, [supportsWebVitals])
 
   return {
     trackWebVitals,

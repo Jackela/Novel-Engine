@@ -65,8 +65,8 @@ const AppRoutes: React.FC = () => {
       <SkipLink targetId="main-content" text="Skip to main content" />
       <Routes>
         {/* Main dashboard route with Suspense boundary */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <Suspense fallback={<LoadingFallback />}>
@@ -77,13 +77,13 @@ const AppRoutes: React.FC = () => {
         />
         
         {/* Landing route */}
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             <Suspense fallback={<LoadingFallback />}>
               <LandingPage />
             </Suspense>
-          } 
+          }
         />
         
         {/* Login route (placeholder for future implementation) */}

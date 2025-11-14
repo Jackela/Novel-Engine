@@ -305,6 +305,11 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                     minHeight: '48px',
                     backgroundColor: highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
                   }}
+                  data-testid="activity-event"
+                  data-activity-type={activity.type}
+                  data-severity={activity.severity}
+                  data-activity-id={activity.id}
+                  data-character-activity={activity.characterName ? 'true' : 'false'}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
@@ -336,17 +341,19 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                           {formatTimestamp(activity.timestamp)}
                         </Typography>
                         {activity.characterName && (
-                          <Chip
-                            label={activity.characterName}
-                            size="small"
-                            sx={{ 
-                              height: '18px', 
-                              fontSize: '0.6rem',
-                              backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                              borderColor: (theme) => theme.palette.primary.main,
-                              color: (theme) => theme.palette.text.secondary,
-                            }}
-                          />
+                          <Box data-testid="character-activity" sx={{ display: 'inline-flex' }}>
+                            <Chip
+                              label={activity.characterName}
+                              size="small"
+                              sx={{ 
+                                height: '18px', 
+                                fontSize: '0.6rem',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                borderColor: (theme) => theme.palette.primary.main,
+                                color: (theme) => theme.palette.text.secondary,
+                              }}
+                            />
+                          </Box>
                         )}
                       </Stack>
                     }
@@ -401,6 +408,11 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                   sx={{
                     backgroundColor: highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
                   }}
+                  data-testid="activity-event"
+                  data-activity-type={activity.type}
+                  data-severity={activity.severity}
+                  data-activity-id={activity.id}
+                  data-character-activity={activity.characterName ? 'true' : 'false'}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
@@ -426,17 +438,19 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error }) =
                     secondary={
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
                         {activity.characterName && (
-                          <Chip
-                            label={activity.characterName}
-                            size="small"
-                            sx={{ 
-                              height: '16px', 
-                              fontSize: '0.65rem',
-                              backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                              borderColor: (theme) => theme.palette.primary.main,
-                              color: (theme) => theme.palette.text.secondary,
-                            }}
-                          />
+                          <Box data-testid="character-activity" sx={{ display: 'inline-flex' }}>
+                            <Chip
+                              label={activity.characterName}
+                              size="small"
+                              sx={{ 
+                                height: '16px', 
+                                fontSize: '0.65rem',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                borderColor: (theme) => theme.palette.primary.main,
+                                color: (theme) => theme.palette.text.secondary,
+                              }}
+                            />
+                          </Box>
                         )}
                         <Typography variant="caption" color="text.secondary">
                           {formatTimestamp(activity.timestamp)}

@@ -4,6 +4,7 @@ Character Template Manager - Core orchestration.
 """
 
 import asyncio
+import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -97,6 +98,83 @@ class CharacterTemplateManager:
         logger.info(
             f"CHARACTER TEMPLATE MANAGER INITIALIZED: {len(self._personas)} personas loaded"
         )
+
+    def _initialize_archetype_templates(self):
+        """Delegate archetype template bootstrap to the configuration helper."""
+        config = ArchetypeConfiguration()
+        return config._initialize_archetype_templates()
+
+    def _determine_archetype_emphasis(
+        self, archetype: CharacterArchetype
+    ) -> Dict[str, float]:
+        """Lightweight heuristic for emphasis weighting per archetype."""
+        base = {
+            "memory": 0.3,
+            "emotion": 0.2,
+            "relationship": 0.2,
+            "environment": 0.15,
+            "equipment": 0.15,
+        }
+        adjustments: Dict[CharacterArchetype, Dict[str, float]] = {
+            CharacterArchetype.WARRIOR: {"equipment": 0.1, "emotion": -0.05},
+            CharacterArchetype.SCHOLAR: {"memory": 0.2, "equipment": -0.05},
+            CharacterArchetype.LEADER: {"relationship": 0.2},
+            CharacterArchetype.MYSTIC: {"emotion": 0.2, "environment": -0.05},
+            CharacterArchetype.ENGINEER: {"equipment": 0.25},
+            CharacterArchetype.DIPLOMAT: {"relationship": 0.3, "emotion": 0.1},
+            CharacterArchetype.GUARDIAN: {"equipment": 0.1, "relationship": 0.1},
+            CharacterArchetype.SURVIVOR: {"environment": 0.2, "memory": 0.1},
+        }
+        for key, delta in adjustments.get(archetype, {}).items():
+            base[key] = max(0.0, base.get(key, 0.0) + delta)
+        total = sum(base.values()) or 1.0
+        return {k: v / total for k, v in base.items()}
+
+    def _discover_personas(self):
+        """Load persona definitions from disk without failing startup."""
+        if not self.personas_directory.exists():
+            return
+
+        for persona_file in self.personas_directory.glob("*.json"):
+            try:
+                with open(persona_file, "r", encoding="utf-8") as handle:
+                    payload = json.load(handle)
+
+                persona = CharacterPersona(
+                    persona_id=payload["persona_id"],
+                    name=payload.get("name", payload["persona_id"]),
+                    archetype=CharacterArchetype(payload.get("archetype", "WARRIOR")),
+                    description=payload.get("description", ""),
+                    personality_traits=payload.get("personality_traits", []),
+                    speech_patterns=payload.get("speech_patterns", {}),
+                    behavioral_preferences=payload.get("behavioral_preferences", {}),
+                    memory_priorities=payload.get("memory_priorities", {}),
+                    emotional_tendencies=payload.get("emotional_tendencies", {}),
+                    faction_data=payload.get("faction_data", []),
+                    core_beliefs=payload.get("core_beliefs", []),
+                    template_preferences=payload.get("template_preferences", {}),
+                    usage_statistics=payload.get("usage_statistics", {}),
+                )
+
+                self._personas[persona.persona_id] = persona
+                self._character_templates.setdefault(persona.persona_id, {})
+                self._context_profiles[persona.persona_id] = CharacterContextProfile(
+                    persona_id=persona.persona_id,
+                    preferred_formats={fmt: 0.5 for fmt in RenderFormat},
+                    context_emphasis=self._determine_archetype_emphasis(
+                        persona.archetype
+                    ),
+                )
+
+                logger.info(
+                    "DISCOVERED PERSONA %s from %s",
+                    persona.persona_id,
+                    persona_file.name,
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to load persona file %s: %s", persona_file.name, exc
+                )
 
     async def create_persona(
         self, persona_data: CharacterPersona, generate_templates: bool = True

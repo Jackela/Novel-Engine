@@ -707,6 +707,10 @@ class SubjectiveRealityEngine:
 
         logger.info("主观现实引擎初始化完成")
 
+    async def initialize(self) -> None:
+        """Compatibility hook invoked by the system orchestrator."""
+        logger.info("主观现实引擎准备就绪")
+
     async def initialize_agent(
         self,
         agent_id: str,

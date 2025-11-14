@@ -121,3 +121,42 @@ curl http://localhost:8000/health
 这次实际测试暴露了系统的严重问题，证明了真实UAT测试的重要性。如果没有进行实际测试，这些问题将会直接影响生产环境。
 
 **建议**: 立即修复系统问题，确保基本可用性后重新开始UAT流程。
+
+---
+
+## ✅ 2025-11-13 Flow-based Dashboard 回归记录
+
+**执行人**: Platform QA  
+**环境**:
+- 开发服务统一通过 `npm run dev:daemon`（封装 `scripts/dev_env.sh start --detach`）启动；`npm run dev:stop` 清理遗留进程  
+- 所有 Playwright/UAT 命令均设置 `SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000`
+- 日志位置：`tmp/dev_env/backend.log` / `tmp/dev_env/frontend.log`
+
+### 自动化结果概览
+| 套件 | 命令 | 结果 | 备注 |
+| --- | --- | --- | --- |
+| Core UAT (桌面) | `npx playwright test tests/e2e/dashboard-core-uat.spec.ts --project=chromium-desktop` | ✅ 通过 | Flow-based 控制区 + pipeline 指标全部验证，最终截图保存在 `frontend/test-results/…` |
+| Accessibility | `npx playwright test tests/e2e/accessibility.spec.ts --project=chromium-desktop` | ✅ 通过 | Keyboard-only 旅程、可见焦点与 live region 验证通过 |
+| Extended UAT | `npx playwright test tests/e2e/dashboard-extended-uat.spec.ts --project=chromium-desktop` | ⚠️ 仍失败 | Phase 2/3/5/6 依赖真实网络/多角色编排，当前 mock 数据缺失导致断言失败 |
+| Vitest | `npm test -- --run` | ✅ 通过 | 仍有 `tests/workflows.test.tsx` 的 duplicate key warning（需后续修复） |
+| Lint/Type Check | `npm run lint` / `npm run type-check` | ✅ 通过 | 仅保留 `CharacterCreationDialog` 的既有 `autoFocus` 警告 |
+| Backend slices | `pytest tests/test_security_framework.py tests/test_quality_framework.py` | ✅ 通过 | 仍有 asyncio/Deprecation warning，功能全部绿灯 |
+| `scripts/validate_ci_locally.sh` | `bash scripts/validate_ci_locally.sh` | ❌ Formatter 阶段失败 | Black/Isort 需要一次性格式化 40+ legacy 文件（详见 `tmp/validate-ci.log`） |
+
+### 视觉证据（最新流式仪表盘）
+
+![Flow dashboard](../../assets/dashboard/dashboard-flow-2025-11-12.png)
+
+> Summary/Control/Pipeline/Streams/Signals/Persona/Insights 各区域分别通过 `data-role="summary-strip|control-cluster|pipeline-monitor|stream-feed|system-signals|persona-ops|analytics-insights"` 暴露语义标记，Playwright 与 AI 自动化可稳定定位这些容器。
+
+### act 仿真 CI 状态
+- `act -W .github/workflows/frontend-ci.yml -j build-and-test`：仍在 `actions/setup-node@v4` 阶段失败，因为 workflow 尝试缓存 `frontend/package-lock.json`——仓库并未提交该文件，`act` 无法解析路径。需要调整 workflow cache 配置或提交锁文件。
+- `act -W .github/workflows/ci.yml -j tests`：pytest 在收集阶段抛出 `ModuleNotFoundError: src.core.types.shared_types`。即使跳过该问题，后续 security/orchestrator 测试仍按照 `tmp/validate-ci.log` 提示失败（未恢复 `_initialize_archetype_templates`、旧版 rate limiter 配置等）。
+
+### 待解决事项
+1. **Formatter 大清理**：`scripts/validate_ci_locally.sh` 在 Black/Isort 阶段即失败（首批文件：`scripts/reporting/cache_savings_report.py`、`src/api/main_api_server.py`、`tests/test_character_system_comprehensive.py` 等）。需要一次性处理后才能看到 pytest 覆盖率结果。
+2. **CI workflow 缓存配置**：`frontend-ci.yml` 的 `cache` 与 `cache-dependency-path` 应与实际锁文件一致，或在本地仿真时关闭缓存，否则 `act` 无法越过 `setup-node`。
+3. **Shared Types 打包**：`src/core/types/shared_types.py` 尚未正确暴露给 tests runner；修复该包及 security/rate-limiter 回归后，`act -W .github/workflows/ci.yml -j tests` 才能转向真正的测试失败。
+4. **Extended UAT 断言**：`tests/e2e/dashboard-extended-uat.spec.ts` 仍假设真实 API/多角色剧情，需要针对 mock 数据降级断言，或补充测试数据与端点。
+
+> 以上结果已经附加到 `frontend/test-results/` 与 `tmp/*.log`，可在 `docs/assets` 目录补充最新截图后纳入报告。

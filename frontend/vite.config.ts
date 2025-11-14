@@ -122,6 +122,8 @@ export default defineConfig({
       '@hooks': resolve(__dirname, 'src/hooks'),
       '@services': resolve(__dirname, 'src/services'),
       '@types': resolve(__dirname, 'src/types'),
+      '@/styles': resolve(__dirname, 'src/styles'),
+      '@mui/icons-material$': resolve(__dirname, 'src/mui-icons.ts'),
     },
   },
   
@@ -137,7 +139,7 @@ export default defineConfig({
   
   // Preview configuration
   preview: {
-    port: 3000,
+    port: 4173,
     host: true,
   },
   test: {

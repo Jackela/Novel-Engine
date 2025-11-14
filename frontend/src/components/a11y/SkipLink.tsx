@@ -7,12 +7,22 @@ interface SkipLinkProps {
   targetId: string;
   text: string;
   className?: string;
+  style?: React.CSSProperties;
 }
+
+const hiddenBaseStyle: React.CSSProperties = {
+  position: 'absolute',
+  left: '-9999px',
+  width: '1px',
+  height: '1px',
+  overflow: 'hidden',
+};
 
 export const SkipLink: React.FC<SkipLinkProps> = ({
   targetId,
   text,
   className = '',
+  style,
 }) => {
   const focusTarget = () => {
     const targetElement = document.getElementById(targetId);
@@ -38,9 +48,9 @@ export const SkipLink: React.FC<SkipLinkProps> = ({
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      handleClick(event);
+      focusTarget();
     }
   };
 
@@ -50,13 +60,7 @@ export const SkipLink: React.FC<SkipLinkProps> = ({
       className={`skip-link ${className}`}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      style={{
-        position: 'absolute',
-        left: '-9999px',
-        width: '1px',
-        height: '1px',
-        overflow: 'hidden',
-      }}
+      style={{ ...hiddenBaseStyle, ...style }}
       onFocus={(e) => {
         e.currentTarget.style.position = 'fixed';
         e.currentTarget.style.top = '0';

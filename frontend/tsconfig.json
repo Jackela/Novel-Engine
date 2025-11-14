@@ -29,7 +29,9 @@
       "@/hooks/*": ["src/hooks/*"],
       "@/services/*": ["src/services/*"],
       "@/types/*": ["src/types/*"],
-      "@/utils/*": ["src/utils/*"]
+      "@/utils/*": ["src/utils/*"],
+      "@/styles/*": ["src/styles/*"],
+      "@mui/icons-material": ["src/mui-icons.ts"]
     }
   },
   "include": [

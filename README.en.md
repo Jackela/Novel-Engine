@@ -95,9 +95,45 @@ Unified dev bootstrap (non-blocking)
    ```
 4. Individual commands still work, but the daemon script is now the supported workflow documented throughout the repo.
 
+### Unified Dev Environment Scripts
+
+Always use the wrapper scripts so FastAPI + Vite start/stop cleanly:
+
+| Command | Description |
+| --- | --- |
+| `npm run dev:daemon` | Calls `scripts/dev_env.sh start --detach`, booting uvicorn (127.0.0.1:8000) and Vite (127.0.0.1:3000) in the background |
+| `npm run dev:stop` | Gracefully shuts both processes down |
+| `npm run dev:status` | Shows current PIDs; run this before killing stray processes |
+
+Logs are tailed to `tmp/dev_env/backend.log` and `tmp/dev_env/frontend.log`. Playwright/UAT commands should export:
+
+```bash
+SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test …
+```
+
+### Flow-based Dashboard (Nov 2025)
+
+`/dashboard` now renders semantic zones via a responsive flow grid:
+
+- `data-role="summary-strip"` — system status banner with orchestration mode, active phase, and last updated time
+- `data-role="control-cluster"` — Quick Actions + connection badge with ≥44 px targets
+- `data-role="pipeline-monitor"` — Turn pipeline timeline with scrollable steps; phase changes emit to tests and the summary strip
+- `data-role="stream-feed"` — Real-time activity + narrative timeline (tabs/accordion on tablet/mobile)
+- `data-role="system-signals"` — Performance metrics paired with event cascade feed, height-capped with internal scroll
+- `data-role="persona-ops"` / `data-role="analytics-insights"` — character networks and analytics panels
+
+On desktop the grid uses `repeat(auto-fit, minmax(320px, 1fr))` with `grid-auto-flow: dense`, letting high-priority zones span two columns while telemetry panels wrap automatically. Tablets collapse to two columns, and mobile traffic is routed through `MobileTabbedDashboard` so only one dense panel stays open at a time.
+
+![Flow-based dashboard screenshot](docs/assets/dashboard/dashboard-flow-2025-11-12.png)
+
 ---
 
 ## Testing & Quality
+
+- Python tests: `pytest` (see `pytest.ini` / `.coveragerc`)
+- Local CI parity: `scripts/validate_ci_locally.sh` (Windows: `scripts/validate_ci_locally.ps1`). It defaults to touched files but supports `RUN_LINT=1`, `RUN_MYPY=1`, and `RUN_TESTS=1` to exercise the legacy code paths (lint/mypy debt still exists there).
+- Frontend gates: `npm run type-check`, `npm run lint:all`, `npm run tokens:check`
+- Full UAT: start via `npm run dev:daemon`, then run the Playwright suites (core/extended/cross-browser/accessibility) with `SKIP_DASHBOARD_VERIFY=true`.
 
 **Last local validation** (2025-11-12, commit `584cc40`)
 

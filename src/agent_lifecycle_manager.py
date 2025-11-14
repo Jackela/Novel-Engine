@@ -14,7 +14,7 @@ providing repair mechanisms for common violations.
 """
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -54,6 +54,15 @@ except ImportError:
         action_id: str = "unknown"
         action_type: str = "unknown"
         target: Any = None
+
+    @dataclass
+    class CharacterData:
+        """Minimal fallback when shared types are unavailable."""
+
+        character_id: str = "unknown"
+        name: str = "Unknown"
+        archetype: str = "WARRIOR"
+        metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 # Import agent types
