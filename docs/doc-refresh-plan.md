@@ -27,3 +27,8 @@
 - Added Playwright coverage for the documented flows (`tests/e2e/login-flow.spec.ts`, `tests/e2e/dashboard-interactions.spec.ts`) so README commands map to real specs.
 - Realigned `tests/e2e/accessibility.spec.ts` with the flow-based dashboard experience and documented the temporary Axe rule suppressions (`color-contrast`, `list`, `scrollable-region-focusable`).
 - `scripts/dev_env_daemon.sh` + MCP audit tooling now gate every Playwright suite; regression evidence (screenshots, traces) land back in `frontend/test-results/`.
+
+## 2025-11-14 updates
+- `README.md`/`README.en.md` now embed the `2025-11-14` flow screenshot, describe `scripts/mcp_chrome_runner.js`, and list the exact lint/vitest/Playwright/act commands run.
+- `docs/assets/dashboard/README.md` lists the new desktop+laptop captures plus the CLI used to reproduce them; `docs/testing/uat/UAT_REAL_TESTING_RESULTS.md` references the same asset.
+- 新增 `docs/coding-standards.md`，集中记录前后端 lint/测试/CI/LHCI/MCP 约定，并在 README 链接，方便审阅编码标准。

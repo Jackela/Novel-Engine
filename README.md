@@ -21,7 +21,7 @@
 - 生产友好：并发安全、丰富日志、缓存与重试、错误处理与可观测性
 - 前端支持：独立的 `frontend/`（React 18），设计系统与质量门禁集成
 
-![Flow-based dashboard view](docs/assets/dashboard/dashboard-flow-2025-11-12.png)
+![Flow-based dashboard view](docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.png)
 
 ---
 
@@ -112,6 +112,14 @@ python api_server.py  # 或运行其他入口，如 production_api_server.py
 SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test …
 ```
 
+## 编码规范与质量门禁
+
+- **前端**：进入 `frontend/` 后运行 `npm run lint`、`npm run type-check`、`npm test -- --run`。仪表盘相关改动必须使用上述环境变量运行全部 Playwright 套件（Core / Extended / Interactions / Cross-browser / Accessibility / Login）。`data-role` 与 `data-testid` 标签是自动化和 MCP 的硬性要求。
+- **后端**：执行 `bash scripts/validate_ci_locally.sh` 以获得 Black、Isort、Flake8、Mypy 以及 pytest coverage 的完整输出；若仅需冒烟可运行 `pytest tests/test_security_framework.py tests/test_quality_framework.py`。
+- **CI 对齐**：使用 `act --pull=false -W .github/workflows/frontend-ci.yml -j build-and-test` 与 `act --pull=false -W .github/workflows/ci.yml -j tests` 模拟 GitHub Actions，日志保存在 `tmp/act-frontend.log` 与 `tmp/act-ci.log`。
+- **Lighthouse / MCP 证据**：`CHROME_PATH=/usr/bin/google-chrome npx @lhci/cli@0.14.0 autorun` 生成性能报告；`node scripts/mcp_chrome_runner.js --viewport WIDTHxHEIGHT …` 采集真实 UI 截图与 metadata（存放在 `docs/assets/dashboard/` 并在 README/UX 报告中引用）。
+- 详细约定、命令表与文档更新流程请参阅 [`docs/coding-standards.md`](docs/coding-standards.md)。
+
 ### Flow-based Dashboard（2025-11）
 
 `/dashboard` 现以语义区域为核心构建流式布局：
@@ -125,7 +133,11 @@ SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwri
 
 桌面端使用 `repeat(auto-fit, minmax(320px, 1fr)) + grid-auto-flow: dense`，控制/管线区域优先占两列；平板收敛为 2 列，移动端交由 `MobileTabbedDashboard` 控制一次只展开一个高密度面板。
 
-![Flow-based dashboard screenshot](docs/assets/dashboard/dashboard-flow-2025-11-12.png)
+![Flow-based dashboard screenshot](docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.png)
+
+> 捕获最新截图：  
+> `node scripts/mcp_chrome_runner.js --url http://127.0.0.1:3000/dashboard --viewport 1440x900 --screenshot docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.png --metadata docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.json`  
+> 脚本会自动点击 Demo CTA、等待 `data-role="control-cluster"` 渲染，随后将 PNG+JSON 存入 `docs/assets/dashboard/`，用于 README/UX 报告取证。
 
 ---
 
@@ -136,13 +148,14 @@ SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwri
 - 前端质量门禁：`npm run type-check`、`npm run lint:all`、`npm run tokens:check`
 - 完整 UAT：使用 `npm run dev:daemon` 启动后执行 Playwright 套件（核心 UAT、扩展 UAT、跨浏览器、无障碍）。
 
-**最后一次本地验证**（2025-11-12，commit `584cc40`）
+**最后一次本地验证**（2025-11-14，commit `bf1406c`）
 
-| 范畴 | 命令 |
+| 范畴 | 覆盖命令 |
 | --- | --- |
-| Lint & Type | `npm run lint:all --prefix frontend`、`npm run type-check --prefix frontend` |
-| 单元测试 | `npm test -- --run`（frontend）、`pytest`（backend） |
-| Playwright | `npx playwright test tests/e2e/login-flow.spec.ts`、`npx playwright test tests/e2e/dashboard-interactions.spec.ts` |
+| 前端 Lint/Type | `npm run lint`、`npm run type-check` |
+| 前端单测 | `VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=3 npx vitest run --reporter=dot` |
+| Playwright | `npx playwright test tests/e2e/dashboard-core-uat.spec.ts --project=chromium-desktop`<br>`npx playwright test tests/e2e/dashboard-extended-uat.spec.ts --project=chromium-desktop`<br>`npx playwright test tests/e2e/dashboard-cross-browser-uat.spec.ts --project=chromium-desktop`<br>`npx playwright test tests/e2e/dashboard-interactions.spec.ts --project=chromium-desktop`<br>`npx playwright test tests/e2e/accessibility.spec.ts --project=chromium-desktop`<br>`npx playwright test tests/e2e/login-flow.spec.ts --project=chromium-desktop` |
+| 后端测试 | `pytest tests/test_security_framework.py tests/test_quality_framework.py` |
 | CI Parity | `scripts/validate_ci_locally.sh`、`act --pull=false -W .github/workflows/frontend-ci.yml -j build-and-test`、`act --pull=false -W .github/workflows/ci.yml -j tests` |
 
 如需快速复现，可执行 `scripts/dev_env_daemon.sh` 启动环境后运行以上命令；验证输出会被追加到 `tmp/dev_env.log` 与 `reports/test-results/`。

@@ -20,7 +20,7 @@ This monorepo uses the root README as the single authoritative project homepage.
 - Production-ready: concurrency-safe, rich logging, caching & retries, error handling & observability
 - Frontend: isolated `frontend/` (React 18) with design system and quality gates
 
-![Flow-based dashboard view](docs/assets/dashboard/dashboard-flow-2025-11-12.png)
+![Flow-based dashboard view](docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.png)
 
 ---
 
@@ -111,6 +111,14 @@ Logs are tailed to `tmp/dev_env/backend.log` and `tmp/dev_env/frontend.log`. Pla
 SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test …
 ```
 
+## Coding Standards & Quality Gates
+
+- **Frontend**: Inside `frontend/` run `npm run lint`, `npm run type-check`, and `npm test -- --run`. Dashboard changes must execute all Playwright suites (Core / Extended / Interactions / Cross-browser / Accessibility / Login) with the daemon server and env vars above. Preserve deterministic `data-role` / `data-testid` attributes for automation.
+- **Backend**: Run `bash scripts/validate_ci_locally.sh` to get Black, Isort, Flake8, Mypy, and pytest coverage in one pass; for smoke checks use `pytest tests/test_security_framework.py tests/test_quality_framework.py`.
+- **CI parity**: Mirror GitHub Actions with `act --pull=false -W .github/workflows/frontend-ci.yml -j build-and-test` and `act --pull=false -W .github/workflows/ci.yml -j tests`, saving logs to `tmp/act-frontend.log` and `tmp/act-ci.log`.
+- **Lighthouse / MCP evidence**: `CHROME_PATH=/usr/bin/google-chrome npx @lhci/cli@0.14.0 autorun` for performance, `node scripts/mcp_chrome_runner.js --viewport WIDTHxHEIGHT …` for real UI screenshots + metadata stored in `docs/assets/dashboard/`.
+- See [`docs/coding-standards.md`](docs/coding-standards.md) for the full checklist, doc-update requirements, and linkable commands.
+
 ### Flow-based Dashboard (Nov 2025)
 
 `/dashboard` now renders semantic zones via a responsive flow grid:
@@ -124,7 +132,11 @@ SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwri
 
 On desktop the grid uses `repeat(auto-fit, minmax(320px, 1fr))` with `grid-auto-flow: dense`, letting high-priority zones span two columns while telemetry panels wrap automatically. Tablets collapse to two columns, and mobile traffic is routed through `MobileTabbedDashboard` so only one dense panel stays open at a time.
 
-![Flow-based dashboard screenshot](docs/assets/dashboard/dashboard-flow-2025-11-12.png)
+![Flow-based dashboard screenshot](docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.png)
+
+> Capture evidence via MCP automation:  
+> `node scripts/mcp_chrome_runner.js --url http://127.0.0.1:3000/dashboard --viewport 1440x900 --screenshot docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.png --metadata docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.json`  
+> The script clicks the Demo CTA, waits for `data-role="control-cluster"`/`stream-feed`, and writes PNG+JSON into `docs/assets/dashboard/` for README/UX reports.
 
 ---
 
@@ -135,13 +147,14 @@ On desktop the grid uses `repeat(auto-fit, minmax(320px, 1fr))` with `grid-auto-
 - Frontend gates: `npm run type-check`, `npm run lint:all`, `npm run tokens:check`
 - Full UAT: start via `npm run dev:daemon`, then run the Playwright suites (core/extended/cross-browser/accessibility) with `SKIP_DASHBOARD_VERIFY=true`.
 
-**Last local validation** (2025-11-12, commit `584cc40`)
+**Last local validation** (2025-11-14, commit `bf1406c`)
 
 | Scope | Commands |
 | --- | --- |
-| Lint & Type Safety | `npm run lint:all --prefix frontend`, `npm run type-check --prefix frontend` |
-| Unit Tests | `npm test -- --run` (frontend), `pytest` (backend) |
-| Playwright Smoke | `npx playwright test tests/e2e/login-flow.spec.ts`, `npx playwright test tests/e2e/dashboard-interactions.spec.ts` |
+| Lint & Type Safety | `npm run lint`, `npm run type-check` |
+| Frontend Unit | `VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=3 npx vitest run --reporter=dot` |
+| Playwright Suites | `npx playwright test tests/e2e/dashboard-core-uat.spec.ts --project=chromium-desktop`<br>`npx playwright test tests/e2e/dashboard-extended-uat.spec.ts --project=chromium-desktop`<br>`npx playwright test tests/e2e/dashboard-cross-browser-uat.spec.ts --project=chromium-desktop`<br>`npx playwright test tests/e2e/dashboard-interactions.spec.ts --project=chromium-desktop`<br>`npx playwright test tests/e2e/accessibility.spec.ts --project=chromium-desktop`<br>`npx playwright test tests/e2e/login-flow.spec.ts --project=chromium-desktop` |
+| Backend Tests | `pytest tests/test_security_framework.py tests/test_quality_framework.py` |
 | CI Mirrors | `scripts/validate_ci_locally.sh`, `act --pull=false -W .github/workflows/frontend-ci.yml -j build-and-test`, `act --pull=false -W .github/workflows/ci.yml -j tests` |
 
 Run `npm run dev:daemon` beforehand so both stacks are healthy; logs and artifacts live in `tmp/dev_env.log` and `reports/test-results/`.

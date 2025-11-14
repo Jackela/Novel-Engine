@@ -1,0 +1,20 @@
+{
+  "title": "Novel Engine - AI Story Generator",
+  "url": "http://127.0.0.1:3000/dashboard",
+  "connectionStatus": "standby",
+  "liveIndicator": "STANDBY",
+  "pipelinePhase": "world-update",
+  "timestamp": "2025-11-15T00:25:00Z",
+  "screenshot": "docs/assets/dashboard/dashboard-flow-2025-11-14-laptop.png",
+  "selectors": [
+    "[data-testid=\"dashboard-layout\"]",
+    "[data-role=\"control-cluster\"]",
+    "[data-role=\"stream-feed\"]",
+    "[data-role=\"system-signals\"]",
+    "[data-role=\"pipeline\"]"
+  ],
+  "viewport": {
+    "width": 1366,
+    "height": 768
+  }
+}
