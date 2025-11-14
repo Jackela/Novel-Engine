@@ -1,10 +1,6 @@
-<testsuites id="" name="" tests="2" failures="0" skipped="0" errors="0" time="25.742354">
-<testsuite name="dashboard-interactions.spec.ts" timestamp="2025-11-13T03:40:38.798Z" hostname="chromium-desktop" tests="1" failures="0" skipped="0" time="3.69" errors="0">
-<testcase name="Dashboard Interactions › Connection indicator reflects offline recovery @smoke" classname="dashboard-interactions.spec.ts" time="3.69">
-</testcase>
-</testsuite>
-<testsuite name="login-flow.spec.ts" timestamp="2025-11-13T03:40:38.798Z" hostname="chromium-desktop" tests="1" failures="0" skipped="0" time="2.477" errors="0">
-<testcase name="Login Flow - Demo CTA › Landing CTA launches dashboard in guest mode @smoke" classname="login-flow.spec.ts" time="2.477">
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="14.865077000000001">
+<testsuite name="login-flow.spec.ts" timestamp="2025-11-14T13:03:46.914Z" hostname="chromium-desktop" tests="1" failures="0" skipped="0" time="3.985" errors="0">
+<testcase name="Login Flow - Demo CTA › @experience-cta @smoke Landing CTA launches dashboard in guest mode" classname="login-flow.spec.ts" time="3.985">
 </testcase>
 </testsuite>
 </testsuites>
