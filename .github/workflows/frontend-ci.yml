@@ -44,7 +44,12 @@ jobs:
 
       - name: Install
         if: ${{ hashFiles('frontend/package.json') != '' }}
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Test (if present)
         if: ${{ hashFiles('frontend/package.json') != '' }}
