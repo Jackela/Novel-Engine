@@ -556,8 +556,17 @@ def setup_logging(
         log_file=log_file,
     )
 
-    # Add logging middleware
-    app.add_middleware(LoggingMiddleware, logger=logger)
+    # Add logging middleware once
+    if not getattr(app.state, "logging_middleware_initialized", False):
+        try:
+            app.add_middleware(LoggingMiddleware, logger=logger)
+            app.state.logging_middleware_initialized = True
+        except RuntimeError as exc:
+            # Application may already be running (e.g., during hot reload); skip middleware injection
+            logger.warning(
+                "Logging middleware already active; skipping middleware injection (%s)",
+                exc,
+            )
 
     # Store logger in app state for access from endpoints
     app.state.logger = logger

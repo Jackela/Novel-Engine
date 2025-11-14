@@ -23,12 +23,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node (cached)
+        if: env.ACT != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Node (no cache under act)
+        if: env.ACT == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate package-lock for act
+        if: env.ACT == 'true'
+        working-directory: frontend
+        run: npm install --package-lock-only
 
       - name: Install
         if: ${{ hashFiles('frontend/package.json') != '' }}
@@ -41,4 +53,3 @@ jobs:
       - name: Build
         if: ${{ hashFiles('frontend/package.json') != '' }}
         run: npm run build --if-present
-

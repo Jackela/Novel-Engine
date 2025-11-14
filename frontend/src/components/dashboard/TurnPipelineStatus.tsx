@@ -25,6 +25,7 @@ import {
   Groups as CharacterIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
+import type { RunStateSummary } from './types';
 
 const PipelineContainer = styled(Box)(({ theme }) => ({
   height: '100%',
@@ -108,15 +109,23 @@ interface PipelineData {
   totalTurns: number;
   queueLength: number;
   averageProcessingTime: number;
+  activeStepIndex: number;
   steps: TurnStep[];
 }
 
 interface TurnPipelineStatusProps {
   loading?: boolean;
   error?: boolean;
+  runState?: RunStateSummary;
+  onPhaseChange?: (phase: string) => void;
 }
 
-const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error }) => {
+const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ 
+  loading, 
+  error,
+  runState,
+  onPhaseChange,
+}) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -125,102 +134,140 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
     totalTurns: 150,
     queueLength: 3,
     averageProcessingTime: 2.3,
+    activeStepIndex: 0,
     steps: [
       {
-        id: 'input',
-        name: 'Input Processing',
-        status: 'completed',
-        progress: 100,
-        duration: 0.5,
+        id: 'world-update',
+        name: 'World Update',
+        status: 'processing',
+        progress: 45,
         character: 'Aria Shadowbane',
       },
       {
-        id: 'context',
-        name: 'Context Analysis',
-        status: 'completed',
-        progress: 100,
-        duration: 1.2,
-      },
-      {
-        id: 'ai_generation',
-        name: 'AI Response Generation',
-        status: 'processing',
-        progress: 73,
-        character: 'Merchant Aldric',
-      },
-      {
-        id: 'validation',
-        name: 'Response Validation',
+        id: 'subjective-brief',
+        name: 'Subjective Brief',
         status: 'queued',
         progress: 0,
       },
       {
-        id: 'output',
-        name: 'Output Delivery',
+        id: 'interaction-orchestration',
+        name: 'Interaction Orchestration',
+        status: 'queued',
+        progress: 0,
+      },
+      {
+        id: 'event-integration',
+        name: 'Event Integration',
+        status: 'queued',
+        progress: 0,
+      },
+      {
+        id: 'narrative-integration',
+        name: 'Narrative Integration',
         status: 'queued',
         progress: 0,
       },
     ],
   });
 
-  // Simulate pipeline progression
+  // Simulate pipeline progression with deterministic step advancement
   useEffect(() => {
     const interval = setInterval(() => {
       setPipelineData(prev => {
         const newData = { ...prev };
-        
-        // Update step progress
-        newData.steps = prev.steps.map(step => {
-          if (step.status === 'processing') {
-            const newProgress = Math.min(100, step.progress + Math.random() * 15);
-            if (newProgress >= 100) {
-              return { ...step, status: 'completed', progress: 100, duration: Math.random() * 2 + 0.5 };
-            }
-            return { ...step, progress: newProgress };
-          }
-          return step;
-        });
+        const totalSteps = prev.steps.length;
+        let steps = prev.steps.map(step => ({ ...step }));
 
-        // Move pipeline forward
-        const processingIndex = newData.steps.findIndex(step => step.status === 'processing');
-        const completedCount = newData.steps.filter(step => step.status === 'completed').length;
-        
-        if (processingIndex !== -1 && newData.steps[processingIndex].progress >= 100) {
-          // Start next step
-          const nextIndex = processingIndex + 1;
-          if (nextIndex < newData.steps.length) {
-            newData.steps[nextIndex] = { 
-              ...newData.steps[nextIndex], 
-              status: 'processing', 
-              progress: Math.random() * 20 
+        let activeIndex = Math.min(newData.activeStepIndex, totalSteps - 1);
+        if (newData.activeStepIndex >= totalSteps) {
+          activeIndex = totalSteps - 1;
+        }
+
+        const activeStep = newData.activeStepIndex >= totalSteps ? null : steps[activeIndex];
+
+        if (activeStep) {
+          if (activeStep.status === 'processing') {
+            const increment = 40 + Math.random() * 35;
+            const updatedProgress = Math.min(100, activeStep.progress + increment);
+            steps[activeIndex] = { ...activeStep, progress: updatedProgress };
+            if (updatedProgress >= 100) {
+              steps[activeIndex] = {
+                ...steps[activeIndex],
+                status: 'completed',
+                progress: 100,
+                duration: Math.random() * 2 + 0.8,
+              };
+              newData.activeStepIndex = activeIndex + 1;
+              activeIndex = newData.activeStepIndex;
+            }
+          } else if (activeStep.status === 'queued') {
+            steps[activeIndex] = {
+              ...activeStep,
+              status: 'processing',
+              progress: 35 + Math.random() * 25,
             };
           }
         }
 
-        // Complete turn and reset if all steps done
-        if (completedCount === newData.steps.length) {
+        if (newData.activeStepIndex < totalSteps) {
+          const candidateIndex = Math.max(newData.activeStepIndex, 0);
+          const candidate = steps[candidateIndex];
+          if (candidate && candidate.status === 'queued') {
+            steps[candidateIndex] = {
+              ...candidate,
+              status: 'processing',
+              progress: 30 + Math.random() * 30,
+            };
+          }
+        }
+
+        const completedCount = steps.filter(step => step.status === 'completed').length;
+        const allCompleted = completedCount === totalSteps;
+
+        if (!allCompleted && !steps.some(step => step.status === 'processing')) {
+          const nextIndex = steps.findIndex(step => step.status === 'queued');
+          if (nextIndex !== -1) {
+            steps[nextIndex] = {
+              ...steps[nextIndex],
+              status: 'processing',
+              progress: 35 + Math.random() * 30,
+            };
+            newData.activeStepIndex = nextIndex;
+          }
+        }
+
+        if (allCompleted) {
           newData.currentTurn += 1;
           newData.queueLength = Math.max(0, newData.queueLength - 1 + Math.floor(Math.random() * 2));
-          
-          // Reset pipeline for next turn
+
           const characters = ['Aria Shadowbane', 'Merchant Aldric', 'Elder Thorne', 'Captain Vex'];
-          newData.steps = newData.steps.map((step, index) => ({
+          steps = steps.map((step, index) => ({
             ...step,
             status: index === 0 ? 'processing' : 'queued',
-            progress: index === 0 ? Math.random() * 30 : 0,
-            character: step.id === 'input' || step.id === 'ai_generation' 
+            progress: index === 0 ? 30 + Math.random() * 20 : 0,
+            character: step.id === 'input' || step.id === 'ai_generation'
               ? characters[Math.floor(Math.random() * characters.length)]
               : undefined,
             duration: undefined,
           }));
+          newData.activeStepIndex = 0;
         }
 
+        newData.steps = steps;
         return newData;
       });
-    }, 2000);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!onPhaseChange) return;
+    const activeStep = pipelineData.steps[pipelineData.activeStepIndex];
+    if (activeStep) {
+      onPhaseChange(activeStep.name);
+    }
+  }, [pipelineData.steps, pipelineData.activeStepIndex, onPhaseChange]);
 
   const getStepIcon = (step: TurnStep) => {
     const iconProps = { fontSize: 'small' as const };
@@ -255,6 +302,36 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
             Turn {pipelineData.currentTurn} of {pipelineData.totalTurns}
           </Typography>
           <Stack direction="row" spacing={0.5}>
+            {runState && (
+              <Chip
+                data-testid="pipeline-run-state"
+                size="small"
+                label={runState.status.toUpperCase()}
+                sx={{
+                  textTransform: 'uppercase',
+                  backgroundColor: (theme) =>
+                    runState.status === 'running'
+                      ? alpha(theme.palette.success.main, 0.15)
+                      : runState.status === 'paused'
+                        ? alpha(theme.palette.warning.main, 0.15)
+                        : alpha(theme.palette.text.secondary, 0.1),
+                  borderColor: (theme) =>
+                    runState.status === 'running'
+                      ? theme.palette.success.main
+                      : runState.status === 'paused'
+                        ? theme.palette.warning.main
+                        : theme.palette.divider,
+                  color: (theme) =>
+                    runState.status === 'running'
+                      ? theme.palette.success.main
+                      : runState.status === 'paused'
+                        ? theme.palette.warning.main
+                        : theme.palette.text.secondary,
+                  fontSize: '0.65rem',
+                  height: '20px',
+                }}
+              />
+            )}
             <Chip 
               label={`${pipelineData.queueLength} queued`} 
               size="small" 
@@ -288,6 +365,9 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
                 <Fade in key={step.id} timeout={300 + index * 100}>
                   <StageItem 
                     status={step.status}
+                    data-status={step.status}
+                    data-phase={step.name}
+                    data-step-index={index}
                     sx={{ 
                       py: isMobile ? 0.5 : 0.75,
                       px: 0,
@@ -319,6 +399,7 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ loading, error 
                           </Typography>
                           <StatusChip 
                             status={step.status} 
+                            data-status={step.status}
                             label={step.status} 
                             size="small"
                           />

@@ -14,6 +14,7 @@ Author: Engineer Security-Engineering
 System保佑此认证系统 (May the System bless this authentication system)
 """
 
+import hashlib
 import logging
 import os
 import secrets
@@ -419,14 +420,78 @@ class SecurityService:
         salt = bcrypt.gensalt()
         return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
+    @staticmethod
+    def _hash_token(token: str) -> str:
+        """Return a deterministic hash for refresh tokens."""
+        return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
     def _verify_password(self, password: str, password_hash: str) -> bool:
         """STANDARD PASSWORD VERIFICATION"""
         return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
 
+    async def _user_exists(
+        self, *, username: Optional[str] = None, email: Optional[str] = None
+    ) -> bool:
+        """Check for an existing user by username and/or email."""
+        if not username and not email:
+            return False
+
+        clauses = []
+        params: List[Any] = []
+        if username:
+            clauses.append("username = ?")
+            params.append(username)
+        if email:
+            clauses.append("email = ?")
+            params.append(email)
+
+        query = f"SELECT 1 FROM users WHERE {' OR '.join(clauses)} LIMIT 1"
+        async with self._connection() as conn:
+            cursor = await conn.execute(query, tuple(params))
+            row = await cursor.fetchone()
+        return row is not None
+
+    def _row_to_user(self, row: Tuple[Any, ...]) -> User:
+        """Convert a database row to a ``User`` dataclass."""
+        return User(
+            id=row[0],
+            username=row[1],
+            email=row[2],
+            password_hash=row[3],
+            role=UserRole(row[4]),
+            is_active=bool(row[5]),
+            is_verified=bool(row[6]),
+            created_at=datetime.fromisoformat(row[7]) if row[7] else None,
+            last_login=datetime.fromisoformat(row[8]) if row[8] else None,
+            failed_login_attempts=row[9],
+            locked_until=datetime.fromisoformat(row[10]) if row[10] else None,
+            api_key=None,
+        )
+
+    async def _get_user_by_id(self, user_id: str) -> Optional[User]:
+        """Fetch a user row by ID."""
+        async with self._connection() as conn:
+            cursor = await conn.execute(
+                """
+                SELECT id, username, email, password_hash, role, is_active, is_verified,
+                       created_at, last_login, failed_login_attempts, locked_until
+                FROM users WHERE id = ?
+            """,
+                (user_id,),
+            )
+            row = await cursor.fetchone()
+        return self._row_to_user(row) if row else None
+
     def _generate_token(self, payload: Dict[str, Any], expires_delta: timedelta) -> str:
         """STANDARD JWT TOKEN GENERATION"""
         expire = datetime.now(timezone.utc) + expires_delta
-        payload.update({"exp": expire, "iat": datetime.now(timezone.utc)})
+        payload.update(
+            {
+                "exp": expire,
+                "iat": datetime.now(timezone.utc),
+                "jti": secrets.token_urlsafe(8),
+            }
+        )
         return jwt.encode(payload, self.secret_key, algorithm=JWT_ALGORITHM)
 
     def _decode_token(self, token: str) -> Dict[str, Any]:
@@ -463,6 +528,11 @@ class SecurityService:
         self, registration: UserRegistration, ip_address: str, user_agent: str
     ) -> User:
         """STANDARD USER REGISTRATION ENHANCED BY SECURE CREATION"""
+        if await self._user_exists(username=registration.username):
+            raise AuthenticationError("Username already exists")
+        if await self._user_exists(email=registration.email):
+            raise AuthenticationError("Email already exists")
+
         user_id = secrets.token_urlsafe(16)
         password_hash = self._hash_password(registration.password)
 
@@ -605,8 +675,8 @@ class SecurityService:
         password: Optional[str] = None,
         ip_address: str = "127.0.0.1",
         user_agent: str = "Test Client",
-    ) -> OperationResult:
-        """Validate credentials and return token pair wrapped in OperationResult."""
+    ) -> Optional[User]:
+        """Validate credentials and return the authenticated user."""
         if isinstance(login, UserLogin):
             login_identifier = login.username
             supplied_password = login.password
@@ -637,27 +707,9 @@ class SecurityService:
                     user_agent,
                     {"username": login_identifier, "reason": "user_not_found"},
                 )
-                return OperationResult(
-                    success=False,
-                    error=OperationError(
-                        message="Invalid credentials",
-                        code="USER_NOT_FOUND",
-                    ),
-                )
+                return None
 
-            user = User(
-                id=row[0],
-                username=row[1],
-                email=row[2],
-                password_hash=row[3],
-                role=UserRole(row[4]),
-                is_active=bool(row[5]),
-                is_verified=bool(row[6]),
-                created_at=datetime.fromisoformat(row[7]) if row[7] else None,
-                last_login=datetime.fromisoformat(row[8]) if row[8] else None,
-                failed_login_attempts=row[9],
-                locked_until=datetime.fromisoformat(row[10]) if row[10] else None,
-            )
+            user = self._row_to_user(row)
 
             if user.locked_until and user.locked_until > datetime.now(timezone.utc):
                 await self._log_security_event(
@@ -667,13 +719,7 @@ class SecurityService:
                     user_agent,
                     {"username": login_identifier, "reason": "account_locked"},
                 )
-                return OperationResult(
-                    success=False,
-                    error=OperationError(
-                        message="Account is temporarily locked",
-                        code="ACCOUNT_LOCKED",
-                    ),
-                )
+                raise AuthenticationError("Account is temporarily locked")
 
             if not user.is_active:
                 await self._log_security_event(
@@ -683,13 +729,7 @@ class SecurityService:
                     user_agent,
                     {"username": login_identifier, "reason": "account_inactive"},
                 )
-                return OperationResult(
-                    success=False,
-                    error=OperationError(
-                        message="Account is inactive",
-                        code="ACCOUNT_INACTIVE",
-                    ),
-                )
+                raise AuthenticationError("Account is inactive")
 
             if not self._verify_password(supplied_password, user.password_hash):
                 failed_attempts = user.failed_login_attempts + 1
@@ -720,13 +760,7 @@ class SecurityService:
                         "attempts": failed_attempts,
                     },
                 )
-                return OperationResult(
-                    success=False,
-                    error=OperationError(
-                        message="Invalid credentials",
-                        code="INVALID_PASSWORD",
-                    ),
-                )
+                return None
 
             await conn.execute(
                 """
@@ -737,15 +771,6 @@ class SecurityService:
             )
             await conn.commit()
 
-            access_token = self._generate_token(
-                {"user_id": user.id, "type": "access"},
-                timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-            )
-            refresh_token = self._generate_token(
-                {"user_id": user.id, "type": "refresh"},
-                timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
-            )
-
             await self._log_security_event(
                 "login_success",
                 user.id,
@@ -754,16 +779,82 @@ class SecurityService:
                 {"username": login_identifier},
             )
 
-            return OperationResult(
-                success=True,
-                data={
-                    "user_id": user.id,
-                    "username": user.username,
-                    "role": user.role.value,
-                    "access_token": access_token,
-                    "refresh_token": refresh_token,
-                },
+            return user
+
+    async def create_token_pair(self, user: User) -> TokenPair:
+        """Generate and persist a new access/refresh token pair."""
+        base_payload = {
+            "user_id": user.id,
+            "username": user.username,
+            "role": user.role.value,
+            "permissions": sorted(
+                permission.value
+                for permission in ROLE_PERMISSIONS.get(user.role, set())
+            ),
+        }
+        access_token = self._generate_token(
+            {**base_payload, "type": "access"},
+            timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        )
+        refresh_token = self._generate_token(
+            {**base_payload, "type": "refresh"},
+            timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+        )
+        refresh_id = secrets.token_urlsafe(16)
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            days=REFRESH_TOKEN_EXPIRE_DAYS
+        )
+
+        async with self._connection() as conn:
+            await conn.execute(
+                """
+                INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at)
+                VALUES (?, ?, ?, ?)
+            """,
+                (refresh_id, user.id, self._hash_token(refresh_token), expires_at),
             )
+            await conn.commit()
+
+        return TokenPair(access_token=access_token, refresh_token=refresh_token)
+
+    async def refresh_access_token(self, refresh_token: str) -> TokenPair:
+        """Exchange a refresh token for a new token pair."""
+        token_hash = self._hash_token(refresh_token)
+        async with self._connection() as conn:
+            cursor = await conn.execute(
+                """
+                SELECT user_id, expires_at, revoked
+                FROM refresh_tokens
+                WHERE token_hash = ?
+            """,
+                (token_hash,),
+            )
+            row = await cursor.fetchone()
+
+            if not row:
+                raise AuthenticationError("Invalid refresh token")
+
+            user_id, expires_at_value, revoked = row
+            expires_at = (
+                datetime.fromisoformat(expires_at_value)
+                if isinstance(expires_at_value, str)
+                else expires_at_value
+            )
+
+            if revoked or expires_at < datetime.now(timezone.utc):
+                raise AuthenticationError("Refresh token expired or revoked")
+
+            # Remove the used refresh token to enforce rotation
+            await conn.execute(
+                "DELETE FROM refresh_tokens WHERE token_hash = ?", (token_hash,)
+            )
+            await conn.commit()
+
+        user = await self._get_user_by_id(user_id)
+        if not user:
+            raise AuthenticationError("User associated with token no longer exists")
+
+        return await self.create_token_pair(user)
 
     async def validate_token(self, token: str) -> OperationResult:
         """Validate JWT token and return decoded payload."""

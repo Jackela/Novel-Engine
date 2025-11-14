@@ -309,10 +309,13 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
         
         <div className="parameter-group">
           <h5>Core Attributes</h5>
-          {(['creativity', 'consistency', 'responsiveness', 'autonomy'] as const).map(param => (
+          {(['creativity', 'consistency', 'responsiveness', 'autonomy'] as const).map(param => {
+            const inputId = `core-${param}`;
+            return (
             <div key={param} className="parameter-control">
-              <label>{param.charAt(0).toUpperCase() + param.slice(1)}</label>
+              <label htmlFor={inputId}>{param.charAt(0).toUpperCase() + param.slice(1)}</label>
               <input
+                id={inputId}
                 type="range"
                 min="0"
                 max="1"
@@ -325,15 +328,19 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
                 {(selectedAgent.parameters[param] * 100).toFixed(0)}%
               </span>
             </div>
-          ))}
+            );
+          })}
         </div>
         
         <div className="parameter-group">
           <h5>Social Attributes</h5>
-          {(['collaboration', 'riskTolerance', 'memoryRetention'] as const).map(param => (
+          {(['collaboration', 'riskTolerance', 'memoryRetention'] as const).map(param => {
+            const inputId = `social-${param}`;
+            return (
             <div key={param} className="parameter-control">
-              <label>{param.replace(/([A-Z])/g, ' $1').toLowerCase()}</label>
+              <label htmlFor={inputId}>{param.replace(/([A-Z])/g, ' $1').toLowerCase()}</label>
               <input
+                id={inputId}
                 type="range"
                 min="0"
                 max="1"
@@ -346,14 +353,16 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
                 {(selectedAgent.parameters[param] * 100).toFixed(0)}%
               </span>
             </div>
-          ))}
+            );
+          })}
         </div>
         
         <div className="parameter-group">
           <h5>Behavior Settings</h5>
           <div className="parameter-control">
-            <label>Narrative Focus</label>
+            <label htmlFor="narrative-focus">Narrative Focus</label>
             <select
+              id="narrative-focus"
               value={selectedAgent.parameters.narrativeFocus}
               onChange={(e) => handleParameterChange('narrativeFocus', e.target.value)}
               className="parameter-select"
@@ -366,8 +375,9 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
           </div>
           
           <div className="parameter-control">
-            <label>Communication Style</label>
+            <label htmlFor="communication-style">Communication Style</label>
             <select
+              id="communication-style"
               value={selectedAgent.parameters.communicationStyle}
               onChange={(e) => handleParameterChange('communicationStyle', e.target.value)}
               className="parameter-select"

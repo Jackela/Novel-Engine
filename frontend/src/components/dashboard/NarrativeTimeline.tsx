@@ -228,6 +228,7 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
   return (
     <GridTile
       title="Narrative Arc Timeline"
+      data-testid="narrative-timeline"
       position={{
         desktop: { column: '1 / 13', height: '200px' },
         tablet: { column: '1 / 9', height: '180px' },

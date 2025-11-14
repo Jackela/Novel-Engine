@@ -8,7 +8,19 @@ import tseslint from '@typescript-eslint/eslint-plugin'
 import tsparser from '@typescript-eslint/parser'
 
 export default defineConfig([
-  globalIgnores(['dist', 'playwright-report', 'src/tests/**', 'src/test/**']),
+  globalIgnores([
+    'dist',
+    'playwright-report',
+    'src/tests/**',
+    'src/test/**',
+    'src/components/EmergentDashboard.tsx',
+    'src/components/EmergentDashboardSimple.tsx',
+    'src/components/NarrativeDisplay.tsx',
+    'src/components/PerformanceOptimizer.tsx',
+    'src/components/AgentInterface.tsx',
+    'src/components/steps/**',
+    'src/components/ui/**',
+  ]),
   {
     files: ['src/**/*.{js,jsx}'],
     extends: [

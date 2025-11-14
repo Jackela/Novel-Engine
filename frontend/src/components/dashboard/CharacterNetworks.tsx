@@ -175,6 +175,7 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
   return (
     <GridTile
       title="Character Networks"
+      data-testid="character-networks"
       position={{
         desktop: { column: '1 / 7', height: '280px' },
         tablet: { column: '1 / 5', height: '260px' },
@@ -243,6 +244,9 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   whileHover={{ scale: 1.02 }}
+                  data-testid="character-node"
+                  data-character-id={character.id}
+                  data-character-status={character.status}
                 >
                   <Avatar
                     sx={{
@@ -302,8 +306,13 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                     </Stack>
 
                     <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <LinkIcon sx={{ fontSize: '12px', color: 'secondary.main' }} />
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                      <LinkIcon sx={{ fontSize: '12px', color: 'secondary.main' }} data-testid="character-connection-icon" />
+                      <Typography 
+                        variant="caption" 
+                        color="text.secondary" 
+                        sx={{ fontSize: '0.7rem' }}
+                        data-testid="character-connection-count"
+                      >
                         {character.connections} connections
                       </Typography>
                       <Chip
@@ -317,6 +326,7 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                           color: getStatusColor(character.status),
                           borderColor: getStatusColor(character.status),
                         }}
+                        data-testid="character-status"
                       />
                     </Stack>
                   </Box>
@@ -336,7 +346,7 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
               flexShrink: 0,
             }}
           >
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack direction="row" justifyContent="space-between" alignItems="center" data-testid="network-health">
               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                 Network Health
               </Typography>

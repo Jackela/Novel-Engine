@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { 
   Box, 
-  IconButton, 
   Tooltip, 
   Stack,
   Divider,
   Typography,
   useTheme,
   useMediaQuery,
-  ButtonGroup,
   Fade,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import {
   PlayArrow as PlayIcon,
@@ -24,6 +22,7 @@ import {
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
+import type { QuickAction, RunStateSummary } from './types';
 
 const ActionsContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -62,40 +61,52 @@ const ActionsContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ActionButton = styled(motion(IconButton))<{ active?: boolean }>(({ theme, active }) => ({
+const ActionButton = styled(motion.button, {
+  shouldForwardProp: (prop) => prop !== '$active',
+})<{ $active?: boolean }>(({ theme, $active: active }) => ({
   border: `1px solid ${active ? theme.palette.primary.main : theme.palette.divider}`,
-  backgroundColor: active ? 'rgba(99, 102, 241, 0.1)' : theme.palette.background.paper,
+  backgroundColor: active ? 'rgba(99, 102, 241, 0.12)' : theme.palette.background.paper,
+  color: theme.palette.text.primary,
+  width: 44,
+  height: 44,
+  borderRadius: 999,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  outline: '2px solid transparent',
+  outlineOffset: 4,
+  position: 'relative',
+  boxShadow: 'none',
+  '& svg': {
+    fontSize: '1.25rem',
+  },
   '&:hover': {
-    backgroundColor: active ? 'rgba(99, 102, 241, 0.2)' : theme.palette.action.hover,
+    backgroundColor: active ? 'rgba(99, 102, 241, 0.22)' : theme.palette.action.hover,
     borderColor: theme.palette.primary.main,
-    transform: 'translateY(-2px)',
-    boxShadow: '0 4px 8px rgba(99, 102, 241, 0.2)',
+    transform: 'translateY(-1px)',
+    boxShadow: '0 4px 10px rgba(99, 102, 241, 0.2)',
   },
   '&:active': {
-    transform: 'translateY(0px)',
+    transform: 'scale(0.97)',
   },
-  '&.Mui-disabled': {
+  '&:disabled': {
+    cursor: 'not-allowed',
     opacity: 0.4,
     borderColor: theme.palette.divider,
+    boxShadow: 'none',
   },
-  
-  // Mobile: touch-friendly sizing, horizontal layout
+  '&:focus, &:focus-visible': {
+    outlineColor: theme.palette.primary.main,
+    boxShadow: `0 0 0 4px ${theme.palette.primary.main}33`,
+  },
   [theme.breakpoints.down('md')]: {
-    width: 48,
-    height: 48,
-    margin: 0,
-    flexShrink: 0,
-    '& .MuiSvgIcon-root': {
-      fontSize: '1.3rem',
+    width: 52,
+    height: 52,
+    '& svg': {
+      fontSize: '1.35rem',
     },
-  },
-  
-  // Desktop: larger, vertical layout
-  [theme.breakpoints.up('md')]: {
-    width: 44,
-    height: 44,
-    margin: theme.spacing(0.5, 0),
   },
 }));
 
@@ -124,76 +135,119 @@ const GroupLabel = styled(Typography)(({ theme }) => ({
 interface QuickActionsProps {
   loading?: boolean;
   error?: boolean;
-  onAction?: (action: string) => void;
+  runState?: RunStateSummary;
+  onAction?: (action: QuickAction) => void;
 }
+
+const defaultRunState: RunStateSummary = {
+  status: 'idle',
+  mode: 'simulation',
+  connected: false,
+  isLiveMode: false,
+};
 
 const QuickActions: React.FC<QuickActionsProps> = ({ 
   loading, 
   error, 
+  runState = defaultRunState,
   onAction = () => {} 
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  const isRunning = runState.status === 'running';
+  const isPaused = runState.status === 'paused';
+  const connectionState = runState.connected
+    ? runState.isLiveMode
+      ? 'LIVE'
+      : 'SIM'
+    : 'IDLE';
 
-  const handlePlayPause = () => {
-    if (isRunning && !isPaused) {
-      setIsPaused(true);
-      onAction('pause');
-    } else {
-      setIsRunning(true);
-      setIsPaused(false);
-      onAction('play');
-    }
+  const announce = (message: string) => {
+    setAnnouncement(message);
+    // keep announcement text long enough for screen readers, then clear
+    setTimeout(() => setAnnouncement(''), 1200);
+  };
+
+  const handleStart = () => {
+    if (isRunning && !isPaused) return;
+    onAction('play');
+    announce('Orchestration started');
+  };
+
+  const handlePause = () => {
+    if (!isRunning || isPaused) return;
+    onAction('pause');
+    announce('Orchestration paused');
   };
 
   const handleStop = () => {
-    setIsRunning(false);
-    setIsPaused(false);
+    if (!isRunning && !isPaused) return;
     onAction('stop');
+    announce('Orchestration stopped');
   };
 
   const handleRefresh = () => {
     onAction('refresh');
+    announce('Dashboard data refresh requested');
   };
 
   const handleSave = () => {
     onAction('save');
+    announce('Current state saved');
   };
 
   const handleSettings = () => {
     onAction('settings');
+    announce('Opening settings');
   };
 
   const handleFullscreen = () => {
     onAction('fullscreen');
+    announce('Toggling fullscreen mode');
   };
 
   const handleExport = () => {
     onAction('export');
+    announce('Export started');
   };
 
   // Mobile: Essential actions only, horizontal layout with visual grouping
   const renderMobileActions = () => (
     <ActionsContainer>
-      <Tooltip title={isRunning && !isPaused ? "Pause" : "Start"} placement="top">
+      <Tooltip title="Start" placement="top">
         <ActionButton 
-          data-testid="run-turn-button"
-          onClick={handlePlayPause} 
+          data-testid="quick-action-play"
+          onClick={handleStart} 
           color="primary"
-          active={isRunning && !isPaused}
+          $active={isRunning && !isPaused}
+          disabled={isRunning && !isPaused}
           whileTap={{ scale: 0.95 }}
+          aria-label="Start orchestration"
         >
-          {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
+          <PlayIcon />
+        </ActionButton>
+      </Tooltip>
+
+      <Tooltip title="Pause" placement="top">
+        <ActionButton 
+          data-testid="quick-action-pause"
+          onClick={handlePause} 
+          disabled={!isRunning || isPaused}
+          whileTap={{ scale: 0.95 }}
+          aria-label="Pause orchestration"
+        >
+          <PauseIcon />
         </ActionButton>
       </Tooltip>
 
       <Tooltip title="Stop" placement="top">
         <ActionButton 
+          data-testid="quick-action-stop"
           onClick={handleStop} 
-          disabled={!isRunning}
+          disabled={!isRunning && !isPaused}
           whileTap={{ scale: 0.95 }}
+          aria-label="Stop orchestration"
         >
           <StopIcon />
         </ActionButton>
@@ -202,13 +256,23 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: 'divider' }} />
 
       <Tooltip title="Refresh" placement="top">
-        <ActionButton onClick={handleRefresh} whileTap={{ scale: 0.95 }}>
+        <ActionButton 
+          data-testid="quick-action-refresh"
+          onClick={handleRefresh} 
+          whileTap={{ scale: 0.95 }}
+          aria-label="Refresh dashboard data"
+        >
           <RefreshIcon />
         </ActionButton>
       </Tooltip>
 
       <Tooltip title="Save" placement="top">
-        <ActionButton onClick={handleSave} whileTap={{ scale: 0.95 }}>
+        <ActionButton 
+          data-testid="quick-action-save"
+          onClick={handleSave} 
+          whileTap={{ scale: 0.95 }}
+          aria-label="Save current state"
+        >
           <SaveIcon />
         </ActionButton>
       </Tooltip>
@@ -216,13 +280,23 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       <Divider orientation="vertical" flexItem sx={{ mx: 1, backgroundColor: 'divider' }} />
 
       <Tooltip title="Settings" placement="top">
-        <ActionButton onClick={handleSettings} whileTap={{ scale: 0.95 }}>
+        <ActionButton 
+          data-testid="quick-action-settings"
+          onClick={handleSettings} 
+          whileTap={{ scale: 0.95 }}
+          aria-label="Open dashboard settings"
+        >
           <SettingsIcon />
         </ActionButton>
       </Tooltip>
 
       <Tooltip title="Export" placement="top">
-        <ActionButton onClick={handleExport} whileTap={{ scale: 0.95 }}>
+        <ActionButton 
+          data-testid="quick-action-export"
+          onClick={handleExport} 
+          whileTap={{ scale: 0.95 }}
+          aria-label="Export dashboard data"
+        >
           <DownloadIcon />
         </ActionButton>
       </Tooltip>
@@ -238,25 +312,42 @@ const QuickActions: React.FC<QuickActionsProps> = ({
           <ActionGroup>
             <GroupLabel>Control</GroupLabel>
             
-            <Tooltip title={isRunning && !isPaused ? "Pause" : "Start"} placement="left">
+            <Tooltip title="Start" placement="left">
               <ActionButton 
-                data-testid="run-turn-button"
-                onClick={handlePlayPause} 
+                data-testid="quick-action-play"
+                onClick={handleStart} 
                 color="primary"
-                active={isRunning && !isPaused}
+                $active={isRunning && !isPaused}
+                disabled={isRunning && !isPaused}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label="Start orchestration"
               >
-                {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
+                <PlayIcon />
+              </ActionButton>
+            </Tooltip>
+
+            <Tooltip title="Pause" placement="left">
+              <ActionButton 
+                data-testid="quick-action-pause"
+                onClick={handlePause} 
+                disabled={!isRunning || isPaused}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Pause orchestration"
+              >
+                <PauseIcon />
               </ActionButton>
             </Tooltip>
 
             <Tooltip title="Stop" placement="left">
               <ActionButton 
+                data-testid="quick-action-stop"
                 onClick={handleStop} 
-                disabled={!isRunning}
+                disabled={!isRunning && !isPaused}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label="Stop orchestration"
               >
                 <StopIcon />
               </ActionButton>
@@ -273,10 +364,12 @@ const QuickActions: React.FC<QuickActionsProps> = ({
 
             <Tooltip title="Refresh Data" placement="left">
               <ActionButton 
+                data-testid="quick-action-refresh"
                 onClick={handleRefresh}
                 whileHover={{ scale: 1.05, rotate: 180 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.3 }}
+                aria-label="Refresh dashboard data"
               >
                 <RefreshIcon />
               </ActionButton>
@@ -284,9 +377,11 @@ const QuickActions: React.FC<QuickActionsProps> = ({
 
             <Tooltip title="Save State" placement="left">
               <ActionButton 
+                data-testid="quick-action-save"
                 onClick={handleSave}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label="Save current state"
               >
                 <SaveIcon />
               </ActionButton>
@@ -303,10 +398,12 @@ const QuickActions: React.FC<QuickActionsProps> = ({
 
             <Tooltip title="Settings" placement="left">
               <ActionButton 
+                data-testid="quick-action-settings"
                 onClick={handleSettings}
                 whileHover={{ scale: 1.05, rotate: 90 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.3 }}
+                aria-label="Open dashboard settings"
               >
                 <SettingsIcon />
               </ActionButton>
@@ -314,9 +411,11 @@ const QuickActions: React.FC<QuickActionsProps> = ({
 
             <Tooltip title="Fullscreen" placement="left">
               <ActionButton 
+                data-testid="quick-action-fullscreen"
                 onClick={handleFullscreen}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label="Toggle fullscreen"
               >
                 <FullscreenIcon />
               </ActionButton>
@@ -324,9 +423,11 @@ const QuickActions: React.FC<QuickActionsProps> = ({
 
             <Tooltip title="Export Data" placement="left">
               <ActionButton 
+                data-testid="quick-action-export"
                 onClick={handleExport}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label="Export dashboard data"
               >
                 <DownloadIcon />
               </ActionButton>
@@ -349,7 +450,82 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       loading={loading}
       error={error}
     >
-      {isMobile ? renderMobileActions() : renderDesktopActions()}
+      <Box sx={{ position: 'relative', width: '100%' }}>
+        <Box 
+          component="div"
+          role="status"
+          aria-live="polite"
+          data-testid="quick-actions-announcer"
+          sx={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            overflow: 'hidden',
+            clip: 'rect(0 0 0 0)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {announcement}
+        </Box>
+        <Box
+          data-testid="connection-status"
+          aria-label={`Connection status: ${connectionState}`}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            position: 'absolute',
+            top: (theme) => theme.spacing(1),
+            right: (theme) => theme.spacing(1.5),
+            backgroundColor: (theme) => alpha(theme.palette.background.default, 0.85),
+            borderRadius: 999,
+            padding: (theme) => theme.spacing(0.5, 1),
+            border: (theme) => `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Box
+            sx={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: (theme) =>
+                isRunning
+                  ? theme.palette.success.main
+                  : isPaused
+                    ? theme.palette.warning.main
+                    : theme.palette.text.disabled,
+              boxShadow: (theme) =>
+                isRunning ? `0 0 8px ${theme.palette.success.main}` : 'none',
+            }}
+          />
+          <Typography variant="caption" fontWeight={600}>
+            {connectionState}
+          </Typography>
+          {isRunning && !isPaused && runState.isLiveMode && (
+            <Box
+              data-testid="live-indicator"
+              sx={{
+                ml: 0.5,
+                px: 1,
+                py: 0.25,
+                borderRadius: 999,
+                backgroundColor: (theme) => alpha(theme.palette.success.main, 0.15),
+                border: (theme) => `1px solid ${alpha(theme.palette.success.main, 0.6)}`,
+              }}
+            >
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                letterSpacing={0.5}
+                color="success.main"
+              >
+                LIVE
+              </Typography>
+            </Box>
+          )}
+        </Box>
+        {isMobile ? renderMobileActions() : renderDesktopActions()}
+      </Box>
     </GridTile>
   );
 };

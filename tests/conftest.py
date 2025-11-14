@@ -5,20 +5,68 @@ pytest配置文件和共享fixture
 """
 
 import asyncio
-import threading
-from multiprocessing import active_children
+import inspect
 import os
 import shutil
 import sys
 import tempfile
+import threading
+from multiprocessing import active_children
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+import pytest_asyncio
+
+pytest_plugins = ("pytest_asyncio", "pytest_html")
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
+
+# ---------------------------------------------------------------------------
+# Compatibility helpers
+# ---------------------------------------------------------------------------
+
+_original_fixture = pytest.fixture
+
+
+def _auto_async_fixture(*fixture_args, **fixture_kwargs):
+    """
+    Backwards-compatible fixture decorator.
+
+    Several legacy tests still decorate async fixtures with ``@pytest.fixture``.
+    Wrap those coroutines with ``pytest_asyncio.fixture`` automatically while
+    leaving synchronous fixtures untouched.
+    """
+
+    def _decorate(func, args, kwargs):
+        if inspect.iscoroutinefunction(func) or inspect.isasyncgenfunction(func):
+            pytest.fixture = _original_fixture  # Temporarily restore to avoid recursion
+            try:
+                return pytest_asyncio.fixture(*args, **kwargs)(func)
+            finally:
+                pytest.fixture = _auto_async_fixture  # type: ignore[assignment]
+        return _original_fixture(*args, **kwargs)(func)
+
+    # Support bare usage: @pytest.fixture
+    if (
+        fixture_args
+        and callable(fixture_args[0])
+        and len(fixture_args) == 1
+        and not fixture_kwargs
+    ):
+        func = fixture_args[0]
+        return _decorate(func, (), {})
+
+    def decorator(func):
+        return _decorate(func, fixture_args, fixture_kwargs)
+
+    return decorator
+
+
+pytest.fixture = _auto_async_fixture  # type: ignore[assignment]
 
 
 @pytest.fixture(scope="session")
@@ -224,12 +272,6 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.slow)
 
 
-# 测试报告钩子
-def pytest_html_report_title(report):
-    """自定义HTML报告标题"""
-    report.title = "StoryForge AI 测试报告"
-
-
 @pytest.hookimpl(trylast=True)
 def pytest_sessionfinish(session, exitstatus):
     """尽最大努力确保测试会话结束时清理所有存活资源，避免挂起。
@@ -276,7 +318,9 @@ def pytest_sessionfinish(session, exitstatus):
             for task in pending:
                 task.cancel()
             if pending:
-                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                loop.run_until_complete(
+                    asyncio.gather(*pending, return_exceptions=True)
+                )
     except Exception:
         # If loop is closed or unavailable, ignore
         pass

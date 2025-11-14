@@ -13,6 +13,8 @@ env:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,9 +29,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements/requirements-test.txt
+          pip install -e .
+
+      - name: Export PYTHONPATH
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+
+      - name: Debug sys.path
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
+          python -c "import os, sys; print('PYTHONPATH:', os.environ.get('PYTHONPATH')); print('sys.path:', sys.path)"
 
       - name: Run smoke tests with JUnit XML
-        run: pytest -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
+          unset PYTEST_DISABLE_PLUGIN_AUTOLOAD
+          echo "PYTEST_DISABLE_PLUGIN_AUTOLOAD=${PYTEST_DISABLE_PLUGIN_AUTOLOAD:-<unset>}"
+          echo "Using PYTHONPATH=$PYTHONPATH"
+          python -c "import sys; print('sys.path head:', sys.path[:3])"
+          python -c "import importlib; mod = importlib.import_module('src.shared_types'); print('CharacterData?', hasattr(mod, 'CharacterData'))"
+          pytest -p pytest_asyncio -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py
 
       - name: Upload JUnit report
         if: ${{ always() }}
@@ -37,4 +56,3 @@ jobs:
         with:
           name: junit-report
           path: reports/test-results/pytest-report.xml
-

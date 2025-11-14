@@ -83,6 +83,10 @@ class EmergentNarrativeEngine:
         self.coherence_engine.register_consistency_rule(basic_causality_rule)
         self.coherence_engine.register_consistency_rule(temporal_logic_rule)
 
+    async def initialize(self) -> None:
+        """Compatibility hook invoked during orchestrator startup."""
+        logger.info("涌现式叙事引擎准备就绪")
+
     async def initialize_agent(
         self,
         agent_id: str,

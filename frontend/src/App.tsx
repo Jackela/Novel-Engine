@@ -6,10 +6,8 @@ import { CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import theme from './styles/theme';
 import { store } from './store/store';
-import DashboardLayout from './components/layout/DashboardLayout';
-
 // Route-based code splitting with React.lazy() (T050)
-const EmergentDashboardSimple = lazy(() => import('./components/EmergentDashboardSimple'));
+const Dashboard = lazy(() => import('./components/dashboard/Dashboard'));
 // import { useAppSelector } from './hooks/redux'; // Unused after auth refactor
 import { initializeMobileOptimizations } from './utils/serviceWorkerRegistration';
 import { logger } from './services/logging/LoggerFactory';
@@ -66,27 +64,23 @@ const AppRoutes: React.FC = () => {
       <SkipLink targetId="main-content" text="Skip to main content" />
       <Routes>
         {/* Main dashboard route with Suspense boundary */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <Suspense fallback={<LoadingFallback />}>
-              <DashboardLayout>
-                <EmergentDashboardSimple />
-              </DashboardLayout>
+              <Dashboard />
             </Suspense>
           }
         />
         
         {/* Default route shows dashboard directly */}
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             <Suspense fallback={<LoadingFallback />}>
-              <DashboardLayout>
-                <EmergentDashboardSimple />
-              </DashboardLayout>
+              <Dashboard />
             </Suspense>
-          } 
+          }
         />
         
         {/* Login route (placeholder for future implementation) */}

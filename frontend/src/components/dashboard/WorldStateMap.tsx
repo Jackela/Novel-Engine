@@ -11,13 +11,14 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
+  useTheme,
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LocationOn as LocationIcon,
   Person as PersonIcon,
-  Activity as ActivityIcon,
+  Timeline as ActivityIcon,
   Circle as PulseIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
@@ -53,7 +54,9 @@ const MapGrid = styled(Box)({
   gap: '8px',
 });
 
-const LocationMarker = styled(motion.div)<{ active?: boolean; activitylevel?: string }>(({ theme, active, activitylevel }) => ({
+const LocationMarker = styled(motion.div, {
+  shouldForwardProp: (prop) => prop !== 'activeState' && prop !== 'activityLevel',
+})<{ activeState?: boolean; activityLevel?: string }>(({ theme, activeState: active, activityLevel: activitylevel }) => ({
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
@@ -98,7 +101,9 @@ const LocationMarker = styled(motion.div)<{ active?: boolean; activitylevel?: st
   },
 }));
 
-const CharacterAvatar = styled(Avatar)<{ active?: boolean }>(({ theme, active }) => ({
+const CharacterAvatar = styled(Avatar, {
+  shouldForwardProp: (prop) => prop !== 'activeState',
+})<{ activeState?: boolean }>(({ theme, activeState: active }) => ({
   width: 24,
   height: 24,
   fontSize: '0.7rem',
@@ -126,6 +131,7 @@ interface WorldStateMapProps {
 }
 
 const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
+  const theme = useTheme();
   const [locations] = useState<WorldLocation[]>([
     {
       id: 'crystal-city',
@@ -253,8 +259,12 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
             return (
               <LocationMarker
                 key={location.id}
-                active={isSelected}
-                activitylevel={location.activity}
+                activeState={isSelected}
+                activityLevel={location.activity}
+                data-testid="world-map-location"
+                data-location-id={location.id}
+                data-activity={location.activity}
+                data-role="world-map-location"
                 style={{
                   gridColumnStart: location.gridPosition.x,
                   gridRowStart: location.gridPosition.y,
@@ -290,11 +300,19 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
                   </Typography>
                 </Box>
 
-                <Stack direction="row" spacing={-0.5} sx={{ alignSelf: 'flex-start' }}>
+                <Stack 
+                  direction="row" 
+                  spacing={-0.5} 
+                  sx={{ alignSelf: 'flex-start' }}
+                  data-testid="world-map-character-markers"
+                >
                   {location.characters.slice(0, 3).map((character) => (
                     <CharacterAvatar
                       key={character.id}
-                      active={isSelected}
+                      activeState={isSelected}
+                      data-testid="world-map-character"
+                      data-character-id={character.id}
+                      data-character-name={character.name}
                       sx={{ 
                         backgroundColor: getActivityColor(location.activity),
                         border: (theme) => `2px solid ${theme.palette.background.default}`,
@@ -339,6 +357,7 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
                             <ListItem 
                               key={character.id} 
                               disablePadding
+                              data-testid="world-map-character-detail"
                               sx={{ mb: 0.5 }}
                             >
                               <ListItemAvatar sx={{ minWidth: 32 }}>
@@ -374,6 +393,7 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
 
         {/* Status Information */}
         <Box
+          data-testid="world-map-last-updated"
           sx={{
             position: 'absolute',
             bottom: 8,

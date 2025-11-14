@@ -81,12 +81,43 @@ npm run build:tokens
 npm run dev
 ```
 
+### 统一开发脚本（前后端同步启动）
+
+为避免 Vite/uvicorn 阻塞或悬挂，**必须通过封装脚本启动/停止本地环境**：
+
+| 命令 | 说明 |
+| --- | --- |
+| `npm run dev:daemon` | 调用 `scripts/dev_env.sh start --detach`，同时拉起 FastAPI（127.0.0.1:8000）与 Vite（127.0.0.1:3000），非阻塞运行 |
+| `npm run dev:stop` | 对应 `scripts/dev_env.sh stop`，优雅停止两个进程 |
+| `npm run dev:status` | 显示当前进程 PID；若发现僵尸 `uvicorn`/`vite`，请先执行此命令再决定是否手动 kill |
+
+日志归档在 `tmp/dev_env/backend.log` 与 `tmp/dev_env/frontend.log`，便于 Playwright 或 MCP 快照分析。所有本地 UAT/Playwright 测试需要显式指定：
+
+```bash
+SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test …
+```
+
+### Flow-based Dashboard（2025-11）
+
+`/dashboard` 现以语义区域为核心构建流式布局：
+
+- `data-role="summary-strip"`：最上方的摘要带显示编排状态、当前阶段与最后一次数据刷新时间
+- `data-role="control-cluster"`：Quick Actions + 连接指示灯；所有按钮保持 ≥44px 点击区
+- `data-role="pipeline-monitor"`：Turn Pipeline 运行态信息，可滚动查看步骤，阶段变化会同步到控制区
+- `data-role="stream-feed"`：Real-time Activity 与 Narrative Timeline 并排显示（窄屏合并为选项卡）
+- `data-role="system-signals"`：Performance Metrics + Event Cascade，内部滚动避免挤压下方卡片
+- `data-role="persona-ops"` / `data-role="analytics-insights"`：角色网络与分析面板
+
+桌面端使用 `repeat(auto-fit, minmax(320px, 1fr)) + grid-auto-flow: dense`，控制/管线区域优先占两列；平板收敛为 2 列，移动端交由 `MobileTabbedDashboard` 控制一次只展开一个高密度面板。
+
+![Flow-based dashboard screenshot](docs/assets/dashboard/dashboard-flow-2025-11-12.png)
+
 ---
 
 ## 测试与质量
 
 - Python 测试：`pytest`（配置见 `pytest.ini` / `.coveragerc`）
-- 本地 CI 对齐验证：`scripts/validate_ci_locally.sh`（Windows 可用 `scripts/validate_ci_locally.ps1`）
+- 本地 CI 对齐验证：`scripts/validate_ci_locally.sh`（Windows 可用 `scripts/validate_ci_locally.ps1`）。默认仅校验当前变更涉及的文件，可通过 `RUN_LINT=1` / `RUN_MYPY=1` / `RUN_TESTS=1` 扩展到完整的遗留模块（注意：旧模块仍存在未清理的 lint/mypy 问题，需逐步消化）。
 - 前端质量门禁：`npm run type-check`、`npm run lint:all`、`npm run tokens:check`
 
 ---

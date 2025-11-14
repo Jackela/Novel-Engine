@@ -137,7 +137,7 @@ export class WebVitalsMonitor implements IPerformanceMonitor {
    * Send metric to analytics service
    * Future: Integrate with LoggerFactory or analytics platform
    */
-  private sendToAnalytics(metric: PerformanceMetric): void {
+  private sendToAnalytics(_metric: PerformanceMetric): void {
     // Future implementation:
     // LoggerFactory.info('web_vitals', {
     //   metric_name: metric.name,

@@ -149,7 +149,16 @@ async function verifyDashboardAccessibility() {
   
   try {
     // Navigate to dashboard
-    await page.goto(process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000');
+    const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
+    await page.goto(baseUrl);
+    
+    // If we're on the landing page, trigger demo CTA to reach the dashboard
+    const demoCta = page.locator('[data-testid="cta-demo"], [data-testid="cta-demo-primary"]');
+    if (await demoCta.count()) {
+      console.log('🧪 Landing page detected; triggering demo mode CTA…');
+      await demoCta.first().click();
+      await page.waitForURL('**/dashboard', { timeout: 15000 });
+    }
     
     // Wait for main dashboard components to load
     await page.waitForSelector('[data-testid="dashboard-layout"]', { timeout: 30000, state: 'attached' });

@@ -194,7 +194,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
           <Stack spacing={1}>
             {/* Status and Users */}
             <Box display="flex" justifyContent="space-between" alignItems="center">
-              <StatusIndicator status={systemStatus.overall}>
+              <StatusIndicator status={systemStatus.overall} data-testid="health-status" data-role="system-health">
                 <StatusIcon />
                 <Typography variant="caption" fontWeight={500}>
                   System {systemStatus.overall}
@@ -208,6 +208,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
               >
                 <Chip
                   label={`${metrics.activeUsers} users`}
+                  data-testid="metric-value-users"
                   size="small"
                   sx={{ 
                     backgroundColor: 'rgba(99, 102, 241, 0.1)',
@@ -226,7 +227,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                   <Typography variant="caption" color="text.secondary">
                     Response
                   </Typography>
-                  <Typography variant="body1" fontWeight={600}>
+                  <Typography variant="body1" fontWeight={600} data-testid="metric-value-response">
                     {formatNumber(metrics.responseTime, 0)}ms
                   </Typography>
                 </MetricCard>
@@ -243,7 +244,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                       sx={{ height: 4, borderRadius: 2 }}
                       color={metrics.systemLoad > 80 ? 'warning' : 'primary'}
                     />
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" data-testid="metric-value-load">
                       {formatNumber(metrics.systemLoad, 0)}%
                     </Typography>
                   </Box>
@@ -254,7 +255,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
             {/* Secondary Metrics */}
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="caption" color="text.secondary">
-                Memory: {formatNumber(metrics.memoryUsage, 0)}% • RPS: {formatNumber(metrics.requestsPerSecond, 1)}
+                <span data-testid="metric-value-memory">Memory: {formatNumber(metrics.memoryUsage, 0)}%</span> • <span data-testid="metric-value-rps">RPS: {formatNumber(metrics.requestsPerSecond, 1)}</span>
               </Typography>
             </Box>
 
@@ -267,6 +268,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                 variant="caption" 
                 fontWeight={500}
                 color={metrics.errorRate > 1 ? 'error.main' : 'success.main'}
+                data-testid="metric-value-error-rate"
               >
                 {formatNumber(metrics.errorRate, 2)}%
               </Typography>
@@ -279,7 +281,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
           <Stack spacing={1.5}>
             {/* Overall Status */}
             <Box display="flex" justifyContent="space-between" alignItems="center">
-              <StatusIndicator status={systemStatus.overall}>
+              <StatusIndicator status={systemStatus.overall} data-testid="health-status" data-role="system-health">
                 <StatusIcon />
                 <Typography variant="caption" fontWeight={500}>
                   System {systemStatus.overall}
@@ -293,6 +295,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
               >
                 <Chip
                   label={`${metrics.activeUsers} users`}
+                  data-testid="metric-value-users"
                   size="small"
                   sx={{ 
                     backgroundColor: 'rgba(99, 102, 241, 0.1)',
@@ -314,7 +317,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                       Response
                     </Typography>
                   </Stack>
-                  <Typography variant="h6" fontWeight={600}>
+                  <Typography variant="h6" fontWeight={600} data-testid="metric-value-response">
                     {formatNumber(metrics.responseTime, 0)}ms
                   </Typography>
                 </MetricCard>
@@ -328,7 +331,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                       RPS
                     </Typography>
                   </Stack>
-                  <Typography variant="h6" fontWeight={600}>
+                  <Typography variant="h6" fontWeight={600} data-testid="metric-value-rps">
                     {formatNumber(metrics.requestsPerSecond)}
                   </Typography>
                 </MetricCard>
@@ -349,7 +352,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                       sx={{ height: 4, borderRadius: 2 }}
                       color={metrics.memoryUsage > 80 ? 'error' : 'primary'}
                     />
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" data-testid="metric-value-memory">
                       {formatNumber(metrics.memoryUsage, 0)}%
                     </Typography>
                   </Box>
@@ -371,7 +374,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                       sx={{ height: 4, borderRadius: 2 }}
                       color={metrics.systemLoad > 80 ? 'warning' : 'primary'}
                     />
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" data-testid="metric-value-load">
                       {formatNumber(metrics.systemLoad, 0)}%
                     </Typography>
                   </Box>
@@ -388,6 +391,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
                 variant="caption" 
                 fontWeight={500}
                 color={metrics.errorRate > 1 ? 'error.main' : 'success.main'}
+                data-testid="metric-value-error-rate"
               >
                 {formatNumber(metrics.errorRate, 2)}%
               </Typography>

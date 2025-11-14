@@ -71,19 +71,19 @@ export const RouteErrorBoundary: React.FC<RouteErrorBoundaryProps> = ({
         style={{
           padding: '2rem',
           margin: '2rem',
-          border: '2px solid #ff4444',
+          border: '2px solid var(--color-error)',
           borderRadius: '8px',
-          backgroundColor: '#fff5f5',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
+          backgroundColor: 'var(--color-bg-secondary)',
+          fontFamily: 'var(--font-primary)',
         }}
       >
-        <h2 style={{ color: '#cc0000', marginTop: 0 }}>
+        <h2 style={{ color: 'var(--color-error)', marginTop: 0 }}>
           Something went wrong on this page
         </h2>
-        <p style={{ color: '#666', marginBottom: '1.5rem' }}>
+        <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem' }}>
           We're sorry, but an error occurred while loading this page. You can:
         </p>
-        <ul style={{ color: '#666', marginBottom: '1.5rem' }}>
+        <ul style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem' }}>
           <li>Try going back to the previous page</li>
           <li>Return to the home page</li>
           <li>Refresh the page</li>
@@ -93,8 +93,8 @@ export const RouteErrorBoundary: React.FC<RouteErrorBoundaryProps> = ({
             onClick={() => navigate(-1)}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#0066cc',
-              color: 'white',
+              backgroundColor: 'var(--color-primary)',
+              color: 'var(--color-text-inverse)',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -107,8 +107,8 @@ export const RouteErrorBoundary: React.FC<RouteErrorBoundaryProps> = ({
             onClick={() => navigate('/')}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#0066cc',
-              color: 'white',
+              backgroundColor: 'var(--color-primary)',
+              color: 'var(--color-text-inverse)',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -121,8 +121,8 @@ export const RouteErrorBoundary: React.FC<RouteErrorBoundaryProps> = ({
             onClick={reset}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#666',
-              color: 'white',
+              backgroundColor: 'var(--color-border-secondary)',
+              color: 'var(--color-text-inverse)',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -135,8 +135,8 @@ export const RouteErrorBoundary: React.FC<RouteErrorBoundaryProps> = ({
             onClick={() => window.location.reload()}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#666',
-              color: 'white',
+              backgroundColor: 'var(--color-border-secondary)',
+              color: 'var(--color-text-inverse)',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -149,7 +149,7 @@ export const RouteErrorBoundary: React.FC<RouteErrorBoundaryProps> = ({
 
         {/* Technical details - only show in development */}
         {process.env.NODE_ENV === 'development' && (
-          <details style={{ marginTop: '2rem', color: '#333' }}>
+          <details style={{ marginTop: '2rem', color: 'var(--color-text-primary)' }}>
             <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
               Technical Details (Development Only)
             </summary>
@@ -157,7 +157,7 @@ export const RouteErrorBoundary: React.FC<RouteErrorBoundaryProps> = ({
               style={{
                 marginTop: '1rem',
                 padding: '1rem',
-                backgroundColor: '#f5f5f5',
+                backgroundColor: 'var(--color-bg-tertiary)',
                 borderRadius: '4px',
                 overflow: 'auto',
                 fontSize: '0.875rem',
