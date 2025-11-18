@@ -189,7 +189,11 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading: propLoadin
             }}
             aria-hidden="true"
           />
-          <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.error.main, mb: 1 }}>
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{ fontWeight: 600, color: theme.palette.error.main, mb: 1 }}
+          >
             Unable to load live events
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: '400px' }}>

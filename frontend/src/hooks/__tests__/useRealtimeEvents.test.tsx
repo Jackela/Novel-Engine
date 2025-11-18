@@ -52,11 +52,13 @@ describe('useRealtimeEvents', () => {
   let eventSourceInstance: MockEventSource | null = null;
 
   beforeEach(() => {
-    // Replace global EventSource with mock
-    (global as any).EventSource = vi.fn((url: string) => {
-      eventSourceInstance = new MockEventSource(url);
-      return eventSourceInstance;
-    });
+    // Replace global EventSource with mock constructor
+    (global as any).EventSource = class extends MockEventSource {
+      constructor(url: string) {
+        super(url);
+        eventSourceInstance = this as MockEventSource;
+      }
+    };
   });
 
   afterEach(() => {
@@ -236,7 +238,9 @@ describe('useRealtimeEvents', () => {
     const customEndpoint = '/custom/events/stream';
     renderHook(() => useRealtimeEvents({ endpoint: customEndpoint }));
 
-    expect(global.EventSource).toHaveBeenCalledWith(customEndpoint);
+    // Verify the instance was created with the custom endpoint
+    expect(eventSourceInstance).not.toBeNull();
+    expect(eventSourceInstance?.url).toBe(customEndpoint);
   });
 
   it('respects enabled flag', () => {
@@ -244,6 +248,7 @@ describe('useRealtimeEvents', () => {
 
     expect(result.current.loading).toBe(false);
     expect(result.current.connectionState).toBe('disconnected');
-    expect(global.EventSource).not.toHaveBeenCalled();
+    // When disabled, EventSource should not be instantiated
+    expect(eventSourceInstance).toBeNull();
   });
 });
