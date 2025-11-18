@@ -280,7 +280,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading: propLoadin
                   sx={{ 
                     py: 1, 
                     minHeight: '48px',
-                    backgroundColor: highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                    backgroundColor: _highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
                   }}
                   data-activity-type={activity.type}
                   data-severity={activity.severity}
@@ -405,7 +405,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading: propLoadin
                   key={activity.id}
                   severity={activity.severity}
                   sx={{
-                    backgroundColor: highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                    backgroundColor: _highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
                     flexDirection: isCondensed ? 'column' : 'row',
                     gap: isCondensed ? 0.5 : 0,
                   }}
