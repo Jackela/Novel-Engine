@@ -452,3 +452,5 @@ evaluation/
 !.env.local.template
 .venv-run/
 coverage.json
+/undefined
+/frontend/undefined

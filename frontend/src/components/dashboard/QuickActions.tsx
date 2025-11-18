@@ -24,15 +24,22 @@ import {
 import GridTile from '../layout/GridTile';
 import { telemetry } from '../../utils/telemetry';
 
-const ActionButton = styled(motion(IconButton))<{ active?: boolean }>(({ theme, active }) => ({
-  border: `1px solid ${active ? theme.palette.primary.main : theme.palette.divider}`,
-  backgroundColor: active ? 'rgba(99, 102, 241, 0.1)' : theme.palette.background.paper,
+const ActionButton = styled(motion(IconButton))(({ theme }) => ({
+  border: `1px solid ${theme.palette.divider}`,
+  backgroundColor: theme.palette.background.paper,
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    backgroundColor: active ? 'rgba(99, 102, 241, 0.2)' : theme.palette.action.hover,
+    backgroundColor: theme.palette.action.hover,
     borderColor: theme.palette.primary.main,
     transform: 'translateY(-2px)',
     boxShadow: '0 4px 8px rgba(99, 102, 241, 0.2)',
+  },
+  '&:focus-visible': {
+    outline: `2px solid ${theme.palette.info.main}`,
+    outlineOffset: 2,
+  },
+  '&:focus:not(:focus-visible)': {
+    outline: 'none',
   },
   '&:active': {
     transform: 'translateY(0px)',
@@ -51,6 +58,14 @@ const ActionButton = styled(motion(IconButton))<{ active?: boolean }>(({ theme, 
   [theme.breakpoints.up('md')]: {
     width: 52,
     height: 52,
+  },
+  '&[data-active=\"true\"]': {
+    borderColor: theme.palette.primary.main,
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    '&:hover': {
+      backgroundColor: 'rgba(99, 102, 241, 0.2)',
+      borderColor: theme.palette.primary.main,
+    },
   },
 }));
 
@@ -77,6 +92,24 @@ interface QuickActionsProps {
   showInlineTitle?: boolean;
 }
 
+const TooltipWrapper = styled('span', {
+  shouldForwardProp: (prop: PropertyKey) => prop !== '$disabled',
+})<{ $disabled?: boolean }>(({ theme, $disabled }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  pointerEvents: 'auto',
+  '& > *': {
+    pointerEvents: $disabled ? 'none' : 'auto',
+  },
+  ...( $disabled
+    ? {
+        cursor: 'not-allowed',
+        color: theme.palette.action.disabled,
+      }
+    : {}),
+}));
+
 const QuickActions: React.FC<QuickActionsProps> = ({
   loading,
   error,
@@ -95,11 +128,9 @@ const QuickActions: React.FC<QuickActionsProps> = ({
   const isPaused = status === 'paused';
   const connectionState = !isOnline
     ? 'OFFLINE'
-    : isLive
+    : isLive || isRunning
       ? 'LIVE'
-      : isRunning
-        ? 'ONLINE'
-        : 'STANDBY';
+      : 'ONLINE';
   const previousConnectionState = useRef(connectionState);
 
   useEffect(() => {
@@ -188,7 +219,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
         </Typography>
         {showStatusChip && (
           <Chip
-            label={!isOnline ? 'OFFLINE' : isLive ? 'LIVE' : isRunning ? 'ACTIVE' : 'STANDBY'}
+            label={!isOnline ? 'OFFLINE' : isLive ? 'LIVE' : isRunning ? 'ACTIVE' : 'ONLINE'}
             size="small"
             color={isLive ? 'success' : 'default'}
             sx={{
@@ -207,6 +238,9 @@ const QuickActions: React.FC<QuickActionsProps> = ({
           />
         )}
       </Stack>
+      <Typography variant="caption" color="text.secondary">
+        Demo actions are simulated; spatial/network tiles may use live API data.
+      </Typography>
     </Box>
   );
 
@@ -221,94 +255,110 @@ const QuickActions: React.FC<QuickActionsProps> = ({
     >
       <Fade in timeout={200}>
         <Tooltip title={isRunning && !isPaused ? 'Pause' : 'Start'} placement={isMobile ? 'top' : 'bottom'}>
-          <ActionButton
-            data-testid="quick-action-play"
-            onClick={handlePlayPause}
-            color="primary"
-            active={isRunning && !isPaused}
-            whileTap={{ scale: 0.95 }}
-            aria-label={isRunning && !isPaused ? 'Pause orchestration' : 'Start orchestration'}
-          >
-            {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
-          </ActionButton>
+          <TooltipWrapper>
+            <ActionButton
+              data-testid="quick-action-play"
+              onClick={handlePlayPause}
+              color="primary"
+              data-active={(isRunning && !isPaused).toString()}
+              whileTap={{ scale: 0.95 }}
+              aria-label={isRunning && !isPaused ? 'Pause orchestration' : 'Start orchestration'}
+              aria-pressed={isRunning && !isPaused}
+            >
+              {isRunning && !isPaused ? <PauseIcon /> : <PlayIcon />}
+            </ActionButton>
+          </TooltipWrapper>
         </Tooltip>
       </Fade>
 
       <Fade in timeout={220}>
         <Tooltip title="Stop" placement={isMobile ? 'top' : 'bottom'}>
-          <ActionButton
-            data-testid="quick-action-stop"
-            onClick={handleStop}
-            disabled={!isRunning}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Stop orchestration"
-          >
-            <StopIcon />
-          </ActionButton>
+          <TooltipWrapper $disabled={!isRunning}>
+            <ActionButton
+              data-testid="quick-action-stop"
+              onClick={handleStop}
+              disabled={!isRunning}
+              aria-disabled={!isRunning}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Stop orchestration"
+            >
+              <StopIcon />
+            </ActionButton>
+          </TooltipWrapper>
         </Tooltip>
       </Fade>
 
       <Fade in timeout={260}>
         <Tooltip title="Refresh" placement={isMobile ? 'top' : 'bottom'}>
-          <ActionButton
-            data-testid="quick-action-refresh"
-            onClick={handleRefresh}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Refresh dashboard data"
-          >
-            <RefreshIcon />
-          </ActionButton>
+          <TooltipWrapper>
+            <ActionButton
+              data-testid="quick-action-refresh"
+              onClick={handleRefresh}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Refresh dashboard data"
+            >
+              <RefreshIcon />
+            </ActionButton>
+          </TooltipWrapper>
         </Tooltip>
       </Fade>
 
       <Fade in timeout={280}>
         <Tooltip title="Save" placement={isMobile ? 'top' : 'bottom'}>
-          <ActionButton
-            data-testid="quick-action-save"
-            onClick={handleSave}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Save current state"
-          >
-            <SaveIcon />
-          </ActionButton>
+          <TooltipWrapper>
+            <ActionButton
+              data-testid="quick-action-save"
+              onClick={handleSave}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Save current state"
+            >
+              <SaveIcon />
+            </ActionButton>
+          </TooltipWrapper>
         </Tooltip>
       </Fade>
 
       <Fade in timeout={320}>
         <Tooltip title="Settings" placement={isMobile ? 'top' : 'bottom'}>
-          <ActionButton
-            data-testid="settings-button"
-            onClick={handleSettings}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Open settings"
-          >
-            <SettingsIcon />
-          </ActionButton>
+          <TooltipWrapper>
+            <ActionButton
+              data-testid="settings-button"
+              onClick={handleSettings}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Open settings"
+            >
+              <SettingsIcon />
+            </ActionButton>
+          </TooltipWrapper>
         </Tooltip>
       </Fade>
 
       <Fade in timeout={340}>
         <Tooltip title="Fullscreen" placement={isMobile ? 'top' : 'bottom'}>
-          <ActionButton
-            onClick={handleFullscreen}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Toggle fullscreen"
-          >
-            <FullscreenIcon />
-          </ActionButton>
+          <TooltipWrapper>
+            <ActionButton
+              onClick={handleFullscreen}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Toggle fullscreen"
+            >
+              <FullscreenIcon />
+            </ActionButton>
+          </TooltipWrapper>
         </Tooltip>
       </Fade>
 
       <Fade in timeout={360}>
         <Tooltip title="Export" placement={isMobile ? 'top' : 'bottom'}>
-          <ActionButton
-            data-testid="quick-action-export"
-            onClick={handleExport}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Export data"
-          >
-            <DownloadIcon />
-          </ActionButton>
+          <TooltipWrapper>
+            <ActionButton
+              data-testid="quick-action-export"
+              onClick={handleExport}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Export data"
+            >
+              <DownloadIcon />
+            </ActionButton>
+          </TooltipWrapper>
         </Tooltip>
       </Fade>
     </Stack>

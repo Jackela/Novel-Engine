@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { act } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import userEvent from '@testing-library/user-event';
@@ -59,7 +59,7 @@ const createWrapper = () => {
 
   return ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         {children}
       </BrowserRouter>
     </QueryClientProvider>
@@ -78,7 +78,10 @@ describe('Keyboard Navigation Integration', () => {
       expect(buttons.length).toBeGreaterThan(0);
     });
     
-    const results = await axe(container);
+    let results: Awaited<ReturnType<typeof axe>>;
+    await act(async () => {
+      results = await axe(container);
+    });
     expect(results).toHaveNoViolations();
   });
 

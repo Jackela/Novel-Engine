@@ -1,6 +1,13 @@
 import React, { useEffect, Suspense, lazy } from 'react';
 import { Provider } from 'react-redux';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+  Route,
+  Outlet,
+  createRoutesFromElements,
+} from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -58,54 +65,65 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // Loading fallback using SkeletonDashboard (T059)
 const LoadingFallback: React.FC = () => <SkeletonDashboard />;
 
+const LoginPlaceholder: React.FC = () => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      background: 'var(--color-bg-primary)',
+    }}
+  >
+    <h2>Login Page (Not Yet Implemented)</h2>
+  </div>
+);
+
+const AppShell: React.FC = () => (
+  <>
+    <SkipLink targetId="main-content" text="Skip to main content" />
+    <Outlet />
+  </>
+);
+
+const appRouter = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<AppShell />}>
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Suspense fallback={<LoadingFallback />}>
+              <Dashboard />
+            </Suspense>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/"
+        element={
+          <Suspense fallback={<LoadingFallback />}>
+            <LandingPage />
+          </Suspense>
+        }
+      />
+      <Route path="/login" element={<LoginPlaceholder />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Route>
+  ),
+  {
+    future: { v7_startTransition: true, v7_relativeSplatPath: true },
+  }
+);
+
 // Main App component with routing
 const AppRoutes: React.FC = () => {
   return (
-    <Router>
-      <SkipLink targetId="main-content" text="Skip to main content" />
-      <Routes>
-        {/* Main dashboard route with Suspense boundary */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<LoadingFallback />}>
-                <Dashboard />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        
-        {/* Landing route */}
-        <Route
-          path="/"
-          element={
-            <Suspense fallback={<LoadingFallback />}>
-              <LandingPage />
-            </Suspense>
-          }
-        />
-        
-        {/* Login route (placeholder for future implementation) */}
-        <Route 
-          path="/login" 
-          element={
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              height: '100vh',
-              background: 'var(--color-bg-primary)'
-            }}>
-              <h2>Login Page (Not Yet Implemented)</h2>
-            </div>
-          } 
-        />
-        
-        {/* Fallback for unknown routes */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+    <RouterProvider
+      router={appRouter}
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      fallbackElement={<LoadingFallback />}
+    />
   );
 };
 

@@ -65,9 +65,8 @@ const LandingPage: React.FC = () => {
             <Button
               variant="outlined"
               size="large"
-              color="inherit"
-              startIcon={<SecurityIcon />}
-              component="a"
+              color="primary"
+              startIcon={<LiveTvIcon />}
               href="mailto:ops@novel-engine.ai?subject=Novel%20Engine%20Access"
               data-testid="cta-request-access"
             >

@@ -98,7 +98,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               }
               data-testid="guest-mode-banner"
             >
-              You&apos;re viewing the demo dataset. Actions and telemetry are simulated for showcasing the narrative engine.
+              You&apos;re in the demo shell. Actions remain simulated; data may include live API feeds for Maps/Networks.
             </Alert>
           </Collapse>
         </Box>

@@ -203,5 +203,14 @@ console.warn = (...args: any[]) => {
   originalConsoleWarn(...args);
 };
 
+const originalConsoleError = console.error;
+console.error = (...args: any[]) => {
+  const message = args[0];
+  if (typeof message === 'string' && message.includes('ReactDOMTestUtils.act')) {
+    return;
+  }
+  originalConsoleError(...args);
+};
+
 // Export mock WebSocket for tests that need to simulate messages
 export { MockWebSocket };

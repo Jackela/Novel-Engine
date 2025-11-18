@@ -46,6 +46,8 @@ export function usePerformance(options: UsePerformanceOptions = {}): IPerformanc
     typeof window !== 'undefined' &&
     typeof window.document !== 'undefined' &&
     typeof self !== 'undefined'
+  const isTestEnv = import.meta.env.MODE === 'test'
+  const shouldTrackWebVitals = supportsWebVitals && !isTestEnv
 
   // Track re-renders (T052)
   renderCount.current++
@@ -104,7 +106,7 @@ export function usePerformance(options: UsePerformanceOptions = {}): IPerformanc
   }
 
   const trackWebVitals = () => {
-    if (!supportsWebVitals) return
+    if (!shouldTrackWebVitals) return
 
     // Dynamic import to avoid bundling in SSR/test environments
     import('web-vitals')
@@ -140,8 +142,10 @@ export function usePerformance(options: UsePerformanceOptions = {}): IPerformanc
   }
 
   useEffect(() => {
-    trackWebVitals()
-  }, [supportsWebVitals])
+    if (shouldTrackWebVitals) {
+      trackWebVitals()
+    }
+  }, [shouldTrackWebVitals])
 
   return {
     trackWebVitals,

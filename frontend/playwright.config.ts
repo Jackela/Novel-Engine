@@ -126,6 +126,9 @@ export default defineConfig({
     timeout: 120 * 1000, // 2 minutes to start dev server
     env: {
       NODE_ENV: 'test',
+      VITE_API_BASE_URL: process.env.TEST_API_URL || 'http://localhost:8000/v1',
+      VITE_WS_URL: process.env.TEST_WS_URL || 'ws://localhost:8001/ws',
+      // Backward compatibility
       REACT_APP_API_BASE_URL: process.env.TEST_API_URL || 'http://localhost:8000/v1',
       REACT_APP_WS_URL: process.env.TEST_WS_URL || 'ws://localhost:8001/ws',
     },

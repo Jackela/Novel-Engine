@@ -15,8 +15,19 @@ import { useRealtimeEvents } from '../../../src/hooks/useRealtimeEvents';
 
 describe('RealTimeActivity Error State Accessibility', () => {
   const mockError = new Error('Failed to connect to event stream. Please check your connection and try again.');
+  let originalLocation: Location;
 
   beforeEach(() => {
+    // Save original location
+    originalLocation = window.location;
+
+    // Mock window.location.reload by deleting and recreating
+    delete (window as any).location;
+    window.location = {
+      ...originalLocation,
+      reload: vi.fn(),
+    } as any;
+
     // Mock error state
     (useRealtimeEvents as any).mockReturnValue({
       events: [],
@@ -24,6 +35,11 @@ describe('RealTimeActivity Error State Accessibility', () => {
       error: mockError,
       connectionState: 'error',
     });
+  });
+
+  afterEach(() => {
+    // Restore original location
+    window.location = originalLocation;
   });
 
   it('error container has role="alert" attribute', () => {
@@ -49,7 +65,6 @@ describe('RealTimeActivity Error State Accessibility', () => {
 
   it('retry button is keyboard accessible', async () => {
     const user = userEvent.setup();
-    const reloadSpy = vi.spyOn(window.location, 'reload').mockImplementation(() => {});
 
     render(<RealTimeActivity />);
 
@@ -61,14 +76,11 @@ describe('RealTimeActivity Error State Accessibility', () => {
 
     // Button should be activatable with Enter
     await user.keyboard('{Enter}');
-    expect(reloadSpy).toHaveBeenCalled();
-
-    reloadSpy.mockRestore();
+    expect(window.location.reload).toHaveBeenCalled();
   });
 
   it('retry button can be activated with Space key', async () => {
     const user = userEvent.setup();
-    const reloadSpy = vi.spyOn(window.location, 'reload').mockImplementation(() => {});
 
     render(<RealTimeActivity />);
 
@@ -80,9 +92,7 @@ describe('RealTimeActivity Error State Accessibility', () => {
 
     // Activate with Space
     await user.keyboard(' ');
-    expect(reloadSpy).toHaveBeenCalled();
-
-    reloadSpy.mockRestore();
+    expect(window.location.reload).toHaveBeenCalled();
   });
 
   it('has no accessibility violations in error state', async () => {

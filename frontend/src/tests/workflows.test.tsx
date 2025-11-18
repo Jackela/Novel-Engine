@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -48,11 +48,6 @@ vi.mock('../services/api', () => ({
     })),
     testConnection: vi.fn(() => Promise.resolve(true)),
     getBaseURL: vi.fn(() => 'http://localhost:8000'),
-    getSystemStatus: vi.fn(() => Promise.resolve({
-      api: 'healthy',
-      config: 'loaded',
-      version: '1.0.0',
-    })),
   },
 }));
 
@@ -74,16 +69,27 @@ const theme = createTheme({
     background: { default: '#0a0a0a', paper: '#1a1a1a' },
     text: { primary: '#ffffff', secondary: '#b0b0b0' },
   },
+  components: {
+    MuiListItemText: {
+      defaultProps: {
+        primaryTypographyProps: { component: 'div' },
+        secondaryTypographyProps: { component: 'div' },
+      },
+    },
+  },
 });
 
 // Test-specific App component that uses our controlled providers
 const TestApp: React.FC = () => (
-  <Box sx={{ 
-    display: 'flex', 
-    flexDirection: 'column', 
-    minHeight: '100vh',
-    backgroundColor: 'background.default'
-  }}>
+    <Box
+      component="div"
+      sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        minHeight: '100vh',
+        backgroundColor: 'background.default'
+      }}
+    >
     <Navbar />
     <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
       <Routes>
@@ -110,19 +116,22 @@ const createTestQueryClient = () => {
   });
 };
 
-const renderAppWithProviders = ({ route = '/' } = {}) => {
+const renderAppWithProviders = async ({ route = '/' } = {}) => {
   const queryClient = createTestQueryClient();
-  
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <MemoryRouter initialEntries={[route]}>
-          <TestApp />
-        </MemoryRouter>
-      </ThemeProvider>
-    </QueryClientProvider>
-  );
+  let rendered;
+  await act(async () => {
+    rendered = render(
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <MemoryRouter initialEntries={[route]}>
+            <TestApp />
+          </MemoryRouter>
+        </ThemeProvider>
+      </QueryClientProvider>
+    );
+  });
+  return rendered!;
 };
 
 // Import the mocked API for test assertions
@@ -135,7 +144,7 @@ describe('Novel Engine Workflows', () => {
 
   describe('Navigation Workflow', () => {
     it('should render the application without errors', async () => {
-      renderAppWithProviders();
+      await renderAppWithProviders();
 
       // Should render without throwing errors
       await waitFor(() => {
@@ -148,7 +157,7 @@ describe('Novel Engine Workflows', () => {
     });
 
     it('should have navigation buttons', async () => {
-      renderAppWithProviders();
+      await renderAppWithProviders();
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /dashboard/i })).toBeInTheDocument();
@@ -163,10 +172,12 @@ describe('Novel Engine Workflows', () => {
 
   describe('Character Management Workflow', () => {
     it('should navigate to character studio', async () => {
-      renderAppWithProviders();
+      await renderAppWithProviders();
 
       // Navigate to Characters
-      fireEvent.click(screen.getByRole('button', { name: /characters/i }));
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /characters/i }));
+      });
 
       // Should navigate without errors
       await waitFor(() => {
@@ -177,10 +188,12 @@ describe('Novel Engine Workflows', () => {
 
   describe('Story Generation Workflow', () => {
     it('should navigate to workshop', async () => {
-      renderAppWithProviders();
+      await renderAppWithProviders();
 
       // Navigate to Workshop
-      fireEvent.click(screen.getByRole('button', { name: /workshop/i }));
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /workshop/i }));
+      });
 
       // Should navigate without errors
       await waitFor(() => {
@@ -191,10 +204,12 @@ describe('Novel Engine Workflows', () => {
 
   describe('System Health Workflow', () => {
     it('should navigate to monitor', async () => {
-      renderAppWithProviders();
+      await renderAppWithProviders();
 
       // Navigate to Monitor
-      fireEvent.click(screen.getByRole('button', { name: /monitor/i }));
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /monitor/i }));
+      });
 
       // Should navigate without errors
       await waitFor(() => {
@@ -205,7 +220,7 @@ describe('Novel Engine Workflows', () => {
 
   describe('Error Handling', () => {
     it('should render without crashing on API errors', async () => {
-      renderAppWithProviders();
+      await renderAppWithProviders();
 
       // Should render without throwing errors
       await waitFor(() => {
@@ -216,7 +231,7 @@ describe('Novel Engine Workflows', () => {
 
   describe('Performance and Responsiveness', () => {
     it('should render without performance issues', async () => {
-      renderAppWithProviders();
+      await renderAppWithProviders();
 
       await waitFor(() => {
         expect(document.body).toBeInTheDocument();
@@ -226,7 +241,7 @@ describe('Novel Engine Workflows', () => {
 
   describe('Accessibility', () => {
     it('should have accessible navigation elements', async () => {
-      renderAppWithProviders();
+      await renderAppWithProviders();
 
       await waitFor(() => {
         expect(document.body).toBeInTheDocument();
@@ -241,7 +256,7 @@ describe('Novel Engine Workflows', () => {
 
 describe('Integration Tests', () => {
   it('should render the application successfully', async () => {
-    renderAppWithProviders();
+    await renderAppWithProviders();
 
     // Should render without throwing errors
     await waitFor(() => {

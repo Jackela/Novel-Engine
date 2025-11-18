@@ -18,15 +18,17 @@ export default defineConfig({
   ],
   
   // Manual process polyfill via define
+  // MIGRATION NOTE: Transitioning from REACT_APP_* to VITE_* (VITE_* takes precedence)
   define: {
     global: 'globalThis',
     'process': JSON.stringify({
       env: {
         NODE_ENV: process.env.NODE_ENV || 'development',
-        REACT_APP_API_BASE_URL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1',
-        REACT_APP_API_TIMEOUT: process.env.REACT_APP_API_TIMEOUT || '10000',
-        REACT_APP_API_URL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
-        REACT_APP_DOCKER: process.env.REACT_APP_DOCKER || 'false',
+        // Backward compatibility: Keep REACT_APP_* for existing code
+        REACT_APP_API_BASE_URL: process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1',
+        REACT_APP_API_TIMEOUT: process.env.VITE_API_TIMEOUT || process.env.REACT_APP_API_TIMEOUT || '10000',
+        REACT_APP_API_URL: process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
+        REACT_APP_DOCKER: process.env.VITE_DOCKER || process.env.REACT_APP_DOCKER || 'false',
       },
       platform: 'browser',
       version: '18.0.0',
@@ -39,16 +41,17 @@ export default defineConfig({
     }),
     'process.env': JSON.stringify({
       NODE_ENV: process.env.NODE_ENV || 'development',
-      REACT_APP_API_BASE_URL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1',
-      REACT_APP_API_TIMEOUT: process.env.REACT_APP_API_TIMEOUT || '10000',
-      REACT_APP_API_URL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
-      REACT_APP_DOCKER: process.env.REACT_APP_DOCKER || 'false',
+      // Backward compatibility: Keep REACT_APP_* for existing code
+      REACT_APP_API_BASE_URL: process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1',
+      REACT_APP_API_TIMEOUT: process.env.VITE_API_TIMEOUT || process.env.REACT_APP_API_TIMEOUT || '10000',
+      REACT_APP_API_URL: process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
+      REACT_APP_DOCKER: process.env.VITE_DOCKER || process.env.REACT_APP_DOCKER || 'false',
     }),
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-    'process.env.REACT_APP_API_BASE_URL': JSON.stringify(process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1'),
-    'process.env.REACT_APP_API_TIMEOUT': JSON.stringify(process.env.REACT_APP_API_TIMEOUT || '10000'),
-    'process.env.REACT_APP_API_URL': JSON.stringify(process.env.REACT_APP_API_URL || 'http://localhost:8000'),
-    'process.env.REACT_APP_DOCKER': JSON.stringify(process.env.REACT_APP_DOCKER || 'false'),
+    'process.env.REACT_APP_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1'),
+    'process.env.REACT_APP_API_TIMEOUT': JSON.stringify(process.env.VITE_API_TIMEOUT || process.env.REACT_APP_API_TIMEOUT || '10000'),
+    'process.env.REACT_APP_API_URL': JSON.stringify(process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000'),
+    'process.env.REACT_APP_DOCKER': JSON.stringify(process.env.VITE_DOCKER || process.env.REACT_APP_DOCKER || 'false'),
   },
   
   // Performance optimizations
@@ -100,6 +103,30 @@ export default defineConfig({
     hmr: {
       port: 3001,
     },
+    proxy: {
+      '/api/v1': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path, // Keep /api/v1 prefix
+
+        // SSE-specific configuration for event streaming
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            // Preserve SSE headers for event stream endpoint
+            if (req.url?.includes('/events/stream')) {
+              proxyReq.setHeader('Accept', 'text/event-stream');
+              proxyReq.setHeader('Cache-Control', 'no-cache');
+              proxyReq.setHeader('Connection', 'keep-alive');
+            }
+          });
+        },
+      },
+      // Legacy /api endpoint (without version prefix)
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+    },
   },
   
   // Dependency optimization
@@ -145,7 +172,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: ['./src/test/act-env.ts', './src/test/setup.ts'],
     testTimeout: 10000, // 10 second timeout for tests
     hookTimeout: 5000,  // 5 second timeout for hooks
     teardownTimeout: 5000, // 5 second timeout for teardown

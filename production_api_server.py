@@ -346,6 +346,24 @@ async def get_characters(
         raise HTTPException(status_code=500, detail="Failed to retrieve characters.")
 
 
+@app.get("/api/v1/characters")
+@limiter.limit("20/minute")
+async def get_characters_v1(
+    request: Request, current_user: str = Depends(get_current_user)
+):
+    """Versioned alias for /characters."""
+    return await get_characters(request, current_user)
+
+
+@app.get("/api/characters")
+@limiter.limit("20/minute")
+async def get_characters_unversioned(
+    request: Request, current_user: str = Depends(get_current_user)
+):
+    """Unversioned REST endpoint for characters."""
+    return await get_characters(request, current_user)
+
+
 @app.post("/simulations")
 @limiter.limit("5/minute")
 async def run_simulation(

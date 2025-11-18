@@ -19,9 +19,12 @@ class MockEventSource {
 
     // Simulate connection opening after a short delay
     setTimeout(() => {
-      this.readyState = this.OPEN;
-      if (this.onopen) {
-        this.onopen(new Event('open'));
+      // Only open connection if not already in error/closed state
+      if (this.readyState === this.CONNECTING) {
+        this.readyState = this.OPEN;
+        if (this.onopen) {
+          this.onopen(new Event('open'));
+        }
       }
     }, 10);
   }
@@ -42,6 +45,7 @@ class MockEventSource {
 
   // Test helper to simulate an error
   simulateError() {
+    this.readyState = this.CLOSED;
     if (this.onerror) {
       this.onerror(new Event('error'));
     }
@@ -171,7 +175,7 @@ describe('useRealtimeEvents', () => {
 
     // Verify EventSource was closed
     expect(closeSpy).toHaveBeenCalled();
-    expect(eventSourceInstance?.readyState).toBe(MockEventSource.prototype.CLOSED);
+    expect(eventSourceInstance?.readyState).toBe(2); // CLOSED state
   });
 
   it('handles invalid JSON in event data gracefully', async () => {

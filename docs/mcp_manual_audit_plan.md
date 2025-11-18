@@ -19,6 +19,13 @@ This plan covers **all known routes, UI zones, and backend endpoints** in Novel 
    ```
 3. **Record `browserWSEndpoint`** from `http://127.0.0.1:9222/json/version` and use it for all `chrome-devtools/*` calls.
 4. **Artifact naming**: store screenshots under `docs/assets/audit/YYYYMMDD_<section>.png` and reference them in the final report.
+   - Latest captures:
+     - `docs/assets/audit/20251116_landing.png` (landing hero, CTAs)
+     - `docs/assets/audit/20251116_dashboard_online_chip.png` (dashboard fold w/ API feed chips, ONLINE connection chip, demo perf badge)
+     - `docs/assets/audit/20251116_dashboard_fold.png` (full fold reference)
+     - `docs/assets/audit/20251116_map_network_v2.png` (world map + character networks tiles)
+     - `docs/assets/audit/20251116_dashboard_api_metrics_live.png` (dashboard fold showing API metrics label)
+     - `docs/assets/audit/20251115_dashboard_api_feed_polish_v4.png` (previous reference)
 
 ---
 
@@ -148,11 +155,12 @@ For each button (`play`, `pause`, `stop`, `refresh`, `save`, `settings`, `fullsc
 Using shell outside MCP:
 1. `curl http://127.0.0.1:8000/health` – log JSON to audit report.
 2. Additional endpoints (see `api_server.py`):
-   - `/characters`
-   - `/characters/{id}`
+   - `/api/characters` (primary feed)
+   - `/api/characters/{id}`
+   - `/characters` (legacy shim; keep for regression when API is down)
    - `/campaigns`
    - `/cache/metrics`
-3. Cross-check UI data (e.g., character names on map) with API payloads.
+3. Cross-check UI data (e.g., character names on map) with `/api/v1/characters` payloads; confirm dashboard chips show “API feed” only when that endpoint succeeds.
 4. Tail `tmp/dev_env/backend.log` during dashboard usage to catch errors.
 
 ---
