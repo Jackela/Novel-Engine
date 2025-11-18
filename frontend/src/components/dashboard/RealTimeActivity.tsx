@@ -88,7 +88,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading: propLoadin
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isCondensed = density === 'condensed' && !isMobile;
   const [unreadCount, setUnreadCount] = useState(0);
-  const [highlightedId] = useState<string | null>(null);
+  const [_highlightedId] = useState<string | null>(null); // Unused - reserved for future event highlighting feature
 
   // Use SSE hook for real-time events
   const { events, loading: hookLoading, error: hookError, connectionState } = useRealtimeEvents({ enabled: true });

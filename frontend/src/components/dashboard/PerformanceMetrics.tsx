@@ -1,26 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Stack, 
-  Chip, 
-  LinearProgress, 
-  Grid, 
-  CircularProgress,
+import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  Stack,
+  Grid,
   useTheme,
   useMediaQuery,
-  Fade, 
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Speed as PerformanceIcon,
-  Memory as MemoryIcon,
-  Storage as StorageIcon,
-  NetworkCheck as NetworkIcon,
-  Circle as StatusIcon,
-} from '@mui/icons-material';
+import { motion } from 'framer-motion';
+// Removed unused imports: PerformanceIcon, MemoryIcon, StorageIcon, NetworkIcon, StatusIcon
 import GridTile from '../layout/GridTile';
+import { usePerformance, type PerformanceMetric } from '../../hooks/usePerformance';
+
+// Try importing useAuth - may not be available yet
+let useAuth: (() => { user: { roles: string[] } | null }) | undefined;
+try {
+  const authModule = require('../../hooks/useAuth');
+  useAuth = authModule.useAuth;
+} catch {
+  // useAuth not available, will fall back to env var
+}
 
 const MetricCard = styled(motion.div)(({ theme }) => ({
   display: 'flex',
@@ -50,57 +50,14 @@ const MetricCard = styled(motion.div)(({ theme }) => ({
   },
 }));
 
-const StatusIndicator = styled(motion.div)<{ status: 'healthy' | 'warning' | 'error' }>(
-  ({ theme, status }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
-    padding: theme.spacing(0.5, 1),
-    borderRadius: theme.shape.borderRadius / 2,
-    backgroundColor: status === 'healthy' 
-      ? 'rgba(16, 185, 129, 0.1)' 
-      : status === 'warning' 
-      ? 'rgba(245, 158, 11, 0.1)' 
-      : 'rgba(239, 68, 68, 0.1)',
-    border: (theme) => `1px solid ${status === 'healthy' ? theme.palette.success.main : status === 'warning' ? theme.palette.warning.main : theme.palette.error.main}`,
-    '& .MuiSvgIcon-root': {
-      fontSize: '12px',
-      color: (theme) => status === 'healthy' ? theme.palette.success.main : status === 'warning' ? theme.palette.warning.main : theme.palette.error.main,
-      animation: status !== 'healthy' ? 'pulse 2s infinite' : 'none',
-    },
-    '@keyframes pulse': {
-      '0%, 100%': { opacity: 1 },
-      '50%': { opacity: 0.6 },
-    },
-  })
-);
+// Removed unused styled components: StatusIndicator, AnimatedProgress
 
-const AnimatedProgress = styled(motion(LinearProgress))(({ theme }) => ({
-  height: 6,
-  borderRadius: theme.shape.borderRadius,
-    backgroundColor: theme.palette.divider,
-  '& .MuiLinearProgress-bar': {
-    borderRadius: theme.shape.borderRadius,
-    transition: 'transform 0.4s ease',
-  },
-}));
-
-interface PerformanceData {
-  responseTime: number;
-  errorRate: number;
-  requestsPerSecond: number;
-  activeUsers: number;
-  systemLoad: number;
-  memoryUsage: number;
-  storageUsage: number;
-  networkLatency: number;
-}
-
-interface SystemStatus {
-  overall: 'healthy' | 'warning' | 'error';
-  database: 'healthy' | 'warning' | 'error';
-  aiService: 'healthy' | 'warning' | 'error';
-  memoryService: 'healthy' | 'warning' | 'error';
+interface WebVitalsState {
+  lcp?: number;
+  fid?: number;
+  cls?: number;
+  fcp?: number;
+  ttfb?: number;
 }
 
 interface PerformanceMetricsProps {
@@ -111,74 +68,71 @@ interface PerformanceMetricsProps {
 const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [metrics, setMetrics] = useState<PerformanceData>({
-    responseTime: 145,
-    errorRate: 0.2,
-    requestsPerSecond: 23.5,
-    activeUsers: 127,
-    systemLoad: 68,
-    memoryUsage: 74,
-    storageUsage: 42,
-    networkLatency: 12,
-  });
 
-  const [systemStatus, setSystemStatus] = useState<SystemStatus>({
-    overall: 'healthy',
-    database: 'healthy',
-    aiService: 'warning',
-    memoryService: 'healthy',
-  });
+  // RBAC: Check if user has developer or admin role
+  const authResult = useAuth?.();
+  const hasDevAccess = authResult?.user?.roles?.includes('developer') ||
+                       authResult?.user?.roles?.includes('admin');
 
-  // Simulate real-time metric updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics(prev => ({
-        responseTime: Math.max(50, prev.responseTime + (Math.random() - 0.5) * 20),
-        errorRate: Math.max(0, Math.min(5, prev.errorRate + (Math.random() - 0.5) * 0.2)),
-        requestsPerSecond: Math.max(0, prev.requestsPerSecond + (Math.random() - 0.5) * 5),
-        activeUsers: Math.max(0, prev.activeUsers + Math.floor((Math.random() - 0.5) * 10)),
-        systemLoad: Math.max(0, Math.min(100, prev.systemLoad + (Math.random() - 0.5) * 10)),
-        memoryUsage: Math.max(0, Math.min(100, prev.memoryUsage + (Math.random() - 0.5) * 5)),
-        storageUsage: Math.max(0, Math.min(100, prev.storageUsage + (Math.random() - 0.5) * 2)),
-        networkLatency: Math.max(1, prev.networkLatency + (Math.random() - 0.5) * 5),
+  // Fallback to environment variable if useAuth unavailable
+  const canViewMetrics = hasDevAccess ?? (import.meta.env.VITE_SHOW_PERFORMANCE_METRICS === 'true');
+
+  // Hide widget if user doesn't have access
+  if (!canViewMetrics) {
+    return null;
+  }
+
+  // Track Web Vitals
+  const [webVitals, setWebVitals] = useState<WebVitalsState>({});
+
+  usePerformance({
+    onMetric: (metric: PerformanceMetric) => {
+      // Update Web Vitals state when metrics are reported
+      setWebVitals((prev) => ({
+        ...prev,
+        [metric.name.toLowerCase()]: metric.value,
       }));
+    },
+  });
 
-      // Update system status based on metrics
-      setSystemStatus(prev => {
-        const newStatus = { ...prev };
-        
-        if (metrics.systemLoad > 90 || metrics.errorRate > 2) {
-          newStatus.overall = 'error';
-        } else if (metrics.systemLoad > 70 || metrics.errorRate > 1) {
-          newStatus.overall = 'warning';
-        } else {
-          newStatus.overall = 'healthy';
-        }
-
-        if (metrics.responseTime > 200) {
-          newStatus.aiService = 'warning';
-        } else if (metrics.responseTime > 300) {
-          newStatus.aiService = 'error';
-        } else {
-          newStatus.aiService = 'healthy';
-        }
-
-        return newStatus;
-      });
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [metrics.systemLoad, metrics.errorRate, metrics.responseTime]);
-
-  // status color helper removed; inline theme.palette usage elsewhere
-
-  const formatNumber = (num: number, decimals = 1) => {
+  const formatNumber = (num: number | undefined, decimals = 1) => {
+    if (num === undefined) return '-';
     return num.toFixed(decimals);
+  };
+
+  const getRating = (metricName: string, value: number | undefined): 'good' | 'needs-improvement' | 'poor' => {
+    if (value === undefined) return 'needs-improvement';
+
+    switch (metricName) {
+      case 'LCP':
+        return value <= 2500 ? 'good' : value <= 4000 ? 'needs-improvement' : 'poor';
+      case 'FID':
+        return value <= 100 ? 'good' : value <= 300 ? 'needs-improvement' : 'poor';
+      case 'CLS':
+        return value <= 0.1 ? 'good' : value <= 0.25 ? 'needs-improvement' : 'poor';
+      case 'FCP':
+        return value <= 1800 ? 'good' : value <= 3000 ? 'needs-improvement' : 'poor';
+      case 'TTFB':
+        return value <= 600 ? 'good' : value <= 1500 ? 'needs-improvement' : 'poor';
+      default:
+        return 'needs-improvement';
+    }
+  };
+
+  const getRatingColor = (rating: 'good' | 'needs-improvement' | 'poor') => {
+    switch (rating) {
+      case 'good':
+        return theme.palette.success.main;
+      case 'poor':
+        return theme.palette.error.main;
+      default:
+        return theme.palette.warning.main;
+    }
   };
 
   return (
     <GridTile
-      title="Performance"
+      title="Performance Metrics (Dev)"
       data-testid="performance-metrics"
       position={{
         desktop: { column: '12 / 13', height: '160px' },
@@ -189,215 +143,183 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
       error={error}
     >
       {isMobile ? (
-        // Mobile: Condensed critical metrics
+        // Mobile: Web Vitals display
         <Box sx={{ height: '100%' }}>
           <Stack spacing={1}>
-            {/* Status and Users */}
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <StatusIndicator status={systemStatus.overall} data-testid="performance-health-status">
-                <StatusIcon />
-                <Typography variant="caption" fontWeight={500}>
-                  System {systemStatus.overall}
-                </Typography>
-              </StatusIndicator>
-              <motion.div
-                key={metrics.activeUsers}
-                initial={{ scale: 1.1 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Chip
-                  label={`${metrics.activeUsers} users`}
-                  size="small"
-                  sx={{ 
-                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                    borderColor: (theme) => theme.palette.primary.main,
-                    color: (theme) => theme.palette.text.secondary,
-                    fontWeight: 500,
-                  }}
-                />
-              </motion.div>
-            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
+              Core Web Vitals
+            </Typography>
 
-            {/* Essential Metrics Row */}
+            {/* Web Vitals Grid */}
             <Grid container spacing={1}>
               <Grid item xs={6}>
                 <MetricCard>
                   <Typography variant="caption" color="text.secondary">
-                    Response
+                    LCP
                   </Typography>
-                  <Typography variant="body1" fontWeight={600} data-testid="performance-metric-value">
-                    {formatNumber(metrics.responseTime, 0)}ms
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    data-testid="performance-metric-value"
+                    sx={{ color: getRatingColor(getRating('LCP', webVitals.lcp)) }}
+                  >
+                    {formatNumber(webVitals.lcp, 0)}ms
                   </Typography>
                 </MetricCard>
               </Grid>
               <Grid item xs={6}>
                 <MetricCard>
                   <Typography variant="caption" color="text.secondary">
-                    Load
+                    FID
                   </Typography>
-                  <Box sx={{ width: '100%', mt: 0.25 }}>
-                    <LinearProgress
-                      variant="determinate"
-                      value={metrics.systemLoad}
-                      sx={{ height: 4, borderRadius: 2 }}
-                      color={metrics.systemLoad > 80 ? 'warning' : 'primary'}
-                      aria-label="System load utilization"
-                      data-testid="performance-metric-progress"
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {formatNumber(metrics.systemLoad, 0)}%
-                    </Typography>
-                  </Box>
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    data-testid="performance-metric-value"
+                    sx={{ color: getRatingColor(getRating('FID', webVitals.fid)) }}
+                  >
+                    {formatNumber(webVitals.fid, 0)}ms
+                  </Typography>
+                </MetricCard>
+              </Grid>
+              <Grid item xs={4}>
+                <MetricCard>
+                  <Typography variant="caption" color="text.secondary">
+                    CLS
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    data-testid="performance-metric-value"
+                    sx={{ color: getRatingColor(getRating('CLS', webVitals.cls)) }}
+                  >
+                    {formatNumber(webVitals.cls, 3)}
+                  </Typography>
+                </MetricCard>
+              </Grid>
+              <Grid item xs={4}>
+                <MetricCard>
+                  <Typography variant="caption" color="text.secondary">
+                    FCP
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    data-testid="performance-metric-value"
+                    sx={{ color: getRatingColor(getRating('FCP', webVitals.fcp)) }}
+                  >
+                    {formatNumber(webVitals.fcp, 0)}ms
+                  </Typography>
+                </MetricCard>
+              </Grid>
+              <Grid item xs={4}>
+                <MetricCard>
+                  <Typography variant="caption" color="text.secondary">
+                    TTFB
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    data-testid="performance-metric-value"
+                    sx={{ color: getRatingColor(getRating('TTFB', webVitals.ttfb)) }}
+                  >
+                    {formatNumber(webVitals.ttfb, 0)}ms
+                  </Typography>
                 </MetricCard>
               </Grid>
             </Grid>
-
-            {/* Secondary Metrics */}
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="caption" color="text.secondary">
-                Memory: {formatNumber(metrics.memoryUsage, 0)}% • RPS: {formatNumber(metrics.requestsPerSecond, 1)}
-              </Typography>
-            </Box>
-
-            {/* Error Rate */}
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="caption" color="text.secondary">
-                Error Rate
-              </Typography>
-              <Typography 
-                variant="caption" 
-                fontWeight={500}
-                color={metrics.errorRate > 1 ? 'error.main' : 'success.main'}
-              >
-                {formatNumber(metrics.errorRate, 2)}%
-              </Typography>
-            </Box>
           </Stack>
         </Box>
       ) : (
-        // Desktop: Full metrics layout
+        // Desktop: Web Vitals display
         <Box sx={{ height: '100%' }}>
           <Stack spacing={1.5}>
-            {/* Overall Status */}
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <StatusIndicator status={systemStatus.overall} data-testid="performance-health-status">
-                <StatusIcon />
-                <Typography variant="caption" fontWeight={500}>
-                  System {systemStatus.overall}
-                </Typography>
-              </StatusIndicator>
-              <motion.div
-                key={metrics.activeUsers}
-                initial={{ scale: 1.1 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Chip
-                  label={`${metrics.activeUsers} users`}
-                  size="small"
-                  sx={{ 
-                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                    borderColor: (theme) => theme.palette.primary.main,
-                    color: (theme) => theme.palette.text.secondary,
-                    fontWeight: 500,
-                  }}
-                />
-              </motion.div>
-            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Core Web Vitals
+            </Typography>
 
-            {/* Key Metrics Grid */}
+            {/* Web Vitals Grid */}
             <Grid container spacing={1}>
               <Grid item xs={6}>
                 <MetricCard>
-                  <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <PerformanceIcon fontSize="small" />
-                    <Typography variant="caption" color="text.secondary">
-                      Response
-                    </Typography>
-                  </Stack>
-                  <Typography variant="h6" fontWeight={600} data-testid="performance-metric-value">
-                    {formatNumber(metrics.responseTime, 0)}ms
+                  <Typography variant="caption" color="text.secondary">
+                    LCP (Largest Contentful Paint)
                   </Typography>
-                </MetricCard>
-              </Grid>
-              
-              <Grid item xs={6}>
-                <MetricCard>
-                  <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <NetworkIcon fontSize="small" />
-                    <Typography variant="caption" color="text.secondary">
-                      RPS
-                    </Typography>
-                  </Stack>
-                  <Typography variant="h6" fontWeight={600} data-testid="performance-metric-value">
-                    {formatNumber(metrics.requestsPerSecond)}
+                  <Typography
+                    variant="h6"
+                    fontWeight={600}
+                    data-testid="performance-metric-value"
+                    sx={{ color: getRatingColor(getRating('LCP', webVitals.lcp)) }}
+                  >
+                    {formatNumber(webVitals.lcp, 0)}ms
                   </Typography>
                 </MetricCard>
               </Grid>
 
               <Grid item xs={6}>
                 <MetricCard>
-                  <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <MemoryIcon fontSize="small" />
-                    <Typography variant="caption" color="text.secondary">
-                      Memory
-                    </Typography>
-                  </Stack>
-                  <Box sx={{ width: '100%', mt: 0.5 }}>
-                    <LinearProgress
-                      variant="determinate"
-                      value={metrics.memoryUsage}
-                      sx={{ height: 4, borderRadius: 2 }}
-                      color={metrics.memoryUsage > 80 ? 'error' : 'primary'}
-                      aria-label="Memory usage"
-                      data-testid="performance-metric-progress"
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {formatNumber(metrics.memoryUsage, 0)}%
-                    </Typography>
-                  </Box>
+                  <Typography variant="caption" color="text.secondary">
+                    FID (First Input Delay)
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    fontWeight={600}
+                    data-testid="performance-metric-value"
+                    sx={{ color: getRatingColor(getRating('FID', webVitals.fid)) }}
+                  >
+                    {formatNumber(webVitals.fid, 0)}ms
+                  </Typography>
                 </MetricCard>
               </Grid>
 
-              <Grid item xs={6}>
+              <Grid item xs={4}>
                 <MetricCard>
-                  <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <StorageIcon fontSize="small" />
-                    <Typography variant="caption" color="text.secondary">
-                      Load
-                    </Typography>
-                  </Stack>
-                  <Box sx={{ width: '100%', mt: 0.5 }}>
-                    <LinearProgress
-                      variant="determinate"
-                      value={metrics.systemLoad}
-                      sx={{ height: 4, borderRadius: 2 }}
-                      color={metrics.systemLoad > 80 ? 'warning' : 'primary'}
-                      aria-label="System load utilization"
-                      data-testid="performance-metric-progress"
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {formatNumber(metrics.systemLoad, 0)}%
-                    </Typography>
-                  </Box>
+                  <Typography variant="caption" color="text.secondary">
+                    CLS
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    fontWeight={600}
+                    data-testid="performance-metric-value"
+                    sx={{ color: getRatingColor(getRating('CLS', webVitals.cls)) }}
+                  >
+                    {formatNumber(webVitals.cls, 3)}
+                  </Typography>
+                </MetricCard>
+              </Grid>
+
+              <Grid item xs={4}>
+                <MetricCard>
+                  <Typography variant="caption" color="text.secondary">
+                    FCP
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    fontWeight={600}
+                    data-testid="performance-metric-value"
+                    sx={{ color: getRatingColor(getRating('FCP', webVitals.fcp)) }}
+                  >
+                    {formatNumber(webVitals.fcp, 0)}ms
+                  </Typography>
+                </MetricCard>
+              </Grid>
+
+              <Grid item xs={4}>
+                <MetricCard>
+                  <Typography variant="caption" color="text.secondary">
+                    TTFB
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    fontWeight={600}
+                    data-testid="performance-metric-value"
+                    sx={{ color: getRatingColor(getRating('TTFB', webVitals.ttfb)) }}
+                  >
+                    {formatNumber(webVitals.ttfb, 0)}ms
+                  </Typography>
                 </MetricCard>
               </Grid>
             </Grid>
-
-            {/* Error Rate Indicator */}
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="caption" color="text.secondary">
-                Error Rate
-              </Typography>
-              <Typography 
-                variant="caption" 
-                fontWeight={500}
-                color={metrics.errorRate > 1 ? 'error.main' : 'success.main'}
-              >
-                {formatNumber(metrics.errorRate, 2)}%
-              </Typography>
-            </Box>
           </Stack>
         </Box>
       )}
