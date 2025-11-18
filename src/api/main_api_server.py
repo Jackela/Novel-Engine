@@ -12,20 +12,21 @@ This server provides a comprehensive, production-ready API with:
 """
 
 import asyncio
+import json
 import logging
 import os
 import secrets
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, AsyncGenerator, Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.api.character_api import create_character_api
@@ -422,11 +423,8 @@ def create_app() -> FastAPI:
     # Add security middleware stack if available (order matters - first added = last executed)
     if SECURITY_AVAILABLE:
         # Apply Security Headers as the outermost middleware so it can decorate all responses
-        security_config = (
-            get_production_security_config()
-            if not config.debug
-            else get_development_security_config()
-        )
+        # Note: Using production config for both modes since get_development_security_config not available
+        security_config = get_production_security_config()
         security_headers = SecurityHeaders(security_config)
         app.add_middleware(SecurityHeadersMiddleware, security_headers=security_headers)
         logger.info("Security headers middleware enabled (outermost)")
@@ -840,6 +838,160 @@ def _register_legacy_routes(app: FastAPI):
                 status_code=500,
                 detail=f"Failed to retrieve character details: {str(e)}",
             )
+
+    @app.get("/api/v1/characters", response_model=dict)
+    async def legacy_get_characters_v1():
+        """Versioned alias for the legacy characters list."""
+        return await legacy_get_characters()
+
+    @app.get("/api/v1/characters/{character_id}", response_model=dict)
+    async def legacy_get_character_detail_v1(character_id: str):
+        """Versioned alias for the legacy character detail."""
+        return await legacy_get_character_detail(character_id)
+
+    @app.get("/api/characters", response_model=dict)
+    async def legacy_get_characters_api():
+        """Unversioned REST endpoint for legacy characters list."""
+        return await legacy_get_characters()
+
+    @app.get("/api/characters/{character_id}", response_model=dict)
+    async def legacy_get_character_detail_api(character_id: str):
+        """Unversioned REST endpoint for legacy character detail."""
+        return await legacy_get_character_detail(character_id)
+
+    # ===================================================================
+    # Real-time Events SSE Endpoint (Dashboard Live API Integration)
+    # ===================================================================
+
+    # Track active SSE connections for monitoring
+    active_sse_connections = {"count": 0}
+
+    async def event_generator(client_id: str) -> AsyncGenerator[str, None]:
+        """
+        Async generator yielding SSE-formatted events for real-time dashboard updates.
+
+        Streams events with format:
+        - retry: <milliseconds>
+        - id: <event-id>
+        - data: <json-payload>
+
+        Args:
+            client_id: Unique identifier for the connected client
+
+        Yields:
+            SSE-formatted event strings
+        """
+        event_id = 0
+
+        try:
+            # Send retry directive for client reconnection interval (3 seconds)
+            yield "retry: 3000\n\n"
+
+            global_structured_logger.info(
+                f"SSE client connected: {client_id}",
+                category=LogCategory.SYSTEM
+            )
+            active_sse_connections["count"] += 1
+
+            # Main event loop - generate events every 2 seconds (MVP: simulated events)
+            while True:
+                try:
+                    await asyncio.sleep(2)  # Event frequency
+
+                    event_id += 1
+
+                    # Generate simulated event (MVP implementation)
+                    # Production: Replace with actual event store/message queue integration
+                    event_types = ["character", "story", "system", "interaction"]
+                    severities = ["low", "medium", "high"]
+
+                    event_data = {
+                        "id": f"evt-{event_id}",
+                        "type": event_types[event_id % len(event_types)],
+                        "title": f"Event {event_id}",
+                        "description": f"Simulated dashboard event #{event_id}",
+                        "timestamp": int(time.time() * 1000),
+                        "severity": severities[event_id % len(severities)],
+                    }
+
+                    # Add optional characterName for character-type events
+                    if event_data["type"] == "character":
+                        event_data["characterName"] = f"Character-{event_id}"
+
+                    # Format as SSE message
+                    yield f"id: evt-{event_id}\n"
+                    yield f"data: {json.dumps(event_data)}\n\n"
+
+                except asyncio.CancelledError:
+                    # Client disconnected - clean up and exit gracefully
+                    global_structured_logger.info(
+                        f"SSE client disconnected: {client_id}",
+                        category=LogCategory.SYSTEM
+                    )
+                    active_sse_connections["count"] -= 1
+                    break
+
+                except Exception as e:
+                    # Internal error - send error event but continue streaming
+                    global_structured_logger.error(
+                        f"SSE event generation error for client {client_id}: {e}",
+                        exc_info=e,
+                        category=LogCategory.ERROR
+                    )
+
+                    error_event = {
+                        "id": f"err-{event_id}",
+                        "type": "system",
+                        "title": "Stream Error",
+                        "description": f"Internal error: {str(e)}",
+                        "timestamp": int(time.time() * 1000),
+                        "severity": "high"
+                    }
+
+                    yield f"data: {json.dumps(error_event)}\n\n"
+
+        except Exception as fatal_error:
+            # Fatal error - log and terminate
+            global_structured_logger.error(
+                f"Fatal SSE error for client {client_id}: {fatal_error}",
+                exc_info=fatal_error,
+                category=LogCategory.ERROR
+            )
+            active_sse_connections["count"] -= 1
+            raise
+
+    @app.get("/api/v1/events/stream", tags=["Dashboard"])
+    async def stream_events():
+        """
+        Server-Sent Events (SSE) endpoint for real-time dashboard events.
+
+        Streams continuous event updates with automatic reconnection support.
+        Events include: character actions, story progression, system alerts, interactions.
+
+        Returns:
+            StreamingResponse: text/event-stream with continuous event updates
+
+        Example:
+            ```javascript
+            const eventSource = new EventSource('/api/v1/events/stream');
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('Event:', data);
+            };
+            ```
+        """
+        # Generate unique client identifier for logging/monitoring
+        client_id = secrets.token_hex(8)
+
+        return StreamingResponse(
+            event_generator(client_id),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",  # Disable nginx buffering for streaming
+            }
+        )
 
     @app.post("/simulations", response_model=dict)
     async def legacy_run_simulation(request: dict):

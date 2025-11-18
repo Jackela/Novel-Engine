@@ -6,11 +6,13 @@ This module implements a FastAPI web server that provides RESTful API endpoints
 for the story generation system.
 """
 
+import asyncio
 import html
 import json
 import logging
 import os
 import re
+import secrets
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -921,6 +923,163 @@ async def get_campaigns() -> CampaignsListResponse:
     except Exception as e:
         logger.error(f"Error retrieving campaigns: {e}", exc_info=True)
         return CampaignsListResponse(campaigns=[])
+
+
+@app.get("/api/v1/characters", response_model=CharactersListResponse)
+async def get_characters_v1() -> CharactersListResponse:
+    """Versioned alias for /characters to support the /api/v1 contract."""
+    return await get_characters()
+
+
+@app.get("/api/v1/characters/{character_id}", response_model=CharacterDetailResponse)
+async def get_character_detail_v1(character_id: str) -> CharacterDetailResponse:
+    """Versioned alias for /characters/{id}."""
+    return await get_character_detail(character_id)
+
+
+@app.get("/api/v1/characters/{character_id}/enhanced")
+async def get_character_enhanced_v1(character_id: str) -> Dict[str, Any]:
+    """Versioned alias for /characters/{id}/enhanced."""
+    return await get_character_enhanced(character_id)
+
+@app.get("/api/characters", response_model=CharactersListResponse)
+async def get_characters_api() -> CharactersListResponse:
+    """Unversioned REST endpoint for characters list."""
+    return await get_characters()
+
+
+@app.get("/api/characters/{character_id}", response_model=CharacterDetailResponse)
+async def get_character_detail_api(character_id: str) -> CharacterDetailResponse:
+    """Unversioned REST endpoint for character detail."""
+    return await get_character_detail(character_id)
+
+
+@app.get("/api/characters/{character_id}/enhanced")
+async def get_character_enhanced_api(character_id: str) -> Dict[str, Any]:
+    """Unversioned REST endpoint for enhanced character detail."""
+    return await get_character_enhanced(character_id)
+
+
+# ===================================================================
+# Real-time Events SSE Endpoint (Dashboard Live API Integration)
+# ===================================================================
+
+# Track active SSE connections for monitoring
+active_sse_connections = {"count": 0}
+
+async def event_generator(client_id: str):
+    """
+    Async generator yielding SSE-formatted events for real-time dashboard updates.
+
+    Streams events with format:
+    - retry: <milliseconds>
+    - id: <event-id>
+    - data: <json-payload>
+
+    Args:
+        client_id: Unique identifier for the connected client
+
+    Yields:
+        SSE-formatted event strings
+    """
+    event_id = 0
+
+    try:
+        # Send retry directive for client reconnection interval (3 seconds)
+        yield "retry: 3000\n\n"
+
+        logger.info(f"SSE client connected: {client_id}")
+        active_sse_connections["count"] += 1
+
+        # Main event loop - generate events every 2 seconds (MVP: simulated events)
+        while True:
+            try:
+                await asyncio.sleep(2)  # Event frequency
+
+                event_id += 1
+
+                # Generate simulated event (MVP implementation)
+                # Production: Replace with actual event store/message queue integration
+                event_types = ["character", "story", "system", "interaction"]
+                severities = ["low", "medium", "high"]
+
+                event_data = {
+                    "id": f"evt-{event_id}",
+                    "type": event_types[event_id % len(event_types)],
+                    "title": f"Event {event_id}",
+                    "description": f"Simulated dashboard event #{event_id}",
+                    "timestamp": int(time.time() * 1000),
+                    "severity": severities[event_id % len(severities)],
+                }
+
+                # Add optional characterName for character-type events
+                if event_data["type"] == "character":
+                    event_data["characterName"] = f"Character-{event_id}"
+
+                # Format as SSE message
+                yield f"id: evt-{event_id}\n"
+                yield f"data: {json.dumps(event_data)}\n\n"
+
+            except asyncio.CancelledError:
+                # Client disconnected - clean up and exit gracefully
+                logger.info(f"SSE client disconnected: {client_id}")
+                active_sse_connections["count"] -= 1
+                break
+
+            except Exception as e:
+                # Internal error - send error event but continue streaming
+                logger.error(f"SSE event generation error for client {client_id}: {e}")
+
+                error_event = {
+                    "id": f"err-{event_id}",
+                    "type": "system",
+                    "title": "Stream Error",
+                    "description": f"Internal error: {str(e)}",
+                    "timestamp": int(time.time() * 1000),
+                    "severity": "high"
+                }
+
+                yield f"data: {json.dumps(error_event)}\n\n"
+
+    except Exception as fatal_error:
+        # Fatal error - log and terminate
+        logger.error(f"Fatal SSE error for client {client_id}: {fatal_error}")
+        active_sse_connections["count"] -= 1
+        raise
+
+
+@app.get("/api/v1/events/stream", tags=["Dashboard"])
+async def stream_events():
+    """
+    Server-Sent Events (SSE) endpoint for real-time dashboard events.
+
+    Streams continuous event updates with automatic reconnection support.
+    Events include: character actions, story progression, system alerts, interactions.
+
+    Returns:
+        StreamingResponse: text/event-stream with continuous event updates
+
+    Example:
+        ```javascript
+        const eventSource = new EventSource('/api/v1/events/stream');
+        eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log('Event:', data);
+        };
+        ```
+    """
+    # Generate unique client identifier for logging/monitoring
+    client_id = secrets.token_hex(8)
+
+    return StreamingResponse(
+        event_generator(client_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering for streaming
+        }
+    )
 
 
 @app.post("/campaigns", response_model=CampaignCreationResponse)
