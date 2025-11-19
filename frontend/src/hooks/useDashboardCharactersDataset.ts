@@ -18,7 +18,7 @@ interface DashboardCharactersState {
 const API_BASE_URL = resolveApiBaseUrl(
   (import.meta.env.VITE_NOVEL_ENGINE_API_BASE_URL as string | undefined) ?? 'http://127.0.0.1:8000'
 );
-const CHARACTER_ENDPOINT = joinUrl(API_BASE_URL, '/characters');
+const CHARACTER_ENDPOINT = joinUrl(API_BASE_URL, '/api/characters');
 
 const CHARACTER_LIBRARY: Record<string, Pick<DashboardCharacter, 'name' | 'status' | 'role' | 'trust'>> = {
   aria: { name: 'Aria Shadowbane', status: 'active', role: 'protagonist', trust: 85 },
@@ -117,41 +117,17 @@ function resolveApiBaseUrl(base: string) {
 }
 
 function buildCharacterEndpoints() {
-  const ordered: string[] = [];
-  const seen = new Set<string>();
+  // Use /api/characters endpoints without versioning
+  const endpoints: string[] = [];
 
-  const push = (value: string | null | undefined) => {
-    if (!value) {
-      return;
-    }
-    const key = normalizeEndpoint(value);
-    if (seen.has(key)) {
-      return;
-    }
-    seen.add(key);
-    ordered.push(value);
-  };
+  // Primary endpoint: configured API base + /api/characters
+  endpoints.push(CHARACTER_ENDPOINT);
 
-  push(CHARACTER_ENDPOINT);
+  // Same-origin proxy fallback: /api/characters
+  // This allows Vite proxy to rewrite /api/* → backend /api/*
+  endpoints.push('/api/characters');
 
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    push(joinUrl(window.location.origin, '/api/characters'));
-  }
-
-  ['http://127.0.0.1:8000', 'http://localhost:8000'].forEach((origin) => {
-    push(joinUrl(origin, '/api/characters'));
-  });
-
-  push('/api/characters');
-
-  return ordered;
-}
-
-function normalizeEndpoint(value: string) {
-  if (value.startsWith('http://') || value.startsWith('https://')) {
-    return value.replace(/\/+$/, '');
-  }
-  return value;
+  return endpoints;
 }
 
 async function fetchCharacters(endpoint: string, signal: AbortSignal): Promise<DashboardCharacter[]> {

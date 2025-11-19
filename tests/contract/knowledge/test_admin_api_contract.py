@@ -47,7 +47,7 @@ def auth_headers():
 
 
 class TestPostKnowledgeEntriesEndpoint:
-    """Contract tests for POST /api/v1/knowledge/entries (FR-002)."""
+    """Contract tests for POST /api/knowledge/entries (FR-002)."""
 
     @pytest.mark.asyncio
     async def test_create_entry_success_returns_201(self, client, auth_headers):
@@ -62,7 +62,7 @@ class TestPostKnowledgeEntriesEndpoint:
 
         # Act
         response = await client.post(
-            "/api/v1/knowledge/entries",
+            "/api/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
@@ -90,7 +90,7 @@ class TestPostKnowledgeEntriesEndpoint:
 
         # Act
         response = await client.post(
-            "/api/v1/knowledge/entries",
+            "/api/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
@@ -115,7 +115,7 @@ class TestPostKnowledgeEntriesEndpoint:
 
         # Act
         response = await client.post(
-            "/api/v1/knowledge/entries",
+            "/api/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
@@ -139,7 +139,7 @@ class TestPostKnowledgeEntriesEndpoint:
 
         # Act
         response = await client.post(
-            "/api/v1/knowledge/entries",
+            "/api/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
@@ -164,7 +164,7 @@ class TestPostKnowledgeEntriesEndpoint:
 
         # Act
         response = await client.post(
-            "/api/v1/knowledge/entries",
+            "/api/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
@@ -188,7 +188,7 @@ class TestPostKnowledgeEntriesEndpoint:
 
         # Act - no auth headers
         response = await client.post(
-            "/api/v1/knowledge/entries",
+            "/api/knowledge/entries",
             json=payload,
         )
 
@@ -213,7 +213,7 @@ class TestPostKnowledgeEntriesEndpoint:
 
         # Act
         response = await client.post(
-            "/api/v1/knowledge/entries",
+            "/api/knowledge/entries",
             json=payload,
             headers=non_admin_headers,
         )
@@ -223,7 +223,7 @@ class TestPostKnowledgeEntriesEndpoint:
 
 
 class TestPutKnowledgeEntriesEndpoint:
-    """Contract tests for PUT /api/v1/knowledge/entries/{id} (FR-003)."""
+    """Contract tests for PUT /api/knowledge/entries/{id} (FR-003)."""
 
     @pytest_asyncio.fixture
     async def existing_entry_id(self, client, auth_headers):
@@ -236,7 +236,7 @@ class TestPutKnowledgeEntriesEndpoint:
             "access_level": "public",
         }
         response = await client.post(
-            "/api/v1/knowledge/entries",
+            "/api/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
@@ -254,7 +254,7 @@ class TestPutKnowledgeEntriesEndpoint:
 
         # Act
         response = await client.put(
-            f"/api/v1/knowledge/entries/{existing_entry_id}",
+            f"/api/knowledge/entries/{existing_entry_id}",
             json=payload,
             headers=auth_headers,
         )
@@ -278,7 +278,7 @@ class TestPutKnowledgeEntriesEndpoint:
 
         # Act
         response = await client.put(
-            f"/api/v1/knowledge/entries/{existing_entry_id}",
+            f"/api/knowledge/entries/{existing_entry_id}",
             json=payload,
             headers=auth_headers,
         )
@@ -297,7 +297,7 @@ class TestPutKnowledgeEntriesEndpoint:
 
         # Act
         response = await client.put(
-            f"/api/v1/knowledge/entries/{non_existent_id}",
+            f"/api/knowledge/entries/{non_existent_id}",
             json=payload,
             headers=auth_headers,
         )
@@ -317,7 +317,7 @@ class TestPutKnowledgeEntriesEndpoint:
 
         # Act
         response = await client.put(
-            f"/api/v1/knowledge/entries/{existing_entry_id}",
+            f"/api/knowledge/entries/{existing_entry_id}",
             json=payload,
         )
 
@@ -326,7 +326,7 @@ class TestPutKnowledgeEntriesEndpoint:
 
 
 class TestDeleteKnowledgeEntriesEndpoint:
-    """Contract tests for DELETE /api/v1/knowledge/entries/{id} (FR-004)."""
+    """Contract tests for DELETE /api/knowledge/entries/{id} (FR-004)."""
 
     @pytest_asyncio.fixture
     async def existing_entry_id(self, client, auth_headers):
@@ -338,7 +338,7 @@ class TestDeleteKnowledgeEntriesEndpoint:
             "access_level": "public",
         }
         response = await client.post(
-            "/api/v1/knowledge/entries",
+            "/api/knowledge/entries",
             json=payload,
             headers=auth_headers,
         )
@@ -351,7 +351,7 @@ class TestDeleteKnowledgeEntriesEndpoint:
         """Test successful entry deletion returns 204 No Content."""
         # Act
         response = await client.delete(
-            f"/api/v1/knowledge/entries/{existing_entry_id}",
+            f"/api/knowledge/entries/{existing_entry_id}",
             headers=auth_headers,
         )
 
@@ -365,13 +365,13 @@ class TestDeleteKnowledgeEntriesEndpoint:
         """Test that deleted entry cannot be retrieved."""
         # Act - delete entry
         await client.delete(
-            f"/api/v1/knowledge/entries/{existing_entry_id}",
+            f"/api/knowledge/entries/{existing_entry_id}",
             headers=auth_headers,
         )
 
         # Assert - entry should not be retrievable
         get_response = await client.get(
-            f"/api/v1/knowledge/entries/{existing_entry_id}",
+            f"/api/knowledge/entries/{existing_entry_id}",
             headers=auth_headers,
         )
         assert get_response.status_code == 404
@@ -384,7 +384,7 @@ class TestDeleteKnowledgeEntriesEndpoint:
 
         # Act
         response = await client.delete(
-            f"/api/v1/knowledge/entries/{non_existent_id}",
+            f"/api/knowledge/entries/{non_existent_id}",
             headers=auth_headers,
         )
 
@@ -398,7 +398,7 @@ class TestDeleteKnowledgeEntriesEndpoint:
         """Test deleting entry without authentication returns 401."""
         # Act
         response = await client.delete(
-            f"/api/v1/knowledge/entries/{existing_entry_id}",
+            f"/api/knowledge/entries/{existing_entry_id}",
         )
 
         # Assert
@@ -411,11 +411,11 @@ class TestDeleteKnowledgeEntriesEndpoint:
         """Test that deleting already deleted entry succeeds (idempotent)."""
         # Act - delete twice
         response1 = await client.delete(
-            f"/api/v1/knowledge/entries/{existing_entry_id}",
+            f"/api/knowledge/entries/{existing_entry_id}",
             headers=auth_headers,
         )
         response2 = await client.delete(
-            f"/api/v1/knowledge/entries/{existing_entry_id}",
+            f"/api/knowledge/entries/{existing_entry_id}",
             headers=auth_headers,
         )
 

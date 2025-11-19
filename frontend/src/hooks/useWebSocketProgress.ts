@@ -69,7 +69,7 @@ export function useWebSocketProgress({
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
-      const wsUrl = `${protocol}//${host}/api/v1/stories/progress/${generationId}`;
+      const wsUrl = `${protocol}//${host}/api/stories/progress/${generationId}`;
       
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;

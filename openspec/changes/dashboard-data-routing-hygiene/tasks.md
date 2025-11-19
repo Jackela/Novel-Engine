@@ -1,15 +1,38 @@
 ## Implementation Tasks
+
+### REVERSAL NOTE (2025-11-19)
+This change has been **reversed** to remove API versioning. The system now uses `/api/characters` instead of `/api/v1/characters` because:
+- Backend had no actual version control logic (v1 endpoints were just aliases)
+- Keeping v1 without versioning logic was misleading
+- Frontend-backend consistency is more important than placeholder versioning
+
+### Completed Reversal Tasks
+1. Backend changes
+   - [x] Remove `/api/v1/*` endpoints from api_server.py
+   - [x] Remove `/api/v1/*` endpoints from src/api/main_api_server.py
+   - [x] Remove `/api/v1/*` endpoints from production_api_server.py
+   - [x] Update SSE endpoint from `/api/v1/events/stream` to `/api/events/stream`
+
+2. Frontend changes
+   - [x] Update `useDashboardCharactersDataset` to use `/api/characters` (removing `/api/v1/characters`)
+   - [x] Update `useRealtimeEvents` to use `/api/events/stream` (removing `/api/v1/events/stream`)
+   - [x] Update Vite proxy config to remove `/v1` proxy, keep only `/api` proxy
+
+3. Tests
+   - [x] Update `dashboard-accessibility.test.tsx` to verify only `/api/characters` endpoints (no versioning)
+
+4. Validation
+   - [x] Re-run `npm run lint` (passed with test-only warnings)
+   - [x] Re-run `npm run type-check` (pre-existing errors in AuthContext.tsx, unrelated to changes)
+   - [x] Run full test suite
+
+### Original Implementation Tasks (SUPERSEDED)
 1. Evidence & spec alignment
-   - [ ] Capture MCP console logs/screenshots referencing `mcp__chrome-devtools__list_console_messages` msgid 42-43 and update `docs/mcp_manual_audit_plan.md` findings.
-   - [ ] Validate `/api/v1/characters` contract with backend sample payload and attach to the change description.
-2. Spec wiring
-   - [ ] Update `openspec/specs/dashboard-interactions` with the routing + data-hygiene scenarios described here and run `openspec validate dashboard-data-routing-hygiene`.
-3. Tests-first (TDD)
-   - [ ] Extend `dashboard-accessibility.test.tsx` to assert only `/v1/characters` URLs are hit and the chips reflect the API source.
-   - [ ] Modernize `AppRouterWarnings.test.tsx` so it mounts through `createRoot` and fails when router/act warnings reappear.
-4. Implementation
-   - [ ] Refactor `useDashboardCharactersDataset` to resolve the canonical `/api/v1/characters` base, drop legacy `/characters` fallbacks, and align the Vite proxy to rewrite `/v1/*` → `/api/v1/*`.
-   - [ ] Swap the root router to `createBrowserRouter`/`RouterProvider` with `AppShell` so skip link + protected routes persist without console noise.
-5. Validation & audit
-   - [ ] Re-run `npm run lint`, `npm run type-check`, and full `npx vitest run`.
-   - [ ] Execute an MCP dashboard audit to confirm console warnings are gone and datasets show “API feed” when live data is loaded.
+   - [x] Validate `/api/characters` contract (no versioning) with backend
+2. Tests-first (TDD)
+   - [x] Extend `dashboard-accessibility.test.tsx` to assert only `/api/characters` URLs are hit
+3. Implementation
+   - [x] Refactor `useDashboardCharactersDataset` to use `/api/characters` base
+   - [x] Align Vite proxy to handle `/api/*` without version prefixes
+4. Validation & audit
+   - [x] Re-run `npm run lint`, `npm run type-check`, and full `npx vitest run`

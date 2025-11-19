@@ -112,7 +112,7 @@ class InteractionAPI:
     def setup_routes(self, app: FastAPI):
         """Sets up API routes for interaction management."""
 
-        @app.post("/api/v1/interactions", response_model=InteractionResponse)
+        @app.post("/api/interactions", response_model=InteractionResponse)
         async def create_interaction(request: InteractionRequest):
             """Initiates a new character interaction."""
             if not self.orchestrator:
@@ -161,7 +161,7 @@ class InteractionAPI:
                 logger.error(f"Error creating interaction: {e}")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
-        @app.get("/api/v1/interactions", response_model=dict)
+        @app.get("/api/interactions", response_model=dict)
         async def list_interactions():
             """List all active interactions."""
             if not self.orchestrator:
@@ -189,7 +189,7 @@ class InteractionAPI:
                 logger.error(f"Error listing interactions: {e}")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
-        @app.get("/api/v1/interactions/{interaction_id}", response_model=dict)
+        @app.get("/api/interactions/{interaction_id}", response_model=dict)
         async def get_interaction(interaction_id: str):
             """Get detailed interaction information."""
             if not self.orchestrator:

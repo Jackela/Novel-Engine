@@ -463,7 +463,7 @@ class TestVulnerabilityAssessment:
             <foo>&xxe;</foo>"""
 
             response = await security_suite.client.post(
-                "/api/v1/stories",
+                "/api/stories",
                 content=xxe_payload,
                 headers={"Content-Type": "application/xml"},
             )
@@ -608,7 +608,7 @@ class TestSecurityIntegration:
         # 2. Make authenticated request with proper headers
         headers = {"Authorization": f"Bearer {access_token}"}
         response = await security_suite.client.get(
-            "/api/v1/characters", headers=headers
+            "/api/characters", headers=headers
         )
 
         # Should succeed with proper authentication
@@ -620,7 +620,7 @@ class TestSecurityIntegration:
         ]  # 404 ok if none; 400 acceptable in ASGI test
 
         # 3. Test unauthorized access
-        response = await security_suite.client.get("/api/v1/characters")
+        response = await security_suite.client.get("/api/characters")
 
         # Should require authentication
         # Accept 400 from ASGI test transport as a rejected request in test context

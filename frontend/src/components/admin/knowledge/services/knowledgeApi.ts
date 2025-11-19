@@ -91,7 +91,7 @@ export interface KnowledgeEntryFilters {
 // API Client
 // ============================================================================
 
-const BASE_PATH = '/api/v1/knowledge';
+const BASE_PATH = '/api/knowledge';
 
 /**
  * Knowledge Management API Client

@@ -19,7 +19,7 @@ interface UseRealtimeEventsOptions {
 type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'error';
 
 export function useRealtimeEvents({
-  endpoint = (import.meta.env.VITE_DASHBOARD_EVENTS_ENDPOINT as string | undefined) ?? '/api/v1/events/stream',
+  endpoint = (import.meta.env.VITE_DASHBOARD_EVENTS_ENDPOINT as string | undefined) ?? '/api/events/stream',
   maxEvents = 50,
   enabled = true,
 }: UseRealtimeEventsOptions = {}) {
