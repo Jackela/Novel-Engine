@@ -87,6 +87,43 @@ export class DashboardPage {
       } catch {
         // ignore storage failures in CI
       }
+
+      // Mock EventSource for SSE testing
+      class MockEventSource extends EventTarget {
+        url: string;
+        readyState: number = 0;
+        CONNECTING = 0;
+        OPEN = 1;
+        CLOSED = 2;
+
+        constructor(url: string) {
+          super();
+          this.url = url;
+          this.readyState = this.CONNECTING;
+
+          // Simulate connection opening after a short delay
+          setTimeout(() => {
+            if (this.readyState === this.CONNECTING) {
+              this.readyState = this.OPEN;
+              const openEvent = new Event('open');
+              if (this.onopen) {
+                this.onopen(openEvent);
+              }
+              this.dispatchEvent(openEvent);
+            }
+          }, 10);
+        }
+
+        onopen: ((event: Event) => void) | null = null;
+        onmessage: ((event: MessageEvent) => void) | null = null;
+        onerror: ((event: Event) => void) | null = null;
+
+        close() {
+          this.readyState = this.CLOSED;
+        }
+      }
+
+      (window as any).EventSource = MockEventSource;
     });
 
     let onDashboard = false;
