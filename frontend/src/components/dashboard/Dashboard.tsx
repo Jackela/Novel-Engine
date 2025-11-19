@@ -198,12 +198,23 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
         <EventCascadeFlow loading={loading} error={!!error} />
       </LazyWrapper>,
     ],
-    analytics: [
-      <LazyWrapper key="performance-metrics">
-        <PerformanceMetrics loading={loading} error={!!error} />
-      </LazyWrapper>,
-      <LazyWrapper key="analytics">
-        <AnalyticsDashboard loading={loading} error={!!error} />
+  analytics: [
+    <LazyWrapper key="performance-metrics">
+      <PerformanceMetrics
+        loading={loading}
+        error={!!error}
+        dataSource={!isOnline || error ? 'demo' : 'api'}
+        sourceLabel={
+          !isOnline || error
+            ? 'Demo metrics'
+            : isLiveMode
+              ? 'API metrics (live)'
+              : 'API metrics (standby)'
+        }
+      />
+    </LazyWrapper>,
+    <LazyWrapper key="analytics">
+      <AnalyticsDashboard loading={loading} error={!!error} />
       </LazyWrapper>,
     ],
   };
@@ -257,7 +268,18 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
       content: (
         <Stack spacing={2}>
           <LazyWrapper>
-            <PerformanceMetrics loading={loading} error={!!error} />
+            <PerformanceMetrics
+              loading={loading}
+              error={!!error}
+              dataSource={!isOnline || error ? 'demo' : 'api'}
+              sourceLabel={
+                !isOnline || error
+                  ? 'Demo metrics'
+                  : isLiveMode
+                    ? 'API metrics (live)'
+                    : 'API metrics (standby)'
+              }
+            />
           </LazyWrapper>
           <LazyWrapper>
             <NarrativeTimeline loading={loading} error={!!error} />

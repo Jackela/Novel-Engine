@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Chip, 
-  Stack, 
+import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import {
+  Box,
+  Typography,
+  Chip,
+  Stack,
   List,
-  ListItem,
-  ListItemText,
   Avatar,
   LinearProgress,
   useTheme,
@@ -15,13 +13,14 @@ import {
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import { motion } from 'framer-motion';
-import { 
+import {
   Person as PersonIcon,
   Groups as GroupIcon,
   Link as LinkIcon,
   Diversity3 as NetworkIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
+import { useDashboardCharactersDataset } from '../../hooks/useDashboardCharactersDataset';
 
 const NetworkContainer = styled(Box)(({ theme }) => ({
   width: '100%',
@@ -29,30 +28,48 @@ const NetworkContainer = styled(Box)(({ theme }) => ({
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
-  
   [theme.breakpoints.down('md')]: {
     padding: theme.spacing(0.5),
   },
 }));
 
-const CharacterCard = styled(motion(Box))<{ status: string }>(({ theme, status }) => ({
+const CharacterCard = styled(motion.button, {
+  shouldForwardProp: (prop: PropertyKey) => prop !== 'status',
+})<{ status: string }>(({ theme, status }) => ({
   display: 'flex',
   alignItems: 'center',
+  width: '100%',
   padding: theme.spacing(1),
   borderRadius: theme.shape.borderRadius,
   backgroundColor: theme.palette.background.paper,
   border: `1px solid ${theme.palette.divider}`,
   marginBottom: theme.spacing(1),
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+  cursor: 'pointer',
+  textAlign: 'left',
   '&:hover': {
     backgroundColor: 'var(--color-bg-tertiary)',
-    borderColor: status === 'active' ? theme.palette.success.main : status === 'hostile' ? theme.palette.error.main : theme.palette.warning.main,
+    borderColor:
+      status === 'active'
+        ? theme.palette.success.main
+        : status === 'hostile'
+          ? theme.palette.error.main
+          : theme.palette.warning.main,
     transform: 'translateY(-2px)',
     boxShadow: `0 4px 8px ${
-      status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 
-      status === 'hostile' ? 'rgba(239, 68, 68, 0.2)' : 
-      'rgba(245, 158, 11, 0.2)'
+      status === 'active'
+        ? 'rgba(16, 185, 129, 0.2)'
+        : status === 'hostile'
+          ? 'rgba(239, 68, 68, 0.2)'
+          : 'rgba(245, 158, 11, 0.2)'
     }`,
+  },
+  '&:focus-visible': {
+    outline: `2px solid ${theme.palette.info.main}`,
+    outlineOffset: 2,
+  },
+  '&:focus:not(:focus-visible)': {
+    outline: 'none',
   },
 }));
 
@@ -62,37 +79,35 @@ const TrustProgress = styled(LinearProgress)<{ trustlevel: number }>(({ theme, t
   backgroundColor: theme.palette.divider,
   '& .MuiLinearProgress-bar': {
     borderRadius: 2,
-    backgroundColor: 
-      trustlevel >= 80 ? theme.palette.success.main :
-      trustlevel >= 60 ? theme.palette.primary.main :
-      trustlevel >= 40 ? theme.palette.warning.main :
-      theme.palette.error.main,
+    backgroundColor:
+      trustlevel >= 80
+        ? theme.palette.success.main
+        : trustlevel >= 60
+          ? theme.palette.primary.main
+          : trustlevel >= 40
+            ? theme.palette.warning.main
+            : theme.palette.error.main,
   },
 }));
 
-const StatusBadge = styled(Box)<{ status: string }>(({ theme, status }) => ({
+const StatusBadge = styled(Box, {
+  shouldForwardProp: (prop: PropertyKey) => prop !== 'status',
+})<{ status: string }>(({ theme, status }) => ({
   width: 8,
   height: 8,
   borderRadius: '50%',
-  backgroundColor: 
-    status === 'active' ? theme.palette.success.main :
-    status === 'hostile' ? theme.palette.error.main :
-    theme.palette.warning.main,
+  backgroundColor:
+    status === 'active'
+      ? theme.palette.success.main
+      : status === 'hostile'
+        ? theme.palette.error.main
+        : theme.palette.warning.main,
   animation: status === 'active' ? 'pulse 2s infinite' : 'none',
   '@keyframes pulse': {
     '0%, 100%': { opacity: 1 },
     '50%': { opacity: 0.5 },
   },
 }));
-
-interface CharacterData {
-  id: string;
-  name: string;
-  role: string;
-  trustLevel: number;
-  connections: number;
-  status: 'active' | 'inactive' | 'hostile';
-}
 
 interface CharacterNetworksProps {
   loading?: boolean;
@@ -102,75 +117,93 @@ interface CharacterNetworksProps {
 const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
-  const [characters] = useState<CharacterData[]>([
-    {
-      id: '1',
-      name: 'Aria Shadowbane',
-      role: 'Rogue',
-      trustLevel: 85,
-      connections: 4,
-      status: 'active'
-    },
-    {
-      id: '2', 
-      name: 'Elder Thorne',
-      role: 'Mentor',
-      trustLevel: 95,
-      connections: 6,
-      status: 'active'
-    },
-    {
-      id: '3',
-      name: 'Merchant Aldric', 
-      role: 'Trader',
-      trustLevel: 65,
-      connections: 3,
-      status: 'active'
-    },
-    {
-      id: '4',
-      name: 'Captain Vex',
-      role: 'Guard Captain',
-      trustLevel: 40,
-      connections: 2,
-      status: 'hostile'
-    },
-    {
-      id: '5',
-      name: 'Mystic Vera',
-      role: 'Oracle',
-      trustLevel: 78,
-      connections: 5,
-      status: 'inactive'
-    }
-  ]);
+  const { characters, loading: charactersLoading, error: charactersError, source } = useDashboardCharactersDataset();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
+  const cardRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  const getStatusColor = (status: CharacterData['status']) => {
+  const networkCharacters = useMemo(
+    () =>
+      characters.map((character, index) => ({
+        ...character,
+        roleLabel: character.role.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()),
+        connections: Math.max(2, (index % 5) + 2),
+      })),
+    [characters]
+  );
+
+  useEffect(() => {
+    if (!networkCharacters.length) {
+      return;
+    }
+    if (!selectedCharacterId || !networkCharacters.some((char) => char.id === selectedCharacterId)) {
+      setSelectedCharacterId(networkCharacters[0].id);
+      setActiveIndex(0);
+    }
+  }, [networkCharacters, selectedCharacterId]);
+
+  useEffect(() => {
+    const node = cardRefs.current[activeIndex];
+    if (node && document.activeElement !== node) {
+      node.focus();
+    }
+  }, [activeIndex]);
+
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
         return theme.palette.success.main;
       case 'hostile':
         return theme.palette.error.main;
       case 'inactive':
-        return theme.palette.warning.main;
       default:
-        return theme.palette.text.secondary;
+        return theme.palette.warning.main;
     }
   };
 
-  const getTrustColor = (trust: number) => {
-    if (trust >= 80) return theme.palette.success.main;
-    if (trust >= 60) return theme.palette.primary.main;
-    if (trust >= 40) return theme.palette.warning.main;
-    return theme.palette.error.main;
-  };
+  const totalConnections = networkCharacters.reduce((sum, character) => sum + character.connections, 0);
+  const activeCount = networkCharacters.filter((character) => character.status === 'active').length;
+  const averageTrust = networkCharacters.length
+    ? Math.round(networkCharacters.reduce((sum, character) => sum + character.trust, 0) / networkCharacters.length)
+    : 0;
 
-  const totalConnections = characters.reduce((sum, c) => sum + c.connections, 0);
-  const activeCount = characters.filter(c => c.status === 'active').length;
-  const averageTrust = Math.round(
-    characters.reduce((sum, c) => sum + c.trustLevel, 0) / characters.length
+  const handleMoveFocus = useCallback(
+    (direction: 1 | -1) => {
+      if (!networkCharacters.length) {
+        return;
+      }
+      setActiveIndex((prev) => {
+        const next = (prev + direction + networkCharacters.length) % networkCharacters.length;
+        return next;
+      });
+    },
+    [networkCharacters.length]
   );
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent, index: number, characterId: string) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        setSelectedCharacterId((prev) => (prev === characterId ? null : characterId));
+      }
+
+      if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        handleMoveFocus(1);
+      }
+
+      if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+        event.preventDefault();
+        handleMoveFocus(-1);
+      }
+    },
+    [handleMoveFocus]
+  );
+
+  const combinedLoading = loading || charactersLoading;
+  const combinedError = error || charactersError;
+  const hasRenderableCharacters = networkCharacters.length > 0;
+  const shouldShowError = Boolean(combinedError) && !hasRenderableCharacters;
 
   return (
     <GridTile
@@ -182,62 +215,70 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
         tablet: { column: 'span 2', height: '300px' },
         mobile: { column: 'span 1', height: '220px' },
       }}
-      loading={loading}
-      error={error}
+      loading={combinedLoading}
+      error={shouldShowError}
     >
       <NetworkContainer>
-        {/* Stats Header */}
-        <Stack 
-          direction="row" 
-          spacing={1} 
-          justifyContent="center" 
+        <Stack
+          direction="row"
+          spacing={1}
+          justifyContent="center"
           sx={{ mb: 1.5, flexShrink: 0, flexWrap: 'wrap' }}
         >
-          <Chip 
+          <Chip
             icon={<PersonIcon sx={{ fontSize: '16px' }} />}
-            label={`${characters.length} Characters`} 
-            size="small" 
+            label={`${networkCharacters.length} Characters`}
+            size="small"
             sx={{
               backgroundColor: (theme) => theme.palette.background.paper,
               borderColor: (theme) => theme.palette.divider,
               color: (theme) => theme.palette.text.secondary,
               fontSize: '0.7rem',
               height: '22px',
-              '& .MuiChip-icon': { color: (theme) => theme.palette.primary.main }
+              '& .MuiChip-icon': { color: (theme) => theme.palette.primary.main },
             }}
           />
-          <Chip 
+          <Chip
             icon={<LinkIcon sx={{ fontSize: '16px' }} />}
-            label={`${totalConnections} Links`} 
-            size="small" 
+            label={`${totalConnections} Links`}
+            size="small"
             sx={{
               backgroundColor: (theme) => theme.palette.background.paper,
               borderColor: (theme) => theme.palette.divider,
               color: (theme) => theme.palette.text.secondary,
               fontSize: '0.7rem',
               height: '22px',
-              '& .MuiChip-icon': { color: (theme) => theme.palette.secondary.main }
+              '& .MuiChip-icon': { color: (theme) => theme.palette.secondary.main },
             }}
           />
-          <Chip 
+          <Chip
             icon={<GroupIcon sx={{ fontSize: '16px' }} />}
-            label={`${activeCount} Active`} 
-            size="small" 
+            label={`${activeCount} Active`}
+            size="small"
             sx={{
               backgroundColor: (theme) => alpha(theme.palette.success.main, 0.12),
               borderColor: (theme) => theme.palette.success.main,
               color: (theme) => alpha(theme.palette.success.main, 0.8),
               fontSize: '0.7rem',
               height: '22px',
-              '& .MuiChip-icon': { color: (theme) => theme.palette.success.main }
+              '& .MuiChip-icon': { color: (theme) => theme.palette.success.main },
+            }}
+          />
+          <Chip
+            label={source === 'api' ? 'API feed' : 'Demo data'}
+            size="small"
+            color={source === 'api' ? 'success' : 'default'}
+            sx={{
+              fontSize: '0.7rem',
+              height: '22px',
+              fontWeight: 600,
             }}
           />
         </Stack>
 
-        {/* Character List */}
         <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
           <List dense sx={{ py: 0 }}>
-            {characters.slice(0, isMobile ? 3 : 5).map((character, index) => (
+            {networkCharacters.slice(0, isMobile ? 3 : 5).map((character, index) => (
               <Fade in key={character.id} timeout={300 + index * 100}>
                 <CharacterCard
                   status={character.status}
@@ -249,6 +290,17 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   whileHover={{ scale: 1.02 }}
                   data-testid="character-node"
+                  role="button"
+                  type="button"
+                  aria-pressed={selectedCharacterId === character.id}
+                  aria-controls={`character-detail-${character.id}`}
+                  tabIndex={activeIndex === index ? 0 : -1}
+                  ref={(node: HTMLButtonElement | null) => {
+                    cardRefs.current[index] = node;
+                  }}
+                  onFocus={() => setActiveIndex(index)}
+                  onKeyDown={(event) => handleKeyDown(event, index, character.id)}
+                  onClick={() => setSelectedCharacterId((prev) => (prev === character.id ? null : character.id))}
                 >
                   <Avatar
                     sx={{
@@ -261,7 +313,7 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                     }}
                   >
                     <PersonIcon fontSize="small" />
-                    <StatusBadge 
+                    <StatusBadge
                       status={character.status}
                       sx={{
                         position: 'absolute',
@@ -274,46 +326,38 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
 
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.25 }}>
-                      <Typography 
-                        variant={isMobile ? 'caption' : 'body2'} 
-                        fontWeight={600} 
+                      <Typography
+                        variant={isMobile ? 'caption' : 'body2'}
+                        fontWeight={600}
                         noWrap
                         sx={{ color: 'var(--color-text-primary)' }}
                       >
                         {character.name}
                       </Typography>
-                      <Typography 
-                        variant="caption" 
-                        color="text.secondary"
-                        sx={{ fontSize: '0.7rem' }}
-                      >
-                        • {character.role}
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                        • {character.roleLabel}
                       </Typography>
                     </Stack>
 
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-                      <Typography 
-                        variant="caption" 
-                        color="text.secondary"
-                        sx={{ fontSize: '0.7rem', minWidth: '50px' }}
-                      >
-                        Trust: {character.trustLevel}%
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', minWidth: '50px' }}>
+                        Trust: {character.trust}%
                       </Typography>
                       <TrustProgress
                         variant="determinate"
-                        value={character.trustLevel}
-                        trustlevel={character.trustLevel}
+                        value={character.trust}
+                        trustlevel={character.trust}
                         sx={{ flex: 1 }}
-                        aria-label={`${character.name} trust level ${character.trustLevel} percent`}
+                        aria-label={`${character.name} trust level ${character.trust} percent`}
                         data-testid="character-trust-progress"
                       />
                     </Stack>
 
                     <Stack direction="row" alignItems="center" spacing={0.5}>
                       <LinkIcon sx={{ fontSize: '12px', color: 'secondary.main' }} data-testid="character-connection-icon" />
-                      <Typography 
-                        variant="caption" 
-                        color="text.secondary" 
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
                         sx={{ fontSize: '0.7rem' }}
                         data-testid="character-connection-count"
                       >
@@ -333,6 +377,21 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                         data-testid="character-status"
                       />
                     </Stack>
+
+                    <Box
+                      id={`character-detail-${character.id}`}
+                      sx={{
+                        mt: 0.5,
+                        color: selectedCharacterId === character.id ? 'text.primary' : 'text.disabled',
+                        fontSize: '0.65rem',
+                      }}
+                    >
+                      <Typography variant="caption">
+                        {selectedCharacterId === character.id
+                          ? `${character.name} ready for orchestration`
+                          : 'Select to inspect network details'}
+                      </Typography>
+                    </Box>
                   </Box>
                 </CharacterCard>
               </Fade>
@@ -340,12 +399,11 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
           </List>
         </Box>
 
-        {/* Summary Footer */}
         {!isMobile && (
-          <Box 
-            sx={{ 
-              pt: 1, 
-              mt: 1, 
+          <Box
+            sx={{
+              pt: 1,
+              mt: 1,
               borderTop: (theme) => `1px solid ${theme.palette.divider}`,
               flexShrink: 0,
             }}
@@ -355,15 +413,8 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
                 Network Health
               </Typography>
               <Stack direction="row" spacing={1} alignItems="center">
-                <NetworkIcon sx={{ fontSize: '16px', color: getTrustColor(averageTrust) }} />
-                <Typography 
-                  variant="caption" 
-                  sx={{ 
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: getTrustColor(averageTrust)
-                  }}
-                >
+                <NetworkIcon sx={{ fontSize: '16px', color: getStatusColor(averageTrust >= 60 ? 'active' : 'inactive') }} />
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                   {averageTrust}% Avg Trust
                 </Typography>
               </Stack>

@@ -82,14 +82,10 @@ interface AuthProviderProps {
  * @returns Provider component wrapping children
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authService: customAuthService }) => {
-  const guestEnv =
-    (import.meta as ImportMeta & { env?: Record<string, string> }).env
-      ?.VITE_ENABLE_GUEST_MODE;
-
   const enableGuestMode =
     String(
-      (process.env.REACT_APP_ENABLE_GUEST_MODE ??
-        guestEnv ??
+      (import.meta.env.VITE_ENABLE_GUEST_MODE ??
+        process.env.REACT_APP_ENABLE_GUEST_MODE ??
         'true') as string
     )
       .trim()
@@ -104,8 +100,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
     // Create default auth service
     const tokenStorage = new TokenStorage();
     const httpClient = axios.create({
-      baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1',
-      timeout: parseInt(process.env.REACT_APP_API_TIMEOUT || '10000'),
+      baseURL: import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1',
+      timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || process.env.REACT_APP_API_TIMEOUT || '10000'),
     });
 
     return new JWTAuthService(httpClient, tokenStorage);

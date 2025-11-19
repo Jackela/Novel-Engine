@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import userEvent from '@testing-library/user-event';
+import { act } from 'react';
 import { SkipLink } from '../../../src/components/a11y/SkipLink';
 
 expect.extend(toHaveNoViolations);
@@ -15,7 +16,10 @@ describe('SkipLink', () => {
         </div>
       </>
     );
-    const results = await axe(container);
+    let results: Awaited<ReturnType<typeof axe>>;
+    await act(async () => {
+      results = await axe(container);
+    });
     expect(results).toHaveNoViolations();
   });
 

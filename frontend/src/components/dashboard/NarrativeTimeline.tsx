@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Box, 
   Typography, 
@@ -87,6 +87,13 @@ const TimelineNode = styled(motion(Box))<{ status: string }>(({ theme, status })
     backgroundColor: status === 'current' ? alpha(theme.palette.primary.main, 0.2) : 'var(--color-bg-tertiary)',
     borderColor: status === 'completed' ? theme.palette.success.main : theme.palette.primary.main,
     transform: 'scale(1.02)',
+  },
+  '&:focus-visible': {
+    outline: `2px solid ${theme.palette.info.main}`,
+    outlineOffset: 2,
+  },
+  '&:focus:not(:focus-visible)': {
+    outline: 'none',
   },
   
   // Desktop: vertical layout
@@ -188,6 +195,42 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
   const currentTurn = 47;
   const maxTurn = 150;
   const progressPercentage = (currentTurn / maxTurn) * 100;
+  const currentIndex = timelineEvents.findIndex((event) => event.status === 'current');
+  const [focusIndex, setFocusIndex] = useState(currentIndex >= 0 ? currentIndex : 0);
+  const nodeRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  useEffect(() => {
+    const node = nodeRefs.current[focusIndex];
+    if (node && document.activeElement !== node) {
+      node.focus();
+    }
+  }, [focusIndex]);
+
+  const handleNodeKeyDown = useCallback(
+    (event: React.KeyboardEvent, index: number) => {
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        setFocusIndex((prev) => (prev + 1) % timelineEvents.length);
+      }
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        setFocusIndex((prev) => (prev - 1 + timelineEvents.length) % timelineEvents.length);
+      }
+      if (event.key === 'Home') {
+        event.preventDefault();
+        setFocusIndex(0);
+      }
+      if (event.key === 'End') {
+        event.preventDefault();
+        setFocusIndex(timelineEvents.length - 1);
+      }
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        setFocusIndex(index);
+      }
+    },
+    [timelineEvents.length]
+  );
 
   const getStatusIcon = (status: TimelineEvent['status']) => {
     const iconProps = { fontSize: 'small' as const };
@@ -242,12 +285,13 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
         {/* Progress Header */}
         <ProgressHeader>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
-            <Typography variant="caption" color="text.secondary" fontWeight={500}>
+            <Typography variant="caption" color="text.secondary" fontWeight={500} component="div">
               Turn {currentTurn} of {maxTurn}
             </Typography>
             <Typography
               variant="caption"
               sx={{ color: (theme) => theme.palette.primary.light, fontWeight: 600 }}
+              component="div"
             >
               {Math.round(progressPercentage)}% Complete
             </Typography>
@@ -296,7 +340,7 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
         </ProgressHeader>
 
         {/* Timeline Track */}
-        <TimelineTrack>
+        <TimelineTrack role="tablist" aria-label="Narrative Arc Timeline">
           {timelineEvents.map((event, index) => (
             <React.Fragment key={event.id}>
               <Fade in timeout={300 + index * 100}>
@@ -305,6 +349,15 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
                   data-testid="timeline-node"
                   data-status={event.status}
                   data-turn={event.turn}
+                  role="tab"
+                  aria-current={event.status === 'current' ? 'step' : undefined}
+                  aria-selected={focusIndex === index}
+                  tabIndex={focusIndex === index ? 0 : -1}
+                  ref={(node: HTMLDivElement | null) => {
+                    nodeRefs.current[index] = node;
+                  }}
+                  onFocus={() => setFocusIndex(index)}
+                  onKeyDown={(event) => handleNodeKeyDown(event, index)}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -332,6 +385,7 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
                         display: 'block',
                         mb: 0.25,
                       }}
+                      component="div"
                     >
                       {event.title}
                     </Typography>
@@ -345,6 +399,7 @@ const NarrativeTimeline: React.FC<NarrativeTimelineProps> = ({ loading, error })
                         display: 'block',
                         mb: 0.5,
                       }}
+                      component="div"
                     >
                       Turn {event.turn}
                     </Typography>

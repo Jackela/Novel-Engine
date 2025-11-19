@@ -1,3 +1,5 @@
+import { logger } from '../services/logging/LoggerFactory';
+
 /**
  * Service Worker Registration for Mobile Optimization
  * ===================================================

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { act } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import { BrowserRouter } from 'react-router-dom';
@@ -46,7 +46,7 @@ const createWrapper = () => {
 
   return ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         {children}
       </BrowserRouter>
     </QueryClientProvider>
@@ -65,7 +65,10 @@ describe('ARIA Attribute Validation', () => {
       expect(buttons.length).toBeGreaterThan(0);
     });
     
-    const results = await axe(container);
+    let results: Awaited<ReturnType<typeof axe>>;
+    await act(async () => {
+      results = await axe(container);
+    });
     expect(results).toHaveNoViolations();
   });
 
@@ -112,9 +115,10 @@ describe('ARIA Attribute Validation', () => {
     
     expect(characterCard).toHaveAttribute('aria-pressed', 'false');
     
-    // Click and wait for aria-pressed to update
-    characterCard.click();
-    
+    await act(async () => {
+      characterCard.click();
+    });
+
     await waitFor(() => {
       expect(characterCard).toHaveAttribute('aria-pressed', 'true');
     });

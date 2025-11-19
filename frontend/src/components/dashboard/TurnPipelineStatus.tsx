@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Stack, 
-  Chip, 
-  LinearProgress, 
+import {
+  Box,
+  Typography,
+  Stack,
+  Chip,
+  LinearProgress,
   List,
   ListItem,
   ListItemIcon,
-  ListItemText,
   Avatar,
   useTheme,
   useMediaQuery,
@@ -55,6 +54,10 @@ const StageItem = styled(motion(ListItem), {
   '&:hover': {
     background: $status === 'processing' ? alpha(theme.palette.primary.main, 0.1) : 'var(--color-bg-tertiary)',
     borderLeftWidth: '4px',
+  },
+  '&:focus-visible': {
+    outline: `2px solid ${theme.palette.info.main}`,
+    outlineOffset: 2,
   },
 }));
 
@@ -371,6 +374,8 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
                     data-phase={step.id}
                     data-phase-name={step.name}
                     data-step-index={index}
+                    tabIndex={0}
+                    aria-label={`${step.name} ${step.status}${step.progress ? ` ${step.progress.toFixed(0)} percent` : ''}`}
                     sx={{ 
                       py: isMobile ? 0.5 : 0.75,
                       px: 0,
@@ -401,60 +406,53 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
                           {getStepIcon(step)}
                         </Avatar>
                       </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.25 }}>
-                            <Typography 
-                              variant={isMobile ? 'caption' : 'body2'} 
-                              fontWeight={500}
-                              sx={{ color: (theme) => theme.palette.text.primary }}
-                            >
-                              {step.name}
-                            </Typography>
-                            <StatusChip 
-                              status={step.status} 
-                              label={step.status} 
-                              size="small"
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.25 }}>
+                          <Typography
+                            variant={isMobile ? 'caption' : 'body2'}
+                            fontWeight={500}
+                            sx={{ color: (theme) => theme.palette.text.primary }}
+                            component="div"
+                          >
+                            {step.name}
+                          </Typography>
+                          <StatusChip status={step.status} label={step.status} size="small" />
+                        </Stack>
+                        <Box sx={{ mt: 0.5 }}>
+                          {step.status === 'processing' && (
+                            <AnimatedProgress
+                              variant="determinate"
+                              value={step.progress}
+                              sx={{ mb: 0.5 }}
+                              initial={{ scaleX: 0 }}
+                              animate={{ scaleX: 1 }}
+                              transition={{ duration: 0.5 }}
+                              aria-label={`${step.name} processing progress`}
+                              data-testid="pipeline-progress"
                             />
-                          </Stack>
-                        }
-                        secondary={
-                          <Box sx={{ mt: 0.5 }}>
-                            {step.status === 'processing' && (
-                              <AnimatedProgress
-                                variant="determinate"
-                                value={step.progress}
-                                sx={{ mb: 0.5 }}
-                                initial={{ scaleX: 0 }}
-                                animate={{ scaleX: 1 }}
-                                transition={{ duration: 0.5 }}
-                                aria-label={`${step.name} processing progress`}
-                                data-testid="pipeline-progress"
-                              />
+                          )}
+                          <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                            {step.character && (
+                              <Stack direction="row" alignItems="center" spacing={0.5}>
+                                <CharacterIcon sx={{ fontSize: '14px', color: (theme) => theme.palette.primary.main }} />
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }} component="span">
+                                  {step.character}
+                                </Typography>
+                              </Stack>
                             )}
-                            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-                              {step.character && (
-                                <Stack direction="row" alignItems="center" spacing={0.5}>
-                                  <CharacterIcon sx={{ fontSize: '14px', color: (theme) => theme.palette.primary.main }} />
-                                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                    {step.character}
-                                  </Typography>
-                                </Stack>
-                              )}
-                              {step.duration !== undefined && (
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                  {step.duration.toFixed(1)}s
-                                </Typography>
-                              )}
-                              {step.status === 'processing' && (
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                  {step.progress.toFixed(0)}%
-                                </Typography>
-                              )}
-                            </Stack>
-                          </Box>
-                        }
-                      />
+                            {step.duration !== undefined && (
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }} component="span">
+                                {step.duration.toFixed(1)}s
+                              </Typography>
+                            )}
+                            {step.status === 'processing' && (
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }} component="span">
+                                {step.progress.toFixed(0)}%
+                              </Typography>
+                            )}
+                          </Stack>
+                        </Box>
+                      </Box>
                     </Box>
                   </StageItem>
                 </Fade>

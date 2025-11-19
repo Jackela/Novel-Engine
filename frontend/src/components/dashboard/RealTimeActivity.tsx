@@ -1,28 +1,31 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Box, 
-  List, 
-  ListItem, 
-  ListItemText, 
-  Typography, 
-  Chip, 
-  Avatar, 
-  Stack, 
+import {
+  Box,
+  List,
+  ListItem,
+  Typography,
+  Chip,
+  Avatar,
+  Stack,
   Badge,
   useTheme,
   useMediaQuery,
   Fade,
+  Button,
+  Alert,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   Person as PersonIcon,
   AutoStories as StoryIcon,
   Psychology as BrainIcon,
   Speed as ActivityIcon,
-  Notifications as NotificationIcon
+  Notifications as NotificationIcon,
+  Error as AlertCircleIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
+import { useRealtimeEvents } from '../../hooks/useRealtimeEvents';
 
 const ActivityList = styled(List)(({ theme }) => ({
   padding: 0,
@@ -74,142 +77,38 @@ const PulsingBadge = styled(motion.div)({
   justifyContent: 'center',
 });
 
-interface ActivityEvent {
-  id: string;
-  type: 'character' | 'story' | 'system' | 'interaction';
-  title: string;
-  description: string;
-  timestamp: Date;
-  characterName?: string;
-  severity: 'low' | 'medium' | 'high';
-}
-
 interface RealTimeActivityProps {
   loading?: boolean;
   error?: boolean;
   density?: 'default' | 'condensed';
 }
 
-const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, density = 'default' }) => {
+const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading: propLoading, error: propError, density = 'default' }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isCondensed = density === 'condensed' && !isMobile;
-  const [activities, setActivities] = useState<ActivityEvent[]>([
-    {
-      id: '1',
-      type: 'character',
-      title: 'Character Action',
-      description: 'Aria Shadowbane initiated a stealth sequence',
-      timestamp: new Date(Date.now() - 30000),
-      characterName: 'Aria Shadowbane',
-      severity: 'medium',
-    },
-    {
-      id: '2',
-      type: 'story',
-      title: 'Plot Development',
-      description: 'New narrative thread: "The Ancient Prophecy" introduced',
-      timestamp: new Date(Date.now() - 120000),
-      severity: 'high',
-    },
-    {
-      id: '3',
-      type: 'system',
-      title: 'AI Processing',
-      description: 'Generated 3 dialogue responses for merchant encounter',
-      timestamp: new Date(Date.now() - 180000),
-      severity: 'low',
-    },
-    {
-      id: '4',
-      type: 'interaction',
-      title: 'Character Interaction',
-      description: 'Merchant Aldric engaged in dialogue with party',
-      timestamp: new Date(Date.now() - 240000),
-      characterName: 'Merchant Aldric',
-      severity: 'medium',
-    },
-    {
-      id: '5',
-      type: 'system',
-      title: 'Memory Update',
-      description: 'Updated character relationship: Trust +2 (Aria → Aldric)',
-      timestamp: new Date(Date.now() - 300000),
-      severity: 'low',
-    },
-  ]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [_highlightedId] = useState<string | null>(null); // Unused - reserved for future event highlighting feature
 
-  const [unreadCount, setUnreadCount] = useState(2);
-  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  // Use SSE hook for real-time events
+  const { events, loading: hookLoading, error: hookError, connectionState } = useRealtimeEvents({ enabled: true });
+
+  // Use hook state or prop state
+  const loading = propLoading ?? hookLoading;
+  const error = propError ?? hookError;
 
   const handleMarkAsRead = useCallback(() => {
     setUnreadCount(0);
   }, []);
 
-  // Simulate real-time updates
+  // Update unread count when new events arrive
   useEffect(() => {
-    const interval = setInterval(() => {
-      const eventTypes: ActivityEvent['type'][] = ['character', 'story', 'system', 'interaction'];
-      const severities: ActivityEvent['severity'][] = ['low', 'medium', 'high'];
-      const characters = ['Aria Shadowbane', 'Merchant Aldric', 'Elder Thorne', 'Captain Vex'];
-      
-      const descriptions = {
-        character: [
-          'initiated a combat sequence',
-          'cast a spell: Healing Light',
-          'discovered a hidden passage',
-          'leveled up to level 5',
-        ],
-        story: [
-          'New quest: "The Lost Crown" available',
-          'Plot twist revealed in current arc',
-          'Chapter completed: "The Forest Path"',
-          'New location unlocked: Crystal Caverns',
-        ],
-        system: [
-          'Generated environmental description',
-          'Processed emotion analysis for dialogue',
-          'Updated world state: Weather changed',
-          'AI model responded in 1.2s',
-        ],
-        interaction: [
-          'engaged in complex dialogue',
-          'formed alliance with party',
-          'entered hostile state',
-          'provided quest information',
-        ],
-      };
+    if (connectionState === 'connected' && events.length > 0) {
+      setUnreadCount(events.length);
+    }
+  }, [events.length, connectionState]);
 
-      if (Math.random() < 0.3) { // 30% chance to add new activity
-        const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
-        const severity = severities[Math.floor(Math.random() * severities.length)];
-        const descList = descriptions[type];
-        
-        const newActivity: ActivityEvent = {
-          id: Date.now().toString(),
-          type,
-          title: type.charAt(0).toUpperCase() + type.slice(1) + ' Event',
-          description: type === 'character' || type === 'interaction' 
-            ? `${characters[Math.floor(Math.random() * characters.length)]} ${descList[Math.floor(Math.random() * descList.length)]}`
-            : descList[Math.floor(Math.random() * descList.length)],
-          timestamp: new Date(),
-          characterName: (type === 'character' || type === 'interaction') 
-            ? characters[Math.floor(Math.random() * characters.length)]
-            : undefined,
-          severity,
-        };
-
-        setActivities(prev => [newActivity, ...prev.slice(0, 9)]); // Keep only 10 most recent
-        setUnreadCount(prev => prev + 1);
-        setHighlightedId(newActivity.id);
-        setTimeout(() => setHighlightedId(null), 3000);
-      }
-    }, 5000); // Check every 5 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const getActivityIcon = (type: ActivityEvent['type']) => {
+  const getActivityIcon = (type: 'character' | 'story' | 'system' | 'interaction') => {
     const iconProps = { fontSize: 'small' as const };
     switch (type) {
       case 'character':
@@ -223,7 +122,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
     }
   };
 
-  const getSeverityColor = (severity: ActivityEvent['severity']) => {
+  const getSeverityColor = (severity: 'low' | 'medium' | 'high') => {
     switch (severity) {
       case 'high':
         return theme.palette.error.main;
@@ -234,10 +133,10 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
     }
   };
 
-  const formatTimestamp = (timestamp: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - timestamp.getTime();
-    
+  const formatTimestamp = (timestampMs: number) => {
+    const now = Date.now();
+    const diff = now - timestampMs;
+
     if (diff < 60000) {
       return 'Just now';
     } else if (diff < 3600000) {
@@ -246,6 +145,72 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
       return `${Math.floor(diff / 3600000)}h ago`;
     }
   };
+
+  const badgeCount = Math.min(unreadCount, events.length);
+  const eventCountLabel = events.length > 0 ? `${events.length} events` : 'No events';
+  const isConnected = connectionState === 'connected';
+  const connectionLabel = isConnected ? '● Live' : '○ Connecting';
+  const connectionColor = isConnected ? theme.palette.success.main : theme.palette.text.disabled;
+
+  // Error-first UI: Show error state when connection fails
+  if (error) {
+    return (
+      <GridTile
+        title="Real-time Activity"
+        data-testid="real-time-activity"
+        position={{
+          desktop: { column: 'span 2', height: isCondensed ? '240px' : '280px' },
+          tablet: { column: 'span 2', height: '260px' },
+          mobile: { column: 'span 1', height: '220px' },
+        }}
+        loading={false}
+        error={false}
+      >
+        <Box
+          role="alert"
+          sx={{
+            p: 2,
+            borderRadius: 1,
+            border: `1px solid ${theme.palette.error.light}`,
+            backgroundColor: theme.palette.error.main + '10',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            textAlign: 'center',
+          }}
+        >
+          <AlertCircleIcon
+            sx={{
+              fontSize: 48,
+              color: theme.palette.error.main,
+              mb: 2,
+            }}
+            aria-hidden="true"
+          />
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{ fontWeight: 600, color: theme.palette.error.main, mb: 1 }}
+          >
+            Unable to load live events
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: '400px' }}>
+            {hookError?.message || 'Failed to connect to event stream. Please check your connection and try again.'}
+          </Typography>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => window.location.reload()}
+            sx={{ textTransform: 'none' }}
+          >
+            Retry Connection
+          </Button>
+        </Box>
+      </GridTile>
+    );
+  }
 
   return (
     <GridTile
@@ -257,7 +222,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
         mobile: { column: 'span 1', height: '220px' },
       }}
       loading={loading}
-      error={error}
+      error={false}
       onMenuClick={handleMarkAsRead}
     >
       {isMobile ? (
@@ -266,7 +231,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
           <ActivityHeader sx={{ flexShrink: 0 }}>
             <Stack direction="row" spacing={1} alignItems="center">
               <PulsingBadge
-                animate={unreadCount > 0 ? {
+                animate={badgeCount > 0 ? {
                   scale: [1, 1.1, 1],
                 } : {}}
                 transition={{
@@ -275,16 +240,21 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
                   ease: "easeInOut"
                 }}
               >
-                <Badge badgeContent={unreadCount} color="primary">
+                <Badge badgeContent={badgeCount} color="primary">
                   <NotificationIcon fontSize="small" sx={{ color: (theme) => theme.palette.primary.main }} />
                 </Badge>
               </PulsingBadge>
-              <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                Live Feed
+              <Typography
+                variant="body2"
+                fontWeight={500}
+                component="div"
+                sx={{ color: connectionColor }}
+              >
+                {connectionLabel}
               </Typography>
             </Stack>
             <Chip 
-              label={`${activities.length} events`} 
+              label={eventCountLabel} 
               size="small" 
               sx={{ 
                 backgroundColor: 'background.paper',
@@ -296,8 +266,13 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
           </ActivityHeader>
           
           <ActivityList sx={{ flex: 1, minHeight: '160px' }}>
-            <AnimatePresence initial={false}>
-              {activities.slice(0, 6).map((activity, index) => (
+            {events.length === 0 && connectionState === 'connected' ? (
+              <Typography variant="body2" color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
+                No recent events
+              </Typography>
+            ) : (
+              <AnimatePresence initial={false}>
+                {events.slice(0, 6).map((activity, index) => (
                 <ActivityItem 
                   data-testid="activity-event"
                   key={activity.id} 
@@ -305,7 +280,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
                   sx={{ 
                     py: 1, 
                     minHeight: '48px',
-                    backgroundColor: highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                    backgroundColor: _highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
                   }}
                   data-activity-type={activity.type}
                   data-severity={activity.severity}
@@ -327,41 +302,42 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
                   >
                     {getActivityIcon(activity.type)}
                   </Avatar>
-                  <ListItemText
-                    primary={
-                      <Typography variant="body2" fontWeight={500} sx={{ lineHeight: 1.3, mb: 0.25, color: 'text.primary' }}>
-                        {activity.description.length > 60 
-                          ? `${activity.description.substring(0, 60)}...`
-                          : activity.description
-                        }
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="body2"
+                      component="div"
+                      fontWeight={500}
+                      sx={{ lineHeight: 1.3, mb: 0.25, color: 'text.primary' }}
+                    >
+                      {activity.description.length > 60
+                        ? `${activity.description.substring(0, 60)}...`
+                        : activity.description}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography variant="caption" component="span" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                        {formatTimestamp(activity.timestamp)}
                       </Typography>
-                    }
-                    secondary={
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                          {formatTimestamp(activity.timestamp)}
-                        </Typography>
-                        {activity.characterName && (
-                          <Box data-testid="character-activity" sx={{ display: 'inline-flex' }}>
-                            <Chip
-                              label={activity.characterName}
-                              size="small"
-                              sx={{ 
-                                height: '18px', 
-                                fontSize: '0.6rem',
-                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                                borderColor: (theme) => theme.palette.primary.main,
-                                color: (theme) => theme.palette.text.secondary,
-                              }}
-                            />
-                          </Box>
-                        )}
-                      </Stack>
-                    }
-                  />
+                      {activity.characterName && (
+                        <Box data-testid="character-activity" sx={{ display: 'inline-flex' }}>
+                          <Chip
+                            label={activity.characterName}
+                            size="small"
+                            sx={{
+                              height: '18px',
+                              fontSize: '0.6rem',
+                              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                              borderColor: (theme) => theme.palette.primary.main,
+                              color: (theme) => theme.palette.text.secondary,
+                            }}
+                          />
+                        </Box>
+                      )}
+                    </Stack>
+                  </Box>
                 </ActivityItem>
               ))}
             </AnimatePresence>
+            )}
           </ActivityList>
         </Box>
       ) : (
@@ -370,7 +346,7 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
           <ActivityHeader>
             <Stack direction="row" spacing={1} alignItems="center">
               <PulsingBadge
-                animate={unreadCount > 0 ? {
+                animate={badgeCount > 0 ? {
                   scale: [1, 1.1, 1],
                 } : {}}
                 transition={{
@@ -379,16 +355,21 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
                   ease: "easeInOut"
                 }}
               >
-                <Badge badgeContent={unreadCount} color="primary">
+                <Badge badgeContent={badgeCount} color="primary">
                   <NotificationIcon fontSize="small" sx={{ color: (theme) => theme.palette.primary.main }} />
                 </Badge>
               </PulsingBadge>
-              <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                Live Feed
+              <Typography
+                variant="body2"
+                fontWeight={500}
+                component="div"
+                sx={{ color: connectionColor }}
+              >
+                {connectionLabel}
               </Typography>
             </Stack>
             <Chip 
-              label={`${activities.length} events`} 
+              label={eventCountLabel} 
               size="small" 
               sx={{ 
                 backgroundColor: 'background.paper',
@@ -412,14 +393,19 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
             }
             data-density={isCondensed ? 'condensed' : 'default'}
           >
-            <AnimatePresence initial={false}>
-              {activities.map((activity, index) => (
+            {events.length === 0 && connectionState === 'connected' ? (
+              <Typography variant="body2" color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
+                No recent events
+              </Typography>
+            ) : (
+              <AnimatePresence initial={false}>
+                {events.map((activity, index) => (
                 <ActivityItem 
                   data-testid="activity-event"
                   key={activity.id}
                   severity={activity.severity}
                   sx={{
-                    backgroundColor: highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                    backgroundColor: _highlightedId === activity.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
                     flexDirection: isCondensed ? 'column' : 'row',
                     gap: isCondensed ? 0.5 : 0,
                   }}
@@ -443,47 +429,40 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading, error, den
                   >
                     {getActivityIcon(activity.type)}
                   </Avatar>
-                  <ListItemText
-                    primary={
-                      <Typography
-                        variant="body2"
-                        fontWeight={500}
-                        sx={{ color: 'text.primary', lineHeight: 1.3 }}
-                      >
-                        {activity.description}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="body2"
+                      component="div"
+                      fontWeight={500}
+                      sx={{ color: 'text.primary', lineHeight: 1.3 }}
+                    >
+                      {activity.description}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                      {activity.characterName && (
+                        <Box data-testid="character-activity" sx={{ display: 'inline-flex' }}>
+                          <Chip
+                            label={activity.characterName}
+                            size="small"
+                            sx={{
+                              height: '16px',
+                              fontSize: '0.65rem',
+                              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                              borderColor: (theme) => theme.palette.primary.main,
+                              color: (theme) => theme.palette.text.secondary,
+                            }}
+                          />
+                        </Box>
+                      )}
+                      <Typography variant="caption" component="span" color="text.secondary">
+                        {formatTimestamp(activity.timestamp)}
                       </Typography>
-                    }
-                    secondary={
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        alignItems="center"
-                        sx={{ mt: 0.5, flexWrap: 'wrap' }}
-                      >
-                        {activity.characterName && (
-                          <Box data-testid="character-activity" sx={{ display: 'inline-flex' }}>
-                            <Chip
-                              label={activity.characterName}
-                              size="small"
-                              sx={{ 
-                                height: '16px', 
-                                fontSize: '0.65rem',
-                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                                borderColor: (theme) => theme.palette.primary.main,
-                                color: (theme) => theme.palette.text.secondary,
-                              }}
-                            />
-                          </Box>
-                        )}
-                        <Typography variant="caption" color="text.secondary">
-                          {formatTimestamp(activity.timestamp)}
-                        </Typography>
-                      </Stack>
-                    }
-                  />
+                    </Stack>
+                  </Box>
                 </ActivityItem>
               ))}
             </AnimatePresence>
+            )}
           </ActivityList>
         </Box>
       )}

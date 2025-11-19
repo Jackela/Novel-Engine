@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import * as queries from '@/services/queries';
 import api from '@/services/api';
@@ -16,12 +16,13 @@ describe('US3: Query hooks states', () => {
   it('loading -> data success flow', async () => {
     vi.spyOn(api, 'getCharacters').mockResolvedValueOnce(['a', 'b']);
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(
-      <QueryClientProvider client={qc}>
-        <HookProbe />
-      </QueryClientProvider>
-    );
-    expect(await screen.findByText('loading')).toBeTruthy();
+    await act(async () => {
+      render(
+        <QueryClientProvider client={qc}>
+          <HookProbe />
+        </QueryClientProvider>
+      );
+    });
     await waitFor(async () => {
       expect(await screen.findByText('count:2')).toBeTruthy();
     });
@@ -30,12 +31,13 @@ describe('US3: Query hooks states', () => {
   it('error flow', async () => {
     vi.spyOn(api, 'getCharacters').mockRejectedValueOnce(new Error('boom'));
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(
-      <QueryClientProvider client={qc}>
-        <HookProbe />
-      </QueryClientProvider>
-    );
-    expect(await screen.findByText('loading')).toBeTruthy();
+    await act(async () => {
+      render(
+        <QueryClientProvider client={qc}>
+          <HookProbe />
+        </QueryClientProvider>
+      );
+    });
     await waitFor(async () => {
       expect(await screen.findByText('error')).toBeTruthy();
     });

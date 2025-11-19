@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import userEvent from '@testing-library/user-event';
+import { act } from 'react';
 import { KeyboardButton } from '../../../src/components/a11y/KeyboardButton';
 
 expect.extend(toHaveNoViolations);
@@ -12,7 +13,10 @@ describe('KeyboardButton', () => {
         Click me
       </KeyboardButton>
     );
-    const results = await axe(container);
+    let results: Awaited<ReturnType<typeof axe>>;
+    await act(async () => {
+      results = await axe(container);
+    });
     expect(results).toHaveNoViolations();
   });
 
