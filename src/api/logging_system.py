@@ -572,7 +572,7 @@ def setup_logging(
     app.state.logger = logger
 
     # Setup log endpoints
-    @app.get("/api/v1/logs/health", tags=["Monitoring"])
+    @app.get("/api/logs/health", tags=["Monitoring"])
     async def get_logging_health():
         """Get logging system health."""
         return {
@@ -583,7 +583,7 @@ def setup_logging(
             "handlers_count": len(logger.logger.handlers),
         }
 
-    @app.get("/api/v1/logs/security", tags=["Monitoring"])
+    @app.get("/api/logs/security", tags=["Monitoring"])
     async def get_security_events(limit: int = 100):
         """Get recent security events."""
         events = logger.security_logger.get_recent_security_events(limit)

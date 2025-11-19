@@ -839,16 +839,6 @@ def _register_legacy_routes(app: FastAPI):
                 detail=f"Failed to retrieve character details: {str(e)}",
             )
 
-    @app.get("/api/v1/characters", response_model=dict)
-    async def legacy_get_characters_v1():
-        """Versioned alias for the legacy characters list."""
-        return await legacy_get_characters()
-
-    @app.get("/api/v1/characters/{character_id}", response_model=dict)
-    async def legacy_get_character_detail_v1(character_id: str):
-        """Versioned alias for the legacy character detail."""
-        return await legacy_get_character_detail(character_id)
-
     @app.get("/api/characters", response_model=dict)
     async def legacy_get_characters_api():
         """Unversioned REST endpoint for legacy characters list."""
@@ -960,7 +950,7 @@ def _register_legacy_routes(app: FastAPI):
             active_sse_connections["count"] -= 1
             raise
 
-    @app.get("/api/v1/events/stream", tags=["Dashboard"])
+    @app.get("/api/events/stream", tags=["Dashboard"])
     async def stream_events():
         """
         Server-Sent Events (SSE) endpoint for real-time dashboard events.
@@ -973,7 +963,7 @@ def _register_legacy_routes(app: FastAPI):
 
         Example:
             ```javascript
-            const eventSource = new EventSource('/api/v1/events/stream');
+            const eventSource = new EventSource('/api/events/stream');
             eventSource.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 console.log('Event:', data);

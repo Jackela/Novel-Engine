@@ -925,23 +925,6 @@ async def get_campaigns() -> CampaignsListResponse:
         return CampaignsListResponse(campaigns=[])
 
 
-@app.get("/api/v1/characters", response_model=CharactersListResponse)
-async def get_characters_v1() -> CharactersListResponse:
-    """Versioned alias for /characters to support the /api/v1 contract."""
-    return await get_characters()
-
-
-@app.get("/api/v1/characters/{character_id}", response_model=CharacterDetailResponse)
-async def get_character_detail_v1(character_id: str) -> CharacterDetailResponse:
-    """Versioned alias for /characters/{id}."""
-    return await get_character_detail(character_id)
-
-
-@app.get("/api/v1/characters/{character_id}/enhanced")
-async def get_character_enhanced_v1(character_id: str) -> Dict[str, Any]:
-    """Versioned alias for /characters/{id}/enhanced."""
-    return await get_character_enhanced(character_id)
-
 @app.get("/api/characters", response_model=CharactersListResponse)
 async def get_characters_api() -> CharactersListResponse:
     """Unversioned REST endpoint for characters list."""
@@ -1048,7 +1031,7 @@ async def event_generator(client_id: str):
         raise
 
 
-@app.get("/api/v1/events/stream", tags=["Dashboard"])
+@app.get("/api/events/stream", tags=["Dashboard"])
 async def stream_events():
     """
     Server-Sent Events (SSE) endpoint for real-time dashboard events.
@@ -1061,7 +1044,7 @@ async def stream_events():
 
     Example:
         ```javascript
-        const eventSource = new EventSource('/api/v1/events/stream');
+        const eventSource = new EventSource('/api/events/stream');
         eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
             console.log('Event:', data);
