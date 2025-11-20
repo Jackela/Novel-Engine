@@ -120,7 +120,7 @@ class CharacterAPI:
     def setup_routes(self, app: FastAPI):
         """Sets up API routes."""
 
-        @app.post("/api/v1/characters", response_model=dict)
+        @app.post("/api/characters", response_model=dict)
         async def create_character(request: CharacterCreationRequest):
             """Creates a new character."""
             if not self.orchestrator:
@@ -167,7 +167,7 @@ class CharacterAPI:
                 logger.error(f"Error creating character: {e}")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
-        @app.get("/api/v1/characters", response_model=CharacterListResponse)
+        @app.get("/api/characters", response_model=CharacterListResponse)
         async def list_characters():
             """List all characters."""
             if not self.orchestrator:
@@ -196,7 +196,7 @@ class CharacterAPI:
                 logger.error(f"Error listing characters: {e}")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
-        @app.get("/api/v1/characters/{character_id}", response_model=dict)
+        @app.get("/api/characters/{character_id}", response_model=dict)
         async def get_character(
             character_id: str = Path(..., description="Character ID")
         ):
@@ -228,7 +228,7 @@ class CharacterAPI:
                 logger.error(f"Error getting character {character_id}: {e}")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
-        @app.put("/api/v1/characters/{character_id}", response_model=dict)
+        @app.put("/api/characters/{character_id}", response_model=dict)
         async def update_character(character_id: str, request: CharacterUpdateRequest):
             """Update character information."""
             if not self.orchestrator:

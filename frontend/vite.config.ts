@@ -104,10 +104,10 @@ export default defineConfig({
       port: 3001,
     },
     proxy: {
-      '/api/v1': {
+      // Proxy /api/* to backend without versioning
+      '/api': {
         target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path) => path, // Keep /api/v1 prefix
 
         // SSE-specific configuration for event streaming
         configure: (proxy, _options) => {
@@ -120,11 +120,6 @@ export default defineConfig({
             }
           });
         },
-      },
-      // Legacy /api endpoint (without version prefix)
-      '/api': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
       },
     },
   },

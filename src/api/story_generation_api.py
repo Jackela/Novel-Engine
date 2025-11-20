@@ -200,7 +200,7 @@ class StoryGenerationAPI:
     def setup_routes(self, app: FastAPI):
         """Sets up API routes for story generation."""
 
-        @app.post("/api/v1/stories/generate", response_model=StoryGenerationResponse)
+        @app.post("/api/stories/generate", response_model=StoryGenerationResponse)
         async def generate_story(
             request: StoryGenerationRequest, background_tasks: BackgroundTasks
         ):
@@ -244,7 +244,7 @@ class StoryGenerationAPI:
                 logger.error(f"Error initiating story generation: {e}")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
-        @app.websocket("/api/v1/stories/progress/{generation_id}")
+        @app.websocket("/api/stories/progress/{generation_id}")
         async def websocket_progress(websocket: WebSocket, generation_id: str):
             """Optimized WebSocket endpoint with connection pooling."""
             try:
@@ -292,7 +292,7 @@ class StoryGenerationAPI:
             finally:
                 self.connection_pool.remove_connection(generation_id, websocket)
 
-        @app.get("/api/v1/stories/status/{generation_id}")
+        @app.get("/api/stories/status/{generation_id}")
         async def get_generation_status(generation_id: str):
             """Get current status of a story generation (REST fallback)."""
             if generation_id not in self.active_generations:

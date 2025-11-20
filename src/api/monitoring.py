@@ -540,7 +540,7 @@ def setup_monitoring(app, enable_alerts: bool = True):
     app.add_middleware(MonitoringMiddleware, metrics_collector=metrics_collector)
 
     # Add metrics endpoint
-    @app.get("/api/v1/metrics", tags=["Monitoring"])
+    @app.get("/api/metrics", tags=["Monitoring"])
     async def get_metrics():
         """Get system metrics and statistics."""
         summary = metrics_collector.get_metrics_summary()
@@ -557,7 +557,7 @@ def setup_monitoring(app, enable_alerts: bool = True):
         return summary
 
     # Add performance endpoint
-    @app.get("/api/v1/metrics/performance", tags=["Monitoring"])
+    @app.get("/api/metrics/performance", tags=["Monitoring"])
     async def get_performance_metrics():
         """Get detailed performance metrics."""
         summary = metrics_collector.get_metrics_summary()

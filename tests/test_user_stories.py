@@ -105,7 +105,7 @@ class TestUserStories:
             "skills": {"combat": 0.9, "leadership": 0.7, "courage": 0.95},
         }
 
-        response = api_client.post("/api/v1/characters", json=character_data)
+        response = api_client.post("/api/characters", json=character_data)
         assert response.status_code == 200
 
         result = response.json()
@@ -116,7 +116,7 @@ class TestUserStories:
 
         # Verify character was created with template enhancement
         character_detail = api_client.get(
-            f"/api/v1/characters/{character_data['agent_id']}"
+            f"/api/characters/{character_data['agent_id']}"
         )
         assert character_detail.status_code == 200
 
@@ -144,7 +144,7 @@ class TestUserStories:
             "personality_traits": "Analytical, curious, methodical",
         }
 
-        create_response = api_client.post("/api/v1/characters", json=character_data)
+        create_response = api_client.post("/api/characters", json=character_data)
         assert create_response.status_code == 200
 
         # Test character customization
@@ -157,13 +157,13 @@ class TestUserStories:
         }
 
         update_response = api_client.put(
-            f"/api/v1/characters/{character_data['agent_id']}", json=update_data
+            f"/api/characters/{character_data['agent_id']}", json=update_data
         )
         assert update_response.status_code == 200
 
         # Verify customization applied
         updated_character = api_client.get(
-            f"/api/v1/characters/{character_data['agent_id']}"
+            f"/api/characters/{character_data['agent_id']}"
         )
         updated_data = updated_character.json()
 
@@ -189,7 +189,7 @@ class TestUserStories:
             "personality_traits": "This is a personality description that is definitely longer than fifty characters to meet the validation requirement",
         }
 
-        response_1 = api_client.post("/api/v1/characters", json=character_1)
+        response_1 = api_client.post("/api/characters", json=character_1)
         assert response_1.status_code == 200
 
         # Try to create character with same agent_id (should fail)
@@ -199,7 +199,7 @@ class TestUserStories:
             "personality_traits": "This is another personality description that is also longer than fifty characters for validation",
         }
 
-        response_2 = api_client.post("/api/v1/characters", json=character_2)
+        response_2 = api_client.post("/api/characters", json=character_2)
         assert response_2.status_code == 400  # Should fail due to duplicate ID
 
         # Test personality length validation
@@ -209,7 +209,7 @@ class TestUserStories:
             "personality_traits": "Short",  # Too short (less than 50 characters)
         }
 
-        response_3 = api_client.post("/api/v1/characters", json=character_3)
+        response_3 = api_client.post("/api/characters", json=character_3)
         assert response_3.status_code == 422  # Validation error
 
     # ++ USER STORY 2: REAL-TIME CHARACTER INTERACTIONS TESTS ++
@@ -233,7 +233,7 @@ class TestUserStories:
                 "name": f"Test Character {i+1}",
                 "personality_traits": f"Personality traits for character {i+1} that are long enough for validation requirements",
             }
-            response = api_client.post("/api/v1/characters", json=char_data)
+            response = api_client.post("/api/characters", json=char_data)
             assert response.status_code == 200
             characters.append(char_data["agent_id"])
 
@@ -252,7 +252,7 @@ class TestUserStories:
                 "real_time_updates": False,
             }
 
-            response = api_client.post("/api/v1/interactions", json=interaction_data)
+            response = api_client.post("/api/interactions", json=interaction_data)
             assert response.status_code == 200
 
             result = response.json()
@@ -269,7 +269,7 @@ class TestUserStories:
             "auto_process": True,
         }
 
-        response = api_client.post("/api/v1/interactions", json=multi_char_interaction)
+        response = api_client.post("/api/interactions", json=multi_char_interaction)
         assert response.status_code == 200
 
         result = response.json()
@@ -294,7 +294,7 @@ class TestUserStories:
                 "name": f"Realtime Character {i+1}",
                 "personality_traits": "Detailed personality traits for real-time interaction testing that meet validation length requirements",
             }
-            response = api_client.post("/api/v1/characters", json=char_data)
+            response = api_client.post("/api/characters", json=char_data)
             assert response.status_code == 200
             char_ids.append(char_data["agent_id"])
 
@@ -308,7 +308,7 @@ class TestUserStories:
             "intervention_allowed": True,  # Allow user intervention
         }
 
-        response = api_client.post("/api/v1/interactions", json=interaction_data)
+        response = api_client.post("/api/interactions", json=interaction_data)
         assert response.status_code == 200
 
         result = response.json()
@@ -317,7 +317,7 @@ class TestUserStories:
         assert result["websocket_url"] is not None
 
         # Check interaction status progression
-        status_response = api_client.get(f"/api/v1/interactions/{interaction_id}")
+        status_response = api_client.get(f"/api/interactions/{interaction_id}")
         assert status_response.status_code == 200
 
         status_data = status_response.json()
@@ -481,7 +481,7 @@ class TestUserStories:
         assert "timestamp" in health_data
 
         # Check system information
-        info_response = api_client.get("/api/v1/system/info")
+        info_response = api_client.get("/api/system/info")
         assert info_response.status_code == 200
 
         info_data = info_response.json()
@@ -507,7 +507,7 @@ class TestUserStories:
             assert features.get(feature) is True
 
         # Check API endpoints documentation
-        endpoints_response = api_client.get("/api/v1/system/endpoints")
+        endpoints_response = api_client.get("/api/system/endpoints")
         assert endpoints_response.status_code == 200
 
         endpoints_data = endpoints_response.json()

@@ -164,7 +164,7 @@ class NovelEngineAPI {
         characters: storyData.characters,
         title: storyData.title,
       };
-      const response = await this.client.post<GenerateStoryResponse>('/api/v1/stories/generate', generationRequest as unknown as Record<string, unknown>);
+      const response = await this.client.post<GenerateStoryResponse>('/api/stories/generate', generationRequest as unknown as Record<string, unknown>);
       
       // Return response with generation_id for WebSocket tracking
       return {
@@ -194,7 +194,7 @@ class NovelEngineAPI {
   }
 
   async getGenerationStatus(generationId: string): Promise<{ generation_id: string; status: string; progress: number; stage: string; estimated_time_remaining: number; }> {
-    const response = await this.client.get<{ generation_id: string; status: string; progress: number; stage: string; estimated_time_remaining: number; }>(`/api/v1/stories/status/${generationId}`);
+    const response = await this.client.get<{ generation_id: string; status: string; progress: number; stage: string; estimated_time_remaining: number; }>(`/api/stories/status/${generationId}`);
     return response.data;
   }
 

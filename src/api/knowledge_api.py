@@ -152,7 +152,7 @@ def create_knowledge_api() -> APIRouter:
         APIRouter with knowledge management endpoints
     """
     router = APIRouter(
-        prefix="/api/v1/knowledge",
+        prefix="/api/knowledge",
         tags=["Knowledge Management"],
         responses={
             401: {"description": "Unauthorized"},

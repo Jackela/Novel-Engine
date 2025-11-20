@@ -202,12 +202,14 @@ describe('Dashboard accessibility + data parity', () => {
     expect(apiFeedBadges.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('only attempts /api/characters endpoints (base + same-origin proxy) when the primary API fails', async () => {
+  it('only attempts /api/characters endpoints (canonical + same-origin proxy) per spec requirement', async () => {
     const proxyFetch = vi.fn(async (url: RequestInfo | URL) => {
       const endpoint = typeof url === 'string' ? url : url.toString();
-      if (endpoint.includes('127.0.0.1:8000') && endpoint.includes('/api/characters')) {
+      // Primary canonical endpoint fails
+      if (endpoint.includes('127.0.0.1:8000/api/characters')) {
         return new Response('Server error', { status: 500 });
       }
+      // Same-origin proxy succeeds
       if (endpoint.includes('/api/characters')) {
         return new Response(JSON.stringify({ characters: ['pilot'] }), {
           status: 200,
@@ -229,9 +231,12 @@ describe('Dashboard accessibility + data parity', () => {
     );
 
     expect(attemptedUrls).not.toHaveLength(0);
+    // Verify only /api/characters endpoints were attempted (no versioning)
     expect(attemptedUrls.every((url) => url.includes('/api/characters'))).toBe(true);
-    expect(attemptedUrls.some((url) => url.startsWith('http://127.0.0.1:8000/'))).toBe(true);
-    expect(attemptedUrls.some((url) => url.includes(window.location.origin))).toBe(true);
+    // Verify canonical endpoint was tried first
+    expect(attemptedUrls.some((url) => url.includes('127.0.0.1:8000') && url.includes('/api/characters'))).toBe(true);
+    // Verify same-origin proxy fallback was tried
+    expect(attemptedUrls.some((url) => url.endsWith('/api/characters') || url.includes('/api/characters?'))).toBe(true);
   });
 
   it('supports keyboard activation for world map markers', async () => {

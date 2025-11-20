@@ -82,7 +82,7 @@ class TestWorldAPIIntegration:
             "source": "test",
         }
 
-        response = client.post(f"/api/v1/{world_id}/delta", json=delta_data)
+        response = client.post(f"/api/{world_id}/delta", json=delta_data)
 
         # We expect this to fail gracefully (not 404), indicating endpoint exists
         assert response.status_code != 404, "World delta endpoint should exist"
@@ -101,14 +101,14 @@ class TestWorldAPIIntegration:
         world_id = "test-world-123"
 
         # Test basic GET request
-        response = client.get(f"/api/v1/{world_id}/slice")
+        response = client.get(f"/api/{world_id}/slice")
 
         # Endpoint should exist (not 404)
         assert response.status_code != 404, "World slice endpoint should exist"
 
         # Test with query parameters
         response = client.get(
-            f"/api/v1/{world_id}/slice?entities=entity1,entity2&include_metadata=true"
+            f"/api/{world_id}/slice?entities=entity1,entity2&include_metadata=true"
         )
         assert (
             response.status_code != 404
@@ -121,7 +121,7 @@ class TestWorldAPIIntegration:
 
         world_id = "test-world-123"
 
-        response = client.get(f"/api/v1/{world_id}/summary")
+        response = client.get(f"/api/{world_id}/summary")
 
         # Endpoint should exist (not 404)
         assert response.status_code != 404, "World summary endpoint should exist"
@@ -133,13 +133,13 @@ class TestWorldAPIIntegration:
 
         world_id = "test-world-123"
 
-        response = client.get(f"/api/v1/{world_id}/history")
+        response = client.get(f"/api/{world_id}/history")
 
         # Endpoint should exist (not 404)
         assert response.status_code != 404, "World history endpoint should exist"
 
         # Test with query parameters
-        response = client.get(f"/api/v1/{world_id}/history?limit=10&offset=0")
+        response = client.get(f"/api/{world_id}/history?limit=10&offset=0")
         assert (
             response.status_code != 404
         ), "World history endpoint with params should exist"
@@ -151,7 +151,7 @@ class TestWorldAPIIntegration:
 
         world_id = "test-world-123"
 
-        response = client.get(f"/api/v1/{world_id}/validate")
+        response = client.get(f"/api/{world_id}/validate")
 
         # Endpoint should exist (not 404)
         assert response.status_code != 404, "World validate endpoint should exist"
@@ -162,7 +162,7 @@ class TestWorldAPIIntegration:
             pytest.skip("World router not available")
 
         # Test with empty world ID (should be handled by FastAPI)
-        response = client.get("/api/v1//slice")  # Double slash creates empty world_id
+        response = client.get("/api//slice")  # Double slash creates empty world_id
 
         # This should either be 404 (route not matched) or 422 (validation error)
         assert response.status_code in [404, 422], "Empty world ID should be rejected"
@@ -175,27 +175,27 @@ class TestWorldAPIIntegration:
         world_id = "test-world-123"
 
         # Delta endpoint should accept POST
-        response = client.post(f"/api/v1/{world_id}/delta", json={})
+        response = client.post(f"/api/{world_id}/delta", json={})
         assert response.status_code != 405, "Delta endpoint should accept POST"
 
         # Delta endpoint should reject GET
-        response = client.get(f"/api/v1/{world_id}/delta")
+        response = client.get(f"/api/{world_id}/delta")
         assert response.status_code == 405, "Delta endpoint should reject GET"
 
         # Slice endpoint should accept GET
-        response = client.get(f"/api/v1/{world_id}/slice")
+        response = client.get(f"/api/{world_id}/slice")
         assert response.status_code != 405, "Slice endpoint should accept GET"
 
         # Summary endpoint should accept GET
-        response = client.get(f"/api/v1/{world_id}/summary")
+        response = client.get(f"/api/{world_id}/summary")
         assert response.status_code != 405, "Summary endpoint should accept GET"
 
         # History endpoint should accept GET
-        response = client.get(f"/api/v1/{world_id}/history")
+        response = client.get(f"/api/{world_id}/history")
         assert response.status_code != 405, "History endpoint should accept GET"
 
         # Validate endpoint should accept GET
-        response = client.get(f"/api/v1/{world_id}/validate")
+        response = client.get(f"/api/{world_id}/validate")
         assert response.status_code != 405, "Validate endpoint should accept GET"
 
 
@@ -230,7 +230,7 @@ class TestAPIServerIntegration:
                     # App should have routes from World router
                     route_paths = [route.path for route in app.routes]
                     world_routes_exist = any(
-                        "/api/v1/" in path and "{world_id}" in path
+                        "/api/" in path and "{world_id}" in path
                         for path in route_paths
                     )
                     assert (
@@ -287,7 +287,7 @@ def run_world_api_integration_tests():
                         route
                         for route in app.routes
                         if hasattr(route, "path")
-                        and "/api/v1/" in getattr(route, "path", "")
+                        and "/api/" in getattr(route, "path", "")
                     ]
                     if world_routes:
                         print(f"✅ World routes integrated: {len(world_routes)} routes")
