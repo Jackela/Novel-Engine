@@ -245,11 +245,11 @@ describe('Dashboard accessibility + data parity', () => {
     await act(async () => {
       await flushPromises();
     });
-    const marker = await screen.findByRole('gridcell', { name: /Aria Shadowbane/i });
+    const marker = await screen.findByRole('button', { name: /Aria Shadowbane/i });
 
     fireEvent.keyDown(marker, { key: 'Enter' });
 
-    expect(marker).toHaveAttribute('aria-selected', 'true');
+    expect(marker).toHaveAttribute('aria-pressed', 'true');
     expect(marker).toHaveAttribute('aria-controls');
   });
 
