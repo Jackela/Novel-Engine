@@ -26,13 +26,14 @@ import { telemetry } from '../../utils/telemetry';
 
 const ActionButton = styled(motion(IconButton))(({ theme }) => ({
   border: `1px solid ${theme.palette.divider}`,
-  backgroundColor: theme.palette.background.paper,
+  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  backdropFilter: 'blur(10px)',
   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    backgroundColor: theme.palette.action.hover,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderColor: theme.palette.primary.main,
     transform: 'translateY(-2px)',
-    boxShadow: '0 4px 8px rgba(99, 102, 241, 0.2)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
   },
   '&:focus-visible': {
     outline: `2px solid ${theme.palette.info.main}`,
@@ -59,11 +60,12 @@ const ActionButton = styled(motion(IconButton))(({ theme }) => ({
     width: 52,
     height: 52,
   },
-  '&[data-active=\"true\"]': {
+  '&[data-active="true"]': {
     borderColor: theme.palette.primary.main,
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    boxShadow: `0 0 12px ${theme.palette.primary.main}40`,
     '&:hover': {
-      backgroundColor: 'rgba(99, 102, 241, 0.2)',
+      backgroundColor: 'rgba(99, 102, 241, 0.25)',
       borderColor: theme.palette.primary.main,
     },
   },
@@ -105,6 +107,18 @@ const TooltipWrapper = styled('span', {
   ...( $disabled
     ? {
         cursor: 'not-allowed',
+        padding: theme.spacing(2, 3),
+  background: 'rgba(255, 255, 255, 0.03)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  backdropFilter: 'blur(12px)',
+  borderRadius: theme.shape.borderRadius * 2,
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    background: 'rgba(99, 102, 241, 0.15)',
+    borderColor: 'rgba(99, 102, 241, 0.4)',
+    transform: 'translateY(-2px)',
+    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(99, 102, 241, 0.2)',
+  },
         color: theme.palette.action.disabled,
       }
     : {}),
@@ -194,7 +208,8 @@ const QuickActions: React.FC<QuickActionsProps> = ({
         py: isCompact ? 0.25 : 0.5,
         borderRadius: 1,
         border: (theme) => `1px solid ${theme.palette.divider}`,
-        backgroundColor: 'rgba(99, 102, 241, 0.05)',
+        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        backdropFilter: 'blur(4px)',
         width: '100%',
       }}
     >
@@ -408,8 +423,8 @@ const QuickActions: React.FC<QuickActionsProps> = ({
           tablet: { column: 'span 2', height: 'auto' },
           mobile: { column: 'span 1', height: 'auto' },
         }}
-        loading={loading}
-        error={error}
+        loading={loading || false}
+        error={!!error}
       >
         {body}
       </GridTile>

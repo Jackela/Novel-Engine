@@ -1,336 +1,312 @@
 {
   "test_summary": {
-    "total_interactions": 17,
-    "successful_actions": 17,
+    "total_interactions": 16,
+    "successful_actions": 16,
     "errors_encountered": 0,
-    "quality_assessments": 17,
-    "decisions_made": 17
+    "quality_assessments": 16,
+    "decisions_made": 16
   },
   "ai_decisions": [
     {
-      "timestamp": 1755853977.1890354,
+      "timestamp": 1763609144.5256588,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/",
         "elements": {
-          "buttons": 1,
+          "buttons": 2,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nNovel Engine v1.0\nNARRATIVE\nENGINE\nORCHESTRATE COMPLEX SCI-FI STORYLINES ACROSS MERIDIAN STATION. MONITOR CHARACTER NETWORKS, MANAGE EVENT CASCADES, AND WATCH YOUR NARRATIVE EVOLVE IN REAL-TIME.\nLaunch Demo\nEnter Dashboard\nLIVE ORCHESTRATION\n\nReal-time control over narrative turns and character decisions.\n\nADAPTIVE ANALYTICS\n\nDeep insights into plot progression and character relationships.\n\nSECURE ENVIRONMENT\n\nAir-gapped simulation sandbox for safe narrative testing."
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['Launch Demo', 'Enter Dashboard'] - will explore"
     },
     {
-      "timestamp": 1755853980.8079164,
+      "timestamp": 1763609148.4184196,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 23,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nYou're in the demo shell. Actions remain simulated; data may include live API feeds.\nDismiss\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:25:45\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nRE"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['Dismiss', '3', '×'] - will explore"
     },
     {
-      "timestamp": 1755853984.4199808,
+      "timestamp": 1763609152.117578,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:25:45\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755853989.7386591,
+      "timestamp": 1763609155.8294518,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:25:45\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755853993.3326726,
+      "timestamp": 1763609159.5414674,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:25:56\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755853996.9462492,
+      "timestamp": 1763609163.7958558,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:25:56\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755854000.5437548,
+      "timestamp": 1763609167.573794,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:06\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755854004.142066,
+      "timestamp": 1763609171.6434097,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:06\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755854007.7450018,
+      "timestamp": 1763609176.487985,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:16\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755854011.3734543,
+      "timestamp": 1763609180.3151731,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:16\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755854015.0035365,
+      "timestamp": 1763609184.263402,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:16\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755854018.6170595,
+      "timestamp": 1763609188.0785031,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:26\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755854022.2260747,
+      "timestamp": 1763609192.1500769,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:26\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755854025.8333066,
+      "timestamp": 1763609195.9688308,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:26\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755854029.472246,
+      "timestamp": 1763609200.22389,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:36\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     },
     {
-      "timestamp": 1755854033.0732079,
+      "timestamp": 1763609204.4126477,
       "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
+        "title": "Novel Engine - AI Story Generator",
+        "url": "http://localhost:3000/dashboard",
         "elements": {
-          "buttons": 1,
+          "buttons": 22,
           "inputs": 0,
           "textareas": 0,
           "links": 1,
           "forms": 0,
           "selects": 0
         },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
+        "text_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:36\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s avg\nWorld Update\ncompleted\nAria Shadowbane\n0.5s\nSubjective Brief\ncompleted\n1.2s\nInteraction Orchestration\nprocessing\nMerchant Aldric\n73%\nEvent Integration\nqueued\nNarrative Integration\nqueued\nACTIVITY STREAM\nREAL-TIME ACTIVITY\n0\n● Live\nNo events\n\nNo recent events\n\nWORLD STATE\nEXPAND ↗\nWORLD STATE MAP\n5"
       },
       "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
-    },
-    {
-      "timestamp": 1755854036.670938,
-      "context": {
-        "title": "Vite + React",
-        "url": "http://localhost:5173/",
-        "elements": {
-          "buttons": 1,
-          "inputs": 0,
-          "textareas": 0,
-          "links": 1,
-          "forms": 0,
-          "selects": 0
-        },
-        "text_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:8000\n\nREFRESH STATUS\nSimulator Information\nFrontend\n\nReact 19 with Vite\n\nStatus: Active\n\nBackend\n\nFastAPI Server\n\nStatus: Connected\n\nIntegration\n\nREST API via Axios\n\nStatus: Operational\n\nSTART CHARACTER SELECTION\n\nStoryForge AI Interactive Story Engine - Web Interface"
-      },
-      "action": "click_first_button",
-      "reasoning": "Found buttons: ['REFRESH STATUS'] - will explore"
+      "reasoning": "Found buttons: ['3', '×', ''] - will explore"
     }
   ],
   "quality_scores": {
-    "coherence": 0.8354869520895676,
-    "creativity": 0.7697216399576914,
-    "engagement": 0.7923575581101524,
-    "grammar": 0.8858417739760922,
-    "character_consistency": 0.7728092444725486,
-    "overall": 0.8112434337212104
+    "coherence": 0.8319135585687129,
+    "creativity": 0.7649141632413392,
+    "engagement": 0.7816520378178028,
+    "grammar": 0.8991022298351476,
+    "character_consistency": 0.8086588632280242,
+    "depth": 0.8597566225782947,
+    "overall": 0.8243329125448869
   },
   "test_results": {
     "interactions": [
-      {
-        "action": "click_first_button",
-        "success": true,
-        "details": {
-          "clicked": "First available button"
-        }
-      },
       {
         "action": "click_first_button",
         "success": true,
@@ -446,211 +422,215 @@
     ],
     "quality_assessments": [
       {
-        "timestamp": 1755853978.765447,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609146.3599749,
+        "content_preview": "Skip to main content\nYou're in the demo shell. Actions remain simulated; data may include live API feeds.\nDismiss\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:25:45\n3\nCOMMAN",
         "metrics": {
-          "coherence": 0.9296775063272729,
-          "creativity": 0.8171547214793882,
-          "engagement": 0.768169821897628,
-          "grammar": 0.9765687265097959,
-          "character_consistency": 0.7747270638460885,
-          "overall": 0.8532595680120346
+          "coherence": 0.7108368263780862,
+          "creativity": 0.8696815762691501,
+          "engagement": 0.8717755891123747,
+          "grammar": 0.964597102115269,
+          "character_consistency": 0.8740855997098076,
+          "depth": 0.8708988555714637,
+          "overall": 0.8603125915260251
         }
       },
       {
-        "timestamp": 1755853982.3712497,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609150.0530932,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:25:45\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.7051934110125234,
-          "creativity": 0.6745069728082662,
-          "engagement": 0.6709802936544731,
-          "grammar": 0.9124558208172353,
-          "character_consistency": 0.7481000363243512,
-          "overall": 0.7422473069233698
+          "coherence": 0.7915702206282095,
+          "creativity": 0.8197459946429348,
+          "engagement": 0.8814544443375009,
+          "grammar": 0.9672578945482799,
+          "character_consistency": 0.8705128738047968,
+          "depth": 0.9441110804408303,
+          "overall": 0.8791087514004253
         }
       },
       {
-        "timestamp": 1755853987.702739,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609153.7494226,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:25:45\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.7872054171702826,
-          "creativity": 0.8664377436651292,
-          "engagement": 0.7153671396831289,
-          "grammar": 0.9569847348576782,
-          "character_consistency": 0.7968938742885012,
-          "overall": 0.8245777819329441
+          "coherence": 0.8233139956925061,
+          "creativity": 0.7541470785203346,
+          "engagement": 0.7220044219112646,
+          "grammar": 0.8143673992398606,
+          "character_consistency": 0.7717862485114908,
+          "depth": 0.9441500078843063,
+          "overall": 0.8049615252932938
         }
       },
       {
-        "timestamp": 1755853991.3004456,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609157.4524777,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:25:56\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.885729414602994,
-          "creativity": 0.7841314569285097,
-          "engagement": 0.9057642445182763,
-          "grammar": 0.9490674171259024,
-          "character_consistency": 0.8824643944752528,
-          "overall": 0.8814313855301871
+          "coherence": 0.8142828767178905,
+          "creativity": 0.7839543664017457,
+          "engagement": 0.6827296574062277,
+          "grammar": 0.8855037430701869,
+          "character_consistency": 0.795553742218536,
+          "depth": 0.8555035433543393,
+          "overall": 0.8029213215281543
         }
       },
       {
-        "timestamp": 1755853994.8965425,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609161.4846869,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:25:56\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.8497812208843982,
-          "creativity": 0.6356127736162984,
-          "engagement": 0.6727082320177841,
-          "grammar": 0.8533697610569219,
-          "character_consistency": 0.7081508848058544,
-          "overall": 0.7439245744762515
+          "coherence": 0.8119087584092367,
+          "creativity": 0.8151123899813562,
+          "engagement": 0.6758081151751844,
+          "grammar": 0.83176591686968,
+          "character_consistency": 0.7373846507967152,
+          "depth": 0.8774970658866128,
+          "overall": 0.7915794828531308
         }
       },
       {
-        "timestamp": 1755853998.501502,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609165.4940557,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:25:56\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.9335024933408553,
-          "creativity": 0.7435327391248875,
-          "engagement": 0.8615618868822098,
-          "grammar": 0.8242345044597786,
-          "character_consistency": 0.8461277667029865,
-          "overall": 0.8417918781021436
+          "coherence": 0.9300718135014168,
+          "creativity": 0.7541545623651512,
+          "engagement": 0.8008065618412337,
+          "grammar": 0.8930112863681163,
+          "character_consistency": 0.7567678499015946,
+          "depth": 0.751032830452981,
+          "overall": 0.8143074840717489
         }
       },
       {
-        "timestamp": 1755854002.0984805,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609169.2532263,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:06\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.9035089876757464,
-          "creativity": 0.6817529587785577,
-          "engagement": 0.8359007469185136,
-          "grammar": 0.8903055399329727,
-          "character_consistency": 0.8005303760600919,
-          "overall": 0.8223997218731764
+          "coherence": 0.821835482994529,
+          "creativity": 0.6022826046264305,
+          "engagement": 0.6591495270516604,
+          "grammar": 0.889479618376315,
+          "character_consistency": 0.8732882065391105,
+          "depth": 0.7808270024494159,
+          "overall": 0.771143740339577
         }
       },
       {
-        "timestamp": 1755854005.7017775,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609174.4011161,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:06\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.9466381584020328,
-          "creativity": 0.7739885619714029,
-          "engagement": 0.800133468622218,
-          "grammar": 0.8936667974662111,
-          "character_consistency": 0.7304064147998082,
-          "overall": 0.8289666802523346
+          "coherence": 0.8989779955257772,
+          "creativity": 0.7454814505022972,
+          "engagement": 0.6510860562726859,
+          "grammar": 0.8959737963695569,
+          "character_consistency": 0.8357235151655105,
+          "depth": 0.8052593569699826,
+          "overall": 0.8054170284676351
         }
       },
       {
-        "timestamp": 1755854009.3254464,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609178.2238402,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:16\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.7893510071281359,
-          "creativity": 0.8961520494518034,
-          "engagement": 0.7324717490700332,
-          "grammar": 0.9264594171371737,
-          "character_consistency": 0.7150224277026617,
-          "overall": 0.8118913300979615
+          "coherence": 0.8514819188892371,
+          "creativity": 0.8725905651264405,
+          "engagement": 0.831420825874885,
+          "grammar": 0.9273111223908181,
+          "character_consistency": 0.8227745105319834,
+          "depth": 0.7653360628714702,
+          "overall": 0.8451525009474724
         }
       },
       {
-        "timestamp": 1755854012.9575198,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609182.1073136,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:16\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.831886458656145,
-          "creativity": 0.8469427509330973,
-          "engagement": 0.6738721694577496,
-          "grammar": 0.9328414962566116,
-          "character_consistency": 0.7738921760836175,
-          "overall": 0.8118870102774443
+          "coherence": 0.8366999222448973,
+          "creativity": 0.7869497109034602,
+          "engagement": 0.6560061149550671,
+          "grammar": 0.9059383308786909,
+          "character_consistency": 0.7816315932349115,
+          "depth": 0.8758733352123623,
+          "overall": 0.8071831679048982
         }
       },
       {
-        "timestamp": 1755854016.5771275,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609185.9800334,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:16\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.7821355363007396,
-          "creativity": 0.8635978801593178,
-          "engagement": 0.8672450744115059,
-          "grammar": 0.8304694443583429,
-          "character_consistency": 0.78783643359457,
-          "overall": 0.8262568737648952
+          "coherence": 0.7878676151460442,
+          "creativity": 0.6858459214439926,
+          "engagement": 0.8509547657463197,
+          "grammar": 0.8910593500085913,
+          "character_consistency": 0.75350900930179,
+          "depth": 0.8295338245020104,
+          "overall": 0.7997950810247914
         }
       },
       {
-        "timestamp": 1755854020.1814554,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609190.0170999,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:26\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.7923220875344014,
-          "creativity": 0.837715297341076,
-          "engagement": 0.7447745568224018,
-          "grammar": 0.8141157186064693,
-          "character_consistency": 0.7035479653288678,
-          "overall": 0.7784951251266432
+          "coherence": 0.8037853573767271,
+          "creativity": 0.8256890934703106,
+          "engagement": 0.8547730801118508,
+          "grammar": 0.8443078826429556,
+          "character_consistency": 0.7770195110603398,
+          "depth": 0.9348059526863066,
+          "overall": 0.8400634795580818
         }
       },
       {
-        "timestamp": 1755854023.786837,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609193.872586,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:26\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.8596163261828479,
-          "creativity": 0.7367119806849254,
-          "engagement": 0.700874523365102,
-          "grammar": 0.8222355525701744,
-          "character_consistency": 0.8332049379928141,
-          "overall": 0.7905286641591728
+          "coherence": 0.8847877036475243,
+          "creativity": 0.6515438750272138,
+          "engagement": 0.9127141103171741,
+          "grammar": 0.9502440149961463,
+          "character_consistency": 0.8777581246720754,
+          "depth": 0.9051686468627707,
+          "overall": 0.8637027459204841
         }
       },
       {
-        "timestamp": 1755854027.4346926,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609197.6406198,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:36\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.814317311571856,
-          "creativity": 0.7987949004641055,
-          "engagement": 0.916766054237407,
-          "grammar": 0.842303149935458,
-          "character_consistency": 0.7696919159845722,
-          "overall": 0.8283746664386797
+          "coherence": 0.9165338181269196,
+          "creativity": 0.612168760947289,
+          "engagement": 0.6754364339134687,
+          "grammar": 0.9721817548591156,
+          "character_consistency": 0.7279638152344753,
+          "depth": 0.9451445435738333,
+          "overall": 0.8082381877758502
         }
       },
       {
-        "timestamp": 1755854031.0389342,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609202.3131015,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:36\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.7536780906322558,
-          "creativity": 0.651152926622569,
-          "engagement": 0.8643162965286443,
-          "grammar": 0.8193107887315471,
-          "character_consistency": 0.7037196185164352,
-          "overall": 0.7584355442062902
+          "coherence": 0.899766258095363,
+          "creativity": 0.7805931473320988,
+          "engagement": 0.8882218148992351,
+          "grammar": 0.9376753532784521,
+          "character_consistency": 0.8127838513333558,
+          "depth": 0.811579285759272,
+          "overall": 0.8551032851162962
         }
       },
       {
-        "timestamp": 1755854034.6344047,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
+        "timestamp": 1763609206.1402473,
+        "content_preview": "Skip to main content\nMERIDIAN STATION\n//\nCOMMAND DECK\nSYSTEM ONLINE\nRUN STATE: IDLE\nSYNC: 14:26:36\n3\nCOMMANDER\nLEVEL 5 ACCESS\nSIMULATION PIPELINE\n×\nTURN PIPELINE\n\nTurn 47 of 150\n\nIdle\n3 queued\n2.3s av",
         "metrics": {
-          "coherence": 0.8630746186160588,
-          "creativity": 0.7558674660570576,
-          "engagement": 0.8649015581535306,
-          "grammar": 0.9725413940396626,
-          "character_consistency": 0.7403509433802582,
-          "overall": 0.8393471960493135
-        }
-      },
-      {
-        "timestamp": 1755854038.2315533,
-        "content_preview": "STORYFORGE AI - INTERACTIVE STORY ENGINE\n\nAI-Powered Narrative Generation Platform\n\nBackend Connection Status\nBackend Status: healthy\n\nSuccessfully connected to FastAPI backend at http://localhost:800",
-        "metrics": {
-          "coherence": 0.7756601394841033,
-          "creativity": 0.7212146991943608,
-          "engagement": 0.8742706716319842,
-          "grammar": 0.8423798937316325,
-          "character_consistency": 0.8230899261465965,
-          "overall": 0.8073230660377355
+          "coherence": 0.7268963737250409,
+          "creativity": 0.878685514301222,
+          "engagement": 0.8920910861587124,
+          "grammar": 0.8149611113503284,
+          "character_consistency": 0.8699987096318939,
+          "depth": 0.8593845667747566,
+          "overall": 0.8403362269903257
         }
       }
     ],
     "errors": [],
-    "timestamp": "2025-08-22 19:12:46"
+    "timestamp": "2025-11-20 14:25:33"
   }
 }

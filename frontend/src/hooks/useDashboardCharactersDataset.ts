@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { charactersAPI } from '../services/api/charactersAPI';
 
 export interface DashboardCharacter {
   id: string;
@@ -18,7 +19,8 @@ interface DashboardCharactersState {
 const API_BASE_URL = resolveApiBaseUrl(
   (import.meta.env.VITE_NOVEL_ENGINE_API_BASE_URL as string | undefined) ?? 'http://127.0.0.1:8000'
 );
-const CHARACTER_ENDPOINT = joinUrl(API_BASE_URL, '/api/characters');
+// API_BASE_URL already normalizes to an /api prefix; avoid double-prefixing
+const CHARACTER_ENDPOINT = joinUrl(API_BASE_URL, '/characters');
 
 const CHARACTER_LIBRARY: Record<string, Pick<DashboardCharacter, 'name' | 'status' | 'role' | 'trust'>> = {
   aria: { name: 'Aria Shadowbane', status: 'active', role: 'protagonist', trust: 85 },
@@ -131,31 +133,52 @@ function buildCharacterEndpoints() {
 }
 
 async function fetchCharacters(endpoint: string, signal: AbortSignal): Promise<DashboardCharacter[]> {
-  const response = await fetch(endpoint, {
-    signal,
-    headers: {
-      Accept: 'application/json',
-    },
-  });
+  // Prefer axios client to include auth headers
+  try {
+    const axiosResponse = await charactersAPI.getCharacters();
+    const payload = axiosResponse.data;
+    if (!payload || !Array.isArray(payload.characters)) {
+      throw new Error('Malformed /api/characters payload');
+    }
+    return payload.characters.map((rawId: string, index: number) => {
+      const id = String(rawId).trim().toLowerCase();
+      const libraryEntry = CHARACTER_LIBRARY[id];
+      return {
+        id,
+        name: libraryEntry?.name ?? toTitle(id || `Character ${index + 1}`),
+        status: libraryEntry?.status ?? 'active',
+        role: libraryEntry?.role ?? (index % 2 === 0 ? 'npc' : 'protagonist'),
+        trust: libraryEntry?.trust ?? pseudoRandomTrust(id || String(index)),
+      };
+    });
+  } catch (err: unknown) {
+    // Fallback to fetch if axios fails (e.g., interceptor issues)
+    const response = await fetch(endpoint, {
+      signal,
+      headers: {
+        Accept: 'application/json',
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(`API responded with ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`API responded with ${response.status}`);
+    }
+
+    const payload = await response.json();
+    if (!payload || !Array.isArray(payload.characters)) {
+      throw new Error('Malformed /api/characters payload');
+    }
+
+    return payload.characters.map((rawId: string, index: number) => {
+      const id = String(rawId).trim().toLowerCase();
+      const libraryEntry = CHARACTER_LIBRARY[id];
+      return {
+        id,
+        name: libraryEntry?.name ?? toTitle(id || `Character ${index + 1}`),
+        status: libraryEntry?.status ?? 'active',
+        role: libraryEntry?.role ?? (index % 2 === 0 ? 'npc' : 'protagonist'),
+        trust: libraryEntry?.trust ?? pseudoRandomTrust(id || String(index)),
+      };
+    });
   }
-
-  const payload = await response.json();
-  if (!payload || !Array.isArray(payload.characters)) {
-    throw new Error('Malformed /api/characters payload');
-  }
-
-  return payload.characters.map((rawId: string, index: number) => {
-    const id = String(rawId).trim().toLowerCase();
-    const libraryEntry = CHARACTER_LIBRARY[id];
-    return {
-      id,
-      name: libraryEntry?.name ?? toTitle(id || `Character ${index + 1}`),
-      status: libraryEntry?.status ?? 'active',
-      role: libraryEntry?.role ?? (index % 2 === 0 ? 'npc' : 'protagonist'),
-      trust: libraryEntry?.trust ?? pseudoRandomTrust(id || String(index)),
-    };
-  });
 }

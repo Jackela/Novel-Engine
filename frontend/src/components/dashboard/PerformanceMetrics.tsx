@@ -63,9 +63,10 @@ interface WebVitalsState {
 interface PerformanceMetricsProps {
   loading?: boolean;
   error?: boolean;
+  sourceLabel?: string;
 }
 
-const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error }) => {
+const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error, sourceLabel }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -74,7 +75,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
   const hasDevAccess = authResult?.user?.roles?.includes('developer') ||
                        authResult?.user?.roles?.includes('admin');
 
-  // Fallback to environment variable if useAuth unavailable
+  // Prefer real RBAC if available, otherwise allow opt-in via env flag
   const canViewMetrics = hasDevAccess ?? (import.meta.env.VITE_SHOW_PERFORMANCE_METRICS === 'true');
 
   // Hide widget if user doesn't have access
@@ -132,15 +133,15 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
 
   return (
     <GridTile
-      title="Performance Metrics (Dev)"
+      title={sourceLabel || "Performance Metrics (Dev)"}
       data-testid="performance-metrics"
       position={{
         desktop: { column: '12 / 13', height: '160px' },
         tablet: { column: '8 / 9', height: '150px' },
         mobile: { height: '200px' },
       }}
-      loading={loading}
-      error={error}
+      loading={loading || false}
+      error={!!error}
     >
       {isMobile ? (
         // Mobile: Web Vitals display

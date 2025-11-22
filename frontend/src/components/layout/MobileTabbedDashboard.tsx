@@ -23,21 +23,13 @@ import { styled } from '@mui/material/styles';
 import { tokens } from '../../styles/tokens';
 
 const MobileTabbedContainer = styled(Box)(({ theme }) => ({
-  display: 'none',
+  display: 'flex',
+  flexDirection: 'column',
   height: '100vh',
-  
-  [theme.breakpoints.down('md')]: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
 }));
 
 const DesktopLayout = styled(Box)(({ theme }) => ({
   display: 'block',
-  
-  [theme.breakpoints.down('md')]: {
-    display: 'none',
-  },
 }));
 
 const CompactTabs = styled(Tabs)(({ theme }) => ({
@@ -121,7 +113,6 @@ const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
   components 
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery('(max-width:767px)');
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -209,7 +200,7 @@ const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
     );
   };
 
-  if (!isMobile) {
+  if (components?.essential === undefined && React.Children.count(children) > 0) {
     return <DesktopLayout>{children}</DesktopLayout>;
   }
 

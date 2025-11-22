@@ -5,6 +5,7 @@ import storiesSlice from './slices/storiesSlice';
 import campaignsSlice from './slices/campaignsSlice';
 import dashboardSlice from './slices/dashboardSlice';
 import { mobileMemoryMiddleware } from './middleware/mobileMemoryMiddleware';
+import { logger } from '../services/logging/LoggerFactory';
 
 // Detect mobile device for memory optimizations
 const isMobile = () => {

@@ -49,7 +49,7 @@ class AIBrowserController:
         logger.info("🌐 Navigating to Novel-Engine...")
         try:
             # Try frontend first
-            await self.page.goto("http://localhost:5173", wait_until="networkidle")
+            await self.page.goto("http://localhost:3000", wait_until="networkidle")
             logger.info("✅ Connected to frontend")
             return "frontend"
         except Exception:

@@ -5,14 +5,11 @@ import type { Character, PersonalityTraits, CharacterListResponse } from '../../
 // Character API request types based on OpenAPI spec
 export interface CreateCharacterRequest {
   name: string;
-  type: 'protagonist' | 'antagonist' | 'npc' | 'narrator';
-  personality_traits: PersonalityTraits;
-  background?: string;
-  configuration?: {
-    ai_model?: 'gpt-4' | 'gpt-3.5-turbo' | 'claude-3';
-    response_style?: 'formal' | 'casual' | 'dramatic' | 'humorous';
-    memory_retention?: 'low' | 'medium' | 'high';
-  };
+  background_summary?: string;
+  personality_traits?: string;
+  skills?: Record<string, number>;
+  relationships?: Record<string, number>;
+  current_location?: string;
 }
 
 export interface UpdateCharacterRequest {
@@ -42,8 +39,44 @@ export class CharactersAPI {
    */
   async getCharacters(params?: GetCharactersParams): Promise<BaseAPIResponse<CharacterListResponse>> {
     try {
-      const response = await apiClient.get('/characters', { params });
-      return handleAPIResponse(response);
+      const response = await apiClient.get('/api/characters', { params });
+      const payload = response.data as { characters: string[] };
+      const mapped: Character[] = (payload.characters || []).map((name, idx) => ({
+        id: name,
+        name,
+        type: 'npc',
+        personality_traits: {
+          openness: 0.5,
+          conscientiousness: 0.5,
+          extraversion: 0.5,
+          agreeableness: 0.5,
+          neuroticism: 0.5,
+        },
+        background: '',
+        configuration: {
+          ai_model: 'gpt-4',
+          response_style: 'formal',
+          memory_retention: 'medium',
+        },
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        created_by: 'self',
+      }));
+      return handleAPIResponse({
+        ...response,
+        data: {
+          characters: mapped,
+          pagination: {
+            page: 1,
+            limit: mapped.length,
+            total_items: mapped.length,
+            total_pages: 1,
+            has_next: false,
+            has_previous: false,
+          },
+        },
+      } as any);
     } catch (error) {
       return handleAPIError(error);
     }
@@ -68,8 +101,31 @@ export class CharactersAPI {
    */
   async createCharacter(characterData: CreateCharacterRequest): Promise<BaseAPIResponse<Character>> {
     try {
-      const response = await apiClient.post('/characters', characterData);
-      return handleAPIResponse(response);
+      const response = await apiClient.post('/api/characters', characterData);
+      const payload = response.data as any;
+      const mapped: Character = {
+        id: payload.id || payload.name,
+        name: payload.name,
+        type: 'npc',
+        personality_traits: {
+          openness: 0.5,
+          conscientiousness: 0.5,
+          extraversion: 0.5,
+          agreeableness: 0.5,
+          neuroticism: 0.5,
+        },
+        background: payload.background_summary || '',
+        configuration: {
+          ai_model: 'gpt-4',
+          response_style: 'formal',
+          memory_retention: 'medium',
+        },
+        status: 'active',
+        created_at: payload.created_at || new Date().toISOString(),
+        updated_at: payload.updated_at || new Date().toISOString(),
+        created_by: payload.user_id || 'self',
+      };
+      return handleAPIResponse({ ...response, data: mapped } as any);
     } catch (error) {
       return handleAPIError(error);
     }
