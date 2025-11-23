@@ -107,6 +107,7 @@ export function useFocusTrap(
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, containerRef])
 
   useEffect(() => {
@@ -119,6 +120,7 @@ export function useFocusTrap(
         deactivate()
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled])
 
   return {

@@ -70,6 +70,19 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error,
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  // Track Web Vitals - hooks must be called unconditionally before any returns
+  const [webVitals, setWebVitals] = useState<WebVitalsState>({});
+
+  usePerformance({
+    onMetric: (metric: PerformanceMetric) => {
+      // Update Web Vitals state when metrics are reported
+      setWebVitals((prev) => ({
+        ...prev,
+        [metric.name.toLowerCase()]: metric.value,
+      }));
+    },
+  });
+
   // RBAC: Check if user has developer or admin role
   const authResult = useAuth?.();
   const hasDevAccess = authResult?.user?.roles?.includes('developer') ||
@@ -82,19 +95,6 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error,
   if (!canViewMetrics) {
     return null;
   }
-
-  // Track Web Vitals
-  const [webVitals, setWebVitals] = useState<WebVitalsState>({});
-
-  usePerformance({
-    onMetric: (metric: PerformanceMetric) => {
-      // Update Web Vitals state when metrics are reported
-      setWebVitals((prev) => ({
-        ...prev,
-        [metric.name.toLowerCase()]: metric.value,
-      }));
-    },
-  });
 
   const formatNumber = (num: number | undefined, decimals = 1) => {
     if (num === undefined) return '-';

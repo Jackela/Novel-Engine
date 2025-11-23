@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Box, Stack, CircularProgress } from '@mui/material';
 import QuickActions, { type QuickAction } from '../QuickActions';
 import AnalyticsDashboard from '../AnalyticsDashboard';
@@ -98,7 +98,7 @@ const InsightsPanel: React.FC<InsightsPanelProps> = React.memo(({
             ].map((mode) => (
               <button
                 key={mode.id}
-                onClick={() => onMfdModeChange(mode.id as any)}
+                onClick={() => onMfdModeChange(mode.id as 'status' | 'network' | 'timeline' | 'signals')}
                 style={{
                   background: mfdMode === mode.id ? 'var(--color-accent-primary)' : 'transparent',
                   color: mfdMode === mode.id ? '#000' : 'var(--color-text-secondary)',

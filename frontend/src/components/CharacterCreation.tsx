@@ -497,6 +497,16 @@ const CharacterCreation: React.FC = () => {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={t('characterCreation.form.files.label')}
                 data-testid="file-upload-zone"
               >
                 <input

@@ -189,7 +189,7 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
     measureInteractionDelay(() => {
       const message: Omit<AgentMessage, 'id' | 'timestamp'> = {
         fromAgentId: 'user',
-        toAgentId: selectedAgentId,
+        toAgentId: selectedAgentId ?? undefined,
         content: messageInput.trim(),
         type: messageType,
         priority: 'normal',
@@ -249,8 +249,8 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
 
   // Event listeners
   useEffect(() => {
-    window.addEventListener('websocket-message', handleWebSocketMessage);
-    
+    window.addEventListener('websocket-message', handleWebSocketMessage as EventListener);
+
     // Request initial agent status
     if (wsState.isConnected) {
       sendMessage({
@@ -259,9 +259,9 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
         priority: 'normal'
       });
     }
-    
+
     return () => {
-      window.removeEventListener('websocket-message', handleWebSocketMessage);
+      window.removeEventListener('websocket-message', handleWebSocketMessage as EventListener);
     };
   }, [handleWebSocketMessage, wsState.isConnected, sendMessage, sessionId]);
 

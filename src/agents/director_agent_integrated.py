@@ -21,6 +21,7 @@ from datetime import datetime
 from textwrap import dedent
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import uuid4
 
 from src.agent_lifecycle_manager import AgentLifecycleManager
 from src.core.iron_laws_processor import IronLawsProcessor
@@ -786,7 +787,7 @@ class DirectorAgent:
         proposed_action: Optional["ProposedAction"] = None
         character_data: Optional["CharacterData"] = None
         if action:
-            proposed_action = self._convert_to_proposed_action(action)
+            proposed_action = self._convert_to_proposed_action(action, agent)
             character_data = self._extract_character_data(agent)
 
         try:
@@ -855,21 +856,63 @@ class DirectorAgent:
         except Exception as e:
             logger.error(f"Error handling agent action: {str(e)}")
 
-    def _convert_to_proposed_action(self, action: CharacterAction) -> "ProposedAction":
-        """Convert CharacterAction to ProposedAction format."""
+    def _convert_to_proposed_action(
+        self, action: CharacterAction, agent: PersonaAgent
+    ) -> "ProposedAction":
+        """Convert CharacterAction to ProposedAction format.
+
+        Args:
+            action: The CharacterAction from the agent's decision
+            agent: The PersonaAgent that performed the action (needed for character_id)
+        """
         if not IRON_LAWS_AVAILABLE:
             return action
 
+        # Extract character_id from agent
+        character_id = getattr(agent, "agent_id", "unknown")
+
         if isinstance(action, dict):
-            action_id = action.get("action_id", "unknown")
-            action_type = action.get("action_type", "unknown")
+            action_id = action.get("action_id", str(uuid4()))
+            raw_action_type = action.get("action_type", "wait")
             reasoning = action.get("reasoning", "")
             target = action.get("target")
         else:
-            action_id = getattr(action, "action_id", "unknown")
-            action_type = getattr(action, "action_type", "unknown")
+            action_id = getattr(action, "action_id", str(uuid4()))
+            raw_action_type = getattr(action, "action_type", "wait")
             reasoning = getattr(action, "reasoning", "")
             target = getattr(action, "target", None)
+
+        # Map CharacterAction action types to ProposedAction ActionType enum
+        # CharacterAction uses: dialogue, movement, interaction, investigation, combat, social, thinking, planning, other
+        # ProposedAction expects: move, attack, defend, communicate, observe, use_item, special_ability, wait, retreat, fortify, investigate, search, hide, interact, cast_spell
+        action_type_mapping = {
+            "dialogue": ActionType.COMMUNICATE,
+            "movement": ActionType.MOVE,
+            "interaction": ActionType.INTERACT,
+            "investigation": ActionType.INVESTIGATE,
+            "combat": ActionType.ATTACK,
+            "social": ActionType.COMMUNICATE,
+            "thinking": ActionType.OBSERVE,
+            "planning": ActionType.WAIT,
+            "other": ActionType.WAIT,
+            "wait": ActionType.WAIT,
+            "unknown": ActionType.WAIT,
+        }
+
+        # Normalize and map the action type
+        raw_type_str = str(raw_action_type).lower() if raw_action_type else "wait"
+        # Handle enum objects
+        if hasattr(raw_action_type, "value"):
+            raw_type_str = str(raw_action_type.value).lower()
+
+        mapped_action_type = action_type_mapping.get(raw_type_str)
+
+        if mapped_action_type is None:
+            # Try direct ActionType enum conversion for valid values
+            try:
+                mapped_action_type = ActionType(raw_type_str)
+            except (ValueError, KeyError):
+                mapped_action_type = ActionType.WAIT  # Safe fallback
 
         if target is not None and not isinstance(target, ActionTarget):
             entity_id = (
@@ -893,8 +936,9 @@ class DirectorAgent:
             )
 
         return ProposedAction(
-            action_id=action_id or "unknown",
-            action_type=action_type or "unknown",
+            action_id=action_id or str(uuid4()),
+            character_id=character_id,
+            action_type=mapped_action_type,
             reasoning=reasoning or "Auto-generated reasoning",
             target=target,
         )
@@ -905,11 +949,32 @@ class DirectorAgent:
             return None
 
         try:
-            # Extract basic character data
+            # Import required types for default values
+            from src.shared_types import (
+                CharacterResources,
+                CharacterStats,
+                Position,
+            )
+
+            # Extract character ID from agent
+            character_id = getattr(agent, "agent_id", "unknown")
+            character_name = getattr(agent, "character_name", None)
+            if not character_name:
+                # Try to get name from character_data dict
+                char_data = getattr(agent, "character_data", {})
+                character_name = char_data.get("name", "Unknown") if isinstance(char_data, dict) else "Unknown"
+
+            # Extract faction if available
+            faction = getattr(agent, "faction", "Neutral")
+
+            # Create CharacterData with all required fields and sensible defaults
             return CharacterData(
-                name=getattr(agent, "character_name", "Unknown"),
-                faction=getattr(agent, "faction", "Unknown"),
-                # Additional fields would be extracted here in full implementation
+                character_id=character_id,
+                name=character_name,
+                faction=faction,
+                position=Position(x=0.0, y=0.0, z=0.0),
+                stats=CharacterStats(),  # Uses defaults
+                resources=CharacterResources(),  # Uses defaults
             )
         except Exception as e:
             logger.error(f"Error extracting character data: {e}")

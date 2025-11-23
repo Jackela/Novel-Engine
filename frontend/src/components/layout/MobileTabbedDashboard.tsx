@@ -7,7 +7,6 @@ import {
   Paper,
   Stack,
   useTheme,
-  useMediaQuery,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -22,13 +21,13 @@ import {
 import { styled } from '@mui/material/styles';
 import { tokens } from '../../styles/tokens';
 
-const MobileTabbedContainer = styled(Box)(({ theme }) => ({
+const MobileTabbedContainer = styled(Box)(({ theme: _theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   height: '100vh',
 }));
 
-const DesktopLayout = styled(Box)(({ theme }) => ({
+const DesktopLayout = styled(Box)(({ theme: _theme }) => ({
   display: 'block',
 }));
 

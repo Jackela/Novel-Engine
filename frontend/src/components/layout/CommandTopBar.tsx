@@ -16,7 +16,7 @@ interface CommandTopBarProps {
   lastUpdate: Date;
 }
 
-const TopBarContainer = styled(Box)(({ theme }) => ({
+const TopBarContainer = styled(Box)(({ theme: _theme }) => ({
   position: 'sticky',
   top: 0,
   zIndex: 1100,
@@ -32,7 +32,7 @@ const TopBarContainer = styled(Box)(({ theme }) => ({
   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
 }));
 
-const BrandText = styled(Typography)(({ theme }) => ({
+const BrandText = styled(Typography)(({ theme: _theme }) => ({
   fontFamily: 'var(--font-header)',
   fontSize: '16px',
   fontWeight: 700,
@@ -69,7 +69,7 @@ const StatusChip = styled(Chip)<{ status: string }>(({ status }) => ({
 const CommandTopBar: React.FC<CommandTopBarProps> = ({
   pipelineStatus,
   isOnline,
-  isLive,
+  isLive: _isLive,
   lastUpdate,
 }) => {
   return (

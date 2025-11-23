@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { logger } from '../services/logging/LoggerFactory';
 import './WizardNavigation.css';
 
@@ -62,44 +62,45 @@ function WizardNavigation({
   const isLastStep = currentStep === totalSteps - 1;
   const canProceed = completedSteps.includes(currentStep) || !validationErrors[currentStep];
 
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.ctrlKey || event.metaKey) {
-        switch (event.key) {
-          case 'ArrowLeft':
-            event.preventDefault();
-            handlePrevious();
-            break;
-          case 'ArrowRight':
-            event.preventDefault();
-            handleNext();
-            break;
-          case 'Enter':
-            if (event.shiftKey) {
-              event.preventDefault();
-              handleComplete();
-            } else {
-              event.preventDefault();
-              handleNext();
-            }
-            break;
-          case 'Escape':
-            event.preventDefault();
-            handleCancel();
-            break;
-        }
-      }
-    };
+  /**
+   * Handle wizard completion
+   */
+  const handleComplete = useCallback(() => {
+    onComplete?.({
+      completedSteps,
+      navigationHistory,
+      totalSteps,
+      timestamp: new Date().toISOString()
+    });
+  }, [onComplete, completedSteps, navigationHistory, totalSteps]);
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [currentStep, canProceed, handleCancel, handleComplete, handleNext, handlePrevious]);
+  /**
+   * Handle wizard cancellation
+   */
+  const handleCancel = useCallback(() => {
+    onCancel?.({
+      currentStep,
+      completedSteps,
+      navigationHistory,
+      timestamp: new Date().toISOString()
+    });
+  }, [onCancel, currentStep, completedSteps, navigationHistory]);
+
+  /**
+   * Handle navigation to previous step
+   */
+  const handlePrevious = useCallback(() => {
+    if (isFirstStep || !allowBacktrack) return;
+
+    const previousStep = currentStep - 1;
+    setNavigationHistory(prev => [...prev, previousStep]);
+    onStepChange?.(previousStep, 'previous');
+  }, [isFirstStep, allowBacktrack, currentStep, onStepChange]);
 
   /**
    * Handle navigation to next step
    */
-  const handleNext = async () => {
+  const handleNext = useCallback(async () => {
     if (isValidating) return;
 
     // Validate current step if validator provided
@@ -142,18 +143,42 @@ function WizardNavigation({
     } else {
       handleComplete();
     }
-  };
+  }, [isValidating, validateStep, currentStep, steps, totalSteps, onStepChange, handleComplete]);
 
-  /**
-   * Handle navigation to previous step
-   */
-  const handlePrevious = () => {
-    if (isFirstStep || !allowBacktrack) return;
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey || event.metaKey) {
+        switch (event.key) {
+          case 'ArrowLeft':
+            event.preventDefault();
+            handlePrevious();
+            break;
+          case 'ArrowRight':
+            event.preventDefault();
+            handleNext();
+            break;
+          case 'Enter':
+            if (event.shiftKey) {
+              event.preventDefault();
+              handleComplete();
+            } else {
+              event.preventDefault();
+              handleNext();
+            }
+            break;
+          case 'Escape':
+            event.preventDefault();
+            handleCancel();
+            break;
+        }
+      }
+    };
 
-    const previousStep = currentStep - 1;
-    setNavigationHistory(prev => [...prev, previousStep]);
-    onStepChange?.(previousStep, 'previous');
-  };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+     
+  }, [currentStep, canProceed, handleCancel, handleComplete, handleNext, handlePrevious]);
 
   /**
    * Handle direct step navigation
@@ -181,30 +206,6 @@ function WizardNavigation({
     const nextStep = currentStep + 1;
     setNavigationHistory(prev => [...prev, nextStep]);
     onStepChange?.(nextStep, 'skip');
-  };
-
-  /**
-   * Handle wizard completion
-   */
-  const handleComplete = () => {
-    onComplete?.({
-      completedSteps,
-      navigationHistory,
-      totalSteps,
-      timestamp: new Date().toISOString()
-    });
-  };
-
-  /**
-   * Handle wizard cancellation
-   */
-  const handleCancel = () => {
-    onCancel?.({
-      currentStep,
-      completedSteps,
-      navigationHistory,
-      timestamp: new Date().toISOString()
-    });
   };
 
   if (navigationStyle === 'breadcrumb') {

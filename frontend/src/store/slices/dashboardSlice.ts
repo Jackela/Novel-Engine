@@ -1,5 +1,6 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
+import { dashboardAPI } from '../../services/api/dashboardAPI';
 
 export interface PerformanceMetrics {
   responseTime: number;
@@ -55,22 +56,36 @@ export interface WorldNode {
   activity: number;
 }
 
+export interface AnalyticsMetrics {
+  storyQuality: number;
+  engagement: number;
+  coherence: number;
+  complexity: number;
+  dataPoints: number;
+  metricsTracked: number;
+  status: string;
+  lastUpdated: string;
+}
+
 export interface DashboardState {
   // Connection status
   connected: boolean;
   lastUpdate: string | null;
-  
+
   // Performance metrics
   metrics: PerformanceMetrics;
   systemStatus: SystemStatus;
-  
+
+  // Analytics metrics
+  analytics: AnalyticsMetrics;
+
   // Real-time activity
   activities: ActivityEvent[];
   unreadActivityCount: number;
-  
+
   // Turn pipeline
   pipeline: PipelineData;
-  
+
   // World state
   worldNodes: WorldNode[];
   
@@ -91,109 +106,153 @@ export interface DashboardState {
   }>;
 }
 
+// Initial state with empty/default values - data should come from API
 const initialState: DashboardState = {
   connected: false,
   lastUpdate: null,
-  
+
+  // Empty metrics - will be populated from /api/meta/system-status or SSE events
   metrics: {
-    responseTime: 145,
-    errorRate: 0.2,
-    requestsPerSecond: 23.5,
-    activeUsers: 127,
-    systemLoad: 68,
-    memoryUsage: 74,
-    storageUsage: 42,
-    networkLatency: 12,
+    responseTime: 0,
+    errorRate: 0,
+    requestsPerSecond: 0,
+    activeUsers: 0,
+    systemLoad: 0,
+    memoryUsage: 0,
+    storageUsage: 0,
+    networkLatency: 0,
   },
-  
+
+  // Default to unknown/warning until API confirms status
   systemStatus: {
-    overall: 'healthy',
-    database: 'healthy',
-    aiService: 'healthy',
-    memoryService: 'healthy',
+    overall: 'warning',
+    database: 'warning',
+    aiService: 'warning',
+    memoryService: 'warning',
   },
-  
+
+  // Analytics metrics - will be populated from /api/analytics/metrics
+  analytics: {
+    storyQuality: 0,
+    engagement: 0,
+    coherence: 0,
+    complexity: 0,
+    dataPoints: 0,
+    metricsTracked: 0,
+    status: 'unknown',
+    lastUpdated: '',
+  },
+
   activities: [],
   unreadActivityCount: 0,
-  
+
+  // Empty pipeline - will be populated from real-time events
   pipeline: {
-    currentTurn: 47,
-    totalTurns: 150,
-    queueLength: 3,
-    averageProcessingTime: 2.3,
-    steps: [
-      {
-        id: 'input',
-        name: 'Input Processing',
-        status: 'completed',
-        progress: 100,
-        duration: 0.5,
-        character: 'Aria Shadowbane',
-      },
-      {
-        id: 'context',
-        name: 'Context Analysis',
-        status: 'completed',
-        progress: 100,
-        duration: 1.2,
-      },
-      {
-        id: 'ai_generation',
-        name: 'AI Response Generation',
-        status: 'processing',
-        progress: 73,
-        character: 'Merchant Aldric',
-      },
-      {
-        id: 'validation',
-        name: 'Response Validation',
-        status: 'queued',
-        progress: 0,
-      },
-      {
-        id: 'output',
-        name: 'Output Delivery',
-        status: 'queued',
-        progress: 0,
-      },
-    ],
+    currentTurn: 0,
+    totalTurns: 0,
+    queueLength: 0,
+    averageProcessingTime: 0,
+    steps: [],
   },
-  
-  worldNodes: [
-    {
-      id: 'hub',
-      name: 'Central Hub',
-      position: [0, 0, 0],
-      color: '#FF6B6B',
-      size: 0.3,
-      activity: 1.0,
-    },
-    {
-      id: 'forest',
-      name: 'Forest Realm',
-      position: [2, 1, -1],
-      color: '#4ECDC4',
-      size: 0.2,
-      activity: 0.7,
-    },
-    {
-      id: 'caves',
-      name: 'Crystal Caves',
-      position: [-1.5, -0.5, 2],
-      color: '#45B7D1',
-      size: 0.25,
-      activity: 0.5,
-    },
-  ],
-  
+
+  // Empty world nodes - will be populated from API
+  worldNodes: [],
+
   expandedAnalytics: false,
   quickActionsState: {
     isRunning: false,
     isPaused: false,
   },
-  
+
   notifications: [],
 };
+
+// Async thunk to fetch dashboard data from real API
+export const fetchDashboardData = createAsyncThunk(
+  'dashboard/fetchData',
+  async (_, { rejectWithValue }) => {
+    try {
+      const [systemStatusRes, healthRes, orchestrationRes, analyticsRes] = await Promise.all([
+        dashboardAPI.getSystemStatus(),
+        dashboardAPI.getHealth(),
+        dashboardAPI.getOrchestrationStatus(),
+        dashboardAPI.getAnalyticsMetrics(),
+      ]);
+
+      // Try to get cache metrics, but don't fail if unavailable
+      let cacheMetrics;
+      try {
+        const cacheRes = await dashboardAPI.getCacheMetrics();
+        cacheMetrics = cacheRes.data;
+      } catch {
+        // Cache metrics are optional
+      }
+
+      const transformed = dashboardAPI.transformToMetrics(
+        systemStatusRes.data,
+        healthRes.data,
+        cacheMetrics
+      );
+
+      // Transform orchestration response to pipeline data
+      const orchestrationData = orchestrationRes.data;
+      const pipelineData: PipelineData = orchestrationData.success && orchestrationData.data ? {
+        currentTurn: orchestrationData.data.current_turn,
+        totalTurns: orchestrationData.data.total_turns,
+        queueLength: orchestrationData.data.queue_length,
+        averageProcessingTime: orchestrationData.data.average_processing_time,
+        steps: orchestrationData.data.steps.map((step) => ({
+          id: step.id,
+          name: step.name,
+          status: step.status,
+          progress: step.progress,
+          duration: step.duration,
+          character: step.character,
+        })),
+      } : {
+        currentTurn: 0,
+        totalTurns: 0,
+        queueLength: 0,
+        averageProcessingTime: 0,
+        steps: [],
+      };
+
+      // Transform analytics response
+      const analyticsData = analyticsRes.data;
+      const analytics: AnalyticsMetrics = analyticsData.success && analyticsData.data ? {
+        storyQuality: analyticsData.data.story_quality,
+        engagement: analyticsData.data.engagement,
+        coherence: analyticsData.data.coherence,
+        complexity: analyticsData.data.complexity,
+        dataPoints: analyticsData.data.data_points,
+        metricsTracked: analyticsData.data.metrics_tracked,
+        status: analyticsData.data.status,
+        lastUpdated: analyticsData.data.last_updated,
+      } : {
+        storyQuality: 0,
+        engagement: 0,
+        coherence: 0,
+        complexity: 0,
+        dataPoints: 0,
+        metricsTracked: 0,
+        status: 'unknown',
+        lastUpdated: '',
+      };
+
+      return {
+        ...transformed,
+        connected: true,
+        pipeline: pipelineData,
+        analytics,
+        orchestrationStatus: orchestrationData.data?.status || 'idle',
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to fetch dashboard data'
+      );
+    }
+  }
+);
 
 const dashboardSlice = createSlice({
   name: 'dashboard',
@@ -218,7 +277,12 @@ const dashboardSlice = createSlice({
     updateSystemStatus: (state, action: PayloadAction<Partial<SystemStatus>>) => {
       state.systemStatus = { ...state.systemStatus, ...action.payload };
     },
-    
+
+    // Analytics metrics
+    updateAnalytics: (state, action: PayloadAction<Partial<AnalyticsMetrics>>) => {
+      state.analytics = { ...state.analytics, ...action.payload };
+    },
+
     // Activity management
     addActivity: (state, action: PayloadAction<ActivityEvent>) => {
       state.activities.unshift(action.payload);
@@ -306,6 +370,52 @@ const dashboardSlice = createSlice({
       state.notifications = [];
     },
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchDashboardData.pending, (state) => {
+        // Keep existing data while loading, just update timestamp
+        state.lastUpdate = new Date().toISOString();
+      })
+      .addCase(fetchDashboardData.fulfilled, (state, action) => {
+        state.connected = action.payload.connected;
+        state.metrics = action.payload.metrics;
+        state.systemStatus = action.payload.systemStatus;
+        state.lastUpdate = new Date().toISOString();
+
+        // Update pipeline data from orchestration status
+        if (action.payload.pipeline) {
+          state.pipeline = action.payload.pipeline;
+        }
+
+        // Update analytics metrics
+        if (action.payload.analytics) {
+          state.analytics = action.payload.analytics;
+        }
+
+        // Update quick actions state based on orchestration status
+        if (action.payload.orchestrationStatus) {
+          state.quickActionsState.isRunning = action.payload.orchestrationStatus === 'running';
+          state.quickActionsState.isPaused = action.payload.orchestrationStatus === 'paused';
+        }
+      })
+      .addCase(fetchDashboardData.rejected, (state, action) => {
+        state.connected = false;
+        state.systemStatus = {
+          overall: 'error',
+          database: 'warning',
+          aiService: 'error',
+          memoryService: 'warning',
+        };
+        // Add notification about the error
+        state.notifications.unshift({
+          id: Date.now().toString(),
+          message: `Failed to fetch dashboard data: ${action.payload || 'Unknown error'}`,
+          type: 'error',
+          timestamp: new Date().toISOString(),
+          read: false,
+        });
+      });
+  },
 });
 
 export const {
@@ -313,6 +423,7 @@ export const {
   updateLastUpdate,
   updateMetrics,
   updateSystemStatus,
+  updateAnalytics,
   addActivity,
   markActivitiesAsRead,
   updatePipeline,

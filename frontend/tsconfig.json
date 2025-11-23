@@ -21,7 +21,7 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["node", "@playwright/test"],
+    "types": ["node", "@playwright/test", "vite/client"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],

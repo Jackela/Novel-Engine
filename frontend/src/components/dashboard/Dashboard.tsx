@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Alert, Snackbar, useMediaQuery, Stack, useTheme } from '@mui/material';
 import { AnimatePresence, motion } from 'framer-motion';
 import CommandLayout from '../layout/CommandLayout';
@@ -7,6 +7,7 @@ import MobileTabbedDashboard from '../layout/MobileTabbedDashboard';
 import { logger } from '../../services/logging/LoggerFactory';
 import QuickActions, { type QuickAction } from './QuickActions';
 import CommandTopBar from '../layout/CommandTopBar';
+import { dashboardAPI } from '../../services/api/dashboardAPI';
 
 // Import new panels
 import EnginePanel from './panels/EnginePanel';
@@ -58,19 +59,68 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
     setSnackbarOpen(true);
   };
 
-  const handleQuickAction = (action: QuickAction) => {
+  const handleQuickAction = useCallback(async (action: QuickAction) => {
     logger.info('Quick action triggered:', { action });
-    switch (action) {
-      case 'play': setPipelineStatus('running'); setIsLiveMode(true); showNotification('System resumed'); break;
-      case 'pause': setPipelineStatus('paused'); setIsLiveMode(false); showNotification('System paused'); break;
-      case 'stop': setPipelineStatus('stopped'); setIsLiveMode(false); showNotification('System stopped'); break;
-      case 'refresh': 
-        setLoading(true); 
-        setTimeout(() => { setLoading(false); setLastUpdate(new Date()); showNotification('Data refreshed'); }, 1000); 
-        break;
-      default: showNotification(`Action ${action} triggered`);
+    try {
+      switch (action) {
+        case 'play': {
+          setLoading(true);
+          const response = await dashboardAPI.startOrchestration();
+          if (response.data.success) {
+            const status = response.data.data?.status || 'running';
+            setPipelineStatus(status as PipelineState);
+            setIsLiveMode(status === 'running');
+            showNotification('Orchestration started');
+          } else {
+            showNotification('Failed to start orchestration');
+          }
+          break;
+        }
+        case 'pause': {
+          // Pause uses same endpoint as stop for now (backend can be enhanced)
+          setPipelineStatus('paused');
+          setIsLiveMode(false);
+          showNotification('System paused');
+          break;
+        }
+        case 'stop': {
+          setLoading(true);
+          const response = await dashboardAPI.stopOrchestration();
+          if (response.data.success) {
+            const status = response.data.data?.status || 'stopped';
+            setPipelineStatus(status as PipelineState);
+            setIsLiveMode(false);
+            showNotification('Orchestration stopped');
+          } else {
+            showNotification('Failed to stop orchestration');
+          }
+          break;
+        }
+        case 'refresh': {
+          setLoading(true);
+          // Fetch fresh data from all dashboard endpoints
+          const [_statusRes, orchestrationRes] = await Promise.all([
+            dashboardAPI.getSystemStatus(),
+            dashboardAPI.getOrchestrationStatus(),
+          ]);
+          if (orchestrationRes.data.success && orchestrationRes.data.data) {
+            setPipelineStatus(orchestrationRes.data.data.status as PipelineState);
+            setIsLiveMode(orchestrationRes.data.data.status === 'running');
+          }
+          setLastUpdate(new Date());
+          showNotification('Data refreshed');
+          break;
+        }
+        default:
+          showNotification(`Action ${action} triggered`);
+      }
+    } catch (err) {
+      logger.error('Quick action failed:', err as Error);
+      showNotification(`Action ${action} failed: ${(err as Error).message}`);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
   const handleSnackbarClose = () => setSnackbarOpen(false);
 

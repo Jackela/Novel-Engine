@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Box, Stack, CircularProgress } from '@mui/material';
 import TurnPipelineStatus from '../TurnPipelineStatus';
 import RealTimeActivity from '../RealTimeActivity';

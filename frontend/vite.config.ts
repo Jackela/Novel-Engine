@@ -121,6 +121,31 @@ export default defineConfig({
           });
         },
       },
+      // Proxy /meta/* to backend
+      '/meta': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Proxy /health to backend
+      '/health': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Proxy /cache/* to backend
+      '/cache': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Proxy /characters/* to backend
+      '/characters': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Proxy /simulations/* to backend
+      '/simulations': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
   

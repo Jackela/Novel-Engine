@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Chip, 
-  Stack, 
-  Collapse, 
+import {
+  Box,
+  Typography,
+  Chip,
+  Stack,
   IconButton,
   Grid,
   useTheme,
-  useMediaQuery 
+  useMediaQuery
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { 
+import {
   ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon 
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../store/store';
 import GridTile from '../layout/GridTile';
 
 const AnalyticsContainer = styled(Box)({
@@ -59,6 +60,9 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ loading, error 
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [expanded, setExpanded] = useState(false);
 
+  // Get analytics data from Redux store
+  const analytics = useSelector((state: RootState) => state.dashboard.analytics);
+
   const handleToggle = () => {
     setExpanded(!expanded);
   };
@@ -102,29 +106,29 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ loading, error 
               // Mobile: Stacked metrics
               <Stack spacing={0.5} alignItems="center">
                 <Typography variant="body2" color="text.secondary">
-                  Quality: 8.3/10 • Engagement: 92%
+                  Quality: {analytics.storyQuality.toFixed(1)}/10 • Engagement: {analytics.engagement.toFixed(0)}%
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Coherence: 94% • 47 data points tracked
+                  Coherence: {analytics.coherence.toFixed(0)}% • {analytics.dataPoints} data points tracked
                 </Typography>
               </Stack>
             ) : (
               // Desktop: Horizontal metrics
               <Stack direction="row" spacing={2} alignItems="center">
                 <Typography variant="body2" color="text.secondary">
-                  Story Quality: 8.3/10
+                  Story Quality: {analytics.storyQuality.toFixed(1)}/10
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   •
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Engagement: 92%
+                  Engagement: {analytics.engagement.toFixed(0)}%
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   •
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Coherence: 94%
+                  Coherence: {analytics.coherence.toFixed(0)}%
                 </Typography>
               </Stack>
             )}
@@ -144,7 +148,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ loading, error 
                 <Grid item xs={12} sm={6} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="primary">
-                      8.3
+                      {analytics.storyQuality.toFixed(1)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Story Quality
@@ -154,7 +158,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ loading, error 
                 <Grid item xs={12} sm={6} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="success.main">
-                      92%
+                      {analytics.engagement.toFixed(0)}%
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Engagement
@@ -164,7 +168,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ loading, error 
                 <Grid item xs={12} sm={6} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="info.main">
-                      94%
+                      {analytics.coherence.toFixed(0)}%
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Coherence
@@ -174,7 +178,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ loading, error 
                 <Grid item xs={12} sm={6} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="warning.main">
-                      7.8
+                      {analytics.complexity.toFixed(1)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Complexity
@@ -182,11 +186,11 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ loading, error 
                   </Box>
                 </Grid>
               </Grid>
-              
+
               <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 3 }}>
-                <Chip label="47 Data Points" size="small" variant="outlined" />
-                <Chip label="5 Metrics Tracked" size="small" variant="outlined" />
-                <Chip label="Real-time Analysis" size="small" variant="outlined" />
+                <Chip label={`${analytics.dataPoints} Data Points`} size="small" variant="outlined" />
+                <Chip label={`${analytics.metricsTracked} Metrics Tracked`} size="small" variant="outlined" />
+                <Chip label={analytics.status === 'active' ? 'Real-time Analysis' : 'Analysis Idle'} size="small" variant="outlined" />
               </Stack>
             </PlaceholderContent>
           </ExpandedView>

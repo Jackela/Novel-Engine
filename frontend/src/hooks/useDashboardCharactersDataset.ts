@@ -22,16 +22,9 @@ const API_BASE_URL = resolveApiBaseUrl(
 // API_BASE_URL already normalizes to an /api prefix; avoid double-prefixing
 const CHARACTER_ENDPOINT = joinUrl(API_BASE_URL, '/characters');
 
-const CHARACTER_LIBRARY: Record<string, Pick<DashboardCharacter, 'name' | 'status' | 'role' | 'trust'>> = {
-  aria: { name: 'Aria Shadowbane', status: 'active', role: 'protagonist', trust: 85 },
-  engineer: { name: 'Kael Stormrider', status: 'active', role: 'npc', trust: 78 },
-  pilot: { name: 'Captain Vex', status: 'hostile', role: 'antagonist', trust: 42 },
-  scientist: { name: 'Dr. Lira Soren', status: 'inactive', role: 'npc', trust: 70 },
-  test: { name: 'Systems Sentinel', status: 'inactive', role: 'narrator', trust: 60 },
-};
-
+// Empty default state - no mock data
 const DEFAULT_STATE: DashboardCharactersState = {
-  characters: Object.entries(CHARACTER_LIBRARY).map(([id, meta]) => ({ id, ...meta })),
+  characters: [],
   loading: true,
   error: null,
   source: 'fallback',
@@ -140,18 +133,17 @@ async function fetchCharacters(endpoint: string, signal: AbortSignal): Promise<D
     if (!payload || !Array.isArray(payload.characters)) {
       throw new Error('Malformed /api/characters payload');
     }
-    return payload.characters.map((rawId: string, index: number) => {
-      const id = String(rawId).trim().toLowerCase();
-      const libraryEntry = CHARACTER_LIBRARY[id];
-      return {
-        id,
-        name: libraryEntry?.name ?? toTitle(id || `Character ${index + 1}`),
-        status: libraryEntry?.status ?? 'active',
-        role: libraryEntry?.role ?? (index % 2 === 0 ? 'npc' : 'protagonist'),
-        trust: libraryEntry?.trust ?? pseudoRandomTrust(id || String(index)),
-      };
-    });
-  } catch (err: unknown) {
+
+    // charactersAPI.getCharacters() now returns fully detailed Character objects
+    // Transform them to DashboardCharacter format
+    return payload.characters.map((char, index) => ({
+      id: char.id || String(index),
+      name: char.name || toTitle(char.id || `Character ${index + 1}`),
+      status: mapCharacterStatus(char.status),
+      role: mapCharacterType(char.type),
+      trust: pseudoRandomTrust(char.id || String(index)),
+    }));
+  } catch {
     // Fallback to fetch if axios fails (e.g., interceptor issues)
     const response = await fetch(endpoint, {
       signal,
@@ -169,16 +161,98 @@ async function fetchCharacters(endpoint: string, signal: AbortSignal): Promise<D
       throw new Error('Malformed /api/characters payload');
     }
 
-    return payload.characters.map((rawId: string, index: number) => {
-      const id = String(rawId).trim().toLowerCase();
-      const libraryEntry = CHARACTER_LIBRARY[id];
-      return {
-        id,
-        name: libraryEntry?.name ?? toTitle(id || `Character ${index + 1}`),
-        status: libraryEntry?.status ?? 'active',
-        role: libraryEntry?.role ?? (index % 2 === 0 ? 'npc' : 'protagonist'),
-        trust: libraryEntry?.trust ?? pseudoRandomTrust(id || String(index)),
-      };
-    });
+    // Fetch detailed info for each character ID
+    const characterDetails = await Promise.all(
+      payload.characters.map(async (rawId: string, index: number) => {
+        const id = String(rawId).trim().toLowerCase();
+        try {
+          const detailEndpoint = `${endpoint}/${id}`;
+          const detailResponse = await fetch(detailEndpoint, {
+            signal,
+            headers: { Accept: 'application/json' },
+          });
+          if (!detailResponse.ok) throw new Error('Detail fetch failed');
+          const detail = await detailResponse.json();
+          return {
+            id,
+            name: detail.name || toTitle(id || `Character ${index + 1}`),
+            status: mapCurrentStatusToStatus(detail.current_status),
+            role: inferRoleFromCharacter(detail),
+            trust: calculateTrustFromRelationships(detail.relationships) ?? pseudoRandomTrust(id),
+          };
+        } catch {
+          return {
+            id,
+            name: toTitle(id || `Character ${index + 1}`),
+            status: 'active' as const,
+            role: 'npc' as const,
+            trust: pseudoRandomTrust(id || String(index)),
+          };
+        }
+      })
+    );
+    return characterDetails;
   }
+}
+
+// Map Character status to DashboardCharacter status
+function mapCharacterStatus(status: string | undefined): DashboardCharacter['status'] {
+  if (!status) return 'active';
+  if (status === 'inactive' || status === 'archived') return 'inactive';
+  return 'active';
+}
+
+// Map Character type to DashboardCharacter role
+function mapCharacterType(type: string | undefined): DashboardCharacter['role'] {
+  if (!type) return 'npc';
+  if (type === 'protagonist') return 'protagonist';
+  if (type === 'antagonist') return 'antagonist';
+  if (type === 'narrator') return 'narrator';
+  return 'npc';
+}
+
+// Map backend current_status to frontend status enum
+function mapCurrentStatusToStatus(currentStatus: string | undefined): DashboardCharacter['status'] {
+  if (!currentStatus) return 'active';
+  const lower = currentStatus.toLowerCase();
+  if (lower.includes('hostile') || lower.includes('enemy') || lower.includes('antagonist')) {
+    return 'hostile';
+  }
+  if (lower.includes('inactive') || lower.includes('dormant') || lower.includes('unavailable')) {
+    return 'inactive';
+  }
+  return 'active';
+}
+
+// Infer role from character detail data
+function inferRoleFromCharacter(detail: Record<string, unknown>): DashboardCharacter['role'] {
+  const narrativeContext = String(detail.narrative_context || '').toLowerCase();
+  const backgroundSummary = String(detail.background_summary || '').toLowerCase();
+  const combined = `${narrativeContext} ${backgroundSummary}`;
+
+  if (combined.includes('protagonist') || combined.includes('hero') || combined.includes('main character')) {
+    return 'protagonist';
+  }
+  if (combined.includes('antagonist') || combined.includes('villain') || combined.includes('enemy')) {
+    return 'antagonist';
+  }
+  if (combined.includes('narrator') || combined.includes('chronicler')) {
+    return 'narrator';
+  }
+  return 'npc';
+}
+
+// Calculate trust level from relationships data
+function calculateTrustFromRelationships(relationships: Record<string, unknown> | undefined): number | null {
+  if (!relationships || typeof relationships !== 'object') return null;
+  const values = Object.values(relationships);
+  if (values.length === 0) return null;
+
+  // Average relationship values if they're numeric, otherwise return null
+  const numericValues = values.filter((v): v is number => typeof v === 'number');
+  if (numericValues.length === 0) return null;
+
+  const avg = numericValues.reduce((a, b) => a + b, 0) / numericValues.length;
+  // Normalize to 0-100 range (assuming relationships are -1 to 1 or 0 to 1)
+  return Math.round(Math.min(100, Math.max(0, (avg + 1) * 50)));
 }

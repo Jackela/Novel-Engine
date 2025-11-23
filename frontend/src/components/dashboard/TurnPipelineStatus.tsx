@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import type { AppDispatch } from '../../store/store';
+import { fetchDashboardData } from '../../store/slices/dashboardSlice';
 import {
   Box,
   Typography,
@@ -24,6 +27,7 @@ import {
   Groups as CharacterIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
+import type { RootState } from '../../store/store';
 
 const PipelineContainer = styled(Box)(({ theme }) => ({
   height: '100%',
@@ -123,8 +127,17 @@ interface TurnPipelineStatusProps {
   isLive?: boolean;
 }
 
-const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({ 
-  loading, 
+// Default empty pipeline data structure
+const DEFAULT_PIPELINE: PipelineData = {
+  currentTurn: 0,
+  totalTurns: 0,
+  queueLength: 0,
+  averageProcessingTime: 0,
+  steps: [],
+};
+
+const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
+  loading,
   error,
   status = 'idle',
   isLive = false,
@@ -132,131 +145,67 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const previousStatus = useRef(status);
-  
-  const [pipelineData, setPipelineData] = useState<PipelineData>({
-    currentTurn: 47,
-    totalTurns: 150,
-    queueLength: 3,
-    averageProcessingTime: 2.3,
-    steps: [
-      {
-        id: 'world-update',
-        name: 'World Update',
-        status: 'completed',
-        progress: 100,
-        duration: 0.5,
-        character: 'Aria Shadowbane',
-      },
-      {
-        id: 'subjective-brief',
-        name: 'Subjective Brief',
-        status: 'completed',
-        progress: 100,
-        duration: 1.2,
-      },
-      {
-        id: 'interaction-orchestration',
-        name: 'Interaction Orchestration',
-        status: 'processing',
-        progress: 73,
-        character: 'Merchant Aldric',
-      },
-      {
-        id: 'event-integration',
-        name: 'Event Integration',
-        status: 'queued',
-        progress: 0,
-      },
-      {
-        id: 'narrative-integration',
-        name: 'Narrative Integration',
-        status: 'queued',
-        progress: 0,
-      },
-    ],
-  });
+  const dispatch = useDispatch<AppDispatch>();
 
-  // Ensure pipeline visibly restarts whenever orchestration resumes.
+  // Get pipeline data from Redux store
+  const storePipeline = useSelector((state: RootState) => state.dashboard.pipeline);
+
+  // Fetch orchestration status on mount and periodically
   useEffect(() => {
-    if (status === 'running' && previousStatus.current !== 'running') {
-      setPipelineData(prev => ({
-        ...prev,
-        steps: prev.steps.map((step, index) => ({
-          ...step,
-          status: index === 0 ? 'processing' : 'queued',
-          progress: index === 0 ? Math.random() * 30 : 0,
-          duration: undefined,
-        })),
-      }));
-    }
-    previousStatus.current = status;
-  }, [status]);
+    // Initial fetch
+    dispatch(fetchDashboardData());
 
-  // Simulate pipeline progression when running
-  useEffect(() => {
-    if (status !== 'running') {
-      return;
-    }
-
-    const PROCESS_INTERVAL = 1200;
+    // Poll for updates every 5 seconds when running
     const interval = setInterval(() => {
-      setPipelineData(prev => {
-        const next = { ...prev };
-
-        const ensureProcessingStep = () => {
-          const activeIndex = next.steps.findIndex(step => step.status === 'processing');
-          if (activeIndex === -1) {
-            const nextIndex = next.steps.findIndex(step => step.status !== 'completed');
-            if (nextIndex !== -1) {
-              next.steps[nextIndex] = {
-                ...next.steps[nextIndex],
-                status: 'processing',
-                progress: Math.max(next.steps[nextIndex].progress, 20 + Math.random() * 15),
-              };
-            }
-          }
-        };
-
-        next.steps = next.steps.map(step => {
-          if (step.status === 'processing') {
-            const increment = 35 + Math.random() * 30;
-            const newProgress = Math.min(100, step.progress + increment);
-            if (newProgress >= 100) {
-              return {
-                ...step,
-                status: 'completed',
-                progress: 100,
-                duration: (step.duration ?? 0) + increment / 60,
-              };
-            }
-            return { ...step, progress: newProgress };
-          }
-          return step;
-        });
-
-        ensureProcessingStep();
-
-        const completedCount = next.steps.filter(step => step.status === 'completed').length;
-        if (completedCount === next.steps.length) {
-          const characters = ['Aria Shadowbane', 'Merchant Aldric', 'Elder Thorne', 'Captain Vex'];
-          next.currentTurn += 1;
-          next.queueLength = Math.max(0, next.queueLength - 1 + Math.floor(Math.random() * 2));
-          next.steps = next.steps.map((step, index) => ({
-            ...step,
-            status: index === 0 ? 'processing' : 'queued',
-            progress: index === 0 ? 25 + Math.random() * 20 : 0,
-            character: step.id === 'world-update' || step.id === 'interaction-orchestration'
-              ? characters[Math.floor(Math.random() * characters.length)]
-              : undefined,
-            duration: undefined,
-          }));
-        }
-
-        return next;
-      });
-    }, PROCESS_INTERVAL);
+      dispatch(fetchDashboardData());
+    }, 5000);
 
     return () => clearInterval(interval);
+  }, [dispatch]);
+
+  // Use store data if available, otherwise use empty defaults
+  const hasStoreData = storePipeline && storePipeline.steps && storePipeline.steps.length > 0;
+
+  const [pipelineData, setPipelineData] = useState<PipelineData>(
+    hasStoreData ? {
+      currentTurn: storePipeline.currentTurn,
+      totalTurns: storePipeline.totalTurns,
+      queueLength: storePipeline.queueLength,
+      averageProcessingTime: storePipeline.averageProcessingTime,
+      steps: storePipeline.steps.map(step => ({
+        id: step.id,
+        name: step.name,
+        status: step.status,
+        progress: step.progress,
+        duration: step.duration,
+        character: step.character,
+      })),
+    } : DEFAULT_PIPELINE
+  );
+
+  // Sync with Redux store when it changes
+  useEffect(() => {
+    if (storePipeline && storePipeline.steps && storePipeline.steps.length > 0) {
+      setPipelineData({
+        currentTurn: storePipeline.currentTurn,
+        totalTurns: storePipeline.totalTurns,
+        queueLength: storePipeline.queueLength,
+        averageProcessingTime: storePipeline.averageProcessingTime,
+        steps: storePipeline.steps.map(step => ({
+          id: step.id,
+          name: step.name,
+          status: step.status,
+          progress: step.progress,
+          duration: step.duration,
+          character: step.character,
+        })),
+      });
+    }
+  }, [storePipeline]);
+
+  // Track status changes for UI feedback
+  useEffect(() => {
+    previousStatus.current = status;
   }, [status]);
 
   const getStepIcon = (step: TurnStep) => {
