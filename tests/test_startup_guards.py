@@ -264,6 +264,12 @@ Pydantic - MIT License
 
     def test_validate_file_structure_creates_directories(self):
         """Test file structure validation creates missing directories."""
+        # Create required files that _validate_file_structure expects
+        self.create_test_settings_file()
+        self.create_test_legal_file()
+        self.create_test_notice_file()
+        Path("README.md").write_text("# Test README")
+
         result = self.startup_guard._validate_file_structure()
 
         assert result is True
