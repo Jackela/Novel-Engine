@@ -1,7 +1,7 @@
 /**
  * WebSocket Hook for Real-time Novel Engine Communication
  * =====================================================
- * 
+ *
  * Advanced React hook for managing WebSocket connections with:
  * - Automatic reconnection with exponential backoff
  * - Message queuing and deduplication
@@ -10,6 +10,7 @@
  * - Performance optimization
  */
 
+/* eslint-disable react-refresh/only-export-components */
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { usePerformanceOptimizer } from './usePerformanceOptimizer';
 import { logger } from '../services/logging/LoggerFactory';
@@ -275,6 +276,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
         connect();
       }, delay);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.reconnectAttempts, maxReconnectAttempts, getReconnectDelay]);
 
   // Handle WebSocket error

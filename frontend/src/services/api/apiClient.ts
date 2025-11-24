@@ -6,7 +6,8 @@ import { logger } from '../logging/LoggerFactory';
 import type { IAuthenticationService } from '../auth/IAuthenticationService';
 
 // API base configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1';
+// Use Vite proxy (/api) or direct backend URL - no /v1 versioning
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || '';
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || process.env.REACT_APP_API_TIMEOUT || '10000');
 
 // Mobile-optimized cache configuration

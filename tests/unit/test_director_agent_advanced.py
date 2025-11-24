@@ -467,7 +467,7 @@ class TestDirectorAgentEventHandling:
 
         # Should subscribe to agent action events
         self.mock_event_bus.subscribe.assert_called_with(
-            "AGENT_ACTION_COMPLETE", director._handle_agent_action
+            "AGENT_ACTION_COMPLETE", director._bus_agent_action_handler
         )
 
     @pytest.mark.unit
@@ -478,8 +478,8 @@ class TestDirectorAgentEventHandling:
         )
 
         # Should have agent action handler
-        assert hasattr(director, "_handle_agent_action")
-        assert callable(director._handle_agent_action)
+        assert hasattr(director, "_bus_agent_action_handler")
+        assert callable(director._bus_agent_action_handler)
 
         # Test action handling
         mock_agent = Mock()
@@ -489,7 +489,7 @@ class TestDirectorAgentEventHandling:
         )
 
         try:
-            director._handle_agent_action(agent=mock_agent, action=mock_action)
+            director._bus_agent_action_handler(agent=mock_agent, action=mock_action)
             # Should handle without errors
         except Exception as e:
             # Should handle gracefully

@@ -94,7 +94,6 @@ describe('OnboardingWizard + DemoStep integration', () => {
       grid = container.querySelector('.story-grid');
       if (grid) break;
       // yield to microtask queue
-      // eslint-disable-next-line no-await-in-loop
       await new Promise((r) => setTimeout(r, 0));
     }
     expect(grid).toBeTruthy();

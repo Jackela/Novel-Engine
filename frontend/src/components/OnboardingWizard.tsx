@@ -405,7 +405,7 @@ function WelcomeStep({ onContinue: _onContinue }) {
 function EnvironmentStep({ validationData, onValidate, onValidationComplete }) {
   const [isValidating, setIsValidating] = useState(false);
 
-  const handleValidation = async () => {
+  const handleValidation = useCallback(async () => {
     setIsValidating(true);
     try {
       const result = await onValidate();
@@ -413,7 +413,7 @@ function EnvironmentStep({ validationData, onValidate, onValidationComplete }) {
     } finally {
       setIsValidating(false);
     }
-  };
+  }, [onValidate, onValidationComplete]);
 
   useEffect(() => {
     if (!validationData) {

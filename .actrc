@@ -1,0 +1,5 @@
+--container-architecture linux/amd64
+--platform ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest
+--artifact-server-path /tmp/artifacts
+--bind
+-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest

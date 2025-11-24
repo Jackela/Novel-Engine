@@ -129,9 +129,10 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
           return b.statistics.successRate - a.statistics.successRate;
         case 'name':
           return a.name.localeCompare(b.name);
-        case 'status':
+        case 'status': {
           const statusPriority = { acting: 0, thinking: 1, waiting: 2, idle: 3, error: 4 };
           return statusPriority[a.status] - statusPriority[b.status];
+        }
         default:
           return 0;
       }
@@ -246,7 +247,7 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
         priority: 'high'
       });
     });
-  }, [measureInteractionDelay, sendMessage, sessionId]);
+  }, [measureInteractionDelay, sendMessage]);
 
   const resumeAgent = useCallback((agentId: string) => {
     measureInteractionDelay(() => {
@@ -256,7 +257,7 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
         priority: 'high'
       });
     });
-  }, [measureInteractionDelay, sendMessage, sessionId]);
+  }, [measureInteractionDelay, sendMessage]);
 
   // Event listeners
   useEffect(() => {
@@ -274,7 +275,7 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
     return () => {
       window.removeEventListener('websocket-message', handleWebSocketMessage);
     };
-  }, [handleWebSocketMessage, wsState.isConnected, sendMessage, sessionId]);
+  }, [handleWebSocketMessage, wsState.isConnected, sendMessage]);
 
   // Auto-select first agent if none selected
   useEffect(() => {

@@ -112,7 +112,7 @@ const appRouter = createBrowserRouter(
     </Route>
   ),
   {
-    future: { v7_startTransition: true, v7_relativeSplatPath: true },
+    // Future flags removed - using defaults for current react-router-dom version
   }
 );
 
@@ -121,7 +121,6 @@ const AppRoutes: React.FC = () => {
   return (
     <RouterProvider
       router={appRouter}
-      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       fallbackElement={<LoadingFallback />}
     />
   );

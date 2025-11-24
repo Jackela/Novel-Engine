@@ -434,14 +434,14 @@ class KnowledgeBaseBuilder:
             item_path = kb_path / item_name
 
             if isinstance(item_content, dict):
-                item_path.mkdir(exist_ok=True)
+                item_path.mkdir(parents=True, exist_ok=True)
 
                 # Handle nested structure
                 for sub_name, sub_content in item_content.items():
                     if isinstance(sub_content, list):
                         # Create subdirectory
                         sub_path = item_path / sub_name
-                        sub_path.mkdir(exist_ok=True)
+                        sub_path.mkdir(parents=True, exist_ok=True)
 
                         # Create template files
                         for template_file in sub_content:

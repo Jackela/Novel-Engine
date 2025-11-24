@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Paper, Stack, Typography, Chip, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Stack, Typography, Chip, useTheme, useMediaQuery } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Timeline as TimelineIcon, Bolt as BoltIcon, AutoGraph as AutoGraphIcon } from '@mui/icons-material';
 
@@ -14,28 +14,36 @@ interface SummaryStripProps {
   embedded?: boolean;
 }
 
-const SummaryContainer = styled(Paper)(({ theme }) => ({
+const SummaryContainer = styled(Box)(({ theme }) => ({
   width: '100%',
-  padding: theme.spacing(2),
-  border: `1px solid ${theme.palette.divider}`,
-  borderRadius: theme.shape.borderRadius * 1.5,
-  backgroundColor: theme.palette.background.paper,
+  padding: theme.spacing(3),
+  borderRadius: theme.shape.borderRadius * 2,
   display: 'flex',
   flexDirection: 'column',
-  gap: theme.spacing(1.5),
+  gap: theme.spacing(2.5),
   minHeight: 0,
+  background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.0) 100%)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
 }));
 
 const MetricCard = styled(Box)(({ theme }) => ({
   flex: 1,
   minWidth: 180,
   borderRadius: theme.shape.borderRadius,
-  border: `1px solid ${theme.palette.divider}`,
-  padding: theme.spacing(1.25),
+  padding: theme.spacing(2.5),
   display: 'flex',
   flexDirection: 'column',
-  gap: theme.spacing(1),
-  minHeight: 92,
+  gap: theme.spacing(1.5),
+  minHeight: 110,
+  background: 'rgba(255, 255, 255, 0.02)',
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  backdropFilter: 'blur(10px)',
+  transition: 'all 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
 }));
 
 const SummaryStrip: React.FC<SummaryStripProps> = ({
@@ -132,7 +140,7 @@ const SummaryStrip: React.FC<SummaryStripProps> = ({
         }}
       >
         {summaryItems.map((item) => (
-          <MetricCard key={item.label}>
+          <MetricCard key={item.label} className="glass-card">
             <Stack direction="row" spacing={1} alignItems="center">
               {item.icon}
               <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600}>
@@ -152,7 +160,7 @@ const SummaryStrip: React.FC<SummaryStripProps> = ({
   );
 
   return (
-    <SummaryContainer {...containerProps}>
+    <SummaryContainer {...containerProps} className="glass-panel">
       {metricsContent}
       {hasActions && (
         <Box

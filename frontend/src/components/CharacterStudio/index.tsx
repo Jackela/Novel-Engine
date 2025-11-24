@@ -192,18 +192,29 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
 }) => {
   const [imageError, setImageError] = useState(false);
 
-  // Mock data - in real app, this would come from character details
-  const mockData = {
-    faction: characterName.includes('bastion_guardian') ? 'Bastion Cohort' : 
-             characterName.includes('freewind_raider') ? 'Freewind Collective' : 'Alliance Network',
-    role: characterName.includes('bastion_guardian') ? 'Sentinel' : 
-          characterName.includes('freewind_raider') ? 'Collective Captain' : 'Character',
-    stats: { strength: 7, intelligence: 6, charisma: 5 },
+  // Fetch real character data from API
+  const { data: characterData, isLoading: isLoadingDetails } = useQuery(
+    ['character-card', characterName],
+    () => api.getCharacterDetails(characterName),
+    {
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+      retry: 1,
+    }
+  );
+
+  // Use real data from API, with sensible defaults
+  const displayData = {
+    faction: characterData?.faction || 'Unknown',
+    role: characterData?.role || 'Character',
+    stats: characterData?.stats || { strength: 0, intelligence: 0, charisma: 0 },
+    displayName: characterData?.name || characterName.split('_').map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' '),
   };
 
   return (
-    <Card 
-      sx={{ 
+    <Card
+      sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -233,12 +244,10 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
             {characterName.charAt(0).toUpperCase()}
           </Avatar>
           <Typography variant="h6" component="div" sx={{ fontWeight: 600, mb: 0.5 }}>
-            {characterName.split('_').map(word => 
-              word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ')}
+            {isLoadingDetails ? characterName : displayData.displayName}
           </Typography>
           <Chip
-            label={mockData.faction}
+            label={isLoadingDetails ? 'Loading...' : displayData.faction}
             size="small"
             sx={{
               bgcolor: 'primary.main',
@@ -251,14 +260,29 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
         {/* Character Info */}
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            <strong>Role:</strong> {mockData.role}
+            <strong>Role:</strong> {isLoadingDetails ? '...' : displayData.role}
           </Typography>
-          
+
           {/* Quick Stats */}
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Chip label={`STR ${mockData.stats.strength}`} size="small" variant="outlined" />
-            <Chip label={`INT ${mockData.stats.intelligence}`} size="small" variant="outlined" />
-            <Chip label={`CHA ${mockData.stats.charisma}`} size="small" variant="outlined" />
+            <Chip
+              label={`STR ${displayData.stats.strength}`}
+              size="small"
+              variant="outlined"
+              disabled={isLoadingDetails}
+            />
+            <Chip
+              label={`INT ${displayData.stats.intelligence}`}
+              size="small"
+              variant="outlined"
+              disabled={isLoadingDetails}
+            />
+            <Chip
+              label={`CHA ${displayData.stats.charisma}`}
+              size="small"
+              variant="outlined"
+              disabled={isLoadingDetails}
+            />
           </Box>
         </Box>
       </CardContent>

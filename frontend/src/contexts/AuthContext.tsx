@@ -1,14 +1,15 @@
 /**
  * AuthContext - Global Authentication State Provider
- * 
+ *
  * React Context for managing authentication state across the application
- * 
+ *
  * Constitution Compliance:
  * - Article II (Hexagonal): Adapter layer for React component tree
  * - Article IV (SSOT): Single source of truth for auth state
  * - Article V (SOLID): SRP - Manages only auth context
  */
 
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { LoginRequest, AuthToken } from '../types/auth';
 import type { IAuthenticationService } from '../services/auth/IAuthenticationService';
@@ -100,7 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
     // Create default auth service
     const tokenStorage = new TokenStorage();
     const httpClient = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1',
+      baseURL: import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || '',
       timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || process.env.REACT_APP_API_TIMEOUT || '10000'),
     });
 
@@ -248,6 +249,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
     return () => {
       unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authService]);
 
   /**

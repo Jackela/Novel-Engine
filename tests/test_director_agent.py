@@ -17,7 +17,7 @@ class TestDirectorAgent(unittest.TestCase):
         """Test that the DirectorAgent initializes correctly and subscribes to events."""
         self.assertEqual(self.director.event_bus, self.event_bus)
         self.event_bus.subscribe.assert_called_once_with(
-            "AGENT_ACTION_COMPLETE", self.director._handle_agent_action
+            "AGENT_ACTION_COMPLETE", self.director._bus_agent_action_handler
         )
 
     def test_run_turn_emits_event(self):

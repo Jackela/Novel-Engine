@@ -137,9 +137,10 @@ const EnhancedNarrativeDisplay: React.FC<EnhancedNarrativeDisplayProps> = ({
     // Sort events
     const sorted = filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'priority':
+        case 'priority': {
           const priorityOrder = { critical: 0, high: 1, normal: 2, low: 3 };
           return priorityOrder[a.priority] - priorityOrder[b.priority];
+        }
         case 'reactions':
           return b.reactionCount - a.reactionCount;
         case 'timestamp':
@@ -235,11 +236,11 @@ const EnhancedNarrativeDisplay: React.FC<EnhancedNarrativeDisplayProps> = ({
       },
       priority: 'normal'
     });
-  }, [wsState.isConnected, sendMessage, sessionId]);
+  }, [wsState.isConnected, sendMessage]);
 
   const handleEventAction = useCallback((eventId: string, action: string) => {
     if (!wsState.isConnected) return;
-    
+
     sendMessage({
       type: 'narrative_action',
       data: {
@@ -249,7 +250,7 @@ const EnhancedNarrativeDisplay: React.FC<EnhancedNarrativeDisplayProps> = ({
       },
       priority: 'normal'
     });
-  }, [wsState.isConnected, sendMessage, sessionId]);
+  }, [wsState.isConnected, sendMessage]);
 
   // Auto-scroll management
   useEffect(() => {
@@ -274,7 +275,7 @@ const EnhancedNarrativeDisplay: React.FC<EnhancedNarrativeDisplayProps> = ({
     return () => {
       window.removeEventListener('websocket-message', handleWebSocketMessage);
     };
-  }, [handleWebSocketMessage, wsState.isConnected, sendMessage, sessionId]);
+  }, [handleWebSocketMessage, wsState.isConnected, sendMessage]);
 
   // Performance optimization
   useEffect(() => {

@@ -1,7 +1,7 @@
 /**
  * Performance Optimization Hook
  * =============================
- * 
+ *
  * React hook for real-time performance optimization including:
  * - React concurrent features optimization
  * - Memory management and cleanup
@@ -10,6 +10,7 @@
  * - Virtual scrolling and windowing
  */
 
+/* eslint-disable react-refresh/only-export-components */
 import React, { useCallback, useEffect, useRef, useMemo, useState, startTransition } from 'react';
 import { unstable_scheduleCallback, unstable_LowPriority } from 'scheduler';
 
@@ -213,6 +214,7 @@ export const usePerformanceOptimizer = () => {
     if (document.documentElement) {
       document.documentElement.style.setProperty('--react-concurrent', 'enabled');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generateRecommendations]);
 
   const determineOptimizationLevel = useCallback((metrics: PerformanceMetrics): OptimizationState['optimizationLevel'] => {

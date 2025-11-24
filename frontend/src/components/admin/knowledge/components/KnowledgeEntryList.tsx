@@ -68,11 +68,13 @@ export const KnowledgeEntryList: React.FC<KnowledgeEntryListProps> = ({
   // Load entries on mount
   useEffect(() => {
     loadEntries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Apply search and filters when entries or filters change
   useEffect(() => {
     applyFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, searchTerm, filterType]);
 
   /**

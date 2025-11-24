@@ -11,12 +11,14 @@ export interface ErrorBoundaryState {
 
 export interface ErrorBoundaryProps {
   children: ReactNode;
-  fallback?: ReactNode | ((error: Error, errorInfo: ErrorInfo) => ReactNode);
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  fallback?: ReactNode | ((error: Error, reset: () => void) => ReactNode);
+  onError?: (info: { error: Error; errorInfo: { componentStack: string } }) => void;
+  onReset?: () => void;
   errorMessage?: string;
   showRetry?: boolean;
   onRetry?: () => void;
   boundaryName?: string;
+  componentName?: string;
 }
 
 export interface ErrorReport {

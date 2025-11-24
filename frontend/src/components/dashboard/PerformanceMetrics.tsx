@@ -63,26 +63,14 @@ interface WebVitalsState {
 interface PerformanceMetricsProps {
   loading?: boolean;
   error?: boolean;
+  sourceLabel?: string;
 }
 
-const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error }) => {
+const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error, sourceLabel }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // RBAC: Check if user has developer or admin role
-  const authResult = useAuth?.();
-  const hasDevAccess = authResult?.user?.roles?.includes('developer') ||
-                       authResult?.user?.roles?.includes('admin');
-
-  // Fallback to environment variable if useAuth unavailable
-  const canViewMetrics = hasDevAccess ?? (import.meta.env.VITE_SHOW_PERFORMANCE_METRICS === 'true');
-
-  // Hide widget if user doesn't have access
-  if (!canViewMetrics) {
-    return null;
-  }
-
-  // Track Web Vitals
+  // Track Web Vitals - hooks must be called unconditionally before any returns
   const [webVitals, setWebVitals] = useState<WebVitalsState>({});
 
   usePerformance({
@@ -94,6 +82,19 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
       }));
     },
   });
+
+  // RBAC: Check if user has developer or admin role
+  const authResult = useAuth?.();
+  const hasDevAccess = authResult?.user?.roles?.includes('developer') ||
+                       authResult?.user?.roles?.includes('admin');
+
+  // Prefer real RBAC if available, otherwise allow opt-in via env flag
+  const canViewMetrics = hasDevAccess ?? (import.meta.env.VITE_SHOW_PERFORMANCE_METRICS === 'true');
+
+  // Hide widget if user doesn't have access
+  if (!canViewMetrics) {
+    return null;
+  }
 
   const formatNumber = (num: number | undefined, decimals = 1) => {
     if (num === undefined) return '-';
@@ -132,15 +133,15 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ loading, error 
 
   return (
     <GridTile
-      title="Performance Metrics (Dev)"
+      title={sourceLabel || "Performance Metrics (Dev)"}
       data-testid="performance-metrics"
       position={{
         desktop: { column: '12 / 13', height: '160px' },
         tablet: { column: '8 / 9', height: '150px' },
         mobile: { height: '200px' },
       }}
-      loading={loading}
-      error={error}
+      loading={loading || false}
+      error={!!error}
     >
       {isMobile ? (
         // Mobile: Web Vitals display

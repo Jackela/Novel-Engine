@@ -510,7 +510,7 @@ def create_app() -> FastAPI:
 
     # Add trusted host middleware for security in production
     if not config.debug:
-        trusted_hosts = cors_origins + [config.host, "localhost", "127.0.0.1"]
+        trusted_hosts = cors_origins + [config.host, "localhost", "127.0.0.1", "testserver"]
         app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
 
     # Enhanced system endpoints

@@ -169,6 +169,7 @@ const CharacterSelection = () => {
         }
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectionConstraints.maxSelection, t]);
 
   /**

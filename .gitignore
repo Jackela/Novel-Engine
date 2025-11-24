@@ -189,13 +189,14 @@ cython_debug/
 # Node.js (Frontend)
 node_modules/
 .DS_Store
-undefined:/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 frontend/.lighthouseci/
+frontend/nm_backup_ci/
+frontend/node_modules_backup_ci/
 package-lock.json
 !frontend/package-lock.json
 yarn.lock
@@ -435,6 +436,7 @@ reports/evidence/**/*.png
 reports/evidence/**/*.jpg
 reports/evidence/**/*.mp4
 frontend/reports/
+frontend/undefined:/
 
 # Third-party tool configurations
 .specify/
@@ -452,5 +454,18 @@ evaluation/
 !.env.local.template
 .venv-run/
 coverage.json
-/undefined
-/frontend/undefined
+undefined:/
+
+# Runtime artifacts
+data/
+.playwright-mcp/
+chrome-devtools-mcp-*.tgz
+frontend/test-results.json
+
+# Codemachine
+.codemachine/
+.codemachine/logs
+.codemachine/memory
+.codemachine/prompts
+.codemachine/agents
+.codemachine/template.json

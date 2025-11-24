@@ -1,6 +1,8 @@
 import React, { act } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import { vi } from 'vitest';
 import QuickActions from '../QuickActions';
 import WorldStateMapV2 from '../WorldStateMapV2';
@@ -9,10 +11,45 @@ import NarrativeTimeline from '../NarrativeTimeline';
 import TurnPipelineStatus from '../TurnPipelineStatus';
 import RealTimeActivity from '../RealTimeActivity';
 import PerformanceMetrics from '../PerformanceMetrics';
+import dashboardSlice from '../../../store/slices/dashboardSlice';
 
 const renderWithTheme = (ui: React.ReactElement) => {
   const theme = createTheme();
   return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+};
+
+// Create a mock store for components that need Redux
+const createMockStore = () =>
+  configureStore({
+    reducer: {
+      dashboard: dashboardSlice,
+    },
+    preloadedState: {
+      dashboard: {
+        orchestrationStatus: null,
+        pipeline: {
+          steps: [],
+          status: 'idle',
+          currentStep: undefined,
+          progress: 0,
+        },
+        events: [],
+        analytics: null,
+        narrative: null,
+        loading: false,
+        error: null,
+      },
+    },
+  });
+
+const renderWithRedux = (ui: React.ReactElement) => {
+  const theme = createTheme();
+  const store = createMockStore();
+  return render(
+    <Provider store={store}>
+      <ThemeProvider theme={theme}>{ui}</ThemeProvider>
+    </Provider>
+  );
 };
 
 if (typeof window.PointerEvent === 'undefined') {
@@ -59,6 +96,7 @@ class MockEventSource {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (global as any).EventSource = MockEventSource;
 
 const mockFetchCharacters = () =>
@@ -282,7 +320,8 @@ describe('Dashboard accessibility + data parity', () => {
   it('renders QuickActions and timeline/pipeline tiles without console warnings', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    renderWithTheme(
+    // Use renderWithRedux because TurnPipelineStatus now uses Redux hooks
+    renderWithRedux(
       <>
         <QuickActions />
         <NarrativeTimeline />

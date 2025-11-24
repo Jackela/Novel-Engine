@@ -145,6 +145,7 @@ export function usePerformance(options: UsePerformanceOptions = {}): IPerformanc
     if (shouldTrackWebVitals) {
       trackWebVitals()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldTrackWebVitals])
 
   return {

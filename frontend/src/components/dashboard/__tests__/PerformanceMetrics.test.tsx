@@ -13,7 +13,7 @@ vi.mock('../../../hooks/usePerformance', () => ({
 }));
 
 describe('PerformanceMetrics RBAC', () => {
-  let originalEnv: any;
+  let originalEnv: string | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();

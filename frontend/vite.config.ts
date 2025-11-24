@@ -11,7 +11,7 @@ export default defineConfig({
       globals: {
         Buffer: true,
         global: true,
-        process: false, // Let us handle process manually
+        process: true, // Enable process polyfill
       },
       protocolImports: true,
     })
@@ -19,7 +19,7 @@ export default defineConfig({
   
   // Manual process polyfill via define
   // MIGRATION NOTE: Transitioning from REACT_APP_* to VITE_* (VITE_* takes precedence)
-  define: {
+  /* define: {
     global: 'globalThis',
     'process': JSON.stringify({
       env: {
@@ -52,7 +52,7 @@ export default defineConfig({
     'process.env.REACT_APP_API_TIMEOUT': JSON.stringify(process.env.VITE_API_TIMEOUT || process.env.REACT_APP_API_TIMEOUT || '10000'),
     'process.env.REACT_APP_API_URL': JSON.stringify(process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000'),
     'process.env.REACT_APP_DOCKER': JSON.stringify(process.env.VITE_DOCKER || process.env.REACT_APP_DOCKER || 'false'),
-  },
+  }, */
   
   // Performance optimizations
   build: {
@@ -121,6 +121,31 @@ export default defineConfig({
           });
         },
       },
+      // Proxy /meta/* to backend
+      '/meta': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Proxy /health to backend
+      '/health': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Proxy /cache/* to backend
+      '/cache': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Proxy /characters/* to backend
+      '/characters': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Proxy /simulations/* to backend
+      '/simulations': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
   
@@ -173,6 +198,7 @@ export default defineConfig({
     teardownTimeout: 5000, // 5 second timeout for teardown
     exclude: [
       '**/node_modules/**',
+      '**/nm_backup_ci/**',
       '**/dist/**',
       '**/*.e2e.spec.js',
       '**/*.spec.js',

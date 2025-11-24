@@ -34,7 +34,7 @@ class MockEventSource {
   }
 
   // Test helper to simulate receiving a message
-  simulateMessage(data: any) {
+  simulateMessage(data: Record<string, unknown>) {
     if (this.onmessage) {
       const event = new MessageEvent('message', {
         data: JSON.stringify(data),
@@ -57,6 +57,7 @@ describe('useRealtimeEvents', () => {
 
   beforeEach(() => {
     // Replace global EventSource with mock constructor
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any).EventSource = class extends MockEventSource {
       constructor(url: string) {
         super(url);

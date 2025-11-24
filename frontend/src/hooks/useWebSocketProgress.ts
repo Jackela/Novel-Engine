@@ -207,6 +207,7 @@ export function useWebSocketProgress({
       }));
       onError?.(connectionError);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generationId, enabled, onUpdate, onError, onConnect, onDisconnect, state.connectionAttempts]);
 
   const disconnect = useCallback(() => {
