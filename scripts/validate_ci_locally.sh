@@ -106,6 +106,29 @@ echo "🧪 Running tests with coverage (this matches GitHub Actions exactly)..."
 test_exit_code=$?
 
 echo ""
+echo "🌐 Running frontend tests (Vitest)..."
+FRONTEND_DIR="frontend"
+if [ -d "$FRONTEND_DIR" ]; then
+    cd "$FRONTEND_DIR"
+    if [ -f "package.json" ] && grep -q '"test"' package.json; then
+        npm test -- --run 2>&1
+        frontend_exit_code=$?
+        cd ..
+        if [ $frontend_exit_code -ne 0 ]; then
+            echo -e "${RED}❌ Frontend tests failed${NC}"
+            test_exit_code=1
+        else
+            echo -e "${GREEN}✓ Frontend tests passed${NC}"
+        fi
+    else
+        cd ..
+        echo -e "${YELLOW}⚠ No frontend test script found, skipping${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠ Frontend directory not found, skipping${NC}"
+fi
+
+echo ""
 echo "=========================================="
 if [ $test_exit_code -eq 0 ]; then
     echo -e "${GREEN}✅ Validation PASSED${NC}"
