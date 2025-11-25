@@ -467,3 +467,4 @@ frontend/test-results.json
 .codemachine/prompts
 .codemachine/agents
 .codemachine/template.json
+frontend/undefined:*
