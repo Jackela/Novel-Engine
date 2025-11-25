@@ -13,6 +13,10 @@
   - [x] Set PYTHONPATH environment variable
   - [x] Add debug step to verify Python environment
 
+- [x] **Fix health endpoint returning 400 instead of 503**
+  - [x] Return 503 directly when health_monitor not initialized (avoids global exception handler)
+  - [x] Set service_status to "initializing" during startup phase
+
 - [ ] **Validation**
   - [ ] Push to PR and verify CI passes
   - [ ] Confirm error messages are clear when API fails
@@ -23,6 +27,7 @@
 |------|--------|
 | `tests/e2e/conftest.py` | Fixed health check to only accept 200 + healthy status |
 | `.github/workflows/e2e-tests.yml` | Added PYTHONPATH, editable install, test requirements |
+| `src/api/main_api_server.py` | Fixed health endpoint to return 503 (not 400) when uninitialized |
 
 ## Dependencies
 
