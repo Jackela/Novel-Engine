@@ -378,49 +378,49 @@ mobile-quickactions-fix-validation-*.png
 backup_configs_wave3/
 
 # Root-level temporary scripts (keep organized scripts in scripts/ dir)
-cleanup_project.sh
-ai_agent_story_server.py
-ai_enhancement_analysis.py
-# api_server.py  # KEEP: Required by tests
-campaign_brief.py
-# character_factory.py  # KEEP: Backward compatibility interface, required by tests
-chronicler_agent.py
-component_integration_fix.py
-component_integration_test.py
-config_loader.py
-database_security.py
-database_security_test.py
-# director_agent.py  # KEEP: Backward compatibility interface, required by tests
-# director_agent_integrated.py  # KEEP: Required by director_agent.py
-emergent_narrative_orchestrator.py
-# enhanced_multi_agent_bridge.py  # KEEP: Required by tests
-enhanced_simulation_orchestrator.py
-enterprise_integration_fix.py
-enterprise_multi_agent_orchestrator.py
-evaluate_baseline.py
-final-dashboard-validation.js
-find_missing_docstrings.py
-fix_async_tests.py
-high_performance_concurrent_processor.py
-inspect-current-app*.js
-integration_compatibility_fix.py
-integration_test.py
-integration_validation_test.py
-m45_platform_fix_validation.py
-parallel_agent_coordinator.py
-performance_stability_validation.py
-performance_validation_test.py
-phase1_validation_test.py
-playwright_ai_validation_test.py
-production_*.py
-quality_gates.py
-quick_platform_validation.py
-scalability_framework.py
-# shared_types.py  # tracked for core type exports
-uat_test_script.py
-validate_platform.py
-validation_test.py
-wave*.py
+/cleanup_project.sh
+/ai_agent_story_server.py
+/ai_enhancement_analysis.py
+# /api_server.py  # KEEP: Required by tests
+/campaign_brief.py
+# /character_factory.py  # KEEP: Backward compatibility interface, required by tests
+/chronicler_agent.py
+/component_integration_fix.py
+/component_integration_test.py
+/config_loader.py
+/database_security.py
+/database_security_test.py
+# /director_agent.py  # KEEP: Backward compatibility interface, required by tests
+# /director_agent_integrated.py  # KEEP: Required by director_agent.py
+/emergent_narrative_orchestrator.py
+# /enhanced_multi_agent_bridge.py  # KEEP: Required by tests
+/enhanced_simulation_orchestrator.py
+/enterprise_integration_fix.py
+/enterprise_multi_agent_orchestrator.py
+/evaluate_baseline.py
+/final-dashboard-validation.js
+/find_missing_docstrings.py
+/fix_async_tests.py
+/high_performance_concurrent_processor.py
+/inspect-current-app*.js
+/integration_compatibility_fix.py
+/integration_test.py
+/integration_validation_test.py
+/m45_platform_fix_validation.py
+/parallel_agent_coordinator.py
+/performance_stability_validation.py
+/performance_validation_test.py
+/phase1_validation_test.py
+/playwright_ai_validation_test.py
+/production_*.py
+/quality_gates.py
+/quick_platform_validation.py
+/scalability_framework.py
+# /shared_types.py  # tracked for core type exports
+/uat_test_script.py
+/validate_platform.py
+/validation_test.py
+/wave*.py
 
 # Temporary data files (now organized in reports/)
 world_state.json
