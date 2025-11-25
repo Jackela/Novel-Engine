@@ -56,20 +56,34 @@ def api_app():
 def client(api_app):
     """Create synchronous test client."""
     with TestClient(api_app, raise_server_exceptions=False) as test_client:
-        # Wait for lifespan to complete (system to be ready)
+        # Wait for API to become fully healthy before yielding client
         import time
         max_wait = 30
         start = time.time()
+        last_status = None
+        last_service_status = None
 
         while time.time() - start < max_wait:
             try:
                 response = test_client.get("/health")
-                if response.status_code in [200, 503]:
-                    # Health endpoint responds, system is initializing or ready
-                    break
-            except Exception:
-                pass
+                last_status = response.status_code
+
+                if response.status_code == 200:
+                    data = response.json()
+                    last_service_status = data.get("data", {}).get("service_status")
+                    # Only accept truly healthy status
+                    if last_service_status == "healthy":
+                        break
+            except Exception as e:
+                last_status = f"exception: {e}"
             time.sleep(0.5)
+        else:
+            # Timeout reached - fail with clear message
+            raise RuntimeError(
+                f"API failed to become healthy within {max_wait}s. "
+                f"Last status code: {last_status}, "
+                f"Last service_status: {last_service_status}"
+            )
 
         yield test_client
 
