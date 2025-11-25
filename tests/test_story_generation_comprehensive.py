@@ -64,6 +64,7 @@ BANNED_BRAND_TERMS = [
 class TestChroniclerAgentCore:
     """Test core ChroniclerAgent functionality"""
 
+    @pytest.mark.integration
     def test_chronicler_initialization(self):
         """Test ChroniclerAgent initialization"""
         chronicler = ChroniclerAgent()
@@ -71,6 +72,7 @@ class TestChroniclerAgentCore:
         assert hasattr(chronicler, "narrative_templates")
         assert hasattr(chronicler, "faction_descriptions")
 
+    @pytest.mark.integration
     def test_narrative_templates_debranded(self):
         """Test that narrative templates contain no branded content"""
         chronicler = ChroniclerAgent()
@@ -89,6 +91,7 @@ class TestChroniclerAgentCore:
         assert "sci_fi_dramatic" in chronicler.narrative_templates
         assert "grimdark_dramatic" not in chronicler.narrative_templates
 
+    @pytest.mark.integration
     def test_faction_descriptions_generic(self):
         """Test that faction descriptions are generic sci-fi"""
         chronicler = ChroniclerAgent()
@@ -118,6 +121,7 @@ class TestChroniclerAgentCore:
                 faction not in chronicler.faction_descriptions
             ), f"Branded faction found: {faction}"
 
+    @pytest.mark.integration
     def test_narrative_style_management(self):
         """Test narrative style setting and validation"""
         chronicler = ChroniclerAgent()
@@ -136,6 +140,7 @@ class TestChroniclerAgentCore:
         assert chronicler.set_narrative_style("grimdark_dramatic") is False
         assert chronicler.set_narrative_style("invalid_style") is False
 
+    @pytest.mark.integration
     def test_campaign_log_parsing(self):
         """Test campaign log parsing functionality"""
         chronicler = ChroniclerAgent()
@@ -174,6 +179,7 @@ class TestChroniclerAgentCore:
         finally:
             os.unlink(temp_log_path)
 
+    @pytest.mark.integration
     def test_narrative_segment_generation(self):
         """Test narrative segment generation from events"""
         chronicler = ChroniclerAgent()
@@ -230,6 +236,7 @@ class TestStoryContentQuality:
             yield f.name
         os.unlink(f.name)
 
+    @pytest.mark.integration
     def test_story_length_adequacy(self, sample_campaign_log):
         """Test that generated stories have adequate length"""
         chronicler = ChroniclerAgent()
@@ -242,6 +249,7 @@ class TestStoryContentQuality:
         sentence_count = story.count(".") + story.count("!") + story.count("?")
         assert sentence_count >= 5, "Story should have multiple sentences"
 
+    @pytest.mark.integration
     def test_story_structure_coherence(self, sample_campaign_log):
         """Test story structure and coherence"""
         chronicler = ChroniclerAgent()
@@ -260,6 +268,7 @@ class TestStoryContentQuality:
         has_closing = any(word in story_lower[-200:] for word in closing_words)
         assert has_closing, "Story should have conclusive ending"
 
+    @pytest.mark.integration
     def test_character_integration_in_stories(self, sample_campaign_log):
         """Test that character names and actions are integrated properly"""
         chronicler = ChroniclerAgent()
@@ -281,6 +290,7 @@ class TestStoryContentQuality:
         has_actions = any(word in story_lower for word in action_words)
         assert has_actions, "Story should integrate character actions"
 
+    @pytest.mark.integration
     def test_story_atmosphere_consistency(self, sample_campaign_log):
         """Test that story maintains consistent sci-fi atmosphere"""
         chronicler = ChroniclerAgent()
@@ -307,6 +317,7 @@ class TestStoryContentQuality:
         has_drama = any(indicator in story_lower for indicator in dramatic_indicators)
         assert has_drama, "Story should maintain dramatic tone"
 
+    @pytest.mark.integration
     def test_story_readability(self, sample_campaign_log):
         """Test story readability and flow"""
         chronicler = ChroniclerAgent()
@@ -341,6 +352,7 @@ class TestStoryContentQuality:
 class TestDebrandingValidation:
     """Test comprehensive debranding validation"""
 
+    @pytest.mark.integration
     def test_no_branded_content_in_generated_stories(self):
         """Test that generated stories contain no branded content"""
         chronicler = ChroniclerAgent()
@@ -382,6 +394,7 @@ class TestDebrandingValidation:
             finally:
                 os.unlink(temp_path)
 
+    @pytest.mark.integration
     def test_generic_faction_usage_in_stories(self):
         """Test that stories use generic faction names"""
         chronicler = ChroniclerAgent()
@@ -411,6 +424,7 @@ class TestDebrandingValidation:
         finally:
             os.unlink(temp_path)
 
+    @pytest.mark.integration
     def test_sci_fi_theme_replacement(self):
         """Test that sci-fi themes properly replace branded themes"""
         chronicler = ChroniclerAgent()
@@ -458,6 +472,7 @@ class TestDebrandingValidation:
 class TestNarrativeStyleAndTone:
     """Test narrative style and tone management"""
 
+    @pytest.mark.integration
     def test_sci_fi_dramatic_style(self):
         """Test sci_fi_dramatic narrative style"""
         chronicler = ChroniclerAgent()
@@ -497,6 +512,7 @@ class TestNarrativeStyleAndTone:
         finally:
             os.unlink(temp_path)
 
+    @pytest.mark.integration
     def test_tactical_style(self):
         """Test tactical narrative style"""
         chronicler = ChroniclerAgent()
@@ -525,6 +541,7 @@ class TestNarrativeStyleAndTone:
         finally:
             os.unlink(temp_path)
 
+    @pytest.mark.integration
     def test_philosophical_style(self):
         """Test philosophical narrative style"""
         chronicler = ChroniclerAgent()
@@ -555,6 +572,7 @@ class TestNarrativeStyleAndTone:
 class TestCharacterIntegration:
     """Test character integration in story generation"""
 
+    @pytest.mark.integration
     def test_multiple_character_story_generation(self):
         """Test story generation with multiple characters"""
         chronicler = ChroniclerAgent()
@@ -603,6 +621,7 @@ class TestCharacterIntegration:
         finally:
             os.unlink(temp_path)
 
+    @pytest.mark.integration
     def test_character_faction_integration(self):
         """Test character faction integration in stories"""
         chronicler = ChroniclerAgent()
@@ -644,6 +663,7 @@ class TestCharacterIntegration:
 class TestTemplateAndPatternSystems:
     """Test template and pattern systems"""
 
+    @pytest.mark.integration
     def test_response_template_variety(self):
         """Test variety in response templates"""
         chronicler = ChroniclerAgent()
@@ -673,6 +693,7 @@ class TestTemplateAndPatternSystems:
             len(unique_stories) >= 2
         ), "Stories should have some variation in templates"
 
+    @pytest.mark.integration
     def test_narrative_opening_templates(self):
         """Test narrative opening template functionality"""
         chronicler = ChroniclerAgent()
@@ -717,6 +738,7 @@ class TestTemplateAndPatternSystems:
 class TestPerformanceAndScalability:
     """Test performance and scalability of story generation"""
 
+    @pytest.mark.integration
     def test_story_generation_performance(self):
         """Test story generation performance"""
         import time
@@ -757,6 +779,7 @@ class TestPerformanceAndScalability:
         finally:
             os.unlink(temp_path)
 
+    @pytest.mark.integration
     def test_large_log_handling(self):
         """Test handling of large campaign logs"""
         chronicler = ChroniclerAgent()
@@ -795,6 +818,7 @@ class TestPerformanceAndScalability:
 class TestErrorHandlingAndEdgeCases:
     """Test error handling and edge cases"""
 
+    @pytest.mark.integration
     def test_empty_log_handling(self):
         """Test handling of empty campaign logs"""
         chronicler = ChroniclerAgent()
@@ -813,6 +837,7 @@ class TestErrorHandlingAndEdgeCases:
         finally:
             os.unlink(temp_path)
 
+    @pytest.mark.integration
     def test_malformed_log_handling(self):
         """Test handling of malformed campaign logs"""
         chronicler = ChroniclerAgent()
@@ -837,6 +862,7 @@ class TestErrorHandlingAndEdgeCases:
         finally:
             os.unlink(temp_path)
 
+    @pytest.mark.integration
     def test_nonexistent_log_handling(self):
         """Test handling of non-existent log files"""
         chronicler = ChroniclerAgent()
@@ -845,6 +871,7 @@ class TestErrorHandlingAndEdgeCases:
         with pytest.raises((FileNotFoundError, IOError)):
             chronicler.transcribe_log("nonexistent_file.md")
 
+    @pytest.mark.integration
     def test_corrupted_log_recovery(self):
         """Test recovery from corrupted log data"""
         chronicler = ChroniclerAgent()

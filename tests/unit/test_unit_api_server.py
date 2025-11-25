@@ -30,6 +30,7 @@ class TestAPIServerEndpoints:
     @pytest.mark.api
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_root_endpoint_success(self):
         """测试根端点 - 成功情况"""
         response = self.client.get("/")
@@ -218,6 +219,7 @@ class TestAPIServerEndpoints:
         assert response.status_code == 422  # Validation error
 
     @pytest.mark.api
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_simulations_endpoint_invalid_request_too_many_characters(self):
         """测试模拟端点 - 无效请求（角色过多）"""
@@ -554,6 +556,7 @@ class TestAPIServerErrorHandling:
     @pytest.mark.api
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_404_endpoint_not_found(self):
         """测试404错误处理"""
         response = self.client.get("/nonexistent-endpoint")
@@ -575,6 +578,7 @@ class TestAPIServerErrorHandling:
     @pytest.mark.api
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_422_validation_error(self):
         """测试422验证错误"""
         invalid_data = {"invalid_field": "invalid_value"}
@@ -595,6 +599,7 @@ class TestAPIServerSecurity:
     @pytest.mark.security
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_cors_headers_present(self):
         """测试CORS头部设置"""
         # CORS头部在GET请求中也会出现
@@ -673,6 +678,7 @@ class TestAPIServerPerformance:
     @pytest.mark.performance
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_health_endpoint_response_time(self):
         """测试健康检查端点响应时间"""
         import time

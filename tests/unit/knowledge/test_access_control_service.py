@@ -198,6 +198,7 @@ class TestAccessControlServiceCanAccessEntry:
         return AccessControlService()
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_can_access_public_entry(self, service):
         """Test that any agent can access public entry."""
         if KnowledgeEntry is None or AgentIdentity is None:

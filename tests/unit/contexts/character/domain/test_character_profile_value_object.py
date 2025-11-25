@@ -32,6 +32,7 @@ class TestPhysicalTraits:
     # ==================== Creation Tests ====================
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_physical_traits_creation_success(self):
         """Test successful physical traits creation."""
         traits = PhysicalTraits(
@@ -129,6 +130,7 @@ class TestPersonalityTraits:
     # ==================== Creation Tests ====================
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_personality_traits_creation_success(self):
         """Test successful personality traits creation."""
         traits = PersonalityTraits(
@@ -185,6 +187,7 @@ class TestPersonalityTraits:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_personality_traits_invalid_score_too_high(self):
         """Test validation fails for trait scores above 1.0."""
         with pytest.raises(ValueError) as exc_info:
@@ -195,6 +198,7 @@ class TestPersonalityTraits:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_personality_traits_boundary_scores(self):
         """Test trait scores at boundary values."""
         traits = PersonalityTraits(traits={"minimum": 0.0, "maximum": 1.0})
@@ -204,6 +208,7 @@ class TestPersonalityTraits:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_personality_traits_empty_trait_name_fails(self):
         """Test validation fails for empty trait names."""
         with pytest.raises(ValueError) as exc_info:
@@ -222,6 +227,7 @@ class TestPersonalityTraits:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_trait_score_existing_trait(self):
         """Test getting trait score for existing trait."""
         traits = PersonalityTraits(traits={"courage": 0.8})
@@ -247,6 +253,7 @@ class TestPersonalityTraits:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_has_trait_existing(self):
         """Test has_trait returns True for existing traits."""
         traits = PersonalityTraits(traits={"courage": 0.8})

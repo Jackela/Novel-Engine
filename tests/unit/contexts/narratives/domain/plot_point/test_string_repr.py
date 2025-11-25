@@ -23,6 +23,7 @@ class TestPlotPointStringRepresentation:
     """Test suite for PlotPoint string representation methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_str_representation(self):
         """Test human-readable string representation."""
         plot_point = PlotPoint(

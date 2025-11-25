@@ -144,6 +144,7 @@ class TestWorldStateAggregate:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_world_state_validation_entity_limit(self):
         """Test validation for entity limit exceeded."""
         world = WorldState(name="Test", max_entities=2)
@@ -810,6 +811,7 @@ class TestWorldStateAggregate:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_has_domain_events(self, world_state):
         """Test checking for pending domain events."""
         world_state.clear_domain_events()
@@ -855,6 +857,7 @@ class TestWorldStateAggregate:
         grid_key = world_state._get_spatial_grid_key(boundary_coords)
         assert grid_key == "1,2"  # Should consistently assign to one grid
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_concurrent_entity_modifications(self, world_state, sample_entity_data):
         """Test entity modifications update timestamps correctly."""

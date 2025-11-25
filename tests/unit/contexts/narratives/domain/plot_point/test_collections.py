@@ -23,6 +23,7 @@ class TestPlotPointCollectionsAndComparison:
     """Test suite for PlotPoint behavior in collections and comparisons."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_plot_points_in_list(self):
         """Test PlotPoint objects in list operations."""
         plot1 = PlotPoint(

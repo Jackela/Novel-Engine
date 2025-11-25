@@ -44,6 +44,7 @@ class TestInteractionApplicationServiceInitialization:
     """Test suite for InteractionApplicationService initialization."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_initialization_with_all_dependencies(self):
         """Test initialization with all dependencies provided."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
@@ -1297,6 +1298,7 @@ class TestSessionHealthMonitoring:
 class TestPrivateHelperMethods:
     """Test suite for private helper methods in InteractionApplicationService."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_calculate_success_probability(self):
         """Test success probability calculation."""

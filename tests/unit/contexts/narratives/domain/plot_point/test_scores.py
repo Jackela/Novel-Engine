@@ -23,6 +23,7 @@ class TestPlotPointOverallImpactScore:
     """Test suite for overall impact score calculation."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_critical_importance_impact_score(self):
         """Test impact score calculation for CRITICAL importance."""
         plot_point = PlotPoint(

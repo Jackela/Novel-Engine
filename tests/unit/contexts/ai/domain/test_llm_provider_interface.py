@@ -37,6 +37,7 @@ class TestLLMRequestTypeEnum:
     """Test suite for LLMRequestType enum."""
 
     @pytest.mark.unit
+    @pytest.mark.integration
     def test_all_request_types_exist(self):
         """Test that all expected request types are defined."""
         expected_types = {
@@ -384,6 +385,7 @@ class TestLLMRequestFactoryMethods:
         self.model_id = ModelId.create_gpt4(provider_id)
 
     @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_chat_request_basic(self):
         """Test creating chat request with basic parameters."""
         messages = [
@@ -638,6 +640,7 @@ class TestLLMResponseCreation:
         self.response_id = uuid4()
 
     @pytest.mark.unit
+    @pytest.mark.integration
     def test_basic_response_creation(self):
         """Test basic LLM response creation with required parameters."""
         response = LLMResponse(
@@ -792,6 +795,7 @@ class TestLLMResponseFactoryMethods:
         self.request_id = uuid4()
 
     @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_success_response(self):
         """Test creating successful response using factory method."""
         content = "Generated response content"
@@ -936,6 +940,7 @@ class TestLLMResponseBusinessMethods:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.integration
     def test_get_input_tokens(self):
         """Test getting input token usage."""
         input_tokens = self.success_response.get_input_tokens()
@@ -945,6 +950,7 @@ class TestLLMResponseBusinessMethods:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.integration
     def test_get_output_tokens(self):
         """Test getting output token usage."""
         output_tokens = self.success_response.get_output_tokens()
@@ -972,6 +978,7 @@ class TestLLMProviderErrorHierarchy:
     """Test suite for LLM provider error hierarchy."""
 
     @pytest.mark.unit
+    @pytest.mark.integration
     def test_base_llm_provider_error(self):
         """Test base LLMProviderError exception."""
         provider_id = ProviderId.create_openai()
@@ -1190,6 +1197,7 @@ class TestILLMProviderInterface:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.integration
     def test_validate_request_valid(self):
         """Test request validation for valid request."""
         is_valid = self.provider.validate_request(self.request)
@@ -1250,6 +1258,7 @@ class TestILLMProviderInterface:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.integration
     def test_supports_streaming_default(self):
         """Test default streaming support."""
         assert self.provider.supports_streaming() is True
@@ -1289,6 +1298,7 @@ class TestILLMProviderInterface:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.integration
     def test_string_representation(self):
         """Test string representations of provider."""
         str_repr = str(self.provider)

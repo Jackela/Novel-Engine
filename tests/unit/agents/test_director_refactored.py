@@ -172,6 +172,7 @@ class TestDirectorAgentComponents(unittest.TestCase):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_agent_lifecycle_manager_initialization(self):
         """Test AgentLifecycleManager initialization."""
         manager = AgentLifecycleManager(self.event_bus, self.state)
@@ -356,6 +357,7 @@ class TestDirectorAgentIntegration(unittest.TestCase):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_director_agent_creation(self):
         """Test DirectorAgent creation and initialization."""
         director = DirectorAgent(
@@ -518,6 +520,7 @@ class TestSystemResilience(unittest.TestCase):
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_error_recovery(self):
         """Test system error recovery capabilities."""
         director = DirectorAgent(self.event_bus)

@@ -56,6 +56,7 @@ class TestLLMIntegration(unittest.TestCase):
             shutil.rmtree(self.test_dir)
 
     @patch("src.persona_agent._make_gemini_api_request")
+    @pytest.mark.integration
     def test_llm_decision_making_returns_action(self, mock_gemini_request):
         """Test _llm_enhanced_decision_making returns a CharacterAction for a valid response."""
         # Arrange
@@ -84,6 +85,7 @@ class TestLLMIntegration(unittest.TestCase):
         mock_gemini_request.assert_called_once()
 
     @patch("src.persona_agent.PersonaAgent._call_llm")
+    @pytest.mark.integration
     def test_llm_decision_making_handles_invalid_response(self, mock_call_llm):
         """Test _llm_enhanced_decision_making returns None for an invalid LLM response."""
         # Arrange
@@ -104,6 +106,7 @@ class TestLLMIntegration(unittest.TestCase):
 
     @patch("src.persona_agent._validate_gemini_api_key", return_value=None)
     @patch("src.persona_agent._generate_fallback_response")
+    @pytest.mark.integration
     def test_llm_uses_fallback_when_no_api_key(self, mock_fallback, mock_validate_key):
         """Test the agent uses the fallback mechanism when the API key is not available."""
         # Arrange
@@ -130,6 +133,7 @@ class TestLLMIntegration(unittest.TestCase):
         mock_fallback.assert_called_once()
 
     @patch("src.persona_agent._make_gemini_api_request")
+    @pytest.mark.integration
     def test_llm_decision_making_handles_api_failure_and_uses_fallback(
         self, mock_gemini_request
     ):
@@ -166,6 +170,7 @@ class TestLLMIntegration(unittest.TestCase):
         mock_gemini_request.assert_called_once()
 
     @patch("src.persona_agent._make_gemini_api_request")
+    @pytest.mark.integration
     def test_llm_decision_making_handles_observe_action(self, mock_gemini_request):
         """Test _llm_enhanced_decision_making returns None when LLM chooses to observe."""
         # Arrange

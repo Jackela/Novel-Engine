@@ -55,6 +55,7 @@ class TestChroniclerAgent:
             pass
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_chronicler_initialization_success(self):
         """测试记录代理初始化 - 成功情况"""
         event_bus = Mock()
@@ -261,6 +262,7 @@ class TestChroniclerAgentAdvanced:
         )
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_event_bus_integration(self):
         """测试与事件总线的集成"""
         # 检查记录代理是否正确使用事件总线
@@ -408,6 +410,7 @@ class TestChroniclerAgentPerformance:
         )
 
     @pytest.mark.performance
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_transcription_performance(self):
         """测试转录性能"""

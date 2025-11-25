@@ -18,6 +18,7 @@ class TestNarrativeIdCreation:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_create_with_uuid(self):
         """Test creating NarrativeId with valid UUID."""
         uuid_value = uuid4()
@@ -28,6 +29,7 @@ class TestNarrativeIdCreation:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_create_with_specific_uuid(self):
         """Test creating NarrativeId with specific UUID."""
         specific_uuid = UUID("12345678-1234-5678-9abc-123456789abc")
@@ -36,6 +38,7 @@ class TestNarrativeIdCreation:
         assert narrative_id.value == specific_uuid
         assert str(narrative_id.value) == "12345678-1234-5678-9abc-123456789abc"
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_frozen_dataclass_immutability(self):
         """Test that NarrativeId is immutable (frozen dataclass)."""
@@ -237,6 +240,7 @@ class TestNarrativeIdEquality:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_equality_same_uuid(self):
         """Test equality with same UUID value."""
         uuid_value = uuid4()
@@ -317,6 +321,7 @@ class TestNarrativeIdHashing:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_hash_consistency(self):
         """Test that hash is consistent for same object."""
         narrative_id = NarrativeId.generate()
@@ -327,6 +332,7 @@ class TestNarrativeIdHashing:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_hash_equality_implies_same_hash(self):
         """Test that equal objects have the same hash."""
         uuid_value = uuid4()
@@ -389,6 +395,7 @@ class TestNarrativeIdRoundTripConversion:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_generate_to_string_to_from_string(self):
         """Test round-trip: generate -> to_string -> from_string."""
         original = NarrativeId.generate()
@@ -410,6 +417,7 @@ class TestNarrativeIdRoundTripConversion:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_uuid_to_narrative_id_to_string(self):
         """Test round-trip: UUID -> NarrativeId -> to_string."""
         original_uuid = uuid4()
@@ -420,6 +428,7 @@ class TestNarrativeIdRoundTripConversion:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_multiple_round_trips(self):
         """Test multiple round-trip conversions maintain equality."""
         original = NarrativeId.generate()
@@ -441,6 +450,7 @@ class TestNarrativeIdEdgeCases:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_nil_uuid(self):
         """Test with nil/zero UUID."""
         nil_uuid = UUID("00000000-0000-0000-0000-000000000000")
@@ -451,6 +461,7 @@ class TestNarrativeIdEdgeCases:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_max_uuid(self):
         """Test with maximum UUID value."""
         max_uuid = UUID("ffffffff-ffff-ffff-ffff-ffffffffffff")
@@ -461,6 +472,7 @@ class TestNarrativeIdEdgeCases:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_uuid_versions(self):
         """Test with different UUID versions."""
         # UUID version 1 (time-based)
@@ -531,6 +543,7 @@ class TestNarrativeIdEdgeCases:
 class TestNarrativeIdCollections:
     """Test suite for NarrativeId behavior in collections."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_list_operations(self):
         """Test NarrativeId in list operations."""
@@ -610,6 +623,7 @@ class TestNarrativeIdContextMetadata:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_context_name_metadata(self):
         """Test context name class variable."""
         assert hasattr(NarrativeId, "_context_name")

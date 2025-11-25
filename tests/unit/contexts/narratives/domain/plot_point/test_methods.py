@@ -23,6 +23,7 @@ class TestPlotPointInstanceMethods:
     """Test suite for PlotPoint instance methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_involves_character_true(self):
         """Test involves_character returns True for involved character."""
         char_id1 = uuid4()

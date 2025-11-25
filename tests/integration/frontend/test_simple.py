@@ -54,6 +54,7 @@ def start_frontend_server():
     return None
 
 
+@pytest.mark.integration
 def test_frontend_basic():
     """基础前端测试"""
     import pytest

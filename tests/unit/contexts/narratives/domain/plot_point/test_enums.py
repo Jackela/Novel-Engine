@@ -23,6 +23,7 @@ class TestPlotPointTypeEnum:
     """Test suite for PlotPointType enum."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_all_enum_values_exist(self):
         """Test that all expected enum values are defined."""
         expected_types = {

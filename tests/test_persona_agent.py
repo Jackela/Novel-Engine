@@ -28,12 +28,14 @@ class TestPersonaAgent(unittest.TestCase):
                 agent_id="test_agent",
             )
 
+    @pytest.mark.unit
     def test_initialization_subscribes_to_turn_start(self):
         """Test that the PersonaAgent subscribes to the TURN_START event on initialization."""
         self.event_bus.subscribe.assert_called_once_with(
             "TURN_START", self.agent.handle_turn_start
         )
 
+    @pytest.mark.unit
     def test_handle_turn_start_emits_action(self):
         """Test that handle_turn_start calls _make_decision and emits an AGENT_ACTION_COMPLETE event."""
         # Mock the _make_decision method to return a specific action
@@ -51,6 +53,7 @@ class TestPersonaAgent(unittest.TestCase):
             "AGENT_ACTION_COMPLETE", agent=self.agent, action=mock_action
         )
 
+    @pytest.mark.unit
     def test_handle_turn_start_with_no_action(self):
         """Test that handle_turn_start emits an event even when no action is taken."""
         self.agent._make_decision = Mock(return_value=None)
@@ -89,6 +92,7 @@ class TestPersonaAgentCharacterLoading(unittest.TestCase):
             "social_network": {"relationships": {"ally_1": 0.7, "enemy_1": -0.8}},
         }
 
+    @pytest.mark.unit
     def test_load_character_context_success(self):
         """Test successful character context loading with mixed file types."""
         md_content = "# Character Sheet\n\nTest character description"
@@ -140,6 +144,7 @@ psychological_profile:
                 self.assertIsInstance(agent.character_data, dict)
                 self.assertEqual(agent.agent_id, "test_agent")
 
+    @pytest.mark.unit
     def test_load_character_context_missing_directory(self):
         """Test error handling when character directory doesn't exist."""
         with patch("os.path.exists", return_value=False), patch.object(
@@ -154,6 +159,7 @@ psychological_profile:
                     agent_id="test_agent",
                 )
 
+    @pytest.mark.unit
     def test_character_properties(self):
         """Test character property accessors."""
         with patch("os.path.exists", return_value=True), patch(
@@ -184,6 +190,7 @@ psychological_profile:
             self.assertEqual(agent.character_directory_name, "test_char")
             self.assertIsInstance(agent.character_context, str)
 
+    @pytest.mark.unit
     def test_read_cached_file(self):
         """Test the cached file reading functionality."""
         test_content = "Test file content"
@@ -216,6 +223,7 @@ psychological_profile:
             result = agent._read_cached_file("test_file.txt")
             self.assertEqual(result, test_content)
 
+    @pytest.mark.unit
     def test_derive_agent_id_from_path(self):
         """Test agent ID derivation from directory path."""
         with patch("os.path.exists", return_value=True), patch(
@@ -248,6 +256,7 @@ psychological_profile:
             self.assertIsInstance(result, str)
             self.assertIn("sergeant_johnson", result.lower())
 
+    @pytest.mark.unit
     def test_estimate_trait_strength(self):
         """Test personality trait strength estimation."""
         with patch("os.path.exists", return_value=True), patch(
@@ -288,6 +297,7 @@ psychological_profile:
                 self.assertGreaterEqual(result, 0.0)
                 self.assertLessEqual(result, 1.0)
 
+    @pytest.mark.unit
     def test_parse_character_sheet_content(self):
         """Test character sheet parsing functionality."""
         test_markdown = """
@@ -362,6 +372,7 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
                 agent_id="test_agent",
             )
 
+    @pytest.mark.unit
     def test_make_decision_with_world_state(self):
         """Test decision making with world state input."""
         world_state = {
@@ -394,6 +405,7 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
             mock_process.assert_called_once()
             mock_llm.assert_called_once()
 
+    @pytest.mark.unit
     def test_make_decision_ai_fallback(self):
         """Test decision making when AI integration fails."""
         world_state = {"current_turn": 1}
@@ -424,6 +436,7 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
             self.assertEqual(result, fallback_action)
             mock_select.assert_called_once()
 
+    @pytest.mark.unit
     def test_assess_threat_levels(self):
         """Test threat assessment functionality."""
         # Test different threat descriptions
@@ -443,6 +456,7 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
                 result = self.agent._assess_threat_from_description(description)
                 self.assertEqual(result, expected_level)
 
+    @pytest.mark.unit
     def test_decision_weight_application(self):
         """Test that decision weights influence action selection."""
         # Set up test decision weights
@@ -487,6 +501,7 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertEqual(result.action_type, "retreat")
 
+    @pytest.mark.unit
     def test_assess_current_situation(self):
         """Test current situation assessment."""
         with patch.object(
@@ -510,6 +525,7 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
             self.assertIn("threat_level", result)
             self.assertIn("available_resources", result)
 
+    @pytest.mark.unit
     def test_identify_available_actions(self):
         """Test action identification based on situation."""
         test_situation = {
@@ -523,6 +539,7 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         # Should return at least some default actions
         self.assertGreaterEqual(len(result), 0)
 
+    @pytest.mark.unit
     def test_evaluate_action_option(self):
         """Test individual action evaluation."""
         test_action = {
@@ -542,6 +559,7 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         self.assertGreaterEqual(result, 0.0)
         self.assertLessEqual(result, 1.0)
 
+    @pytest.mark.unit
     def test_parse_llm_response(self):
         """Test LLM response parsing."""
         test_response = '{"action_type": "scout", "target": "sector_7", "reasoning": "Gather intelligence"}'
@@ -586,6 +604,7 @@ class TestPersonaAgentWorldInterpretation(unittest.TestCase):
                 agent_id="test_agent",
             )
 
+    @pytest.mark.unit
     def test_subjective_worldview_initialization(self):
         """Test that subjective worldview is properly initialized."""
         required_keys = [
@@ -600,6 +619,7 @@ class TestPersonaAgentWorldInterpretation(unittest.TestCase):
         for key in required_keys:
             self.assertIn(key, self.agent.subjective_worldview)
 
+    @pytest.mark.unit
     def test_world_event_processing(self):
         """Test processing of world events into subjective interpretations."""
         test_event = WorldEvent(
@@ -623,6 +643,7 @@ class TestPersonaAgentWorldInterpretation(unittest.TestCase):
         )
         self.assertIsInstance(threat_level, ThreatLevel)
 
+    @pytest.mark.unit
     def test_memory_integration(self):
         """Test that events are properly stored in memory systems."""
         # Test short-term memory functionality
@@ -669,6 +690,7 @@ class TestPersonaAgentAIIntegration(unittest.TestCase):
             )
 
     @patch.dict(os.environ, {"GEMINI_API_KEY": "test_api_key"})
+    @pytest.mark.unit
     def test_ai_query_with_valid_api_key(self):
         """Test AI query when Gemini API key is available."""
         test_prompt = "Test prompt for character decision"
@@ -681,6 +703,7 @@ class TestPersonaAgentAIIntegration(unittest.TestCase):
             self.assertEqual(result, expected_response)
             mock_llm.assert_called_once_with(test_prompt)
 
+    @pytest.mark.unit
     def test_ai_query_without_api_key(self):
         """Test AI query fallback when no API key is available."""
         with patch.dict(os.environ, {}, clear=True):
@@ -694,6 +717,7 @@ class TestPersonaAgentAIIntegration(unittest.TestCase):
                 # Should return fallback response or handle gracefully
                 self.assertIsInstance(result, str)
 
+    @pytest.mark.unit
     def test_api_error_handling(self):
         """Test handling of API errors and network issues."""
         test_prompt = "Test prompt"
@@ -738,6 +762,7 @@ class TestPersonaAgentMemoryAndEvolution(unittest.TestCase):
                 agent_id="test_agent",
             )
 
+    @pytest.mark.unit
     def test_short_term_memory_management(self):
         """Test short-term memory storage and retrieval."""
         # Add multiple memories
@@ -755,6 +780,7 @@ class TestPersonaAgentMemoryAndEvolution(unittest.TestCase):
         self.assertEqual(self.agent.short_term_memory[0]["event_id"], "event_0")
         self.assertEqual(self.agent.short_term_memory[-1]["event_id"], "event_4")
 
+    @pytest.mark.unit
     def test_long_term_memory_consolidation(self):
         """Test consolidation of important memories to long-term storage."""
         important_memory = {
@@ -771,6 +797,7 @@ class TestPersonaAgentMemoryAndEvolution(unittest.TestCase):
                 self.agent._consolidate_memories()
                 mock_consolidate.assert_called_once()
 
+    @pytest.mark.unit
     def test_relationship_evolution(self):
         """Test that relationships change based on interactions."""
         # Initial relationship state
@@ -789,6 +816,7 @@ class TestPersonaAgentMemoryAndEvolution(unittest.TestCase):
             self.agent.relationships["test_entity"] += relationship_change
             self.assertEqual(self.agent.relationships["test_entity"], 0.7)
 
+    @pytest.mark.unit
     def test_morale_and_status_tracking(self):
         """Test character morale and status management."""
         # Test initial state

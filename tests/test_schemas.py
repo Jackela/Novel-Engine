@@ -78,6 +78,7 @@ except ImportError as e:
 class TestEnumTypes:
     """Test enumeration types and their values."""
 
+    @pytest.mark.unit
     def test_action_type_values(self):
         """Test ActionType enum contains expected values."""
         expected_actions = [
@@ -97,6 +98,7 @@ class TestEnumTypes:
             assert hasattr(ActionType, action.upper())
             assert ActionType[action.upper()].value == action
 
+    @pytest.mark.unit
     def test_entity_type_values(self):
         """Test EntityType enum contains expected values."""
         expected_entities = [
@@ -112,6 +114,7 @@ class TestEnumTypes:
             assert hasattr(EntityType, entity.upper())
             assert EntityType[entity.upper()].value == entity
 
+    @pytest.mark.unit
     def test_validation_result_values(self):
         """Test ValidationResult enum contains expected values."""
         expected_results = [
@@ -125,6 +128,7 @@ class TestEnumTypes:
             assert hasattr(ValidationResult, result.upper())
             assert ValidationResult[result.upper()].value == result
 
+    @pytest.mark.unit
     def test_fog_of_war_channel_values(self):
         """Test FogOfWarChannel enum contains expected values."""
         expected_channels = ["visual", "radio", "intel", "rumor", "sensor"]
@@ -133,6 +137,7 @@ class TestEnumTypes:
             assert hasattr(FogOfWarChannel, channel.upper())
             assert FogOfWarChannel[channel.upper()].value == channel
 
+    @pytest.mark.unit
     def test_simulation_phase_values(self):
         """Test SimulationPhase enum contains expected values."""
         expected_phases = [
@@ -152,6 +157,7 @@ class TestEnumTypes:
 class TestSpatialTypes:
     """Test spatial and coordinate types."""
 
+    @pytest.mark.unit
     def test_position_creation_valid(self):
         """Test Position model with valid data."""
         position = Position(x=100.0, y=200.0, z=10.0, facing=270.0, accuracy=0.95)
@@ -162,6 +168,7 @@ class TestSpatialTypes:
         assert position.facing == 270.0
         assert position.accuracy == 0.95
 
+    @pytest.mark.unit
     def test_position_defaults(self):
         """Test Position model with default values."""
         position = Position(x=50.0, y=75.0)
@@ -172,6 +179,7 @@ class TestSpatialTypes:
         assert position.facing is None
         assert position.accuracy == 1.0
 
+    @pytest.mark.unit
     def test_position_facing_validation(self):
         """Test Position facing angle validation."""
         # Valid facing angles
@@ -185,6 +193,7 @@ class TestSpatialTypes:
         with pytest.raises(ValueError):
             Position(x=0.0, y=0.0, facing=360.0)
 
+    @pytest.mark.unit
     def test_position_accuracy_validation(self):
         """Test Position accuracy validation."""
         # Valid accuracy values
@@ -199,6 +208,7 @@ class TestSpatialTypes:
         with pytest.raises(ValueError):
             Position(x=0.0, y=0.0, accuracy=1.1)
 
+    @pytest.mark.unit
     def test_bounding_box_valid(self):
         """Test BoundingBox with valid coordinates."""
         bbox = BoundingBox(min_x=0.0, min_y=0.0, max_x=100.0, max_y=200.0)
@@ -208,6 +218,7 @@ class TestSpatialTypes:
         assert bbox.max_x == 100.0
         assert bbox.max_y == 200.0
 
+    @pytest.mark.unit
     def test_bounding_box_validation_errors(self):
         """Test BoundingBox coordinate validation."""
         # max_x must be greater than min_x
@@ -218,6 +229,7 @@ class TestSpatialTypes:
         with pytest.raises(ValueError, match="max_y must be greater than min_y"):
             BoundingBox(min_x=0.0, min_y=10.0, max_x=10.0, max_y=5.0)
 
+    @pytest.mark.unit
     def test_area_creation(self):
         """Test Area model creation."""
         bbox = BoundingBox(min_x=0.0, min_y=0.0, max_x=100.0, max_y=100.0)
@@ -237,6 +249,7 @@ class TestSpatialTypes:
 class TestResourceTypes:
     """Test resource and equipment types."""
 
+    @pytest.mark.unit
     def test_resource_value_valid(self):
         """Test ResourceValue with valid data."""
         resource = ResourceValue(current=75.0, maximum=100.0, regeneration_rate=5.0)
@@ -246,6 +259,7 @@ class TestResourceTypes:
         assert resource.regeneration_rate == 5.0
         assert resource.percentage == 75.0
 
+    @pytest.mark.unit
     def test_resource_value_validation(self):
         """Test ResourceValue validation rules."""
         # Current cannot be negative
@@ -260,6 +274,7 @@ class TestResourceTypes:
         with pytest.raises(ValueError):
             ResourceValue(current=150.0, maximum=100.0)
 
+    @pytest.mark.unit
     def test_resource_value_percentage_calculation(self):
         """Test percentage property calculation."""
         resource = ResourceValue(current=25.0, maximum=100.0)
@@ -271,6 +286,7 @@ class TestResourceTypes:
         resource = ResourceValue(current=100.0, maximum=100.0)
         assert resource.percentage == 100.0
 
+    @pytest.mark.unit
     def test_equipment_creation(self):
         """Test Equipment model creation."""
         equipment = Equipment(
@@ -287,6 +303,7 @@ class TestResourceTypes:
         assert equipment.properties["damage"] == 15
         assert equipment.quantity == 1
 
+    @pytest.mark.unit
     def test_equipment_defaults(self):
         """Test Equipment model with default values."""
         equipment = Equipment(name="Basic Tool", equipment_type="utility")
@@ -295,6 +312,7 @@ class TestResourceTypes:
         assert equipment.properties == {}
         assert equipment.quantity == 1
 
+    @pytest.mark.unit
     def test_equipment_validation(self):
         """Test Equipment validation rules."""
         # Condition must be between 0.0 and 1.0
@@ -312,6 +330,7 @@ class TestResourceTypes:
 class TestCharacterTypes:
     """Test character-related model types."""
 
+    @pytest.mark.unit
     def test_character_stats_valid(self):
         """Test CharacterStats with valid values."""
         stats = CharacterStats(
@@ -330,6 +349,7 @@ class TestCharacterTypes:
         assert stats.perception == 6
         assert stats.charisma == 4
 
+    @pytest.mark.unit
     def test_character_stats_validation(self):
         """Test CharacterStats validation rules."""
         # All stats must be between 1 and 10
@@ -353,6 +373,7 @@ class TestCharacterTypes:
                 charisma=5,
             )
 
+    @pytest.mark.unit
     def test_character_resources_creation(self):
         """Test CharacterResources model creation."""
         health = ResourceValue(current=100.0, maximum=100.0)
@@ -373,6 +394,7 @@ class TestCharacterTypes:
         assert resources.ammo["las_cell"] == 20
         assert resources.special_resources["faith"].current == 50.0
 
+    @pytest.mark.unit
     def test_character_state_defaults(self):
         """Test CharacterState with default values."""
         state = CharacterState()
@@ -384,6 +406,7 @@ class TestCharacterTypes:
         assert state.injuries == []
         assert state.fatigue_level == 0.0
 
+    @pytest.mark.unit
     def test_character_state_validation(self):
         """Test CharacterState validation rules."""
         # Fatigue level must be between 0.0 and 1.0
@@ -393,6 +416,7 @@ class TestCharacterTypes:
         with pytest.raises(ValueError):
             CharacterState(fatigue_level=1.1)
 
+    @pytest.mark.unit
     def test_character_data_full_creation(self):
         """Test complete CharacterData model creation."""
         position = Position(x=100.0, y=150.0)
@@ -431,6 +455,7 @@ class TestCharacterTypes:
 class TestActionTypes:
     """Test action-related model types."""
 
+    @pytest.mark.unit
     def test_action_target_creation(self):
         """Test ActionTarget model creation."""
         position = Position(x=200.0, y=300.0)
@@ -446,6 +471,7 @@ class TestActionTypes:
         assert target.position.x == 200.0
         assert target.properties["visible"] is True
 
+    @pytest.mark.unit
     def test_action_parameters_defaults(self):
         """Test ActionParameters with default values."""
         params = ActionParameters()
@@ -457,6 +483,7 @@ class TestActionTypes:
         assert params.resources_consumed == {}
         assert params.conditions == []
 
+    @pytest.mark.unit
     def test_action_parameters_validation(self):
         """Test ActionParameters validation rules."""
         # Duration must be non-negative
@@ -471,6 +498,7 @@ class TestActionTypes:
         with pytest.raises(ValueError):
             ActionParameters(duration=-1.0)
 
+    @pytest.mark.unit
     def test_proposed_action_creation(self):
         """Test ProposedAction model creation."""
         target = ActionTarget(entity_id="enemy_001", entity_type=EntityType.CHARACTER)
@@ -495,6 +523,7 @@ class TestActionTypes:
         assert "defend" in action.alternatives
         assert len(action.action_id) > 0  # Should auto-generate UUID
 
+    @pytest.mark.unit
     def test_proposed_action_confidence_validation(self):
         """Test ProposedAction confidence validation."""
         # Confidence must be between 0.0 and 1.0
@@ -514,6 +543,7 @@ class TestActionTypes:
                 confidence=1.1,
             )
 
+    @pytest.mark.unit
     def test_validated_action_creation(self):
         """Test ValidatedAction model creation."""
         target = ActionTarget(entity_id="enemy_001", entity_type=EntityType.CHARACTER)
@@ -541,6 +571,7 @@ class TestActionTypes:
 class TestIronLawsTypes:
     """Test Iron Laws validation model types."""
 
+    @pytest.mark.unit
     def test_iron_laws_violation_creation(self):
         """Test IronLawsViolation model creation."""
         violation = IronLawsViolation(
@@ -559,6 +590,7 @@ class TestIronLawsTypes:
         assert "char_001" in violation.affected_entities
         assert violation.suggested_repair == "Reduce damage intensity"
 
+    @pytest.mark.unit
     def test_iron_laws_report_creation(self):
         """Test IronLawsReport model creation."""
         violation = IronLawsViolation(
@@ -584,6 +616,7 @@ class TestIronLawsTypes:
         assert "visibility_check" in report.repair_attempts
         assert isinstance(report.timestamp, datetime)
 
+    @pytest.mark.unit
     def test_iron_laws_report_properties(self):
         """Test IronLawsReport computed properties."""
         critical_violation = IronLawsViolation(
@@ -620,6 +653,7 @@ class TestIronLawsTypes:
 class TestWorldStateTypes:
     """Test world state and environment types."""
 
+    @pytest.mark.unit
     def test_world_entity_creation(self):
         """Test WorldEntity model creation."""
         position = Position(x=150.0, y=250.0)
@@ -640,6 +674,7 @@ class TestWorldStateTypes:
         assert entity.visibility == 0.8
         assert isinstance(entity.last_updated, datetime)
 
+    @pytest.mark.unit
     def test_environmental_condition_creation(self):
         """Test EnvironmentalCondition model creation."""
         bbox = BoundingBox(min_x=0.0, min_y=0.0, max_x=100.0, max_y=100.0)
@@ -659,6 +694,7 @@ class TestWorldStateTypes:
         assert condition.duration_remaining == 300.0
         assert condition.effects["visibility"] == -0.5
 
+    @pytest.mark.unit
     def test_world_state_creation(self):
         """Test WorldState model creation."""
         entity = WorldEntity(
@@ -679,6 +715,7 @@ class TestWorldStateTypes:
         assert world_state.global_properties["weather"] == "clear"
         assert isinstance(world_state.timestamp, datetime)
 
+    @pytest.mark.unit
     def test_world_state_utility_methods(self):
         """Test WorldState utility methods."""
         char_entity = WorldEntity(
@@ -706,6 +743,7 @@ class TestWorldStateTypes:
 class TestFogOfWarTypes:
     """Test Fog of War and information filtering types."""
 
+    @pytest.mark.unit
     def test_information_source_creation(self):
         """Test InformationSource model creation."""
         source = InformationSource(
@@ -722,6 +760,7 @@ class TestFogOfWarTypes:
         assert FogOfWarChannel.VISUAL in source.access_channels
         assert source.range_modifiers["visual"] == 1.2
 
+    @pytest.mark.unit
     def test_information_fragment_creation(self):
         """Test InformationFragment model creation."""
         source = InformationSource(
@@ -749,6 +788,7 @@ class TestFogOfWarTypes:
         assert fragment.accuracy == 0.9
         assert len(fragment.fragment_id) > 0  # Auto-generated UUID
 
+    @pytest.mark.unit
     def test_fog_of_war_filter_creation(self):
         """Test FogOfWarFilter model creation."""
         fog_filter = FogOfWarFilter(
@@ -772,6 +812,7 @@ class TestFogOfWarTypes:
         assert fog_filter.rumor_reliability == 0.4
         assert fog_filter.channel_preferences[FogOfWarChannel.VISUAL] == 1.0
 
+    @pytest.mark.unit
     def test_filtered_world_view_creation(self):
         """Test FilteredWorldView model creation."""
         entity = WorldEntity(
@@ -816,6 +857,7 @@ class TestFogOfWarTypes:
 class TestTurnBriefTypes:
     """Test Turn Brief and RAG injection types."""
 
+    @pytest.mark.unit
     def test_knowledge_fragment_creation(self):
         """Test KnowledgeFragment model creation."""
         fragment = KnowledgeFragment(
@@ -834,6 +876,7 @@ class TestTurnBriefTypes:
         assert len(fragment.fragment_id) > 0  # Auto-generated UUID
         assert isinstance(fragment.last_accessed, datetime)
 
+    @pytest.mark.unit
     def test_contextual_prompt_creation(self):
         """Test ContextualPrompt model creation."""
         knowledge = KnowledgeFragment(
@@ -858,6 +901,7 @@ class TestTurnBriefTypes:
         assert "smoke" in prompt.fog_of_war_mask
         assert prompt.prompt_tokens == 1250
 
+    @pytest.mark.unit
     def test_contextual_prompt_compilation(self):
         """Test ContextualPrompt compile_prompt method."""
         knowledge = KnowledgeFragment(
@@ -884,6 +928,7 @@ class TestTurnBriefTypes:
         assert "## Relevant Knowledge" in compiled
         assert "## Information Constraints" in compiled
 
+    @pytest.mark.unit
     def test_turn_brief_creation(self):
         """Test TurnBrief model creation."""
         Position(x=100.0, y=100.0)
@@ -925,6 +970,7 @@ class TestTurnBriefTypes:
 class TestSimulationTypes:
     """Test simulation control and state types."""
 
+    @pytest.mark.unit
     def test_simulation_config_defaults(self):
         """Test SimulationConfig with default values."""
         config = SimulationConfig()
@@ -938,6 +984,7 @@ class TestSimulationTypes:
         assert config.performance_mode == "balanced"
         assert config.logging_level == "info"
 
+    @pytest.mark.unit
     def test_simulation_config_validation(self):
         """Test SimulationConfig validation rules."""
         # max_turns must be between 1 and 100
@@ -955,6 +1002,7 @@ class TestSimulationTypes:
         with pytest.raises(ValueError):
             SimulationConfig(max_agents=0)
 
+    @pytest.mark.unit
     def test_simulation_state_creation(self):
         """Test SimulationState model creation."""
         world_state = WorldState(turn_number=0)
@@ -979,6 +1027,7 @@ class TestSimulationTypes:
         assert sim_state.metrics["actions_processed"] == 15
         assert isinstance(sim_state.start_time, datetime)
 
+    @pytest.mark.unit
     def test_turn_result_creation(self):
         """Test TurnResult model creation."""
         target = ActionTarget(entity_id="enemy_001", entity_type=EntityType.CHARACTER)
@@ -1040,6 +1089,7 @@ class TestSimulationTypes:
 class TestAPITypes:
     """Test API response and status types."""
 
+    @pytest.mark.unit
     def test_api_response_success(self):
         """Test APIResponse for successful operation."""
         response = APIResponse(
@@ -1056,6 +1106,7 @@ class TestAPITypes:
         assert "minor_validation_warning" in response.warnings
         assert isinstance(response.timestamp, datetime)
 
+    @pytest.mark.unit
     def test_api_response_error(self):
         """Test APIResponse for failed operation."""
         response = APIResponse(
@@ -1072,6 +1123,7 @@ class TestAPITypes:
         assert response.warnings == []  # Default empty list
         assert response.request_id == "req_12345"
 
+    @pytest.mark.unit
     def test_system_status_creation(self):
         """Test SystemStatus model creation."""
         status = SystemStatus(
@@ -1096,6 +1148,7 @@ class TestAPITypes:
         assert status.cpu_usage_percent == 35.2
         assert status.components["cache"] == "degraded"
 
+    @pytest.mark.unit
     def test_system_status_validation(self):
         """Test SystemStatus validation rules."""
         # uptime_seconds must be non-negative
@@ -1116,6 +1169,7 @@ class TestAPITypes:
 class TestPerformanceTypes:
     """Test performance and caching types."""
 
+    @pytest.mark.unit
     def test_cache_entry_creation(self):
         """Test CacheEntry model creation."""
         cache_entry = CacheEntry(
@@ -1134,6 +1188,7 @@ class TestPerformanceTypes:
         assert isinstance(cache_entry.created_at, datetime)
         assert isinstance(cache_entry.last_accessed, datetime)
 
+    @pytest.mark.unit
     def test_cache_entry_expiration(self):
         """Test CacheEntry expiration logic."""
         # Entry with no TTL should never expire
@@ -1144,6 +1199,7 @@ class TestPerformanceTypes:
         CacheEntry(key="temp", value="data", ttl_seconds=0.001)
         # Note: In real test, would need to wait or mock datetime
 
+    @pytest.mark.unit
     def test_performance_metrics_creation(self):
         """Test PerformanceMetrics model creation."""
         metrics = PerformanceMetrics(
@@ -1165,6 +1221,7 @@ class TestPerformanceTypes:
         assert metrics.error_count == 0
         assert isinstance(metrics.timestamp, datetime)
 
+    @pytest.mark.unit
     def test_performance_metrics_validation(self):
         """Test PerformanceMetrics validation rules."""
         # duration_ms must be non-negative
@@ -1181,6 +1238,7 @@ class TestPerformanceTypes:
 class TestConsistencyTypes:
     """Test state hashing and consistency check types."""
 
+    @pytest.mark.unit
     def test_state_hash_creation(self):
         """Test StateHash model creation."""
         state_hash = StateHash(
@@ -1198,6 +1256,7 @@ class TestConsistencyTypes:
         assert state_hash.salt == "random_salt_123"
         assert isinstance(state_hash.timestamp, datetime)
 
+    @pytest.mark.unit
     def test_state_hash_validation(self):
         """Test StateHash validation rules."""
         # Valid hexadecimal hash values
@@ -1226,6 +1285,7 @@ class TestConsistencyTypes:
                 fields_included=["test"],
             )
 
+    @pytest.mark.unit
     def test_consistency_check_creation(self):
         """Test ConsistencyCheck model creation."""
         consistency_check = ConsistencyCheck(
@@ -1256,6 +1316,7 @@ class TestConsistencyTypes:
 class TestModelRegistry:
     """Test model registry functionality."""
 
+    @pytest.mark.unit
     def test_model_registry_contains_expected_models(self):
         """Test that MODEL_REGISTRY contains expected model types."""
         expected_models = [
@@ -1274,6 +1335,7 @@ class TestModelRegistry:
             assert model_name in MODEL_REGISTRY
             assert MODEL_REGISTRY[model_name] is not None
 
+    @pytest.mark.unit
     def test_model_registry_types_are_pydantic_models(self):
         """Test that MODEL_REGISTRY contains actual Pydantic model classes."""
         from pydantic import BaseModel
@@ -1282,6 +1344,7 @@ class TestModelRegistry:
             # Verify each registry entry is a Pydantic model class
             assert issubclass(model_class, BaseModel)
 
+    @pytest.mark.unit
     def test_model_creation_from_registry(self):
         """Test creating model instances from registry."""
         # Test CharacterData creation
@@ -1318,6 +1381,7 @@ class TestModelRegistry:
 class TestJSONSerialization:
     """Test JSON serialization and deserialization of models."""
 
+    @pytest.mark.unit
     def test_character_data_json_roundtrip(self):
         """Test CharacterData JSON serialization roundtrip."""
         position = Position(x=100.0, y=150.0, facing=270.0)
@@ -1363,6 +1427,7 @@ class TestJSONSerialization:
             reconstructed.resources.health.current == original.resources.health.current
         )
 
+    @pytest.mark.unit
     def test_world_state_json_serialization(self):
         """Test WorldState JSON serialization."""
         entity = WorldEntity(
@@ -1384,6 +1449,7 @@ class TestJSONSerialization:
         assert json_data["entities"]["obj_001"]["name"] == "Supply Cache"
         assert json_data["global_properties"]["weather"] == "storm"
 
+    @pytest.mark.unit
     def test_iron_laws_report_json_serialization(self):
         """Test IronLawsReport JSON serialization with nested models."""
         violation = IronLawsViolation(

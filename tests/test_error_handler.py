@@ -29,6 +29,7 @@ from core.error_handler import (
 class TestErrorContext:
     """Test ErrorContext functionality."""
 
+    @pytest.mark.unit
     def test_error_context_creation(self):
         """Test ErrorContext creation."""
         context = ErrorContext(
@@ -62,6 +63,7 @@ class TestCentralizedErrorHandler:
             metadata={"test_key": "test_value"},
         )
 
+    @pytest.mark.unit
     def test_error_handler_initialization(self, error_handler):
         """Test error handler initialization."""
         assert len(error_handler.error_records) == 0
@@ -88,6 +90,7 @@ class TestCentralizedErrorHandler:
         assert error_record.category == ErrorCategory.VALIDATION
         assert error_record.occurrence_count == 1
 
+    @pytest.mark.unit
     def test_error_severity_detection(self, error_handler, error_context):
         """Test automatic error severity detection."""
         # Critical errors
@@ -105,6 +108,7 @@ class TestCentralizedErrorHandler:
         severity = error_handler._detect_error_severity(value_error, error_context)
         assert severity == ErrorSeverity.MEDIUM
 
+    @pytest.mark.unit
     def test_error_category_detection(self, error_handler, error_context):
         """Test automatic error category detection."""
         # System errors
@@ -122,6 +126,7 @@ class TestCentralizedErrorHandler:
         category = error_handler._detect_error_category(validation_error, error_context)
         assert category == ErrorCategory.VALIDATION
 
+    @pytest.mark.unit
     def test_recovery_strategy_selection(self, error_handler):
         """Test recovery strategy selection logic."""
         ErrorContext("test_component", "test_operation")
@@ -167,6 +172,7 @@ class TestCentralizedErrorHandler:
         assert error_record1.error_id == error_record2.error_id
         assert error_record2.occurrence_count == 2
 
+    @pytest.mark.unit
     def test_error_statistics(self, error_handler):
         """Test error statistics reporting."""
         stats = error_handler.get_error_statistics()

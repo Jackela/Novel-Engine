@@ -24,6 +24,7 @@ class TestPlotPointProperties:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_is_major_plot_point_critical(self):
         """Test is_major_plot_point returns True for CRITICAL importance."""
         plot_point = PlotPoint(

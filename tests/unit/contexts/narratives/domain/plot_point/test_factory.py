@@ -23,6 +23,7 @@ class TestPlotPointFactoryMethods:
     """Test suite for PlotPoint factory methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_with_updated_intensity_single_value(self):
         """Test updating a single intensity value."""
         original = PlotPoint(

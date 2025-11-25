@@ -42,6 +42,7 @@ class TestNarrativePlanningEngine:
     """Desired behaviours for generate_guidance_for_turn."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_generate_guidance_in_exposition_focuses_on_character_intros(self) -> None:
         engine = NarrativePlanningEngine()
         guidance = engine.generate_guidance_for_turn(

@@ -35,6 +35,7 @@ class TestLLMExecutionConfig:
     """Test suite for LLMExecutionConfig data class."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_default_config_creation(self):
         """Test creating execution config with default values."""
         config = LLMExecutionConfig()
@@ -317,6 +318,7 @@ class TestProviderRouter:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_provider_non_existing(self):
         """Test getting non-existing provider."""
         provider = self.router.get_provider("non-existing-provider")
@@ -413,6 +415,7 @@ class TestProviderRouter:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_is_provider_healthy_true(self):
         """Test _is_provider_healthy method for healthy provider."""
         self.router.register_provider(self.mock_provider_1)
@@ -423,6 +426,7 @@ class TestProviderRouter:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_is_provider_healthy_false_not_available(self):
         """Test _is_provider_healthy method for unavailable provider."""
         self.router.register_provider(self.mock_provider_1)

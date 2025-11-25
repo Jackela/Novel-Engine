@@ -9,6 +9,7 @@ class TestEventBus(unittest.TestCase):
     def setUp(self):
         self.event_bus = EventBus()
 
+    @pytest.mark.unit
     def test_subscribe_and_emit(self):
         """Test that a subscribed callback is called when an event is emitted."""
         mock_callback = Mock()
@@ -16,6 +17,7 @@ class TestEventBus(unittest.TestCase):
         self.event_bus.emit("test_event", "arg1", kwarg1="value1")
         mock_callback.assert_called_once_with("arg1", kwarg1="value1")
 
+    @pytest.mark.unit
     def test_multiple_subscribers(self):
         """Test that multiple subscribers are called for a single event."""
         mock_callback1 = Mock()
@@ -26,6 +28,7 @@ class TestEventBus(unittest.TestCase):
         mock_callback1.assert_called_once()
         mock_callback2.assert_called_once()
 
+    @pytest.mark.unit
     def test_emit_to_unsubscribed_event(self):
         """Test that emitting an event with no subscribers does not raise an error."""
         try:
@@ -33,6 +36,7 @@ class TestEventBus(unittest.TestCase):
         except Exception as e:
             self.fail(f"Emitting to an unsubscribed event raised an exception: {e}")
 
+    @pytest.mark.unit
     def test_callback_exception_handling(self):
         """Test that the event bus handles exceptions in callbacks gracefully."""
         mock_callback1 = Mock(side_effect=ValueError("Test Error"))

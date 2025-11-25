@@ -53,6 +53,7 @@ class TestNarrativeArcApplicationServiceInitialization:
     """Test suite for NarrativeArcApplicationService initialization."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_initialization_with_required_repository(self):
         """Test service initialization with required repository."""
         mock_repository = Mock()
@@ -326,6 +327,7 @@ class TestPlotPointManagement:
         self.service.query_handler = Mock()
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_add_plot_point_minimal_params(self):
         """Test adding a plot point with minimal parameters."""
         arc_id = "test-arc"
@@ -535,6 +537,7 @@ class TestThemeManagement:
         self.service.query_handler = Mock()
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_add_theme_minimal_params(self):
         """Test adding a theme with minimal parameters."""
         arc_id = "test-arc"
@@ -680,6 +683,7 @@ class TestPacingManagement:
         self.service.command_handler = Mock()
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_add_pacing_segment_minimal_params(self):
         """Test adding a pacing segment with minimal parameters."""
         arc_id = "test-arc"
@@ -769,6 +773,7 @@ class TestContextManagement:
         self.service = NarrativeArcApplicationService(repository=self.mock_repository)
         self.service.command_handler = Mock()
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_add_narrative_context_minimal_params(self):
         """Test adding a narrative context with minimal parameters."""
@@ -885,6 +890,7 @@ class TestCharacterManagement:
         self.service.command_handler = Mock()
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_add_character_to_arc(self):
         """Test adding a character to a narrative arc."""
         arc_id = "test-arc"
@@ -933,6 +939,7 @@ class TestAnalysisAndOptimization:
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_analyze_narrative_flow(self):
         """Test analyzing narrative flow."""
@@ -1062,6 +1069,7 @@ class TestComprehensiveAnalysis:
         self.service.query_handler = Mock()
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_get_arc_metrics(self):
         """Test getting comprehensive arc metrics."""
         arc_id = "test-arc"
@@ -1124,6 +1132,7 @@ class TestSearchAndDiscovery:
         self.service = NarrativeArcApplicationService(repository=self.mock_repository)
         self.service.query_handler = Mock()
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_search_narrative_arcs_minimal_params(self):
         """Test searching narrative arcs with minimal parameters."""
@@ -1263,6 +1272,7 @@ class TestErrorHandling:
         self.service.query_handler = Mock()
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_command_handler_exception_propagation(self):
         """Test that exceptions from command handler are properly propagated."""
         self.service.command_handler.handle_create_narrative_arc.side_effect = (
@@ -1284,6 +1294,7 @@ class TestErrorHandling:
         with pytest.raises(RuntimeError, match="Database connection failed"):
             self.service.get_narrative_arc(arc_id="test-arc")
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_decimal_conversion_handling(self):
         """Test proper handling of decimal conversions."""
@@ -1318,6 +1329,7 @@ class TestIntegrationScenarios:
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_complete_arc_creation_workflow(self):
         """Test complete workflow of creating and configuring an arc."""

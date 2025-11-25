@@ -24,6 +24,7 @@ class TestPacingTypeEnum:
     """Test suite for PacingType enum."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_all_pacing_types_exist(self):
         """Test that all expected pacing types are defined."""
         expected_types = {
@@ -298,6 +299,7 @@ class TestStoryPacingCreation:
 class TestStoryPacingValidation:
     """Test suite for StoryPacing validation and constraints."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_empty_pacing_id_raises_error(self):
         """Test that empty pacing ID raises validation error."""
@@ -582,6 +584,7 @@ class TestStoryPacingProperties:
     """Test suite for StoryPacing computed properties."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_segment_length_property(self):
         """Test segment_length property calculation."""
         pacing = StoryPacing(
@@ -836,6 +839,7 @@ class TestStoryPacingMethods:
     """Test suite for StoryPacing methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_contains_sequence(self):
         """Test contains_sequence method."""
         pacing = StoryPacing(
@@ -1029,6 +1033,7 @@ class TestStoryPacingStringRepresentation:
     """Test suite for StoryPacing string representations."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_str_representation_with_segment_name(self):
         """Test __str__ method with segment name."""
         pacing = StoryPacing(
@@ -1078,6 +1083,7 @@ class TestStoryPacingStringRepresentation:
 class TestStoryPacingEquality:
     """Test suite for StoryPacing equality and hashing."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_equality_same_values(self):
         """Test equality with same values."""
@@ -1153,6 +1159,7 @@ class TestStoryPacingEquality:
 class TestStoryPacingEdgeCases:
     """Test suite for StoryPacing edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_minimum_valid_segment(self):
         """Test minimum valid segment with two sequences."""

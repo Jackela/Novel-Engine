@@ -23,6 +23,7 @@ class TestPlotPointTypeEnum:
     """Test suite for PlotPointType enum."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_all_enum_values_exist(self):
         """Test that all expected enum values are defined."""
         expected_types = {
@@ -137,6 +138,7 @@ class TestPlotPointImportanceEnum:
 class TestPlotPointCreation:
     """Test suite for PlotPoint creation and initialization."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_create_minimal_plot_point(self):
         """Test creating plot point with minimal required fields."""
@@ -272,6 +274,7 @@ class TestPlotPointCreation:
 class TestPlotPointValidation:
     """Test suite for PlotPoint validation logic."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_empty_title_validation(self):
         """Test validation fails with empty title."""
@@ -560,6 +563,7 @@ class TestPlotPointProperties:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_is_major_plot_point_critical(self):
         """Test is_major_plot_point returns True for CRITICAL importance."""
         plot_point = PlotPoint(
@@ -797,6 +801,7 @@ class TestPlotPointOverallImpactScore:
     """Test suite for overall impact score calculation."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_critical_importance_impact_score(self):
         """Test impact score calculation for CRITICAL importance."""
         plot_point = PlotPoint(
@@ -893,6 +898,7 @@ class TestPlotPointInstanceMethods:
     """Test suite for PlotPoint instance methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_involves_character_true(self):
         """Test involves_character returns True for involved character."""
         char_id1 = uuid4()
@@ -987,6 +993,7 @@ class TestPlotPointInstanceMethods:
 class TestPlotPointFactoryMethods:
     """Test suite for PlotPoint factory methods."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_with_updated_intensity_single_value(self):
         """Test updating a single intensity value."""
@@ -1186,6 +1193,7 @@ class TestPlotPointStringRepresentation:
     """Test suite for PlotPoint string representation methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_str_representation(self):
         """Test human-readable string representation."""
         plot_point = PlotPoint(
@@ -1250,6 +1258,7 @@ class TestPlotPointStringRepresentation:
 class TestPlotPointEdgeCasesAndBoundaryConditions:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_creation_with_mock_timestamp(self):
         """Test creation with explicitly mocked timestamp."""
@@ -1392,6 +1401,7 @@ class TestPlotPointEdgeCasesAndBoundaryConditions:
 class TestPlotPointCollectionsAndComparison:
     """Test suite for PlotPoint behavior in collections and comparisons."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_plot_points_in_list(self):
         """Test PlotPoint objects in list operations."""

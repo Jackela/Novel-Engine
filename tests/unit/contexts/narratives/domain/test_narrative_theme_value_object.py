@@ -22,6 +22,7 @@ class TestThemeTypeEnum:
     """Test suite for ThemeType enum."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_all_theme_types_exist(self):
         """Test that all expected theme types are defined."""
         expected_types = {
@@ -127,6 +128,7 @@ class TestThemeIntensityEnum:
 class TestNarrativeThemeCreation:
     """Test suite for NarrativeTheme creation and initialization."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_create_minimal_narrative_theme(self):
         """Test creating narrative theme with minimal required fields."""
@@ -283,6 +285,7 @@ class TestNarrativeThemeCreation:
 class TestNarrativeThemeValidation:
     """Test suite for NarrativeTheme validation logic."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_empty_name_validation(self):
         """Test validation fails with empty name."""
@@ -596,6 +599,7 @@ class TestNarrativeThemeProperties:
     """Test suite for NarrativeTheme property methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_is_major_theme_for_major_intensities(self):
         """Test is_major_theme returns True for major intensity levels."""
         major_intensities = [
@@ -821,6 +825,7 @@ class TestThematicComplexityScore:
     """Test suite for thematic complexity score calculation."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_base_complexity_only(self):
         """Test complexity score with only moral complexity (no bonuses)."""
         theme = NarrativeTheme(
@@ -934,6 +939,7 @@ class TestNarrativeImpactScore:
     """Test suite for narrative impact score calculation."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_impact_score_subtle_intensity(self):
         """Test impact score calculation for SUBTLE intensity."""
         theme = NarrativeTheme(
@@ -1034,6 +1040,7 @@ class TestNarrativeImpactScore:
 class TestNarrativeThemeInstanceMethods:
     """Test suite for NarrativeTheme instance methods."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_conflicts_with_theme_true(self):
         """Test conflicts_with_theme returns True for conflicting theme."""
@@ -1211,6 +1218,7 @@ class TestNarrativeThemeFactoryMethods:
     """Test suite for NarrativeTheme factory methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_with_updated_intensity_change_intensity(self):
         """Test updating theme intensity."""
         original = NarrativeTheme(
@@ -1307,6 +1315,7 @@ class TestNarrativeThemeStringRepresentation:
     """Test suite for NarrativeTheme string representation methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_str_representation(self):
         """Test human-readable string representation."""
         theme = NarrativeTheme(
@@ -1367,6 +1376,7 @@ class TestNarrativeThemeStringRepresentation:
 class TestNarrativeThemeEdgeCasesAndBoundaryConditions:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_creation_with_fixed_timestamp(self):
         """Test creation with explicitly set timestamp."""
@@ -1514,6 +1524,7 @@ class TestNarrativeThemeEdgeCasesAndBoundaryConditions:
 class TestNarrativeThemeCollectionsAndComparison:
     """Test suite for NarrativeTheme behavior in collections and comparisons."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_themes_in_list(self):
         """Test NarrativeTheme objects in list operations."""

@@ -45,6 +45,7 @@ class TestNarrativeEngineV2:
     """Integration tests for the NarrativeEngineV2 facade."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_get_narrative_context_for_turn_coordinates_managers(self) -> None:
         """
         Verify that get_narrative_context_for_turn properly coordinates

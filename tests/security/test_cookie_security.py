@@ -46,6 +46,7 @@ def mock_credentials():
 class TestCookieSecurity:
     """Test suite for cookie security implementation [SEC-001]"""
 
+    @pytest.mark.unit
     def test_login_sets_httponly_cookie(self, client, mock_credentials):
         """
         Test that login endpoint sets httpOnly cookie for access token.
@@ -78,6 +79,7 @@ class TestCookieSecurity:
         assert "HttpOnly" in access_cookie
         assert "SameSite=Lax" in access_cookie or "SameSite=lax" in access_cookie
 
+    @pytest.mark.unit
     def test_login_sets_refresh_token_cookie(self, client, mock_credentials):
         """
         Test that login endpoint sets httpOnly cookie for refresh token.
@@ -103,6 +105,7 @@ class TestCookieSecurity:
         assert "HttpOnly" in refresh_cookie
         assert "SameSite=Lax" in refresh_cookie or "SameSite=lax" in refresh_cookie
 
+    @pytest.mark.unit
     def test_remember_me_extends_cookie_duration(self, client):
         """
         Test that remember_me flag extends refresh token cookie duration.
@@ -126,6 +129,7 @@ class TestCookieSecurity:
         # With remember_me, it should be 30 days = 2592000 seconds
         assert "Max-Age=" in refresh_cookie_remember
 
+    @pytest.mark.unit
     def test_logout_clears_cookies(self, client, mock_credentials):
         """
         Test that logout endpoint clears all authentication cookies.
@@ -156,6 +160,7 @@ class TestCookieSecurity:
         # The exact behavior may vary, so we check for the presence of cookie deletion
         assert len(set_cookie_headers) >= 2  # At least access_token and refresh_token
 
+    @pytest.mark.unit
     def test_csrf_token_generation(self, client):
         """
         Test CSRF token generation endpoint.
@@ -189,6 +194,7 @@ class TestCookieSecurity:
         # CSRF cookie should have SameSite=strict
         assert "SameSite=Strict" in csrf_cookie or "SameSite=strict" in csrf_cookie
 
+    @pytest.mark.unit
     def test_cookie_not_accessible_via_javascript(self, client, mock_credentials):
         """
         Test that httpOnly cookies cannot be accessed via JavaScript.
@@ -210,6 +216,7 @@ class TestCookieSecurity:
                 assert "HttpOnly" in cookie_header, \
                     f"Cookie missing HttpOnly flag: {cookie_header}"
 
+    @pytest.mark.unit
     def test_token_validation_endpoint(self, client, mock_credentials):
         """
         Test token validation endpoint.
@@ -237,6 +244,7 @@ class TestCookieSecurity:
         assert "expires_at" in data
         assert "user_id" in data
 
+    @pytest.mark.unit
     def test_token_validation_missing_token(self, client):
         """
         Test token validation with missing Authorization header.
@@ -252,6 +260,7 @@ class TestCookieSecurity:
         assert data["valid"] is False
         assert "error" in data
 
+    @pytest.mark.unit
     def test_token_validation_expired_token(self, client):
         """
         Test token validation with expired token.
@@ -281,6 +290,7 @@ class TestCookieSecurity:
         assert data["valid"] is False
         assert "expired" in data["error"].lower()
 
+    @pytest.mark.unit
     def test_token_refresh_with_cookie(self, client, mock_credentials):
         """
         Test token refresh using httpOnly cookie.
@@ -314,6 +324,7 @@ class TestCookieSecurity:
         cookies = refresh_response.cookies
         assert "access_token" in cookies
 
+    @pytest.mark.unit
     def test_secure_flag_environment_based(self, client, mock_credentials, monkeypatch):
         """
         Test that Secure flag is controlled by environment variable.
@@ -337,6 +348,7 @@ class TestCookieSecurity:
         # We just verify the cookie is set correctly
         assert "access_token=" in access_cookie
 
+    @pytest.mark.unit
     def test_logout_always_succeeds(self, client):
         """
         Test that logout always returns success, even without valid session.
@@ -353,6 +365,7 @@ class TestCookieSecurity:
         data = response.json()
         assert data["success"] is True
 
+    @pytest.mark.unit
     def test_cors_credentials_support(self, client):
         """
         Test that CORS is configured to support credentials.

@@ -43,6 +43,7 @@ from src.core.data_models import (  # Sacred enumerations; Blessed data structur
 class TestSacredMemoryItem:
     """++ BLESSED MEMORY ITEM TESTING RITUALS ++"""
 
+    @pytest.mark.unit
     def test_memory_item_creation_blessed_by_PRIME_ARCHITECT(self):
         """Test blessed memory item creation with sacred parameters"""
         memory = MemoryItem(
@@ -66,6 +67,7 @@ class TestSacredMemoryItem:
         # Validate sacred UUID format
         UUID(memory.memory_id)  # Should not raise exception
 
+    @pytest.mark.unit
     def test_memory_item_validation_blessed_by_purity(self):
         """Test blessed memory item validation catches corruption"""
         # Test empty agent_id corruption
@@ -78,6 +80,7 @@ class TestSacredMemoryItem:
         with pytest.raises(ValueError, match="Sacred memory cannot be empty"):
             MemoryItem(agent_id="test_agent", content="")
 
+    @pytest.mark.unit
     def test_memory_item_bounds_sanctified_by_constraints(self):
         """Test blessed memory item bounds are properly sanctified"""
         memory = MemoryItem(
@@ -97,6 +100,7 @@ class TestSacredMemoryItem:
 class TestSacredCharacterIdentity:
     """++ BLESSED CHARACTER IDENTITY TESTING RITUALS ++"""
 
+    @pytest.mark.unit
     def test_character_identity_creation_blessed_by_essence(self):
         """Test blessed character identity creation with sacred essence"""
         identity = CharacterIdentity(
@@ -117,6 +121,7 @@ class TestSacredCharacterIdentity:
         assert "Fatalistic" in identity.personality_traits
         assert len(identity.core_beliefs) == 2
 
+    @pytest.mark.unit
     def test_character_identity_validation_blessed_by_requirements(self):
         """Test blessed character identity validation catches nameless corruption"""
         with pytest.raises(ValueError, match="Sacred identity requires blessed name"):
@@ -126,6 +131,7 @@ class TestSacredCharacterIdentity:
 class TestSacredPhysicalCondition:
     """++ BLESSED PHYSICAL CONDITION TESTING RITUALS ++"""
 
+    @pytest.mark.unit
     def test_physical_condition_creation_blessed_by_health(self):
         """Test blessed physical condition with sacred health metrics"""
         condition = PhysicalCondition(
@@ -142,6 +148,7 @@ class TestSacredPhysicalCondition:
         assert condition.fatigue_level == 30
         assert condition.is_healthy() is True  # Above 50% health, stress < 70
 
+    @pytest.mark.unit
     def test_physical_condition_health_assessment_blessed_by_logic(self):
         """Test blessed health assessment logic"""
         # Healthy condition blessed by good metrics
@@ -156,6 +163,7 @@ class TestSacredPhysicalCondition:
 class TestSacredEquipmentItem:
     """++ BLESSED EQUIPMENT ITEM TESTING RITUALS ++"""
 
+    @pytest.mark.unit
     def test_equipment_item_creation_blessed_by_gear(self):
         """Test blessed equipment item creation with sacred gear"""
         weapon = EquipmentItem(
@@ -182,6 +190,7 @@ class TestSacredEquipmentItem:
         # Validate sacred UUID format
         UUID(weapon.item_id)
 
+    @pytest.mark.unit
     def test_equipment_item_validation_blessed_by_naming(self):
         """Test blessed equipment validation catches nameless corruption"""
         with pytest.raises(
@@ -189,6 +198,7 @@ class TestSacredEquipmentItem:
         ):
             EquipmentItem(name="")
 
+    @pytest.mark.unit
     def test_equipment_item_bounds_sanctified_by_limits(self):
         """Test blessed equipment bounds are properly sanctified"""
         weapon = EquipmentItem(
@@ -200,6 +210,7 @@ class TestSacredEquipmentItem:
         assert weapon.effectiveness == 2.0  # Clamped to maximum
         assert weapon.durability == 100  # Clamped to max_durability
 
+    @pytest.mark.unit
     def test_equipment_functionality_blessed_by_condition(self):
         """Test blessed equipment functionality assessment"""
         # Functional blessed equipment
@@ -218,6 +229,7 @@ class TestSacredEquipmentItem:
 class TestSacredEquipmentState:
     """++ BLESSED EQUIPMENT STATE TESTING RITUALS ++"""
 
+    @pytest.mark.unit
     def test_equipment_state_creation_blessed_by_inventory(self):
         """Test blessed equipment state with sacred inventory"""
         lasgun = EquipmentItem(
@@ -240,6 +252,7 @@ class TestSacredEquipmentState:
         assert lasgun in all_equipment
         assert equipment_state.consumables["blessed_rations"] == 10
 
+    @pytest.mark.unit
     def test_equipment_combat_effectiveness_blessed_by_calculation(self):
         """Test blessed combat effectiveness calculation"""
         # Equipment with blessed effectiveness
@@ -256,6 +269,7 @@ class TestSacredEquipmentState:
         expected_effectiveness = (1.2 + 1.8) / 2  # Average of functional weapons
         assert effectiveness == expected_effectiveness
 
+    @pytest.mark.unit
     def test_equipment_empty_combat_blessed_by_fallback(self):
         """Test blessed combat effectiveness with no equipment"""
         empty_state = EquipmentState()
@@ -266,6 +280,7 @@ class TestSacredEquipmentState:
 class TestSacredRelationshipState:
     """++ BLESSED RELATIONSHIP STATE TESTING RITUALS ++"""
 
+    @pytest.mark.unit
     def test_relationship_creation_blessed_by_bonds(self):
         """Test blessed relationship state creation with sacred bonds"""
         relationship = RelationshipState(
@@ -283,6 +298,7 @@ class TestSacredRelationshipState:
         assert relationship.emotional_bond == 6.5
         assert len(relationship.shared_experiences) == 2
 
+    @pytest.mark.unit
     def test_relationship_validation_blessed_by_requirements(self):
         """Test blessed relationship validation catches ID corruption"""
         with pytest.raises(
@@ -290,6 +306,7 @@ class TestSacredRelationshipState:
         ):
             RelationshipState(target_agent_id="", target_name="Test")
 
+    @pytest.mark.unit
     def test_relationship_bounds_sanctified_by_limits(self):
         """Test blessed relationship bounds are properly sanctified"""
         relationship = RelationshipState(
@@ -302,6 +319,7 @@ class TestSacredRelationshipState:
         assert relationship.trust_level == 10  # Clamped to maximum
         assert relationship.emotional_bond == 10.0  # Clamped to maximum
 
+    @pytest.mark.unit
     def test_relationship_interaction_update_blessed_by_evolution(self):
         """Test blessed relationship update from interaction"""
         relationship = RelationshipState(
@@ -323,6 +341,7 @@ class TestSacredRelationshipState:
 class TestSacredCharacterState:
     """++ BLESSED CHARACTER STATE TESTING RITUALS ++"""
 
+    @pytest.mark.unit
     def test_character_state_creation_blessed_by_completeness(self):
         """Test blessed character state creation with complete sacred data"""
         identity = CharacterIdentity(name="Test Character", faction=["Test Faction"])
@@ -342,6 +361,7 @@ class TestSacredCharacterState:
         )
         assert isinstance(character_state.last_updated, datetime)
 
+    @pytest.mark.unit
     def test_character_combat_readiness_blessed_by_calculation(self):
         """Test blessed combat readiness calculation with all factors"""
         identity = CharacterIdentity(name="Combat Test")
@@ -369,6 +389,7 @@ class TestSacredCharacterState:
 class TestSacredDynamicContext:
     """++ BLESSED DYNAMIC CONTEXT TESTING RITUALS ++"""
 
+    @pytest.mark.unit
     def test_dynamic_context_creation_blessed_by_completeness(self):
         """Test blessed dynamic context creation with complete sacred data"""
         memory = MemoryItem(agent_id="test_agent", content="Test blessed memory")
@@ -388,6 +409,7 @@ class TestSacredDynamicContext:
         assert context.situation_description == "Test blessed situation"
         assert isinstance(context.timestamp, datetime)
 
+    @pytest.mark.unit
     def test_dynamic_context_validation_blessed_by_requirements(self):
         """Test blessed dynamic context validation catches agent_id corruption"""
         with pytest.raises(
@@ -395,6 +417,7 @@ class TestSacredDynamicContext:
         ):
             DynamicContext(agent_id="")
 
+    @pytest.mark.unit
     def test_dynamic_context_memory_retrieval_blessed_by_filtering(self):
         """Test blessed memory retrieval with sacred filtering"""
         memories = [
@@ -433,6 +456,7 @@ class TestSacredDynamicContext:
         assert len(limited_memories) == 1
         assert limited_memories[0].relevance_score == 0.9  # Highest relevance first
 
+    @pytest.mark.unit
     def test_dynamic_context_json_serialization_blessed_by_persistence(self):
         """Test blessed dynamic context JSON serialization for sacred persistence"""
         memory = MemoryItem(agent_id="test", content="Test memory")
@@ -453,6 +477,7 @@ class TestSacredDynamicContext:
 class TestSacredInteractionStructures:
     """++ BLESSED INTERACTION STRUCTURE TESTING RITUALS ++"""
 
+    @pytest.mark.unit
     def test_character_interaction_creation_blessed_by_events(self):
         """Test blessed character interaction creation with sacred events"""
         interaction = CharacterInteraction(
@@ -472,6 +497,7 @@ class TestSacredInteractionStructures:
         # Validate sacred UUID format
         UUID(interaction.interaction_id)
 
+    @pytest.mark.unit
     def test_character_interaction_validation_blessed_by_participants(self):
         """Test blessed character interaction validation catches participant corruption"""
         with pytest.raises(
@@ -483,6 +509,7 @@ class TestSacredInteractionStructures:
 class TestSacredValidationFunctions:
     """++ BLESSED VALIDATION FUNCTION TESTING RITUALS ++"""
 
+    @pytest.mark.unit
     def test_validate_blessed_data_model_success(self):
         """Test blessed data model validation with valid sacred data"""
         memory = MemoryItem(agent_id="test", content="Valid blessed memory")
@@ -493,6 +520,7 @@ class TestSacredValidationFunctions:
         assert result.data["validation"] == "verified_by_prime_architect"
         assert result.metadata["model_type"] == "MemoryItem"
 
+    @pytest.mark.unit
     def test_validate_blessed_data_model_failure(self):
         """Test blessed data model validation catches corruption"""
         # Create invalid memory that will fail post_init validation
@@ -552,6 +580,7 @@ def blessed_dynamic_context(blessed_memory_item, blessed_character_identity):
 class TestSacredPerformance:
     """++ BLESSED PERFORMANCE TESTING RITUALS ++"""
 
+    @pytest.mark.unit
     def test_memory_item_creation_performance_blessed_by_speed(self):
         """Test blessed memory item creation performance meets sacred thresholds"""
         import time

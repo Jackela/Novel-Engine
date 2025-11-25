@@ -23,12 +23,14 @@ import yaml
 class TestLegalFoundation:
     """Test legal and compliance infrastructure."""
 
+    @pytest.mark.unit
     def test_legal_file_exists(self):
         """Verify LEGAL.md file exists and is accessible."""
         legal_path = Path("LEGAL.md")
         assert legal_path.exists(), "LEGAL.md file must exist for compliance"
         assert legal_path.is_file(), "LEGAL.md must be a file"
 
+    @pytest.mark.unit
     def test_legal_file_content(self):
         """Validate LEGAL.md contains required sections."""
         with open("LEGAL.md", "r", encoding="utf-8") as f:
@@ -46,6 +48,7 @@ class TestLegalFoundation:
         for section in required_sections:
             assert section in content, f"LEGAL.md must contain '{section}' section"
 
+    @pytest.mark.unit
     def test_legal_fan_mode_compliance(self):
         """Validate fan mode compliance requirements are documented."""
         with open("LEGAL.md", "r", encoding="utf-8") as f:
@@ -61,6 +64,7 @@ class TestLegalFoundation:
         for requirement in fan_mode_requirements:
             assert requirement in content, f"Fan mode must document '{requirement}'"
 
+    @pytest.mark.unit
     def test_notice_file_exists(self):
         """Verify NOTICE file exists for third-party attributions."""
         notice_path = Path("NOTICE")
@@ -69,6 +73,7 @@ class TestLegalFoundation:
         ), "NOTICE file must exist for third-party attributions"
         assert notice_path.is_file(), "NOTICE must be a file"
 
+    @pytest.mark.unit
     def test_notice_file_content(self):
         """Validate NOTICE file contains required third-party notices."""
         with open("NOTICE", "r", encoding="utf-8") as f:
@@ -91,6 +96,7 @@ class TestLegalFoundation:
 class TestConfigurationFoundation:
     """Test configuration system infrastructure."""
 
+    @pytest.mark.unit
     def test_settings_yaml_exists(self):
         """Verify settings.yaml configuration file exists."""
         settings_path = Path("settings.yaml")
@@ -99,6 +105,7 @@ class TestConfigurationFoundation:
         ), "settings.yaml must exist for system configuration"
         assert settings_path.is_file(), "settings.yaml must be a file"
 
+    @pytest.mark.unit
     def test_settings_yaml_valid_syntax(self):
         """Validate settings.yaml has valid YAML syntax."""
         with open("settings.yaml", "r", encoding="utf-8") as f:
@@ -110,6 +117,7 @@ class TestConfigurationFoundation:
             except yaml.YAMLError as e:
                 pytest.fail(f"settings.yaml contains invalid YAML syntax: {e}")
 
+    @pytest.mark.unit
     def test_settings_yaml_required_sections(self):
         """Validate settings.yaml contains all required configuration sections."""
         with open("settings.yaml", "r", encoding="utf-8") as f:
@@ -131,6 +139,7 @@ class TestConfigurationFoundation:
         for section in required_sections:
             assert section in config, f"settings.yaml must contain '{section}' section"
 
+    @pytest.mark.unit
     def test_legal_settings_configuration(self):
         """Validate legal compliance settings are properly configured."""
         with open("settings.yaml", "r", encoding="utf-8") as f:
@@ -153,6 +162,7 @@ class TestConfigurationFoundation:
         # Verify registry file path is configured
         assert "registry_file" in legal_config, "Registry file path must be configured"
 
+    @pytest.mark.unit
     def test_simulation_engine_settings(self):
         """Validate simulation engine settings are properly configured."""
         with open("settings.yaml", "r", encoding="utf-8") as f:
@@ -180,12 +190,14 @@ class TestConfigurationFoundation:
 class TestDocumentationFoundation:
     """Test documentation infrastructure."""
 
+    @pytest.mark.unit
     def test_adrs_directory_exists(self):
         """Verify Architecture Decision Records directory exists."""
         adrs_path = Path("docs/ADRs")
         assert adrs_path.exists(), "docs/ADRs directory must exist"
         assert adrs_path.is_dir(), "docs/ADRs must be a directory"
 
+    @pytest.mark.unit
     def test_adrs_readme_exists(self):
         """Verify ADRs README exists and lists all ADRs."""
         adrs_index = Path("docs/ADRs/INDEX.md")
@@ -204,6 +216,7 @@ class TestDocumentationFoundation:
         for adr in essential_adrs:
             assert adr in content, f"ADRs README must reference '{adr}'"
 
+    @pytest.mark.unit
     def test_core_adrs_exist(self):
         """Verify core ADR files exist and are properly formatted."""
         core_adrs = [
@@ -226,6 +239,7 @@ class TestDocumentationFoundation:
                     section in content
                 ), f"ADR {adr_path} must contain '{section}' section"
 
+    @pytest.mark.unit
     def test_developer_documentation_exists(self):
         """Verify developer documentation files exist."""
         dev_docs = [
@@ -245,6 +259,7 @@ class TestDocumentationFoundation:
 class TestProjectStructure:
     """Test basic project structure and file permissions."""
 
+    @pytest.mark.unit
     def test_directory_structure(self):
         """Verify essential directories exist."""
         essential_dirs = ["src", "tests", "docs", "docs/ADRs", "scripts", "private"]
@@ -254,6 +269,7 @@ class TestProjectStructure:
             assert path.exists(), f"Essential directory {dir_path} must exist"
             assert path.is_dir(), f"{dir_path} must be a directory"
 
+    @pytest.mark.unit
     def test_private_directory_structure(self):
         """Verify private directory structure for data isolation."""
         private_path = Path("private")
@@ -265,6 +281,7 @@ class TestProjectStructure:
             with open(gitignore_path, "w", encoding="utf-8") as f:
                 f.write("# Ignore all private data\n*\n!.gitignore\n")
 
+    @pytest.mark.unit
     def test_file_permissions_security(self):
         """Verify configuration files have appropriate permissions."""
         sensitive_files = ["settings.yaml", "LEGAL.md"]
@@ -276,6 +293,7 @@ class TestProjectStructure:
                 # Verify file is readable (basic check on Windows/Unix)
                 assert stat.st_size > 0, f"{file_path} must not be empty"
 
+    @pytest.mark.unit
     def test_readme_legal_disclaimer(self):
         """Verify README contains proper legal disclaimer."""
         readme_path = Path("README.md")
@@ -301,6 +319,7 @@ class TestProjectStructure:
 class TestComplianceValidation:
     """Test compliance and safety validation systems."""
 
+    @pytest.mark.unit
     def test_fan_mode_registry_structure(self):
         """Verify fan mode registry structure is documented."""
         with open("LEGAL.md", "r", encoding="utf-8") as f:
@@ -320,6 +339,7 @@ class TestComplianceValidation:
                 indicator in legal_content
             ), f"Fan mode registry structure must document '{indicator}'"
 
+    @pytest.mark.unit
     def test_ip_protection_mechanisms(self):
         """Verify intellectual property protection mechanisms are in place."""
         with open("settings.yaml", "r", encoding="utf-8") as f:
@@ -338,6 +358,7 @@ class TestComplianceValidation:
             "permissive",
         ], "Content filtering severity must be valid"
 
+    @pytest.mark.unit
     def test_dmca_compliance_documentation(self):
         """Verify DMCA compliance procedures are documented."""
         with open("LEGAL.md", "r", encoding="utf-8") as f:

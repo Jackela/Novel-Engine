@@ -270,6 +270,7 @@ class TestDirectorAgentAdvanced:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_event_bus_interaction(self):
         """测试与事件总线的交互"""
         # 检查导演是否使用事件总线
@@ -379,6 +380,7 @@ class TestDirectorAgentPerformance:
             pass
 
     @pytest.mark.performance
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_agent_registration_performance(self):
         """测试代理注册性能"""

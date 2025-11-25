@@ -149,6 +149,7 @@ class TestCompleteSystemIntegration:
         return director
 
     @pytest.mark.skipif(not CORE_ENGINE_AVAILABLE, reason="Core engine not available")
+    @pytest.mark.integration
     def test_iron_laws_integration(self, director_agent, mock_character_data):
         """Test Iron Laws integration with DirectorAgent."""
 
@@ -185,6 +186,7 @@ class TestCompleteSystemIntegration:
     @pytest.mark.skipif(
         not CACHING_SYSTEM_AVAILABLE, reason="Caching system not available"
     )
+    @pytest.mark.integration
     def test_state_hashing_integration(self, mock_character_data, temp_directory):
         """Test state hashing system integration."""
 
@@ -236,6 +238,7 @@ class TestCompleteSystemIntegration:
     @pytest.mark.skipif(
         not CACHING_SYSTEM_AVAILABLE, reason="Caching system not available"
     )
+    @pytest.mark.integration
     def test_semantic_caching_integration(self, temp_directory):
         """Test semantic caching system integration."""
 
@@ -298,6 +301,7 @@ class TestCompleteSystemIntegration:
     @pytest.mark.skipif(
         not CACHING_SYSTEM_AVAILABLE, reason="Caching system not available"
     )
+    @pytest.mark.integration
     def test_token_budget_integration(self, temp_directory):
         """Test token budget management system integration."""
 
@@ -386,6 +390,7 @@ class TestCompleteSystemIntegration:
     @pytest.mark.skipif(
         not EVALUATION_SYSTEM_AVAILABLE, reason="Evaluation system not available"
     )
+    @pytest.mark.integration
     def test_evaluation_system_integration(self, temp_directory):
         """Test evaluation system integration."""
 
@@ -477,6 +482,7 @@ class TestCompleteSystemIntegration:
         ),
         reason="Full system components not available",
     )
+    @pytest.mark.integration
     def test_end_to_end_integration(self, temp_directory, mock_character_data):
         """Test complete end-to-end system integration."""
 
@@ -704,6 +710,7 @@ class TestCompleteSystemIntegration:
     @pytest.mark.skipif(
         not CACHING_SYSTEM_AVAILABLE, reason="Caching system not available"
     )
+    @pytest.mark.integration
     def test_performance_integration(self, temp_directory):
         """Test performance optimization integration across systems."""
 

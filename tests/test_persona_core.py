@@ -24,6 +24,7 @@ from src.agents.persona_core import AgentIdentity, PersonaCore
 class TestAgentIdentity:
     """Test AgentIdentity dataclass functionality."""
 
+    @pytest.mark.unit
     def test_agent_identity_creation(self):
         """Test AgentIdentity creation and properties."""
         identity = AgentIdentity(
@@ -40,6 +41,7 @@ class TestAgentIdentity:
         assert identity.primary_faction == "Test Faction"
         assert identity.character_sheet_path == "/test/path/character_sheet.md"
 
+    @pytest.mark.unit
     def test_agent_identity_defaults(self):
         """Test AgentIdentity with minimal required fields."""
         identity = AgentIdentity(
@@ -83,6 +85,7 @@ class TestPersonaCore:
         """Create PersonaCore instance for testing."""
         return PersonaCore(temp_character_dir, mock_event_bus, "test_agent_001")
 
+    @pytest.mark.unit
     def test_persona_core_initialization(self, persona_core):
         """Test PersonaCore initialization."""
         assert persona_core.identity.agent_id == "test_agent_001"
@@ -113,6 +116,7 @@ class TestPersonaCore:
         assert "Test Character" in content
         assert "Test Faction" in content
 
+    @pytest.mark.unit
     def test_persona_core_status(self, persona_core):
         """Test status reporting."""
         status = persona_core.get_status()
@@ -130,6 +134,7 @@ class TestPersonaCore:
         content = await persona_core.read_character_file("nonexistent.md")
         assert content == ""  # Should return empty string for missing files
 
+    @pytest.mark.unit
     def test_persona_core_component_integration(self, persona_core):
         """Test integration with sub-components."""
         # Test memory component

@@ -45,6 +45,7 @@ class TestStoryArcManager:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_initial_state_available(self) -> None:
         state = build_state(StoryArcPhase.EXPOSITION)
         manager = StoryArcManager(state)

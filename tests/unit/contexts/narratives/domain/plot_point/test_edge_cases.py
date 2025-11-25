@@ -23,6 +23,7 @@ class TestPlotPointEdgeCasesAndBoundaryConditions:
     """Test suite for edge cases and boundary conditions."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_creation_with_mock_timestamp(self):
         """Test creation with explicitly mocked timestamp."""
         fixed_time = datetime(2024, 1, 15, 12, 30, 45, tzinfo=timezone.utc)

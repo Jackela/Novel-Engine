@@ -76,8 +76,9 @@ class FastTestPyramidMonitor:
             test_pattern = re.compile(r'^    def (test_\w+)', re.MULTILINE)
             class_pattern = re.compile(r'^class (Test\w+)', re.MULTILINE)
 
-            # Track current markers
-            current_markers = set()
+            # Track class-level and function-level markers separately
+            class_markers = set()
+            function_markers = set()
 
             lines = content.split('\n')
             current_class = None
@@ -87,19 +88,20 @@ class FastTestPyramidMonitor:
                 class_match = class_pattern.match(line)
                 if class_match:
                     current_class = class_match.group(1)
-                    # Reset markers for new class
-                    current_markers = set()
+                    # Reset class markers for new class
+                    class_markers = set()
+                    function_markers = set()
                     # Look back for markers before class
                     for j in range(max(0, i - 10), i):
                         marker_match = re.search(r'@pytest\.mark\.(unit|integration|e2e)', lines[j])
                         if marker_match:
-                            current_markers.add(marker_match.group(1))
+                            class_markers.add(marker_match.group(1))
 
                 # Check for test function markers
                 if line.strip().startswith('@pytest.mark.'):
                     marker_match = re.search(r'@pytest\.mark\.(unit|integration|e2e)', line)
                     if marker_match:
-                        current_markers.add(marker_match.group(1))
+                        function_markers.add(marker_match.group(1))
 
                 # Check for test function
                 test_match = test_pattern.match(line)
@@ -110,14 +112,17 @@ class FastTestPyramidMonitor:
                     # Add to all tests
                     self.all_tests.add(test_id)
 
+                    # Combine class and function markers
+                    effective_markers = class_markers | function_markers
+
                     # Add to marker sets
-                    if current_markers:
-                        for marker in current_markers:
+                    if effective_markers:
+                        for marker in effective_markers:
                             if marker in self.tests_by_marker:
                                 self.tests_by_marker[marker].add(test_id)
 
-                    # Reset function-level markers
-                    current_markers = set()
+                    # Reset only function-level markers (class markers persist)
+                    function_markers = set()
 
         except Exception as e:
             print(f"Warning: Could not parse {file_path}: {e}", file=sys.stderr)

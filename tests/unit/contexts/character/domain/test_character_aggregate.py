@@ -933,6 +933,7 @@ class TestCharacterAggregate:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_clear_events(self, sample_character):
         """Test clearing domain events."""
         # Ensure there are events

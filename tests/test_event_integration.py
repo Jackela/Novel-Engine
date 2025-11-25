@@ -8,6 +8,7 @@ from src.persona_agent import PersonaAgent
 
 class TestEventIntegration(unittest.TestCase):
 
+    @pytest.mark.integration
     def test_full_turn_event_flow(self):
         """
         Tests the full event flow for a single turn, ensuring agents

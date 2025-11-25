@@ -33,6 +33,7 @@ def build_client():
     return TestClient(app)
 
 
+@pytest.mark.integration
 def test_create_list_and_simulate_user_character():
     client = build_client()
 
@@ -65,6 +66,7 @@ def test_create_list_and_simulate_user_character():
     assert "nova" in sim_resp.json().get("participants", [])
 
 
+@pytest.mark.integration
 def test_simulation_rejects_unknown_character():
     client = build_client()
     sim_resp = client.post(

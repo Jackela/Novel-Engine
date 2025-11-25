@@ -27,6 +27,7 @@ from src.memory.semantic_memory import ConceptNode, KnowledgeFact, SemanticMemor
 class TestKnowledgeFact:
     """Unit tests for KnowledgeFact dataclass."""
 
+    @pytest.mark.unit
     def test_knowledge_fact_initialization(self):
         """Test KnowledgeFact initialization."""
         fact = KnowledgeFact(
@@ -44,6 +45,7 @@ class TestKnowledgeFact:
         assert fact.confidence == 0.9
         assert fact.confirmation_count == 1
 
+    @pytest.mark.unit
     def test_knowledge_fact_auto_id_generation(self):
         """Test automatic fact ID generation."""
         fact = KnowledgeFact(
@@ -53,6 +55,7 @@ class TestKnowledgeFact:
         assert fact.fact_id.startswith("fact_")
         assert len(fact.fact_id) > 5
 
+    @pytest.mark.unit
     def test_knowledge_fact_confidence_clamping(self):
         """Test confidence value clamping to 0-1 range."""
         fact_high = KnowledgeFact(
@@ -65,6 +68,7 @@ class TestKnowledgeFact:
         )
         assert fact_low.confidence == 0.0
 
+    @pytest.mark.unit
     def test_confirm_fact(self):
         """Test fact confirmation mechanism."""
         fact = KnowledgeFact(
@@ -83,6 +87,7 @@ class TestKnowledgeFact:
         assert fact.confirmation_count == initial_count + 1
         assert fact.confidence >= initial_confidence
 
+    @pytest.mark.unit
     def test_confirm_fact_with_different_source(self):
         """Test confirmation from different source increases confidence more."""
         fact = KnowledgeFact(
@@ -99,6 +104,7 @@ class TestKnowledgeFact:
         assert fact.confirmation_count == 2
         assert fact.confidence > 0.7
 
+    @pytest.mark.unit
     def test_to_natural_language(self):
         """Test natural language representation."""
         fact = KnowledgeFact(
@@ -116,6 +122,7 @@ class TestKnowledgeFact:
 class TestConceptNode:
     """Unit tests for ConceptNode dataclass."""
 
+    @pytest.mark.unit
     def test_concept_node_initialization(self):
         """Test ConceptNode initialization."""
         node = ConceptNode(concept_id="animal_001", concept_name="Animal")

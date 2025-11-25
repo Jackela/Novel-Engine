@@ -32,18 +32,21 @@ class TestEventsStreamEndpoint:
         app = create_app()
         return TestClient(app)
 
+    @pytest.mark.integration
     def test_endpoint_exists_and_returns_200(self, client):
         """Verify /api/events/stream endpoint exists and returns HTTP 200"""
         # Use stream context to test streaming endpoint
         with client.stream("GET", "/api/events/stream") as response:
             assert response.status_code == 200
 
+    @pytest.mark.integration
     def test_endpoint_returns_correct_content_type(self, client):
         """Verify endpoint returns text/event-stream content type"""
         with client.stream("GET", "/api/events/stream") as response:
             # Accept content-type with or without charset
             assert response.headers["content-type"].startswith("text/event-stream")
 
+    @pytest.mark.integration
     def test_endpoint_returns_required_headers(self, client):
         """Verify SSE-required headers are present"""
         with client.stream("GET", "/api/events/stream") as response:
@@ -61,6 +64,7 @@ class TestEventsStreamEndpoint:
             assert "x-accel-buffering" in headers
             assert headers["x-accel-buffering"] == "no"
 
+    @pytest.mark.integration
     def test_stream_returns_retry_directive(self, client):
         """Verify SSE stream includes retry directive in first message"""
         with client.stream("GET", "/api/events/stream") as response:
@@ -73,6 +77,7 @@ class TestEventsStreamEndpoint:
             assert retry_value.isdigit()
             assert int(retry_value) == 3000  # 3 seconds
 
+    @pytest.mark.integration
     def test_stream_returns_sse_formatted_events(self, client):
         """Verify events are formatted according to SSE spec"""
         with client.stream("GET", "/api/events/stream") as response:
@@ -99,6 +104,7 @@ class TestEventsStreamEndpoint:
             id_lines = [l for l in lines_collected if l.startswith("id:")]
             # Note: id lines are optional in SSE, just verify stream is working
 
+    @pytest.mark.integration
     def test_event_payload_includes_required_fields(self, client):
         """Verify event data includes all required fields"""
         with client.stream("GET", "/api/events/stream") as response:
@@ -131,6 +137,7 @@ class TestEventsStreamEndpoint:
 
                     break  # Only test first event
 
+    @pytest.mark.integration
     def test_character_events_include_character_name(self, client):
         """Verify character-type events include optional characterName field"""
         with client.stream("GET", "/api/events/stream") as response:
@@ -161,6 +168,7 @@ class TestEventsStreamEndpoint:
             # Note: In simulated events, we cycle through types, so we should find one
             # If not found, this is acceptable for MVP (production will have real events)
 
+    @pytest.mark.integration
     def test_stream_handles_client_disconnection(self, client):
         """Verify stream gracefully handles client disconnection"""
         # This test verifies the endpoint doesn't crash when client disconnects
@@ -177,6 +185,7 @@ class TestEventsStreamEndpoint:
         # If we reach here without exception, disconnection was handled gracefully
         assert True
 
+    @pytest.mark.integration
     def test_event_ids_are_sequential(self, client):
         """Verify event IDs exist and follow some pattern (SSE id lines)"""
         with client.stream("GET", "/api/events/stream") as response:
@@ -202,6 +211,7 @@ class TestEventsStreamEndpoint:
             # If present, verify they exist; if not, that's also acceptable
             # The test passes if we either found sequential IDs or if SSE events work without ids
 
+    @pytest.mark.integration
     def test_events_arrive_at_expected_frequency(self, client):
         """Verify events are generated approximately every 2 seconds"""
         with client.stream("GET", "/api/events/stream") as response:
@@ -222,6 +232,7 @@ class TestEventsStreamEndpoint:
                 # Should be approximately 2 seconds (allow some variance)
                 assert 1.8 <= interval <= 2.5, f"Event interval {interval}s not near 2s"
 
+    @pytest.mark.integration
     def test_timestamp_field_is_milliseconds_since_epoch(self, client):
         """Verify timestamp is in milliseconds and reasonably current"""
         with client.stream("GET", "/api/events/stream") as response:
@@ -254,6 +265,7 @@ class TestEventsStreamErrorHandling:
         app = create_app()
         return TestClient(app)
 
+    @pytest.mark.integration
     def test_endpoint_accessible_without_authentication(self, client):
         """Verify endpoint is accessible without auth (for MVP)"""
         # No auth headers provided
@@ -261,6 +273,7 @@ class TestEventsStreamErrorHandling:
             assert response.status_code == 200
             # If auth was required, would get 401 Unauthorized
 
+    @pytest.mark.integration
     def test_multiple_clients_can_connect_simultaneously(self, client):
         """Verify multiple SSE connections can be established"""
         # Open multiple streaming connections
@@ -281,6 +294,7 @@ class TestEventsStreamErrorHandling:
             for response_context, response in responses:
                 response_context.__exit__(None, None, None)
 
+    @pytest.mark.integration
     def test_endpoint_returns_valid_json_in_data_field(self, client):
         """Verify data field always contains valid JSON"""
         with client.stream("GET", "/api/events/stream") as response:

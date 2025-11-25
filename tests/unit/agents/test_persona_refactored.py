@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.unit
+@pytest.mark.unit
 def test_persona_core():
     """Test PersonaCore component."""
     print("\n🔍 Testing PersonaCore...")

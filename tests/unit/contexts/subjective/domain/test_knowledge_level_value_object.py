@@ -23,6 +23,7 @@ class TestKnowledgeItemCreation:
     """Test suite for KnowledgeItem value object creation and validation."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_minimal_knowledge_item_creation(self):
         """Test creating knowledge item with minimal required fields."""
         acquired_time = datetime.now()
@@ -113,6 +114,7 @@ class TestKnowledgeItemCreation:
 class TestKnowledgeItemValidation:
     """Test suite for KnowledgeItem validation logic."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_empty_subject_validation(self):
         """Test validation fails with empty subject."""
@@ -215,6 +217,7 @@ class TestKnowledgeItemValidation:
 class TestKnowledgeItemBusinessLogic:
     """Test suite for KnowledgeItem business logic methods."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_is_current_no_expiration(self):
         """Test that knowledge without expiration is always current."""
@@ -423,6 +426,7 @@ class TestKnowledgeItemImmutableOperations:
     """Test suite for KnowledgeItem immutable operations."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_with_updated_certainty_creates_new_instance(self):
         """Test with_updated_certainty creates new instance with updated certainty."""
         acquired_time = datetime.now()
@@ -487,6 +491,7 @@ class TestKnowledgeBaseCreation:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_empty_knowledge_base_creation(self):
         """Test creating an empty knowledge base."""
         kb = KnowledgeBase(knowledge_items={})
@@ -495,6 +500,7 @@ class TestKnowledgeBaseCreation:
         assert kb.get_total_knowledge_count() == 0
         assert kb.get_subjects_count() == 0
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_knowledge_base_with_items(self):
         """Test creating knowledge base with items."""
@@ -531,11 +537,13 @@ class TestKnowledgeBaseValidation:
     """Test suite for KnowledgeBase validation logic."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_invalid_knowledge_items_type(self):
         """Test validation fails with non-dict knowledge_items."""
         with pytest.raises(ValueError, match="Knowledge items must be a dictionary"):
             KnowledgeBase(knowledge_items="invalid")
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_invalid_subject_items_type(self):
         """Test validation fails when subject items is not a list."""
@@ -882,6 +890,7 @@ class TestKnowledgeBaseImmutableOperations:
     """Test suite for KnowledgeBase immutable operations."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_add_knowledge_creates_new_instance(self):
         """Test add_knowledge creates new instance with additional knowledge."""
         now = datetime.now()
@@ -1025,6 +1034,7 @@ class TestKnowledgeBaseImmutableOperations:
 class TestKnowledgeBaseStatistics:
     """Test suite for KnowledgeBase statistics methods."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_get_total_knowledge_count(self):
         """Test getting total knowledge count."""

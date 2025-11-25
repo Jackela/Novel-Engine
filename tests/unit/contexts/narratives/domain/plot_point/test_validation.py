@@ -23,6 +23,7 @@ class TestPlotPointValidation:
     """Test suite for PlotPoint validation logic."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_empty_title_validation(self):
         """Test validation fails with empty title."""
         with pytest.raises(ValueError, match="Plot point title cannot be empty"):

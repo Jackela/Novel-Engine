@@ -154,6 +154,7 @@ class TestPersonaAgentInitialization:
                 )
 
     @pytest.mark.unit
+    @pytest.mark.integration
     def test_initialization_empty_character_directory(self):
         """Test initialization with empty character directory"""
         with patch("os.path.exists", return_value=True), patch(

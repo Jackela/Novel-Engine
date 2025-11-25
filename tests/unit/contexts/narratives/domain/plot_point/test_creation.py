@@ -23,6 +23,7 @@ class TestPlotPointCreation:
     """Test suite for PlotPoint creation and initialization."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_create_minimal_plot_point(self):
         """Test creating plot point with minimal required fields."""
         plot_point = PlotPoint(

@@ -28,6 +28,7 @@ class TestKnowledgeFeatureFlags:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_use_knowledge_base_returns_false_when_not_set(self):
         """Test that use_knowledge_base returns False when env var not set."""
         # Ensure env var is not set
@@ -38,6 +39,7 @@ class TestKnowledgeFeatureFlags:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_use_knowledge_base_returns_true_for_truthy_values(self):
         """Test that use_knowledge_base returns True for truthy string values."""
         truthy_values = ["true", "TRUE", "True", "1", "yes", "YES", "on", "ON"]

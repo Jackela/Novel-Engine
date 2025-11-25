@@ -9,6 +9,7 @@ def client():
         yield c
 
 
+@pytest.mark.unit
 def test_metrics_contract_shape(client):
     resp = client.get("/cache/metrics")
     assert resp.status_code == 200
@@ -30,6 +31,7 @@ def test_metrics_contract_shape(client):
         assert key in data
 
 
+@pytest.mark.unit
 def test_invalidate_contract_shape(client):
     resp = client.post("/cache/invalidate", json={"all_of": ["model:test-model"]})
     assert resp.status_code == 200
