@@ -610,8 +610,26 @@ def create_app() -> FastAPI:
         try:
             health_monitor = getattr(app.state, "health_monitor", None)
             if not health_monitor:
-                raise ServiceUnavailableException(
-                    "Health Monitor", "Health monitoring system not available"
+                # Return 503 directly without raising - avoids global exception handler
+                response_time = (time.time() - start_time) * 1000
+                logger.warning("Health check called before monitor initialized")
+                fallback_data = HealthCheckData(
+                    service_status="initializing",
+                    database_status="unknown",
+                    orchestrator_status="unknown",
+                    active_agents=0,
+                    uptime_seconds=0,
+                    version="1.1.0",
+                    environment="startup",
+                )
+                metadata = APIMetadata(
+                    timestamp=datetime.now(), api_version="1.1", server_time=response_time
+                )
+                response = HealthCheckResponse(data=fallback_data, metadata=metadata)
+                return JSONResponse(
+                    content=response.model_dump(),
+                    status_code=503,
+                    headers={"Cache-Control": "no-cache"},
                 )
 
             # Get comprehensive health status
