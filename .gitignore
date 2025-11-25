@@ -134,6 +134,7 @@ celerybeat.pid
 .env.development
 .env.test
 .venv
+.venv-ci/
 env/
 venv/
 ENV/
@@ -466,4 +467,20 @@ frontend/test-results.json
 .codemachine/prompts
 .codemachine/agents
 .codemachine/template.json
-frontend/undefined:*
+
+# OpenSpec Generated Files and Archives
+openspec/specs/
+openspec/changes/archive/
+
+# Test Output Files (root level)
+test-results.xml
+pytest-report.xml
+test_report.json
+benchmark.json
+test.md
+test_log.md
+campaign_log.md
+
+# Pyramid Reports
+pyramid-report.json
+speed-report.json
